@@ -168,8 +168,17 @@ class Bot:
                 self.sync_medals(map_name, w)
                 if self.skip_known and self.skip_known(map_name):
                     return "known"
-                self.inp.click(w.x, min(0.95, w.y + 0.1))  # thumbnail sits under the name
-                time.sleep(1.5)
+                for _ in range(3):
+                    self.inp.click(w.x, min(0.95, w.y + 0.1))  # thumbnail sits under the name
+                    time.sleep(1.5)
+                    st = self.menus.identify()
+                    if st == "difficulty":
+                        return True
+                    if not self.menus.has("clicktounlock", "tounlock"):
+                        break
+                    # a newly available map unlocks on the first click (free)
+                    log.info("unlocking map %s", map_name)
+                    time.sleep(2.5)
                 return self.menus.identify() == "difficulty"
         return False
 

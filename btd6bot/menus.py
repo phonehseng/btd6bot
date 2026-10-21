@@ -18,7 +18,8 @@ SCREENS = [
     ("upgrade_tree", [["unlockall", "ingamecost", "appliestothismonkey"]]),
     ("profile", [["overallstats", "topmonkeys", "topheroes", "publicstats"]]),
     ("victory", [["victory", "vigtory", "congratulations", "completedthistrack", "monkeystar"]]),
-    ("tower_choice", [["choosea", "tounlock"], ["unlock"]]),
+    # "CHOOSE A MONKEY TO UNLOCK" - not just "to unlock" (map cards say "click to unlock")
+    ("tower_choice", [["chooseamonkey", "choosea"], ["unlock"]]),
     ("level_up", [["levelup"]]),
     ("hero_unlock", [["tryme", "nextgame"]]),
     ("pause", [["pause"], ["restart"], ["home"]]),
@@ -152,6 +153,9 @@ class Menus:
                     offered.append(name)
                 if target is None and offered:
                     target = choose(title, offered)
+                if not self.has("choosea", "chooseamonkey"):
+                    log.warning("carousel: no longer on the tower-choice screen - aborting")
+                    return ""
                 log.info("carousel lap %d step %d: centre=%r target=%r", lap, attempt, name, target)
                 if target and norm(target) == norm(name):
                     break
@@ -166,6 +170,8 @@ class Menus:
             else:
                 # never reached the target: pick again knowing everything offered
                 target = choose(title, offered) if offered else None
+                if target is None:
+                    break  # nothing we prefer is offered: take the centred one
                 log.warning("carousel: target not reached; offered %s -> retry for %r", offered, target)
                 continue
             break
