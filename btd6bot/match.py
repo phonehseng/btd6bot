@@ -8,6 +8,14 @@ from .maplearn import PathTracer
 log = logging.getLogger("match")
 
 
+def _hero_id(text):
+    n = "".join(c for c in text.lower() if c.isalnum())
+    for hid, h in T.HEROES.items():
+        if len(n) >= 4 and "".join(c for c in h["name"].lower() if c.isalnum()) == n:
+            return hid
+    return None
+
+
 class Match:
     def __init__(self, game, menus, model, executor, account=None, on_tower_choice=None):
         self.g = game
@@ -157,8 +165,17 @@ class Match:
         log.info("off game screen: %s", st)
         if st in ("victory", "defeat"):
             return st
-        if st == "level_up":
-            self.menus.handle_level_up()
+        if st != "unknown":
+            self._unknown = 0
+        if st in ("level_up", "hero_unlock"):
+            self.menus.handle_level_up()  # both continue with a click
+            if st == "hero_unlock" and self.account is not None:
+                for w in self.menus.words:
+                    hid = _hero_id(w.text)
+                    if hid:
+                        self.account.unlocked_heroes.add(hid)
+                        self.account.save()
+                        log.info("hero unlocked: %s", hid)
         elif st == "tower_choice":
             name = self.menus.handle_tower_choice(self.on_tower_choice or (lambda c, o: None))
             tid = T.find_tower(name) if name else None
@@ -174,6 +191,11 @@ class Match:
             return None
         else:
             if not self.menus.dismiss_popup():
+                # full-screen announcements (new hero, rewards) continue on click
+                self._unknown = getattr(self, "_unknown", 0) + 1
+                if self._unknown >= 3:
+                    log.info("unknown screen x%d - clicking to continue", self._unknown)
+                    self.menus.inp.click(0.5, 0.5)
                 time.sleep(0.8)
         return None
 

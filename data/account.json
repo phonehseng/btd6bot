@@ -1,10 +1,11 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T16:15:30",
+ "saved_at": "2026-10-21T16:21:53",
  "player_level": 10,
  "xp": 19850.0,
  "monkey_money": 175,
  "unlocked_towers": [
+  "ace",
   "bomb",
   "boomerang",
   "buccaneer",
@@ -33,15 +34,23 @@
    0
   ],
   "sniper": [
+   3,
+   2,
+   0
+  ],
+  "heli": [
    1,
    0,
-   0
+   1
   ]
  },
  "mk_points": 0,
  "mk_unlocked": [],
  "medals": {
   "Monkey Meadow": {
+   "easy": true
+  },
+  "In The Loop": {
    "easy": true
   }
  },
@@ -54,6 +63,15 @@
     "easy": 14
    },
    "observed_rewards": {}
+  },
+  "In The Loop": {
+   "wins": 1,
+   "losses": 0,
+   "best_round": 40,
+   "avg_minutes": {
+    "easy": 7.83
+   },
+   "observed_rewards": {}
   }
  },
  "strategy_stats": {
@@ -63,12 +81,19 @@
    "games": 1,
    "best_round": 40,
    "avg_minutes": 14
+  },
+  "In The Loop|easy|military_heli_sniper": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": 7.83
   }
  },
  "pending_tower_choices": [],
  "map_category_overrides": {},
  "observed_upgrade_costs": {},
- "games_played": 1,
+ "games_played": 2,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -79,6 +104,18 @@
    "won": true,
    "round": 40,
    "minutes": 14,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T16:21:53",
+   "map": "In The Loop",
+   "mode": "easy",
+   "strategy": "military_heli_sniper",
+   "hero": "quincy",
+   "won": true,
+   "round": 40,
+   "minutes": 7.828126553694407,
    "xp": null,
    "mm": null
   }

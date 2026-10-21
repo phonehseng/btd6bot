@@ -20,6 +20,7 @@ SCREENS = [
     ("victory", [["victory", "vigtory", "congratulations", "completedthistrack", "monkeystar"]]),
     ("tower_choice", [["choosea", "tounlock"], ["unlock"]]),
     ("level_up", [["levelup"]]),
+    ("hero_unlock", [["tryme", "nextgame"]]),
     ("pause", [["pause"], ["restart"], ["home"]]),
     ("restart_confirm", [["restart?", "sureyouwish"]]),
     # NB the difficulty screen can show a "Continue saved game?" banner; that is
@@ -168,7 +169,9 @@ class Menus:
             st = self.identify()
             if st == "main_menu":
                 return True
-            if self.click_word("home"):
+            # buttons are icons above their labels; the label is not clickable
+            if self.click_word("home", dy=-0.08):
+                time.sleep(2.0)
                 continue
             if self.click_word("next", "continue", "collect"):
                 continue
@@ -182,7 +185,8 @@ class Menus:
             st = self.identify()
             if st == "main_menu":
                 return True
-            if self.click_word("home"):
+            if self.click_word("home", dy=-0.08):
+                time.sleep(2.0)
                 continue
             time.sleep(1.0)
         return False

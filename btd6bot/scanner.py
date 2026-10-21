@@ -9,7 +9,7 @@ from .maplearn import GRID
 log = logging.getLogger("scanner")
 
 
-def scan_placement(game, model, kind="dart", cls="land", step=4, settle=0.035):
+def scan_placement(game, model, kind="dart", cls="land", step=5, settle=0.03):
     """Fill model.scan[cls] (1 = can place, 2 = blocked). Game must be idle."""
     w, h = GRID
     grid = model.scan.get(cls)
