@@ -11,7 +11,7 @@ from .inputs import Aborted, FocusLost, Input
 from .maplearn import MapModel
 from .match import Match
 from .menus import Menus
-from .scanner import scan_placement
+from .scanner import scan_placement, scan_water
 from .screen import GameNotFound, Screen
 from .strategy import Executor, hero_for, load_all, usable
 from .vision import norm
@@ -248,6 +248,14 @@ class Bot:
         if not model.scanned("land"):
             log.info("first visit to %s: scanning placement", plan.map)
             scan_placement(g, model, "dart", "land")
+            model.save()
+        # water towers in this plan: find the water once (cheap, land-blocked cells only)
+        steps = strat.get("plan", []) + strat.get("fill", [])
+        kinds = {st.get("kind") for st in steps} | set((strat.get("planner") or {}).get("towers") or {})
+        water = sorted(k for k in kinds if k in T.TOWERS and T.TOWERS[k]["placement"] == "water")
+        if water and (not model.water_scanned() or model.water_pending() > 3):
+            log.info("scanning water on %s for %s", plan.map, water)
+            scan_water(g, model, "sub" if "sub" in water else water[0])
             model.save()
         ex = Executor(g, model, strat, plan.mode_key, self.account)
         res = Match(g, self.menus, model, ex, self.account,

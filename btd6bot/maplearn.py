@@ -89,14 +89,74 @@ class MapModel:
 
     # -- placement scan -------------------------------------------------------
     def blocked(self, cls="land"):
-        """bool grid: True where a tower of this class cannot stand (unknown=False)."""
+        """bool grid: True where a tower of this class cannot stand.
+
+        land: unknown cells count as free (the land scan covers nearly everything).
+        water: water is a minority of the map and the water scan only probes
+        likely cells, so once a water scan exists anything not confirmed
+        placeable is blocked. Without one, land-placeable cells are still known
+        not to be water."""
         s = self.scan.get(cls)
+        if cls == "water":
+            if s is not None:
+                return s != 1
+            land = self.scan.get("land")
+            if land is not None:
+                return land == 1
+            return np.zeros(self.heat.shape, bool)
         if s is None:
             return np.zeros(self.heat.shape, bool)
         return s == 2
 
     def scanned(self, cls="land"):
+        if cls == "water":  # water scans are sparse by design
+            return self.water_scanned()
         return cls in self.scan and (self.scan[cls] > 0).mean() > 0.5
+
+    # -- water ------------------------------------------------------------------
+    def water_scanned(self):
+        return "water" in self.scan
+
+    def water_cells(self):
+        """bool grid: cells confirmed placeable for water towers."""
+        s = self.scan.get("water")
+        if s is None:
+            return np.zeros(self.heat.shape, bool)
+        return s == 1
+
+    def has_water(self, min_cells=50):
+        """True if a water scan found usable water (>= min_cells grid cells;
+        one probe at step 5 marks 25 cells, so this needs >= 2 positive probes)."""
+        return int(self.water_cells().sum()) >= min_cells
+
+    def track_estimate(self):
+        """bool grid of the track: learned from motion when there is enough of
+        it, else guessed from the land scan's thin blocked corridors."""
+        traced = self.track_mask()
+        if traced.sum() >= 60:
+            return traced
+        return self.track_guess() > 0
+
+    def water_probe_mask(self, step=5):
+        """Cells worth probing with a water tower: blocked for land (water is
+        always land-blocked), not yet known, and either off the track estimate
+        or right next to confirmed water (lake rims / river banks that the
+        track guess swallowed; step = scan lattice spacing)."""
+        land = self.scan.get("land")
+        if land is None:
+            return np.zeros(self.heat.shape, bool)
+        water = self.scan.get("water")
+        if water is None:
+            return (land == 2) & ~self.track_estimate()
+        cross = cv2.getStructuringElement(cv2.MORPH_CROSS, (2 * step + 1, 2 * step + 1))
+        shore = cv2.dilate((water == 1).astype(np.uint8), cross) > 0
+        return (land == 2) & (water == 0) & (~self.track_estimate() | shore)
+
+    def water_pending(self, step=5):
+        """How many lattice probe points scan_water(step=step) would still visit
+        in its first pass (0 = nothing left to learn with the current track)."""
+        m = self.water_probe_mask(step)
+        return int(m[step // 2::step, step // 2::step].sum())
 
     def track_guess(self):
         """Before any bloon has been seen: thin blocked corridors look like track.
