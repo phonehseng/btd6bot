@@ -138,29 +138,37 @@ class Menus:
                 title = n.replace("monkeys", "")
         offered = []
         target = None
-        # Step one item at a time (click the right-hand neighbour) and read the
-        # centred name each time; a full lap visits every offered tower.
         name = ""
-        for attempt in range(9):
-            self.read(scale=0.6)
-            name_w = self.find_center_name()
-            name = name_w.text if name_w else ""
-            if name and norm(name) not in map(norm, offered):
-                offered.append(name)
-            if target is None:
+        # Step one item at a time (click the right-hand neighbour) and read the
+        # centred name each time. Lap 1 aims for the first-seen preference but
+        # records every tower offered; if the lap ends without landing on it,
+        # re-choose from the full list and go round once more.
+        for lap in range(2):
+            for attempt in range(8):
+                self.read(scale=0.6)
+                name_w = self.find_center_name()
+                name = name_w.text if name_w else ""
+                if name and norm(name) not in map(norm, offered):
+                    offered.append(name)
+                if target is None and offered:
+                    target = choose(title, offered)
+                log.info("carousel lap %d step %d: centre=%r target=%r", lap, attempt, name, target)
+                if target and norm(target) == norm(name):
+                    break
+                if lap == 0 and attempt == 0:
+                    try:  # what the carousel looks like, for calibration
+                        from .vision import save
+                        save(self.s.grab(), "logs/carousel.png")
+                    except Exception:
+                        pass
+                self.inp.click(0.745, 0.45)
+                time.sleep(1.4)
+            else:
+                # never reached the target: pick again knowing everything offered
                 target = choose(title, offered) if offered else None
-            log.info("carousel step %d: centre=%r target=%r", attempt, name, target)
-            if target and norm(target) == norm(name):
-                break
-            if attempt == 0:
-                # save what the carousel looks like, for calibration
-                try:
-                    from .vision import save
-                    save(self.s.grab(), "logs/carousel.png")
-                except Exception:
-                    pass
-            self.inp.click(0.745, 0.45)
-            time.sleep(1.4)
+                log.warning("carousel: target not reached; offered %s -> retry for %r", offered, target)
+                continue
+            break
         log.info("unlocking %s (%s)", name, title)
         self.inp.click(0.5, 0.938)
         time.sleep(2.0)
