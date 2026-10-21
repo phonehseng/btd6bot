@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Runtime output
+logs/
+runs/
+debug/
+*.log
+scratch/
+
+# Large screen capture dumps
+captures/
