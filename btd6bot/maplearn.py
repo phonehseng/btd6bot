@@ -96,6 +96,8 @@ class MapModel:
         likely cells, so once a water scan exists anything not confirmed
         placeable is blocked. Without one, land-placeable cells are still known
         not to be water."""
+        if cls == "land_or_water":  # e.g. Mermonkey: blocked only where both are
+            return self.blocked("land") & self.blocked("water")
         s = self.scan.get(cls)
         if cls == "water":
             if s is not None:

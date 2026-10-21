@@ -26,12 +26,46 @@ MODE_BUTTON_TEXT = {
 }
 
 
+ROOT_DIR = __import__("pathlib").Path(__file__).resolve().parents[1]
+PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main menu
+STATE_FILE = ROOT_DIR / "logs" / "state.txt"
+
+
+def set_state(text):
+    try:
+        STATE_FILE.parent.mkdir(exist_ok=True)
+        STATE_FILE.write_text(time.strftime("%Y-%m-%d %H:%M:%S ") + text + "\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _code_imports():
+    """Does the code on disk import (and do the strategies load) in a fresh interpreter?"""
+    import subprocess
+    import sys
+    try:
+        r = subprocess.run([sys.executable, "-c",
+                            "import btd6bot.runner, btd6bot.strategy as s; s.load_all()"],
+                           cwd=str(ROOT_DIR), capture_output=True, timeout=60)
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
 def _code_stamp():
     """Latest modification time of the bot's code and strategy files."""
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
     files = list((root / "btd6bot").glob("*.py")) + list((root / "strategies").glob("*.yaml"))
     return max((f.stat().st_mtime for f in files), default=0)
+
+
+def _tested(account, sid, mode):
+    """Has this strategy won this mode on this account before?"""
+    for key, st in (account.strategy_stats or {}).items():
+        if sid in key and mode in key and st.get("wins", 0) > 0:
+            return True
+    return False
 
 
 def planner_specs(strats, account):
@@ -42,17 +76,24 @@ def planner_specs(strats, account):
         modes = [m for m in s.get("modes", []) if usable(s, m, account)[0]]
         if not modes:
             continue
-        # Upgrade requirements only gate on towers we have evidence about: the
-        # executor unlocks/skips upgrades in-game, and unproven ones would
-        # otherwise lock a strategy out forever.
-        reqs = {k: v for k, v in (p.get("towers") or {}).items() if k in account.unlocked_upgrades}
-        reqs.update({k: [0, 0, 0] for k in (p.get("towers") or {}) if k not in reqs})
+        # Full upgrade requirements: the planner lowers the win chance for
+        # upgrades not yet unlocked (unknown = locked), it no longer blocks.
+        reqs = dict(p.get("towers") or {})
+        base = {m: v for m, v in (p.get("base_success") or {}).items() if m in modes}
+        hero = hero_for(s, account)
+        if s.get("hero") and hero != s["hero"]:
+            # the plan leans on a hero we do not own yet: be less sure of it
+            base = {m: v * 0.85 for m, v in base.items()}
+        # untested on this account: never trust a declared Hard+ prior above 0.85
+        for m in base:
+            if m not in ("easy", "primary_only", "medium") and not _tested(account, s["id"], m):
+                base[m] = min(base[m], 0.85)
         specs.append(StrategySpec.from_any({
             "id": s["id"],
             "towers": reqs,
             "modes": modes,
-            "base_success": {m: v for m, v in (p.get("base_success") or {}).items() if m in modes},
-            "heroes": [hero_for(s, account)],
+            "base_success": base,
+            "heroes": [hero],
             "maps": p.get("maps"), "excluded_maps": p.get("excluded_maps"),
             "categories": p.get("categories"), "minutes": p.get("minutes"),
         }))
@@ -152,6 +193,7 @@ class Bot:
                 self.menus.dismiss_popup()
                 self.to_main_menu()
         else:
+            log.warning("open_map: PLAY did not reach map select")
             return False
         self.inp.click(0.044, 0.154)  # search (magnifier)
         time.sleep(0.5)
@@ -170,6 +212,8 @@ class Bot:
                     label = w
                     break
         if label is None:
+            log.warning("open_map: no search result matching %r (saw %s)", map_name,
+                        [w.text for w in self.menus.words][:12])
             return False
         self.sync_medals(map_name, label)
         if self.skip_known and self.skip_known(map_name):
@@ -182,6 +226,8 @@ class Bot:
                 break
             log.info("unlocking map %s", map_name)  # first click unlocks a new map (free)
             time.sleep(1.5)
+        log.warning("open_map: clicking %s did not open its difficulty screen (screen: %s, saw %s)",
+                    map_name, self.menus.identify(), [w.text for w in self.menus.words][:12])
         return False
 
     def sync_medals(self, map_name, label):
@@ -265,10 +311,13 @@ class Bot:
         # water towers in this plan: find the water once (cheap, land-blocked cells only)
         steps = strat.get("plan", []) + strat.get("fill", [])
         kinds = {st.get("kind") for st in steps} | set((strat.get("planner") or {}).get("towers") or {})
-        water = sorted(k for k in kinds if k in T.TOWERS and T.TOWERS[k]["placement"] == "water")
+        water = sorted(k for k in kinds if k in T.TOWERS
+                       and T.TOWERS[k]["placement"] in ("water", "land_or_water"))
+        if T.HEROES.get(hero, {}).get("placement") in ("water", "land_or_water"):
+            water.append("hero")
         if water and (not model.water_scanned() or model.water_pending() > 3):
             log.info("scanning water on %s for %s", plan.map, water)
-            scan_water(g, model, "sub" if "sub" in water else water[0])
+            scan_water(g, model, "sub" if "sub" in water else ("hero" if water == ["hero"] else water[0]))
             model.save()
         ex = Executor(g, model, strat, plan.mode_key, self.account)
         res = Match(g, self.menus, model, ex, self.account,
@@ -288,10 +337,17 @@ class Bot:
         end = time.time() + hours * 3600
         code_stamp = _code_stamp()
         while time.time() < end:
+            if PAUSE_FILE.exists():
+                self.pause_at_menu()
+                continue
             if _code_stamp() != code_stamp:
-                # between games: exit so the supervisor restarts us on the new code
-                log.warning("code or strategies changed - exiting to reload")
-                raise SystemExit(4)
+                # between games: exit so the supervisor restarts us on the new code,
+                # but only if it imports cleanly (a half-saved edit must not kill us)
+                if _code_imports():
+                    log.warning("code or strategies changed - exiting to reload")
+                    raise SystemExit(4)
+                log.error("changed code does not import - staying on the running version")
+                code_stamp = _code_stamp()
             if self.failures >= 8:
                 log.error("too many consecutive failures; stopping")
                 return
@@ -308,6 +364,7 @@ class Bot:
                     log.error("planner has nothing to play")
                     return
                 log.info("NEXT: %s", plan.reason)
+                set_state(f"playing {plan.map} {plan.mode_key}")
                 started = self.start(plan)
                 if started == "known":
                     continue
@@ -341,6 +398,17 @@ class Bot:
         hero, so the game always matches what Game() is told."""
         log.info("strategy prefers %s; hero switching not calibrated yet - keeping %s",
                  hero, self.account_selected_hero())
+
+    def pause_at_menu(self):
+        """Park at the main menu while the PAUSE file exists (between games only),
+        so a developer can use the game safely."""
+        self.to_main_menu()
+        log.warning("PAUSE file present - idling at the main menu")
+        set_state("paused")
+        while PAUSE_FILE.exists():
+            time.sleep(3)
+        log.warning("PAUSE file removed - resuming")
+        set_state("resuming")
 
     def relaunch_game(self, wait=90):
         """BTD6 closed or crashed: start it again through Steam and reattach."""

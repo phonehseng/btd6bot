@@ -215,9 +215,10 @@ class Executor:
 
     def pick_spot(self, kind, step):
         role = step.get("role", "dps")
-        placement = "land"
-        if kind != "hero" and T.TOWERS[kind]["placement"] == "water":
-            placement = "water"
+        if kind == "hero":
+            placement = T.HEROES.get(self.g.hero, {}).get("placement") or "land"
+        else:
+            placement = T.TOWERS[kind].get("placement") or "land"
         rc = min(self._range_cells(kind), 60)
         seg = tuple(step.get("segment", (0.0, 1.0)))
         near, near_r = None, None

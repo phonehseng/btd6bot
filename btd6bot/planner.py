@@ -9,15 +9,24 @@ Public API (every function also returns human readable reasons for logs):
 
 The game choice maximises expected value per minute::
 
-    score = [p*(XP_value + w*MM + medal/unlock/unique value) + (1-p)*XP_fail]
-            / [p*T + (1-p)*T_fail]
+    score = [p*(XP_value + w*MM + medal/unlock/unique value)
+             + (1-p)*(XP_fail - loss_penalty)] / [p*T + (1-p)*T_fail]
 
 where ``p`` comes from a Beta posterior over this (map, mode, strategy)'s
 record, with a prior from the strategy's declared success rates, the map's
-category/ease and the strategy's calibration on other maps. XP is weighted
-by how much the account still *needs* XP (levels for tower/MK unlocks, tower
-XP for upgrades that STRATEGY_NEEDS lists). A phase model (P0..P6) decides
-which medals are "goal" medals for now and receive the large goal bonus.
+category/ease (scaled by how hard the mode is), how much of the strategy's
+upgrade build is unlocked, and the strategy's calibration on other maps.
+``T`` is learned from observed game durations (see :class:`_Durations`).
+XP is weighted by how much the account still *needs* XP (levels for
+tower/MK unlocks, tower XP for upgrades that STRATEGY_NEEDS lists). A phase
+model (P0, PH, P1..P6) decides which medals are "goal" medals for now and
+receive the large goal bonus.
+
+The owner's objective is the most Hard-mode map medals per hour with as
+few losses as possible, so: a first-time Hard standard medal that the
+roster wins reliably (``p >= hard_ready_p``) gets a large bonus in every
+phase, and candidates below the per-mode p thresholds are never preferred
+(if nothing clears its threshold, the highest-p candidate is chosen).
 
 The runner only needs to::
 
@@ -57,12 +66,27 @@ class PlannerConfig:
     threshold_win_bonus: float = 1.5  # multiplier when the win crosses 5/12/20
     farm_bonus: float = 1.25         # XP multiplier for the designated farm while farming
     overhead_minutes: float = 1.0    # menus, loading, collecting rewards
-    fail_time_frac: float = 0.6      # a loss costs this fraction of the full time
+    first_visit_minutes: float = 2.5  # one-time placement scan on a never-played map
+    fail_time_frac: float = 0.7      # a loss costs this fraction of the full time
     fail_round_frac: float = 0.6     # ... and reaches this fraction of the rounds
+    loss_penalty: float = 15_000     # XP-equivalent cost of a loss on top of the lost time
     prior_strength: float = 3.0      # Beta prior pseudo-games
-    min_p_new: float = 0.25          # minimum p to attempt an unearned medal
-    min_p_chimps: float = 0.40
-    min_p_repeat: float = 0.55       # minimum p to replay for XP/MM
+    # Losses are expensive (time, no rewards): only attempt confident games.
+    min_p_new: float = 0.75          # minimum p to attempt an unearned Easy/Medium-group medal
+    min_p_new_hard: float = 0.80     # ... an unearned Hard-group medal
+    min_p_chimps: float = 0.80
+    min_p_repeat: float = 0.85       # minimum p to replay for XP/MM (optional games: be safe)
+    # Hard focus: a first-time Hard standard medal with p >= hard_ready_p is
+    # "reliable" and gets hard_medal_value on top of every other bonus.
+    hard_ready_p: float = 0.80
+    hard_medal_value: float = 150_000
+    # Observed durations: Beta-like shrinkage of observed (EW) averages toward
+    # the default estimate with this many pseudo-games, observations clipped
+    # to [lo, hi] x the mode default (one-off stalls should not dominate).
+    duration_prior_games: float = 2.0
+    duration_obs_cap: int = 12       # an EW average is worth at most this many games
+    pace_prior_games: float = 3.0
+    duration_clip: tuple[float, float] = (0.6, 1.5)
     farm_level_target: int = 30      # P2 farms until this player level
     player_xp_full_until: int = 30   # levels below this: player XP fully valuable
     player_xp_half_until: int = 50
@@ -72,8 +96,16 @@ class PlannerConfig:
 
 DEFAULT_CONFIG = PlannerConfig()
 
-# Map-category success multiplier applied to a strategy's base (beginner) rate.
+# Map-category success multiplier applied to a strategy's base (beginner) rate
+# (full strength in Hard; see MODE_GROUP_MAP_WEIGHT).
 CATEGORY_SUCCESS = {"beginner": 1.0, "intermediate": 0.9, "advanced": 0.8, "expert": 0.68}
+# How strongly map difficulty (category + ease) matters per medal group: an
+# Easy game on an expert map is still easy, Hard/CHIMPS feel the full map.
+MODE_GROUP_MAP_WEIGHT = {"easy": 0.45, "medium": 0.75, "hard": 1.0, "chimps": 1.15}
+# Win-rate factor of a strategy whose upgrade build is entirely locked
+# (towers placed at low tiers; the executor skips what it cannot buy). It
+# rises linearly to 1.0 as the build's tower-XP cost gets unlocked.
+READINESS_FLOOR = {"easy": 0.9, "medium": 0.75, "hard": 0.45, "chimps": 0.2}
 
 # Relative ease hints within a category (1.0 = typical). Subjective community
 # consensus; they only shape the prior - real win/loss stats take over fast.
@@ -116,6 +148,7 @@ NORMAL_GROUP = ("easy", "primary_only", "deflation", "medium", "military_only",
 
 PHASES = {
     "P0": "levels 1-10: beginner maps, quick Easy/Medium then beginner Hard",
+    "PH": "Hard standard medal on every open map where the roster wins Hard reliably",
     "P1": "reach 20 unique map wins (opens expert) using the easiest/fastest maps",
     "P2": "unlock Deflation on Infernal/Dark Castle and farm XP to the level target",
     "P3": "Hard standard on every expert map",
@@ -537,15 +570,37 @@ def estimate_mm(account: AccountState, map_name: str, mode: str) -> tuple[float,
 
 
 def _strategy_available(s: StrategySpec, account: AccountState) -> tuple[bool, str]:
-    for t, cp in s.towers.items():
+    """Playable at all: every tower and a required hero unlocked. Missing
+    upgrade tiers do not block (the executor plays what it can, and the game
+    is how those towers earn the XP for their upgrades); they lower p via
+    :func:`strategy_readiness` instead."""
+    for t in s.towers:
         if t not in account.unlocked_towers:
             return False, f"tower {t} locked"
-        ups = account.upgrades(t)
-        if any(ups[i] < cp[i] for i in range(3)):
-            return False, f"{t} needs {'-'.join(map(str, cp))}, have {'-'.join(map(str, ups))}"
     if s.hero_required and s.heroes and not any(h in account.unlocked_heroes for h in s.heroes):
         return False, f"needs hero {s.heroes}"
     return True, "ok"
+
+
+def build_fraction(s: StrategySpec, account: AccountState) -> float:
+    """Share of the strategy's upgrade build (weighted by tier XP cost) that is
+    unlocked: 1.0 = everything the strategy wants is available."""
+    need = have = 0.0
+    for t, cp in s.towers.items():
+        ups = account.upgrades(t)
+        for path in range(3):
+            for tier in range(1, cp[path] + 1):
+                w = UPGRADE_XP_ESTIMATE[tier]
+                need += w
+                if ups[path] >= tier:
+                    have += w
+    return 1.0 if need <= 0 else have / need
+
+
+def strategy_readiness(s: StrategySpec, account: AccountState, mode: str) -> float:
+    """Win-rate multiplier for missing upgrades (1.0 when the build is complete)."""
+    floor = READINESS_FLOOR[MODES[mode].group]
+    return floor + (1.0 - floor) * build_fraction(s, account)
 
 
 def _strategy_fits(s: StrategySpec, map_name: str, category: str, mode: str) -> bool:
@@ -571,8 +626,18 @@ def _pick_hero(s: StrategySpec, account: AccountState) -> str | None:
 
 
 def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
+    """Declared success rate scaled by map difficulty (complete build)."""
     base = s.base_success.get(mode, 0.0)
-    return min(0.98, max(0.01, base * CATEGORY_SUCCESS[category] * MAP_EASE.get(map_name, 1.0)))
+    w = MODE_GROUP_MAP_WEIGHT[MODES[mode].group]
+    cat_f = max(0.05, 1.0 - (1.0 - CATEGORY_SUCCESS[category]) * w)
+    ease_f = max(0.05, 1.0 + (MAP_EASE.get(map_name, 1.0) - 1.0) * w)
+    return min(0.98, max(0.01, base * cat_f * ease_f))
+
+
+def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> float:
+    """Prior p before any record/calibration: declared rate x map x readiness."""
+    p = _prior(s, map_name, account.map_category(map_name), mode)
+    return min(0.98, max(0.01, p * strategy_readiness(s, account, mode)))
 
 
 class _Calibration:
@@ -586,7 +651,7 @@ class _Calibration:
             if s is None or m not in MAPS or mode not in MODES:
                 continue
             games = st.get("wins", 0) + st.get("losses", 0)
-            exp = _prior(s, m, account.map_category(m), mode) * games
+            exp = prior_win_probability(account, s, m, mode) * games
             a = acc.setdefault((sid, mode), [0.0, 0.0])
             a[0] += st.get("wins", 0)
             a[1] += exp
@@ -601,8 +666,7 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
                     cfg: PlannerConfig = DEFAULT_CONFIG, calib: _Calibration | None = None
                     ) -> tuple[float, int]:
     """Beta posterior mean and number of games for (map, mode, strategy)."""
-    cat = account.map_category(map_name)
-    prior = _prior(s, map_name, cat, mode)
+    prior = prior_win_probability(account, s, map_name, mode)
     if calib is not None:
         prior = min(0.98, max(0.01, prior * calib.get(s.id, mode)))
     st = account.strategy_record(map_name, mode, s.id)
@@ -625,6 +689,115 @@ def _tower_need_factor(s: StrategySpec, account: AccountState, unmet_towers: set
                for t, sh in s.share().items())
 
 
+def p_threshold(mode: str, first_time: bool, cfg: PlannerConfig = DEFAULT_CONFIG) -> float:
+    """Minimum p for a candidate to be preferred at all."""
+    if not first_time:
+        return cfg.min_p_repeat
+    group = MODES[mode].group
+    if group == "chimps":
+        return cfg.min_p_chimps
+    if group == "hard":
+        return cfg.min_p_new_hard
+    return cfg.min_p_new
+
+
+# ---------------------------------------------------------------------------
+# Game durations
+# ---------------------------------------------------------------------------
+
+
+def _shrink(prior: float, obs: float | None, n: float, k: float) -> float:
+    """Blend an observed average worth ``n`` games into ``prior`` (worth ``k``)."""
+    if obs is None or n <= 0:
+        return prior
+    return (k * prior + n * obs) / (k + n)
+
+
+class _Durations:
+    """Expected minutes of a *won* game for (map, mode, strategy).
+
+    Sources, from general to specific, each blended into the previous level
+    with ``duration_prior_games`` pseudo-games so a single observation moves
+    the estimate but does not replace it:
+
+    1. default: strategy ``minutes`` override, else ``MODES[mode].minutes``
+    2. x account pace: how fast games actually run relative to the defaults,
+       pooled over every mode (so Easy observations also calibrate Hard)
+    3. this mode's observed average over all maps
+    4. this (map, mode)'s exponentially weighted average (``map_stats``)
+    5. this (map, mode, strategy)'s exponentially weighted average
+
+    Observations are the EW averages ``AccountState.record_result`` keeps
+    (wins only) and count as ``min(n, duration_obs_cap)`` games.
+    """
+
+    def __init__(self, account: AccountState, cfg: PlannerConfig):
+        self.cfg = cfg
+        lo, hi = cfg.duration_clip
+        cap = cfg.duration_obs_cap
+        wins: dict[tuple[str, str], int] = {}
+        self.strat: dict[tuple[str, str, str], tuple[float, float]] = {}
+        for m, mode, sid, st in account.iter_strategy_stats():
+            if mode not in MODES:
+                continue
+            wins[(m, mode)] = wins.get((m, mode), 0) + int(st.get("wins", 0))
+            avg = st.get("avg_minutes")
+            if avg:
+                d = MODES[mode].minutes
+                n = min(cap, int(st.get("minutes_n") or st.get("wins") or 1))
+                self.strat[(m, mode, sid)] = (min(hi * d, max(lo * d, float(avg))), n)
+        self.map: dict[tuple[str, str], tuple[float, float]] = {}
+        mode_acc: dict[str, list[float]] = {}
+        pace_acc = [0.0, 0.0]
+        for m, ms in account.map_stats.items():
+            for mode, avg in (ms.get("avg_minutes") or {}).items():
+                if mode not in MODES or not avg:
+                    continue
+                d = MODES[mode].minutes
+                n = min(cap, int((ms.get("minutes_n") or {}).get(mode) or wins.get((m, mode)) or 1))
+                obs = min(hi * d, max(lo * d, float(avg)))
+                self.map[(m, mode)] = (obs, n)
+                a = mode_acc.setdefault(mode, [0.0, 0.0])
+                a[0] += n * obs
+                a[1] += n
+                pace_acc[0] += n * obs / d
+                pace_acc[1] += n
+        self.mode = {md: (a[0] / a[1], min(cap, a[1])) for md, a in mode_acc.items() if a[1]}
+        self.pace_n = pace_acc[1]
+        self.pace = _shrink(1.0, pace_acc[0] / pace_acc[1] if pace_acc[1] else None,
+                            min(cap, pace_acc[1]), cfg.pace_prior_games)
+        self.visited = {m for m, ms in account.map_stats.items()
+                        if ms.get("wins", 0) or ms.get("losses", 0)}
+
+    def game_minutes(self, s: StrategySpec, map_name: str, mode: str) -> tuple[float, str]:
+        """Minutes of a won game (no menus/scan) and where the number came from."""
+        k = self.cfg.duration_prior_games
+        default = s.minutes.get(mode) or MODES[mode].minutes
+        est = default * self.pace
+        src = [f"default {default:g}x pace {self.pace:.2f}"]
+        for label, entry in (("mode", self.mode.get(mode)),
+                             ("map", self.map.get((map_name, mode))),
+                             ("strat", self.strat.get((map_name, mode, s.id)))):
+            if entry is not None:
+                est = _shrink(est, entry[0], entry[1], k)
+                src.append(f"{label} {entry[0]:.1f}(n={entry[1]:g})")
+        return est, " + ".join(src)
+
+    def scan_minutes(self, map_name: str) -> float:
+        """One-time placement scan the first time the bot plays a map."""
+        return 0.0 if map_name in self.visited else self.cfg.first_visit_minutes
+
+
+def expected_minutes(account: AccountState, s: Any, map_name: str, mode: str,
+                     config: PlannerConfig | None = None) -> float:
+    """Full expected minutes of a won game incl. menus and a first-visit scan."""
+    cfg = config or DEFAULT_CONFIG
+    d = _Durations(account, cfg)
+    m = canonical_map(map_name)
+    return d.game_minutes(StrategySpec.from_any(s), m, mode)[0] + cfg.overhead_minutes \
+        + d.scan_minutes(m)
+
+
 # ---------------------------------------------------------------------------
 # Phase model
 # ---------------------------------------------------------------------------
@@ -639,6 +812,8 @@ def _phase_goals(phase: str, account: AccountState) -> set[tuple[str, str]]:
     if phase == "P0":
         return {(m, md) for m in maps if account.map_category(m) == "beginner"
                 for md in ("easy", "medium", "hard")}
+    if phase == "PH":
+        return {(m, "hard") for m in maps}
     if phase == "P1":
         return {(m, md) for m in maps if not account.medals.get(m)
                 for md in ("easy", "medium", "hard")}
@@ -679,6 +854,8 @@ class _Cand:
     value_fail: float
     score: float
     notes: list[str]
+    fail_minutes: float = 0.0   # expected minutes of a lost game
+    ok: bool = True             # p clears its threshold (False = last resort only)
 
 
 def _normalise_strategies(available: Iterable[Any] | None) -> dict[str, StrategySpec]:
@@ -695,6 +872,7 @@ def _normalise_strategies(available: Iterable[Any] | None) -> dict[str, Strategy
 def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 cfg: PlannerConfig, playable_maps: set[str] | None) -> list[_Cand]:
     calib = _Calibration(account, strategies)
+    durations = _Durations(account, cfg)
     unmet_towers = {n.tower for n in _unmet_needs(account)}
     usable = {sid: s for sid, s in strategies.items() if _strategy_available(s, account)[0]}
     pf = _player_xp_factor(account, cfg)
@@ -713,19 +891,22 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 if not _strategy_fits(s, m, cat, mode):
                     continue
                 p, n = win_probability(account, s, m, mode, cfg, calib)
-                st = account.strategy_record(m, mode, s.id)
-                t_full = (st.get("avg_minutes")
-                          or account.map_stats.get(m, {}).get("avg_minutes", {}).get(mode)
-                          or s.minutes.get(mode) or mi.minutes) + cfg.overhead_minutes
+                game_min, _src = durations.game_minutes(s, m, mode)
+                scan = durations.scan_minutes(m)
+                t_full = game_min + cfg.overhead_minutes + scan
+                t_fail = game_min * cfg.fail_time_frac + cfg.overhead_minutes + scan
                 xp_win = game_xp(mode, cat)
                 xp_fail = game_xp(mode, cat, fail_frac=cfg.fail_round_frac)
                 tf = _tower_need_factor(s, account, unmet_towers, cfg)
                 xp_w = 0.6 * pf + 0.4 * tf
-                notes = [f"p={p:.2f} (n={n})", f"xp {xp_win:,.0f}x{xp_w:.2f}",
+                notes = [f"p={p:.2f} (n={n})", f"{t_full:.1f} min"
+                         + (f" incl. {scan:g} scan" if scan else ""),
+                         f"xp {xp_win:,.0f}x{xp_w:.2f}",
                          f"mm {mm:.0f} ({mm_src}{', first' if first else ''})"]
                 out.append(_Cand(m, mode, s, p, n, t_full, xp_win, mm, first,
                                  value_win=xp_win * xp_w + cfg.mm_weight * mm,
-                                 value_fail=xp_fail * xp_w, score=0.0, notes=notes))
+                                 value_fail=xp_fail * xp_w, score=0.0, notes=notes,
+                                 fail_minutes=t_fail))
     return out
 
 
@@ -738,19 +919,28 @@ def _determine_phase(account: AccountState, cands: list[_Cand], cfg: PlannerConf
         k = (c.map, c.mode)
         best_p[k] = max(best_p.get(k, 0.0), c.p)
 
-    def feasible(goals: set[tuple[str, str]]) -> list[tuple[str, str]]:
+    def feasible(goals: set[tuple[str, str]], hard_ready: bool = False) -> list[tuple[str, str]]:
         out = []
         for k in goals:
             if account.has_medal(*k):
                 continue
-            thr = cfg.min_p_chimps if k[1] == "chimps" else cfg.min_p_new
+            thr = cfg.hard_ready_p if hard_ready else p_threshold(k[1], True, cfg)
             if best_p.get(k, 0.0) >= thr:
                 out.append(k)
         return out
 
-    order = ["P0", "P1", "P2", "P3", "P4", "P5", "P6"]
+    # PH comes right after the level 1-10 start: Hard medals on every map the
+    # roster wins Hard reliably beat everything else (they also count as
+    # unique map wins), the other phases fill in when none is reliable.
+    order = ["P0", "PH", "P1", "P2", "P3", "P4", "P5", "P6"]
     for ph in order:
         if ph == "P0" and not (account.player_level < 10 and uniq < CATEGORY_UNLOCK_WINS["expert"]):
+            continue
+        if ph == "PH":
+            ok = feasible(_phase_goals(ph, account), hard_ready=True)
+            if ok:
+                reasons.append(f"PH: {PHASES[ph]} ({len(ok)} reliable Hard medals open)")
+                return ph, reasons
             continue
         if ph == "P1" and uniq >= CATEGORY_UNLOCK_WINS["expert"]:
             continue
@@ -805,24 +995,27 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
                     c.notes.append(f"win #{uniq + 1} opens a category")
                 bonus += u
                 c.notes.append("new unique map")
+            if c.mode == "hard" and c.p >= cfg.hard_ready_p:
+                bonus += cfg.hard_medal_value
+                c.notes.append("reliable Hard medal")
         vw = c.value_win + bonus
-        vf = c.value_fail
+        vf = c.value_fail - cfg.loss_penalty
         if farming and c.map in FARM_MAPS and c.mode == "deflation":
             vw = c.value_win * cfg.farm_bonus + bonus
             c.notes.append("designated farm")
-        minutes = c.p * c.minutes + (1 - c.p) * c.minutes * cfg.fail_time_frac
+        minutes = c.p * c.minutes + (1 - c.p) * (c.fail_minutes or c.minutes * cfg.fail_time_frac)
         score = (c.p * vw + (1 - c.p) * vf) / minutes
         score *= 1.0 + cfg.explore_bonus / math.sqrt(c.n + 1)
-        # feasibility gates
-        if c.first:
-            thr = cfg.min_p_chimps if c.mode == "chimps" else cfg.min_p_new
-        else:
-            thr = cfg.min_p_repeat
-        if c.p < thr:
-            score *= 0.01  # still rankable as a last resort, never preferred
+        # feasibility gate: below threshold = last resort only (ranked by p)
+        thr = p_threshold(c.mode, c.first, cfg)
+        c.ok = c.p >= thr
+        if not c.ok:
+            score *= 0.01  # shown in logs only; the sort below uses p
             c.notes.append(f"below p threshold {thr}")
         c.score = score
-    cands.sort(key=lambda c: c.score, reverse=True)
+    # Never prefer a candidate below its p threshold; if nothing clears its
+    # threshold, the safest (highest p) game goes first.
+    cands.sort(key=lambda c: (c.ok, c.score if c.ok else c.p), reverse=True)
     return phase, preasons, cands
 
 
