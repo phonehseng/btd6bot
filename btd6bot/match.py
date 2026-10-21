@@ -137,7 +137,9 @@ class Match:
                         log.info("round tracking reset %s -> %s", last_round, rnd)
                         last_round = rnd
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
-                if not bought and cash is not None and cash > 800 and now - self._last_buy > 12:
+                saving = getattr(self.ex, "wait_cost", None) and cash is not None                     and cash < self.ex.wait_cost and not dropped
+                patience = 40 if saving else 12  # saving up for a big upgrade is fine, briefly
+                if not bought and cash is not None and cash > 800 and now - self._last_buy > patience:
                     # cash is piling up while the plan waits: say why, then spend it
                     if now - self._last_wait_log > 20:
                         self._last_wait_log = now

@@ -786,6 +786,7 @@ class Executor:
                 return "skip"
             price = self.g.price(kind)
             if cash is None or cash < price:
+                self.wait_cost = price
                 return "wait"
             if self.hold_fails.get(kind, 0) >= 3:
                 return "skip"  # cannot pick it up (locked / mode-restricted / unbound)
@@ -821,6 +822,7 @@ class Executor:
                     continue
                 path, cost = nxt
                 if cash is None or cash < cost:
+                    self.wait_cost = cost
                     return "wait"
                 if self.g.upgrade(p, path):
                     if self.account and p.kind != "hero":
@@ -916,6 +918,7 @@ class Executor:
         """Do at most one action. Returns True if something was bought."""
         if cash is None:
             return False  # never act on an unreadable cash value
+        self.wait_cost = None
         if lives_dropped:
             self.panic_pending = 2
         if self.panic_pending:
