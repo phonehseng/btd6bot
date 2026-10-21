@@ -1,12 +1,14 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T15:45:16",
+ "saved_at": "2026-10-21T15:47:53",
  "player_level": 3,
  "xp": 0.0,
  "monkey_money": 0,
  "unlocked_towers": [
   "bomb",
+  "boomerang",
   "dart",
+  "ice",
   "tack"
  ],
  "unlocked_heroes": [
@@ -17,7 +19,12 @@
   "tack": [
    2,
    0,
-   1
+   2
+  ],
+  "dart": [
+   0,
+   0,
+   2
   ]
  },
  "mk_points": 0,

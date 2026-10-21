@@ -105,6 +105,28 @@ class Input:
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
         time.sleep(self.delay)
 
+    def type_text(self, text):
+        """Type into a focused game text box (letters, digits, spaces, ' and #)."""
+        for ch in text:
+            self.guard()
+            if ch == " ":
+                pdi.press("space")
+            elif ch.isalnum():
+                if ch.isupper():
+                    pdi.keyDown("shift")
+                    pdi.press(ch.lower())
+                    pdi.keyUp("shift")
+                else:
+                    pdi.press(ch)
+            elif ch == "'":
+                pdi.press("'")
+            elif ch == "#":
+                pdi.keyDown("shift")
+                pdi.press("3")
+                pdi.keyUp("shift")
+            time.sleep(0.03)
+        time.sleep(self.delay)
+
     def press(self, key, hold=0.05):
         """key like 'q', 'space', 'shift+space', ','.
 

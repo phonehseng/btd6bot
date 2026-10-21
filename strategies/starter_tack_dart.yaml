@@ -5,6 +5,9 @@
 id: starter_tack_dart
 hero: quincy
 modes: [easy, medium, hard, primary_only]
+planner:
+  towers: {tack: [0, 0, 0], dart: [0, 0, 0]}
+  base_success: {easy: 0.95, primary_only: 0.85, medium: 0.7, hard: 0.35}
 plan:
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.7]}
   - {do: place, id: t1, kind: tack, role: dps, segment: [0.0, 0.6]}
