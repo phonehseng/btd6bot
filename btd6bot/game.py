@@ -221,13 +221,17 @@ class Game:
             self.fail_reason = "click"
             return None
         after = self.cash_stable()
-        if before is not None and after is not None:
-            if after >= before:
-                log.warning("placement of %s not confirmed (cash %s -> %s)", kind, before, after)
-                self.fail_reason = "noeffect"
-                return None
-            self.learned_cost[(kind, 0, 0)] = before - after
-        p = Placed(tid, kind, fx, fy, spent=(before - after) if before and after else cost)
+        spent = cost
+        if before is not None and after is not None and after < before:
+            spent = before - after
+            if spent <= cost * 1.3:
+                self.learned_cost[(kind, 0, 0)] = spent
+        else:
+            # the game keeps a tower on the cursor after a click on a bad spot,
+            # so a released hold means it was placed; pop income at 2x speed
+            # can simply outpace a cheap tower's price during the cash check
+            log.info("placement of %s assumed (hold released; cash %s -> %s)", kind, before, after)
+        p = Placed(tid, kind, fx, fy, spent=spent)
         self.towers[tid] = p
         log.info("placed %s (%s) at %.3f,%.3f", tid, kind, fx, fy)
         return p
