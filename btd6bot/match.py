@@ -203,6 +203,13 @@ class Match:
                 self.account.unlock_tower(tid)
                 self.account.save()
                 log.info("unlocked tower %s", tid)
+                if len(getattr(self.menus, "last_offered", [])) == 1:
+                    # nothing else was offered: the rest of this category is owned
+                    cat = T.TOWERS[tid]["category"]
+                    for k, t in T.TOWERS.items():
+                        if t["category"] == cat and k not in T.GIFT_BOX_TOWERS:
+                            self.account.unlocked_towers.add(k)
+                    self.account.save()
         elif st == "upgrade_tree":
             self.g.leave_tree()
         elif st == "pause":

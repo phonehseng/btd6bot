@@ -182,6 +182,11 @@ class Menus:
                 self.inp.click(0.745, 0.45)
                 time.sleep(0.9)
             else:
+                if len(offered) == 1:
+                    # a whole lap showed one tower: it is the only one left to unlock
+                    log.info("carousel: only %r offered", offered[0])
+                    name = offered[0]
+                    break
                 # never reached the target: pick again knowing everything offered
                 target = choose(title, offered) if offered else None
                 if target is None:
@@ -189,6 +194,7 @@ class Menus:
                 log.warning("carousel: target not reached; offered %s -> retry for %r", offered, target)
                 continue
             break
+        self.last_offered = list(offered)
         log.info("unlocking %s (%s)", name, title)
         self.inp.click(0.5, 0.938)
         time.sleep(2.0)
