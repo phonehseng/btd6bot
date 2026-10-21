@@ -6,6 +6,7 @@ from . import layout as L
 from . import towers as T
 from .account import AccountState
 from .achievements import Achievements
+from .xpspend import unlock_for_strategy
 from .choices import tower_chooser
 from .game import Game
 from .inputs import Aborted, FocusLost, Input
@@ -407,6 +408,16 @@ class Bot:
                     return
                 log.info("NEXT: %s", plan.reason)
                 set_state(f"playing {plan.map} {plan.mode_key}")
+                try:  # spend tower XP on this plan's upgrades before it needs them
+                    got = unlock_for_strategy(self.s, self.inp, self.menus, self.account,
+                                              self.strats[plan.strategy_id])
+                    if got:
+                        log.info("unlocked before the game: %s", got)
+                except (FocusLost, Aborted):
+                    raise
+                except Exception:
+                    log.exception("XP spending failed - continuing")
+                    self.to_main_menu()
                 started = self.start(plan)
                 if started == "known":
                     continue

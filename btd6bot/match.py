@@ -88,6 +88,8 @@ class Match:
                 # a modal popup pauses the game while the HUD stays visible
                 st = self.menus.identify()
                 log.info("screen frozen (%s) - looking for a popup", st)
+                if st in ("victory", "defeat"):
+                    return self._finish(st, last_round)  # the end screen overlays the HUD
                 if st in ("in_game", "unknown"):
                     self.menus.dismiss_popup()
                 else:
