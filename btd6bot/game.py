@@ -122,11 +122,13 @@ class Game:
             raise ValueError(f"{kind} has no hotkey bound")
         if self.is_holding():
             self.cancel_hold()
-        self.inp.press(key)
-        for _ in range(8):
-            time.sleep(0.06)
-            if self.is_holding():
-                return True
+        self._held_kind = kind
+        for attempt in range(2):  # a keypress is occasionally dropped: try twice
+            self.inp.press(key)
+            for _ in range(8):
+                time.sleep(0.06)
+                if self.is_holding():
+                    return True
         return False
 
     def probe_roster(self):
@@ -152,16 +154,40 @@ class Game:
             self.inp.click(*self.lay["cancel_place"])
             time.sleep(0.15)
 
+    PX_PER_UNIT = 5.3 / 1920  # range circle radius per game unit, as a width fraction
+                              # (measured: held dart, range 32 -> ~170 px at 1920 wide)
+
     def probe(self, fx, fy, baseline=None, settle=0.06):
-        """With a tower held, is (fx, fy) a legal spot? Red range circle = no."""
+        """With a tower held, is (fx, fy) a legal spot? Red range circle = no.
+
+        Only a ring of the range circle (45-85% of its radius) is sampled: the
+        tower sprite in the middle can itself be red (Tack Shooter is pink).
+        """
         self.inp.move(fx, fy, fast=True)
         time.sleep(settle)
         f = self.fresh()
-        r = 0.035
-        reg = (max(0, fx - r), max(0, fy - r * 1.6), min(1, fx + r), min(1, fy + r * 1.6))
-        red_now = _red_frac(crop(f, reg))
-        red_base = _red_frac(crop(baseline, reg)) if baseline is not None else 0.0
-        return (red_now - red_base) < 0.12
+        h, w = f.shape[:2]
+        rng = self._held_range()
+        R = max(45, rng * self.PX_PER_UNIT * w)
+        cx, cy = int(fx * w), int(fy * h)
+        x0, x1 = max(0, int(cx - R)), min(w, int(cx + R))
+        y0, y1 = max(0, int(cy - R)), min(h, int(cy + R))
+        yy, xx = np.ogrid[y0:y1, x0:x1]
+        d2 = (xx - cx) ** 2 + (yy - cy) ** 2
+        ring = (d2 >= (0.45 * R) ** 2) & (d2 <= (0.85 * R) ** 2)
+        if not ring.any():
+            return True
+        red_now = _red_mask(f[y0:y1, x0:x1])[ring].mean()
+        red_base = _red_mask(baseline[y0:y1, x0:x1])[ring].mean() if baseline is not None else 0.0
+        return bool(red_now - red_base < 0.2)
+
+    def _held_range(self):
+        kind = getattr(self, "_held_kind", None)
+        if kind == "hero":
+            return T.HEROES.get(self.hero, {}).get("range") or 40
+        if kind in T.TOWERS:
+            return T.TOWERS[kind].get("range") or 12  # unlimited-range towers show a small circle
+        return 32
 
     # -- placing ----------------------------------------------------------------
     def price(self, kind):
@@ -392,6 +418,12 @@ class Game:
 
     def ability(self, n):
         self.inp.press(str(n))
+
+
+def _red_mask(img):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    return (cv2.inRange(hsv, (0, 90, 90), (10, 255, 255)) |
+            cv2.inRange(hsv, (168, 90, 90), (180, 255, 255))) > 0
 
 
 def _red_frac(img):
