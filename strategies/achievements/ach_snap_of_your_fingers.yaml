@@ -5,6 +5,8 @@ achievement: Snap of your fingers
 map: Logs
 modes: [deflation]
 hero: null
+bot_ready: false
+bot_ready_reason: 'SAFETY: owner rule - never deliberately lose lives'
 constraints:
   mk: 'off'
   spend_exact: 10000

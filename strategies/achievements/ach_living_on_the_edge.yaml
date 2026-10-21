@@ -5,6 +5,8 @@ achievement: Living on the Edge
 map: Resort
 modes: [easy]
 hero: quincy
+bot_ready: false
+bot_ready_reason: 'SAFETY: owner rule - never deliberately lose lives or start rounds undefended'
 constraints:
   mk: 'off'
   end_lives_exact: 1

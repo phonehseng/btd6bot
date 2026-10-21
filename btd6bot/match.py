@@ -47,12 +47,16 @@ class Match:
         """Before round 1: buy everything affordable from the plan."""
         t = time.time()
         idle = 0
-        while time.time() - t < max_seconds and idle < 2:
+        # failed spots are blocked one by one, so keep trying for a while
+        # before concluding nothing can be placed (never start undefended)
+        while time.time() - t < max_seconds and idle < 8:
             cash = self.g.cash_stable()
             if self.ex.tick(cash, self.g.round()):
                 idle = 0
             else:
                 idle += 1
+            if self.ex.defended() and idle >= 2:
+                break
         return self.ex.defended()
 
     def play(self, max_minutes=60):

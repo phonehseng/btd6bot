@@ -10,6 +10,7 @@ constraints:
   place_hero: false
   no_default_panic: true
   no_answers: true
+requires_upgrades: {boomerang: 5-0-2, dartling: 1-5-0}
 planner:
   towers: {boomerang: [5, 0, 2], dartling: [1, 5, 0]}
   base_success: {chimps: 0.5}

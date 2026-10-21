@@ -41,6 +41,23 @@ def set_state(text):
         pass
 
 
+ACH_STAMP = ROOT_DIR / "logs" / "achievements_scanned_at.txt"
+
+
+def _ach_last():
+    try:
+        return float(ACH_STAMP.read_text().strip())
+    except (OSError, ValueError):
+        return 0.0
+
+
+def _ach_mark(t):
+    try:
+        ACH_STAMP.write_text(str(t))
+    except OSError:
+        pass
+
+
 def _code_imports():
     """Does the code on disk import (and do the strategies load) in a fresh interpreter?"""
     import subprocess
@@ -58,7 +75,7 @@ def _code_stamp():
     """Latest modification time of the bot's code and strategy files."""
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
-    files = list((root / "btd6bot").glob("*.py")) + list((root / "strategies").glob("*.yaml"))
+    files = list((root / "btd6bot").glob("*.py")) + list((root / "strategies").rglob("*.yaml"))
     return max((f.stat().st_mtime for f in files), default=0)
 
 
@@ -72,10 +89,15 @@ def _tested(account, sid, mode):
 
 def planner_specs(strats, account):
     from .planner import StrategySpec
+    from .strategy import achievement_strategies
     specs = []
+    wanted = set(achievement_strategies(strats, Achievements.load()))
     for s in strats.values():
         p = s.get("planner") or {}
-        modes = [m for m in s.get("modes", []) if usable(s, m, account)[0]]
+        allow = s["id"] in wanted
+        if s.get("achievement") and not allow:
+            continue  # achievement plans only while their achievement is wanted
+        modes = [m for m in s.get("modes", []) if usable(s, m, account, allow_achievement=allow)[0]]
         if not modes:
             continue
         # Full upgrade requirements: the planner lowers the win chance for
@@ -96,6 +118,9 @@ def planner_specs(strats, account):
             "modes": modes,
             "base_success": base,
             "heroes": [hero],
+            "achievement": s.get("achievement"), "bot_ready": s.get("bot_ready"),
+            "map": s.get("map"), "constraints": s.get("constraints"),
+            "wins_needed": s.get("wins_needed"),
             "maps": p.get("maps"), "excluded_maps": p.get("excluded_maps"),
             "categories": p.get("categories"), "minutes": p.get("minutes"),
         }))
@@ -115,7 +140,7 @@ class Bot:
         self._level_synced = False
         self.skip_known = None
         self._roster_done = False
-        self._ach_at = 0.0  # scan achievements at session start, then every ACH_EVERY
+        self._ach_at = _ach_last()  # every ACH_EVERY, remembered across restarts
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -278,6 +303,10 @@ class Bot:
     # -- one game ------------------------------------------------------------------
     def play(self, plan):
         strat = self.strats[plan.strategy_id]
+        ok, why = usable(strat, plan.mode_key, self.account, map_name=plan.map,
+                         allow_achievement=bool(strat.get("achievement")))
+        if not ok:
+            raise RuntimeError(f"{plan.strategy_id} not usable for {plan.map} {plan.mode_key}: {why}")
         diff = {"easy": "easy", "medium": "medium", "hard": "hard"}.get(plan.difficulty, "hard")
         if plan.mode_key in ("impoppable", "chimps"):
             diff = "impoppable"
@@ -364,6 +393,7 @@ class Bot:
                 self.read_level()
                 if time.time() - self._ach_at > ACH_EVERY:
                     self._ach_at = time.time()
+                    _ach_mark(self._ach_at)
                     try:  # claim finished achievements' rewards, refresh progress
                         Achievements(self.s, self.inp, self.menus).scan(collect=True)
                     except (FocusLost, Aborted):

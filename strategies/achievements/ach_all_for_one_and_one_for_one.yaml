@@ -12,6 +12,8 @@ constraints:
   place_hero: false
   no_default_panic: true
   no_answers: true
+# one tower, no panic: never attempt it unless Pirate Lord is already unlocked
+requires_upgrades: {buccaneer: 0-5-2}
 planner:
   towers: {buccaneer: [0, 5, 2]}
   base_success: {hard: 0.8}

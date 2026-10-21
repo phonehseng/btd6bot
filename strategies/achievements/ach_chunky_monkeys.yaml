@@ -9,11 +9,10 @@ id: ach_chunky_monkeys
 achievement: Chunky Monkeys
 map: Logs
 modes: [medium]
-hero: null
+hero: pat_fusty   # equipped only if owned; otherwise Churchill, else no hero is placed
 constraints:
   allowed_towers: [buccaneer, ace, heli, mortar, super, mermonkey, farm, village, spike]
-  allowed_heroes: [pat_fusty, churchill]
-  place_hero: false
+  allowed_heroes: [pat_fusty, churchill]   # any other equipped hero is never placed
   wins_needed: 10
   min_difficulty: medium
   no_default_panic: true
@@ -27,6 +26,7 @@ plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, segment: [0.0, 0.6]}
   - {do: upgrade, id: b1, to: 0-1-0}
   - {do: upgrade, id: b1, to: 1-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: m1, kind: mortar, role: dps, segment: [0.2, 0.8]}
   - {do: upgrade, id: m1, to: 0-0-2}
   - {do: place, id: sp1, kind: spike, role: exit}
