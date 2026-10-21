@@ -1,0 +1,25 @@
+# Deflation XP farm (start R31 with $20,000, no income): build everything at
+# once and let it run. Sniper 0-2-4 Elite Defender carries, Alchemist 4-2-0
+# Berserker Brew buffs it and grants lead popping, Village 2-0-2 adds range,
+# camo and discounts. Best on expert maps (x1.3 XP), e.g. Infernal, Dark Castle.
+# Leftover cash goes into the tower we want to level (tower XP follows cash).
+id: deflation_farm
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {sniper: [0, 2, 4], alchemist: [4, 2, 0], village: [2, 0, 2]}
+  base_success: {deflation: 0.97}
+  minutes: {deflation: 5.0}
+plan:
+  - {do: place, id: v1, kind: village, role: dps}
+  - {do: place, id: s1, kind: sniper, role: support, near: [v1], near_radius: 7}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [s1], near_radius: 6}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: s1, to: 0-2-4}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: hero, kind: hero, role: dps}
+fill:
+  - {do: place, kind: sniper, role: support, near: [v1], near_radius: 8, max: 3}
+  - {do: upgrade, kind: sniper, to: 0-2-4}
+panic:
+  - {do: place, kind: sniper, role: support, near: [v1]}

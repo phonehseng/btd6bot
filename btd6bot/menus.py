@@ -125,19 +125,21 @@ class Menus:
                 title = n.replace("monkeys", "")
         offered = []
         target = None
-        for attempt in range(7):
+        # Step one item at a time (click the right-hand neighbour) and read the
+        # centred name each time; a full lap visits every offered tower.
+        name = ""
+        for attempt in range(9):
             self.read(scale=0.6)
             name_w = self.find_center_name()
             name = name_w.text if name_w else ""
-            if name and name not in offered:
+            if name and norm(name) not in map(norm, offered):
                 offered.append(name)
             if target is None:
-                target = choose(title, offered) if len(offered) >= 1 else None
+                target = choose(title, offered) if offered else None
             if target and norm(target) == norm(name):
                 break
-            # rotate: click the item left of centre
-            self.inp.click(0.255, 0.45)
-            time.sleep(1.0)
+            self.inp.click(0.745, 0.45)
+            time.sleep(1.4)
         log.info("unlocking %s (%s)", name, title)
         self.inp.click(0.5, 0.938)
         time.sleep(2.0)

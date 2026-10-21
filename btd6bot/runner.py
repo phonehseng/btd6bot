@@ -152,6 +152,13 @@ class Bot:
         hero = plan.hero or strat.get("hero") or "quincy"
         g = Game(self.s, self.inp, self.lay, difficulty=diff, hero=hero)
         self.menus.g = g
+        roster = g.probe_roster()  # the save file is the truth, not our notes
+        for kind, ok in roster.items():
+            if ok:
+                self.account.unlocked_towers.add(kind)
+            else:
+                self.account.unlocked_towers.discard(kind)
+        self.account.save()
         model = MapModel.load(plan.map, self.lay["playfield"])
         if not model.scanned("land"):
             log.info("first visit to %s: scanning placement", plan.map)

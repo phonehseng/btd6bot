@@ -128,6 +128,24 @@ class Game:
                 return True
         return False
 
+    def probe_roster(self):
+        """Which towers does this save have? Press each hotkey before round 1:
+        a tower that can be picked up is unlocked. Towers we cannot afford yet
+        are left out (unknown). Returns {tower_id: True/False}."""
+        cash = self.cash_stable()
+        out = {}
+        for kind, t in T.TOWERS.items():
+            if not t.get("hotkey"):
+                continue
+            if cash is None or self.price(kind) > cash:
+                continue
+            held = self.hold(kind)
+            out[kind] = held
+            if held:
+                self.cancel_hold()
+        log.info("roster probe: %s", {k: v for k, v in out.items()})
+        return out
+
     def cancel_hold(self):
         if self.is_holding():
             self.inp.click(*self.lay["cancel_place"])
@@ -241,11 +259,15 @@ class Game:
     def unlock_in_tree(self, path, tier):
         """On the upgrade tree screen: unlock (path, tier) with tower XP if affordable."""
         self.inp.click(self.TREE_ICON_X[tier - 1], self.TREE_ICON_Y[path - 1] - 0.03)
-        time.sleep(0.8)
-        f = self.fresh()
-        have = parse_int(rec_text(crop(f, (0.52, 0.01, 0.70, 0.065)))[0].lower().replace("xp", ""))
-        need_txt = rec_text(crop(f, (0.04, 0.685, 0.25, 0.72)))[0].lower()
-        need = parse_int(need_txt.replace("xp", "")) if "xp" in need_txt else None
+        have = need = None
+        for _ in range(3):
+            time.sleep(0.8)
+            f = self.fresh()
+            have = parse_int(rec_text(crop(f, (0.52, 0.01, 0.70, 0.065)))[0].lower().replace("xp", ""))
+            need_txt = rec_text(crop(f, (0.04, 0.685, 0.25, 0.72)))[0].lower()
+            need = parse_int(need_txt.replace("xp", "")) if "xp" in need_txt else None
+            if have is not None and need is not None:
+                break
         log.info("tree: path %d tier %d needs %s XP, have %s", path, tier, need, have)
         if need is not None and have is not None and have >= need:
             self.inp.click(*self.TREE_UNLOCK)

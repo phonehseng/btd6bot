@@ -34,6 +34,39 @@ MODE_TOWER_FILTER = {
     "primary_only": "primary", "military_only": "military", "magic_only": "magic",
 }
 
+# Rounds where a new kind of threat first shows up (standard rounds). The
+# executor makes sure an answer is *already built* a couple of rounds earlier:
+# DDTs in particular are too fast to answer after they appear.
+THREATS = [
+    (22, "camo"), (26, "lead"), (36, "ceramic"), (38, "moab"),
+    (58, "bfb"), (62, "rush"), (78, "zomg"), (88, "ddt"), (98, "bad"),
+]
+# What counts as an answer: (tower, path, min tier) - any one is enough.
+ANSWERS = {
+    "camo": [("dart", 3, 2), ("sniper", 2, 2), ("ninja", 0, 0), ("heli", 0, 0), ("wizard", 3, 3),
+             ("sub", 3, 0), ("village", 2, 2), ("druid", 0, 0), ("mortar", 0, 0), ("ace", 0, 0),
+             ("engineer", 3, 3), ("spike", 0, 0), ("alchemist", 0, 0)],
+    "lead": [("tack", 1, 3), ("bomb", 0, 0), ("boomerang", 3, 2), ("sniper", 1, 1), ("alchemist", 1, 1),
+             ("wizard", 2, 2), ("heli", 0, 0), ("mortar", 0, 0), ("ace", 0, 0), ("glue", 1, 1),
+             ("dart", 1, 4), ("ninja", 3, 2), ("spike", 0, 0), ("super", 1, 1)],
+    "ceramic": [("tack", 1, 3), ("boomerang", 1, 3), ("bomb", 2, 2), ("sniper", 1, 2), ("dart", 3, 3),
+                ("heli", 1, 2), ("ninja", 1, 3), ("super", 0, 0), ("spike", 0, 0), ("druid", 1, 3)],
+    "moab": [("bomb", 2, 3), ("boomerang", 1, 4), ("tack", 1, 4), ("sniper", 1, 3), ("heli", 1, 3),
+             ("dart", 3, 4), ("ninja", 3, 3), ("super", 0, 0), ("spike", 3, 3), ("druid", 2, 4),
+             ("wizard", 2, 4), ("ace", 0, 0), ("sub", 3, 3), ("buccaneer", 2, 4)],
+    "bfb": [("bomb", 2, 4), ("sniper", 1, 4), ("heli", 1, 4), ("boomerang", 1, 4), ("dart", 3, 4),
+            ("super", 1, 3), ("ninja", 3, 4), ("spike", 3, 4), ("druid", 2, 4), ("tack", 1, 4)],
+    "rush": [("tack", 1, 4), ("bomb", 3, 3), ("ninja", 1, 4), ("super", 0, 0), ("wizard", 2, 3),
+             ("dartling", 0, 0), ("boomerang", 1, 3), ("ice", 3, 3)],
+    "zomg": [("bomb", 2, 4), ("sniper", 1, 4), ("super", 1, 3), ("heli", 1, 4), ("spike", 3, 4),
+             ("boomerang", 1, 5), ("druid", 2, 4), ("ninja", 3, 4)],
+    "ddt": [("sniper", 2, 4), ("bomb", 2, 4), ("heli", 1, 4), ("super", 1, 3), ("spike", 3, 4),
+            ("ninja", 3, 4), ("boomerang", 1, 4), ("dart", 3, 4)],
+    "bad": [("super", 1, 4), ("bomb", 2, 5), ("sniper", 1, 5), ("ninja", 3, 5), ("spike", 3, 5)],
+}
+# camo-requiring threats also need camo on the answering tower (or village MIB)
+NEEDS_CAMO = {"ddt"}
+
 
 def load_all():
     out = {}
@@ -92,6 +125,7 @@ class Executor:
         self.capped = set()          # (tid, path) that turned out locked
         self.failed_spots = set()
         self.panic_pending = 0
+        self.unanswerable = set()
         self.last_try = 0.0
         self.no_sell = mode == "chimps"
 
@@ -117,7 +151,7 @@ class Executor:
         out = []
         for p in self.g.towers.values():
             cx, cy = self.m.frac_to_cell(p.x, p.y)
-            out.append((cx, cy, 2))
+            out.append((cx, cy, 3))  # footprints: ~3 cells radius each
         return out
 
     def pick_spot(self, kind, step):
@@ -151,6 +185,8 @@ class Executor:
 
     def _next_path(self, p, target):
         """Cheapest next tier that moves p toward target crosspath."""
+        if any(c > t for c, t in zip(p.tiers, target)):
+            return None  # tower already went another way; target unreachable
         best = None
         for i in range(3):
             if p.tiers[i] >= target[i] or (p.tid, i + 1) in self.capped:
@@ -244,6 +280,53 @@ class Executor:
             return "done"
         return "skip"
 
+    # -- threat calendar ---------------------------------------------------------
+    def has_answer(self, threat):
+        for p in self.g.towers.values():
+            if p.kind == "hero":
+                continue
+            for kind, path, tier in ANSWERS.get(threat, []):
+                if p.kind == kind and (path == 0 or p.tiers[path - 1] >= tier):
+                    return True
+        return False
+
+    def due_threat(self, rnd, lookahead=3):
+        """First upcoming threat with no answer built yet."""
+        if rnd is None:
+            return None
+        start = self.strat.get("start_round", 1)
+        for r, threat in THREATS:
+            if r < start:
+                continue
+            # past r+1 it is no longer "early"; stop holding the plan hostage
+            if r - lookahead <= rnd <= r + 1 and not self.has_answer(threat):
+                return threat
+        return None
+
+    def answer_threat(self, threat, cash, rnd):
+        """Run the strategy's `answers:` steps for this threat (or a generic one)."""
+        steps = (self.strat.get("answers") or {}).get(threat)
+        if steps is None:
+            steps = self._generic_answer(threat)
+        for st in steps:
+            r = self.try_step(dict(st), cash, rnd)
+            if r == "done":
+                log.warning("threat %s: bought answer %s", threat, st)
+                return True
+            if r == "wait":
+                return False  # saving up for it: do not spend elsewhere
+        return False
+
+    def _generic_answer(self, threat):
+        """Upgrade an existing tower toward the cheapest listed answer."""
+        steps = []
+        for kind, path, tier in ANSWERS.get(threat, []):
+            if any(p.kind == kind for p in self.g.towers.values()) and path:
+                to = ["0", "0", "0"]
+                to[path - 1] = str(tier)
+                steps.append({"do": "upgrade", "kind": kind, "to": "-".join(to)})
+        return steps[:3]
+
     def tick(self, cash, rnd, lives_dropped=False):
         """Do at most one action. Returns True if something was bought."""
         if lives_dropped:
@@ -254,6 +337,14 @@ class Executor:
                 if r == "done":
                     self.panic_pending -= 1
                     return True
+        threat = self.due_threat(rnd)
+        if threat and threat not in self.unanswerable:
+            if self.answer_threat(threat, cash, rnd):
+                return True
+            if not (self.strat.get("answers") or {}).get(threat) and not self._generic_answer(threat):
+                self.unanswerable.add(threat)  # nothing we can do; don't block the plan
+            else:
+                return False  # hold cash for the answer
         while self.idx < len(self.plan):
             r = self.try_step(self.plan[self.idx], cash, rnd)
             if r in ("done", "skip"):

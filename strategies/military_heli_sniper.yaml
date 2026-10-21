@@ -1,0 +1,39 @@
+# Military carry: Heli Pilots follow bloons anywhere (placement-proof), Snipers
+# hit anything on screen. Heli 2-0-x Bigger Jets -> 4-0-2 Apache Dartship;
+# Sniper 0-2-x gives camo (Night Vision) and 4-0-2 Cripple MOAB. Tack/Dart cover
+# the first rounds before the expensive heli is affordable.
+id: military_heli_sniper
+hero: quincy
+modes: [easy, medium, hard, military_only, abr, reverse]
+planner:
+  towers: {heli: [2, 0, 2], sniper: [2, 2, 0]}
+  base_success: {easy: 0.98, medium: 0.95, military_only: 0.92, hard: 0.85, abr: 0.8, reverse: 0.92}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: s1, kind: sniper, role: dps, target: first}
+  - {do: upgrade, id: s1, to: 1-0-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: first}
+  - {do: upgrade, id: s1, to: 2-0-0}
+  - {do: place, id: h1, kind: heli, role: dps}
+  - {do: upgrade, id: h1, to: 1-0-1}
+  - {do: upgrade, id: s1, to: 2-2-0, round: 18}
+  - {do: upgrade, id: h1, to: 2-0-2}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: place, id: h2, kind: heli, role: dps}
+  - {do: upgrade, id: h2, to: 3-0-2}
+  - {do: upgrade, id: s1, to: 4-0-2, round: 36}
+  - {do: target, id: s1, mode: strong}
+  - {do: upgrade, id: h1, to: 4-0-2}
+  - {do: upgrade, id: h2, to: 4-0-2}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong}
+  - {do: upgrade, id: s3, to: 4-0-2}
+fill:
+  - {do: upgrade, kind: heli, to: 4-0-2}
+  - {do: upgrade, kind: sniper, to: 4-2-0}
+  - {do: place, kind: heli, role: dps, max: 5}
+  - {do: upgrade, kind: heli, to: 5-0-2}
+  - {do: place, kind: sniper, role: dps, max: 5}
+panic:
+  - {do: place, kind: sniper, role: exit}
+  - {do: place, kind: tack, role: exit}

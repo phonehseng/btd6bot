@@ -61,8 +61,12 @@ class Match:
             now = time.time()
             if self._frozen(f, now):
                 # a modal popup pauses the game while the HUD stays visible
-                if self.menus.identify() not in ("in_game", "unknown") or self.menus.has("ok"):
-                    self._off_screen()
+                st = self.menus.identify()
+                log.info("screen frozen (%s) - looking for a popup", st)
+                if st in ("in_game", "unknown"):
+                    self.menus.dismiss_popup()
+                else:
+                    self._off_screen(st)
                 continue
             self.tracer.feed(f, self._exclude())
             dropped = False
@@ -124,8 +128,8 @@ class Match:
             if ab.get("use") == "on_cooldown":
                 self.g.ability(i)
 
-    def _off_screen(self):
-        st = self.menus.identify()
+    def _off_screen(self, st=None):
+        st = st or self.menus.identify()
         log.info("off game screen: %s", st)
         if st in ("victory", "defeat"):
             return st

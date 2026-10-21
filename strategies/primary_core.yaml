@@ -1,0 +1,54 @@
+# All-primary build that can carry Hard (and Primary Only).
+# Checkpoints: camo by R22 (Dart 0-0-2), lead by R26 (Tack Hot Shots / Red Hot
+# Rangs), MOAB damage by R38 (Bomb MOAB Mauler), BFB/ZOMG by R60+ (MOAB
+# Assassin, Ring of Fire, MOAR Glaives, Sharp Shooter), Glue slows everything.
+id: primary_core
+hero: quincy
+modes: [easy, medium, hard, primary_only, abr]
+planner:
+  towers: {tack: [3, 0, 0], boomerang: [2, 0, 2], bomb: [0, 3, 0], dart: [0, 0, 2]}
+  base_success: {easy: 0.98, primary_only: 0.95, medium: 0.93, hard: 0.8, abr: 0.7}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: t1, kind: tack, role: dps, segment: [0.0, 0.5]}
+  - {do: upgrade, id: t1, to: 1-0-1}
+  - {do: place, id: b1, kind: boomerang, role: dps, segment: [0.2, 0.8]}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: d1, to: 0-0-2, round: 12}
+  - {do: upgrade, id: t1, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: t1, to: 3-0-2, round: 18}
+  - {do: place, id: g1, kind: glue, role: dps, segment: [0.1, 0.7]}
+  - {do: upgrade, id: g1, to: 1-0-2}
+  - {do: upgrade, id: b1, to: 3-0-2}
+  - {do: place, id: bm1, kind: bomb, role: dps, segment: [0.3, 1.0]}
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: upgrade, id: bm1, to: 0-3-2, round: 30}
+  - {do: upgrade, id: t1, to: 4-0-2}
+  - {do: place, id: b2, kind: boomerang, role: dps, segment: [0.4, 1.0]}
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: d1, to: 0-2-3}
+  - {do: upgrade, id: g1, to: 2-0-3}
+  - {do: upgrade, id: bm1, to: 0-4-2}
+  - {do: upgrade, id: b1, to: 4-0-2}
+  - {do: upgrade, id: d1, to: 0-2-4}
+  - {do: place, id: bm2, kind: bomb, role: exit}
+  - {do: upgrade, id: bm2, to: 0-4-2}
+  - {do: upgrade, id: b2, to: 4-0-2}
+  - {do: place, id: g2, kind: glue, role: exit}
+  - {do: upgrade, id: g2, to: 2-0-3}
+fill:
+  - {do: upgrade, kind: tack, to: 4-0-2}
+  - {do: upgrade, kind: boomerang, to: 4-0-2}
+  - {do: upgrade, kind: bomb, to: 0-4-2}
+  - {do: place, kind: boomerang, role: dps, max: 6}
+  - {do: place, kind: bomb, role: dps, max: 4}
+  - {do: upgrade, kind: tack, to: 5-0-2}
+  - {do: upgrade, kind: bomb, to: 0-5-2}
+  - {do: upgrade, kind: boomerang, to: 5-0-2}
+  - {do: place, kind: tack, role: dps, max: 6}
+panic:
+  - {do: place, kind: tack, role: exit}
+  - {do: place, kind: boomerang, role: exit}
+  - {do: place, kind: dart, role: exit}
