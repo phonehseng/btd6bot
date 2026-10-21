@@ -179,7 +179,7 @@ class MapModel:
 
     # -- choosing tower spots ---------------------------------------------
     def score_spots(self, range_cells, segment=(0.0, 1.0), avoid=(), min_sep=3.0, near=None,
-                    near_radius=None, placement="land"):
+                    near_radius=None, placement="land", extra_block=None):
         """Score every cell by how much (weighted) track lies within range.
 
         segment: only count track whose progress lies in this window.
@@ -201,6 +201,8 @@ class MapModel:
         on_track = cv2.dilate(mask.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
         cover[on_track] = -1
         cover[self.blocked(placement)] = -1
+        if extra_block is not None:
+            cover[extra_block] = -1
         hh, ww = cover.shape
         yy, xx = np.mgrid[0:hh, 0:ww]
         for ax, ay, ar in avoid:

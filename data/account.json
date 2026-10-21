@@ -1,16 +1,18 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T15:50:51",
- "player_level": 3,
- "xp": 0.0,
- "monkey_money": 0,
+ "saved_at": "2026-10-21T16:00:00",
+ "player_level": 10,
+ "xp": 19850.0,
+ "monkey_money": 175,
  "unlocked_towers": [
   "bomb",
   "boomerang",
   "buccaneer",
   "dart",
   "glue",
+  "heli",
   "ice",
+  "mortar",
   "sniper",
   "tack"
  ],
@@ -22,22 +24,57 @@
   "tack": [
    3,
    0,
-   0
+   2
   ],
   "dart": [
    0,
    2,
-   2
+   0
   ]
  },
  "mk_points": 0,
  "mk_unlocked": [],
- "medals": {},
- "map_stats": {},
- "strategy_stats": {},
+ "medals": {
+  "Monkey Meadow": {
+   "easy": true
+  }
+ },
+ "map_stats": {
+  "Monkey Meadow": {
+   "wins": 1,
+   "losses": 0,
+   "best_round": 40,
+   "avg_minutes": {
+    "easy": 14
+   },
+   "observed_rewards": {}
+  }
+ },
+ "strategy_stats": {
+  "Monkey Meadow|easy|starter_tack_dart": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": 14
+  }
+ },
  "pending_tower_choices": [],
  "map_category_overrides": {},
  "observed_upgrade_costs": {},
- "games_played": 0,
- "history": []
+ "games_played": 1,
+ "history": [
+  {
+   "t": "2026-10-21T15:55:26",
+   "map": "Monkey Meadow",
+   "mode": "easy",
+   "strategy": "starter_tack_dart",
+   "hero": null,
+   "won": true,
+   "round": 40,
+   "minutes": 14,
+   "xp": null,
+   "mm": null
+  }
+ ]
 }

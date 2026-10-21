@@ -7,7 +7,7 @@ from . import towers as T
 from .account import AccountState
 from .choices import tower_chooser
 from .game import Game
-from .inputs import Input
+from .inputs import Aborted, FocusLost, Input
 from .maplearn import MapModel
 from .match import Match
 from .menus import Menus
@@ -54,6 +54,7 @@ class Bot:
         self.account = AccountState.load(account_path)
         self.menus = Menus(self.s, self.inp)
         self.strats = load_all()
+        self.failures = 0
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -96,11 +97,14 @@ class Bot:
         from .hud import parse_int, rec_text
         from .vision import crop
         f = self.s.grab()
-        lvl = parse_int(rec_text(crop(f, (0.085, 0.025, 0.135, 0.09)))[0])
+        lvl = parse_int(rec_text(crop(f, (0.095, 0.03, 0.125, 0.08)))[0])
         if lvl and 1 <= lvl <= 999:
             events = self.account.sync_level(lvl)
             for e in events:
                 log.info(e)
+            # tower choices are made on screen as they come up; don't queue them
+            self.account.pending_tower_choices.clear()
+            self.account.save()
         return lvl
 
     def open_map(self, map_name):
@@ -111,11 +115,15 @@ class Bot:
             return False
         self.inp.click(0.044, 0.154)  # search (magnifier)
         time.sleep(1.0)
+        self.inp.click(0.52, 0.04)    # focus the search box
+        time.sleep(0.4)
         self.inp.type_text(map_name)
         time.sleep(1.5)
         self.menus.read()
         target = norm(map_name)
         for w in sorted(self.menus.words, key=lambda w: (w.y, w.x)):
+            if w.y < 0.1 or w.y > 0.9:
+                continue  # the search box itself / bottom buttons
             if target in norm(w.text) or norm(w.text) in target and len(norm(w.text)) > 4:
                 self.inp.click(w.x, min(0.95, w.y + 0.1))  # thumbnail sits under the name
                 time.sleep(1.5)
@@ -159,7 +167,13 @@ class Bot:
             else:
                 self.account.unlocked_towers.discard(kind)
         self.account.save()
-        model = MapModel.load(plan.map, self.lay["playfield"])
+        from .strategy import rules
+        # Reverse runs the same track backwards: its progress map is mirrored
+        key = plan.map + (" reverse" if rules(plan.mode_key).get("reversed") else "")
+        model = MapModel.load(key, self.lay["playfield"])
+        if key != plan.map and not model.scanned("land"):
+            base = MapModel.load(plan.map, self.lay["playfield"])
+            model.scan = dict(base.scan)  # placement is identical
         if not model.scanned("land"):
             log.info("first visit to %s: scanning placement", plan.map)
             scan_placement(g, model, "dart", "land")
@@ -193,8 +207,23 @@ class Bot:
                 log.error("planner has nothing to play")
                 return
             log.info("NEXT: %s", plan.reason)
-            if not self.start(plan):
-                log.error("failed to start %s %s", plan.map, plan.mode_key)
+            try:
+                if not self.start(plan):
+                    log.error("failed to start %s %s", plan.map, plan.mode_key)
+                    self.failures += 1
+                    continue
+                res = self.play(plan)
+                log.info("RESULT %s", res)
+                self.failures = 0
+            except Aborted:
+                raise
+            except FocusLost as e:
+                log.warning("%s - waiting for the game to be in front again", e)
+                time.sleep(10)
                 continue
-            res = self.play(plan)
-            log.info("RESULT %s", res)
+            except Exception:
+                log.exception("game loop error - recovering to main menu")
+                self.failures += 1
+            if self.failures >= 5:
+                log.error("too many consecutive failures; stopping")
+                return

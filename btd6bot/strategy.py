@@ -67,6 +67,34 @@ ANSWERS = {
 # camo-requiring threats also need camo on the answering tower (or village MIB)
 NEEDS_CAMO = {"ddt"}
 
+# What each mode changes. Used by the executor (spending), match loop
+# (starting rounds) and runner (map model key).
+MODE_RULES = {
+    "easy":          {"start_round": 1, "end_round": 40, "lives": 200},
+    "primary_only":  {"start_round": 1, "end_round": 40, "lives": 200},
+    "deflation":     {"start_round": 31, "end_round": 60, "lives": 200, "income": False,
+                      "buy_all_upfront": True},
+    "medium":        {"start_round": 1, "end_round": 60, "lives": 150},
+    "military_only": {"start_round": 1, "end_round": 60, "lives": 150},
+    "apopalypse":    {"start_round": 1, "end_round": 100, "lives": 150, "continuous": True},
+    "reverse":       {"start_round": 1, "end_round": 60, "lives": 150, "reversed": True},
+    "hard":          {"start_round": 3, "end_round": 80, "lives": 100},
+    "magic_only":    {"start_round": 3, "end_round": 80, "lives": 100},
+    "double_hp":     {"start_round": 3, "end_round": 80, "lives": 100, "tough_moabs": True},
+    "half_cash":     {"start_round": 3, "end_round": 80, "lives": 100, "half_cash": True},
+    "abr":           {"start_round": 3, "end_round": 80, "lives": 100,
+                      "threat_shift": {"ddt": 88}},
+    "impoppable":    {"start_round": 6, "end_round": 100, "lives": 1, "one_life": True},
+    "chimps":        {"start_round": 6, "end_round": 100, "lives": 1, "one_life": True,
+                      "no_sell": True, "no_income_towers": True, "no_mk": True, "no_powers": True},
+}
+INCOME_TOWERS = {"farm"}  # banana farms; also e.g. Merchantman/Favored Trades buccaneers
+INCOME_UPGRADES = {("buccaneer", 3, 3), ("engineer", 2, 3)}
+
+
+def rules(mode):
+    return MODE_RULES.get(mode, MODE_RULES["hard"])
+
 
 def load_all():
     out = {}
@@ -127,9 +155,22 @@ class Executor:
         self.panic_pending = 0
         self.unanswerable = set()
         self.last_try = 0.0
-        self.no_sell = mode == "chimps"
+        self.blocked = np.zeros(model.heat.shape, bool)  # this game's no-go cells
+        for p in game.towers.values():
+            cx, cy = model.frac_to_cell(p.x, p.y)
+            self._block(cx, cy, 3)
+        self.rules = rules(mode)
+        self.no_sell = bool(self.rules.get("no_sell"))
+        if self.rules.get("no_income_towers"):
+            # CHIMPS: strip income towers/upgrades from the plan entirely
+            self.plan = [s for s in self.plan if s.get("kind") not in INCOME_TOWERS]
+            self.fill = [s for s in self.fill if s.get("kind") not in INCOME_TOWERS]
 
     # -- helpers ------------------------------------------------------------
+    def _block(self, cx, cy, r):
+        h, w = self.blocked.shape
+        self.blocked[max(0, cy - r):min(h, cy + r + 1), max(0, cx - r):min(w, cx + r + 1)] = True
+
     def _best_panic_kind(self):
         for k in ("tack", "dart"):
             if self.account is None or k in self.account.unlocked_towers:
@@ -172,11 +213,12 @@ class Executor:
                 near = self.m.frac_to_cell(sum(xs) / len(xs), sum(ys) / len(ys))
                 near_r = step.get("near_radius", 9)
         if role == "far":
-            cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement)
+            cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
+                                        extra_block=self.blocked)
             cover[cover >= 1] = -1  # still exclude blocked/occupied
         else:
             cover = self.m.score_spots(rc, seg, self._occupied(), near=near, near_radius=near_r,
-                                       placement=placement)
+                                       placement=placement, extra_block=self.blocked)
         for cx, cy, score in self.m.best_spots(cover, n=12):
             if (kind, cx, cy) in self.failed_spots:
                 continue
@@ -234,10 +276,12 @@ class Executor:
             fx, fy = self.m.cell_to_frac(cx, cy)
             tid = step.get("id") or self._new_tid(kind)
             if self.g.place(tid, kind, fx, fy):
+                self._block(cx, cy, 3)
                 if step.get("target"):
                     self.g.target(self.g.towers[tid], step["target"])
                 return "done"
             self.failed_spots.add((kind, cx, cy))
+            self._block(cx, cy, 2)  # don't probe right next to a failed spot again
             return "wait"
         if do == "upgrade":
             target = parse_cross(step["to"])
@@ -294,10 +338,13 @@ class Executor:
         """First upcoming threat with no answer built yet."""
         if rnd is None:
             return None
-        start = self.strat.get("start_round", 1)
-        for r, threat in THREATS:
-            if r < start:
-                continue
+        start = self.rules.get("start_round", 1)
+        if self.rules.get("one_life"):
+            lookahead = max(lookahead, 6)  # one leak = defeat: build answers early
+        shift = self.rules.get("threat_shift", {})
+        for r, threat in sorted((shift.get(t, r), t) for r, t in THREATS):
+            # threats that began before our first round are present from the start
+            r = max(r, start)
             # past r+1 it is no longer "early"; stop holding the plan hostage
             if r - lookahead <= rnd <= r + 1 and not self.has_answer(threat):
                 return threat

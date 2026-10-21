@@ -59,6 +59,13 @@ class Match:
                     return self._finish(outcome, last_round)
                 continue
             now = time.time()
+            end_round = self.ex.rules.get("end_round", 80)
+            if last_round is not None and last_round >= end_round and now - getattr(self, "_t_end", 0) > 2.5:
+                # final round: the victory overlay dims but does not hide the HUD
+                self._t_end = now
+                st = self.menus.identify()
+                if st in ("victory", "defeat"):
+                    return self._finish(st, last_round)
             if self._frozen(f, now):
                 # a modal popup pauses the game while the HUD stays visible
                 st = self.menus.identify()

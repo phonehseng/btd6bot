@@ -16,7 +16,7 @@ log = logging.getLogger("menus")
 SCREENS = [
     ("defeat", [["defeat", "gameover", "bloonsleaked", "youlost"]]),
     ("upgrade_tree", [["unlockall", "ingamecost", "appliestothismonkey"]]),
-    ("victory", [["victory"]]),
+    ("victory", [["victory", "vigtory", "congratulations", "completedthistrack", "monkeystar"]]),
     ("tower_choice", [["choosea", "tounlock"], ["unlock"]]),
     ("level_up", [["levelup"]]),
     ("pause", [["pause"], ["restart"], ["home"]]),
@@ -78,9 +78,15 @@ class Menus:
         for name, groups in SCREENS:
             if all(self.has(*g) for g in groups):
                 return name
-        if self.g is not None and self.g.in_game():
+        if self.in_game():
             return "in_game"
         return "unknown"
+
+    def in_game(self):
+        from .templates import classify
+        best, scores = classify(self.s.grab(), ["play_idle", "play_run", "play_fast"],
+                                (0.905, 0.835, 1.0, 0.975))
+        return scores[best] > 0.75
 
     def click_word(self, *keys, region=None, dy=0.0):
         w = self.find(*keys, region=region)
