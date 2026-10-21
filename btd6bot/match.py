@@ -29,6 +29,8 @@ class Match:
         self.stats = {"start": time.time(), "rounds": 0, "lives_lost": 0, "panic": 0}
         self._prev_lives_read = None
         self._round_cand, self._round_votes = None, 0
+        self._last_buy = time.time()
+        self._last_wait_log = 0.0
         self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
         self._in_round = False
 
@@ -134,7 +136,15 @@ class Match:
                     if last_round is None or self._round_votes >= 4:
                         log.info("round tracking reset %s -> %s", last_round, rnd)
                         last_round = rnd
-                if self.ex.tick(cash, last_round, lives_dropped=dropped):
+                bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
+                if not bought and cash is not None and cash > 800 and now - self._last_buy > 12:
+                    # cash is piling up while the plan waits: say why, then spend it
+                    if now - self._last_wait_log > 20:
+                        self._last_wait_log = now
+                        log.info("idle with $%d: %s", cash, getattr(self.ex, "waiting", "?"))
+                    bought = self.ex.surplus(cash, last_round)
+                if bought:
+                    self._last_buy = now
                     if dropped:
                         self.stats["panic"] += 1
                     t_hud = 0  # re-read cash right away after spending

@@ -852,20 +852,75 @@ class Executor:
             if r == "bought":
                 return True
             if r == "wait":
+                self.waiting = f"saving for {threat} answer"
                 return False  # hold cash for the answer
             self.unanswerable.add(threat)  # nothing applicable; don't block the plan
         while self.idx < len(self.plan):
-            r = self.try_step(self.plan[self.idx], cash, rnd)
+            st = self.plan[self.idx]
+            r = self.try_step(st, cash, rnd)
             if r in ("done", "skip", "bought"):
                 self.idx += 1
                 if r == "bought":
                     return True
                 continue
+            self.waiting = f"plan step {self.idx} {st} -> {r} ({self.g.fail_reason})"
             return r == "progress"  # waiting for cash / round, or mid-upgrade
         for st in self.fill:
             if self.try_step(st, cash, rnd) in ("bought", "progress"):
                 return True
+        self.waiting = "plan and fill exhausted"
         return False
+
+    def surplus(self, cash, rnd):
+        """Cash is piling up while the plan waits: buy damage anyway.
+
+        1. next tier on an existing tower's own path (biggest investment first),
+           respecting crosspaths, tower XP locks and the mode's tower filter
+        2. another copy of the strategy's main tower
+        Never violates constraints (kind_allowed) and never sells."""
+        if cash is None:
+            return False
+        towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
+                        key=lambda p: -p.spent)
+        for p in towers:
+            for path in sorted(range(3), key=lambda i: -p.tiers[i]):
+                if (p.tid, path + 1) in self.capped or p.tiers[path] >= 5:
+                    continue
+                t = list(p.tiers)
+                t[path] += 1
+                if sum(x > 0 for x in t) > 2 or sum(x > 2 for x in t) > 1:
+                    continue
+                if self.account and t[path] > self.account.upgrades(p.kind)[path] and t[path] > 2:
+                    continue  # known XP-locked beyond tier 2
+                cost = T.upgrade_cost(p.kind, path + 1, t[path], MODE_FAMILY.get(self.mode, "hard"))
+                if cost > cash:
+                    continue
+                r = self.try_step({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, t))}, cash, rnd)
+                if r in ("bought", "progress"):
+                    log.info("surplus: upgraded %s -> %s", p.tid, p.crosspath)
+                    return True
+        main = self._main_kind()
+        if main and cash >= self.g.price(main):
+            r = self.try_step({"do": "place", "kind": main, "role": "dps", "segment": [0.2, 1.0]}, cash, rnd)
+            if r == "bought":
+                log.info("surplus: placed another %s", main)
+                return True
+        return False
+
+    def _main_kind(self):
+        counts = {}
+        for st in self.plan:
+            k = st.get("kind")
+            if st.get("do") == "place" and k and k != "hero" and self._allowed(k):
+                counts[k] = counts.get(k, 0) + 1
+        return max(counts, key=counts.get) if counts else None
+
+    def _allowed(self, kind):
+        f = getattr(self, "kind_allowed", None)
+        try:
+            return f(kind) if f else True
+        except TypeError:
+            return True
 
     def defended(self):
         return any(p.kind != "hero" for p in self.g.towers.values()) or \
