@@ -7,7 +7,28 @@ Public API (every function also returns human readable reasons for logs):
 * :func:`choose_mk` - Monkey Knowledge priority list
 * :func:`next_game` - the next (map, difficulty, mode, strategy, hero)
 
-The game choice maximises expected value per minute::
+Progression policy (the owner's order: Hard first, levelled up through the
+Hard sub-modes until CHIMPS, Medium and Easy only afterwards). Every
+candidate falls in one tier; the best tier wins, the score only ranks
+within a tier (see :data:`PHASES` and :func:`_tier`):
+
+    H    first-time Hard standard medal, p >= min_p_new_hard (0.8), on every
+         open map - unique Hard wins also open the next map category
+    HS   first-time Hard sub-mode medal, p >= its threshold: Magic Monkeys
+         Only -> Double HP -> Half Cash, and ABR -> Impoppable -> CHIMPS
+    HF   nothing Hard-family clears 0.8: the highest-p Hard-family medal with
+         p >= hard_fallback_p (0.7; never CHIMPS)
+    B    Hard is blocked by missing upgrades: a Medium/Easy game (p >= 0.7)
+         whose towers are mostly the ones the Hard roster still needs XP for
+    M    Medium family medal (Medium, Military Only, Apopalypse, Reverse)
+    E    Easy family medal (Easy, Primary Only, Deflation)
+    FARM no confident medal: replay the best confident game for XP/MM
+    LAST nothing is confident at all: the safest (highest-p) game
+
+M/E are reached while the roster is too weak for Hard (they then serve as
+XP/unlock games) or once the Hard family is exhausted. In H/HS, maps whose
+track is already learned (no placement scan) go first. Within a tier the
+score is expected value per minute::
 
     score = [p*(XP_value + w*MM + medal/unlock/unique value)
              + (1-p)*(XP_fail - loss_penalty)] / [p*T + (1-p)*T_fail]
@@ -18,15 +39,7 @@ category/ease (scaled by how hard the mode is), how much of the strategy's
 upgrade build is unlocked, and the strategy's calibration on other maps.
 ``T`` is learned from observed game durations (see :class:`_Durations`).
 XP is weighted by how much the account still *needs* XP (levels for
-tower/MK unlocks, tower XP for upgrades that STRATEGY_NEEDS lists). A phase
-model (P0, PH, P1..P6) decides which medals are "goal" medals for now and
-receive the large goal bonus.
-
-The owner's objective is the most Hard-mode map medals per hour with as
-few losses as possible, so: a first-time Hard standard medal that the
-roster wins reliably (``p >= hard_ready_p``) gets a large bonus in every
-phase, and candidates below the per-mode p thresholds are never preferred
-(if nothing clears its threshold, the highest-p candidate is chosen).
+tower/MK unlocks, tower XP for upgrades that STRATEGY_NEEDS lists).
 
 The runner only needs to::
 
@@ -42,14 +55,24 @@ tests and as a fallback; the real roster should come from the strategy layer.
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping, Sequence
 
 from .account import (
     CATEGORY_UNLOCK_WINS, CATEGORY_XP_MULT, EXCLUDED_MAPS, EXCLUDED_MODES,
-    GIFT_BOX_TOWERS, MAPS, MODES, TOWER_CATEGORIES, TOWER_TO_CATEGORY,
+    GIFT_BOX_TOWERS, MAPS, MODES, PROJECT_ROOT, TOWER_CATEGORIES, TOWER_TO_CATEGORY,
     AccountState, canonical_map, mode_unlocks, rounds_xp,
 )
+
+# Learned map tracks (btd6bot/maplearn.py writes data/maps/<slug>.npz after
+# the placement scan of a map's first visit).
+MAPS_DIR = PROJECT_ROOT / "data" / "maps"
+
+
+def map_slug(name: str) -> str:
+    """Same slug as maplearn.slug (not imported: maplearn pulls in cv2)."""
+    return "".join(c for c in name.lower() if c.isalnum())
 
 # ---------------------------------------------------------------------------
 # Tunables
@@ -59,8 +82,8 @@ from .account import (
 @dataclass
 class PlannerConfig:
     mm_weight: float = 20.0          # XP-equivalent of 1 MM
-    goal_medal_value: float = 60_000  # medal that is in the current phase's goal set
-    off_goal_medal_value: float = 6_000
+    goal_medal_value: float = 60_000  # any first-time medal (tiers decide the order)
+    off_goal_medal_value: float = 6_000  # unused since the tier policy (kept for configs)
     unlock_value: float = 3_000      # per mode a medal unlocks
     unique_win_value: float = 25_000  # first win on a map while < 20 unique wins
     threshold_win_bonus: float = 1.5  # multiplier when the win crosses 5/12/20
@@ -80,6 +103,12 @@ class PlannerConfig:
     # "reliable" and gets hard_medal_value on top of every other bonus.
     hard_ready_p: float = 0.80
     hard_medal_value: float = 150_000
+    # No Hard-family medal clears its threshold: still play the highest-p one
+    # (not CHIMPS) if p >= this, rather than dropping to Medium/Easy.
+    hard_fallback_p: float = 0.70
+    # Where learned map tracks live (None: only maps already played count as
+    # learned - used by tests so they do not depend on data/maps).
+    maps_dir: str | None = str(MAPS_DIR)
     # Observed durations: Beta-like shrinkage of observed (EW) averages toward
     # the default estimate with this many pseudo-games, observations clipped
     # to [lo, hi] x the mode default (one-off stalls should not dominate).
@@ -87,11 +116,15 @@ class PlannerConfig:
     duration_obs_cap: int = 12       # an EW average is worth at most this many games
     pace_prior_games: float = 3.0
     duration_clip: tuple[float, float] = (0.6, 1.5)
-    farm_level_target: int = 30      # P2 farms until this player level
+    farm_level_target: int = 30      # repeat Deflation on FARM_MAPS gets farm_bonus below this level
     player_xp_full_until: int = 30   # levels below this: player XP fully valuable
     player_xp_half_until: int = 50
     tower_no_need_value: float = 0.15
     explore_bonus: float = 0.04      # UCB-style bonus for little-tried combos
+    # XP into towers whose missing upgrades hold back a Hard-family strategy
+    # counts this much extra (per unit of the game's XP share they receive):
+    # while Hard is blocked, Medium/Easy games should build the Hard roster.
+    hard_build_xp_weight: float = 1.5
 
 
 DEFAULT_CONFIG = PlannerConfig()
@@ -143,18 +176,28 @@ MO_MONKEY_MONEY = "Mo' Monkey Money"
 MO_MONKEY_MONEY_BONUS = 0.10
 
 HARD_GROUP = ("hard", "magic_only", "double_hp", "half_cash", "abr", "impoppable")
-NORMAL_GROUP = ("easy", "primary_only", "deflation", "medium", "military_only",
-                "apopalypse", "reverse")
+# Medal families in the owner's order. The Hard sub-mode chains (account.MODES
+# ``requires``): hard -> magic_only -> double_hp -> half_cash and
+# hard -> abr -> impoppable -> chimps.
+HARD_FAMILY = HARD_GROUP + ("chimps",)
+MEDIUM_FAMILY = ("medium", "military_only", "apopalypse", "reverse")
+EASY_FAMILY = ("easy", "primary_only", "deflation")
+NORMAL_GROUP = EASY_FAMILY + MEDIUM_FAMILY
 
+# Tiers, best first (index = rank). See the module docstring.
+TIERS = ("H", "HS", "HF", "B", "M", "E", "FARM", "LAST")
 PHASES = {
-    "P0": "levels 1-10: beginner maps, quick Easy/Medium then beginner Hard",
-    "PH": "Hard standard medal on every open map where the roster wins Hard reliably",
-    "P1": "reach 20 unique map wins (opens expert) using the easiest/fastest maps",
-    "P2": "unlock Deflation on Infernal/Dark Castle and farm XP to the level target",
-    "P3": "Hard standard on every expert map",
-    "P4": "remaining hard-group modes (Hard, Magic, Double HP, Half Cash, ABR, Impoppable)",
-    "P5": "remaining Easy/Medium-group modes",
-    "P6": "CHIMPS everywhere",
+    "H": "Hard standard medal on every open map (learned tracks first; "
+         "unique Hard wins open the next map category)",
+    "HS": "Hard sub-mode chains: Magic Only -> Double HP -> Half Cash, "
+          "ABR -> Impoppable -> CHIMPS",
+    "HF": "no Hard-family medal clears its threshold: highest-p Hard medal (p >= 0.7)",
+    "B": "Hard blocked by missing upgrades: Medium/Easy games (p >= 0.7) that level "
+         "the Hard roster's towers",
+    "M": "Medium family medals (Medium, Military Only, Apopalypse, Reverse)",
+    "E": "Easy family medals (Easy, Primary Only, Deflation)",
+    "FARM": "no confident medal left: replay the best confident game for XP/MM",
+    "LAST": "nothing is confident: the safest game",
     "DONE": "every medal earned - farm XP/MM",
 }
 
@@ -398,7 +441,7 @@ EXAMPLE_STRATEGIES: list[StrategySpec] = [
        heroes=("obyn", "gwendolin")),
     _S("late_game_chimps", {"ninja": (4, 0, 2), "alchemist": (4, 2, 0), "village": (2, 3, 0),
                             "super": (2, 0, 4), "sniper": (4, 0, 2), "glue": (0, 2, 3)},
-       {"chimps": 0.65, "impoppable": 0.80, "half_cash": 0.80, "double_hp": 0.85,
+       {"chimps": 0.88, "impoppable": 0.88, "half_cash": 0.80, "double_hp": 0.85,
         "hard": 0.92, "abr": 0.88},
        heroes=("obyn", "striker_jones")),
     _S("obyn_druid_dark_castle", {"druid": (1, 3, 0), "village": (2, 3, 0), "alchemist": (4, 2, 0)},
@@ -768,6 +811,17 @@ class _Durations:
                             min(cap, pace_acc[1]), cfg.pace_prior_games)
         self.visited = {m for m, ms in account.map_stats.items()
                         if ms.get("wins", 0) or ms.get("losses", 0)}
+        self._learned: dict[str, bool] = {}
+
+    def learned(self, map_name: str) -> bool:
+        """Track already learned: played before, or data/maps/<slug>.npz exists."""
+        if map_name in self.visited:
+            return True
+        if map_name not in self._learned:
+            d = self.cfg.maps_dir
+            self._learned[map_name] = bool(d) and os.path.exists(
+                os.path.join(d, map_slug(map_name) + ".npz"))
+        return self._learned[map_name]
 
     def game_minutes(self, s: StrategySpec, map_name: str, mode: str) -> tuple[float, str]:
         """Minutes of a won game (no menus/scan) and where the number came from."""
@@ -785,7 +839,7 @@ class _Durations:
 
     def scan_minutes(self, map_name: str) -> float:
         """One-time placement scan the first time the bot plays a map."""
-        return 0.0 if map_name in self.visited else self.cfg.first_visit_minutes
+        return 0.0 if self.learned(map_name) else self.cfg.first_visit_minutes
 
 
 def expected_minutes(account: AccountState, s: Any, map_name: str, mode: str,
@@ -799,35 +853,12 @@ def expected_minutes(account: AccountState, s: Any, map_name: str, mode: str,
 
 
 # ---------------------------------------------------------------------------
-# Phase model
+# Progression tiers
 # ---------------------------------------------------------------------------
 
 
 def _all_maps() -> list[str]:
     return [m for m in MAPS if m not in EXCLUDED_MAPS]
-
-
-def _phase_goals(phase: str, account: AccountState) -> set[tuple[str, str]]:
-    maps = _all_maps()
-    if phase == "P0":
-        return {(m, md) for m in maps if account.map_category(m) == "beginner"
-                for md in ("easy", "medium", "hard")}
-    if phase == "PH":
-        return {(m, "hard") for m in maps}
-    if phase == "P1":
-        return {(m, md) for m in maps if not account.medals.get(m)
-                for md in ("easy", "medium", "hard")}
-    if phase == "P2":
-        return {(m, md) for m in FARM_MAPS for md in FARM_CHAIN}
-    if phase == "P3":
-        return {(m, "hard") for m in maps if account.map_category(m) == "expert"}
-    if phase == "P4":
-        return {(m, md) for m in maps for md in HARD_GROUP}
-    if phase == "P5":
-        return {(m, md) for m in maps for md in NORMAL_GROUP}
-    if phase == "P6":
-        return {(m, "chimps") for m in maps}
-    return set()
 
 
 def _farm_needed(account: AccountState, cfg: PlannerConfig) -> bool:
@@ -855,7 +886,10 @@ class _Cand:
     score: float
     notes: list[str]
     fail_minutes: float = 0.0   # expected minutes of a lost game
-    ok: bool = True             # p clears its threshold (False = last resort only)
+    ok: bool = True             # p clears its threshold (p_threshold)
+    learned: bool = False       # map track already learned (no placement scan)
+    tier: str = "LAST"          # progression tier, see TIERS
+    build: float = 0.0          # share of the game's tower XP that feeds the Hard build
 
 
 def _normalise_strategies(available: Iterable[Any] | None) -> dict[str, StrategySpec]:
@@ -869,6 +903,12 @@ def _normalise_strategies(available: Iterable[Any] | None) -> dict[str, Strategy
     return out
 
 
+def _missing_towers(s: StrategySpec, account: AccountState) -> set[str]:
+    """Unlocked towers of ``s`` that still lack upgrades its build wants."""
+    return {t for t, cp in s.towers.items() if t in account.unlocked_towers
+            and any(account.upgrades(t)[i] < cp[i] for i in range(3))}
+
+
 def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 cfg: PlannerConfig, playable_maps: set[str] | None) -> list[_Cand]:
     calib = _Calibration(account, strategies)
@@ -877,13 +917,18 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
     usable = {sid: s for sid, s in strategies.items() if _strategy_available(s, account)[0]}
     pf = _player_xp_factor(account, cfg)
     out: list[_Cand] = []
+    # Hard-build towers: missing upgrades of a strategy that, with its full
+    # build, would clear the Hard fallback bar on some open Hard-family medal.
+    # Their tower XP is what turns Hard from "not yet" into "winnable".
+    hard_build: set[str] = set()
     for m in _all_maps():
         if playable_maps is not None and m not in playable_maps:
             continue
         if not account.map_unlocked(m):
             continue
         cat = account.map_category(m)
-        for mode, mi in MODES.items():
+        learned = durations.learned(m)
+        for mode in MODES:
             if mode in EXCLUDED_MODES or not account.mode_unlocked(m, mode):
                 continue
             mm, first, mm_src = estimate_mm(account, m, mode)
@@ -891,100 +936,112 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 if not _strategy_fits(s, m, cat, mode):
                     continue
                 p, n = win_probability(account, s, m, mode, cfg, calib)
+                r = strategy_readiness(s, account, mode)
+                if (first and mode in HARD_FAMILY and mode != "chimps" and r < 1.0
+                        and p / r >= cfg.hard_fallback_p):
+                    hard_build |= _missing_towers(s, account)
                 game_min, _src = durations.game_minutes(s, m, mode)
                 scan = durations.scan_minutes(m)
                 t_full = game_min + cfg.overhead_minutes + scan
                 t_fail = game_min * cfg.fail_time_frac + cfg.overhead_minutes + scan
                 xp_win = game_xp(mode, cat)
                 xp_fail = game_xp(mode, cat, fail_frac=cfg.fail_round_frac)
-                tf = _tower_need_factor(s, account, unmet_towers, cfg)
-                xp_w = 0.6 * pf + 0.4 * tf
                 notes = [f"p={p:.2f} (n={n})", f"{t_full:.1f} min"
                          + (f" incl. {scan:g} scan" if scan else ""),
-                         f"xp {xp_win:,.0f}x{xp_w:.2f}",
                          f"mm {mm:.0f} ({mm_src}{', first' if first else ''})"]
                 out.append(_Cand(m, mode, s, p, n, t_full, xp_win, mm, first,
-                                 value_win=xp_win * xp_w + cfg.mm_weight * mm,
-                                 value_fail=xp_fail * xp_w, score=0.0, notes=notes,
-                                 fail_minutes=t_fail))
+                                 value_win=0.0, value_fail=xp_fail, score=0.0, notes=notes,
+                                 fail_minutes=t_fail, learned=learned))
+    # XP value: account level needs, STRATEGY_NEEDS and the Hard build
+    tf_cache: dict[str, tuple[float, float]] = {}
+    for c in out:
+        if c.s.id not in tf_cache:
+            tf = _tower_need_factor(c.s, account, unmet_towers | hard_build, cfg)
+            hb = sum(sh for t, sh in c.s.share().items() if t in hard_build)
+            tf_cache[c.s.id] = (0.6 * pf + 0.4 * tf + cfg.hard_build_xp_weight * hb, hb)
+        xp_w, hb = tf_cache[c.s.id]
+        c.build = hb
+        c.value_win = c.xp_win * xp_w + cfg.mm_weight * c.mm
+        c.value_fail = c.value_fail * xp_w
+        c.notes.insert(2, f"xp {c.xp_win:,.0f}x{xp_w:.2f}"
+                       + (f" (builds Hard roster {hb:.0%})" if hb else ""))
     return out
 
 
-def _determine_phase(account: AccountState, cands: list[_Cand], cfg: PlannerConfig
-                     ) -> tuple[str, list[str]]:
+def _tier(c: _Cand, cfg: PlannerConfig) -> str:
+    """Progression tier of a scored candidate (``c.ok`` already set)."""
+    if c.mode in HARD_FAMILY:
+        if c.first:
+            if c.ok:
+                return "H" if c.mode == "hard" else "HS"
+            if c.mode != "chimps" and c.p >= cfg.hard_fallback_p:
+                return "HF"
+        return "FARM" if c.ok else "LAST"
+    # Medium/Easy: a game that mostly feeds the Hard roster's missing upgrades
+    # is worth it at the Hard fallback bar; plain medals need their threshold.
+    if c.build >= 0.5 and c.p >= cfg.hard_fallback_p:
+        return "B"
+    if c.first and c.ok:
+        return "M" if c.mode in MEDIUM_FAMILY else "E"
+    return "FARM" if c.ok else "LAST"
+
+
+def _sort_key(c: _Cand) -> tuple:
+    """Best first with reverse=True: tier, then (H/HS) learned tracks first,
+    then score - or p where the tier is about safety (HF, LAST)."""
+    rank = -TIERS.index(c.tier)
+    learned = 1 if c.tier in ("H", "HS") and c.learned else 0
+    within = c.p if c.tier in ("HF", "LAST") else c.score
+    return (rank, learned, within)
+
+
+def _phase_reasons(account: AccountState, cands: list[_Cand], cfg: PlannerConfig) -> list[str]:
+    """Why the top tier is what it is (for the log)."""
     reasons: list[str] = []
-    uniq = account.unique_map_wins()
-    best_p: dict[tuple[str, str], float] = {}
+    if not cands:
+        return reasons
+    top = cands[0].tier
+    count = {t: 0 for t in TIERS}
+    seen: set[tuple[str, str]] = set()
     for c in cands:
-        k = (c.map, c.mode)
-        best_p[k] = max(best_p.get(k, 0.0), c.p)
-
-    def feasible(goals: set[tuple[str, str]], hard_ready: bool = False) -> list[tuple[str, str]]:
-        out = []
-        for k in goals:
-            if account.has_medal(*k):
-                continue
-            thr = cfg.hard_ready_p if hard_ready else p_threshold(k[1], True, cfg)
-            if best_p.get(k, 0.0) >= thr:
-                out.append(k)
-        return out
-
-    # PH comes right after the level 1-10 start: Hard medals on every map the
-    # roster wins Hard reliably beat everything else (they also count as
-    # unique map wins), the other phases fill in when none is reliable.
-    order = ["P0", "PH", "P1", "P2", "P3", "P4", "P5", "P6"]
-    for ph in order:
-        if ph == "P0" and not (account.player_level < 10 and uniq < CATEGORY_UNLOCK_WINS["expert"]):
-            continue
-        if ph == "PH":
-            ok = feasible(_phase_goals(ph, account), hard_ready=True)
-            if ok:
-                reasons.append(f"PH: {PHASES[ph]} ({len(ok)} reliable Hard medals open)")
-                return ph, reasons
-            continue
-        if ph == "P1" and uniq >= CATEGORY_UNLOCK_WINS["expert"]:
-            continue
-        goals = _phase_goals(ph, account)
-        remaining = [g for g in goals if not account.has_medal(*g)]
-        if ph == "P2":
-            farm_ready = any(c.mode == "deflation" and c.map in FARM_MAPS and c.p >= cfg.min_p_repeat
-                             for c in cands)
-            if not remaining and farm_ready and _farm_needed(account, cfg):
-                reasons.append(f"P2: farm chain done, farming until L{cfg.farm_level_target}")
-                return ph, reasons
-        if not remaining:
-            continue
-        ok = feasible(goals)
-        if ok:
-            reasons.append(f"{ph}: {PHASES[ph]} ({len(remaining)} goals left, {len(ok)} feasible now)")
-            return ph, reasons
-        reasons.append(f"{ph}: {len(remaining)} goals left but none feasible with roster - skipping")
-    if not account.remaining_goals():
-        return "DONE", reasons + [PHASES["DONE"]]
-    reasons.append("no phase has feasible goals - growing roster via XP")
-    return "FARM", reasons
+        if c.first and (c.map, c.mode) not in seen and c.tier != "LAST":
+            seen.add((c.map, c.mode))
+            count[c.tier] += 1
+    reasons.append(f"{top}: {PHASES[top]} (open medals by tier: "
+                   + ", ".join(f"{t}={count[t]}" for t in ("H", "HS", "HF", "B", "M", "E")) + ")")
+    if top in ("B", "M", "E", "FARM", "LAST"):
+        hard = [c for c in cands if c.first and c.mode in HARD_FAMILY]
+        if hard:
+            b = max(hard, key=lambda c: c.p)
+            reasons.append(f"no Hard-family medal reaches p>={cfg.hard_fallback_p:.2f} "
+                           f"(best {b.map}/{b.mode}/{b.s.id} p={b.p:.2f}) - "
+                           f"playing {top} for XP/unlocks until the roster is ready")
+        elif any(c.mode in HARD_FAMILY for c in cands):
+            reasons.append("every open Hard-family medal is earned")
+        else:
+            reasons.append("no strategy in the roster can play a Hard-family mode yet")
+    if top == "HF":
+        reasons.append(f"no Hard-family medal clears its threshold; best is p={cands[0].p:.2f} "
+                       f">= fallback {cfg.hard_fallback_p:.2f}")
+    return reasons
 
 
 def rank_games(account: AccountState, available_strategies: Iterable[Any] | None = None, *,
                config: PlannerConfig | None = None, playable_maps: Iterable[str] | None = None
                ) -> tuple[str, list[str], list[_Cand]]:
-    """All scored candidates, best first, plus the phase and phase reasons."""
+    """All scored candidates, best first, plus the phase (top tier) and reasons."""
     cfg = config or DEFAULT_CONFIG
     strategies = _normalise_strategies(available_strategies)
     pm = {canonical_map(m) for m in playable_maps} if playable_maps is not None else None
     cands = _candidates(account, strategies, cfg, pm)
-    phase, preasons = _determine_phase(account, cands, cfg)
-    goals = _phase_goals(phase, account)
     uniq = account.unique_map_wins()
     thresholds = sorted(v for v in CATEGORY_UNLOCK_WINS.values() if v > 0)
-    farming = phase == "P2" and _farm_needed(account, cfg)
+    farming = _farm_needed(account, cfg)
 
     for c in cands:
         bonus = 0.0
         if c.first:
-            in_goal = (c.map, c.mode) in goals
-            bonus += cfg.goal_medal_value if in_goal else cfg.off_goal_medal_value
-            c.notes.append("goal medal" if in_goal else "new medal")
+            bonus += cfg.goal_medal_value
             nu = len(mode_unlocks(c.mode))
             if nu:
                 bonus += cfg.unlock_value * nu
@@ -1000,23 +1057,26 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
                 c.notes.append("reliable Hard medal")
         vw = c.value_win + bonus
         vf = c.value_fail - cfg.loss_penalty
-        if farming and c.map in FARM_MAPS and c.mode == "deflation":
-            vw = c.value_win * cfg.farm_bonus + bonus
+        if farming and not c.first and c.map in FARM_MAPS and c.mode == "deflation":
+            vw = c.value_win * cfg.farm_bonus
             c.notes.append("designated farm")
         minutes = c.p * c.minutes + (1 - c.p) * (c.fail_minutes or c.minutes * cfg.fail_time_frac)
         score = (c.p * vw + (1 - c.p) * vf) / minutes
         score *= 1.0 + cfg.explore_bonus / math.sqrt(c.n + 1)
-        # feasibility gate: below threshold = last resort only (ranked by p)
         thr = p_threshold(c.mode, c.first, cfg)
         c.ok = c.p >= thr
+        c.tier = _tier(c, cfg)
         if not c.ok:
-            score *= 0.01  # shown in logs only; the sort below uses p
             c.notes.append(f"below p threshold {thr}")
+        if c.learned:
+            c.notes.append("learned track")
         c.score = score
-    # Never prefer a candidate below its p threshold; if nothing clears its
-    # threshold, the safest (highest p) game goes first.
-    cands.sort(key=lambda c: (c.ok, c.score if c.ok else c.p), reverse=True)
-    return phase, preasons, cands
+    cands.sort(key=_sort_key, reverse=True)
+    if not account.remaining_goals():
+        return "DONE", [PHASES["DONE"]], cands
+    if not cands:
+        return "LAST", ["no playable candidate"], cands
+    return cands[0].tier, _phase_reasons(account, cands, cfg), cands
 
 
 def next_game(account: AccountState, available_strategies: Iterable[Any] | None = None, *,

@@ -5,6 +5,7 @@ import time
 from . import layout as L
 from . import towers as T
 from .account import AccountState
+from .achievements import Achievements
 from .choices import tower_chooser
 from .game import Game
 from .inputs import Aborted, FocusLost, Input
@@ -27,6 +28,7 @@ MODE_BUTTON_TEXT = {
 
 
 ROOT_DIR = __import__("pathlib").Path(__file__).resolve().parents[1]
+ACH_EVERY = 2 * 3600                   # seconds between achievement scans
 PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main menu
 STATE_FILE = ROOT_DIR / "logs" / "state.txt"
 
@@ -113,6 +115,7 @@ class Bot:
         self._level_synced = False
         self.skip_known = None
         self._roster_done = False
+        self._ach_at = 0.0  # scan achievements at session start, then every ACH_EVERY
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -359,6 +362,15 @@ class Bot:
                     time.sleep(5)
                     continue
                 self.read_level()
+                if time.time() - self._ach_at > ACH_EVERY:
+                    self._ach_at = time.time()
+                    try:  # claim finished achievements' rewards, refresh progress
+                        Achievements(self.s, self.inp, self.menus).scan(collect=True)
+                    except (FocusLost, Aborted):
+                        raise
+                    except Exception:
+                        log.exception("achievements scan failed")
+                    self.to_main_menu()
                 plan = self.next_plan()
                 if plan is None:
                     log.error("planner has nothing to play")

@@ -18,6 +18,9 @@ from btd6bot.account import (  # noqa: E402
     level_for_xp, rounds_xp, xp_for_level,
 )
 
+# Tests must not depend on which tracks data/maps happens to hold right now.
+P.DEFAULT_CONFIG.maps_dir = None
+
 
 # --------------------------------------------------------------- simulation
 
@@ -61,6 +64,7 @@ def simulate(n_games: int, seed: int = 1, verbose_first: int = 40,
              idle_stop: int = 150) -> tuple[AccountState, list[str]]:
     rng = random.Random(seed)
     acc = AccountState()
+    acc.HISTORY_LIMIT = 10 ** 6  # keep the whole run for the order checks
     strategies = {s.id: s for s in P.EXAMPLE_STRATEGIES}
     log: list[str] = []
     phase = None
@@ -95,7 +99,7 @@ def simulate(n_games: int, seed: int = 1, verbose_first: int = 40,
         if not acc.remaining_goals():
             log.append(f"== ALL MEDALS after {g + 1} games, ~{minutes_total / 60:.0f} h, L{acc.player_level}")
             break
-        idle = idle + 1 if plan.phase in ("FARM", "DONE") and not (won and plan.first_time) else 0
+        idle = idle + 1 if plan.phase in ("FARM", "LAST", "DONE") and not (won and plan.first_time) else 0
         if idle >= idle_stop:
             log.append(f"== nothing feasible left for {idle} games: stopping after {g + 1} games")
             break
@@ -220,13 +224,24 @@ def test_fresh_account_first_40():
     assert acc.unique_map_wins() >= 5
 
 
+def _medal_order(acc: AccountState) -> list[tuple[str, str]]:
+    """(map, mode) of every medal in the order the simulation earned them."""
+    got: set[tuple[str, str]] = set()
+    order = []
+    for h in acc.history:
+        k = (h["map"], h["mode"])
+        if h["won"] and k not in got:
+            got.add(k)
+            order.append(k)
+    return order
+
+
 def test_long_run_reaches_everything():
-    """Regression for the old deadlock: strategies whose upgrades were locked
-    were unplayable, so their towers never earned the XP to unlock them and
-    the run stalled in FARM on dart_quincy. Now missing upgrades only lower p
-    and every medal the roster can win confidently gets won."""
+    """Regression for the old deadlock (strategies with locked upgrades were
+    unplayable, so their towers never earned XP and the run stalled), plus the
+    owner's order: Hard first, Hard sub-modes up to CHIMPS, Medium/Easy last."""
     t0 = time.time()
-    acc, log = simulate(4000, seed=11, verbose_first=0)
+    acc, log = simulate(6000, seed=11, verbose_first=0)
     print("\n".join(l for l in log if l.startswith("==")))
     print(f"(long sim took {time.time() - t0:.1f}s)")
     all_maps = [m for m in MAPS if m not in EXCLUDED_MAPS]
@@ -236,17 +251,31 @@ def test_long_run_reaches_everything():
     assert acc.unique_map_wins() >= 0.85 * len(all_maps), acc.unique_map_wins()
     hard = sum(1 for m in all_maps if acc.has_medal(m, "hard"))
     assert hard >= 25, hard
-    # nothing confident is left behind: every unearned non-CHIMPS medal that
-    # is open now is below its p threshold for every strategy
+    # nothing confident is left behind: every unearned medal that is open now
+    # is below its p threshold for every strategy
     _, _, cands = P.rank_games(acc, P.EXAMPLE_STRATEGIES)
     left = set(acc.remaining_goals())
     feasible = [(c.map, c.mode, c.s.id, round(c.p, 2)) for c in cands
-                if c.first and c.ok and (c.map, c.mode) in left and c.mode != "chimps"]
+                if c.first and c.ok and (c.map, c.mode) in left]
     assert not feasible, feasible[:10]
     # losses stay rare (reality = the planner's prior in this simulation)
     games = sum(st["wins"] + st["losses"] for st in acc.strategy_stats.values())
     losses = sum(st["losses"] for st in acc.strategy_stats.values())
     assert losses / games < 0.2, (losses, games)
+    # progression order: CHIMPS is beaten before most Easy-family medals, and
+    # Hard sub-mode medals come before most Medium-family medals
+    order = _medal_order(acc)
+    idx = {k: i for i, k in enumerate(order)}
+    chimps = [i for k, i in idx.items() if k[1] == "chimps"]
+    assert chimps, "no CHIMPS medal reached"
+    easy = sorted(i for k, i in idx.items() if k[1] in P.EASY_FAMILY)
+    medium = sorted(i for k, i in idx.items() if k[1] in P.MEDIUM_FAMILY)
+    sub = sorted(i for k, i in idx.items() if k[1] in P.HARD_FAMILY and k[1] != "hard")
+    easy_before = sum(1 for i in easy if i < min(chimps))
+    assert easy_before < 0.5 * len(easy), (easy_before, len(easy))
+    assert sub and medium and sorted(sub)[len(sub) // 2] < sorted(medium)[len(medium) // 2]
+    hard_idx = sorted(i for k, i in idx.items() if k[1] == "hard")
+    assert hard_idx[len(hard_idx) // 2] < easy[len(easy) // 2]
 
 
 # ------------------------------------------------------------ durations
@@ -338,20 +367,42 @@ def _hard_ready_account() -> AccountState:
 def test_hard_medals_preferred_when_reliable():
     acc = _hard_ready_account()
     plan = P.next_game(acc)
-    assert plan.phase == "PH", plan.reasons
+    assert plan.phase == "H", plan.reasons
     assert plan.mode_key == "hard" and plan.first_time, plan.reason
     assert plan.p_win >= P.DEFAULT_CONFIG.hard_ready_p, plan
-    # keeps going for Hard medals as long as reliable ones are open
+    # keeps going for Hard standard medals as long as reliable ones are open
     for _ in range(8):
         plan = P.next_game(acc)
         assert plan.mode_key == "hard", plan.reason
         acc.record_result(plan.map, "hard", plan.strategy_id, True, minutes=17.0)
-    # every reliable Hard medal outranks every non-Hard candidate
+    # every Hard tier candidate ranks above every Medium/Easy one
     _, _, cands = P.rank_games(acc)
-    best_other = max(c.score for c in cands if c.ok and c.mode != "hard")
-    reliable = [c for c in cands if c.ok and c.mode == "hard" and c.first
-                and c.p >= P.DEFAULT_CONFIG.hard_ready_p]
-    assert reliable and all(c.score > best_other for c in reliable)
+    pos = {id(c): i for i, c in enumerate(cands)}
+    hard = [pos[id(c)] for c in cands if c.tier == "H"]
+    other = [pos[id(c)] for c in cands if c.tier in ("M", "E", "FARM")]
+    assert hard and other and max(hard) < min(other)
+
+
+def test_hard_submode_chain_after_hard():
+    """Once Hard is beaten on a map, its sub-modes outrank Medium/Easy."""
+    acc = _hard_ready_account()
+    beginner = [m for m in MAPS if MAPS[m] == "beginner"]
+    for m in beginner:
+        acc.record_result(m, "hard", "primary_moab", True, minutes=17.0)
+    plan = P.next_game(acc)
+    assert plan.phase in ("H", "HS"), plan.reasons
+    assert plan.mode_key in P.HARD_FAMILY, plan.reason
+    # walk the ABR chain on Monkey Meadow: each step unlocks the next
+    for mode in ("abr", "impoppable"):
+        acc.record_result("Monkey Meadow", mode, "late_game_chimps", True, minutes=20.0)
+    assert acc.mode_unlocked("Monkey Meadow", "chimps")
+    _, _, cands = P.rank_games(acc)
+    ch = [c for c in cands if c.map == "Monkey Meadow" and c.mode == "chimps"]
+    assert ch and max(c.p for c in ch) >= P.DEFAULT_CONFIG.min_p_chimps
+    assert all(c.tier == "HS" for c in ch if c.ok)
+    pos = {id(c): i for i, c in enumerate(cands)}
+    best_ch = min(pos[id(c)] for c in ch if c.ok)
+    assert all(pos[id(c)] > best_ch for c in cands if c.tier in ("M", "E"))
 
 
 def test_hard_losses_stop_hard_attempts():
@@ -363,8 +414,86 @@ def test_hard_losses_stop_hard_attempts():
                 for _ in range(3):
                     acc.record_result(m, "hard", s.id, False, minutes=10.0)
     plan = P.next_game(acc)
-    assert plan.mode_key != "hard" or plan.p_win >= P.DEFAULT_CONFIG.hard_ready_p, plan
-    assert plan.p_win >= P.p_threshold(plan.mode_key, plan.first_time), plan
+    assert plan.mode_key != "hard" or plan.p_win >= P.DEFAULT_CONFIG.hard_fallback_p, plan
+    ok = plan.p_win >= P.p_threshold(plan.mode_key, plan.first_time)
+    assert ok or (plan.phase == "HF" and plan.p_win >= P.DEFAULT_CONFIG.hard_fallback_p), plan
+
+
+def _runner_like_roster(acc: AccountState) -> list[P.StrategySpec]:
+    """Shaped like runner.planner_specs output for the YAML roster: full
+    upgrade requirements, x0.85 when the hero is not owned, untested Hard+
+    priors capped at 0.85."""
+    def spec(id, towers, base, hero, owned):
+        f = 1.0 if owned else 0.85
+        b = {m: min(v * f, 0.85) if m not in ("easy", "primary_only", "medium") else v * f
+             for m, v in base.items()}
+        return P.StrategySpec(id=id, towers=towers, modes=frozenset(b), base_success=b,
+                              heroes=(hero,))
+    have = acc.unlocked_heroes
+    return [
+        spec("starter_tack_dart", {"tack": (0, 0, 0), "dart": (0, 0, 0)},
+             {"easy": 0.95, "primary_only": 0.85, "medium": 0.7, "hard": 0.35}, "quincy", True),
+        spec("primary_core", {"tack": (3, 0, 0), "boomerang": (2, 0, 2), "bomb": (0, 3, 0),
+                              "dart": (0, 0, 2)},
+             {"easy": 0.98, "primary_only": 0.95, "medium": 0.93, "hard": 0.8, "abr": 0.7},
+             "quincy", True),
+        spec("primary_glaive_dart", {"boomerang": (3, 0, 2), "dart": (0, 0, 2)},
+             {"easy": 0.97, "primary_only": 0.95, "medium": 0.9}, "quincy", True),
+        spec("military_heli_sniper", {"heli": (2, 0, 2), "sniper": (2, 2, 0)},
+             {"easy": 0.98, "medium": 0.95, "military_only": 0.92, "hard": 0.85, "abr": 0.8,
+              "reverse": 0.92}, "striker_jones", "striker_jones" in have),
+        spec("hard_ninja_alch_sniper", {"ninja": (4, 0, 4), "alchemist": (4, 2, 0),
+                                        "sniper": (4, 2, 0)},
+             {"medium": 0.92, "hard": 0.82}, "obyn", "obyn" in have),
+    ]
+
+
+def test_fresh_ish_account_plans_hard():
+    """Level ~20, mid roster, Easy medals on six beginner maps: play Hard next
+    (on a map whose track is already learned), not more Easy."""
+    acc = AccountState()
+    acc.apply_level(20)
+    acc.pending_tower_choices.clear()
+    acc.unlocked_towers = {"dart", "boomerang", "bomb", "tack", "ice", "glue", "sniper", "sub",
+                           "buccaneer", "mortar", "ace", "heli", "alchemist", "druid", "ninja",
+                           "wizard"}
+    acc.unlocked_upgrades = {"tack": [4, 0, 2], "dart": [0, 0, 4], "sniper": [3, 2, 0],
+                             "heli": [1, 0, 1], "boomerang": [2, 0, 2], "glue": [2, 0, 1],
+                             "bomb": [0, 1, 1]}
+    learned = ["Monkey Meadow", "In The Loop", "Tree Stump", "Town Center", "Logs", "Alpine Run"]
+    for m in learned:
+        acc.record_result(m, "easy", "primary_core", True, minutes=7.5)
+    plan = P.next_game(acc, _runner_like_roster(acc))
+    assert plan.mode_key in P.HARD_FAMILY, (plan.reason, plan.reasons)
+    assert plan.phase in ("H", "HS", "HF"), plan.reasons
+    assert plan.map in learned, plan.reason
+    assert plan.p_win >= P.DEFAULT_CONFIG.hard_fallback_p, plan
+
+
+def test_learned_tracks_first():
+    """data/maps/<slug>.npz marks a learned track: no scan time, and Hard
+    medals there go first even though unseen maps carry a unique-win bonus."""
+    acc = _hard_ready_account()
+    with tempfile.TemporaryDirectory() as d:
+        for m in ("Cubism", "Hedge"):
+            Path(d, P.map_slug(m) + ".npz").write_bytes(b"")
+        cfg = P.PlannerConfig(maps_dir=d)
+        assert P.expected_minutes(acc, P.EXAMPLE_STRATEGIES[2], "Cubism", "hard", cfg) < \
+            P.expected_minutes(acc, P.EXAMPLE_STRATEGIES[2], "Carved", "hard", cfg) - 2.0
+        _, _, cands = P.rank_games(acc, config=cfg)
+        top = cands[0]
+        assert top.tier == "H" and top.learned, (top.map, top.notes)
+        played = {"Monkey Meadow", "Logs", "Tree Stump", "Town Center", "In The Loop"}
+        assert top.map in played | {"Cubism", "Hedge"}, top.map
+
+
+def test_weak_roster_falls_back_to_easy_with_reason():
+    """Nothing Hard >= 0.7: Easy/Medium medals as XP/unlock games, logged."""
+    acc = AccountState()
+    phase, reasons, cands = P.rank_games(acc)
+    assert phase in ("M", "E"), (phase, reasons)
+    assert cands[0].mode not in P.HARD_FAMILY
+    assert any("no Hard-family medal reaches" in r or "no strategy" in r for r in reasons), reasons
 
 
 def test_never_prefers_low_p():
@@ -375,11 +504,12 @@ def test_never_prefers_low_p():
     assert plan.strategy_id == "good" and plan.p_win >= P.DEFAULT_CONFIG.min_p_new, plan
     _, _, cands = P.rank_games(acc, [weak, good])
     seen_bad = False
-    for c in cands:  # every confident candidate ranks above every gated one
-        if not c.ok:
+    for c in cands:  # every allowed candidate ranks above every last-resort one
+        if c.tier == "LAST":
             seen_bad = True
-        assert not (seen_bad and c.ok)
+        assert not (seen_bad and c.tier != "LAST")
         assert c.ok == (c.p >= P.p_threshold(c.mode, c.first))
+        assert c.ok or c.tier in ("HF", "LAST")
     # nothing confident at all: the safest game goes first
     plan = P.next_game(acc, [weak])
     _, _, cands = P.rank_games(acc, [weak])
@@ -419,7 +549,9 @@ if __name__ == "__main__":
              "test_learning_avoids_failing_strategy", "test_save_load_roundtrip",
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
-             "test_hard_medals_preferred_when_reliable", "test_hard_losses_stop_hard_attempts",
+             "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
+             "test_hard_losses_stop_hard_attempts", "test_fresh_ish_account_plans_hard",
+             "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_long_run_reaches_everything"]
     for name in order:

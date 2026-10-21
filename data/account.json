@@ -1,8 +1,8 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T18:14:26",
- "player_level": 19,
- "xp": 86333.0,
+ "saved_at": "2026-10-21T18:44:05",
+ "player_level": 22,
+ "xp": 127000.0,
  "monkey_money": 275,
  "unlocked_towers": [
   "alchemist",
@@ -11,18 +11,22 @@
   "buccaneer",
   "dart",
   "druid",
+  "engineer",
   "glue",
   "ice",
   "mortar",
   "ninja",
   "sniper",
   "sub",
+  "super",
   "tack",
+  "village",
   "wizard"
  ],
  "unlocked_heroes": [
   "gwendolin",
-  "quincy"
+  "quincy",
+  "striker_jones"
  ],
  "tower_xp": {},
  "unlocked_upgrades": {
@@ -34,7 +38,7 @@
   "dart": [
    0,
    2,
-   3
+   4
   ],
   "sniper": [
    3,
@@ -76,6 +80,21 @@
   },
   "Town Center": {
    "easy": true
+  },
+  "Logs": {
+   "easy": true
+  },
+  "Alpine Run": {
+   "easy": true
+  },
+  "Park Path": {
+   "easy": true
+  },
+  "Bloonarius Prime": {},
+  "Cubism": {
+   "hard": true,
+   "impoppable": true,
+   "easy": true
   }
  },
  "map_stats": {
@@ -114,6 +133,39 @@
     "easy": 7.0
    },
    "observed_rewards": {}
+  },
+  "Logs": {
+   "wins": 1,
+   "losses": 0,
+   "best_round": 40,
+   "avg_minutes": {
+    "easy": 5.62
+   },
+   "observed_rewards": {}
+  },
+  "Alpine Run": {
+   "wins": 1,
+   "losses": 0,
+   "best_round": 40,
+   "avg_minutes": {
+    "easy": 7.04
+   },
+   "observed_rewards": {},
+   "minutes_n": {
+    "easy": 1
+   }
+  },
+  "Cubism": {
+   "wins": 1,
+   "losses": 0,
+   "best_round": 40,
+   "avg_minutes": {
+    "easy": 5.5
+   },
+   "observed_rewards": {},
+   "minutes_n": {
+    "easy": 1
+   }
   }
  },
  "strategy_stats": {
@@ -144,12 +196,35 @@
    "games": 1,
    "best_round": 40,
    "avg_minutes": 7.0
+  },
+  "Logs|easy|starter_tack_dart": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": 5.62
+  },
+  "Alpine Run|easy|starter_tack_dart": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": 7.04,
+   "minutes_n": 1
+  },
+  "Cubism|easy|starter_tack_dart": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": 5.5,
+   "minutes_n": 1
   }
  },
  "pending_tower_choices": [],
  "map_category_overrides": {},
  "observed_upgrade_costs": {},
- "games_played": 4,
+ "games_played": 7,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -196,6 +271,42 @@
    "won": true,
    "round": 40,
    "minutes": 6.99855463107427,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T18:22:12",
+   "map": "Logs",
+   "mode": "easy",
+   "strategy": "starter_tack_dart",
+   "hero": "quincy",
+   "won": true,
+   "round": 40,
+   "minutes": 5.618220531940461,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T18:36:10",
+   "map": "Alpine Run",
+   "mode": "easy",
+   "strategy": "starter_tack_dart",
+   "hero": "quincy",
+   "won": true,
+   "round": 40,
+   "minutes": 7.043049045403799,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T18:44:05",
+   "map": "Cubism",
+   "mode": "easy",
+   "strategy": "starter_tack_dart",
+   "hero": "quincy",
+   "won": true,
+   "round": 40,
+   "minutes": 5.500987319151561,
    "xp": null,
    "mm": null
   }

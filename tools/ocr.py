@@ -4,6 +4,8 @@ Usage: python tools/ocr.py [x0 y0 x1 y1]   (fractions; default whole screen)
 """
 import sys
 import time
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
