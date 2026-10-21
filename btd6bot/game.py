@@ -177,11 +177,13 @@ class Game:
         if before is None or before < cost:
             self.fail_reason = "cash"
             return None
+        self.cancel_hold()
+        baseline = self.fresh()  # the spot without a held tower, to compare against
         if not self.hold(kind):
             log.info("could not pick up %s (locked or unaffordable)", kind)
             self.fail_reason = "hold"
             return None
-        if check_valid and not self.probe(fx, fy):
+        if check_valid and not self.probe(fx, fy, baseline):
             self.cancel_hold()
             log.info("spot %.3f,%.3f invalid for %s", fx, fy, kind)
             self.fail_reason = "spot"

@@ -43,6 +43,7 @@ class Hud:
         self.layout = layout
         self.last_round = None
         self.total_rounds = None
+        self._cash_reads = []
 
     def read(self, frame):
         return {
@@ -55,9 +56,18 @@ class Hud:
         return parse_int(rec_text(crop(frame, _shift(self.layout["lives"], dx)))[0])
 
     def cash(self, frame, dx=0.0):
-        """dx: horizontal shift of the HUD (an upgrade panel on the left pushes it right)."""
+        """Cash, as the median of the last three reads.
+
+        OCR occasionally inserts a phantom digit when scenery scrolls behind the
+        number ('$137' -> '$1237'); a single outlier never survives the median.
+        dx: horizontal shift of the HUD (an upgrade panel on the left pushes it right).
+        """
         text, _ = rec_text(crop(frame, _shift(self.layout["cash"], dx)))
-        return parse_int(text)
+        value = parse_int(text)
+        if value is None:
+            return None
+        self._cash_reads = (self._cash_reads + [value])[-3:]
+        return sorted(self._cash_reads)[(len(self._cash_reads) - 1) // 2]  # lower median
 
     def round(self, frame, shifted=None):
         regions = [self.layout["round"], self.layout["round_shifted"]]
