@@ -53,8 +53,13 @@ def main():
         for line in (plan.reasons if plan else []):
             print("  ", line)
         return
+    from btd6bot.inputs import Aborted
     from btd6bot.runner import Bot
-    Bot().run(hours=args.hours)
+    try:
+        Bot().run(hours=args.hours)
+    except Aborted:
+        logging.getLogger("bot").warning("stopped with F8")
+        sys.exit(3)  # run_forever.ps1 treats 3 as "user stop"
 
 
 if __name__ == "__main__":

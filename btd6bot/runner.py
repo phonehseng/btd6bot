@@ -12,8 +12,8 @@ from .maplearn import MapModel
 from .match import Match
 from .menus import Menus
 from .scanner import scan_placement
-from .screen import Screen
-from .strategy import Executor, load_all, usable
+from .screen import GameNotFound, Screen
+from .strategy import Executor, hero_for, load_all, usable
 from .vision import norm
 
 log = logging.getLogger("runner")
@@ -44,7 +44,7 @@ def planner_specs(strats, account):
             "towers": reqs,
             "modes": modes,
             "base_success": {m: v for m, v in (p.get("base_success") or {}).items() if m in modes},
-            "heroes": [s["hero"]] if s.get("hero") else [],
+            "heroes": [hero_for(s, account)],
             "maps": p.get("maps"), "excluded_maps": p.get("excluded_maps"),
             "categories": p.get("categories"), "minutes": p.get("minutes"),
         }))
@@ -163,8 +163,10 @@ class Bot:
 
     def start(self, plan):
         if not self.open_map(plan.map):
-            raise RuntimeError(f"could not open map {plan.map}")
-        if not self.menus.click_word(plan.difficulty, dy=-0.09):
+            log.error("could not open map %s", plan.map)
+            return False
+        self.menus.read()
+        if not self.menus.click_word(plan.difficulty, dy=-0.09, region=(0, 0.3, 1, 0.7)):
             return False
         time.sleep(1.0)
         if self.menus.identify() != "mode_select":
@@ -188,7 +190,11 @@ class Bot:
         diff = {"easy": "easy", "medium": "medium", "hard": "hard"}.get(plan.difficulty, "hard")
         if plan.mode_key in ("impoppable", "chimps"):
             diff = "impoppable"
-        hero = plan.hero or strat.get("hero") or "quincy"
+        from .strategy import hero_for
+        hero = hero_for(strat, self.account)
+        if hero != self.account_selected_hero():
+            self.select_hero(hero)
+        hero = self.account_selected_hero()  # what is actually equipped
         g = Game(self.s, self.inp, self.lay, difficulty=diff, hero=hero)
         self.menus.g = g
         from .strategy import MODE_TOWER_FILTER
@@ -255,12 +261,48 @@ class Bot:
                 self.failures = 0
             except Aborted:
                 raise
+            except GameNotFound:
+                self.relaunch_game()
             except FocusLost as e:
                 log.warning("%s - waiting for the game to be in front again", e)
                 time.sleep(10)
             except Exception:
                 log.exception("game loop error - recovering to main menu")
                 self.failures += 1
+
+    def account_selected_hero(self):
+        return getattr(self.account, "selected_hero", None) or "quincy"
+
+    def select_hero(self, hero):
+        """Hero choice happens on the map/difficulty screen ('Change Hero'),
+        which we pass through right before the game. Until the hero menu has
+        been calibrated live this only records the wish and keeps the current
+        hero, so the game always matches what Game() is told."""
+        log.info("strategy prefers %s; hero switching not calibrated yet - keeping %s",
+                 hero, self.account_selected_hero())
+
+    def relaunch_game(self, wait=90):
+        """BTD6 closed or crashed: start it again through Steam and reattach."""
+        import os
+        log.error("BTD6 window not found - relaunching through Steam")
+        os.startfile("steam://rungameid/960090")
+        t = time.time()
+        while time.time() - t < wait:
+            time.sleep(5)
+            try:
+                self.s.refresh()
+                time.sleep(20)  # let the title screen finish loading
+                self.s.refresh()
+                log.info("BTD6 is back (%dx%d)", self.s.width, self.s.height)
+                for _ in range(6):  # title screen: click through to the main menu
+                    if self.menus.identify() == "main_menu":
+                        break
+                    self.inp.click(0.5, 0.6)
+                    time.sleep(3)
+                return True
+            except GameNotFound:
+                continue
+        return False
 
     def next_plan(self):
         """Best plan whose (map, mode) has not failed to start this session."""

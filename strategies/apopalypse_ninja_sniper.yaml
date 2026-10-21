@@ -1,0 +1,63 @@
+# Apopalypse (Medium prices, rounds never pause, random waves up to R100).
+# Nothing can be bought "between rounds", so every purchase is front-loaded and
+# cheap-first: Ninja (camo) + Alchemist (lead) immediately, Sniper 2-2-0 (map
+# wide, camo, lead, ceramics) by ~R15, Flash Bomb ninja for the first MOABs.
+# Sniper 4-2-0 Maim MOAB stuns BFBs/ZOMGs/DDTs (it has camo + lead), Sticky
+# Bomb + exit 2-0-4 Spike Factory cover DDTs, and Sniper 5-2-0 Cripple MOAB
+# (tier 5, $32k) is the BAD answer. No farms: random rush waves punish greed.
+id: apopalypse_ninja_sniper
+hero: obyn
+modes: [apopalypse]
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], sniper: [5, 2, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
+  base_success: {apopalypse: 0.65}
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
+  - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: n1, to: 2-0-2}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong}
+  - {do: upgrade, id: s1, to: 2-2-0}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: s1, to: 4-2-0}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong}
+  - {do: upgrade, id: s2, to: 4-2-0}
+  - {do: place, id: su1, kind: super, role: support, near: [v1], near_radius: 7}
+  - {do: upgrade, id: su1, to: 3-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: upgrade, id: s1, to: 5-2-0}
+fill:
+  - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 5}
+  - {do: upgrade, kind: ninja, to: 4-0-2}
+  - {do: place, kind: sniper, role: dps, target: strong, max: 4}
+  - {do: upgrade, kind: sniper, to: 4-2-0}
+  - {do: place, kind: super, role: support, near: [v1], near_radius: 8, max: 2}
+  - {do: upgrade, kind: super, to: 3-0-2}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: sniper, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-2-0}]
+  ddt:
+    - {do: upgrade, id: n2, to: 2-0-4}
+    - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
+  bad: [{do: upgrade, id: s1, to: 5-2-0}]

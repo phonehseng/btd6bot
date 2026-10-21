@@ -49,7 +49,9 @@ panic:
 # Backups (bought before the round if the plan is behind). Upgrade-first then
 # place: an existing tower is upgraded, a missing one gets placed.
 answers:
-  lead: [{do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}]
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
   moab: [{do: upgrade, id: n2, to: 2-0-3}]
   bfb: [{do: upgrade, id: n2, to: 2-0-4}]

@@ -1,0 +1,47 @@
+# Primary Only / Easy / Medium alternative to primary_core with fewer tower
+# types: Boomerangs are long range and forgiving to place. 2-0-2 = Glaives +
+# Red Hot 'Rangs (lead), 3-0-2 Glaive Ricochet bounces through whole waves,
+# 4-0-2 M.O.A.R. Glaives handles MOAB/BFB. A Dart 0-2-3 -> 0-2-4 Sharp
+# Shooter brings camo and single-target, a 0-2-3 Glue (Splatter + MOAB Glue)
+# slows blimps. 5-0-2 Glaive Lord only as fill (tier 5).
+id: primary_glaive_dart
+hero: quincy
+modes: [easy, primary_only, medium]
+planner:
+  towers: {boomerang: [4, 0, 2], dart: [0, 2, 4], glue: [0, 2, 3]}
+  base_success: {easy: 0.97, primary_only: 0.95, medium: 0.9}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: b1, kind: boomerang, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: d1, to: 0-0-2}
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: place, id: b2, kind: boomerang, role: dps, segment: [0.3, 1.0]}
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 3-0-2}
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: d1, to: 0-2-3}
+  - {do: upgrade, id: b1, to: 4-0-2}
+  - {do: place, id: g1, kind: glue, role: dps, segment: [0.2, 0.8]}
+  - {do: upgrade, id: g1, to: 0-2-3}
+  - {do: upgrade, id: b2, to: 4-0-2}
+  - {do: upgrade, id: d1, to: 0-2-4}
+  - {do: place, id: b3, kind: boomerang, role: exit}
+  - {do: upgrade, id: b3, to: 4-0-2}
+fill:
+  - {do: place, kind: boomerang, role: dps, max: 6}
+  - {do: upgrade, kind: boomerang, to: 4-0-2}
+  - {do: place, kind: dart, role: dps, max: 3}
+  - {do: upgrade, kind: dart, to: 0-2-4}
+  - {do: upgrade, kind: boomerang, to: 5-0-2}
+panic:
+  - {do: place, kind: boomerang, role: exit}
+  - {do: place, kind: dart, role: exit}
+answers:
+  camo: [{do: upgrade, id: d1, to: 0-0-2}, {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.6]}]
+  lead: [{do: upgrade, id: b1, to: 2-0-2}]
+  ceramic: [{do: upgrade, id: b1, to: 3-0-2}]
+  moab: [{do: upgrade, id: b1, to: 4-0-2}]
+  bfb: [{do: upgrade, id: b2, to: 4-0-2}]
+  rush: [{do: upgrade, id: b1, to: 3-0-2}]

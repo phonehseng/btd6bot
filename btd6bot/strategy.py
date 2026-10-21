@@ -43,12 +43,13 @@ THREATS = [
 ]
 # What counts as an answer: (tower, path, min tier) - any one is enough.
 ANSWERS = {
-    "camo": [("dart", 3, 2), ("sniper", 2, 2), ("ninja", 0, 0), ("heli", 0, 0), ("wizard", 3, 3),
-             ("sub", 3, 0), ("village", 2, 2), ("druid", 0, 0), ("mortar", 0, 0), ("ace", 0, 0),
-             ("engineer", 3, 3), ("spike", 0, 0), ("alchemist", 0, 0)],
+    # only towers/tiers that really detect camo (Night Vision, Enhanced Eyesight,
+    # Monkey Sense, Radar Scanner, Submerge and Support; ninjas and spikes innately)
+    "camo": [("dart", 3, 2), ("sniper", 2, 2), ("ninja", 0, 0), ("wizard", 3, 2),
+             ("sub", 1, 3), ("village", 2, 2), ("spike", 0, 0)],
     "lead": [("tack", 1, 3), ("bomb", 0, 0), ("boomerang", 3, 2), ("sniper", 1, 1), ("alchemist", 1, 1),
-             ("wizard", 2, 2), ("heli", 0, 0), ("mortar", 0, 0), ("ace", 0, 0), ("glue", 1, 1),
-             ("dart", 1, 4), ("ninja", 3, 2), ("spike", 0, 0), ("super", 1, 1)],
+             ("wizard", 2, 1), ("mortar", 0, 0), ("dart", 1, 4), ("ninja", 3, 3), ("spike", 1, 2),
+             ("super", 1, 2)],
     "ceramic": [("tack", 1, 3), ("boomerang", 1, 3), ("bomb", 2, 2), ("sniper", 1, 2), ("dart", 3, 3),
                 ("heli", 1, 2), ("ninja", 1, 3), ("super", 0, 0), ("spike", 0, 0), ("druid", 1, 3)],
     "moab": [("bomb", 2, 3), ("boomerang", 1, 4), ("tack", 1, 4), ("sniper", 1, 3), ("heli", 1, 3),
@@ -60,7 +61,7 @@ ANSWERS = {
              ("dartling", 0, 0), ("boomerang", 1, 3), ("ice", 3, 3)],
     "zomg": [("bomb", 2, 4), ("sniper", 1, 4), ("super", 1, 3), ("heli", 1, 4), ("spike", 3, 4),
              ("boomerang", 1, 5), ("druid", 2, 4), ("ninja", 3, 4)],
-    "ddt": [("sniper", 2, 4), ("bomb", 2, 4), ("heli", 1, 4), ("super", 1, 3), ("spike", 3, 4),
+    "ddt": [("sniper", 1, 4), ("bomb", 2, 4), ("heli", 1, 4), ("super", 1, 3), ("spike", 3, 4),
             ("ninja", 3, 4), ("boomerang", 1, 4), ("dart", 3, 4)],
     "bad": [("super", 1, 4), ("bomb", 2, 5), ("sniper", 1, 5), ("ninja", 3, 5), ("spike", 3, 5)],
 }
@@ -83,7 +84,7 @@ MODE_RULES = {
     "double_hp":     {"start_round": 3, "end_round": 80, "lives": 100, "tough_moabs": True},
     "half_cash":     {"start_round": 3, "end_round": 80, "lives": 100, "half_cash": True},
     "abr":           {"start_round": 3, "end_round": 80, "lives": 100,
-                      "threat_shift": {"ddt": 88}},
+                      "threat_shift": {"camo": 5, "lead": 10, "bfb": 54, "zomg": 79, "ddt": 88}},
     "impoppable":    {"start_round": 6, "end_round": 100, "lives": 1, "one_life": True},
     "chimps":        {"start_round": 6, "end_round": 100, "lives": 1, "one_life": True,
                       "no_sell": True, "no_income_towers": True, "no_mk": True, "no_powers": True},
@@ -105,6 +106,21 @@ def load_all():
     return out
 
 
+HERO_FALLBACK = ["obyn", "striker_jones", "gwendolin", "quincy"]
+
+
+def hero_for(strat, account):
+    """The strategy's hero if owned, else the best owned fallback."""
+    want = strat.get("hero")
+    owned = account.unlocked_heroes if account is not None else {want}
+    if want in owned:
+        return want
+    for h in HERO_FALLBACK:
+        if h in owned:
+            return h
+    return "quincy"
+
+
 def parse_cross(s):
     return [int(c) for c in str(s).split("-")]
 
@@ -114,22 +130,22 @@ def usable(strat, mode, account):
     if mode not in strat.get("modes", []):
         return False, "mode not supported"
     cat = MODE_TOWER_FILTER.get(mode)
-    kinds = set()
-    for st in strat.get("plan", []) + strat.get("fill", []):
-        if st.get("kind") and st["kind"] != "hero":
-            kinds.add(st["kind"])
-    for k in kinds:
+    # Core towers must be unlocked; optional ones (fill, backups, answers) are
+    # simply skipped in-game when locked.
+    core = set((strat.get("planner") or {}).get("towers") or {})
+    if not core:
+        core = {st["kind"] for st in strat.get("plan", [])
+                if st.get("do") == "place" and st.get("kind") not in (None, "hero")}
+    for k in core:
         if k not in T.TOWERS:
             return False, f"unknown tower {k}"
         if cat and T.TOWERS[k]["category"] != cat:
             return False, f"{k} not allowed in {mode}"
         if account is not None and k not in account.unlocked_towers:
             return False, f"{k} locked"
-    hero = strat.get("hero")
     if mode == "chimps" and strat.get("uses_income"):
         return False, "income not allowed in CHIMPS"
-    if hero and account is not None and hero not in account.unlocked_heroes:
-        return False, f"hero {hero} locked"
+    # a locked preferred hero falls back to an owned one (see hero_for)
     for kind, need in (strat.get("requires_upgrades") or {}).items():
         have = account.unlocked_upgrades.get(kind, [0, 0, 0]) if account else [5, 5, 5]
         if any(h < n for h, n in zip(have, parse_cross(need))):
@@ -333,6 +349,8 @@ class Executor:
 
     # -- threat calendar ---------------------------------------------------------
     def has_answer(self, threat):
+        if threat in NEEDS_CAMO and not self.has_answer("camo"):
+            return False  # DDTs are camo: the blimp popper must be able to see them
         for p in self.g.towers.values():
             if p.kind == "hero":
                 continue

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T16:07:16",
+ "saved_at": "2026-10-21T16:15:30",
  "player_level": 10,
  "xp": 19850.0,
  "monkey_money": 175,
@@ -14,6 +14,7 @@
   "ice",
   "mortar",
   "sniper",
+  "sub",
   "tack"
  ],
  "unlocked_heroes": [
@@ -29,6 +30,11 @@
   "dart": [
    0,
    2,
+   0
+  ],
+  "sniper": [
+   1,
+   0,
    0
   ]
  },

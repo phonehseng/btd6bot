@@ -1,0 +1,67 @@
+# Impoppable / CHIMPS on land maps (R6-100, one life, no farms, no selling).
+# One leak loses the game, so defence is bought ahead of every threat and
+# nothing is spent on income. Spine: Obyn + Ninja/Alchemist core (camo, lead,
+# brew), Flash Bomb by R25, Sticky Bomb by ~R50 (BFB/ZOMG/DDT single target,
+# Ninja sees camo), 2-0-2 Village discount under two 3-0-2 Sun Avatars, a 2-3-0
+# MIB Village (all damage types + camo for everything near it), an exit
+# Spike Factory 2-0-4 for DDT leaks -> 2-0-5 Perma-Spike (tier 5) for the
+# R98 BAD. Super Ceramics after R80 are why two Sun Avatars are mandatory.
+id: chimps_ninja_sun
+hero: obyn
+modes: [hard, impoppable, chimps]
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 3, 2], super: [3, 0, 2], spike: [2, 0, 5]}
+  base_success: {hard: 0.9, impoppable: 0.5, chimps: 0.4}
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
+  - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8]}
+  - {do: upgrade, id: n2, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: n3, kind: ninja, role: support, near: [a1, v1], near_radius: 7}
+  - {do: upgrade, id: n3, to: 4-0-2}
+  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
+  - {do: upgrade, id: s1, to: 3-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: place, id: v2, kind: village, role: support, near: [s1], near_radius: 7}
+  - {do: upgrade, id: v2, to: 2-3-0}
+  - {do: place, id: s2, kind: super, role: support, near: [v1, v2], near_radius: 8}
+  - {do: upgrade, id: s2, to: 3-0-2}
+  - {do: place, id: a2, kind: alchemist, role: support, near: [s1, s2], near_radius: 6}
+  - {do: upgrade, id: a2, to: 4-2-0}
+  - {do: upgrade, id: sp1, to: 2-0-5}
+fill:
+  - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 6}
+  - {do: upgrade, kind: ninja, to: 4-0-2}
+  - {do: place, kind: super, role: support, near: [v1, v2], near_radius: 9, max: 3}
+  - {do: upgrade, kind: super, to: 3-0-2}
+  - {do: place, kind: spike, role: exit, max: 3}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: n2, to: 2-0-3}]
+  bfb: [{do: upgrade, id: n2, to: 2-0-4}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: n2, to: 2-0-4}]
+  ddt: [{do: upgrade, id: n2, to: 2-0-4}]
+  bad:
+    - {do: upgrade, id: sp1, to: 2-0-5}
+    - {do: place, id: sp1, kind: spike, role: exit}

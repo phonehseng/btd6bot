@@ -45,7 +45,9 @@ panic:
   - {do: place, kind: ninja, role: exit}
   - {do: place, kind: wizard, role: exit}
 answers:
-  lead: [{do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}]
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
   moab:
     - {do: upgrade, id: n2, to: 2-0-3}

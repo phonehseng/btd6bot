@@ -25,6 +25,7 @@ plan:
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: sb1, to: 2-0-3}
   - {do: upgrade, id: sb2, to: 2-0-3}
+  - {do: place, id: sp1, kind: spike, role: exit}
   - {do: place, id: v1, kind: village, role: support, near: [sb1, a1], near_radius: 7}
   - {do: upgrade, id: v1, to: 2-0-2}
   - {do: upgrade, id: sb1, to: 2-0-4}
@@ -33,10 +34,9 @@ plan:
   - {do: upgrade, id: sb3, to: 2-0-4}
   - {do: upgrade, id: sb2, to: 2-0-4}
   - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: upgrade, id: sp1, to: 2-0-4}
   - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
   - {do: upgrade, id: s1, to: 3-0-2}
-  - {do: place, id: sp1, kind: spike, role: exit}
-  - {do: upgrade, id: sp1, to: 2-0-4}
 fill:
   - {do: place, kind: sub, role: support, near: [v1], near_radius: 9, max: 6}
   - {do: upgrade, kind: sub, to: 2-0-4}
@@ -47,7 +47,9 @@ panic:
   - {do: place, kind: sub, role: exit}
   - {do: place, kind: spike, role: exit}
 answers:
-  lead: [{do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 7}]
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 7}
   moab: [{do: upgrade, id: sb1, to: 2-0-3}]
   bfb:
     - {do: upgrade, id: sp1, to: 2-0-4}

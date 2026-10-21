@@ -25,8 +25,9 @@ SCREENS = [
     # NB the difficulty screen can show a "Continue saved game?" banner; that is
     # not this prompt (which appears after picking a mode over an existing save)
     ("overwrite", [["overwrite", "existingsave"]]),
-    ("mode_select", [["standard"], ["rewards", "sandbox"]]),
+    # difficulty first: its "continue saved game" banner can say "Standard"
     ("difficulty", [["easy"], ["medium"], ["hard"]]),
+    ("mode_select", [["standard"], ["rewards", "sandbox"]]),
     ("map_select", [["beginner"], ["intermediate"], ["expert"]]),
     ("hero_select", [["select"], ["heroes", "hero"]]),
     ("main_menu", [["play"], ["monkeys"], ["heroes"]]),
