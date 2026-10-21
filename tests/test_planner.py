@@ -20,6 +20,9 @@ from btd6bot.account import (  # noqa: E402
 
 # Tests must not depend on which tracks data/maps happens to hold right now.
 P.DEFAULT_CONFIG.maps_dir = None
+# ... nor on the live achievement catalog/scan (tests pass their own).
+P.DEFAULT_CONFIG.achievements_path = None
+P.DEFAULT_CONFIG.achievements_state_path = None
 
 
 # --------------------------------------------------------------- simulation
@@ -542,6 +545,145 @@ def test_map_difficulty_matters_less_in_easy():
     assert hard < easy < 1.0
 
 
+# ------------------------------------------------------------ achievements
+
+def _ach(name, desc, kind="game_win_constraint", mode=None, map=None, passive=True,
+         category="single_player", strategy=None, difficulty=None):
+    return {"name": name, "description": desc, "category": category, "kind": kind,
+            "mode": mode, "map": map, "difficulty": difficulty, "passive": passive,
+            "strategy": strategy, "bot_feasible": "easy"}
+
+
+ACH_CATALOG = [
+    _ach("Impoppable", "Pop 100,000,000 Bloons", kind="cumulative"),
+    _ach("Grasshopper", "Win on 9 different Beginner maps", kind="progression"),
+    _ach("War Monkeys", "Win 10 games using only Military monkeys", mode="military_only"),
+    _ach("First Monkeys First", "Win 10 games using only Primary monkeys", mode="primary_only"),
+    _ach("Abracadabmonkey", "Win 10 games using only Magic monkeys", mode="magic_only",
+         strategy="ach_abracadabmonkey"),
+    _ach("Bloons Master", "Beat 1 map in CHIMPS mode", mode="chimps", difficulty="impoppable",
+         strategy="ach_bloons_master"),
+    _ach("Role Reverser", "Win a game in Reverse mode", mode="reverse",
+         strategy="ach_role_reverser"),
+    _ach("Living on the Edge", "Win any non-CHIMPS game with only 1 life remaining",
+         map="Resort", passive=False, strategy="ach_living_on_the_edge"),
+    _ach("Boss Slayer", "Defeat a boss", kind="other", category="excluded"),
+    _ach("Co-op Champ", "Win a co-op game", kind="other", category="excluded", mode="reverse"),
+]
+
+
+def test_achievement_state_fuzzy_match():
+    state = {"cards": {
+        ".ruPPABLe": {"desc": "Pop 100,000,000 Bloons", "status": "progress", "progress": 0},
+        "Grashopper": {"desc": "Win on9differentBeginnermaps", "status": "progress", "progress": 77},
+        "War Monkeys": {"desc": "Win 10 games using only Military monkeys", "status": "collect"},
+        "Flrst Monkeys First": {"desc": "x", "status": "progress", "progress": 60},
+        "Totally Unrelated": {"desc": "Something else entirely", "status": "complete"},
+    }}
+    m = P.match_achievement_state(ACH_CATALOG, state)
+    assert m["Impoppable"]["status"] == "progress"
+    assert m["Grasshopper"]["progress"] == 77
+    assert m["War Monkeys"]["status"] == "collect"
+    assert m["First Monkeys First"]["progress"] == 60
+    assert len(m) == 4, m
+
+
+def test_wanted_achievements():
+    acc = AccountState()
+    state = {"cards": {"War Monkeys": {"status": "collect"},
+                       "Role Reverser": {"status": "complete"},
+                       "First Monkeys First": {"status": "progress", "progress": 60}}}
+    goals = {g.name: g for g in P.wanted_achievements(acc, state, ACH_CATALOG)}
+    assert "War Monkeys" not in goals and "Role Reverser" not in goals  # done
+    assert "Boss Slayer" not in goals and "Co-op Champ" not in goals    # excluded
+    assert goals["First Monkeys First"].modes == ("primary_only",)
+    assert goals["First Monkeys First"].wins_needed == 10
+    assert goals["Bloons Master"].wins_needed == 1 and goals["Bloons Master"].plannable
+    assert goals["Living on the Edge"].modes == () and goals["Living on the Edge"].map == "Resort"
+    assert P.wanted_achievements(acc, state, None) == []
+    # a CHIMPS medal on the account means 'Bloons Master' is done even if the scan lags
+    acc.medals["Logs"] = {"chimps": True}
+    assert "Bloons Master" not in {g.name for g in P.wanted_achievements(acc, state, ACH_CATALOG)}
+    # the real catalog (read only): excluded categories are never wanted
+    real = Path(__file__).resolve().parent.parent / "data" / "achievements.json"
+    if real.exists():
+        import json
+        cat = json.loads(real.read_text(encoding="utf-8"))
+        names = {g.name for g in P.wanted_achievements(AccountState(), None, cat)}
+        excluded = {e["name"] for e in cat if e["category"] != "single_player"}
+        assert names and not names & excluded
+
+
+def test_achievement_bonus_on_mode_replays():
+    """Replays that advance e.g. 'Abracadabmonkey' (10 Magic Only wins) move
+    from FARM up to the Hard sub-mode tier, below Hard standard medals."""
+    acc = _hard_ready_account()
+    acc.record_result("Monkey Meadow", "hard", "magic_core", True, minutes=17.0)
+    acc.record_result("Monkey Meadow", "magic_only", "magic_core", True, minutes=17.0)
+    ach = (ACH_CATALOG, {"cards": {}})
+
+    def mm_magic(cands):
+        return [c for c in cands if c.map == "Monkey Meadow" and c.mode == "magic_only"]
+
+    _, _, plain = P.rank_games(acc, achievements=(None, None))
+    assert all(c.tier in ("FARM", "LAST") and not c.ach for c in mm_magic(plain))
+    _, reasons, cands = P.rank_games(acc, achievements=ach)
+    rep = mm_magic(cands)
+    assert rep and all("Abracadabmonkey" in c.achievements for c in rep)
+    assert any(c.tier == "HS" for c in rep), [(c.tier, c.p) for c in rep]
+    assert all(c.ok for c in rep if c.tier == "HS")
+    pos = {id(c): i for i, c in enumerate(cands)}
+    best_rep = min(pos[id(c)] for c in rep if c.tier == "HS")
+    assert all(pos[id(c)] < best_rep for c in cands if c.tier == "H")
+    assert any("achievements:" in r for r in reasons), reasons
+    # once complete, the bonus is gone
+    done = (ACH_CATALOG, {"cards": {"Abracadabmonkey": {"status": "complete"}}})
+    _, _, after = P.rank_games(acc, achievements=done)
+    assert not any(c.ach for c in mm_magic(after))
+
+
+def _reverser(**kw) -> P.StrategySpec:
+    d = {"id": "ach_role_reverser", "achievement": "Role Reverser", "map": "Logs",
+         "modes": ["reverse"], "towers": {"dart": [0, 0, 0]},
+         "base_success": {"reverse": 0.95}}
+    d.update(kw)
+    return P.StrategySpec.from_any(d)
+
+
+def test_achievement_strategy_gating():
+    acc = AccountState()
+    acc.record_result("Logs", "medium", "x", True, minutes=11.0)  # opens Reverse on Logs
+    ach = (ACH_CATALOG, {"cards": {}})
+    roster = [_spec("plain", modes=("easy",), rate=0.95)]
+
+    def ach_cands(spec, a=ach):
+        _, _, cands = P.rank_games(acc, roster + [spec], achievements=a)
+        return [c for c in cands if c.s.id == spec.id]
+
+    ready = ach_cands(_reverser(bot_ready=True))
+    assert ready and all(c.map == "Logs" and c.mode == "reverse" for c in ready)
+    assert all("Role Reverser" in c.achievements and c.ok and c.tier == "M" for c in ready)
+    assert not ach_cands(_reverser())                     # readiness unknown
+    assert not ach_cands(_reverser(bot_ready=False))      # not ready
+    assert not ach_cands(_reverser(bot_ready=True),       # already complete
+                         (ACH_CATALOG, {"cards": {"Role Reverser": {"status": "complete"}}}))
+    assert not ach_cands(_reverser(bot_ready=True), (None, None))  # no catalog: never
+    # never below the win threshold (losses are unacceptable)
+    assert not ach_cands(_reverser(bot_ready=True, base_success={"reverse": 0.5}))
+    # excluded achievements are never planned, even when marked ready
+    assert not ach_cands(_reverser(bot_ready=True, achievement="Co-op Champ"))
+    assert not ach_cands(_reverser(bot_ready=True, achievement="Boss Slayer"))
+    # an achievement plan that arrives without its tag is never a normal strategy
+    assert not ach_cands(_reverser(bot_ready=True, achievement=None))
+
+
+def test_achievements_keep_hard_first():
+    """With every achievement wanted, a reliable Hard medal still goes first."""
+    acc = _hard_ready_account()
+    plan = P.next_game(acc, achievements=(ACH_CATALOG, {"cards": {}}))
+    assert plan.phase == "H" and plan.mode_key == "hard", plan.reason
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     order = ["test_xp_tables", "test_mode_unlocks_and_categories", "test_apply_level_rewards",
@@ -553,7 +695,10 @@ if __name__ == "__main__":
              "test_hard_losses_stop_hard_attempts", "test_fresh_ish_account_plans_hard",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
-             "test_map_difficulty_matters_less_in_easy", "test_long_run_reaches_everything"]
+             "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",
+             "test_wanted_achievements", "test_achievement_bonus_on_mode_replays",
+             "test_achievement_strategy_gating", "test_achievements_keep_hard_first",
+             "test_long_run_reaches_everything"]
     for name in order:
         res = globals()[name]()
         if name == "test_tower_unlock_order":

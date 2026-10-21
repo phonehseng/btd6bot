@@ -54,8 +54,11 @@ tests and as a fallback; the real roster should come from the strategy layer.
 
 from __future__ import annotations
 
+import difflib
+import json
 import math
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -109,6 +112,12 @@ class PlannerConfig:
     # Where learned map tracks live (None: only maps already played count as
     # learned - used by tests so they do not depend on data/maps).
     maps_dir: str | None = str(MAPS_DIR)
+    # Achievements: catalog + live scan (None: no achievement planning).
+    # A win that advances an incomplete achievement is worth
+    # achievement_value / wins_needed extra (moderate: medals still lead).
+    achievements_path: str | None = str(PROJECT_ROOT / "data" / "achievements.json")
+    achievements_state_path: str | None = str(PROJECT_ROOT / "data" / "achievements_state.json")
+    achievement_value: float = 30_000
     # Observed durations: Beta-like shrinkage of observed (EW) averages toward
     # the default estimate with this many pseudo-games, observations clipped
     # to [lo, hi] x the mode default (one-off stalls should not dominate).
@@ -372,6 +381,12 @@ class StrategySpec:
     cost_share: dict[str, float] | None = None       # tower XP split (default equal)
     minutes: dict[str, float] = field(default_factory=dict)  # per-mode runtime override
     notes: str = ""
+    # Achievement strategies (strategies/achievements/*.yaml): the achievement
+    # this plan earns. Planned only while that achievement is single-player,
+    # incomplete and ``bot_ready`` is True (unknown readiness = not ready).
+    achievement: str | None = None
+    bot_ready: bool | None = None
+    wins_needed: int | None = None
 
     @classmethod
     def from_any(cls, obj: Any) -> "StrategySpec":
@@ -382,9 +397,20 @@ class StrategySpec:
         towers_raw = get("towers") or {}
         towers = {canon_tower(t): tuple(int(x) for x in cp) for t, cp in dict(towers_raw).items()}
         maps = get("maps")
+        if not maps and get("map"):  # achievement yaml pins a single map
+            maps = [get("map")]
         cats = get("categories")
+        cons = get("constraints") or {}
+        wins = get("wins_needed") or (cons.get("wins_needed") if isinstance(cons, Mapping) else None)
+        ready = get("bot_ready")
+        sid = str(get("id") or get("strategy_id") or get("name"))
+        ach = get("achievement")
+        if not ach and sid.startswith("ach_"):
+            # achievement plan passed without its tag: never treat it as a
+            # normal strategy (its constraints would be ignored) - unplannable
+            ach = "?" + sid
         return cls(
-            id=str(get("id") or get("strategy_id") or get("name")),
+            id=sid,
             towers=towers,
             modes=frozenset(get("modes") or ("easy", "medium")),
             base_success=dict(get("base_success") or {}),
@@ -396,6 +422,9 @@ class StrategySpec:
             cost_share=dict(get("cost_share")) if get("cost_share") else None,
             minutes=dict(get("minutes") or {}),
             notes=str(get("notes") or ""),
+            achievement=str(ach) if ach else None,
+            bot_ready=None if ready is None else bool(ready),
+            wins_needed=int(wins) if wins else None,
         )
 
     def share(self) -> dict[str, float]:
@@ -853,6 +882,165 @@ def expected_minutes(account: AccountState, s: Any, map_name: str, mode: str,
 
 
 # ---------------------------------------------------------------------------
+# Achievements
+# ---------------------------------------------------------------------------
+
+ACH_DONE = ("complete", "collect")   # "collect" = finished, reward not claimed yet
+_ACH_WINS_RE = re.compile(r"\b(?:win|beat|complete)\s+(\d+)\s+(?:games?|maps?|times)", re.I)
+_ach_cache: dict[str, tuple[float, Any]] = {}
+
+
+def _norm_text(s: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+
+def _load_json_cached(path: str | None) -> Any:
+    """JSON file, re-read only when its mtime changes; None if missing/broken."""
+    if not path:
+        return None
+    try:
+        mt = os.path.getmtime(path)
+    except OSError:
+        return None
+    hit = _ach_cache.get(path)
+    if hit and hit[0] == mt:
+        return hit[1]
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    _ach_cache[path] = (mt, data)
+    return data
+
+
+def load_achievements(cfg: PlannerConfig | None = None) -> tuple[list[dict] | None, dict | None]:
+    """(catalog, live state) from the paths in the config (None when absent)."""
+    cfg = cfg or DEFAULT_CONFIG
+    cat = _load_json_cached(cfg.achievements_path)
+    if isinstance(cat, Mapping):
+        cat = cat.get("achievements")
+    return (cat if isinstance(cat, list) else None), _load_json_cached(cfg.achievements_state_path)
+
+
+def _card_rank(card: Mapping[str, Any]) -> tuple[int, float]:
+    st = card.get("status")
+    return (2 if st in ACH_DONE else 1 if st == "progress" else 0, float(card.get("progress") or 0))
+
+
+def match_achievement_state(catalog: Sequence[Mapping[str, Any]],
+                            state: Mapping[str, Any] | None) -> dict[str, dict]:
+    """Catalog name -> scanned card. Card names are OCR'd, so they are matched
+    fuzzily on the name and, failing that, on the description."""
+    cards = (state or {}).get("cards") or {}
+    by_name = {_norm_text(e["name"]): e["name"] for e in catalog if e.get("name")}
+    by_desc = {_norm_text(e.get("description") or ""): e["name"] for e in catalog
+               if e.get("description")}
+    out: dict[str, dict] = {}
+    for card_name, card in cards.items():
+        if not isinstance(card, Mapping):
+            continue
+        n = _norm_text(card_name)
+        hit = by_name.get(n)
+        if hit is None and n:
+            m = difflib.get_close_matches(n, list(by_name), n=1, cutoff=0.8)
+            hit = by_name[m[0]] if m else None
+        if hit is None and len(n) >= 6:  # banner titles get cut off: unique prefix
+            pre = [full for k, full in by_name.items() if k.startswith(n)]
+            hit = pre[0] if len(pre) == 1 else None
+        if hit is None and card.get("desc"):
+            m = difflib.get_close_matches(_norm_text(card["desc"]), list(by_desc), n=1, cutoff=0.9)
+            hit = by_desc[m[0]] if m else None
+        if hit is None:
+            continue
+        if hit not in out or _card_rank(card) > _card_rank(out[hit]):
+            out[hit] = dict(card)
+    return out
+
+
+@dataclass
+class AchievementGoal:
+    name: str
+    kind: str
+    status: str                 # complete/collect/progress/unknown
+    progress: float             # percent from the live scan (0 if unknown)
+    modes: tuple[str, ...]      # planner modes whose wins advance it passively
+    map: str | None             # only on this map (None = any)
+    strategy: str | None        # catalog's suggested strategy id
+    passive: bool
+    wins_needed: int
+
+    @property
+    def plannable(self) -> bool:
+        return bool(self.modes) or bool(self.strategy)
+
+    def per_game_value(self, cfg: PlannerConfig) -> float:
+        """XP-equivalent bonus for one win that advances this achievement."""
+        return cfg.achievement_value / max(1, self.wins_needed)
+
+
+def _wins_needed(entry: Mapping[str, Any]) -> int:
+    m = _ACH_WINS_RE.search(entry.get("description") or "")
+    if m:
+        return int(m.group(1))
+    # lifetime counters (pops, kills) need many games; a single win is a step
+    return 10 if entry.get("kind") == "cumulative" else 1
+
+
+def wanted_achievements(account: AccountState, state: Mapping[str, Any] | None,
+                        catalog: Sequence[Mapping[str, Any]] | None) -> list[AchievementGoal]:
+    """Single-player achievements not complete yet (excluded categories such
+    as co-op/boss/race/odyssey/contested territory/daily challenge/events/
+    purchase are never returned). ``plannable`` ones have modes or a strategy
+    the planner can steer towards; the rest accrue passively. Most advanced
+    first."""
+    if not catalog:
+        return []
+    cards = match_achievement_state(catalog, state)
+    out: list[AchievementGoal] = []
+    for e in catalog:
+        if e.get("category") != "single_player" or not e.get("name"):
+            continue
+        card = cards.get(e["name"], {})
+        status = str(card.get("status") or "unknown")
+        if status in ACH_DONE:
+            continue
+        mode = e.get("mode")
+        modes = (mode,) if e.get("passive") and mode in MODES and mode not in EXCLUDED_MODES else ()
+        mp = e.get("map")
+        try:
+            mp = canonical_map(mp) if mp else None
+        except KeyError:
+            mp = None
+        if mp in EXCLUDED_MAPS:
+            continue
+        out.append(AchievementGoal(
+            name=e["name"], kind=str(e.get("kind") or ""), status=status,
+            progress=float(card.get("progress") or 0), modes=modes, map=mp,
+            strategy=e.get("strategy"), passive=bool(e.get("passive")),
+            wins_needed=_wins_needed(e)))
+    # a CHIMPS/Impoppable medal etc. already earned on the account means the
+    # one-win achievements of that mode are done even if the scan lags behind
+    out = [g for g in out if not (g.wins_needed == 1 and g.kind == "game_win_constraint"
+                                  and g.modes and g.map is None
+                                  and _account_has_mode_win(account, g.modes[0]))]
+    out.sort(key=lambda g: (-g.progress, g.name))
+    return out
+
+
+def _account_has_mode_win(account: AccountState, mode: str) -> bool:
+    return any(d.get(mode) for d in account.medals.values())
+
+
+def _strategy_achievement_ok(s: StrategySpec, goals: Mapping[str, AchievementGoal]) -> bool:
+    """An achievement strategy is planned only for a wanted (single-player,
+    incomplete) achievement and only when its plan is marked bot_ready."""
+    if not s.achievement:
+        return True
+    return s.bot_ready is True and s.achievement in goals
+
+
+# ---------------------------------------------------------------------------
 # Progression tiers
 # ---------------------------------------------------------------------------
 
@@ -890,6 +1078,8 @@ class _Cand:
     learned: bool = False       # map track already learned (no placement scan)
     tier: str = "LAST"          # progression tier, see TIERS
     build: float = 0.0          # share of the game's tower XP that feeds the Hard build
+    ach: float = 0.0            # XP-equivalent achievement value of a win
+    achievements: tuple[str, ...] = ()  # achievements a win advances
 
 
 def _normalise_strategies(available: Iterable[Any] | None) -> dict[str, StrategySpec]:
@@ -976,12 +1166,14 @@ def _tier(c: _Cand, cfg: PlannerConfig) -> str:
                 return "H" if c.mode == "hard" else "HS"
             if c.mode != "chimps" and c.p >= cfg.hard_fallback_p:
                 return "HF"
+        elif c.ach and c.ok:  # replay that advances an achievement
+            return "HS"
         return "FARM" if c.ok else "LAST"
     # Medium/Easy: a game that mostly feeds the Hard roster's missing upgrades
     # is worth it at the Hard fallback bar; plain medals need their threshold.
     if c.build >= 0.5 and c.p >= cfg.hard_fallback_p:
         return "B"
-    if c.first and c.ok:
+    if (c.first or c.ach) and c.ok:
         return "M" if c.mode in MEDIUM_FAMILY else "E"
     return "FARM" if c.ok else "LAST"
 
@@ -1026,12 +1218,39 @@ def _phase_reasons(account: AccountState, cands: list[_Cand], cfg: PlannerConfig
     return reasons
 
 
+def _achievement_values(c: _Cand, goals: Mapping[str, AchievementGoal],
+                        cfg: PlannerConfig) -> None:
+    """Achievements a win of ``c`` advances, and their value."""
+    names = []
+    for g in goals.values():
+        if c.mode in g.modes and (g.map is None or g.map == c.map):
+            names.append(g.name)
+    g = goals.get(c.s.achievement) if c.s.achievement else None
+    # an achievement plan counts in the modes that advance its achievement (or
+    # in any of its modes when the plan itself enforces the constraint)
+    if g is not None and g.name not in names and (not g.modes or c.mode in g.modes):
+        names.append(g.name)
+    if names:
+        c.achievements = tuple(names)
+        c.ach = sum(goals[n].per_game_value(cfg) for n in names)
+        c.notes.append("achievement: " + ", ".join(names))
+
+
 def rank_games(account: AccountState, available_strategies: Iterable[Any] | None = None, *,
-               config: PlannerConfig | None = None, playable_maps: Iterable[str] | None = None
+               config: PlannerConfig | None = None, playable_maps: Iterable[str] | None = None,
+               achievements: tuple[Sequence[Mapping[str, Any]] | None, Mapping[str, Any] | None]
+               | None = None,
                ) -> tuple[str, list[str], list[_Cand]]:
-    """All scored candidates, best first, plus the phase (top tier) and reasons."""
+    """All scored candidates, best first, plus the phase (top tier) and reasons.
+
+    ``achievements``: (catalog, live state); default: loaded from the paths
+    in the config (data/achievements.json, data/achievements_state.json)."""
     cfg = config or DEFAULT_CONFIG
     strategies = _normalise_strategies(available_strategies)
+    catalog, ach_state = achievements if achievements is not None else load_achievements(cfg)
+    goals = {g.name: g for g in wanted_achievements(account, ach_state, catalog)}
+    # achievement plans only for wanted, bot-ready achievements
+    strategies = {sid: s for sid, s in strategies.items() if _strategy_achievement_ok(s, goals)}
     pm = {canonical_map(m) for m in playable_maps} if playable_maps is not None else None
     cands = _candidates(account, strategies, cfg, pm)
     uniq = account.unique_map_wins()
@@ -1055,6 +1274,8 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
             if c.mode == "hard" and c.p >= cfg.hard_ready_p:
                 bonus += cfg.hard_medal_value
                 c.notes.append("reliable Hard medal")
+        _achievement_values(c, goals, cfg)
+        bonus += c.ach
         vw = c.value_win + bonus
         vf = c.value_fail - cfg.loss_penalty
         if farming and not c.first and c.map in FARM_MAPS and c.mode == "deflation":
@@ -1063,7 +1284,8 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
         minutes = c.p * c.minutes + (1 - c.p) * (c.fail_minutes or c.minutes * cfg.fail_time_frac)
         score = (c.p * vw + (1 - c.p) * vf) / minutes
         score *= 1.0 + cfg.explore_bonus / math.sqrt(c.n + 1)
-        thr = p_threshold(c.mode, c.first, cfg)
+        # an achievement game is a new goal: it needs the new-medal threshold
+        thr = p_threshold(c.mode, c.first or bool(c.ach), cfg)
         c.ok = c.p >= thr
         c.tier = _tier(c, cfg)
         if not c.ok:
@@ -1071,24 +1293,35 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
         if c.learned:
             c.notes.append("learned track")
         c.score = score
+    # achievement plans never play below their threshold (losses unacceptable)
+    cands = [c for c in cands if not c.s.achievement or c.ok]
     cands.sort(key=_sort_key, reverse=True)
-    if not account.remaining_goals():
-        return "DONE", [PHASES["DONE"]], cands
     if not cands:
         return "LAST", ["no playable candidate"], cands
-    return cands[0].tier, _phase_reasons(account, cands, cfg), cands
+    if not account.remaining_goals() and not cands[0].ach:
+        return "DONE", [PHASES["DONE"]], cands
+    reasons = _phase_reasons(account, cands, cfg)
+    if goals:
+        steer = [g.name for g in goals.values() if g.plannable]
+        reasons.append(f"achievements: {len(goals)} incomplete single-player, "
+                       f"{len(steer)} steerable" + (f" ({', '.join(steer[:6])}"
+                                                   + (", ..." if len(steer) > 6 else "") + ")"
+                                                   if steer else ""))
+    return cands[0].tier, reasons, cands
 
 
 def next_game(account: AccountState, available_strategies: Iterable[Any] | None = None, *,
-              config: PlannerConfig | None = None, playable_maps: Iterable[str] | None = None
+              config: PlannerConfig | None = None, playable_maps: Iterable[str] | None = None,
+              achievements: tuple[Sequence[Mapping[str, Any]] | None, Mapping[str, Any] | None]
+              | None = None,
               ) -> GamePlan | None:
     """Best next game, or None if no strategy can be played on any open map.
 
     ``available_strategies``: StrategySpec / dict / objects (see StrategySpec);
     defaults to EXAMPLE_STRATEGIES. ``playable_maps`` restricts to maps the
     bot has placement data for."""
-    phase, preasons, cands = rank_games(account, available_strategies,
-                                        config=config, playable_maps=playable_maps)
+    phase, preasons, cands = rank_games(account, available_strategies, config=config,
+                                        playable_maps=playable_maps, achievements=achievements)
     if not cands:
         return None
     c = cands[0]
