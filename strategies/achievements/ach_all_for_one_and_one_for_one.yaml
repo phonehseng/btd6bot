@@ -1,0 +1,33 @@
+# Achievement 'All for one and one for one': win a Hard game with only one tower on
+# screen at any time (no hero placed). Wiki route: a single Buccaneer in the middle
+# of the Logs river: Grape Shot R6, Long Range R7, Hot Shot R10, Cannon Ship R14,
+# Crow's Nest (camo) by R24-36, Monkey Pirates R30, Pirate Lord R52.
+id: ach_all_for_one_and_one_for_one
+achievement: All for one and one for one
+map: Logs
+modes: [hard]
+hero: null
+constraints:
+  max_towers_on_screen: 1
+  place_hero: false
+  no_default_panic: true
+  no_answers: true
+planner:
+  towers: {buccaneer: [0, 5, 2]}
+  base_success: {hard: 0.8}
+notes:
+  - 'Alternative map: Spa Pits (Buccaneer in the central lake).'
+  - From R30 use the Monkey Pirates MOAB Takedown ability whenever several MOABs are on screen; after Pirate Lord (R52) it can idle.
+  - Requires Buccaneer 0-5-0 Pirate Lord unlocked (tower XP).
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, segment: [0.35, 0.65]}
+  - {do: upgrade, id: b1, to: 0-1-0, round: 6}
+  - {do: upgrade, id: b1, to: 0-1-1, round: 7}
+  - {do: upgrade, id: b1, to: 0-2-1, round: 10}
+  - {do: upgrade, id: b1, to: 0-3-1, round: 14}
+  - {do: upgrade, id: b1, to: 0-3-2, round: 24}
+  - {do: upgrade, id: b1, to: 0-4-2, round: 30}
+  - {do: target, id: b1, mode: strong}
+  - {do: upgrade, id: b1, to: 0-5-2, round: 52}
+fill: []
+panic: []

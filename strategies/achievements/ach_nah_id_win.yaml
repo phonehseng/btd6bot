@@ -1,0 +1,74 @@
+# Achievement 'Nah, I'd Win' (hidden): beat Spa Pits on Hard after activating its
+# Tar Pits secret, with Monkey Knowledge disabled, no Powers and no continues
+# (Insta Monkeys, farming, selling and lost lives are allowed).
+# Route condensed from the bloonswiki guide (Benjamin, Subs, Snipers, Alchemists).
+id: ach_nah_id_win
+achievement: Nah, I'd Win
+map: Spa Pits
+modes: [hard]
+hero: benjamin
+constraints:
+  mk: 'off'
+  no_powers: true
+  no_continues: true
+  map_secret: click rocks before R1 to activate Tar Pits layout
+planner:
+  towers: {sub: [2, 0, 3], sniper: [0, 5, 2], alchemist: [4, 2, 0], buccaneer: [0, 3, 2], village: [2, 0, 2], farm: [2, 0, 3], glue: [1, 1, 0]}
+  base_success: {hard: 0.3}
+notes:
+  - Positions are clock positions around the central lake (wiki guide by unescaped); placements must be calibrated by hand.
+  - Benjamin placed mid-round 13 near the original entrance (Bloon Trojan at L7 for R40).
+  - 'R66/R69: use Supply Drop ability; R74-77 Maim MOAB + own 4-2-0 Alchemist handles the R80 ZOMG.'
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, note: '12 o''clock, sees the 3 top pits', round: 3}
+  - {do: place, id: d1, kind: dart, role: dps, note: between the two bottom pits, round: 3}
+  - {do: place, id: sb2, kind: sub, role: dps, note: 8-9 o'clock, round: 5}
+  - {do: place, id: sb3, kind: sub, role: dps, note: 3-4 o'clock, round: 7}
+  - {do: place, id: hero, kind: hero, role: dps, note: 'next to original entrance, mid-round', round: 13}
+  - {do: place, id: sn1, kind: sniper, role: dps, target: strong, note: bottom-left pit entrance, round: 14}
+  - {do: place, id: sn2, kind: sniper, role: dps, target: strong, note: top-right pit entrance, round: 15}
+  - {do: upgrade, id: sb1, to: 2-0-2, round: 16}
+  - {do: upgrade, id: sn1, to: 1-0-0, round: 22}
+  - {do: upgrade, id: sn2, to: 1-0-0, round: 23}
+  - {do: upgrade, id: sb1, to: 2-0-3, round: 26}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 5, note: '1 o''clock, only sb1 in range', round: 27}
+  - {do: upgrade, id: a1, to: 3-0-0}
+  - {do: place, id: bu1, kind: buccaneer, role: dps, note: centre of the lake, round: 33}
+  - {do: upgrade, id: bu1, to: 0-3-2}
+  - {do: place, id: v1, kind: village, role: support, near: [sb2], near_radius: 6, round: 37}
+  - {do: upgrade, id: v1, to: 1-0-2}
+  - {do: place, id: f1, kind: farm, role: far, near: [v1], near_radius: 6, round: 38}
+  - {do: upgrade, id: f1, to: 2-0-0}
+  - {do: upgrade, id: sb2, to: 2-0-3, round: 39}
+  - {do: place, id: a2, kind: alchemist, role: support, near: [sb2], near_radius: 5, round: 42}
+  - {do: upgrade, id: a2, to: 3-0-0}
+  - {do: upgrade, id: f1, to: 2-0-3, round: 44}
+  - {do: place, id: sn3, kind: sniper, role: support, near: [v1], near_radius: 6, round: 45}
+  - {do: upgrade, id: sn3, to: 0-2-4}
+  - {do: place, id: a3, kind: alchemist, role: support, near: [sn3], near_radius: 5, round: 49}
+  - {do: upgrade, id: a3, to: 3-2-0}
+  - {do: upgrade, id: v1, to: 2-0-2, round: 50}
+  - {do: place, id: g1, kind: glue, role: dps, target: strong, round: 50}
+  - {do: upgrade, id: g1, to: 1-1-0}
+  - {do: place, id: g2, kind: glue, role: dps, target: strong, round: 50}
+  - {do: upgrade, id: g2, to: 1-1-0}
+  - {do: place, id: g3, kind: glue, role: dps, target: strong, round: 50}
+  - {do: upgrade, id: g3, to: 1-1-0}
+  - {do: place, id: g4, kind: glue, role: dps, target: strong, round: 50}
+  - {do: upgrade, id: g4, to: 1-1-0}
+  - {do: upgrade, id: sn3, to: 0-2-5, round: 57}
+  - {do: place, id: sn4, kind: sniper, role: support, near: [sn3], near_radius: 4, round: 58}
+  - {do: upgrade, id: sn4, to: 0-3-2}
+  - {do: place, id: a4, kind: alchemist, role: support, near: [sn4], near_radius: 4}
+  - {do: upgrade, id: a4, to: 3-0-0}
+  - {do: upgrade, id: a3, to: 4-2-0, round: 61}
+  - {do: upgrade, id: sn4, to: 0-4-2, round: 64}
+  - {do: upgrade, id: sn4, to: 0-5-2, round: 69}
+  - {do: target, id: sn4, mode: first}
+  - {do: upgrade, id: a1, to: 4-2-0, round: 71}
+  - {do: upgrade, id: a2, to: 4-2-0, round: 73}
+  - {do: upgrade, id: sn1, to: 4-0-2, round: 74}
+  - {do: place, id: a5, kind: alchemist, role: support, near: [sn1], near_radius: 4}
+  - {do: upgrade, id: a5, to: 4-2-0}
+fill: []
+panic: []

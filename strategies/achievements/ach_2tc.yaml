@@ -1,0 +1,34 @@
+# Achievement '2TC': win CHIMPS having bought only 2 towers (removed/sacrificed ones still count).
+# Wiki route (v54.3), no micro needed: Resort, Glaive Lord 5-0-2 + M.A.D 1-5-0 with a locked target.
+id: ach_2tc
+achievement: 2TC
+map: Resort
+modes: [chimps]
+hero: null
+constraints:
+  max_towers_purchased: 2
+  place_hero: false
+  no_default_panic: true
+  no_answers: true
+planner:
+  towers: {boomerang: [5, 0, 2], dartling: [1, 5, 0]}
+  base_success: {chimps: 0.5}
+notes:
+  - Boomerang goes anywhere inside the smallest track loop on Resort.
+  - Dartling goes on the far right, directly below the track exit; set targeting to Locked and click a point slightly above the track entrance (one calibrated click).
+  - Requires Glaive Lord (Boomerang 5-x-x) and M.A.D (Dartling x-5-x) unlocked.
+plan:
+  - {do: place, id: bo1, kind: boomerang, role: dps, segment: [0.3, 0.7]}
+  - {do: upgrade, id: bo1, to: 1-0-1}
+  - {do: upgrade, id: bo1, to: 2-0-2}
+  - {do: upgrade, id: bo1, to: 3-0-2}
+  - {do: place, id: dg1, kind: dartling, role: exit}
+  - {do: target, id: dg1, mode: locked}
+  - {do: upgrade, id: dg1, to: 0-1-0}
+  - {do: upgrade, id: dg1, to: 1-3-0}
+  - {do: upgrade, id: bo1, to: 4-0-2}
+  - {do: upgrade, id: bo1, to: 5-0-2}
+  - {do: upgrade, id: dg1, to: 1-4-0}
+  - {do: upgrade, id: dg1, to: 1-5-0}
+fill: []
+panic: []

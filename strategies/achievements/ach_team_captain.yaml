@@ -1,0 +1,24 @@
+# Achievement 'Team Captain': win 50 games with Monkey Teams (single player).
+# Monkey Teams runs Mon 08:00 to Fri 08:00 UTC (alternating weekly with Golden Bloon).
+# Only the hero + the 3 highlighted towers may be placed. The tower set is dynamic,
+# so this file describes the selection rule instead of a fixed plan.
+id: ach_team_captain
+achievement: Team Captain
+map: monkey_teams_active
+modes: [easy, medium, hard]
+hero: quincy
+constraints:
+  dynamic_tower_set: monkey_teams
+  wins_needed: 50
+  hero_allowed: true
+  event_window_utc: Mon 08:00 - Fri 08:00
+  no_default_panic: true
+planner:
+  towers: {}
+  base_success: {easy: 0.9, medium: 0.8, hard: 0.6}
+notes:
+  - Read the 3 allowed tower icons shown on the Monkey Teams map (one map per difficulty; set rotates every 3 h).
+  - Pick an existing strategy whose plan/fill/panic/answers kinds are a subset of the 3 towers, else build one with role dps x2 + exit.
+  - With the hero covering the first rounds, one strong DPS kind (tack, boomerang, bomb, ninja, sniper, heli) plus a support usually carries Easy; secure camo by R22 and lead by R26.
+  - Placing any other tower breaks the bonus (selling does not undo it); hero and powers are fine.
+plan: []

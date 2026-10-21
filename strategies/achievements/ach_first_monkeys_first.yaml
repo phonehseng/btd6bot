@@ -1,0 +1,60 @@
+# Achievement 'First Monkeys First': win 10 games placing only Primary towers.
+# Heroes and Powers do not break it (v5.0). Primary Only mode enforces the rule,
+# so the bot's normal primary_only farming already counts; on Easy the executor
+# must also refuse non-primary panic/answer towers (see constraints).
+# Plan = primary_core (Quincy, Tack 4-0-2, Boomerang 4-0-2, Bomb 0-4-2, Dart 0-2-4, Glue 2-0-3).
+id: ach_first_monkeys_first
+achievement: First Monkeys First
+map: null
+modes: [primary_only, easy]
+hero: quincy
+constraints:
+  allowed_towers: [dart, boomerang, bomb, tack, ice, glue, desperado]
+  wins_needed: 10
+planner:
+  towers: {tack: [3, 0, 0], boomerang: [2, 0, 2], bomb: [0, 3, 0], dart: [0, 0, 2]}
+  base_success: {primary_only: 0.95, easy: 0.98}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: t1, kind: tack, role: dps, segment: [0.0, 0.5]}
+  - {do: upgrade, id: t1, to: 1-0-1}
+  - {do: place, id: b1, kind: boomerang, role: dps, segment: [0.2, 0.8]}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: d1, to: 0-0-2, round: 12}
+  - {do: upgrade, id: t1, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: t1, to: 3-0-2, round: 18}
+  - {do: place, id: g1, kind: glue, role: dps, segment: [0.1, 0.7]}
+  - {do: upgrade, id: g1, to: 1-0-2}
+  - {do: upgrade, id: b1, to: 3-0-2}
+  - {do: place, id: bm1, kind: bomb, role: dps, segment: [0.3, 1.0]}
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: upgrade, id: bm1, to: 0-3-2, round: 30}
+  - {do: upgrade, id: t1, to: 4-0-2}
+  - {do: place, id: b2, kind: boomerang, role: dps, segment: [0.4, 1.0]}
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: d1, to: 0-2-3}
+  - {do: upgrade, id: g1, to: 2-0-3}
+  - {do: upgrade, id: bm1, to: 0-4-2}
+  - {do: upgrade, id: b1, to: 4-0-2}
+  - {do: upgrade, id: d1, to: 0-2-4}
+  - {do: place, id: bm2, kind: bomb, role: exit}
+  - {do: upgrade, id: bm2, to: 0-4-2}
+  - {do: upgrade, id: b2, to: 4-0-2}
+  - {do: place, id: g2, kind: glue, role: exit}
+  - {do: upgrade, id: g2, to: 2-0-3}
+fill:
+  - {do: upgrade, kind: tack, to: 4-0-2}
+  - {do: upgrade, kind: boomerang, to: 4-0-2}
+  - {do: upgrade, kind: bomb, to: 0-4-2}
+  - {do: place, kind: boomerang, role: dps, max: 6}
+  - {do: place, kind: bomb, role: dps, max: 4}
+  - {do: upgrade, kind: tack, to: 5-0-2}
+  - {do: upgrade, kind: bomb, to: 0-5-2}
+  - {do: upgrade, kind: boomerang, to: 5-0-2}
+  - {do: place, kind: tack, role: dps, max: 6}
+panic:
+  - {do: place, kind: tack, role: exit}
+  - {do: place, kind: boomerang, role: exit}
+  - {do: place, kind: dart, role: exit}

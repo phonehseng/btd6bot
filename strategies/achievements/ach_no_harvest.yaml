@@ -1,0 +1,27 @@
+# Achievement 'No Harvest': win CHIMPS on Cornfield without removing any corn.
+# Documented for completeness only (bot_feasible: no).
+id: ach_no_harvest
+achievement: No Harvest
+map: Cornfield
+modes: [chimps]
+hero: quincy
+constraints:
+  no_removables: true
+  bot_feasible: 'no'
+planner:
+  towers: {dart: [5, 0, 2], glue: [0, 2, 3]}
+  base_success: {chimps: 0.1}
+notes:
+  - Only four hidden spots at track bends (2nd, 3rd, 5th, 6th); the 6th needs sub-pixel placement.
+  - Ultra-Juggernaut balls bounce off corn walls; MOAB Glue / Bloon Sabotage in the medium-size spots.
+  - 'Not attempted by the bot: placement precision exceeds the learned map model.'
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.5]}
+  - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: d1, to: 2-0-2}
+  - {do: upgrade, id: d1, to: 4-0-2}
+  - {do: place, id: g1, kind: glue, role: support, near: [d1], near_radius: 8}
+  - {do: upgrade, id: g1, to: 0-2-3}
+  - {do: upgrade, id: d1, to: 5-0-2}
+fill: []
+panic: []

@@ -1,0 +1,40 @@
+# Achievement '2 MegaPops': win CHIMPS with one tower dealing over 2M damage.
+# Carry: Heli Pilot -> 5-0-2 Apache Prime (wiki candidate), buffed by MIB Village,
+# Stronger Stimulant Alchemist and slowed by an exit MOAB Glue; a lone early Dart
+# covers R6-10 and steals few pops.
+id: ach_2_megapops
+achievement: 2 MegaPops
+map: Logs
+modes: [chimps]
+hero: null
+constraints:
+  one_tower_damage_min: 2000000
+  other_towers_pop_budget: 42693
+  place_hero: false
+  no_default_panic: true
+planner:
+  towers: {heli: [5, 0, 2], village: [2, 3, 0], alchemist: [4, 0, 0], glue: [0, 2, 3]}
+  base_success: {chimps: 0.25}
+notes:
+  - 'Total CHIMPS RBE is 2,042,693: everything except h1 may pop at most 42,693 in total.'
+  - Keep a1 (Stronger Stimulant) and v1 (MIB) away from the track; lock the heli in place (Lock Place targeting) inside both ranges.
+  - 'Alternatives: Carrier Flagship or Pirate Lord on water maps.'
+plan:
+  - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.2]}
+  - {do: place, id: h1, kind: heli, role: dps}
+  - {do: upgrade, id: h1, to: 1-0-1}
+  - {do: upgrade, id: h1, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [h1], near_radius: 5}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: place, id: v1, kind: village, role: support, near: [h1], near_radius: 5}
+  - {do: upgrade, id: v1, to: 0-2-0}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: upgrade, id: v1, to: 0-3-0}
+  - {do: upgrade, id: h1, to: 4-0-2}
+  - {do: upgrade, id: a1, to: 4-0-0}
+  - {do: upgrade, id: v1, to: 2-3-0}
+  - {do: place, id: g1, kind: glue, role: exit}
+  - {do: upgrade, id: g1, to: 0-2-3}
+  - {do: upgrade, id: h1, to: 5-0-2}
+fill: []
+panic: []

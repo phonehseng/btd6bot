@@ -1,0 +1,43 @@
+# Achievement 'War Monkeys': win 10 games placing only Military towers.
+# Military Only (Medium, R1-60) enforces it. Plan = military_heli_sniper with the
+# Tack panic replaced by Sniper/Heli so it never breaks the restriction.
+id: ach_war_monkeys
+achievement: War Monkeys
+map: null
+modes: [military_only, medium]
+hero: quincy
+constraints:
+  allowed_towers: [sniper, sub, buccaneer, ace, heli, mortar, dartling]
+  wins_needed: 10
+planner:
+  towers: {heli: [2, 0, 2], sniper: [2, 2, 0]}
+  base_success: {military_only: 0.92, medium: 0.95}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: s1, kind: sniper, role: dps, target: first}
+  - {do: upgrade, id: s1, to: 1-0-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: first}
+  - {do: upgrade, id: s1, to: 2-0-0}
+  - {do: place, id: h1, kind: heli, role: dps}
+  - {do: upgrade, id: h1, to: 1-0-1}
+  - {do: upgrade, id: s1, to: 2-2-0, round: 18}
+  - {do: upgrade, id: h1, to: 2-0-2}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: place, id: h2, kind: heli, role: dps}
+  - {do: upgrade, id: h2, to: 3-0-2}
+  - {do: upgrade, id: s1, to: 4-2-0, round: 36}
+  - {do: target, id: s1, mode: strong}
+  - {do: upgrade, id: h1, to: 4-0-2}
+  - {do: upgrade, id: h2, to: 4-0-2}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong}
+  - {do: upgrade, id: s3, to: 4-2-0}
+fill:
+  - {do: upgrade, kind: heli, to: 4-0-2}
+  - {do: upgrade, kind: sniper, to: 4-2-0}
+  - {do: place, kind: heli, role: dps, max: 5}
+  - {do: upgrade, kind: heli, to: 5-0-2}
+  - {do: place, kind: sniper, role: dps, max: 5}
+panic:
+  - {do: place, kind: sniper, role: exit}
+  - {do: place, kind: heli, role: dps}

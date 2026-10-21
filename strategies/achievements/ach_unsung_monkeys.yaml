@@ -1,0 +1,53 @@
+# Achievement 'Unsung Monkeys': win 10 games placing only Support towers
+# (Banana Farm, Spike Factory, Monkey Village, Engineer, Beast Handler).
+# Heroes are allowed since v5.0, which solves the R1 cash problem (Quincy defends R1).
+# Easy (R1-40) on Logs: Engineer 1-0-0 Sentries + 3-0-2 Sprockets, Spike Factories at
+# the exit (2-0-0 White Hot Spikes pops lead, 2-3-0 MOAB SHREDR for the R40 MOAB),
+# Village 0-2-0 Radar Scanner gives the engineers camo (spikes hit camo innately).
+id: ach_unsung_monkeys
+achievement: Unsung Monkeys
+map: Logs
+modes: [easy]
+hero: quincy
+constraints:
+  allowed_towers: [farm, spike, village, engineer, beast_handler]
+  wins_needed: 10
+  hero_allowed: true
+planner:
+  towers: {engineer: [3, 0, 2], spike: [2, 3, 0], village: [2, 2, 0]}
+  base_success: {easy: 0.85}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: e1, kind: engineer, role: dps, segment: [0.0, 0.5]}
+  - {do: upgrade, id: e1, to: 1-0-0}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: e1, to: 2-0-0}
+  - {do: upgrade, id: sp1, to: 2-0-0}
+  - {do: upgrade, id: sp1, to: 2-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [e1], near_radius: 6}
+  - {do: upgrade, id: v1, to: 0-2-0}
+  - {do: place, id: e2, kind: engineer, role: dps, near: [v1], near_radius: 6}
+  - {do: upgrade, id: e2, to: 2-0-1}
+  - {do: upgrade, id: e1, to: 3-0-2}
+  - {do: place, id: sp2, kind: spike, role: exit}
+  - {do: upgrade, id: sp2, to: 2-2-0}
+  - {do: upgrade, id: sp1, to: 2-3-0, round: 36}
+  - {do: upgrade, id: sp2, to: 2-3-0}
+  - {do: upgrade, id: v1, to: 2-2-0}
+fill:
+  - {do: place, kind: spike, role: exit, max: 4}
+  - {do: upgrade, kind: spike, to: 2-3-0}
+  - {do: place, kind: engineer, role: support, near: [v1], near_radius: 7, max: 4}
+  - {do: upgrade, kind: engineer, to: 3-0-2}
+panic:
+  - {do: place, kind: spike, role: exit}
+answers:
+  camo:
+    - {do: upgrade, id: v1, to: 0-2-0}
+    - {do: place, id: v1, kind: village, role: support, near: [e1], near_radius: 6}
+  lead:
+    - {do: upgrade, id: sp1, to: 2-0-0}
+  ceramic:
+    - {do: upgrade, id: sp1, to: 2-2-0}
+  moab:
+    - {do: upgrade, id: sp1, to: 2-3-0}

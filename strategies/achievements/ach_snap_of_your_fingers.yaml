@@ -1,0 +1,31 @@
+# Achievement 'Snap of your fingers': finish with exactly half the starting lives and cash.
+# Wiki method (v56.3): Deflation on Logs with MK off. Needs exact-leak control the bot lacks.
+id: ach_snap_of_your_fingers
+achievement: Snap of your fingers
+map: Logs
+modes: [deflation]
+hero: null
+constraints:
+  mk: 'off'
+  spend_exact: 10000
+  lives_lost_exact: 100
+  no_default_panic: true
+  place_hero: false
+planner:
+  towers: {sub: [4, 2, 0], buccaneer: [3, 2, 0], tack: [0, 3, 0], dart: [1, 0, 0]}
+  base_success: {deflation: 0.3}
+notes:
+  - 'Deflation: $20,000 and 200 lives at start, no income -> finish with exactly $10,000 and 100 lives.'
+  - 'Tower set totals exactly $10,000 in v56.3 (Ezili alt: 4-2-0 Sub, 3-2-0 Buccaneer, 2-0-0 Desperado, 0-0-0 Dart). Re-price for v57 before use.'
+  - 'Lives: leak exactly 10 camo Yellows on R33 (pop the rest), then leak every camo on R36 (=100 lives). Submerge/surface the Bloontonium Reactor to control camo pops.'
+plan:
+  - {do: place, id: sub1, kind: sub, role: dps, segment: [0.0, 1.0]}
+  - {do: upgrade, id: sub1, to: 4-2-0}
+  - {do: place, id: bu1, kind: buccaneer, role: dps}
+  - {do: upgrade, id: bu1, to: 3-2-0}
+  - {do: place, id: t1, kind: tack, role: dps}
+  - {do: upgrade, id: t1, to: 0-3-0}
+  - {do: place, id: d1, kind: dart, role: dps}
+  - {do: upgrade, id: d1, to: 1-0-0}
+fill: []
+panic: []

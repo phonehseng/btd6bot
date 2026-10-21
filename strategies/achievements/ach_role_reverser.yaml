@@ -1,0 +1,41 @@
+# Achievement 'Role Reverser': win one game in Reverse (Medium, bloons enter from the exit).
+# Plan = military_heli_sniper (already lists reverse); Logs is long and open.
+id: ach_role_reverser
+achievement: Role Reverser
+map: Logs
+modes: [reverse]
+hero: quincy
+constraints:
+  wins_needed: 1
+planner:
+  towers: {heli: [2, 0, 2], sniper: [2, 2, 0]}
+  base_success: {reverse: 0.92}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: s1, kind: sniper, role: dps, target: first}
+  - {do: upgrade, id: s1, to: 1-0-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: first}
+  - {do: upgrade, id: s1, to: 2-0-0}
+  - {do: place, id: h1, kind: heli, role: dps}
+  - {do: upgrade, id: h1, to: 1-0-1}
+  - {do: upgrade, id: s1, to: 2-2-0, round: 18}
+  - {do: upgrade, id: h1, to: 2-0-2}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: place, id: h2, kind: heli, role: dps}
+  - {do: upgrade, id: h2, to: 3-0-2}
+  - {do: upgrade, id: s1, to: 4-2-0, round: 36}
+  - {do: target, id: s1, mode: strong}
+  - {do: upgrade, id: h1, to: 4-0-2}
+  - {do: upgrade, id: h2, to: 4-0-2}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong}
+  - {do: upgrade, id: s3, to: 4-2-0}
+fill:
+  - {do: upgrade, kind: heli, to: 4-0-2}
+  - {do: upgrade, kind: sniper, to: 4-2-0}
+  - {do: place, kind: heli, role: dps, max: 5}
+  - {do: upgrade, kind: heli, to: 5-0-2}
+  - {do: place, kind: sniper, role: dps, max: 5}
+panic:
+  - {do: place, kind: sniper, role: exit}
+  - {do: place, kind: tack, role: exit}

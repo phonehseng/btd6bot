@@ -1,0 +1,72 @@
+# Achievement 'Chunky Monkeys' (hidden): win 10 games on Medium or harder using only
+# large-footprint towers: Buccaneer, Ace, Heli, Mortar, Super, Mermonkey, Banana Farm,
+# Village, Spike Factory (heroes: only Pat Fusty or Churchill, otherwise none).
+# Medium (R1-60) on Logs. Buccaneer 3-2-0 Destroyer (0-2-0 Hot Shot pops lead),
+# Mortar 0-0-3 Signal Flare (de-camo), Spike exit 2-3-0, Heli 4-0-2 Apache
+# Dartship, Village 2-2-0 (drums + radar), Super 3-0-2 Sun Avatar by R50+.
+# Executor must not use its default panic tower (constraints.no_default_panic).
+id: ach_chunky_monkeys
+achievement: Chunky Monkeys
+map: Logs
+modes: [medium]
+hero: null
+constraints:
+  allowed_towers: [buccaneer, ace, heli, mortar, super, mermonkey, farm, village, spike]
+  allowed_heroes: [pat_fusty, churchill]
+  place_hero: false
+  wins_needed: 10
+  min_difficulty: medium
+  no_default_panic: true
+planner:
+  towers: {buccaneer: [3, 2, 0], mortar: [2, 0, 3], spike: [2, 3, 0], heli: [4, 0, 2], village: [2, 2, 0], super: [3, 0, 2]}
+  base_success: {medium: 0.8}
+notes:
+  - 'Medium start cash $650: the $500 Buccaneer (water) is the only large tower affordable on R1, hence Logs (river).'
+  - If Pat Fusty is owned, select and place him at R1 (allowed by the achievement) for a safer opening.
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: b1, to: 0-1-0}
+  - {do: upgrade, id: b1, to: 1-2-0}
+  - {do: place, id: m1, kind: mortar, role: dps, segment: [0.2, 0.8]}
+  - {do: upgrade, id: m1, to: 0-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-0}
+  - {do: upgrade, id: m1, to: 0-0-3, round: 20}
+  - {do: upgrade, id: b1, to: 2-2-0}
+  - {do: place, id: h1, kind: heli, role: dps}
+  - {do: upgrade, id: h1, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 3-2-0}
+  - {do: upgrade, id: sp1, to: 2-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [h1, b1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: upgrade, id: sp1, to: 2-3-0}
+  - {do: upgrade, id: m1, to: 2-0-3}
+  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
+  - {do: upgrade, id: s1, to: 2-0-2}
+  - {do: upgrade, id: h1, to: 4-0-2}
+  - {do: upgrade, id: s1, to: 3-0-2}
+fill:
+  - {do: place, kind: spike, role: exit, max: 3}
+  - {do: upgrade, kind: spike, to: 2-3-0}
+  - {do: place, kind: heli, role: dps, max: 3}
+  - {do: upgrade, kind: heli, to: 4-0-2}
+  - {do: place, kind: super, role: support, near: [v1], near_radius: 8, max: 2}
+  - {do: upgrade, kind: super, to: 3-0-2}
+panic:
+  - {do: place, kind: spike, role: exit}
+  - {do: place, kind: mortar, role: dps}
+answers:
+  camo:
+    - {do: upgrade, id: m1, to: 0-0-3}
+    - {do: upgrade, id: v1, to: 0-2-0}
+  lead:
+    - {do: upgrade, id: b1, to: 0-2-0}
+    - {do: upgrade, id: sp1, to: 2-0-0}
+  ceramic:
+    - {do: upgrade, id: b1, to: 3-2-0}
+  moab:
+    - {do: upgrade, id: h1, to: 3-0-2}
+    - {do: upgrade, id: sp1, to: 2-3-0}
+  bfb:
+    - {do: upgrade, id: h1, to: 4-0-2}
