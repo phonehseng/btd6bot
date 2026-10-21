@@ -8,10 +8,10 @@ alternate table below (selected automatically from the aspect ratio).
 LAYOUTS = {
     "16:10": {
         "playfield": (0.0, 0.04, 0.855, 0.96),
-        "lives": (0.04, 0.045, 0.13, 0.11),
-        "cash": (0.15, 0.045, 0.32, 0.11),
+        "lives": (0.059, 0.045, 0.135, 0.11),   # right of the heart icon
+        "cash": (0.183, 0.045, 0.32, 0.11),     # right of the coin icon
         # round counter moves left when an upgrade panel opens on the right
-        "round": (0.745, 0.06, 0.83, 0.11),
+        "round": (0.705, 0.06, 0.815, 0.11),
         "round_shifted": (0.505, 0.06, 0.60, 0.11),
         "cancel_place": (0.829, 0.145),        # red X shown while a tower is held
         "tower_panel": (0.86, 0.17, 1.0, 0.84),
@@ -44,20 +44,22 @@ def mirror(region):
     return (pf_right - x1, y0, pf_right - x0, y1)
 
 
+def shift(region, dx):
+    if len(region) == 2:
+        return (region[0] + dx, region[1])
+    x0, y0, x1, y1 = region
+    return (x0 + dx, y0, x1 + dx, y1)
+
+
 def _with_left_panel(l):
+    """The panel for towers on the right half opens at the far left of the
+    screen with the same internal layout, and pushes the HUD to the right."""
     r = l["upg_right"]
-    l["upg_left"] = {
-        "box": mirror(r["box"]),
-        "close": mirror(r["close"]),
-        "paths": [mirror(p) for p in r["paths"]],
-        "cost_rows": [mirror(c) for c in r["cost_rows"]],
-        "tier_rows": [mirror(c) for c in r["tier_rows"]],
-        "target_prev": mirror(r["target_next"]),
-        "target_next": mirror(r["target_prev"]),
-        "target_text": mirror(r["target_text"]),
-        "sell": mirror(r["sell"]),
-        "name": mirror(r["name"]),
-    }
+    dx = -0.625
+    l["upg_left"] = {k: ([shift(v, dx) for v in r[k]] if isinstance(r[k], list) else shift(r[k], dx))
+                     for k in r}
+    l["upg_left"]["hud_shift"] = 0.23
+    l["upg_right"]["hud_shift"] = 0.0
     return l
 
 

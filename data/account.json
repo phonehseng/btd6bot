@@ -1,0 +1,33 @@
+{
+ "schema": 1,
+ "saved_at": "2026-10-21T15:45:16",
+ "player_level": 3,
+ "xp": 0.0,
+ "monkey_money": 0,
+ "unlocked_towers": [
+  "bomb",
+  "dart",
+  "tack"
+ ],
+ "unlocked_heroes": [
+  "quincy"
+ ],
+ "tower_xp": {},
+ "unlocked_upgrades": {
+  "tack": [
+   2,
+   0,
+   1
+  ]
+ },
+ "mk_points": 0,
+ "mk_unlocked": [],
+ "medals": {},
+ "map_stats": {},
+ "strategy_stats": {},
+ "pending_tower_choices": [],
+ "map_category_overrides": {},
+ "observed_upgrade_costs": {},
+ "games_played": 0,
+ "history": []
+}

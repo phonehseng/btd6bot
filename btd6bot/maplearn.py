@@ -35,6 +35,8 @@ class MapModel:
         self.rounds_traced = 0
         self.valid = {}  # tower -> {"x,y": bool} placement validity cache
         self.px_per_unit = None
+        # placement scan per footprint class ("land"/"water"): 0 unknown, 1 ok, 2 blocked
+        self.scan = {}
 
     # -- persistence ------------------------------------------------------
     @property
@@ -43,8 +45,9 @@ class MapModel:
 
     def save(self):
         DATA.mkdir(parents=True, exist_ok=True)
+        scans = {f"scan_{k}": v for k, v in self.scan.items()}
         np.savez_compressed(
-            self.path, heat=self.heat, t_sum=self.t_sum, t_cnt=self.t_cnt,
+            self.path, heat=self.heat, t_sum=self.t_sum, t_cnt=self.t_cnt, **scans,
             meta=json.dumps({"rounds_traced": self.rounds_traced, "valid": self.valid,
                              "px_per_unit": self.px_per_unit, "playfield": self.playfield}),
         )
@@ -59,7 +62,45 @@ class MapModel:
             m.rounds_traced = meta.get("rounds_traced", 0)
             m.valid = meta.get("valid", {})
             m.px_per_unit = meta.get("px_per_unit")
+            for k in d.files:
+                if k.startswith("scan_"):
+                    m.scan[k[5:]] = d[k]
         return m
+
+    # -- placement scan -------------------------------------------------------
+    def blocked(self, cls="land"):
+        """bool grid: True where a tower of this class cannot stand (unknown=False)."""
+        s = self.scan.get(cls)
+        if s is None:
+            return np.zeros(self.heat.shape, bool)
+        return s == 2
+
+    def scanned(self, cls="land"):
+        return cls in self.scan and (self.scan[cls] > 0).mean() > 0.5
+
+    def track_guess(self):
+        """Before any bloon has been seen: thin blocked corridors look like track.
+
+        Large obstacles (trees, water, buildings) are blocked too, but their
+        interiors are far from any open ground; the track is a narrow band.
+        """
+        s = self.scan.get("land")
+        if s is None:
+            return np.zeros(self.heat.shape, np.float32)
+        blocked = (s == 2).astype(np.uint8)
+        dist = cv2.distanceTransform(blocked, cv2.DIST_L2, 3)
+        # keep only blocked components whose widest point is track-like
+        n, lab, stats, _ = cv2.connectedComponentsWithStats(blocked)
+        thin = np.zeros(blocked.shape, bool)
+        for i in range(1, n):
+            comp = lab == i
+            if dist[comp].max() <= 9 and stats[i, cv2.CC_STAT_AREA] >= 40:
+                thin |= comp
+            elif stats[i, cv2.CC_STAT_AREA] >= 40:
+                thin |= comp & (dist <= 9)
+        # border strips are scenery, not track
+        thin[:3, :] = thin[-3:, :] = False
+        return thin.astype(np.float32)
 
     # -- learned layers ---------------------------------------------------
     def track_mask(self):
@@ -89,6 +130,32 @@ class MapModel:
             out[mask] = np.clip((t[mask] - lo) / max(1e-6, hi - lo), 0, 1)
         return out
 
+    def track_weight(self):
+        """Best estimate of the track: traced motion, plus scan corridors
+        (motion is masked out near our own towers, the scan is not)."""
+        traced = self.track_mask().astype(np.float32)
+        guess = self.track_guess()
+        if traced.sum() < 60:
+            return guess
+        near = cv2.dilate(traced, np.ones((9, 9), np.uint8)) > 0
+        return np.maximum(traced, guess * near * 0.8 + guess * (~near) * 0.4)
+
+    def progress_full(self):
+        """progress() extended to every cell from the nearest traced cell."""
+        prog = self.progress()
+        known = ~np.isnan(prog)
+        if not known.any():
+            return np.zeros_like(prog)
+        src = (~known).astype(np.uint8)
+        _, labels = cv2.distanceTransformWithLabels(src, cv2.DIST_L2, 3,
+                                                   labelType=cv2.DIST_LABEL_PIXEL)
+        ys, xs = np.nonzero(known)
+        # label ids of zero-pixels are assigned in raster order
+        lut = np.zeros(labels.max() + 1, np.float32)
+        order = np.argsort(ys * prog.shape[1] + xs)
+        lut[1:len(order) + 1] = prog[ys[order], xs[order]]
+        return lut[labels]
+
     def known(self):
         return self.rounds_traced >= 2 and self.track_mask().sum() > 60
 
@@ -112,24 +179,28 @@ class MapModel:
 
     # -- choosing tower spots ---------------------------------------------
     def score_spots(self, range_cells, segment=(0.0, 1.0), avoid=(), min_sep=3.0, near=None,
-                    near_radius=None):
+                    near_radius=None, placement="land"):
         """Score every cell by how much (weighted) track lies within range.
 
         segment: only count track whose progress lies in this window.
         avoid: cells (cx, cy, r) occupied by placed towers.
         near: (cx, cy) a spot must be within near_radius of (support towers).
         """
-        mask = self.track_mask().astype(np.float32)
-        prog = self.progress()
-        seg = ((prog >= segment[0]) & (prog <= segment[1])).astype(np.float32)
-        weight = mask * np.nan_to_num(seg)
+        mask = self.track_weight()
+        if self.known() and segment != (0.0, 1.0):
+            prog = self.progress_full()
+            seg = ((prog >= segment[0]) & (prog <= segment[1])).astype(np.float32)
+            weight = mask * seg
+        else:
+            weight = mask
         r = max(1, int(round(range_cells)))
         disk = np.zeros((2 * r + 1, 2 * r + 1), np.float32)
         cv2.circle(disk, (r, r), r, 1.0, -1)
         cover = cv2.filter2D(weight, -1, disk, borderType=cv2.BORDER_CONSTANT)
-        # cannot stand on the track itself
-        on_track = cv2.dilate(mask, np.ones((3, 3), np.uint8)) > 0
+        # cannot stand on the track itself, nor where the scan found it blocked
+        on_track = cv2.dilate(mask.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
         cover[on_track] = -1
+        cover[self.blocked(placement)] = -1
         hh, ww = cover.shape
         yy, xx = np.mgrid[0:hh, 0:ww]
         for ax, ay, ar in avoid:
