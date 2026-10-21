@@ -1,9 +1,9 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T16:21:53",
- "player_level": 10,
- "xp": 19850.0,
- "monkey_money": 175,
+ "saved_at": "2026-10-21T16:23:49",
+ "player_level": 14,
+ "xp": 38000.0,
+ "monkey_money": 225,
  "unlocked_towers": [
   "ace",
   "bomb",
@@ -19,6 +19,7 @@
   "tack"
  ],
  "unlocked_heroes": [
+  "gwendolin",
   "quincy"
  ],
  "tower_xp": {},

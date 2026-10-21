@@ -16,6 +16,12 @@ import cv2
 import numpy as np
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "maps"
+# In-game buttons drawn over the play field (client fractions): placing a tower
+# there would click the button instead.
+UI_OVERLAYS = [
+    (0.70, 0.02, 0.855, 0.21),   # round counter, gear, cancel-X while holding
+    (0.00, 0.84, 0.14, 0.96),    # powers / hero ability buttons
+]
 GRID = (160, 108)  # internal resolution of the learned maps (w, h) of the playfield
 
 
@@ -229,7 +235,11 @@ class MapModel:
         cover[:8, :] = -1
         cover[-2:, :] = -1
         cover[:, :2] = -1
-        cover[:, -2:] = -1
+        cover[:, -4:] = -1
+        for rect in UI_OVERLAYS:
+            x0, y0 = self.frac_to_cell(rect[0], rect[1])
+            x1, y1 = self.frac_to_cell(rect[2], rect[3])
+            cover[max(0, y0):y1 + 1, max(0, x0):x1 + 1] = -1
         return cover
 
     def best_spots(self, cover, n=30):

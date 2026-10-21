@@ -206,9 +206,21 @@ class Game:
 
     # -- selection / upgrade panel ---------------------------------------------
     def panel(self, p):
-        """Which side the upgrade panel opens on for tower p."""
+        """Which side the upgrade panel opens on for tower p (learned on first
+        selection; predicted from the tower's side of the map until then)."""
+        side = getattr(p, "panel_side", None)
+        if side:
+            return self.lay[side]
         mid = self.lay["playfield"][2] / 2
         return self.lay["upg_right"] if p.x < mid else self.lay["upg_left"]
+
+    def _open_side(self, f=None):
+        f = f if f is not None else self.fresh()
+        for side in ("upg_right", "upg_left"):
+            text, _ = rec_text(crop(f, _expand(self.lay[side]["sell"], 0.04, 0.025)))
+            if "sell" in text.lower():
+                return side
+        return None
 
     def panel_open(self, p, f=None):
         f = f if f is not None else self.fresh()
@@ -218,11 +230,17 @@ class Game:
     def select(self, p):
         if self.is_holding():
             self.cancel_hold()
-        for _ in range(3):
+        for attempt in range(3):
             self.inp.click(p.x, p.y)
-            time.sleep(0.25)
-            if self.panel_open(p):
-                return True
+            for _ in range(3):  # the panel slides in over ~0.3 s
+                time.sleep(0.15)
+                side = self._open_side()
+                if side:
+                    p.panel_side = side
+                    return True
+            # nudge: the click may have hit the edge of the sprite
+            p_dx = (0.004, -0.004, 0.0)[attempt]
+            p.x += p_dx
         return False
 
     def deselect(self, p):
