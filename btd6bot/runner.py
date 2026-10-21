@@ -70,6 +70,7 @@ class Bot:
         self.failures = 0
         self.bad = set()        # (map, mode) that failed to start this session
         self._level_synced = False
+        self.skip_known = None
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -164,13 +165,36 @@ class Bot:
             if w.y < 0.1 or w.y > 0.9:
                 continue  # the search box itself / bottom buttons
             if target in norm(w.text) or norm(w.text) in target and len(norm(w.text)) > 4:
+                self.sync_medals(map_name, w)
+                if self.skip_known and self.skip_known(map_name):
+                    return "known"
                 self.inp.click(w.x, min(0.95, w.y + 0.1))  # thumbnail sits under the name
                 time.sleep(1.5)
                 return self.menus.identify() == "difficulty"
         return False
 
+    def sync_medals(self, map_name, label):
+        """Adopt the medals the save file shows on this map's card."""
+        from .account import canonical_map
+        from .medals import read_card
+        seen = read_card(self.s.grab(), label.x, label.y)
+        rec = self.account.medals.setdefault(canonical_map(map_name), {})
+        new = [d for d, earned in seen.items() if earned and not rec.get(d)]
+        for d in new:
+            rec[d] = True
+        if new:
+            log.info("save file shows medals on %s not in our notes: %s", map_name, new)
+            self.account.save()
+
     def start(self, plan):
-        if not self.open_map(plan.map):
+        # a first-time medal that the card shows as already earned: replan
+        self.skip_known = (lambda m: plan.first_time and self.account.has_medal(m, plan.mode_key))
+        opened = self.open_map(plan.map)
+        if opened == "known":
+            log.info("%s %s already earned on this save - replanning", plan.map, plan.mode_key)
+            self.to_main_menu()
+            return "known"
+        if not opened:
             log.error("could not open map %s", plan.map)
             return False
         self.menus.read()
@@ -263,7 +287,10 @@ class Bot:
                     log.error("planner has nothing to play")
                     return
                 log.info("NEXT: %s", plan.reason)
-                if not self.start(plan):
+                started = self.start(plan)
+                if started == "known":
+                    continue
+                if not started:
                     log.error("failed to start %s %s - skipping it this session",
                               plan.map, plan.mode_key)
                     self.bad.add((plan.map, plan.mode_key))
