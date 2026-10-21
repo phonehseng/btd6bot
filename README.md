@@ -12,10 +12,12 @@ python bot.py plan              # what would it play next, and why
 python bot.py status            # account summary (level, towers, medals)
 ```
 
-For an unattended overnight run, use the supervisor. It starts BTD6 through Steam if needed and restarts the bot if it ever exits (F8 still stops it for good):
+For unattended runs, the supervisor (`run_forever.ps1`) is installed as the Windows scheduled task **BTD6Bot**. It starts at logon, survives terminal and Claude restarts, launches BTD6 through Steam if needed, and restarts the bot if it exits. F8 stops it for good.
 
 ```
-powershell -ExecutionPolicy Bypass -File run_forever.ps1 -Hours 12
+powershell -ExecutionPolicy Bypass -File tools\install_task.ps1   # install and start
+schtasks /run /tn BTD6Bot                                         # start
+schtasks /end /tn BTD6Bot                                         # stop the supervisor
 ```
 
 An hourly Claude caretaker task (`btd6-bot-caretaker` in the app's Scheduled list) also runs. It reads the logs, restarts the bot if it died, fixes crash bugs, and commits each fix. Its notes go to `docs/caretaker_log.md`.

@@ -19,5 +19,6 @@ while ((Get-Date) -lt $deadline) {
     $code = $LASTEXITCODE
     "$(Get-Date -Format s) bot exited with code $code" | Add-Content logs\supervisor.log
     if ($code -eq 3) { break }   # F8 pressed: the user wants it stopped
+    if ($code -eq 4) { continue }  # reloading new code: restart right away
     Start-Sleep 15
 }

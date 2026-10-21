@@ -1,11 +1,10 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T16:35:51",
- "player_level": 17,
- "xp": 67000.0,
- "monkey_money": 225,
+ "saved_at": "2026-10-21T18:14:26",
+ "player_level": 19,
+ "xp": 86333.0,
+ "monkey_money": 275,
  "unlocked_towers": [
-  "ace",
   "alchemist",
   "bomb",
   "boomerang",
@@ -13,13 +12,13 @@
   "dart",
   "druid",
   "glue",
-  "heli",
   "ice",
   "mortar",
   "ninja",
   "sniper",
   "sub",
-  "tack"
+  "tack",
+  "wizard"
  ],
  "unlocked_heroes": [
   "gwendolin",
@@ -34,7 +33,7 @@
   ],
   "dart": [
    0,
-   1,
+   2,
    3
   ],
   "sniper": [
@@ -45,6 +44,21 @@
   "heli": [
    1,
    0,
+   1
+  ],
+  "boomerang": [
+   2,
+   0,
+   2
+  ],
+  "glue": [
+   2,
+   0,
+   1
+  ],
+  "bomb": [
+   0,
+   1,
    1
   ]
  },
@@ -58,6 +72,9 @@
    "easy": true
   },
   "Tree Stump": {
+   "easy": true
+  },
+  "Town Center": {
    "easy": true
   }
  },
@@ -88,6 +105,15 @@
     "easy": 8.34
    },
    "observed_rewards": {}
+  },
+  "Town Center": {
+   "wins": 1,
+   "losses": 0,
+   "best_round": 40,
+   "avg_minutes": {
+    "easy": 7.0
+   },
+   "observed_rewards": {}
   }
  },
  "strategy_stats": {
@@ -111,12 +137,19 @@
    "games": 1,
    "best_round": 40,
    "avg_minutes": 8.34
+  },
+  "Town Center|easy|primary_core": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": 7.0
   }
  },
  "pending_tower_choices": [],
  "map_category_overrides": {},
  "observed_upgrade_costs": {},
- "games_played": 3,
+ "games_played": 4,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -151,6 +184,18 @@
    "won": true,
    "round": 40,
    "minutes": 8.343760180473328,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T16:45:00",
+   "map": "Town Center",
+   "mode": "easy",
+   "strategy": "primary_core",
+   "hero": "quincy",
+   "won": true,
+   "round": 40,
+   "minutes": 6.99855463107427,
    "xp": null,
    "mm": null
   }

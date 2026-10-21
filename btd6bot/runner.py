@@ -26,6 +26,14 @@ MODE_BUTTON_TEXT = {
 }
 
 
+def _code_stamp():
+    """Latest modification time of the bot's code and strategy files."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    files = list((root / "btd6bot").glob("*.py")) + list((root / "strategies").glob("*.yaml"))
+    return max((f.stat().st_mtime for f in files), default=0)
+
+
 def planner_specs(strats, account):
     from .planner import StrategySpec
     specs = []
@@ -233,7 +241,12 @@ class Bot:
 
     def run(self, hours=8.0):
         end = time.time() + hours * 3600
+        code_stamp = _code_stamp()
         while time.time() < end:
+            if _code_stamp() != code_stamp:
+                # between games: exit so the supervisor restarts us on the new code
+                log.warning("code or strategies changed - exiting to reload")
+                raise SystemExit(4)
             if self.failures >= 8:
                 log.error("too many consecutive failures; stopping")
                 return
