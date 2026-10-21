@@ -1,8 +1,8 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T16:31:17",
- "player_level": 14,
- "xp": 38000.0,
+ "saved_at": "2026-10-21T16:35:51",
+ "player_level": 17,
+ "xp": 67000.0,
  "monkey_money": 225,
  "unlocked_towers": [
   "ace",
@@ -16,6 +16,7 @@
   "heli",
   "ice",
   "mortar",
+  "ninja",
   "sniper",
   "sub",
   "tack"
@@ -27,14 +28,14 @@
  "tower_xp": {},
  "unlocked_upgrades": {
   "tack": [
-   3,
+   4,
    0,
    2
   ],
   "dart": [
    0,
-   2,
-   2
+   1,
+   3
   ],
   "sniper": [
    3,
@@ -54,6 +55,9 @@
    "easy": true
   },
   "In The Loop": {
+   "easy": true
+  },
+  "Tree Stump": {
    "easy": true
   }
  },
@@ -75,6 +79,15 @@
     "easy": 7.83
    },
    "observed_rewards": {}
+  },
+  "Tree Stump": {
+   "wins": 1,
+   "losses": 0,
+   "best_round": 40,
+   "avg_minutes": {
+    "easy": 8.34
+   },
+   "observed_rewards": {}
   }
  },
  "strategy_stats": {
@@ -91,12 +104,19 @@
    "games": 1,
    "best_round": 40,
    "avg_minutes": 7.83
+  },
+  "Tree Stump|easy|starter_tack_dart": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": 8.34
   }
  },
  "pending_tower_choices": [],
  "map_category_overrides": {},
  "observed_upgrade_costs": {},
- "games_played": 2,
+ "games_played": 3,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -119,6 +139,18 @@
    "won": true,
    "round": 40,
    "minutes": 7.828126553694407,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T16:34:17",
+   "map": "Tree Stump",
+   "mode": "easy",
+   "strategy": "starter_tack_dart",
+   "hero": "quincy",
+   "won": true,
+   "round": 40,
+   "minutes": 8.343760180473328,
    "xp": null,
    "mm": null
   }
