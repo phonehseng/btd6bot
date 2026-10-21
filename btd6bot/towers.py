@@ -663,15 +663,15 @@ HEROES: dict[str, dict] = {
         _ab(3, "Rapid Shot", 60, "on_cooldown"),  # cd ?
         _ab(10, "Storm of Arrows", 60, "on_cooldown"),  # cd ?
     ]),
-    "gwendolin": _hero("Gwendolin", 725, "land", 40, "player level ~3 or 1,500 MM", [  # ? range/unlock
+    "gwendolin": _hero("Gwendolin", 725, "land", 40, "free at player level 14", [  # ? range/unlock
         _ab(3, "Cocktail of Fire", 20, "on_cooldown"),  # cd ?
         _ab(10, "Firestorm", 60, "on_cooldown"),  # cd ?
     ]),
-    "striker_jones": _hero("Striker Jones", 700, "land", 50, "player level ~5 or 1,500 MM", [  # ?
+    "striker_jones": _hero("Striker Jones", 700, "land", 50, "free at player level 21", [  # ?
         _ab(3, "Concussive Shell", 15, "on_cooldown"),  # cd ?
         _ab(10, "Artillery Command", 60, "on_cooldown"),  # cd ?
     ], "buffs bomb/mortar; gives them camo detection"),
-    "obyn": _hero("Obyn Greenfoot", 650, "land", 40, "player level ~10 or 1,500 MM", [  # ?
+    "obyn": _hero("Obyn Greenfoot", 650, "land", 40, "free at player level 28", [  # ?
         _ab(3, "Brambles", 15, "on_cooldown"),  # cd ?
         _ab(10, "Wall of Trees", 90, "on_cooldown"),  # cd ?
     ], "buffs magic towers"),

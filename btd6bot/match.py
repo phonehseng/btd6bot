@@ -3,6 +3,7 @@ import logging
 import time
 
 from . import towers as T
+from .abilities import AbilityPlanner
 from .maplearn import PathTracer
 
 log = logging.getLogger("match")
@@ -28,6 +29,8 @@ class Match:
         self.stats = {"start": time.time(), "rounds": 0, "lives_lost": 0, "panic": 0}
         self._prev_lives_read = None
         self._round_cand, self._round_votes = None, 0
+        self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
+        self._in_round = False
 
     def _exclude(self):
         out = []
@@ -56,6 +59,7 @@ class Match:
         if not self.setup():
             raise RuntimeError("no defence could be placed - refusing to start the round")
         self.g.go_fast(allow_start=True)
+        self._in_round = True
         last_round = self.g.round()
         last_lives = self.g.lives()
         self.tracer.start_round()
@@ -129,13 +133,16 @@ class Match:
                         self.stats["panic"] += 1
                     t_hud = 0  # re-read cash right away after spending
                 st = self.g.button_state()
+                if st in ("play_idle", "play_run", "play_fast"):
+                    self._in_round = st != "play_idle"
                 if st == "play_run":
                     self.g.go_fast(allow_start=False)
                 elif st == "play_idle" and self.ex.defended():
                     self.g.go_fast(allow_start=True)
-            if now - t_ability > 6 and any(p.kind == "hero" for p in self.g.towers.values()):
+                    self._in_round = True
+            if self.g.towers and (dropped or now - t_ability > 1.0):
                 t_ability = now
-                self._abilities(last_round)
+                self._abilities(last_round, dropped)
             time.sleep(0.02)
         return self._finish("timeout", last_round)
 
@@ -154,11 +161,18 @@ class Match:
             return True
         return False
 
-    def _abilities(self, rnd):
-        hero = T.HEROES.get(self.g.hero, {})
-        for i, ab in enumerate(hero.get("abilities", []), start=1):
-            if ab.get("use") == "on_cooldown":
-                self.g.ability(i)
+    def _abilities(self, rnd, dropped=False):
+        """Press the ability hotkeys the planner picks (see abilities.py)."""
+        try:
+            self.abil.update_towers(list(self.g.towers.values()), rnd)
+            keys = self.abil.decide(time.time(), rnd, self._in_round, lives_dropped=dropped)
+        except Exception:  # never let ability bookkeeping end a game
+            log.exception("ability planner failed")
+            return
+        for key, name, reason in self.abil.last_fired:
+            (log.info if reason != "cooldown" else log.debug)("ability %d (%s): %s", key, name, reason)
+        for key in keys:
+            self.g.ability(key)
 
     def _off_screen(self, st=None):
         st = st or self.menus.identify()
