@@ -34,9 +34,14 @@ def planner_specs(strats, account):
         modes = [m for m in s.get("modes", []) if usable(s, m, account)[0]]
         if not modes:
             continue
+        # Upgrade requirements only gate on towers we have evidence about: the
+        # executor unlocks/skips upgrades in-game, and unproven ones would
+        # otherwise lock a strategy out forever.
+        reqs = {k: v for k, v in (p.get("towers") or {}).items() if k in account.unlocked_upgrades}
+        reqs.update({k: [0, 0, 0] for k in (p.get("towers") or {}) if k not in reqs})
         specs.append(StrategySpec.from_any({
             "id": s["id"],
-            "towers": p.get("towers") or {},
+            "towers": reqs,
             "modes": modes,
             "base_success": {m: v for m, v in (p.get("base_success") or {}).items() if m in modes},
             "heroes": [s["hero"]] if s.get("hero") else [],
@@ -55,11 +60,15 @@ class Bot:
         self.menus = Menus(self.s, self.inp)
         self.strats = load_all()
         self.failures = 0
+        self.bad = set()        # (map, mode) that failed to start this session
+        self._level_synced = False
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
+        unknown_streak = 0
         for _ in range(tries):
             st = self.menus.identify()
+            unknown_streak = unknown_streak + 1 if st == "unknown" else 0
             log.info("screen: %s", st)
             if st == "main_menu":
                 return True
@@ -69,8 +78,9 @@ class Bot:
                 self.menus.leave_victory()
             elif st == "defeat":
                 self.menus.leave_defeat()
-            elif st in ("map_select", "difficulty", "mode_select", "hero_select", "upgrade_tree"):
-                self.inp.click(0.027, 0.05)  # back arrow
+            elif st in ("map_select", "difficulty", "mode_select", "hero_select", "upgrade_tree",
+                        "profile", "overwrite"):
+                self.inp.click(0.044, 0.055)  # back arrow
                 time.sleep(1.0)
             elif st == "level_up":
                 self.menus.handle_level_up()
@@ -80,9 +90,13 @@ class Bot:
                 self.inp.click(*self.lay["gear"])
                 time.sleep(0.8)
             else:
+                # transitions read as "unknown" for a moment: wait before acting,
+                # and only fall back to the back arrow after repeated unknowns
                 if not self.menus.dismiss_popup():
-                    self.inp.click(0.027, 0.05)
-                    time.sleep(1.0)
+                    time.sleep(1.5)
+                    if unknown_streak >= 3:
+                        self.inp.click(0.044, 0.055)
+                        time.sleep(1.0)
         return False
 
     def _tower_choice(self):
@@ -98,7 +112,16 @@ class Bot:
         from .vision import crop
         f = self.s.grab()
         lvl = parse_int(rec_text(crop(f, (0.095, 0.03, 0.125, 0.08)))[0])
-        if lvl and 1 <= lvl <= 999:
+        time.sleep(0.3)
+        lvl2 = parse_int(rec_text(crop(self.s.grab(), (0.095, 0.03, 0.125, 0.08)))[0])
+        # two agreeing reads; between games the level only rises a few steps, but
+        # the first read of a session may adopt any save file's level
+        cur = self.account.player_level
+        plausible = cur <= lvl2 <= cur + 4 if self._level_synced else (lvl2 or 0) >= 1
+        if lvl and lvl == lvl2 and plausible:
+            if lvl > cur + 4:
+                log.warning("adopting save-file level %d (notes said %d)", lvl, cur)
+            self._level_synced = True
             events = self.account.sync_level(lvl)
             for e in events:
                 log.info(e)
@@ -109,9 +132,17 @@ class Bot:
 
     def open_map(self, map_name):
         """Main menu -> map select -> search -> map's difficulty screen."""
-        self.inp.click(0.5, 0.88)  # PLAY
-        time.sleep(1.5)
-        if self.menus.identify() != "map_select":
+        for attempt in range(4):
+            self.inp.click(0.5, 0.88)  # PLAY
+            time.sleep(1.5)
+            st = self.menus.identify()
+            if st == "map_select":
+                break
+            log.info("after PLAY: %s", st)
+            if st != "main_menu":
+                self.menus.dismiss_popup()
+                self.to_main_menu()
+        else:
             return False
         self.inp.click(0.044, 0.154)  # search (magnifier)
         time.sleep(1.0)
@@ -160,11 +191,13 @@ class Bot:
         hero = plan.hero or strat.get("hero") or "quincy"
         g = Game(self.s, self.inp, self.lay, difficulty=diff, hero=hero)
         self.menus.g = g
+        from .strategy import MODE_TOWER_FILTER
         roster = g.probe_roster()  # the save file is the truth, not our notes
+        only = MODE_TOWER_FILTER.get(plan.mode_key)  # restricted modes hide other towers
         for kind, ok in roster.items():
             if ok:
                 self.account.unlocked_towers.add(kind)
-            else:
+            elif not only or T.TOWERS[kind]["category"] == only:
                 self.account.unlocked_towers.discard(kind)
         self.account.save()
         from .strategy import rules
@@ -193,23 +226,28 @@ class Bot:
         return res
 
     def run(self, hours=8.0):
-        from .planner import next_game
         end = time.time() + hours * 3600
         while time.time() < end:
-            self.s.focus()
-            if not self.to_main_menu():
-                log.error("cannot reach main menu")
-                time.sleep(5)
-                continue
-            self.read_level()
-            plan = next_game(self.account, planner_specs(self.strats, self.account))
-            if plan is None:
-                log.error("planner has nothing to play")
+            if self.failures >= 8:
+                log.error("too many consecutive failures; stopping")
                 return
-            log.info("NEXT: %s", plan.reason)
             try:
+                self.s.focus()
+                if not self.to_main_menu():
+                    log.error("cannot reach main menu")
+                    self.failures += 1
+                    time.sleep(5)
+                    continue
+                self.read_level()
+                plan = self.next_plan()
+                if plan is None:
+                    log.error("planner has nothing to play")
+                    return
+                log.info("NEXT: %s", plan.reason)
                 if not self.start(plan):
-                    log.error("failed to start %s %s", plan.map, plan.mode_key)
+                    log.error("failed to start %s %s - skipping it this session",
+                              plan.map, plan.mode_key)
+                    self.bad.add((plan.map, plan.mode_key))
                     self.failures += 1
                     continue
                 res = self.play(plan)
@@ -220,10 +258,28 @@ class Bot:
             except FocusLost as e:
                 log.warning("%s - waiting for the game to be in front again", e)
                 time.sleep(10)
-                continue
             except Exception:
                 log.exception("game loop error - recovering to main menu")
                 self.failures += 1
-            if self.failures >= 5:
-                log.error("too many consecutive failures; stopping")
-                return
+
+    def next_plan(self):
+        """Best plan whose (map, mode) has not failed to start this session."""
+        from .planner import GamePlan, rank_games
+        from .account import MODES
+        specs = planner_specs(self.strats, self.account)
+        phase, reasons, cands = rank_games(self.account, specs)
+        for c in cands:
+            if (c.map, c.mode) in self.bad:
+                continue
+            from .planner import next_game  # noqa: F401  (same scoring as next_game)
+            mi = MODES[c.mode]
+            hero = (c.s.heroes or (None,))[0]
+            return GamePlan(
+                map=c.map, difficulty=mi.difficulty, mode=mi.ui_mode, mode_key=c.mode,
+                strategy_id=c.s.id, hero=hero,
+                reason=f"[{phase}] {c.map} / {c.mode} with {c.s.id}: score {c.score:,.0f}/min; "
+                       + ", ".join(c.notes),
+                reasons=reasons, phase=phase, p_win=round(c.p, 3),
+                expected_minutes=round(c.minutes, 1), expected_xp=0, expected_mm=0,
+                score=round(c.score, 1), first_time=c.first)
+        return None

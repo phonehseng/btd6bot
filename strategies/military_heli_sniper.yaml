@@ -22,12 +22,12 @@ plan:
   - {do: upgrade, id: h1, to: 3-0-2}
   - {do: place, id: h2, kind: heli, role: dps}
   - {do: upgrade, id: h2, to: 3-0-2}
-  - {do: upgrade, id: s1, to: 4-0-2, round: 36}
+  - {do: upgrade, id: s1, to: 4-2-0, round: 36}
   - {do: target, id: s1, mode: strong}
   - {do: upgrade, id: h1, to: 4-0-2}
   - {do: upgrade, id: h2, to: 4-0-2}
   - {do: place, id: s3, kind: sniper, role: dps, target: strong}
-  - {do: upgrade, id: s3, to: 4-0-2}
+  - {do: upgrade, id: s3, to: 4-2-0}
 fill:
   - {do: upgrade, kind: heli, to: 4-0-2}
   - {do: upgrade, kind: sniper, to: 4-2-0}

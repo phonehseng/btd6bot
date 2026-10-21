@@ -51,11 +51,12 @@ class Hud:
             "round": self.round(frame),
         }
 
-    def lives(self, frame):
-        return parse_int(rec_text(crop(frame, self.layout["lives"]))[0])
+    def lives(self, frame, dx=0.0):
+        return parse_int(rec_text(crop(frame, _shift(self.layout["lives"], dx)))[0])
 
-    def cash(self, frame):
-        text, _ = rec_text(crop(frame, self.layout["cash"]))
+    def cash(self, frame, dx=0.0):
+        """dx: horizontal shift of the HUD (an upgrade panel on the left pushes it right)."""
+        text, _ = rec_text(crop(frame, _shift(self.layout["cash"], dx)))
         return parse_int(text)
 
     def round(self, frame, shifted=None):
@@ -91,6 +92,11 @@ class Hud:
     @staticmethod
     def _plausible_total(t):
         return t in (40, 50, 60, 80, 100) or 1 <= t <= 200
+
+
+def _shift(region, dx):
+    x0, y0, x1, y1 = region
+    return (x0 + dx, y0, x1 + dx, y1)
 
 
 def red_fraction(frame, region):

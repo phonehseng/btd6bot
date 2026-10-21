@@ -1,0 +1,58 @@
+# Obyn + clustered Druids (2-0-4 Poplust: each nearby Poplust druid buffs the
+# others, up to 5; Heart of Thunder lightning pops lead). Obyn buffs magic
+# towers. Druids have no camo, so a cheap Dart 0-0-2 covers camo early and a
+# 2-2-0 Village (Radar Scanner) gives every druid camo; late 2-3-0 MIB adds all
+# damage types. Dart grows into 0-2-4 Sharp Shooter (MOAB/BFB single target),
+# an exit 2-0-4 Spike Factory is the ZOMG/leak cleaner. Cheap per tower, so it
+# is also the half-cash pick. Druids are clustered via role: support near d1.
+id: obyn_druid_poplust
+hero: obyn
+modes: [medium, hard, half_cash]
+planner:
+  towers: {druid: [2, 0, 4], dart: [0, 2, 4], alchemist: [4, 2, 0], village: [2, 3, 0], spike: [2, 0, 4]}
+  base_success: {medium: 0.9, hard: 0.8, half_cash: 0.62}
+plan:
+  - {do: place, id: d1, kind: druid, role: dps, segment: [0.0, 0.5]}
+  - {do: place, id: hero, kind: hero, role: support, near: [d1], near_radius: 7}
+  - {do: upgrade, id: d1, to: 2-0-2}
+  - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: dr, to: 0-0-2}
+  - {do: place, id: d2, kind: druid, role: support, near: [d1], near_radius: 6}
+  - {do: upgrade, id: d2, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [d1, d2], near_radius: 6}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: d1, to: 2-0-4}
+  - {do: upgrade, id: dr, to: 0-2-3}
+  - {do: upgrade, id: d2, to: 2-0-4}
+  - {do: upgrade, id: dr, to: 0-2-4}
+  - {do: place, id: d3, kind: druid, role: support, near: [d1, d2], near_radius: 6}
+  - {do: upgrade, id: d3, to: 2-0-4}
+  - {do: place, id: v1, kind: village, role: support, near: [d1, d2, d3], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: d4, kind: druid, role: support, near: [d1, d2], near_radius: 7}
+  - {do: upgrade, id: d4, to: 2-0-4}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: place, id: d5, kind: druid, role: support, near: [d1, d2], near_radius: 7}
+  - {do: upgrade, id: d5, to: 2-0-4}
+  - {do: upgrade, id: v1, to: 2-3-0}
+fill:
+  - {do: place, kind: druid, role: support, near: [v1], near_radius: 8, max: 8}
+  - {do: upgrade, kind: druid, to: 2-0-4}
+  - {do: place, kind: spike, role: exit, max: 3}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+  - {do: place, kind: alchemist, role: support, near: [d3], near_radius: 6, max: 2}
+  - {do: upgrade, kind: alchemist, to: 4-2-0}
+panic:
+  - {do: place, kind: druid, role: exit}
+  - {do: place, kind: dart, role: exit}
+answers:
+  camo: [{do: upgrade, id: dr, to: 0-0-2}, {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.6]}]
+  lead: [{do: place, id: a1, kind: alchemist, role: support, near: [d1], near_radius: 6}]
+  ceramic: [{do: upgrade, id: dr, to: 0-2-3}]
+  moab: [{do: upgrade, id: dr, to: 0-2-4}]
+  bfb: [{do: upgrade, id: dr, to: 0-2-4}]
+  zomg:
+    - {do: upgrade, id: sp1, to: 2-0-4}
+    - {do: place, id: sp1, kind: spike, role: exit}

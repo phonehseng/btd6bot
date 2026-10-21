@@ -16,12 +16,15 @@ log = logging.getLogger("menus")
 SCREENS = [
     ("defeat", [["defeat", "gameover", "bloonsleaked", "youlost"]]),
     ("upgrade_tree", [["unlockall", "ingamecost", "appliestothismonkey"]]),
+    ("profile", [["overallstats", "topmonkeys", "topheroes", "publicstats"]]),
     ("victory", [["victory", "vigtory", "congratulations", "completedthistrack", "monkeystar"]]),
     ("tower_choice", [["choosea", "tounlock"], ["unlock"]]),
     ("level_up", [["levelup"]]),
     ("pause", [["pause"], ["restart"], ["home"]]),
     ("restart_confirm", [["restart?", "sureyouwish"]]),
-    ("overwrite", [["overwrite", "existingsave", "savedgame"]]),
+    # NB the difficulty screen can show a "Continue saved game?" banner; that is
+    # not this prompt (which appears after picking a mode over an existing save)
+    ("overwrite", [["overwrite", "existingsave"]]),
     ("mode_select", [["standard"], ["rewards", "sandbox"]]),
     ("difficulty", [["easy"], ["medium"], ["hard"]]),
     ("map_select", [["beginner"], ["intermediate"], ["expert"]]),
@@ -102,12 +105,14 @@ class Menus:
         """Close whatever simple popup is up. Never on a defeat screen."""
         if self.has("defeat", "gameover", "bloonsleaked"):
             return False
+        # a screen offering Restart + Home is an end-of-game screen: its
+        # Continue/Yes may be a paid revive, so never use those here
+        endgame = self.has("restart") and self.has("home") and not self.has("pause")
         for b in POPUP_BUTTONS:
+            if endgame and b in ("continue", "yes", "ok"):
+                continue
             w = self.find(b)
             if w and w.conf > 0.6 and len(norm(w.text)) <= len(b) + 3 and not forbidden(w.text):
-                # a 'continue' next to a monkey-money price is a paid revive
-                if b == "continue" and self.has("$", "monkeymoney") and self.has("defeat", "lost"):
-                    continue
                 log.info("dismiss popup via %r", w.text)
                 self.inp.click(w.x, w.y)
                 time.sleep(0.7)

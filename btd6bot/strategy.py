@@ -154,6 +154,8 @@ class Executor:
         self.failed_spots = set()
         self.panic_pending = 0
         self.unanswerable = set()
+        self.hold_fails = {}       # kind -> times the hotkey would not pick it up
+        self.upgrade_fails = {}    # (tid, path) -> non-XP failures this game
         self.last_try = 0.0
         self.blocked = np.zeros(model.heat.shape, bool)  # this game's no-go cells
         for p in game.towers.values():
@@ -267,8 +269,10 @@ class Executor:
             if step.get("id") and step["id"] in self.g.towers:
                 return "done"
             price = self.g.price(kind)
-            if cash is not None and cash < price:
+            if cash is None or cash < price:
                 return "wait"
+            if self.hold_fails.get(kind, 0) >= 3:
+                return "skip"  # cannot pick it up (locked / mode-restricted / unbound)
             spot = self.pick_spot(kind, step)
             if spot is None:
                 return "skip"
@@ -279,39 +283,42 @@ class Executor:
                 self._block(cx, cy, 3)
                 if step.get("target"):
                     self.g.target(self.g.towers[tid], step["target"])
-                return "done"
-            self.failed_spots.add((kind, cx, cy))
-            self._block(cx, cy, 2)  # don't probe right next to a failed spot again
+                return "bought"
+            reason = self.g.fail_reason
+            if reason == "hold":
+                self.hold_fails[kind] = self.hold_fails.get(kind, 0) + 1
+            elif reason in ("spot", "click"):
+                # only blame the spot when the spot was the problem
+                self.failed_spots.add((kind, cx, cy))
+                self._block(cx, cy, 2)
             return "wait"
         if do == "upgrade":
             target = parse_cross(step["to"])
-            todo = False
-            for p in self._resolve_targets(step):
+            targets = self._resolve_targets(step)
+            for p in targets:
                 nxt = self._next_path(p, target)
                 if nxt is None:
                     continue
-                todo = True
                 path, cost = nxt
-                if cash is not None and cash < cost:
+                if cash is None or cash < cost:
                     return "wait"
-                self.g.locked_seen = None
                 if self.g.upgrade(p, path):
                     if self.account and p.kind != "hero":
                         self.account.note_bought(p.kind, path, p.tiers[path - 1])
-                    return "wait" if self._next_path(p, target) else "done"
-                # locked behind tower XP we do not have yet
-                if getattr(self.g, "locked_seen", None):
+                    return "progress" if self._next_path(p, target) else "bought"
+                reason = self.g.fail_reason
+                if reason == "xp":
+                    # locked behind tower XP we do not have (yet)
                     self.capped.add((p.tid, path))
-                    if self.account:
+                    if self.account and self.g.locked_seen:
                         self.account.note_locked(*self.g.locked_seen)
-                    return "wait"
-                # enough cash but nothing happened: upgrade is locked
-                if cash is not None and cash >= cost * 1.05:
-                    self.capped.add((p.tid, path))
-                    if self.account:
-                        self.account.note_locked(p.kind, path, p.tiers[path - 1] + 1)
+                else:
+                    self.upgrade_fails[(p.tid, path)] = self.upgrade_fails.get((p.tid, path), 0) + 1
+                    if self.upgrade_fails[(p.tid, path)] >= 4:
+                        self.capped.add((p.tid, path))  # give up on it this game only
                 return "wait"
-            return "wait" if todo else ("done" if self._resolve_targets(step) else "skip")
+            reached = [p for p in targets if all(c >= t for c, t in zip(p.tiers, target))]
+            return "done" if reached else "skip"
         if do == "target":
             for p in self._resolve_targets(step):
                 self.g.target(p, step["mode"])
@@ -321,7 +328,7 @@ class Executor:
                 return "skip"
             for p in self._resolve_targets(step):
                 self.g.sell(p)
-            return "done"
+            return "bought"
         return "skip"
 
     # -- threat calendar ---------------------------------------------------------
@@ -346,62 +353,69 @@ class Executor:
             # threats that began before our first round are present from the start
             r = max(r, start)
             # past r+1 it is no longer "early"; stop holding the plan hostage
-            if r - lookahead <= rnd <= r + 1 and not self.has_answer(threat):
+            if r - lookahead <= rnd <= r + 1 and threat not in self.unanswerable \
+                    and not self.has_answer(threat):
                 return threat
         return None
 
     def answer_threat(self, threat, cash, rnd):
-        """Run the strategy's `answers:` steps for this threat (or a generic one)."""
+        """Run the strategy's `answers:` steps for this threat (or a generic one).
+        Returns 'bought', 'wait' (saving for it) or 'none' (nothing applicable)."""
         steps = (self.strat.get("answers") or {}).get(threat)
         if steps is None:
             steps = self._generic_answer(threat)
         for st in steps:
             r = self.try_step(dict(st), cash, rnd)
-            if r == "done":
-                log.warning("threat %s: bought answer %s", threat, st)
-                return True
+            if r in ("bought", "progress"):
+                log.warning("threat %s: bought toward answer %s", threat, st)
+                return "bought"
             if r == "wait":
-                return False  # saving up for it: do not spend elsewhere
-        return False
+                return "wait"
+        return "none"
 
     def _generic_answer(self, threat):
-        """Upgrade an existing tower toward the cheapest listed answer."""
+        """Upgrade an existing tower (from its current tiers) toward a listed answer."""
         steps = []
-        for kind, path, tier in ANSWERS.get(threat, []):
-            if any(p.kind == kind for p in self.g.towers.values()) and path:
-                to = ["0", "0", "0"]
-                to[path - 1] = str(tier)
-                steps.append({"do": "upgrade", "kind": kind, "to": "-".join(to)})
+        for p in self.g.towers.values():
+            for kind, path, tier in ANSWERS.get(threat, []):
+                if p.kind != kind or not path:
+                    continue
+                to = list(p.tiers)
+                to[path - 1] = max(to[path - 1], tier)
+                if sum(t > 0 for t in to) <= 2 and sum(t > 2 for t in to) <= 1:
+                    steps.append({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, to))})
         return steps[:3]
 
     def tick(self, cash, rnd, lives_dropped=False):
         """Do at most one action. Returns True if something was bought."""
+        if cash is None:
+            return False  # never act on an unreadable cash value
         if lives_dropped:
             self.panic_pending = 2
         if self.panic_pending:
             for st in self.panic_steps:
                 r = self.try_step(dict(st), cash, rnd)
-                if r == "done":
+                if r in ("bought", "progress"):
                     self.panic_pending -= 1
                     return True
         threat = self.due_threat(rnd)
-        if threat and threat not in self.unanswerable:
-            if self.answer_threat(threat, cash, rnd):
+        if threat:
+            r = self.answer_threat(threat, cash, rnd)
+            if r == "bought":
                 return True
-            if not (self.strat.get("answers") or {}).get(threat) and not self._generic_answer(threat):
-                self.unanswerable.add(threat)  # nothing we can do; don't block the plan
-            else:
+            if r == "wait":
                 return False  # hold cash for the answer
+            self.unanswerable.add(threat)  # nothing applicable; don't block the plan
         while self.idx < len(self.plan):
             r = self.try_step(self.plan[self.idx], cash, rnd)
-            if r in ("done", "skip"):
+            if r in ("done", "skip", "bought"):
                 self.idx += 1
-                if r == "done":
+                if r == "bought":
                     return True
                 continue
-            return False  # waiting for cash / round
+            return r == "progress"  # waiting for cash / round, or mid-upgrade
         for st in self.fill:
-            if self.try_step(st, cash, rnd) == "done":
+            if self.try_step(st, cash, rnd) in ("bought", "progress"):
                 return True
         return False
 

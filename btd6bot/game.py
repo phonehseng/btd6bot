@@ -46,6 +46,7 @@ class Game:
         self.towers = {}           # tid -> Placed
         self.learned_cost = {}     # (kind, path, tier) -> observed price
         self.locked_seen = None    # (kind, path, tier) last upgrade found XP-locked
+        self.fail_reason = None    # why the last place()/upgrade() did nothing
         self.unlocked_now = None   # (kind, path, tier) last upgrade unlocked with XP
         self._frame = None
         self._frame_t = 0
@@ -63,11 +64,11 @@ class Game:
     def cash(self, f=None):
         return self.hud.cash(f if f is not None else self.fresh())
 
-    def cash_stable(self, tries=3):
+    def cash_stable(self, tries=3, dx=0.0):
         """Cash read twice in agreement (guards against OCR blips)."""
         last = None
         for _ in range(tries):
-            c = self.cash()
+            c = self.hud.cash(self.fresh(), dx)
             if c is not None and c == last:
                 return c
             last = c
@@ -170,26 +171,32 @@ class Game:
 
     def place(self, tid, kind, fx, fy, check_valid=True):
         """Place a tower; returns Placed or None. Verifies via cash drop."""
+        self.fail_reason = None
         before = self.cash_stable()
         cost = self.price(kind)
-        if before is not None and before < cost:
+        if before is None or before < cost:
+            self.fail_reason = "cash"
             return None
         if not self.hold(kind):
             log.info("could not pick up %s (locked or unaffordable)", kind)
+            self.fail_reason = "hold"
             return None
         if check_valid and not self.probe(fx, fy):
             self.cancel_hold()
             log.info("spot %.3f,%.3f invalid for %s", fx, fy, kind)
+            self.fail_reason = "spot"
             return None
         self.inp.click(fx, fy)
         time.sleep(0.25)
         if self.is_holding():
             self.cancel_hold()
+            self.fail_reason = "click"
             return None
         after = self.cash_stable()
         if before is not None and after is not None:
             if after >= before:
                 log.warning("placement of %s not confirmed (cash %s -> %s)", kind, before, after)
+                self.fail_reason = "noeffect"
                 return None
             self.learned_cost[(kind, 0, 0)] = before - after
         p = Placed(tid, kind, fx, fy, spent=(before - after) if before and after else cost)
@@ -285,46 +292,56 @@ class Game:
         A tier still locked behind tower XP is unlocked on the spot (when the
         tower has enough XP) through the upgrade tree, then bought.
         """
+        self.fail_reason = None
+        self.locked_seen = None
         if not self.select(p):
             log.warning("could not select %s", p.tid)
+            self.fail_reason = "select"
             return False
         try:
             costs = self.path_costs(p)
             kind_, cost = costs[path - 1]
             if kind_ == "xp":
+                self.locked_seen = (p.kind, path, p.tiers[path - 1] + 1)
                 if not allow_xp_unlock or p.kind == "hero":
-                    self.locked_seen = (p.kind, path, p.tiers[path - 1] + 1)
+                    self.fail_reason = "xp"
                     return False
                 self.inp.click(*self.panel(p)["paths"][path - 1])
                 time.sleep(1.2)
                 ok = self.unlock_in_tree(path, p.tiers[path - 1] + 1)
                 self.leave_tree()
                 if not ok:
-                    self.locked_seen = (p.kind, path, p.tiers[path - 1] + 1)
+                    self.fail_reason = "xp"
                     return False
+                self.locked_seen = None
                 self.unlocked_now = (p.kind, path, p.tiers[path - 1] + 1)
                 if not self.panel_open(p) and not self.select(p):
                     return False
                 kind_, cost = self.path_costs(p)[path - 1]
             if cost is None:
                 cost = T.upgrade_cost(p.kind, path, p.tiers[path - 1] + 1, self.difficulty) if p.kind != "hero" else None
-            before = self.cash_stable()
-            if cost is not None and before is not None and before < cost:
+            dx = self.panel(p).get("hud_shift", 0.0)  # the open panel moves the HUD
+            before = self.cash_stable(dx=dx)
+            if before is None or (cost is not None and before < cost):
+                self.fail_reason = "cash"
                 return False
             # click the path's upgrade button; fall back to the hotkey
             self.inp.click(*self.panel(p)["paths"][path - 1])
             time.sleep(0.3)
-            after = self.cash_stable()
+            after = self.cash_stable(dx=dx)
             if before is not None and after is not None and after >= before:
                 self.inp.press(T.UPGRADE_HOTKEYS[path - 1])
                 time.sleep(0.3)
-                after = self.cash_stable()
+                after = self.cash_stable(dx=dx)
             if before is not None and after is not None and after < before:
                 p.tiers[path - 1] += 1
                 p.spent += before - after
                 self.learned_cost[(p.kind, path, p.tiers[path - 1])] = before - after
                 log.info("upgraded %s -> %s", p.tid, p.crosspath)
                 return True
+            log.info("upgrade %s path %d not bought (panel %s, cash %s -> %s)",
+                     p.tid, path, costs, before, after)
+            self.fail_reason = "noeffect"
             return False
         finally:
             self.deselect(p)

@@ -8,6 +8,7 @@ reaches a pixel gives its progress along the track (entrance -> exit).
 Per-map knowledge is cached in data/maps/<map>.npz and improves every game.
 """
 import json
+import os
 import time
 from pathlib import Path
 
@@ -44,27 +45,40 @@ class MapModel:
         return DATA / f"{slug(self.name)}.npz"
 
     def save(self):
+        """Atomic write with retries (OneDrive can briefly lock files)."""
         DATA.mkdir(parents=True, exist_ok=True)
         scans = {f"scan_{k}": v for k, v in self.scan.items()}
-        np.savez_compressed(
-            self.path, heat=self.heat, t_sum=self.t_sum, t_cnt=self.t_cnt, **scans,
-            meta=json.dumps({"rounds_traced": self.rounds_traced, "valid": self.valid,
-                             "px_per_unit": self.px_per_unit, "playfield": self.playfield}),
-        )
+        tmp = self.path.with_suffix(".tmp.npz")
+        for attempt in range(5):
+            try:
+                np.savez_compressed(
+                    tmp, heat=self.heat, t_sum=self.t_sum, t_cnt=self.t_cnt, **scans,
+                    meta=json.dumps({"rounds_traced": self.rounds_traced, "valid": self.valid,
+                                     "px_per_unit": self.px_per_unit, "playfield": self.playfield}),
+                )
+                os.replace(tmp, self.path)
+                return True
+            except OSError:
+                time.sleep(0.5 * (attempt + 1))
+        return False
 
     @classmethod
     def load(cls, name, playfield):
         m = cls(name, playfield)
         if m.path.exists():
-            d = np.load(m.path, allow_pickle=False)
-            m.heat, m.t_sum, m.t_cnt = d["heat"], d["t_sum"], d["t_cnt"]
-            meta = json.loads(str(d["meta"]))
-            m.rounds_traced = meta.get("rounds_traced", 0)
-            m.valid = meta.get("valid", {})
-            m.px_per_unit = meta.get("px_per_unit")
-            for k in d.files:
-                if k.startswith("scan_"):
-                    m.scan[k[5:]] = d[k]
+            try:
+                d = np.load(m.path, allow_pickle=False)
+                d.files  # noqa: B018 - forces the zip directory read
+                m.heat, m.t_sum, m.t_cnt = d["heat"], d["t_sum"], d["t_cnt"]
+                meta = json.loads(str(d["meta"]))
+                m.rounds_traced = meta.get("rounds_traced", 0)
+                m.valid = meta.get("valid", {})
+                m.px_per_unit = meta.get("px_per_unit")
+                for k in d.files:
+                    if k.startswith("scan_"):
+                        m.scan[k[5:]] = d[k]
+            except Exception:
+                return cls(name, playfield)  # corrupt file: relearn rather than crash
         return m
 
     # -- placement scan -------------------------------------------------------
@@ -210,8 +224,9 @@ class MapModel:
         if near is not None:
             nr = near_radius or 6
             cover[(xx - near[0]) ** 2 + (yy - near[1]) ** 2 > nr ** 2] = -1
-        # keep a margin from the play-field border (HUD lives there)
-        cover[:3, :] = -1
+        # keep a margin from the play-field border; lives/cash/round HUD covers
+        # roughly the top 8% of the screen
+        cover[:8, :] = -1
         cover[-2:, :] = -1
         cover[:, :2] = -1
         cover[:, -2:] = -1

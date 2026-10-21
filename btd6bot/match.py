@@ -18,6 +18,8 @@ class Match:
         self.tracer = PathTracer(model)
         self.on_tower_choice = on_tower_choice
         self.stats = {"start": time.time(), "rounds": 0, "lives_lost": 0, "panic": 0}
+        self._prev_lives_read = None
+        self._round_cand, self._round_votes = None, 0
 
     def _exclude(self):
         out = []
@@ -84,21 +86,36 @@ class Match:
                 lives = self.g.hud.lives(f)
                 if (cash is None or lives is None) and self.g.close_panels():
                     continue
-                if lives is not None and last_lives is not None and lives < last_lives <= lives + 50:
+                # lives: a drop only counts once two consecutive reads agree
+                if lives is not None and lives == self._prev_lives_read and last_lives is not None \
+                        and lives < last_lives <= lives + 60:
                     self.stats["lives_lost"] += last_lives - lives
                     dropped = True
                     log.warning("lost %d lives (now %d)", last_lives - lives, lives)
-                if lives is not None:
                     last_lives = lives
-                if rnd is not None and last_round is not None and rnd == last_round + 1:
+                elif last_lives is None or (lives is not None and lives > last_lives
+                                            and lives == self._prev_lives_read):
+                    last_lives = lives
+                self._prev_lives_read = lives
+                # rounds only move forward, one or two at a time
+                if rnd is not None and last_round is not None and last_round < rnd <= last_round + 2:
                     self.tracer.end_round()
                     self.tracer.start_round()
-                    self.stats["rounds"] += 1
+                    self.stats["rounds"] += rnd - last_round
                     if self.stats["rounds"] % 5 == 0:
                         self.m.save()
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
-                if rnd is not None and (last_round is None or rnd >= last_round):
                     last_round = rnd
+                elif rnd is not None and rnd != last_round:
+                    # a reading outside the expected step: adopt it only if it
+                    # persists (recovers from a bad first read)
+                    if rnd == self._round_cand:
+                        self._round_votes += 1
+                    else:
+                        self._round_cand, self._round_votes = rnd, 1
+                    if last_round is None or self._round_votes >= 4:
+                        log.info("round tracking reset %s -> %s", last_round, rnd)
+                        last_round = rnd
                 if self.ex.tick(cash, last_round, lives_dropped=dropped):
                     if dropped:
                         self.stats["panic"] += 1

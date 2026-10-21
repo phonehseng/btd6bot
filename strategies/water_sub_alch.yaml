@@ -1,0 +1,58 @@
+# Water maps: spam 2-0-4 Monkey Subs (Advanced Intel + Armor Piercing Darts:
+# camo from tier 0, lead + MOAB damage at 0-0-4) buffed by a 4-2-0 Alchemist,
+# discounted by a 2-0-2 Village. "Whenever there's water, spam 2-0-4 subs" is
+# the standard community advice; the Dark Castle Hard gameplan of
+# linus-jansson/btd6farmer is Sub 2-0-4 + Alch 4-2-0 + Super 3-0-2 + 2 villages.
+# A 3-0-2 Sun Avatar + exit 2-0-4 Spike Factory cover BFB/ZOMG. Restricted to
+# maps with water next to the track (a missing water spot makes sub steps skip).
+id: water_sub_alch
+hero: quincy
+modes: [medium, hard, double_hp]
+planner:
+  towers: {sub: [2, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
+  base_success: {medium: 0.94, hard: 0.88, double_hp: 0.7}
+  maps: [Logs, Resort, Lotus Island, Spa Pits, "Pat's Pond", Peninsula, Off The Coast, Cargo,
+         Spillway, Sunken Columns, Flooded Valley, Dark Castle, Bloody Puddles, Muddy Puddles,
+         Water Park, Downstream, Streambed, Spice Islands, Ravine, Sanctuary, Ship Capture,
+         Castle Revenge, Erosion, Luminous Cove]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: sb1, to: 2-0-1}
+  - {do: place, id: sb2, kind: sub, role: dps, segment: [0.3, 1.0]}
+  - {do: upgrade, id: sb2, to: 2-0-1}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 7}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: sb1, to: 2-0-3}
+  - {do: upgrade, id: sb2, to: 2-0-3}
+  - {do: place, id: v1, kind: village, role: support, near: [sb1, a1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: sb1, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: sb3, kind: sub, role: support, near: [v1], near_radius: 8}
+  - {do: upgrade, id: sb3, to: 2-0-4}
+  - {do: upgrade, id: sb2, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
+  - {do: upgrade, id: s1, to: 3-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+fill:
+  - {do: place, kind: sub, role: support, near: [v1], near_radius: 9, max: 6}
+  - {do: upgrade, kind: sub, to: 2-0-4}
+  - {do: place, kind: super, role: support, near: [v1], near_radius: 8, max: 2}
+  - {do: upgrade, kind: super, to: 3-0-2}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+panic:
+  - {do: place, kind: sub, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead: [{do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 7}]
+  moab: [{do: upgrade, id: sb1, to: 2-0-3}]
+  bfb:
+    - {do: upgrade, id: sp1, to: 2-0-4}
+    - {do: place, id: sp1, kind: spike, role: exit}
+  rush: [{do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}]
+  zomg:
+    - {do: upgrade, id: sp1, to: 2-0-4}
+    - {do: place, id: sp1, kind: spike, role: exit}
