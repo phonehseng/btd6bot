@@ -50,14 +50,16 @@ class Input:
         self._held_keys.clear()
 
     # -- mouse -----------------------------------------------------------
-    def move(self, fx, fy):
+    def move(self, fx, fy, fast=False):
+        """fast: for hover probes - no settling pause for UI clicks."""
         self.guard()
         x, y = self.screen.to_px(fx, fy)
         # Unity only registers hover/click if the cursor actually travels.
         win32api.SetCursorPos((x - 3, y - 3))
-        time.sleep(0.03)
+        time.sleep(0.012 if fast else 0.03)
         win32api.SetCursorPos((x, y))
-        time.sleep(self.delay)
+        if not fast:
+            time.sleep(self.delay)
 
     def guard_point(self, fx, fy):
         self.guard()

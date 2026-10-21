@@ -88,6 +88,20 @@ class Menus:
             return "in_game"
         return "unknown"
 
+    def wait_for(self, targets, timeout=6.0, cheap_in_game=True):
+        """Poll until one of `targets` (screen names) shows; return it, or the
+        last screen seen on timeout. Replaces fixed sleeps after clicks."""
+        targets = {targets} if isinstance(targets, str) else set(targets)
+        end = time.time() + timeout
+        st = "unknown"
+        while True:
+            if cheap_in_game and "in_game" in targets and self.in_game():
+                return "in_game"
+            st = self.identify()
+            if st in targets or time.time() >= end:
+                return st
+            time.sleep(0.15)
+
     def in_game(self):
         from .templates import classify
         best, scores = classify(self.s.grab(), ["play_idle", "play_run", "play_fast"],
@@ -100,7 +114,7 @@ class Menus:
             return False
         log.info("click %r", w.text)
         self.inp.click(w.x, w.y + dy)
-        time.sleep(0.6)
+        time.sleep(0.25)
         return True
 
     # -- popups ---------------------------------------------------------------
@@ -166,7 +180,7 @@ class Menus:
                     except Exception:
                         pass
                 self.inp.click(0.745, 0.45)
-                time.sleep(1.4)
+                time.sleep(0.9)
             else:
                 # never reached the target: pick again knowing everything offered
                 target = choose(title, offered) if offered else None
@@ -193,12 +207,14 @@ class Menus:
                 return True
             # buttons are icons above their labels; the label is not clickable
             if self.click_word("home", dy=-0.08):
-                time.sleep(2.0)
+                if self.wait_for("main_menu", timeout=8) == "main_menu":
+                    return True
                 continue
             if self.click_word("next", "continue", "collect"):
+                self.wait_for({"victory", "main_menu"}, timeout=3)
                 continue
             self.inp.click(0.5, 0.85)
-            time.sleep(1.0)
+            time.sleep(0.5)
         return False
 
     def leave_defeat(self):
@@ -208,7 +224,8 @@ class Menus:
             if st == "main_menu":
                 return True
             if self.click_word("home", dy=-0.08):
-                time.sleep(2.0)
+                if self.wait_for("main_menu", timeout=8) == "main_menu":
+                    return True
                 continue
-            time.sleep(1.0)
+            time.sleep(0.5)
         return False

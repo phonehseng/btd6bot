@@ -154,7 +154,7 @@ class Game:
 
     def probe(self, fx, fy, baseline=None, settle=0.06):
         """With a tower held, is (fx, fy) a legal spot? Red range circle = no."""
-        self.inp.move(fx, fy)
+        self.inp.move(fx, fy, fast=True)
         time.sleep(settle)
         f = self.fresh()
         r = 0.035

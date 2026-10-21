@@ -136,21 +136,27 @@ class ModeInfo:
     reward_tier: str    # MM table row: easy/medium/hard/impoppable
 
 
+# Default game length in minutes at 2x speed, *excluding* menus and the
+# one-time placement scan of a new map. Anchored on observed Easy games
+# (rounds 1-40: 7.0-8.3 min); Medium (1-60) ~1.55x, Hard (3-80) ~2.2x,
+# Impoppable/CHIMPS (6-100) ~3x an Easy game. The planner scales these with
+# the account's observed pace and blends in per-map/strategy observations.
+EASY_GAME_MINUTES = 7.5
 MODES: dict[str, ModeInfo] = {m.key: m for m in [
-    ModeInfo("easy", "easy", "standard", "easy", 1, 40, None, None, 9.0, "easy"),
-    ModeInfo("primary_only", "easy", "primary_only", "easy", 1, 40, "easy", "primary", 9.0, "easy"),
-    ModeInfo("deflation", "easy", "deflation", "easy", 31, 60, "primary_only", None, 5.5, "easy"),
-    ModeInfo("medium", "medium", "standard", "medium", 1, 60, None, None, 15.0, "medium"),
-    ModeInfo("military_only", "medium", "military_only", "medium", 1, 60, "medium", "military", 15.0, "medium"),
-    ModeInfo("apopalypse", "medium", "apopalypse", "medium", 1, 60, "military_only", None, 12.0, "medium"),
-    ModeInfo("reverse", "medium", "reverse", "medium", 1, 60, "medium", None, 15.0, "medium"),
-    ModeInfo("hard", "hard", "standard", "hard", 3, 80, None, None, 27.0, "hard"),
-    ModeInfo("magic_only", "hard", "magic_only", "hard", 3, 80, "hard", "magic", 27.0, "hard"),
-    ModeInfo("double_hp", "hard", "double_hp", "hard", 3, 80, "magic_only", None, 29.0, "hard"),
-    ModeInfo("half_cash", "hard", "half_cash", "hard", 3, 80, "double_hp", None, 28.0, "hard"),
-    ModeInfo("abr", "hard", "abr", "hard", 3, 80, "hard", None, 27.0, "hard"),
-    ModeInfo("impoppable", "hard", "impoppable", "hard", 6, 100, "abr", None, 36.0, "impoppable"),
-    ModeInfo("chimps", "hard", "chimps", "chimps", 6, 100, "impoppable", None, 38.0, "impoppable"),
+    ModeInfo("easy", "easy", "standard", "easy", 1, 40, None, None, 7.5, "easy"),
+    ModeInfo("primary_only", "easy", "primary_only", "easy", 1, 40, "easy", "primary", 7.5, "easy"),
+    ModeInfo("deflation", "easy", "deflation", "easy", 31, 60, "primary_only", None, 5.0, "easy"),
+    ModeInfo("medium", "medium", "standard", "medium", 1, 60, None, None, 11.5, "medium"),
+    ModeInfo("military_only", "medium", "military_only", "medium", 1, 60, "medium", "military", 11.5, "medium"),
+    ModeInfo("apopalypse", "medium", "apopalypse", "medium", 1, 60, "military_only", None, 9.5, "medium"),
+    ModeInfo("reverse", "medium", "reverse", "medium", 1, 60, "medium", None, 11.5, "medium"),
+    ModeInfo("hard", "hard", "standard", "hard", 3, 80, None, None, 16.5, "hard"),
+    ModeInfo("magic_only", "hard", "magic_only", "hard", 3, 80, "hard", "magic", 16.5, "hard"),
+    ModeInfo("double_hp", "hard", "double_hp", "hard", 3, 80, "magic_only", None, 18.0, "hard"),
+    ModeInfo("half_cash", "hard", "half_cash", "hard", 3, 80, "double_hp", None, 17.0, "hard"),
+    ModeInfo("abr", "hard", "abr", "hard", 3, 80, "hard", None, 16.5, "hard"),
+    ModeInfo("impoppable", "hard", "impoppable", "hard", 6, 100, "abr", None, 22.5, "impoppable"),
+    ModeInfo("chimps", "hard", "chimps", "chimps", 6, 100, "impoppable", None, 23.5, "impoppable"),
 ]}
 MODE_KEYS = tuple(MODES)
 # Things the bot must never plan (kept for explicit assertions / filtering).
@@ -485,6 +491,8 @@ class AccountState:
             am = ms.setdefault("avg_minutes", {})
             prev = am.get(mode)
             am[mode] = round(minutes if prev is None else 0.7 * prev + 0.3 * minutes, 2)
+            mn = ms.setdefault("minutes_n", {})
+            mn[mode] = int(mn.get(mode, 0)) + 1
         if mm_gained is not None and won:
             slot = "first" if first_time else "repeat"
             ms.setdefault("observed_rewards", {}).setdefault(mode, {})[slot] = int(mm_gained)
@@ -500,6 +508,7 @@ class AccountState:
         if minutes is not None and won:
             prev = ss.get("avg_minutes")
             ss["avg_minutes"] = round(minutes if prev is None else 0.7 * prev + 0.3 * minutes, 2)
+            ss["minutes_n"] = int(ss.get("minutes_n", 0)) + 1
 
         # currencies
         if mm_gained:

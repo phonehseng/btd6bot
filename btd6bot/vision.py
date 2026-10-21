@@ -15,7 +15,12 @@ def _engine():
         import logging
         from rapidocr_onnxruntime import RapidOCR
 
-        _ocr = RapidOCR()
+        # Tuned on saved game screens (tests: docs/screens): the default detector
+        # upsamples to a 736 px short side and the rotation classifier is useless
+        # for BTD6's horizontal text. 480 px + 8 threads + no classifier reads the
+        # same words ~2.8x faster (850 ms vs 2.4 s per full screen); 360 px drops words.
+        _ocr = RapidOCR(det_limit_side_len=480, rec_batch_num=16,
+                        intra_op_num_threads=8, inter_op_num_threads=1)
         logging.getLogger("RapidOCR").setLevel(logging.ERROR)
     return _ocr
 
@@ -59,7 +64,7 @@ class Vision:
             return []
         if scale != 1.0:
             img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
-        result, _ = _engine()(img)
+        result, _ = _engine()(img, use_cls=False)
         words = []
         rw = (fx1 - fx0) / img.shape[1]
         rh = (fy1 - fy0) / img.shape[0]

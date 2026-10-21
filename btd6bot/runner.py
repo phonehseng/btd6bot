@@ -71,6 +71,7 @@ class Bot:
         self.bad = set()        # (map, mode) that failed to start this session
         self._level_synced = False
         self.skip_known = None
+        self._roster_done = False
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -90,7 +91,7 @@ class Bot:
             elif st in ("map_select", "difficulty", "mode_select", "hero_select", "upgrade_tree",
                         "profile", "overwrite"):
                 self.inp.click(0.044, 0.055)  # back arrow
-                time.sleep(1.0)
+                time.sleep(0.4)
             elif st == "level_up":
                 self.menus.handle_level_up()
             elif st == "tower_choice":
@@ -102,7 +103,7 @@ class Bot:
                 # transitions read as "unknown" for a moment: wait before acting,
                 # and only fall back to the back arrow after repeated unknowns
                 if not self.menus.dismiss_popup():
-                    time.sleep(1.5)
+                    time.sleep(0.6)
                     if unknown_streak >= 3:
                         self.inp.click(0.044, 0.055)
                         time.sleep(1.0)
@@ -143,8 +144,7 @@ class Bot:
         """Main menu -> map select -> search -> map's difficulty screen."""
         for attempt in range(4):
             self.inp.click(0.5, 0.88)  # PLAY
-            time.sleep(1.5)
-            st = self.menus.identify()
+            st = self.menus.wait_for("map_select", timeout=5)
             if st == "map_select":
                 break
             log.info("after PLAY: %s", st)
@@ -154,32 +154,34 @@ class Bot:
         else:
             return False
         self.inp.click(0.044, 0.154)  # search (magnifier)
-        time.sleep(1.0)
+        time.sleep(0.5)
         self.inp.click(0.52, 0.04)    # focus the search box
-        time.sleep(0.4)
+        time.sleep(0.2)
         self.inp.type_text(map_name)
-        time.sleep(1.5)
-        self.menus.read()
         target = norm(map_name)
-        for w in sorted(self.menus.words, key=lambda w: (w.y, w.x)):
-            if w.y < 0.1 or w.y > 0.9:
-                continue  # the search box itself / bottom buttons
-            if target in norm(w.text) or norm(w.text) in target and len(norm(w.text)) > 4:
-                self.sync_medals(map_name, w)
-                if self.skip_known and self.skip_known(map_name):
-                    return "known"
-                for _ in range(3):
-                    self.inp.click(w.x, min(0.95, w.y + 0.1))  # thumbnail sits under the name
-                    time.sleep(1.5)
-                    st = self.menus.identify()
-                    if st == "difficulty":
-                        return True
-                    if not self.menus.has("clicktounlock", "tounlock"):
-                        break
-                    # a newly available map unlocks on the first click (free)
-                    log.info("unlocking map %s", map_name)
-                    time.sleep(2.5)
-                return self.menus.identify() == "difficulty"
+        label = None
+        end = time.time() + 5
+        while label is None and time.time() < end:  # results filter in as you type
+            time.sleep(0.3)
+            for w in sorted(self.menus.read(), key=lambda w: (w.y, w.x)):
+                if w.y < 0.1 or w.y > 0.9:
+                    continue  # the search box itself / bottom buttons
+                if target in norm(w.text) or norm(w.text) in target and len(norm(w.text)) > 4:
+                    label = w
+                    break
+        if label is None:
+            return False
+        self.sync_medals(map_name, label)
+        if self.skip_known and self.skip_known(map_name):
+            return "known"
+        for _ in range(3):
+            self.inp.click(label.x, min(0.95, label.y + 0.1))  # thumbnail sits under the name
+            if self.menus.wait_for("difficulty", timeout=4) == "difficulty":
+                return True
+            if not self.menus.has("clicktounlock", "tounlock"):
+                break
+            log.info("unlocking map %s", map_name)  # first click unlocks a new map (free)
+            time.sleep(1.5)
         return False
 
     def sync_medals(self, map_name, label):
@@ -209,21 +211,20 @@ class Bot:
         self.menus.read()
         if not self.menus.click_word(plan.difficulty, dy=-0.09, region=(0, 0.3, 1, 0.7)):
             return False
-        time.sleep(1.0)
-        if self.menus.identify() != "mode_select":
+        if self.menus.wait_for("mode_select", timeout=4) != "mode_select":
             return False
         if not self.menus.click_word(MODE_BUTTON_TEXT.get(plan.mode, plan.mode), dy=-0.08):
             return False
-        for _ in range(8):  # loading, overwrite prompts, mode intro popups
-            time.sleep(1.5)
-            st = self.menus.identify()
+        end = time.time() + 30  # loading, overwrite prompt, mode intro popups
+        while time.time() < end:
+            st = self.menus.wait_for({"in_game", "overwrite"}, timeout=3)
             if st == "in_game":
                 return True
             if st == "overwrite":
                 self.menus.click_word("ok", "yes", "overwrite")
-            else:
+            elif st == "unknown":
                 self.menus.dismiss_popup()
-        return self.menus.identify() == "in_game"
+        return self.menus.in_game()
 
     # -- one game ------------------------------------------------------------------
     def play(self, plan):
@@ -239,7 +240,10 @@ class Bot:
         g = Game(self.s, self.inp, self.lay, difficulty=diff, hero=hero)
         self.menus.g = g
         from .strategy import MODE_TOWER_FILTER
-        roster = g.probe_roster()  # the save file is the truth, not our notes
+        # the save file is the truth, not our notes: probe once per session
+        # (later unlocks are seen on the level-up screen)
+        roster = {} if self._roster_done else g.probe_roster()
+        self._roster_done = True
         only = MODE_TOWER_FILTER.get(plan.mode_key)  # restricted modes hide other towers
         for kind, ok in roster.items():
             if ok:
