@@ -149,8 +149,16 @@ class Menus:
                 offered.append(name)
             if target is None:
                 target = choose(title, offered) if offered else None
+            log.info("carousel step %d: centre=%r target=%r", attempt, name, target)
             if target and norm(target) == norm(name):
                 break
+            if attempt == 0:
+                # save what the carousel looks like, for calibration
+                try:
+                    from .vision import save
+                    save(self.s.grab(), "logs/carousel.png")
+                except Exception:
+                    pass
             self.inp.click(0.745, 0.45)
             time.sleep(1.4)
         log.info("unlocking %s (%s)", name, title)

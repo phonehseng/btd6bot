@@ -53,8 +53,8 @@ MAIN_BUTTONS = {                     # label x, fallback click position
     "knowledge": (0.868, 0.88),
 }
 MAIN_LABEL_REGION = (0.0, 0.90, 1.0, 1.0)
-MAIN_LABEL_DY = -0.08                # label -> button centre
-MM_REGION = (0.895, 0.025, 0.952, 0.09)      # "$175"; the "+" starts at x~0.952
+MAIN_LABEL_DY = -0.08                # label -> button centre  # VERIFY LIVE
+MM_REGION = (0.895, 0.025, 0.952, 0.09)      # "$175"; the "+" starts at x~0.952  # VERIFY LIVE at 1920x1200
 MM_REGION_WIDE = (0.84, 0.0, 0.952, 0.11)    # VERIFY LIVE: big balances grow leftwards?
 LEVEL_REGION = (0.095, 0.03, 0.125, 0.08)    # number inside the level star
 
@@ -64,13 +64,14 @@ try:
 except Exception:  # game.py is edited live; never let that break this module
     _G = None
 TREE_ICON_X = getattr(_G, "TREE_ICON_X", (0.306, 0.424, 0.541, 0.659, 0.777))
-TREE_ICON_Y = tuple(y - 0.03 for y in getattr(_G, "TREE_ICON_Y", (0.33, 0.53, 0.73)))
+# game.py's row y is the label line; the icon disc centre sits ~0.03 higher
+TREE_ICON_Y = tuple(round(y - 0.03, 3) for y in getattr(_G, "TREE_ICON_Y", (0.33, 0.53, 0.73)))
 TREE_UNLOCK = getattr(_G, "TREE_UNLOCK", (0.143, 0.683))
 TREE_XP_REGION = (0.52, 0.01, 0.70, 0.065)     # "XP: 704" (the "+" at x~0.70 is never clicked)
-TREE_TITLE_REGION = (0.28, 0.005, 0.54, 0.07)  # "TACK SHOOTER"
+TREE_TITLE_REGION = (0.28, 0.005, 0.54, 0.07)  # "TACK SHOOTER"  # VERIFY LIVE: long names fit
 TREE_COST_REGION = (0.04, 0.685, 0.25, 0.72)   # "550 XP" line of the UNLOCK FOR button
 TREE_LEFT_PANEL = (0.0, 0.2, 0.27, 0.8)        # selected upgrade name + UNLOCK FOR button
-TREE_PREV = (0.2, 0.06)
+TREE_PREV = (0.2, 0.06)    # VERIFY LIVE: yellow arrows beside the header
 TREE_NEXT = (0.8, 0.06)
 ICON_HALF = (0.03, 0.045)                      # patch half-size inside an icon disc
 
@@ -200,6 +201,9 @@ _MK_INDEX = {norm(n): (tree, tier, n) for tree, tiers in MK_TREES.items()
 # Pure helpers (tested offline in tests/test_meta_offline.py)
 # ---------------------------------------------------------------------------
 
+# VERIFY LIVE: blue = unlocked, green = unlockable now (inferred from upgrade_tree.jpg:
+# Faster Shooting is blue and the selected green Even Faster Shooting offers
+# "UNLOCK FOR 550 XP"; Super Range Tacks stays grey until Long Range Tacks is unlocked).
 # Icon colours measured on docs/screens/upgrade_tree.jpg (OpenCV HSV, H 0-180):
 #   unlocked   sky-blue disc   H~99  S~244 V~253  -> 64% of the patch passes BLUE
 #   available  bright green    H~53  S~190-250 V~200 -> 52-68% pass GREEN, 0-1% BLUE
@@ -678,6 +682,11 @@ class Meta:
         f = self._frame() if f is None else f
         return parse_xp(rec_text(crop(f, TREE_XP_REGION))[0])
 
+    def _unlock_cost(self, f=None):
+        """XP price of the selected upgrade ('550 XP'), None when not offered."""
+        f = self._frame() if f is None else f
+        return parse_unlock_cost(rec_text(crop(f, TREE_COST_REGION))[0])
+
     def open_monkeys(self):
         return self._open_main_button("monkeys", lambda: self._on_monkeys_menu() or self._on_tree())
 
@@ -734,7 +743,7 @@ class Meta:
         for _ in range(3):
             f = self._frame()
             have = self._tree_xp(f)
-            need = parse_unlock_cost(rec_text(crop(f, TREE_COST_REGION))[0])
+            need = self._unlock_cost(f)
             if have is not None and need is not None:
                 break
             self.sleep(0.6)
@@ -851,8 +860,11 @@ class Meta:
     def _open_mk_tab(self, tree):
         if tree not in MK_TABS:
             return False
-        w = self._find(tree, exact=True)
-        if w is not None and w.y < MK_PANEL_REGION[3]:
+        # tab labels, preferably outside the info panel (its text may say "Primary")
+        cands = [w for w in self.m.words if norm(w.text) == tree and safe_text(w.text)]
+        cands.sort(key=lambda w: w.x >= MK_PANEL_REGION[0])
+        w = cands[0] if cands else None
+        if w is not None:
             self._click_word(w, wait=1.0)
         else:
             self._click(*MK_TAB_FALLBACK[tree], wait=1.0, what=f"{tree} tab (fallback)")
@@ -895,10 +907,14 @@ class Meta:
                     if norm(w.text).startswith(k) and safe_text(w.text)), None)
         if btn is None:
             return "locked"
-        cost = parse_mm_cost(panel)
-        expected = cand.mm_cost if cand.tier is not None else None
-        if not mk_mm_allowed(cost, self.acc.monkey_money, self.cfg,
-                             expected if cost else None):
+        values = mm_values(panel)
+        if cand.tier is None:   # unknown node: any visible price counts
+            cost = None if values is None else max(values, default=0)
+            expected = None
+        else:
+            expected = cand.mm_cost
+            cost = pick_mm_cost(values, expected)
+        if not mk_mm_allowed(cost, self.acc.monkey_money, self.cfg, expected):
             log.info("MK %s: MM cost %s not allowed (have %s)", cand.name, cost, self.acc.monkey_money)
             return "mm"
         before = self._read_mk_points()
@@ -906,13 +922,14 @@ class Meta:
         # an MM node may ask for confirmation: confirm only the price we checked
         self._read(scale=0.6)
         conf = self._find(*CONFIRM_WORDS, exact=True)
-        if conf is not None and not self._find(*MK_BUY_WORDS):
-            dialog_cost = parse_mm_cost(self.m.words)
-            if dialog_cost is not None and dialog_cost in (0, cost) and \
-                    mk_mm_allowed(dialog_cost, self.acc.monkey_money, self.cfg):
+        if conf is not None:
+            dvals = mm_values(self.m.words)
+            ok = dvals is not None and (not dvals or cost in dvals) and \
+                mk_mm_allowed(cost, self.acc.monkey_money, self.cfg, expected)
+            if ok:
                 self._click_word(conf, wait=1.0)
             else:
-                log.warning("MK confirm shows %s MM (expected %s) - cancelling", dialog_cost, cost)
+                log.warning("MK confirm shows %s (checked price %s MM) - cancelling", dvals, cost)
                 self._click_word(self._find(*CANCEL_WORDS, exact=True))
                 return "mm"
         after = self._read_mk_points()
@@ -932,7 +949,8 @@ class Meta:
         bought = []
         if self.acc.player_level < 30 and self.acc.mk_points <= 0:
             return bought
-        self.read_mm_and_level()
+        if self.to_main_menu():
+            self.read_mm_and_level()   # fresh MM balance before any MM-gated node
         try:
             if not self.open_knowledge():
                 return bought
@@ -1024,8 +1042,8 @@ class Meta:
             if norm(w.text) == "select" and safe_text(w.text):
                 return "select", w
         for w in detail:   # an MM price button: digits only (e.g. "2,500")
-            t = w.text.strip()
-            if re.fullmatch(r"[0-9][0-9,]{2,}", t) and not is_real_money(t):
+            t = w.text.strip()   # VERIFY LIVE: unowned heroes show an MM price button
+            if re.fullmatch(r"[0-9][0-9,]{2,}", t) and not is_real_money(t) and (parse_int(t) or 0) >= 1000:
                 return "buy", w
         return None, None
 
@@ -1079,6 +1097,10 @@ class Meta:
             self._click(*BACK_ARROW, wait=1.2, what="back arrow")
             if origin == "main_menu":
                 self.to_main_menu()
+            else:
+                back = self._state()
+                if back != origin:
+                    log.warning("after the hero picker: %s (came from %s)", back, origin)
         if equipped:
             self.acc.selected_hero = hero_id   # dynamic attribute, not persisted
             log.info("hero %s equipped", hero_id)
@@ -1096,8 +1118,8 @@ class Meta:
         self._click_word(btn, wait=1.0)
         self._read()
         conf = self._find(*CONFIRM_WORDS, exact=True)
-        dialog = parse_mm_cost(self.m.words)
-        if conf is None or dialog not in (price,):
+        dialog = mm_values(self.m.words)
+        if conf is None or dialog is None or price not in dialog:
             log.warning("hero confirm dialog unexpected (%s MM) - cancelling", dialog)
             self._click_word(self._find(*CANCEL_WORDS, exact=True))
             return False
