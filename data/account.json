@@ -1,9 +1,9 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T18:44:05",
- "player_level": 22,
- "xp": 127000.0,
- "monkey_money": 275,
+ "saved_at": "2026-10-21T19:48:30",
+ "player_level": 26,
+ "xp": 189000.0,
+ "monkey_money": 325,
  "unlocked_towers": [
   "alchemist",
   "bomb",
@@ -17,10 +17,9 @@
   "mortar",
   "ninja",
   "sniper",
+  "spike",
   "sub",
-  "super",
   "tack",
-  "village",
   "wizard"
  ],
  "unlocked_heroes": [
@@ -28,10 +27,13 @@
   "quincy",
   "striker_jones"
  ],
- "tower_xp": {},
+ "tower_xp": {
+  "tack": 0.0,
+  "sniper": 0.0
+ },
  "unlocked_upgrades": {
   "tack": [
-   4,
+   5,
    0,
    2
   ],
@@ -41,7 +43,7 @@
    4
   ],
   "sniper": [
-   3,
+   4,
    2,
    0
   ],
@@ -51,18 +53,23 @@
    1
   ],
   "boomerang": [
-   2,
+   3,
    0,
    2
   ],
   "glue": [
    2,
    0,
-   1
+   2
   ],
   "bomb": [
    0,
-   1,
+   3,
+   2
+  ],
+  "sub": [
+   2,
+   0,
    1
   ]
  },
@@ -100,7 +107,7 @@
  "map_stats": {
   "Monkey Meadow": {
    "wins": 1,
-   "losses": 0,
+   "losses": 1,
    "best_round": 40,
    "avg_minutes": {
     "easy": 14
@@ -136,8 +143,8 @@
   },
   "Logs": {
    "wins": 1,
-   "losses": 0,
-   "best_round": 40,
+   "losses": 1,
+   "best_round": 49,
    "avg_minutes": {
     "easy": 5.62
    },
@@ -219,12 +226,33 @@
    "best_round": 40,
    "avg_minutes": 5.5,
    "minutes_n": 1
+  },
+  "Monkey Meadow|hard|primary_core": {
+   "wins": 0,
+   "losses": 1,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": null
+  },
+  "Logs|medium|military_sub_sniper_water": {
+   "wins": 0,
+   "losses": 1,
+   "games": 1,
+   "best_round": 49,
+   "avg_minutes": null
   }
  },
  "pending_tower_choices": [],
  "map_category_overrides": {},
- "observed_upgrade_costs": {},
- "games_played": 7,
+ "observed_upgrade_costs": {
+  "tack": {
+   "0-5": 32500
+  },
+  "sniper": {
+   "0-4": 10500
+  }
+ },
+ "games_played": 9,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -307,6 +335,30 @@
    "won": true,
    "round": 40,
    "minutes": 5.500987319151561,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T19:33:31",
+   "map": "Monkey Meadow",
+   "mode": "hard",
+   "strategy": "primary_core",
+   "hero": null,
+   "won": false,
+   "round": 40,
+   "minutes": 20,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T19:47:26",
+   "map": "Logs",
+   "mode": "medium",
+   "strategy": "military_sub_sniper_water",
+   "hero": "quincy",
+   "won": false,
+   "round": 49,
+   "minutes": 9.375808640321095,
    "xp": null,
    "mm": null
   }

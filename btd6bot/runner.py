@@ -15,7 +15,7 @@ from .match import Match
 from .menus import Menus
 from .scanner import scan_placement, scan_water
 from .screen import GameNotFound, Screen
-from .strategy import Executor, hero_for, load_all, usable
+from .strategy import Executor, coverage, hero_for, load_all, usable
 from .vision import norm
 
 log = logging.getLogger("runner")
@@ -99,6 +99,9 @@ def planner_specs(strats, account):
         if s.get("achievement") and not allow:
             continue  # achievement plans only while their achievement is wanted
         modes = [m for m in s.get("modes", []) if usable(s, m, account, allow_achievement=allow)[0]]
+        # only modes whose threats (camo, lead, MOAB ... DDT) this build answers
+        # with the upgrades this account has actually unlocked
+        modes = [m for m in modes if coverage(s, m, account)[0]]
         if not modes:
             continue
         # Full upgrade requirements: the planner lowers the win chance for

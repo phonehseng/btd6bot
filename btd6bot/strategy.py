@@ -60,15 +60,44 @@ MODE_TOWER_FILTER = {
     "primary_only": "primary", "military_only": "military", "magic_only": "magic",
 }
 
-# Rounds where a new kind of threat first shows up (standard rounds). The
-# executor makes sure an answer is *already built* a couple of rounds earlier:
-# DDTs in particular are too fast to answer after they appear.
-THREATS = [
-    (22, "camo"), (26, "lead"), (36, "ceramic"), (38, "moab"),
-    (58, "bfb"), (62, "rush"), (78, "zomg"), (88, "ddt"), (98, "bad"),
-]
+# Round where each kind of threat first shows up, from data/rounds.json (built
+# from the game's round data, standard and Alternate Bloons Rounds). The
+# executor builds the answer a few rounds BEFORE it: DDTs, MOABs and the
+# round-63 ceramic rush are too fast to answer after they appear.
+_FIRST_KEYS = {"camo": "camo", "purple": "purple", "lead": "lead", "ceramic": "ceramic",
+               "moab": "moab", "bfb": "bfb", "zomg": "zomg", "ddt": "ddt", "bad": "bad"}
+
+
+def _first_appearance():
+    import json
+    from pathlib import Path
+    try:
+        d = json.loads((Path(__file__).resolve().parents[1] / "data" / "rounds.json")
+                       .read_text(encoding="utf-8"))["first_appearance"]
+        std = {k: d["standard"][v] for k, v in _FIRST_KEYS.items()}
+        abr = {k: d["abr"][v] for k, v in _FIRST_KEYS.items()}
+        return std, abr
+    except (OSError, ValueError, KeyError):
+        std = {"camo": 24, "purple": 25, "lead": 28, "ceramic": 38, "moab": 40,
+               "bfb": 60, "zomg": 80, "ddt": 90, "bad": 100}
+        abr = {"camo": 5, "purple": 15, "lead": 10, "ceramic": 32, "moab": 40,
+               "bfb": 54, "zomg": 79, "ddt": 88, "bad": 99}
+        return std, abr
+
+
+_STD, _ABR = _first_appearance()
+_STD["rush"] = _ABR["rush"] = 63   # 122 ceramics + 75 leads (14,413 RBE)
+THREATS = sorted((r, t) for t, r in _STD.items())
+ABR_SHIFT = {t: r for t, r in _ABR.items() if r != _STD.get(t)}
+
 # What counts as an answer: (tower, path, min tier) - any one is enough.
 ANSWERS = {
+    # purple bloons are immune to fire, energy and plasma (Inferno Ring, wizard
+    # bolts, plasma darts): needs plain sharp/explosive/cold damage too
+    "purple": [("dart", 0, 0), ("boomerang", 0, 0), ("bomb", 0, 0), ("sniper", 0, 0),
+               ("sub", 0, 0), ("buccaneer", 0, 0), ("ninja", 0, 0), ("ice", 0, 0),
+               ("heli", 0, 0), ("ace", 0, 0), ("mortar", 0, 0), ("spike", 0, 0),
+               ("druid", 0, 0), ("engineer", 0, 0), ("super", 0, 0)],
     # only towers/tiers that really detect camo (Night Vision, Enhanced Eyesight,
     # Monkey Sense, Radar Scanner, Submerge and Support; ninjas and spikes innately)
     "camo": [("dart", 3, 2), ("sniper", 2, 2), ("ninja", 0, 0), ("wizard", 3, 2),
@@ -81,11 +110,11 @@ ANSWERS = {
     "moab": [("bomb", 2, 3), ("boomerang", 1, 4), ("tack", 1, 4), ("sniper", 1, 3), ("heli", 1, 3),
              ("dart", 3, 4), ("ninja", 3, 3), ("super", 0, 0), ("spike", 3, 3), ("druid", 2, 4),
              ("wizard", 2, 4), ("ace", 0, 0), ("sub", 3, 3), ("buccaneer", 2, 4)],
-    "bfb": [("bomb", 2, 4), ("sniper", 1, 4), ("heli", 1, 4), ("boomerang", 1, 4), ("dart", 3, 4),
+    "bfb": [("tack", 1, 5), ("bomb", 2, 4), ("sniper", 1, 4), ("heli", 1, 4), ("boomerang", 1, 4), ("dart", 3, 4),
             ("super", 1, 3), ("ninja", 3, 4), ("spike", 3, 4), ("druid", 2, 4), ("tack", 1, 4)],
     "rush": [("tack", 1, 4), ("bomb", 3, 3), ("ninja", 1, 4), ("super", 0, 0), ("wizard", 2, 3),
              ("dartling", 0, 0), ("boomerang", 1, 3), ("ice", 3, 3)],
-    "zomg": [("bomb", 2, 4), ("sniper", 1, 4), ("super", 1, 3), ("heli", 1, 4), ("spike", 3, 4),
+    "zomg": [("tack", 1, 5), ("bomb", 2, 4), ("sniper", 1, 4), ("super", 1, 3), ("heli", 1, 4), ("spike", 3, 4),
              ("boomerang", 1, 5), ("druid", 2, 4), ("ninja", 3, 4)],
     "ddt": [("sniper", 1, 4), ("bomb", 2, 4), ("heli", 1, 4), ("super", 1, 3), ("spike", 3, 4),
             ("ninja", 3, 4), ("boomerang", 1, 4), ("dart", 3, 4)],
@@ -110,7 +139,7 @@ MODE_RULES = {
     "double_hp":     {"start_round": 3, "end_round": 80, "lives": 100, "tough_moabs": True},
     "half_cash":     {"start_round": 3, "end_round": 80, "lives": 100, "half_cash": True},
     "abr":           {"start_round": 3, "end_round": 80, "lives": 100,
-                      "threat_shift": {"camo": 5, "lead": 10, "bfb": 54, "zomg": 79, "ddt": 88}},
+                      "threat_shift": ABR_SHIFT},
     "impoppable":    {"start_round": 6, "end_round": 100, "lives": 1, "one_life": True},
     "chimps":        {"start_round": 6, "end_round": 100, "lives": 1, "one_life": True,
                       "no_sell": True, "no_income_towers": True, "no_mk": True, "no_powers": True},
@@ -168,6 +197,55 @@ UNSUPPORTED_STEP_KEYS = {
     "note": "hand-calibrated placement notes (`note`) cannot be followed",
 }
 TARGET_MODES = {"first", "last", "close", "strong"}  # cycled by Game.target(); no point targets
+
+
+def final_build(strat, account=None):
+    """{kind: [p1, p2, p3]} the plan ends with (plan + answers), each path capped
+    at what the account has unlocked (unknown upgrades count as locked above
+    tier 2: tiers 1-2 are cheap and usually unlockable in-game)."""
+    ids = {st["id"]: st["kind"] for st in strat.get("plan", [])
+           if st.get("do") == "place" and st.get("id") and st.get("kind")}
+    build = {}
+    for st in strat.get("plan", []):
+        if st.get("do") == "place" and st.get("kind") not in (None, "hero"):
+            build.setdefault(st["kind"], [0, 0, 0])
+    steps = strat.get("plan", []) + [a for v in (strat.get("answers") or {}).values() for a in v]         + strat.get("fill", [])
+    for st in steps:
+        if st.get("do") != "upgrade":
+            continue
+        kind = st.get("kind") or ids.get(st.get("id"))
+        if kind not in T.TOWERS:
+            continue
+        have = build.setdefault(kind, [0, 0, 0])
+        tgt = parse_cross(st["to"])
+        for i in range(3):
+            have[i] = max(have[i], tgt[i])
+    if account is not None:
+        for kind, tiers in build.items():
+            unl = account.upgrades(kind)
+            build[kind] = [min(t, max(u, 2)) for t, u in zip(tiers, unl)]
+    return build
+
+
+def coverage(strat, mode, account=None):
+    """(ok, missing): does the strategy's final build answer every threat that
+    appears in this mode's rounds, given the account's unlocked upgrades?"""
+    build = final_build(strat, account)
+    r = rules(mode)
+    start, end = r.get("start_round", 1), r.get("end_round", 80)
+    shift = r.get("threat_shift", {})
+
+    def answered(threat):
+        if threat in NEEDS_CAMO and not answered("camo"):
+            return False
+        for kind, path, tier in ANSWERS.get(threat, []):
+            tiers = build.get(kind)
+            if tiers is not None and (path == 0 or tiers[path - 1] >= tier):
+                return True
+        return False
+
+    missing = [t for rnd, t in THREATS if shift.get(t, rnd) <= end and not answered(t)]
+    return (not missing), missing
 
 
 def rules(mode):
@@ -785,7 +863,7 @@ class Executor:
                     return True
         return False
 
-    def due_threat(self, rnd, lookahead=3):
+    def due_threat(self, rnd, lookahead=4):
         """First upcoming threat with no answer built yet."""
         if rnd is None or self.no_answers:
             return None
