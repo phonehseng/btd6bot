@@ -8,6 +8,7 @@ from . import towers as T
 from .abilities import AbilityPlanner
 from .bloonwatch import BloonWatch
 from .forecast import RoundForecast
+from .towerxp import TowerXpCounter
 
 WATCH_EVERY = 0.2       # seconds between looks of the bloon watch during a round
 EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
@@ -114,6 +115,12 @@ class Match:
         self._crisis_round = None
         # how far along the route the bloons really get (bloonwatch.py; observe only)
         self.watch = self._make_watch()
+        # tower XP this game earns, round by round (towerxp.py): the paragon
+        # focus works from the account's XP, read from the game once a day
+        from .strategy import PRICE_FAMILY
+        self.tower_xp = TowerXpCounter(getattr(model, "name", None),
+                                       getattr(account, "mk_unlocked", ()) if account else (),
+                                       PRICE_FAMILY.get(getattr(executor, "mode", None), "medium"))
         self._t_watch = 0.0
         self.depths = []           # per-round summaries of the watch
 
@@ -271,6 +278,8 @@ class Match:
                     if self.stats["rounds"] % 5 == 0:
                         self.m.save()
                     self._watch_round_end(last_round)
+                    for done in range(last_round, rnd):     # rounds completed: XP paid
+                        self.tower_xp.round_end(done, list(self.g.towers.values()))
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
@@ -540,6 +549,9 @@ class Match:
         self.tracer.end_round()
         self.m.save()
         self._watch_round_end(rnd)
+        if outcome == "victory":
+            self.tower_xp.round_end(rnd, list(self.g.towers.values()))   # the last round paid too
+        self.stats["tower_xp"] = self.tower_xp.rounded()
         if self.depths:
             # the deepest point bloons reached in any round (bloonwatch.py)
             self.stats["bloon_depth"] = max(s["deepest"] for s in self.depths)

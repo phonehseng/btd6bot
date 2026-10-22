@@ -818,7 +818,10 @@ class Bot:
         else:
             self.account.record_result(plan.map, plan.mode_key, plan.strategy_id, won,
                                        round_reached=res.get("round"), minutes=res.get("minutes"),
-                                       mm_gained=mm, hero=hero)
+                                       mm_gained=mm, hero=hero, tower_xp_gained=res.get("tower_xp"))
+            if res.get("tower_xp"):
+                log.info("tower XP this game (counted): %s", ", ".join(
+                    f"{k} {v:,}" for k, v in sorted(res["tower_xp"].items(), key=lambda kv: -kv[1])))
         self.account.save()
         return res
 

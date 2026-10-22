@@ -299,6 +299,10 @@ def sync_all(screen, inp, menus, account, towers=None):
             xp = sp._xp()
             account.unlocked_upgrades[kind] = list(tiers)
             if xp is not None:
+                counted = account.tower_xp.get(kind)
+                if counted is not None and abs(counted - xp) > max(1000.0, 0.02 * xp):
+                    # the games' counted XP (towerxp.py) against the game's own figure
+                    log.info("%s tower XP: counted %s, the game shows %s", kind, f"{counted:,.0f}", f"{xp:,}")
                 account.tower_xp[kind] = float(xp)
             seen[kind] = tiers
             inp.click(*BACK)
