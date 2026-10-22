@@ -30,8 +30,8 @@ MODE_BUTTON_TEXT = {
 
 
 ROOT_DIR = __import__("pathlib").Path(__file__).resolve().parents[1]
-ID_CHECK_EVERY = 6                    # games between account (User ID) checks
-ACH_EVERY = 2 * 3600                   # seconds between achievement scans
+ID_CHECK_EVERY = 10                   # games between account (User ID) checks
+ACH_EVERY = 6 * 3600                   # seconds between achievement scans
 PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main menu
 STATE_FILE = ROOT_DIR / "logs" / "state.txt"
 
