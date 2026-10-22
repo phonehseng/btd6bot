@@ -132,6 +132,10 @@ ANSWERS = {
             ("ninja", 3, 4), ("boomerang", 1, 4), ("dart", 3, 4)],
     "bad": [("super", 1, 4), ("bomb", 2, 5), ("sniper", 1, 5), ("ninja", 3, 5), ("spike", 3, 5)],
 }
+# Towers that belong at the end of the track: spike factories throw their
+# spikes onto the last stretch and catch what leaks past everything else.
+EXIT_KINDS = {"spike"}
+
 # camo-requiring threats also need camo on the answering tower (or village MIB)
 NEEDS_CAMO = {"ddt"}
 STRONG_CAMO = {"camo_ceramic", "camo_lead"}
@@ -683,7 +687,7 @@ class Executor:
         if not self.panic_steps and not c.get("no_default_panic"):
             k = self._best_panic_kind()
             if k:
-                self.panic_steps = [{"do": "place", "kind": k, "role": "exit"}]
+                self.panic_steps = [{"do": "place", "kind": k, "role": "exit" if k in EXIT_KINDS else "dps"}]
         self.idx = 0
         self.counter = {}
         self.capped = set()          # (tid, path) that turned out locked
@@ -848,6 +852,11 @@ class Executor:
         rc = min(self._range_cells(kind), 60)
         seg = tuple(step.get("segment", (0.0, 1.0)))
         near, near_r = None, None
+        if role == "exit" and kind not in EXIT_KINDS:
+            # Only leak-catchers belong at the exit. A lead/camo answer or a
+            # panic tower placed there pops a lead whose children then escape;
+            # it covers the most still-uncovered track instead.
+            role = "dps"
         if role == "exit":
             seg = (0.65, 1.0)
         if role == "support" and step.get("near"):
