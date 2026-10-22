@@ -73,7 +73,24 @@ class Match:
                 idle += 1
             if self.ex.defended() and idle >= 2 and (not late or (cash or 0) < 600 or idle >= 4):
                 break
+        if not self.ex.defended():
+            self._place_starter(rnd)
         return self.ex.defended()
+
+    def _place_starter(self, rnd, tries=6):
+        """Only the hero is down and the plan's next tower is not affordable
+        yet (Easy: hero $460 of $650, tack $260): buy the cheapest opener
+        tower near the entrance so no round starts with the hero alone."""
+        for kind in self.ex.CHEAP_OPENERS:
+            if not self.ex.kind_allowed(kind):
+                continue
+            step = {"do": "place", "id": "starter", "kind": kind, "role": "dps", "segment": [0.05, 0.45]}
+            for _ in range(tries):     # each refused spot is blocked; try the next
+                if self.ex.try_step(step, self.g.cash_stable(), rnd) == "done" or self.ex.defended():
+                    log.info("starter tower placed: %s", kind)
+                    return True
+                time.sleep(0.3)
+        return False
 
     def play(self, max_minutes=60):
         if not self.setup():
