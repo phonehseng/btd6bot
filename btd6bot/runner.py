@@ -732,6 +732,7 @@ class Bot:
                 if res.get("outcome") != "victory":
                     self.bench(plan.map, plan.mode_key, hours=12, why=res.get("outcome", "loss"))
                 log.info("RESULT %s", res)
+                self._error_streak = 0
                 progress.record_result(plan, res)
                 progress.write(self.account, "game finished")
                 self.failures = 0
@@ -742,10 +743,20 @@ class Bot:
             except FocusLost as e:
                 log.warning("%s - waiting for the game to be in front again", e)
                 time.sleep(10)
-            except Exception:
+            except Exception as e:
                 log.exception("game loop error - recovering to main menu")
                 self.failures += 1
-                if plan is not None:
+                # The same error in several games in a row is a bug in the bot,
+                # not a bad map: benching would take map after map out of play.
+                sig = f"{type(e).__name__}: {e}"
+                self._error_streak = self._error_streak + 1 if sig == getattr(self, "_last_error", None) else 1
+                self._last_error = sig
+                if self._error_streak >= 3:
+                    log.error("the same error in %d games in a row (%s) - not benching maps; "
+                              "waiting 10 min for a code fix", self._error_streak, sig)
+                    set_state(f"error loop: {sig[:120]}")
+                    time.sleep(600)
+                elif plan is not None:
                     self.bench(plan.map, plan.mode_key, hours=6, why="error")
 
     def _check_account(self, force=False):
