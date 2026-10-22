@@ -811,6 +811,18 @@ class Executor:
             rng = T.TOWERS[kind].get("range") or 400
         return self.m.radius_cells(rng, self.g.s.width)
 
+    def _covered(self):
+        """Grid of track already within range of placed damage towers (0/1)."""
+        import cv2
+        grid = np.zeros(self.m.heat.shape, np.float32)
+        for p in self.g.towers.values():
+            if p.kind in ("village", "alchemist", "farm"):
+                continue  # support towers do not pop
+            cx, cy = self.m.frac_to_cell(p.x, p.y)
+            r = int(round(min(self._range_cells(p.kind), 60)))
+            cv2.circle(grid, (int(cx), int(cy)), max(1, r), 1.0, -1)
+        return grid
+
     def _occupied(self):
         out = []
         for p in self.g.towers.values():
@@ -844,7 +856,8 @@ class Executor:
             cover[cover >= 1] = -1  # still exclude blocked/occupied
         else:
             cover = self.m.score_spots(rc, seg, self._occupied(), near=near, near_radius=near_r,
-                                       placement=placement, extra_block=self.blocked)
+                                       placement=placement, extra_block=self.blocked,
+                                       covered=None if role == "support" else self._covered())
         for cx, cy, score in self.m.best_spots(cover, n=12):
             if (kind, cx, cy) in self.failed_spots:
                 continue

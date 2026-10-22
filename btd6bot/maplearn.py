@@ -261,7 +261,7 @@ class MapModel:
 
     # -- choosing tower spots ---------------------------------------------
     def score_spots(self, range_cells, segment=(0.0, 1.0), avoid=(), min_sep=3.0, near=None,
-                    near_radius=None, placement="land", extra_block=None):
+                    near_radius=None, placement="land", extra_block=None, covered=None):
         """Score every cell by how much (weighted) track lies within range.
 
         segment: only count track whose progress lies in this window.
@@ -275,6 +275,10 @@ class MapModel:
             weight = mask * seg
         else:
             weight = mask
+        if covered is not None:
+            # track already in range of our towers counts 30%: spreads defence
+            # over every lane instead of stacking on one (multi-lane maps leak)
+            weight = weight * (1.0 - 0.7 * np.clip(covered, 0, 1))
         r = max(1, int(round(range_cells)))
         disk = np.zeros((2 * r + 1, 2 * r + 1), np.float32)
         cv2.circle(disk, (r, r), r, 1.0, -1)
