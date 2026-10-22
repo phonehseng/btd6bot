@@ -191,10 +191,15 @@ def _code_imports():
 
 
 def _code_stamp():
-    """Latest modification time of the bot's code and strategy files."""
+    """Latest modification time of the bot's code and strategy files.
+
+    strategies/optimized is left out: a batch of tools/optimize_builds.py
+    writes a file every minute or two, and each one made the bot exit and
+    reload between games (2026-10-22). Its builds load at the next restart."""
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
-    files = list((root / "btd6bot").glob("*.py")) + list((root / "strategies").rglob("*.yaml"))
+    files = list((root / "btd6bot").glob("*.py")) + [
+        f for f in (root / "strategies").rglob("*.yaml") if "optimized" not in f.parent.name]
     return max((f.stat().st_mtime for f in files), default=0)
 
 
