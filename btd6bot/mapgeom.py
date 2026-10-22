@@ -28,8 +28,10 @@ log = logging.getLogger("mapgeom")
 
 WORLD_PX_PER_UNIT_1920 = 5.3   # refined by calibrate(); see module docstring
 # The game camera is tilted: a point raised by h units appears HEIGHT_FACTOR*h
-# units further up the screen. Fitted to live bloons on Luminous Cove, whose
-# paths run at heights 54 -> 28 -> 2 (2026-10-22); flat maps are unaffected.
+# units further up the screen. Measured on Luminous Cove (paths at heights
+# 54 -> 28 -> 2): live bloons gave 0.55 and the outlines of its raised areas
+# against a picture of the map 0.5 (tools/fit_height_edges.py; 2026-10-22).
+# Flat maps are unaffected. Re-check with that tool after game updates.
 HEIGHT_FACTOR = 0.55
 TRACK_HEAT = 10.0              # heat painted on track cells (track_mask needs > 2)
 TRACK_THICKNESS = 3            # cells; the drawn width of a bloon lane
