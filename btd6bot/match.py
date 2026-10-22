@@ -28,6 +28,7 @@ class Match:
         self.on_tower_choice = on_tower_choice
         self.stats = {"start": time.time(), "rounds": 0, "lives_lost": 0, "panic": 0}
         self._prev_lives_read = None
+        self._lives_reads = []
         self._round_cand, self._round_votes = None, 0
         self._last_buy = time.time()
         self._last_wait_log = 0.0
@@ -106,16 +107,18 @@ class Match:
                 lives = self.g.hud.lives(f)
                 if (cash is None or lives is None) and self.g.close_panels():
                     continue
-                # lives: a drop only counts once two consecutive reads agree
-                if lives is not None and lives == self._prev_lives_read and last_lives is not None \
-                        and lives < last_lives <= lives + 60:
-                    self.stats["lives_lost"] += last_lives - lives
+                # lives: median of the last 5 reads (OCR flickers 120/121), any
+                # size of drop counts - a MOAB leak is the worst case, not noise
+                if lives is not None:
+                    self._lives_reads = (self._lives_reads + [lives])[-5:]
+                med = sorted(self._lives_reads)[len(self._lives_reads) // 2] if self._lives_reads else None
+                if med is not None and last_lives is not None and med < last_lives:
+                    self.stats["lives_lost"] += last_lives - med
                     dropped = True
-                    log.warning("lost %d lives (now %d)", last_lives - lives, lives)
-                    last_lives = lives
-                elif last_lives is None or (lives is not None and lives > last_lives
-                                            and lives == self._prev_lives_read):
-                    last_lives = lives
+                    log.warning("lost %d lives (now %d)", last_lives - med, med)
+                    last_lives = med
+                elif last_lives is None and med is not None:
+                    last_lives = med
                 self._prev_lives_read = lives
                 # rounds only move forward, one or two at a time
                 if rnd is not None and last_round is not None and last_round < rnd <= last_round + 2:

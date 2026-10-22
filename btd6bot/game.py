@@ -130,10 +130,14 @@ class Game:
                 self.close_panels()
                 self.inp.move(0.42, 0.5, fast=True)
             self.inp.press(key)
-            for _ in range(8):
+            for _ in range(16):  # the X can fade in late when the game is busy
                 time.sleep(0.06)
                 if self.is_holding():
                     return True
+            if self._header_shows(kind):
+                # held, but the cancel X was not drawn (seen on Logs): trust the header
+                self._holding_unseen = True
+                return True
         try:
             from .vision import save
             save(self.fresh(), "logs/holdfail.png")
@@ -160,9 +164,32 @@ class Game:
         return out
 
     def cancel_hold(self):
+        """Drop a held tower. The red X is not always drawn, so a right-click
+        (which cancels placement and does nothing else on the map) backs it up."""
         if self.is_holding():
             self.inp.click(*self.lay["cancel_place"])
             time.sleep(0.15)
+        elif getattr(self, "_holding_unseen", False):
+            self.inp.right_click(0.42, 0.5)
+            time.sleep(0.15)
+        self._holding_unseen = False
+
+    def _vision(self):
+        if getattr(self, "_v", None) is None:
+            from .vision import Vision
+            self._v = Vision(self.s)
+        return self._v
+
+    def _header_shows(self, kind):
+        """The tower panel header names the tower on the cursor (when the X is missing)."""
+        name = T.HEROES.get(self.hero, {}).get("name") if kind == "hero" else T.TOWERS[kind]["name"]
+        if not name:
+            return False
+        words = [w.text for w in self._vision().read((0.855, 0.095, 1.0, 0.175))]
+        a = "".join(c for c in " ".join(words).lower() if c.isalnum())
+        parts = ["".join(c for c in w.lower() if c.isalnum()) for w in name.split()]
+        key = max(parts, key=len)  # 'boomerang' of 'Boomerang Monkey' (names wrap)
+        return len(key) >= 4 and key in a
 
     PX_PER_UNIT = 5.3 / 1920  # range circle radius per game unit, as a width fraction
                               # (measured: held dart, range 32 -> ~170 px at 1920 wide)
@@ -230,6 +257,7 @@ class Game:
             self.cancel_hold()
             self.fail_reason = "click"
             return None
+        self._holding_unseen = False
         after = self.cash_stable()
         spent = cost
         if before is not None and after is not None and after < before:

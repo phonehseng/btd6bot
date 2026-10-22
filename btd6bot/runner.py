@@ -295,12 +295,21 @@ class Bot:
         if not opened:
             log.error("could not open map %s", plan.map)
             return False
-        self.menus.read()
-        if not self.menus.click_word(plan.difficulty, dy=-0.09, region=(0, 0.3, 1, 0.7)):
+        # clicks made during a screen transition are dropped: retry each step
+        for _ in range(3):
+            self.menus.read()
+            if self.menus.click_word(plan.difficulty, dy=-0.09, region=(0, 0.3, 1, 0.7)) and                     self.menus.wait_for("mode_select", timeout=3) == "mode_select":
+                break
+        else:
+            log.warning("start: difficulty %s did not open its modes", plan.difficulty)
             return False
-        if self.menus.wait_for("mode_select", timeout=4) != "mode_select":
-            return False
-        if not self.menus.click_word(MODE_BUTTON_TEXT.get(plan.mode, plan.mode), dy=-0.08):
+        for _ in range(3):
+            self.menus.read()
+            if self.menus.click_word(MODE_BUTTON_TEXT.get(plan.mode, plan.mode), dy=-0.08):
+                if self.menus.wait_for({"in_game", "overwrite", "unknown"}, timeout=3) != "mode_select":
+                    break
+        else:
+            log.warning("start: mode %s did not start", plan.mode)
             return False
         end = time.time() + 30  # loading, overwrite prompt, mode intro popups
         while time.time() < end:
