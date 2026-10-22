@@ -71,6 +71,26 @@ class Menus:
         self.g = game
         self.words = []
 
+    def has_badge(self, cx, cy, dx=0.05, up=0.11, frame=None):
+        """True when the game's red '!' notification badge sits at the
+        top-right of the button centred at (cx, cy) (fractions). The game
+        shows it on Monkey Knowledge when points can be spent and on the
+        achievements ribbon when a reward can be claimed. Measured on
+        docs/screens/after_home.jpg: badge windows hold ~3-4% bright red,
+        plain buttons 0%."""
+        import cv2
+        import numpy as np
+        f = frame if frame is not None else self.s.grab()
+        h, w = f.shape[:2]
+        x0, x1 = int(cx * w), int(min(1.0, cx + dx) * w)
+        y0, y1 = int(max(0.0, cy - up) * h), int(cy * h)
+        if x1 <= x0 or y1 <= y0:
+            return False
+        hsv = cv2.cvtColor(f[y0:y1, x0:x1], cv2.COLOR_BGR2HSV)
+        red = ((hsv[..., 0] < 8) | (hsv[..., 0] > 172)) & (hsv[..., 1] > 150) & (hsv[..., 2] > 170)
+        white = (hsv[..., 1] < 40) & (hsv[..., 2] > 220)
+        return bool(red.mean() > 0.012 and white.mean() > 0.003)
+
     def read(self, scale=0.5):
         """OCR the whole screen (downscaled for speed)."""
         import cv2

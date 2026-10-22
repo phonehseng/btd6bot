@@ -44,7 +44,7 @@ MODE_BUTTON_POS = {
 
 ROOT_DIR = __import__("pathlib").Path(__file__).resolve().parents[1]
 ID_CHECK_EVERY = 10                   # games between account (User ID) checks
-ACH_EVERY = 6 * 3600                   # seconds between achievement scans
+ACH_EVERY = 24 * 3600                  # seconds between full achievement scans (badge claims in between)
 PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main menu
 from .status import STATE_FILE, set_state  # noqa: E402,F401
 
@@ -666,7 +666,11 @@ class Bot:
                     continue
                 self._check_account()
                 self.read_level()
-                if self.account.player_level >= 30 and self._games_since_mk >= 3:
+                # Monkey Knowledge: once per session, then only when the game
+                # puts its "!" badge on the Knowledge button (new points)
+                from .mk import KNOWLEDGE_BUTTON
+                mk_due = self._games_since_mk >= 99 or self.menus.has_badge(*KNOWLEDGE_BUTTON)
+                if self.account.player_level >= 30 and mk_due:
                     self._games_since_mk = 0
                     try:  # spend new Monkey Knowledge points (MM / XP boosts first)
                         set_state("spending Monkey Knowledge points")
@@ -678,7 +682,10 @@ class Bot:
                     except Exception:
                         log.exception("Monkey Knowledge spending failed")
                     self.to_main_menu()
-                if time.time() - self._ach_at > ACH_EVERY:
+                # Achievements: claim when the ribbon shows its "!" badge; the
+                # full progress scan the planner uses runs at most daily
+                from .achievements import BADGE as ACH_RIBBON
+                if time.time() - self._ach_at > ACH_EVERY or self.menus.has_badge(*ACH_RIBBON):
                     self._ach_at = time.time()
                     _ach_mark(self._ach_at)
                     try:  # claim finished achievements' rewards, refresh progress
