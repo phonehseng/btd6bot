@@ -881,7 +881,7 @@ class Executor:
             if cash is None or cash < price:
                 self.wait_cost = price
                 return "wait"
-            if self.hold_fails.get(kind, 0) >= 3:
+            if self.hold_fails.get(kind, 0) >= 6:
                 return "skip"  # cannot pick it up (locked / mode-restricted / unbound)
             spot = self.pick_spot(kind, step)
             if spot is None:
@@ -891,6 +891,7 @@ class Executor:
             tid = step.get("id") or self._new_tid(kind)
             if self.g.place(tid, kind, fx, fy):
                 self.purchased += 1
+                self.hold_fails.pop(kind, None)
                 self._block(cx, cy, 3)
                 if step.get("target"):
                     self.g.target(self.g.towers[tid], step["target"])
