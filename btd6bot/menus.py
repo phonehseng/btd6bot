@@ -14,6 +14,11 @@ log = logging.getLogger("menus")
 
 # screen -> list of keyword groups; all groups must match (any word within a group)
 SCREENS = [
+    # after a win during a collection event (title "COLLECTION EVENT"; the
+    # font's C reads as G): a crate fills up, and a full one shows COLLECT
+    ("collection_event", [["collectionevent", "collegtionevent"]]),
+    # opening an event crate: "INSTA MONKEY! New <tower> 0-2-2" over a card
+    ("insta_reward", [["instamonkey"]]),
     ("defeat", [["defeat", "gameover", "bloonsleaked", "youlost"]]),
     # HEROES screen: SELECT/SELECTED (OCR often reads the C as a G) and the
     # hero's "Ingame cost:", which the upgrade tree shows too - so it goes first
@@ -43,6 +48,9 @@ SCREENS = [
 ]
 
 POPUP_BUTTONS = ["ok", "collect", "claim", "continue", "next", "close", "gotit", "awesome", "yes"]
+# How OCR misreads some button words in the game's font (its C looks like a
+# G or an I): find() accepts these spellings for the key on the left.
+OCR_VARIANTS = {"collect": ("collegt", "colleci"), "select": ("selegt",), "selected": ("selegted",)}
 # never click anything containing these (real-money or Monkey Money purchases)
 FORBIDDEN = ["unlockall", "buy", "purchase", "store", "bundle", "offer", "usd", "insta", "powers",
              "trophystore", "continuefor", "signin", "signup", "resetpassword", "password", "logout",
@@ -108,13 +116,23 @@ class Menus:
         return any(k in norm(w.text) for w in words for k in ks)
 
     def find(self, *keys, words=None, region=None):
+        """First word matching a key. A word that IS a key beats one that only
+        contains it: the Collection Event screen's title "COLLECTION EVENT"
+        contains "collect", and the bot clicked the title four times instead
+        of the COLLECT button below it."""
         words = self.words if words is None else words
-        ks = [norm(k) for k in keys]
-        for k in ks:
+        if region:
+            words = [w for w in words if region[0] <= w.x <= region[2] and region[1] <= w.y <= region[3]]
+        ks = []
+        for k in map(norm, keys):
+            ks += [k, *OCR_VARIANTS.get(k, ())]
+        for k in ks:                       # 1. whole-word matches, keys in order
             for w in words:
-                if region and not (region[0] <= w.x <= region[2] and region[1] <= w.y <= region[3]):
-                    continue
-                if k == norm(w.text) or (len(k) > 3 and k in norm(w.text)):
+                if k == norm(w.text):
+                    return w
+        for k in ks:                       # 2. then words containing a key
+            for w in words:
+                if len(k) > 3 and k in norm(w.text):
                     return w
         return None
 
@@ -126,6 +144,8 @@ class Menus:
                 return name
         if self.in_game():
             return "in_game"
+        if self.reward_cards():
+            return "reward_cards"     # opening an event crate: cards on black
         return "unknown"
 
     def wait_for(self, targets, timeout=6.0, cheap_in_game=True):
@@ -265,6 +285,9 @@ class Menus:
             st = self.identify()
             if st == "main_menu":
                 return True
+            if st in ("collection_event", "reward_cards", "insta_reward"):
+                self.handle_collection_event()
+                continue
             # buttons are icons above their labels; the label is not clickable
             if self.click_word("home", dy=-0.08):
                 if self.wait_for("main_menu", timeout=8) == "main_menu":
@@ -275,6 +298,66 @@ class Menus:
                 continue
             self.inp.click(0.5, 0.85)
             time.sleep(0.5)
+        return False
+
+    # -- collection events ---------------------------------------------------------
+    # Calibrated live (v57.3, 2026-10-22): COLLECT opens the crate; a screen
+    # with NO text shows face-down cards (blue tiles with a "?"); clicking one
+    # shows "INSTA MONKEY! New ..." and a click anywhere closes that; when
+    # every card is turned the event screen returns (crate at 0/N) with a
+    # PLAY button. Free rewards: nothing here costs anything.
+    CARD_BLUE = ((100, 150, 90), (118, 255, 230))   # face-down card, OpenCV HSV
+
+    def reward_cards(self, frame=None):
+        """Centres (fx, fy) of the cards on a crate-opening screen, left to
+        right: blue tiles about a sixth of the screen high."""
+        import cv2
+        import numpy as np
+        if frame is None and getattr(self, "s", None) is None:
+            return []                  # no screen (offline tests)
+        f = frame if frame is not None else self.s.grab()
+        h, w = f.shape[:2]
+        hsv = cv2.cvtColor(f, cv2.COLOR_BGR2HSV)
+        if np.median(hsv[:, :, 2]) > 40:
+            return []                  # the cards screen is almost black around the cards
+        mask = cv2.inRange(hsv, *self.CARD_BLUE)
+        n, _, stats, cen = cv2.connectedComponentsWithStats(mask)
+        return sorted((cen[i][0] / w, cen[i][1] / h) for i in range(1, n)
+                      if stats[i, cv2.CC_STAT_AREA] > 0.004 * w * h)
+
+    def handle_collection_event(self, max_steps=20):
+        """From the collection-event screen, the cards screen or an "INSTA
+        MONKEY!" popup: collect a full crate, turn every card, and leave the
+        event screen. Returns True when none of these screens is up."""
+        turned = set()
+        for _ in range(max_steps):
+            st = self.identify()
+            if st == "insta_reward":
+                self.inp.click(0.5, 0.5)            # close the popup
+                time.sleep(1.2)
+            elif st == "reward_cards":
+                cards = [c for c in self.reward_cards() if (round(c[0], 2), round(c[1], 2)) not in turned]
+                if not cards:
+                    self.inp.click(0.5, 0.5)
+                    time.sleep(1.0)
+                    continue
+                turned.add((round(cards[0][0], 2), round(cards[0][1], 2)))
+                self.inp.click(*cards[0])
+                time.sleep(1.5)
+            elif st == "collection_event":
+                if self.click_word("collect"):
+                    log.info("collection event: crate full - collecting")
+                    time.sleep(2.0)
+                    continue
+                # nothing to collect: PLAY leads on to map select, from where
+                # the caller's back arrow returns to the main menu
+                if not self.click_word("play"):
+                    self.inp.click(0.94, 0.97)
+                time.sleep(1.5)
+            else:
+                if turned:
+                    log.info("collection event: %d reward cards turned", len(turned))
+                return True
         return False
 
     def leave_defeat(self):

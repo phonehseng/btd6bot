@@ -303,6 +303,8 @@ class Bot:
                         "profile", "overwrite", "account", "monkeys_menu"):
                 self.inp.click(0.044, 0.055)  # back arrow
                 time.sleep(0.4)
+            elif st in ("collection_event", "reward_cards", "insta_reward"):
+                self.menus.handle_collection_event()
             elif st == "level_up":
                 self.menus.handle_level_up()
             elif st == "tower_choice":
