@@ -414,6 +414,23 @@ class AccountState:
     def has_medal(self, map_name: str, mode: str) -> bool:
         return bool(self.medals.get(canonical_map(map_name), {}).get(mode))
 
+    def drop_impossible_medals(self) -> list[tuple[str, str]]:
+        """Remove medals the game could not have given: a mode is only playable
+        after its prerequisite mode is beaten on the same map (MODES.requires),
+        so e.g. Impoppable without ABR is a misread. Returns what was removed."""
+        removed = []
+        changed = True
+        while changed:  # a removal can invalidate a mode further down the chain
+            changed = False
+            for m, rec in self.medals.items():
+                for mode in [k for k, v in rec.items() if v]:
+                    req = MODES[mode].requires if mode in MODES else None
+                    if req and not rec.get(req):
+                        rec[mode] = False
+                        removed.append((m, mode))
+                        changed = True
+        return removed
+
     def unique_map_wins(self) -> int:
         return sum(1 for m, d in self.medals.items()
                    if m in MAPS and any(d.values()))

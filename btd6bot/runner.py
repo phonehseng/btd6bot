@@ -5,6 +5,7 @@ import time
 import numpy as np
 
 from . import layout as L
+from . import progress
 from . import towers as T
 from .account import AccountState
 from .achievements import Achievements
@@ -379,6 +380,9 @@ class Bot:
                 if earned and not rec.get(mode):
                     rec[mode] = True
                     new_medals += 1
+        dropped = self.account.drop_impossible_medals()
+        if dropped:
+            log.warning("removed %d impossible medals (prerequisite not earned): %s", len(dropped), dropped[:8])
         self.account.save()
         log.info("medal scan: %d maps read on %d pages, %d medals adopted", len(found), len(seen_pages), new_medals)
         if new_maps:
@@ -439,12 +443,16 @@ class Bot:
         from .account import canonical_map
         from .medals import read_card
         seen = read_card(self.s.grab(), label.x, label.y)
+        # the search card's 4th slot misreads dark thumbnails as Impoppable;
+        # the map-select sweep (scan_all_medals) reads every mode reliably
+        seen.pop("impoppable", None)
         rec = self.account.medals.setdefault(canonical_map(map_name), {})
         new = [d for d, earned in seen.items() if earned and not rec.get(d)]
         for d in new:
             rec[d] = True
         if new:
             log.info("save file shows medals on %s not in our notes: %s", map_name, new)
+            self.account.drop_impossible_medals()
             self.account.save()
 
     def start(self, plan):
@@ -592,6 +600,7 @@ class Bot:
         end = time.time() + hours * 3600
         code_stamp = _code_stamp()
         self._refresh_map_geometry()
+        progress.write(self.account, "starting")
         while time.time() < end:
             plan = None
             if PAUSE_FILE.exists():
@@ -678,6 +687,8 @@ class Bot:
                 if res.get("outcome") != "victory":
                     self.bench(plan.map, plan.mode_key, hours=12, why=res.get("outcome", "loss"))
                 log.info("RESULT %s", res)
+                progress.record_result(plan, res)
+                progress.write(self.account, "game finished")
                 self.failures = 0
             except Aborted:
                 raise
@@ -779,6 +790,7 @@ class Bot:
             self._online_reason = reason
             self.to_main_menu()
         set_state(f"waiting: {reason}")
+        progress.write(self.account, f"waiting: {reason}")
         end = time.time() + poll
         while time.time() < end and not PAUSE_FILE.exists():
             time.sleep(2)
