@@ -15,9 +15,28 @@ Inside, the map's scene holds components with readable field names:
   * BaseArea - the surface type of everything not covered by an Area
              (land on most maps, water on island maps such as Spice Islands)
 
+and the parts of a map that change during a game ("map mechanics"):
+
+  * Removeable / RoundRemoveable - obstacles the player pays to remove
+             (Cornfield's corn, Spillway's boats, Three Mines 'Round's ore);
+             the Areas on the obstacle's own object are what it occupies
+  * RegenRemovable - paid map switches that come back (Polyphemus' eye,
+             Castle Revenge's engine), with a cost formula per round
+  * MapEvent - "when <triggers> then <actions>": triggers such as a round
+             starting or ending, a removable being bought or a click, and
+             actions such as creating, destroying, cycling, rotating or
+             moving Areas (Erosion's melting ice, Covered Garden's windows,
+             Geared's gears, Sanctuary's platforms), switching paths on or
+             off, or suspending the towers standing on an Area
+  * PathPointInfo - per path node: bloons there cannot be hit (tunnels,
+             gates, holes) or cannot be targeted on the ground
+  * Splitters and map gizmos (paid map abilities) - recorded for reference
+
 Reading these gives the exact track and placement map for every map,
 including maps added in future updates (each arrives as a new bundle), so
 nothing has to be learned by watching bloons or probing placements.
+mapgeom.py interprets the mechanics (what changes by itself, when, and what
+it means for placement).
 
 Safety: the game's files are never modified. Bundles are copied to a cache
 folder outside the game (CACHE) and only the copies are opened, read-only.
@@ -46,7 +65,10 @@ log = logging.getLogger("gamefiles")
 ROOT = Path(__file__).resolve().parents[1]
 GEOMETRY_DIR = ROOT / "data" / "map_geometry"
 CACHE = Path.home() / ".btd6bot_cache" / "bundles"   # copies of game bundles
-GEOMETRY_VERSION = 6   # bump when the extracted format or its reading changes
+MECHANICS_FILE = ROOT / "data" / "map_mechanics.json"   # summary of every map's mechanics
+# Bump when the extracted format or its reading changes.
+#   7: area ids/state flags, removables, map events, hidden track (PathPointInfo)
+GEOMETRY_VERSION = 7
 
 # The game's AreaType enum (Assets.Scripts.Models.Map.AreaType in GameAssembly)
 AREA_TYPES = {0: "track", 1: "water", 2: "land", 3: "unplaceable", 4: "ice",
@@ -127,16 +149,28 @@ class _Scene:
 
     def __init__(self, env):
         self.env = env
+        self.objects = {}          # path id -> UnityPy object reader
         self.transforms = {}       # transform id -> typetree
         self.go_transform = {}     # game object id -> transform id
         self.go_name = {}
+        self.go_active = {}        # game object id -> its own m_IsActive flag
+        self.script = {}           # MonoBehaviour id -> (namespace, class name)
+        self._trees = {}           # MonoBehaviour id -> typetree (read on demand)
         for o in env.objects:
-            if o.type.name == "Transform":
+            self.objects[o.path_id] = o
+            if o.type.name in ("Transform", "RectTransform"):
                 t = o.read_typetree()
                 self.transforms[o.path_id] = t
                 self.go_transform[t["m_GameObject"]["m_PathID"]] = o.path_id
             elif o.type.name == "GameObject":
-                self.go_name[o.path_id] = o.read_typetree().get("m_Name", "")
+                t = o.read_typetree()
+                self.go_name[o.path_id] = t.get("m_Name", "")
+                self.go_active[o.path_id] = bool(t.get("m_IsActive", 1))
+            elif o.type.name == "MonoBehaviour":
+                mb = o.read()
+                s = mb.m_Script.read() if mb.m_Script else None
+                if s is not None:
+                    self.script[o.path_id] = (s.m_Namespace, s.m_ClassName)
 
     def world(self, tid, local=(0.0, 0.0, 0.0)):
         """World position of a point given in transform tid's local space."""
@@ -149,15 +183,51 @@ class _Scene:
             tid = t["m_Father"]["m_PathID"]
         return p
 
+    def tree(self, pid):
+        """Typetree of one MonoBehaviour (cached)."""
+        if pid not in self._trees:
+            self._trees[pid] = self.objects[pid].read_typetree()
+        return self._trees[pid]
+
+    def class_of(self, pid):
+        return self.script.get(pid, ("", ""))[1]
+
+    def ids(self, class_name):
+        """Ids of all MonoBehaviours of a script class, in file order."""
+        return [pid for pid, (_, cls) in self.script.items() if cls == class_name]
+
     def components(self, class_name):
         """Typetrees of all MonoBehaviours of a given script class."""
-        for o in self.env.objects:
-            if o.type.name != "MonoBehaviour":
-                continue
-            mb = o.read()
-            script = mb.m_Script.read() if mb.m_Script else None
-            if script is not None and script.m_ClassName == class_name:
-                yield o.read_typetree()
+        for pid in self.ids(class_name):
+            yield self.tree(pid)
+
+    def go_of(self, pid):
+        """Game object id a component belongs to."""
+        return self.tree(pid)["m_GameObject"]["m_PathID"]
+
+    def parent_go(self, go):
+        father = self.transforms[self.go_transform[go]]["m_Father"]["m_PathID"]
+        return self.transforms[father]["m_GameObject"]["m_PathID"] if father else None
+
+    def ancestors(self, go):
+        """The game object itself, then its parent, grandparent, ..."""
+        while go:
+            yield go
+            go = self.parent_go(go)
+
+    def active_in_hierarchy(self, go):
+        """Unity only runs (and the map loader only finds) objects whose whole
+        parent chain is switched on."""
+        return all(self.go_active.get(g, True) for g in self.ancestors(go))
+
+    def position(self, go):
+        """World position of a game object as [x, z, y] (the geometry's order)."""
+        return _xzy(self.world(self.go_transform[go]))
+
+
+def _xzy(p):
+    """Unity (x, y, z) -> the geometry's [x, z, y] (z up the screen, y height)."""
+    return [round(float(p[0]), 2), round(float(p[2]), 2), round(float(p[1]), 2)]
 
 
 def _bezier(points, samples=16):
@@ -241,56 +311,136 @@ def _curved(nodes, samples_per_100=100):
     return list(np.stack(cols, axis=1))
 
 
+# Per-node path settings (PathPointInfo on a node or a curve point). The two
+# that matter to the bot, each stored per path as ranges of point indexes:
+#   invulnerable       bloons there cannot be hit at all (castle gates,
+#                      tunnels, holes they drop into)
+#   no_path_targeting  towers that aim at the ground (spikes, Mortar-style
+#                      path targeting) cannot pick these points (Mushroom
+#                      Grotto's dark caves light up only near its mushrooms)
+POINT_FLAGS = {"invulnerable": "bloonsInvulnerable", "no_path_targeting": "disablePathTargeting"}
+
+
+def _ranges(flags):
+    """[False, True, True, False, True] -> [[1, 2], [4, 4]] (inclusive)."""
+    out, start = [], None
+    for i, f in enumerate(list(flags) + [False]):
+        if f and start is None:
+            start = i
+        elif not f and start is not None:
+            out.append([start, i - 1])
+            start = None
+    return out
+
+
 def _read_paths(scene):
     sources = {}   # game object id -> (point source kind, its fields)
     for kind in ("PolyLineNodes", "BezierLineNodes", "CurvedLineNodes"):
         for t in scene.components(kind):
             sources[t["m_GameObject"]["m_PathID"]] = (kind, t)
+    node_info = {scene.go_of(pid): scene.tree(pid) for pid in scene.ids("PathPointInfo")}
+
+    def flags_of(transform_id):
+        """{flag: bool} of the node (or curve point) behind a transform."""
+        info = node_info.get(scene.transforms[transform_id]["m_GameObject"]["m_PathID"], {})
+        return {k: bool(info.get(field, 0)) for k, field in POINT_FLAGS.items()}
+
+    def either(a, b):
+        # between two nodes a setting counts when either end has it: the bot
+        # would rather miss a little visible track than count hidden track
+        return {k: a[k] or b[k] for k in a}
+
     paths = []
-    for tree in scene.components("Path"):
+    for pid in scene.ids("Path"):
+        tree = scene.tree(pid)
         go = tree["m_GameObject"]["m_PathID"]
         root = scene.go_transform[go]
         kind, fields = sources.get(go, ("PolyLineNodes", {}))
         children = [c["m_PathID"] for c in scene.transforms[root]["m_Children"]]
+        node_flags = [flags_of(c) for c in children]
         if kind == "BezierLineNodes":
-            points = _bezier_chain([scene.world(c) for c in children])
+            nodes = [scene.world(c) for c in children]
+            points = _bezier_chain(nodes)
+            # each chained curve spans anchors i .. i+3 and adds BEZIER_DIVISION-1 points
+            flags = node_flags[:1]
+            for i in range(0, len(nodes) - 3, 3):
+                span = either(node_flags[i], node_flags[i + 3])
+                flags += [span] * (BEZIER_DIVISION - 1)
         elif kind == "CurvedLineNodes":
-            points = _curved([scene.world(c) for c in children], fields.get("samplesPer100Units", 100))
+            nodes = [scene.world(c) for c in children]
+            points = _curved(nodes, fields.get("samplesPer100Units", 100))
+            # samples are spread by distance along the nodes: find each one's node pair
+            pts = np.array(nodes, float)
+            along = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))]) \
+                if len(pts) > 1 else np.zeros(len(pts))
+            sample_t = np.linspace(0.0, along[-1] if len(along) else 0.0, len(points))
+            flags = []
+            for t in sample_t:
+                k = int(np.clip(np.searchsorted(along, t, side="right") - 1, 0, max(len(nodes) - 2, 0)))
+                flags.append(either(node_flags[k], node_flags[min(k + 1, len(nodes) - 1)])
+                             if nodes else {f: False for f in POINT_FLAGS})
         else:
-            points = []
-            for cid in children:
-                kids = scene.transforms[cid]["m_Children"]
+            points, flags = [], []
+            for cid, own in zip(children, node_flags):
+                kids = [k["m_PathID"] for k in scene.transforms[cid]["m_Children"]]
                 if kids:   # a Curve: its children are the Bezier points
-                    points += _bezier([scene.world(k["m_PathID"]) for k in kids])
+                    curve = _bezier([scene.world(k) for k in kids])
+                    kid_flags = [either(own, flags_of(k)) for k in kids]
+                    points += curve
+                    # each sample takes the setting of its nearest control point
+                    flags += [kid_flags[int(round(j * (len(kids) - 1) / max(len(curve) - 1, 1)))]
+                              for j in range(len(curve))]
                 else:      # a LineNode
                     points.append(scene.world(cid))
-        paths.append({
+                    flags.append(own)
+        flags = (flags + flags[-1:] * len(points))[:len(points)] if flags else []
+        entry = {
+            "id": pid,
             "name": scene.go_name.get(go, ""),
             "source": kind,
             "active": bool(tree.get("isActive", 1)),
             "hidden": bool(tree.get("isHidden", 0)),
-            "points": [[round(float(p[0]), 2), round(float(p[2]), 2), round(float(p[1]), 2)] for p in points],
-        })
+            "points": [_xzy(p) for p in points],
+        }
+        for k in POINT_FLAGS:
+            spans = _ranges(f[k] for f in flags)
+            if spans:
+                entry[k] = spans
+        paths.append(entry)
     return paths
 
 
+def _seasonal_objects(scene):
+    """Game objects switched on only during seasonal events (Halloween,
+    Christmas...: the EnableEventObjects component lists them)."""
+    out = set()
+    for tree in scene.components("EnableEventObjects"):
+        out |= {g["m_PathID"] for g in tree.get("gameobjects", []) if g.get("m_PathID")}
+    return out
+
+
 def _read_areas(scene):
+    seasonal = _seasonal_objects(scene)
     areas = []
-    for tree in scene.components("Area"):
+    for pid in scene.ids("Area"):
+        tree = scene.tree(pid)
         go = tree["m_GameObject"]["m_PathID"]
         tid = scene.go_transform[go]
-        polygons = [[[round(float(w[0]), 2), round(float(w[2]), 2), round(float(w[1]), 2)]
-                     for w in (scene.world(tid, (p["x"], p["y"], p["z"])) for p in poly["points"])]
+        polygons = [[_xzy(scene.world(tid, (p["x"], p["y"], p["z"]))) for p in poly["points"]]
                     for poly in tree.get("polygons", [])]
         circles = []
         for c in tree.get("blockerCircles", []) or []:
-            # circle fields vary by version; keep whatever position/radius exists
+            # The circles the game collides projectiles with. They are stored
+            # in the simulation's flat plane, where a point at height h sits at
+            # y = -(z + h/sqrt(3)): heights already folded in. Kept as
+            # [x, z, radius, 0] so the projection adds no height again (every
+            # circle centre then lies inside its own blocker polygon).
             pos = c.get("position") or c.get("center") or {}
             if pos:
-                w = scene.world(tid, (pos.get("x", 0), pos.get("y", 0), pos.get("z", 0)))
-                circles.append([round(float(w[0]), 2), round(float(w[2]), 2), float(c.get("radius", 0)),
-                                round(float(w[1]), 2)])
-        areas.append({
+                circles.append([round(float(pos.get("x", 0)), 2), round(-float(pos.get("y", 0)), 2),
+                                round(float(c.get("radius", 0)), 2), 0.0])
+        entry = {
+            "id": pid,
             "name": scene.go_name.get(go, ""),
             "type": AREA_TYPES.get(tree.get("type"), str(tree.get("type"))),
             "blocks_sight": bool(tree.get("isBlocker", 0)),
@@ -298,8 +448,188 @@ def _read_areas(scene):
             "tower_sizes": tree.get("filterInTowerSizes", ""),
             "polygons": polygons,
             "circles": circles,
-        })
+            "origin": scene.position(go),   # what moving-platform rotations turn about
+        }
+        # Objects switched off in the scene are not part of the map, except
+        # seasonal decorations the game switches on during an event.
+        if not (scene.active_in_hierarchy(go) and tree.get("m_Enabled", 1)):
+            entry["inactive"] = True
+            if any(g in seasonal for g in scene.ancestors(go)):
+                entry["seasonal"] = True
+        if tree.get("renderHeightOffset"):
+            entry["render_offset"] = round(float(tree["renderHeightOffset"]), 2)
+        pivot = (tree.get("pivotPoint") or {}).get("m_PathID")
+        if pivot and pivot in scene.transforms:
+            entry["pivot"] = _xzy(scene.world(pivot))
+        for key, field in (("tower_sets", "filterInTowerSets"), ("exclude_towers", "filterOutSpecificTowers")):
+            text = tree.get(field) or ""
+            if text and text != "{empty}":
+                entry[key] = text
+        if tree.get("dontRemoveExistingTowers"):
+            entry["keeps_towers"] = True   # appearing here does not remove towers
+        areas.append(entry)
     return areas
+
+
+# ---------------------------------------------------------------------------
+# Map mechanics: removable obstacles, map events, gizmos
+# ---------------------------------------------------------------------------
+
+def _plain(value, ndigits=3):
+    """A typetree value as plain JSON: references become the referenced
+    component's id (None when empty), animation curves become keyframe lists
+    [time, value, in-slope, out-slope], Unity bookkeeping fields are dropped."""
+    if isinstance(value, dict):
+        if set(value) == {"m_FileID", "m_PathID"}:
+            return value["m_PathID"] or None
+        if "m_Curve" in value:
+            return [[round(k["time"], ndigits), round(k["value"], ndigits),
+                     round(k["inSlope"], ndigits), round(k["outSlope"], ndigits)] for k in value["m_Curve"]]
+        return {k: _plain(v, ndigits) for k, v in value.items() if not k.startswith("m_") and k != "def"}
+    if isinstance(value, list):
+        return [_plain(v, ndigits) for v in value]
+    if isinstance(value, float):
+        return round(value, ndigits)
+    return value
+
+
+def _component(scene, pid):
+    """{"type": script class, ...its fields} for a trigger or action."""
+    if not pid or pid not in scene.script:
+        return None
+    return {"type": scene.class_of(pid), **_plain(scene.tree(pid))}
+
+
+def _owned_areas(scene, go, area_ids_by_go):
+    """Area ids on a game object and everything below it."""
+    out, todo = [], [go]
+    while todo:
+        g = todo.pop()
+        out += area_ids_by_go.get(g, [])
+        todo += [scene.transforms[c["m_PathID"]]["m_GameObject"]["m_PathID"]
+                 for c in scene.transforms[scene.go_transform[g]]["m_Children"]]
+    return sorted(out)
+
+
+REMOVABLE_CLASSES = ("Removeable", "RoundRemoveable", "CustomMushroomGrottoRemoveable")
+
+
+def _read_removables(scene, area_ids_by_go):
+    """Obstacles the player can pay to remove.
+
+    cost      removealCost (sic) as written in the scene, in dollars
+    active    False: hidden until a map event offers it (RemovableActiveAction)
+    after     the ground type its areas take when sold; with destroy_area the
+              areas are deleted instead, uncovering whatever lies beneath
+    areas     ids of the Areas it occupies (on its own object or below)
+    rounds / cash_reward   RoundRemoveable (Three Mines 'Round's ore): it is
+              mined for `rounds` rounds and then pays `cash_reward`"""
+    out = []
+    for cls in REMOVABLE_CLASSES:
+        for pid in scene.ids(cls):
+            t = scene.tree(pid)
+            go = t["m_GameObject"]["m_PathID"]
+            entry = {
+                "id": pid, "class": cls, "name": scene.go_name.get(go, ""),
+                "cost": int(t.get("removealCost", 0)),
+                "active": bool(t.get("isActive", 1)),
+                "after": AREA_TYPES.get(t.get("defaultTerrianType"), str(t.get("defaultTerrianType"))),
+                "destroy_area": bool(t.get("destroyArea", 0)),
+                "areas": _owned_areas(scene, go, area_ids_by_go),
+                "position": scene.position(go),
+            }
+            if t.get("menuName"):
+                entry["menu_name"] = t["menuName"]
+            if t.get("denySellIfStackedTowers"):
+                entry["deny_if_towers_on_top"] = True
+            if t.get("modPathId"):
+                entry["changes_path"] = t["modPathId"]
+            if cls == "RoundRemoveable":
+                entry["rounds"] = int(t.get("durationRounds", 0))
+                entry["cash_reward"] = int(t.get("cashReward", 0))
+            out.append(entry)
+    return out
+
+
+def _read_regen_removables(scene, area_ids_by_go):
+    """Paid switches that can be bought again (RegenRemovable), with their
+    LinearRoundBasedCost: base + increase * steps, one step every
+    `every` rounds from round `first_round`."""
+    out = []
+    for pid in scene.ids("RegenRemovable"):
+        t = scene.tree(pid)
+        go = t["m_GameObject"]["m_PathID"]
+        cost = None
+        formula = (t.get("costFormula") or {}).get("m_PathID")
+        if formula and scene.class_of(formula) == "LinearRoundBasedCost":
+            f = scene.tree(formula)
+            cost = {"base": f.get("baseCost"), "increase": f.get("costIncrease"),
+                    "first_round": f.get("firstRoundForIncrease"), "every": f.get("roundsBetweenIncreases")}
+        out.append({"id": pid, "name": scene.go_name.get(go, ""), "active": bool(t.get("isActive", 1)),
+                    "cost": cost, "areas": _owned_areas(scene, go, area_ids_by_go),
+                    "position": scene.position(go),
+                    "inactive_when_bought": bool(t.get("setInactiveOnRemoved", 0))})
+    return out
+
+
+def _read_events(scene):
+    """Map events ("when TRIGGERS, do ACTIONS") and the MapActions lists
+    they can call (TriggerMapActionsAction). References inside triggers and
+    actions are component ids: of Areas, Paths, Removeables, other events."""
+    out = []
+    for cls in ("MapEvent", "MapActions"):
+        for pid in scene.ids(cls):
+            t = scene.tree(pid)
+            entry = {"id": pid, "kind": "event" if cls == "MapEvent" else "actions",
+                     "name": scene.go_name.get(t["m_GameObject"]["m_PathID"], "")}
+            if cls == "MapEvent":
+                entry.update({
+                    "one_time": bool(t.get("oneTimeEvent", 0)),
+                    "all_triggers": bool(t.get("allTriggersRequired", 0)),
+                    "active": not t.get("inactiveByDefault", 0),
+                    "triggers": [c for c in (_component(scene, r.get("m_PathID")) for r in t.get("triggers", [])) if c],
+                })
+            entry["actions"] = [c for c in (_component(scene, r.get("m_PathID")) for r in t.get("actions", [])) if c]
+            out.append(entry)
+    return out
+
+
+GIZMO_NAMESPACE = "Assets.Scripts.Unity.Map.Gizmos"
+SPLITTER_NAMESPACE = "Assets.Scripts.Unity.Map.Spawners"
+
+
+def _read_gizmos(scene):
+    """Paid map abilities (Tricky Tracks' train, Workshop's power core and
+    reverse motor, Dark Dungeons' statue) - recorded, not used for placement."""
+    out = []
+    for pid, (ns, cls) in scene.script.items():
+        if ns == GIZMO_NAMESPACE and cls not in ("MapGizmo", "GizmoTimeDisplay"):
+            go = scene.go_of(pid)
+            out.append({"id": pid, "type": cls, "name": scene.go_name.get(go, ""),
+                        "position": scene.position(go), **_plain(scene.tree(pid))})
+    return out
+
+
+def _read_splitters(scene):
+    """How bloons choose between paths (alternating by round, MOABs only...)."""
+    out = []
+    for pid, (ns, cls) in scene.script.items():
+        if ns == SPLITTER_NAMESPACE and cls != "PathSpawner" or cls == "Splitter":
+            fields = _plain(scene.tree(pid))
+            out.append({"id": pid, "type": cls, "name": scene.go_name.get(scene.go_of(pid), ""), **fields})
+    return out
+
+
+def _read_mechanics(scene, areas):
+    area_ids_by_go = {}
+    for a in areas:
+        area_ids_by_go.setdefault(scene.go_of(a["id"]), []).append(a["id"])
+    out = {"removables": _read_removables(scene, area_ids_by_go),
+           "regen_removables": _read_regen_removables(scene, area_ids_by_go),
+           "events": _read_events(scene),
+           "gizmos": _read_gizmos(scene),
+           "splitters": _read_splitters(scene)}
+    return {k: v for k, v in out.items() if v}
 
 
 def extract_map(bundle, monoscripts):
@@ -307,9 +637,11 @@ def extract_map(bundle, monoscripts):
     import UnityPy  # only needed for extraction
     scene = _Scene(UnityPy.load(str(monoscripts), str(_cached(bundle))))
     base = [t.get("type") for t in scene.components("BaseArea")]
+    areas = _read_areas(scene)
     return {"version": GEOMETRY_VERSION, "bundle": bundle.name,
             "base": AREA_TYPES.get(base[0], "land") if base else "land",
-            "paths": _read_paths(scene), "areas": _read_areas(scene)}
+            "paths": _read_paths(scene), "areas": areas,
+            "mechanics": _read_mechanics(scene, areas)}
 
 
 # ---------------------------------------------------------------------------
@@ -355,6 +687,12 @@ def refresh(install=None, only=None, status=None):
         done.append(map_id)
     if done:
         log.info("map geometry extracted for %d maps: %s", len(done), ", ".join(done))
+    if done or not MECHANICS_FILE.exists():
+        try:   # the readable summary of every map's mechanics
+            from .mapgeom import write_mechanics_summary
+            write_mechanics_summary()
+        except Exception as e:  # a summary problem must not stop the geometry
+            log.warning("could not write %s: %s", MECHANICS_FILE.name, e)
     return done
 
 

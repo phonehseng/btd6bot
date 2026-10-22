@@ -135,6 +135,38 @@ game code was run. Newest finds are at the bottom.
 - A tower called **Sheriff** is in the shop list with 0 copies allowed and no
   upgrades: present in the files, not purchasable.
 
+## Map mechanics (removables, events, moving ground)
+
+Details and the per-map table: [`docs/map_mechanics.md`](map_mechanics.md).
+
+- Map scenes describe their changes as **`MapEvent`s**: trigger components
+  (`AfterRoundTrigger`, `RemoveableSoldTrigger`, `InteractableClickTrigger`...)
+  and action components (`CreateAreaAction`, `CycleAreasAction`,
+  `RotateAreaAction`, `MovingPlatformAction`, `SuspendTowersOnAreaAction`...),
+  all readable typetrees. 42 maps have events, 37 have obstacles to buy
+  (`Removeable`, 120 of them), Three Mines 'Round has 6 ores to mine
+  (`RoundRemoveable`: pay, wait 10-20 rounds, get more back).
+- An obstacle owns the Areas on its own object; selling it either deletes
+  them or changes their type (`Map.DestroyRemoveable`). `AreaType.removable`
+  is hardly used: obstacles are ordinary unplaceable areas.
+- From the simulation code: creating an area keeps the towers under it,
+  destroying one destroys the towers it no longer supports, moving and
+  rotating areas carry their towers, `CycleAreasAction` opens one area of its
+  list per step and closes the rest (with `invert`).
+- **Areas are stacked by height**: `Map.CanPlace` takes the highest area at
+  the tower's centre and checks the footprint only against areas up to 5
+  units above it; nothing stands on areas 250 or higher (constants 5.0, 250.0
+  and a 0.75 footprint factor in the DLL's data). Raised platforms are land 1
+  unit above an unplaceable cliff; the bot used to block them all.
+- **Blocker circles live in the simulation's flat plane**: y = -(z + h/sqrt(3)).
+  All 9,430 of them then sit inside their blocker polygons. 1/sqrt(3) = 0.577
+  is the camera tilt; the bot measured 0.55 live.
+- `PathPointInfo` marks path nodes where bloons cannot be hit
+  (`bloonsInvulnerable`: castle gates, tunnels) or not targeted on the ground
+  (`disablePathTargeting`: Mushroom Grotto's dark caves).
+- Seasonal decorations are switched on by `EnableEventObjects`; one carries
+  an area (Tricky Tracks' Halloween pumpkin patch).
+
 ## Smaller finds
 
 - The **Halloween season** shows up in the files too: seasonal bloon skins
