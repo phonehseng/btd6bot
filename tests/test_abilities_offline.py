@@ -101,7 +101,8 @@ def test_level_monotonic():
 def test_moab_rounds():
     assert not A.is_moab_round(30)
     assert not A.is_moab_round(None)
-    assert A.is_moab_round(38) and A.is_moab_round(40) and A.is_moab_round(63)
+    assert not A.is_moab_round(39)  # first MOAB is round 40 (data/rounds.json)
+    assert A.is_moab_round(40) and A.is_moab_round(41) and A.is_moab_round(63)
     assert A.is_moab_round(40, MODE_RULES["easy"])
 
 
