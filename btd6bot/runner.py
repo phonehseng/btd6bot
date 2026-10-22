@@ -537,9 +537,9 @@ class Bot:
                 rec[mode] = bool(earned)
         if dropped_medals:
             log.warning("medal scan: removed medals the game does not show: %s", ", ".join(dropped_medals))
-        dropped = self.account.drop_impossible_medals()
-        if dropped:
-            log.warning("removed %d impossible medals (prerequisite not earned): %s", len(dropped), dropped[:8])
+        odd = self.account.out_of_chain_medals()
+        if odd:   # kept: earned in someone else's co-op lobby (see AccountState.out_of_chain_medals)
+            log.info("%d medals earned outside the unlock chain (co-op): %s", len(odd), odd[:8])
         self.account.save()
         log.info("medal scan: %d maps read on %d pages, %d medals adopted", len(found), len(seen_pages), new_medals)
         if new_maps:
@@ -617,7 +617,6 @@ class Bot:
             rec[d] = True
         if new:
             log.info("save file shows medals on %s not in our notes: %s", map_name, new)
-            self.account.drop_impossible_medals()
             self.account.save()
 
     def start(self, plan):

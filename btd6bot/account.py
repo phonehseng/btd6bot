@@ -500,22 +500,18 @@ class AccountState:
     def has_medal(self, map_name: str, mode: str) -> bool:
         return bool(self.medals.get(canonical_map(map_name), {}).get(mode))
 
-    def drop_impossible_medals(self) -> list[tuple[str, str]]:
-        """Remove medals the game could not have given: a mode is only playable
-        after its prerequisite mode is beaten on the same map (MODES.requires),
-        so e.g. Impoppable without ABR is a misread. Returns what was removed."""
-        removed = []
-        changed = True
-        while changed:  # a removal can invalidate a mode further down the chain
-            changed = False
-            for m, rec in self.medals.items():
-                for mode in [k for k, v in rec.items() if v]:
-                    req = MODES[mode].requires if mode in MODES else None
-                    if req and not rec.get(req):
-                        rec[mode] = False
-                        removed.append((m, mode))
-                        changed = True
-        return removed
+    def out_of_chain_medals(self) -> list[tuple[str, str]]:
+        """Medals whose prerequisite mode is not earned on the same map
+        (MODES.requires). They are real, not misreads, and are kept: the
+        game's own unlock check (MapInfoManager.IsModeUnlocked, decompiled)
+        uses the same chains, but a co-op lobby plays the HOST's unlocked
+        modes, so a guest can earn e.g. Impoppable or CHIMPS without ABR.
+        (Dropping them made the bot forget earned medals, so it could
+        replay them later.) Returns them for the log."""
+        return [(m, mode) for m, rec in self.medals.items()
+                for mode, earned in rec.items()
+                if earned and mode in MODES and MODES[mode].requires
+                and not rec.get(MODES[mode].requires)]
 
     def unique_map_wins(self) -> int:
         return sum(1 for m, d in self.medals.items()
