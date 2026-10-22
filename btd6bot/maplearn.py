@@ -40,6 +40,7 @@ class MapModel:
         self.t_sum = np.zeros((h, w), np.float32)
         self.t_cnt = np.zeros((h, w), np.float32)
         self.rounds_traced = 0
+        self.sandbox_rounds = 0  # rounds traced in Sandbox (clean: no towers)
         self.valid = {}  # tower -> {"x,y": bool} placement validity cache
         self.px_per_unit = None
         # placement scan per footprint class ("land"/"water"): 0 unknown, 1 ok, 2 blocked
@@ -63,7 +64,7 @@ class MapModel:
                     tmp, heat=self.heat, t_sum=self.t_sum, t_cnt=self.t_cnt, **scans,
                     meta=json.dumps({"rounds_traced": self.rounds_traced, "valid": self.valid,
                                      "px_per_unit": self.px_per_unit, "playfield": self.playfield,
-                             "spot_stats": self.spot_stats}),
+                             "spot_stats": self.spot_stats, "sandbox_rounds": self.sandbox_rounds}),
                 )
                 os.replace(tmp, self.path)
                 return True
@@ -84,6 +85,7 @@ class MapModel:
                 m.valid = meta.get("valid", {})
                 m.px_per_unit = meta.get("px_per_unit")
                 m.spot_stats = meta.get("spot_stats", {})
+                m.sandbox_rounds = meta.get("sandbox_rounds", 0)
                 for k in d.files:
                     if k.startswith("scan_"):
                         m.scan[k[5:]] = d[k]

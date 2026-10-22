@@ -331,6 +331,22 @@ class Bot:
         self.to_main_menu()
         return len(found)
 
+    def _learn_track_if_needed(self, map_name):
+        """First visit (or a model learned the old, noisy way): trace the
+        track in Sandbox before playing for real."""
+        from .tracklearn import learn_track, needs_sandbox, sandbox_difficulty
+        if not needs_sandbox(MapModel.load(map_name, self.lay["playfield"])):
+            return
+        if sandbox_difficulty(self.account, map_name) is None:
+            return  # Sandbox still locked on this map: the in-game tracer has to do
+        try:
+            learn_track(self, map_name)
+        except (FocusLost, Aborted):
+            raise
+        except Exception:
+            log.exception("sandbox track learning failed - playing with the old model")
+        self.to_main_menu()
+
     def sync_medals(self, map_name, label):
         """Adopt the medals the save file shows on this map's card."""
         from .account import canonical_map
@@ -426,9 +442,13 @@ class Bot:
         # Reverse runs the same track backwards: its progress map is mirrored
         key = plan.map + (" reverse" if rules(plan.mode_key).get("reversed") else "")
         model = MapModel.load(key, self.lay["playfield"])
-        if key != plan.map and not model.scanned("land"):
+        if key != plan.map:
             base = MapModel.load(plan.map, self.lay["playfield"])
-            model.scan = dict(base.scan)  # placement is identical
+            if not model.scanned("land"):
+                model.scan = dict(base.scan)  # placement is identical
+            if base.sandbox_rounds and not model.sandbox_rounds:
+                from .tracklearn import reversed_from
+                reversed_from(base, model)
         if not model.scanned("land"):
             log.info("first visit to %s: scanning placement", plan.map)
             set_state("first visit: scanning where towers can be placed")
@@ -552,6 +572,7 @@ class Bot:
                 except Exception:
                     log.exception("XP spending failed - continuing")
                     self.to_main_menu()
+                self._learn_track_if_needed(plan.map)
                 started = self.start(plan)
                 if started == "known":
                     continue

@@ -3,7 +3,7 @@
 Screens are recognised from OCR keywords (robust to art/event changes) and
 buttons are clicked by their text where possible. Hard rules:
   * never click a Continue that costs Monkey Money (defeat screen)
-  * never press Esc (it would stop a supervising Claude session)
+  * never press Esc (other programs treat a global Esc as "stop")
 """
 import logging
 import time

@@ -1,5 +1,5 @@
 # Registers the bot supervisor as a Windows scheduled task so it runs
-# independently of any terminal or Claude session, and starts it at logon.
+# independently of any terminal session, and starts it at logon.
 #   powershell -ExecutionPolicy Bypass -File tools\install_task.ps1        (install + start now)
 #   schtasks /end /tn BTD6Bot ; schtasks /run /tn BTD6Bot                  (restart)
 $root = Split-Path -Parent $PSScriptRoot

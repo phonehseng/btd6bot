@@ -55,7 +55,7 @@ class Screen:
         """Bring BTD6 to the front without sending any keystrokes.
 
         Never synthesises keys to get focus: a stray key (Esc especially) landing
-        in another window, e.g. the Claude app, can have real consequences.
+        in another window can have real consequences.
         """
         if self.is_foreground():
             return True

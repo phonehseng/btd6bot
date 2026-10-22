@@ -1,7 +1,7 @@
 """Mouse/keyboard input via SendInput, guarded so it only ever reaches BTD6.
 
 Every single event re-checks that BTD6 is the foreground window right before it
-is sent. If focus moved elsewhere (another app, a notification, the Claude app)
+is sent. If focus moved elsewhere (another app, a notification)
 the bot stops instead of typing into that window. F8 aborts the bot at any time.
 """
 import time
@@ -149,8 +149,8 @@ class Input:
     def press(self, key, hold=0.05):
         """key like 'q', 'space', 'shift+space', ','.
 
-        Esc is refused: the Claude desktop app treats a global Esc as "stop", so
-        sending it would kill a supervising Claude session. Use clicks instead.
+        Esc is refused: other programs on this machine treat a global Esc as
+        "stop", so a stray Esc could end them. Use clicks instead.
         """
         keys = key.split("+") if len(key) > 1 else [key]
         if any(k.lower() in ("esc", "escape") for k in keys):
