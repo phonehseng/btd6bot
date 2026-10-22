@@ -1,9 +1,9 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T20:05:09",
- "player_level": 26,
- "xp": 189000.0,
- "monkey_money": 325,
+ "saved_at": "2026-10-21T21:00:27",
+ "player_level": 33,
+ "xp": 431500.0,
+ "monkey_money": 1885,
  "unlocked_towers": [
   "alchemist",
   "bomb",
@@ -17,14 +17,13 @@
   "mortar",
   "ninja",
   "sniper",
-  "spike",
   "sub",
   "tack",
-  "village",
   "wizard"
  ],
  "unlocked_heroes": [
   "gwendolin",
+  "obyn",
   "quincy",
   "striker_jones"
  ],
@@ -39,7 +38,7 @@
   "buccaneer": 0.0,
   "wizard": 0.0,
   "ninja": 0.0,
-  "alchemist": 0.0,
+  "alchemist": 103.0,
   "druid": 0.0,
   "spike": 0.0,
   "engineer": 0.0,
@@ -75,13 +74,13 @@
   ],
   "glue": [
    2,
-   1,
+   2,
    3
   ],
   "bomb": [
    0,
-   3,
-   3
+   4,
+   1
   ],
   "sub": [
    1,
@@ -99,14 +98,14 @@
    1
   ],
   "ninja": [
+   4,
    1,
-   1,
-   1
+   4
   ],
   "alchemist": [
    1,
-   1,
-   1
+   0,
+   0
   ],
   "druid": [
    0,
@@ -139,7 +138,7 @@
    1
   ]
  },
- "mk_points": 0,
+ "mk_points": 4,
  "mk_unlocked": [],
  "medals": {
   "Monkey Meadow": {
@@ -168,7 +167,8 @@
   "Cubism": {
    "hard": true,
    "impoppable": true,
-   "easy": true
+   "easy": true,
+   "medium": true
   }
  },
  "map_stats": {
@@ -214,8 +214,8 @@
   },
   "Logs": {
    "wins": 1,
-   "losses": 1,
-   "best_round": 49,
+   "losses": 3,
+   "best_round": 51,
    "avg_minutes": {
     "easy": 5.62
    },
@@ -234,15 +234,21 @@
    }
   },
   "Cubism": {
-   "wins": 1,
+   "wins": 2,
    "losses": 0,
-   "best_round": 40,
+   "best_round": 60,
    "avg_minutes": {
-    "easy": 5.5
+    "easy": 5.5,
+    "medium": 8.83
    },
-   "observed_rewards": {},
+   "observed_rewards": {
+    "medium": {
+     "first": 325
+    }
+   },
    "minutes_n": {
-    "easy": 1
+    "easy": 1,
+    "medium": 1
    }
   }
  },
@@ -319,6 +325,28 @@
    "best_round": 60,
    "avg_minutes": 9.5,
    "minutes_n": 1
+  },
+  "Logs|medium|primary_core": {
+   "wins": 0,
+   "losses": 1,
+   "games": 1,
+   "best_round": 51,
+   "avg_minutes": null
+  },
+  "Logs|medium|primary_glaive_dart": {
+   "wins": 0,
+   "losses": 1,
+   "games": 1,
+   "best_round": 30,
+   "avg_minutes": null
+  },
+  "Cubism|medium|hard_ninja_alch_sniper": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 60,
+   "avg_minutes": 8.83,
+   "minutes_n": 1
   }
  },
  "pending_tower_choices": [],
@@ -329,9 +357,16 @@
   },
   "sniper": {
    "0-4": 10500
+  },
+  "ninja": {
+   "0-4": 2500,
+   "2-4": 15500
+  },
+  "alchemist": {
+   "0-1": 140
   }
  },
- "games_played": 10,
+ "games_played": 13,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -452,6 +487,42 @@
    "minutes": 9.503854417800904,
    "xp": null,
    "mm": null
+  },
+  {
+   "t": "2026-10-21T20:15:42",
+   "map": "Logs",
+   "mode": "medium",
+   "strategy": "primary_core",
+   "hero": "quincy",
+   "won": false,
+   "round": 51,
+   "minutes": 8.567934850851694,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T20:32:42",
+   "map": "Logs",
+   "mode": "medium",
+   "strategy": "primary_glaive_dart",
+   "hero": "quincy",
+   "won": false,
+   "round": 30,
+   "minutes": 6.672810661792755,
+   "xp": null,
+   "mm": null
+  },
+  {
+   "t": "2026-10-21T20:52:24",
+   "map": "Cubism",
+   "mode": "medium",
+   "strategy": "hard_ninja_alch_sniper",
+   "hero": "quincy",
+   "won": true,
+   "round": 60,
+   "minutes": 8.829150986671447,
+   "xp": null,
+   "mm": 325
   }
  ]
 }

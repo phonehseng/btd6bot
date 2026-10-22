@@ -87,7 +87,7 @@ class FakeModel:
         return 5
 
     def score_spots(self, rc, seg, occupied, near=None, near_radius=None, placement="land",
-                    extra_block=None):
+                    extra_block=None, covered=None):
         self.last_placement = placement
         cover = np.ones((self.H, self.W), np.float32)
         if extra_block is not None:
