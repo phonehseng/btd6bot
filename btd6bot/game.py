@@ -123,12 +123,22 @@ class Game:
         if self.is_holding():
             self.cancel_hold()
         self._held_kind = kind
-        for attempt in range(2):  # a keypress is occasionally dropped: try twice
+        for attempt in range(3):
+            if attempt:
+                # an open upgrade panel or the cursor over the side panel can
+                # swallow the hotkey: clear both and retry
+                self.close_panels()
+                self.inp.move(0.42, 0.5, fast=True)
             self.inp.press(key)
             for _ in range(8):
                 time.sleep(0.06)
                 if self.is_holding():
                     return True
+        try:
+            from .vision import save
+            save(self.fresh(), "logs/holdfail.png")
+        except Exception:
+            pass
         return False
 
     def probe_roster(self):
