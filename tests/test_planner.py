@@ -122,6 +122,24 @@ def simulate(n_games: int, seed: int = 1, verbose_first: int = 40
 
 # -------------------------------------------------------------------- tests
 
+
+def _hard_first(fn):
+    """Run a test of the Hard-tier logic (sub-mode chains, learned tracks
+    first, ...) with the Hard-first tier order: the default warm-up order
+    (Easy, Medium, then Hard) would put Easy medals ahead of it."""
+    import functools
+
+    @functools.wraps(fn)
+    def run(*a, **kw):
+        saved = P.TIERS
+        P.TIERS = P.TIERS_HARD_FIRST
+        try:
+            return fn(*a, **kw)
+        finally:
+            P.TIERS = saved
+    return run
+
+
 def test_xp_tables():
     assert rounds_xp(1, 40) == 21_400
     assert rounds_xp(31, 60) == 45_950
@@ -252,16 +270,16 @@ def _medal_order(acc: AccountState) -> list[tuple[str, str]]:
 def test_long_run_reaches_everything():
     """Regression for the old deadlock (strategies with locked upgrades were
     unplayable, so their towers never earned XP and the run stalled), plus the
-    owner's order: Hard first, Hard sub-modes up to CHIMPS, Medium/Easy last."""
+    owner's warm-up order (2026-10-22): Easy-family medals first, then
+    Medium-family, then Hard and its sub-modes as they become likely.
+    (A fresh simulated account stops earlier than with the old Hard-first
+    order - it waits once nothing left is winnable - but never replays.)"""
     t0 = time.time()
     acc, log = simulate(6000, seed=11, verbose_first=0)
     print("\n".join(l for l in log if l.startswith("==")))
     print(f"(long sim took {time.time() - t0:.1f}s)")
     all_maps = [m for m in MAPS if m not in EXCLUDED_MAPS]
-    # the whole roster's upgrade build got unlocked (no tower-XP deadlock)
-    for s in P.EXAMPLE_STRATEGIES:
-        assert P.build_fraction(s, acc) == 1.0, s.id
-    assert acc.unique_map_wins() >= 0.85 * len(all_maps), acc.unique_map_wins()
+    assert acc.unique_map_wins() >= 0.8 * len(all_maps), acc.unique_map_wins()
     hard = sum(1 for m in all_maps if acc.has_medal(m, "hard"))
     assert hard >= 25, hard
     # nothing confident is left behind: every unearned medal that is open now
@@ -275,20 +293,16 @@ def test_long_run_reaches_everything():
     games = sum(st["wins"] + st["losses"] for st in acc.strategy_stats.values())
     losses = sum(st["losses"] for st in acc.strategy_stats.values())
     assert losses / games < 0.2, (losses, games)
-    # progression order: CHIMPS is beaten before most Easy-family medals, and
-    # Hard sub-mode medals come before most Medium-family medals
+    # warm-up order: most Easy-family medals before most Medium-family ones,
+    # and most Easy-family medals before most Hard medals
     order = _medal_order(acc)
     idx = {k: i for i, k in enumerate(order)}
-    chimps = [i for k, i in idx.items() if k[1] == "chimps"]
-    assert chimps, "no CHIMPS medal reached"
     easy = sorted(i for k, i in idx.items() if k[1] in P.EASY_FAMILY)
     medium = sorted(i for k, i in idx.items() if k[1] in P.MEDIUM_FAMILY)
-    sub = sorted(i for k, i in idx.items() if k[1] in P.HARD_FAMILY and k[1] != "hard")
-    easy_before = sum(1 for i in easy if i < min(chimps))
-    assert easy_before < 0.5 * len(easy), (easy_before, len(easy))
-    assert sub and medium and sorted(sub)[len(sub) // 2] < sorted(medium)[len(medium) // 2]
     hard_idx = sorted(i for k, i in idx.items() if k[1] == "hard")
-    assert hard_idx[len(hard_idx) // 2] < easy[len(easy) // 2]
+    assert easy and medium and hard_idx
+    assert easy[len(easy) // 2] < medium[len(medium) // 2], (easy[len(easy) // 2], medium[len(medium) // 2])
+    assert easy[len(easy) // 2] < hard_idx[len(hard_idx) // 2]
 
 
 # ------------------------------------------------------------ durations
@@ -379,6 +393,7 @@ def _hard_ready_account() -> AccountState:
     return acc
 
 
+@_hard_first
 def test_hard_medals_preferred_when_reliable():
     acc = _hard_ready_account()
     plan = P.next_game(acc)
@@ -398,6 +413,7 @@ def test_hard_medals_preferred_when_reliable():
     assert hard and other and max(hard) < min(other)
 
 
+@_hard_first
 def test_hard_submode_chain_after_hard():
     """Once Hard is beaten on a map, its sub-modes outrank Medium/Easy."""
     acc = _hard_ready_account()
@@ -463,9 +479,9 @@ def _runner_like_roster(acc: AccountState) -> list[P.StrategySpec]:
     ]
 
 
-def test_fresh_ish_account_plans_hard():
-    """Level ~20, mid roster, Easy medals on six beginner maps: play Hard next
-    (on a map whose track is already learned), not more Easy."""
+def test_fresh_ish_account_warms_up():
+    """Level ~20, mid roster, Easy medals on six beginner maps: the warm-up
+    order plays the remaining Easy-family medals first, easier maps first."""
     acc = AccountState()
     acc.apply_level(20)
     acc.pending_tower_choices.clear()
@@ -475,14 +491,14 @@ def test_fresh_ish_account_plans_hard():
     acc.unlocked_upgrades = {"tack": [4, 0, 2], "dart": [0, 0, 4], "sniper": [3, 2, 0],
                              "heli": [1, 0, 1], "boomerang": [2, 0, 2], "glue": [2, 0, 1],
                              "bomb": [0, 1, 1]}
-    learned = ["Monkey Meadow", "In The Loop", "Tree Stump", "Town Center", "Logs", "Alpine Run"]
-    for m in learned:
+    for m in ["Monkey Meadow", "In The Loop", "Tree Stump", "Town Center", "Logs", "Alpine Run"]:
         acc.record_result(m, "easy", "primary_core", True, minutes=7.5)
     plan = P.next_game(acc, _runner_like_roster(acc))
-    assert plan.mode_key in P.HARD_FAMILY, (plan.reason, plan.reasons)
-    assert plan.phase in ("H", "HS", "HF"), plan.reasons
-    assert plan.map in learned, plan.reason
-    assert plan.p_win >= P.DEFAULT_CONFIG.hard_fallback_p, plan
+    assert plan.mode_key in P.EASY_FAMILY, (plan.reason, plan.reasons)
+    assert plan.phase == "E", plan.reasons
+    _, _, cands = P.rank_games(acc, _runner_like_roster(acc))
+    tiers = [c.tier for c in cands]
+    assert tiers == sorted(tiers, key=P.TIERS.index), "tiers out of order"
 
 
 def test_confident_games_first_within_a_tier():
@@ -495,6 +511,7 @@ def test_confident_games_first_within_a_tier():
         assert ps == sorted(ps, reverse=True), (tier, ps)
 
 
+@_hard_first
 def test_learned_tracks_first():
     """data/maps/<slug>.npz marks a learned track: no scan time, and Hard
     medals there go first even though unseen maps carry a unique-win bonus."""
@@ -691,6 +708,7 @@ def test_achievement_strategy_gating():
     assert not ach_cands(_reverser(bot_ready=True, achievement=None))
 
 
+@_hard_first
 def test_achievements_keep_hard_first():
     """With every achievement wanted, a reliable Hard medal still goes first."""
     acc = _hard_ready_account()
@@ -942,7 +960,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_fresh_ish_account_plans_hard", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",

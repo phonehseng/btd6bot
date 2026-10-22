@@ -271,7 +271,15 @@ NORMAL_GROUP = EASY_FAMILY + MEDIUM_FAMILY
 
 # Tiers, best first (index = rank); every candidate in them is a first-time
 # medal. See the module docstring.
-TIERS = ("H", "HS", "HF", "B", "M", "E")   # best first
+# Progression, best first. The owner's order since 2026-10-22: "focus on the
+# easy maps and every single medal, then normal, and warm up to the harder
+# maps" - Easy-family medals, then Medium-family, then Hard and its sub-modes
+# (which also get likelier as the record and tower XP grow), then the
+# riskier fallbacks. (Before: Hard first - TIERS_HARD_FIRST.)
+TIERS_HARD_FIRST = ("H", "HS", "HF", "B", "M", "E")
+TIERS = ("E", "M", "H", "HS", "HF", "B")
+# Within a tier, easier map categories first (warm-up).
+CATEGORY_EASE = {"beginner": 3, "intermediate": 2, "advanced": 1, "expert": 0}
 PHASES = {
     "H": "Hard standard medal on every open map (learned tracks first; "
          "unique Hard wins open the next map category)",
@@ -1357,6 +1365,7 @@ class _Cand:
     ach: float = 0.0            # XP-equivalent achievement value of a win
     achievements: tuple[str, ...] = ()  # achievements a win advances
     per_hour: float = 0.0       # objective: expected points per hour (score * 60)
+    ease: int = 0               # map category: 3 beginner .. 0 expert (warm-up order)
 
 
 def _normalise_strategies(available: Iterable[Any] | None) -> dict[str, StrategySpec]:
@@ -1423,7 +1432,7 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 out.append(_Cand(m, mode, s, p, n, t_full, xp_win, mm, True,
                                  value_win=0.0, value_fail=xp_fail, score=0.0, notes=notes,
                                  fail_minutes=t_fail, learned=learned,
-                                 ok=p >= p_threshold(mode, cfg)))
+                                 ok=p >= p_threshold(mode, cfg), ease=CATEGORY_EASE.get(cat, 0)))
     # XP + MM value. Tower XP counts extra where it unblocks the Hard roster
     # and, in games the planner is quite sure of (paragon_min_p), where it
     # brings a paragon closer (it must never make a riskier game look better).
@@ -1486,7 +1495,7 @@ def _sort_key(c: _Cand) -> tuple:
     preferred = 1 if c.s.id in PREFERRED_STRATEGIES else 0
     learned = 1 if c.tier in ("H", "HS") and c.learned else 0
     within = c.p if c.tier == "HF" else c.score
-    return (rank, confident, preferred, learned, within)
+    return (rank, confident, c.ease, preferred, learned, within)
 
 
 def _open_unearned(account: AccountState, modes: Iterable[str]) -> bool:
@@ -1517,7 +1526,10 @@ def _phase_reasons(account: AccountState, scored: list[_Cand], cands: list[_Cand
     not_yet = len({(c.map, c.mode) for c in scored} - seen)
     reasons = [f"{top}: {PHASES[top]} (open medals by tier: "
                + ", ".join(f"{t}={count[t]}" for t in TIERS) + f"; not winnable yet: {not_yet})"]
-    if top in ("B", "M", "E"):
+    if top in ("M", "E") and any(c.tier in ("H", "HS") for c in scored):
+        reasons.append("warm-up order: Easy-family medals first, then Medium, then Hard "
+                       "(the Hard medals already in reach wait their turn)")
+    elif top in ("B", "M", "E"):
         hard = [c for c in scored if c.mode in HARD_FAMILY]
         if hard:
             b = max(hard, key=lambda c: c.p)

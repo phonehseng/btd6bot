@@ -916,6 +916,8 @@ class Bot:
                 log.info("RESULT %s", res)
                 self._game_done(plan)
                 progress.record_result(plan, res)
+                from . import safety
+                safety.after_game(res.get("outcome"))
                 progress.write(self.account, "game finished")
                 self.failures = 0
             except Aborted:
@@ -1185,8 +1187,19 @@ class Bot:
         """Best plan whose (map, mode) has not failed to start this session."""
         from .planner import GamePlan, rank_games
         from .account import MODES
+        from . import safety
+        from .planner import EASY_FAMILY, MEDIUM_FAMILY
         specs = planner_specs(self.strats, self.account)
         phase, reasons, cands = rank_games(self.account, specs)
+        if safety.active():
+            # loss circuit breaker (safety.py): Easy-family medals, then
+            # Medium-family once those are all earned, else anything left
+            for family in (EASY_FAMILY, MEDIUM_FAMILY):
+                safe = [c for c in cands if c.mode in family and not self.benched(c.map, c.mode)]
+                if safe:
+                    cands = safe
+                    break
+            log.info("%s", safety.status())
         for c in cands:
             if self.benched(c.map, c.mode):
                 continue
