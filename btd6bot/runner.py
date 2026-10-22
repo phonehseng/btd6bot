@@ -29,6 +29,15 @@ MODE_BUTTON_TEXT = {
     "abr": "alternatebloonsrounds", "impoppable": "impoppable", "chimps": "chimps",
 }
 
+# mode button icon centres on each difficulty's mode screen (calibrated live
+# 2026-10-21, 1920x1200); OCR misreads the two-line labels ("MAGIGMONKeYS")
+MODE_BUTTON_POS = {
+    "standard": (0.313, 0.55),
+    "primary_only": (0.5, 0.42), "deflation": (0.688, 0.41),
+    "military_only": (0.5, 0.42), "apopalypse": (0.688, 0.41), "reverse": (0.5, 0.68),
+    "magic_only": (0.5, 0.42), "double_hp": (0.688, 0.42), "half_cash": (0.875, 0.42),
+    "abr": (0.5, 0.69), "impoppable": (0.688, 0.69), "chimps": (0.875, 0.69),
+}
 
 ROOT_DIR = __import__("pathlib").Path(__file__).resolve().parents[1]
 ID_CHECK_EVERY = 10                   # games between account (User ID) checks
@@ -355,8 +364,19 @@ class Bot:
             log.warning("start: difficulty %s did not open its modes", plan.difficulty)
             return False
         for _ in range(3):
-            self.menus.read()
-            if self.menus.click_word(MODE_BUTTON_TEXT.get(plan.mode, plan.mode), dy=-0.08):
+            words = self.menus.read()
+            clicked = self.menus.click_word(MODE_BUTTON_TEXT.get(plan.mode, plan.mode), dy=-0.08)
+            if not clicked and plan.mode in MODE_BUTTON_POS:
+                x, y = MODE_BUTTON_POS[plan.mode]
+                # the label sits under the icon: never click a slot labelled Sandbox
+                near = [w for w in words if abs(w.x - x) < 0.09 and 0.03 < w.y - y < 0.14]
+                if any("sandbox" in norm(w.text) for w in near):
+                    log.warning("start: %s slot shows Sandbox - not clicking", plan.mode)
+                    return False
+                log.info("click mode %s at its slot (label %s)", plan.mode, [w.text for w in near][:2])
+                self.inp.click(x, y)
+                clicked = True
+            if clicked:
                 if self.menus.wait_for({"in_game", "overwrite", "unknown"}, timeout=3) != "mode_select":
                     break
         else:
