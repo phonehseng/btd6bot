@@ -214,5 +214,17 @@
     "time": "2026-10-22T04:16:44",
     "topic": "menus",
     "caption": "A Collection Event screen that appeared between games and confused the bot's way back to the menus."
+  },
+  {
+    "file": "20261022_042001_reveal_1.jpg",
+    "time": "2026-10-22T04:20:01",
+    "topic": "menus",
+    "caption": "Collection event crate: face-down reward cards on black and almost no text, which the bot first read as an unknown screen and got stuck on."
+  },
+  {
+    "file": "20261022_042451_lc_valid.jpg",
+    "time": "2026-10-22T04:24:51",
+    "topic": "losses",
+    "caption": "Why Luminous Cove was lost: white dots are every spot a ninja may stand - only the rock at the bottom. Green to red is the track from entrance to exit: most of it is out of reach of land towers."
   }
 ]
