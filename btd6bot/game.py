@@ -133,6 +133,8 @@ class Game:
             for _ in range(16):  # the X can fade in late when the game is busy
                 time.sleep(0.06)
                 if self.is_holding():
+                    if kind == "hero" and not getattr(self, "_hero_checked", False):
+                        self._detect_hero()
                     return True
             if self._header_shows(kind):
                 # held, but the cancel X was not drawn (seen on Logs): trust the header
@@ -175,6 +177,28 @@ class Game:
             self.inp.right_click(0.42, 0.5)
             time.sleep(0.15)
         self._holding_unseen = False
+
+    def _detect_hero(self):
+        """The equipped hero is whatever the save has selected: read its name
+        from the tower panel header while it is held, and adopt it."""
+        self._hero_checked = True
+        try:
+            words = " ".join(w.text for w in self._vision().read((0.855, 0.095, 1.0, 0.175)))
+            n = "".join(c for c in words.lower() if c.isalnum())
+            for hid, h in T.HEROES.items():
+                key = "".join(c for c in h["name"].lower() if c.isalnum())
+                first = "".join(c for c in h["name"].split()[0].lower() if c.isalnum())
+                if len(n) >= 4 and (key in n or (len(first) >= 4 and first in n)):
+                    if hid != self.hero:
+                        log.info("equipped hero is %s (assumed %s)", hid, self.hero)
+                        self.hero = hid
+                        self.detected_hero = hid
+                        cb = getattr(self, "on_hero", None)
+                        if cb:
+                            cb(hid)
+                    return
+        except Exception:
+            pass
 
     def _vision(self):
         if getattr(self, "_v", None) is None:

@@ -7,6 +7,7 @@ from . import towers as T
 from .account import AccountState
 from .achievements import Achievements
 from .xpspend import sync_all, unlock_for_strategy
+from .mk import Knowledge
 from .identity import current_path, is_stale, load_for, mark_synced, read_user_id
 from .choices import tower_chooser
 from .game import Game
@@ -153,6 +154,7 @@ class Bot:
         self.uid = None             # signed-in account, read from Settings
         self._games_since_id = 0
         self._mm_before = None
+        self._games_since_mk = 99  # check Monkey Knowledge at session start, then every 3 games
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -170,7 +172,7 @@ class Bot:
             elif st == "defeat":
                 self.menus.leave_defeat()
             elif st in ("map_select", "difficulty", "mode_select", "hero_select", "upgrade_tree",
-                        "profile", "overwrite"):
+                        "profile", "overwrite", "account"):
                 self.inp.click(0.044, 0.055)  # back arrow
                 time.sleep(0.4)
             elif st == "level_up":
@@ -378,6 +380,7 @@ class Bot:
             scan_water(g, model, "sub" if "sub" in water else ("hero" if water == ["hero"] else water[0]))
             model.save()
         ex = Executor(g, model, strat, plan.mode_key, self.account)
+        g.on_hero = lambda hid: setattr(self.account, "selected_hero", hid)
         res = Match(g, self.menus, model, ex, self.account,
                     on_tower_choice=tower_chooser(self.account)).play()
         won = res.get("outcome") == "victory"
@@ -440,6 +443,17 @@ class Bot:
                     continue
                 self._check_account()
                 self.read_level()
+                if self.account.player_level >= 30 and self._games_since_mk >= 3:
+                    self._games_since_mk = 0
+                    try:  # spend new Monkey Knowledge points (MM / XP boosts first)
+                        got = Knowledge(self.s, self.inp, self.menus, self.account).spend()
+                        if got:
+                            log.info("Monkey Knowledge: %s", got)
+                    except (FocusLost, Aborted):
+                        raise
+                    except Exception:
+                        log.exception("Monkey Knowledge spending failed")
+                    self.to_main_menu()
                 if time.time() - self._ach_at > ACH_EVERY:
                     self._ach_at = time.time()
                     _ach_mark(self._ach_at)
@@ -480,6 +494,7 @@ class Bot:
                     continue
                 res = self.play(plan)
                 self._games_since_id += 1
+                self._games_since_mk += 1
                 if res.get("outcome") != "victory":
                     self.bench(plan.map, plan.mode_key, hours=12, why=res.get("outcome", "loss"))
                 log.info("RESULT %s", res)

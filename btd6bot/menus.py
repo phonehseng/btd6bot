@@ -17,6 +17,7 @@ SCREENS = [
     ("defeat", [["defeat", "gameover", "bloonsleaked", "youlost"]]),
     ("upgrade_tree", [["unlockall", "ingamecost", "appliestothismonkey"]]),
     ("profile", [["overallstats", "topmonkeys", "topheroes", "publicstats"]]),
+    ("account", [["yourninjakiwiaccount", "signin", "resetpassword"]]),
     ("victory", [["victory", "vigtory", "congratulations", "completedthistrack", "monkeystar"]]),
     # "CHOOSE A MONKEY TO UNLOCK" - not just "to unlock" (map cards say "click to unlock")
     ("tower_choice", [["chooseamonkey", "choosea"], ["unlock"]]),
@@ -38,7 +39,8 @@ SCREENS = [
 POPUP_BUTTONS = ["ok", "collect", "claim", "continue", "next", "close", "gotit", "awesome", "yes"]
 # never click anything containing these (real-money or Monkey Money purchases)
 FORBIDDEN = ["unlockall", "buy", "purchase", "store", "bundle", "offer", "usd", "insta", "powers",
-             "trophystore", "continuefor"]
+             "trophystore", "continuefor", "signin", "signup", "resetpassword", "password", "logout",
+             "deleteaccount"]
 
 
 def forbidden(text):

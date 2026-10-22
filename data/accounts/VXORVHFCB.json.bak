@@ -1,8 +1,8 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T20:57:38",
- "player_level": 33,
- "xp": 431500.0,
+ "saved_at": "2026-10-21T21:12:17",
+ "player_level": 34,
+ "xp": 484000.0,
  "monkey_money": 1885,
  "unlocked_towers": [
   "alchemist",
@@ -138,7 +138,7 @@
    1
   ]
  },
- "mk_points": 4,
+ "mk_points": 5,
  "mk_unlocked": [],
  "medals": {
   "Monkey Meadow": {
@@ -174,8 +174,8 @@
  "map_stats": {
   "Monkey Meadow": {
    "wins": 2,
-   "losses": 1,
-   "best_round": 60,
+   "losses": 2,
+   "best_round": 63,
    "avg_minutes": {
     "easy": 14,
     "medium": 9.5
@@ -347,6 +347,13 @@
    "best_round": 60,
    "avg_minutes": 8.83,
    "minutes_n": 1
+  },
+  "Monkey Meadow|hard|hard_ninja_alch_sniper": {
+   "wins": 0,
+   "losses": 1,
+   "games": 1,
+   "best_round": 63,
+   "avg_minutes": null
   }
  },
  "pending_tower_choices": [],
@@ -366,7 +373,7 @@
    "0-1": 140
   }
  },
- "games_played": 13,
+ "games_played": 14,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -523,6 +530,18 @@
    "minutes": 8.829150986671447,
    "xp": null,
    "mm": 325
+  },
+  {
+   "t": "2026-10-21T21:11:07",
+   "map": "Monkey Meadow",
+   "mode": "hard",
+   "strategy": "hard_ninja_alch_sniper",
+   "hero": "quincy",
+   "won": false,
+   "round": 63,
+   "minutes": 9.924335141976675,
+   "xp": null,
+   "mm": 0
   }
  ]
 }

@@ -691,6 +691,8 @@ class Executor:
         self.panic_pending = 0
         self.unanswerable = set()
         self.hold_fails = {}       # kind -> times the hotkey would not pick it up
+        self.step_spot_fails = {}  # id(step) -> refused spots for that step
+        self.learned_blocks = 0
         self.upgrade_fails = {}    # (tid, path) -> non-XP failures this game
         self.last_try = 0.0
         self.blocked = np.zeros(model.heat.shape, bool)  # this game's no-go cells
@@ -783,6 +785,11 @@ class Executor:
             h, w = grid.shape
             grid[max(0, cy - 1):min(h, cy + 2), max(0, cx - 1):min(w, cx + 2)] = 2
             log.info("learned: %s spot (%d,%d) is not placeable on this map", cls, cx, cy)
+            self.learned_blocks += 1
+            if self.learned_blocks > 10 and cls in self.m.scan:
+                # the saved scan is clearly unreliable here: redo it next visit
+                log.warning("map scan disagrees with the game too often - rescanning next visit")
+                self.m.scan.pop(cls, None)
 
     def _block(self, cx, cy, r):
         h, w = self.blocked.shape
@@ -937,6 +944,11 @@ class Executor:
                 self.failed_spots.add((kind, cx, cy))
                 self._block(cx, cy, 2)
                 self._learn_blocked(kind, cx, cy)
+                key = id(step)
+                self.step_spot_fails[key] = self.step_spot_fails.get(key, 0) + 1
+                if self.step_spot_fails[key] >= 4:
+                    log.warning("giving up on step %s after 4 refused spots", step)
+                    return "skip"  # let the rest of the plan proceed
             return "wait"
         if do == "upgrade":
             target = parse_cross(step["to"])
