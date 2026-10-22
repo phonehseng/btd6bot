@@ -718,8 +718,8 @@ class Executor:
         if first is None or first.get("kind") in self.CHEAP_OPENERS + ("hero",):
             return plan  # a hero (or cheap tower) already holds the early rounds
         cons = self.strat.get("constraints") or {}
-        if self.strat.get("achievement") or cons.get("no_opener") or cons.get("allowed_towers") is not None                 or cons.get("max_towers_on_screen") or cons.get("max_towers_purchased"):
-            return plan  # restricted plans are exact; never add towers to them
+        if self.strat.get("achievement") or cons:
+            return plan  # constrained plans are exact; never add towers to them
         if not self.kind_allowed("dart"):
             return plan
         return [{"do": "place", "id": "opener", "kind": "dart", "role": "dps",
