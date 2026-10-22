@@ -1,9 +1,9 @@
 {
  "schema": 1,
- "saved_at": "2026-10-22T01:44:30",
- "player_level": 35,
- "xp": 536500.0,
- "monkey_money": 2285,
+ "saved_at": "2026-10-22T02:32:00",
+ "player_level": 37,
+ "xp": 641500.0,
+ "monkey_money": 2300,
  "unlocked_towers": [
   "alchemist",
   "bomb",
@@ -31,8 +31,8 @@
   "tack": 63799.0,
   "sniper": 22550.0,
   "dart": 26632.0,
-  "boomerang": 33118.0,
-  "bomb": 8068.0,
+  "boomerang": 36108.0,
+  "bomb": 10885.0,
   "glue": 10387.0,
   "sub": 10883.0,
   "buccaneer": 0.0,
@@ -53,7 +53,7 @@
    2
   ],
   "dart": [
-   2,
+   3,
    2,
    4
   ],
@@ -70,12 +70,12 @@
   "boomerang": [
    4,
    2,
-   1
+   2
   ],
   "glue": [
    2,
    2,
-   2
+   3
   ],
   "bomb": [
    0,
@@ -138,7 +138,7 @@
    1
   ]
  },
- "mk_points": 6,
+ "mk_points": 8,
  "mk_unlocked": [
   "Magic Tricks",
   "Speedy Brewing",
@@ -691,7 +691,7 @@
    "chimps": false
   },
   "Quiet Street": {
-   "easy": false,
+   "easy": true,
    "primary_only": false,
    "deflation": false,
    "medium": false,
@@ -1595,7 +1595,7 @@
   },
   "Logs": {
    "wins": 1,
-   "losses": 4,
+   "losses": 5,
    "best_round": 51,
    "avg_minutes": {
     "easy": 5.62
@@ -1638,6 +1638,22 @@
    "best_round": 54,
    "avg_minutes": {},
    "observed_rewards": {}
+  },
+  "Quiet Street": {
+   "wins": 1,
+   "losses": 0,
+   "best_round": 40,
+   "avg_minutes": {
+    "easy": 6.47
+   },
+   "observed_rewards": {
+    "easy": {
+     "first": 165
+    }
+   },
+   "minutes_n": {
+    "easy": 1
+   }
   }
  },
  "strategy_stats": {
@@ -1763,17 +1779,25 @@
    "games": 1,
    "best_round": 59,
    "avg_minutes": null
+  },
+  "Logs|medium|starter_tack_dart": {
+   "wins": 0,
+   "losses": 1,
+   "games": 1,
+   "best_round": 30,
+   "avg_minutes": null
+  },
+  "Quiet Street|easy|starter_tack_dart": {
+   "wins": 1,
+   "losses": 0,
+   "games": 1,
+   "best_round": 40,
+   "avg_minutes": 6.47,
+   "minutes_n": 1
   }
  },
  "pending_tower_choices": [],
- "map_category_overrides": {
-  "Monkey Meadow": "expert",
-  "In The Loop": "expert",
-  "Skull Tweak": "expert",
-  "Three Mines 'Round": "expert",
-  "Spa Pits": "expert",
-  "Tinkerton": "expert"
- },
+ "map_category_overrides": {},
  "category_progress": {
   "beginner": [
    1,
@@ -1784,11 +1808,11 @@
    1
   ],
   "advanced": [
-   7,
+   8,
    12
   ],
   "expert": [
-   7,
+   8,
    20
   ]
  },
@@ -1808,7 +1832,7 @@
    "0-2": 550
   }
  },
- "games_played": 17,
+ "games_played": 19,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -2013,6 +2037,30 @@
    "minutes": 11.94668362935384,
    "xp": null,
    "mm": 200
+  },
+  {
+   "t": "2026-10-22T01:57:21",
+   "map": "Logs",
+   "mode": "medium",
+   "strategy": "starter_tack_dart",
+   "hero": "quincy",
+   "won": false,
+   "round": 30,
+   "minutes": 5.802061339219411,
+   "xp": null,
+   "mm": 0
+  },
+  {
+   "t": "2026-10-22T02:25:40",
+   "map": "Quiet Street",
+   "mode": "easy",
+   "strategy": "starter_tack_dart",
+   "hero": "quincy",
+   "won": true,
+   "round": 40,
+   "minutes": 6.471239829063416,
+   "xp": null,
+   "mm": 165
   }
  ]
 }

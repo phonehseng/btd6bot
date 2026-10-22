@@ -12,10 +12,19 @@ New-Item -ItemType Directory -Force logs | Out-Null
 $sup = Join-Path $PSScriptRoot "logs\supervisor.log"
 $botlog = Join-Path $PSScriptRoot "logs\bot.log"
 $state = Join-Path $PSScriptRoot "logs\state.txt"
+# Log a line. If supervisor.log stays locked by another program (an editor or
+# a "tail" left open, OneDrive syncing), write to supervisor.fallback.log
+# instead - before this fallback, a locked file silently lost every line.
+$supFallback = Join-Path $PSScriptRoot "logs\supervisor.fallback.log"
 function Note($m) {
+    $line = "$(Get-Date -Format s) $m"
+    $why = ""
     for ($i = 0; $i -lt 5; $i++) {
-        try { Add-Content -Path $sup -Value "$(Get-Date -Format s) $m" -ErrorAction Stop; return } catch { Start-Sleep -Milliseconds 300 }
+        try { Add-Content -Path $sup -Value $line -ErrorAction Stop; return } catch { $why = $_.Exception.Message; Start-Sleep -Milliseconds 300 }
     }
+    # say why the main log refused the line: supervisor.log was found unlocked
+    # while lines were still missing, so the cause is not known yet
+    try { Add-Content -Path $supFallback -Value "$line   [supervisor.log: $why]" -ErrorAction Stop } catch { }
 }
 function LastChange {
     $t = [datetime]::MinValue

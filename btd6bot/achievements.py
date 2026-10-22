@@ -7,6 +7,12 @@ Main menu -> ribbon badge (left column) -> a two-column grid of cards:
 The list is scrolled with the mouse wheel (one tick ~ 3.5% of the screen,
 one card row ~ 29%). Results go to data/achievements_state.json so the planner
 can aim for what is missing. Collecting is a free reward, never a purchase.
+
+The game sorts the list by completion: in-progress cards by percentage, highest
+first, and claimed ("COMPLETE") cards at the bottom (both saved scans show it:
+VXORVHFCB 80, 77, 55, 40, 25 ... 0 %; SFYOSHHYV 96, 92, 90 ... 0 %, then 55
+COMPLETE cards). A finished card waiting for its COLLECT click is at 100 %, so
+it sits at the top - which is what claim() relies on.
 """
 import json
 import logging
@@ -26,11 +32,16 @@ LIST_POINT = (0.5, 0.6)    # where to hover while scrolling
 SCROLL_TICKS = 15          # ~1.8 card rows per page, so cards overlap between pages
 ROW_PITCH = 0.288          # vertical distance between card rows
 COLLECT_WORDS = ("collect", "collegt", "colleci")
+CLAIM_PAGES = 4            # claim(): pages it may scroll through at most
 
 
 def _is_collect(text):
+    """The COLLECT button: one word. A description that starts with
+    "Collect" is not one - "Our Powers Combined" ("Collect at least 12
+    different Powers") was read as claimable in every scan and its text
+    clicked as if it were the button."""
     n = norm(text)
-    return any(n.startswith(c) for c in COLLECT_WORDS)
+    return " " not in text.strip() and any(n.startswith(c) for c in COLLECT_WORDS)
 
 
 def _catalog_names():
@@ -38,6 +49,14 @@ def _catalog_names():
         return {norm(a["name"]): a["name"] for a in json.loads(CATALOG.read_text(encoding="utf-8"))}
     except (OSError, ValueError, KeyError, TypeError):
         return {}
+
+
+def _past_finished(cards, claimed):
+    """Does this page reach below the finished cards? True when it shows an
+    in-progress card, or a COMPLETE one this claim pass did not just claim
+    (claimed cards may keep their place until the list is reopened)."""
+    return any(c["status"] == "progress" or (c["status"] == "complete" and c["name"] not in claimed)
+               for c in cards)
 
 
 def _same_card(card, seen, catalog):
@@ -136,6 +155,68 @@ class Achievements:
                 self.inp.click(0.5, 0.6)
             time.sleep(0.9)
 
+    def claim(self, max_pages=CLAIM_PAGES):
+        """Claim finished rewards without reading the whole list - for when
+        the ribbon shows its "!" badge. Ends on the main menu; returns the
+        names claimed.
+
+        Log evidence (2026-10-22): the badge used to start the full scan,
+        204 s (01:58:40-02:02:04, 97 cards read for 4 rewards) and 192 s
+        (02:26:52-02:30:04, 92 cards for 1) only 28 minutes apart. As the
+        list is sorted by completion (module notes), the COLLECT buttons are
+        on the first page; the walk stops at the first page that also shows
+        an unfinished or claimed card, since everything below is the same."""
+        if not self.open():
+            log.warning("could not open achievements")
+            return []
+        catalog = _catalog_names()
+        claimed = []
+        try:
+            for _ in range(max_pages):
+                cards = self._claim_visible(catalog, claimed)
+                if not cards or _past_finished(cards, claimed):
+                    break  # below the finished cards (or nothing readable at all)
+                self._focus_list()  # every card on this page was finished: look further
+                self.inp.scroll(-SCROLL_TICKS, *LIST_POINT)
+                time.sleep(0.5)
+        finally:
+            self.close()
+        log.info("achievements: %d rewards claimed %s", len(claimed), claimed)
+        self._mark_claimed(claimed, catalog)
+        return claimed
+
+    def _claim_visible(self, catalog, claimed, most=8):
+        """Claim every COLLECT button on the current page, one at a time with
+        a fresh read before each: a claimed card may move to the bottom of
+        the list, shifting the others, so positions from an older read could
+        miss. Returns the page's cards as last read; `claimed` collects the
+        names."""
+        cards = []
+        for _ in range(most):  # bounded, like everything that clicks in a loop
+            cards = parse_cards(self.menus.read(), catalog)
+            todo = [c for c in cards if c["status"] == "collect"]
+            if not todo or todo[0]["name"] in claimed:
+                break  # nothing (more) to claim, or a button that did not take
+            self._claim(todo[0]["collect_xy"])
+            claimed.append(todo[0]["name"])
+        return cards
+
+    @classmethod
+    def _mark_claimed(cls, names, catalog):
+        """Mark claimed cards COMPLETE in the saved progress, so the planner
+        stops aiming at them before the next full scan."""
+        if not names:
+            return
+        try:
+            data = json.loads(STATE.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return  # no full scan saved yet: the next one records everything
+        cards = data.get("cards", {})
+        for name in names:
+            key = _same_card({"name": name, "desc": ""}, cards, catalog) or name
+            cards.setdefault(key, {"desc": "", "progress": None}).update(status="complete", progress=None)
+        cls.save(cards, scanned_at=data.get("scanned_at"))
+
     def scan(self, collect=True, max_pages=40):
         """Walk the whole list; claim rewards; return {name: card}. Ends on main menu."""
         if not self.open():
@@ -187,9 +268,10 @@ class Achievements:
         return ""
 
     @staticmethod
-    def save(cards):
+    def save(cards, scanned_at=None):
+        """scanned_at: when the cards were last all read (default: now)."""
         STATE.parent.mkdir(parents=True, exist_ok=True)
-        data = {"scanned_at": time.strftime("%Y-%m-%d %H:%M:%S"), "cards": cards}
+        data = {"scanned_at": scanned_at or time.strftime("%Y-%m-%d %H:%M:%S"), "cards": cards}
         tmp = STATE.with_suffix(".tmp")
         tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
         tmp.replace(STATE)

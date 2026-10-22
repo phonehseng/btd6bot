@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import logging
 import math
 import os
 import random
@@ -24,6 +25,11 @@ P.DEFAULT_CONFIG.maps_dir = None
 # ... nor on the live achievement catalog/scan (tests pass their own).
 P.DEFAULT_CONFIG.achievements_path = None
 P.DEFAULT_CONFIG.achievements_state_path = None
+# Paragon focus off by default; the paragon tests switch it on with a config
+# that points at the (static) tower XP price table.
+P.DEFAULT_CONFIG.tower_xp_path = None
+PARAGON_CFG = P.PlannerConfig(maps_dir=None, achievements_path=None,
+                              achievements_state_path=None, tower_xp_path=str(P.TOWER_XP_FILE))
 
 
 # --------------------------------------------------------------- simulation
@@ -64,8 +70,8 @@ def _check_plan(acc: AccountState, plan: P.GamePlan, strategies: dict) -> None:
         assert plan.hero in acc.unlocked_heroes
 
 
-def simulate(n_games: int, seed: int = 1, verbose_first: int = 40,
-             idle_stop: int = 150) -> tuple[AccountState, list[str]]:
+def simulate(n_games: int, seed: int = 1, verbose_first: int = 40
+             ) -> tuple[AccountState, list[str]]:
     rng = random.Random(seed)
     acc = AccountState()
     acc.HISTORY_LIMIT = 10 ** 6  # keep the whole run for the order checks
@@ -73,11 +79,13 @@ def simulate(n_games: int, seed: int = 1, verbose_first: int = 40,
     log: list[str] = []
     phase = None
     minutes_total = 0.0
-    idle = 0  # consecutive games without a new medal while nothing is left to try
     for g in range(n_games):
         _settle(acc, log)
         plan = P.next_game(acc, strategies.values())
-        assert plan is not None, "no plan for account"
+        if plan is None:  # no winnable first-time medal left: the runner would idle
+            log.append(f"== nothing left to play after {g} games")
+            break
+        assert not acc.has_medal(plan.map, plan.mode_key), f"replay planned: {plan.reason}"
         _check_plan(acc, plan, strategies)
         if plan.phase != phase:
             log.append(f"== game {g + 1}: phase {plan.phase} ({P.PHASES.get(plan.phase, '')}) "
@@ -102,10 +110,6 @@ def simulate(n_games: int, seed: int = 1, verbose_first: int = 40,
                           tower_xp_gained=P.split_tower_xp(s, xp), hero=plan.hero)
         if not acc.remaining_goals():
             log.append(f"== ALL MEDALS after {g + 1} games, ~{minutes_total / 60:.0f} h, L{acc.player_level}")
-            break
-        idle = idle + 1 if plan.phase in ("FARM", "LAST", "DONE") and not (won and plan.first_time) else 0
-        if idle >= idle_stop:
-            log.append(f"== nothing feasible left for {idle} games: stopping after {g + 1} games")
             break
     games = sum(st["wins"] + st["losses"] for st in acc.strategy_stats.values())
     losses = sum(st["losses"] for st in acc.strategy_stats.values())
@@ -204,10 +208,15 @@ def test_mk():
 
 def test_learning_avoids_failing_strategy():
     acc = AccountState()
+    s = P.strategy_by_id("dart_quincy")
+    p0 = P.win_probability(acc, s, "Monkey Meadow", "easy")[0]
     for _ in range(6):
         acc.record_result("Monkey Meadow", "easy", "dart_quincy", False)
-    plan = P.next_game(acc)
-    assert not (plan.map == "Monkey Meadow" and plan.mode_key == "easy"), plan.reasons
+    p1 = P.win_probability(acc, s, "Monkey Meadow", "easy")[0]
+    assert p1 < p0 and p1 < P.p_threshold("easy"), (p0, p1)
+    # the losing (map, mode, strategy) is no longer offered at all
+    _, _, cands = P.rank_games(acc)
+    assert not [c for c in cands if (c.map, c.mode, c.s.id) == ("Monkey Meadow", "easy", "dart_quincy")]
 
 
 def test_save_load_roundtrip():
@@ -342,9 +351,11 @@ def test_planner_prefers_faster_games():
     """Same medal value, observed slower map -> lower score."""
     acc = AccountState()
     s = _spec(modes=("easy",), rate=0.97)
+    # Easy durations seen on both maps while their medal is still open (a won
+    # game would earn the medal and take the map/mode out of the plan)
     for m, mins in (("Logs", 7.0), ("Monkey Meadow", 11.0)):
-        for _ in range(4):
-            acc.record_result(m, "easy", "s", True, minutes=mins)
+        acc.map_stats[m] = {"wins": 0, "losses": 0, "avg_minutes": {"easy": mins},
+                            "minutes_n": {"easy": 4}}
     _, _, cands = P.rank_games(acc, [s], playable_maps=["Logs", "Monkey Meadow"])
     by = {c.map: c for c in cands if c.mode == "easy"}
     assert by["Logs"].minutes < by["Monkey Meadow"].minutes
@@ -383,7 +394,7 @@ def test_hard_medals_preferred_when_reliable():
     _, _, cands = P.rank_games(acc)
     pos = {id(c): i for i, c in enumerate(cands)}
     hard = [pos[id(c)] for c in cands if c.tier == "H"]
-    other = [pos[id(c)] for c in cands if c.tier in ("M", "E", "FARM")]
+    other = [pos[id(c)] for c in cands if c.tier in ("M", "E")]
     assert hard and other and max(hard) < min(other)
 
 
@@ -419,7 +430,7 @@ def test_hard_losses_stop_hard_attempts():
                     acc.record_result(m, "hard", s.id, False, minutes=10.0)
     plan = P.next_game(acc)
     assert plan.mode_key != "hard" or plan.p_win >= P.DEFAULT_CONFIG.hard_fallback_p, plan
-    ok = plan.p_win >= P.p_threshold(plan.mode_key, plan.first_time)
+    ok = plan.p_win >= P.p_threshold(plan.mode_key)
     assert ok or (plan.phase == "HF" and plan.p_win >= P.DEFAULT_CONFIG.hard_fallback_p), plan
 
 
@@ -474,6 +485,16 @@ def test_fresh_ish_account_plans_hard():
     assert plan.p_win >= P.DEFAULT_CONFIG.hard_fallback_p, plan
 
 
+def test_confident_games_first_within_a_tier():
+    """A bonus (achievement, Monkey Money) must not put a shaky game ahead of
+    a near-certain one in the same tier."""
+    acc = _hard_ready_account()
+    _, _, cands = P.rank_games(acc)
+    for tier in set(c.tier for c in cands):
+        ps = [c.p >= P.CONFIDENT_P for c in cands if c.tier == tier]
+        assert ps == sorted(ps, reverse=True), (tier, ps)
+
+
 def test_learned_tracks_first():
     """data/maps/<slug>.npz marks a learned track: no scan time, and Hard
     medals there go first even though unseen maps carry a unique-win bonus."""
@@ -497,7 +518,7 @@ def test_weak_roster_falls_back_to_easy_with_reason():
     phase, reasons, cands = P.rank_games(acc)
     assert phase in ("M", "E"), (phase, reasons)
     assert cands[0].mode not in P.HARD_FAMILY
-    assert any("no Hard-family medal reaches" in r or "no strategy" in r for r in reasons), reasons
+    assert any("no Hard-family medal clears its bar" in r or "no strategy" in r for r in reasons), reasons
 
 
 def test_never_prefers_low_p():
@@ -507,18 +528,14 @@ def test_never_prefers_low_p():
     plan = P.next_game(acc, [weak, good])
     assert plan.strategy_id == "good" and plan.p_win >= P.DEFAULT_CONFIG.min_p_new, plan
     _, _, cands = P.rank_games(acc, [weak, good])
-    seen_bad = False
-    for c in cands:  # every allowed candidate ranks above every last-resort one
-        if c.tier == "LAST":
-            seen_bad = True
-        assert not (seen_bad and c.tier != "LAST")
-        assert c.ok == (c.p >= P.p_threshold(c.mode, c.first))
-        assert c.ok or c.tier in ("HF", "LAST")
-    # nothing confident at all: the safest game goes first
-    plan = P.next_game(acc, [weak])
-    _, _, cands = P.rank_games(acc, [weak])
-    assert not any(c.ok for c in cands)
-    assert plan.p_win == round(max(c.p for c in cands), 3)
+    for c in cands:  # only games that clear a bar are offered at all
+        assert c.ok == (c.p >= P.p_threshold(c.mode))
+        assert c.ok or (c.tier in ("HF", "B") and c.p >= P.DEFAULT_CONFIG.hard_fallback_p)
+    assert not any(c.s.id == "weak" for c in cands)
+    # nothing confident at all: nothing is played (no "safest loss")
+    phase, reasons, cands = P.rank_games(acc, [weak])
+    assert not cands and phase == "NONE" and reasons[0].startswith(P.NOTHING_LEFT), reasons
+    assert P.next_game(acc, [weak]) is None
 
 
 def test_missing_upgrades_degrade_instead_of_block():
@@ -615,32 +632,28 @@ def test_wanted_achievements():
         assert names and not names & excluded
 
 
-def test_achievement_bonus_on_mode_replays():
-    """Replays that advance e.g. 'Abracadabmonkey' (10 Magic Only wins) move
-    from FARM up to the Hard sub-mode tier, below Hard standard medals."""
+def test_achievement_bonus_only_on_new_medals():
+    """'Abracadabmonkey' (10 Magic Only wins) adds value to a first-time Magic
+    Only medal, but never brings back a Magic Only replay."""
     acc = _hard_ready_account()
-    acc.record_result("Monkey Meadow", "hard", "magic_core", True, minutes=17.0)
+    for m in ("Monkey Meadow", "Logs"):
+        acc.record_result(m, "hard", "magic_core", True, minutes=17.0)
     acc.record_result("Monkey Meadow", "magic_only", "magic_core", True, minutes=17.0)
     ach = (ACH_CATALOG, {"cards": {}})
 
-    def mm_magic(cands):
-        return [c for c in cands if c.map == "Monkey Meadow" and c.mode == "magic_only"]
+    def magic(cands, m):
+        return [c for c in cands if c.map == m and c.mode == "magic_only"]
 
-    _, _, plain = P.rank_games(acc, achievements=(None, None))
-    assert all(c.tier in ("FARM", "LAST") and not c.ach for c in mm_magic(plain))
     _, reasons, cands = P.rank_games(acc, achievements=ach)
-    rep = mm_magic(cands)
-    assert rep and all("Abracadabmonkey" in c.achievements for c in rep)
-    assert any(c.tier == "HS" for c in rep), [(c.tier, c.p) for c in rep]
-    assert all(c.ok for c in rep if c.tier == "HS")
-    pos = {id(c): i for i, c in enumerate(cands)}
-    best_rep = min(pos[id(c)] for c in rep if c.tier == "HS")
-    assert all(pos[id(c)] < best_rep for c in cands if c.tier == "H")
+    assert not magic(cands, "Monkey Meadow")       # beaten: never a candidate
+    new = magic(cands, "Logs")
+    assert new and all("Abracadabmonkey" in c.achievements and c.ach > 0 for c in new)
+    assert all(c.tier == "HS" and c.ok for c in new), [(c.tier, c.p) for c in new]
     assert any("achievements:" in r for r in reasons), reasons
     # once complete, the bonus is gone
     done = (ACH_CATALOG, {"cards": {"Abracadabmonkey": {"status": "complete"}}})
     _, _, after = P.rank_games(acc, achievements=done)
-    assert not any(c.ach for c in mm_magic(after))
+    assert not any(c.ach for c in magic(after, "Logs"))
 
 
 def _reverser(**kw) -> P.StrategySpec:
@@ -724,7 +737,8 @@ def test_objective_is_points_per_hour():
     _, _, cands = P.rank_games(acc, achievements=(None, None))
     c = next(c for c in cands if c.first and c.mode == "hard" and c.map == "Logs")
     mm = P.estimate_mm(acc, "Logs", "hard")[0]
-    v_win = (c.xp_win * cfg.w_xp * (1 + cfg.hard_build_xp_weight * c.build) + cfg.w_mm * mm
+    xp_w = cfg.w_xp * (1 + cfg.hard_build_xp_weight * c.build + cfg.paragon_xp_weight * c.paragon)
+    v_win = (c.xp_win * xp_w + cfg.w_mm * mm
              + P.black_border_value(acc, "Logs", "hard") + cfg.unlock_value * 2 + c.ach)
     v_loss = c.value_fail - cfg.loss_penalty
     t = c.p * c.minutes + (1 - c.p) * c.fail_minutes
@@ -748,24 +762,176 @@ def test_mm_estimates_and_observed_override():
 def test_xp_favours_expert_and_long_modes():
     assert abs(P.game_xp("hard", "expert") / P.game_xp("hard", "beginner") - 1.3) < 1e-9
     assert P.game_xp("chimps", "beginner") > 1.8 * P.game_xp("hard", "beginner")
-    # when equally winnable, Impoppable beats Hard on XP per hour of replays
+    # when equally winnable, a new Impoppable medal beats a new Hard medal on
+    # XP per hour (Impoppable opened on Logs, Hard still open on Tree Stump)
     acc = _hard_ready_account()
-    for mode in ("hard", "abr", "impoppable"):
+    for mode in ("hard", "abr"):
         acc.record_result("Logs", mode, "late_game_chimps", True, minutes=MODES[mode].minutes)
     _, _, cands = P.rank_games(acc, achievements=(None, None))
-    rep = {c.mode: c for c in cands if c.map == "Logs" and c.s.id == "late_game_chimps"
-           and not c.first}
-    assert rep["impoppable"].xp_win / rep["impoppable"].minutes > \
-        rep["hard"].xp_win / rep["hard"].minutes
+    imp = next(c for c in cands if (c.map, c.mode, c.s.id) == ("Logs", "impoppable", "late_game_chimps"))
+    hard = next(c for c in cands if (c.map, c.mode, c.s.id) == ("Tree Stump", "hard", "late_game_chimps"))
+    assert imp.xp_win / imp.minutes > hard.xp_win / hard.minutes
 
 
-def test_replays_only_when_no_medal_is_feasible():
+# ------------------------------------------------------- never replay
+
+def test_replays_never_chosen():
+    """The owner's rule: a beaten map/mode is never a candidate, in any tier
+    or fallback - not for XP, MM, nor an achievement it would advance."""
     acc = _hard_ready_account()
-    _, _, cands = P.rank_games(acc, achievements=(None, None))
-    pos = {id(c): i for i, c in enumerate(cands)}
-    farm = [pos[id(c)] for c in cands if c.tier == "FARM"]
-    medals = [pos[id(c)] for c in cands if c.first and c.tier in ("H", "HS", "HF", "B", "M", "E")]
-    assert farm and medals and max(medals) < min(farm)
+    acc.record_result("Monkey Meadow", "hard", "magic_core", True, minutes=17.0)
+    acc.record_result("Monkey Meadow", "magic_only", "magic_core", True, minutes=17.0)
+    ach = (ACH_CATALOG, {"cards": {}})   # every achievement wanted (rewards replays most)
+    _, _, cands = P.rank_games(acc, achievements=ach)
+    assert cands and all(c.first for c in cands)
+    assert not [(c.map, c.mode) for c in cands if acc.has_medal(c.map, c.mode)]
+    # play it forward: every single plan is a medal the account does not have
+    for _ in range(40):
+        plan = P.next_game(acc, achievements=ach)
+        if plan is None:
+            break
+        assert plan.first_time and not acc.has_medal(plan.map, plan.mode_key), plan.reason
+        acc.record_result(plan.map, plan.mode_key, plan.strategy_id, True,
+                          minutes=MODES[plan.mode_key].minutes)
+
+
+class _Records(logging.Handler):
+    """Collects log messages (to check the reason the planner logs)."""
+
+    def __init__(self):
+        super().__init__()
+        self.lines: list[str] = []
+
+    def emit(self, record):
+        self.lines.append(record.getMessage())
+
+
+def test_none_when_nothing_left():
+    """No winnable first-time medal: next_game is None (the runner idles) and
+    logs NOTHING_LEFT - both when every open medal is beaten and when the rest
+    is below its win-chance bar."""
+    rec = _Records()
+    P.log.addHandler(rec)
+    level = P.log.level
+    P.log.setLevel(logging.INFO)   # the reason is logged at INFO
+    try:
+        # 1) only beginner maps open (the game's category bars say so), all beaten
+        acc = AccountState()
+        acc.category_progress = {"intermediate": [0, 5], "advanced": [0, 12], "expert": [0, 20]}
+        for m in MAPS:
+            if MAPS[m] == "beginner":
+                acc.medals[m] = {mode: True for mode in MODES}
+        phase, reasons, cands = P.rank_games(acc)
+        assert not cands and phase == "NONE" and reasons == [P.NOTHING_LEFT], reasons
+        assert P.next_game(acc) is None
+        assert rec.lines[-1] == P.NOTHING_LEFT, rec.lines
+        # 2) medals open, but none winnable yet: the closest one is named
+        acc = AccountState()
+        weak = _spec("weak", modes=("easy", "medium", "hard"), rate=0.6)
+        assert P.next_game(acc, [weak]) is None
+        assert rec.lines[-1].startswith(P.NOTHING_LEFT) and "closest:" in rec.lines[-1], rec.lines
+    finally:
+        P.log.removeHandler(rec)
+        P.log.setLevel(level)
+
+
+# ------------------------------------------------------- paragon focus
+
+def _paragon_account() -> tuple[AccountState, dict]:
+    """Ninja 100k XP short of its paragon, Tack 400k short, Sniper's paragon
+    read as unlocked, Ice never read, Bomb with enough XP banked."""
+    prices = P.load_tower_xp_prices(PARAGON_CFG.tower_xp_path)
+    acc = AccountState()
+    acc.unlocked_towers |= {"ninja", "tack", "sniper", "ice", "bomb", "alchemist"}
+    full = [5, 5, 5]
+    acc.unlocked_upgrades = {"dart": full, "ninja": full, "tack": full, "sniper": full,
+                             "ice": full, "bomb": [5, 4, 5]}
+    acc.paragons = {"dart": True, "ninja": False, "tack": False, "sniper": True}
+    acc.tower_xp = {"ninja": prices["ninja"].paragon_xp - 100_000,
+                    "tack": prices["tack"].paragon_xp - 400_000,
+                    "bomb": prices["bomb"].paragon_xp + 1_000_000}
+    return acc, prices
+
+
+def test_paragon_status_from_account_data():
+    acc, prices = _paragon_account()
+    # which towers have a paragon comes from the data file, not a list in code
+    assert prices["ninja"].paragon and prices["alchemist"].paragon is None
+    st = P.paragon_status(acc, PARAGON_CFG)
+    assert [g.tower for g in st.focus] == ["ninja", "tack"], st.focus   # closest first
+    ninja, tack = st.focus
+    assert abs(ninja.remaining_xp - 100_000) < 1 and abs(tack.remaining_xp - 400_000) < 1
+    assert ninja.closeness == 1.0                     # within one Hard game's XP
+    assert abs(tack.closeness - PARAGON_CFG.paragon_reach_xp / 400_000) < 1e-9
+    assert ninja.label == "ninja (needs 100k XP)"
+    assert sorted(st.done) == ["dart", "sniper"]
+    assert st.banked == ["bomb"]      # its missing tier 5 + paragon are paid for already
+    assert st.unknown == ["ice"]      # all upgrades, XP short, paragon never read
+    assert "alchemist" not in st.focus + st.banked + st.unknown + st.done
+    # missing upgrades count too: a tower without its tier 5s cannot have a paragon
+    acc.unlocked_upgrades["ice"] = [5, 5, 4]
+    ice = next(g for g in P.paragon_status(acc, PARAGON_CFG).focus if g.tower == "ice")
+    assert abs(ice.remaining_xp - (prices["ice"].upgrade_xp[2][4] + prices["ice"].paragon_xp)) < 1
+
+
+def test_paragon_focus_prefers_closest_tower():
+    """Same medal, same p and time: the strategy that feeds the tower closest
+    to its paragon wins, and the plan's reason line says so. Finishing one
+    paragon beats spreading the same XP. Only in games the planner is sure of."""
+    acc, _ = _paragon_account()
+
+    def spec(id, share, rate=0.97):
+        return _spec(id, modes=("easy",), rate=rate, towers={t: (0, 0, 0) for t in share},
+                     cost_share=share)
+
+    roster = [spec("tack_only", {"tack": 1.0}), spec("ninja_only", {"ninja": 1.0}),
+              spec("ninja_tack", {"ninja": 0.5, "tack": 0.5})]
+    plan = P.next_game(acc, roster, config=PARAGON_CFG, playable_maps=["Logs"])
+    assert plan.strategy_id == "ninja_only", plan.reason
+    assert "paragon focus: ninja (needs 100k XP)" in plan.reason, plan.reason
+    _, reasons, cands = P.rank_games(acc, roster, config=PARAGON_CFG, playable_maps=["Logs"])
+    by = {c.s.id: c for c in cands}
+    assert by["ninja_only"].score > by["ninja_tack"].score > by["tack_only"].score
+    assert len({round(c.p, 9) for c in cands}) == 1          # the focus never changes p
+    assert any(r.startswith("paragon focus (closest first): ninja") for r in reasons), reasons
+    # without the price table there is no focus, and the choice is a tie on XP
+    _, _, plain = P.rank_games(acc, roster, playable_maps=["Logs"])
+    assert all(c.paragon == 0.0 for c in plain)
+    # a game below its p bar gets no paragon bonus and is never offered
+    risky = spec("ninja_risky", {"ninja": 1.0}, rate=0.6)
+    _, _, cands = P.rank_games(acc, [risky], config=PARAGON_CFG, playable_maps=["Logs"])
+    assert not cands
+    # a playable but not very sure game (threshold <= p < paragon_min_p): no bonus
+    shaky = spec("ninja_shaky", {"ninja": 1.0}, rate=0.78)
+    _, _, cands = P.rank_games(acc, [shaky], config=PARAGON_CFG, playable_maps=["Logs"])
+    assert cands and all(c.ok and c.p < PARAGON_CFG.paragon_min_p and c.paragon == 0.0
+                         for c in cands), [(c.p, c.paragon) for c in cands]
+    # once the sync reads ninja's paragon as unlocked, the focus moves to tack
+    acc.paragons["ninja"] = True
+    plan = P.next_game(acc, roster, config=PARAGON_CFG, playable_maps=["Logs"])
+    assert plan.strategy_id == "tack_only" and "paragon focus: tack" in plan.reason, plan.reason
+
+
+def test_invested_cash_follows_the_plan():
+    """Tower XP is split by invested cash: the runner gives the planner each
+    YAML plan's cash per tower type (heroes excluded)."""
+    from btd6bot import strategy as S
+    from btd6bot import towers as T
+    strat = {"plan": [
+        {"do": "place", "id": "hero", "kind": "hero"},
+        {"do": "place", "id": "t1", "kind": "tack"},
+        {"do": "upgrade", "id": "t1", "to": "2-0-1"},
+        {"do": "place", "id": "d1", "kind": "dart"},
+        {"do": "place", "kind": "dart"},
+        {"do": "upgrade", "kind": "dart", "to": "0-0-2"},   # every placed dart
+        {"do": "upgrade", "id": "t1", "to": "2-0-2"},
+    ]}
+    cash = {"tack": T.total_cost("tack", (2, 0, 2)), "dart": 2 * T.total_cost("dart", (0, 0, 2))}
+    assert S.invested_cash(strat) == cash
+    assert S.invested_cash({"plan": [{"do": "place", "id": "hero", "kind": "hero"}]}) is None
+    # the planner's XP split is the cash split
+    spec = P.StrategySpec.from_any({"id": "x", "towers": {"tack": [2, 0, 2]}, "cost_share": cash})
+    assert abs(spec.share()["tack"] - cash["tack"] / sum(cash.values())) < 1e-9
 
 
 if __name__ == "__main__":
@@ -776,16 +942,20 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_fresh_ish_account_plans_hard",
+             "test_hard_losses_stop_hard_attempts", "test_fresh_ish_account_plans_hard", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",
-             "test_wanted_achievements", "test_achievement_bonus_on_mode_replays",
+             "test_wanted_achievements", "test_achievement_bonus_only_on_new_medals",
              "test_achievement_strategy_gating", "test_achievements_keep_hard_first",
              "test_black_border_value_rewards_finishing_maps",
              "test_within_tier_prefers_completing_a_map", "test_objective_is_points_per_hour",
              "test_mm_estimates_and_observed_override", "test_xp_favours_expert_and_long_modes",
-             "test_replays_only_when_no_medal_is_feasible", "test_long_run_reaches_everything"]
+             "test_replays_never_chosen", "test_none_when_nothing_left",
+             "test_paragon_status_from_account_data", "test_paragon_focus_prefers_closest_tower",
+             "test_invested_cash_follows_the_plan", "test_long_run_reaches_everything"]
+    missing = {t.__name__ for t in tests} - set(order)   # a new test must not be skipped
+    assert not missing, f"add these to the order list: {sorted(missing)}"
     for name in order:
         res = globals()[name]()
         if name == "test_tower_unlock_order":

@@ -1,0 +1,108 @@
+{
+  "source": "bloonswiki.com Bloon pages (BTD6 v57); speed is relative to a Red Bloon",
+  "notes": "bright = solid, saturated colour that stands out from any map background (used to pick Sandbox rounds for track learning). Purple is excluded on purpose: seasonal decorations (bats) are purple too. hue = OpenCV hue ranges (0-180) of the bloon's body colour, used to look only for the bloons that were sent.",
+  "bloons": {
+    "red": {
+      "speed": 1.0,
+      "bright": true,
+      "hue": [
+        [
+          0,
+          6
+        ],
+        [
+          174,
+          180
+        ]
+      ]
+    },
+    "blue": {
+      "speed": 1.4,
+      "bright": true,
+      "hue": [
+        [
+          100,
+          118
+        ]
+      ]
+    },
+    "green": {
+      "speed": 1.8,
+      "bright": true,
+      "hue": [
+        [
+          40,
+          72
+        ]
+      ]
+    },
+    "yellow": {
+      "speed": 3.2,
+      "bright": true,
+      "hue": [
+        [
+          22,
+          34
+        ]
+      ]
+    },
+    "pink": {
+      "speed": 3.5,
+      "bright": true,
+      "hue": [
+        [
+          160,
+          173
+        ]
+      ]
+    },
+    "black": {
+      "speed": 1.8,
+      "bright": false
+    },
+    "white": {
+      "speed": 2.0,
+      "bright": false
+    },
+    "purple": {
+      "speed": 3.0,
+      "bright": false
+    },
+    "lead": {
+      "speed": 1.0,
+      "bright": false
+    },
+    "zebra": {
+      "speed": 1.8,
+      "bright": false
+    },
+    "rainbow": {
+      "speed": 2.2,
+      "bright": false
+    },
+    "ceramic": {
+      "speed": 2.5,
+      "bright": false
+    },
+    "moab": {
+      "speed": 1.0,
+      "bright": false
+    },
+    "bfb": {
+      "speed": 0.25,
+      "bright": false
+    },
+    "zomg": {
+      "speed": 0.18,
+      "bright": false
+    },
+    "ddt": {
+      "speed": 2.64,
+      "bright": false
+    },
+    "bad": {
+      "speed": 0.18,
+      "bright": false
+    }
+  }
+}

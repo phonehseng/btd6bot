@@ -1,0 +1,639 @@
+[
+ {
+  "id": "BaseEditorMap",
+  "sprite": null,
+  "category": "intermediate",
+  "browser_only": true,
+  "debug": false
+ },
+ {
+  "id": "Tutorial",
+  "sprite": "MonkeyMeadow",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "InTheLoop",
+  "sprite": "InTheLoop",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "SkullTweak",
+  "sprite": "SkullPeak",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "ThreeMinesAround",
+  "sprite": "ThreeMinesAround",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "SpaPits",
+  "sprite": "SpaPits",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Tinkerton",
+  "sprite": "Tinkerton",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "TreeStump",
+  "sprite": "TreeStump",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "TownCentre",
+  "sprite": "TownCentre",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "MiddleOfTheRoad",
+  "sprite": "MiddleOfTheRoad",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "OneTwoTree",
+  "sprite": "OneTwoTree",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Scrapyard",
+  "sprite": "Scrapyard",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "TheCabin",
+  "sprite": "TheCabin",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Resort",
+  "sprite": "Resort",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Skates",
+  "sprite": "Skates",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "LotusIsland",
+  "sprite": "LotusIsland",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "CandyFalls",
+  "sprite": "Candyfalls",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "WinterPark",
+  "sprite": null,
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Carved",
+  "sprite": "Carved",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "ParkPath",
+  "sprite": "ParkPath",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "AlpineRun",
+  "sprite": "AlpineRun",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "FrozenOver",
+  "sprite": "FrozenOver",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Cubism",
+  "sprite": "Cubism",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "FourCircles",
+  "sprite": "FourCircles",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Hedge",
+  "sprite": "Hedge",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Logs",
+  "sprite": "Logs",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "EndOfTheRoad",
+  "sprite": "EndOfTheRoad",
+  "category": "beginner",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "LostCrevasse",
+  "sprite": "LostCrevasse",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "LuminousCove",
+  "sprite": "LuminousCove",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "AncientPortal",
+  "sprite": "AncientPortal",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "SulfurSprings",
+  "sprite": "SulfurSprings",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "WaterPark",
+  "sprite": "Waterpark",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Polyphemus",
+  "sprite": "Polyphemus",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "CoveredGarden",
+  "sprite": "CoveredGarden",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Quarry",
+  "sprite": "Quarry",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "QuietStreet",
+  "sprite": "QuietSteet",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "BloonariusPrime",
+  "sprite": "BloonariusPrime",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Balance",
+  "sprite": "Balance",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Encrypted",
+  "sprite": "Encrypted",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Bazaar",
+  "sprite": "Bazaar",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "AdorasTemple",
+  "sprite": null,
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "SpringSpring",
+  "sprite": "SpringSpring",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "KartsNDarts",
+  "sprite": null,
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "MoonLanding",
+  "sprite": "MoonLanding",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Haunted",
+  "sprite": "Haunted",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Downstream",
+  "sprite": "Downstream",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "FiringRange",
+  "sprite": "FiringRange",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Cracked",
+  "sprite": "Cracked",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Streambed",
+  "sprite": "Streambed",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Chutes",
+  "sprite": "Chutes",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Rake",
+  "sprite": "Rake",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "SpiceIslands",
+  "sprite": "SpiceIslands",
+  "category": "intermediate",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "ShipCapture",
+  "sprite": "ShipCapture",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Ascent",
+  "sprite": "Ascent",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "MushroomGrotto",
+  "sprite": "MushroomGrotto",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "PartyParade",
+  "sprite": "PartyParade",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "SunsetGulch",
+  "sprite": "SunsetGulch",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "EnchantedGlade",
+  "sprite": "EnchantedGlade",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "LastResort",
+  "sprite": "LastResort",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "CastleRevenge",
+  "sprite": "CastleRevenge",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "DarkPath",
+  "sprite": "DarkPath",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Erosion",
+  "sprite": "Erosion",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "MidnightMansion",
+  "sprite": "MidnightMansion",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "SunkenColumns",
+  "sprite": "SunkenColumns",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "XFactor",
+  "sprite": "XFactor",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Mesa",
+  "sprite": "Mesa",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Geared",
+  "sprite": "Geared",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Spillway",
+  "sprite": "Spillway",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Cargo",
+  "sprite": "Cargo",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "PatsPond",
+  "sprite": "PatsPond",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Peninsula",
+  "sprite": "Peninsula",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "HighFinance",
+  "sprite": "HighFinance",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "AnotherBrick",
+  "sprite": "AnotherBrick",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "OffTheCoast",
+  "sprite": "OffTheCoast",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Cornfield",
+  "sprite": "Cornfields",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Underground",
+  "sprite": "Underground",
+  "category": "advanced",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "TrickyTracks",
+  "sprite": "TrickyTracks",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "GlacialTrail",
+  "sprite": "GlacialTrail",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "DarkDungeons",
+  "sprite": "DarkDungeons",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Sanctuary",
+  "sprite": "Sanctuary",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Ravine",
+  "sprite": "Ravine",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "FloodedValley",
+  "sprite": "FloodedValley",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Infernal",
+  "sprite": null,
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "BloodyPuddles",
+  "sprite": "BloodyPuddles",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Workshop",
+  "sprite": "Workshop",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "Quad",
+  "sprite": "Quad",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "DarkCastle",
+  "sprite": "DarkCastle",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "MuddyPuddles",
+  "sprite": "MuddyPuddles",
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "#ouch",
+  "sprite": null,
+  "category": "expert",
+  "browser_only": false,
+  "debug": false
+ },
+ {
+  "id": "ProtectTheYacht",
+  "sprite": "ProtectTheYacht",
+  "category": "intermediate",
+  "browser_only": true,
+  "debug": false
+ },
+ {
+  "id": "Blons",
+  "sprite": "Blons",
+  "category": "expert",
+  "browser_only": true,
+  "debug": false
+ }
+]

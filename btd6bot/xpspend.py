@@ -6,6 +6,8 @@ to the round-40 MOAB with MOAB Mauler affordable but locked). So before every
 game the runner calls unlock_for_strategy(): main menu -> MONKEYS -> category
 tab -> tower card -> upgrade tree -> unlock each needed tier the tower's XP
 pays for, verified by the XP total dropping. Layout measured at 1920x1200.
+The menu is only opened when some needed tier is neither known unlocked nor
+known to be too expensive (see known_short).
 """
 import logging
 import re
@@ -28,7 +30,6 @@ TREE_COST = (0.03, 0.655, 0.26, 0.725)  # "UNLOCK FOR: / 2,700XP"
 TREE_XP = (0.52, 0.01, 0.70, 0.065)     # "XP: 3,373"
 TREE_TITLE = (0.28, 0.005, 0.56, 0.07)
 BACK = (0.044, 0.055)
-SHORT = {}  # tower -> cheapest XP cost it could not pay (skip until its XP grows)
 
 
 def _title_matches(title, kind):
@@ -70,6 +71,60 @@ def needed_upgrades(strat):
                 order.append((kind, path + 1, tier))
             have[path] = max(have[path], target[path])
     return order
+
+
+def strategy_towers(strat):
+    """Tower kinds a strategy places (plan, threat answers, fill): the towers
+    that earn XP when it is played."""
+    steps = strat.get("plan", []) + [a for v in (strat.get("answers") or {}).values() for a in v] \
+        + strat.get("fill", [])
+    return {st["kind"] for st in steps if st.get("kind") in T.TOWERS}
+
+
+# -- "can't afford yet", remembered per account (AccountState.xp_short) ------
+# Log evidence (2026-10-22 02:30): "boomerang path 1 tier 5 needs 37500 XP,
+# have 36108" and "bomb path 2 tier 5 needs 35000 XP, have 10885" were read
+# again after every bot restart (6-25 s each time): the old cache was a
+# module-level dict that each restart (29 code reloads that night) emptied.
+# A tower's XP only grows when it is played, so a shortfall stays true until
+# that tower plays a game (forget_short, called by the runner after each game)
+# or, to be safe, for a day.
+SHORT_TTL = 24 * 3600
+
+
+def known_short(account, kind, path, tier, now=None):
+    """True while (kind, path 1..3, tier) is known to be unaffordable: the
+    menu showed tier t0 <= tier of that path costing more XP than the tower
+    had (a higher tier needs t0 first, so it is out of reach too)."""
+    rec = (account.xp_short or {}).get(kind)
+    if not rec or (now or time.time()) - rec.get("at", 0) > SHORT_TTL:
+        return False
+    blocked = rec.get("paths", {}).get(str(path))
+    return bool(blocked) and blocked[0] <= tier and rec.get("xp", 0) < blocked[1]
+
+
+def note_short(account, kind, path, tier, cost, have):
+    """Remember that the tower had `have` XP and the path's `tier` costs `cost`."""
+    rec = account.xp_short.setdefault(kind, {"paths": {}})
+    rec["xp"], rec["at"] = float(have), time.time()
+    rec["paths"][str(path)] = [int(tier), int(cost)]
+
+
+def forget_short(account, kinds):
+    """These towers just played a game and earned XP: check them again."""
+    for kind in kinds:
+        account.xp_short.pop(kind, None)
+
+
+def pending_upgrades(account, wanted):
+    """{tower: [(path, tier)]} still worth a look in the Monkeys menu: not
+    known unlocked and not known unaffordable. Empty -> skip the menu."""
+    todo = {}
+    for kind, path, tier in wanted:
+        if account.upgrades(kind)[path - 1] >= tier or known_short(account, kind, path, tier):
+            continue
+        todo.setdefault(kind, []).append((path, tier))
+    return todo
 
 
 class XpSpender:
@@ -120,7 +175,11 @@ class XpSpender:
 
     def unlock(self, wanted):
         """wanted: [(tower, path, tier)]. Returns the list actually unlocked."""
-        if not wanted:
+        # Decide before opening anything: the Monkeys menu used to be opened
+        # (and closed again, ~3-4 s) before every game even when every needed
+        # upgrade was already unlocked or known to be out of reach.
+        by_tower = pending_upgrades(self.account, wanted)
+        if not by_tower:
             return []
         if self.menus.identify() != "main_menu":
             return []
@@ -128,17 +187,8 @@ class XpSpender:
         time.sleep(1.5)
         done = []
         try:
-            by_tower = {}
-            for kind, path, tier in wanted:
-                by_tower.setdefault(kind, []).append((path, tier))
             for kind, items in by_tower.items():
-                known = self.account.upgrades(kind)
-                items = [(p, t) for p, t in items if known[p - 1] < t]
-                # skip the trip when we already know this tower's XP is short
-                short = SHORT.get(kind)
-                if items and short is not None and                         float((self.account.tower_xp or {}).get(kind, 0) or 0) < short:
-                    continue
-                if not items or not self.open_tower(kind):
+                if not self.open_tower(kind):
                     continue
                 blocked = set()
                 for path, tier in items:
@@ -156,7 +206,7 @@ class XpSpender:
                         blocked.add(path)
                         if have is not None:
                             self.account.tower_xp[kind] = float(have)
-                            SHORT[kind] = min(SHORT.get(kind, cost), cost)
+                            note_short(self.account, kind, path, tier, cost, have)
                         continue
                     self.inp.click(*TREE_UNLOCK)
                     time.sleep(0.9)
@@ -228,7 +278,11 @@ def sync_all(screen, inp, menus, account, towers=None):
             inp.move(0.97, 0.97)
             time.sleep(0.5)
             frame = screen.grab()
-            if paragon_tree(frame):
+            # remembered for the planner's paragon focus (towers still short
+            # of their paragon get XP-heavy games first)
+            has_paragon = paragon_tree(frame)
+            account.paragons[kind] = has_paragon
+            if has_paragon:
                 tiers = [5, 5, 5]
             else:
                 tiers = tiers_from_states(tree_states(frame))

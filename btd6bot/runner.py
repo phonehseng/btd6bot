@@ -9,7 +9,7 @@ from . import progress
 from . import towers as T
 from .account import AccountState
 from .achievements import Achievements
-from .xpspend import sync_all, unlock_for_strategy
+from .xpspend import forget_short, strategy_towers, sync_all, unlock_for_strategy
 from .mk import Knowledge
 from .identity import current_path, is_stale, load_for, mark_synced, read_user_id
 from .choices import tower_chooser
@@ -20,7 +20,7 @@ from .match import Match
 from .menus import Menus
 from .scanner import scan_placement, scan_water
 from .screen import GameNotFound, Screen
-from .strategy import Executor, coverage, hero_for, load_all, usable
+from .strategy import Executor, coverage, hero_for, invested_cash, load_all, usable
 from .vision import norm
 
 log = logging.getLogger("runner")
@@ -50,20 +50,131 @@ from .status import STATE_FILE, set_state  # noqa: E402,F401
 
 
 ACH_STAMP = ROOT_DIR / "logs" / "achievements_scanned_at.txt"
+# time of the full scan after which the ribbon's badge was still lit: the
+# badge is then ignored until the next full scan (see _achievements_if_due)
+ACH_MUTE = ROOT_DIR / "logs" / "achievements_badge_muted.txt"
+MEDAL_SWEEP_EVERY = 24 * 3600          # seconds between map-select medal sweeps per account
+# Waiting (nothing to play, an error loop, PAUSE): the supervisor's watchdog
+# (run_forever.ps1) kills a bot whose logs/bot.log and logs/state.txt have not
+# changed for 10 minutes, so long waits refresh the status this often.
+IDLE_STATUS_EVERY = 120
+IDLE_POLL = 5                          # seconds between checks for PAUSE / new code while waiting
+# Consecutive game-loop errors, kept on disk so a restart does not reset them
+ERROR_FILE = ROOT_DIR / "logs" / "error_streak.json"
+ERROR_STREAK_WAIT = 3                  # the same error this many games in a row = a bot bug
+ERROR_BENCH_AFTER = 2                  # failures of one map/mode before it is benched
 
 
-def _ach_last():
+def _read_stamp(path):
+    """Unix time stored in a small text file, 0.0 if missing or unreadable."""
     try:
-        return float(ACH_STAMP.read_text().strip())
+        return float(path.read_text().strip())
     except (OSError, ValueError):
         return 0.0
 
 
-def _ach_mark(t):
+def _write_stamp(path, t):
     try:
-        ACH_STAMP.write_text(str(t))
+        path.write_text(str(t))
     except OSError:
         pass
+
+
+def _ach_last():
+    return _read_stamp(ACH_STAMP)
+
+
+def _ach_mark(t):
+    _write_stamp(ACH_STAMP, t)
+
+
+def _medal_sweep_file(uid):
+    """Per account, next to its state file (like identity's .synced stamp)."""
+    return ROOT_DIR / "data" / "accounts" / f"{uid}.medals_swept"
+
+
+def _medal_sweep_due(uid, now=None):
+    """Has this account's map-select medal sweep not run for a day?"""
+    return (now or time.time()) - _read_stamp(_medal_sweep_file(uid)) > MEDAL_SWEEP_EVERY
+
+
+def _load_errors():
+    """{"sig": last error signature, "streak": times in a row, "maps":
+    {"map|mode": failures}} from ERROR_FILE (empty when missing)."""
+    import json
+    try:
+        d = json.loads(ERROR_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        d = {}
+    return {"sig": d.get("sig"), "streak": int(d.get("streak", 0)), "maps": dict(d.get("maps", {}))}
+
+
+def _save_errors(errors):
+    import json
+    try:
+        ERROR_FILE.parent.mkdir(exist_ok=True)
+        ERROR_FILE.write_text(json.dumps(errors, indent=1), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _error_signature(e):
+    """Which bug an exception is: its type and the bot function that raised
+    it. The message is left out on purpose, as it may name the map: the same
+    bug on 13 maps must count as one streak, not 13 different errors."""
+    import traceback
+    from pathlib import Path
+    frames = [f for f in traceback.extract_tb(e.__traceback__) if "btd6bot" in f.filename]
+    where = f"{Path(frames[-1].filename).name}:{frames[-1].name}" if frames else "?"
+    return f"{type(e).__name__} in {where}"
+
+
+def outside_cause(outcome, screen):
+    """Why a game that was not won is not the map's (or the plan's) fault,
+    else None. Such a game is neither recorded as a loss nor benched.
+      * "abandoned": match.py saw the menus come back mid-game while the bot
+        still had more than 20 lives (it calls that "abandoned", fewer is a
+        "defeat"). Log evidence: Tree Stump medium ended at round 59 of 60
+        with 149 lives (2026-10-22 01:39) and was benched 12 h as a loss.
+      * the title or account screen after the game: someone signed in to
+        another account mid-game (the game restarts to its title screen)."""
+    if outcome == "abandoned":
+        return "left the game with more than 20 lives"
+    if screen in ("title", "account"):
+        return f"the game went to the {screen} screen"
+    return None
+
+
+def tab_first_pages(reads):
+    """Map-select category tab -> names on its first page, keeping only the
+    tabs whose page is unambiguous. reads: {category: set of normalised
+    names read right after clicking that tab}. Two tabs that read two or more
+    of the same names did not both switch pages (a locked tab, a click lost
+    in a transition): neither can tell its category apart, so both become
+    empty. Before, the last of them won: Expert's read of the Beginner page
+    put six Beginner maps under "expert" on both accounts."""
+    out = dict(reads)
+    for a in reads:
+        for b in reads:
+            if a < b and len(reads[a] & reads[b]) >= 2:
+                out[a], out[b] = set(), set()
+    return out
+
+
+def page_category(keys, names, first_pages, current, known):
+    """Category of one map-select page (every category starts on a new page,
+    so a page holds a single category):
+      1. the category of the known maps on it, when at least two agree and
+         none disagrees (known: {map: category}, the game's own data),
+      2. else the one tab whose first page shares two or more names with it,
+      3. else the page continues the current category (None before any).
+    keys: the page's normalised label texts; names: the maps they matched."""
+    from collections import Counter
+    votes = Counter(known[n] for n in names if n in known)
+    if len(votes) == 1 and sum(votes.values()) >= 2:
+        return next(iter(votes))
+    tabs = [cat for cat, first in first_pages.items() if first and len(keys & first) >= 2]
+    return tabs[0] if len(tabs) == 1 else current
 
 
 def _code_imports():
@@ -134,6 +245,8 @@ def planner_specs(strats, account):
             "wins_needed": s.get("wins_needed"),
             "maps": p.get("maps"), "excluded_maps": p.get("excluded_maps"),
             "categories": p.get("categories"), "minutes": p.get("minutes"),
+            # tower XP follows invested cash: which towers this game levels up
+            "cost_share": invested_cash(s),
         }))
     return specs
 
@@ -167,6 +280,9 @@ class Bot:
         self._games_since_id = 0
         self._mm_before = None
         self._games_since_mk = 99  # check Monkey Knowledge at session start, then every 3 games
+        self._hero_failed = set()  # heroes the picker could not equip this session
+        self._errors = _load_errors()  # error streak, survives restarts (see _game_error)
+        self._medals_due = False   # sweep map medals at the next account check (account switched)
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -324,6 +440,38 @@ class Bot:
         close = difflib.get_close_matches(key, names, n=1, cutoff=0.8) if len(key) >= 5 else []
         return names[close[0]] if close else None
 
+    def _read_category_tabs(self):
+        """On the map-select screen: click each category tab, read its first
+        page and its unlock bar. Stores account.category_progress and
+        returns {category: normalised names on its first page} (empty for a
+        tab whose page could not be told apart, see tab_first_pages)."""
+        import re
+        from .account import _norm
+        reads = {}
+        for cat, pos in self.CATEGORY_TABS.items():
+            self.inp.click(*pos)
+            time.sleep(0.8)
+            reads[cat] = {_norm(t) for t, _ in self._page_names()}
+            # A locked category shows its unlock bar at the top ("7 / 12" map wins) ...
+            bar = next((re.search(r"(\d+)\s*/\s*(\d+)", w.text) for w in self.menus.words
+                        if w.y < 0.08 and re.search(r"\d+\s*/\s*\d+", w.text)), None)
+            # ... or, on Expert, a banner: "Beat 13 more maps to unlock all Expert maps"
+            more = next((re.search(r"beat\s*(\d+)\s*more", w.text, re.I) for w in self.menus.words
+                         if re.search(r"beat\s*\d+\s*more", w.text, re.I)), None)
+            if bar and int(bar.group(1)) < int(bar.group(2)):
+                self.account.category_progress[cat] = [int(bar.group(1)), int(bar.group(2))]
+                log.info("medal scan: %s maps locked (%s/%s map wins)", cat, bar.group(1), bar.group(2))
+            elif more:
+                self.account.category_progress[cat] = [0, int(more.group(1))]
+                log.info("medal scan: %s maps locked (%s more wins needed)", cat, more.group(1))
+            else:
+                self.account.category_progress[cat] = [1, 1]  # no bar: unlocked
+        first = tab_first_pages(reads)
+        unclear = [cat for cat in reads if reads[cat] and not first[cat]]
+        if unclear:
+            log.warning("medal scan: tabs %s showed the same page - not using them to tell categories", unclear)
+        return first
+
     def scan_all_medals(self, max_pages=30):
         """Read every map card on the map-select pages (~30 s for ~90 maps):
           * adopt each mode's medal shown on the card (a save made elsewhere
@@ -341,44 +489,26 @@ class Bot:
             self.to_main_menu()
             return 0
         # first page of each category tab -> lets us tell which category a
-        # page belongs to while paging through everything below. A locked
-        # category also shows its unlock bar at the top ("7 / 12" map wins).
-        import re
-        first_page = {}
-        for cat, pos in self.CATEGORY_TABS.items():
-            self.inp.click(*pos)
-            time.sleep(0.8)
-            first_page[cat] = {_norm(t) for t, _ in self._page_names()}
-            bar = next((re.search(r"(\d+)\s*/\s*(\d+)", w.text) for w in self.menus.words
-                        if w.y < 0.08 and re.search(r"\d+\s*/\s*\d+", w.text)), None)
-            # Expert shows a banner instead: "Beat 13 more maps to unlock all Expert maps"
-            more = next((re.search(r"beat\s*(\d+)\s*more", w.text, re.I) for w in self.menus.words
-                         if re.search(r"beat\s*\d+\s*more", w.text, re.I)), None)
-            if bar and int(bar.group(1)) < int(bar.group(2)):
-                self.account.category_progress[cat] = [int(bar.group(1)), int(bar.group(2))]
-                log.info("medal scan: %s maps locked (%s/%s map wins)", cat, bar.group(1), bar.group(2))
-            elif more:
-                self.account.category_progress[cat] = [0, int(more.group(1))]
-                log.info("medal scan: %s maps locked (%s more wins needed)", cat, more.group(1))
-            else:
-                self.account.category_progress[cat] = [1, 1]  # no bar: unlocked
+        # page belongs to while paging through everything below
+        first_page = self._read_category_tabs()
         self.inp.click(*self.CATEGORY_TABS["beginner"])
         time.sleep(0.8)
 
-        category = "beginner"
+        # A map belongs to the category of the page it is read on. Pages are
+        # told apart by the game's own map data first and by an unambiguous
+        # tab match second (page_category); until either says, no category is
+        # recorded at all.
+        category = None
         seen_pages, found, new_medals, new_maps = [], {}, 0, []
         for _ in range(max_pages):
             time.sleep(0.5)
             frame = self.s.grab()
-            labels = self._page_names()
-            keys = {_norm(t) for t, _ in labels}
-            for cat, first in first_page.items():
-                if first and len(keys & first) >= 2:
-                    category = cat
+            labels = [(text, cell, self._match_map(text)) for text, cell in self._page_names()]
+            category = page_category({_norm(t) for t, _, _ in labels}, [n for _, _, n in labels if n],
+                                     first_page, category, MAPS)
             page = []
-            for text, cell in labels:
-                name = self._match_map(text)
-                if name is None and _looks_like_map_name(text) and mapgeom.unknown_map_id(text):
+            for text, cell, name in labels:
+                if name is None and category and _looks_like_map_name(text) and mapgeom.unknown_map_id(text):
                     # a card for a map bundle the game has and our list lacks
                     name = text.strip().title()
                     if register_map(name, category):
@@ -386,8 +516,9 @@ class Bot:
                 if name is None or name in page:
                     continue
                 page.append(name)
-                if MAPS.get(name) != category:  # the game lists it elsewhere
-                    self.account.map_category_overrides[name] = category
+                if category and not self.account.note_map_category(name, category):
+                    log.warning("medal scan: %s read on a %s page, but the game data lists it as %s",
+                                name, category, self.account.map_category(name))
                 found[name] = read_grid_card(frame, *cell)
             if not page or page in seen_pages:
                 break  # wrapped around to a page we already read
@@ -475,7 +606,7 @@ class Bot:
         seen = read_card(self.s.grab(), label.x, label.y)
         # The search card's slots are unreliable (they invented a Hard medal on
         # Luminous Cove and Impoppable ones): log only. The map-select sweep
-        # (scan_all_medals, once per session) sets medals from the cards.
+        # (scan_all_medals, daily per account) sets medals from the cards.
         if any(seen.values()):
             log.info("search card for %s suggests %s (not adopted)", map_name,
                      [d for d, e in seen.items() if e])
@@ -548,16 +679,24 @@ class Bot:
         diff = {"easy": "easy", "medium": "medium", "hard": "hard"}.get(plan.difficulty, "hard")
         if plan.mode_key in ("impoppable", "chimps"):
             diff = "impoppable"
-        from .strategy import hero_for
-        hero = hero_for(strat, self.account)
-        if hero != self.account_selected_hero():
-            self.select_hero(hero)
-        hero = self.account_selected_hero()  # what is actually equipped
+        # the hero was equipped from the main menu (equip_hero_for); the game
+        # reads the equipped hero's name again when it is placed
+        hero = self.account_selected_hero()
         g = Game(self.s, self.inp, self.lay, difficulty=diff, hero=hero)
         self.menus.g = g
         # probe which towers the hotkeys can pick up, once per session
-        # (later unlocks are seen on the level-up screen)
-        roster = {} if self._roster_done else g.probe_roster()
+        # (later unlocks are seen on the level-up screen). Only towers the
+        # account is not known to own, and that this mode lets us place
+        # (Primary Only etc.), are worth a press: probing every tower took
+        # ~17 s per session and 80 s in Primary Only.
+        if self._roster_done:
+            roster = {}
+        else:
+            from .strategy import MODE_TOWER_FILTER
+            only = MODE_TOWER_FILTER.get(plan.mode_key)
+            unknown = [k for k, t in T.TOWERS.items()
+                       if k not in self.account.unlocked_towers and only in (None, t["category"])]
+            roster = g.probe_roster(unknown) if unknown else {}
         self._roster_done = True
         # The probe only ADDS towers. Ownership is read in the Monkeys menu
         # (xpspend.sync_all); a probe can fail wholesale (a popup, a slow
@@ -600,6 +739,14 @@ class Bot:
         res = Match(g, self.menus, model, ex, self.account,
                     on_tower_choice=tower_chooser(self.account)).play()
         won = res.get("outcome") == "victory"
+        # towers that played earned XP: their "can't afford" notes are stale
+        forget_short(self.account, {p.kind for p in g.towers.values()} | strategy_towers(strat))
+        # a game not won may have ended for a reason outside the map: look at
+        # the screen before leaving it (see outside_cause)
+        screen = None if won else self.menus.identify()
+        cause = None if won else outside_cause(res.get("outcome"), screen)
+        if screen in ("title", "account"):
+            self._games_since_id = ID_CHECK_EVERY  # read the User ID before the next game
         if won:
             self.menus.leave_victory()
         else:
@@ -612,10 +759,15 @@ class Bot:
         res["mm"] = mm
         # Note: Monkey Money gained is NOT proof of a win (level-up rewards pay
         # too: an abandoned Tree Stump game "paid" 200). The medal sweep, which
-        # reads every map card each session, is what settles medals.
-        self.account.record_result(plan.map, plan.mode_key, plan.strategy_id, won,
-                                   round_reached=res.get("round"), minutes=res.get("minutes"),
-                                   mm_gained=mm, hero=hero)
+        # reads every map card daily, is what settles medals.
+        if cause:
+            # not a loss of this map or strategy: no stats, and run() does not bench it
+            res["outside_cause"] = cause
+            log.warning("%s %s ended early: %s - not recorded as a loss", plan.map, plan.mode_key, cause)
+        else:
+            self.account.record_result(plan.map, plan.mode_key, plan.strategy_id, won,
+                                       round_reached=res.get("round"), minutes=res.get("minutes"),
+                                       mm_gained=mm, hero=hero)
         self.account.save()
         return res
 
@@ -666,6 +818,16 @@ class Bot:
                     continue
                 self._check_account()
                 self.read_level()
+                # which heroes the account owns, from the HEROES screen (weekly)
+                try:
+                    from .heroes import HeroPicker
+                    set_state("checking which heroes the account owns")
+                    HeroPicker(self.s, self.inp, self.menus, self.account).scan_owned_if_due()
+                except (FocusLost, Aborted):
+                    raise
+                except Exception:
+                    log.exception("hero scan failed")
+                    self.to_main_menu()
                 # Monkey Knowledge: once per session, then only when the game
                 # puts its "!" badge on the Knowledge button (new points)
                 from .mk import KNOWLEDGE_BUTTON
@@ -684,23 +846,11 @@ class Bot:
                     self.to_main_menu()
                 # Achievements: claim when the ribbon shows its "!" badge; the
                 # full progress scan the planner uses runs at most daily
-                from .achievements import BADGE as ACH_RIBBON
-                if time.time() - self._ach_at > ACH_EVERY or self.menus.has_badge(*ACH_RIBBON):
-                    self._ach_at = time.time()
-                    _ach_mark(self._ach_at)
-                    try:  # claim finished achievements' rewards, refresh progress
-                        set_state("scanning achievements, claiming rewards")
-                        Achievements(self.s, self.inp, self.menus).scan(collect=True)
-                    except (FocusLost, Aborted):
-                        raise
-                    except Exception:
-                        log.exception("achievements scan failed")
-                    self.to_main_menu()
+                self._achievements_if_due()
                 plan = self.next_plan()
                 if plan is None:
                     log.error("planner has nothing to play - waiting 30 min (benches expire, XP grows)")
-                    set_state("idle: nothing to play")
-                    time.sleep(1800)
+                    self._idle(1800, "idle: nothing to play", code_stamp)
                     continue
                 log.info("NEXT: %s", plan.reason)
                 set_state(f"opening {plan.map} {plan.mode_key}", game=f"{plan.map} {plan.mode_key}")
@@ -717,6 +867,7 @@ class Bot:
                     log.exception("XP spending failed - continuing")
                     self.to_main_menu()
                 self._learn_track_if_needed(plan.map)
+                self.equip_hero_for(plan)
                 started = self.start(plan)
                 if started == "known":
                     continue
@@ -726,13 +877,15 @@ class Bot:
                     self.bench(plan.map, plan.mode_key, hours=2, why="failed to start")
                     self.failures += 1
                     continue
+                # the plan's towers earn XP from here on (even if the game breaks)
+                forget_short(self.account, strategy_towers(self.strats[plan.strategy_id]))
                 res = self.play(plan)
                 self._games_since_id += 1
                 self._games_since_mk += 1
-                if res.get("outcome") != "victory":
+                if res.get("outcome") != "victory" and not res.get("outside_cause"):
                     self.bench(plan.map, plan.mode_key, hours=12, why=res.get("outcome", "loss"))
                 log.info("RESULT %s", res)
-                self._error_streak = 0
+                self._game_done(plan)
                 progress.record_result(plan, res)
                 progress.write(self.account, "game finished")
                 self.failures = 0
@@ -746,18 +899,9 @@ class Bot:
             except Exception as e:
                 log.exception("game loop error - recovering to main menu")
                 self.failures += 1
-                # The same error in several games in a row is a bug in the bot,
-                # not a bad map: benching would take map after map out of play.
-                sig = f"{type(e).__name__}: {e}"
-                self._error_streak = self._error_streak + 1 if sig == getattr(self, "_last_error", None) else 1
-                self._last_error = sig
-                if self._error_streak >= 3:
-                    log.error("the same error in %d games in a row (%s) - not benching maps; "
-                              "waiting 10 min for a code fix", self._error_streak, sig)
-                    set_state(f"error loop: {sig[:120]}")
-                    time.sleep(600)
-                elif plan is not None:
-                    self.bench(plan.map, plan.mode_key, hours=6, why="error")
+                # bench only a map/mode that fails twice; wait instead when the
+                # same error repeats game after game (a bot bug, not a bad map)
+                self._game_error(e, plan, code_stamp)
 
     def _check_account(self, force=False):
         """Read the signed-in account's User ID; switch state files if it changed,
@@ -770,8 +914,10 @@ class Bot:
             log.warning("could not read the account's User ID")
             return
         if uid != self.uid:
-            if self.uid:
-                log.warning("account changed: %s -> %s", self.uid, uid)
+            previous = self.uid or current_path().stem  # after a restart: the last run's account
+            if previous != uid:
+                log.warning("account changed: %s -> %s", previous, uid)
+                self._medals_due = True  # another save: its medals may differ from our notes
             self.account, is_new = load_for(uid)
             self.uid = uid
             self._level_synced = False
@@ -784,11 +930,15 @@ class Bot:
             sync_all(self.s, self.inp, self.menus, self.account)
             self.to_main_menu()
             mark_synced(uid)
-        if getattr(self, "_medals_swept", None) != uid:
-            # ~30 s once per session: every map's medals (and any new maps) at
-            # once, instead of discovering earned medals one map search at a time
-            self.scan_all_medals()
-            self._medals_swept = uid
+        if self._medals_due or _medal_sweep_due(uid):
+            # ~40 s: every map's medals (and any new maps) at once. It used to
+            # run at every process start - 14 sweeps in one night of code
+            # reloads (2026-10-21/22), 13 of them adopting 0 medals. Our own
+            # wins are recorded as they happen, so a daily sweep (or one after
+            # an account switch) is enough; it stays authoritative when it runs.
+            if self.scan_all_medals():
+                _write_stamp(_medal_sweep_file(uid), time.time())
+                self._medals_due = False
             self.to_main_menu()
 
     # -- benches: (map, mode) that just lost or broke are not retried for a while
@@ -821,13 +971,35 @@ class Bot:
     def account_selected_hero(self):
         return getattr(self.account, "selected_hero", None) or "quincy"
 
+    def equip_hero_for(self, plan):
+        """Before opening the map: equip the hero the plan's strategy wants
+        (strategy.hero_for: its own hero if owned, else the best owned one its
+        constraints allow). Nothing happens when it is already equipped."""
+        hero = hero_for(self.strats[plan.strategy_id], self.account)
+        if not hero or hero == getattr(self.account, "selected_hero", None):
+            return
+        if hero in self._hero_failed:
+            return   # the picker could not find it this session; don't retry every game
+        if not self.select_hero(hero):
+            self._hero_failed.add(hero)
+
     def select_hero(self, hero):
-        """Hero choice happens on the map/difficulty screen ('Change Hero'),
-        which we pass through right before the game. Until the hero menu has
-        been calibrated live this only records the wish and keeps the current
-        hero, so the game always matches what Game() is told."""
-        log.info("strategy prefers %s; hero switching not calibrated yet - keeping %s",
-                 hero, self.account_selected_hero())
+        """Equip `hero` in the HEROES menu of the main menu (heroes.HeroPicker:
+        clicks the portraits and reads the name each one shows) and record it
+        as account.selected_hero. True when it is equipped."""
+        from .heroes import HeroPicker
+        set_state(f"equipping hero {hero}")
+        try:
+            ok = HeroPicker(self.s, self.inp, self.menus, self.account).select(hero)
+        except (FocusLost, Aborted):
+            raise
+        except Exception:
+            log.exception("hero selection failed")
+            ok = False
+        if not ok:
+            log.warning("could not equip %s - keeping %s", hero, self.account_selected_hero())
+        self.to_main_menu()
+        return ok
 
     def wait_until_offline(self, poll=30):
         """The bot only plays while the game is offline (dummy account rule).
@@ -858,10 +1030,104 @@ class Bot:
         self.to_main_menu()
         log.warning("PAUSE file present - idling at the main menu")
         set_state("paused")
+        # Refresh the status now and then: without it the watchdog killed the
+        # parked bot every ~11 minutes (log 2026-10-22: restarts at 02:47,
+        # 02:58, 03:09, 03:21), and each restart clicked back to the main
+        # menu - under the developer's mouse.
+        shown = time.time()
         while PAUSE_FILE.exists():
             time.sleep(3)
+            if time.time() - shown > IDLE_STATUS_EVERY:
+                set_state("paused")
+                shown = time.time()
         log.warning("PAUSE file removed - resuming")
         set_state("resuming")
+
+    def _idle(self, seconds, why, code_stamp=None):
+        """Wait up to `seconds` without looking hung: the supervisor's watchdog
+        kills a bot whose log and status file stay unchanged for 10 minutes,
+        and a single 30-minute time.sleep() did exactly that. The status is
+        refreshed every IDLE_STATUS_EVERY s. Ends early when the PAUSE file
+        appears or the code changes, so a fix loads at once."""
+        end = time.time() + seconds
+        next_status = 0.0
+        while time.time() < end:
+            if PAUSE_FILE.exists() or (code_stamp is not None and _code_stamp() != code_stamp):
+                return
+            if time.time() >= next_status:
+                set_state(f"{why} ({(end - time.time()) / 60:.0f} min left)")
+                next_status = time.time() + IDLE_STATUS_EVERY
+            time.sleep(min(IDLE_POLL, max(0.0, end - time.time())))
+
+    def _achievements_if_due(self):
+        """Claim achievement rewards when the ribbon shows its "!" badge, and
+        read every card's progress (which the planner uses) at most once per
+        ACH_EVERY. The badge used to start that full scan: 204 s and 192 s
+        only 28 minutes apart (log 2026-10-22 02:02 and 02:30); a claim pass
+        reads one or two pages (Achievements.claim).
+        If the badge is still lit after a claim pass, the full scan runs at
+        once; if even that leaves it lit, the badge means something the bot
+        cannot act on, and it is ignored until the next daily scan - so it
+        can never start a scan before every game."""
+        from .achievements import BADGE
+        full = time.time() - self._ach_at > ACH_EVERY
+        badge = (not full and _read_stamp(ACH_MUTE) < self._ach_at
+                 and self.menus.has_badge(*BADGE))
+        if not (full or badge):
+            return
+        ach = Achievements(self.s, self.inp, self.menus)
+        try:
+            if badge:
+                set_state("claiming achievement rewards")
+                ach.claim()
+                time.sleep(1.0)  # let the main menu redraw the ribbon before judging its badge
+                full = self.menus.has_badge(*BADGE)
+                if full:
+                    log.warning("achievements badge still lit after claiming - reading the whole list")
+            if full:
+                self._ach_at = time.time()
+                _ach_mark(self._ach_at)
+                set_state("scanning achievements, claiming rewards")
+                ach.scan(collect=True)
+                if self.menus.has_badge(*BADGE):
+                    log.warning("achievements badge still lit after a full scan - ignoring it until the next one")
+                    _write_stamp(ACH_MUTE, self._ach_at)
+        except (FocusLost, Aborted):
+            raise
+        except Exception:
+            log.exception("achievements failed")
+        self.to_main_menu()
+
+    def _game_error(self, e, plan, code_stamp=None):
+        """After a game-loop error: bench the map only when the same map and
+        mode failed twice, and stop benching altogether when the same error
+        hits game after game - that is a bug in the bot, not a bad map (log
+        2026-10-22 02:04-02:15: one setup bug benched 13 maps for 6 h each).
+        The counts are kept on disk, so a restart does not reset them."""
+        errors = self._errors
+        sig = _error_signature(e)
+        errors["streak"] = errors["streak"] + 1 if sig == errors["sig"] else 1
+        errors["sig"] = sig
+        key = f"{plan.map}|{plan.mode_key}" if plan is not None else None
+        if key:
+            errors["maps"][key] = errors["maps"].get(key, 0) + 1
+        _save_errors(errors)
+        if errors["streak"] >= ERROR_STREAK_WAIT:
+            log.error("the same error in %d games in a row (%s: %s) - not benching maps; "
+                      "waiting 10 min for a code fix", errors["streak"], sig, e)
+            self._idle(600, f"error loop: {sig}: {str(e)[:80]}", code_stamp)
+        elif key and errors["maps"][key] >= ERROR_BENCH_AFTER:
+            self.bench(plan.map, plan.mode_key, hours=6, why=f"error twice: {sig}")
+            errors["maps"].pop(key)
+            _save_errors(errors)
+        elif key:
+            log.warning("%s %s failed (%s) - it is benched only if it fails again", plan.map, plan.mode_key, sig)
+
+    def _game_done(self, plan):
+        """A game ran to its end: the error streak and this map's count reset."""
+        self._errors["sig"], self._errors["streak"] = None, 0
+        self._errors["maps"].pop(f"{plan.map}|{plan.mode_key}", None)
+        _save_errors(self._errors)
 
     def relaunch_game(self, wait=90):
         """BTD6 closed or crashed: start it again through Steam and reattach."""
@@ -906,4 +1172,9 @@ class Bot:
                 reasons=reasons, phase=phase, p_win=round(c.p, 3),
                 expected_minutes=round(c.minutes, 1), expected_xp=0, expected_mm=0,
                 score=round(c.score, 1), first_time=c.first)
+        # Nothing to play (run() then idles): say why. The planner only offers
+        # first-time medals that clear their win-chance bar; its first reason
+        # line explains an empty list.
+        log.warning("%s", "nothing to play right now: every winnable first-time medal is "
+                          "benched after a recent loss or error" if cands else reasons[0])
         return None

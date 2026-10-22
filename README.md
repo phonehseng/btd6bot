@@ -92,12 +92,13 @@ wrong and why: they become the narration.
 | `strategy.py` | Plays YAML build plans (`strategies/`). Plans use roles such as *dps*, *support*, *exit* or *far* instead of coordinates, so one plan works on every map. If lives drop, it panic-buys defense. |
 | `match.py` | One game. It sets up a defense first (no round starts undefended), then keeps 2× speed with auto-start, traces the track, and handles level-ups and popups. A game paused by a popup is detected because the screen stops changing. |
 | `menus.py` | Recognizes screens by OCR keywords. Never clicks purchase buttons or a Monkey Money continue. |
-| `planner.py` / `account.py` | Picks the next map, mode and strategy by expected value per minute: XP, Monkey Money, new medals, unlocks, and win probability learned from past results. |
+| `planner.py` / `account.py` | Picks the next medal (map and mode) and strategy: Hard first, then the Hard sub-modes up to CHIMPS, then Medium and Easy. Within that order it ranks by expected value per minute: XP, Monkey Money, new medals, unlocks, and win probability learned from past results. It only plays medals the account does not have yet, and only when the win chance clears the bar. When nothing like that is left, it waits instead of replaying. Tower XP counts extra for towers that still lack their paragon, most for the one closest to unlocking it, but only in games the planner is sure of (`python bot.py plan` lists them). |
 | `runner.py` | The loop: main menu → plan → search map → difficulty → mode → play → record. |
 
 ## Rules it follows
 
 - Never lose: overbuild rather than risk it, and never start a round with no towers.
+- Never replay a map/mode that is already beaten: a replay pays about a fifth of the first-time Monkey Money and gives no medal or unlock. When every unlocked map/mode is beaten or not winnable yet, the bot waits.
 - Never spend Monkey Money on continues. Never click real-money or store buttons.
 - Single-player only.
 

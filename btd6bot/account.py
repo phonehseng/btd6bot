@@ -4,7 +4,8 @@ Everything the planner needs to know about progress lives here and is
 persisted to ``data/account.json`` with an atomic write:
 
 * player level / XP, Monkey Money (MM), Monkey Knowledge (MK)
-* unlocked towers, heroes and per-tower upgrade tiers + unspent tower XP
+* unlocked towers, heroes and per-tower upgrade tiers + unspent tower XP,
+  and which towers have their paragon unlocked
 * medals per map and mode, per-map stats, observed MM rewards
 * per (map, mode, strategy) win/loss stats used by the planner to learn
   which strategy actually works where.
@@ -188,8 +189,8 @@ _INTERMEDIATE = [
     "Spring Spring", "KartsNDarts", "Moon Landing", "Haunted", "Downstream",
     "Firing Range", "Cracked", "Streambed", "Chutes", "Rake", "Spice Islands",
 ]
-# UNVERIFIED: sources disagree whether Ship Capture (v57) is Intermediate or
-# Advanced; the account's map_category_overrides fixes it once seen in-game.
+# Ship Capture (v57) is Advanced per the game's own map data
+# (GAME_MAP_CATEGORIES below), which overrides these lists wherever they differ.
 _ADVANCED = [
     "Off The Coast", "Cornfield", "Underground", "High Finance", "Another Brick",
     "Peninsula", "Pat's Pond", "Cargo", "Spillway", "Geared", "Mesa", "X Factor",
@@ -256,6 +257,50 @@ def register_map(name: str, category: str) -> bool:
 
 _load_discovered_maps()
 
+# The game's own map list (gamedata.py extracts its MapSet to this file): every
+# map's difficulty category, i.e. the map-select tab it is listed under. When
+# present it is the truth for categories - the lists above are only a fallback
+# for a machine where the game data has not been extracted yet.
+GAME_MAPS_FILE = PROJECT_ROOT / "data" / "game_data" / "maps.json"
+
+
+def _game_map_categories() -> dict[str, str]:
+    """{display name: category} for the maps the game data knows.
+
+    The game's ids are display names without spaces or punctuation
+    ("AdorasTemple"), except a few older ones; for those the map-select image
+    name helps ("Tutorial" shows "MapSelectMonkeyMeadowButton"). The rest
+    ("TownCentre", "ThreeMinesAround") pair up with the one remaining
+    display name they are close to."""
+    import difflib
+    try:
+        entries = json.loads(GAME_MAPS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out, unmatched = {}, []
+    for e in entries:
+        cat = e.get("category")
+        if cat not in CATEGORY_XP_MULT or e.get("browser_only") or e.get("debug"):
+            continue
+        keys = [_norm(k) for k in (e.get("id"), e.get("sprite")) if k]
+        name = next((_MAP_BY_NORM[k] for k in keys if k in _MAP_BY_NORM), None)
+        if name:
+            out[name] = cat
+        elif keys:
+            unmatched.append((keys[0], cat))
+    # close spellings, only among names nothing else claimed (so "Muddy
+    # Puddles" can never be taken for "Bloody Puddles")
+    left = {_norm(m): m for m in MAPS if m not in out}
+    for key, cat in unmatched:
+        hit = difflib.get_close_matches(key, list(left), n=1, cutoff=0.85)
+        if hit:
+            out[left.pop(hit[0])] = cat
+    return out
+
+
+GAME_MAP_CATEGORIES = _game_map_categories()
+MAPS.update({m: c for m, c in GAME_MAP_CATEGORIES.items() if m in MAPS})
+
 
 def canonical_map(name: str) -> str:
     """Map an OCR'd / loosely typed name onto the canonical display name."""
@@ -289,13 +334,23 @@ class AccountState:
     unlocked_heroes: set[str] = field(default_factory=lambda: set(STARTING_HEROES))
     tower_xp: dict[str, float] = field(default_factory=dict)       # unspent per tower
     unlocked_upgrades: dict[str, list[int]] = field(default_factory=dict)  # tower -> [p1,p2,p3]
+    # tower -> is its paragon unlocked? Read from the upgrade tree (purple
+    # background) by xpspend.sync_all. A tower missing here has not been read
+    # yet, so its paragon state is unknown.
+    paragons: dict[str, bool] = field(default_factory=dict)
     mk_points: int = 0                  # unspent
     mk_unlocked: list[str] = field(default_factory=list)
     medals: dict[str, dict[str, bool]] = field(default_factory=dict)
     map_stats: dict[str, dict[str, Any]] = field(default_factory=dict)
     strategy_stats: dict[str, dict[str, Any]] = field(default_factory=dict)
     pending_tower_choices: list[str] = field(default_factory=list)  # categories awaiting a pick
+    # map -> category, for maps whose category the game data does not give
+    # (only then: GAME_MAP_CATEGORIES wins over any override)
     map_category_overrides: dict[str, str] = field(default_factory=dict)
+    # tower -> {"paths": {"1": [tier, xp cost]}, "xp": tower XP seen, "at": unix
+    # time}: the lowest tier per upgrade path the Monkeys menu showed as too
+    # expensive (xpspend.py skips the menu for it until the tower plays again)
+    xp_short: dict[str, dict[str, Any]] = field(default_factory=dict)
     # category -> [map wins counted by the game, wins needed], read from the
     # bar at the top of each map-select category ("7 / 12"); absent = unknown
     category_progress: dict[str, list[int]] = field(default_factory=dict)
@@ -336,13 +391,18 @@ class AccountState:
         st.unlocked_heroes = set(raw.get("unlocked_heroes", STARTING_HEROES))
         st.tower_xp = {k: float(v) for k, v in raw.get("tower_xp", {}).items()}
         st.unlocked_upgrades = {k: list(v) for k, v in raw.get("unlocked_upgrades", {}).items()}
+        st.paragons = {k: bool(v) for k, v in raw.get("paragons", {}).items()}
         st.mk_points = int(raw.get("mk_points", 0))
         st.mk_unlocked = list(raw.get("mk_unlocked", []))
         st.medals = {k: dict(v) for k, v in raw.get("medals", {}).items()}
         st.map_stats = raw.get("map_stats", {})
         st.strategy_stats = raw.get("strategy_stats", {})
         st.pending_tower_choices = list(raw.get("pending_tower_choices", []))
-        st.map_category_overrides = dict(raw.get("map_category_overrides", {}))
+        # an override for a map the game data knows is at best redundant and at
+        # worst wrong (a bad sweep once put six Beginner maps under "expert")
+        st.map_category_overrides = {m: c for m, c in raw.get("map_category_overrides", {}).items()
+                                     if m not in GAME_MAP_CATEGORIES}
+        st.xp_short = {k: dict(v) for k, v in raw.get("xp_short", {}).items()}
         st.category_progress = {k: list(v) for k, v in raw.get("category_progress", {}).items()}
         st.observed_upgrade_costs = raw.get("observed_upgrade_costs", {})
         st.games_played = int(raw.get("games_played", 0))
@@ -360,6 +420,7 @@ class AccountState:
             "unlocked_heroes": sorted(self.unlocked_heroes),
             "tower_xp": self.tower_xp,
             "unlocked_upgrades": self.unlocked_upgrades,
+            "paragons": self.paragons,
             "mk_points": self.mk_points,
             "mk_unlocked": self.mk_unlocked,
             "medals": self.medals,
@@ -367,6 +428,7 @@ class AccountState:
             "strategy_stats": self.strategy_stats,
             "pending_tower_choices": self.pending_tower_choices,
             "map_category_overrides": self.map_category_overrides,
+            "xp_short": self.xp_short,
             "category_progress": self.category_progress,
             "observed_upgrade_costs": self.observed_upgrade_costs,
             "games_played": self.games_played,
@@ -413,8 +475,27 @@ class AccountState:
 
     # ------------------------------------------------------------ map queries
     def map_category(self, map_name: str) -> str:
+        """The game data's category, else one seen in-game, else our list's."""
         m = canonical_map(map_name)
-        return self.map_category_overrides.get(m) or MAPS[m]
+        return GAME_MAP_CATEGORIES.get(m) or self.map_category_overrides.get(m) or MAPS[m]
+
+    def note_map_category(self, map_name: str, category: str) -> bool:
+        """The map-select sweep read this map on `category`'s pages.
+
+        Only a map the game data does not know takes an override from that,
+        and a map seen in its own (listed) category loses any override it
+        had - before, overrides were only ever added, so one bad sweep stuck
+        forever. Returns False when the game data disagrees with the page,
+        which means the sweep's page category was wrong."""
+        m = canonical_map(map_name)
+        if m in GAME_MAP_CATEGORIES:
+            self.map_category_overrides.pop(m, None)
+            return GAME_MAP_CATEGORIES[m] == category
+        if MAPS.get(m) == category:
+            self.map_category_overrides.pop(m, None)
+        else:
+            self.map_category_overrides[m] = category
+        return True
 
     def has_medal(self, map_name: str, mode: str) -> bool:
         return bool(self.medals.get(canonical_map(map_name), {}).get(mode))
@@ -548,6 +629,16 @@ class AccountState:
         events: list[str] = []
         first_time = not self.has_medal(m, mode)
         self.games_played += 1
+
+        # A first win on a map moves the game's "N / M map wins" bar of every
+        # still-locked category by one (the map-select sweep saw 7/12 and 7/20
+        # become 8/12 and 8/20 after one such win). Counting it here keeps
+        # category_unlocked() right without re-reading the map-select pages
+        # after every game.
+        if won and not any(self.medals.get(m, {}).values()):
+            for seen in self.category_progress.values():
+                if seen[0] < seen[1]:
+                    seen[0] += 1
 
         # medals
         if won and first_time:
