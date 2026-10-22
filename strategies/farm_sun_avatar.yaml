@@ -19,15 +19,18 @@ plan:
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 0.9]}
   - {do: upgrade, id: n2, to: 1-0-1}
   - {do: place, id: f1, kind: farm, role: far}
+  - {do: upgrade, id: f1, to: 0-0-3}   # Marketplace first: no bananas to collect
   - {do: upgrade, id: f1, to: 2-0-3}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   - {do: upgrade, id: n1, to: 2-0-2}
   - {do: place, id: f2, kind: farm, role: far}
+  - {do: upgrade, id: f2, to: 0-0-3}   # Marketplace first: no bananas to collect
   - {do: upgrade, id: f2, to: 2-0-3}
   - {do: upgrade, id: n1, to: 3-0-2}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: n2, to: 2-0-3}
   - {do: place, id: f3, kind: farm, role: far}
+  - {do: upgrade, id: f3, to: 0-0-3}   # Marketplace first: no bananas to collect
   - {do: upgrade, id: f3, to: 2-0-3}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}

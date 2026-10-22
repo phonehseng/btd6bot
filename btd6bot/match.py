@@ -9,6 +9,7 @@ from .abilities import AbilityPlanner
 from .maplearn import PathTracer
 
 log = logging.getLogger("match")
+BANANA_EVERY = 2.0   # seconds between passes over the bananas around farms
 
 
 class LivesTracker:
@@ -100,6 +101,7 @@ class Match:
         self._round_cand, self._round_votes = None, 0
         self._last_buy = time.time()
         self._last_wait_log = 0.0
+        self._t_bananas = 0.0      # last pass over the farms' bananas
         self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
         self._in_round = False
 
@@ -256,6 +258,12 @@ class Match:
                     if dropped:
                         self.stats["panic"] += 1
                     t_hud = 0  # re-read cash right away after spending
+                # bananas pay only when the cursor passes over them
+                if now - self._t_bananas > BANANA_EVERY:
+                    self._t_bananas = now
+                    got = self.g.collect_bananas()
+                    if got:
+                        self.stats["banana_moves"] = self.stats.get("banana_moves", 0) + got
                 st = self.g.button_state()
                 if st in ("play_idle", "play_run", "play_fast"):
                     self._in_round = st != "play_idle"

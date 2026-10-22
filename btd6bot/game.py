@@ -116,6 +116,70 @@ class Game:
             time.sleep(0.2)
         return True
 
+    # -- banana farms -----------------------------------------------------------
+    # A banana farm drops bananas on the ground around it, and they only pay
+    # when the cursor moves over them. Path 3 tier 3 (Marketplace) and path 2
+    # tier 3 (Monkey Bank) stop the drops (cash goes straight to the player /
+    # into the bank), so only farms below both make bananas.
+    #
+    # Bananas are found by looking: bright yellow blobs near a farm that were
+    # not there when the farm was built (its first snapshot), outside the
+    # farm's own sprite. The cursor then passes over each one - no clicks.
+    BANANA_REACH = 0.10       # farthest drop from the farm, fraction of window width (estimate)
+    BANANA_HSV = ((20, 140, 190), (36, 255, 255))   # banana yellow, OpenCV HSV
+    BANANA_AREA = (0.00002, 0.0012)   # blob area, fraction of the window area
+    MAX_BANANA_MOVES = 12
+
+    @staticmethod
+    def drops_bananas(p):
+        return p.kind == "farm" and p.tiers[1] < 3 and p.tiers[2] < 3
+
+    def collect_bananas(self):
+        """Move the cursor over the bananas lying around this game's farms.
+        Returns how many were passed over."""
+        farms = [p for p in self.towers.values() if self.drops_bananas(p)]
+        if not farms:
+            return 0
+        f = self.fresh()
+        h, w = f.shape[:2]
+        reach = int(self.BANANA_REACH * w)
+        from .mapgeom import WORLD_PX_PER_UNIT_1920
+        from .placement import footprint_radius
+        own = int(1.4 * footprint_radius("farm") * WORLD_PX_PER_UNIT_1920 * w / 1920)
+        moves = 0
+        for p in farms:
+            cx, cy = int(p.x * w), int(p.y * h)
+            x0, y0, x1, y1 = max(0, cx - reach), max(0, cy - reach), min(w, cx + reach), min(h, cy + reach)
+            patch = f[y0:y1, x0:x1]
+            bg = getattr(p, "banana_bg", None)
+            if bg is None or bg.shape != patch.shape:
+                p.banana_bg = patch.copy()      # the ground before any banana fell
+                continue
+            for bx, by in self._banana_blobs(patch, bg, (cx - x0, cy - y0), reach, own, w * h):
+                if moves >= self.MAX_BANANA_MOVES:
+                    return moves
+                self.inp.move((x0 + bx) / w, (y0 + by) / h, fast=True)
+                moves += 1
+        return moves
+
+    def _banana_blobs(self, patch, bg, centre, reach, own, window_area):
+        """Centres of new yellow blobs in `patch` (vs its snapshot `bg`),
+        between the farm's own sprite (radius `own`) and `reach`."""
+        hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+        yellow = cv2.inRange(hsv, *self.BANANA_HSV)
+        changed = cv2.absdiff(cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY),
+                              cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY)) > 30
+        mask = (yellow > 0) & changed
+        ring = np.zeros(mask.shape, np.uint8)
+        cv2.circle(ring, centre, reach, 1, -1)
+        cv2.circle(ring, centre, own, 0, -1)
+        mask = (mask & (ring > 0)).astype(np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        n, _, stats, cents = cv2.connectedComponentsWithStats(mask)
+        lo, hi = (a * window_area for a in self.BANANA_AREA)
+        return [(int(cents[i][0]), int(cents[i][1])) for i in range(1, n)
+                if lo <= stats[i, cv2.CC_STAT_AREA] <= hi]
+
     # -- holding / probing ----------------------------------------------------
     def is_holding(self, f=None):
         f = f if f is not None else self.fresh()
@@ -693,34 +757,58 @@ class Game:
                 # nothing, so none is made (the caller saves up for last_price)
                 self.fail_reason = "cash"
                 return False
-            # click the path's upgrade button; fall back to the hotkey
+            # Click the path's button, then decide from the BUTTON whether the
+            # tier was bought: it then shows the next tier's price (or the XP
+            # lock). Cash alone misleads when pop income lands between the two
+            # reads: with Double Cash a click that bought a tier looked like
+            # nothing, the hotkey fallback then bought a SECOND tier, and the
+            # bot believed neither (Lost Crevasse: spike factories went
+            # 0-0-0 -> 0-0-2 in one "failed" upgrade). The hotkey is pressed
+            # only while the same price is still on the button.
             self.inp.click(*self.panel(p)["paths"][path - 1])
             time.sleep(0.3)
-            after = self.cash_stable(dx=dx)
-            if before is not None and after is not None and after >= before:
+            verdict = self._upgrade_verdict(p, path, shown, before, cost, dx)
+            if verdict == "same":
                 self.inp.press(T.UPGRADE_HOTKEYS[path - 1])
                 time.sleep(0.3)
-                after = self.cash_stable(dx=dx)
-            if after is None and before is not None and shown[1] is not None:
-                # the cash was unreadable after the click (a flash or popup);
-                # if the button now shows another price (the next tier's), it
-                # was bought. An unreadable button proves nothing either way.
-                again = self.path_costs(p)[path - 1]
-                if again[1] is not None and again != shown:
-                    after = before - shown[1]
-            if before is not None and after is not None and after < before:
+                verdict = self._upgrade_verdict(p, path, shown, before, cost, dx)
+            if verdict == "bought":
                 p.tiers[path - 1] += 1
-                p.spent += before - after
-                if p.kind != "hero":
-                    self.learn_price(p.kind, path, p.tiers[path - 1], before - after)
+                p.spent += cost or 0
                 log.info("upgraded %s -> %s", p.tid, p.crosspath)
                 return True
-            log.info("upgrade %s path %d not bought (panel %s, cash %s -> %s)",
-                     p.tid, path, costs, before, after)
+            log.info("upgrade %s path %d not bought (panel %s, cash %s)", p.tid, path, costs, before)
             self.fail_reason = "noeffect"
             return False
         finally:
             self.deselect(p)
+
+    def _upgrade_verdict(self, p, path, shown, before, cost, dx):
+        """After an upgrade click: 'bought', 'same' (the button still shows
+        the same price: the click did not register), or 'unknown'.
+
+        The button decides when it can be read: another price or the XP lock
+        means the tier was bought. A blank button (path now maxed or closed,
+        or an unreadable read) falls back to the cash, which must have
+        dropped by about the price (PRICE_BAND), not merely gone down."""
+        again = self.path_costs(p)[path - 1]
+        if shown[1] is not None and again[0] is not None:
+            if again == shown:
+                return "same"
+            if again[0] == "xp":
+                return "bought"                  # the next tier is XP-locked
+            # the next tier's price - not just any other number (an OCR slip)
+            if (p.kind != "hero" and again[1] is not None
+                    and self._tier_for_price(p.kind, path, again[1]) == p.tiers[path - 1] + 2):
+                return "bought"
+        after = self.cash_stable(dx=dx)
+        if before is not None and after is not None and cost:
+            lo, hi = self.PRICE_BAND
+            if lo * cost <= before - after <= hi * cost:
+                return "bought"
+            if after >= before:
+                return "same"
+        return "unknown"
 
     def target(self, p, mode):
         mode = mode.lower()

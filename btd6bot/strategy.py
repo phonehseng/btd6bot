@@ -1070,7 +1070,7 @@ class Executor:
             return "wait"
         if self.hold_fails.get(kind, 0) >= 6:
             return "skip"  # cannot pick it up (locked / mode-restricted / unbound)
-        spots = self.pick_spots(kind, step, n=self.SPOTS_PER_HOLD)
+        spots = self._spots_widening(kind, step)
         if not spots:
             return self._out_of_spots(step, key)
         fracs = [self.m.cell_to_frac(cx, cy) for cx, cy, _ in spots]
@@ -1109,6 +1109,33 @@ class Executor:
             self._block(cx, cy, 2)
             self._learn_blocked(kind, cx, cy)
             self.step_spot_fails[key] = self.step_spot_fails.get(key, 0) + 1
+
+    # A support tower placed "near" others (an alchemist next to the ninja it
+    # buffs) may find no free cell inside near_radius; then the radius grows
+    # by these factors, and finally the step is placed by its role alone.
+    # (Lost Crevasse Hard: the alchemist and the village were given up at
+    # once - "after 0 refused spots" - and the game was played without them.)
+    NEAR_WIDENING = (1.5, 2.2)
+
+    def _spots_widening(self, kind, step):
+        """Candidate spots for a place step, widening a `near` search that
+        finds none. Returns [] only when even the role alone has no spot."""
+        spots = self.pick_spots(kind, step, n=self.SPOTS_PER_HOLD)
+        if spots or not step.get("near"):
+            return spots
+        radius = step.get("near_radius", 9)   # pick_spots' default
+        for factor in self.NEAR_WIDENING:
+            wider = dict(step, near_radius=radius * factor)
+            spots = self.pick_spots(kind, wider, n=self.SPOTS_PER_HOLD)
+            if spots:
+                log.info("%s: no spot within %g of %s - using radius %g",
+                         step.get("id", kind), radius, step["near"], radius * factor)
+                return spots
+        anywhere = {k: v for k, v in step.items() if k not in ("near", "near_radius")}
+        spots = self.pick_spots(kind, anywhere, n=self.SPOTS_PER_HOLD)
+        if spots:
+            log.info("%s: no spot near %s - placing by role only", step.get("id", kind), step["near"])
+        return spots
 
     def _out_of_spots(self, step, key):
         """No spot was accepted for this step: SPOT_LIMIT refusals in a row,
