@@ -120,8 +120,9 @@ class Match:
     def _make_watch(self):
         try:
             lay = getattr(self.g, "lay", None) or {}
-            closes = [lay[s]["close"] for s in ("upg_left", "upg_right") if s in lay]
-            return BloonWatch(getattr(self.m, "name", None), self.m.playfield, closes)
+            panels = [lay[s]["box"] for s in ("upg_left", "upg_right") if s in lay]
+            hud = [lay[s] for s in ("lives", "cash", "round") if s in lay]
+            return BloonWatch(getattr(self.m, "name", None), self.m.playfield, panels, hud)
         except Exception as e:      # an observer must never cost a game
             log.info("bloon watch not available: %s", e)
             return None

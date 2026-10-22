@@ -21,9 +21,10 @@ Not bloons, and masked out:
   * anything that stays put for STICK_S (a tower bought after the setup),
   * spots that light up often (decorations, splashes): FLICKER_MAX,
   * the towers' own footprints and attack animations (TOWER_R),
-  * looks with an upgrade panel open (its close button differs from the
+  * looks with an upgrade panel open (most of its box differs from the
     empty map),
-  * the strip under the bot's status overlay at the top of the screen.
+  * the HUD numbers (lives, cash, round) and the strip under the bot's
+    status overlay at the top of the screen.
 
 OBSERVE ONLY for now: Match logs each round's deepest point and saves
 pictures of deep rounds in logs/bloonwatch/, and nothing is decided on it
@@ -55,8 +56,8 @@ FLICKER_MAX = 0.08      # ... above this share it is animated scenery
 TOWER_R = 0.02          # screen-width fraction masked around every tower
 OVERLAY_BOTTOM = 0.05   # the status overlay (tools/overlay.py) ends above this
 CONFIRM_DROP = 0.1      # a blob counts if one look earlier something was this close
-PANEL_PATCH = 4         # half-size (working px) of the patch at a panel's close button
-PANEL_SHARE = 0.5       # that much of the patch changed: the panel is open
+PANEL_SHARE = 0.45      # this much of an upgrade panel's box changed: the panel is open
+HUD_PAD = (0.06, 0.05)  # HUD boxes grow left (icons) and down (badges) by this much
 DEEP = 0.8              # "deep": past this share of the route
 SNAP_DEPTH = 0.9        # rounds this deep are saved as pictures ...
 SNAPS_PER_GAME = 3      # ... at most this many per game
@@ -84,17 +85,21 @@ def route_progress(track, shape, band_cells=2):
 
 
 class BloonWatch:
-    def __init__(self, map_key, playfield, panel_points=(), progress=None):
+    def __init__(self, map_key, playfield, panel_boxes=(), hud_boxes=(), progress=None):
         """map_key: the MapModel name ("<map>" or "<map> reverse").
         playfield: (x0, y0, x1, y1) screen fractions of the play field.
-        panel_points: screen fractions of the upgrade panels' close buttons.
-        progress: a ready route-progress grid (tests); else built from the
-        game's path data on first use."""
+        panel_boxes: the upgrade panels' boxes, hud_boxes the HUD numbers'
+        (screen fractions, layout.py). progress: a ready route-progress grid
+        (tests); else built from the game's path data on first use."""
         from .maplearn import GRID
         self.playfield = playfield
         self.shape = (GRID[1] * WORK_SCALE, GRID[0] * WORK_SCALE)
         self.map_key = map_key or ""
-        self.panel_px = [self._to_px(fx, fy) for fx, fy in panel_points]
+        self.panel_px = [self._box_px(b) for b in panel_boxes]
+        self.hud = np.zeros(self.shape, bool)       # never a bloon: the numbers change
+        for x0, y0, x1, y1 in hud_boxes:
+            ys, xs = self._box_px((x0 - HUD_PAD[0], y0, x1, y1 + HUD_PAD[1]))
+            self.hud[ys, xs] = True
         self._progress = progress
         self.off = progress is None and not map_key
         self._empty = []
@@ -114,6 +119,12 @@ class BloonWatch:
         x0, y0, x1, y1 = self.playfield
         h, w = self.shape
         return int((fx - x0) / (x1 - x0) * w), int((fy - y0) / (y1 - y0) * h)
+
+    def _box_px(self, box):
+        """Rows and columns (slices, working resolution) of a screen box."""
+        (x0, y0), (x1, y1) = self._to_px(box[0], box[1]), self._to_px(box[2], box[3])
+        h, w = self.shape
+        return slice(max(y0, 0), min(y1, h)), slice(max(x0, 0), min(x1, w))
 
     def progress(self):
         """The route-progress grid, or None (then the watch is off)."""
@@ -168,11 +179,9 @@ class BloonWatch:
         return self._tower_mask
 
     def _panel_open(self, new):
-        for x, y in self.panel_px:
-            patch = new[max(y - PANEL_PATCH, 0):y + PANEL_PATCH + 1, max(x - PANEL_PATCH, 0):x + PANEL_PATCH + 1]
-            if patch.size and patch.mean() > PANEL_SHARE:
-                return True
-        return False
+        """An upgrade panel covers most of its box with colours the empty map
+        never showed (a stream of bloons covers far less)."""
+        return any(new[ys, xs].size and new[ys, xs].mean() > PANEL_SHARE for ys, xs in self.panel_px)
 
     def look(self, frame, now=None, towers=()):
         """One look during a round. Returns the depth (0..1) of the deepest
@@ -199,7 +208,7 @@ class BloonWatch:
         self._t_prev = now
         self.flicker += (new.astype(np.float32) - self.flicker) * (dt / FLICKER_TAU_S)
         prog = self.progress()
-        bloon = new & ~np.isnan(prog) & (self.flicker <= FLICKER_MAX) & ~self._towers_mask(towers)
+        bloon = new & ~np.isnan(prog) & (self.flicker <= FLICKER_MAX) & ~self._towers_mask(towers) & ~self.hud
         bloon = cv2.morphologyEx(bloon.astype(np.uint8), cv2.MORPH_OPEN,
                                  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
         n, lab, stats, _ = cv2.connectedComponentsWithStats(bloon, 8)

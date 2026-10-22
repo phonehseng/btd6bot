@@ -16,7 +16,8 @@ from btd6bot.maplearn import GRID  # noqa: E402
 PF = (0.0, 0.04, 0.855, 0.96)
 W, H = 1920, 1200
 SH, SW = GRID[1] * B.WORK_SCALE, GRID[0] * B.WORK_SCALE
-CLOSE = (0.84, 0.085)                 # a panel's close button (screen fractions)
+PANEL = (0.625, 0.03, 0.85, 0.90)     # the right upgrade panel's box (layout.py)
+ROUND = (0.705, 0.06, 0.815, 0.11)     # the round counter (layout.py)
 
 # a horizontal route across the middle of the play field: progress = x
 PROGRESS = np.full((SH, SW), np.nan, np.float32)
@@ -38,7 +39,7 @@ def with_bloon(f, fx, r=18, colour=(40, 40, 230)):
 
 
 def watch():
-    w = B.BloonWatch("synthetic", PF, [CLOSE], progress=PROGRESS.copy())
+    w = B.BloonWatch("synthetic", PF, [PANEL], [ROUND], progress=PROGRESS.copy())
     for i in range(B.EMPTY_FRAMES):
         w.learn_empty(background(i))
     assert w.ready()
@@ -87,9 +88,21 @@ def test_known_towers_are_masked():
 def test_an_open_panel_does_not_count():
     w = watch()
     f = background(0)
-    cx, cy = int(CLOSE[0] * W), int(CLOSE[1] * H)
-    cv2.rectangle(f, (cx - 40, cy - 40), (cx + 40, cy + 40), (20, 60, 120), -1)
+    cv2.rectangle(f, (int(PANEL[0] * W), int(PANEL[1] * H)), (int(PANEL[2] * W), int(PANEL[3] * H)),
+                  (20, 60, 120), -1)
     assert w.look(f, now=0.0) is None
+
+
+def test_hud_numbers_changing_are_not_bloons_or_a_panel():
+    # Chutes: the round counter changing every round read as an open panel
+    w = B.BloonWatch("synthetic", PF, [PANEL], [ROUND], progress=np.full((SH, SW), 0.9, np.float32))
+    for i in range(B.EMPTY_FRAMES):
+        w.learn_empty(background(i))
+    for i in range(6):
+        f = background(i)
+        cv2.putText(f, f"{11 + i}/40", (int(ROUND[0] * W), int(ROUND[3] * H)), cv2.FONT_HERSHEY_SIMPLEX, 2.0,
+                    (255, 255, 255), 6)
+        assert w.look(f, now=i * 0.2) == 0.0
 
 
 def test_off_without_a_map():
