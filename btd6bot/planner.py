@@ -199,9 +199,12 @@ class PlannerConfig:
     # while Hard is blocked, Medium/Easy games should build the Hard roster.
     hard_build_xp_weight: float = 1.5
     # Paragon focus (see paragon_status): XP into towers still short of their
-    # paragon counts this much extra, times how close each tower is. With 1.0,
-    # XP into a tower at most one Hard game away from its paragon counts double.
-    paragon_xp_weight: float = 1.0
+    # paragon counts this much extra, times how close each tower is. With 3.0,
+    # XP into a tower at most one Hard game away from its paragon counts four
+    # times. The owner: "a large part of the script should be to help unlock
+    # needed paragons" - among confident games, the build that feeds the
+    # nearest paragon wins (every tower has a solo build: strategies/generated).
+    paragon_xp_weight: float = 3.0
     # "Close" means at most this much tower XP missing: one full Hard game
     # (rounds 3-80) on a beginner map, from the round XP table (126,150).
     paragon_reach_xp: float = float(rounds_xp(MODES["hard"].start_round, MODES["hard"].end_round))
