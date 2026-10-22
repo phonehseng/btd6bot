@@ -793,9 +793,11 @@ def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
 # when the defence cannot be afforded in time - and map difficulty mostly
 # acts through that - so with twice the money the chance of LOSING is
 # multiplied by this factor. An estimate: the per-strategy calibration and the
-# win/loss record correct it as games are played. (Two Hard games on the
-# main account right after it was introduced: 2 wins, 0 lives lost.)
-DOUBLE_CASH_LOSS_FACTOR = 0.35
+# win/loss record correct it as games are played. First set to 0.35 after
+# two clean Hard wins; the next hour lost 6 of 7 Hard games rated 0.85-0.92
+# (bad placement and unspent cash, not money), so it is 0.6 until the
+# record shows better.
+DOUBLE_CASH_LOSS_FACTOR = 0.6
 
 
 # Map fit (mapfit.py): the share of the early track that the plan's damage
@@ -1467,16 +1469,24 @@ def _tier(c: _Cand, cfg: PlannerConfig) -> str | None:
 # a near-certain one: losses are never acceptable.
 CONFIDENT_P = 0.85
 
+# The owner's preferred plans: within a tier and confidence class they come
+# first. Sniper Elite Defender + a radar village shoots the whole map from
+# wherever there is room ("they can solo many maps"), the answer to maps
+# with little land near the track.
+PREFERRED_STRATEGIES = ("hard_sniper_elite",)
+
 
 def _sort_key(c: _Cand) -> tuple:
     """Best first with reverse=True: tier, then confident games (p >=
-    CONFIDENT_P), then (H/HS) learned tracks, then score - or p in HF, the
+    CONFIDENT_P), then the owner's preferred plans (PREFERRED_STRATEGIES),
+    then (H/HS) learned tracks, then score - or p in HF, the
     tier that is about safety."""
     rank = -TIERS.index(c.tier)
     confident = 1 if c.p >= CONFIDENT_P else 0
+    preferred = 1 if c.s.id in PREFERRED_STRATEGIES else 0
     learned = 1 if c.tier in ("H", "HS") and c.learned else 0
     within = c.p if c.tier == "HF" else c.score
-    return (rank, confident, learned, within)
+    return (rank, confident, preferred, learned, within)
 
 
 def _open_unearned(account: AccountState, modes: Iterable[str]) -> bool:

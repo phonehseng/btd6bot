@@ -129,7 +129,11 @@ class Match:
             max_seconds = 150
             log.info("game starts at round %d (Fast Track?) - building the full defence first", rnd)
         # failed spots are blocked one by one, so keep trying for a while
-        # before concluding nothing can be placed (never start undefended)
+        # before concluding nothing can be placed (never start undefended).
+        # On a late (Fast Track) start every dollar goes in before Play: Dark
+        # Path Hard started round 22 with $6,025 unspent - the old loop gave up
+        # after 4 idle passes whatever the cash - and lost 47 lives in seconds.
+        cash = None
         while time.time() - t < max_seconds and idle < 8:
             cash = self.g.cash_stable()
             bought = self.ex.tick(cash, rnd)
@@ -139,8 +143,11 @@ class Match:
                 idle = 0
             else:
                 idle += 1
-            if self.ex.defended() and idle >= 2 and (not late or (cash or 0) < 600 or idle >= 4):
+            if self.ex.defended() and idle >= 2 and (not late or (cash or 0) < 600):
                 break
+        if late and cash is not None and cash >= 600:
+            log.warning("starting round %s with $%d unspent: %s", rnd, cash,
+                        getattr(self.ex, "waiting", "nothing more could be bought"))
         if not self.ex.defended():
             self._place_starter(rnd)
         return self.ex.defended()
@@ -246,7 +253,10 @@ class Match:
                         last_round = rnd
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
                 saving = getattr(self.ex, "wait_cost", None) and cash is not None                     and cash < self.ex.wait_cost and not dropped
-                patience = 40 if saving else 12  # saving up for a big upgrade is fine, briefly
+                # Saving up for a big upgrade is fine, briefly - these are seconds
+                # of fast-forward, several rounds; never while lives are falling
+                # (losses showed $3-6k idle during leaks).
+                patience = 0 if dropped else (12 if saving else 3)
                 if not bought and cash is not None and cash > 800 and now - self._last_buy > patience:
                     # cash is piling up while the plan waits: say why, then spend it
                     if now - self._last_wait_log > 20:
@@ -269,7 +279,7 @@ class Match:
                     self._in_round = st != "play_idle"
                 if st == "play_run":
                     self.g.go_fast(allow_start=False)
-                elif st == "play_idle" and self.ex.defended():
+                elif st == "play_idle" and self.ex.defended() and not self._hold_round(last_round, cash):
                     self.g.go_fast(allow_start=True)
                     self._in_round = True
             if self.g.towers and (dropped or now - t_ability > 1.0):
@@ -277,6 +287,17 @@ class Match:
                 self._abilities(last_round, dropped)
             time.sleep(0.02)
         return self._finish("timeout", last_round)
+
+    def _hold_round(self, rnd, cash):
+        """Keep the next round from starting while it brings a bloon the defence
+        cannot pop and the answer is affordable now (Executor.hold_round; the
+        executor bounds the wait, so a failing purchase never stalls a game)."""
+        hold = getattr(self.ex, "hold_round", None)
+        try:
+            return bool(hold and hold(rnd, cash))
+        except Exception as e:   # the check must never stop the game from going on
+            log.warning("hold_round failed: %r", e)
+            return False
 
     def _frozen(self, f, now):
         """True if the play field has not changed for ~2 s (game paused by a popup)."""

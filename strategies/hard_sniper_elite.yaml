@@ -1,0 +1,79 @@
+# Sniper Elite Defender (Hard and its sub-modes that allow snipers + a village).
+#
+# Snipers shoot anywhere on the map, so where they stand hardly matters -
+# the answer to maps where land near the track is scarce (Castle Revenge:
+# only a few castle tops are placeable; Luminous Cove: only the bottom rock)
+# and to the bad placements behind six Hard losses on 2026-10-22. The owner's
+# favourite: "they can solo many maps when placed right".
+#
+# Build (prices from the decoded game model, Hard):
+#   * snipers 2-0-x: Full Metal Jacket pops lead/black/frozen, Large Caliber
+#     doubles damage; path 3 is attack speed: Fast Firing, Even Faster Firing,
+#     Semi-Automatic, Full Auto Rifle (2-0-4, $4,430), and ONE Elite Defender
+#     (2-0-5, $16,090 - a tier 5 can be bought once per game), which fires
+#     faster the further bloons get and after lives are lost.
+#   * a village at the middle of the sniper group: Radar Scanner (0-2-0)
+#     gives camo detection to every tower in its radius (2-0-x snipers have
+#     none of their own); Bigger Radius + Jungle Drums (2-x-x) make the group
+#     larger and 15% faster; Monkey Intelligence Bureau (0-3-0) later lets
+#     them pop every bloon type.
+#   So every sniper after the first stands near the village (role support,
+#   near v1): its range does not need the track, its camo needs the village.
+#   * one boomerang for the dense waves (round 63: 122 ceramics + 75 leads),
+#     which single-target snipers handle worst: Glaive Ricochet + Red Hot
+#     Rangs (3-0-2, pops lead), later Glaive Lord (5-0-2) - the owner's other
+#     favourite. Placed by role dps, where it covers the most track (loops).
+#   * a spike factory at the exit catches the few bloons that slip through.
+#
+# Fast Track starts Hard at round ~22 with ~$9,700 (Double Cash doubles the
+# income, not that money): the opening below costs about that, so the whole
+# group stands before the first round.
+id: hard_sniper_elite
+hero: etienne
+modes: [hard, double_hp, half_cash, abr]
+planner:
+  towers: {sniper: [2, 0, 5], village: [2, 3, 0], boomerang: [5, 0, 2], spike: [2, 0, 4]}
+  # Untested on this account: the planner caps unproven Hard priors at 0.85
+  # and its win/loss record takes over after a few games.
+  base_success: {hard: 0.88, double_hp: 0.8, half_cash: 0.75, abr: 0.8}
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps}
+  - {do: upgrade, id: s1, to: 2-0-2}
+  - {do: place, id: v1, kind: village, role: support, near: [s1], near_radius: 8}
+  - {do: upgrade, id: v1, to: 0-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: s2, kind: sniper, role: support, near: [v1], near_radius: 10}
+  - {do: upgrade, id: s2, to: 2-0-2}
+  - {do: place, id: s3, kind: sniper, role: support, near: [v1], near_radius: 10}
+  - {do: upgrade, id: s3, to: 2-0-2}
+  - {do: upgrade, id: s1, to: 2-0-4}
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: upgrade, id: s2, to: 2-0-4}
+  - {do: place, id: s4, kind: sniper, role: support, near: [v1], near_radius: 11}
+  - {do: upgrade, id: s4, to: 2-0-4}
+  - {do: upgrade, id: s3, to: 2-0-4}
+  - {do: place, id: b1, kind: boomerang, role: dps, segment: [0.2, 0.8]}
+  - {do: upgrade, id: b1, to: 3-0-2}
+  - {do: upgrade, id: s1, to: 2-0-5}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: upgrade, id: v1, to: 2-3-0}
+  - {do: place, id: s5, kind: sniper, role: support, near: [v1], near_radius: 12}
+  - {do: upgrade, id: s5, to: 2-0-4}
+  - {do: place, id: s6, kind: sniper, role: support, near: [v1], near_radius: 12}
+  - {do: upgrade, id: s6, to: 2-0-4}
+  - {do: upgrade, id: b1, to: 5-0-2}
+fill:
+  - {do: place, kind: sniper, role: support, near: [v1], near_radius: 13, max: 10}
+  - {do: upgrade, kind: sniper, to: 2-0-4}
+panic:
+  - {do: place, kind: sniper, role: support, near: [v1], near_radius: 13}
+  - {do: place, kind: spike, role: exit}
+answers:
+  camo: [{do: upgrade, id: v1, to: 0-2-0}]
+  lead: [{do: upgrade, id: s1, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-0-4}]
+  moab: [{do: upgrade, id: s2, to: 2-0-4}]
+  bfb: [{do: upgrade, id: s1, to: 2-0-5}]
+  zomg: [{do: upgrade, id: s3, to: 2-0-4}]
+  rush: [{do: place, id: b1, kind: boomerang, role: dps, segment: [0.2, 0.8]}, {do: upgrade, id: b1, to: 3-0-2}]
