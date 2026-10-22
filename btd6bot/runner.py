@@ -599,6 +599,12 @@ class Bot:
         if self._mm_before is not None and mm_after is not None and 0 <= mm_after - self._mm_before < 5000:
             mm = mm_after - self._mm_before
         res["mm"] = mm
+        if not won and mm and mm > 0:
+            # only a win pays Monkey Money: the victory screen came and went
+            # unseen (e.g. a click meant for the map pressed one of its buttons)
+            log.warning("game recorded as %s but paid %d Monkey Money - it was a win", res.get("outcome"), mm)
+            res["outcome"] = "victory"
+            won = True
         self.account.record_result(plan.map, plan.mode_key, plan.strategy_id, won,
                                    round_reached=res.get("round"), minutes=res.get("minutes"),
                                    mm_gained=mm, hero=hero)
