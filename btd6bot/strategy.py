@@ -615,16 +615,43 @@ def readiness(strat):
 
 
 def load_all():
-    """All strategies by id: strategies/*.yaml plus strategies/achievements/**/*.yaml.
+    """All strategies by id: strategies/*.yaml, strategies/generated/*.yaml and
+    strategies/achievements/**/*.yaml.
 
     Every strategy gets `bot_ready` (bool). Achievement strategies also get
     `source: "achievements"`, `bot_ready_reasons`, and planner.maps from `map:`.
+    Generated builds (tools/gen_builds.py: one solo XP build per tower) get
+    `source: "generated"` and `bot_ready_reasons`; one that does not parse is
+    skipped and one that fails readiness() is never auto-played, so a bad
+    file there can neither stop the bot nor be played.
     Ids stay unique: a later file with a used id is skipped (logged)."""
     out = {}
     for f in sorted(STRAT_DIR.glob("*.yaml")):
         d = yaml.safe_load(f.read_text(encoding="utf-8"))
         d.setdefault("id", f.stem)
         d.setdefault("bot_ready", True)
+        out[d["id"]] = d
+    gen_dir = STRAT_DIR / "generated"
+    for f in sorted(gen_dir.glob("*.yaml")) if gen_dir.is_dir() else ():
+        try:
+            d = yaml.safe_load(f.read_text(encoding="utf-8"))
+        except Exception as e:  # a half-written or broken file must not stop the bot
+            log.error("generated strategy %s does not parse: %s", f.name, e)
+            continue
+        if not isinstance(d, dict):
+            log.error("generated strategy %s is not a mapping", f.name)
+            continue
+        d.setdefault("id", f.stem)
+        if d["id"] in out:
+            log.error("duplicate strategy id %s in %s - skipped", d["id"], f)
+            continue
+        d["source"] = "generated"
+        try:
+            reasons = readiness(d)
+        except Exception as e:
+            reasons = [f"validation failed: {e!r}"]
+        d["bot_ready"] = not reasons
+        d["bot_ready_reasons"] = reasons
         out[d["id"]] = d
     if ACH_DIR.is_dir():
         for f in sorted(ACH_DIR.rglob("*.yaml")):
@@ -1017,8 +1044,11 @@ class Executor:
         hero = self.g.hero if kind == "hero" else None
         placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
                   for p in self.g.towers.values()]
+        # the game's last round: ground that only changes later (Erosion's ice
+        # melts after round 54) is usable in a shorter game
         valid = PL.valid_spots(self.m, kind, hero, placed,
-                               where={"land"} if self.land_only else None)
+                               where={"land"} if self.land_only else None,
+                               last_round=self.rules.get("end_round"))
         covered = None if role == "support" else self._covered()
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
@@ -1249,7 +1279,8 @@ class Executor:
         placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
                   for p in self.g.towers.values()]
         valid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
-                               where={"land"} if self.land_only else None)
+                               where={"land"} if self.land_only else None,
+                               last_round=self.rules.get("end_round"))
         if valid is None:
             return []
         legal = int(valid.sum())
