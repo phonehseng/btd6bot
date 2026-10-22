@@ -45,6 +45,8 @@ class MapModel:
         self.geometry_bundle = None   # bundle file the geometry came from
         self.small_only = None        # bool grid: only small towers fit here
         self.sight = None             # bool grid: line-of-sight blockers
+        self.size_limit = None        # uint8 grid: largest tower size class allowed (1-4)
+        self.mermonkey_water = None   # bool grid: water only a Mermonkey may use
         self.valid = {}  # tower -> {"x,y": bool} placement validity cache
         self.px_per_unit = None
         # placement scan per footprint class ("land"/"water"): 0 unknown, 1 ok, 2 blocked
@@ -61,10 +63,9 @@ class MapModel:
         """Atomic write with retries (OneDrive can briefly lock files)."""
         DATA.mkdir(parents=True, exist_ok=True)
         scans = {f"scan_{k}": v for k, v in self.scan.items()}
-        if self.small_only is not None:
-            scans["geom_small_only"] = self.small_only
-        if self.sight is not None:
-            scans["geom_sight"] = self.sight
+        for key in ("small_only", "sight", "size_limit", "mermonkey_water"):
+            if getattr(self, key, None) is not None:
+                scans[f"geom_{key}"] = getattr(self, key)
         tmp = self.path.with_suffix(".tmp.npz")
         for attempt in range(5):
             try:
@@ -96,10 +97,11 @@ class MapModel:
                 m.spot_stats = meta.get("spot_stats", {})
                 m.sandbox_rounds = meta.get("sandbox_rounds", 0)
                 m.geometry_bundle = meta.get("geometry_bundle")
-                if "geom_small_only" in d.files:
-                    m.small_only = d["geom_small_only"].astype(bool)
-                if "geom_sight" in d.files:
-                    m.sight = d["geom_sight"].astype(bool)
+                for key in ("small_only", "sight", "mermonkey_water"):
+                    if f"geom_{key}" in d.files:
+                        setattr(m, key, d[f"geom_{key}"].astype(bool))
+                if "geom_size_limit" in d.files:
+                    m.size_limit = d["geom_size_limit"].astype(np.uint8)
                 for k in d.files:
                     if k.startswith("scan_"):
                         m.scan[k[5:]] = d[k]
@@ -280,14 +282,9 @@ class MapModel:
         return px / cell_px
 
     # -- choosing tower spots ---------------------------------------------
-    def score_spots(self, range_cells, segment=(0.0, 1.0), avoid=(), min_sep=3.0, near=None,
-                    near_radius=None, placement="land", extra_block=None, covered=None):
-        """Score every cell by how much (weighted) track lies within range.
-
-        segment: only count track whose progress lies in this window.
-        avoid: cells (cx, cy, r) occupied by placed towers.
-        near: (cx, cy) a spot must be within near_radius of (support towers).
-        """
+    def spot_weight(self, segment=(0.0, 1.0), covered=None):
+        """Per-cell value of track for a new tower: track in the wanted progress
+        segment, with track our towers already cover counting less."""
         mask = self.track_weight()
         if self.known() and segment != (0.0, 1.0):
             prog = self.progress_full()
@@ -299,6 +296,22 @@ class MapModel:
             # track already in range of our towers counts 30%: spreads defence
             # over every lane instead of stacking on one (multi-lane maps leak)
             weight = weight * (1.0 - 0.7 * np.clip(covered, 0, 1))
+        return weight
+
+    def score_spots(self, range_cells, segment=(0.0, 1.0), avoid=(), min_sep=3.0, near=None,
+                    near_radius=None, placement="land", extra_block=None, covered=None,
+                    valid=None):
+        """Score every cell by how much (weighted) track lies within range.
+
+        segment: only count track whose progress lies in this window.
+        avoid: cells (cx, cy, r) occupied by placed towers.
+        near: (cx, cy) a spot must be within near_radius of (support towers).
+        valid: optional bool grid of where this tower may stand (placement.py,
+               from the game's geometry incl. footprints and other towers);
+               replaces the placement-class check and the avoid list.
+        """
+        mask = self.track_weight()
+        weight = self.spot_weight(segment, covered)
         r = max(1, int(round(range_cells)))
         disk = np.zeros((2 * r + 1, 2 * r + 1), np.float32)
         cv2.circle(disk, (r, r), r, 1.0, -1)
@@ -306,12 +319,15 @@ class MapModel:
         # cannot stand on the track itself, nor where the scan found it blocked
         on_track = cv2.dilate(mask.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
         cover[on_track] = -1
-        cover[self.blocked(placement)] = -1
+        if valid is not None:
+            cover[~valid] = -1
+        else:
+            cover[self.blocked(placement)] = -1
         if extra_block is not None:
             cover[extra_block] = -1
         hh, ww = cover.shape
         yy, xx = np.mgrid[0:hh, 0:ww]
-        for ax, ay, ar in avoid:
+        for ax, ay, ar in (avoid if valid is None else ()):
             cover[(xx - ax) ** 2 + (yy - ay) ** 2 < (ar + min_sep) ** 2] = -1
         if near is not None:
             nr = near_radius or 6

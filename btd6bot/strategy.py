@@ -857,17 +857,32 @@ class Executor:
                 ys = [self.g.towers[i].y for i in ids]
                 near = self.m.frac_to_cell(sum(xs) / len(xs), sum(ys) / len(ys))
                 near_r = step.get("near_radius", 9)
+        # Where this tower fits, from the game's own map geometry: its
+        # footprint on allowed ground, clear of track, obstacles and the towers
+        # already placed (None on maps without geometry: old grid checks)
+        from . import placement as PL
+        hero = self.g.hero if kind == "hero" else None
+        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
+                  for p in self.g.towers.values()]
+        valid = PL.valid_spots(self.m, kind, hero, placed,
+                               where={"land"} if self.land_only else None)
+        covered = None if role == "support" else self._covered()
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
-                                        extra_block=self.blocked)
+                                        extra_block=self.blocked, valid=valid)
             cover[cover >= 1] = -1  # still exclude blocked/occupied
         else:
             cover = self.m.score_spots(rc, seg, self._occupied(), near=near, near_radius=near_r,
                                        placement=placement, extra_block=self.blocked,
-                                       covered=None if role == "support" else self._covered())
+                                       covered=covered, valid=valid)
         from .maplearn import spot_factor
+        cands = self.m.best_spots(cover, n=30 if valid is not None else 12)
+        if valid is not None and role not in ("support", "far") and PL.needs_sight(kind, hero):
+            # count only the track this spot can actually see past walls/blockers
+            weight = self.m.spot_weight(seg, covered)
+            cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight)) for cx, cy, _ in cands]
         ranked = sorted(((cx, cy, sc * spot_factor(self.m, kind, cx, cy))
-                         for cx, cy, sc in self.m.best_spots(cover, n=12)), key=lambda t: -t[2])
+                         for cx, cy, sc in cands), key=lambda t: -t[2])
         for cx, cy, score in ranked:
             if (kind, cx, cy) in self.failed_spots:
                 continue

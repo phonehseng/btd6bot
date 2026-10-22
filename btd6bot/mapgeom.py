@@ -122,18 +122,38 @@ def _poly_mask(polygons, proj):
     return img > 0
 
 
+# Tower size classes, from the game's TowerModel.GetTowerSize: a footprint
+# radius up to 6 is small, exactly 7 medium, exactly 8 large, anything else XL
+# (constants 6.0/7.0/8.0 read from GameAssembly.dll). Area size filters are
+# cumulative lists ("small,medium"), so an area allows sizes up to a level.
+SIZE_LEVELS = {"small": 1, "medium": 2, "large": 3, "xl": 4}
+
+
+def size_level_of_filter(text):
+    """'small,medium' -> 2; '' / '{empty}' (no filter) -> 4 (everything fits)."""
+    sizes = [s.strip().lower() for s in (text or "").split(",") if s.strip()]
+    sizes = [s for s in sizes if s in SIZE_LEVELS]
+    return max((SIZE_LEVELS[s] for s in sizes), default=4)
+
+
 def area_masks(geom, proj):
-    """{area type: bool grid} plus 'sight' for line-of-sight blockers."""
+    """Bool grids per surface type (track, water, land, unplaceable, ice,
+    removable, water_mermonkey, shallow_water), 'sight' for line-of-sight
+    blockers, and 'size_limit' (uint8): the largest tower size class allowed."""
     w, h = GRID
-    out = {t: np.zeros((h, w), bool) for t in ("track", "water", "land", "unplaceable", "sight", "small_only")}
+    names = ("track", "water", "land", "unplaceable", "ice", "removable",
+             "water_mermonkey", "shallow_water", "sight")
+    out = {t: np.zeros((h, w), bool) for t in names}
+    out["size_limit"] = np.full((h, w), 4, np.uint8)
     for a in geom.get("areas", []):
         if a.get("disabled"):
             continue
         m = _poly_mask(a["polygons"], proj)
         if a["type"] in out:
             out[a["type"]] |= m
-        if a["type"] == "land" and a.get("tower_sizes", "") not in ("", "{empty}"):
-            out["small_only"] |= m
+        level = size_level_of_filter(a.get("tower_sizes", ""))
+        if level < 4:
+            out["size_limit"][m] = np.minimum(out["size_limit"][m], level)
         if a.get("blocks_sight"):
             out["sight"] |= m
             for circle in a.get("circles", []):
@@ -181,30 +201,36 @@ def paint_paths(geom, proj):
 
 
 def apply(model, geom, aspect=1920 / 1200):
-    """Overwrite a MapModel's track and placement grids from geometry."""
+    """Overwrite a MapModel's track and placement grids from geometry.
+
+    scan["land"] / scan["water"] hold the exact surfaces (1 = a land / water
+    tower's centre may stand here as far as the ground goes, 2 = not). The
+    room each tower's footprint needs is added per tower by placement.py, and
+    spots the game refuses in play are still learned on top of these grids."""
     proj = Projection(model.playfield, aspect)
     masks = area_masks(geom, proj)
     model.heat, model.t_sum, model.t_cnt = paint_paths(geom, proj)
 
-    # Surface per cell: the map's base surface, then land/water areas on top
-    # (islands on water maps, ponds on land maps); track and unplaceable win.
+    # Surface per cell: the map's base surface, then the areas drawn on top
+    # (islands on water maps, ponds on land maps); track and obstacles win.
     base = geom.get("base", "land")
-    is_water = np.full(GRID[::-1], base == "water")
-    is_water[masks["water"]] = True
-    is_water[masks["land"]] = False
-    # maps whose base is "unplaceable" only allow towers on their land/water areas
-    no_ground = np.full(GRID[::-1], base == "unplaceable")
-    no_ground[masks["land"] | masks["water"]] = False
-    land = np.ones(GRID[::-1], np.uint8)            # 1 = placeable
-    blocked = masks["track"] | masks["unplaceable"] | is_water | no_ground
-    blocked |= masks["sight"]                        # blockers are solid objects
-    # a tower's centre also needs room for its footprint: keep 1 cell clear
-    blocked = cv2.dilate(blocked.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
-    land[blocked] = 2
-    water = np.where(is_water & ~(masks["track"] | masks["unplaceable"]), 1, 2).astype(np.uint8)
-    model.scan["land"] = land
-    model.scan["water"] = water
-    model.small_only = masks["small_only"]
+    shape = GRID[::-1]
+    land_ok = np.full(shape, base in ("land", "ice"))
+    water_ok = np.full(shape, base == "water")
+    for name in ("land", "ice"):
+        land_ok |= masks[name]
+        water_ok &= ~masks[name]
+    water_ok |= masks["water"]
+    land_ok &= ~masks["water"]
+    land_ok |= masks["shallow_water"]          # shallow water takes both kinds
+    water_ok |= masks["shallow_water"]
+    solid = masks["track"] | masks["unplaceable"] | masks["removable"] | masks["sight"]
+    solid |= model.heat > 0   # the drawn bloon lanes can poke past the track polygon on curves
+    model.scan["land"] = np.where(land_ok & ~solid, 1, 2).astype(np.uint8)
+    model.scan["water"] = np.where(water_ok & ~solid, 1, 2).astype(np.uint8)
+    model.mermonkey_water = masks["water_mermonkey"] & ~solid
+    model.size_limit = masks["size_limit"]
+    model.small_only = masks["size_limit"] <= 1
     model.sight = masks["sight"]
     model.geometry_version = geom.get("version", 1)
     log.info("%s: geometry applied (%d paths, %d areas)", model.name,

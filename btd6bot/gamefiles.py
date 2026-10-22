@@ -8,7 +8,8 @@ Inside, the map's scene holds components with readable field names:
 
   * Path   - the bloon route; its child objects are straight "LineNode"s
              and "Curve"s (Bezier control points as the curve's children)
-  * Area   - polygons with a type: 0 track, 1 water, 2 land, 3 unplaceable;
+  * Area   - polygons with a type (AREA_TYPES: track, water, land, unplaceable,
+             ice, removable obstacle, Mermonkey-only water, shallow water);
              filterInTowerSizes limits which tower sizes fit ("small");
              isBlocker/blockerCircles mark line-of-sight blockers
   * BaseArea - the surface type of everything not covered by an Area
@@ -45,9 +46,11 @@ log = logging.getLogger("gamefiles")
 ROOT = Path(__file__).resolve().parents[1]
 GEOMETRY_DIR = ROOT / "data" / "map_geometry"
 CACHE = Path.home() / ".btd6bot_cache" / "bundles"   # copies of game bundles
-GEOMETRY_VERSION = 3   # bump when the extracted format changes
+GEOMETRY_VERSION = 4   # bump when the extracted format changes
 
-AREA_TYPES = {0: "track", 1: "water", 2: "land", 3: "unplaceable"}
+# The game's AreaType enum (Assets.Scripts.Models.Map.AreaType in GameAssembly)
+AREA_TYPES = {0: "track", 1: "water", 2: "land", 3: "unplaceable", 4: "ice",
+              5: "removable", 6: "water_mermonkey", 7: "shallow_water"}
 
 
 # ---------------------------------------------------------------------------
