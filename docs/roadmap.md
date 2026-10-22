@@ -40,7 +40,9 @@ maps. Never lose, never replay a beaten map/mode.
 - [x] Sandbox track learning as fallback
 - [x] Map fit: how much of each track every tower can reach
 - [ ] Line-of-sight aware tower spots
-- [ ] Dynamic map mechanics: moving parts, sometimes-blocking windows, removable obstacles
+- [x] Dynamic map mechanics: moving parts, sometimes-blocking windows, removable obstacles
+- [x] Raised platforms placeable (the highest area decides, as in the game)
+- [ ] Buy removable obstacles when the freed space is worth it
 
 ## Account and planning
 - [x] Account detection and full sync (towers, upgrades)
@@ -49,10 +51,13 @@ maps. Never lose, never replay a beaten map/mode.
 - [x] Never replay a beaten map/mode
 - [x] Monkey Knowledge auto-spend
 - [x] Hero selection (strategy's hero equipped from the HEROES screen)
-- [x] Paragon focus: XP to towers closest to their paragon
+- [x] Paragon focus: XP to towers closest to their paragon (weighs 3x)
+- [x] A solo XP build for every tower (water towers on water maps)
+- [ ] Every paragon unlocked
 - [x] Double Cash / Fast Track read and used in win chances
 - [x] Loss circuit breaker: Easy-family medals after repeated losses
 - [x] Collection events: crates collected, reward cards turned
+- [x] Mode intro boxes closed after loading (Deflation, ...)
 - [x] Check Monkey Knowledge and achievements only when the "!" badge shows
 
 ## Game knowledge
