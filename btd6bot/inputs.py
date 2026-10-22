@@ -24,8 +24,15 @@ class Aborted(RuntimeError):
     pass
 
 
+_STOP_FILE = __import__("pathlib").Path(__file__).resolve().parents[1] / "STOP"
+
+
 def kill_requested():
-    return bool(win32api.GetAsyncKeyState(KILL_KEY) & 0x8000)
+    """Ctrl+Alt+F8 (plain F8 is too easy to hit by accident) or a STOP file."""
+    down = lambda vk: bool(win32api.GetAsyncKeyState(vk) & 0x8000)  # noqa: E731
+    if down(KILL_KEY) and down(win32con.VK_CONTROL) and down(win32con.VK_MENU):
+        return True
+    return _STOP_FILE.exists()
 
 
 class Input:
@@ -41,8 +48,15 @@ class Input:
         if self.screen.is_foreground():
             return
         self.release_all()
-        if not self.screen.focus():
-            raise FocusLost("BTD6 is not the foreground window - refusing to send input")
+        # a toast or another window took focus: wait (up to a minute) for the
+        # game to come back rather than abandoning the game in progress
+        for _ in range(30):
+            if self.screen.focus():
+                return
+            if kill_requested():
+                raise Aborted("stop requested")
+            time.sleep(2)
+        raise FocusLost("BTD6 is not the foreground window - refusing to send input")
 
     def release_all(self):
         for k in reversed(self._held_keys):
@@ -63,8 +77,11 @@ class Input:
 
     def guard_point(self, fx, fy):
         self.guard()
-        if not self.screen.owns_point(fx, fy):
-            raise FocusLost(f"another window covers the game at ({fx:.3f}, {fy:.3f}) - not clicking")
+        for _ in range(10):  # e.g. a notification sliding over the click point
+            if self.screen.owns_point(fx, fy):
+                return
+            time.sleep(2)
+        raise FocusLost(f"another window covers the game at ({fx:.3f}, {fy:.3f}) - not clicking")
 
     def click(self, fx, fy, hold=0.07):
         self.move(fx, fy)

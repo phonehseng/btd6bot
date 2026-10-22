@@ -27,6 +27,7 @@ TREE_COST = (0.03, 0.655, 0.26, 0.725)  # "UNLOCK FOR: / 2,700XP"
 TREE_XP = (0.52, 0.01, 0.70, 0.065)     # "XP: 3,373"
 TREE_TITLE = (0.28, 0.005, 0.56, 0.07)
 BACK = (0.044, 0.055)
+SHORT = {}  # tower -> cheapest XP cost it could not pay (skip until its XP grows)
 
 
 def _title_matches(title, kind):
@@ -119,6 +120,10 @@ class XpSpender:
             for kind, items in by_tower.items():
                 known = self.account.upgrades(kind)
                 items = [(p, t) for p, t in items if known[p - 1] < t]
+                # skip the trip when we already know this tower's XP is short
+                short = SHORT.get(kind)
+                if items and short is not None and                         float((self.account.tower_xp or {}).get(kind, 0) or 0) < short:
+                    continue
                 if not items or not self.open_tower(kind):
                     continue
                 blocked = set()
@@ -135,6 +140,9 @@ class XpSpender:
                     if have is None or have < cost:
                         log.info("%s path %d tier %d needs %s XP, have %s", kind, path, tier, cost, have)
                         blocked.add(path)
+                        if have is not None:
+                            self.account.tower_xp[kind] = float(have)
+                            SHORT[kind] = min(SHORT.get(kind, cost), cost)
                         continue
                     self.inp.click(*TREE_UNLOCK)
                     time.sleep(0.9)

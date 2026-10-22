@@ -12,7 +12,7 @@ python bot.py plan              # what would it play next, and why
 python bot.py status            # account summary (level, towers, medals)
 ```
 
-For unattended runs, the supervisor (`run_forever.ps1`) is installed as the Windows scheduled task **BTD6Bot**. It starts at logon, survives terminal and Claude restarts, launches BTD6 through Steam if needed, and restarts the bot if it exits. F8 stops it for good.
+For unattended runs, the supervisor (`run_forever.ps1`) is installed as the Windows scheduled task **BTD6Bot**. It starts at logon, survives terminal and Claude restarts, launches BTD6 through Steam if needed, and restarts the bot if it exits, kills it if it hangs (watchdog), and restarts BTD6 if games stop finishing. **Ctrl+Alt+F8**, or creating a file named `STOP` in the project folder, stops it for good.
 
 ```
 powershell -ExecutionPolicy Bypass -File tools\install_task.ps1   # install and start
@@ -24,7 +24,7 @@ An hourly Claude caretaker task (`btd6-bot-caretaker` in the app's Scheduled lis
 
 - Python 3.12 is installed at `%LOCALAPPDATA%\Programs\Python\Python312\python.exe`.
 - The game must run fullscreen at 1920×1200. This is the calibrated layout; other 16:10 resolutions scale.
-- **F8** stops the bot immediately.
+- **Ctrl+Alt+F8** (or a `STOP` file) stops the bot immediately; a `PAUSE` file parks it at the main menu between games.
 
 ## How it plays
 

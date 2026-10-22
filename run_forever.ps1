@@ -1,24 +1,60 @@
-# Keeps the bot running unattended: restarts it if it exits for any reason other
-# than F8 (exit code 3). Starts BTD6 through Steam if it is not running.
-# Usage:  powershell -ExecutionPolicy Bypass -File run_forever.ps1 [-Hours 10]
-param([double]$Hours = 10)
+# Supervisor: keeps the bot running forever, unattended.
+#  - restarts the bot whenever it exits (exit 3 = user stop via Ctrl+Alt+F8 or a STOP file)
+#  - watchdog: kills the bot if its log/state has not changed for 10 minutes (hung)
+#  - after 2 exits in a row without a finished game, restarts BTD6 itself
+#  - starts BTD6 through Steam whenever it is not running
+# Usage:  powershell -ExecutionPolicy Bypass -File run_forever.ps1
+param([double]$Hours = 0)   # 0 = forever
 
 $py = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
 Set-Location $PSScriptRoot
-$deadline = (Get-Date).AddHours($Hours)
 New-Item -ItemType Directory -Force logs | Out-Null
-
-while ((Get-Date) -lt $deadline) {
-    if (-not (Get-Process BloonsTD6 -ErrorAction SilentlyContinue)) {
-        "$(Get-Date -Format s) starting BTD6" | Add-Content logs\supervisor.log
-        Start-Process "steam://rungameid/960090"
-        Start-Sleep 60
+$sup = Join-Path $PSScriptRoot "logs\supervisor.log"
+$botlog = Join-Path $PSScriptRoot "logs\bot.log"
+$state = Join-Path $PSScriptRoot "logs\state.txt"
+function Note($m) {
+    for ($i = 0; $i -lt 5; $i++) {
+        try { Add-Content -Path $sup -Value "$(Get-Date -Format s) $m" -ErrorAction Stop; return } catch { Start-Sleep -Milliseconds 300 }
     }
-    $left = [math]::Max(0.1, ($deadline - (Get-Date)).TotalHours)
-    & $py bot.py run --hours $left
-    $code = $LASTEXITCODE
-    "$(Get-Date -Format s) bot exited with code $code" | Add-Content logs\supervisor.log
-    if ($code -eq 3) { break }   # F8 pressed: the user wants it stopped
-    if ($code -eq 4) { continue }  # reloading new code: restart right away
+}
+function LastChange {
+    $t = [datetime]::MinValue
+    foreach ($f in @($botlog, $state)) { if (Test-Path $f) { $w = (Get-Item $f).LastWriteTime; if ($w -gt $t) { $t = $w } } }
+    return $t
+}
+function Results { if (Test-Path $botlog) { (Select-String -Path $botlog -Pattern "RESULT" -SimpleMatch | Measure-Object).Count } else { 0 } }
+
+$deadline = if ($Hours -gt 0) { (Get-Date).AddHours($Hours) } else { [datetime]::MaxValue }
+$noResult = 0
+while ((Get-Date) -lt $deadline) {
+    if (Test-Path (Join-Path $PSScriptRoot "STOP")) { Note "STOP file present - supervisor exiting"; break }
+    if (-not (Get-Process BloonsTD6 -ErrorAction SilentlyContinue)) {
+        Note "starting BTD6"
+        Start-Process "steam://rungameid/960090"
+        Start-Sleep 75
+    }
+    $before = Results
+    $p = Start-Process -FilePath $py -ArgumentList "bot.py", "run", "--hours", "24" -WorkingDirectory $PSScriptRoot -PassThru -WindowStyle Hidden
+    while (-not $p.HasExited) {
+        Start-Sleep 30
+        if (((Get-Date) - (LastChange)).TotalMinutes -gt 10) {
+            Note "watchdog: no log activity for 10 min - killing hung bot (pid $($p.Id))"
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+            break
+        }
+    }
+    $p.WaitForExit()
+    $code = $p.ExitCode
+    Note "bot exited with code $code"
+    if ($code -eq 3) { break }        # user stop
+    if ($code -eq 5) { Start-Sleep 60; continue }   # another instance is running
+    if ((Results) -gt $before) { $noResult = 0 } elseif ($code -ne 4) { $noResult++ }
+    if ($noResult -ge 2) {
+        Note "2 exits without a finished game - restarting BTD6"
+        Stop-Process -Name BloonsTD6 -Force -ErrorAction SilentlyContinue
+        Start-Sleep 10
+        $noResult = 0
+    }
+    if ($code -eq 4) { continue }     # reload for new code: right away
     Start-Sleep 15
 }

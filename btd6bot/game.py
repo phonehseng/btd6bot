@@ -138,11 +138,13 @@ class Game:
                 # held, but the cancel X was not drawn (seen on Logs): trust the header
                 self._holding_unseen = True
                 return True
-        try:
-            from .vision import save
-            save(self.fresh(), "logs/holdfail.png")
-        except Exception:
-            pass
+        if time.time() - getattr(self, "_holdfail_saved", 0) > 600:  # a capture now and then
+            self._holdfail_saved = time.time()
+            try:
+                from .vision import save
+                save(self.fresh(), "logs/holdfail.png")
+            except Exception:
+                pass
         return False
 
     def probe_roster(self):

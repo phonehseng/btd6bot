@@ -98,7 +98,8 @@ class Match:
                 else:
                     self._off_screen(st)
                 continue
-            self.tracer.feed(f, self._exclude())
+            if self.m.rounds_traced < 25:  # the track is learned by then
+                self.tracer.feed(f, self._exclude())
             dropped = False
             if now - t_hud > 0.35:
                 t_hud = now
@@ -136,7 +137,10 @@ class Match:
                         self._round_votes += 1
                     else:
                         self._round_cand, self._round_votes = rnd, 1
-                    if last_round is None or self._round_votes >= 4:
+                    # small corrections need 4 agreeing reads, big jumps (OCR
+                    # '11' -> '711') far more - a wrong round misfires threats
+                    big = last_round is not None and abs(rnd - last_round) > 3
+                    if last_round is None or self._round_votes >= (15 if big else 4):
                         log.info("round tracking reset %s -> %s", last_round, rnd)
                         last_round = rnd
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
@@ -235,7 +239,8 @@ class Match:
             if not self.menus.dismiss_popup():
                 # full-screen announcements (new hero, rewards) continue on click
                 self._unknown = getattr(self, "_unknown", 0) + 1
-                if self._unknown >= 3:
+                from .menus import page_forbidden
+                if self._unknown >= 3 and not page_forbidden(self.menus.words):
                     log.info("unknown screen x%d - clicking to continue", self._unknown)
                     self.menus.inp.click(0.5, 0.5)
                 time.sleep(0.8)

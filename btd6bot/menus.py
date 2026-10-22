@@ -46,6 +46,18 @@ def forbidden(text):
     return any(f in n for f in FORBIDDEN)
 
 
+CONFIRM_WORDS = ("yes", "ok", "confirm", "continue", "buy", "purchase", "unlock")
+SPEND_WORDS = ("areyousure", "purchase", "buy", "spend", "cost", "for$")
+PRICE_WORDS = ("monkeymoney", "$")
+
+
+def page_forbidden(words):
+    """A purchase confirmation: spending wording next to a price. On such a page
+    no confirming button may be clicked (Monkey Money or real money)."""
+    joined = " ".join(norm(w.text) for w in words)
+    return any(sw in joined for sw in SPEND_WORDS) and any(pw in joined for pw in PRICE_WORDS)
+
+
 class Menus:
     def __init__(self, screen, inp, game=None):
         self.s = screen
@@ -112,6 +124,9 @@ class Menus:
         w = self.find(*keys, region=region)
         if not w or forbidden(w.text):
             return False
+        if page_forbidden(self.words) and any(norm(w.text).startswith(c) for c in CONFIRM_WORDS):
+            log.warning("refusing to click %r on a purchase screen", w.text)
+            return False
         log.info("click %r", w.text)
         self.inp.click(w.x, w.y + dy)
         time.sleep(0.25)
@@ -125,6 +140,17 @@ class Menus:
         # a screen offering Restart + Home is an end-of-game screen: its
         # Continue/Yes may be a paid revive, so never use those here
         endgame = self.has("restart") and self.has("home") and not self.has("pause")
+        if page_forbidden(self.words):
+            # never confirm a purchase: back out with cancel / no / close instead
+            for b in ("cancel", "no", "close", "back"):
+                w = self.find(b)
+                if w and not forbidden(w.text):
+                    log.warning("purchase screen - backing out via %r", w.text)
+                    self.inp.click(w.x, w.y)
+                    time.sleep(0.6)
+                    return True
+            log.warning("purchase screen with no way out found - not clicking")
+            return False
         for b in POPUP_BUTTONS:
             if endgame and b in ("continue", "yes", "ok"):
                 continue

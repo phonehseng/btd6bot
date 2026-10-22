@@ -8,7 +8,8 @@ $action = New-ScheduledTaskAction -Execute $ps -WorkingDirectory $root `
     -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Minimized -File `"$root\run_forever.ps1`" -Hours 24"
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-    -ExecutionTimeLimit (New-TimeSpan -Days 3) -MultipleInstances IgnoreNew
+    -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew `
+    -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
 $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName BTD6Bot -Action $action -Trigger $trigger -Settings $settings `
     -Principal $principal -Force | Out-Null

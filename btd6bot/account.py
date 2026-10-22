@@ -275,9 +275,15 @@ class AccountState:
             st = cls()
             st.path = str(p)
             return st
-        with open(p, "r", encoding="utf-8") as fh:
-            raw = json.load(fh)
-        st = cls.from_dict(raw)
+        raw = None
+        for candidate in (p, p.with_suffix(p.suffix + ".bak")):
+            try:
+                with open(candidate, "r", encoding="utf-8") as fh:
+                    raw = json.load(fh)
+                break
+            except (OSError, ValueError):
+                continue  # corrupt/locked: fall back to the last good copy
+        st = cls.from_dict(raw or {})
         st.path = str(p)
         return st
 
@@ -339,6 +345,12 @@ class AccountState:
                 fh.flush()
                 os.fsync(fh.fileno())
             last_err: Exception | None = None
+            if p.exists():  # keep the previous good copy as .bak
+                try:
+                    import shutil
+                    shutil.copy2(p, p.with_suffix(p.suffix + ".bak"))
+                except OSError:
+                    pass
             for attempt in range(10):
                 try:
                     os.replace(tmp, p)

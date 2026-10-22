@@ -135,6 +135,9 @@ def planner_specs(strats, account):
 
 class Bot:
     def __init__(self, account_path=None):
+        import ctypes
+        # ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED: no sleep, no screen-off
+        ctypes.windll.kernel32.SetThreadExecutionState(0x80000003)
         self.s = Screen()
         self.inp = Input(self.s)
         self.lay = L.get(self.s.width, self.s.height)
@@ -149,6 +152,7 @@ class Bot:
         self._ach_at = _ach_last()  # every ACH_EVERY, remembered across restarts
         self.uid = None             # signed-in account, read from Settings
         self._games_since_id = 0
+        self._mm_before = None
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -377,20 +381,42 @@ class Bot:
         res = Match(g, self.menus, model, ex, self.account,
                     on_tower_choice=tower_chooser(self.account)).play()
         won = res.get("outcome") == "victory"
-        self.account.record_result(plan.map, plan.mode_key, plan.strategy_id, won,
-                                   round_reached=res.get("round"), minutes=res.get("minutes"),
-                                   hero=hero)
-        self.account.save()
         if won:
             self.menus.leave_victory()
         else:
             self.menus.leave_defeat()
+        # the Monkey Money total on the main menu, before vs after, is the game's real reward
+        mm_after = self.read_mm()
+        mm = None
+        if self._mm_before is not None and mm_after is not None and 0 <= mm_after - self._mm_before < 5000:
+            mm = mm_after - self._mm_before
+        res["mm"] = mm
+        self.account.record_result(plan.map, plan.mode_key, plan.strategy_id, won,
+                                   round_reached=res.get("round"), minutes=res.get("minutes"),
+                                   mm_gained=mm, hero=hero)
+        self.account.save()
         return res
+
+    def read_mm(self):
+        """Monkey Money on the main menu (two agreeing reads), else None."""
+        if self.menus.identify() != "main_menu":
+            return None
+        from .hud import parse_int, rec_text
+        from .vision import crop
+        reads = []
+        for _ in range(2):
+            reads.append(parse_int(rec_text(crop(self.s.grab(), (0.895, 0.025, 0.955, 0.09)))[0]))
+            time.sleep(0.2)
+        if reads[0] is not None and reads[0] == reads[1]:
+            self.account.monkey_money = reads[0]
+            return reads[0]
+        return None
 
     def run(self, hours=8.0):
         end = time.time() + hours * 3600
         code_stamp = _code_stamp()
         while time.time() < end:
+            plan = None
             if PAUSE_FILE.exists():
                 self.pause_at_menu()
                 continue
@@ -426,10 +452,13 @@ class Bot:
                     self.to_main_menu()
                 plan = self.next_plan()
                 if plan is None:
-                    log.error("planner has nothing to play")
-                    return
+                    log.error("planner has nothing to play - waiting 30 min (benches expire, XP grows)")
+                    set_state("idle: nothing to play")
+                    time.sleep(1800)
+                    continue
                 log.info("NEXT: %s", plan.reason)
                 set_state(f"playing {plan.map} {plan.mode_key}")
+                self._mm_before = self.read_mm()
                 try:  # spend tower XP on this plan's upgrades before it needs them
                     got = unlock_for_strategy(self.s, self.inp, self.menus, self.account,
                                               self.strats[plan.strategy_id])
@@ -446,11 +475,13 @@ class Bot:
                 if not started:
                     log.error("failed to start %s %s - skipping it this session",
                               plan.map, plan.mode_key)
-                    self.bad.add((plan.map, plan.mode_key))
+                    self.bench(plan.map, plan.mode_key, hours=2, why="failed to start")
                     self.failures += 1
                     continue
                 res = self.play(plan)
                 self._games_since_id += 1
+                if res.get("outcome") != "victory":
+                    self.bench(plan.map, plan.mode_key, hours=12, why=res.get("outcome", "loss"))
                 log.info("RESULT %s", res)
                 self.failures = 0
             except Aborted:
@@ -463,6 +494,8 @@ class Bot:
             except Exception:
                 log.exception("game loop error - recovering to main menu")
                 self.failures += 1
+                if plan is not None:
+                    self.bench(plan.map, plan.mode_key, hours=6, why="error")
 
     def _check_account(self, force=False):
         """Read the signed-in account's User ID; switch state files if it changed,
@@ -488,6 +521,33 @@ class Bot:
             sync_all(self.s, self.inp, self.menus, self.account)
             mark_synced(uid)
             self.to_main_menu()
+
+    # -- benches: (map, mode) that just lost or broke are not retried for a while
+    def _bench_file(self):
+        return ROOT_DIR / "data" / "accounts" / f"{self.uid or 'default'}.bench.json"
+
+    def _benches(self):
+        import json
+        try:
+            d = json.loads(self._bench_file().read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            d = {}
+        now = time.time()
+        return {k: v for k, v in d.items() if v > now}
+
+    def bench(self, map_name, mode, hours, why=""):
+        import json
+        d = self._benches()
+        d[f"{map_name}|{mode}"] = time.time() + hours * 3600
+        try:
+            self._bench_file().parent.mkdir(parents=True, exist_ok=True)
+            self._bench_file().write_text(json.dumps(d), encoding="utf-8")
+        except OSError:
+            pass
+        log.warning("benched %s %s for %gh (%s)", map_name, mode, hours, why)
+
+    def benched(self, map_name, mode):
+        return f"{map_name}|{mode}" in self._benches() or (map_name, mode) in self.bad
 
     def account_selected_hero(self):
         return getattr(self.account, "selected_hero", None) or "quincy"
@@ -541,7 +601,7 @@ class Bot:
         specs = planner_specs(self.strats, self.account)
         phase, reasons, cands = rank_games(self.account, specs)
         for c in cands:
-            if (c.map, c.mode) in self.bad:
+            if self.benched(c.map, c.mode):
                 continue
             from .planner import next_game  # noqa: F401  (same scoring as next_game)
             mi = MODES[c.mode]

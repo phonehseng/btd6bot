@@ -54,12 +54,20 @@ def main():
         for line in (plan.reasons if plan else []):
             print("  ", line)
         return
+    # one bot at a time (two would fight over the mouse)
+    import win32api
+    import win32event
+    import winerror
+    _lock = win32event.CreateMutex(None, False, "Global\BTD6Bot")  # noqa: F841 (held for life)
+    if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
+        logging.getLogger("bot").warning("another bot instance is running - exiting")
+        sys.exit(5)
     from btd6bot.inputs import Aborted
     from btd6bot.runner import Bot
     try:
         Bot().run(hours=args.hours)
     except Aborted:
-        logging.getLogger("bot").warning("stopped with F8")
+        logging.getLogger("bot").warning("stopped by the user (Ctrl+Alt+F8 or STOP file)")
         sys.exit(3)  # run_forever.ps1 treats 3 as "user stop"
 
 
