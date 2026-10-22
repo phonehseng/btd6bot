@@ -50,6 +50,11 @@ SCREENS = [
 ]
 
 POPUP_BUTTONS = ["ok", "collect", "claim", "continue", "next", "close", "gotit", "awesome", "yes"]
+# After a win, "Review Map" hides the Victory screen; it comes back through a
+# blue CONTINUE button in the bottom-right corner (caption at 0.93, 0.93 of
+# the window) whose magnifier icon, not its caption, takes the click.
+REVIEW_MAP_CORNER = (0.85, 0.85)
+REVIEW_MAP_ICON_ABOVE = 0.065
 # How OCR misreads some button words in the game's font (its C looks like a
 # G or an I): find() accepts these spellings for the key on the left.
 OCR_VARIANTS = {"collect": ("collegt", "colleci"), "select": ("selegt",), "selected": ("selegted",)}
@@ -214,8 +219,14 @@ class Menus:
                 continue
             w = self.find(b)
             if w and w.conf > 0.6 and len(norm(w.text)) <= len(b) + 3 and not forbidden(w.text):
+                x, y = w.x, w.y
+                if b == "continue" and x > REVIEW_MAP_CORNER[0] and y > REVIEW_MAP_CORNER[1]:
+                    # "Review Map" after a win: only the magnifier icon above
+                    # the caption takes the click (Rake Easy: 20 minutes of
+                    # clicks on the caption did nothing)
+                    y -= REVIEW_MAP_ICON_ABOVE
                 log.info("dismiss popup via %r", w.text)
-                self.inp.click(w.x, w.y)
+                self.inp.click(x, y)
                 time.sleep(0.7)
                 return True
         return False

@@ -34,6 +34,29 @@ def test_defeat_needs_its_buttons():
     assert _screen("DEFEAT", "Restart", "Home") == "defeat"
 
 
+def _popup_click(words):
+    """Where dismiss_popup clicks on a screen showing `words` (Word list)."""
+    m = M.Menus.__new__(M.Menus)
+    m.s = None
+    m.words = words
+    clicks = []
+    m.inp = type("Inp", (), {"click": lambda self, x, y: clicks.append((round(x, 3), round(y, 3)))})()
+    sleep, M.time.sleep = M.time.sleep, lambda s: None
+    try:
+        m.dismiss_popup()
+    finally:
+        M.time.sleep = sleep
+    return clicks
+
+
+def test_review_map_continue_is_clicked_on_its_icon():
+    # Rake Easy, 2026-10-22: clicks on the caption left the game in Review Map for 20 minutes
+    corner = [Word("conTinue", 0.925, 0.927, 0.08, 0.03, 0.9)]
+    assert _popup_click(corner) == [(0.925, round(0.927 - M.REVIEW_MAP_ICON_ABOVE, 3))]
+    middle = [Word("Continue", 0.5, 0.6, 0.08, 0.03, 0.9)]
+    assert _popup_click(middle) == [(0.5, 0.6)]     # an ordinary popup: its caption
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
