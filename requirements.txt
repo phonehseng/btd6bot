@@ -1,0 +1,9 @@
+# Python 3.12 packages the bot needs (install: python -m pip install -r requirements.txt)
+numpy>=2.0                 # grids, image maths
+opencv-python>=4.9         # screen image processing
+rapidocr-onnxruntime>=1.4  # reading text on screen (OCR)
+mss>=9.0                   # screen capture fallback
+PyDirectInput>=1.0         # keyboard/mouse input the game accepts
+pywin32>=306               # window handling, focus, PrintWindow capture
+PyYAML>=6.0                # strategy files (strategies/*.yaml)
+UnityPy>=1.20              # reading map geometry from the game's asset bundles (read-only)

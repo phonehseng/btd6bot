@@ -41,6 +41,10 @@ class MapModel:
         self.t_cnt = np.zeros((h, w), np.float32)
         self.rounds_traced = 0
         self.sandbox_rounds = 0  # rounds traced in Sandbox (clean: no towers)
+        # from the game's own map files (mapgeom.py); None when not available
+        self.geometry_bundle = None   # bundle file the geometry came from
+        self.small_only = None        # bool grid: only small towers fit here
+        self.sight = None             # bool grid: line-of-sight blockers
         self.valid = {}  # tower -> {"x,y": bool} placement validity cache
         self.px_per_unit = None
         # placement scan per footprint class ("land"/"water"): 0 unknown, 1 ok, 2 blocked
@@ -57,6 +61,10 @@ class MapModel:
         """Atomic write with retries (OneDrive can briefly lock files)."""
         DATA.mkdir(parents=True, exist_ok=True)
         scans = {f"scan_{k}": v for k, v in self.scan.items()}
+        if self.small_only is not None:
+            scans["geom_small_only"] = self.small_only
+        if self.sight is not None:
+            scans["geom_sight"] = self.sight
         tmp = self.path.with_suffix(".tmp.npz")
         for attempt in range(5):
             try:
@@ -64,7 +72,8 @@ class MapModel:
                     tmp, heat=self.heat, t_sum=self.t_sum, t_cnt=self.t_cnt, **scans,
                     meta=json.dumps({"rounds_traced": self.rounds_traced, "valid": self.valid,
                                      "px_per_unit": self.px_per_unit, "playfield": self.playfield,
-                             "spot_stats": self.spot_stats, "sandbox_rounds": self.sandbox_rounds}),
+                             "spot_stats": self.spot_stats, "sandbox_rounds": self.sandbox_rounds,
+                             "geometry_bundle": self.geometry_bundle}),
                 )
                 os.replace(tmp, self.path)
                 return True
@@ -86,6 +95,11 @@ class MapModel:
                 m.px_per_unit = meta.get("px_per_unit")
                 m.spot_stats = meta.get("spot_stats", {})
                 m.sandbox_rounds = meta.get("sandbox_rounds", 0)
+                m.geometry_bundle = meta.get("geometry_bundle")
+                if "geom_small_only" in d.files:
+                    m.small_only = d["geom_small_only"].astype(bool)
+                if "geom_sight" in d.files:
+                    m.sight = d["geom_sight"].astype(bool)
                 for k in d.files:
                     if k.startswith("scan_"):
                         m.scan[k[5:]] = d[k]

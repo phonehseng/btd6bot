@@ -220,6 +220,42 @@ _MAP_BY_NORM = {_norm(m): m for m in list(MAPS) + list(EXCLUDED_MAPS)}
 _MAP_BY_NORM.update({"ouch": "#Ouch", "kartsndarts": "KartsNDarts",
                      "threeminesround": "Three Mines 'Round"})
 
+# Maps added to the game after this list was written. The map-select sweep
+# (runner.scan_all_medals) finds unknown names on the cards and records them
+# here with the category tab they were listed under, so new maps get planned,
+# learned (Sandbox track + placement scan) and played without code changes.
+DISCOVERED_MAPS_FILE = Path(__file__).resolve().parents[1] / "data" / "maps_discovered.json"
+
+
+def _load_discovered_maps():
+    try:
+        found = json.loads(DISCOVERED_MAPS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    for name, category in found.items():
+        if category in CATEGORY_XP_MULT and _norm(name) not in _MAP_BY_NORM:
+            MAPS[name] = category
+            _MAP_BY_NORM[_norm(name)] = name
+
+
+def register_map(name: str, category: str) -> bool:
+    """Remember a map seen in-game that MAPS does not know. True if new."""
+    if category not in CATEGORY_XP_MULT or _norm(name) in _MAP_BY_NORM:
+        return False
+    try:
+        found = json.loads(DISCOVERED_MAPS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        found = {}
+    found[name] = category
+    DISCOVERED_MAPS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    DISCOVERED_MAPS_FILE.write_text(json.dumps(found, indent=1, sort_keys=True), encoding="utf-8")
+    MAPS[name] = category
+    _MAP_BY_NORM[_norm(name)] = name
+    return True
+
+
+_load_discovered_maps()
+
 
 def canonical_map(name: str) -> str:
     """Map an OCR'd / loosely typed name onto the canonical display name."""

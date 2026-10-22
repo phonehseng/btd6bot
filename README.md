@@ -31,7 +31,10 @@ schtasks /end /tn BTD6Bot                                         # stop the sup
 | `screen.py` | Captures the game window with `PrintWindow`, so other windows on top don't matter. Focuses the game without sending any keystrokes. |
 | `inputs.py` | Sends input only while BTD6 is the foreground window, and clicks only where the game owns the pixel. **Never sends Esc.** |
 | `hud.py` | Reads cash, lives and round with recognition-only OCR (about 50 ms). |
-| `scanner.py` | Visits a map for the first time: holds a tower over a grid and checks whether the range circle turns red. The result is a placement map, and the thin blocked corridors reveal the track **before round 1**. |
+| `gamefiles.py` | Reads every map's exact track, placement areas (land, water, unplaceable) and line-of-sight blockers straight from the game's own asset bundles, **read-only from copies** in `~/.btd6bot_cache` (the game files are never changed). Runs at start-up and picks up new or updated maps automatically; output goes to `data/map_geometry/`. Manual run: `python -m btd6bot.gamefiles`. |
+| `mapgeom.py` | Turns that geometry into the bot's grids (track, progress from entrance to exit, where towers fit). With it, no learning or placement scan is needed. |
+| `tracklearn.py` | Fallback for a map without geometry: learns the track in Sandbox (no towers, free) by watching bloons of known colours. |
+| `scanner.py` | Fallback placement scan. Visits a map for the first time: holds a tower over a grid and checks whether the range circle turns red. The result is a placement map, and the thin blocked corridors reveal the track **before round 1**. |
 | `maplearn.py` | Watches bloons move during defended rounds to learn the exact track and how far along it each point is. Scores tower spots by how much track they cover. Results are cached in `data/maps/`. |
 | `game.py` | Places towers and verifies each placement (tower held, spot legal, cash dropped). Upgrades by clicking the tower and its path button. Upgrades still locked behind tower XP are unlocked from the in-game upgrade tree. Also handles targeting, selling and hero abilities. |
 | `strategy.py` | Plays YAML build plans (`strategies/`). Plans use roles such as *dps*, *support*, *exit* or *far* instead of coordinates, so one plan works on every map. If lives drop, it panic-buys defense. |

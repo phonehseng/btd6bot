@@ -1,0 +1,3364 @@
+{
+ "_meta": {
+  "game_version_basis": "BTD6 ~v50-57 (bloonswiki.com, read Oct 2026)",
+  "uncertain_marker": "Any value or text containing '?' is not confirmed by a reliable source.",
+  "companion_doc": "docs/tower_xp.md"
+ },
+ "xp_per_round_formula": {
+  "description": "Base XP awarded at the END of each completed round r. Fixed per round: independent of pops/damage. Same base amount for player XP, tower XP and hero XP.",
+  "piecewise": [
+   "r <= 20: 20*r + 20",
+   "21 <= r <= 50: 40*(r-20) + 420",
+   "r > 50: 90*(r-50) + 1620"
+  ],
+  "cumulative_rounds_1_to_r": [
+   "r <= 20: 10r^2 + 30r",
+   "21..50: 20r^2 - 360r + 3800",
+   "r > 50: 45r^2 - 2835r + 65050"
+  ],
+  "final_formula": "tower_xp_round = base(r) * map_difficulty_mult * (1.08 if Monkey Education else 1) * freeplay_mult(r)",
+  "rounds_beyond_140": "assumed to keep the +90/round line ?",
+  "sources": [
+   "https://www.bloonswiki.com/Tower_XP",
+   "https://www.bloonswiki.com/Experience",
+   "https://sciplypandora.github.io/static/js/hero.js"
+  ]
+ },
+ "xp_per_round": {
+  "1": 40,
+  "2": 60,
+  "3": 80,
+  "4": 100,
+  "5": 120,
+  "6": 140,
+  "7": 160,
+  "8": 180,
+  "9": 200,
+  "10": 220,
+  "11": 240,
+  "12": 260,
+  "13": 280,
+  "14": 300,
+  "15": 320,
+  "16": 340,
+  "17": 360,
+  "18": 380,
+  "19": 400,
+  "20": 420,
+  "21": 460,
+  "22": 500,
+  "23": 540,
+  "24": 580,
+  "25": 620,
+  "26": 660,
+  "27": 700,
+  "28": 740,
+  "29": 780,
+  "30": 820,
+  "31": 860,
+  "32": 900,
+  "33": 940,
+  "34": 980,
+  "35": 1020,
+  "36": 1060,
+  "37": 1100,
+  "38": 1140,
+  "39": 1180,
+  "40": 1220,
+  "41": 1260,
+  "42": 1300,
+  "43": 1340,
+  "44": 1380,
+  "45": 1420,
+  "46": 1460,
+  "47": 1500,
+  "48": 1540,
+  "49": 1580,
+  "50": 1620,
+  "51": 1710,
+  "52": 1800,
+  "53": 1890,
+  "54": 1980,
+  "55": 2070,
+  "56": 2160,
+  "57": 2250,
+  "58": 2340,
+  "59": 2430,
+  "60": 2520,
+  "61": 2610,
+  "62": 2700,
+  "63": 2790,
+  "64": 2880,
+  "65": 2970,
+  "66": 3060,
+  "67": 3150,
+  "68": 3240,
+  "69": 3330,
+  "70": 3420,
+  "71": 3510,
+  "72": 3600,
+  "73": 3690,
+  "74": 3780,
+  "75": 3870,
+  "76": 3960,
+  "77": 4050,
+  "78": 4140,
+  "79": 4230,
+  "80": 4320,
+  "81": 4410,
+  "82": 4500,
+  "83": 4590,
+  "84": 4680,
+  "85": 4770,
+  "86": 4860,
+  "87": 4950,
+  "88": 5040,
+  "89": 5130,
+  "90": 5220,
+  "91": 5310,
+  "92": 5400,
+  "93": 5490,
+  "94": 5580,
+  "95": 5670,
+  "96": 5760,
+  "97": 5850,
+  "98": 5940,
+  "99": 6030,
+  "100": 6120,
+  "101": 6210,
+  "102": 6300,
+  "103": 6390,
+  "104": 6480,
+  "105": 6570,
+  "106": 6660,
+  "107": 6750,
+  "108": 6840,
+  "109": 6930,
+  "110": 7020,
+  "111": 7110,
+  "112": 7200,
+  "113": 7290,
+  "114": 7380,
+  "115": 7470,
+  "116": 7560,
+  "117": 7650,
+  "118": 7740,
+  "119": 7830,
+  "120": 7920,
+  "121": 8010,
+  "122": 8100,
+  "123": 8190,
+  "124": 8280,
+  "125": 8370,
+  "126": 8460,
+  "127": 8550,
+  "128": 8640,
+  "129": 8730,
+  "130": 8820,
+  "131": 8910,
+  "132": 9000,
+  "133": 9090,
+  "134": 9180,
+  "135": 9270,
+  "136": 9360,
+  "137": 9450,
+  "138": 9540,
+  "139": 9630,
+  "140": 9720
+ },
+ "split_rule": {
+  "rule": "At each round end, that round's tower XP is split between TOWER TYPES in proportion to the cash currently invested (purchase + upgrades) in that type's towers on the map. Each share goes into the type's single account-wide XP pool, from which upgrades are unlocked.",
+  "formula": "xp_to_type[T] = tower_xp_round * invested_cash[T] / sum(invested_cash of all non-hero towers on map)",
+  "heroes": "Cash spent on heroes is ignored. Hero XP is a separate stream that is not split with towers (it is split evenly only between several heroes, e.g. co-op).",
+  "upgraded_vs_unupgraded": "No flat per-tower amount. A tier-5 earns more than a bare tower only because more cash is invested in it. Only the ratio matters: a lone $200 target tower with no other non-hero towers on the map receives 100% of the round's tower XP.",
+  "tower_count": "Irrelevant; many cheap towers give no advantage over one expensive tower of the same type.",
+  "sold_towers": "Get nothing (no invested cash at round end). Towers placed mid-round count if still on the map at round end.",
+  "depends_on_pops_or_damage": false,
+  "invested_cash_definition": "Price actually paid (difficulty-scaled, discounted) vs. sell value vs. base price: unknown ?. It does not matter when only one type is on the map.",
+  "insta_monkeys_paragons_subtowers": "How free Insta Monkeys, Paragons, and sub-towers count toward invested cash: unknown ?",
+  "coop": "Split first between players by their invested-cash ratio, then per type within each player.",
+  "sources": [
+   "https://www.bloonswiki.com/Tower_XP",
+   "https://www.bloonswiki.com/Co-op_(BTD6)",
+   "https://sarahs-btd6-site.onrender.com/guides/prologue/knowledge"
+  ]
+ },
+ "difficulty_multipliers": {
+  "_note": "Sources list no XP multiplier for game difficulty; harder difficulties give more XP only because they include more and later rounds. Tower prices (Easy x0.85, Hard x1.08, Impoppable ~x1.2) do not affect the ratio split. Values are 1.0 by absence of evidence ?",
+  "easy": 1.0,
+  "medium": 1.0,
+  "hard": 1.0,
+  "impoppable": 1.0,
+  "chimps": 1.0
+ },
+ "map_difficulty_multipliers": {
+  "beginner": 1.0,
+  "intermediate": 1.1,
+  "advanced": 1.2,
+  "expert": 1.3,
+  "map_editor_maps": "count as intermediate for hero XP; tower XP assumed the same ?",
+  "source": "https://www.bloonswiki.com/Map_difficulty"
+ },
+ "mode_multipliers": {
+  "_note": "No mode-specific XP multiplier was found. Modes differ only in which rounds are played (see mode_round_ranges). 1.0 values mean no evidence of any multiplier ?",
+  "standard": 1.0,
+  "primary_military_magic_only": 1.0,
+  "reverse": 1.0,
+  "deflation": 1.0,
+  "apopalypse": 1.0,
+  "alternate_bloons_rounds": 1.0,
+  "half_cash": 1.0,
+  "double_hp_moabs": 1.0,
+  "impoppable": 1.0,
+  "chimps": 1.0,
+  "double_cash_mode": "1.0: doubles cash only, so the ratio split is unaffected ?",
+  "fast_track_mode": "The first 25% of rounds are skipped and earn no XP (Hard starts r22, Impoppable r29). No other multiplier ?. Not usable in CHIMPS or Deflation.",
+  "sandbox": 0.0,
+  "sandbox_note": "No rewards, stats or achievements; heroes explicitly gain no round XP. Tower and player XP assumed 0 ?",
+  "coop": "Each player earns the same player XP as in singleplayer; tower XP is split by invested cash."
+ },
+ "freeplay_multiplier": {
+  "rule": "Applies to rounds played after the mode's win round (continuing into freeplay).",
+  "rounds_after_win_up_to_100": 0.3,
+  "rounds_101_plus": 0.1,
+  "impoppable_chimps": "These win at r100, so every freeplay round uses 0.10.",
+  "applies_to": "player XP and tower XP; hero XP ? (the community hero calculator does not apply it)",
+  "history": "v24.0 changed the freeplay entry reduction from 90% to 70%; rounds after 100 were unchanged.",
+  "sources": [
+   "https://www.bloonswiki.com/Experience",
+   "https://www.bloonswiki.com/Freeplay",
+   "https://sarahs-btd6-site.onrender.com/guides/prologue/knowledge"
+  ]
+ },
+ "monkey_knowledge": {
+  "monkey_education": {
+   "effect": "+8% tower XP and hero XP at round end (Support tree, free, needs 3 points invested)",
+   "source": "https://www.bloonswiki.com/Monkey_Education"
+  },
+  "self_taught_heroes": "+10% hero XP only",
+  "monkeys_together_strong": "+5% hero XP per hero on the map (heroes only)",
+  "other_tower_xp_boosts": "none known ?"
+ },
+ "excess_xp": {
+  "rule": "After all 15 upgrades are unlocked, tower XP keeps accumulating. It is needed for the Paragon unlock, which costs XP on top of all 15 upgrades. After the paragon, or for towers without one, extra XP has no known use ?",
+  "source": "https://steamcommunity.com/app/960090/discussions/0/2647504242046384994/ (community, not authoritative)"
+ },
+ "paragon": {
+  "unlock": "Tower XP only, no Monkey Money. Requires all 15 regular upgrades of the tower to be unlocked first, then the paragon's own XP cost.",
+  "build_requirements": "All three tier-5s of the tower on the map at the same time, then pay the cash cost (scaled by difficulty; the table lists the Medium price). Only one of each paragon at a time. In Sandbox it is available only after building it once in a real game.",
+  "degree_power_sources_v57": {
+   "cash": "absorbed non-T5 towers: 1 power per (paragon_cost/20000) dollars spent; slider: 1 per (paragon_cost*1.05/20000) dollars; cap 80,000",
+   "extra_tier5s": "6,000 per tier-5 beyond the first three; cap 50,000",
+   "damage_income": "1 power per 180 damage dealt or per $45 earned by absorbed towers; cap 125,000",
+   "paragon_power_totems": "2,000 each, no cap"
+  },
+  "degree_formula": "P(D) = (50D^3 + 5025D^2 + 168324D + 843000)/600 for 2<=D<=99; P(1)=0; P(100)=200000",
+  "source": "https://www.bloonswiki.com/Paragon"
+ },
+ "mode_round_ranges": {
+  "easy_standard": {
+   "difficulty": "easy",
+   "first_round": 1,
+   "win_round": 40,
+   "freeplay_starts_round": 41,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 21400,
+    "intermediate": 23540,
+    "advanced": 25680,
+    "expert": 27820
+   }
+  },
+  "primary_only": {
+   "difficulty": "easy",
+   "first_round": 1,
+   "win_round": 40,
+   "freeplay_starts_round": 41,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 21400,
+    "intermediate": 23540,
+    "advanced": 25680,
+    "expert": 27820
+   }
+  },
+  "deflation": {
+   "difficulty": "easy",
+   "first_round": 31,
+   "win_round": 60,
+   "freeplay_starts_round": 61,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 45950,
+    "intermediate": 50545,
+    "advanced": 55140,
+    "expert": 59735
+   }
+  },
+  "medium_standard": {
+   "difficulty": "medium",
+   "first_round": 1,
+   "win_round": 60,
+   "freeplay_starts_round": 61,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 56950,
+    "intermediate": 62645,
+    "advanced": 68340,
+    "expert": 74035
+   }
+  },
+  "military_only": {
+   "difficulty": "medium",
+   "first_round": 1,
+   "win_round": 60,
+   "freeplay_starts_round": 61,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 56950,
+    "intermediate": 62645,
+    "advanced": 68340,
+    "expert": 74035
+   }
+  },
+  "reverse": {
+   "difficulty": "medium",
+   "first_round": 1,
+   "win_round": 60,
+   "freeplay_starts_round": 61,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 56950,
+    "intermediate": 62645,
+    "advanced": 68340,
+    "expert": 74035
+   }
+  },
+  "apopalypse": {
+   "difficulty": "medium",
+   "first_round": 1,
+   "win_round": 60,
+   "freeplay_starts_round": 61,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 56950,
+    "intermediate": 62645,
+    "advanced": 68340,
+    "expert": 74035
+   },
+   "note": "random rounds, no breaks between rounds; win round 60 since v3.0"
+  },
+  "hard_standard": {
+   "difficulty": "hard",
+   "first_round": 3,
+   "win_round": 80,
+   "freeplay_starts_round": 81,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 126150,
+    "intermediate": 138765,
+    "advanced": 151380,
+    "expert": 163995
+   }
+  },
+  "magic_monkeys_only": {
+   "difficulty": "hard",
+   "first_round": 3,
+   "win_round": 80,
+   "freeplay_starts_round": 81,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 126150,
+    "intermediate": 138765,
+    "advanced": 151380,
+    "expert": 163995
+   }
+  },
+  "double_hp_moabs": {
+   "difficulty": "hard",
+   "first_round": 3,
+   "win_round": 80,
+   "freeplay_starts_round": 81,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 126150,
+    "intermediate": 138765,
+    "advanced": 151380,
+    "expert": 163995
+   }
+  },
+  "half_cash": {
+   "difficulty": "hard",
+   "first_round": 3,
+   "win_round": 80,
+   "freeplay_starts_round": 81,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 126150,
+    "intermediate": 138765,
+    "advanced": 151380,
+    "expert": 163995
+   }
+  },
+  "alternate_bloons_rounds": {
+   "difficulty": "hard",
+   "first_round": 3,
+   "win_round": 80,
+   "freeplay_starts_round": 81,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 126150,
+    "intermediate": 138765,
+    "advanced": 151380,
+    "expert": 163995
+   }
+  },
+  "impoppable": {
+   "difficulty": "hard*",
+   "first_round": 6,
+   "win_round": 100,
+   "freeplay_starts_round": 101,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 231150,
+    "intermediate": 254265,
+    "advanced": 277380,
+    "expert": 300495
+   },
+   "note": "Impoppable is its own difficulty in BTD6 (starts r6, ends r100)"
+  },
+  "chimps": {
+   "difficulty": "hard",
+   "first_round": 6,
+   "win_round": 100,
+   "freeplay_starts_round": 101,
+   "mode_xp_multiplier": 1.0,
+   "base_xp_full_game_by_map_difficulty": {
+    "beginner": 231150,
+    "intermediate": 254265,
+    "advanced": 277380,
+    "expert": 300495
+   }
+  }
+ },
+ "freeplay_xp_examples_beginner_map": {
+  "easy_rounds_41_100_x0.3": 63045,
+  "medium_rounds_61_100_x0.3": 52380,
+  "hard_rounds_81_100_x0.3": 31590,
+  "rounds_101_140_x0.1": 31860
+ },
+ "towers": {
+  "Alchemist": {
+   "total_xp_all_15_upgrades": 119425,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 425,
+    "2": 1750,
+    "3": 6750,
+    "4": 28500,
+    "5": 82000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Larger Potions",
+      "cash_cost_medium": 250,
+      "xp": 140
+     },
+     {
+      "tier": 2,
+      "name": "Acidic Mixture Dip",
+      "cash_cost_medium": 350,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Berserker Brew",
+      "cash_cost_medium": 1400,
+      "xp": 2250
+     },
+     {
+      "tier": 4,
+      "name": "Stronger Stimulant",
+      "cash_cost_medium": 2850,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "Permanent Brew",
+      "cash_cost_medium": 48000,
+      "xp": 30000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Stronger Acid",
+      "cash_cost_medium": 250,
+      "xp": 140
+     },
+     {
+      "tier": 2,
+      "name": "Perishing Potions",
+      "cash_cost_medium": 475,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Unstable Concoction",
+      "cash_cost_medium": 2800,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Transforming Tonic",
+      "cash_cost_medium": 4200,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "Total Transformation",
+      "cash_cost_medium": 45000,
+      "xp": 28000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Faster Throwing",
+      "cash_cost_medium": 650,
+      "xp": 145
+     },
+     {
+      "tier": 2,
+      "name": "Acid Pool",
+      "cash_cost_medium": 450,
+      "xp": 700
+     },
+     {
+      "tier": 3,
+      "name": "Lead to Gold",
+      "cash_cost_medium": 1000,
+      "xp": 2000
+     },
+     {
+      "tier": 4,
+      "name": "Rubber to Gold",
+      "cash_cost_medium": 2750,
+      "xp": 8500
+     },
+     {
+      "tier": 5,
+      "name": "Bloon Master Alchemist",
+      "cash_cost_medium": 40000,
+      "xp": 24000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Banana Farm": {
+   "total_xp_all_15_upgrades": 223000,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 600,
+    "2": 2700,
+    "3": 9700,
+    "4": 60000,
+    "5": 150000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Increased Production",
+      "cash_cost_medium": 500,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Greater Production",
+      "cash_cost_medium": 600,
+      "xp": 750
+     },
+     {
+      "tier": 3,
+      "name": "Banana Plantation",
+      "cash_cost_medium": 3000,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Banana Research Facility",
+      "cash_cost_medium": 19000,
+      "xp": 20000
+     },
+     {
+      "tier": 5,
+      "name": "Banana Central",
+      "cash_cost_medium": 115000,
+      "xp": 50000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Long Life Bananas",
+      "cash_cost_medium": 300,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Valuable Bananas",
+      "cash_cost_medium": 800,
+      "xp": 1000
+     },
+     {
+      "tier": 3,
+      "name": "Monkey Bank",
+      "cash_cost_medium": 3650,
+      "xp": 3500
+     },
+     {
+      "tier": 4,
+      "name": "IMF Loan",
+      "cash_cost_medium": 7200,
+      "xp": 20000
+     },
+     {
+      "tier": 5,
+      "name": "Monkey-Nomics",
+      "cash_cost_medium": 100000,
+      "xp": 50000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "EZ Collect",
+      "cash_cost_medium": 250,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Banana Salvage",
+      "cash_cost_medium": 400,
+      "xp": 950
+     },
+     {
+      "tier": 3,
+      "name": "Marketplace",
+      "cash_cost_medium": 2700,
+      "xp": 3200
+     },
+     {
+      "tier": 4,
+      "name": "Central Market",
+      "cash_cost_medium": 15000,
+      "xp": 20000
+     },
+     {
+      "tier": 5,
+      "name": "Monkey Wall Street",
+      "cash_cost_medium": 70000,
+      "xp": 50000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Beast Handler": {
+   "total_xp_all_15_upgrades": 320050,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 750,
+    "2": 1550,
+    "3": 3000,
+    "4": 14750,
+    "5": 300000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Piranha",
+      "cash_cost_medium": 160,
+      "xp": 250
+     },
+     {
+      "tier": 2,
+      "name": "Barracuda",
+      "cash_cost_medium": 810,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Great White",
+      "cash_cost_medium": 2010,
+      "xp": 1000
+     },
+     {
+      "tier": 4,
+      "name": "Orca",
+      "cash_cost_medium": 12500,
+      "xp": 4250
+     },
+     {
+      "tier": 5,
+      "name": "Megalodon",
+      "cash_cost_medium": 45000,
+      "xp": 100000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Microraptor",
+      "cash_cost_medium": 175,
+      "xp": 250
+     },
+     {
+      "tier": 2,
+      "name": "Adasaurus",
+      "cash_cost_medium": 830,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Velociraptor",
+      "cash_cost_medium": 2065,
+      "xp": 1000
+     },
+     {
+      "tier": 4,
+      "name": "Tyrannosaurus Rex",
+      "cash_cost_medium": 9500,
+      "xp": 5000
+     },
+     {
+      "tier": 5,
+      "name": "Giganotosaurus",
+      "cash_cost_medium": 60000,
+      "xp": 90000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Gyrfalcon",
+      "cash_cost_medium": 190,
+      "xp": 250
+     },
+     {
+      "tier": 2,
+      "name": "Horned Owl",
+      "cash_cost_medium": 860,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Golden Eagle",
+      "cash_cost_medium": 2120,
+      "xp": 1000
+     },
+     {
+      "tier": 4,
+      "name": "Giant Condor",
+      "cash_cost_medium": 9000,
+      "xp": 5500
+     },
+     {
+      "tier": 5,
+      "name": "Pouākai",
+      "cash_cost_medium": 30000,
+      "xp": 110000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Bomb Shooter": {
+   "total_xp_all_15_upgrades": 138480,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 530,
+    "2": 2250,
+    "3": 8200,
+    "4": 30000,
+    "5": 97500
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Bigger Bombs",
+      "cash_cost_medium": 250,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Heavy Bombs",
+      "cash_cost_medium": 650,
+      "xp": 1000
+     },
+     {
+      "tier": 3,
+      "name": "Really Big Bombs",
+      "cash_cost_medium": 1100,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Bloon Impact",
+      "cash_cost_medium": 2800,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "Bloon Crush",
+      "cash_cost_medium": 55000,
+      "xp": 37500
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Faster Reload",
+      "cash_cost_medium": 250,
+      "xp": 180
+     },
+     {
+      "tier": 2,
+      "name": "Missile Launcher",
+      "cash_cost_medium": 400,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "MOAB Mauler",
+      "cash_cost_medium": 1000,
+      "xp": 2700
+     },
+     {
+      "tier": 4,
+      "name": "MOAB Assassin",
+      "cash_cost_medium": 3450,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "MOAB Eliminator",
+      "cash_cost_medium": 26000,
+      "xp": 35000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Extra Range",
+      "cash_cost_medium": 200,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Frag Bombs",
+      "cash_cost_medium": 300,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Cluster Bombs",
+      "cash_cost_medium": 700,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Recursive Cluster",
+      "cash_cost_medium": 2500,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "Bomb Blitz",
+      "cash_cost_medium": 30000,
+      "xp": 25000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Ballistic Obliteration Missile Bunker",
+    "cash_cost_medium": 650000,
+    "xp_to_unlock": 750000,
+    "total_xp_incl_paragon": 888480
+   }
+  },
+  "Boomerang Monkey": {
+   "total_xp_all_15_upgrades": 134390,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 330,
+    "2": 1560,
+    "3": 8000,
+    "4": 27000,
+    "5": 97500
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Improved Rangs",
+      "cash_cost_medium": 200,
+      "xp": 100
+     },
+     {
+      "tier": 2,
+      "name": "Glaives",
+      "cash_cost_medium": 280,
+      "xp": 520
+     },
+     {
+      "tier": 3,
+      "name": "Glaive Ricochet",
+      "cash_cost_medium": 600,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "M.O.A.R Glaives",
+      "cash_cost_medium": 2000,
+      "xp": 8500
+     },
+     {
+      "tier": 5,
+      "name": "Glaive Lord",
+      "cash_cost_medium": 32500,
+      "xp": 37500
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Faster Throwing",
+      "cash_cost_medium": 175,
+      "xp": 120
+     },
+     {
+      "tier": 2,
+      "name": "Faster Rangs",
+      "cash_cost_medium": 250,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Bionic Boomerang",
+      "cash_cost_medium": 1250,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Turbo Charge",
+      "cash_cost_medium": 4200,
+      "xp": 9000
+     },
+     {
+      "tier": 5,
+      "name": "Perma Charge",
+      "cash_cost_medium": 35000,
+      "xp": 32000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Long Range Rangs",
+      "cash_cost_medium": 100,
+      "xp": 110
+     },
+     {
+      "tier": 2,
+      "name": "Red Hot Rangs",
+      "cash_cost_medium": 300,
+      "xp": 490
+     },
+     {
+      "tier": 3,
+      "name": "Kylie Boomerang",
+      "cash_cost_medium": 1300,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "MOAB Press",
+      "cash_cost_medium": 2700,
+      "xp": 9500
+     },
+     {
+      "tier": 5,
+      "name": "MOAB Domination",
+      "cash_cost_medium": 50000,
+      "xp": 28000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Glaive Dominus",
+    "cash_cost_medium": 375000,
+    "xp_to_unlock": 500000,
+    "total_xp_incl_paragon": 634390
+   }
+  },
+  "Dart Monkey": {
+   "total_xp_all_15_upgrades": 122300,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 0,
+    "2": 300,
+    "3": 6000,
+    "4": 29000,
+    "5": 87000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Sharp Shots",
+      "cash_cost_medium": 140,
+      "xp": 0
+     },
+     {
+      "tier": 2,
+      "name": "Razor Sharp Shots",
+      "cash_cost_medium": 200,
+      "xp": 100
+     },
+     {
+      "tier": 3,
+      "name": "Spike-o-pult",
+      "cash_cost_medium": 320,
+      "xp": 2100
+     },
+     {
+      "tier": 4,
+      "name": "Juggernaut",
+      "cash_cost_medium": 1800,
+      "xp": 7500
+     },
+     {
+      "tier": 5,
+      "name": "Ultra-Juggernaut",
+      "cash_cost_medium": 15000,
+      "xp": 22000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Quick Shots",
+      "cash_cost_medium": 100,
+      "xp": 0
+     },
+     {
+      "tier": 2,
+      "name": "Very Quick Shots",
+      "cash_cost_medium": 190,
+      "xp": 100
+     },
+     {
+      "tier": 3,
+      "name": "Triple Shot",
+      "cash_cost_medium": 450,
+      "xp": 2000
+     },
+     {
+      "tier": 4,
+      "name": "Super Monkey Fan Club",
+      "cash_cost_medium": 7200,
+      "xp": 9500
+     },
+     {
+      "tier": 5,
+      "name": "Plasma Monkey Fan Club",
+      "cash_cost_medium": 45000,
+      "xp": 30000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Long Range Darts",
+      "cash_cost_medium": 90,
+      "xp": 0
+     },
+     {
+      "tier": 2,
+      "name": "Enhanced Eyesight",
+      "cash_cost_medium": 200,
+      "xp": 100
+     },
+     {
+      "tier": 3,
+      "name": "Crossbow",
+      "cash_cost_medium": 575,
+      "xp": 1900
+     },
+     {
+      "tier": 4,
+      "name": "Sharp Shooter",
+      "cash_cost_medium": 2050,
+      "xp": 12000
+     },
+     {
+      "tier": 5,
+      "name": "Crossbow Master",
+      "cash_cost_medium": 21500,
+      "xp": 35000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Apex Plasma Master",
+    "cash_cost_medium": 150000,
+    "xp_to_unlock": 500000,
+    "total_xp_incl_paragon": 622300
+   }
+  },
+  "Dartling Gunner": {
+   "total_xp_all_15_upgrades": 242140,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 390,
+    "2": 1950,
+    "3": 8300,
+    "4": 41500,
+    "5": 190000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Focused Firing",
+      "cash_cost_medium": 300,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Laser Shock",
+      "cash_cost_medium": 900,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Laser Cannon",
+      "cash_cost_medium": 3000,
+      "xp": 2600
+     },
+     {
+      "tier": 4,
+      "name": "Plasma Accelerator",
+      "cash_cost_medium": 11750,
+      "xp": 12500
+     },
+     {
+      "tier": 5,
+      "name": "Ray of Doom",
+      "cash_cost_medium": 75000,
+      "xp": 75000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Advanced Targeting",
+      "cash_cost_medium": 250,
+      "xp": 130
+     },
+     {
+      "tier": 2,
+      "name": "Faster Barrel Spin",
+      "cash_cost_medium": 950,
+      "xp": 700
+     },
+     {
+      "tier": 3,
+      "name": "Hydra Rocket Pods",
+      "cash_cost_medium": 4500,
+      "xp": 2700
+     },
+     {
+      "tier": 4,
+      "name": "Rocket Storm",
+      "cash_cost_medium": 5000,
+      "xp": 14000
+     },
+     {
+      "tier": 5,
+      "name": "M.A.D",
+      "cash_cost_medium": 65000,
+      "xp": 60000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Faster Swivel",
+      "cash_cost_medium": 150,
+      "xp": 110
+     },
+     {
+      "tier": 2,
+      "name": "Powerful Darts",
+      "cash_cost_medium": 1200,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "Buckshot",
+      "cash_cost_medium": 3000,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Bloon Area Denial System",
+      "cash_cost_medium": 12000,
+      "xp": 15000
+     },
+     {
+      "tier": 5,
+      "name": "Bloon Exclusion Zone",
+      "cash_cost_medium": 58000,
+      "xp": 55000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Desperado": {
+   "total_xp_all_15_upgrades": 150600,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 550,
+    "2": 1700,
+    "3": 8850,
+    "4": 41500,
+    "5": 98000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Quickdraw",
+      "cash_cost_medium": 200,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Standoff",
+      "cash_cost_medium": 200,
+      "xp": 450
+     },
+     {
+      "tier": 3,
+      "name": "Big Iron",
+      "cash_cost_medium": 1200,
+      "xp": 2100
+     },
+     {
+      "tier": 4,
+      "name": "Twin Sixes",
+      "cash_cost_medium": 5800,
+      "xp": 9500
+     },
+     {
+      "tier": 5,
+      "name": "The Blazing Sun",
+      "cash_cost_medium": 16500,
+      "xp": 29000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Eagle Eye",
+      "cash_cost_medium": 150,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Bullseye",
+      "cash_cost_medium": 350,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "Deadeye",
+      "cash_cost_medium": 3000,
+      "xp": 3750
+     },
+     {
+      "tier": 4,
+      "name": "Bounty Hunter",
+      "cash_cost_medium": 6000,
+      "xp": 18000
+     },
+     {
+      "tier": 5,
+      "name": "Golden Justice",
+      "cash_cost_medium": 42000,
+      "xp": 40000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Wanderer",
+      "cash_cost_medium": 220,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Nomad",
+      "cash_cost_medium": 280,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Enforcer",
+      "cash_cost_medium": 2100,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Avenger",
+      "cash_cost_medium": 9500,
+      "xp": 14000
+     },
+     {
+      "tier": 5,
+      "name": "The Desert Phantom",
+      "cash_cost_medium": 31000,
+      "xp": 29000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Druid": {
+   "total_xp_all_15_upgrades": 153510,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 410,
+    "2": 1900,
+    "3": 6200,
+    "4": 37000,
+    "5": 108000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Hard Thorns",
+      "cash_cost_medium": 350,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Heart of Thunder",
+      "cash_cost_medium": 850,
+      "xp": 750
+     },
+     {
+      "tier": 3,
+      "name": "Druid of the Storm",
+      "cash_cost_medium": 1700,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Ball Lightning",
+      "cash_cost_medium": 4500,
+      "xp": 12000
+     },
+     {
+      "tier": 5,
+      "name": "Monarch of Storms",
+      "cash_cost_medium": 60000,
+      "xp": 35000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Thorn Swarm",
+      "cash_cost_medium": 250,
+      "xp": 140
+     },
+     {
+      "tier": 2,
+      "name": "Heart of Oak",
+      "cash_cost_medium": 350,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Druid of the Jungle",
+      "cash_cost_medium": 1050,
+      "xp": 2000
+     },
+     {
+      "tier": 4,
+      "name": "Jungle's Bounty",
+      "cash_cost_medium": 4900,
+      "xp": 11000
+     },
+     {
+      "tier": 5,
+      "name": "Spirit of the Forest",
+      "cash_cost_medium": 35000,
+      "xp": 40000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Druidic Reach",
+      "cash_cost_medium": 100,
+      "xp": 120
+     },
+     {
+      "tier": 2,
+      "name": "Heart of Vengeance",
+      "cash_cost_medium": 300,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Druid of Wrath",
+      "cash_cost_medium": 600,
+      "xp": 1700
+     },
+     {
+      "tier": 4,
+      "name": "Poplust",
+      "cash_cost_medium": 2350,
+      "xp": 14000
+     },
+     {
+      "tier": 5,
+      "name": "Avatar of Wrath",
+      "cash_cost_medium": 45000,
+      "xp": 33000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Root of all Nature",
+    "cash_cost_medium": 475000,
+    "xp_to_unlock": 750000,
+    "total_xp_incl_paragon": 903510
+   }
+  },
+  "Engineer Monkey": {
+   "total_xp_all_15_upgrades": 147180,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 480,
+    "2": 1550,
+    "3": 5650,
+    "4": 34500,
+    "5": 105000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Sentry Gun",
+      "cash_cost_medium": 500,
+      "xp": 160
+     },
+     {
+      "tier": 2,
+      "name": "Faster Engineering",
+      "cash_cost_medium": 400,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Sprockets",
+      "cash_cost_medium": 575,
+      "xp": 1850
+     },
+     {
+      "tier": 4,
+      "name": "Sentry Expert",
+      "cash_cost_medium": 2500,
+      "xp": 9500
+     },
+     {
+      "tier": 5,
+      "name": "Sentry Champion",
+      "cash_cost_medium": 32000,
+      "xp": 30000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Larger Service Area",
+      "cash_cost_medium": 250,
+      "xp": 170
+     },
+     {
+      "tier": 2,
+      "name": "Deconstruction",
+      "cash_cost_medium": 350,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Cleansing Foam",
+      "cash_cost_medium": 900,
+      "xp": 2000
+     },
+     {
+      "tier": 4,
+      "name": "Overclock",
+      "cash_cost_medium": 13500,
+      "xp": 14000
+     },
+     {
+      "tier": 5,
+      "name": "Ultraboost",
+      "cash_cost_medium": 72000,
+      "xp": 35000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Oversize Nails",
+      "cash_cost_medium": 450,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Pin",
+      "cash_cost_medium": 220,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Double Gun",
+      "cash_cost_medium": 450,
+      "xp": 1800
+     },
+     {
+      "tier": 4,
+      "name": "Bloon Trap",
+      "cash_cost_medium": 3600,
+      "xp": 11000
+     },
+     {
+      "tier": 5,
+      "name": "XXXL Trap",
+      "cash_cost_medium": 45000,
+      "xp": 40000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Master Builder",
+    "cash_cost_medium": 600000,
+    "xp_to_unlock": 750000,
+    "total_xp_incl_paragon": 897180
+   }
+  },
+  "Glue Gunner": {
+   "total_xp_all_15_upgrades": 127950,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 400,
+    "2": 2050,
+    "3": 7500,
+    "4": 25500,
+    "5": 92500
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Glue Soak",
+      "cash_cost_medium": 200,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Corrosive Glue",
+      "cash_cost_medium": 300,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Bloon Dissolver",
+      "cash_cost_medium": 2000,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Bloon Liquefier",
+      "cash_cost_medium": 5000,
+      "xp": 9000
+     },
+     {
+      "tier": 5,
+      "name": "The Bloon Solver",
+      "cash_cost_medium": 22500,
+      "xp": 37500
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Bigger Globs",
+      "cash_cost_medium": 100,
+      "xp": 120
+     },
+     {
+      "tier": 2,
+      "name": "Glue Splatter",
+      "cash_cost_medium": 650,
+      "xp": 900
+     },
+     {
+      "tier": 3,
+      "name": "Glue Hose",
+      "cash_cost_medium": 1950,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Glue Strike",
+      "cash_cost_medium": 4500,
+      "xp": 8500
+     },
+     {
+      "tier": 5,
+      "name": "Glue Storm",
+      "cash_cost_medium": 16000,
+      "xp": 25000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Stickier Glue",
+      "cash_cost_medium": 280,
+      "xp": 130
+     },
+     {
+      "tier": 2,
+      "name": "Stronger Glue",
+      "cash_cost_medium": 400,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "MOAB Glue",
+      "cash_cost_medium": 3600,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Relentless Glue",
+      "cash_cost_medium": 4000,
+      "xp": 8000
+     },
+     {
+      "tier": 5,
+      "name": "Super Glue",
+      "cash_cost_medium": 24000,
+      "xp": 30000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Heli Pilot": {
+   "total_xp_all_15_upgrades": 203340,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 490,
+    "2": 1850,
+    "3": 8500,
+    "4": 47500,
+    "5": 145000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Quad Darts",
+      "cash_cost_medium": 800,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Pursuit",
+      "cash_cost_medium": 500,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "Razor Rotors",
+      "cash_cost_medium": 1450,
+      "xp": 2700
+     },
+     {
+      "tier": 4,
+      "name": "Apache Dartship",
+      "cash_cost_medium": 20000,
+      "xp": 20000
+     },
+     {
+      "tier": 5,
+      "name": "Apache Prime",
+      "cash_cost_medium": 45000,
+      "xp": 55000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Bigger Jets",
+      "cash_cost_medium": 300,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "IFR",
+      "cash_cost_medium": 600,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "Downdraft",
+      "cash_cost_medium": 3500,
+      "xp": 3300
+     },
+     {
+      "tier": 4,
+      "name": "Support Chinook",
+      "cash_cost_medium": 9500,
+      "xp": 15000
+     },
+     {
+      "tier": 5,
+      "name": "Special Poperations",
+      "cash_cost_medium": 30000,
+      "xp": 40000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Faster Darts",
+      "cash_cost_medium": 250,
+      "xp": 140
+     },
+     {
+      "tier": 2,
+      "name": "Faster Firing",
+      "cash_cost_medium": 350,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "MOAB Shove",
+      "cash_cost_medium": 3400,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Comanche Defense",
+      "cash_cost_medium": 8500,
+      "xp": 12500
+     },
+     {
+      "tier": 5,
+      "name": "Comanche Commander",
+      "cash_cost_medium": 35000,
+      "xp": 50000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Ice Monkey": {
+   "total_xp_all_15_upgrades": 117730,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 480,
+    "2": 1500,
+    "3": 7500,
+    "4": 25750,
+    "5": 82500
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Permafrost",
+      "cash_cost_medium": 150,
+      "xp": 160
+     },
+     {
+      "tier": 2,
+      "name": "Cold Snap",
+      "cash_cost_medium": 350,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Ice Shards",
+      "cash_cost_medium": 1500,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Embrittlement",
+      "cash_cost_medium": 2300,
+      "xp": 8250
+     },
+     {
+      "tier": 5,
+      "name": "Super Brittle",
+      "cash_cost_medium": 28000,
+      "xp": 25000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Enhanced Freeze",
+      "cash_cost_medium": 200,
+      "xp": 160
+     },
+     {
+      "tier": 2,
+      "name": "Deep Freeze",
+      "cash_cost_medium": 300,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Arctic Wind",
+      "cash_cost_medium": 2750,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Snowstorm",
+      "cash_cost_medium": 4750,
+      "xp": 8500
+     },
+     {
+      "tier": 5,
+      "name": "Absolute Zero",
+      "cash_cost_medium": 21000,
+      "xp": 27500
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Larger Radius",
+      "cash_cost_medium": 150,
+      "xp": 160
+     },
+     {
+      "tier": 2,
+      "name": "Re-Freeze",
+      "cash_cost_medium": 200,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Cryo Cannon",
+      "cash_cost_medium": 1900,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Icicles",
+      "cash_cost_medium": 2750,
+      "xp": 9000
+     },
+     {
+      "tier": 5,
+      "name": "Icicle Impale",
+      "cash_cost_medium": 30000,
+      "xp": 30000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Herald of Everfrost",
+    "cash_cost_medium": 300000,
+    "xp_to_unlock": 750000,
+    "total_xp_incl_paragon": 867730
+   }
+  },
+  "Mermonkey": {
+   "total_xp_all_15_upgrades": 242210,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 460,
+    "2": 1950,
+    "3": 8300,
+    "4": 41500,
+    "5": 190000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Trident Efficiency",
+      "cash_cost_medium": 150,
+      "xp": 160
+     },
+     {
+      "tier": 2,
+      "name": "Trident Swiftness",
+      "cash_cost_medium": 250,
+      "xp": 580
+     },
+     {
+      "tier": 3,
+      "name": "Abyss Dweller",
+      "cash_cost_medium": 1800,
+      "xp": 2800
+     },
+     {
+      "tier": 4,
+      "name": "Abyssal Warrior",
+      "cash_cost_medium": 4200,
+      "xp": 11000
+     },
+     {
+      "tier": 5,
+      "name": "Lord of the Abyss",
+      "cash_cost_medium": 23000,
+      "xp": 68000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Sharper Prongs",
+      "cash_cost_medium": 200,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Tidal Chill",
+      "cash_cost_medium": 225,
+      "xp": 700
+     },
+     {
+      "tier": 3,
+      "name": "Riptide Champion",
+      "cash_cost_medium": 2000,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Arctic Knight",
+      "cash_cost_medium": 8000,
+      "xp": 16000
+     },
+     {
+      "tier": 5,
+      "name": "Popseidon",
+      "cash_cost_medium": 52000,
+      "xp": 70000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Echosense Precision",
+      "cash_cost_medium": 200,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Echosense Network",
+      "cash_cost_medium": 280,
+      "xp": 670
+     },
+     {
+      "tier": 3,
+      "name": "Alluring Melody",
+      "cash_cost_medium": 2000,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Symphonic Resonance",
+      "cash_cost_medium": 7600,
+      "xp": 14500
+     },
+     {
+      "tier": 5,
+      "name": "The Final Harmonic",
+      "cash_cost_medium": 25000,
+      "xp": 52000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Monkey Ace": {
+   "total_xp_all_15_upgrades": 162590,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 440,
+    "2": 1950,
+    "3": 8200,
+    "4": 42000,
+    "5": 110000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Rapid Fire",
+      "cash_cost_medium": 450,
+      "xp": 160
+     },
+     {
+      "tier": 2,
+      "name": "Lots More Darts",
+      "cash_cost_medium": 550,
+      "xp": 750
+     },
+     {
+      "tier": 3,
+      "name": "Fighter Plane",
+      "cash_cost_medium": 1000,
+      "xp": 2700
+     },
+     {
+      "tier": 4,
+      "name": "Operation: Dart Storm",
+      "cash_cost_medium": 3300,
+      "xp": 8000
+     },
+     {
+      "tier": 5,
+      "name": "Sky Shredder",
+      "cash_cost_medium": 42500,
+      "xp": 35000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Exploding Pineapple",
+      "cash_cost_medium": 200,
+      "xp": 120
+     },
+     {
+      "tier": 2,
+      "name": "Spy Plane",
+      "cash_cost_medium": 350,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Bomber Ace",
+      "cash_cost_medium": 900,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Ground Zero",
+      "cash_cost_medium": 16000,
+      "xp": 15000
+     },
+     {
+      "tier": 5,
+      "name": "Tsar Bomba",
+      "cash_cost_medium": 26000,
+      "xp": 30000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Sharper Darts",
+      "cash_cost_medium": 500,
+      "xp": 160
+     },
+     {
+      "tier": 2,
+      "name": "Centered Path",
+      "cash_cost_medium": 550,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Neva-Miss Targeting",
+      "cash_cost_medium": 2550,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Spectre",
+      "cash_cost_medium": 23400,
+      "xp": 19000
+     },
+     {
+      "tier": 5,
+      "name": "Flying Fortress",
+      "cash_cost_medium": 90000,
+      "xp": 45000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Goliath Doomship",
+    "cash_cost_medium": 900000,
+    "xp_to_unlock": 1000000,
+    "total_xp_incl_paragon": 1162590
+   }
+  },
+  "Monkey Buccaneer": {
+   "total_xp_all_15_upgrades": 158750,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 500,
+    "2": 1950,
+    "3": 8800,
+    "4": 35500,
+    "5": 112000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Faster Shooting",
+      "cash_cost_medium": 275,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Double Shot",
+      "cash_cost_medium": 425,
+      "xp": 700
+     },
+     {
+      "tier": 3,
+      "name": "Destroyer",
+      "cash_cost_medium": 3350,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Aircraft Carrier",
+      "cash_cost_medium": 8000,
+      "xp": 12500
+     },
+     {
+      "tier": 5,
+      "name": "Carrier Flagship",
+      "cash_cost_medium": 26000,
+      "xp": 37000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Grape Shot",
+      "cash_cost_medium": 550,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Hot Shot",
+      "cash_cost_medium": 500,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "Cannon Ship",
+      "cash_cost_medium": 900,
+      "xp": 2700
+     },
+     {
+      "tier": 4,
+      "name": "Monkey Pirates",
+      "cash_cost_medium": 3900,
+      "xp": 13000
+     },
+     {
+      "tier": 5,
+      "name": "Pirate Lord",
+      "cash_cost_medium": 29000,
+      "xp": 35000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Long Range",
+      "cash_cost_medium": 200,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Crow's Nest",
+      "cash_cost_medium": 350,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Merchantman",
+      "cash_cost_medium": 2400,
+      "xp": 3100
+     },
+     {
+      "tier": 4,
+      "name": "Favored Trades",
+      "cash_cost_medium": 5500,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "Trade Empire",
+      "cash_cost_medium": 23000,
+      "xp": 40000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Navarch of the Seas",
+    "cash_cost_medium": 550000,
+    "xp_to_unlock": 750000,
+    "total_xp_incl_paragon": 908750
+   }
+  },
+  "Monkey Sub": {
+   "total_xp_all_15_upgrades": 154755,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 405,
+    "2": 2350,
+    "3": 8000,
+    "4": 41000,
+    "5": 103000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Longer Range",
+      "cash_cost_medium": 130,
+      "xp": 125
+     },
+     {
+      "tier": 2,
+      "name": "Advanced Intel",
+      "cash_cost_medium": 500,
+      "xp": 750
+     },
+     {
+      "tier": 3,
+      "name": "Submerge and Support",
+      "cash_cost_medium": 700,
+      "xp": 2250
+     },
+     {
+      "tier": 4,
+      "name": "Bloontonium Reactor",
+      "cash_cost_medium": 2400,
+      "xp": 11000
+     },
+     {
+      "tier": 5,
+      "name": "Energizer",
+      "cash_cost_medium": 28000,
+      "xp": 33000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Barbed Darts",
+      "cash_cost_medium": 450,
+      "xp": 130
+     },
+     {
+      "tier": 2,
+      "name": "Heat-tipped Darts",
+      "cash_cost_medium": 300,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Ballistic Missile",
+      "cash_cost_medium": 1350,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "First Strike Capability",
+      "cash_cost_medium": 13000,
+      "xp": 20000
+     },
+     {
+      "tier": 5,
+      "name": "Pre-emptive Strike",
+      "cash_cost_medium": 29000,
+      "xp": 45000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Twin Guns",
+      "cash_cost_medium": 450,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Airburst Darts",
+      "cash_cost_medium": 1000,
+      "xp": 1000
+     },
+     {
+      "tier": 3,
+      "name": "Triple Guns",
+      "cash_cost_medium": 1100,
+      "xp": 2750
+     },
+     {
+      "tier": 4,
+      "name": "Armor Piercing Darts",
+      "cash_cost_medium": 2500,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "Sub Commander",
+      "cash_cost_medium": 25000,
+      "xp": 25000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Nautic Siege Core",
+    "cash_cost_medium": 400000,
+    "xp_to_unlock": 1000000,
+    "total_xp_incl_paragon": 1154755
+   }
+  },
+  "Monkey Village": {
+   "total_xp_all_15_upgrades": 150810,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 560,
+    "2": 4250,
+    "3": 8500,
+    "4": 47500,
+    "5": 90000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Bigger Radius",
+      "cash_cost_medium": 400,
+      "xp": 160
+     },
+     {
+      "tier": 2,
+      "name": "Jungle Drums",
+      "cash_cost_medium": 1500,
+      "xp": 1000
+     },
+     {
+      "tier": 3,
+      "name": "Primary Training",
+      "cash_cost_medium": 800,
+      "xp": 2000
+     },
+     {
+      "tier": 4,
+      "name": "Primary Mentoring",
+      "cash_cost_medium": 2500,
+      "xp": 12000
+     },
+     {
+      "tier": 5,
+      "name": "Primary Expertise",
+      "cash_cost_medium": 25000,
+      "xp": 32000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Grow Blocker",
+      "cash_cost_medium": 250,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Radar Scanner",
+      "cash_cost_medium": 2000,
+      "xp": 2500
+     },
+     {
+      "tier": 3,
+      "name": "Monkey Intelligence Bureau",
+      "cash_cost_medium": 7500,
+      "xp": 3500
+     },
+     {
+      "tier": 4,
+      "name": "Call to Arms",
+      "cash_cost_medium": 20000,
+      "xp": 20000
+     },
+     {
+      "tier": 5,
+      "name": "Homeland Defense",
+      "cash_cost_medium": 40000,
+      "xp": 30000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Monkey Business",
+      "cash_cost_medium": 500,
+      "xp": 250
+     },
+     {
+      "tier": 2,
+      "name": "Monkey Commerce",
+      "cash_cost_medium": 500,
+      "xp": 750
+     },
+     {
+      "tier": 3,
+      "name": "Monkey Town",
+      "cash_cost_medium": 10000,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Monkey City",
+      "cash_cost_medium": 3000,
+      "xp": 15500
+     },
+     {
+      "tier": 5,
+      "name": "Monkeyopolis",
+      "cash_cost_medium": 5000,
+      "xp": 28000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Mortar Monkey": {
+   "total_xp_all_15_upgrades": 144820,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 470,
+    "2": 1850,
+    "3": 7000,
+    "4": 39500,
+    "5": 96000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Bigger Blast",
+      "cash_cost_medium": 300,
+      "xp": 180
+     },
+     {
+      "tier": 2,
+      "name": "Bloon Buster",
+      "cash_cost_medium": 500,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Shell Shock",
+      "cash_cost_medium": 825,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "The Big One",
+      "cash_cost_medium": 7000,
+      "xp": 15000
+     },
+     {
+      "tier": 5,
+      "name": "The Biggest One",
+      "cash_cost_medium": 36000,
+      "xp": 29000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Faster Reload",
+      "cash_cost_medium": 400,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Rapid Reload",
+      "cash_cost_medium": 500,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Heavy Shells",
+      "cash_cost_medium": 900,
+      "xp": 2300
+     },
+     {
+      "tier": 4,
+      "name": "Artillery Battery",
+      "cash_cost_medium": 6500,
+      "xp": 12500
+     },
+     {
+      "tier": 5,
+      "name": "Pop and Awe",
+      "cash_cost_medium": 38000,
+      "xp": 32000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Increased Accuracy",
+      "cash_cost_medium": 200,
+      "xp": 140
+     },
+     {
+      "tier": 2,
+      "name": "Burny Stuff",
+      "cash_cost_medium": 400,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "Signal Flare",
+      "cash_cost_medium": 1100,
+      "xp": 2200
+     },
+     {
+      "tier": 4,
+      "name": "Shattering Shells",
+      "cash_cost_medium": 9500,
+      "xp": 12000
+     },
+     {
+      "tier": 5,
+      "name": "Blooncineration",
+      "cash_cost_medium": 40000,
+      "xp": 35000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Ninja Monkey": {
+   "total_xp_all_15_upgrades": 176640,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 490,
+    "2": 1650,
+    "3": 6500,
+    "4": 45500,
+    "5": 122500
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Ninja Discipline",
+      "cash_cost_medium": 350,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Sharp Shurikens",
+      "cash_cost_medium": 350,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Double Shot",
+      "cash_cost_medium": 900,
+      "xp": 2000
+     },
+     {
+      "tier": 4,
+      "name": "Bloonjitsu",
+      "cash_cost_medium": 2750,
+      "xp": 16000
+     },
+     {
+      "tier": 5,
+      "name": "Grandmaster Ninja",
+      "cash_cost_medium": 35000,
+      "xp": 50000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Distraction",
+      "cash_cost_medium": 250,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Counter-Espionage",
+      "cash_cost_medium": 400,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Shinobi Tactics",
+      "cash_cost_medium": 1200,
+      "xp": 2000
+     },
+     {
+      "tier": 4,
+      "name": "Bloon Sabotage",
+      "cash_cost_medium": 5200,
+      "xp": 14000
+     },
+     {
+      "tier": 5,
+      "name": "Grand Saboteur",
+      "cash_cost_medium": 22000,
+      "xp": 35000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Seeking Shuriken",
+      "cash_cost_medium": 300,
+      "xp": 140
+     },
+     {
+      "tier": 2,
+      "name": "Caltrops",
+      "cash_cost_medium": 450,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Flash Bomb",
+      "cash_cost_medium": 2250,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Sticky Bomb",
+      "cash_cost_medium": 5000,
+      "xp": 15500
+     },
+     {
+      "tier": 5,
+      "name": "Master Bomber",
+      "cash_cost_medium": 40000,
+      "xp": 37500
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Ascended Shadow",
+    "cash_cost_medium": 500000,
+    "xp_to_unlock": 500000,
+    "total_xp_incl_paragon": 676640
+   }
+  },
+  "Skywarden": {
+   "total_xp_all_15_upgrades": 150725,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 525,
+    "2": 1700,
+    "3": 8500,
+    "4": 42000,
+    "5": 98000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Aerial Attunement",
+      "cash_cost_medium": 140,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Zephyr Sense",
+      "cash_cost_medium": 175,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Wind Weaver",
+      "cash_cost_medium": 1200,
+      "xp": 2750
+     },
+     {
+      "tier": 4,
+      "name": "Galesage",
+      "cash_cost_medium": 3000,
+      "xp": 16000
+     },
+     {
+      "tier": 5,
+      "name": "Farwind Seer",
+      "cash_cost_medium": 19000,
+      "xp": 30000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Storm's Pulse",
+      "cash_cost_medium": 175,
+      "xp": 175
+     },
+     {
+      "tier": 2,
+      "name": "Thundering Arc",
+      "cash_cost_medium": 275,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "Galvanic Conduit",
+      "cash_cost_medium": 2500,
+      "xp": 3000
+     },
+     {
+      "tier": 4,
+      "name": "Thunder's Decree",
+      "cash_cost_medium": 3500,
+      "xp": 12000
+     },
+     {
+      "tier": 5,
+      "name": "Stormwrath Archon",
+      "cash_cost_medium": 32000,
+      "xp": 36000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Shatterpoint",
+      "cash_cost_medium": 150,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Icebore",
+      "cash_cost_medium": 250,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Coldchain",
+      "cash_cost_medium": 1500,
+      "xp": 2750
+     },
+     {
+      "tier": 4,
+      "name": "Frozen Verdict",
+      "cash_cost_medium": 3900,
+      "xp": 14000
+     },
+     {
+      "tier": 5,
+      "name": "Winter's Mercy",
+      "cash_cost_medium": 20000,
+      "xp": 32000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Sniper Monkey": {
+   "total_xp_all_15_upgrades": 145200,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 450,
+    "2": 2000,
+    "3": 8750,
+    "4": 31500,
+    "5": 102500
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Full Metal Jacket",
+      "cash_cost_medium": 350,
+      "xp": 120
+     },
+     {
+      "tier": 2,
+      "name": "Large Caliber",
+      "cash_cost_medium": 1300,
+      "xp": 800
+     },
+     {
+      "tier": 3,
+      "name": "Deadly Precision",
+      "cash_cost_medium": 2200,
+      "xp": 3500
+     },
+     {
+      "tier": 4,
+      "name": "Maim MOAB",
+      "cash_cost_medium": 6300,
+      "xp": 10500
+     },
+     {
+      "tier": 5,
+      "name": "Cripple MOAB",
+      "cash_cost_medium": 32000,
+      "xp": 37500
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Night Vision Goggles",
+      "cash_cost_medium": 250,
+      "xp": 200
+     },
+     {
+      "tier": 2,
+      "name": "Shrapnel Shot",
+      "cash_cost_medium": 450,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Bouncing Bullet",
+      "cash_cost_medium": 2100,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Supply Drop",
+      "cash_cost_medium": 7600,
+      "xp": 11000
+     },
+     {
+      "tier": 5,
+      "name": "Elite Sniper",
+      "cash_cost_medium": 12000,
+      "xp": 35000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Fast Firing",
+      "cash_cost_medium": 450,
+      "xp": 130
+     },
+     {
+      "tier": 2,
+      "name": "Even Faster Firing",
+      "cash_cost_medium": 450,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Semi-Automatic",
+      "cash_cost_medium": 2700,
+      "xp": 2750
+     },
+     {
+      "tier": 4,
+      "name": "Full Auto Rifle",
+      "cash_cost_medium": 4100,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "Elite Defender",
+      "cash_cost_medium": 14900,
+      "xp": 30000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "S.P.I.D.E.R. Monkey",
+    "cash_cost_medium": 800000,
+    "xp_to_unlock": 750000,
+    "total_xp_incl_paragon": 895200
+   }
+  },
+  "Spike Factory": {
+   "total_xp_all_15_upgrades": 141270,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 470,
+    "2": 1800,
+    "3": 7000,
+    "4": 35000,
+    "5": 97000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Bigger Stacks",
+      "cash_cost_medium": 800,
+      "xp": 170
+     },
+     {
+      "tier": 2,
+      "name": "White Hot Spikes",
+      "cash_cost_medium": 600,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Spiked Balls",
+      "cash_cost_medium": 2300,
+      "xp": 2400
+     },
+     {
+      "tier": 4,
+      "name": "Spiked Mines",
+      "cash_cost_medium": 9500,
+      "xp": 15000
+     },
+     {
+      "tier": 5,
+      "name": "Super Mines",
+      "cash_cost_medium": 125000,
+      "xp": 32500
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Faster Production",
+      "cash_cost_medium": 600,
+      "xp": 180
+     },
+     {
+      "tier": 2,
+      "name": "Even Faster Production",
+      "cash_cost_medium": 800,
+      "xp": 650
+     },
+     {
+      "tier": 3,
+      "name": "MOAB SHREDR",
+      "cash_cost_medium": 2500,
+      "xp": 2500
+     },
+     {
+      "tier": 4,
+      "name": "Spike Storm",
+      "cash_cost_medium": 7000,
+      "xp": 11000
+     },
+     {
+      "tier": 5,
+      "name": "Carpet of Spikes",
+      "cash_cost_medium": 41000,
+      "xp": 35000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Long Reach",
+      "cash_cost_medium": 150,
+      "xp": 120
+     },
+     {
+      "tier": 2,
+      "name": "Smart Spikes",
+      "cash_cost_medium": 400,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Long Life Spikes",
+      "cash_cost_medium": 1300,
+      "xp": 2100
+     },
+     {
+      "tier": 4,
+      "name": "Deadly Spikes",
+      "cash_cost_medium": 3600,
+      "xp": 9000
+     },
+     {
+      "tier": 5,
+      "name": "Perma-Spike",
+      "cash_cost_medium": 30000,
+      "xp": 29500
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Mega Massive Munitions Factory",
+    "cash_cost_medium": 750000,
+    "xp_to_unlock": 1000000,
+    "total_xp_incl_paragon": 1141270
+   }
+  },
+  "Super Monkey": {
+   "total_xp_all_15_upgrades": 493850,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 1350,
+    "2": 5500,
+    "3": 19500,
+    "4": 132500,
+    "5": 335000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Laser Blasts",
+      "cash_cost_medium": 2000,
+      "xp": 500
+     },
+     {
+      "tier": 2,
+      "name": "Plasma Blasts",
+      "cash_cost_medium": 2500,
+      "xp": 2200
+     },
+     {
+      "tier": 3,
+      "name": "Sun Avatar",
+      "cash_cost_medium": 20000,
+      "xp": 7000
+     },
+     {
+      "tier": 4,
+      "name": "Sun Temple",
+      "cash_cost_medium": 100000,
+      "xp": 50000
+     },
+     {
+      "tier": 5,
+      "name": "True Sun God",
+      "cash_cost_medium": 500000,
+      "xp": 150000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Super Range",
+      "cash_cost_medium": 1500,
+      "xp": 300
+     },
+     {
+      "tier": 2,
+      "name": "Epic Range",
+      "cash_cost_medium": 1900,
+      "xp": 1300
+     },
+     {
+      "tier": 3,
+      "name": "Robo Monkey",
+      "cash_cost_medium": 7500,
+      "xp": 6000
+     },
+     {
+      "tier": 4,
+      "name": "Tech Terror",
+      "cash_cost_medium": 25000,
+      "xp": 35000
+     },
+     {
+      "tier": 5,
+      "name": "The Anti-Bloon",
+      "cash_cost_medium": 70000,
+      "xp": 85000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Knockback",
+      "cash_cost_medium": 3000,
+      "xp": 550
+     },
+     {
+      "tier": 2,
+      "name": "Ultravision",
+      "cash_cost_medium": 1200,
+      "xp": 2000
+     },
+     {
+      "tier": 3,
+      "name": "Dark Knight",
+      "cash_cost_medium": 5600,
+      "xp": 6500
+     },
+     {
+      "tier": 4,
+      "name": "Dark Champion",
+      "cash_cost_medium": 55555,
+      "xp": 47500
+     },
+     {
+      "tier": 5,
+      "name": "Legend of the Night",
+      "cash_cost_medium": 165650,
+      "xp": 100000
+     }
+    ]
+   },
+   "paragon": null
+  },
+  "Tack Shooter": {
+   "total_xp_all_15_upgrades": 123380,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 440,
+    "2": 1540,
+    "3": 7150,
+    "4": 27250,
+    "5": 87000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Faster Shooting",
+      "cash_cost_medium": 150,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Even Faster Shooting",
+      "cash_cost_medium": 220,
+      "xp": 550
+     },
+     {
+      "tier": 3,
+      "name": "Hot Shots",
+      "cash_cost_medium": 600,
+      "xp": 2400
+     },
+     {
+      "tier": 4,
+      "name": "Ring of Fire",
+      "cash_cost_medium": 3500,
+      "xp": 9500
+     },
+     {
+      "tier": 5,
+      "name": "Inferno Ring",
+      "cash_cost_medium": 45500,
+      "xp": 32500
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Long Range Tacks",
+      "cash_cost_medium": 100,
+      "xp": 140
+     },
+     {
+      "tier": 2,
+      "name": "Super Range Tacks",
+      "cash_cost_medium": 225,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Blade Shooter",
+      "cash_cost_medium": 550,
+      "xp": 2300
+     },
+     {
+      "tier": 4,
+      "name": "Blade Maelstrom",
+      "cash_cost_medium": 2700,
+      "xp": 9000
+     },
+     {
+      "tier": 5,
+      "name": "Super Maelstrom",
+      "cash_cost_medium": 15000,
+      "xp": 28000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "More Tacks",
+      "cash_cost_medium": 150,
+      "xp": 150
+     },
+     {
+      "tier": 2,
+      "name": "Even More Tacks",
+      "cash_cost_medium": 150,
+      "xp": 490
+     },
+     {
+      "tier": 3,
+      "name": "Tack Sprayer",
+      "cash_cost_medium": 450,
+      "xp": 2450
+     },
+     {
+      "tier": 4,
+      "name": "Overdrive",
+      "cash_cost_medium": 3200,
+      "xp": 8750
+     },
+     {
+      "tier": 5,
+      "name": "The Tack Zone",
+      "cash_cost_medium": 20000,
+      "xp": 26500
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Crucible of Steel and Flame",
+    "cash_cost_medium": 200000,
+    "xp_to_unlock": 500000,
+    "total_xp_incl_paragon": 623380
+   }
+  },
+  "Wizard Monkey": {
+   "total_xp_all_15_upgrades": 143280,
+   "xp_by_tier_sum_of_3_paths": {
+    "1": 380,
+    "2": 1800,
+    "3": 7100,
+    "4": 34000,
+    "5": 100000
+   },
+   "paths": {
+    "1": [
+     {
+      "tier": 1,
+      "name": "Guided Magic",
+      "cash_cost_medium": 175,
+      "xp": 110
+     },
+     {
+      "tier": 2,
+      "name": "Arcane Blast",
+      "cash_cost_medium": 450,
+      "xp": 600
+     },
+     {
+      "tier": 3,
+      "name": "Arcane Mastery",
+      "cash_cost_medium": 1450,
+      "xp": 2300
+     },
+     {
+      "tier": 4,
+      "name": "Arcane Spike",
+      "cash_cost_medium": 10000,
+      "xp": 11000
+     },
+     {
+      "tier": 5,
+      "name": "Archmage",
+      "cash_cost_medium": 32000,
+      "xp": 35000
+     }
+    ],
+    "2": [
+     {
+      "tier": 1,
+      "name": "Fireball",
+      "cash_cost_medium": 300,
+      "xp": 130
+     },
+     {
+      "tier": 2,
+      "name": "Wall of Fire",
+      "cash_cost_medium": 800,
+      "xp": 700
+     },
+     {
+      "tier": 3,
+      "name": "Dragon's Breath",
+      "cash_cost_medium": 3300,
+      "xp": 2600
+     },
+     {
+      "tier": 4,
+      "name": "Summon Phoenix",
+      "cash_cost_medium": 6000,
+      "xp": 13000
+     },
+     {
+      "tier": 5,
+      "name": "Wizard Lord Phoenix",
+      "cash_cost_medium": 50000,
+      "xp": 35000
+     }
+    ],
+    "3": [
+     {
+      "tier": 1,
+      "name": "Intense Magic",
+      "cash_cost_medium": 300,
+      "xp": 140
+     },
+     {
+      "tier": 2,
+      "name": "Monkey Sense",
+      "cash_cost_medium": 300,
+      "xp": 500
+     },
+     {
+      "tier": 3,
+      "name": "Shimmer",
+      "cash_cost_medium": 1500,
+      "xp": 2200
+     },
+     {
+      "tier": 4,
+      "name": "Necromancer: Unpopped Army",
+      "cash_cost_medium": 2800,
+      "xp": 10000
+     },
+     {
+      "tier": 5,
+      "name": "Prince of Darkness",
+      "cash_cost_medium": 26500,
+      "xp": 30000
+     }
+    ]
+   },
+   "paragon": {
+    "name": "Magus Perfectus",
+    "cash_cost_medium": 800000,
+    "xp_to_unlock": 1000000,
+    "total_xp_incl_paragon": 1143280
+   }
+  }
+ },
+ "notes": [
+  "XP belongs to the tower TYPE (account-wide pool), not to an individual tower.",
+  "To grind type T, keep T at about 100% of non-hero invested cash at every round end. Other types, including Banana Farms, take XP in proportion to their cash.",
+  "To feed two targets, balance invested cash between them.",
+  "Later rounds give much more XP (r10 = 220, r50 = 1620, r100 = 6120). Full-game base totals: Easy 21,400, Medium 56,950, Deflation 45,950, Hard 126,150, CHIMPS/Impoppable 231,150; multiply by map difficulty.",
+  "Freeplay is penalised (x0.3, then x0.1 after r100), so the bot should usually stop at the win round. Compare XP per minute, not per game.",
+  "Upgrade XP numbers were parsed from https://www.bloonswiki.com/List_of_upgrades_in_BTD6. Dart Monkey tier-1 upgrades are unlocked by default (0 XP). Cash costs are Medium prices."
+ ]
+}

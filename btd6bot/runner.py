@@ -2,6 +2,8 @@
 import logging
 import time
 
+import numpy as np
+
 from . import layout as L
 from . import towers as T
 from .account import AccountState
@@ -133,6 +135,14 @@ def planner_specs(strats, account):
             "categories": p.get("categories"), "minutes": p.get("minutes"),
         }))
     return specs
+
+
+def _looks_like_map_name(text):
+    """A plausible map title (letters, digits, spaces, ' # &), not OCR debris
+    such as a medal count or a hero level."""
+    import re
+    t = text.strip()
+    return len(re.sub(r"[^A-Za-z]", "", t)) >= 4 and re.fullmatch(r"[A-Za-z0-9 '#&.!-]+", t) is not None
 
 
 class Bot:
@@ -283,58 +293,135 @@ class Bot:
                     map_name, self.menus.identify(), [w.text for w in self.menus.words][:12])
         return False
 
-    def scan_all_medals(self, max_pages=30):
-        """Map select, page by page: adopt every mode's medal shown on each map
-        card (a save from elsewhere has medals we never saw). ~17 pages, ~1 min."""
+    # Map-select screen (calibrated 2026-10-21, 1920x1200): category tabs along
+    # the bottom, page arrow on the right. Every category starts on a new page.
+    CATEGORY_TABS = {"beginner": (0.282, 0.93), "intermediate": (0.427, 0.93),
+                     "advanced": (0.573, 0.93), "expert": (0.719, 0.93)}
+    NEXT_PAGE = (0.903, 0.40)
+
+    def _page_names(self):
+        """OCR the map-name labels on the current map-select page.
+        Returns [(text, (col, row))] for words sitting on a card's name label."""
+        from .medals import grid_cell
+        out = []
+        for w in self.menus.read():
+            if not 0.1 < w.y < 0.75:
+                continue
+            cell = grid_cell(w.x, w.y)
+            if cell is not None and len(w.text.strip()) >= 3:
+                out.append((w.text.strip(), cell))
+        return out
+
+    def _match_map(self, text):
+        """Known map for an OCR'd label, tolerating small misreads; else None."""
         import difflib
-        from .account import MAPS, _norm, canonical_map
-        from .medals import grid_cell, read_grid_card
+        from .account import MAPS, _norm
+        key = _norm(text)
+        names = {_norm(m): m for m in MAPS}
+        if key in names:
+            return names[key]
+        close = difflib.get_close_matches(key, names, n=1, cutoff=0.8) if len(key) >= 5 else []
+        return names[close[0]] if close else None
+
+    def scan_all_medals(self, max_pages=30):
+        """Read every map card on the map-select pages (~30 s for ~90 maps):
+          * adopt each mode's medal shown on the card (a save made elsewhere
+            has medals our notes never saw), and
+          * register maps the code does not know yet (new game updates), under
+            the category tab they are listed in.
+        Returns the number of maps read."""
+        from .account import _norm, canonical_map, register_map
+        from .medals import read_grid_card
         set_state("reading map medals from the map select pages")
         self.inp.click(0.5, 0.88)  # PLAY
         if self.menus.wait_for("map_select", timeout=6) != "map_select":
             log.warning("medal scan: PLAY did not reach map select")
             self.to_main_menu()
             return 0
-        names = {_norm(m): m for m in MAPS}
-        seen_pages, found, new = [], {}, 0
+        # first page of each category tab -> lets us tell which category a
+        # page belongs to while paging through everything below
+        first_page = {}
+        for cat, pos in self.CATEGORY_TABS.items():
+            self.inp.click(*pos)
+            time.sleep(0.8)
+            first_page[cat] = {_norm(t) for t, _ in self._page_names()}
+        self.inp.click(*self.CATEGORY_TABS["beginner"])
+        time.sleep(0.8)
+
+        category = "beginner"
+        seen_pages, found, new_medals, new_maps = [], {}, 0, []
         for _ in range(max_pages):
             time.sleep(0.5)
             frame = self.s.grab()
+            labels = self._page_names()
+            keys = {_norm(t) for t, _ in labels}
+            for cat, first in first_page.items():
+                if first and len(keys & first) >= 2:
+                    category = cat
             page = []
-            for w in self.menus.read():
-                if not 0.1 < w.y < 0.75:
+            for text, cell in labels:
+                name = self._match_map(text)
+                if name is None and _looks_like_map_name(text):
+                    name = text.title()
+                    if register_map(name, category):
+                        new_maps.append(f"{name} ({category})")
+                if name is None or name in page:
                     continue
-                key = _norm(w.text)
-                m = names.get(key)
-                if m is None and len(key) >= 5:
-                    close = difflib.get_close_matches(key, names, n=1, cutoff=0.85)
-                    m = names[close[0]] if close else None
-                if m is None or m in page:
-                    continue
-                cell = grid_cell(w.x, w.y)
-                if cell is None:
-                    continue
-                page.append(m)
-                found[m] = read_grid_card(frame, *cell)
+                page.append(name)
+                found[name] = read_grid_card(frame, *cell)
             if not page or page in seen_pages:
                 break  # wrapped around to a page we already read
             seen_pages.append(page)
-            self.inp.click(0.903, 0.40)  # next page arrow
-        for m, medals in found.items():
-            rec = self.account.medals.setdefault(canonical_map(m), {})
-            for d, earned in medals.items():
-                if earned and not rec.get(d):
-                    rec[d] = True
-                    new += 1
+            self.inp.click(*self.NEXT_PAGE)
+        for name, medals in found.items():
+            rec = self.account.medals.setdefault(canonical_map(name), {})
+            for mode, earned in medals.items():
+                if earned and not rec.get(mode):
+                    rec[mode] = True
+                    new_medals += 1
         self.account.save()
-        log.info("medal scan: %d maps read on %d pages, %d medals adopted", len(found), len(seen_pages), new)
+        log.info("medal scan: %d maps read on %d pages, %d medals adopted", len(found), len(seen_pages), new_medals)
+        if new_maps:
+            log.warning("new maps found and added: %s", ", ".join(new_maps))
         self.to_main_menu()
         return len(found)
+
+    def _refresh_map_geometry(self):
+        """Read maps that are new or changed in the game files (a game update
+        adds or rebuilds map bundles). Takes ~15 s the first time, ~1 s after."""
+        try:
+            from . import gamefiles
+            gamefiles.refresh(status=set_state)
+        except Exception:  # never let this stop the bot: learning still works
+            log.exception("reading map geometry from the game files failed")
+
+    def _use_geometry(self, model, map_name, reverse=False):
+        """Fill the model from the game's own map files when they are available
+        (exact track, progress, placement and sight blockers - no learning).
+        Re-applied when the game updates the map or the scan was dropped.
+        Returns True when the model now holds game geometry."""
+        from . import mapgeom
+        from .tracklearn import LEARNED_ROUNDS
+        geom = mapgeom.load(map_name)
+        if geom is None:
+            return False
+        if model.geometry_bundle == geom.get("bundle") and model.scanned("land"):
+            return True
+        mapgeom.apply(model, geom)
+        if reverse:  # Reverse runs the same track backwards
+            model.t_sum = np.where(model.t_cnt > 0, model.t_cnt - model.t_sum, 0).astype(np.float32)
+        model.geometry_bundle = geom.get("bundle")
+        model.rounds_traced = max(model.rounds_traced, LEARNED_ROUNDS)  # no noisy in-game tracing
+        model.save()
+        return True
 
     def _learn_track_if_needed(self, map_name):
         """First visit (or a model learned the old, noisy way): trace the
         track in Sandbox before playing for real."""
+        from . import mapgeom
         from .tracklearn import learn_track, needs_sandbox, sandbox_difficulty
+        if mapgeom.load(map_name) is not None:
+            return  # the game's own map files describe this map exactly
         if not needs_sandbox(MapModel.load(map_name, self.lay["playfield"])):
             return
         if sandbox_difficulty(self.account, map_name) is None:
@@ -442,7 +529,7 @@ class Bot:
         # Reverse runs the same track backwards: its progress map is mirrored
         key = plan.map + (" reverse" if rules(plan.mode_key).get("reversed") else "")
         model = MapModel.load(key, self.lay["playfield"])
-        if key != plan.map:
+        if not self._use_geometry(model, plan.map, reverse=key != plan.map) and key != plan.map:
             base = MapModel.load(plan.map, self.lay["playfield"])
             if not model.scanned("land"):
                 model.scan = dict(base.scan)  # placement is identical
@@ -504,6 +591,7 @@ class Bot:
     def run(self, hours=8.0):
         end = time.time() + hours * 3600
         code_stamp = _code_stamp()
+        self._refresh_map_geometry()
         while time.time() < end:
             plan = None
             if PAUSE_FILE.exists():
