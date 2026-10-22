@@ -258,7 +258,8 @@ SAFETY_ACHIEVEMENTS = {
     "snapofyourfingers": "SAFETY: needs exactly 100 deliberately leaked lives",
 }
 STEP_KEYS = {"do", "id", "kind", "role", "segment", "near", "near_radius", "round", "max",
-             "target", "to", "mode"}
+             "target", "to", "mode",
+             "at"}   # exact spot [fx, fy] (screen fractions) from a map's own build
 UNSUPPORTED_STEP_KEYS = {
     "avoid": "spot avoidance (`avoid`) is not implemented by pick_spot",
     "avoid_radius": "spot avoidance (`avoid`) is not implemented by pick_spot",
@@ -614,6 +615,33 @@ def readiness(strat):
     return list(dict.fromkeys(reasons))
 
 
+# An optimized build's win chance before it has been played, from the
+# model's lowest margin over all its rounds (docs/optimizer.md, section 3:
+# 0.5% of logged rounds at a margin of 2.0 or more lost lives, 5.4% below
+# 1.0). Below OPTIMIZED_MIN_MARGIN it is never auto-played.
+OPTIMIZED_SAFE_MARGIN = 2.0
+OPTIMIZED_MIN_MARGIN = 1.0
+OPTIMIZED_PRIOR = {"safe": 0.95, "thin": 0.85}
+
+
+def _optimized_prior(d, planner):
+    """Set planner.base_success and d["needs_boosts"] for an optimized
+    build from its `optimizer:` block; returns reasons it may not be played."""
+    opt = d.get("optimizer") or {}
+    worst = opt.get("worst_margin")
+    if worst is None:
+        return ["optimized build without optimizer.worst_margin"]
+    if opt.get("unsafe_rounds") or worst < OPTIMIZED_MIN_MARGIN:
+        return [f"model margin too thin (worst {worst:.2f}, unsafe rounds {opt.get('unsafe_rounds')})"]
+    p = OPTIMIZED_PRIOR["safe" if worst >= OPTIMIZED_SAFE_MARGIN else "thin"]
+    planner["base_success"] = {m: p for m in d.get("modes") or ()}
+    # planned with the account's Double Cash / Fast Track income: not proven
+    # safe without them (runner.planner_specs skips it then)
+    boosts = (opt.get("scenario") or {}).get("boosts") or []
+    d["needs_boosts"] = [b.replace(" ", "_") for b in boosts]
+    return []
+
+
 def load_all():
     """All strategies by id: strategies/*.yaml, strategies/generated/*.yaml and
     strategies/achievements/**/*.yaml.
@@ -653,6 +681,39 @@ def load_all():
         d["bot_ready"] = not reasons
         d["bot_ready_reasons"] = reasons
         out[d["id"]] = d
+    # Map-specific builds, only ever planned on their own map:
+    #   strategies/maps       researched per map (docs/map_strategies.md)
+    #   strategies/optimized  proven round by round on the game's own numbers
+    #                         (tools/optimize_builds.py, docs/optimizer.md)
+    # Both carry exact `at` spots.
+    for source in ("maps", "optimized"):
+        src_dir = STRAT_DIR / source
+        for f in sorted(src_dir.glob("*.yaml")) if src_dir.is_dir() else ():
+            try:
+                d = yaml.safe_load(f.read_text(encoding="utf-8"))
+            except Exception as e:  # a broken file must not stop the bot
+                log.error("%s strategy %s does not parse: %s", source, f.name, e)
+                continue
+            if not isinstance(d, dict) or not d.get("map"):
+                log.error("%s strategy %s has no `map:` - skipped", source, f.name)
+                continue
+            d.setdefault("id", f.stem)
+            if d["id"] in out:
+                log.error("duplicate strategy id %s in %s - skipped", d["id"], f)
+                continue
+            d["source"] = source
+            try:
+                reasons = readiness(d)
+            except Exception as e:
+                reasons = [f"validation failed: {e!r}"]
+            planner = dict(d.get("planner") or {})
+            planner["maps"] = [d["map"]]          # never on another map
+            if source == "optimized":
+                reasons += _optimized_prior(d, planner)
+            d["bot_ready"] = not reasons
+            d["bot_ready_reasons"] = reasons
+            d["planner"] = planner
+            out[d["id"]] = d
     if ACH_DIR.is_dir():
         for f in sorted(ACH_DIR.rglob("*.yaml")):
             try:
@@ -870,6 +931,8 @@ class Executor:
         """Rounds 1-5 leak when a plan opens with one slow/expensive tower (seen:
         lone base Ninja on Medium). Prepend a $200 Dart near the entrance unless
         the plan already opens cheap or the mode/constraints forbid darts."""
+        if self.rules.get("start_round", 1) > 5 or self.rules.get("buy_all_upfront"):
+            return plan  # no early rounds to hold (Deflation starts at 31 on fixed cash)
         first = next((st for st in plan if st.get("do") == "place"), None)
         if first is None or first.get("kind") in self.CHEAP_OPENERS + ("hero",):
             return plan  # a hero (or cheap tower) already holds the early rounds
@@ -1069,9 +1132,18 @@ class Executor:
                           * (self.EDGE_PENALTY if edge is not None and edge[cy, cx] else 1.0))
                          for cx, cy, sc in cands), key=lambda t: -t[2])
         out = []
+        exact = self._exact_spot(step, valid)
+        if exact is not None:
+            out.append(exact)       # the build's researched spot comes first
+        floor = self._reach_floor(kind, valid) if role in ("dps", "exit") else None
+        probe = self._probe_spot(kind, valid) if role in ("dps", "exit") else None
+        if probe is not None:
+            out.append(probe)       # tried first; a refusal costs ~0.1 s and is learned
         for cx, cy, score in ranked:
             if (kind, cx, cy) in self.failed_spots:
                 continue
+            if floor is not None and self._reach(kind)[cy, cx] < floor:
+                continue  # its range only grazes the track (see MIN_REACH_SHARE)
             if any((cx - ox) ** 2 + (cy - oy) ** 2 < 9 for ox, oy, _ in out):
                 continue
             out.append((cx, cy, score))
@@ -1194,6 +1266,8 @@ class Executor:
             return "wait"
         if self.hold_fails.get(kind, 0) >= 6:
             return "skip"  # cannot pick it up (locked / mode-restricted / unbound)
+        if kind in self.BUFFERS and not self._damage_towers():
+            return self._defer(step, key, self.BUFFER_RETRY_S)   # nothing to buff yet
         spots = self._spots_widening(kind, step)
         if not spots:
             return self._out_of_spots(step, key)
@@ -1203,6 +1277,7 @@ class Executor:
         self._note_refused(kind, key, spots, fracs)
         if placed:
             p = self.g.towers[tid]
+            self._learn_probe(kind, p)
             self.purchased += 1
             self.hold_fails.pop(kind, None)
             # refusals count in a row: a fill or panic step that keeps finding
@@ -1241,6 +1316,218 @@ class Executor:
     # once - "after 0 refused spots" - and the game was played without them.)
     NEAR_WIDENING = (1.5, 2.2)
 
+    AT_SEARCH_CELLS = 6   # an `at` spot taken (or refused) moves to the nearest legal cell this close
+
+    # A damage tower must reach at least this share of the track that the
+    # best legal spot for it on this map reaches - its range (the grey circle
+    # while placing) has to cover the route, not graze it. The owner, of
+    # Water Park: "some of these tack shooters barely even touch the route".
+    MIN_REACH_SHARE = 0.45
+    # Placed damage towers reaching less than this share are sold (outside
+    # no-sell modes, never while lives fall): their cash goes into towers
+    # that pop bloons.
+    SELL_REACH_SHARE = 0.25
+
+    BUFFERS = ("village", "alchemist")   # towers whose value is the towers around them
+
+    def _damage_towers(self):
+        return [p for p in self.g.towers.values()
+                if p.kind != "hero" and p.kind not in self.BUFFERS and p.kind != "farm"]
+
+    def _buffed(self, kind, cx, cy):
+        """How many damage towers a `kind` buffer at cell (cx, cy) has in range."""
+        r2 = self._range_cells(kind) ** 2
+        n = 0
+        for p in self._damage_towers():
+            tx, ty = self.m.frac_to_cell(p.x, p.y)
+            n += (tx - cx) ** 2 + (ty - cy) ** 2 <= r2
+        return n
+
+    def _buff_spots(self, kind):
+        """Legal cells where a buffer reaches the most damage towers (at least
+        one), best first; [] when no damage tower stands yet."""
+        from . import placement as PL
+        if not self._damage_towers():
+            return []
+        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
+                  for p in self.g.towers.values()]
+        valid = PL.valid_spots(self.m, kind, None, placed, where={"land"} if self.land_only else None)
+        if valid is None:
+            return []
+        ys, xs = np.nonzero(valid & ~self.blocked)
+        scored = sorted(((self._buffed(kind, x, y), x, y) for x, y in zip(xs.tolist(), ys.tolist())
+                         if (kind, x, y) not in self.failed_spots), reverse=True)
+        out = []
+        for n, x, y in scored:
+            if n < 1:
+                break
+            if any((x - ox) ** 2 + (y - oy) ** 2 < 9 for ox, oy, _ in out):
+                continue
+            out.append((x, y, float(n)))
+            if len(out) >= self.SPOTS_PER_HOLD:
+                break
+        return out
+
+    PROBE_GAIN = 1.2       # probe a blocked spot only if it reaches this much more track
+    POP_GRACE_ROUNDS = 6   # rounds a damage tower may stand without a single pop
+    BUFFER_RETRY_S = 20.0  # a village/alchemist with nothing to buff yet waits this long
+
+    def _probe_spot(self, kind, valid):
+        """One cell the map file marks blocked but whose range would reach
+        PROBE_GAIN times more track than any legal spot (Water Park's
+        top-left pink circle, inside the slide's loop): tried first while
+        the tower is held. A refusal is learned like any refused spot (never
+        probed again), an acceptance too (_learn_probe). None when nothing
+        is worth it."""
+        if kind == "hero" or valid is None or not valid.any():
+            return None
+        reach = self._reach(kind)
+        if reach is None:
+            return None
+        probed = self.__dict__.setdefault("_probed", set())
+        if any(k == kind for k, _, _ in probed):
+            return None            # one probe per tower kind and game
+        cnt = getattr(self.m, "t_cnt", None)
+        on_track = (cnt > 0) if isinstance(cnt, np.ndarray) else np.zeros(valid.shape, bool)
+        surface = "water" if T.TOWERS.get(kind, {}).get("placement") == "water" else "land"
+        refused_mask = getattr(self.m, "refused_mask", None)
+        refused = refused_mask(surface) if refused_mask else np.zeros(valid.shape, bool)
+        best_legal = float(reach[valid].max())
+        cand = ~valid & ~on_track & ~refused & ~self.blocked & (reach > self.PROBE_GAIN * best_legal)
+        ys, xs = np.nonzero(cand)
+        for i in np.argsort(-reach[ys, xs])[:50]:
+            cx, cy = int(xs[i]), int(ys[i])
+            if (kind, cx, cy) in self.failed_spots:
+                continue
+            probed.add((kind, cx, cy))
+            log.info("%s: probing a spot the map file marks blocked (reaches %.0f track cells, "
+                     "the best legal one %.0f)", kind, reach[cy, cx], best_legal)
+            return (cx, cy, 2e9)
+        return None
+
+    def _learn_probe(self, kind, p):
+        """The tower stands where a probe was tried: the game accepts that
+        spot, so it is legal on this map from now on (MapModel.accept)."""
+        cx, cy = (int(round(v)) for v in self.m.frac_to_cell(p.x, p.y))
+        probed = self.__dict__.get("_probed", set())
+        hit = any(k == kind and abs(x - cx) <= 1 and abs(y - cy) <= 1 for k, x, y in probed)
+        if hit and hasattr(self.m, "accept"):
+            surface = "water" if T.TOWERS.get(kind, {}).get("placement") == "water" else "land"
+            self.m.accept(surface, cx, cy)
+            log.warning("learned: the game accepts %s at a spot the map file marks blocked (%d,%d)",
+                        kind, cx, cy)
+
+    def _reach(self, kind):
+        """Grid: how many track cells a `kind` tower centred on each cell has
+        in range (computed once per kind and game)."""
+        cache = self.__dict__.setdefault("_reach_cache", {})
+        if kind not in cache:
+            import cv2
+            cnt = getattr(self.m, "t_cnt", None)
+            track = (cnt > 0).astype(np.float32) if isinstance(cnt, np.ndarray) else None
+            if track is None:
+                cache[kind] = None
+            else:
+                r = max(1, int(round(min(self._range_cells(kind), 60))))
+                disc = np.zeros((2 * r + 1, 2 * r + 1), np.float32)
+                cv2.circle(disc, (r, r), r, 1.0, -1)
+                cache[kind] = cv2.filter2D(track, -1, disc, borderType=cv2.BORDER_CONSTANT)
+        return cache[kind]
+
+    def _reach_floor(self, kind, valid):
+        """The least track a `kind` tower must reach here, or None when it
+        does not apply (global range, no track or no legal ground known)."""
+        if kind == "hero" or T.TOWERS.get(kind, {}).get("range") is None:
+            return None
+        reach = self._reach(kind)
+        if reach is None or valid is None or not valid.any():
+            return None
+        best = float(reach[valid].max())
+        return self.MIN_REACH_SHARE * best if best > 0 else None
+
+    def sell_useless(self, rnd, lives_dropped=False):
+        """Sell one placed damage tower whose range reaches almost no track
+        (less than SELL_REACH_SHARE of the best legal spot's reach). Not in
+        no-sell modes (CHIMPS), not while lives are falling, never the last
+        real tower. Returns True when one was sold."""
+        if self.no_sell or lives_dropped or getattr(self, "_sold_round", None) == rnd:
+            return False
+        from . import placement as PL
+        towers = [p for p in self.g.towers.values() if p.kind != "hero"]
+        if len(towers) <= 1:
+            return False
+        for p in towers:
+            if not hasattr(p, "placed_round"):
+                p.placed_round = rnd
+        # 1. a damage tower that popped NOTHING in POP_GRACE_ROUNDS: the map's
+        #    reading of the route there is wrong (Water Park: a tack "below the
+        #    slide", where the map file put the second route)
+        for p in towers:
+            if p.kind in self.BUFFERS or p.kind in ("farm", "spike"):
+                continue
+            if rnd - p.placed_round < self.POP_GRACE_ROUNDS or getattr(p, "pops", 0) > 0:
+                continue                    # too new to judge, or proven to pop: no more clicks
+            if getattr(p, "pops_round", -1) < rnd - 2:
+                if self.g.select(p):        # its panel shows the pop count (Game._read_pops)
+                    self.g.deselect(p)
+                    p.pops_round = rnd
+                    # two reads of 0, rounds apart, before a sale: one misread is not proof
+                    p.zero_reads = getattr(p, "zero_reads", 0) + 1 if getattr(p, "pops", None) == 0 else 0
+                break                       # one panel read per round at most
+            if getattr(p, "zero_reads", 0) >= 2:
+                log.warning("selling %s (%s): not a single pop in %d rounds", p.tid, p.kind,
+                            rnd - p.placed_round)
+                self._sold_round = rnd
+                return bool(self.g.sell(p))
+        # 2. a buffer with no damage tower in its radius;
+        # 3. a damage tower whose range barely reaches the track
+        for p in towers:
+            if p.kind in self.BUFFERS:
+                cx, cy = self.m.frac_to_cell(p.x, p.y)
+                if len(self._damage_towers()) >= 2 and self._buffed(p.kind, cx, cy) == 0:
+                    log.warning("selling %s (%s): no tower in its radius to buff", p.tid, p.kind)
+                    self._sold_round = rnd
+                    return bool(self.g.sell(p))
+                continue
+            if p.kind in ("farm", "spike") or T.TOWERS.get(p.kind, {}).get("range") is None:
+                continue   # income, exit and global-range towers stay
+            reach = self._reach(p.kind)
+            valid = PL.valid_spots(self.m, p.kind)
+            if reach is None or valid is None or not valid.any():
+                continue
+            best = float(reach[valid].max())
+            cx, cy = (int(round(v)) for v in self.m.frac_to_cell(p.x, p.y))
+            if best > 0 and reach[cy, cx] < self.SELL_REACH_SHARE * best:
+                log.warning("selling %s (%s): its range reaches %.0f track cells, the best spot "
+                            "reaches %.0f", p.tid, p.kind, reach[cy, cx], best)
+                self._sold_round = rnd
+                return bool(self.g.sell(p))
+        return False
+
+    def _exact_spot(self, step, valid):
+        """The cell of a step's exact spot (`at: [fx, fy]`, from a map's own
+        build), or the nearest legal cell within AT_SEARCH_CELLS when it is
+        taken or was refused; None when there is no `at` or nothing close."""
+        at = step.get("at")
+        if not at or len(at) != 2:
+            return None
+        cx, cy = (int(round(v)) for v in self.m.frac_to_cell(float(at[0]), float(at[1])))
+        h, w = self.blocked.shape
+        best = None
+        for dy in range(-self.AT_SEARCH_CELLS, self.AT_SEARCH_CELLS + 1):
+            for dx in range(-self.AT_SEARCH_CELLS, self.AT_SEARCH_CELLS + 1):
+                x, y = cx + dx, cy + dy
+                if not (0 <= x < w and 0 <= y < h) or self.blocked[y, x]:
+                    continue
+                if valid is not None and not valid[y, x]:
+                    continue
+                if (step.get("kind"), x, y) in self.failed_spots:
+                    continue
+                d = dx * dx + dy * dy
+                if best is None or d < best[0]:
+                    best = (d, x, y)
+        return None if best is None else (best[1], best[2], 1e9)
+
     def _edge_band(self):
         """Cells within EDGE_CELLS of the bloon path's line (computed once per
         game), or None when the track is not known."""
@@ -1264,8 +1551,14 @@ class Executor:
           2. the progress `segment` is dropped (any part of the track);
           3. a support/far step is tried as a damage tower would be;
           4. a global-range tower (sniper, mortar, ...) takes any legal spot.
+        A buffer (village, alchemist) never relaxes into a spot chosen by
+        role alone: it goes next to the most damage towers (_buff_spots).
         Each relaxation that finds spots is logged; a real dead end logs how
         much legal ground there was, so the cause shows in the log."""
+        if kind in self.BUFFERS and not any(i in self.g.towers for i in step.get("near") or ()):
+            # none of the towers it was meant to buff stands (Water Park: a
+            # lone village buffing nothing)
+            return self._buff_spots(kind)
         spots = self.pick_spots(kind, step, n=self.SPOTS_PER_HOLD)
         if spots:
             return spots
@@ -1277,11 +1570,13 @@ class Executor:
                 tries.append((dict(step, near_radius=radius * factor),
                               f"no spot within {radius:g} of {step['near']} - using radius {radius * factor:g}"))
             step = {k: v for k, v in step.items() if k not in ("near", "near_radius")}
-            tries.append((step, f"no spot near the towers it supports - placing by role only"))
+            if kind not in self.BUFFERS:
+                tries.append((step, f"no spot near the towers it supports - placing by role only"))
         if "segment" in step:
             step = {k: v for k, v in step.items() if k != "segment"}
             tries.append((step, "no spot covering its part of the track - any part of the track"))
-        if step.get("role") in ("support", "far") and kind != "hero":
+        buffer = kind in self.BUFFERS
+        if step.get("role") in ("support", "far") and kind != "hero" and not buffer:
             step = dict(step, role="dps")
             tries.append((step, "no support spot - placing it where it covers track"))
         for relaxed, why in tries:
@@ -1289,6 +1584,14 @@ class Executor:
             if spots:
                 log.info("%s: %s", label, why)
                 return spots
+        if buffer:
+            # a village/alchemist buffs the towers in its radius: next to the
+            # most damage towers, never on its own (a lone village buffed
+            # nothing on Water Park)
+            spots = self._buff_spots(kind)
+            if spots:
+                log.info("%s: placed where it buffs the most towers", label)
+            return spots
         spots = self._any_legal_spot(kind)
         if spots:
             log.info("%s: no spot reaches the track - global range, any legal spot", label)
@@ -1350,6 +1653,14 @@ class Executor:
             self.dead_steps.add(key)
             log.warning("giving up on step %s for this game after %d refused spots",
                         step, self.step_spot_fails.get(key, 0))
+        return "skip"
+
+    def _defer(self, step, key, pause):
+        """Put a place step aside for `pause` seconds; tick() tries it again
+        from the deferred list. Returns 'skip' so the plan moves on."""
+        self.retry_at[key] = time.time() + pause
+        if all(self._step_key(s) != key for s in self.deferred):
+            self.deferred.append(step)
         return "skip"
 
     def _avoid_unverified(self, kind):
@@ -2192,6 +2503,9 @@ class Executor:
                 t[path] += 1
                 if sum(x > 0 for x in t) > 2 or sum(x > 2 for x in t) > 1:
                     continue
+                cap = self._planned_cap(p)
+                if cap is not None and t[path] > cap[path]:
+                    continue  # past the crosspath the plan wants for this tower
                 if self.account and t[path] > self.account.upgrades(p.kind)[path] and t[path] > 2:
                     continue  # known XP-locked beyond tier 2
                 cost = T.upgrade_cost(p.kind, path + 1, t[path], PRICE_FAMILY.get(self.mode, "hard"))
@@ -2208,6 +2522,32 @@ class Executor:
                 log.info("surplus: placed another %s", main)
                 return True
         return False
+
+    def _planned_cap(self, p):
+        """The crosspath the plan wants this tower to end at (its upgrade steps
+        by id, else by kind, over plan, fill and answers; the highest tier
+        per path), or None when the plan never upgrades it. Surplus cash must
+        not push a tower past it: on Enchanted Glade, Party Parade and Last
+        Resort, 4-0-2 ninjas became 0-0-4 and 3-0-2 Super Monkeys 0-2-3,
+        losing the attack the plan was built around."""
+        if not hasattr(self, "_plan_caps"):
+            by_id, by_kind = {}, {}
+            steps = list(self.plan) + list(self.strat.get("fill") or [])                 + [a for v in (self.strat.get("answers") or {}).values() for a in v]
+            for st in steps:
+                if st.get("do") != "upgrade" or not st.get("to"):
+                    continue
+                try:
+                    tiers = parse_cross(st["to"])
+                except Exception:
+                    continue
+                key, table = (st["id"], by_id) if st.get("id") else (st.get("kind"), by_kind)
+                if key is None:
+                    continue
+                old = table.get(key, (0, 0, 0))
+                table[key] = tuple(max(a, b) for a, b in zip(old, tiers))
+            self._plan_caps = (by_id, by_kind)
+        by_id, by_kind = self._plan_caps
+        return by_id.get(p.tid) or by_kind.get(p.kind)
 
     def _main_kind(self):
         counts = {}

@@ -175,6 +175,11 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
         mask = getattr(model, "refused_mask", None)
         return mask(surface) if mask else np.zeros(ok.shape, bool)
 
+    # ... and spots the game accepted although the map file says blocked
+    def accepted(surface):
+        mask = getattr(model, "accepted_mask", None)
+        return mask(surface) if mask else np.zeros(ok.shape, bool)
+
     scan, mermonkey_water, size_limit = model.scan, model.mermonkey_water, model.size_limit
     if removed or now_round is not None or last_round is not None:
         alt = _game_grids(model, tuple(removed), now_round, last_round)
@@ -182,12 +187,12 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
             scan = alt["scan"]
             mermonkey_water, size_limit = alt["mermonkey_water"], alt["size_limit"]
     if "land" in where:
-        ok |= (scan["land"] == 1) & ~refused("land")
+        ok |= ((scan["land"] == 1) | accepted("land")) & ~refused("land")
     if "water" in where:
         water = scan.get("water", np.full(ok.shape, 2)) == 1
         if kind == "mermonkey" and mermonkey_water is not None:
             water |= mermonkey_water
-        ok |= water & ~refused("water")
+        ok |= (water | accepted("water")) & ~refused("water")
     if size_limit is not None:
         ok &= size_limit >= size_level(kind, hero)
     if moving is not True:

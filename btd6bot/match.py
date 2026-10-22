@@ -241,6 +241,12 @@ class Match:
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
+                    # once a round: a tower whose range barely reaches the
+                    # track is sold, its cash goes to towers that pop bloons
+                    try:
+                        self.ex.sell_useless(rnd, lives_dropped=dropped)
+                    except Exception:
+                        log.exception("selling useless towers failed - carrying on")
                 elif rnd is not None and rnd != last_round:
                     # a reading outside the expected step: adopt it only if it
                     # persists (recovers from a bad first read)

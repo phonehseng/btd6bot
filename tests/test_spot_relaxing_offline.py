@@ -3,19 +3,24 @@ spot is relaxed in stages (near radius, near, segment, role) before it can
 be given up. Run: python tests/test_spot_relaxing_offline.py"""
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from btd6bot.strategy import Executor  # noqa: E402
 
 
-def _executor(finds):
-    """An Executor whose spot finder only succeeds when finds(step) is True."""
+def _executor(finds, standing=("s1", "v1", "a1")):
+    """An Executor whose spot finder only succeeds when finds(step) is True;
+    `standing` are the tower ids already placed."""
     ex = Executor.__new__(Executor)
     ex.SPOTS_PER_HOLD = 4
     ex.seen = []
+    ex.g = SimpleNamespace(towers={tid: object() for tid in standing})
     ex.pick_spots = lambda kind, step, n=1: (ex.seen.append(dict(step)) or
                                               ([(10, 10, 1.0)] if finds(step) else []))
     ex._any_legal_spot = lambda kind: []
+    ex._buff_spots = lambda kind: [(5, 5, 2.0)] if ex.buff_ok else []
+    ex.buff_ok = False
     return ex
 
 
@@ -45,6 +50,22 @@ def test_gives_up_only_after_every_stage():
     step = {"do": "place", "kind": "ninja", "role": "support", "near": ["a1"], "segment": [0, 0.5]}
     assert ex._spots_widening("ninja", step) == []
     assert len(ex.seen) >= 5      # original + 2 radii + no near + no segment + as dps
+
+
+def test_buffer_without_its_towers_goes_next_to_damage_towers():
+    # Water Park: the village's snipers were never placed and it stood alone
+    ex = _executor(lambda st: True, standing=())
+    ex.buff_ok = True
+    step = {"do": "place", "kind": "village", "role": "support", "near": ["s1"]}
+    assert ex._spots_widening("village", step) == [(5, 5, 2.0)]
+    assert ex.seen == []          # no spot chosen by role alone was even looked at
+
+
+def test_buffer_never_relaxes_into_a_role_only_spot():
+    ex = _executor(lambda st: "near" not in st)   # only a role-only search would succeed
+    step = {"do": "place", "kind": "village", "role": "support", "near": ["s1"], "near_radius": 8}
+    assert ex._spots_widening("village", step) == []
+    assert all("near" in st for st in ex.seen)
 
 
 if __name__ == "__main__":

@@ -57,6 +57,10 @@ class MapModel:
         # geometry is (re-)applied, and refusals written into `scan` used to
         # vanish with it, so the bot tried the same bad spots on every visit.
         self.refused = {}
+        # Spots the game ACCEPTED although the map file marks them blocked
+        # (probed while holding a tower; e.g. Water Park's top-left pink
+        # circle): bool grids per surface, added to what the geometry allows.
+        self.accepted = {}
         # experience: "kind|cx|cy" -> [sum of relative pops-per-dollar, games]
         self.spot_stats = {}
 
@@ -70,6 +74,7 @@ class MapModel:
         DATA.mkdir(parents=True, exist_ok=True)
         scans = {f"scan_{k}": v for k, v in self.scan.items()}
         scans.update({f"refused_{k}": v for k, v in self.refused.items()})
+        scans.update({f"accepted_{k}": v for k, v in self.accepted.items()})
         for key in ("small_only", "sight", "size_limit", "mermonkey_water"):
             if getattr(self, key, None) is not None:
                 scans[f"geom_{key}"] = getattr(self, key)
@@ -114,6 +119,8 @@ class MapModel:
                         m.scan[k[5:]] = d[k]
                     elif k.startswith("refused_"):
                         m.refused[k[len("refused_"):]] = d[k].astype(bool)
+                    elif k.startswith("accepted_"):
+                        m.accepted[k[len("accepted_"):]] = d[k].astype(bool)
             except Exception:
                 return cls(name, playfield)  # corrupt file: relearn rather than crash
         return m
@@ -159,6 +166,20 @@ class MapModel:
             grid = self.refused[surface] = np.zeros(self.heat.shape, bool)
         h, w = grid.shape
         grid[max(0, cy - r):min(h, cy + r + 1), max(0, cx - r):min(w, cx + r + 1)] = True
+
+    def accepted_mask(self, surface):
+        """bool grid: cells the game accepted a tower on although the map
+        file marks them blocked (see accept)."""
+        grid = getattr(self, "accepted", {}).get(surface)
+        return grid if grid is not None else np.zeros(self.heat.shape, bool)
+
+    def accept(self, surface, cx, cy):
+        """Remember that the game placed a tower centred on cell (cx, cy) that
+        the map file marks blocked: it counts as legal from now on (saved)."""
+        grid = self.accepted.get(surface)
+        if grid is None:
+            grid = self.accepted[surface] = np.zeros(self.heat.shape, bool)
+        grid[cy, cx] = True
 
     def scanned(self, cls="land"):
         if cls == "water":  # water scans are sparse by design
