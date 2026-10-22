@@ -29,16 +29,18 @@ overall completion, so keep the format: `## Section` headings and `- [ ]` /
 - [x] Monkey Knowledge auto-spend
 - [ ] Hero selection
 - [ ] Grind low-XP towers in safe games (paragons, all tiers)
-- [ ] Check Monkey Knowledge and achievements only when the "!" badge shows
+- [x] Check Monkey Knowledge and achievements only when the "!" badge shows
 
 ## Game knowledge
 - [x] Round compositions
 - [x] Tower XP mechanics
 - [ ] Bloon properties knowledge base
+- [x] Map geometry, round sets and achievements read from the game files
 - [ ] Tower and bloon stats decoded from the game model
 
 ## Running unattended
 - [x] Supervisor, watchdog and scheduled task
 - [x] Offline gate (ALLOW_ONLINE file for development)
 - [x] Status overlay and progress pane
+- [x] Rolling recording and daily highlight videos
 - [ ] 24-hour unattended run without a loss

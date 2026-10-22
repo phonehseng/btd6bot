@@ -44,6 +44,22 @@ the game closes). To undo: `Remove-NetFirewallRule -DisplayName "BTD6 offline (b
 For testing with an online game, create an empty file named `ALLOW_ONLINE` in
 the project folder.
 
+## Highlight videos
+
+While the bot runs, `btd6bot/recorder.py` (started by the supervisor) records
+the screen in 1-minute chunks and keeps the last 4 hours in
+`~/.btd6bot_cache/recordings`. After each game, `btd6bot/highlights.py` cuts
+the interesting moments out of them: the opening, tier 4/5 upgrades, leaks,
+rounds 40/60/80/100 and the ending. Each clip gets a subtitle saying what
+happened and the bot build it was running. Each day becomes one video,
+`~/Videos/BTD6 Bot/BTD6 bot highlights YYYY-MM-DD.mp4`, with "What changed"
+cards wherever the code changed between games, so it shows the bot improving.
+
+- Needs ffmpeg (not in the repo): unzip a BtbN Windows build into
+  `~/.btd6bot_cache/tools/ffmpeg/`, or point `BTD6BOT_FFMPEG` at an `ffmpeg.exe`.
+- A file named `NO_RECORD` in the project folder pauses recording.
+- Rebuild by hand: `python -m btd6bot.highlights`.
+
 ## How it plays
 
 | Piece | What it does |
