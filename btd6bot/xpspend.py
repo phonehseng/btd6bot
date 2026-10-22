@@ -33,8 +33,21 @@ SHORT = {}  # tower -> cheapest XP cost it could not pay (skip until its XP grow
 def _title_matches(title, kind):
     """OCR'd tree title vs tower (tolerates misreads like 'soomeRAnG MonKeY')."""
     import difflib
-    t, name = norm(title), norm(T.TOWERS[kind]["name"])
-    return T.find_tower(title) == kind or difflib.SequenceMatcher(None, t, name).ratio() >= 0.75         or (len(t) >= 6 and difflib.SequenceMatcher(None, t, name[:len(t)]).ratio() >= 0.8)
+    t = norm(title)
+    exact = T.find_tower(title)
+    if exact:
+        return exact == kind
+
+    def score(k):
+        name = norm(T.TOWERS[k]["name"])
+        r = difflib.SequenceMatcher(None, t, name).ratio()
+        if r < 0.75 and len(t) >= 6 and difflib.SequenceMatcher(None, t, name[:len(t)]).ratio() >= 0.8:
+            r = 0.75
+        return r
+
+    # the best-scoring tower must be this one ('SUPeRMONKeY' is close to Mermonkey too)
+    best = max(T.TOWERS, key=score)
+    return best == kind and score(kind) >= 0.75
 
 
 def needed_upgrades(strat):
@@ -169,23 +182,54 @@ def unlock_for_strategy(screen, inp, menus, account, strat):
     return XpSpender(screen, inp, menus, account).unlock(needed_upgrades(strat))
 
 
+def scan_owned(inp, menus):
+    """Monkeys menu: towers whose card shows an 'XP:' total are owned (locked
+    cards show a price instead). Leaves the menu on the last tab."""
+    owned = set()
+    for cat, pos in TABS.items():
+        inp.click(*pos)
+        time.sleep(0.8)
+        words = menus.read()
+        xps = [w for w in words if "xp" in norm(w.text) or re.search(r"\d[\d,.]{3,}", w.text)]
+        for w in words:
+            kind = T.find_tower(w.text)
+            if not kind or T.TOWERS[kind]["category"] != cat:
+                continue
+            if any(abs(x.x - w.x) < 0.08 and 0.15 < x.y - w.y < 0.35 for x in xps):
+                owned.add(kind)
+    log.info("owned towers: %d (%s)", len(owned), ", ".join(sorted(owned)))
+    return owned
+
+
 def sync_all(screen, inp, menus, account, towers=None):
     """Read every owned tower's upgrade tree and store the true unlocked tiers.
     Used when an account is first seen (e.g. a higher-level save) and daily."""
-    from .meta import tiers_from_states, tree_states
+    from .meta import paragon_tree, tiers_from_states, tree_states
     sp = XpSpender(screen, inp, menus, account)
     if menus.identify() != "main_menu":
         return {}
-    kinds = towers or [k for k in T.TOWERS if k in account.unlocked_towers]
     inp.click(*MONKEYS_BUTTON)
     time.sleep(1.5)
     seen = {}
     try:
+        if not towers:
+            owned = scan_owned(inp, menus)
+            if owned:
+                account.unlocked_towers |= owned
+        kinds = towers or [k for k in T.TOWERS if k in account.unlocked_towers]
         for kind in kinds:
             if not sp.open_tower(kind):
                 continue
-            time.sleep(0.4)
-            tiers = tiers_from_states(tree_states(screen.grab()))
+            # the click that opened the tree may land on a node, whose tooltip
+            # then hides part of the tree: click empty background to close it
+            inp.click(0.5, 0.94)
+            inp.move(0.97, 0.97)
+            time.sleep(0.5)
+            frame = screen.grab()
+            if paragon_tree(frame):
+                tiers = [5, 5, 5]
+            else:
+                tiers = tiers_from_states(tree_states(frame))
             # colour alone is unsure for tiers 4-5 (a locked tier 5 that is next
             # in line is drawn as a gold face): confirm by the side panel, which
             # shows "UNLOCK FOR: N XP" only for upgrades not yet unlocked

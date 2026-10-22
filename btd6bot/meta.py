@@ -273,15 +273,36 @@ def tree_states(frame):
     return [[icon_state(crop(frame, icon_region(p, t))) for t in range(1, 6)] for p in range(1, 4)]
 
 
+def paragon_tree(frame):
+    """True when the tree is drawn on the purple paragon background, which the
+    game uses once the tower's paragon is unlocked - and a paragon needs all
+    three tier-5 upgrades, so every tier of every path is unlocked."""
+    if frame is None:
+        return False
+    h, w = frame.shape[:2]
+    for x0, y0, x1, y1 in ((0.25, 0.17, 0.35, 0.22), (0.30, 0.90, 0.70, 0.96)):
+        patch = frame[int(y0 * h):int(y1 * h), int(x0 * w):int(x1 * w)]
+        if patch.size == 0:
+            continue
+        hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV).reshape(-1, 3)
+        purple = (hsv[:, 0] > 125) & (hsv[:, 0] < 155) & (hsv[:, 1] > 150)
+        if float(np.mean(purple)) > 0.6:
+            return True
+    return False
+
+
 def tiers_from_states(states):
-    """Unlocked tier per path = length of the leading run of 'unlocked' icons."""
+    """Unlocked tier per path = the highest 'unlocked' icon. Tiers unlock in
+    order, so an icon whose art is mostly green (Bloon Dissolver) and reads as
+    'available' cannot really be locked when a later tier is unlocked."""
     out = []
     for row in states:
         n = 0
-        for st in row:
-            if st not in ("unlocked", True):
-                break
-            n += 1
+        for i, st in enumerate(row):
+            if st in ("locked", False):
+                break  # grey stone: nothing after it can be unlocked
+            if st in ("unlocked", True):
+                n = i + 1
         out.append(n)
     return out
 

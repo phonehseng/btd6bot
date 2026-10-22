@@ -172,13 +172,17 @@ class Bot:
             elif st == "defeat":
                 self.menus.leave_defeat()
             elif st in ("map_select", "difficulty", "mode_select", "hero_select", "upgrade_tree",
-                        "profile", "overwrite", "account"):
+                        "profile", "overwrite", "account", "monkeys_menu"):
                 self.inp.click(0.044, 0.055)  # back arrow
                 time.sleep(0.4)
             elif st == "level_up":
                 self.menus.handle_level_up()
             elif st == "tower_choice":
                 self._tower_choice()
+            elif st == "title":
+                if not self.menus.click_word("start"):
+                    self.inp.click(0.5, 0.9)
+                time.sleep(3.0)
             elif st == "in_game":
                 self.inp.click(*self.lay["gear"])
                 time.sleep(0.8)

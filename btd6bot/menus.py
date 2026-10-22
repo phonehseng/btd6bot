@@ -33,6 +33,9 @@ SCREENS = [
     ("mode_select", [["standard"], ["rewards", "sandbox"]]),
     ("map_select", [["beginner"], ["intermediate"], ["expert"]]),
     ("hero_select", [["select"], ["heroes", "hero"]]),
+    ("monkeys_menu", [["primary"], ["military"], ["magic"], ["support"]]),
+    # title screen after the game reloads / reconnects: "WELCOME TO BLOONS ... START"
+    ("title", [["welcometo", "anepicadventure", "anepigadventureof"], ["start"]]),
     ("main_menu", [["play"], ["monkeys"], ["heroes"]]),
 ]
 

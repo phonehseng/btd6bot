@@ -1,0 +1,2127 @@
+{
+ "version": "BTD6 v57 (Oct 2026)",
+ "sources": [
+  "bloonswiki.com (via r.jina.ai): Line_of_sight, every tower page's stat tables ('Ignores blockers' filters, display range, footprint radius), every BTD6 map page and hero pages (fetched 2026-10-21)",
+  "docs/research_strategies.md, docs/rounds.md (project)",
+  "Fandom Height page was CAPTCHA-blocked; Reddit/Steam not needed for LOS facts"
+ ],
+ "conventions": {
+  "progress": "0 = entrance, 1 = exit, learned from bloon motion order",
+  "segment_preference": "[lo, hi] progress range where the tower performs best; null = irrelevant (no attack)",
+  "range_type": "radius = attacks within display_range; global = map-wide (still LOS-limited if needs_line_of_sight); track_adjacent = places things on track inside its range",
+  "units": "display_range / footprint_radius / support_radius are BTD6 game units (as on bloonswiki). null = unknown/not applicable. Convert with the bot's own unit->pixel scale.",
+  "footprint": "small <= 6, medium 7-8, large >= 9 or rectangular (ace runway 28x18, heli pad 27x27)",
+  "uncertain": "'?' marks unverified values",
+  "upgrade_notation": "a-b-c = top-middle-bottom path tiers; 'x' = any"
+ },
+ "line_of_sight": {
+  "mechanic": "Most towers can only target a bloon if a straight line from the tower to some part of the bloon is not blocked. Blockers are walls and objects, removables, and higher terrain: a tower cannot see bloons on ground higher than itself, but can see lower ground. Targeting is checked when an attack starts, so projectiles already in flight keep going. Most LOS projectiles are destroyed when they hit a blocker; some rebound (Juggernaut, Skywarden/Mermonkey ice balls) or pass through it (Glaive Ricochet glaives).",
+  "how_to_see_it_in_game": "When a tower is selected, or while it is being placed, the game shades the parts of its display range that are blocked in red (black with High Contrast / Color Blind). For snipers, blocked areas anywhere on the map are shaded. A bot can learn a per-cell LOS mask by hovering a tower ghost (a Sniper gives the whole map) over a candidate cell and diffing the screenshot against the normal range tint.",
+  "ignores_los_fully": [
+   "ace (flying)",
+   "heli (flying)",
+   "mortar (lobbed)",
+   "alchemist (potions)",
+   "spike (drops spikes behind blockers, but needs track inside its range)",
+   "farm / village (no attack)",
+   "beast_handler base staff attack",
+   "obyn (spirit wolf)",
+   "ezili (instant curse)",
+   "adora (seeking bolts)",
+   "psi (global)",
+   "corvus spirit (flying, global)",
+   "benjamin (no attack)"
+  ],
+  "ignores_los_with_upgrade": [
+   "wizard Guided Magic (1-x-x): bolts seek through cover",
+   "wizard Summon Phoenix (x-4-x) and Lava Phoenix: infinite range, ignore blockers",
+   "wizard Necromancer (x-x-4): zombies ignore LOS; the graveyard collects through walls",
+   "sub Ballistic Missile (x-3-x) and Pre-emptive Strike: missiles fly over walls",
+   "boomerang MOAB Press heavy Kylie (x-x-4): targets through blockers",
+   "boomerang Glaive Ricochet (3-x-x): glaives pass through blockers, but targeting still needs LOS",
+   "druid Heart of Thunder (2-x-x): lightning chains through obstacles; Superstorm ignores walls",
+   "sniper Bouncing Bullet (x-3-x): the bounces ignore obstacles; S.P.I.D.E.R. paragon ignores LOS",
+   "skywarden Thundering Arc (x-2-x)+: fires over walls and gains Set Target",
+   "buccaneer Aircraft Carrier (4-x-x) / Flagship planes (flying)",
+   "super X-ray Ultra Monkey Knowledge: sees and fires through blockers",
+   "beast_handler Giganotosaurus sees over all obstacles; birds of prey fly",
+   "dartling BADS/Rocket Storm/M.A.D. higher barrels pass over some low obstacles",
+   "etienne drones fly over blockers but only inside his range; UCAV missiles infinite range",
+   "admiral_brickell sea mines / Mega Mine ignore LOS",
+   "gwendolin Cocktail of Fire lands anywhere in range, even behind blockers",
+   "silas can attack inside an Ice Monkey's range without his own LOS (v50+)",
+   "mermonkey Final Harmonic totem pulls bloons through walls"
+  ],
+  "partially_elevated_los": [
+   "tack tier 4+ (Ring of Fire, Blade Maelstrom, Overdrive)",
+   "ice Cryo Cannon line",
+   "boomerang Bionic Boomerang (x-3-x)",
+   "ninja Grandmaster (5-x-x)",
+   "super Laser Blasts (1-x-x)+"
+  ],
+  "needs_los": [
+   "dart",
+   "boomerang (base)",
+   "bomb (projectile; explosion ignores)",
+   "tack",
+   "ice (needs a visible target to trigger)",
+   "glue",
+   "desperado",
+   "sniper (global but LOS-limited)",
+   "sub darts (incl. via Advanced Intel)",
+   "buccaneer guns ?",
+   "dartling (projectiles destroyed by blockers; Ray of Doom stops at obstacles)",
+   "wizard (base)",
+   "super",
+   "ninja (and caltrop placement)",
+   "druid thorns",
+   "mermonkey",
+   "skywarden (base)",
+   "engineer",
+   "quincy",
+   "gwendolin",
+   "striker_jones",
+   "churchill ?",
+   "pat_fusty",
+   "admiral_brickell main attack ?",
+   "sauda ?",
+   "geraldo ?",
+   "rosalia ?",
+   "silas (own targeting)",
+   "dan_dmonke ?",
+   "benjamin Trojan (infinite range but cannot see through blockers)"
+  ],
+  "special_immunity_zones": [
+   "Quad trusses and Dark Castle entrance trees: bloons under them are IMMUNE to every attack, not just hidden",
+   "KartsNDarts tunnel: non-MOAB bloons inside cannot be targeted or damaged (MOABs fly over)",
+   "X Factor central barrack: blocks all attacks on bloons under it until the $2000 stack is removed",
+   "Mushroom Grotto darkness: bloons in unlit areas cannot be targeted (projectiles still hit); no placement in the dark",
+   "Logs: bloons under the logs CAN be hit by LOS-ignoring attacks"
+  ]
+ },
+ "towers": {
+  "dart": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 32,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Projectiles are stopped by blockers, except Juggernaut balls, which rebound off them.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "straight",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 6,
+   "support_radius": null,
+   "notes": "Cheap early DPS. Darts fly straight: a cell beside a straight lets missed darts continue along the track. Juggernaut / Ultra-Juggernaut (top path) balls rebound off walls: near walls on walled maps (Hedge, Encrypted, Dark Path, Moon Landing)."
+  },
+  "boomerang": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 43,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Glaive Ricochet glaives pass through blockers, but targeting still needs LOS. the heavy Kylie of MOAB Press (x-x-4) targets and attacks through blockers. Bionic Boomerang (x-3-x) LOS slightly elevated.",
+   "segment_preference": [
+    0.1,
+    0.9
+   ],
+   "geometry": "straight",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Base rangs arc counter-clockwise ('Monkey Special' flips to clockwise), so a curve hugging the arc helps. Glaive Ricochet (3-x-x) and Kylie (x-x-3+) throw in straight lines: beside a long straight, aimed along it. Glaive Lord orbiting glaives favour a loop center."
+  },
+  "bomb": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 40,
+   "needs_line_of_sight": true,
+   "los_exceptions": "The bomb needs LOS to fire; its explosion ignores blockers once it lands.",
+   "segment_preference": [
+    0.0,
+    0.8
+   ],
+   "geometry": "bends",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Splash damage: place where bloons bunch up (bends, intersections, overlapping lanes). MOAB Mauler/Assassin (x-3/4-x) is single target, so any spot with LOS works."
+  },
+  "tack": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 23,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Tier 4+ (Ring of Fire, Blade Maelstrom, Overdrive) have slightly elevated LOS. A Monkey Knowledge makes tacks rebound off obstacles.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "bends",
+   "aiming": null,
+   "default_targeting": "Close (only option)",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 6,
+   "support_radius": null,
+   "notes": "Very short range (23). Maximise track length within range: tight curves, small loops, U-turns. Overdrive / Tack Zone kill zone sits right above the tower, so place inside a loop near its top edge. Ring of Fire / Inferno Ring want maximum track coverage (loop_center)."
+  },
+  "ice": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 20,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Needs a visible bloon to trigger; the freeze blast itself is flagged 'ignores blockers'. Cryo Cannon line has higher LOS.",
+   "segment_preference": [
+    0.0,
+    0.4
+   ],
+   "geometry": "loop_center",
+   "aiming": null,
+   "default_targeting": "Close (only option)",
+   "placement": "land_or_water",
+   "footprint": "small",
+   "footprint_radius": 6,
+   "support_radius": null,
+   "notes": "Radial freeze/slow around itself (20): put it where the most track is within range, early on the track, so slowed bloons stay longer in other towers' ranges. Can go on water. Arctic Wind (x-3-x) lets land towers sit on nearby water."
+  },
+  "glue": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 46,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    0.5
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 6,
+   "support_radius": null,
+   "notes": "Slow/stun support: first 30-50% of the track, so glued bloons spend longer in the damage zone. Corrosive/Liquefier glue pops over time, so it needs bloons glued early. Super Glue / Relentless Glue stuns belong at the main kill zone or chokepoint. Glue Storm ability is global."
+  },
+  "desperado": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 60,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Targeting ignores bloons behind blockers; the bullets themselves are flagged 'ignores blockers'.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "straight",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Primary tower (v49): a pistol that fires 2-round bursts with 60 range (long for a primary). Paths: revolver (Quickdraw attacks faster the further the closest bloon is), long-range rifle with crits and bounties (Golden Justice: near-infinite pierce down long straights), or a close-range shotgun. Rifle builds want a long straight. Pistol: any cell with the most visible track within 60."
+  },
+  "sniper": {
+   "kind": "tower",
+   "range_type": "global",
+   "display_range": 20,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Bouncing Bullet (x-3-x) bounces ignore obstacles. The S.P.I.D.E.R. paragon ignores LOS.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First (Strong for blimp roles)",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 6,
+   "support_radius": null,
+   "notes": "Map-wide range, but every shot needs a clear straight line from the tower to the bloon. Choose the cell with the most visible track: open centre, raised platforms, away from walls. Elite Defender (x-x-5) attacks faster the further bloons are along the track. Set Strong for MOAB/DDT roles."
+  },
+  "sub": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 42,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Main darts need LOS. Ballistic Missile missiles fly over walls. Low water on Ravine blocks normal sub darts.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "water",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Water only; darts seek. Use the water cell with the most track within 42. Advanced Intel (2-x-x) shoots inside other towers' ranges, but the darts still need the sub's own LOS. Submerge (3-x-x, Submerge targeting) reveals camo around itself and buffs water-tower abilities, but does not attack while submerged. Ballistic Missile (x-3-x) and First/Pre-emptive Strike ignore LOS."
+  },
+  "buccaneer": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 60,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Ship guns follow normal LOS rules ?. Carrier/Flagship planes are flying and ignore blockers.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "straight",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "water",
+   "footprint": "medium",
+   "footprint_radius": 8,
+   "support_radius": null,
+   "notes": "Water only, two broadside guns. Best where the track runs on both sides of the water cell (central ponds, rivers between lanes). Aircraft Carrier (4-x-x) planes fly the whole map."
+  },
+  "ace": {
+   "kind": "tower",
+   "range_type": "global",
+   "display_range": 22,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": {
+    "type": "flight_path",
+    "options": [
+     "Circle",
+     "Figure Infinite",
+     "Figure Eight",
+     "Centered Path (x-x-2)"
+    ],
+    "how": "The plane flies a fixed pattern of about 80-unit radius around its runway; every pattern is 160*pi long. Centered Path (x-x-2) flies a 90-unit circle around a point set anywhere (it defaults to the map centre).",
+    "bot_safe": "Leave Circle. Choose the runway cell whose 80-unit circle overlaps the most track. With Centered Path, set the point on the densest track region. Avoid Wingmonkey (it misbehaves on split lanes)."
+   },
+   "default_targeting": "Circle",
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Flying: ignores all LOS blockers and elevation. The base attack fires 8 radial darts continuously with no targeting. Bomber Ace runs drop only while crossing the track. The runway footprint is a 28x18 rectangle."
+  },
+  "heli": {
+   "kind": "tower",
+   "range_type": "global",
+   "display_range": 22,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": {
+    "type": "movement",
+    "options": [
+     "Follow Touch",
+     "Lock in Place",
+     "Patrol Points",
+     "Pursuit (2-x-x)"
+    ],
+    "how": "The heli moves over the map. Follow Touch chases the mouse cursor, Lock in Place hovers at a chosen point, Patrol moves between two points, and Pursuit (Pursuit upgrade, path 1 tier 2) chases bloons automatically.",
+    "bot_safe": "Buy Pursuit (2-x-x) early and select it. Before that, Lock in Place over the densest track point in the 0.1-0.5 progress range. Never leave it on Follow Touch, because the bot moves the mouse constantly. Pursuit gets confused on maps with 2 simultaneous lanes."
+   },
+   "default_targeting": "Follow Touch ? (verify in game)",
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Flying: ignores LOS and elevation. A 42-unit detection circle moves with the heli. Excellent on alternating-lane, walled and elevated maps. Heli pad footprint is 27x27. The pad itself can go anywhere with space. The Support Chinook and Special Poperations abilities need clicks."
+  },
+  "mortar": {
+   "kind": "tower",
+   "range_type": "global",
+   "display_range": 30,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.1,
+    0.8
+   ],
+   "geometry": "bends",
+   "aiming": {
+    "type": "fixed_point",
+    "options": [
+     "target reticle (chosen at placement)"
+    ],
+    "how": "Fires at a reticle placed anywhere on the map with 18-unit random spread (8 with Increased Accuracy). The reticle stays put until moved.",
+    "bot_safe": "Put the reticle once on the point with the most track cells within about 20 units: a tight bend, a loop, or a lane overlap, early-to-middle of the track. One fixed point is enough on a static map. For alternating lanes, pick an overlap or skip mortar."
+   },
+   "default_targeting": "target point",
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": 11,
+   "support_radius": null,
+   "notes": "Lobbed: ignores all LOS blockers and elevation, and the pad can sit anywhere. Burny Stuff / Shattering Shells reward long tracks with wide bends. It also fires with no target in sight (works in Mushroom Grotto darkness)."
+  },
+  "dartling": {
+   "kind": "tower",
+   "range_type": "global",
+   "display_range": 20,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "straight",
+   "aiming": {
+    "type": "cursor",
+    "options": [
+     "Normal (follows cursor)",
+     "Locked (holds current direction)",
+     "Target Independent (x-x-4 BADS)"
+    ],
+    "how": "The gun swivels toward the mouse cursor at 180 deg/s and fires constantly with 23 deg spread. Locked freezes the current aim. Bloon Area Denial System (x-x-4) adds automatic targeting.",
+    "bot_safe": "Place it at the end of a long straight that runs away from the tower. Hover the cursor far along that straight, then click Locked. Otherwise only use it from x-x-4 BADS with Target Independent."
+   },
+   "default_targeting": "Normal (cursor)",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Projectiles are destroyed by LOS blockers and the map edge. The Ray of Doom beam continues until it hits an obstacle. The higher barrels of Rocket Storm / M.A.D. / BADS pass over some low obstacles. It fires with no target (works in darkness)."
+  },
+  "wizard": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 40,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Guided Magic (1-x-x) bolts ignore blockers. Phoenix (x-4-x) and Lava Phoenix have infinite range and ignore blockers. Necromancer zombies ignore LOS, and its graveyard counts pops through walls.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Guided Magic (1-x-x) bolts seek bloons behind cover: buy it first on walled maps. Wall of Fire (x-2-x) drops on the closest track point. Dragon's Breath (x-3-x) is a short flamethrower, so put it near a bend close to the track. Necromancer / Prince of Darkness zombies walk backwards from the exit and ignore LOS."
+  },
+  "super": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 50,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Laser Blasts (1-x-x) and up have slightly elevated LOS. The X-ray Ultra Monkey Knowledge lets Supers see and fire through blockers.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "loop_center",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": 11,
+   "support_radius": null,
+   "notes": "Huge DPS within 50: the cell with the most track in range (loop centres, spots where several passes overlap). Large footprint (radius 11), so reserve the space before cheaper towers crowd it."
+  },
+  "ninja": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 40,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "bends",
+   "aiming": null,
+   "default_targeting": "First (Camo Prioritization available)",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 6,
+   "support_radius": null,
+   "notes": "Camo detection. Seeking Shuriken (x-x-1) makes shurikens home. Grandmaster (5-x-x) gains +10 range and slightly higher LOS. Caltrops land on track within range (LOS-limited). Flash Bomb / Sticky Bomb have long range: any spot with LOS."
+  },
+  "alchemist": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 45,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 6,
+   "support_radius": 45,
+   "notes": "Potions ignore all LOS blockers. The buff path (Acidic Mixture Dip, Stronger Stimulant, Berserker Brew) targets towers inside its 45 range, so place it within 45 of the main damage towers. With no target in range it splashes acid on random track within range."
+  },
+  "druid": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 35,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Heart of Thunder lightning jumps through obstacles; Superstorm projectiles ignore walls.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Thorns fire as a 5-shot spread, so dense track helps. Heart of Thunder lightning chains through obstacles. Druid of the Storm tornado blows bloons back. Spirit of the Forest vines cover the whole track. Poplust (x-x-4/5) buffs nearby Poplust druids, so cluster druids. Jungle's Bounty is income."
+  },
+  "mermonkey": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 28,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Standard LOS for the trident; the song totem pull ignores walls.",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land_or_water",
+   "footprint": "medium",
+   "footprint_radius": 8,
+   "support_radius": null,
+   "notes": "Magic tower (v44): splashing tridents. Range is 28 on land, +35% (about 38) on water, so prefer water cells next to the track. Lord of the Abyss (5-x-x) lets water towers be placed on land within its range (the reverse of Arctic Wind). The Final Harmonic song totem can be placed anywhere and pulls bloons through walls. Arctic Knight / Popseidon ice balls bounce off walls."
+  },
+  "skywarden": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 48,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Thundering Arc (x-2-x) and up fire over walls and gain Set Target (fixed point within range).",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 6,
+   "support_radius": null,
+   "notes": "Magic tower (v56). The bow ramps attack speed while it keeps hitting. Paths: wind (Aerial Attunement 1-x-x gives +range to itself and nearby towers), thunder, and ice. Combo debuffs reward several tier-3+ Skywardens of the same path placed together."
+  },
+  "farm": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": null,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": null,
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": null,
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Income only, no attack. Place far from the track and from prime damage cells (corners, leftover space). Marketplace (x-x-3) auto-collects. Its range only matters for collection upgrades."
+  },
+  "spike": {
+   "kind": "tower",
+   "range_type": "track_adjacent",
+   "display_range": 34,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.75,
+    1.0
+   ],
+   "geometry": "near_exit",
+   "aiming": null,
+   "default_targeting": "Normal (random point within range)",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 8,
+   "support_radius": null,
+   "notes": "Drops spike piles on a random point of the track within 34. It attacks with no bloons nearby and can drop behind LOS blockers, but needs track in range. Last line of defence: place it so its range covers only the final ~15-25% of the track. Barely reaching the track makes piles denser. Smart Spikes (x-x-2) adds Close / Smart / Set Target / Automatic. Smart targets the track nearest the exit; Set Target can cover two exits at a split."
+  },
+  "village": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 40,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": null,
+   "geometry": "loop_center",
+   "aiming": null,
+   "default_targeting": null,
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": null,
+   "support_radius": 40,
+   "notes": "No attack. It buffs towers inside its radius (+range, Radar Scanner camo, MIB, discounts, Jungle Drums attack speed). Place it at the centroid of the damage-tower cluster; it does not need to be near the track."
+  },
+  "engineer": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 40,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "The nail gun needs LOS. Sentries spawn on nearby land. Cleansing Foam (x-3-x) and Bloon Trap (x-x-4) are placed onto track within range (track_adjacent behaviour; the trap needs collecting). Overclock (x-4-x) is an ability that needs a target click. Sentry Gun is 1-x-x."
+  },
+  "beast_handler": {
+   "kind": "tower",
+   "range_type": "radius",
+   "display_range": 20,
+   "needs_line_of_sight": false,
+   "los_exceptions": "The base staff attack ignores blockers. Bird and fish attacks come from the beast's position (birds fly).",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Support tower (v36) with a staff melee of 20 range that ignores LOS. Paths: (1) fish: Piranha needs water within 60 of the handler to be bought; the beasts jump from water at bloons. (2) dinosaurs: land beasts that can be repositioned in the handler's area; Giganotosaurus sees over all obstacles. (3) birds of prey: they fly, and Gyrfalcon / Giant Condor grab bloons and drop them at a reticle. Condor can merge two lanes. Several handlers merge into one beast (max 4 contributors). Placement: within range of the track bend the beast should cover; for the fish path, next to water."
+  },
+  "quincy": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 50,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    0.7
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Bouncing arrows. Generic early carry: cell with the most track within 50 in the first 2/3 of the track. Storm of Arrows (lvl 10) and Rapid Shot are abilities; Storm of Arrows can target anywhere on the map."
+  },
+  "gwendolin": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 38,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Cocktail of Fire / its burst ignore blockers",
+   "segment_preference": [
+    0.0,
+    0.7
+   ],
+   "geometry": "bends",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Short-lived fire with splash: bends and dense track. The Cocktail of Fire target can be set anywhere in range, even behind blockers. Firestorm is global. Heat It Up buffs nearby towers."
+  },
+  "striker_jones": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 55,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Bomb projectile needs LOS; its explosion ignores blockers",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Bomb hero. His Bomb/Mortar buffs and the black-bloon buff are GLOBAL, so placement only matters for his own attack (55). Concussive Shell and Artillery Command are abilities."
+  },
+  "obyn": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 40,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    0.7
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": 40,
+   "notes": "Spirit wolf attack goes through solid obstacles. Nature's Wrath / Nature's Clarity buff Magic towers in his radius (+pierce, +5 range at lvl 11): place him inside the Magic cluster (druids, ninjas, wizards) near the main kill zone. Brambles / Wall of Trees drop on the track."
+  },
+  "churchill": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 65,
+   "needs_line_of_sight": true,
+   "los_exceptions": "MOAB Barrage ability is map-wide ?",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Tank shells: high single-target damage; acquisition range about 65 (75 at higher level). MOAB Barrage targets up to 10 blimps anywhere on the map. Large footprint."
+  },
+  "benjamin": {
+   "kind": "hero",
+   "range_type": "global",
+   "display_range": null,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": null,
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": null,
+   "placement": "land",
+   "footprint": "small",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Income/support hero with no damage attack. Placement barely matters. Trojan (lvl 7) has infinite range but cannot see through blockers, and some players hide him behind a blocker to keep it from shrinking bloons. Put him on a spare cell away from prime spots."
+  },
+  "ezili": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 52,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First ?",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Instant-hit curse that targets over LOS blockers. Totem (78 range) placed inside her range. MOAB Hex / Sacrificial Totem are abilities; MOAB Hex is global."
+  },
+  "pat_fusty": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 30,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    0.6
+   ],
+   "geometry": "bends",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Short range (30 at max): put him inside a tight bend near the front half. Rallying Roar buffs nearby towers. Big Squeeze grabs blimps. Large footprint."
+  },
+  "adora": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 45,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Divine bolts seek and ignore LOS. Long Arm of Light (temporary huge range) and Ball of Light. She can sacrifice towers for XP. Place centrally for coverage; walls don't matter."
+  },
+  "admiral_brickell": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 50,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Mines and their explosions ignore LOS; main gun follows normal LOS ?",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "water",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Water only. Sea mines drop on water within her range every 3 s and ignore LOS, but only hurt bloons passing near that water. Naval Tactics / water-tower buffs reach water towers in range (global at lvl 19). Mega Mine can go on any water. Place her in water close to the track and to the other water towers."
+  },
+  "etienne": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 55,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": 55,
+   "notes": "Drones fly over blockers but only pursue bloons inside his range (55, later 60/80), so place him centrally with the most track inside 55. The lvl 8 UAV gives global camo detection. UCAV missiles have infinite range and ignore LOS. His range buff helps nearby towers."
+  },
+  "sauda": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 23,
+   "needs_line_of_sight": true,
+   "los_exceptions": "Slash projectile flagged 'ignores blockers'; targeting still needs LOS ?",
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "loop_center",
+   "aiming": null,
+   "default_targeting": "First",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": 7,
+   "support_radius": null,
+   "notes": "Melee with 23 range: needs the most track packed within 23, so loop centres, tight bends and overlapping lanes. Sword Charge hits overlapping lanes twice. Pairs with stuns (Relentless/Super Glue). Typical spot: inside the densest loop near the middle of the track."
+  },
+  "psi": {
+   "kind": "hero",
+   "range_type": "global",
+   "display_range": null,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First ?",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Attacks anywhere on the map through blockers and sees camo. Placement only matters for the Psychic Blast ability radius (about Buccaneer range). Put Psi near the densest/most-overlapping track region."
+  },
+  "geraldo": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 40,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First ?",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Shop hero. Most items (turrets, idols, blade trap, Pet Rabbit) are placed by the player on or near the track. His own attack is modest. Not bot-friendly unless the item placement is scripted."
+  },
+  "corvus": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 50,
+   "needs_line_of_sight": false,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    0.3
+   ],
+   "geometry": "near_entrance",
+   "aiming": null,
+   "default_targeting": "First ?",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "The flying Spirit attacks anywhere on the map (ignores LOS). Corvus gains mana by haunting bloons near himself, so community placement is near the entrance/front of the track. Spells (Spear, Ancestral Might, ...) need active casting, which is not bot-friendly."
+  },
+  "rosalia": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 40,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "any",
+   "aiming": null,
+   "default_targeting": "First ?",
+   "placement": "land",
+   "footprint": "large",
+   "footprint_radius": null,
+   "support_radius": 60,
+   "notes": "Placing her drops a workshop launch pad (60 range) and she hovers anywhere inside it. Her own attack range is 40. From lvl 7 the jetpack has no footprint. Discounts Aces and Helis."
+  },
+  "silas": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": null,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    0.5
+   ],
+   "geometry": "loop_center",
+   "aiming": null,
+   "default_targeting": "First ?",
+   "placement": "land_or_water",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": 30,
+   "notes": "Ice hero: placeable on land or water, slows bloons 15% within 30, and lets land towers be placed on water within 30 (Arctic Wind-like). He can attack inside any Ice Monkey's range, even out of his own LOS (since v50); the orb passes through blockers but he can't target behind them himself. Global freeze buffs. Never frozen on Glacial Trail. Place near Ice Monkeys / early track."
+  },
+  "dan_dmonke": {
+   "kind": "hero",
+   "range_type": "radius",
+   "display_range": 30,
+   "needs_line_of_sight": true,
+   "los_exceptions": null,
+   "segment_preference": [
+    0.0,
+    1.0
+   ],
+   "geometry": "bends",
+   "aiming": null,
+   "default_targeting": "First ?",
+   "placement": "land",
+   "footprint": "medium",
+   "footprint_radius": null,
+   "support_radius": null,
+   "notes": "Short range (30). Volant Strike / Reposition (lvl 7) let him move. Heals leaked lives at lvl 14. Never frozen on Glacial Trail. Place inside a dense bend."
+  }
+ },
+ "maps": {
+  "Monkey Meadow": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "bushes at every corner except bottom-left (slight)",
+   "elevation": null,
+   "removables": null,
+   "special": null,
+   "best_spots": "center of the map just below the top enclosed grass patch (widest coverage); generic map, track encloses top and bottom-left grass patches"
+  },
+  "In The Loop": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "autumn trees and wheelbarrow near top-right",
+   "elevation": null,
+   "removables": null,
+   "special": "square track with circular loops at bottom-right, top-right (water inside) and top-left corners",
+   "best_spots": "central spot: long-range towers see 3+ pass-throughs; water towers in bottom-left of the top-right loop lake; short-range towers inside a corner loop"
+  },
+  "Tree Stump": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "tree stump, 3 logs and autumn trees",
+   "elevation": "towers ON the central stump are not blocked by any LOS blocker",
+   "removables": null,
+   "special": "bloons loop once around the stump",
+   "best_spots": "on the central stump (good coverage, no LOS issues)"
+  },
+  "Town Center": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "3 buildings and a windmill",
+   "elevation": null,
+   "removables": null,
+   "special": "short, spread-out track; one of the hardest beginner maps; ocean on the left (top-center/top-right ocean not placeable for water towers)",
+   "best_spots": "central portion of the map"
+  },
+  "Middle of the Road": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "6 buildings, water tower, windmill, parking station: most LOS-restricted beginner map",
+   "elevation": "a tower placed on top of the water tower (top-right, fits up to Super Monkey size) is not LOS-blocked",
+   "removables": null,
+   "special": "entrance and exit at about the same spot on the left; small pool bottom-right for water towers; global-range towers excel",
+   "best_spots": "on the water tower (top-right); otherwise prefer LOS-ignoring / global towers"
+  },
+  "One Two Tree": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "fences, top-corner trees, and closed tree spaces (each closed space is unplaceable + LOS blocker until it opens)",
+   "elevation": null,
+   "removables": null,
+   "special": "24 tree spaces on the lower half open at the end of specific rounds and give category-restricted buffs (Primary/Military/Magic/Support; 2 water-only snowmonkey spaces); bottom area fits only up to medium footprint",
+   "best_spots": "category spaces (e.g. +1 damage spaces for 1-damage towers); the free space unlocked at start; no single great coverage spot"
+  },
+  "Scrapyard": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "crusher near top and the central junk pile",
+   "elevation": "4 boxes inside the junk are placeable (up to Super Monkey size) and high-elevation",
+   "removables": null,
+   "special": "longest map; crusher gizmo (60 s cooldown) deals 6 dmg + 6 s stun to non-MOABs under it",
+   "best_spots": "top-left box for limited-range towers (multiple passes); keep room above/top-right of it for a Village; long-range towers on boxes"
+  },
+  "The Cabin": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "trees, car, cabin (trees also limit placement)",
+   "elevation": null,
+   "removables": "Car $500",
+   "special": "short, spread-out; hardest beginner map by consensus; pond in upper-middle split by a bridge",
+   "best_spots": "the pond (water towers, wide coverage); global-range towers"
+  },
+  "Resort": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "2 umbrellas and bottom-left palm tree (slight)",
+   "elevation": null,
+   "removables": null,
+   "special": "4th longest map; three nested clockwise rectangular loops; 2nd easiest map",
+   "best_spots": "enclosed space top-right of the pool (9 track segments adjacent) - best for tack/ice/Sauda; pool between the two small loops for water towers; top straight for line attackers"
+  },
+  "Skates": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "3 houses on the right (removable), corner trees (do not reach the track)",
+   "elevation": null,
+   "removables": "Houses $500 (reveals water)",
+   "special": "frozen lake; 2 ice cracks for water towers (large one in the center)",
+   "best_spots": "left of the large middle loop for short/medium range towers; center ice crack for water towers; global towers"
+  },
+  "Lotus Island": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "stone podium and 5 lotus plants",
+   "elevation": "towers on the stone podium are not LOS-blocked",
+   "removables": null,
+   "special": "short, spread-out archipelago; lots of water; bottom-left island fits up to Super size, minor islands up to Spike Factory size",
+   "best_spots": "land: right of the lower-middle-center loop; water towers immediately left and right of that spot"
+  },
+  "Candy Falls": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": null,
+   "removables": null,
+   "special": "long map, vertical chocolate river down the middle (water placement); watermill blocks placement; two small loops (bottom-right, top-left)",
+   "best_spots": "river near the center (both sides of a boat see track); loops for short-range towers"
+  },
+  "Winter Park": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "edge barrier (marginal)",
+   "elevation": "towers can be placed on lamps, chairs, flower pots",
+   "removables": null,
+   "special": "4 loops, one per quadrant; central fountain fits a few water towers",
+   "best_spots": "left- or right-most point of the fountain (Buccaneer covers 4 sections); center-left / center-right land for medium-long range (3 sections)"
+  },
+  "Carved": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "two trees by the entrance and exit",
+   "elevation": null,
+   "removables": null,
+   "special": "jack-o'-lantern track; two eye ponds; cauldron on the right fits one water tower",
+   "best_spots": "right eye pond; just below it; below the rightmost point of the mouth; below the mouth's connection to the border (tack: bloons pass twice over the kill zone)"
+  },
+  "Park Path": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "trees",
+   "elevation": null,
+   "removables": null,
+   "special": "stream top-right to bottom-left with 4 water spots",
+   "best_spots": "central water spot (boats fire both sides); land immediately top / top-right of the central water spot covers entrance, middle and exit"
+  },
+  "Alpine Run": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": null,
+   "elevation": "no LOS blockers despite the tall ski lift",
+   "removables": null,
+   "special": "sharp 90-degree turns and long straights; dispersed",
+   "best_spots": "around the center of the middle lane; straight-line attackers"
+  },
+  "Frozen Over": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": "high-elevation cliff at the top; widest part (middle-left) fits a Village/Super",
+   "removables": null,
+   "special": "towers can go on ice, water and small icebergs (small/medium footprint)",
+   "best_spots": "close to the top of a loop for tack-type towers; left of the central water spot for long range"
+  },
+  "Cubism": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": null,
+   "removables": null,
+   "special": "5th longest map; track wraps triangles, a quadrilateral and a hexagon; many intersections left of center",
+   "best_spots": "center and its immediate left (intersections); tack-type: near the top edge inside a small shape"
+  },
+  "Four Circles": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": null,
+   "removables": null,
+   "special": "running track with 4 circles; pools in the top-left and bottom-right circles",
+   "best_spots": "central spot (covers 4 sectors and several straights)"
+  },
+  "Hedge": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "3 hedges (small gaps in the left and right ones) and the central statue; edge walls bounce projectiles",
+   "elevation": null,
+   "removables": null,
+   "special": "many up/down turns; small spaces between tracks (central spaces fit only small towers like Dart)",
+   "best_spots": "heli / LOS-ignoring towers; 3rd space between tracks from left or right looking through a hedge gap; behind the right hedge near the exit for Archmage"
+  },
+  "End Of The Road": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "cacti",
+   "elevation": null,
+   "removables": null,
+   "special": "shortest beginner map; entrance and exit adjacent around a pool",
+   "best_spots": "the pool (water towers see both sides); lots of open land"
+  },
+  "Logs": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "6 hollow logs (bloons under logs can still be hit by LOS-ignoring towers)",
+   "elevation": null,
+   "removables": null,
+   "special": "2nd longest and easiest map; small central pond fits 5 subs / 4 buccaneers",
+   "best_spots": "central pond and land around the middle (many intersections)"
+  },
+  "Skull Tweak": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "the skull is a major LOS blocker (and unplaceable, as are the crevasses); the nest becomes a blocker in the Party Peak variant",
+   "elevation": null,
+   "removables": null,
+   "special": "added v55; 90-degree bends and straights; two lakes (top, and below the skull in 4 quadrants). Interacting with water spots/nest before R1 turns it into the harder 'Party Peak' layout (entrance moves to the skull's eyes) - the bot must not click those",
+   "best_spots": "flying / LOS-ignoring towers (ace, heli, phoenix); water spots near the docks; bends on the bridges"
+  },
+  "Three Mines 'Round": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "6 rocks with Bananite crystals and the top-left tent (block placement and LOS)",
+   "elevation": null,
+   "removables": "Bananite crystal rocks (take 10 rounds to mine, 20 for the last; return more cash than cost): under loop $435 (+$435), left side $3000, inside loop bottom-right $10000, above loop $25000, inside loop top-left $50000, bottom-right corner $100000",
+   "special": "track loops 3 times anticlockwise around the center (top -> bottom); dried river on the left with small puddles for water towers; one of the easiest maps",
+   "best_spots": "spots next to where the loop passes intersect/overlap (center of the big loop is prone to chasing except for AoE); buy the $435 crystal early (profit)"
+  },
+  "Spa Pits": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "5 caves",
+   "elevation": null,
+   "removables": null,
+   "special": "added v48; one long path looping clockwise around 4 outer hot springs and partially around the central pool; hot springs take water towers; edge plants block placement. Clicking the 4 loose rocks in order before R1 offers a much harder Tar Pits layout - the bot must not do this",
+   "best_spots": "spots adjacent to the central pool (save one for a Village); central pool for water towers / Bloontonium Reactor"
+  },
+  "Tinkerton": {
+   "category": "beginner",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "table, whiteboard, tree, top building, orange-juice containers",
+   "elevation": "bottom-left OJ container is placeable; the open OJ container near the center takes water towers",
+   "removables": "Rocket gizmo (one use after 11 clicks; 3 dmg + 50 dmg explosion + stun)",
+   "special": "added v43 (Rosalia's workshop); bloons slowed 40% after the top bend of the grass part; spread out",
+   "best_spots": "crater near the middle (sees 4 track sections); global towers"
+  },
+  "Lost Crevasse": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 3,
+   "exits": 3,
+   "has_water": true,
+   "los_blockers": "column of ice crystals splitting the lower section; walls around the edges (bounce)",
+   "elevation": null,
+   "removables": null,
+   "special": "two always-active paths that both run through the middle section in opposite directions; infobox says 3 entrances/3 exits ?",
+   "best_spots": "chokepoint at the front/middle where both lanes overlap (Sauda + glue); sniper right of the small crystal above the crystal column sees both sides"
+  },
+  "Luminous Cove": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "elevated pre-waterfall sections are out of LOS for most towers",
+   "elevation": "pre-waterfall parts of both lanes are higher than the rest of the map: most towers cannot reach them",
+   "removables": "Mermonkey secret reveals extra water (needs tier-5 Mermonkeys)",
+   "special": "alternating lanes (odd rounds top-left -> bottom-right, even rounds top-right -> bottom-left); both loop through the center; mostly water",
+   "best_spots": "central water spot inside the central loop (water strategies); heli/flagship for the elevated parts"
+  },
+  "Ancient Portal": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "the curved left exit path is surrounded by LOS blockers; the straight right exit path is visible from the entrance area",
+   "elevation": null,
+   "removables": "Realign Portal $0 (switches which exit is active)",
+   "special": "one entrance spiraling into a portal that teleports bloons to the active exit; 4 hero pedestals buff heroes placed on them; bosses take a reverse route",
+   "best_spots": "between the top-right spiral and the bottom-right straight (covers both); hero on a pedestal; bends for tack/mortar"
+  },
+  "Sulfur Springs": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": "3 low-elevation rocks (one in each small loop, one top-left of the central spring) - walls around them bounce juggernaut balls",
+   "removables": null,
+   "special": "1.5 loops around the top small loop, 1.5 around the large central loop, 1.5 around the bottom small loop; easiest intermediate",
+   "best_spots": "central hot spring (water) and the land ring around it (fits up to Super size)"
+  },
+  "Water Park": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "waterslide (even-round lane) is elevated: only the 2 pink platforms in the loops, tops of tan platforms, lifeguard tower (bottom-right) and pink slide top-right of the 2nd loop can see it; top-left trees slightly block",
+   "elevation": "waterslide higher than most of the map; bottom water towers cannot reach the slide",
+   "removables": null,
+   "special": "alternating lanes: odd rounds lazy river (bloons 10% slower, zigzag top-right -> bottom-left), even rounds waterslide (top-left, 2 loops, -> bottom-right); bottom water has 3 floaties for land towers",
+   "best_spots": "pink slide top-right of the waterslide's 2nd loop (covers straights of both lanes); heli pilots excel"
+  },
+  "Polyphemus": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "8 walls around the track (each removable)",
+   "elevation": null,
+   "removables": "8 walls $500 each; eye reopen cost $0 at R5 then +$500 every 10 rounds",
+   "special": "bloons come from top and bottom, loop around the eye and exit at the opposite entrance; towers in the eye pool get buffs but the eye closes after every round ending in 5 and disables towers inside until paid",
+   "best_spots": "immediately above and below the eye (land); in the eye (water, if paying to keep it open)"
+  },
+  "Covered Garden": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "3 flower plantations inside the garden; glass panels do NOT block LOS",
+   "elevation": null,
+   "removables": null,
+   "special": "3 of 4 garden quarters covered at any time: covered quarters cannot be placed in / interacted with (towers still attack). Bottom-left uncovered on R1, rotates 90 deg clockwise each round. Bot must upgrade a tower before its quarter gets covered",
+   "best_spots": "outside the garden near the track start and end (always accessible); global towers (heli) outside the garden; pond bottom-right of the garden for water"
+  },
+  "Quarry": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "walls above the middle and lower layers block LOS upward",
+   "elevation": "3 elevation layers: towers on a layer cannot hit bloons on a higher layer, but can hit lower ones; prefer the upper layer for LOS towers",
+   "removables": null,
+   "special": "zig-zag over 3 layers; water channels speed bloons +25%; after R39 a MOAB-only second entrance opens (top-right)",
+   "best_spots": "upper layer looking down; heli pilots ignore layers; long track with many bends"
+  },
+  "Quiet Street": {
+   "category": "intermediate",
+   "lanes": 3,
+   "entrances": 3,
+   "exits": 3,
+   "has_water": true,
+   "los_blockers": "5 cars (removable)",
+   "elevation": null,
+   "removables": "Frozen ponds $500 each (x2, enables water towers); cars $250 each (x5)",
+   "special": "bloons from top-left and bottom-left with overlapping entrances/exits; blimps use a separate one-lane path from left of the bottom entrance exiting top-left; bosses use the bloon path",
+   "best_spots": "far right covers all tracks for long-range/BEZ; spike factory between the MOAB path and regular paths"
+  },
+  "Bloonarius Prime": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 1,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "large clump of trees and rocks in the middle",
+   "elevation": null,
+   "removables": null,
+   "special": "shared entrance; on prime-numbered rounds a portal sends bloons down a short right lane, otherwise the long composite lane; boss-only path",
+   "best_spots": "near the entrance (both lanes share it); heli pilots; few spots cover both lanes"
+  },
+  "Balance": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "hedges wall off most of the track (openings near entrances, top and bottom)",
+   "elevation": null,
+   "removables": null,
+   "special": "bloons from left and right split into 8 paths that merge in a central loop (3.5 laps) then split to the exits",
+   "best_spots": "spots around the central loop (tack / Sauda / ice); mortar target on the central loop"
+  },
+  "Encrypted": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 1,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "crypt wall blocks most outside towers from the enclosed space; walls bounce projectiles",
+   "elevation": null,
+   "removables": "Graves $250 each (x4)",
+   "special": "one entrance splitting left and right into the walled crypt, looping the top and exiting bottom-left/bottom-right",
+   "best_spots": "central space inside the wall (fits up to Village size) - by far best coverage; don't waste it on early towers"
+  },
+  "Bazaar": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "4 market stalls by the bridge; removable tree groups behind the stalls",
+   "elevation": null,
+   "removables": "Trees $500 each (x4)",
+   "special": "alternating lanes (even: top-left -> top-right, odd: bottom-right -> bottom-left); water canal down the middle; center between lanes fits only small/medium towers; bridge fits up to medium",
+   "best_spots": "middle section / bridge sees both lanes; heli pilots"
+  },
+  "Adora's Temple": {
+   "category": "intermediate",
+   "lanes": 4,
+   "entrances": 4,
+   "exits": 4,
+   "has_water": true,
+   "los_blockers": "temple layers: each layer above the first blocks LOS of towers on all lower layers",
+   "elevation": "4 peak spots (each fits up to Boomerang size) are not LOS-blocked; win conditions go on the top 2 peak spots",
+   "removables": null,
+   "special": "odd rounds enter left and right, even rounds top and bottom; one loop around the temple base then up the steps",
+   "best_spots": "top 2 peak spots of the temple; 4 ponds around the edge for water towers; avoid placing lower towers that block the peak spots"
+  },
+  "Spring Spring": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": null,
+   "removables": null,
+   "special": "two separate parallel paths left -> right wrapping the big middle island and circling two small islands; narrow water gaps",
+   "best_spots": "right end of the large island (bloons loop around the two back islands); spike factory bottom-right of the island above the exit; boats at the left-most point of the space between the big island and the exit"
+  },
+  "KartsNDarts": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": null,
+   "elevation": "no LOS blockers; tunnel at the figure-eight crossing makes non-MOAB bloons untargetable and immune inside it",
+   "removables": "Tires/haystacks inside each loop $500 each (x2, opens placement)",
+   "special": "figure-eight go-kart track; bloons circle each loop once",
+   "best_spots": "top-left or top-right of the tunnel between the two loops (double pass-throughs); inside loops after clearing tires"
+  },
+  "Moon Landing": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "cliff walls around each of the 3 craters",
+   "elevation": "crater rims are walls: outside towers cannot see in unless LOS-ignoring (Guided Magic wizard, mortar, heli, alchemist); small gaps on the inner rims fit small towers",
+   "removables": null,
+   "special": "bloons enter the center of each crater and loop out; 2nd longest intermediate",
+   "best_spots": "top-left of the 1st crater (alchemist start); inside crater gaps; mortar/Wall-of-Fire targeted at a crater center"
+  },
+  "Haunted": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "2 trees (removable), fences (pumpkin field at the bottom is not blocked)",
+   "elevation": null,
+   "removables": "Trees $500 each (x2)",
+   "special": "bloons from left and right, turn at the top, exit at the opposite entrance (overlapping paths)",
+   "best_spots": "central pond for water towers (buccaneers fire both sides); bottom bends / pumpkin field for land towers"
+  },
+  "Downstream": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "trees and bushes at top-left, top-right and bottom-left (slight)",
+   "elevation": null,
+   "removables": "Rocks $350 each (x2, one in each loop)",
+   "special": "stream down most of the map; 2 loops (bottom-left, top-right)",
+   "best_spots": "center of the open middle-top space for long range (entrance, middle, 2nd loop); inside the loops for tack; water right of the track start for buccaneers"
+  },
+  "Firing Range": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "fence and central outpost (removable)",
+   "elevation": null,
+   "removables": "Watchtower/outpost $1000",
+   "special": "two lanes (top-left -> right, top-right -> left), each with 3 turns; 2 benches fit only small footprint towers (no heroes)",
+   "best_spots": "the 2 benches (small towers); center after removing the outpost; small water area with good coverage"
+  },
+  "Cracked": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "central rock (removable) and edge trees",
+   "elevation": null,
+   "removables": "Rock $1000 (reveals water)",
+   "special": "long single lane with plenty of bends",
+   "best_spots": "right of the central rock (covers several sectors); heli/global towers"
+  },
+  "Streambed": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "dinosaur skull next to the pool (removable) and corner rocks",
+   "elevation": null,
+   "removables": "Skull $1000",
+   "special": "dry river; compact single lane top -> east",
+   "best_spots": "right of the skull, or below the line extending from the entrance; top of the pool for buccaneers"
+  },
+  "Chutes": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "2 monkey chutes (removable)",
+   "elevation": null,
+   "removables": "Statues/chutes $350 each (x2)",
+   "special": "alternating very short lanes (odd: top-left -> top-middle-right, even: top-right -> top-middle-left); two small pools; harder than some advanced maps",
+   "best_spots": "few spots cover both lanes; heli / carrier / global towers"
+  },
+  "Rake": {
+   "category": "intermediate",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "3 cherry trees (2 top-left, 1 top-right)",
+   "elevation": null,
+   "removables": "Rock $1000 (middle-right, frees space near the intersections)",
+   "special": "two simultaneous short lanes (top -> bottom-right, left -> bottom-center-right) that cross; First targeting gets confused - prefer Strong/Close or cleanup towers",
+   "best_spots": "center, right below the center, or the space freed by the rock (lane intersection); spike factory top-left of the enclosed space bottom-left of the rock with Smart targeting"
+  },
+  "Spice Islands": {
+   "category": "intermediate",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": null,
+   "removables": "Coconut trees $1000 (one island)",
+   "special": "almost entirely water, 5 small islands; Arctic Wind lets land towers go on water",
+   "best_spots": "water towers next to the weaving track; small islands for land towers"
+  },
+  "Ship Capture": {
+   "category": "advanced",
+   "lanes": 4,
+   "entrances": 4,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "?",
+   "elevation": "crow's nest fits up to 5 small towers (e.g. snipers) ?elevated",
+   "removables": "Hatch $1000 (reveals water; cannot remove with towers on it)",
+   "special": "added v57; two enemy ships board via planks (2 lanes each); right ship first, left from R5, alternating every 5 rounds; from R45 both or alternating; the outer ocean is NOT placeable water",
+   "best_spots": "between the two converging lanes on the main ship; spike factory Set Target between the two main lanes; central water after removing the hatch"
+  },
+  "Ascent": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "no significant LOS blockers; pointed gray rocks ?",
+   "elevation": null,
+   "removables": null,
+   "special": "added v56 (Skywarden map); two simultaneously used paths, the right one much longer; floating islands",
+   "best_spots": "middle platform at the bottom-right covers both paths near the end (spike factory); submerged sub at the start to decamo"
+  },
+  "Mushroom Grotto": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": false,
+   "los_blockers": "darkness: towers cannot target bloons in unlit areas (projectiles still hit), cannot place in the dark; lighting mushrooms expands the lit area",
+   "elevation": null,
+   "removables": "4 small mushroom patches $250 each; big mushroom $400 (after the 4) increases light radius",
+   "special": "two winding tracks crossing near the center (top-left -> bottom-right and bottom-right -> top-left); only the center mushroom lit by default",
+   "best_spots": "lit center area; mortar and dartling (fire without a target) and spike factory work in the dark"
+  },
+  "Party Parade": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": false,
+   "los_blockers": "wide central wall separates the two halves (blocks placement and LOS)",
+   "elevation": null,
+   "removables": null,
+   "special": "two simultaneous short lanes, mirrored (left: top -> bottom, right: bottom -> top); heli Pursuit flips between lanes",
+   "best_spots": "separate defence for each half; ace (not Wingmonkey), Psi, druid vines, spike Carpet cover both"
+  },
+  "Sunset Gulch": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": false,
+   "los_blockers": "a few cacti (minor)",
+   "elevation": "two elevated rocks in the central valley are placeable (top fits large e.g. Spike Factory, bottom fits Super size); valley otherwise unplaceable",
+   "removables": null,
+   "special": "bloon path: lower-left -> bridge -> lower-right; MOAB/boss-only railroad path top-left -> top-right (long straight)",
+   "best_spots": "focus defence near the end (right side) where both exits are close; spike factory Set Target at the exit split; straight-line towers along the railroad"
+  },
+  "Enchanted Glade": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "abundant LOS blockers (trees, central cherry tree)",
+   "elevation": null,
+   "removables": null,
+   "special": "alternating lanes (odd: bottom-left, even: top-right) half-loop below the center then speed up into the central exit portal; water only in the loop around the bottom-right island",
+   "best_spots": "bottom-center space and right below the center (chokepoint); spike factory top-middle right below the chokepoint (Smart); mortar on the chokepoint bends"
+  },
+  "Last Resort": {
+   "category": "advanced",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "snow blocks placement but NOT LOS; raised snowmen platform, lamp post, palms, shrubs block placement",
+   "elevation": null,
+   "removables": "Frozen pond sign $1000 (tiny water pool)",
+   "special": "round-cycled loops sharing entrance/exit: R1-type longest loop +80% speed, R2 medium +40%, R3 smallest +25%, R4 straight line +15% (repeats); bosses take the straight",
+   "best_spots": "near the shared exit (spike factory); stuns/glue near the start; condor"
+  },
+  "Castle Revenge": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 4,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "central platform and a wheel near the left; castle walls interfere with projectiles",
+   "elevation": "towers on the central platform see the whole track",
+   "removables": "Pressure valve $500",
+   "special": "walking castle; bloons invulnerable until past the wheels on the right; two simultaneous paths (top and bottom of the castle) to the left; no placement outside the castle",
+   "best_spots": "central platform; juggernaut near the last bend on each side; global towers"
+  },
+  "Dark Path": {
+   "category": "advanced",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "many walls (Park Path's old track); walls removable in pairs",
+   "elevation": "high platform above the center: limited-range and global towers placed there see over the walls",
+   "removables": "Walls via the two caves: 1st pair $250, 2nd $500, 3rd $1000, 4th $1000",
+   "special": "single lane, decent length, middle loops",
+   "best_spots": "high platform above the center; mortar on the middle loops; juggernaut on low ground among walls"
+  },
+  "Erosion": {
+   "category": "advanced",
+   "lanes": 1,
+   "entrances": 6,
+   "exits": 6,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": null,
+   "removables": null,
+   "special": "ice floe melts: at the end of R17, 35, 53, 71, 89 the land between the current and next track collapses, SELLING land towers on it (no refund value in CHIMPS?) and switching to the next lane; final R90+ lane (top-right) is extremely short. Ice/Mermonkey/Pat/Sun Temple/TSG become water towers; Arctic Wind platforms save towers; heli cannot be placed on the top-right island",
+   "best_spots": "permanent top-right platform for long-term towers; global towers (Psi, sniper, BEZ) on the top-right; subs with Advanced Intel; never place heroes on temporary land"
+  },
+  "Midnight Mansion": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": false,
+   "los_blockers": "walls plus flames that cycle (top/bottom flames active on rounds 1+4n and 2+4n, left/right on 3+4n and 4n)",
+   "elevation": null,
+   "removables": "Drawers $250 each (x2, top-left and top-right; the ONLY spots for large towers: Buccaneer?, Mermonkey, Spike, Village, Mortar, Super, Ace, Pat, Churchill, Dan; one per drawer)",
+   "special": "2 lanes overlapping at the top; almost no room for large footprints (no farms)",
+   "best_spots": "top-left or top-right corner (Sauda/tack near the right-cornered region of the overlap); super glue on the shared top section"
+  },
+  "Sunken Columns": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "two basalt depressions in the middle are much lower: towers placed there are blocked except on the 4 narrow river strips",
+   "elevation": "depressions are low ground - do not place LOS towers in them",
+   "removables": "Pools $1000 each (x2, drain when no water towers on them)",
+   "special": "two crossing lanes (top-middle-left -> top-right -> bottom-middle-left and mirror)",
+   "best_spots": "bends where the lanes overlap/intersect (Sauda, Glaive Lord, super glue)"
+  },
+  "X Factor": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 4,
+   "exits": 4,
+   "has_water": false,
+   "los_blockers": "central barrack blocks ALL attacks on bloons under it (even blimps) until its stack is removed",
+   "elevation": null,
+   "removables": "Middle stack $2000 (reveals a spot that fits any tower except Banana Farm)",
+   "special": "8 paths, 2 corners active per round; spawn corners rotate 90 deg clockwise every round (4-round cycle); erratic mini-loops; hardest advanced map",
+   "best_spots": "the middle after removing the stack; snipers/Psi/spike Carpet for global coverage"
+  },
+  "Mesa": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": false,
+   "los_blockers": "3 rock growths (removable) and the low valley walls",
+   "elevation": "the long top lane runs in a LOW valley: towers placed in it cannot hit the bottom lane; the 3 protruding rocks are elevated spots free of LOS issues",
+   "removables": "Hoodoos (rock growths) $500 each (x3)",
+   "special": "2 simultaneous lanes from the bottom to the right; top lane much longer; targeting gets confused (First favours the bottom lane)",
+   "best_spots": "section directly top-right of the center (both lanes close); on the 3 rock growths; condor reticle on the top lane"
+  },
+  "Geared": {
+   "category": "advanced",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "none significant (snipers work well)",
+   "elevation": null,
+   "removables": null,
+   "special": "ONLY two placeable areas, both rotating: the large outer gear turns 45 deg clockwise after each round (cycle 8 rounds), the small central gear 108 deg (cycle 10 rounds); towers move with them, so a radius-tower's coverage changes every round",
+   "best_spots": "global / position-independent towers (snipers, heli, Corvus); small central gear for short range (stays near the middle); for the outer gear evaluate coverage over the full 8-round rotation"
+  },
+  "Spillway": {
+   "category": "advanced",
+   "lanes": 4,
+   "entrances": 4,
+   "exits": 4,
+   "has_water": true,
+   "los_blockers": "4 valves block most towers from reaching the central loop",
+   "elevation": "a radioactive barrel in the very middle fits one small-footprint tower (Dart/Ninja/Ezili/Silas)",
+   "removables": "Inflatable walls/valves $2000 each (x4)",
+   "special": "4 lanes all active, converging into a central loop (1.75 counter-clockwise laps) then exiting 90 deg clockwise from their spawn",
+   "best_spots": "the central barrel (small tower, e.g. Ninja in CHIMPS); mortar on the middle loop; Guided Magic wizards; open valves later"
+  },
+  "Cargo": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "2 trucks (top-left, bottom-right; removable after R39), middle trucks (until R39), boats",
+   "elevation": null,
+   "removables": "Trucks $500 each (x2, only after the middle trucks move at R39)",
+   "special": "bloon lane plus a MOAB-only lane that opens at R39 when the middle trucks move; central dock surrounded by water; thin strip top/right fits only the smallest towers",
+   "best_spots": "early: immediately right of the (future) MOAB lane; after R39: below the 1st bend of the MOAB lane; water towers right of the MOAB exit"
+  },
+  "Pat's Pond": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "2 trees on land and 2 rocks in water (removable)",
+   "elevation": null,
+   "removables": "Trees/rocks $500 each (x4)",
+   "special": "two lanes (left curving up, right curving down) with overlapping entrances/exits and widely divergent middles; global towers chase between lanes",
+   "best_spots": "cram short-range towers at the right (or left) shared entrance/exit area; Sauda + super glue there"
+  },
+  "Peninsula": {
+   "category": "advanced",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "central mountain blocks LOS severely",
+   "elevation": "small placeable section on the mountaintop (sees over the mountain ?); small plot at its bottom-right",
+   "removables": "Seaweed plots $500 each (x3: left, bottom-left, top-right; becomes land)",
+   "special": "mostly water (>80% of placeable space is water-only); short single lane",
+   "best_spots": "water towers along the track; Carrier Flagship; spike factory on the top-right removable plot near the exit"
+  },
+  "High Finance": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "unbuilt construction plots / buildings ?",
+   "elevation": "15 buildable building plots (bought) become placement: $1500 ones are the only spots for Heli/Farm; $1000 and lower-middle $750 fit up to Village; $350/$500 fit only small towers",
+   "removables": "15 buildings $350-$1500 (buying them ADDS placeable space)",
+   "special": "alternating lanes: odd rounds top-right -> loop top-left -> loop right -> bottom-left (longest advanced lane), even rounds top-center-left -> loop center-bottom -> top-center-right; small base placement (fits up to Super)",
+   "best_spots": "initial placeable terrain covers both lanes; top-center of the lower-middle $750 building; heli pilots"
+  },
+  "Another Brick": {
+   "category": "advanced",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "brick walls across the horizontal middle and the vertical left side",
+   "elevation": null,
+   "removables": "Brick pallets $1000 each (x2, left of the wall)",
+   "special": "single lane around the wall edge, top -> bottom; two flooded potholes for water towers",
+   "best_spots": "LOS-ignoring towers (Guided Magic wizard, carrier, mortar, alchemist); spike factory near the exit; bends next to the wall"
+  },
+  "Off The Coast": {
+   "category": "advanced",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "tall central crane (slight); 2 cliffs at the top (slight)",
+   "elevation": null,
+   "removables": null,
+   "special": "beach at top, ocean at bottom; most junk above the shipwreck is unplaceable except the large left/right pieces and the crane; entrance bottom-left, exit bottom-right (both in water); three wide loops, no compact loops",
+   "best_spots": "apexes of the three wide loops; water towers near the track; carrier flagship"
+  },
+  "Cornfield": {
+   "category": "advanced",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "corn patches block LOS until removed",
+   "elevation": null,
+   "removables": "13 corn patches $350-$1500 each (removing ADDS placeable space); only the middle patch is removed at start",
+   "special": "single lane top-left -> top-right; starts with very little placeable space",
+   "best_spots": "the cleared middle; buy cheap patches near bends; juggernaut bounces off corn (keep corn)"
+  },
+  "Underground": {
+   "category": "advanced",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": false,
+   "los_blockers": "cave walls (slight)",
+   "elevation": null,
+   "removables": null,
+   "special": "two short lanes (bottom-left -> bottom-right, top-right -> top-left), awkward targeting",
+   "best_spots": "center of the map and the spaces directly above/below it (cover both lanes); left/right-most spot of the central space for Sauda"
+  },
+  "Ravine": {
+   "category": "expert",
+   "lanes": 4,
+   "entrances": 2,
+   "exits": 4,
+   "has_water": true,
+   "los_blockers": "3 bridges with 6 walls plus trees - heavy blocking",
+   "elevation": "river is low: water towers there are fully blocked unless they ignore walls (e.g. Ballistic Missile / pre-emptive)",
+   "removables": null,
+   "special": "entrances alternate each round (odd: right, even: left), each splits into 2 exits; 2nd hardest map",
+   "best_spots": "bottom-left space (surrounded by all 4 lanes); hidden spot in center-left trees; Aces ignore the walls"
+  },
+  "Tricky Tracks": {
+   "category": "expert",
+   "lanes": 6,
+   "entrances": 6,
+   "exits": 6,
+   "has_water": false,
+   "los_blockers": "?",
+   "elevation": null,
+   "removables": "Train: $2500 per use, +$2500 each subsequent use, 60 s shared cooldown (one-shots non-MOABs, stuns MOABs)",
+   "special": "3 used diagonal train tracks, each with 2 opposite-direction paths (6 lanes); bloons rush to the track center, pause, then rush to the exit; separated simultaneous lanes make heli/ace weak",
+   "best_spots": "spots between railroads where long-range/seeking towers reach the middle stopping points of several tracks; range buffs (village, Etienne) matter"
+  },
+  "Glacial Trail": {
+   "category": "expert",
+   "lanes": 1,
+   "entrances": 1,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "many small ice cliffs and an ice forest in the middle section",
+   "elevation": "3 elevation sections: top part is cut off by ice cliffs; bottom water is too low for most water towers to attack",
+   "removables": null,
+   "special": "every tower except Ice Monkey, Silas and Dan D'Monke freezes (no attacks/abilities, cannot be selected) for 2 rounds every 10 rounds, counted from ITS placement round (frozen on rounds placed+9, +10, ...). Stagger key towers' placement rounds; the only truly single-lane expert map",
+   "best_spots": "middle section near bends (mortar); keep important towers' placement rounds offset by >= 2; ice monkeys and Silas never freeze"
+  },
+  "Dark Dungeons": {
+   "category": "expert",
+   "lanes": 4,
+   "entrances": 4,
+   "exits": 4,
+   "has_water": true,
+   "los_blockers": "walls split the map into 6 rooms",
+   "elevation": "bottom three rooms are LOWER than the upper three: most towers cannot shoot up the side stairs or the central ledge",
+   "removables": "Statue: activate $30000, level 2 $50000, level 3 $100000 (activating blocks placement on the ledge below it)",
+   "special": "4 lanes: 2 non-MOAB lanes, 1 MOAB lane (top-right), 1 shared (middle-bottom); non-MOAB bloons enter from the bottom 3 entrances roughly cycling left to right",
+   "best_spots": "bends of the two MOAB-carrying lanes (tack below the 2nd turnaround on the middle MOAB lane); Adora shoots over walls; juggernauts in the side rooms"
+  },
+  "Sanctuary": {
+   "category": "expert",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 4,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": "no LOS blockers despite the tall Psi statue",
+   "removables": null,
+   "special": "6 MOVING/ROTATING platforms are the main placeable space; they move at the start of each round on a 24-round cycle, so radius-tower coverage changes every round; 2 entrances merge in the middle then split to 4 exits",
+   "best_spots": "the shared middle section; global towers; evaluate each platform cell's coverage over all 24 platform positions (bottom-middle platform spot for spike factory Set Target)"
+  },
+  "Flooded Valley": {
+   "category": "expert",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "the dam wall: land towers on the left cannot see the track on top of the dam (except from the rightmost rocks or with LOS-ignoring attacks)",
+   "elevation": "the rocks on the land side can just barely see the track; no towers on the dam",
+   "removables": "Secret dam breach $5000 (floods the left side, SELLS non-water towers there)",
+   "special": "two fully overlapping lanes on top of the dam (top -> bottom and bottom -> top); water right, land left; water towers dominate early",
+   "best_spots": "water right next to the dam; rightmost top/bottom rocks for snipers/LOS towers; Silas / Arctic Wind platforms"
+  },
+  "Infernal": {
+   "category": "expert",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 2,
+   "has_water": true,
+   "los_blockers": "?",
+   "elevation": null,
+   "removables": null,
+   "special": "alternating lanes (odd rounds top, even rounds bottom), both very long; very little placeable space; farms only fit on the left and right islands; 2 water islands; easiest expert",
+   "best_spots": "right island (sniper/heli/village cluster); heli pilots, snipers, BADS dartlings for alternating lanes"
+  },
+  "Bloody Puddles": {
+   "category": "expert",
+   "lanes": 5,
+   "entrances": 6,
+   "exits": 6,
+   "has_water": true,
+   "los_blockers": "central jeep; removing it drops a chinook that blocks MORE LOS, then both can be removed",
+   "elevation": null,
+   "removables": "Jeep $1000 (adds a fallen chinook blocker); jeep + chinook/rocks $500",
+   "special": "5 paths with 6 entrances; spawns shift inward each round (R1 far-left top->bottom and far-right bottom->top, reach the middle lane by R3, back outward by R5, repeating); hardest map",
+   "best_spots": "condor to merge lanes; airburst sub early; desperados top-left against the left lake border and right side; no single spot covers all lanes"
+  },
+  "Workshop": {
+   "category": "expert",
+   "lanes": 2,
+   "entrances": 2,
+   "exits": 1,
+   "has_water": false,
+   "los_blockers": "many green tables and the gizmos",
+   "elevation": null,
+   "removables": "Reverse Motor (free first use, then rising cost: bloons at normal speed for 30 s); Track Extensions (free first use, then rising cost: 4 extra loops for 20 s)",
+   "special": "conveyor belt makes ALL bloons 50% faster; bloon entrance plus a MOAB entrance (MOABs from R40); single shared exit; very short MOAB lane",
+   "best_spots": "spike factories near the single exit (essential); stuns/glue; CHIMPS start needs 3 precisely placed darts"
+  },
+  "Quad": {
+   "category": "expert",
+   "lanes": 4,
+   "entrances": 4,
+   "exits": 4,
+   "has_water": true,
+   "los_blockers": "4 trusses: block LOS AND make bloons/blimps under them immune to all attacks (removable)",
+   "elevation": null,
+   "removables": "Overhang trusses $1500 each (x4, also clears bushes for placement)",
+   "special": "4 lanes all active every round; each crosses 2 quadrants; exits share spots with entrances (leaks hard to see); 3rd hardest map",
+   "best_spots": "separate defence clusters for the top and bottom halves; central pond for water towers (buccaneers fire both sides); spike factories each covering two exits"
+  },
+  "Dark Castle": {
+   "category": "expert",
+   "lanes": 4,
+   "entrances": 4,
+   "exits": 1,
+   "has_water": true,
+   "los_blockers": "castle at the right is mostly blocked except its elevated ledge; entrance trees make bloons immune while under them",
+   "elevation": "the castle ledge is higher than the rest of the castle and sees the track",
+   "removables": "Trees $1000 each (x4, at the entrances)",
+   "special": "4 entrances converging into 1 exit (castle door shrinks bloons); very short (reds exit in <10 s on Hard); open space above/below the convergent part; water above/below the end of the track; 2nd easiest expert",
+   "best_spots": "around the convergent end of the track (cluster everything with a Village); spike factory on the castle ledge at the right; water above and below the end"
+  },
+  "Muddy Puddles": {
+   "category": "expert",
+   "lanes": 4,
+   "entrances": 4,
+   "exits": 4,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": null,
+   "removables": null,
+   "special": "4 disconnected lanes, ONE active per round: R1 leftmost, moving right to the rightmost on R4, then back left to the leftmost on R7 (6-round cycle); bosses on the middle-left lane; 3 large puddles for water towers",
+   "best_spots": "spots covering 2+ lanes (between lanes 2 and 3 for late game); heli, subs with Advanced Intel, snipers, Corvus"
+  },
+  "#Ouch": {
+   "category": "expert",
+   "lanes": 4,
+   "entrances": 4,
+   "exits": 4,
+   "has_water": true,
+   "los_blockers": null,
+   "elevation": "no LOS blockers",
+   "removables": "Central water $1000 (drain; only if no water tower on it)",
+   "special": "#-shaped: 4 lanes all active every round; top-bottom lanes ~22% shorter than left-right; very short",
+   "best_spots": "central pond surrounded by all 4 lanes (water towers / buccaneers both sides); center of the map if drained"
+  }
+ },
+ "rules": [
+  {
+   "id": "coverage",
+   "applies_to": "all radius towers",
+   "rule": "score(cell) = sum over track cells t within range r of w(progress(t)), where w is 1 inside segment_preference and falls off linearly to 0.3 at 0.25 progress outside it. Exclude t with known blocked LOS when needs_line_of_sight."
+  },
+  {
+   "id": "passes",
+   "applies_to": "radius towers, especially short range",
+   "rule": "Count distinct track passes inside range: sort in-range track cells by progress and split wherever consecutive progress jumps by more than ~0.03. More passes means the same bloon is attacked several times (loops, U-turns, lanes passing next to each other). Bonus of about 0.15 * coverage per extra pass."
+  },
+  {
+   "id": "tack_bends",
+   "applies_to": "tack, sauda, pat_fusty, dan_dmonke, ninja, bomb, gwendolin",
+   "rule": "Maximise track length within a SHORT range (density). Prefer cells inside tight curves and small loops where the track wraps around the cell: angular coverage = fraction of 16 angle bins (around the cell) that contain in-range track cells; score *= (0.5 + angular_coverage)."
+  },
+  {
+   "id": "loop_center",
+   "applies_to": "tack Ring of Fire/Inferno, super, ice, sauda, village(for towers), druid",
+   "rule": "Prefer cells enclosed by track: cast 8 rays; count rays that hit track within 1.5*range. Score *= (0.6 + 0.4 * rays_hit/8)."
+  },
+  {
+   "id": "straight",
+   "applies_to": "boomerang (Glaive Ricochet/Kylie), dartling, desperado rifle, buccaneer, dart",
+   "rule": "Run PCA on the in-range track cells. Linearity = 1 - lambda_min/lambda_max. Prefer a cell beside (not on the axis of) a long straight: score *= (0.6 + 0.4 * linearity). For a Dartling, pick the straight whose direction points away from the tower and aim there once, then set Locked."
+  },
+  {
+   "id": "buccaneer_both_sides",
+   "applies_to": "buccaneer, sub, admiral_brickell, mermonkey-on-water",
+   "rule": "Water cell only. Bonus when in-range track lies on opposite sides of the cell: angular bins on both halves are occupied. Central ponds and rivers between lanes are ideal."
+  },
+  {
+   "id": "early_control",
+   "applies_to": "ice, glue, silas, druid of the storm, any stun/slow",
+   "rule": "Restrict to segment progress [0, 0.4] (glue up to 0.5). A slowed bloon spends longer in every later tower's range, so the slow must come before the main kill zone, not after."
+  },
+  {
+   "id": "spike_exit",
+   "applies_to": "spike",
+   "rule": "Range must contain track with progress >= 0.75 (ideally the last 15%). Penalise in-range track with progress < 0.6, because spikes spread over all in-range track. Barely reaching the track is better than sitting on it. On shared or converging exits pick the convergence point; with Smart Spikes use Smart, or Set Target at a split."
+  },
+  {
+   "id": "global_los",
+   "applies_to": "sniper, dartling(auto), skywarden set-target",
+   "rule": "Range is irrelevant. Score = fraction of track (weighted by segment_preference) visible from the cell, using the learned LOS mask; without a mask, prefer open cells far from map objects and on elevated platforms (map.elevation). Never place on low ground (Ravine river, Sunken Columns depressions, Mesa valley, Glacial Trail water, Quarry lower layers)."
+  },
+  {
+   "id": "los_ignorers_on_walled_maps",
+   "applies_to": "map selection / tower choice",
+   "rule": "When map.los_blockers is heavy (Ravine, Hedge, Encrypted, Moon Landing, Another Brick, Dark Path, Castle Revenge, Flooded Valley, Peninsula, Dark Dungeons, Spillway, Middle of the Road, Water Park, Luminous Cove, Adora's Temple), prefer towers with needs_line_of_sight=false (alchemist, mortar, heli, ace, spike, obyn, adora, psi) or buy the LOS upgrade early (Guided Magic, Ballistic Missile)."
+  },
+  {
+   "id": "avoid_blocked_cells",
+   "applies_to": "all LOS towers",
+   "rule": "If the in-game red/black blocked overlay is captured during placement preview, drop any cell where more than 40% of the in-range track is blocked. Re-check after a removable is bought."
+  },
+  {
+   "id": "support_radius",
+   "applies_to": "village, alchemist buffs, obyn, etienne, rosalia, silas",
+   "rule": "Place the support so the most damage-tower footprints fall inside support_radius (village 40 with +range upgrades; alchemist 45, and its buff targets towers in range; Obyn buffs Magic towers in range). Score = sum of covered towers' value. The support itself needs no track coverage, except the alchemist when it is also an attacker."
+  },
+  {
+   "id": "cluster_reservation",
+   "applies_to": "planning",
+   "rule": "Identify the top 1-2 'prime' cells (max passes*coverage). Reserve a radius-40 disk around the best one for the main carry plus Village plus Alchemist. Place early cheap towers outside the reserved footprint, or plan to sell them. Large footprints (super, village, farm, heli pad, ace runway, mortar) need the space reserved first."
+  },
+  {
+   "id": "farm_far",
+   "applies_to": "farm, benjamin",
+   "rule": "Use the lowest-value cells: far from track and outside prime clusters. Range does not matter."
+  },
+  {
+   "id": "flying_any",
+   "applies_to": "ace, heli",
+   "rule": "The pad/runway can go on any free large-footprint cell. Ace: choose the runway whose 80-unit flight circle overlaps the most track. Heli: Lock in Place, or Pursuit, over the densest track point."
+  },
+  {
+   "id": "mortar_point",
+   "applies_to": "mortar",
+   "rule": "The pad can be anywhere. Choose the target point p maximising the count of track cells within 20 units of p (tight loop or lane overlap), weighted toward progress [0.1, 0.7]. Set it once."
+  },
+  {
+   "id": "alternating_lanes",
+   "applies_to": "maps with lanes that alternate by round",
+   "rule": "Score a cell over ALL lanes: score = min over lanes of coverage (both lanes must be covered), or use towers that follow bloons (heli Pursuit, Corvus, global towers). Lanes are learned from bloon motion; record which lanes appear on which rounds."
+  },
+  {
+   "id": "simultaneous_lanes",
+   "applies_to": "maps with several active lanes",
+   "rule": "Prefer cells where lanes overlap or converge (exit convergence on Dark Castle, Workshop, Enchanted Glade). Otherwise build one cluster per lane group (Quad top/bottom, Party Parade left/right). Heli Pursuit and Ace Wingmonkey get confused on split lanes."
+  },
+  {
+   "id": "moving_platforms",
+   "applies_to": "Geared, Sanctuary, Covered Garden, Erosion, Glacial Trail",
+   "rule": "Coverage must be evaluated over the platform cycle (Geared 8/10 rounds, Sanctuary 24). Covered Garden: only the uncovered quarter is placeable, and towers there can't be upgraded once covered. Erosion: land collapses at the end of R17/35/53/71/89. Glacial Trail: a tower is frozen 2 of every 10 rounds counted from its own placement round, so stagger placements. Prefer global/position-independent towers on these maps."
+  },
+  {
+   "id": "dont_click_secrets",
+   "applies_to": "Skull Tweak, Spa Pits, Flooded Valley, Luminous Cove, Polyphemus",
+   "rule": "Never click map props before or during R1. Some click sequences make the map harder (Party Peak, Tar Pits), flood towers (Flooded Valley $5000 breach, which needs a confirm), or cost cash. The probe/placement code should avoid clicking the listed hotspots."
+  }
+ ]
+}
