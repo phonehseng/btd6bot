@@ -1,7 +1,7 @@
 """A small progress summary for people watching the bot (logs/progress.json).
 
 Written by the runner at start-up, after every game and while waiting. It is
-read by dashboards such as the Claude Code "btd6-progress" pane, but is plain
+read by dashboards such as the editor's "btd6-progress" pane, but is plain
 JSON anyone can open. Nothing in the bot reads it back.
 
 Contents:
