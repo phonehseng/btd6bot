@@ -766,12 +766,10 @@ class Game:
             # 0-0-0 -> 0-0-2 in one "failed" upgrade). The hotkey is pressed
             # only while the same price is still on the button.
             self.inp.click(*self.panel(p)["paths"][path - 1])
-            time.sleep(0.3)
-            verdict = self._upgrade_verdict(p, path, shown, before, cost, dx)
+            verdict = self._await_verdict(p, path, shown, before, cost, dx)
             if verdict == "same":
                 self.inp.press(T.UPGRADE_HOTKEYS[path - 1])
-                time.sleep(0.3)
-                verdict = self._upgrade_verdict(p, path, shown, before, cost, dx)
+                verdict = self._await_verdict(p, path, shown, before, cost, dx)
             if verdict == "bought":
                 p.tiers[path - 1] += 1
                 p.spent += cost or 0
@@ -782,6 +780,24 @@ class Game:
             return False
         finally:
             self.deselect(p)
+
+    # The price on an upgrade button can take most of a second to change after
+    # a purchase. Judged 0.3 s after the click, a bought tier looked "not
+    # bought", the hotkey fallback then bought the NEXT tier too, and the bot
+    # believed neither (22 games: 131 "not bought" lines, most of them right
+    # after another upgrade of the same tower, towers jumping 1-0-0 -> 2-0-2).
+    VERDICT_WAIT = 1.2
+    VERDICT_POLL = 0.15
+
+    def _await_verdict(self, p, path, shown, before, cost, dx):
+        """Poll _upgrade_verdict until it says "bought" or VERDICT_WAIT has
+        passed: only a button that kept its price that long counts as "same"."""
+        end = time.time() + self.VERDICT_WAIT
+        while True:
+            time.sleep(self.VERDICT_POLL)
+            verdict = self._upgrade_verdict(p, path, shown, before, cost, dx)
+            if verdict == "bought" or time.time() >= end:
+                return verdict
 
     def _upgrade_verdict(self, p, path, shown, before, cost, dx):
         """After an upgrade click: 'bought', 'same' (the button still shows

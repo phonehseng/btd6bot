@@ -1064,7 +1064,9 @@ class Executor:
             # count only the track this spot can actually see past walls/blockers
             weight = self.m.spot_weight(seg, covered)
             cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight)) for cx, cy, _ in cands]
-        ranked = sorted(((cx, cy, sc * spot_factor(self.m, kind, cx, cy))
+        edge = self._edge_band()
+        ranked = sorted(((cx, cy, sc * spot_factor(self.m, kind, cx, cy)
+                          * (self.EDGE_PENALTY if edge is not None and edge[cy, cx] else 1.0))
                          for cx, cy, sc in cands), key=lambda t: -t[2])
         out = []
         for cx, cy, score in ranked:
@@ -1103,8 +1105,15 @@ class Executor:
     # Placing: spots probed per pick-up of a tower, refused spots in a row
     # after which a step is given up for the rest of the game, and the pause
     # before the hero (never given up) is tried again at the next-best spots.
-    SPOTS_PER_HOLD = 4
-    SPOT_LIMIT = 12
+    # A probe while holding costs ~0.1 s; cancelling and picking the tower up
+    # again (the "pick a monkey, then X" the owner saw mid-round) costs ~1.4 s,
+    # so a pick-up tries many spots: 22 games logged 166 refused spots.
+    SPOTS_PER_HOLD = 10
+    SPOT_LIMIT = 20
+    # Refused spots cluster at the track's edge (3 cells from the path line:
+    # 59% refused, against 26% from 7 cells out), so the edge band ranks lower.
+    EDGE_CELLS = 3
+    EDGE_PENALTY = 0.75
     HERO_RETRY_S = 8.0        # first pause; it doubles after every further miss ...
     HERO_RETRY_MAX_S = 120.0  # ... up to this
     # Failed selections in a row after which a tower is taken to be absent.
@@ -1231,6 +1240,20 @@ class Executor:
     # (Lost Crevasse Hard: the alchemist and the village were given up at
     # once - "after 0 refused spots" - and the game was played without them.)
     NEAR_WIDENING = (1.5, 2.2)
+
+    def _edge_band(self):
+        """Cells within EDGE_CELLS of the bloon path's line (computed once per
+        game), or None when the track is not known."""
+        if not hasattr(self, "_edge"):
+            import cv2
+            cnt = getattr(self.m, "t_cnt", None)   # test models may have no track grids
+            track = (cnt > 0).astype(np.uint8) if isinstance(cnt, np.ndarray) else None
+            if track is None or not track.any():
+                self._edge = None
+            else:
+                dist = cv2.distanceTransform(1 - track, cv2.DIST_L2, 3)
+                self._edge = (dist > 0) & (dist <= self.EDGE_CELLS)
+        return self._edge
 
     def _spots_widening(self, kind, step):
         """Candidate spots for a place step. A step that finds none is

@@ -119,8 +119,15 @@ class GridModel:
                 if cover.flat[i] > 0][:n]
 
 
+# The give-up logic is tested with small limits the little test grid can
+# fill (the real ones, Executor.SPOTS_PER_HOLD / SPOT_LIMIT, are larger).
+PER_HOLD, LIMIT = 4, 12
+
+
 def executor(game, strat, mode="easy"):
-    return S.Executor(game, GridModel(), dict({"id": "t", "modes": [mode]}, **strat), mode)
+    ex = S.Executor(game, GridModel(), dict({"id": "t", "modes": [mode]}, **strat), mode)
+    ex.SPOTS_PER_HOLD, ex.SPOT_LIMIT = PER_HOLD, LIMIT
+    return ex
 
 
 def test_fill_step_is_given_up_once():
@@ -128,9 +135,9 @@ def test_fill_step_is_given_up_once():
     ex = executor(g, {"plan": [], "fill": [{"do": "place", "kind": "tack", "role": "dps"}]})
     for _ in range(10):
         ex.tick(10000, 5)
-    holds = S.Executor.SPOT_LIMIT // S.Executor.SPOTS_PER_HOLD
+    holds = LIMIT // PER_HOLD
     assert len(g.holds) == holds, g.holds
-    assert len(ex.m.refusals) == S.Executor.SPOT_LIMIT, "every refused spot is learned"
+    assert len(ex.m.refusals) == LIMIT, "every refused spot is learned"
     assert len(ex.dead_steps) == 1
 
 
@@ -140,7 +147,7 @@ def test_panic_copies_add_up():
     ex = executor(g, {"plan": [], "panic": [{"do": "place", "kind": "tack", "role": "dps"}]})
     for _ in range(10):
         ex.tick(10000, 5, lives_dropped=True)
-    assert len(g.holds) == S.Executor.SPOT_LIMIT // S.Executor.SPOTS_PER_HOLD, g.holds
+    assert len(g.holds) == LIMIT // PER_HOLD, g.holds
 
 
 def test_a_placement_resets_the_refusal_count():
@@ -150,7 +157,7 @@ def test_a_placement_resets_the_refusal_count():
     ex = executor(g, {"plan": [], "fill": [{"do": "place", "kind": "tack", "role": "dps"}]})
     for _ in range(10):
         ex.tick(10000, 5)
-    holds = S.Executor.SPOT_LIMIT // S.Executor.SPOTS_PER_HOLD
+    holds = LIMIT // PER_HOLD
     assert len(g.holds) == 3 + holds and ex.dead_steps, g.holds
 
 
@@ -174,7 +181,7 @@ def test_hero_is_retried_after_refusals():
         ex.tick(10000, 1)
     assert "d1" in g.towers, "the rest of the plan goes on meanwhile"
     assert "hero" not in g.towers and ex.deferred
-    first = S.Executor.SPOT_LIMIT // S.Executor.SPOTS_PER_HOLD
+    first = LIMIT // PER_HOLD
     assert g.holds.count("hero") == first + 1, "later tries are one pick-up each"
     hero_ok["now"] = True        # e.g. the next-best spots are fine
     for _ in range(2):
