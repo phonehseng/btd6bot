@@ -1,0 +1,4939 @@
+{
+ "about": "What each tower can pop, per crosspath. Hand-entered facts (damage_types, towers) plus a section derived from them by tools/build_bloon_kb.py (counters). btd6bot/threats.py reads this file; docs/bloons.md explains it.",
+ "source": "Well-established BTD6 facts (v57), consistent with the repo's earlier bloonswiki research (data/rounds.json answers, docs/rounds.md). NOT yet checked against the game's own simulation model: when data/game_model/towers.json + upgrades.json exist, tools/build_bloon_kb.py cross-checks every fact it can find there and lists disagreements under crosscheck.",
+ "confidence_levels": {
+  "game_model": "confirmed by data/game_model (the game's own numbers) - counted by the bot",
+  "established": "well-known BTD6 fact, agrees with earlier research in this repo - counted by the bot",
+  "likely": "believed true but not confirmed - documented only, NEVER counted when the bot decides whether a threat is covered",
+  "unknown": "no reliable fact - the tower is never counted for that property"
+ },
+ "bot_counts": [
+  "game_model",
+  "established"
+ ],
+ "conventions": {
+  "min": "the attack/ability exists once the tower has at least these tiers on every path (\"0-0-2\" = bottom path tier 2+)",
+  "max": "the attack exists only while the tower has at most these tiers (an upgrade that REPLACES the attack, e.g. Tack 3-x-x Hot Shots turns every tack into fire)",
+  "type": "damage type of the attack; damage_types says which bloon properties it cannot pop",
+  "blimp": "false when the attack cannot hurt MOAB-class bloons (Ice Monkey freeze)",
+  "camo.how": "detect = the tower targets camo bloons; track = its damage lies on the track and hits camo without targeting; untargeted = it fires without a target; decamo = it strips camo from the bloons it hits, so every tower downstream sees them",
+  "auras.grant": "camo = every tower in range detects camo (Radar Scanner); all_types = every tower in range pops every bloon type (Monkey Intelligence Bureau); deregrow = bloons in range cannot regrow",
+  "conservative choices": "when an attack's damage type is uncertain, it is entered as the type that pops LESS: a 'hot' upgrade that may be Fire or Normal is entered as fire (both pop lead and black, only fire fails against purple); the Wizard's Fireball, Fire or Explosion, is fire_or_explosion (pops neither black nor purple). The bot then never believes it can pop something it might not."
+ },
+ "damage_types": {
+  "normal": {
+   "cannot_pop": [],
+   "what": "pops everything (Juggernaut balls, Full Metal Jacket bullets, Flash/Sticky Bombs, Cold Snap)"
+  },
+  "sharp": {
+   "cannot_pop": [
+    "lead",
+    "frozen"
+   ],
+   "what": "darts, tacks, shurikens, spikes, thorns, bullets"
+  },
+  "explosion": {
+   "cannot_pop": [
+    "black"
+   ],
+   "what": "bombs, mortar shells, missiles, pineapples"
+  },
+  "fire": {
+   "cannot_pop": [
+    "purple"
+   ],
+   "what": "Hot Shots, Ring of Fire, Wall of Fire, Dragon's Breath, burning"
+  },
+  "cold": {
+   "cannot_pop": [
+    "white",
+    "lead"
+   ],
+   "what": "the Ice Monkey's freeze; MOAB-class cannot be frozen"
+  },
+  "energy": {
+   "cannot_pop": [
+    "lead",
+    "purple"
+   ],
+   "what": "the Wizard's magic bolts, Super Monkey Laser Blasts, Dartling lasers"
+  },
+  "plasma": {
+   "cannot_pop": [
+    "purple"
+   ],
+   "what": "Super Monkey Plasma Blasts / Sun Avatar, Apache Prime"
+  },
+  "acid": {
+   "cannot_pop": [],
+   "what": "the Alchemist's potions"
+  },
+  "fire_or_explosion": {
+   "cannot_pop": [
+    "black",
+    "purple"
+   ],
+   "what": "an attack whose type is uncertain between fire and explosion (Wizard Fireball): counted as popping neither black nor purple"
+  },
+  "glacier": {
+   "cannot_pop": [
+    "white"
+   ],
+   "what": "Cold Snap's freeze (the game model: pops lead, black and purple, not white)"
+  }
+ },
+ "towers": {
+  "dart": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "3-5-5",
+     "what": "darts (Spike-o-pult balls are sharp too)",
+     "confidence": "established"
+    },
+    {
+     "type": "normal",
+     "min": "4-0-0",
+     "what": "Juggernaut: balls pop lead and frozen",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "0-0-2",
+     "upgrade": "Enhanced Eyesight",
+     "confidence": "established"
+    }
+   ]
+  },
+  "boomerang": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "5-5-1",
+     "what": "boomerangs and glaives",
+     "confidence": "established"
+    },
+    {
+     "type": "fire",
+     "min": "0-0-2",
+     "what": "Red Hot Rangs: pops lead and frozen (entered as fire: purple not assumed)",
+     "confidence": "established"
+    }
+   ],
+   "camo": []
+  },
+  "bomb": {
+   "attacks": [
+    {
+     "type": "explosion",
+     "what": "bombs, MOAB Mauler/Assassin/Eliminator missiles",
+     "confidence": "established"
+    },
+    {
+     "type": "sharp",
+     "min": "0-0-2",
+     "what": "Frag Bombs: sharp fragments pop black and zebra (the game model: no longer at 0-0-3+)",
+     "confidence": "established",
+     "max": "5-5-2"
+    }
+   ],
+   "camo": []
+  },
+  "tack": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "2-5-5",
+     "what": "tacks and blades",
+     "confidence": "established"
+    },
+    {
+     "type": "fire",
+     "min": "3-0-0",
+     "what": "Hot Shots / Ring of Fire / Inferno Ring: pops lead, not purple",
+     "confidence": "established"
+    }
+   ],
+   "camo": []
+  },
+  "ice": {
+   "attacks": [
+    {
+     "type": "cold",
+     "max": "1-5-5",
+     "blimp": false,
+     "what": "freeze pulse: no white, zebra or lead; MOAB-class cannot be frozen",
+     "confidence": "established"
+    },
+    {
+     "type": "glacier",
+     "min": "2-0-0",
+     "max": "2-5-5",
+     "blimp": false,
+     "what": "Cold Snap: freezes and pops lead and camo (not white: game model)",
+     "confidence": "game_model"
+    },
+    {
+     "type": "normal",
+     "min": "3-0-0",
+     "blimp": false,
+     "what": "Ice Shards and up: pops white too (game model)",
+     "confidence": "game_model"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "2-0-0",
+     "upgrade": "Cold Snap",
+     "confidence": "established"
+    }
+   ]
+  },
+  "glue": {
+   "attacks": [],
+   "camo": [],
+   "notes": "Glue slows; it is not counted as a popper (Corrosive Glue and later damage-over-time types are not modelled)."
+  },
+  "desperado": {
+   "attacks": [],
+   "camo": [],
+   "notes": "gift-box tower; no reliable facts - never counted"
+  },
+  "sniper": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "0-5-5",
+     "what": "bullets",
+     "confidence": "established"
+    },
+    {
+     "type": "normal",
+     "min": "1-0-0",
+     "what": "Full Metal Jacket: pops lead (and DDTs with camo detection)",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "0-1-0",
+     "upgrade": "Night Vision Goggles",
+     "confidence": "established"
+    }
+   ],
+   "map_wide": true
+  },
+  "sub": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "5-1-5",
+     "what": "darts",
+     "confidence": "established"
+    },
+    {
+     "type": "fire",
+     "min": "0-2-0",
+     "what": "Heat-tipped Darts: pop lead (entered as fire: purple not assumed)",
+     "confidence": "established"
+    },
+    {
+     "type": "explosion",
+     "min": "0-3-0",
+     "what": "Ballistic Missile",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "decamo",
+     "min": "3-0-0",
+     "upgrade": "Submerge and Support",
+     "confidence": "likely"
+    }
+   ],
+   "notes": "No innate camo detection. Advanced Intel (2-x-x) shoots at what other towers see."
+  },
+  "buccaneer": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "5-1-5",
+     "what": "darts",
+     "confidence": "established"
+    },
+    {
+     "type": "fire",
+     "min": "0-2-0",
+     "what": "Hot Shot: pops lead (entered as fire)",
+     "confidence": "established"
+    },
+    {
+     "type": "explosion",
+     "min": "0-3-0",
+     "what": "Cannon Ship cannon balls",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "0-0-2",
+     "upgrade": "Crow's Nest",
+     "confidence": "established"
+    }
+   ]
+  },
+  "ace": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "what": "radial darts",
+     "confidence": "established"
+    },
+    {
+     "type": "explosion",
+     "min": "0-1-0",
+     "what": "Exploding Pineapple / Bomber Ace bombs",
+     "confidence": "established"
+    },
+    {
+     "type": "explosion",
+     "min": "3-0-0",
+     "what": "Fighter Plane missiles",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "untargeted",
+     "min": "0-0-0",
+     "upgrade": "radial darts need no target",
+     "confidence": "likely"
+    },
+    {
+     "how": "detect",
+     "min": "0-2-0",
+     "upgrade": "Spy Plane",
+     "confidence": "established"
+    }
+   ],
+   "map_wide": true
+  },
+  "heli": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "what": "darts",
+     "confidence": "established"
+    },
+    {
+     "type": "explosion",
+     "min": "4-0-0",
+     "what": "Apache Dartship missiles",
+     "confidence": "established"
+    },
+    {
+     "type": "plasma",
+     "min": "5-0-0",
+     "what": "Apache Prime plasma",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "0-2-0",
+     "upgrade": "IFR",
+     "confidence": "established"
+    }
+   ],
+   "map_wide": true
+  },
+  "mortar": {
+   "attacks": [
+    {
+     "type": "explosion",
+     "what": "shells",
+     "confidence": "established"
+    },
+    {
+     "type": "fire",
+     "min": "0-0-2",
+     "what": "Burny Stuff: burning pops black",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "0-0-1",
+     "upgrade": "Increased Accuracy",
+     "confidence": "likely"
+    },
+    {
+     "how": "decamo",
+     "min": "0-0-3",
+     "upgrade": "Signal Flare",
+     "confidence": "established"
+    }
+   ],
+   "map_wide": true,
+   "needs_aim": true
+  },
+  "dartling": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "1-5-5",
+     "what": "darts",
+     "confidence": "established"
+    },
+    {
+     "type": "energy",
+     "min": "2-0-0",
+     "max": "3-5-5",
+     "what": "Laser Shock / Laser Cannon",
+     "confidence": "likely"
+    },
+    {
+     "type": "plasma",
+     "min": "4-0-0",
+     "what": "Plasma Accelerator / Ray of Doom",
+     "confidence": "likely"
+    },
+    {
+     "type": "explosion",
+     "min": "0-3-0",
+     "what": "Hydra Rocket Pods",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "untargeted",
+     "min": "0-0-0",
+     "upgrade": "fires at the cursor",
+     "confidence": "likely"
+    }
+   ],
+   "needs_aim": true
+  },
+  "wizard": {
+   "attacks": [
+    {
+     "type": "energy",
+     "what": "magic bolts: no lead, no purple",
+     "confidence": "established"
+    },
+    {
+     "type": "fire_or_explosion",
+     "min": "0-1-0",
+     "what": "Fireball: pops lead (fire or explosion - neither black nor purple assumed)",
+     "confidence": "established"
+    },
+    {
+     "type": "fire",
+     "min": "0-2-0",
+     "what": "Wall of Fire / Dragon's Breath / Phoenix",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "0-0-2",
+     "upgrade": "Monkey Sense",
+     "confidence": "established"
+    },
+    {
+     "how": "decamo",
+     "min": "0-0-3",
+     "upgrade": "Shimmer",
+     "confidence": "established"
+    }
+   ]
+  },
+  "super": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "0-3-5",
+     "what": "darts",
+     "confidence": "established"
+    },
+    {
+     "type": "energy",
+     "min": "1-0-0",
+     "max": "1-5-5",
+     "what": "Laser Blasts: no lead, no purple",
+     "confidence": "established"
+    },
+    {
+     "type": "plasma",
+     "min": "2-0-0",
+     "what": "Plasma Blasts / Sun Avatar: pops lead, NOT purple",
+     "confidence": "established"
+    },
+    {
+     "type": "plasma",
+     "min": "0-4-0",
+     "what": "Tech Terror / The Anti-Bloon: pops lead, not purple (game model)",
+     "confidence": "game_model"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "0-0-2",
+     "upgrade": "Ultravision",
+     "confidence": "established"
+    }
+   ]
+  },
+  "ninja": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "what": "shurikens, caltrops",
+     "confidence": "established"
+    },
+    {
+     "type": "normal",
+     "min": "0-0-3",
+     "what": "Flash Bomb / Sticky Bomb: pop lead, damage DDTs",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "detect",
+     "min": "0-0-0",
+     "upgrade": "innate",
+     "confidence": "established"
+    },
+    {
+     "how": "decamo",
+     "min": "0-2-0",
+     "upgrade": "Counter-Espionage",
+     "confidence": "established"
+    }
+   ]
+  },
+  "alchemist": {
+   "attacks": [
+    {
+     "type": "acid",
+     "what": "acid potions pop every bloon type",
+     "confidence": "established"
+    }
+   ],
+   "camo": [],
+   "auras": [
+    {
+     "grant": "lead",
+     "min": "2-0-0",
+     "upgrade": "Acidic Mixture Dip: towers it buffs (in its range) pop lead",
+     "confidence": "established"
+    }
+   ],
+   "notes": "The lead dip is counted for towers inside the Alchemist's range; the buff is thrown at towers one at a time, so one Alchemist serves only the towers around it."
+  },
+  "druid": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "what": "thorns",
+     "confidence": "established"
+    }
+   ],
+   "camo": [],
+   "notes": "Heart of Thunder lightning (2-x-x) is believed to pop lead but its damage type is not confirmed - not counted."
+  },
+  "mermonkey": {
+   "attacks": [],
+   "camo": [],
+   "notes": "gift-box tower; Echosense (0-0-1/0-0-2) camo is unconfirmed - never counted"
+  },
+  "skywarden": {
+   "attacks": [],
+   "camo": [],
+   "notes": "new tower (v56); no reliable facts - never counted"
+  },
+  "farm": {
+   "attacks": [],
+   "camo": []
+  },
+  "spike": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "max": "1-5-5",
+     "what": "spikes",
+     "confidence": "established"
+    },
+    {
+     "type": "fire",
+     "min": "2-0-0",
+     "what": "White Hot Spikes: pop lead (entered as fire)",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "track",
+     "min": "0-0-0",
+     "upgrade": "spikes lie on the track",
+     "confidence": "established"
+    }
+   ]
+  },
+  "village": {
+   "attacks": [],
+   "camo": [],
+   "auras": [
+    {
+     "grant": "deregrow",
+     "min": "0-1-0",
+     "upgrade": "Grow Blocker",
+     "confidence": "established"
+    },
+    {
+     "grant": "camo",
+     "min": "0-2-0",
+     "upgrade": "Radar Scanner",
+     "confidence": "established"
+    },
+    {
+     "grant": "all_types",
+     "min": "0-3-0",
+     "upgrade": "Monkey Intelligence Bureau",
+     "confidence": "established"
+    }
+   ]
+  },
+  "engineer": {
+   "attacks": [
+    {
+     "type": "sharp",
+     "what": "nails",
+     "confidence": "established"
+    }
+   ],
+   "camo": [
+    {
+     "how": "decamo",
+     "min": "0-3-0",
+     "upgrade": "Cleansing Foam",
+     "confidence": "likely"
+    }
+   ]
+  },
+  "beast_handler": {
+   "attacks": [],
+   "camo": [],
+   "notes": "gift-box tower; no reliable facts - never counted"
+  }
+ },
+ "blimp_dps": {
+  "about": "Rough single-target damage per second against MOAB-class bloons, unbuffed, from the commonly quoted upgrade stats (bloonswiki numbers already in docs/rounds.md where available). Order-of-magnitude estimates for the blimp ramp check only; every entry applies once the tower has at least that crosspath, and the highest matching entry wins.",
+  "dart": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "0-3-0",
+    3
+   ],
+   [
+    "4-0-0",
+    8
+   ],
+   [
+    "0-0-4",
+    15
+   ],
+   [
+    "0-0-5",
+    60
+   ],
+   [
+    "5-0-0",
+    60
+   ]
+  ],
+  "boomerang": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "0-3-0",
+    12
+   ],
+   [
+    "4-0-0",
+    15
+   ],
+   [
+    "0-0-4",
+    20
+   ],
+   [
+    "0-4-0",
+    30
+   ],
+   [
+    "5-0-0",
+    100
+   ]
+  ],
+  "bomb": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "4-0-0",
+    10
+   ],
+   [
+    "0-3-0",
+    19
+   ],
+   [
+    "0-4-0",
+    40
+   ],
+   [
+    "0-5-0",
+    400
+   ]
+  ],
+  "tack": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "0-0-4",
+    10
+   ],
+   [
+    "4-0-0",
+    16
+   ],
+   [
+    "5-0-0",
+    150
+   ]
+  ],
+  "sniper": [
+   [
+    "0-0-0",
+    1.3
+   ],
+   [
+    "1-0-0",
+    2.5
+   ],
+   [
+    "2-0-0",
+    4.4
+   ],
+   [
+    "3-0-0",
+    12.6
+   ],
+   [
+    "4-0-0",
+    19
+   ],
+   [
+    "0-0-3",
+    8
+   ],
+   [
+    "2-0-3",
+    25
+   ],
+   [
+    "4-0-2",
+    38
+   ],
+   [
+    "0-0-4",
+    16
+   ],
+   [
+    "5-0-0",
+    180
+   ]
+  ],
+  "sub": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "0-3-0",
+    7
+   ],
+   [
+    "4-0-0",
+    15
+   ],
+   [
+    "0-0-4",
+    25
+   ],
+   [
+    "0-4-0",
+    60
+   ],
+   [
+    "0-0-5",
+    150
+   ]
+  ],
+  "buccaneer": [
+   [
+    "0-0-0",
+    1.5
+   ],
+   [
+    "0-3-0",
+    6
+   ],
+   [
+    "3-0-0",
+    10
+   ],
+   [
+    "0-4-0",
+    20
+   ],
+   [
+    "4-0-0",
+    35
+   ]
+  ],
+  "ace": [
+   [
+    "0-0-0",
+    1.5
+   ],
+   [
+    "3-0-0",
+    25
+   ],
+   [
+    "0-4-0",
+    30
+   ],
+   [
+    "4-0-0",
+    40
+   ],
+   [
+    "0-0-4",
+    60
+   ]
+  ],
+  "heli": [
+   [
+    "0-0-0",
+    3
+   ],
+   [
+    "3-0-0",
+    12
+   ],
+   [
+    "0-0-4",
+    30
+   ],
+   [
+    "4-0-0",
+    60
+   ],
+   [
+    "5-0-0",
+    250
+   ]
+  ],
+  "mortar": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "0-3-0",
+    8
+   ],
+   [
+    "4-0-0",
+    30
+   ],
+   [
+    "0-0-5",
+    80
+   ]
+  ],
+  "wizard": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "3-0-0",
+    6
+   ],
+   [
+    "0-3-0",
+    12
+   ],
+   [
+    "0-4-0",
+    30
+   ],
+   [
+    "4-0-0",
+    40
+   ]
+  ],
+  "super": [
+   [
+    "0-0-0",
+    22
+   ],
+   [
+    "1-0-0",
+    35
+   ],
+   [
+    "2-0-0",
+    60
+   ],
+   [
+    "0-3-0",
+    60
+   ],
+   [
+    "0-0-3",
+    80
+   ],
+   [
+    "3-0-0",
+    100
+   ],
+   [
+    "4-0-0",
+    400
+   ]
+  ],
+  "ninja": [
+   [
+    "0-0-0",
+    1.4
+   ],
+   [
+    "3-0-0",
+    4
+   ],
+   [
+    "0-0-3",
+    5
+   ],
+   [
+    "4-0-0",
+    10
+   ],
+   [
+    "0-0-4",
+    60
+   ],
+   [
+    "5-0-0",
+    60
+   ],
+   [
+    "0-0-5",
+    300
+   ]
+  ],
+  "alchemist": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "0-2-0",
+    6
+   ],
+   [
+    "0-3-0",
+    15
+   ]
+  ],
+  "druid": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "3-0-0",
+    6
+   ],
+   [
+    "4-0-0",
+    30
+   ]
+  ],
+  "spike": [
+   [
+    "0-0-0",
+    2
+   ],
+   [
+    "0-3-0",
+    20
+   ],
+   [
+    "2-0-4",
+    25
+   ],
+   [
+    "0-4-0",
+    30
+   ],
+   [
+    "4-0-0",
+    40
+   ],
+   [
+    "0-0-5",
+    120
+   ],
+   [
+    "2-0-5",
+    150
+   ]
+  ],
+  "engineer": [
+   [
+    "0-0-0",
+    1
+   ],
+   [
+    "0-2-0",
+    4
+   ],
+   [
+    "4-0-0",
+    20
+   ]
+  ]
+ },
+ "counters": {
+  "camo": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Enhanced Eyesight"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "5-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "2-0-0",
+     "how": "glacier; camo: detect (Cold Snap"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-1-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (Night Vision Goggles"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Crow's Nest"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (Spy Plane"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (IFR"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-1",
+     "how": "explosion; camo: detect (game model"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-2",
+     "how": "energy; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Ultravision"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: detect (innate"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-1",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model; camo: detect (game model"
+    }
+   ],
+   "with_radar": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    }
+   ],
+   "with_mib": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    }
+   ]
+  },
+  "lead": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "4-0-0",
+     "how": "normal"
+    },
+    {
+     "tower": "dart",
+     "crosspath": "0-0-5",
+     "how": "game model"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-2",
+     "how": "fire"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "5-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "3-0-0",
+     "how": "fire"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-5-0",
+     "how": "game model"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "2-0-0",
+     "how": "glacier"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-3-0",
+     "how": "game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "3-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-5",
+     "how": "game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "1-0-0",
+     "how": "normal"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-2-0",
+     "how": "fire"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-2-0",
+     "how": "fire"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "4-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-1-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "3-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-4",
+     "how": "game model"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-3",
+     "how": "game model"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "3-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-3-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "4-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-1-0",
+     "how": "fire_or_explosion"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-4",
+     "how": "game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "4-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "super",
+     "crosspath": "2-0-0",
+     "how": "plasma"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-4",
+     "how": "game model"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-4-0",
+     "how": "plasma"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-3",
+     "how": "normal"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "1-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-3-0",
+     "how": "game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-2-0",
+     "how": "game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-3",
+     "how": "game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "2-0-0",
+     "how": "fire"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "4-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-2-0",
+     "how": "game model"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-5",
+     "how": "game model"
+    }
+   ],
+   "with_radar": [],
+   "with_mib": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold via MIB mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy via MIB mib"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    }
+   ]
+  },
+  "black": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-2",
+     "how": "sharp"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "5-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-2",
+     "how": "fire"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-3-0",
+     "how": "game model"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "4-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    }
+   ],
+   "with_radar": [],
+   "with_mib": [
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib"
+    }
+   ]
+  },
+  "white": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "3-0-0",
+     "how": "normal"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-4",
+     "how": "game model"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    }
+   ],
+   "with_radar": [],
+   "with_mib": [
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold via MIB mib"
+    }
+   ]
+  },
+  "zebra": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-2",
+     "how": "sharp"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "3-0-0",
+     "how": "normal"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-2",
+     "how": "fire"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    }
+   ],
+   "with_radar": [],
+   "with_mib": [
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold via MIB mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model via MIB mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model via MIB mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    }
+   ]
+  },
+  "purple": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-1-0",
+     "how": "game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-4",
+     "how": "game model"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-1",
+     "how": "game model"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-1-0",
+     "how": "game model"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "1-0-0",
+     "how": "game model"
+    }
+   ],
+   "with_radar": [],
+   "with_mib": [
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy via MIB mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib"
+    }
+   ]
+  },
+  "camo+lead": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: detect (Enhanced Eyesight"
+    },
+    {
+     "tower": "dart",
+     "crosspath": "4-0-2",
+     "how": "normal; camo: detect (Enhanced Eyesight"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "5-0-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "2-0-0",
+     "how": "glacier; camo: detect (Cold Snap"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-3-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "3-1-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-1-5",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "1-1-0",
+     "how": "normal; camo: detect (Night Vision Goggles"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "4-2-0",
+     "how": "fire; camo: detect (game model"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-2-2",
+     "how": "fire; camo: detect (Crow's Nest"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "4-0-2",
+     "how": "game model; camo: detect (Crow's Nest"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-2-0",
+     "how": "explosion; camo: detect (Spy Plane"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-2-3",
+     "how": "game model; camo: detect (IFR"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "3-2-0",
+     "how": "game model; camo: detect (IFR"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-1",
+     "how": "explosion; camo: detect (game model"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-3-0",
+     "how": "explosion; camo: detect (game model"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "4-1-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-1-2",
+     "how": "fire_or_explosion; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-4",
+     "how": "game model; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "4-0-2",
+     "how": "game model; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-4",
+     "how": "game model; camo: detect (Ultravision"
+    },
+    {
+     "tower": "super",
+     "crosspath": "2-0-2",
+     "how": "plasma; camo: detect (Ultravision"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-4-2",
+     "how": "plasma; camo: detect (Ultravision"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-3",
+     "how": "normal; camo: detect (innate"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "4-0-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-3-1",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-2-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-0-3",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "2-0-0",
+     "how": "fire; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model; camo: detect (game model"
+    }
+   ],
+   "with_radar": [
+    {
+     "tower": "dart",
+     "crosspath": "4-0-0",
+     "how": "normal; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-2",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "3-0-0",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-5-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "3-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "1-0-0",
+     "how": "normal; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-2-0",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-2-0",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "4-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-1-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "3-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-4",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-3",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "3-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "4-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-1-0",
+     "how": "fire_or_explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "4-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "2-0-0",
+     "how": "plasma; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-4-0",
+     "how": "plasma; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "1-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-3-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-2-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-3",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "4-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-2-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner radar"
+    }
+   ],
+   "with_mib": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: detect (innate"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    }
+   ]
+  },
+  "camo+black": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Enhanced Eyesight"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "5-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "2-0-0",
+     "how": "glacier; camo: detect (Cold Snap"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-1-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (Night Vision Goggles"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Crow's Nest"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (Spy Plane"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (IFR"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-2",
+     "how": "fire; camo: detect (game model"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-3-1",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "4-0-1",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-2",
+     "how": "energy; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Ultravision"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: detect (innate"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-1",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model; camo: detect (game model"
+    }
+   ],
+   "with_radar": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "5-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-3-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "4-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    }
+   ],
+   "with_mib": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    }
+   ]
+  },
+  "camo+white": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Enhanced Eyesight"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "5-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "3-0-0",
+     "how": "normal; camo: detect (Cold Snap"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "2-0-4",
+     "how": "game model; camo: detect (Cold Snap"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-1-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (Night Vision Goggles"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Crow's Nest"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (Spy Plane"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (IFR"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-1",
+     "how": "explosion; camo: detect (game model"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-2",
+     "how": "energy; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Ultravision"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: detect (innate"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-1",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model; camo: detect (game model"
+    }
+   ],
+   "with_radar": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-4",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    }
+   ],
+   "with_mib": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    }
+   ]
+  },
+  "camo+zebra": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Enhanced Eyesight"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "5-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "3-0-0",
+     "how": "normal; camo: detect (Cold Snap"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (Night Vision Goggles"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Crow's Nest"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (Spy Plane"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (IFR"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-2",
+     "how": "fire; camo: detect (game model"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-2",
+     "how": "energy; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Ultravision"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: detect (innate"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: track (spikes lie on the track"
+    }
+   ],
+   "with_radar": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    }
+   ],
+   "with_mib": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    }
+   ]
+  },
+  "camo+purple": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Enhanced Eyesight"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "5-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "2-0-0",
+     "how": "glacier; camo: detect (Cold Snap"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-1-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (Night Vision Goggles"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Crow's Nest"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (Spy Plane"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-2-0",
+     "how": "sharp; camo: detect (IFR"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-1",
+     "how": "explosion; camo: detect (game model"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-1-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-1-2",
+     "how": "game model; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-4",
+     "how": "game model; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-2",
+     "how": "sharp; camo: detect (Ultravision"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: detect (innate"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "4-0-0",
+     "how": "sharp; camo: detect (game model"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-1",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: detect (game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model; camo: detect (game model"
+    }
+   ],
+   "with_radar": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-1-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-1",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-1-0",
+     "how": "game model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "1-0-0",
+     "how": "game model; camo: Radar Scanner radar"
+    }
+   ],
+   "with_mib": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ice",
+     "crosspath": "0-0-0",
+     "how": "cold; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    }
+   ]
+  },
+  "blimp": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "game model"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model"
+    }
+   ],
+   "with_radar": [],
+   "with_mib": []
+  },
+  "ddt": {
+   "alone": [
+    {
+     "tower": "dart",
+     "crosspath": "4-0-2",
+     "how": "normal; camo: detect (Enhanced Eyesight"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "5-0-2",
+     "how": "fire; camo: detect (game model"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "1-1-0",
+     "how": "normal; camo: detect (Night Vision Goggles"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "4-2-0",
+     "how": "fire; camo: detect (game model"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-2-2",
+     "how": "fire; camo: detect (Crow's Nest"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "5-2-0",
+     "how": "plasma; camo: detect (IFR"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-2",
+     "how": "fire; camo: detect (game model"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-2-2",
+     "how": "fire; camo: detect (Monkey Sense"
+    },
+    {
+     "tower": "super",
+     "crosspath": "2-0-2",
+     "how": "plasma; camo: detect (Ultravision"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-4-2",
+     "how": "plasma; camo: detect (Ultravision"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-3",
+     "how": "normal; camo: detect (innate"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "2-0-0",
+     "how": "fire; camo: track (spikes lie on the track"
+    }
+   ],
+   "with_radar": [
+    {
+     "tower": "dart",
+     "crosspath": "4-0-0",
+     "how": "normal; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-2",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "3-0-0",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "1-0-0",
+     "how": "normal; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-2-0",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-2-0",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "5-0-0",
+     "how": "plasma; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-2-0",
+     "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "2-0-0",
+     "how": "plasma; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-4-0",
+     "how": "plasma; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner radar"
+    }
+   ],
+   "with_mib": [
+    {
+     "tower": "dart",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "boomerang",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "bomb",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "tack",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sniper",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "sub",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "buccaneer",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ace",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "heli",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mortar",
+     "crosspath": "0-0-0",
+     "how": "explosion via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "dartling",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "wizard",
+     "crosspath": "0-0-0",
+     "how": "energy via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "super",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "ninja",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: detect (innate"
+    },
+    {
+     "tower": "alchemist",
+     "crosspath": "0-0-0",
+     "how": "acid; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "druid",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "spike",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "engineer",
+     "crosspath": "0-0-0",
+     "how": "sharp via MIB mib; camo: Radar Scanner mib"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "game model via MIB mib; camo: Radar Scanner mib"
+    }
+   ]
+  }
+ },
+ "counters_note": "Derived by tools/build_bloon_kb.py from damage_types + towers (only facts the bot counts). Minimal crosspaths; any crosspath on the way above them works too unless an attack is replaced (see 'max' in towers).",
+ "crosscheck": {
+  "status": "counters.json facts alone vs the game model (the bot uses the game model)",
+  "claimed_but_game_says_no": {},
+  "game_says_yes_we_did_not_claim": {
+   "ace.lead": [
+    "0-0-4",
+    "0-0-5",
+    "1-0-4",
+    "1-0-5",
+    "2-0-4",
+    "2-0-5"
+   ],
+   "beast_handler.black": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 61 crosspaths"
+   ],
+   "beast_handler.lead": [
+    "0-2-0",
+    "0-2-1",
+    "0-3-0",
+    "1-2-0",
+    "0-2-2",
+    "0-3-1",
+    "... 30 crosspaths"
+   ],
+   "beast_handler.purple": [
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "0-2-0",
+    "... 60 crosspaths"
+   ],
+   "beast_handler.white": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 61 crosspaths"
+   ],
+   "bomb.black": [
+    "5-0-0",
+    "5-0-1",
+    "5-1-0",
+    "5-2-0"
+   ],
+   "boomerang.camo": [
+    "5-0-0",
+    "5-0-1",
+    "5-1-0",
+    "5-0-2",
+    "5-2-0"
+   ],
+   "boomerang.lead": [
+    "5-0-0",
+    "5-0-1",
+    "5-1-0",
+    "5-2-0"
+   ],
+   "boomerang.purple": [
+    "0-0-2",
+    "0-0-3",
+    "0-1-2",
+    "1-0-2",
+    "0-0-4",
+    "0-1-3",
+    "... 26 crosspaths"
+   ],
+   "buccaneer.lead": [
+    "4-0-0",
+    "4-0-1",
+    "4-1-0",
+    "5-0-0",
+    "4-0-2",
+    "5-0-1",
+    "... 8 crosspaths"
+   ],
+   "buccaneer.purple": [
+    "0-2-0",
+    "0-2-1",
+    "1-2-0",
+    "0-2-2",
+    "2-2-0",
+    "0-2-3",
+    "... 11 crosspaths"
+   ],
+   "dart.lead": [
+    "0-0-5",
+    "0-1-5",
+    "1-0-5",
+    "0-2-5",
+    "2-0-5"
+   ],
+   "dartling.black": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "3-0-0",
+    "2-0-2",
+    "2-2-0",
+    "... 26 crosspaths"
+   ],
+   "dartling.camo": [
+    "0-1-0",
+    "0-1-1",
+    "0-2-0",
+    "1-1-0",
+    "0-1-2",
+    "0-2-1",
+    "... 37 crosspaths"
+   ],
+   "dartling.lead": [
+    "4-0-0",
+    "4-0-1",
+    "4-1-0",
+    "5-0-0",
+    "4-0-2",
+    "4-2-0",
+    "... 10 crosspaths"
+   ],
+   "dartling.purple": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "2-0-2",
+    "2-2-0",
+    "2-0-3",
+    "... 13 crosspaths"
+   ],
+   "dartling.white": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "3-0-0",
+    "2-0-2",
+    "2-2-0",
+    "... 23 crosspaths"
+   ],
+   "desperado.black": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 64 crosspaths"
+   ],
+   "desperado.camo": [
+    "0-1-0",
+    "0-1-1",
+    "0-2-0",
+    "1-1-0",
+    "0-1-2",
+    "0-2-1",
+    "... 37 crosspaths"
+   ],
+   "desperado.lead": [
+    "0-3-0",
+    "3-0-0",
+    "0-3-1",
+    "0-4-0",
+    "1-3-0",
+    "3-0-1",
+    "... 35 crosspaths"
+   ],
+   "desperado.purple": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 64 crosspaths"
+   ],
+   "desperado.white": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 64 crosspaths"
+   ],
+   "druid.camo": [
+    "4-0-0",
+    "4-0-1",
+    "4-1-0",
+    "5-0-0",
+    "4-0-2",
+    "4-2-0",
+    "... 10 crosspaths"
+   ],
+   "druid.lead": [
+    "1-0-0",
+    "1-0-1",
+    "1-1-0",
+    "2-0-0",
+    "1-0-2",
+    "1-2-0",
+    "... 37 crosspaths"
+   ],
+   "engineer.lead": [
+    "4-0-0",
+    "4-0-1",
+    "4-1-0",
+    "5-0-0",
+    "4-0-2",
+    "4-2-0",
+    "... 10 crosspaths"
+   ],
+   "glue.black": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "3-0-0",
+    "2-0-2",
+    "2-2-0",
+    "... 30 crosspaths"
+   ],
+   "glue.lead": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "3-0-0",
+    "2-0-2",
+    "2-2-0",
+    "... 30 crosspaths"
+   ],
+   "glue.purple": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "3-0-0",
+    "2-0-2",
+    "2-2-0",
+    "... 30 crosspaths"
+   ],
+   "glue.white": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "3-0-0",
+    "2-0-2",
+    "2-2-0",
+    "... 30 crosspaths"
+   ],
+   "heli.lead": [
+    "0-0-3",
+    "3-0-0",
+    "0-0-4",
+    "0-1-3",
+    "1-0-3",
+    "3-0-1",
+    "... 20 crosspaths"
+   ],
+   "ice.white": [
+    "0-0-4",
+    "0-0-5",
+    "0-1-4",
+    "1-0-4",
+    "0-1-5",
+    "0-2-4",
+    "... 10 crosspaths"
+   ],
+   "mermonkey.black": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 64 crosspaths"
+   ],
+   "mermonkey.camo": [
+    "0-0-1",
+    "0-0-2",
+    "0-1-1",
+    "1-0-1",
+    "0-0-3",
+    "0-1-2",
+    "... 37 crosspaths"
+   ],
+   "mermonkey.lead": [
+    "0-3-0",
+    "0-3-1",
+    "0-4-0",
+    "1-3-0",
+    "0-3-2",
+    "0-4-1",
+    "... 15 crosspaths"
+   ],
+   "mermonkey.purple": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 49 crosspaths"
+   ],
+   "mermonkey.white": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 49 crosspaths"
+   ],
+   "mortar.black": [
+    "0-3-0",
+    "0-3-1",
+    "0-4-0",
+    "1-3-0",
+    "4-0-0",
+    "0-4-1",
+    "... 20 crosspaths"
+   ],
+   "mortar.camo": [
+    "0-0-1",
+    "0-0-2",
+    "0-1-1",
+    "1-0-1",
+    "0-0-3",
+    "0-1-2",
+    "... 37 crosspaths"
+   ],
+   "skywarden.black": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 64 crosspaths"
+   ],
+   "skywarden.camo": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "3-0-0",
+    "2-0-2",
+    "2-2-0",
+    "... 26 crosspaths"
+   ],
+   "skywarden.lead": [
+    "0-2-0",
+    "0-0-3",
+    "0-2-1",
+    "0-3-0",
+    "1-2-0",
+    "0-0-4",
+    "... 38 crosspaths"
+   ],
+   "skywarden.purple": [
+    "0-0-0",
+    "0-0-1",
+    "1-0-0",
+    "0-0-2",
+    "1-0-1",
+    "2-0-0",
+    "... 27 crosspaths"
+   ],
+   "skywarden.white": [
+    "0-0-0",
+    "0-0-1",
+    "0-1-0",
+    "1-0-0",
+    "0-0-2",
+    "0-1-1",
+    "... 64 crosspaths"
+   ],
+   "spike.purple": [
+    "2-0-0",
+    "2-0-1",
+    "2-1-0",
+    "3-0-0",
+    "2-0-2",
+    "2-2-0",
+    "... 26 crosspaths"
+   ],
+   "sub.camo": [
+    "4-0-0",
+    "4-0-1",
+    "4-1-0",
+    "5-0-0",
+    "4-0-2",
+    "4-2-0",
+    "... 10 crosspaths"
+   ],
+   "sub.purple": [
+    "0-2-0",
+    "0-2-1",
+    "1-2-0",
+    "0-2-2",
+    "2-2-0",
+    "0-2-3",
+    "... 11 crosspaths"
+   ],
+   "super.lead": [
+    "0-0-4",
+    "0-0-5",
+    "0-1-4",
+    "1-0-4",
+    "0-1-5",
+    "0-2-4",
+    "... 8 crosspaths"
+   ],
+   "super.purple": [
+    "4-0-0",
+    "0-5-0",
+    "1-0-4",
+    "4-0-1",
+    "4-1-0",
+    "5-0-0",
+    "... 19 crosspaths"
+   ],
+   "tack.lead": [
+    "0-5-0",
+    "0-5-1",
+    "1-5-0",
+    "0-5-2",
+    "2-5-0"
+   ],
+   "tack.purple": [
+    "3-0-0",
+    "3-0-1",
+    "3-1-0",
+    "3-0-2",
+    "3-2-0",
+    "5-0-0",
+    "... 10 crosspaths"
+   ],
+   "village.black": [
+    "5-0-0",
+    "5-0-1",
+    "5-1-0",
+    "5-0-2",
+    "5-2-0"
+   ],
+   "village.camo": [
+    "5-0-0",
+    "5-0-1",
+    "5-1-0",
+    "5-0-2",
+    "5-2-0"
+   ],
+   "village.lead": [
+    "5-0-0",
+    "5-0-1",
+    "5-1-0",
+    "5-0-2",
+    "5-2-0"
+   ],
+   "village.purple": [
+    "5-0-0",
+    "5-0-1",
+    "5-1-0",
+    "5-0-2",
+    "5-2-0"
+   ],
+   "village.white": [
+    "5-0-0",
+    "5-0-1",
+    "5-1-0",
+    "5-0-2",
+    "5-2-0"
+   ],
+   "wizard.lead": [
+    "0-0-4",
+    "4-0-0",
+    "0-0-5",
+    "1-0-4",
+    "4-0-1",
+    "5-0-0",
+    "... 12 crosspaths"
+   ],
+   "wizard.purple": [
+    "0-1-0",
+    "0-1-1",
+    "0-2-0",
+    "1-1-0",
+    "0-1-2",
+    "0-2-1",
+    "... 43 crosspaths"
+   ]
+  }
+ }
+}

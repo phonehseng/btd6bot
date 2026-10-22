@@ -1,108 +1,710 @@
 {
-  "source": "bloonswiki.com Bloon pages (BTD6 v57); speed is relative to a Red Bloon",
-  "notes": "bright = solid, saturated colour that stands out from any map background (used to pick Sandbox rounds for track learning). Purple is excluded on purpose: seasonal decorations (bats) are purple too. hue = OpenCV hue ranges (0-180) of the bloon's body colour, used to look only for the bloons that were sent.",
-  "bloons": {
-    "red": {
-      "speed": 1.0,
-      "bright": true,
-      "hue": [
-        [
-          0,
-          6
-        ],
-        [
-          174,
-          180
-        ]
-      ]
+ "source": "bloonswiki.com Bloon pages (BTD6 v57); speed is relative to a Red Bloon. Layer HP, children and properties are well-established BTD6 facts (they reproduce the RBE in data/rounds.json exactly); verified against data/game_model when tools/build_bloon_kb.py finds it.",
+ "notes": "bright = solid, saturated colour that stands out from any map background (used to pick Sandbox rounds for track learning). Purple is excluded on purpose: seasonal decorations (bats) are purple too. hue = OpenCV hue ranges (0-180) of the bloon's body colour, used to look only for the bloons that were sent.",
+ "bloons": {
+  "red": {
+   "speed": 1.0,
+   "bright": true,
+   "hue": [
+    [
+     0,
+     6
+    ],
+    [
+     174,
+     180
+    ]
+   ],
+   "class": "bloon",
+   "hp": 1,
+   "children": [],
+   "properties": [],
+   "rbe": 1,
+   "immune_to": [],
+   "signatures": [],
+   "first_spawn": {
+    "standard": {
+     "any": 1,
+     "camo": 33
     },
-    "blue": {
-      "speed": 1.4,
-      "bright": true,
-      "hue": [
-        [
-          100,
-          118
-        ]
-      ]
-    },
-    "green": {
-      "speed": 1.8,
-      "bright": true,
-      "hue": [
-        [
-          40,
-          72
-        ]
-      ]
-    },
-    "yellow": {
-      "speed": 3.2,
-      "bright": true,
-      "hue": [
-        [
-          22,
-          34
-        ]
-      ]
-    },
-    "pink": {
-      "speed": 3.5,
-      "bright": true,
-      "hue": [
-        [
-          160,
-          173
-        ]
-      ]
-    },
-    "black": {
-      "speed": 1.8,
-      "bright": false
-    },
-    "white": {
-      "speed": 2.0,
-      "bright": false
-    },
-    "purple": {
-      "speed": 3.0,
-      "bright": false
-    },
-    "lead": {
-      "speed": 1.0,
-      "bright": false
-    },
-    "zebra": {
-      "speed": 1.8,
-      "bright": false
-    },
-    "rainbow": {
-      "speed": 2.2,
-      "bright": false
-    },
-    "ceramic": {
-      "speed": 2.5,
-      "bright": false
-    },
-    "moab": {
-      "speed": 1.0,
-      "bright": false
-    },
-    "bfb": {
-      "speed": 0.25,
-      "bright": false
-    },
-    "zomg": {
-      "speed": 0.18,
-      "bright": false
-    },
-    "ddt": {
-      "speed": 2.64,
-      "bright": false
-    },
-    "bad": {
-      "speed": 0.18,
-      "bright": false
+    "abr": {
+     "any": 2,
+     "camo": 5,
+     "regrow": 5
     }
+   }
+  },
+  "blue": {
+   "speed": 1.4,
+   "bright": true,
+   "hue": [
+    [
+     100,
+     118
+    ]
+   ],
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "red"
+   ],
+   "properties": [],
+   "rbe": 2,
+   "immune_to": [],
+   "signatures": [],
+   "first_spawn": {
+    "standard": {
+     "any": 3
+    },
+    "abr": {
+     "any": 1,
+     "regrow": 3,
+     "camo": 7
+    }
+   }
+  },
+  "green": {
+   "speed": 1.8,
+   "bright": true,
+   "hue": [
+    [
+     40,
+     72
+    ]
+   ],
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "blue"
+   ],
+   "properties": [],
+   "rbe": 3,
+   "immune_to": [],
+   "signatures": [],
+   "first_spawn": {
+    "standard": {
+     "any": 6,
+     "camo": 24,
+     "regrow": 36
+    },
+    "abr": {
+     "any": 5,
+     "regrow": 6,
+     "camo": 11
+    }
+   }
+  },
+  "yellow": {
+   "speed": 3.2,
+   "bright": true,
+   "hue": [
+    [
+     22,
+     34
+    ]
+   ],
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "green"
+   ],
+   "properties": [],
+   "rbe": 4,
+   "immune_to": [],
+   "signatures": [],
+   "first_spawn": {
+    "standard": {
+     "any": 11,
+     "regrow": 17,
+     "camo": 33
+    },
+    "abr": {
+     "any": 8,
+     "regrow": 14,
+     "camo": 27
+    }
+   }
+  },
+  "pink": {
+   "speed": 3.5,
+   "bright": true,
+   "hue": [
+    [
+     160,
+     173
+    ]
+   ],
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "yellow"
+   ],
+   "properties": [],
+   "rbe": 5,
+   "immune_to": [],
+   "signatures": [],
+   "first_spawn": {
+    "standard": {
+     "any": 15,
+     "camo": 47,
+     "regrow": 48
+    },
+    "abr": {
+     "any": 12,
+     "regrow": 25,
+     "camo": 47
+    }
+   }
+  },
+  "black": {
+   "speed": 1.8,
+   "bright": false,
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "pink",
+    "pink"
+   ],
+   "properties": [
+    "black"
+   ],
+   "status": "small: some area attacks miss it",
+   "rbe": 11,
+   "immune_to": [
+    "explosion",
+    "fire_or_explosion"
+   ],
+   "signatures": [
+    "black"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 20,
+     "regrow": 69
+    },
+    "abr": {
+     "any": 7,
+     "regrow": 20,
+     "camo": 35
+    }
+   }
+  },
+  "white": {
+   "speed": 2.0,
+   "bright": false,
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "pink",
+    "pink"
+   ],
+   "properties": [
+    "white"
+   ],
+   "status": "cannot be frozen",
+   "rbe": 11,
+   "immune_to": [
+    "cold",
+    "glacier"
+   ],
+   "signatures": [
+    "white"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 22,
+     "camo": 37,
+     "regrow": 70
+    },
+    "abr": {
+     "any": 14,
+     "camo": 31,
+     "regrow": 35
+    }
+   }
+  },
+  "purple": {
+   "speed": 3.0,
+   "bright": false,
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "pink",
+    "pink"
+   ],
+   "properties": [
+    "purple"
+   ],
+   "rbe": 11,
+   "immune_to": [
+    "fire",
+    "energy",
+    "plasma",
+    "fire_or_explosion"
+   ],
+   "signatures": [
+    "purple"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 25,
+     "camo": 45,
+     "regrow": 48
+    },
+    "abr": {
+     "any": 15,
+     "regrow": 25,
+     "camo": 45
+    }
+   }
+  },
+  "lead": {
+   "speed": 1.0,
+   "bright": false,
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "black",
+    "black"
+   ],
+   "properties": [
+    "lead"
+   ],
+   "hp_fortified": 4,
+   "rbe": 23,
+   "immune_to": [
+    "sharp",
+    "cold",
+    "energy"
+   ],
+   "signatures": [
+    "black",
+    "lead"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 28,
+     "fortified": 45,
+     "camo": 59,
+     "regrow": 90
+    },
+    "abr": {
+     "any": 10,
+     "camo": 24,
+     "regrow": 28,
+     "fortified": 44
+    }
+   },
+   "rbe_fortified": 26
+  },
+  "zebra": {
+   "speed": 1.8,
+   "bright": false,
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "black",
+    "white"
+   ],
+   "properties": [
+    "black",
+    "white"
+   ],
+   "status": "cannot be frozen",
+   "rbe": 23,
+   "immune_to": [
+    "explosion",
+    "cold",
+    "fire_or_explosion",
+    "glacier"
+   ],
+   "signatures": [
+    "black",
+    "white",
+    "zebra"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 26,
+     "regrow": 31
+    },
+    "abr": {
+     "any": 26,
+     "regrow": 31,
+     "camo": 49
+    }
+   }
+  },
+  "rainbow": {
+   "speed": 2.2,
+   "bright": false,
+   "class": "bloon",
+   "hp": 1,
+   "children": [
+    "zebra",
+    "zebra"
+   ],
+   "properties": [],
+   "rbe": 47,
+   "immune_to": [],
+   "signatures": [
+    "black",
+    "white",
+    "zebra"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 35,
+     "regrow": 39,
+     "camo": 42
+    },
+    "abr": {
+     "any": 26,
+     "camo": 39,
+     "regrow": 42
+    }
+   }
+  },
+  "ceramic": {
+   "speed": 2.5,
+   "bright": false,
+   "class": "bloon",
+   "hp": 10,
+   "children": [
+    "rainbow",
+    "rainbow"
+   ],
+   "properties": [],
+   "hp_fortified": 20,
+   "hp_super": 60,
+   "hp_super_fortified": 120,
+   "fortified_children": false,
+   "rbe": 104,
+   "immune_to": [],
+   "signatures": [
+    "black",
+    "white",
+    "zebra"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 38,
+     "fortified": 46,
+     "camo": 51,
+     "regrow": 59
+    },
+    "abr": {
+     "any": 32,
+     "regrow": 38,
+     "fortified": 46,
+     "camo": 51
+    }
+   },
+   "rbe_fortified": 114
+  },
+  "moab": {
+   "speed": 1.0,
+   "bright": false,
+   "class": "blimp",
+   "hp": 200,
+   "children": [
+    "ceramic",
+    "ceramic",
+    "ceramic",
+    "ceramic"
+   ],
+   "properties": [
+    "blimp"
+   ],
+   "hp_fortified": 400,
+   "rbe": 616,
+   "immune_to": [],
+   "signatures": [
+    "black",
+    "blimp",
+    "white",
+    "zebra"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 40,
+     "fortified": 62
+    },
+    "abr": {
+     "any": 40,
+     "fortified": 40
+    }
+   },
+   "rbe_fortified": 856
+  },
+  "bfb": {
+   "speed": 0.25,
+   "bright": false,
+   "class": "blimp",
+   "hp": 700,
+   "children": [
+    "moab",
+    "moab",
+    "moab",
+    "moab"
+   ],
+   "properties": [
+    "blimp"
+   ],
+   "hp_fortified": 1400,
+   "rbe": 3164,
+   "immune_to": [],
+   "signatures": [
+    "black",
+    "blimp",
+    "white",
+    "zebra"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 60,
+     "fortified": 79
+    },
+    "abr": {
+     "any": 54,
+     "fortified": 60
+    }
+   },
+   "rbe_fortified": 4824
+  },
+  "zomg": {
+   "speed": 0.18,
+   "bright": false,
+   "class": "blimp",
+   "hp": 4000,
+   "children": [
+    "bfb",
+    "bfb",
+    "bfb",
+    "bfb"
+   ],
+   "properties": [
+    "blimp"
+   ],
+   "hp_fortified": 8000,
+   "rbe": 16656,
+   "immune_to": [],
+   "signatures": [
+    "black",
+    "blimp",
+    "white",
+    "zebra"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 80,
+     "fortified": 97
+    },
+    "abr": {
+     "any": 79,
+     "fortified": 97
+    }
+   },
+   "rbe_fortified": 27296
+  },
+  "ddt": {
+   "speed": 2.64,
+   "bright": false,
+   "class": "blimp",
+   "hp": 400,
+   "children": [
+    "ceramic",
+    "ceramic",
+    "ceramic",
+    "ceramic"
+   ],
+   "properties": [
+    "blimp",
+    "camo",
+    "lead",
+    "black"
+   ],
+   "hp_fortified": 800,
+   "child_modifiers": [
+    "camo",
+    "regrow"
+   ],
+   "rbe": 816,
+   "immune_to": [
+    "sharp",
+    "explosion",
+    "cold",
+    "energy",
+    "fire_or_explosion"
+   ],
+   "signatures": [
+    "camo",
+    "camo+black",
+    "camo+white",
+    "camo+zebra",
+    "ddt"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 90,
+     "camo": 90,
+     "fortified": 99
+    },
+    "abr": {
+     "any": 88,
+     "camo": 88,
+     "fortified": 93
+    }
+   },
+   "rbe_fortified": 1256
+  },
+  "bad": {
+   "speed": 0.18,
+   "bright": false,
+   "class": "blimp",
+   "hp": 20000,
+   "children": [
+    "zomg",
+    "zomg",
+    "ddt",
+    "ddt",
+    "ddt"
+   ],
+   "properties": [
+    "blimp"
+   ],
+   "hp_fortified": 40000,
+   "status": "immune to most stuns, slows, knockback and shrinking (Maim MOAB does not stun it)",
+   "rbe": 55760,
+   "immune_to": [],
+   "signatures": [
+    "black",
+    "blimp",
+    "camo",
+    "camo+black",
+    "camo+white",
+    "camo+zebra",
+    "ddt",
+    "white",
+    "zebra"
+   ],
+   "first_spawn": {
+    "standard": {
+     "any": 100,
+     "fortified": 140
+    },
+    "abr": {
+     "any": 99,
+     "fortified": 100
+    }
+   },
+   "rbe_fortified": 98360
   }
+ },
+ "threat_rounds": {
+  "easy": {
+   "rounds": "1-40",
+   "first": {
+    "camo": 24,
+    "lead": 28,
+    "black": 20,
+    "white": 22,
+    "zebra": 26,
+    "purple": 25,
+    "camo+white": 37,
+    "blimp": 40
+   }
+  },
+  "medium": {
+   "rounds": "1-60",
+   "first": {
+    "camo": 24,
+    "lead": 28,
+    "black": 20,
+    "white": 22,
+    "zebra": 26,
+    "purple": 25,
+    "camo+lead": 59,
+    "camo+black": 42,
+    "camo+white": 37,
+    "camo+zebra": 42,
+    "camo+purple": 45,
+    "blimp": 40
+   }
+  },
+  "hard": {
+   "rounds": "3-80",
+   "first": {
+    "camo": 24,
+    "lead": 28,
+    "black": 20,
+    "white": 22,
+    "zebra": 26,
+    "purple": 25,
+    "camo+lead": 59,
+    "camo+black": 42,
+    "camo+white": 37,
+    "camo+zebra": 42,
+    "camo+purple": 45,
+    "blimp": 40
+   }
+  },
+  "impoppable": {
+   "rounds": "6-100",
+   "first": {
+    "camo": 24,
+    "lead": 28,
+    "black": 20,
+    "white": 22,
+    "zebra": 26,
+    "purple": 25,
+    "camo+lead": 59,
+    "camo+black": 42,
+    "camo+white": 37,
+    "camo+zebra": 42,
+    "camo+purple": 45,
+    "blimp": 40,
+    "ddt": 90
+   }
+  },
+  "abr": {
+   "rounds": "3-80",
+   "first": {
+    "camo": 5,
+    "lead": 10,
+    "black": 7,
+    "white": 14,
+    "zebra": 26,
+    "purple": 15,
+    "camo+lead": 24,
+    "camo+black": 24,
+    "camo+white": 31,
+    "camo+zebra": 39,
+    "camo+purple": 45,
+    "blimp": 40
+   }
+  },
+  "deflation": {
+   "rounds": "31-60",
+   "first": {
+    "camo": 33,
+    "lead": 37,
+    "black": 31,
+    "white": 31,
+    "zebra": 31,
+    "purple": 32,
+    "camo+lead": 59,
+    "camo+black": 42,
+    "camo+white": 37,
+    "camo+zebra": 42,
+    "camo+purple": 45,
+    "blimp": 40
+   }
+  }
+ },
+ "signatures_note": "A signature is the set of properties ONE attack has to get past to pop the bloon (see btd6bot/threats.py). 'zebra' = black+white, 'ddt' = blimp+camo+lead+black.",
+ "crosscheck": {
+  "status": "checked 17 bloons against data/game_model/bloons.json",
+  "disagreements": []
+ }
 }

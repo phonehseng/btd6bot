@@ -1,0 +1,80 @@
+# Boomerang-led Hard build around Glaive Lord (5-0-2) - one of the owner's
+# two favourites ("they can solo many maps when placed right"); the other,
+# the Sniper Elite Defender, is strategies/hard_sniper_elite.yaml.
+#
+# Why boomerangs: glaives bounce between bloons (Glaive Ricochet, 3-x-x) and
+# MOAR Glaives (4-x-x) / Glaive Lord (5-x-x, orbiting glaives) shred dense
+# ceramic waves (R63: 122 ceramics + 75 leads) and blimps alike. Red Hot
+# Rangs (x-x-2) pops lead AND purple (the game model says it is not fire).
+# Boomerangs reach the most track where it bends or loops back, which the
+# "dps" role's coverage scoring already prefers - so on straight, thin or
+# water-heavy maps this plan fits worse than the sniper one (data/map_fit.json).
+#
+# What answers what (checked by tools/simulate_threats.py and the Executor's
+# threat checks - see docs/bloons.md):
+#   camo  (R24)     s1 Night Vision Goggles (0-1-0); Glaive Lord sees camo itself
+#   lead  (R28)     b1 Red Hot Rangs (2-0-2)
+#   camo lead (R59) v1 Radar Scanner (2-2-0) lets the Red Hot Rangs boomerangs see camo
+#   MOAB  (R40)     b2 MOAB Press (2-0-4) + the alchemist's Perishing Potions
+#   rush  (R63)     b1 MOAR Glaives (4-0-2) + b3 (4-0-2) under Stronger Stimulant
+#   BFB/ZOMG (R60-80) Glaive Lord + s2 Maim MOAB (4-0-2) stuns
+# Only ONE tier 5 per game: b1 is the Glaive Lord, every other boomerang
+# stops at 4-0-2.
+#
+# base_success: never played on this account yet. Comparable boomerang
+# builds (primary_core) lost one Hard game of two at R40 on a map without
+# loops, so Hard is set below the ninja/sniper builds; the planner caps
+# untested Hard priors at 0.85 anyway and its win/loss record takes over.
+id: hard_glaive_lord
+hero: quincy
+modes: [medium, hard, abr]
+planner:
+  towers: {boomerang: [5, 0, 4], sniper: [4, 2, 4], alchemist: [4, 2, 0], village: [2, 2, 0]}
+  base_success: {medium: 0.85, hard: 0.75, abr: 0.65}
+plan:
+  - {do: place, id: b1, kind: boomerang, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: place, id: b2, kind: boomerang, role: dps, segment: [0.3, 0.9]}
+  - {do: upgrade, id: b2, to: 2-0-0}
+  - {do: place, id: s1, kind: sniper, role: dps}
+  - {do: upgrade, id: s1, to: 0-1-0}
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 3-0-2}
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [b1], near_radius: 6}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: upgrade, id: b2, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [b1, a1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: upgrade, id: b1, to: 4-0-2}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: b3, kind: boomerang, role: dps, segment: [0.2, 1.0]}
+  - {do: upgrade, id: b3, to: 4-0-2}
+  - {do: upgrade, id: s1, to: 0-2-4}
+  - {do: place, id: s2, kind: sniper, role: dps}
+  - {do: upgrade, id: s2, to: 4-0-2}
+  - {do: upgrade, id: b1, to: 5-0-2}
+fill:
+  - {do: place, kind: boomerang, role: dps, max: 5}
+  - {do: upgrade, kind: boomerang, to: 4-0-2}
+  - {do: place, kind: sniper, role: dps, max: 4}
+  - {do: upgrade, kind: sniper, to: 2-0-4}
+panic:
+  - {do: place, kind: boomerang, role: dps, segment: [0.3, 1.0]}
+  - {do: place, kind: sniper, role: dps}
+answers:
+  camo:
+    - {do: upgrade, id: s1, to: 0-1-0}
+    - {do: place, id: s1, kind: sniper, role: dps}
+  lead: [{do: upgrade, id: b1, to: 2-0-2}]
+  camo_lead: [{do: upgrade, id: v1, to: 0-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-0-2}]
+  moab: [{do: upgrade, id: b2, to: 2-0-4}]
+  bfb: [{do: upgrade, id: b1, to: 4-0-2}]
+  rush: [{do: upgrade, id: b1, to: 4-0-2}]
+  zomg:
+    - {do: upgrade, id: s2, to: 4-0-2}
+    - {do: place, id: s2, kind: sniper, role: dps}

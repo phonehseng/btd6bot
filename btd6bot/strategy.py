@@ -43,6 +43,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
+from . import threats as TH
 from . import towers as T
 
 log = logging.getLogger("strategy")
@@ -110,11 +111,16 @@ ANSWERS = {
                ("sub", 0, 0), ("buccaneer", 0, 0), ("ninja", 0, 0), ("ice", 0, 0),
                ("heli", 0, 0), ("ace", 0, 0), ("mortar", 0, 0), ("spike", 0, 0),
                ("druid", 0, 0), ("engineer", 0, 0), ("super", 0, 0)],
-    # only towers/tiers that really detect camo (Night Vision, Enhanced Eyesight,
-    # Monkey Sense, Radar Scanner, Submerge and Support; ninjas and spikes innately)
-    "camo": [("dart", 3, 2), ("sniper", 2, 2), ("ninja", 0, 0), ("wizard", 3, 2),
-             ("sub", 1, 3), ("village", 2, 2), ("spike", 0, 0)],
-    "lead": [("tack", 1, 3), ("bomb", 0, 0), ("boomerang", 3, 2), ("sniper", 1, 1), ("alchemist", 1, 1),
+    # towers/tiers that detect camo (corrected from the game model: Night Vision
+    # is 0-1-0, the Sub's own camo attack comes at 4-x-x, 3-x-x only strips
+    # camo); spikes hit camo on the track without detection. Replaced below
+    # by gamemodel.answers("camo") when the game model is available.
+    "camo": [("dart", 3, 2), ("sniper", 2, 1), ("ninja", 0, 0), ("wizard", 3, 2),
+             ("sub", 1, 4), ("village", 2, 2), ("spike", 0, 0), ("ice", 1, 2), ("ace", 2, 2),
+             ("heli", 2, 2), ("mortar", 3, 1), ("dartling", 2, 1), ("buccaneer", 3, 2),
+             ("super", 3, 2), ("mermonkey", 3, 1)],
+    # the Alchemist's acid pops lead from tier 0 (game model)
+    "lead": [("tack", 1, 3), ("bomb", 0, 0), ("boomerang", 3, 2), ("sniper", 1, 1), ("alchemist", 0, 0),
              ("wizard", 2, 1), ("mortar", 0, 0), ("dart", 1, 4), ("ninja", 3, 3), ("spike", 1, 2),
              ("super", 1, 2)],
     "ceramic": [("tack", 1, 3), ("boomerang", 1, 3), ("bomb", 2, 2), ("sniper", 1, 2), ("dart", 3, 3),
@@ -132,6 +138,36 @@ ANSWERS = {
             ("ninja", 3, 4), ("boomerang", 1, 4), ("dart", 3, 4)],
     "bad": [("super", 1, 4), ("bomb", 2, 5), ("sniper", 1, 5), ("ninja", 3, 5), ("spike", 3, 5)],
 }
+
+
+def _answers_from_game_model():
+    """Camo and lead answers straight from the game's own model
+    (gamemodel.answers: the lowest tier of each path that has it), so these
+    two lists follow game updates. Spikes are kept as a camo answer: they hit
+    camo on the track without detecting it. Hand lists stay when the model
+    is missing."""
+    try:
+        from . import gamemodel
+        if not gamemodel.available():
+            return
+        camo, lead = gamemodel.answers("camo"), gamemodel.answers("lead")
+    except Exception as e:     # a broken model file must not stop the bot
+        log.warning("game model answers unavailable: %r", e)
+        return
+    if camo:
+        # + spikes (camo on the track) and the Radar Scanner village (lends camo)
+        ANSWERS["camo"] = list(camo) + [a for a in ANSWERS["camo"] if a[0] in ("spike", "village")
+                                        and a not in camo]
+    if lead:
+        ANSWERS["lead"] = list(lead)
+
+
+_answers_from_game_model()
+
+# Prices: CHIMPS is a Hard mode in the game (x1.08), not Impoppable (x1.2);
+# MODE_FAMILY keeps it with Impoppable for difficulty order (min_difficulty).
+PRICE_FAMILY = dict(MODE_FAMILY, chimps="hard")
+
 # Towers that belong at the end of the track: spike factories throw their
 # spikes onto the last stretch and catch what leaks past everything else.
 EXIT_KINDS = {"spike"}
@@ -354,9 +390,22 @@ def coverage(strat, mode, account=None):
         if st.get("do") == "place" and st.get("kind") in build:
             copies[st["kind"]] = copies.get(st["kind"], 0) + 1
 
+    # the final build as towers for threats.covers (copies of a kind share its tiers)
+    towers = [(f"{k}{i}", k, tuple(t)) for k, t in build.items() for i in range(copies.get(k, 1))]
+    use_sigs = TH.available()
+
     def answered(threat):
         if threat in STRONG_CAMO:
             return strong_camo([(k, t) for k, t in build.items() for _ in range(copies.get(k, 1))])
+        if threat == "ddt" and use_sigs:
+            # the DDT-tier tower itself must hurt DDTs (camo + lead + black at once)
+            sig = TH.sig_from_name("ddt")
+            for kind, path, tier in ANSWERS["ddt"]:
+                tiers = build.get(kind)
+                if tiers is not None and (path == 0 or tiers[path - 1] >= tier) and \
+                        TH.covers(towers, sig, poppers={t[0] for t in towers if t[1] == kind})[0]:
+                    return True
+            return False
         if threat in NEEDS_CAMO and not answered("camo"):
             return False
         for kind, path, tier in ANSWERS.get(threat, []):
@@ -366,7 +415,43 @@ def coverage(strat, mode, account=None):
         return False
 
     missing = [t for rnd, t in THREATS if shift.get(t, rnd) <= end and not answered(t)]
+    if use_sigs:
+        # Bloons the build cannot pop at all (threats.py), from this mode's own
+        # rounds. Fine if the final build pops them, or if the Executor can buy
+        # a tower that does in-game (allowed by the mode, the strategy's
+        # constraints and the account; land towers only, as the map is unknown).
+        kinds = _answer_kinds(strat, mode, account)
+        for need in TH.calendar(TH.set_for_mode(mode), start, end):
+            sig = TH.sig_from_name(need)
+            if need in missing or TH.covers(towers, sig)[0]:
+                continue
+            if not constraints(strat).get("no_answers") and any(
+                    TH.covering_crosspaths(k, sig, towers, caps) for k, caps in kinds):
+                continue
+            missing.append(need)
     return (not missing), missing
+
+
+def _answer_kinds(strat, mode, account=None):
+    """[(kind, caps)] towers the Executor could buy as an answer in this mode:
+    the mode's category, the strategy's constraints, the account's unlocks;
+    no income towers, no towers that must be aimed, no water towers."""
+    c = constraints(strat)
+    only = MODE_TOWER_FILTER.get(mode)
+    out = []
+    for kind, facts in T.TOWERS.items():
+        if kind in INCOME_TOWERS or (only and facts["category"] != only):
+            continue
+        if (c.get("allowed_towers") is not None and kind not in c["allowed_towers"]) \
+                or kind in (c.get("forbidden_towers") or ()):
+            continue
+        if (facts.get("placement") or "land") == "water" or TH.tower_facts(kind).get("needs_aim"):
+            continue
+        if account is not None and kind not in account.unlocked_towers:
+            continue
+        caps = [reachable_tier(account, kind, i) if account is not None else 5 for i in range(3)]
+        out.append((kind, caps))
+    return out
 
 
 def rules(mode):
@@ -971,7 +1056,7 @@ class Executor:
             if p.tiers[i] >= target[i] or (p.tid, i + 1) in self.capped:
                 continue
             tier = p.tiers[i] + 1
-            cost = (T.upgrade_cost(p.kind, i + 1, tier, MODE_FAMILY[self.mode])
+            cost = (T.upgrade_cost(p.kind, i + 1, tier, PRICE_FAMILY.get(self.mode, "hard"))
                     if p.kind != "hero" else 0)
             if best is None or cost < best[1]:
                 best = (i + 1, cost)
@@ -1234,43 +1319,386 @@ class Executor:
                 return
 
     # -- threat calendar ---------------------------------------------------------
+    # Two kinds of threat are checked ahead of the round they arrive in.
+    #
+    #  * Property threats (threats.py): bloons the defence cannot pop AT ALL -
+    #    camo, lead, purple, zebra, camo lead, DDT ... Each is a signature (the
+    #    immunities ONE attack has to get past). Their rounds come from the
+    #    game's own round set for this mode, and every round they appear in
+    #    counts, not only the first: a camo tower that never got placed matters
+    #    again at the next camo round. Buying starts early enough to afford the
+    #    cheapest answer from the income of the rounds in between.
+    #  * Strength threats (THREATS / ANSWERS above): ceramic rounds, MOAB-class
+    #    rounds, the R63 rush, strong camo - a tower of the right tier must
+    #    stand - plus a rough blimp-damage ramp check (threats.blimp_capacity).
+
+    MIN_LEAD = 3             # rounds ahead a property answer is bought at the latest
+    MIN_LEAD_ONE_LIFE = 5    # Impoppable/CHIMPS: one leak loses, so start earlier
+    MAX_LEAD = 10            # never hold the plan for a threat further away than this
+    LEAD_MARGIN = 1.25       # count on only 80 % of the income still to come
+    PLAN_FIRST_FACTOR = 1.5  # follow the plan when it covers the threat for <= 1.5x ...
+    PLAN_FIRST_SLACK = 300   # ... (or <= $300 more than) the cheapest answer
+    HOLD_MAX_S = 30.0        # longest wait between rounds to buy an affordable answer
+    RAMP_OK = 1.0            # blimp damage in reach / blimp HP a round brings
+    RAMP_PANIC = 0.4         # below this, the round before, buy blimp damage even mid-plan
+    DEFAULT_TRACK = 600.0    # world units of track when the map geometry is unknown
+
+    def _init_threats(self):
+        """Set up the threat checks (on first use, so that every Executor gets
+        them however it was built)."""
+        self.round_set = TH.set_for_mode(self.mode)
+        self.window = (self.rules.get("start_round", 1), self.rules.get("end_round", 80))
+        self.calendar = TH.calendar(self.round_set, *self.window) if TH.available() else {}
+        self.latched = {}      # threat -> round it is being answered for (stays due until covered)
+        self.noted = set()     # what was already logged, so that each line appears once
+        self.opt_cache = {}    # answer options per (threat, towers on the map)
+        self.hold_since = {}   # round -> when Play was first held for it
+        self.cash_seen = 0
+        self.targets, self.kind_targets = self._upgrade_targets(self.strat)
+        self.track_len = None
+        # income the threat calendar plans with (Double Cash and farms left out)
+        self.income_mult = 0.0 if self.rules.get("income") is False else (
+            0.5 if self.rules.get("half_cash") else 1.0)
+
+    @staticmethod
+    def _upgrade_targets(strat):
+        """({tower id: tiers}, {kind: tiers}) every upgrade step of the strategy
+        aims at (plan, answers, fill, panic), so that an answer never takes a
+        tower off the path its plan still needs."""
+        by_id, by_kind = {}, {}
+        for _, st in _all_steps(strat):
+            if st.get("do") != "upgrade" or not st.get("to"):
+                continue
+            try:
+                want = parse_cross(st["to"])
+            except ValueError:
+                continue
+            key, table = (st["id"], by_id) if st.get("id") else (st.get("kind"), by_kind)
+            if key is not None:
+                table[key] = [max(a, b) for a, b in zip(table.get(key, [0, 0, 0]), want)]
+        return by_id, by_kind
+
+    def _towers(self):
+        """The real towers on the map (a hero is never counted as an answer:
+        what it can pop changes with its level)."""
+        return [p for p in self.g.towers.values() if p.kind != "hero"]
+
+    def _near_ids(self):
+        """The (up to) three biggest damage towers: where a new village goes."""
+        main = sorted((p for p in self._towers() if p.kind not in ("village", "farm")),
+                      key=lambda p: -getattr(p, "spent", 0))
+        return [p.tid for p in main[:3]]
+
+    def _range_fn(self):
+        """in_range(aura_tid, tid) for threats.covers: is tower `tid` inside the
+        range of support tower `aura_tid`? Positions are read once per call
+        of this method (the option search asks this question many times).
+
+        '__new__' is a tower not bought yet: a new village is placed next to
+        the biggest towers (_near_ids); a new damage tower is placed by track
+        coverage, so it is not assumed to stand in any village's range."""
+        towers = self._towers()
+        near = set(self._near_ids())
+        pos = {p.tid: self.m.frac_to_cell(p.x, p.y) for p in towers}
+        reach = {p.tid: self._range_cells(p.kind) + 2 for p in towers}   # + about a footprint
+
+        def in_range(aura_tid, tid):
+            if aura_tid == "__new__":
+                return tid in near
+            if tid == "__new__" or aura_tid not in pos or tid not in pos:
+                return False
+            (ax, ay), (bx, by) = pos[aura_tid], pos[tid]
+            return (ax - bx) ** 2 + (ay - by) ** 2 <= reach[aura_tid] ** 2
+        return in_range
+
+    def _in_range(self, aura_tid, tid):
+        """See _range_fn (one-off question)."""
+        return self._range_fn()(aura_tid, tid)
+
+    def _covers(self, sig, poppers=None):
+        """threats.covers for the towers on the map: (ok, how / what is missing)."""
+        return TH.covers(self._towers(), sig, self._range_fn(), poppers)
+
     def has_answer(self, threat):
+        """Does the defence on the map answer this threat?"""
+        sig = TH.sig_from_name(threat) if TH.available() else None
+        if sig is not None:
+            if not self._covers(sig)[0]:
+                return False          # nothing on the map can pop it at all
+            if threat == "ddt":
+                return self._strong_ddt()
+            if threat not in STRONG_CAMO:
+                return True           # the exact property check beats the tier tables
         if threat in STRONG_CAMO:
-            return strong_camo((p.kind, p.tiers) for p in self.g.towers.values() if p.kind != "hero")
+            return strong_camo((p.kind, p.tiers) for p in self._towers())
         if threat in NEEDS_CAMO and not self.has_answer("camo"):
             return False  # DDTs are camo: the blimp popper must be able to see them
-        for p in self.g.towers.values():
-            if p.kind == "hero":
-                continue
+        for p in self._towers():
             for kind, path, tier in ANSWERS.get(threat, []):
                 if p.kind == kind and (path == 0 or p.tiers[path - 1] >= tier):
                     return True
         return False
 
-    def due_threat(self, rnd, lookahead=4):
-        """First upcoming threat with no answer built yet."""
+    def _strong_ddt(self):
+        """A DDT-tier tower (ANSWERS['ddt']) that can itself hurt DDTs: it gets at
+        camo (own detection, a radar village, a decamo) AND one of its attacks
+        gets past lead and black at once. A MOAB Assassin cannot (explosions),
+        nor can a Maim MOAB sniper without Night Vision Goggles."""
+        sig = TH.sig_from_name("ddt")
+        for p in self._towers():
+            strong = any(p.kind == k and (path == 0 or p.tiers[path - 1] >= tier)
+                         for k, path, tier in ANSWERS["ddt"])
+            if strong and self._covers(sig, poppers={p.tid})[0]:
+                return True
+        return False
+
+    def due_threats(self, rnd, lookahead=4):
+        """Threats to act on now, most urgent first: property threats (see
+        _property_due), then strength threats from the older calendar that
+        have no answer on the map yet."""
         if rnd is None or self.no_answers:
-            return None
+            return []
+        if not hasattr(self, "calendar"):
+            self._init_threats()
+        due = [need for _, need in self._property_due(rnd)]
         start = self.rules.get("start_round", 1)
         if self.rules.get("one_life"):
             lookahead = max(lookahead, 6)  # one leak = defeat: build answers early
         shift = self.rules.get("threat_shift", {})
         for r, threat in sorted((shift.get(t, r), t) for r, t in THREATS):
+            if threat in due or threat in self.unanswerable:
+                continue
+            if self.calendar and threat != "ddt" and threat not in STRONG_CAMO \
+                    and TH.sig_from_name(threat) is not None:
+                continue  # camo, lead, purple: property threats, timed from the round set above
             # threats that began before our first round are present from the start
             r = max(r, start)
             # past r+1 it is no longer "early"; stop holding the plan hostage
-            if r - lookahead <= rnd <= r + 1 and threat not in self.unanswerable \
-                    and not self.has_answer(threat):
-                return threat
+            if r - lookahead <= rnd <= r + 1 and not self.has_answer(threat):
+                due.append(threat)
+        return due
+
+    def due_threat(self, rnd, lookahead=4):
+        """First upcoming threat with no answer built yet (None if there is none)."""
+        due = self.due_threats(rnd, lookahead)
+        return due[0] if due else None
+
+    def _property_due(self, rnd):
+        """[(round, threat)] property threats to act on now: the next round that
+        brings the signature is within its lead time and nothing on the map
+        pops it. A threat that became due stays due until it is covered, so
+        the cash saved for it is not spent elsewhere. Logs (once) when a
+        threat in range is covered, and when it gets answered."""
+        out = []
+        for need, rounds in self.calendar.items():
+            if need in self.unanswerable:
+                continue
+            nxt = next((r for r in rounds if r >= rnd), None)
+            held = self.latched.get(need)
+            if held is not None:
+                nxt = held if held >= rnd else nxt
+            if nxt is None or nxt - rnd > self.MAX_LEAD:
+                continue
+            sig = TH.sig_from_name(need)
+            ok, how = self._covers(sig)
+            if ok:
+                self._note(need, nxt, f"covered by {how}", answered=held is not None)
+                self.latched.pop(need, None)
+                continue
+            if held is None and rnd < nxt - self._lead_rounds(need, sig, nxt, rnd):
+                continue
+            if held is None:
+                self.latched[need] = nxt
+                opts = self._options(need, sig)
+                plan = (f"cheapest answer {opts[0]['desc']} (${opts[0]['cost']})" if opts
+                        else "NO allowed tower can answer it")
+                log.warning("threat %s arrives round %d and the defence cannot pop it (%s) - %s",
+                            need, nxt, how, plan)
+            out.append((nxt, need))
+        return sorted(out)
+
+    def _note(self, need, rnd, text, answered=False):
+        """Log a threat's coverage: once per game, and again when it was answered."""
+        if answered:
+            log.warning("threat %s (round %d): answered - %s", need, rnd, text)
+        elif need not in self.noted:
+            log.info("threat %s (round %d): %s", need, rnd, text)
+        self.noted.add(need)
+
+    def _lead_rounds(self, need, sig, due_round, rnd):
+        """Rounds before due_round to start answering: enough for the income of
+        the rounds in between (with LEAD_MARGIN) to pay for the cheapest answer
+        on top of the cash in hand; never fewer than MIN_LEAD."""
+        least = self.MIN_LEAD_ONE_LIFE if self.rules.get("one_life") else self.MIN_LEAD
+        opts = self._options(need, sig)
+        short = (opts[0]["cost"] - self.cash_seen) if opts else 0
+        if short <= 0:
+            return least
+        income, k = 0.0, 0
+        for r in range(due_round - 1, max(rnd, self.window[0]) - 1, -1):
+            income += TH.round_cash(self.round_set, r) * self.income_mult
+            k += 1
+            if income >= short * self.LEAD_MARGIN:
+                break
+        else:
+            k = due_round - rnd      # not affordable in time even so: start now
+        return min(self.MAX_LEAD, max(least, k))
+
+    def _caps(self, kind, p=None):
+        """Highest tier per path an answer may use: what the account has (or can
+        unlock before the game), and for a placed tower no further on a path
+        that turned out locked this game."""
+        caps = [reachable_tier(self.account, kind, i) if self.account is not None else 5
+                for i in range(3)]
+        if p is not None:
+            caps = [p.tiers[i] if (p.tid, i + 1) in self.capped else max(c, p.tiers[i])
+                    for i, c in enumerate(caps)]
+        return caps
+
+    def _map_has_water(self):
+        f = getattr(self.m, "has_water", None)
+        try:
+            return bool(f()) if f else False
+        except Exception:      # a half-built model must not stop the game
+            return False
+
+    def _answer_kind_ok(self, kind):
+        """May a NEW tower of this kind be bought as an answer?"""
+        if kind in INCOME_TOWERS or not self.kind_allowed(kind):
+            return False
+        if self.account is not None and kind not in self.account.unlocked_towers:
+            return False
+        if self.hold_fails.get(kind, 0) >= 6:
+            return False          # the hotkey would not pick it up this game
+        if TH.tower_facts(kind).get("needs_aim"):
+            return False          # Mortar/Dartling must be aimed; the bot does not aim
+        if (T.TOWERS[kind].get("placement") or "land") == "water" and not self._map_has_water():
+            return False
+        return True
+
+    def _new_tower_option(self, need, kind, cost, tiers):
+        """An answer option that places a new tower and upgrades it."""
+        tid = f"ans_{need.replace('+', '_')}_{kind}"
+        place = {"do": "place", "id": tid, "kind": kind}
+        if kind == "village":
+            place.update(role="support", near=self._near_ids(), near_radius=8)
+        else:
+            place.update(role="dps", segment=[0.0, 0.7])
+        cross = "-".join(map(str, tiers))
+        steps = [place] + ([{"do": "upgrade", "id": tid, "to": cross}] if any(tiers) else [])
+        return {"cost": cost, "desc": f"new {kind} {cross}", "steps": steps}
+
+    def _options(self, need, sig):
+        """Ways to cover a signature, cheapest first: [{cost, desc, steps}].
+
+        1. upgrade a tower already on the map - never off its plan path, never
+           past what the account has unlocked or what turned out locked;
+        2. place a new tower the mode, the strategy's constraints, the tower
+           caps and the account allow, at its cheapest covering crosspath.
+        Towers that must be aimed (Mortar, Dartling) and water towers on a map
+        without water are never bought as answers."""
+        towers = self._towers()
+        key = (need, tuple((p.tid, p.kind, tuple(p.tiers)) for p in towers), frozenset(self.capped))
+        if key in self.opt_cache:
+            return self.opt_cache[key]
+        fam = PRICE_FAMILY.get(self.mode, "hard")
+        in_range = self._range_fn()
+        opts = []
+        for p in towers:
+            plan_t = self.targets.get(p.tid) or self.kind_targets.get(p.kind)
+            others = [q for q in towers if q is not p]
+            for t in TH.covering_crosspaths(p.kind, sig, others, self._caps(p.kind, p), p.tiers,
+                                            in_range, tid=p.tid):
+                if plan_t is not None and not TH.legal([max(a, b) for a, b in zip(t, plan_t)]):
+                    continue      # the plan could not finish this tower any more
+                if self.no_income and self._is_income(p.kind, list(t)):
+                    continue
+                cost = sum(T.upgrade_cost(p.kind, i + 1, k, fam)
+                           for i in range(3) for k in range(p.tiers[i] + 1, t[i] + 1))
+                cross = "-".join(map(str, t))
+                opts.append({"cost": cost, "desc": f"upgrade {p.tid} to {cross}",
+                             "steps": [{"do": "upgrade", "id": p.tid, "to": cross}]})
+        if not self.at_tower_cap():
+            for kind in T.TOWERS:
+                if not self._answer_kind_ok(kind):
+                    continue
+                best = None
+                for t in TH.covering_crosspaths(kind, sig, towers, self._caps(kind),
+                                                in_range=in_range):
+                    if self.no_income and self._is_income(kind, list(t)):
+                        continue
+                    cost = T.total_cost(kind, tuple(t), fam)
+                    if best is None or cost < best[0]:
+                        best = (cost, t)
+                if best is not None:
+                    opts.append(self._new_tower_option(need, kind, *best))
+        opts.sort(key=lambda o: o["cost"])
+        if len(self.opt_cache) > 64:
+            self.opt_cache.clear()
+        self.opt_cache[key] = opts
+        return opts
+
+    def _plan_cost_to_cover(self, sig, due_round, budget, steps=None):
+        """What the plan's own next steps (or the given steps, e.g. a strategy
+        answer) cost up to the one after which the defence covers sig - or
+        None if that is more than `budget` or comes after a `round:` gate at or
+        past due_round. Towers the steps place are taken to stand where the
+        steps put them (villages near what they serve)."""
+        fam = PRICE_FAMILY.get(self.mode, "hard")
+        sim = {p.tid: (p.kind, list(p.tiers)) for p in self._towers()}
+        cost, n = 0, 0
+        for st in (self.plan[self.idx:] if steps is None else steps):
+            if st.get("round") and st["round"] >= due_round:
+                break                       # the plan waits past the threat
+            do, kind = st.get("do"), st.get("kind")
+            if do == "place" and kind not in (None, "hero") and self.kind_allowed(kind):
+                tid = st.get("id") or f"__plan{n}"
+                n += 1
+                if tid not in sim:
+                    sim[tid] = (kind, [0, 0, 0])
+                    cost += T.tower_cost(kind, fam)
+            elif do == "upgrade" and st.get("to"):
+                try:
+                    want = parse_cross(st["to"])
+                except ValueError:
+                    continue
+                ids = [st["id"]] if st.get("id") in sim else \
+                    [t for t, (k, _) in sim.items() if k == kind and not st.get("id")]
+                for tid in ids:
+                    k, have = sim[tid]
+                    new = [max(h, min(w, c)) for h, w, c in zip(have, want, self._caps(k))]
+                    cost += sum(T.upgrade_cost(k, i + 1, t, fam)
+                                for i in range(3) for t in range(have[i] + 1, new[i] + 1))
+                    sim[tid] = (k, new)
+            else:
+                continue
+            if cost > budget:
+                return None
+            if TH.covers([(t, k, tuple(v)) for t, (k, v) in sim.items()], sig)[0]:
+                return cost
         return None
 
     def answer_threat(self, threat, cash, rnd):
-        """Run the strategy's `answers:` steps for this threat (or a generic one).
-        Returns 'bought', 'wait' (saving for it) or 'none' (nothing applicable)."""
+        """Buy toward the answer of one due threat. Returns 'bought', 'wait'
+        (saving for it), 'plan' (the plan's own next steps cover it in time:
+        carry on with the plan) or 'none' (nothing applicable).
+
+        A property gap (nothing on the map can pop it) goes to _answer_gap.
+        A strength threat runs the strategy's own `answers:` for it, or
+        _generic_answer when the strategy has none."""
+        if not hasattr(self, "calendar"):
+            self._init_threats()
+        sig = TH.sig_from_name(threat) if TH.available() else None
+        if sig is not None and not self._covers(sig)[0]:
+            return self._answer_gap(threat, sig, cash, rnd)
         steps = (self.strat.get("answers") or {}).get(threat)
         if steps is None:
             steps = self._generic_answer(threat)
-        for st in steps:
+        return self._run_answer(threat, steps, cash, rnd)
+
+    def _run_answer(self, threat, steps, cash, rnd):
+        """Try answer steps in order: 'bought', 'wait' or 'none'."""
+        for st in steps or ():
             if not self._step_allowed(st):
                 continue
             r = self.try_step(dict(st), cash, rnd)
@@ -1280,6 +1708,281 @@ class Executor:
             if r == "wait":
                 return "wait"
         return "none"
+
+    def _answer_gap(self, threat, sig, cash, rnd):
+        """Nothing on the map pops this signature. In this order:
+
+        1. the plan's next steps, 2. the strategy's own `answers:` for it -
+           each only if it covers the gap for little more than the cheapest
+           option (PLAN_FIRST_FACTOR / _SLACK) while there is still a round to
+           spare, or with the cash in hand right now;
+        3. the cheapest option from _options.
+        (A Flash Bomb ninja at $2,430 is a fine lead answer at R20 but not
+        when R28's leads come in three rounds: then a $405 Bomb Shooter is.)"""
+        due_round = self.latched.get(threat, rnd)
+        opts = self._options(threat, sig)
+        if not opts:
+            log.error("threat %s (round %d): no tower this mode, the strategy's constraints and "
+                      "the account allow can pop it", threat, due_round)
+            return "none"
+        cheapest = opts[0]["cost"]
+        budget = max(cheapest * self.PLAN_FIRST_FACTOR, cheapest + self.PLAN_FIRST_SLACK)
+        own = (self.strat.get("answers") or {}).get(threat)
+        for source, steps in (("plan", None), ("answers", own)):
+            if source == "answers" and not own:
+                continue
+            cost = self._plan_cost_to_cover(sig, due_round, max(budget, self.cash_seen), steps)
+            if cost is None or not (cost <= self.cash_seen or (rnd < due_round - 1 and cost <= budget)):
+                continue
+            if (source, threat) not in self.noted:
+                self.noted.add((source, threat))
+                log.info("threat %s (round %d): the strategy's %s cover it ($%d; cheapest other "
+                         "answer $%d)", threat, due_round,
+                         "next plan steps" if source == "plan" else "own answer", cost, cheapest)
+            if source == "plan":
+                return "plan"
+            r = self._run_answer(threat, own, cash, rnd)
+            if r != "none":
+                return r
+        for opt in opts:
+            st = opt["steps"][0]
+            r = self.try_step(dict(st), cash, rnd)
+            if r in ("bought", "progress"):
+                log.warning("threat %s (round %d): bought %s %s - cheapest answer: %s ($%d in all)",
+                            threat, due_round, st["do"], st.get("kind") or st.get("id"),
+                            opt["desc"], opt["cost"])
+                return "bought"
+            if r == "wait":
+                self.wait_note = f"saving ${opt['cost']} for the {threat} answer ({opt['desc']})"
+                return "wait"
+        return "none"
+
+    # -- blimp damage ramp ---------------------------------------------------------
+    def _track_length(self):
+        """Visible track length of this map in world units (from the game's map
+        geometry; DEFAULT_TRACK when it is unknown)."""
+        if self.track_len is None:
+            length = None
+            try:
+                from . import mapgeom
+                length = TH.track_length(mapgeom.load(self.m.name))
+            except Exception as e:   # geometry is optional: never let it stop a game
+                log.debug("no track length for %s: %s", getattr(self.m, "name", "?"), e)
+            self.track_len = length or self.DEFAULT_TRACK
+        return self.track_len
+
+    @staticmethod
+    def _range_units(kind):
+        return float(T.TOWERS.get(kind, {}).get("range") or 40.0)
+
+    TRACK_MASK_TTL_S = 30.0   # how long a computed track mask is reused
+
+    def _reach_fn(self):
+        """reach(tid, kind) -> world units of track inside a placed tower's range,
+        from the map model's track cells; None for a tower not placed yet, or
+        when the model has no usable track (then threats uses 2.5 x range)."""
+        now = time.time()
+        cached = getattr(self, "_mask_cache", None)
+        if cached is None or now - cached[0] > self.TRACK_MASK_TTL_S:
+            mask = None
+            try:
+                f = getattr(self.m, "track_mask", None)
+                mask = f() if f else None
+            except Exception:      # a half-learned model must not stop the game
+                mask = None
+            if mask is not None and int(mask.sum()) < 30:
+                mask = None
+            cached = self._mask_cache = (now, mask)
+        mask = cached[1]
+        if mask is None:
+            return None
+        total = float(mask.sum())
+        ys, xs = np.nonzero(mask)
+        per_cell = self._track_length() / total      # fraction of the track per cell
+
+        def reach(tid, kind):
+            p = self.g.towers.get(tid)
+            if p is None or p.kind != kind:
+                return None
+            cx, cy = self.m.frac_to_cell(p.x, p.y)
+            r = self._range_cells(kind)
+            return float(((xs - cx) ** 2 + (ys - cy) ** 2 <= r * r).sum()) * per_cell
+        return reach
+
+    def blimp_ratio(self, load, towers=None):
+        """Blimp damage the defence deals in reach / blimp HP the round brings."""
+        cap = TH.blimp_capacity(self._towers() if towers is None else towers, load,
+                                self._track_length(), self._range_units, self._reach_fn())
+        return cap / max(load["hp"], 1.0)
+
+    def _ramp_due(self, rnd):
+        """(round, load, ratio) for the next blimp round within MIN_LEAD rounds,
+        or None. Logs the estimate once per blimp round."""
+        if rnd is None or self.no_answers or not TH.available():
+            return None
+        for R in range(max(rnd, self.window[0]), min(rnd + self.MIN_LEAD, self.window[1]) + 1):
+            load = TH.round_blimp_load(self.round_set, R, double_hp=bool(self.rules.get("tough_moabs")))
+            if not load:
+                continue
+            ratio = self.blimp_ratio(load)
+            if ("ramp", R) not in self.noted:
+                self.noted.add(("ramp", R))
+                log.info("blimp check round %d: %.0f blimp HP, %.0f units of track; the defence "
+                         "deals about %.1fx that in reach%s", R, load["hp"], self._track_length(),
+                         ratio, "" if ratio >= self.RAMP_OK else " - short")
+            return R, load, ratio
+        return None
+
+    def _dps_options(self, load):
+        """Blimp damage to buy, most damage per dollar first: a placed tower
+        upgraded to a crosspath listed in counters.json blimp_dps (on its plan
+        path), or a new tower at such a crosspath."""
+        fam = PRICE_FAMILY.get(self.mode, "hard")
+        track, rng, reach = self._track_length(), self._range_units, self._reach_fn()
+        table = TH.counters().get("blimp_dps") or {}
+        opts = []
+        for p in self._towers():
+            plan_t = self.targets.get(p.tid) or self.kind_targets.get(p.kind)
+            caps = self._caps(p.kind, p)
+            before = TH.blimp_capacity([p], load, track, rng, reach)
+            for cross, _ in table.get(p.kind) or ():
+                t = [max(a, b) for a, b in zip(p.tiers, TH._tiers(cross))]
+                if t == list(p.tiers) or any(a > c for a, c in zip(t, caps)) or not TH.legal(t) or \
+                        (plan_t is not None and not TH.legal([max(a, b) for a, b in zip(t, plan_t)])):
+                    continue
+                if self.no_income and self._is_income(p.kind, t):
+                    continue
+                gain = TH.blimp_capacity([(p.tid, p.kind, t)], load, track, rng, reach) - before
+                if gain > 0:
+                    cross = "-".join(map(str, t))
+                    cost = sum(T.upgrade_cost(p.kind, i + 1, k, fam)
+                               for i in range(3) for k in range(p.tiers[i] + 1, t[i] + 1))
+                    opts.append({"gain": gain, "cost": cost, "desc": f"upgrade {p.tid} to {cross}",
+                                 "steps": [{"do": "upgrade", "id": p.tid, "to": cross}]})
+        if not self.at_tower_cap():
+            for kind, entries in (TH.counters().get("blimp_dps") or {}).items():
+                if kind not in T.TOWERS or not self._answer_kind_ok(kind):
+                    continue
+                caps = self._caps(kind)
+                for cross, _ in entries:
+                    t = TH._tiers(cross)
+                    if any(a > c for a, c in zip(t, caps)) or (self.no_income and self._is_income(kind, list(t))):
+                        continue
+                    gain = TH.blimp_capacity([("__new__", kind, t)], load, track, rng)
+                    if gain > 0:
+                        opt = self._new_tower_option("blimps", kind, T.total_cost(kind, t, fam), t)
+                        opt["gain"] = gain
+                        opts.append(opt)
+        opts.sort(key=lambda o: -o["gain"] / max(o["cost"], 1))
+        return opts[:8]
+
+    def _answer_ramp(self, R, load, ratio, cash, rnd):
+        """More blimp damage for round R. The strategy's own answer for that
+        round's biggest blimp class comes first; otherwise the plan carries on
+        (it is the strategy's own ramp) - unless it is used up, or the round is
+        next and the defence is far short (RAMP_PANIC): then the most blimp
+        damage per dollar is bought."""
+        cls = max((g["bloon"] for g in TH.round_groups(self.round_set, R)
+                   if TH.bloons().get(g["bloon"], {}).get("class") == "blimp"),
+                  key=TH.blimp_hp, default=None)
+        for st in (self.strat.get("answers") or {}).get(cls) or ():
+            if not self._step_allowed(st):
+                continue
+            r = self.try_step(dict(st), cash, rnd)
+            if r in ("bought", "progress"):
+                log.warning("blimp ramp round %d: bought toward answer %s", R, st)
+                return "bought"
+            if r == "wait":
+                return "wait"
+        if self.idx < len(self.plan) and not (rnd >= R - 1 and ratio < self.RAMP_PANIC):
+            return "plan"
+        # Only what can be paid before round R (cash now + the rounds in between),
+        # and only buys that matter: the cheapest one closing the whole shortfall,
+        # else the most damage per dollar among those adding at least a tenth of
+        # it. If nothing fits, save for the cheapest that closes it.
+        money = self.cash_seen + sum(TH.round_cash(self.round_set, r) * self.income_mult
+                                     for r in range(rnd, R))
+        short = (self.RAMP_OK - ratio) * load["hp"]
+        opts = self._dps_options(load)
+        closing = sorted((o for o in opts if o["gain"] >= short), key=lambda o: o["cost"])
+        fits = [o for o in closing if o["cost"] <= money] or \
+            [o for o in opts if o["cost"] <= money and o["gain"] >= 0.1 * short]
+        for opt in fits or (closing or sorted(opts, key=lambda o: o["cost"]))[:1]:
+            r = self.try_step(dict(opt["steps"][0]), cash, rnd)
+            if r in ("bought", "progress"):
+                log.warning("blimp ramp round %d (%.1fx): bought toward %s ($%d)", R, ratio,
+                            opt["desc"], opt["cost"])
+                return "bought"
+            if r == "wait":
+                return "wait"
+        return "none"
+
+    def _threat_tick(self, cash, rnd):
+        """The threat part of tick(): True (bought), False (holding cash for an
+        answer) or None (nothing to do: go on with the plan)."""
+        if not hasattr(self, "calendar"):
+            self._init_threats()
+        self.cash_seen = cash
+        # an answer due now beats every plan step
+        for threat in self.due_threats(rnd):
+            self.wait_note = None
+            r = self.answer_threat(threat, cash, rnd)
+            if r == "bought":
+                return True
+            if r == "wait":
+                self.waiting = self.wait_note or f"saving for {threat} answer"
+                self.saving_for_threat = True
+                return False  # hold cash for the answer
+            if r == "plan":
+                continue      # the plan's own next steps cover it in time
+            log.warning("threat %s: nothing applicable to buy - not holding the plan for it", threat)
+            self.unanswerable.add(threat)  # nothing applicable; don't block the plan
+        ramp = self._ramp_due(rnd)
+        if ramp and ramp[2] < self.RAMP_OK:
+            r = self._answer_ramp(*ramp, cash, rnd)
+            if r == "bought":
+                return True
+            if r == "wait":
+                self.waiting = f"saving for blimp damage before round {ramp[0]}"
+                self.saving_for_threat = True
+                return False
+        return None
+
+    # -- between rounds -------------------------------------------------------------
+    def hold_round(self, rnd, cash):
+        """Should Play wait? True while the coming round (rnd, or rnd + 1 if the
+        HUD still shows the round just played) brings a bloon the defence
+        cannot pop AND the first step of an answer is affordable now: tick()
+        buys it before the round starts. At most HOLD_MAX_S per round, so a
+        purchase that keeps failing can never stall the game."""
+        if rnd is None or cash is None or self.no_answers or not TH.available():
+            return False
+        if not hasattr(self, "calendar"):
+            self._init_threats()
+        since = self.hold_since.get(rnd)
+        if since is not None and time.time() - since > self.HOLD_MAX_S:
+            return False
+        for R in (rnd, rnd + 1):
+            if not self.window[0] <= R <= self.window[1]:
+                continue
+            for sig in TH.round_signatures(self.round_set, R):
+                need = TH.sig_name(sig)
+                if need in self.unanswerable or self._covers(sig)[0]:
+                    continue
+                opts = self._options(need, sig)
+                if opts and self._first_step_cost(opts[0]["steps"][0]) <= cash:
+                    self.hold_since.setdefault(rnd, time.time())
+                    self.waiting = f"holding round {R}: buying the {need} answer first"
+                    return True
+        return False
+
+    def _first_step_cost(self, step):
+        """Cash the first step of an answer needs (inf if it cannot be bought)."""
+        if step.get("do") == "place":
+            return self.g.price(step["kind"])
+        p = self.g.towers.get(step.get("id"))
+        nxt = self._next_path(p, parse_cross(step["to"])) if p is not None else None
+        return nxt[1] if nxt else float("inf")
 
     def _generic_answer(self, threat):
         """Upgrade an existing tower (from its current tiers) toward a listed answer."""
@@ -1307,6 +2010,10 @@ class Executor:
                 to[path - 1] = max(to[path - 1], tier)
                 if self.no_income and self._is_income(kind, to):
                     continue
+                if threat == "ddt" and TH.available() and not TH.covers(
+                        [q for q in self._towers() if q is not p] + [(p.tid, p.kind, tuple(to))],
+                        TH.sig_from_name("ddt"), self._range_fn(), poppers={p.tid})[0]:
+                    continue  # e.g. a MOAB Assassin: explosions cannot hurt DDTs
                 if sum(t > 0 for t in to) <= 2 and sum(t > 2 for t in to) <= 1:
                     steps.append({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, to))})
         return steps[:3]
@@ -1325,15 +2032,14 @@ class Executor:
                 if r in ("bought", "progress"):
                     self.panic_pending -= 1
                     return True
-        threat = self.due_threat(rnd)
-        if threat:
-            r = self.answer_threat(threat, cash, rnd)
-            if r == "bought":
-                return True
-            if r == "wait":
-                self.waiting = f"saving for {threat} answer"
-                return False  # hold cash for the answer
-            self.unanswerable.add(threat)  # nothing applicable; don't block the plan
+        self.saving_for_threat = False   # surplus() may spend unless set again below
+        try:
+            r = self._threat_tick(cash, rnd)
+        except Exception:   # a bug in the checks must not stop the game: the plan goes on
+            log.exception("threat check failed - carrying on with the plan")
+            r = None
+        if r is not None:
+            return r
         # plan steps put aside after refused spots (the hero), once their pause is over
         for st in list(self.deferred):
             r = self.try_step(st, cash, rnd)
@@ -1363,8 +2069,10 @@ class Executor:
         1. next tier on an existing tower's own path (biggest investment first),
            respecting crosspaths, tower XP locks and the mode's tower filter
         2. another copy of the strategy's main tower
-        Never violates constraints (kind_allowed) and never sells."""
-        if cash is None:
+        Never violates constraints (kind_allowed) and never sells. Never
+        spends cash that the last tick() held back for a threat's answer:
+        that money is being saved for a bloon the defence cannot pop yet."""
+        if cash is None or getattr(self, "saving_for_threat", False):
             return False
         towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
                         key=lambda p: -p.spent)
@@ -1378,7 +2086,7 @@ class Executor:
                     continue
                 if self.account and t[path] > self.account.upgrades(p.kind)[path] and t[path] > 2:
                     continue  # known XP-locked beyond tier 2
-                cost = T.upgrade_cost(p.kind, path + 1, t[path], MODE_FAMILY.get(self.mode, "hard"))
+                cost = T.upgrade_cost(p.kind, path + 1, t[path], PRICE_FAMILY.get(self.mode, "hard"))
                 if cost > cash:
                     continue
                 r = self.try_step({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, t))}, cash, rnd)
