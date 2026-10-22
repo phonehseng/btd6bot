@@ -224,6 +224,12 @@ CATEGORY_SUCCESS = {"beginner": 1.0, "intermediate": 0.9, "advanced": 0.8, "expe
 # How strongly map difficulty (category + ease) matters per medal group: an
 # Easy game on an expert map is still easy, Hard/CHIMPS feel the full map.
 MODE_GROUP_MAP_WEIGHT = {"easy": 0.45, "medium": 0.75, "hard": 1.0, "chimps": 1.15}
+# Modes whose map weight differs from their group's. Deflation counts as an
+# Easy medal but plays rounds 31-60 on a fixed $20,000 with no income, so
+# the opening must hold the hardest rounds: map difficulty matters as in
+# Hard. (Ancient Portal Deflation, rated 0.86 with the Easy weight, leaked
+# 91 lives in one wave at round 52; Bloonarius Prime died to one blimp.)
+MODE_MAP_WEIGHT = {"deflation": 0.9}
 # Win-rate factor of a strategy whose upgrade build is entirely locked
 # (towers placed at low tiers; the executor skips what it cannot buy). It
 # rises linearly to 1.0 as the build's tower-XP cost gets unlocked.
@@ -794,7 +800,7 @@ def _pick_hero(s: StrategySpec, account: AccountState) -> str | None:
 def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
     """Declared success rate scaled by map difficulty (complete build)."""
     base = s.base_success.get(mode, 0.0)
-    w = MODE_GROUP_MAP_WEIGHT[MODES[mode].group]
+    w = MODE_MAP_WEIGHT.get(mode, MODE_GROUP_MAP_WEIGHT[MODES[mode].group])
     cat_f = max(0.05, 1.0 - (1.0 - CATEGORY_SUCCESS[category]) * w)
     ease_f = max(0.05, 1.0 + (MAP_EASE.get(map_name, 1.0) - 1.0) * w)
     return min(0.98, max(0.01, base * cat_f * ease_f))
