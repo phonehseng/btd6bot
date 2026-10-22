@@ -46,7 +46,7 @@ log = logging.getLogger("gamefiles")
 ROOT = Path(__file__).resolve().parents[1]
 GEOMETRY_DIR = ROOT / "data" / "map_geometry"
 CACHE = Path.home() / ".btd6bot_cache" / "bundles"   # copies of game bundles
-GEOMETRY_VERSION = 4   # bump when the extracted format changes
+GEOMETRY_VERSION = 5   # bump when the extracted format changes
 
 # The game's AreaType enum (Assets.Scripts.Models.Map.AreaType in GameAssembly)
 AREA_TYPES = {0: "track", 1: "water", 2: "land", 3: "unplaceable", 4: "ice",
@@ -171,21 +171,102 @@ def _bezier(points, samples=16):
     return out
 
 
+# How the game turns a path's nodes into the route bloons follow. A path's
+# GameObject carries one "point source" component (read from GameAssembly's
+# Assets.Scripts.Unity.Map classes):
+#   PolyLineNodes    straight lines between nodes; a child with children of
+#                    its own is a Curve whose children are Bezier points
+#   BezierLineNodes  nodes are a chain of cubic Bezier control points:
+#                    anchor, handle, handle, anchor, ... sampled with
+#                    Math.MakeBezierPoints(start, end, startTangent,
+#                    endTangent, division=30)
+#   CurvedLineNodes  a natural cubic spline through every node, parametrised
+#                    by distance along them (CubicSpline.FitParametric) and
+#                    resampled evenly, samplesPer100Units points per 100 units
+BEZIER_DIVISION = 30
+
+
+def _cubic(p0, p1, p2, p3, n=BEZIER_DIVISION):
+    t = np.linspace(0.0, 1.0, n)[:, None]
+    return list((1 - t) ** 3 * p0 + 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t * t * p2 + t ** 3 * p3)
+
+
+def _bezier_chain(nodes):
+    """Anchor, handle, handle, anchor, ... -> points along the chained curves."""
+    out = [nodes[0]] if nodes else []
+    for i in range(0, len(nodes) - 3, 3):
+        out += _cubic(nodes[i], nodes[i + 1], nodes[i + 2], nodes[i + 3])[1:]
+    return out
+
+
+def _natural_spline(t, v):
+    """Second derivatives of a natural cubic spline through (t, v)."""
+    n = len(t)
+    m = np.zeros(n)
+    if n < 3:
+        return m
+    h = np.diff(t)
+    a = np.zeros(n); b = np.ones(n); c = np.zeros(n); d = np.zeros(n)
+    for i in range(1, n - 1):
+        a[i], b[i], c[i] = h[i - 1], 2 * (h[i - 1] + h[i]), h[i]
+        d[i] = 6 * ((v[i + 1] - v[i]) / h[i] - (v[i] - v[i - 1]) / h[i - 1])
+    for i in range(1, n):            # Thomas algorithm (tridiagonal solve)
+        w = a[i] / b[i - 1]
+        b[i] -= w * c[i - 1]
+        d[i] -= w * d[i - 1]
+    m[n - 1] = d[n - 1] / b[n - 1]
+    for i in range(n - 2, -1, -1):
+        m[i] = (d[i] - c[i] * m[i + 1]) / b[i]
+    m[0] = m[-1] = 0.0
+    return m
+
+
+def _spline_eval(t, v, m, q):
+    i = np.clip(np.searchsorted(t, q) - 1, 0, len(t) - 2)
+    h = t[i + 1] - t[i]
+    a = (t[i + 1] - q) / h
+    b = (q - t[i]) / h
+    return a * v[i] + b * v[i + 1] + ((a ** 3 - a) * m[i] + (b ** 3 - b) * m[i + 1]) * h * h / 6
+
+
+def _curved(nodes, samples_per_100=100):
+    """Natural cubic spline through the nodes, evenly resampled by distance."""
+    pts = np.array([n for k, n in enumerate(nodes) if k == 0 or np.linalg.norm(n - nodes[k - 1]) > 1e-6])
+    if len(pts) < 3:
+        return list(pts)
+    t = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))])
+    count = max(2, int(t[-1] * samples_per_100 / 100.0))
+    q = np.linspace(0.0, t[-1], count)
+    cols = [_spline_eval(t, pts[:, k], _natural_spline(t, pts[:, k]), q) for k in range(3)]
+    return list(np.stack(cols, axis=1))
+
+
 def _read_paths(scene):
+    sources = {}   # game object id -> (point source kind, its fields)
+    for kind in ("PolyLineNodes", "BezierLineNodes", "CurvedLineNodes"):
+        for t in scene.components(kind):
+            sources[t["m_GameObject"]["m_PathID"]] = (kind, t)
     paths = []
     for tree in scene.components("Path"):
         go = tree["m_GameObject"]["m_PathID"]
         root = scene.go_transform[go]
-        points = []
-        for child in scene.transforms[root]["m_Children"]:
-            cid = child["m_PathID"]
-            kids = scene.transforms[cid]["m_Children"]
-            if kids:   # a Curve: its children are the Bezier control points
-                points += _bezier([scene.world(k["m_PathID"]) for k in kids])
-            else:      # a LineNode
-                points.append(scene.world(cid))
+        kind, fields = sources.get(go, ("PolyLineNodes", {}))
+        children = [c["m_PathID"] for c in scene.transforms[root]["m_Children"]]
+        if kind == "BezierLineNodes":
+            points = _bezier_chain([scene.world(c) for c in children])
+        elif kind == "CurvedLineNodes":
+            points = _curved([scene.world(c) for c in children], fields.get("samplesPer100Units", 100))
+        else:
+            points = []
+            for cid in children:
+                kids = scene.transforms[cid]["m_Children"]
+                if kids:   # a Curve: its children are the Bezier points
+                    points += _bezier([scene.world(k["m_PathID"]) for k in kids])
+                else:      # a LineNode
+                    points.append(scene.world(cid))
         paths.append({
             "name": scene.go_name.get(go, ""),
+            "source": kind,
             "active": bool(tree.get("isActive", 1)),
             "hidden": bool(tree.get("isHidden", 0)),
             "points": [[round(float(p[0]), 2), round(float(p[2]), 2), round(float(p[1]), 2)] for p in points],
