@@ -1,230 +1,236 @@
 [
- {
-  "file": "20261021_150919_pair.jpg",
-  "time": "2026-10-21T15:09:19",
-  "topic": "placement",
-  "caption": "How a spot is checked: the game tints the range circle red where a tower cannot stand (left, on the track) and grey where it can (right)."
- },
- {
-  "file": "20261021_152521_trace.jpg",
-  "time": "2026-10-21T15:25:21",
-  "topic": "track learning",
-  "caption": "The first track map, made by watching bloons move in a real game: blue near the entrance, red near the exit. Patchy, with whole stretches missing."
- },
- {
-  "file": "20261021_153812_scan.jpg",
-  "time": "2026-10-21T15:38:12",
-  "topic": "placement",
-  "caption": "An early placement scan on a coarse grid: green where towers may stand, the coloured band around the track ruled out. Blocky, and every probe cost time."
- },
- {
-  "file": "20261021_155529_victory2.jpg",
-  "time": "2026-10-21T15:55:29",
-  "topic": "wins",
-  "caption": "An early win on Easy, saved while teaching the bot to recognise the victory screen and move on to the next game."
- },
- {
-  "file": "20261021_181803_cash.jpg",
-  "time": "2026-10-21T18:18:03",
-  "topic": "screen reading",
-  "caption": "The HUD the bot reads every second. OCR sometimes saw phantom digits in the cash, so it now takes the lower median of three reads."
- },
- {
-  "file": "20261021_182447_car.jpg",
-  "time": "2026-10-21T18:24:47",
-  "topic": "menus",
-  "caption": "Locked map cards say 'click to unlock', and the bot took them for the tower-choice carousel. It now needs the words 'choose a monkey' first."
- },
- {
-  "file": "20261021_194401_carousel.jpg",
-  "time": "2026-10-21T19:44:01",
-  "topic": "menus",
-  "caption": "The tower-choice carousel offering a single tower, Spike Factory. Instead of circling for more, the bot now takes the only offer after one lap."
- },
- {
-  "file": "20261021_205928_heats.jpg",
-  "time": "2026-10-21T20:59:28",
-  "topic": "track learning",
-  "caption": "Heat maps after more games on Logs, Bloonarius Prime and Monkey Meadow. Meadow is nearly empty: bloons popped near the entrance never showed the rest of the track."
- },
- {
-  "file": "20261021_213530_tree.jpg",
-  "time": "2026-10-21T21:35:30",
-  "topic": "menus",
-  "caption": "A high-level account: Dart Monkey with 773,006 tower XP and the Apex Plasma Master paragon. The account sync had to learn to read trees like this."
- },
- {
-  "file": "20261021_220511_medals_zoom.jpg",
-  "time": "2026-10-21T22:05:11",
-  "topic": "medals",
-  "caption": "Mode medals on a map card, zoomed in: one badge per difficulty and mode. The bot now reads them for every map in one sweep of the map pages."
- },
- {
-  "file": "20261021_221309_modes.jpg",
-  "time": "2026-10-21T22:13:09",
-  "topic": "menus",
-  "caption": "The Hard mode screen. Sub-modes are now started by their fixed button slots, and the Sandbox button is never pressed by mistake."
- },
- {
-  "file": "20261021_224202_models.jpg",
-  "time": "2026-10-21T22:42:02",
-  "topic": "track learning",
-  "caption": "Eight maps' learned tracks side by side, frames watched in the corner. Broken lanes, scenery noise and missing loops: not good enough to place towers by."
- },
- {
-  "file": "20261021_224309_sandbox.jpg",
-  "time": "2026-10-21T22:43:09",
-  "topic": "sandbox learner",
-  "caption": "The fix: learn each map in Sandbox, where rounds can be sent with no towers on the map, so the bloons run the whole track."
- },
- {
-  "file": "20261021_230153_sb_view.jpg",
-  "time": "2026-10-21T23:01:53",
-  "topic": "sandbox learner",
-  "caption": "First Sandbox pass on Monkey Meadow. The movement masks (right) caught bats and swaying scenery as speckles, so the background had to be learned first."
- },
- {
-  "file": "20261021_231842_meadow_new.jpg",
-  "time": "2026-10-21T23:18:42",
-  "topic": "sandbox learner",
-  "caption": "Monkey Meadow learned in Sandbox: the whole figure-eight, from the entrance (blue) to the exit (red), in one clean pass."
- },
- {
-  "file": "20261022_000921_bp_new.jpg",
-  "time": "2026-10-22T00:09:21",
-  "topic": "sandbox learner",
-  "caption": "Bloonarius Prime in Sandbox: only scattered strokes of the track lit up. Some maps would not give up their track this way."
- },
- {
-  "file": "20261022_001042_dbg_view.jpg",
-  "time": "2026-10-22T00:10:42",
-  "topic": "sandbox learner",
-  "caption": "On a darker map the frame differences (right) light up big patches of scenery instead of the thin trail of bloons."
- },
- {
-  "file": "20261022_002706_geom_check.jpg",
-  "time": "2026-10-22T00:27:06",
-  "topic": "map geometry",
-  "caption": "Next step: read the maps from the game's own files. Spice Islands, Logs and Infernal come out exact, with no game played; the fourth map is still a tangle."
- },
- {
-  "file": "20261022_003724_lc_overlay.jpg",
-  "time": "2026-10-22T00:37:24",
-  "topic": "height correction",
-  "caption": "Luminous Cove's paths drawn flat over a real game miss the raised loops where the bloons are: the camera is tilted and these paths have height."
- },
- {
-  "file": "20261022_005928_adv.jpg",
-  "time": "2026-10-22T00:59:28",
-  "topic": "medals",
-  "caption": "The Advanced maps page: locked cards and the category's unlock bar. The medal sweep now reads that bar to know how close the next map is."
- },
- {
-  "file": "20261022_013033_ts_path.jpg",
-  "time": "2026-10-22T01:30:33",
-  "topic": "map geometry",
-  "caption": "Tree Stump's path as the file stores it: numbered control points. Joined with straight lines they cut across the spiral; the game draws smooth curves through them."
- },
- {
-  "file": "20261022_013308_paths_check.jpg",
-  "time": "2026-10-22T01:33:08",
-  "topic": "map geometry",
-  "caption": "Paths built the way the game builds them (Bezier chains and splines) now sit on the track, on Tree Stump and Monkey Meadow alike."
- },
- {
-  "file": "20261022_013327_ts_valid.jpg",
-  "time": "2026-10-22T01:33:27",
-  "topic": "placement",
-  "caption": "Placement from the game's own area data on Tree Stump: green where a Dart Monkey fits, red for track, trees and the stump. No probing needed."
- },
- {
-  "file": "20261022_014811_heightfit.jpg",
-  "time": "2026-10-22T01:48:11",
-  "topic": "height correction",
-  "caption": "Checking the camera height factor k on map pictures: Luminous Cove at k=0 and 0.5, Ancient Portal at k=0 and 0.6. The edges agreed with the live-bloon fit, 0.55."
- },
- {
-  "file": "20261022_015654_logs_edge.jpg",
-  "time": "2026-10-22T01:56:54",
-  "topic": "map geometry",
-  "caption": "Logs: the grass blocks between the lanes are holes in the track area. Read as holes (yellow), the best tower ground was usable again."
- },
- {
-  "file": "20261022_021304_rec_frame.jpg",
-  "time": "2026-10-22T02:13:04",
-  "topic": "videos",
-  "caption": "First frame of the rolling screen recording, with the bot's status strip on top. Every game since can be cut into clips like the ones in this video."
- },
- {
-  "file": "20261022_023230_fr_b.jpg",
-  "time": "2026-10-22T02:32:30",
-  "topic": "videos",
-  "caption": "A full-run video: a whole game sped up four times, with captions for each tower and the bot build that played it."
- },
- {
-  "file": "20261022_023743_mk_sheet.jpg",
-  "time": "2026-10-22T02:37:43",
-  "topic": "menus",
-  "caption": "Every Monkey Knowledge page in one sheet. Learned nodes are remembered now instead of being checked again every session."
- },
- {
-  "file": "20261022_024811_probe_open.jpg",
-  "time": "2026-10-22T02:48:11",
-  "topic": "hero picker",
-  "caption": "The hero picker, opened by the calibration probe: portraits on the left, the selected hero's details in the middle."
- },
- {
-  "file": "20261022_024857_scroll_pair.jpg",
-  "time": "2026-10-22T02:48:57",
-  "topic": "hero picker",
-  "caption": "The hero list before and after one scroll, used to measure how far a scroll moves the portraits."
- },
- {
-  "file": "20261022_025045_mask.jpg",
-  "time": "2026-10-22T02:50:45",
-  "topic": "hero picker",
-  "caption": "Silhouette masks cut from hero portraits: too patchy to tell heroes apart, so the picker reads the name each portrait shows instead."
- },
- {
-  "file": "20261022_034457_sweep_sheet.jpg",
-  "time": "2026-10-22T03:44:57",
-  "topic": "medals",
-  "caption": "One medal sweep, every map page in one sheet. Medals earned outside the usual unlock order are kept now: they are real co-op medals."
- },
- {
-  "file": "20261022_040234_lc_leak.mp4",
-  "time": "2026-10-22T04:02:34",
-  "topic": "losses",
-  "caption": "Round 47 on Luminous Cove: the bloons pile up on the raised loops at the top, where no tower reaches, and 56 lives go at once."
- },
- {
-  "file": "20261022_040845_toggles.jpg",
-  "time": "2026-10-22T04:08:45",
-  "topic": "menus",
-  "caption": "The Double Cash and Fast Track toggles beside the hero button. The bot reads them now, and the planner counts the extra cash when it rates its chances."
- },
- {
-  "file": "20261022_041609_lc_paths.jpg",
-  "time": "2026-10-22T04:16:09",
-  "topic": "losses",
-  "caption": "The lost game with the bot's projected paths (yellow, red): bloons run the top loops, but every tower (white circles) sat at the bottom. Placement is being fixed for this."
- },
- {
-  "file": "20261022_041644_now.jpg",
-  "time": "2026-10-22T04:16:44",
-  "topic": "menus",
-  "caption": "A Collection Event screen that appeared between games and confused the bot's way back to the menus."
- },
- {
-  "file": "20261022_042001_reveal_1.jpg",
-  "time": "2026-10-22T04:20:01",
-  "topic": "menus",
-  "caption": "Collection event crate: face-down reward cards on black and almost no text, which the bot first read as an unknown screen and got stuck on."
- },
- {
-  "file": "20261022_042451_lc_valid.jpg",
-  "time": "2026-10-22T04:24:51",
-  "topic": "losses",
-  "caption": "Why Luminous Cove was lost: white dots are every spot a ninja may stand - only the rock at the bottom. Most of the track (green to red) is out of land towers' reach."
- }
+  {
+    "file": "20261021_150919_pair.jpg",
+    "time": "2026-10-21T15:09:19",
+    "topic": "placement",
+    "caption": "How a spot is checked: the game tints the range circle red where a tower cannot stand (left, on the track) and grey where it can (right)."
+  },
+  {
+    "file": "20261021_152521_trace.jpg",
+    "time": "2026-10-21T15:25:21",
+    "topic": "track learning",
+    "caption": "The first track map, made by watching bloons move in a real game: blue near the entrance, red near the exit. Patchy, with whole stretches missing."
+  },
+  {
+    "file": "20261021_153812_scan.jpg",
+    "time": "2026-10-21T15:38:12",
+    "topic": "placement",
+    "caption": "An early placement scan on a coarse grid: green where towers may stand, the coloured band around the track ruled out. Blocky, and every probe cost time."
+  },
+  {
+    "file": "20261021_155529_victory2.jpg",
+    "time": "2026-10-21T15:55:29",
+    "topic": "wins",
+    "caption": "An early win on Easy, saved while teaching the bot to recognise the victory screen and move on to the next game."
+  },
+  {
+    "file": "20261021_181803_cash.jpg",
+    "time": "2026-10-21T18:18:03",
+    "topic": "screen reading",
+    "caption": "The HUD the bot reads every second. OCR sometimes saw phantom digits in the cash, so it now takes the lower median of three reads."
+  },
+  {
+    "file": "20261021_182447_car.jpg",
+    "time": "2026-10-21T18:24:47",
+    "topic": "menus",
+    "caption": "Locked map cards say 'click to unlock', and the bot took them for the tower-choice carousel. It now needs the words 'choose a monkey' first."
+  },
+  {
+    "file": "20261021_194401_carousel.jpg",
+    "time": "2026-10-21T19:44:01",
+    "topic": "menus",
+    "caption": "The tower-choice carousel offering a single tower, Spike Factory. Instead of circling for more, the bot now takes the only offer after one lap."
+  },
+  {
+    "file": "20261021_205928_heats.jpg",
+    "time": "2026-10-21T20:59:28",
+    "topic": "track learning",
+    "caption": "Heat maps after more games on Logs, Bloonarius Prime and Monkey Meadow. Meadow is nearly empty: bloons popped near the entrance never showed the rest of the track."
+  },
+  {
+    "file": "20261021_213530_tree.jpg",
+    "time": "2026-10-21T21:35:30",
+    "topic": "menus",
+    "caption": "A high-level account: Dart Monkey with 773,006 tower XP and the Apex Plasma Master paragon. The account sync had to learn to read trees like this."
+  },
+  {
+    "file": "20261021_220511_medals_zoom.jpg",
+    "time": "2026-10-21T22:05:11",
+    "topic": "medals",
+    "caption": "Mode medals on a map card, zoomed in: one badge per difficulty and mode. The bot now reads them for every map in one sweep of the map pages."
+  },
+  {
+    "file": "20261021_221309_modes.jpg",
+    "time": "2026-10-21T22:13:09",
+    "topic": "menus",
+    "caption": "The Hard mode screen. Sub-modes are now started by their fixed button slots, and the Sandbox button is never pressed by mistake."
+  },
+  {
+    "file": "20261021_224202_models.jpg",
+    "time": "2026-10-21T22:42:02",
+    "topic": "track learning",
+    "caption": "Eight maps' learned tracks side by side, frames watched in the corner. Broken lanes, scenery noise and missing loops: not good enough to place towers by."
+  },
+  {
+    "file": "20261021_224309_sandbox.jpg",
+    "time": "2026-10-21T22:43:09",
+    "topic": "sandbox learner",
+    "caption": "The fix: learn each map in Sandbox, where rounds can be sent with no towers on the map, so the bloons run the whole track."
+  },
+  {
+    "file": "20261021_230153_sb_view.jpg",
+    "time": "2026-10-21T23:01:53",
+    "topic": "sandbox learner",
+    "caption": "First Sandbox pass on Monkey Meadow. The movement masks (right) caught bats and swaying scenery as speckles, so the background had to be learned first."
+  },
+  {
+    "file": "20261021_231842_meadow_new.jpg",
+    "time": "2026-10-21T23:18:42",
+    "topic": "sandbox learner",
+    "caption": "Monkey Meadow learned in Sandbox: the whole figure-eight, from the entrance (blue) to the exit (red), in one clean pass."
+  },
+  {
+    "file": "20261022_000921_bp_new.jpg",
+    "time": "2026-10-22T00:09:21",
+    "topic": "sandbox learner",
+    "caption": "Bloonarius Prime in Sandbox: only scattered strokes of the track lit up. Some maps would not give up their track this way."
+  },
+  {
+    "file": "20261022_001042_dbg_view.jpg",
+    "time": "2026-10-22T00:10:42",
+    "topic": "sandbox learner",
+    "caption": "On a darker map the frame differences (right) light up big patches of scenery instead of the thin trail of bloons."
+  },
+  {
+    "file": "20261022_002706_geom_check.jpg",
+    "time": "2026-10-22T00:27:06",
+    "topic": "map geometry",
+    "caption": "Next step: read the maps from the game's own files. Spice Islands, Logs and Infernal come out exact, with no game played; the fourth map is still a tangle."
+  },
+  {
+    "file": "20261022_003724_lc_overlay.jpg",
+    "time": "2026-10-22T00:37:24",
+    "topic": "height correction",
+    "caption": "Luminous Cove's paths drawn flat over a real game miss the raised loops where the bloons are: the camera is tilted and these paths have height."
+  },
+  {
+    "file": "20261022_005928_adv.jpg",
+    "time": "2026-10-22T00:59:28",
+    "topic": "medals",
+    "caption": "The Advanced maps page: locked cards and the category's unlock bar. The medal sweep now reads that bar to know how close the next map is."
+  },
+  {
+    "file": "20261022_013033_ts_path.jpg",
+    "time": "2026-10-22T01:30:33",
+    "topic": "map geometry",
+    "caption": "Tree Stump's path as the file stores it: numbered control points. Joined with straight lines they cut across the spiral; the game draws smooth curves through them."
+  },
+  {
+    "file": "20261022_013308_paths_check.jpg",
+    "time": "2026-10-22T01:33:08",
+    "topic": "map geometry",
+    "caption": "Paths built the way the game builds them (Bezier chains and splines) now sit on the track, on Tree Stump and Monkey Meadow alike."
+  },
+  {
+    "file": "20261022_013327_ts_valid.jpg",
+    "time": "2026-10-22T01:33:27",
+    "topic": "placement",
+    "caption": "Placement from the game's own area data on Tree Stump: green where a Dart Monkey fits, red for track, trees and the stump. No probing needed."
+  },
+  {
+    "file": "20261022_014811_heightfit.jpg",
+    "time": "2026-10-22T01:48:11",
+    "topic": "height correction",
+    "caption": "Checking the camera height factor k on map pictures: Luminous Cove at k=0 and 0.5, Ancient Portal at k=0 and 0.6. The edges agreed with the live-bloon fit, 0.55."
+  },
+  {
+    "file": "20261022_015654_logs_edge.jpg",
+    "time": "2026-10-22T01:56:54",
+    "topic": "map geometry",
+    "caption": "Logs: the grass blocks between the lanes are holes in the track area. Read as holes (yellow), the best tower ground was usable again."
+  },
+  {
+    "file": "20261022_021304_rec_frame.jpg",
+    "time": "2026-10-22T02:13:04",
+    "topic": "videos",
+    "caption": "First frame of the rolling screen recording, with the bot's status strip on top. Every game since can be cut into clips like the ones in this video."
+  },
+  {
+    "file": "20261022_023230_fr_b.jpg",
+    "time": "2026-10-22T02:32:30",
+    "topic": "videos",
+    "caption": "A full-run video: a whole game sped up four times, with captions for each tower and the bot build that played it."
+  },
+  {
+    "file": "20261022_023743_mk_sheet.jpg",
+    "time": "2026-10-22T02:37:43",
+    "topic": "menus",
+    "caption": "Every Monkey Knowledge page in one sheet. Learned nodes are remembered now instead of being checked again every session."
+  },
+  {
+    "file": "20261022_024811_probe_open.jpg",
+    "time": "2026-10-22T02:48:11",
+    "topic": "hero picker",
+    "caption": "The hero picker, opened by the calibration probe: portraits on the left, the selected hero's details in the middle."
+  },
+  {
+    "file": "20261022_024857_scroll_pair.jpg",
+    "time": "2026-10-22T02:48:57",
+    "topic": "hero picker",
+    "caption": "The hero list before and after one scroll, used to measure how far a scroll moves the portraits."
+  },
+  {
+    "file": "20261022_025045_mask.jpg",
+    "time": "2026-10-22T02:50:45",
+    "topic": "hero picker",
+    "caption": "Silhouette masks cut from hero portraits: too patchy to tell heroes apart, so the picker reads the name each portrait shows instead."
+  },
+  {
+    "file": "20261022_034457_sweep_sheet.jpg",
+    "time": "2026-10-22T03:44:57",
+    "topic": "medals",
+    "caption": "One medal sweep, every map page in one sheet. Medals earned outside the usual unlock order are kept now: they are real co-op medals."
+  },
+  {
+    "file": "20261022_040234_lc_leak.mp4",
+    "time": "2026-10-22T04:02:34",
+    "topic": "losses",
+    "caption": "Round 47 on Luminous Cove: the bloons pile up on the raised loops at the top, where no tower reaches, and 56 lives go at once."
+  },
+  {
+    "file": "20261022_040845_toggles.jpg",
+    "time": "2026-10-22T04:08:45",
+    "topic": "menus",
+    "caption": "The Double Cash and Fast Track toggles beside the hero button. The bot reads them now, and the planner counts the extra cash when it rates its chances."
+  },
+  {
+    "file": "20261022_041609_lc_paths.jpg",
+    "time": "2026-10-22T04:16:09",
+    "topic": "losses",
+    "caption": "The lost game with the bot's projected paths (yellow, red): bloons run the top loops, but every tower (white circles) sat at the bottom. Placement is being fixed for this."
+  },
+  {
+    "file": "20261022_041644_now.jpg",
+    "time": "2026-10-22T04:16:44",
+    "topic": "menus",
+    "caption": "A Collection Event screen that appeared between games and confused the bot's way back to the menus."
+  },
+  {
+    "file": "20261022_042001_reveal_1.jpg",
+    "time": "2026-10-22T04:20:01",
+    "topic": "menus",
+    "caption": "Collection event crate: face-down reward cards on black and almost no text, which the bot first read as an unknown screen and got stuck on."
+  },
+  {
+    "file": "20261022_042451_lc_valid.jpg",
+    "time": "2026-10-22T04:24:51",
+    "topic": "losses",
+    "caption": "Why Luminous Cove was lost: white dots are every spot a ninja may stand - only the rock at the bottom. Most of the track (green to red) is out of land towers' reach."
+  },
+  {
+    "file": "20261022_063257_defl.jpg",
+    "time": "2026-10-22T06:32:57",
+    "topic": "menus",
+    "caption": "Deflation's intro box sat over the game; the bot saw the HUD, thought it was playing and could not pick up a single tower."
+  }
 ]
