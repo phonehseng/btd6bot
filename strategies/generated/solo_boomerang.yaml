@@ -22,18 +22,18 @@
 # Boomerang Monkey (up to 7), else h_dart (Dart Monkey) 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 1.00, Boomerang Monkey share of the
-#   cash 53%, answers bought: ace, bomb, ninja
+#   easy: kept - no gaps, min blimp ratio 1.30, Boomerang Monkey share of the
+#   cash 61%, answers bought: ace, bomb, ninja
 #   primary_only: kept - no gaps, min blimp ratio 1.37, Boomerang Monkey share
-#   of the cash 71%, answers bought: bomb, desperado
-#   deflation: kept - no gaps, min blimp ratio 0.48, Boomerang Monkey share of
-#   the cash 44%
-#   medium: kept - no gaps, min blimp ratio 1.12, Boomerang Monkey share of the
-#   cash 59%, answers bought: ace, bomb, ninja
-#   reverse: kept - no gaps, min blimp ratio 1.12, Boomerang Monkey share of the
-#   cash 59%, answers bought: ace, bomb, ninja
-#   apopalypse: dropped - blimp damage 0.10 < 1.00
-#   hard: dropped - blimp damage 0.50 < 1.00
+#   of the cash 76%, answers bought: bomb, desperado
+#   deflation: kept - no gaps, min blimp ratio 0.88, Boomerang Monkey share of
+#   the cash 85%
+#   medium: kept - no gaps, min blimp ratio 1.00, Boomerang Monkey share of the
+#   cash 82%, answers bought: ace, bomb, ninja
+#   reverse: kept - no gaps, min blimp ratio 1.00, Boomerang Monkey share of the
+#   cash 82%, answers bought: ace, bomb, ninja
+#   apopalypse: dropped - blimp damage 0.12 < 1.00
+#   hard: dropped - blimp damage 0.57 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -44,7 +44,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, primary_only, deflation, medium, reverse]
 planner:
   towers: {boomerang: [4, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.83, primary_only: 0.86, deflation: 0.89, medium: 0.77, reverse: 0.77}
+  base_success: {easy: 0.83, primary_only: 0.86, deflation: 0.91, medium: 0.77, reverse: 0.77}
 plan:
   - {do: place, id: a1, kind: boomerang, role: dps, segment: [0.0, 0.5]}   # main line: 4-0-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

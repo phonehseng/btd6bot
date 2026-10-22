@@ -20,14 +20,15 @@
 # 0-0-3, else a Monkey Ace 0-0-0; bfb: d1 0-0-4, else a Dart Monkey 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: dropped - Banana Farm gets only 18% of the cash: no XP game for it
+#   easy: kept - no gaps, min blimp ratio 0.41, Banana Farm share of the cash
+#   31%, answers bought: ace, bomb
 #   deflation: dropped - gap R37: lead (nothing pops it)
-#   medium: kept - no gaps, min blimp ratio 1.86, Banana Farm share of the cash
-#   45%, answers bought: ace, bomb, dart
-#   reverse: kept - no gaps, min blimp ratio 1.86, Banana Farm share of the cash
-#   45%, answers bought: ace, bomb, dart
+#   medium: kept - no gaps, min blimp ratio 0.52, Banana Farm share of the cash
+#   34%, answers bought: ace, bomb
+#   reverse: kept - no gaps, min blimp ratio 0.52, Banana Farm share of the cash
+#   34%, answers bought: ace, bomb
 #   apopalypse: dropped - blimp damage 0.08 < 1.00
-#   hard: dropped - blimp damage 0.53 < 1.00
+#   hard: dropped - blimp damage 0.75 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -36,11 +37,11 @@
 id: solo_farm
 xp_target: farm   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [medium, reverse]
+modes: [easy, medium, reverse]
 uses_income: true   # never CHIMPS
 planner:
   towers: {ninja: [4, 2, 4], farm: [2, 0, 3]}   # the crosspaths the build needs to be safe
-  base_success: {medium: 0.74, reverse: 0.74}
+  base_success: {easy: 0.8, medium: 0.75, reverse: 0.75}
 plan:
   - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

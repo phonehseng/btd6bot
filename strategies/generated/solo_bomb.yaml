@@ -19,21 +19,24 @@
 # Factory) 0-0-0, else h_dart (Dart Monkey) 0-0-3; moab: a1 0-3-0, else
 # another Bomb Shooter (up to 7), else a Monkey Ace 0-0-0, else h_dart (Dart
 # Monkey) 0-0-4; bfb: a1 0-4-0, else another Bomb Shooter (up to 7), else
-# h_dart (Dart Monkey) 0-0-4
+# h_dart (Dart Monkey) 0-0-4; rush: b1 0-0-3, else a Boomerang Monkey 3-0-0;
+# zomg: a1 0-4-0, else another Bomb Shooter (up to 7), else ex (Spike Factory)
+# 0-0-4, else h_boomerang (Boomerang Monkey) 5-0-0
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 1.31, Bomb Shooter share of the cash
-#   56%, answers bought: ace
-#   primary_only: kept - no gaps, min blimp ratio 1.30, Bomb Shooter share of
-#   the cash 80%, answers bought: dart
-#   deflation: kept - no gaps, min blimp ratio 0.66, Bomb Shooter share of the
-#   cash 49%
-#   medium: kept - no gaps, min blimp ratio 1.09, Bomb Shooter share of the cash
+#   easy: kept - no gaps, min blimp ratio 1.45, Bomb Shooter share of the cash
 #   76%, answers bought: ace
-#   reverse: kept - no gaps, min blimp ratio 1.09, Bomb Shooter share of the
-#   cash 76%, answers bought: ace
-#   apopalypse: dropped - blimp damage 0.11 < 1.00
-#   hard: dropped - blimp damage 0.52 < 1.00
+#   primary_only: kept - no gaps, min blimp ratio 1.80, Bomb Shooter share of
+#   the cash 100%
+#   deflation: kept - no gaps, min blimp ratio 1.07, Bomb Shooter share of the
+#   cash 85%
+#   medium: kept - no gaps, min blimp ratio 1.45, Bomb Shooter share of the cash
+#   86%, answers bought: ace
+#   reverse: kept - no gaps, min blimp ratio 1.45, Bomb Shooter share of the
+#   cash 86%, answers bought: ace
+#   apopalypse: dropped - blimp damage 0.16 < 1.00
+#   hard: kept - no gaps, min blimp ratio 1.09, Bomb Shooter share of the cash
+#   89%, answers bought: ace
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -41,10 +44,10 @@
 id: solo_bomb
 xp_target: bomb   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, primary_only, deflation, medium, reverse]
+modes: [easy, primary_only, deflation, medium, reverse, hard]
 planner:
   towers: {bomb: [0, 4, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.89, primary_only: 0.89, deflation: 0.9, medium: 0.83, reverse: 0.83}
+  base_success: {easy: 0.89, primary_only: 0.92, deflation: 0.92, medium: 0.83, reverse: 0.83, hard: 0.77}
 plan:
   - {do: place, id: a1, kind: bomb, role: dps, segment: [0.0, 0.5]}   # main line: 0-4-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
@@ -109,3 +112,19 @@ answers:
     - {do: place, kind: bomb, role: dps, segment: [0.0, 1.0], max: 7}
     - {do: upgrade, id: h_dart, to: 0-0-4}
     - {do: place, id: h_dart, kind: dart, role: dps, segment: [0.0, 0.7]}
+  rush:
+    - {do: upgrade, id: b1, to: 0-0-3}
+    - {do: upgrade, id: b1, to: 0-1-3}
+    - {do: place, id: b1, kind: bomb, role: dps, segment: [0.0, 0.7]}
+    - {do: upgrade, id: h_boomerang, to: 3-0-0}
+    - {do: place, id: h_boomerang, kind: boomerang, role: dps, segment: [0.0, 0.7]}
+  zomg:
+    - {do: upgrade, id: a1, to: 0-4-0}
+    - {do: upgrade, id: a1, to: 0-4-2}
+    - {do: place, id: a1, kind: bomb, role: dps, segment: [0.0, 0.5]}
+    - {do: place, kind: bomb, role: dps, segment: [0.0, 1.0], max: 7}
+    - {do: upgrade, id: ex, to: 0-0-4}
+    - {do: upgrade, id: ex, to: 2-0-4}
+    - {do: place, id: ex, kind: spike, role: exit}
+    - {do: upgrade, id: h_boomerang, to: 5-0-0}
+    - {do: place, id: h_boomerang, kind: boomerang, role: dps, segment: [0.0, 0.7]}

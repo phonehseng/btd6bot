@@ -19,17 +19,17 @@
 # 0-0-4, else another Ninja Monkey (up to 4), else a Dart Monkey 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 0.56, Ninja Monkey share of the cash
+#   easy: kept - no gaps, min blimp ratio 0.60, Ninja Monkey share of the cash
+#   77%, answers bought: ace, bomb
+#   deflation: kept - no gaps, min blimp ratio 0.86, Ninja Monkey share of the
+#   cash 99%, answers bought: dart
+#   medium: kept - no gaps, min blimp ratio 0.48, Ninja Monkey share of the cash
 #   75%, answers bought: ace, bomb
-#   deflation: kept - no gaps, min blimp ratio 0.89, Ninja Monkey share of the
-#   cash 98%, answers bought: dart
-#   medium: kept - no gaps, min blimp ratio 3.19, Ninja Monkey share of the cash
-#   55%, answers bought: ace, bomb, dart
-#   reverse: kept - no gaps, min blimp ratio 3.19, Ninja Monkey share of the
-#   cash 55%, answers bought: ace, bomb, dart
-#   apopalypse: dropped - blimp damage 0.09 < 1.00
-#   hard: dropped - blimp damage 0.41 < 1.00
-#   magic_only: dropped - blimp damage 0.51 < 1.00
+#   reverse: kept - no gaps, min blimp ratio 0.48, Ninja Monkey share of the
+#   cash 75%, answers bought: ace, bomb
+#   apopalypse: dropped - blimp damage 0.18 < 1.00
+#   hard: dropped - blimp damage 0.48 < 1.00
+#   magic_only: dropped - blimp damage 0.56 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;

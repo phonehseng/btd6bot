@@ -23,16 +23,17 @@
 # 0-0-4, else h_dart (Dart Monkey) 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: dropped - Mermonkey gets only 17% of the cash: no XP game for it
-#   deflation: kept - no gaps, min blimp ratio 0.72, Mermonkey share of the cash
-#   33%
-#   medium: kept - no gaps, min blimp ratio 2.15, Mermonkey share of the cash
-#   42%, answers bought: ace, bomb, dart
-#   reverse: kept - no gaps, min blimp ratio 2.15, Mermonkey share of the cash
-#   42%, answers bought: ace, bomb, dart
+#   easy: kept - no gaps, min blimp ratio 0.41, Mermonkey share of the cash 25%,
+#   answers bought: ace, bomb
+#   deflation: kept - no gaps, min blimp ratio 0.74, Mermonkey share of the cash
+#   31%
+#   medium: kept - no gaps, min blimp ratio 3.74, Mermonkey share of the cash
+#   42%, answers bought: ace, bomb
+#   reverse: kept - no gaps, min blimp ratio 3.74, Mermonkey share of the cash
+#   42%, answers bought: ace, bomb
 #   apopalypse: dropped - blimp damage 0.06 < 1.00
-#   hard: dropped - blimp damage 0.49 < 1.00
-#   magic_only: dropped - blimp damage 0.35 < 1.00
+#   hard: dropped - blimp damage 0.75 < 1.00
+#   magic_only: dropped - blimp damage 0.47 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -41,10 +42,10 @@
 id: solo_mermonkey
 xp_target: mermonkey   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [deflation, medium, reverse]
+modes: [easy, deflation, medium, reverse]
 planner:
   towers: {ninja: [4, 2, 4], mermonkey: [4, 0, 2]}   # the crosspaths the build needs to be safe
-  base_success: {deflation: 0.88, medium: 0.74, reverse: 0.74}
+  base_success: {easy: 0.8, deflation: 0.88, medium: 0.77, reverse: 0.77}
 plan:
   - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

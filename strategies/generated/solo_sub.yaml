@@ -25,17 +25,17 @@
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
 #   easy: kept - no gaps, min blimp ratio 0.93, Monkey Sub share of the cash
-#   71%, answers bought: ace, ninja
-#   deflation: kept - no gaps, min blimp ratio 0.76, Monkey Sub share of the
-#   cash 100%
-#   medium: kept - no gaps, min blimp ratio 0.57, Monkey Sub share of the cash
-#   78%, answers bought: ace, dart, ninja
-#   military_only: kept - no gaps, min blimp ratio 1.29, Monkey Sub share of the
-#   cash 76%, answers bought: ace, sniper
-#   reverse: kept - no gaps, min blimp ratio 0.57, Monkey Sub share of the cash
-#   78%, answers bought: ace, dart, ninja
-#   apopalypse: dropped - blimp damage 0.12 < 1.00
-#   hard: dropped - blimp damage 0.58 < 1.00
+#   81%, answers bought: ace, ninja
+#   deflation: kept - no gaps, min blimp ratio 0.75, Monkey Sub share of the
+#   cash 96%
+#   medium: kept - no gaps, min blimp ratio 0.73, Monkey Sub share of the cash
+#   89%, answers bought: ace, dart, ninja
+#   military_only: kept - no gaps, min blimp ratio 1.17, Monkey Sub share of the
+#   cash 78%, answers bought: ace, sniper
+#   reverse: kept - no gaps, min blimp ratio 0.73, Monkey Sub share of the cash
+#   89%, answers bought: ace, dart, ninja
+#   apopalypse: dropped - blimp damage 0.13 < 1.00
+#   hard: dropped - blimp damage 0.42 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -46,7 +46,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, military_only, reverse]
 planner:
   towers: {sub: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.86, deflation: 0.91, medium: 0.75, military_only: 0.8, reverse: 0.75}
+  base_success: {easy: 0.86, deflation: 0.91, medium: 0.76, military_only: 0.8, reverse: 0.76}
   maps: ["Adora's Temple", "Bloonarius Prime", Cargo, Cubism, "Flooded Valley", "Lotus Island", "Luminous Cove", "Muddy Puddles", "Park Path", "Pat's Pond", Peninsula, Resort, "Skull Tweak", "Spa Pits", "Spice Islands", "Spring Spring", "The Cabin", "Water Park"]
 plan:
   - {do: place, id: a1, kind: sub, role: dps, segment: [0.0, 0.5]}   # main line: 0-2-4

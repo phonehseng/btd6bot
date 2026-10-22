@@ -28,16 +28,16 @@
 #   easy: kept - no gaps, min blimp ratio 5.84, Sniper Monkey share of the cash
 #   96%, answers bought: ace
 #   deflation: kept - no gaps, min blimp ratio 3.00, Sniper Monkey share of the
-#   cash 97%, answers bought: boomerang
+#   cash 100%
 #   medium: kept - no gaps, min blimp ratio 3.33, Sniper Monkey share of the
-#   cash 85%, answers bought: ace, boomerang
+#   cash 90%, answers bought: ace
 #   military_only: kept - no gaps, min blimp ratio 3.33, Sniper Monkey share of
-#   the cash 87%, answers bought: ace
+#   the cash 97%, answers bought: ace
 #   reverse: kept - no gaps, min blimp ratio 3.33, Sniper Monkey share of the
-#   cash 85%, answers bought: ace, boomerang
+#   cash 90%, answers bought: ace
 #   apopalypse: dropped - blimp damage 0.19 < 1.00
-#   hard: kept - no gaps, min blimp ratio 1.49, Sniper Monkey share of the cash
-#   71%, answers bought: ace, boomerang
+#   hard: kept - no gaps, min blimp ratio 1.62, Sniper Monkey share of the cash
+#   84%, answers bought: ace, boomerang
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -48,7 +48,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, military_only, reverse, hard]
 planner:
   towers: {sniper: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.89, deflation: 0.89, medium: 0.8, military_only: 0.83, reverse: 0.8, hard: 0.74}
+  base_success: {easy: 0.89, deflation: 0.92, medium: 0.83, military_only: 0.83, reverse: 0.83, hard: 0.74}
 plan:
   - {do: place, id: a1, kind: sniper, role: dps, segment: [0.0, 0.5]}   # main line: 4-2-0
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

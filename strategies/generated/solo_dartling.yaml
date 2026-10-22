@@ -26,18 +26,18 @@
 # 4-0-0
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 3.79, Dartling Gunner share of the
-#   cash 45%, answers bought: ace
-#   deflation: kept - no gaps, min blimp ratio 1.71, Dartling Gunner share of
-#   the cash 28%
-#   medium: kept - no gaps, min blimp ratio 1.23, Dartling Gunner share of the
-#   cash 52%, answers bought: ace, dart
-#   military_only: kept - no gaps, min blimp ratio 2.78, Dartling Gunner share
-#   of the cash 47%, answers bought: ace, heli
-#   reverse: kept - no gaps, min blimp ratio 1.23, Dartling Gunner share of the
-#   cash 52%, answers bought: ace, dart
-#   apopalypse: dropped - blimp damage 0.07 < 1.00
-#   hard: dropped - blimp damage 0.51 < 1.00
+#   easy: kept - no gaps, min blimp ratio 2.62, Dartling Gunner share of the
+#   cash 55%, answers bought: ace
+#   deflation: kept - no gaps, min blimp ratio 1.64, Dartling Gunner share of
+#   the cash 30%
+#   medium: kept - no gaps, min blimp ratio 0.99, Dartling Gunner share of the
+#   cash 62%, answers bought: ace
+#   military_only: kept - no gaps, min blimp ratio 1.62, Dartling Gunner share
+#   of the cash 58%, answers bought: ace, heli
+#   reverse: kept - no gaps, min blimp ratio 0.99, Dartling Gunner share of the
+#   cash 62%, answers bought: ace
+#   apopalypse: dropped - blimp damage 0.08 < 1.00
+#   hard: dropped - blimp damage 0.37 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -49,7 +49,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, military_only, reverse]
 planner:
   towers: {sniper: [4, 2, 4], dartling: [0, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.86, deflation: 0.89, medium: 0.77, military_only: 0.77, reverse: 0.77}
+  base_success: {easy: 0.86, deflation: 0.89, medium: 0.8, military_only: 0.77, reverse: 0.8}
 plan:
   - {do: place, id: d1, kind: sniper, role: dps, segment: [0.0, 0.5]}   # defence: 4-2-0
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

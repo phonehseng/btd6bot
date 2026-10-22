@@ -24,18 +24,18 @@
 # (data/map_fit.json).
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 1.03, Monkey Buccaneer share of the
-#   cash 71%
+#   easy: kept - no gaps, min blimp ratio 1.17, Monkey Buccaneer share of the
+#   cash 93%
 #   deflation: kept - no gaps, min blimp ratio 0.98, Monkey Buccaneer share of
-#   the cash 100%
+#   the cash 99%, answers bought: dart
 #   medium: kept - no gaps, min blimp ratio 1.18, Monkey Buccaneer share of the
-#   cash 67%, answers bought: ace, dart
-#   military_only: kept - no gaps, min blimp ratio 2.66, Monkey Buccaneer share
-#   of the cash 91%, answers bought: sniper
+#   cash 75%, answers bought: ace, dart
+#   military_only: kept - no gaps, min blimp ratio 1.63, Monkey Buccaneer share
+#   of the cash 80%, answers bought: sniper
 #   reverse: kept - no gaps, min blimp ratio 1.18, Monkey Buccaneer share of the
-#   cash 67%, answers bought: ace, dart
+#   cash 75%, answers bought: ace, dart
 #   apopalypse: dropped - blimp damage 0.12 < 1.00
-#   hard: dropped - blimp damage 0.52 < 1.00
+#   hard: dropped - blimp damage 0.76 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -46,7 +46,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, military_only, reverse]
 planner:
   towers: {buccaneer: [4, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.92, deflation: 0.92, medium: 0.8, military_only: 0.83, reverse: 0.8}
+  base_success: {easy: 0.92, deflation: 0.89, medium: 0.8, military_only: 0.83, reverse: 0.8}
   maps: ["Adora's Temple", "Another Brick", "Bloody Puddles", "Bloonarius Prime", Cargo, Chutes, Cubism, "End Of The Road", "Flooded Valley", "Four Circles", "Frozen Over", Haunted, "Lotus Island", "Luminous Cove", "Muddy Puddles", "Off The Coast", "Park Path", "Pat's Pond", Peninsula, Quad, Rake, Ravine, Resort, Skates, "Skull Tweak", "Spa Pits", "Spice Islands", Spillway, "Spring Spring", "The Cabin", "Water Park"]
 plan:
   - {do: place, id: a1, kind: buccaneer, role: dps, segment: [0.0, 0.5]}   # main line: 0-4-2

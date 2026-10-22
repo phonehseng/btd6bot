@@ -23,18 +23,18 @@
 # to 7), else h_bomb (Bomb Shooter) 0-4-0, else o1 (Sniper Monkey) 4-0-0
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 6.16, Heli Pilot share of the cash 86%
-#   deflation: kept - no gaps, min blimp ratio 1.16, Heli Pilot share of the
+#   easy: kept - no gaps, min blimp ratio 4.45, Heli Pilot share of the cash 88%
+#   deflation: kept - no gaps, min blimp ratio 2.09, Heli Pilot share of the
 #   cash 98%
 #   medium: kept - no gaps, min blimp ratio 4.45, Heli Pilot share of the cash
-#   83%
+#   90%
 #   military_only: kept - no gaps, min blimp ratio 4.45, Heli Pilot share of the
-#   cash 89%
+#   cash 90%
 #   reverse: kept - no gaps, min blimp ratio 4.45, Heli Pilot share of the cash
-#   83%
-#   apopalypse: dropped - blimp damage 0.22 < 1.00
-#   hard: kept - no gaps, min blimp ratio 1.57, Heli Pilot share of the cash
-#   65%, answers bought: boomerang
+#   90%
+#   apopalypse: dropped - blimp damage 0.21 < 1.00
+#   hard: kept - no gaps, min blimp ratio 1.73, Heli Pilot share of the cash
+#   88%, answers bought: boomerang
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;

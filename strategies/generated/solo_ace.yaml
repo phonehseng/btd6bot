@@ -21,18 +21,19 @@
 # o1 4-0-0, else h_bomb (Bomb Shooter) 0-4-0, else a Heli Pilot 4-0-0
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 7.96, Monkey Ace share of the cash 55%
+#   easy: kept - no gaps, min blimp ratio 11.51, Monkey Ace share of the cash
+#   73%
 #   deflation: kept - no gaps, min blimp ratio 4.55, Monkey Ace share of the
 #   cash 90%, answers bought: dart
-#   medium: kept - no gaps, min blimp ratio 4.19, Monkey Ace share of the cash
-#   71%, answers bought: boomerang, dart
-#   military_only: kept - no gaps, min blimp ratio 9.30, Monkey Ace share of the
-#   cash 91%
-#   reverse: kept - no gaps, min blimp ratio 4.19, Monkey Ace share of the cash
-#   71%, answers bought: boomerang, dart
-#   apopalypse: dropped - blimp damage 0.42 < 1.00
-#   hard: kept - no gaps, min blimp ratio 3.50, Monkey Ace share of the cash
-#   65%, answers bought: bomb, boomerang, dart
+#   medium: kept - no gaps, min blimp ratio 8.18, Monkey Ace share of the cash
+#   85%, answers bought: dart
+#   military_only: kept - no gaps, min blimp ratio 11.48, Monkey Ace share of
+#   the cash 80%
+#   reverse: kept - no gaps, min blimp ratio 8.18, Monkey Ace share of the cash
+#   85%, answers bought: dart
+#   apopalypse: dropped - blimp damage 0.45 < 1.00
+#   hard: kept - no gaps, min blimp ratio 3.97, Monkey Ace share of the cash
+#   80%, answers bought: boomerang, dart
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -43,7 +44,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, military_only, reverse, hard]
 planner:
   towers: {ace: [4, 2, 3]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.92, deflation: 0.89, medium: 0.8, military_only: 0.86, reverse: 0.8, hard: 0.71}
+  base_success: {easy: 0.92, deflation: 0.89, medium: 0.83, military_only: 0.86, reverse: 0.83, hard: 0.74}
 plan:
   - {do: place, id: o1, kind: sniper, role: dps, segment: [0.0, 0.6]}   # Monkey Ace costs $800 - more than the $650 start: a Sniper Monkey holds the first rounds
   - {do: place, id: a1, kind: ace, role: dps, segment: [0.0, 0.5]}   # main line: 4-2-0

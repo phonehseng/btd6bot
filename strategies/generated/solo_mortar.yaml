@@ -26,18 +26,18 @@
 # 4-0-0
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 6.24, Mortar Monkey share of the cash
-#   36%, answers bought: ace
-#   deflation: kept - no gaps, min blimp ratio 1.74, Mortar Monkey share of the
-#   cash 27%
-#   medium: kept - no gaps, min blimp ratio 2.91, Mortar Monkey share of the
-#   cash 53%, answers bought: ace
-#   military_only: kept - no gaps, min blimp ratio 2.91, Mortar Monkey share of
-#   the cash 53%, answers bought: ace, heli
-#   reverse: kept - no gaps, min blimp ratio 2.91, Mortar Monkey share of the
-#   cash 53%, answers bought: ace
-#   apopalypse: dropped - blimp damage 0.17 < 1.00
-#   hard: dropped - blimp damage 0.63 < 1.00
+#   easy: kept - no gaps, min blimp ratio 3.05, Mortar Monkey share of the cash
+#   44%, answers bought: ace
+#   deflation: kept - no gaps, min blimp ratio 1.79, Mortar Monkey share of the
+#   cash 28%
+#   medium: kept - no gaps, min blimp ratio 1.78, Mortar Monkey share of the
+#   cash 47%, answers bought: ace
+#   military_only: kept - no gaps, min blimp ratio 2.75, Mortar Monkey share of
+#   the cash 54%, answers bought: ace, heli
+#   reverse: kept - no gaps, min blimp ratio 1.78, Mortar Monkey share of the
+#   cash 47%, answers bought: ace
+#   apopalypse: dropped - blimp damage 0.18 < 1.00
+#   hard: dropped - blimp damage 0.78 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp

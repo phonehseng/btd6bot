@@ -23,16 +23,14 @@
 # bfb: d1 0-0-4, else a Dart Monkey 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: dropped - Alchemist gets only 18% of the cash: no XP game for it
+#   easy: dropped - Alchemist gets only 12% of the cash: no XP game for it
 #   deflation: kept - no gaps, min blimp ratio 0.90, Alchemist share of the cash
-#   39%
-#   medium: kept - no gaps, min blimp ratio 0.48, Alchemist share of the cash
-#   48%, answers bought: ace, dart
-#   reverse: kept - no gaps, min blimp ratio 0.48, Alchemist share of the cash
-#   48%, answers bought: ace, dart
-#   apopalypse: dropped - blimp damage 0.10 < 1.00
-#   hard: dropped - blimp damage 0.45 < 1.00
-#   magic_only: dropped - blimp damage 0.44 < 1.00
+#   39%, answers bought: dart
+#   medium: dropped - Alchemist gets only 18% of the cash: no XP game for it
+#   reverse: dropped - Alchemist gets only 18% of the cash: no XP game for it
+#   apopalypse: dropped - blimp damage 0.14 < 1.00
+#   hard: dropped - blimp damage 0.42 < 1.00
+#   magic_only: dropped - blimp damage 0.58 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -41,10 +39,10 @@
 id: solo_alchemist
 xp_target: alchemist   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [deflation, medium, reverse]
+modes: [deflation]
 planner:
   towers: {ninja: [4, 2, 4], alchemist: [2, 4, 0]}   # the crosspaths the build needs to be safe
-  base_success: {deflation: 0.89, medium: 0.74, reverse: 0.74}
+  base_success: {deflation: 0.85}
 plan:
   - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

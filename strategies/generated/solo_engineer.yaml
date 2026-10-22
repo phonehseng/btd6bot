@@ -23,16 +23,16 @@
 # 0-0-3, else a Monkey Ace 0-0-0; bfb: d1 0-0-4, else a Dart Monkey 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 0.74, Engineer Monkey share of the
-#   cash 25%, answers bought: ace, bomb
+#   easy: kept - no gaps, min blimp ratio 3.90, Engineer Monkey share of the
+#   cash 27%, answers bought: ace, bomb
 #   deflation: kept - no gaps, min blimp ratio 0.97, Engineer Monkey share of
-#   the cash 25%
-#   medium: kept - no gaps, min blimp ratio 0.53, Engineer Monkey share of the
-#   cash 45%, answers bought: ace, bomb, dart
-#   reverse: kept - no gaps, min blimp ratio 0.53, Engineer Monkey share of the
-#   cash 45%, answers bought: ace, bomb, dart
+#   the cash 30%, answers bought: dart
+#   medium: kept - no gaps, min blimp ratio 0.49, Engineer Monkey share of the
+#   cash 36%, answers bought: ace, bomb
+#   reverse: kept - no gaps, min blimp ratio 0.49, Engineer Monkey share of the
+#   cash 36%, answers bought: ace, bomb
 #   apopalypse: dropped - blimp damage 0.12 < 1.00
-#   hard: dropped - blimp damage 0.42 < 1.00
+#   hard: dropped - blimp damage 0.49 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -44,7 +44,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, reverse]
 planner:
   towers: {ninja: [4, 2, 4], engineer: [4, 2, 0]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.82, deflation: 0.89, medium: 0.72, reverse: 0.72}
+  base_success: {easy: 0.83, deflation: 0.86, medium: 0.74, reverse: 0.74}
 plan:
   - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

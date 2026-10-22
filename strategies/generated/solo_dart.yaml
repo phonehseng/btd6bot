@@ -23,17 +23,17 @@
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
 #   easy: kept - no gaps, min blimp ratio 1.32, Dart Monkey share of the cash
-#   71%, answers bought: ace, bomb
+#   70%, answers bought: ace, bomb
 #   primary_only: kept - no gaps, min blimp ratio 1.10, Dart Monkey share of the
-#   cash 73%, answers bought: bomb
-#   deflation: kept - no gaps, min blimp ratio 0.44, Dart Monkey share of the
-#   cash 99%, answers bought: boomerang
+#   cash 75%, answers bought: bomb
+#   deflation: kept - no gaps, min blimp ratio 0.68, Dart Monkey share of the
+#   cash 98%, answers bought: boomerang
 #   medium: kept - no gaps, min blimp ratio 1.08, Dart Monkey share of the cash
-#   66%, answers bought: ace, bomb
+#   84%, answers bought: ace, bomb
 #   reverse: kept - no gaps, min blimp ratio 1.08, Dart Monkey share of the cash
-#   66%, answers bought: ace, bomb
-#   apopalypse: dropped - blimp damage 0.13 < 1.00
-#   hard: dropped - blimp damage 0.50 < 1.00
+#   84%, answers bought: ace, bomb
+#   apopalypse: dropped - blimp damage 0.14 < 1.00
+#   hard: dropped - blimp damage 0.48 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -44,7 +44,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, primary_only, deflation, medium, reverse]
 planner:
   towers: {dart: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.86, primary_only: 0.89, deflation: 0.86, medium: 0.8, reverse: 0.8}
+  base_success: {easy: 0.86, primary_only: 0.89, deflation: 0.87, medium: 0.8, reverse: 0.8}
 plan:
   - {do: place, id: a1, kind: dart, role: dps, segment: [0.0, 0.5]}   # main line: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

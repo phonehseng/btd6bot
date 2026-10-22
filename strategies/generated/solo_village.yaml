@@ -24,16 +24,16 @@
 # Monkey Ace 0-0-0; bfb: d1 0-0-4, else h_dart (Dart Monkey) 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 3.67, Monkey Village share of the cash
-#   28%, answers bought: ace, bomb
+#   easy: kept - no gaps, min blimp ratio 0.41, Monkey Village share of the cash
+#   37%, answers bought: ace, bomb
 #   deflation: kept - no gaps, min blimp ratio 0.72, Monkey Village share of the
-#   cash 38%
-#   medium: kept - no gaps, min blimp ratio 0.66, Monkey Village share of the
-#   cash 48%, answers bought: ace, bomb
-#   reverse: kept - no gaps, min blimp ratio 0.66, Monkey Village share of the
-#   cash 48%, answers bought: ace, bomb
-#   apopalypse: dropped - blimp damage 0.07 < 1.00
-#   hard: dropped - blimp damage 0.45 < 1.00
+#   cash 24%, answers bought: dart
+#   medium: kept - no gaps, min blimp ratio 3.82, Monkey Village share of the
+#   cash 29%, answers bought: ace, bomb
+#   reverse: kept - no gaps, min blimp ratio 3.82, Monkey Village share of the
+#   cash 29%, answers bought: ace, bomb
+#   apopalypse: dropped - blimp damage 0.09 < 1.00
+#   hard: dropped - blimp damage 0.42 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -45,7 +45,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, reverse]
 planner:
   towers: {ninja: [4, 2, 4], village: [2, 3, 0]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.83, deflation: 0.88, medium: 0.75, reverse: 0.75}
+  base_success: {easy: 0.8, deflation: 0.85, medium: 0.77, reverse: 0.77}
 plan:
   - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

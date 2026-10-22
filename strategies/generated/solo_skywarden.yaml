@@ -24,16 +24,17 @@
 # 0-0-4, else h_dart (Dart Monkey) 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: dropped - Skywarden gets only 16% of the cash: no XP game for it
+#   easy: kept - no gaps, min blimp ratio 3.72, Skywarden share of the cash 39%,
+#   answers bought: ace
 #   deflation: kept - no gaps, min blimp ratio 0.74, Skywarden share of the cash
-#   29%
-#   medium: kept - no gaps, min blimp ratio 2.73, Skywarden share of the cash
-#   45%, answers bought: ace, dart
-#   reverse: kept - no gaps, min blimp ratio 2.73, Skywarden share of the cash
-#   45%, answers bought: ace, dart
+#   28%, answers bought: dart
+#   medium: kept - no gaps, min blimp ratio 2.71, Skywarden share of the cash
+#   57%, answers bought: ace
+#   reverse: kept - no gaps, min blimp ratio 2.71, Skywarden share of the cash
+#   57%, answers bought: ace
 #   apopalypse: dropped - blimp damage 0.07 < 1.00
-#   hard: dropped - blimp damage 0.32 < 1.00
-#   magic_only: dropped - blimp damage 0.37 < 1.00
+#   hard: dropped - blimp damage 0.74 < 1.00
+#   magic_only: dropped - blimp damage 0.47 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -42,10 +43,10 @@
 id: solo_skywarden
 xp_target: skywarden   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [deflation, medium, reverse]
+modes: [easy, deflation, medium, reverse]
 planner:
   towers: {ninja: [4, 2, 4], skywarden: [2, 0, 4]}   # the crosspaths the build needs to be safe
-  base_success: {deflation: 0.88, medium: 0.77, reverse: 0.77}
+  base_success: {easy: 0.86, deflation: 0.85, medium: 0.8, reverse: 0.8}
 plan:
   - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

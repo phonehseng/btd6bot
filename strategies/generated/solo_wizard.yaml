@@ -21,10 +21,9 @@
 # Monkey) 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 0.55, Wizard Monkey share of the cash
-#   93%
-#   deflation: kept - no gaps, min blimp ratio 0.60, Wizard Monkey share of the
-#   cash 95%, answers bought: dart
+#   easy: dropped - blimp damage 0.37 < 0.40
+#   deflation: kept - no gaps, min blimp ratio 0.55, Wizard Monkey share of the
+#   cash 93%, answers bought: dart
 #   medium: dropped - blimp damage 0.35 < 0.40
 #   reverse: dropped - blimp damage 0.35 < 0.40
 #   apopalypse: dropped - blimp damage 0.11 < 1.00
@@ -37,10 +36,10 @@
 id: solo_wizard
 xp_target: wizard   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, deflation]
+modes: [deflation]
 planner:
   towers: {wizard: [4, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.9, deflation: 0.87}
+  base_success: {deflation: 0.87}
 plan:
   - {do: place, id: a1, kind: wizard, role: dps, segment: [0.0, 0.5]}   # main line: 0-4-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
