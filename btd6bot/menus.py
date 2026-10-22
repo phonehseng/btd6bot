@@ -15,6 +15,9 @@ log = logging.getLogger("menus")
 # screen -> list of keyword groups; all groups must match (any word within a group)
 SCREENS = [
     ("defeat", [["defeat", "gameover", "bloonsleaked", "youlost"]]),
+    # HEROES screen: SELECT/SELECTED (OCR often reads the C as a G) and the
+    # hero's "Ingame cost:", which the upgrade tree shows too - so it goes first
+    ("hero_select", [["select", "selegt"], ["ingamecost"]]),
     ("upgrade_tree", [["unlockall", "ingamecost", "appliestothismonkey"]]),
     ("profile", [["overallstats", "topmonkeys", "topheroes", "publicstats"]]),
     ("account", [["yourninjakiwiaccount", "signin", "resetpassword"]]),

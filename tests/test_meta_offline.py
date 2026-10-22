@@ -253,13 +253,6 @@ def test_to_main_menu_bounded():
     assert meta.to_main_menu() is True and len(inp.clicks) == 1
 
 
-def test_hero_purchase_disabled_by_default():
-    meta, inp = _new_meta(lambda: [])
-    assert meta.cfg.allow_hero_purchase is False
-    assert meta._buy_hero("adora", W("5,000", 0.6, 0.8)) is False
-    assert inp.clicks == []
-
-
 # -------------------------------------------- simulated upgrade-tree flow
 
 COL = {"unlocked": (99, 244, 253), "available": (54, 220, 203), "locked": (60, 40, 105)}

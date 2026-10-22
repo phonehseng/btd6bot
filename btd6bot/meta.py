@@ -9,8 +9,8 @@ Safety rules (on top of menus.FORBIDDEN):
   * never press Esc, never click "+" buttons, UNLOCK ALL, respec/reset, or
     anything showing a real-money price
   * Monkey Money is only spent on Monkey Knowledge nodes the planner order
-    asks for (tier 4+ gates cost MM), and on heroes only when
-    MetaConfig.allow_hero_purchase is True (default False)
+    asks for (tier 4+ gates cost MM); heroes are never bought (equipping is
+    done by heroes.HeroPicker)
   * purchase confirm dialogs are never closed with a generic "yes": they are
     confirmed explicitly after the price check, or cancelled
 
@@ -97,11 +97,8 @@ MK_OWNED_WORDS = ("unlocked", "owned", "learned", "acquired", "active")  # VERIF
 # filled in live when node names are not drawn on the tree.
 MK_NODE_POS: dict[tuple[str, str], tuple[float, float]] = {}
 
-# Hero picker. VERIFY LIVE: portrait grid on the left, details on the right.
-HERO_GRID_REGION = (0.0, 0.10, 0.35, 0.98)
-HERO_DETAIL_REGION = (0.35, 0.05, 1.0, 0.98)
+# Hero picker (opened here; choosing a hero is heroes.HeroPicker's job)
 CHANGE_HERO = (0.06, 0.93)           # map select / difficulty screen, label at y~0.976
-HERO_SELECT_FALLBACK = (0.59, 0.57)  # btd6farmer CONFIRM_HERO (16:9) - search region only
 
 CONFIRM_WORDS = ("confirm", "yes", "ok")
 CANCEL_WORDS = ("cancel", "no", "close")   # modal dismissals; never a yes/ok
@@ -563,8 +560,6 @@ def mk_mm_allowed(cost, account_mm, cfg, expected=None):
 
 @dataclass
 class MetaConfig:
-    allow_hero_purchase: bool = False   # spend MM on heroes (never real money)
-    max_hero_mm: int = 7000
     max_mk_mm_per_node: int = 1000      # T6/T7 MK price; anything above is refused
     mm_reserve: int = 0                 # never let MM drop below this through MK
     max_unlocks: int = 20               # tower-XP unlock steps per call
@@ -1065,101 +1060,3 @@ class Meta:
         if st == "hero_select" or (st == "unknown" and self._on_heroes()):
             return True, st
         return False, st
-
-    def _hero_button(self):
-        """(kind, word) of the hero action button: 'select' | 'selected' | 'buy' | None."""
-        detail = self._words_in(HERO_DETAIL_REGION)
-        for w in detail:
-            n = norm(w.text)
-            if n in ("selected", "equipped"):
-                return "selected", w
-        for w in detail:
-            if norm(w.text) == "select" and safe_text(w.text):
-                return "select", w
-        for w in detail:   # an MM price button: digits only (e.g. "2,500")
-            t = w.text.strip()   # VERIFY LIVE: unowned heroes show an MM price button
-            if re.fullmatch(r"[0-9][0-9,]{2,}", t) and not is_real_money(t) and (parse_int(t) or 0) >= 1000:
-                return "buy", w
-        return None, None
-
-    def select_hero(self, hero_id):
-        """Equip ``hero_id`` via HEROES / CHANGE HERO. Returns True when equipped."""
-        if hero_id not in T.HEROES:
-            log.warning("unknown hero %r", hero_id)
-            return False
-        name = T.HEROES[hero_id]["name"]
-        ok, origin = self._open_hero_picker()
-        if not ok:
-            log.warning("hero picker did not open (from %s)", origin)
-            if origin == "main_menu":
-                self.to_main_menu()
-            return False
-        equipped = False
-        try:
-            for attempt in range(4):
-                self._read()
-                # VERIFY LIVE: names under the portraits; else scroll the grid
-                w = next((w for w in self._words_in(HERO_GRID_REGION)
-                          if match_hero(w.text) == hero_id and safe_text(w.text)), None)
-                if w is None:
-                    self.inp.scroll(-3, 0.15, 0.55)
-                    self.sleep(0.6)
-                    continue
-                self._click_word(w, dy=-0.04, wait=1.0)   # portrait above the label
-                self._read()
-                detail = self._words_in(HERO_DETAIL_REGION)
-                if not any(match_hero(d.text) == hero_id for d in detail):
-                    log.info("hero detail does not show %s", name)
-                    continue
-                kind, btn = self._hero_button()
-                if kind == "selected":
-                    equipped = True
-                    break
-                if kind == "buy":
-                    if not self._buy_hero(hero_id, btn):
-                        break
-                    self._read()
-                    kind, btn = self._hero_button()
-                if kind == "select":
-                    self._click_word(btn, wait=1.0)
-                    self._read()
-                    k2, _ = self._hero_button()
-                    equipped = k2 == "selected" or (k2 is None and not self._find("select", exact=True))
-                    break
-                log.info("no SELECT button for %s (%s)", name, kind)
-                break
-        finally:
-            self._click(*BACK_ARROW, wait=1.2, what="back arrow")
-            if origin == "main_menu":
-                self.to_main_menu()
-            else:
-                back = self._state()
-                if back != origin:
-                    log.warning("after the hero picker: %s (came from %s)", back, origin)
-        if equipped:
-            self.acc.selected_hero = hero_id   # dynamic attribute, not persisted
-            log.info("hero %s equipped", hero_id)
-        return equipped
-
-    def _buy_hero(self, hero_id, btn):
-        """Monkey Money hero purchase; only with cfg.allow_hero_purchase."""
-        price = parse_int(btn.text)
-        if not self.cfg.allow_hero_purchase:
-            log.info("hero %s costs %s MM - purchase disabled", hero_id, price)
-            return False
-        if price is None or price > self.cfg.max_hero_mm or price > (self.acc.monkey_money or 0):
-            log.info("hero %s: price %s not affordable/allowed (MM %s)", hero_id, price, self.acc.monkey_money)
-            return False
-        self._click_word(btn, wait=1.0)
-        self._read()
-        conf = self._find(*CONFIRM_WORDS, exact=True)
-        dialog = mm_values(self.m.words)
-        if conf is None or dialog is None or price not in dialog:
-            log.warning("hero confirm dialog unexpected (%s MM) - cancelling", dialog)
-            self._click_word(self._find(*CANCEL_WORDS, exact=True))
-            return False
-        self._click_word(conf, wait=1.5)
-        self.acc.unlocked_heroes.add(hero_id)
-        self.acc.monkey_money = (self.acc.monkey_money or 0) - price
-        log.info("bought hero %s for %d MM", hero_id, price)
-        return True

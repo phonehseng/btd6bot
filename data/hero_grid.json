@@ -1,0 +1,126 @@
+{
+ "owned_scan": {
+  "SFYOSHHYV": 1792652014.9930992
+ },
+ "tiles": {
+  "admiral_brickell": {
+   "ticks": 4,
+   "tile": [
+    0.2349,
+    0.7779
+   ]
+  },
+  "adora": {
+   "ticks": 4,
+   "tile": [
+    0.1474,
+    0.7779
+   ]
+  },
+  "benjamin": {
+   "ticks": 0,
+   "tile": [
+    0.2349,
+    0.3833
+   ]
+  },
+  "churchill": {
+   "ticks": 0,
+   "tile": [
+    0.1474,
+    0.5613
+   ]
+  },
+  "corvus": {
+   "ticks": 8,
+   "tile": [
+    0.2349,
+    0.8371
+   ]
+  },
+  "dan_dmonke": {
+   "ticks": 0,
+   "tile": [
+    0.1474,
+    0.3833
+   ]
+  },
+  "etienne": {
+   "ticks": 0,
+   "tile": [
+    0.1474,
+    0.7388
+   ]
+  },
+  "ezili": {
+   "ticks": 0,
+   "tile": [
+    0.2349,
+    0.5613
+   ]
+  },
+  "geraldo": {
+   "ticks": 8,
+   "tile": [
+    0.1474,
+    0.8371
+   ]
+  },
+  "gwendolin": {
+   "ticks": 0,
+   "tile": [
+    0.1474,
+    0.2058
+   ]
+  },
+  "obyn": {
+   "ticks": 0,
+   "tile": [
+    0.0599,
+    0.3833
+   ]
+  },
+  "pat_fusty": {
+   "ticks": 0,
+   "tile": [
+    0.0599,
+    0.5613
+   ]
+  },
+  "psi": {
+   "ticks": 8,
+   "tile": [
+    0.0599,
+    0.8371
+   ]
+  },
+  "rosalia": {
+   "ticks": 4,
+   "tile": [
+    0.0529,
+    0.7717
+   ]
+  },
+  "sauda": {
+   "ticks": 0,
+   "tile": [
+    0.2349,
+    0.7388
+   ]
+  },
+  "silas": {
+   "ticks": 0,
+   "tile": [
+    0.05,
+    0.7325
+   ]
+  },
+  "striker_jones": {
+   "ticks": 0,
+   "tile": [
+    0.2349,
+    0.2058
+   ]
+  }
+ }
+}
