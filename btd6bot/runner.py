@@ -331,7 +331,7 @@ class Bot:
           * register maps the code does not know yet (new game updates), under
             the category tab they are listed in.
         Returns the number of maps read."""
-        from .account import _norm, canonical_map, register_map
+        from .account import MAPS, _norm, canonical_map, register_map
         from .medals import read_grid_card
         set_state("reading map medals from the map select pages")
         self.inp.click(0.5, 0.88)  # PLAY
@@ -340,12 +340,21 @@ class Bot:
             self.to_main_menu()
             return 0
         # first page of each category tab -> lets us tell which category a
-        # page belongs to while paging through everything below
+        # page belongs to while paging through everything below. A locked
+        # category also shows its unlock bar at the top ("7 / 12" map wins).
+        import re
         first_page = {}
         for cat, pos in self.CATEGORY_TABS.items():
             self.inp.click(*pos)
             time.sleep(0.8)
             first_page[cat] = {_norm(t) for t, _ in self._page_names()}
+            bar = next((re.search(r"(\d+)\s*/\s*(\d+)", w.text) for w in self.menus.words
+                        if w.y < 0.08 and re.search(r"\d+\s*/\s*\d+", w.text)), None)
+            if bar and int(bar.group(1)) < int(bar.group(2)):
+                self.account.category_progress[cat] = [int(bar.group(1)), int(bar.group(2))]
+                log.info("medal scan: %s maps locked (%s/%s map wins)", cat, bar.group(1), bar.group(2))
+            else:
+                self.account.category_progress[cat] = [1, 1]  # no bar: unlocked
         self.inp.click(*self.CATEGORY_TABS["beginner"])
         time.sleep(0.8)
 
@@ -369,6 +378,8 @@ class Bot:
                 if name is None or name in page:
                     continue
                 page.append(name)
+                if MAPS.get(name) != category:  # the game lists it elsewhere
+                    self.account.map_category_overrides[name] = category
                 found[name] = read_grid_card(frame, *cell)
             if not page or page in seen_pages:
                 break  # wrapped around to a page we already read

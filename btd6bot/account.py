@@ -296,6 +296,9 @@ class AccountState:
     strategy_stats: dict[str, dict[str, Any]] = field(default_factory=dict)
     pending_tower_choices: list[str] = field(default_factory=list)  # categories awaiting a pick
     map_category_overrides: dict[str, str] = field(default_factory=dict)
+    # category -> [map wins counted by the game, wins needed], read from the
+    # bar at the top of each map-select category ("7 / 12"); absent = unknown
+    category_progress: dict[str, list[int]] = field(default_factory=dict)
     observed_upgrade_costs: dict[str, dict[str, int]] = field(default_factory=dict)  # tower -> "p-t" -> xp
     games_played: int = 0
     history: list[dict[str, Any]] = field(default_factory=list)
@@ -340,6 +343,7 @@ class AccountState:
         st.strategy_stats = raw.get("strategy_stats", {})
         st.pending_tower_choices = list(raw.get("pending_tower_choices", []))
         st.map_category_overrides = dict(raw.get("map_category_overrides", {}))
+        st.category_progress = {k: list(v) for k, v in raw.get("category_progress", {}).items()}
         st.observed_upgrade_costs = raw.get("observed_upgrade_costs", {})
         st.games_played = int(raw.get("games_played", 0))
         st.history = list(raw.get("history", []))
@@ -363,6 +367,7 @@ class AccountState:
             "strategy_stats": self.strategy_stats,
             "pending_tower_choices": self.pending_tower_choices,
             "map_category_overrides": self.map_category_overrides,
+            "category_progress": self.category_progress,
             "observed_upgrade_costs": self.observed_upgrade_costs,
             "games_played": self.games_played,
             "history": self.history[-self.HISTORY_LIMIT:],
@@ -436,6 +441,11 @@ class AccountState:
                    if m in MAPS and any(d.values()))
 
     def category_unlocked(self, category: str) -> bool:
+        """The game's own count when the map-select sweep has read it, else an
+        estimate from the medals in our notes."""
+        seen = self.category_progress.get(category)
+        if seen:
+            return seen[0] >= seen[1]
         return self.unique_map_wins() >= CATEGORY_UNLOCK_WINS[category]
 
     def map_unlocked(self, map_name: str) -> bool:
