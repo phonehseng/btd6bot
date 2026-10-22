@@ -226,6 +226,7 @@ class Bot:
 
     def open_map(self, map_name):
         """Main menu -> map select -> search -> map's difficulty screen."""
+        set_state(f"opening map {map_name}")
         for attempt in range(4):
             self.inp.click(0.5, 0.88)  # PLAY
             st = self.menus.wait_for("map_select", timeout=5)
@@ -272,6 +273,54 @@ class Bot:
         log.warning("open_map: clicking %s did not open its difficulty screen (screen: %s, saw %s)",
                     map_name, self.menus.identify(), [w.text for w in self.menus.words][:12])
         return False
+
+    def scan_all_medals(self, max_pages=30):
+        """Map select, page by page: adopt every mode's medal shown on each map
+        card (a save from elsewhere has medals we never saw). ~17 pages, ~1 min."""
+        import difflib
+        from .account import MAPS, _norm, canonical_map
+        from .medals import grid_cell, read_grid_card
+        set_state("reading map medals from the map select pages")
+        self.inp.click(0.5, 0.88)  # PLAY
+        if self.menus.wait_for("map_select", timeout=6) != "map_select":
+            log.warning("medal scan: PLAY did not reach map select")
+            self.to_main_menu()
+            return 0
+        names = {_norm(m): m for m in MAPS}
+        seen_pages, found, new = [], {}, 0
+        for _ in range(max_pages):
+            time.sleep(0.5)
+            frame = self.s.grab()
+            page = []
+            for w in self.menus.read():
+                if not 0.1 < w.y < 0.75:
+                    continue
+                key = _norm(w.text)
+                m = names.get(key)
+                if m is None and len(key) >= 5:
+                    close = difflib.get_close_matches(key, names, n=1, cutoff=0.85)
+                    m = names[close[0]] if close else None
+                if m is None or m in page:
+                    continue
+                cell = grid_cell(w.x, w.y)
+                if cell is None:
+                    continue
+                page.append(m)
+                found[m] = read_grid_card(frame, *cell)
+            if not page or page in seen_pages:
+                break  # wrapped around to a page we already read
+            seen_pages.append(page)
+            self.inp.click(0.903, 0.40)  # next page arrow
+        for m, medals in found.items():
+            rec = self.account.medals.setdefault(canonical_map(m), {})
+            for d, earned in medals.items():
+                if earned and not rec.get(d):
+                    rec[d] = True
+                    new += 1
+        self.account.save()
+        log.info("medal scan: %d maps read on %d pages, %d medals adopted", len(found), len(seen_pages), new)
+        self.to_main_menu()
+        return len(found)
 
     def sync_medals(self, map_name, label):
         """Adopt the medals the save file shows on this map's card."""
@@ -535,6 +584,8 @@ class Bot:
             log.info("syncing account %s from the game (upgrades, level)", uid)
             set_state("reading the account: owned towers and upgrade trees")
             sync_all(self.s, self.inp, self.menus, self.account)
+            self.to_main_menu()
+            self.scan_all_medals()
             mark_synced(uid)
             self.to_main_menu()
 
