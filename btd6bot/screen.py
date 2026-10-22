@@ -101,6 +101,25 @@ class Screen:
             return False
         return h == self.hwnd or win32process.GetWindowThreadProcessId(h)[1] == self._pid()
 
+    # Windows the bot may minimize when they cover the game (title of the
+    # top-level window). The Claude desktop app restores its window over the
+    # game's right side when a message arrives; twice on 2026-10-22 the bot
+    # then waited for minutes, refusing to click under it.
+    MINIMIZE_WHEN_COVERING = ("Claude",)
+
+    def clear_point(self, fx, fy):
+        """If a known app window covers the game at (fx, fy), minimize it.
+        Returns its title when it did, else None (other windows are left
+        alone: the bot waits for them)."""
+        x, y = self.to_px(fx, fy)
+        h = win32gui.WindowFromPoint((x, y))
+        top = win32gui.GetAncestor(h, 2) if h else 0     # GA_ROOT: the top-level window
+        title = win32gui.GetWindowText(top) if top else ""
+        if top and top != self.hwnd and title in self.MINIMIZE_WHEN_COVERING:
+            win32gui.ShowWindow(top, win32con.SW_MINIMIZE)
+            return title
+        return None
+
     # -- capture ----------------------------------------------------------
     def grab(self, region=None):
         """BGR image of the client area, or of region=(fx0, fy0, fx1, fy1).

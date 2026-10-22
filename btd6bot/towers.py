@@ -228,7 +228,7 @@ TOWERS: dict[str, dict] = {
                   ("Super Glue", 24000, "stops moabs")),
         ]),
     "desperado": _tower(
-        "Desperado", "primary", None, 300, 50, "land", 6,  # range ?, footprint ?
+        "Desperado", "primary", "o", 300, 50, "land", 6,  # range ?, footprint ?
         "gift-box tower; revolver; no camo base?",  # ?
         [
             _path(("Quickdraw", 200, ""),
@@ -490,7 +490,7 @@ TOWERS: dict[str, dict] = {
                   ("Avatar of Wrath", 45000, "strong")),
         ]),
     "mermonkey": _tower(
-        "Mermonkey", "magic", None, 300, 40, "land_or_water", 7,  # range ?, footprint ?
+        "Mermonkey", "magic", "p", 300, 40, "land_or_water", 7,  # range ?, footprint ?
         "gift-box tower; tridents; no camo base?",  # ?
         [
             _path(("Trident Efficiency", 150, "pierce"),
@@ -510,7 +510,7 @@ TOWERS: dict[str, dict] = {
                   ("The Final Harmonic", 25000, "")),
         ]),
     "skywarden": _tower(
-        "Skywarden", "magic", None, 205, 48, "land", 7,  # footprint ?
+        "Skywarden", "magic", ";", 205, 48, "land", 7,  # footprint ?
         "added v56; gift box (3.5M pops); arrows (sharp); no camo base?",  # ?
         [
             _path(("Aerial Attunement", 140, "range; buffs nearby towers"),   # v57: 110 -> 140
@@ -631,6 +631,10 @@ TOWERS: dict[str, dict] = {
                   ("Pouākai", 30000, "")),
         ]),
 }
+
+# Desperado "o", Mermonkey "p" and Skywarden ";" have no hotkey by default:
+# these were bound in the game's Settings -> Hotkeys on 2026-10-22 (keys no
+# other binding uses). A fresh install needs them bound again.
 
 # Default PC hotkey for the selected hero slot.
 HERO_HOTKEY = "u"

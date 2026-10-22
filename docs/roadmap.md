@@ -36,7 +36,7 @@ maps. Never lose, never replay a beaten map/mode.
 - [x] Round forecast: the damage model rates every round as it starts
 - [ ] Abilities in a crisis: before panic buys on a leak, early in forecast crisis rounds
 - [ ] Bloon depth watch: how far along the route bloons get, per round (observing; act on it once it agrees with the lives counter - CHIMPS has one life)
-- [ ] Desperado, Mermonkey, Skywarden placeable (no hotkey by default: bind one, or pick them from the shop panel)
+- [x] Desperado, Mermonkey, Skywarden placeable (hotkeys O, P, ; bound in the game and checked in Sandbox)
 - [ ] Win Hard reliably on most maps
 - [ ] CHIMPS strategies and wins
 

@@ -190,16 +190,20 @@ def _code_imports():
         return False
 
 
+BATCH_STRATEGY_DIRS = ("optimized", "maps")   # written in batches: no reload per file
+
+
 def _code_stamp():
     """Latest modification time of the bot's code and strategy files.
 
-    strategies/optimized is left out: a batch of tools/optimize_builds.py
-    writes a file every minute or two, and each one made the bot exit and
-    reload between games (2026-10-22). Its builds load at the next restart."""
+    strategies/optimized and strategies/maps are left out: a batch of
+    tools/optimize_builds.py, or research agents writing map builds, add a
+    file every minute or two, and each one made the bot exit and reload
+    between games (2026-10-22). Their builds load at the next restart."""
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
     files = list((root / "btd6bot").glob("*.py")) + [
-        f for f in (root / "strategies").rglob("*.yaml") if "optimized" not in f.parent.name]
+        f for f in (root / "strategies").rglob("*.yaml") if f.parent.name not in BATCH_STRATEGY_DIRS]
     return max((f.stat().st_mtime for f in files), default=0)
 
 

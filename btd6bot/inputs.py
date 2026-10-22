@@ -4,11 +4,14 @@ Every single event re-checks that BTD6 is the foreground window right before it
 is sent. If focus moved elsewhere (another app, a notification)
 the bot stops instead of typing into that window. F8 aborts the bot at any time.
 """
+import logging
 import time
 
 import pydirectinput as pdi
 import win32api
 import win32con
+
+log = logging.getLogger("inputs")
 
 pdi.PAUSE = 0.0
 pdi.FAILSAFE = False
@@ -80,6 +83,11 @@ class Input:
         for _ in range(10):  # e.g. a notification sliding over the click point
             if self.screen.owns_point(fx, fy):
                 return
+            cleared = getattr(self.screen, "clear_point", lambda *a: None)(fx, fy)
+            if cleared:
+                log.warning("minimized the %r window covering the game", cleared)
+                time.sleep(0.5)
+                continue
             time.sleep(2)
         raise FocusLost(f"another window covers the game at ({fx:.3f}, {fy:.3f}) - not clicking")
 
