@@ -1203,24 +1203,72 @@ class Executor:
     NEAR_WIDENING = (1.5, 2.2)
 
     def _spots_widening(self, kind, step):
-        """Candidate spots for a place step, widening a `near` search that
-        finds none. Returns [] only when even the role alone has no spot."""
+        """Candidate spots for a place step. A step that finds none is
+        relaxed in stages before it may be given up, because a damage tower
+        not placed is cash left idle while bloons leak (Covered Garden Hard:
+        $49,876 unspent at round 75, steps "given up after 0 refused spots"):
+          1. a `near` search widens (x1.5, x2.2), then drops `near`;
+          2. the progress `segment` is dropped (any part of the track);
+          3. a support/far step is tried as a damage tower would be;
+          4. a global-range tower (sniper, mortar, ...) takes any legal spot.
+        Each relaxation that finds spots is logged; a real dead end logs how
+        much legal ground there was, so the cause shows in the log."""
         spots = self.pick_spots(kind, step, n=self.SPOTS_PER_HOLD)
-        if spots or not step.get("near"):
-            return spots
-        radius = step.get("near_radius", 9)   # pick_spots' default
-        for factor in self.NEAR_WIDENING:
-            wider = dict(step, near_radius=radius * factor)
-            spots = self.pick_spots(kind, wider, n=self.SPOTS_PER_HOLD)
-            if spots:
-                log.info("%s: no spot within %g of %s - using radius %g",
-                         step.get("id", kind), radius, step["near"], radius * factor)
-                return spots
-        anywhere = {k: v for k, v in step.items() if k not in ("near", "near_radius")}
-        spots = self.pick_spots(kind, anywhere, n=self.SPOTS_PER_HOLD)
         if spots:
-            log.info("%s: no spot near %s - placing by role only", step.get("id", kind), step["near"])
+            return spots
+        label = step.get("id", kind)
+        tries = []
+        if step.get("near"):
+            radius = step.get("near_radius", 9)   # pick_spots' default
+            for factor in self.NEAR_WIDENING:
+                tries.append((dict(step, near_radius=radius * factor),
+                              f"no spot within {radius:g} of {step['near']} - using radius {radius * factor:g}"))
+            step = {k: v for k, v in step.items() if k not in ("near", "near_radius")}
+            tries.append((step, f"no spot near the towers it supports - placing by role only"))
+        if "segment" in step:
+            step = {k: v for k, v in step.items() if k != "segment"}
+            tries.append((step, "no spot covering its part of the track - any part of the track"))
+        if step.get("role") in ("support", "far") and kind != "hero":
+            step = dict(step, role="dps")
+            tries.append((step, "no support spot - placing it where it covers track"))
+        for relaxed, why in tries:
+            spots = self.pick_spots(kind, relaxed, n=self.SPOTS_PER_HOLD)
+            if spots:
+                log.info("%s: %s", label, why)
+                return spots
+        spots = self._any_legal_spot(kind)
+        if spots:
+            log.info("%s: no spot reaches the track - global range, any legal spot", label)
         return spots
+
+    def _any_legal_spot(self, kind):
+        """For a tower with global range (range None: sniper, mortar, heli,
+        ace, dartling), any legal cell will do. [] for other towers, and logs
+        how much legal ground there was (the diagnosis of a dead end)."""
+        from . import placement as PL
+        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
+                  for p in self.g.towers.values()]
+        valid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
+                               where={"land"} if self.land_only else None)
+        if valid is None:
+            return []
+        legal = int(valid.sum())
+        if kind == "hero" or T.TOWERS.get(kind, {}).get("range", 0) is not None:
+            log.info("%s: no spot found (%d legal cells, none in reach of the track)", kind, legal)
+            return []
+        ys, xs = np.nonzero(valid)
+        out = []
+        for cx, cy in zip(xs.tolist(), ys.tolist()):
+            if (kind, cx, cy) in self.failed_spots or self.blocked[cy, cx]:
+                continue
+            if any((cx - ox) ** 2 + (cy - oy) ** 2 < 9 for ox, oy, _ in out):
+                continue
+            out.append((cx, cy, 1.0))
+            if len(out) >= self.SPOTS_PER_HOLD:
+                break
+        if not out:
+            log.info("%s: no legal spot left (%d legal cells, all tried)", kind, legal)
+        return out
 
     def _out_of_spots(self, step, key):
         """No spot was accepted for this step: SPOT_LIMIT refusals in a row,
