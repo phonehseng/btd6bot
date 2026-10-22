@@ -825,7 +825,8 @@ def map_fit_factor(s: StrategySpec, map_name: str, mode: str) -> float:
     """1.0 when the plan's damage towers reach enough of the track (or when
     that is not measured), less when they do not."""
     from .mapfit import strategy_fit
-    fit = strategy_fit(map_name, s.dps_kinds, reverse=(mode == "reverse"), weights=s.cost_share)
+    fit = strategy_fit(map_name, s.dps_kinds, reverse=(mode == "reverse"), weights=s.cost_share,
+                       last_round=MODES[mode].end_round)
     if fit is None:
         return 1.0
     return min(1.0, max(MIN_FIT_FACTOR, fit / FULL_FIT))
