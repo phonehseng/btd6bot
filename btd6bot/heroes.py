@@ -93,8 +93,11 @@ class HeroPicker:
         return " ".join(w.text for w in self.menus.v.read(region))
 
     def shown_hero(self):
-        """Hero id whose name is shown at the top, or None."""
-        return match_hero(self._text(NAME))
+        """Hero id whose name is shown at the top, or None. The game's font
+        makes OCR read C as G ("quINGY" for Quincy), so a failed match is
+        tried again with G read as C."""
+        text = self._text(NAME)
+        return match_hero(text) or match_hero(text.replace("G", "C").replace("g", "c"))
 
     def button(self):
         """'selected', 'select', 'locked' (a price or unlock text: not owned),

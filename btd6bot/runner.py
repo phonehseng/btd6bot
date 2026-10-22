@@ -691,12 +691,31 @@ class Bot:
         while time.time() < end:
             st = self.menus.wait_for({"in_game", "overwrite"}, timeout=3)
             if st == "in_game":
+                self._close_mode_intro()
                 return True
             if st == "overwrite":
                 self.menus.click_word("ok", "yes", "overwrite")
             elif st == "unknown":
                 self.menus.dismiss_popup()
         return self.menus.in_game()
+
+    # The intro box of a mode ("DEFLATION - Start at round 31 with $40,400
+    # cash, but you can't earn any more. OK") sits over a game that already
+    # reads as in_game (the HUD shows around it), and until its OK is clicked
+    # no tower can be picked up: Alpine Run Deflation tried 14 pick-ups and
+    # gave the game up. Its OK button sits in this region.
+    MODE_INTRO_OK = (0.35, 0.6, 0.65, 0.8)
+
+    def _close_mode_intro(self):
+        """Click the OK of a mode's intro box if one is up (game just loaded)."""
+        for _ in range(3):
+            time.sleep(0.8)
+            self.menus.read()
+            w = self.menus.find("ok", region=self.MODE_INTRO_OK)
+            if w is None:
+                return
+            log.info("mode intro box: clicking %r", w.text)
+            self.inp.click(w.x, w.y)
 
     # -- one game ------------------------------------------------------------------
     def play(self, plan):
