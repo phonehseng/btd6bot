@@ -1175,5 +1175,7 @@ class Executor:
             return True
 
     def defended(self):
-        return any(p.kind != "hero" for p in self.g.towers.values()) or \
-            any(p.kind == "hero" for p in self.g.towers.values())
+        """At least one tower (not just the hero) is placed. A lone hero leaked
+        20 lives on Logs when the first tower's spot was refused; the rule is
+        never to start a round without a real defence."""
+        return any(p.kind != "hero" for p in self.g.towers.values())

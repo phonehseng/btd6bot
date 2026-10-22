@@ -46,7 +46,7 @@ log = logging.getLogger("gamefiles")
 ROOT = Path(__file__).resolve().parents[1]
 GEOMETRY_DIR = ROOT / "data" / "map_geometry"
 CACHE = Path.home() / ".btd6bot_cache" / "bundles"   # copies of game bundles
-GEOMETRY_VERSION = 5   # bump when the extracted format changes
+GEOMETRY_VERSION = 6   # bump when the extracted format or its reading changes
 
 # The game's AreaType enum (Assets.Scripts.Models.Map.AreaType in GameAssembly)
 AREA_TYPES = {0: "track", 1: "water", 2: "land", 3: "unplaceable", 4: "ice",

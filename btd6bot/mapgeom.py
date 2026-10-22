@@ -115,12 +115,15 @@ class Projection:
 
 
 def _poly_mask(polygons, proj):
+    """Cells covered by an area. As in the game (Unity Area.ToModel), the first
+    polygon is the area's outline and every further polygon is a HOLE in it:
+    Logs' track outline has the grass blocks between its lanes as holes."""
     w, h = GRID
     img = np.zeros((h, w), np.uint8)
-    for poly in polygons:
+    for i, poly in enumerate(polygons):
         if len(poly) >= 3:
             pts = np.round(proj.to_cells(poly)).astype(np.int32)
-            cv2.fillPoly(img, [pts], 1)
+            cv2.fillPoly(img, [pts], 1 if i == 0 else 0)
     return img > 0
 
 
