@@ -51,6 +51,12 @@ class MapModel:
         self.px_per_unit = None
         # placement scan per footprint class ("land"/"water"): 0 unknown, 1 ok, 2 blocked
         self.scan = {}
+        # Spots the game refused during play, per surface ("land"/"water"):
+        # bool grids, True = refused. Kept apart from `scan` on purpose:
+        # mapgeom.apply() rewrites `scan` from the game files whenever the
+        # geometry is (re-)applied, and refusals written into `scan` used to
+        # vanish with it, so the bot tried the same bad spots on every visit.
+        self.refused = {}
         # experience: "kind|cx|cy" -> [sum of relative pops-per-dollar, games]
         self.spot_stats = {}
 
@@ -63,6 +69,7 @@ class MapModel:
         """Atomic write with retries (OneDrive can briefly lock files)."""
         DATA.mkdir(parents=True, exist_ok=True)
         scans = {f"scan_{k}": v for k, v in self.scan.items()}
+        scans.update({f"refused_{k}": v for k, v in self.refused.items()})
         for key in ("small_only", "sight", "size_limit", "mermonkey_water"):
             if getattr(self, key, None) is not None:
                 scans[f"geom_{key}"] = getattr(self, key)
@@ -105,6 +112,8 @@ class MapModel:
                 for k in d.files:
                     if k.startswith("scan_"):
                         m.scan[k[5:]] = d[k]
+                    elif k.startswith("refused_"):
+                        m.refused[k[len("refused_"):]] = d[k].astype(bool)
             except Exception:
                 return cls(name, playfield)  # corrupt file: relearn rather than crash
         return m
@@ -120,6 +129,10 @@ class MapModel:
         not to be water."""
         if cls == "land_or_water":  # e.g. Mermonkey: blocked only where both are
             return self.blocked("land") & self.blocked("water")
+        return self._scan_blocked(cls) | self.refused_mask(cls)
+
+    def _scan_blocked(self, cls):
+        """blocked() as the placement scan alone sees it (no refusals)."""
         s = self.scan.get(cls)
         if cls == "water":
             if s is not None:
@@ -131,6 +144,21 @@ class MapModel:
         if s is None:
             return np.zeros(self.heat.shape, bool)
         return s == 2
+
+    def refused_mask(self, surface):
+        """bool grid: cells where the game refused a tower on this surface."""
+        grid = self.refused.get(surface)
+        return grid if grid is not None else np.zeros(self.heat.shape, bool)
+
+    def refuse(self, surface, cx, cy, r=1):
+        """Remember that the game refused a tower centred on cell (cx, cy):
+        the (2r+1)-cell square around it is never offered again, in this game
+        or later ones (saved with the model, untouched by mapgeom.apply)."""
+        grid = self.refused.get(surface)
+        if grid is None:
+            grid = self.refused[surface] = np.zeros(self.heat.shape, bool)
+        h, w = grid.shape
+        grid[max(0, cy - r):min(h, cy + r + 1), max(0, cx - r):min(w, cx + r + 1)] = True
 
     def scanned(self, cls="land"):
         if cls == "water":  # water scans are sparse by design

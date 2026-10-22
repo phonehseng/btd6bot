@@ -11,6 +11,72 @@ from .maplearn import PathTracer
 log = logging.getLogger("match")
 
 
+class LivesTracker:
+    """The confirmed lives count, from noisy OCR reads of the HUD.
+
+    * Leaks: the median of the last 5 reads (OCR flickers 120/121) falling
+      below the confirmed count is a leak of any size - a MOAB leak is the
+      worst case, not noise.
+    * Rises: lives only go up by a few at a time, so a read more than
+      RISE_LIMIT above the confirmed count is ignored (Easy's 200 was read as
+      "2001" for a whole game, and letting that in would later look like a
+      huge leak and trigger panic buying) ...
+    * ... unless RISE_VOTES reads in a row agree on it. Without this, one
+      wrong LOW value (a bad first read, say 15 for 150) was confirmed
+      forever: every true read was then "too high" and ignored, and leaks
+      were never noticed again.
+    * A read above `max_lives` (twice the mode's starting lives plus 25, room
+      for bonus lives) is never believed, however steady - not even as the
+      first read of the game, which would turn every true read into a leak.
+    """
+    RISE_LIMIT = 50
+    RISE_VOTES = 4
+
+    def __init__(self, start_lives=None):
+        self.confirmed = None
+        self.reads = []                       # last 5 accepted reads
+        self.max_lives = 2 * start_lives + 25 if start_lives else None
+        self._cand, self._votes = None, 0     # an upward correction being voted on
+
+    def median(self):
+        return sorted(self.reads)[len(self.reads) // 2] if self.reads else None
+
+    def update(self, read):
+        """Feed one read (None = unreadable). Returns the lives lost (0 if none)."""
+        if read is not None and self.max_lives and read > self.max_lives:
+            read = None    # impossible for this mode, even as the very first read
+        if read is not None and self.confirmed is not None and read > self.confirmed + self.RISE_LIMIT:
+            if not self._vote_rise(read):
+                return 0
+        elif read is not None:
+            self._cand, self._votes = None, 0
+        if read is not None:
+            self.reads = (self.reads + [read])[-5:]
+        med = self.median()
+        if med is not None and self.confirmed is not None and med < self.confirmed:
+            lost, self.confirmed = self.confirmed - med, med
+            return lost
+        if self.confirmed is None and med is not None:
+            self.confirmed = med
+        return 0
+
+    def _vote_rise(self, read):
+        """A read far above the confirmed count. True once RISE_VOTES reads in
+        a row agree (within 2): the count then restarts from it. False while
+        it is still only a suspected misread."""
+        if self._cand is not None and abs(read - self._cand) <= 2:
+            self._votes += 1
+        else:
+            self._cand, self._votes = read, 1
+        if self._votes < self.RISE_VOTES:
+            return False
+        log.warning("lives tracking corrected %s -> %s (%d agreeing reads)",
+                    self.confirmed, read, self._votes)
+        self.confirmed, self.reads = read, []
+        self._cand, self._votes = None, 0
+        return True
+
+
 def _hero_id(text):
     n = "".join(c for c in text.lower() if c.isalnum())
     for hid, h in T.HEROES.items():
@@ -30,7 +96,7 @@ class Match:
         self.on_tower_choice = on_tower_choice
         self.stats = {"start": time.time(), "rounds": 0, "lives_lost": 0, "panic": 0}
         self._prev_lives_read = None
-        self._lives_reads = []
+        self._lives = LivesTracker((getattr(executor, "rules", None) or {}).get("lives"))
         self._round_cand, self._round_votes = None, 0
         self._last_buy = time.time()
         self._last_wait_log = 0.0
@@ -103,7 +169,7 @@ class Match:
         self.g.go_fast(allow_start=True)
         self._in_round = True
         last_round = self.g.round()
-        last_lives = self.g.lives()
+        self._lives.update(self.g.lives())
         self.tracer.start_round()
         t_hud = t_ability = 0.0
         cash = None
@@ -146,24 +212,12 @@ class Match:
                 lives = self.g.hud.lives(f)
                 if (cash is None or lives is None) and self.g.close_panels():
                     continue
-                # lives: median of the last 5 reads (OCR flickers 120/121), any
-                # size of drop counts - a MOAB leak is the worst case, not noise
-                # Lives never jump up by more than a few (+25 from a bonus at
-                # most): a read far above the confirmed count is a misread
-                # (Easy's 200 read as "2001"), and letting it in would later
-                # look like a huge leak and trigger panic buying.
-                if lives is not None and last_lives is not None and lives > last_lives + 50:
-                    lives = None
-                if lives is not None:
-                    self._lives_reads = (self._lives_reads + [lives])[-5:]
-                med = sorted(self._lives_reads)[len(self._lives_reads) // 2] if self._lives_reads else None
-                if med is not None and last_lives is not None and med < last_lives:
-                    self.stats["lives_lost"] += last_lives - med
+                # leaks, misreads and upward corrections: see LivesTracker
+                lost = self._lives.update(lives)
+                if lost:
+                    self.stats["lives_lost"] += lost
                     dropped = True
-                    log.warning("lost %d lives (now %d)", last_lives - med, med)
-                    last_lives = med
-                elif last_lives is None and med is not None:
-                    last_lives = med
+                    log.warning("lost %d lives (now %d)", lost, self._lives.confirmed)
                 self._prev_lives_read = lives
                 # rounds only move forward, one or two at a time
                 if rnd is not None and last_round is not None and last_round < rnd <= last_round + 2:
@@ -173,7 +227,7 @@ class Match:
                     if self.stats["rounds"] % 5 == 0:
                         self.m.save()
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
-                    status.in_game(f"round {rnd}, ${cash}, {last_lives} lives")
+                    status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
                 elif rnd is not None and rnd != last_round:
                     # a reading outside the expected step: adopt it only if it
@@ -257,7 +311,7 @@ class Match:
         if st in self.MENU_SCREENS:
             self._menu_reads = getattr(self, "_menu_reads", 0) + 1
             if self._menu_reads >= 3:
-                lives = sorted(self._lives_reads)[len(self._lives_reads) // 2] if self._lives_reads else None
+                lives = self._lives.median()
                 outcome = "defeat" if lives is None or lives <= 20 else "abandoned"
                 log.warning("back at the menus mid-game (%s; last lives %s) - recording %s", st, lives, outcome)
                 return outcome
@@ -312,7 +366,7 @@ class Match:
         if st != "defeat":
             return True
         lives = self.g.hud.lives(f) if f is not None else None
-        known = sorted(self._lives_reads)[len(self._lives_reads) // 2] if self._lives_reads else None
+        known = self._lives.median()
         if lives and lives > 0 and (known is None or known > 0):
             hits = [w.text for w in self.menus.words
                     if any(k in norm(w.text) for k in ("defeat", "gameover", "bloonsleaked", "youlost"))]

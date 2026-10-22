@@ -53,7 +53,7 @@ class FakeGame:
     def price(self, kind):
         return 500 if kind == "hero" else T.TOWERS[kind]["cost"]
 
-    def place(self, tid, kind, fx, fy, check_valid=True):
+    def place(self, tid, kind, fx, fy, check_valid=True, more_spots=()):
         self.towers[tid] = Placed(tid, kind, fx, fy)
         self.placed.append(kind)
         return True

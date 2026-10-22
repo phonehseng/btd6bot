@@ -259,6 +259,36 @@ def final_build(strat, account=None):
     return build
 
 
+def invested_cash(strat):
+    """{kind: dollars} the strategy's `plan` steps put into each tower type
+    (Medium prices from towers.py), or None when the plan places no towers.
+
+    Tower XP is split between tower types by the cash invested in them at
+    each round end (docs/tower_xp.md), so this is what the planner uses to
+    estimate which towers a game levels up. Only the `plan` section counts:
+    `fill`, `panic` and `answers` depend on how the game goes. Heroes are
+    left out, as the game leaves them out of the split."""
+    kinds = {}    # placed tower id -> kind
+    tiers = {}    # placed tower id -> [p1, p2, p3] it ends the plan with
+    for st in strat.get("plan") or []:
+        kind = st.get("kind")
+        if st.get("do") == "place" and kind in T.TOWERS:
+            tid = st.get("id") or f"#{len(kinds)}"   # unnamed towers stay separate
+            kinds.setdefault(tid, kind)
+            tiers.setdefault(tid, [0, 0, 0])
+        elif st.get("do") == "upgrade" and st.get("to"):
+            # by id: that tower; by kind only: every placed tower of the kind
+            targets = [st["id"]] if st.get("id") in tiers else \
+                [tid for tid, k in kinds.items() if k == kind and not st.get("id")]
+            want = parse_cross(st["to"])
+            for tid in targets:
+                tiers[tid] = [max(a, b) for a, b in zip(tiers[tid], want)]
+    cash = {}
+    for tid, kind in kinds.items():
+        cash[kind] = cash.get(kind, 0) + T.total_cost(kind, tuple(tiers[tid]))
+    return cash or None
+
+
 def reachable_tier(account, kind, path0):
     """Highest tier on path (0-based) this account has, or can unlock before the
     game: unlocked tiers, plus tiers 1-2 when the tower has banked XP for them."""
@@ -695,9 +725,17 @@ class Executor:
         self.panic_pending = 0
         self.unanswerable = set()
         self.hold_fails = {}       # kind -> times the hotkey would not pick it up
-        self.step_spot_fails = {}  # id(step) -> refused spots for that step
+        # Refused spots are counted per step under a key that survives copying
+        # (_step_key): panic and answer steps run from fresh dict copies, so a
+        # count keyed by id(step) never added up and they retried forever.
+        self.step_spot_fails = {}  # step key -> spots refused in a row for that step
+        self.dead_steps = set()    # step keys given up for this game (no spot accepted)
+        self.deferred = []         # plan steps retried later instead (the hero)
+        self.retry_at = {}         # step key -> time before which it is not retried
+        self.hero_misses = 0       # times the hero ran out of accepted spots
         self.learned_blocks = 0
         self.upgrade_fails = {}    # (tid, path) -> non-XP failures this game
+        self.panel_price = {}      # (tid, path, tier) -> price the panel asked (above table)
         self.last_try = 0.0
         self.blocked = np.zeros(model.heat.shape, bool)  # this game's no-go cells
         for p in game.towers.values():
@@ -778,22 +816,35 @@ class Executor:
 
     # -- helpers ------------------------------------------------------------
     def _learn_blocked(self, kind, cx, cy):
-        """The game refused this spot although the saved scan said it was fine:
-        correct the map's scan so later games (any mode) never try it again."""
+        """The game refused this spot although the map model said it was fine:
+        record it in the model's refused layer (MapModel.refuse), so later
+        games (any mode) never try it again.
+
+        Root cause of the refused-spot loop: refusals used to be written into
+        model.scan, which mapgeom.apply() rebuilds from the game files; and
+        after 10 refusals the scan was dropped "to rescan next visit", which
+        on a map with game geometry only re-applied the same geometry (the
+        bad spots came back) and, for the rest of that game, left spot
+        picking with no placement data at all. The refused layer is never
+        touched by the geometry, so neither happens any more."""
         if kind == "hero":
             cls = T.HEROES.get(self.g.hero, {}).get("placement") or "land"
         else:
             cls = T.TOWERS.get(kind, {}).get("placement") or "land"
-        grid = self.m.scan.get(cls) if cls in ("land", "water") else None
-        if grid is not None:
-            h, w = grid.shape
-            grid[max(0, cy - 1):min(h, cy + 2), max(0, cx - 1):min(w, cx + 2)] = 2
-            log.info("learned: %s spot (%d,%d) is not placeable on this map", cls, cx, cy)
-            self.learned_blocks += 1
-            if self.learned_blocks > 10 and cls in self.m.scan:
-                # the saved scan is clearly unreliable here: redo it next visit
-                log.warning("map scan disagrees with the game too often - rescanning next visit")
-                self.m.scan.pop(cls, None)
+        refuse = getattr(self.m, "refuse", None)
+        if refuse is None:
+            return
+        # an amphibious tower refused here stands neither on land nor on water
+        for surface in (("land", "water") if cls == "land_or_water" else (cls,)):
+            refuse(surface, cx, cy)
+        log.info("learned: %s spot (%d,%d) is not placeable on this map", cls, cx, cy)
+        self.learned_blocks += 1
+        if (self.learned_blocks > 10 and cls in self.m.scan
+                and getattr(self.m, "geometry_bundle", None) is None):
+            # only a map without game geometry has a scan of its own that can
+            # be wrong as a whole: redo that scan next visit
+            log.warning("map scan disagrees with the game too often - rescanning next visit")
+            self.m.scan.pop(cls, None)
 
     def _block(self, cx, cy, r):
         h, w = self.blocked.shape
@@ -842,6 +893,14 @@ class Executor:
         return out
 
     def pick_spot(self, kind, step):
+        """The best spot (cx, cy, score) for this step, or None."""
+        spots = self.pick_spots(kind, step, n=1)
+        return spots[0] if spots else None
+
+    def pick_spots(self, kind, step, n=1):
+        """Up to n spots (cx, cy, score), best first, at least 3 cells apart:
+        the alternatives Game.place tries while still holding the tower.
+        (Neighbouring cells of a refused spot are usually refused too.)"""
         role = step.get("role", "dps")
         if kind == "hero":
             placement = T.HEROES.get(self.g.hero, {}).get("placement") or "land"
@@ -892,11 +951,16 @@ class Executor:
             cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight)) for cx, cy, _ in cands]
         ranked = sorted(((cx, cy, sc * spot_factor(self.m, kind, cx, cy))
                          for cx, cy, sc in cands), key=lambda t: -t[2])
+        out = []
         for cx, cy, score in ranked:
             if (kind, cx, cy) in self.failed_spots:
                 continue
-            return (cx, cy, score)
-        return None
+            if any((cx - ox) ** 2 + (cy - oy) ** 2 < 9 for ox, oy, _ in out):
+                continue
+            out.append((cx, cy, score))
+            if len(out) >= n:
+                break
+        return out
 
     def _next_path(self, p, target):
         """Cheapest next tier that moves p toward target crosspath."""
@@ -921,59 +985,31 @@ class Executor:
             return [p for p in self.g.towers.values() if p.kind == step["kind"]]
         return []
 
+    # Placing: spots probed per pick-up of a tower, refused spots in a row
+    # after which a step is given up for the rest of the game, and the pause
+    # before the hero (never given up) is tried again at the next-best spots.
+    SPOTS_PER_HOLD = 4
+    SPOT_LIMIT = 12
+    HERO_RETRY_S = 8.0        # first pause; it doubles after every further miss ...
+    HERO_RETRY_MAX_S = 120.0  # ... up to this
+    # Failed selections in a row after which a tower is taken to be absent.
+    MAX_SELECT_FAILS = 2
+
+    @staticmethod
+    def _step_key(step):
+        """A name for a step that is the same for every copy of it. Panic and
+        answer steps are run from fresh dict copies on every tick, so a count
+        keyed by id(step) started from zero each time and never gave up."""
+        return (step.get("do"), step.get("kind"), step.get("role", "dps"), step.get("id"),
+                tuple(step.get("near") or ()), tuple(step.get("segment") or ()))
+
     def try_step(self, step, cash, rnd):
-        """Returns 'done', 'wait' or 'skip'."""
+        """Returns 'done', 'wait', 'skip', 'bought' or 'progress'."""
         if rnd is not None and step.get("round") and rnd < step["round"]:
             return "wait"
         do = step["do"]
         if do == "place":
-            kind = step["kind"]
-            if self.account and kind != "hero" and kind not in self.account.unlocked_towers:
-                return "skip"
-            if kind == "hero" and any(p.kind == "hero" for p in self.g.towers.values()):
-                return "done"
-            if step.get("id") and step["id"] in self.g.towers:
-                return "done"
-            # the one gate every placement passes (plan, fill, panic, answers)
-            if not self.kind_allowed(kind):
-                return "skip"
-            if self.at_tower_cap():
-                return "skip"
-            if "max" in step and sum(p.kind == kind for p in self.g.towers.values()) >= step["max"]:
-                return "skip"
-            price = self.g.price(kind)
-            if cash is None or cash < price:
-                self.wait_cost = price
-                return "wait"
-            if self.hold_fails.get(kind, 0) >= 6:
-                return "skip"  # cannot pick it up (locked / mode-restricted / unbound)
-            spot = self.pick_spot(kind, step)
-            if spot is None:
-                return "skip"
-            cx, cy, _ = spot
-            fx, fy = self.m.cell_to_frac(cx, cy)
-            tid = step.get("id") or self._new_tid(kind)
-            if self.g.place(tid, kind, fx, fy):
-                self.purchased += 1
-                self.hold_fails.pop(kind, None)
-                self._block(cx, cy, 3)
-                if step.get("target"):
-                    self.g.target(self.g.towers[tid], step["target"])
-                return "bought"
-            reason = self.g.fail_reason
-            if reason == "hold":
-                self.hold_fails[kind] = self.hold_fails.get(kind, 0) + 1
-            elif reason in ("spot", "click"):
-                # only blame the spot when the spot was the problem
-                self.failed_spots.add((kind, cx, cy))
-                self._block(cx, cy, 2)
-                self._learn_blocked(kind, cx, cy)
-                key = id(step)
-                self.step_spot_fails[key] = self.step_spot_fails.get(key, 0) + 1
-                if self.step_spot_fails[key] >= 4:
-                    log.warning("giving up on step %s after 4 refused spots", step)
-                    return "skip"  # let the rest of the plan proceed
-            return "wait"
+            return self._try_place(step, cash)
         if do == "upgrade":
             target = parse_cross(step["to"])
             targets = self._resolve_targets(step)
@@ -984,6 +1020,8 @@ class Executor:
                 if nxt is None:
                     continue
                 path, cost = nxt
+                # a panel that asked more than the price table is believed
+                cost = max(cost, self.panel_price.get((p.tid, path, p.tiers[path - 1] + 1), 0))
                 if cash is None or cash < cost:
                     self.wait_cost = cost
                     return "wait"
@@ -991,16 +1029,7 @@ class Executor:
                     if self.account and p.kind != "hero":
                         self.account.note_bought(p.kind, path, p.tiers[path - 1])
                     return "progress" if self._next_path(p, target) else "bought"
-                reason = self.g.fail_reason
-                if reason == "xp":
-                    # locked behind tower XP we do not have (yet)
-                    self.capped.add((p.tid, path))
-                    if self.account and self.g.locked_seen:
-                        self.account.note_locked(*self.g.locked_seen)
-                else:
-                    self.upgrade_fails[(p.tid, path)] = self.upgrade_fails.get((p.tid, path), 0) + 1
-                    if self.upgrade_fails[(p.tid, path)] >= 4:
-                        self.capped.add((p.tid, path))  # give up on it this game only
+                self._upgrade_failed(p, path, cash)
                 return "wait"
             reached = [p for p in targets if all(c >= t for c, t in zip(p.tiers, target))]
             return "done" if reached else "skip"
@@ -1015,6 +1044,167 @@ class Executor:
                 self.g.sell(p)
             return "bought"
         return "skip"
+
+    def _try_place(self, step, cash):
+        """One attempt at a `place` step (see try_step for the results)."""
+        kind = step["kind"]
+        if self.account and kind != "hero" and kind not in self.account.unlocked_towers:
+            return "skip"
+        if kind == "hero" and any(p.kind == "hero" for p in self.g.towers.values()):
+            return "done"
+        if step.get("id") and step["id"] in self.g.towers:
+            return "done"
+        # the one gate every placement passes (plan, fill, panic, answers)
+        if not self.kind_allowed(kind):
+            return "skip"
+        if self.at_tower_cap():
+            return "skip"
+        if "max" in step and sum(p.kind == kind for p in self.g.towers.values()) >= step["max"]:
+            return "skip"
+        key = self._step_key(step)
+        if key in self.dead_steps or time.time() < self.retry_at.get(key, 0):
+            return "skip"  # no spot was accepted (this game / the hero, for a few seconds)
+        price = self.g.price(kind)
+        if cash is None or cash < price:
+            self.wait_cost = price
+            return "wait"
+        if self.hold_fails.get(kind, 0) >= 6:
+            return "skip"  # cannot pick it up (locked / mode-restricted / unbound)
+        spots = self.pick_spots(kind, step, n=self.SPOTS_PER_HOLD)
+        if not spots:
+            return self._out_of_spots(step, key)
+        fracs = [self.m.cell_to_frac(cx, cy) for cx, cy, _ in spots]
+        tid = step.get("id") or self._new_tid(kind)
+        placed = self.g.place(tid, kind, *fracs[0], more_spots=fracs[1:])
+        self._note_refused(kind, key, spots, fracs)
+        if placed:
+            p = self.g.towers[tid]
+            self.purchased += 1
+            self.hold_fails.pop(kind, None)
+            # refusals count in a row: a fill or panic step that keeps finding
+            # spots between refusals must not be given up
+            self.step_spot_fails.pop(key, None)
+            self._block(*self.m.frac_to_cell(p.x, p.y), 3)
+            if step.get("target"):
+                self.g.target(p, step["target"])
+            return "bought"
+        reason = self.g.fail_reason
+        if reason == "hold":
+            self.hold_fails[kind] = self.hold_fails.get(kind, 0) + 1
+        elif reason in ("spot", "click") and self.step_spot_fails.get(key, 0) >= self.SPOT_LIMIT:
+            return self._out_of_spots(step, key)
+        elif reason == "unverified":
+            self._avoid_unverified(kind)
+        return "wait"
+
+    def _note_refused(self, kind, key, spots, fracs):
+        """Learn every spot the last Game.place call found refused: never
+        again in this game (failed_spots, blocked) nor on this map (refused
+        layer), and count it against the step."""
+        for spot in getattr(self.g, "refused_spots", None) or ():
+            if spot not in fracs:
+                continue
+            cx, cy, _ = spots[fracs.index(spot)]
+            self.failed_spots.add((kind, cx, cy))
+            self._block(cx, cy, 2)
+            self._learn_blocked(kind, cx, cy)
+            self.step_spot_fails[key] = self.step_spot_fails.get(key, 0) + 1
+
+    def _out_of_spots(self, step, key):
+        """No spot was accepted for this step: SPOT_LIMIT refusals in a row,
+        or no candidate left at all. Returns 'skip'.
+
+        The hero is never given up (it was skipped for whole games after 4
+        refusals on Tree Stump): it goes to the deferred list that tick()
+        works through and is tried again at the next-best spots after a
+        pause. Each later try is a single pick-up (SPOTS_PER_HOLD spots) and
+        the pause doubles, so a hero the map keeps refusing costs little.
+        Any other step is given up for the rest of this game, once: a fill or
+        panic step is re-run every tick and used to re-probe forever (516
+        refused-spot probes of ~1.45 s in one log, 8 of them per panic while
+        lives fell to 12 on Luminous Cove)."""
+        if step.get("kind") == "hero":
+            self.hero_misses += 1
+            pause = min(self.HERO_RETRY_MAX_S, self.HERO_RETRY_S * 2 ** (self.hero_misses - 1))
+            self.step_spot_fails[key] = self.SPOT_LIMIT - self.SPOTS_PER_HOLD
+            self.retry_at[key] = time.time() + pause
+            if all(self._step_key(s) != key for s in self.deferred):
+                self.deferred.append(step)
+            log.warning("no spot accepted for the hero yet - trying again in %.0f s", pause)
+            return "skip"
+        if key not in self.dead_steps:
+            self.dead_steps.add(key)
+            log.warning("giving up on step %s for this game after %d refused spots",
+                        step, self.step_spot_fails.get(key, 0))
+        return "skip"
+
+    def _avoid_unverified(self, kind):
+        """Game.place released the hold but no tower showed up ('unverified'):
+        the spot may be bad, or the purchase silently failed. Avoid that spot
+        for this game only; it is not learned for the map."""
+        spot = getattr(self.g, "last_spot", None)
+        if spot:
+            cx, cy = self.m.frac_to_cell(*spot)
+            self.failed_spots.add((kind, cx, cy))
+            self._block(cx, cy, 2)
+
+    def _upgrade_failed(self, p, path, cash):
+        """Book-keeping after Game.upgrade said no (see its fail_reason)."""
+        reason = self.g.fail_reason
+        price = getattr(self.g, "last_price", None)
+        if reason == "xp":
+            # locked behind tower XP we do not have (yet)
+            self.capped.add((p.tid, path))
+            if self.account and self.g.locked_seen:
+                self.account.note_locked(*self.g.locked_seen)
+        elif reason == "capped":
+            self.capped.add((p.tid, path))   # the panel shows the path closed or maxed
+        elif reason == "drift":
+            pass   # tiers corrected from the panel prices: the next tick re-plans
+        elif reason == "cash" and price and cash is not None and price > cash:
+            # the panel asks more than the price table: save up for that price
+            # instead of opening the panel again on every tick
+            self.panel_price[(p.tid, path, p.tiers[path - 1] + 1)] = price
+            self.wait_cost = price
+        elif reason == "select":
+            self._forget_if_missing(p)
+        else:
+            self.upgrade_fails[(p.tid, path)] = self.upgrade_fails.get((p.tid, path), 0) + 1
+            if self.upgrade_fails[(p.tid, path)] >= 4:
+                self.capped.add((p.tid, path))  # give up on it this game only
+
+    def _forget_if_missing(self, p):
+        """Selecting p failed. MAX_SELECT_FAILS failures in a row mean it is
+        not on the map (a purchase the game never made: on Ancient Portal a
+        phantom ninja failed 8 selections of ~3 s each). Forget it, so that
+        defended() stops counting it and a plan tower gets placed again.
+        `purchased` keeps counting it: if it does exist after all, a tower
+        cap must still include it. Returns True when it was forgotten."""
+        if p.kind == "hero" or getattr(p, "select_fails", 0) < self.MAX_SELECT_FAILS:
+            return False
+        self.g.towers.pop(p.tid, None)
+        log.warning("%s (%s) could not be selected %d times in a row - not on the map; forgotten",
+                    p.tid, p.kind, p.select_fails)
+        step = next((s for s in self.plan[:self.idx]
+                     if s.get("do") == "place" and s.get("id") == p.tid), None)
+        if step is not None:
+            self.plan.insert(self.idx, dict(step))   # placed again before its upgrades
+        return True
+
+    def _recheck_doubtful(self):
+        """When no verified tower is left (defended() False) but one of them is
+        only doubtful (its last selection failed), select it again: it either
+        shows up (verified again) or, failing twice, is forgotten. Rounds do
+        not start while defended() is False, so this must not wait."""
+        if self.defended():
+            return
+        for p in list(self.g.towers.values()):
+            if p.kind != "hero" and not getattr(p, "verified", True):
+                if self.g.select(p):
+                    self.g.deselect(p)
+                else:
+                    self._forget_if_missing(p)
+                return
 
     # -- threat calendar ---------------------------------------------------------
     def has_answer(self, threat):
@@ -1099,6 +1289,7 @@ class Executor:
         if cash is None:
             return False  # never act on an unreadable cash value
         self.wait_cost = None
+        self._recheck_doubtful()
         if lives_dropped:
             self.panic_pending = 2
         if self.panic_pending:
@@ -1116,6 +1307,13 @@ class Executor:
                 self.waiting = f"saving for {threat} answer"
                 return False  # hold cash for the answer
             self.unanswerable.add(threat)  # nothing applicable; don't block the plan
+        # plan steps put aside after refused spots (the hero), once their pause is over
+        for st in list(self.deferred):
+            r = self.try_step(st, cash, rnd)
+            if r in ("bought", "done"):
+                self.deferred.remove(st)
+            if r == "bought":
+                return True
         while self.idx < len(self.plan):
             st = self.plan[self.idx]
             r = self.try_step(st, cash, rnd)
@@ -1184,7 +1382,12 @@ class Executor:
             return True
 
     def defended(self):
-        """At least one tower (not just the hero) is placed. A lone hero leaked
-        20 lives on Logs when the first tower's spot was refused; the rule is
-        never to start a round without a real defence."""
-        return any(p.kind != "hero" for p in self.g.towers.values())
+        """At least one real tower (not just the hero) is on the map. A lone
+        hero leaked 20 lives on Logs when the first tower's spot was refused;
+        the rule is never to start a round without a real defence.
+
+        Only verified towers count (Placed.verified: placed with proof, and
+        not doubtful after a failed selection): a tower the game never placed
+        must not let a round start."""
+        return any(p.kind != "hero" and getattr(p, "verified", True)
+                   for p in self.g.towers.values())

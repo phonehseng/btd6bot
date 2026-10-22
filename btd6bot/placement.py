@@ -11,8 +11,9 @@ The game's placement rule (as read from its map data and code):
     8 large, else XL).
 
 The map side comes from MapModel grids filled by mapgeom.apply (exact
-surfaces, no margin); spots the game refused during play are already marked
-in those grids. This module adds each tower's own footprint on top, with a
+surfaces, no margin); spots the game refused during play come from
+MapModel.refused, a separate layer that survives re-applying the geometry.
+This module adds each tower's own footprint on top, with a
 distance transform: a centre is valid when the nearest forbidden cell is at
 least r away.
 
@@ -118,12 +119,19 @@ def valid_spots(model, kind, hero=None, towers=(), where=None):
         return None
     where = surfaces(kind, hero) & set(where) if where else surfaces(kind, hero)
     ok = np.zeros(model.heat.shape, bool)
+    # spots the game refused in earlier play are learned per surface and kept
+    # outside the geometry grids (MapModel.refused), so subtract them here
+    def refused(surface):
+        mask = getattr(model, "refused_mask", None)
+        return mask(surface) if mask else np.zeros(ok.shape, bool)
+
     if "land" in where:
-        ok |= model.scan["land"] == 1
+        ok |= (model.scan["land"] == 1) & ~refused("land")
     if "water" in where:
-        ok |= model.scan.get("water", np.full(ok.shape, 2)) == 1
+        water = model.scan.get("water", np.full(ok.shape, 2)) == 1
         if kind == "mermonkey" and model.mermonkey_water is not None:
-            ok |= model.mermonkey_water
+            water |= model.mermonkey_water
+        ok |= water & ~refused("water")
     if model.size_limit is not None:
         ok &= model.size_limit >= size_level(kind, hero)
     upc = units_per_cell(model)

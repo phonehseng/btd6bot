@@ -210,8 +210,9 @@ def apply(model, geom, aspect=1920 / 1200):
 
     scan["land"] / scan["water"] hold the exact surfaces (1 = a land / water
     tower's centre may stand here as far as the ground goes, 2 = not). The
-    room each tower's footprint needs is added per tower by placement.py, and
-    spots the game refuses in play are still learned on top of these grids."""
+    room each tower's footprint needs is added per tower by placement.py.
+    Spots the game refuses in play live in model.refused, which this function
+    leaves alone, so re-applying the geometry never forgets them."""
     proj = Projection(model.playfield, aspect)
     masks = area_masks(geom, proj)
     model.heat, model.t_sum, model.t_cnt = paint_paths(geom, proj)
