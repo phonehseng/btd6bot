@@ -393,12 +393,19 @@ class Bot:
                 break  # wrapped around to a page we already read
             seen_pages.append(page)
             self.inp.click(*self.NEXT_PAGE)
+        # The cards are the truth: set every mode exactly as shown (adds medals
+        # earned elsewhere and drops ones our notes got wrong).
+        dropped_medals = []
         for name, medals in found.items():
             rec = self.account.medals.setdefault(canonical_map(name), {})
             for mode, earned in medals.items():
                 if earned and not rec.get(mode):
-                    rec[mode] = True
                     new_medals += 1
+                elif rec.get(mode) and not earned:
+                    dropped_medals.append(f"{name} {mode}")
+                rec[mode] = bool(earned)
+        if dropped_medals:
+            log.warning("medal scan: removed medals the game does not show: %s", ", ".join(dropped_medals))
         dropped = self.account.drop_impossible_medals()
         if dropped:
             log.warning("removed %d impossible medals (prerequisite not earned): %s", len(dropped), dropped[:8])
@@ -466,9 +473,13 @@ class Bot:
         from .account import canonical_map
         from .medals import read_card
         seen = read_card(self.s.grab(), label.x, label.y)
-        # the search card's 4th slot misreads dark thumbnails as Impoppable;
-        # the map-select sweep (scan_all_medals) reads every mode reliably
-        seen.pop("impoppable", None)
+        # The search card's slots are unreliable (they invented a Hard medal on
+        # Luminous Cove and Impoppable ones): log only. The map-select sweep
+        # (scan_all_medals, once per session) sets medals from the cards.
+        if any(seen.values()):
+            log.info("search card for %s suggests %s (not adopted)", map_name,
+                     [d for d, e in seen.items() if e])
+        seen = {}
         rec = self.account.medals.setdefault(canonical_map(map_name), {})
         new = [d for d, earned in seen.items() if earned and not rec.get(d)]
         for d in new:
@@ -599,12 +610,9 @@ class Bot:
         if self._mm_before is not None and mm_after is not None and 0 <= mm_after - self._mm_before < 5000:
             mm = mm_after - self._mm_before
         res["mm"] = mm
-        if not won and mm and mm > 0:
-            # only a win pays Monkey Money: the victory screen came and went
-            # unseen (e.g. a click meant for the map pressed one of its buttons)
-            log.warning("game recorded as %s but paid %d Monkey Money - it was a win", res.get("outcome"), mm)
-            res["outcome"] = "victory"
-            won = True
+        # Note: Monkey Money gained is NOT proof of a win (level-up rewards pay
+        # too: an abandoned Tree Stump game "paid" 200). The medal sweep, which
+        # reads every map card each session, is what settles medals.
         self.account.record_result(plan.map, plan.mode_key, plan.strategy_id, won,
                                    round_reached=res.get("round"), minutes=res.get("minutes"),
                                    mm_gained=mm, hero=hero)
