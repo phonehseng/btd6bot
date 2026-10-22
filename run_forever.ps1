@@ -35,6 +35,8 @@ while ((Get-Date) -lt $deadline) {
     }
     # on-screen status strip (single instance, click-through)
     Start-Process -FilePath ($py -replace 'python\.exe$', 'pythonw.exe') -ArgumentList "tools\overlay.py" -WorkingDirectory $PSScriptRoot
+    # rolling screen recording + daily highlight videos (single instance; NO_RECORD file turns it off)
+    Start-Process -FilePath ($py -replace 'python\.exe$', 'pythonw.exe') -ArgumentList "-m", "btd6bot.recorder" -WorkingDirectory $PSScriptRoot
     $before = Results
     $p = Start-Process -FilePath $py -ArgumentList "bot.py", "run", "--hours", "24" -WorkingDirectory $PSScriptRoot -PassThru -WindowStyle Hidden
     while (-not $p.HasExited) {
