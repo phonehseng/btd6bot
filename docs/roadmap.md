@@ -43,4 +43,7 @@ overall completion, so keep the format: `## Section` headings and `- [ ]` /
 - [x] Offline gate (ALLOW_ONLINE file for development)
 - [x] Status overlay and progress pane
 - [x] Rolling recording and daily highlight videos
+- [x] Sped-up full-run videos (every CHIMPS game, daily Hard-family games)
+- [x] Dev log: voiceover script and before/after video from the commits
+- [ ] A recorded CHIMPS win
 - [ ] 24-hour unattended run without a loss

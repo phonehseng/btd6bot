@@ -92,7 +92,12 @@ class Match:
                 time.sleep(0.3)
         return False
 
-    def play(self, max_minutes=60):
+    def play(self, max_minutes=None):
+        if max_minutes is None:
+            # long modes need longer: CHIMPS (rounds 6-100) runs 40-50 minutes
+            # on fast forward; give every game about 45 s per round, at least an hour
+            rounds = self.ex.rules.get("end_round", 80) - self.ex.rules.get("start_round", 1) + 1
+            max_minutes = max(60, 0.75 * rounds)
         if not self.setup():
             raise RuntimeError("no defence could be placed - refusing to start the round")
         self.g.go_fast(allow_start=True)

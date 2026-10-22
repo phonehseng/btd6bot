@@ -10,7 +10,8 @@ status overlay):
     libx264), scaled to 1280 px wide, into ~/.btd6bot_cache/recordings
   * keeps the last KEEP_HOURS of chunks and deletes older ones
   * every few minutes turns newly finished games into subtitled highlight
-    clips and a per-day video (btd6bot/highlights.py)
+    clips and a per-day video (btd6bot/highlights.py), and CHIMPS / Hard-family
+    games into sped-up full-run videos (btd6bot/timelapse.py)
 
 ffmpeg is not shipped with the bot: it is looked up in
 ~/.btd6bot_cache/tools/ffmpeg/*/bin/ffmpeg.exe (a BtbN Windows build), or the
@@ -98,7 +99,7 @@ def main():
         log.error("ffmpeg not found - see the module docstring")
         return 1
     REC_DIR.mkdir(parents=True, exist_ok=True)
-    from . import highlights
+    from . import highlights, timelapse
     proc, last_highlights = None, 0.0
     log.info("recorder started (%s)", ffmpeg)
     while not (ROOT / "STOP").exists():
@@ -118,6 +119,10 @@ def main():
                 highlights.update(ffmpeg)
             except Exception:
                 log.exception("highlight pass failed")
+            try:
+                timelapse.update(ffmpeg)
+            except Exception:
+                log.exception("full-run pass failed")
         time.sleep(10)
     if proc is not None and proc.poll() is None:
         proc.terminate()

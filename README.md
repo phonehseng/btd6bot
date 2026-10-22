@@ -55,10 +55,26 @@ happened and the bot build it was running. Each day becomes one video,
 `~/Videos/BTD6 Bot/BTD6 bot highlights YYYY-MM-DD.mp4`, with "What changed"
 cards wherever the code changed between games, so it shows the bot improving.
 
+**Full runs.** `btd6bot/timelapse.py` turns whole games into sped-up videos
+(x4 to x24, aiming at about 6 minutes) with captions for towers placed, tier 3+
+upgrades, leaks and milestone rounds:
+`~/Videos/BTD6 Bot/Full runs/<date> <time> <map> <mode> (<outcome>) xN.mp4`.
+Every CHIMPS game gets one, plus the first game of each other Hard-family mode
+per day. To ask for a particular game, add its start time (`YYYY-MM-DD HH:MM`,
+as in the bot log's `NEXT:` line) to `logs/fullrun_requests.txt`.
+
+**Dev log.** `python tools/devlog.py [YYYY-MM-DD]` writes a voiceover script,
+`docs/devlog/YYYY-MM-DD.md`, from the day's commits: what went wrong (the last
+problem in the bot log before each fix), what changed (the commit message),
+and the next game on the new code. It also builds
+`~/Videos/BTD6 Bot/BTD6 bot devlog YYYY-MM-DD.mp4` with a title card and
+before/after clips per commit. So write commit messages that say what was
+wrong and why: they become the narration.
+
 - Needs ffmpeg (not in the repo): unzip a BtbN Windows build into
   `~/.btd6bot_cache/tools/ffmpeg/`, or point `BTD6BOT_FFMPEG` at an `ffmpeg.exe`.
 - A file named `NO_RECORD` in the project folder pauses recording.
-- Rebuild by hand: `python -m btd6bot.highlights`.
+- Rebuild by hand: `python -m btd6bot.highlights`, `python -m btd6bot.timelapse`.
 
 ## How it plays
 
