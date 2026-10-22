@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 import random
 import sys
@@ -684,6 +685,89 @@ def test_achievements_keep_hard_first():
     assert plan.phase == "H" and plan.mode_key == "hard", plan.reason
 
 
+# ------------------------------------------------------------ objective
+
+def test_black_border_value_rewards_finishing_maps():
+    acc = AccountState()
+    cfg = P.DEFAULT_CONFIG
+    assert len(P.BB_MODES) == 14
+    vals = []
+    for k, mode in enumerate(P.BB_MODES[:-1]):
+        vals.append(P.black_border_value(acc, "Logs", mode))
+        acc.medals.setdefault("Logs", {})[mode] = True
+    assert all(b > a for a, b in zip(vals, vals[1:])), vals  # convex: later medals worth more
+    last = P.black_border_value(acc, "Logs", "chimps")
+    assert last > vals[-1] + cfg.chimps_medal_value * 0.99   # CHIMPS is the prize
+    total = sum(vals) + last - cfg.chimps_medal_value
+    assert abs(total - cfg.w_bb) < 1.0                       # all 14 medals = one black border
+    assert P.black_border_value(acc, "Logs", "easy") == 0.0  # already earned
+
+
+def test_within_tier_prefers_completing_a_map():
+    """Same medal (Magic Only), same strategy, same p/time: the map closer to a
+    black border scores higher."""
+    acc = _hard_ready_account()
+    for mode in ("hard", "primary_only", "deflation", "medium", "military_only",
+                 "apopalypse", "reverse", "abr"):
+        acc.record_result("Monkey Meadow", mode, "x", True, minutes=MODES[mode].minutes)
+    acc.record_result("Logs", "hard", "x", True, minutes=MODES["hard"].minutes)
+    _, _, cands = P.rank_games(acc, achievements=(None, None))
+    by = {c.map: c for c in cands if c.mode == "magic_only" and c.s.id == "magic_core"}
+    mm, logs = by["Monkey Meadow"], by["Logs"]
+    assert abs(mm.p - logs.p) < 1e-9 and mm.tier == logs.tier == "HS"
+    assert mm.per_hour > logs.per_hour, (mm.notes, logs.notes)
+
+
+def test_objective_is_points_per_hour():
+    acc = _hard_ready_account()
+    cfg = P.DEFAULT_CONFIG
+    _, _, cands = P.rank_games(acc, achievements=(None, None))
+    c = next(c for c in cands if c.first and c.mode == "hard" and c.map == "Logs")
+    mm = P.estimate_mm(acc, "Logs", "hard")[0]
+    v_win = (c.xp_win * cfg.w_xp * (1 + cfg.hard_build_xp_weight * c.build) + cfg.w_mm * mm
+             + P.black_border_value(acc, "Logs", "hard") + cfg.unlock_value * 2 + c.ach)
+    v_loss = c.value_fail - cfg.loss_penalty
+    t = c.p * c.minutes + (1 - c.p) * c.fail_minutes
+    expect = 60 * (c.p * v_win + (1 - c.p) * v_loss) / t * (1 + cfg.explore_bonus / math.sqrt(c.n + 1))
+    assert abs(c.per_hour - expect) / expect < 1e-6, (c.per_hour, expect)
+    assert abs(c.per_hour - 60 * c.score) < 1e-6
+
+
+def test_mm_estimates_and_observed_override():
+    acc = AccountState()
+    first, is_first, src = P.estimate_mm(acc, "Logs", "hard")
+    assert (first, is_first, src) == (200, True, "estimate")
+    assert P.estimate_mm(acc, "Dark Castle", "chimps")[0] == 300 * 4    # expert x4
+    acc.medals["Logs"] = {"hard": True}
+    replay = P.estimate_mm(acc, "Logs", "hard")[0]
+    assert replay == first * P.MM_REPEAT_FRAC                          # replays pay much less
+    acc.map_stats["Logs"] = {"observed_rewards": {"hard": {"repeat": 55}}}
+    assert P.estimate_mm(acc, "Logs", "hard") == (55.0, False, "observed")
+
+
+def test_xp_favours_expert_and_long_modes():
+    assert abs(P.game_xp("hard", "expert") / P.game_xp("hard", "beginner") - 1.3) < 1e-9
+    assert P.game_xp("chimps", "beginner") > 1.8 * P.game_xp("hard", "beginner")
+    # when equally winnable, Impoppable beats Hard on XP per hour of replays
+    acc = _hard_ready_account()
+    for mode in ("hard", "abr", "impoppable"):
+        acc.record_result("Logs", mode, "late_game_chimps", True, minutes=MODES[mode].minutes)
+    _, _, cands = P.rank_games(acc, achievements=(None, None))
+    rep = {c.mode: c for c in cands if c.map == "Logs" and c.s.id == "late_game_chimps"
+           and not c.first}
+    assert rep["impoppable"].xp_win / rep["impoppable"].minutes > \
+        rep["hard"].xp_win / rep["hard"].minutes
+
+
+def test_replays_only_when_no_medal_is_feasible():
+    acc = _hard_ready_account()
+    _, _, cands = P.rank_games(acc, achievements=(None, None))
+    pos = {id(c): i for i, c in enumerate(cands)}
+    farm = [pos[id(c)] for c in cands if c.tier == "FARM"]
+    medals = [pos[id(c)] for c in cands if c.first and c.tier in ("H", "HS", "HF", "B", "M", "E")]
+    assert farm and medals and max(medals) < min(farm)
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     order = ["test_xp_tables", "test_mode_unlocks_and_categories", "test_apply_level_rewards",
@@ -698,7 +782,10 @@ if __name__ == "__main__":
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",
              "test_wanted_achievements", "test_achievement_bonus_on_mode_replays",
              "test_achievement_strategy_gating", "test_achievements_keep_hard_first",
-             "test_long_run_reaches_everything"]
+             "test_black_border_value_rewards_finishing_maps",
+             "test_within_tier_prefers_completing_a_map", "test_objective_is_points_per_hour",
+             "test_mm_estimates_and_observed_override", "test_xp_favours_expert_and_long_modes",
+             "test_replays_only_when_no_medal_is_feasible", "test_long_run_reaches_everything"]
     for name in order:
         res = globals()[name]()
         if name == "test_tower_unlock_order":

@@ -27,19 +27,43 @@ within a tier (see :data:`PHASES` and :func:`_tier`):
 
 M/E are reached while the roster is too weak for Hard (they then serve as
 XP/unlock games) or once the Hard family is exhausted. In H/HS, maps whose
-track is already learned (no placement scan) go first. Within a tier the
-score is expected value per minute::
+track is already learned (no placement scan) go first. Replays (FARM) only
+happen when no new medal is feasible: they pay ~20% of the first-time MM.
 
-    score = [p*(XP_value + w*MM + medal/unlock/unique value)
-             + (1-p)*(XP_fail - loss_penalty)] / [p*T + (1-p)*T_fail]
+Objective (the bot runs unattended; it maximises Monkey Money + XP + CHIMPS
+black borders per hour). Within a tier candidates are ranked by expected
+points per hour::
 
-where ``p`` comes from a Beta posterior over this (map, mode, strategy)'s
-record, with a prior from the strategy's declared success rates, the map's
+    V_win  = w_xp*XP*(1 + hard_build_xp_weight*build) + w_mm*MM
+             + [first time] (black-border progress + CHIMPS medal value
+                             + unlock/unique-map value) + achievement value
+    V_loss = w_xp*XP_partial - loss_penalty
+    points/h = 60 * (p*V_win + (1-p)*V_loss) / (p*T_win + (1-p)*T_loss)
+
+Weights (PlannerConfig; 1 point = 1 player XP):
+
+    w_xp = 1        XP = sum of per-round XP x map multiplier (beginner 1.0,
+                    intermediate 1.1, advanced 1.2, expert 1.3); Impoppable/
+                    CHIMPS (R6-100) are the best XP per game when winnable
+    w_mm = 250      a first-time Hard beginner win (200 MM) ~ 50k points,
+                    a replay (40 MM) ~ 10k: MM matters for new medals, XP
+                    dominates replays
+    w_bb = 600,000  per black-bordered map (all 14 medals), spread over its
+                    medals on a convex curve (bb_linear_share=0.3 linear,
+                    rest quadratic): the 1st medal on a map ~15k, the 14th
+                    ~71k, so finishing maps beats spreading thin
+    chimps_medal_value = 150,000  the CHIMPS medal itself is the prize
+    loss_penalty = 30,000         lost opportunity on top of the wasted time
+    achievement_value = 30,000    per achievement, split over its wins
+
+``p`` comes from a Beta posterior over this (map, mode, strategy)'s record,
+with a prior from the strategy's declared success rates, the map's
 category/ease (scaled by how hard the mode is), how much of the strategy's
 upgrade build is unlocked, and the strategy's calibration on other maps.
-``T`` is learned from observed game durations (see :class:`_Durations`).
-XP is weighted by how much the account still *needs* XP (levels for
-tower/MK unlocks, tower XP for upgrades that STRATEGY_NEEDS lists).
+``T`` is learned from observed game durations incl. menus and the first-visit
+placement scan (see :class:`_Durations`). MM is the observed reward for this
+(map, mode) when the account has one (``map_stats[map].observed_rewards``),
+else the MM_FIRST_BASE x MM_CATEGORY_MULT estimate.
 
 The runner only needs to::
 
@@ -84,28 +108,29 @@ def map_slug(name: str) -> str:
 
 @dataclass
 class PlannerConfig:
-    mm_weight: float = 20.0          # XP-equivalent of 1 MM
-    goal_medal_value: float = 60_000  # any first-time medal (tiers decide the order)
-    off_goal_medal_value: float = 6_000  # unused since the tier policy (kept for configs)
+    # ---- objective weights (points; 1 point = 1 player XP), see module doc
+    w_xp: float = 1.0
+    w_mm: float = 250.0              # points per Monkey Money
+    w_bb: float = 600_000            # points per black-bordered map (all 14 medals)
+    bb_linear_share: float = 0.3     # rest of the black-border value is quadratic in medals
+    chimps_medal_value: float = 150_000
     unlock_value: float = 3_000      # per mode a medal unlocks
     unique_win_value: float = 25_000  # first win on a map while < 20 unique wins
     threshold_win_bonus: float = 1.5  # multiplier when the win crosses 5/12/20
-    farm_bonus: float = 1.25         # XP multiplier for the designated farm while farming
     overhead_minutes: float = 1.0    # menus, loading, collecting rewards
     first_visit_minutes: float = 2.5  # one-time placement scan on a never-played map
     fail_time_frac: float = 0.7      # a loss costs this fraction of the full time
     fail_round_frac: float = 0.6     # ... and reaches this fraction of the rounds
-    loss_penalty: float = 15_000     # XP-equivalent cost of a loss on top of the lost time
+    loss_penalty: float = 30_000     # points lost per loss on top of the wasted time
     prior_strength: float = 3.0      # Beta prior pseudo-games
     # Losses are expensive (time, no rewards): only attempt confident games.
     min_p_new: float = 0.75          # minimum p to attempt an unearned Easy/Medium-group medal
     min_p_new_hard: float = 0.80     # ... an unearned Hard-group medal
     min_p_chimps: float = 0.80
     min_p_repeat: float = 0.85       # minimum p to replay for XP/MM (optional games: be safe)
-    # Hard focus: a first-time Hard standard medal with p >= hard_ready_p is
-    # "reliable" and gets hard_medal_value on top of every other bonus.
+    # A Hard standard medal with p >= hard_ready_p counts as "reliable" (logs/tests;
+    # the tier order itself puts Hard first).
     hard_ready_p: float = 0.80
-    hard_medal_value: float = 150_000
     # No Hard-family medal clears its threshold: still play the highest-p one
     # (not CHIMPS) if p >= this, rather than dropping to Medium/Easy.
     hard_fallback_p: float = 0.70
@@ -125,10 +150,6 @@ class PlannerConfig:
     duration_obs_cap: int = 12       # an EW average is worth at most this many games
     pace_prior_games: float = 3.0
     duration_clip: tuple[float, float] = (0.6, 1.5)
-    farm_level_target: int = 30      # repeat Deflation on FARM_MAPS gets farm_bonus below this level
-    player_xp_full_until: int = 30   # levels below this: player XP fully valuable
-    player_xp_half_until: int = 50
-    tower_no_need_value: float = 0.15
     explore_bonus: float = 0.04      # UCB-style bonus for little-tried combos
     # XP into towers whose missing upgrades hold back a Hard-family strategy
     # counts this much extra (per unit of the game's XP share they receive):
@@ -170,14 +191,12 @@ MAP_EASE: dict[str, float] = {
     "Dark Dungeons": 0.75, "#Ouch": 0.65,
 }
 
-# Expert maps used for the Deflation XP farm (short track => fastest rounds).
-FARM_MAPS = ("Infernal", "Dark Castle")
-FARM_CHAIN = ("easy", "primary_only", "deflation")
-
 # MM rewards: first completion base by reward tier x category multiplier;
-# replays pay 20%. (Beginner 75/125/200/300 first, 15/25/40/60 replay; x2/x3/x4
-# for intermediate/advanced/expert.) Whether "first time" is per mode or per
-# difficulty is UNVERIFIED - observed rewards override.
+# replays pay 20%. Beginner first-time Easy/Medium/Hard/Impoppable+CHIMPS =
+# 75/125/200/300 (as the difficulty screen shows), replays 15/25/40/60;
+# intermediate/advanced/expert x2/x3/x4 (community tables, UNVERIFIED for
+# v57). Whether "first time" is per mode or per difficulty is UNVERIFIED -
+# observed rewards (account map_stats observed_rewards) override.
 MM_FIRST_BASE = {"easy": 75, "medium": 125, "hard": 200, "impoppable": 300}
 MM_CATEGORY_MULT = {"beginner": 1, "intermediate": 2, "advanced": 3, "expert": 4}
 MM_REPEAT_FRAC = 0.2
@@ -747,20 +766,6 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
     return (prior * k + w) / (k + w + l), w + l
 
 
-def _player_xp_factor(account: AccountState, cfg: PlannerConfig) -> float:
-    if account.player_level < cfg.player_xp_full_until:
-        return 1.0
-    if account.player_level < cfg.player_xp_half_until:
-        return 0.5
-    return 0.2
-
-
-def _tower_need_factor(s: StrategySpec, account: AccountState, unmet_towers: set[str],
-                       cfg: PlannerConfig) -> float:
-    return sum(sh * (1.0 if t in unmet_towers else cfg.tower_no_need_value)
-               for t, sh in s.share().items())
-
-
 def p_threshold(mode: str, first_time: bool, cfg: PlannerConfig = DEFAULT_CONFIG) -> float:
     """Minimum p for a candidate to be preferred at all."""
     if not first_time:
@@ -1049,8 +1054,32 @@ def _all_maps() -> list[str]:
     return [m for m in MAPS if m not in EXCLUDED_MAPS]
 
 
-def _farm_needed(account: AccountState, cfg: PlannerConfig) -> bool:
-    return account.player_level < cfg.farm_level_target
+BB_MODES = tuple(m for m in MODES if m not in EXCLUDED_MODES)  # the 14 medals
+
+
+def _bb_curve(k: int, cfg: PlannerConfig) -> float:
+    """Share of a map's black-border value held with ``k`` of its medals."""
+    x = min(1.0, k / len(BB_MODES))
+    return cfg.bb_linear_share * x + (1.0 - cfg.bb_linear_share) * x * x
+
+
+def map_medal_count(account: AccountState, map_name: str) -> int:
+    d = account.medals.get(map_name, {})
+    return sum(1 for m in BB_MODES if d.get(m))
+
+
+def black_border_value(account: AccountState, map_name: str, mode: str,
+                       cfg: PlannerConfig = DEFAULT_CONFIG) -> float:
+    """Points for earning the ``mode`` medal on ``map_name`` now: progress
+    toward the map's black border (worth more the closer the map is to all
+    medals) plus the CHIMPS medal's own value."""
+    if account.has_medal(map_name, mode) or mode not in BB_MODES:
+        return 0.0
+    k = map_medal_count(account, map_name)
+    v = cfg.w_bb * (_bb_curve(k + 1, cfg) - _bb_curve(k, cfg))
+    if mode == "chimps":
+        v += cfg.chimps_medal_value
+    return v
 
 
 # ---------------------------------------------------------------------------
@@ -1080,6 +1109,7 @@ class _Cand:
     build: float = 0.0          # share of the game's tower XP that feeds the Hard build
     ach: float = 0.0            # XP-equivalent achievement value of a win
     achievements: tuple[str, ...] = ()  # achievements a win advances
+    per_hour: float = 0.0       # objective: expected points per hour (score * 60)
 
 
 def _normalise_strategies(available: Iterable[Any] | None) -> dict[str, StrategySpec]:
@@ -1103,9 +1133,7 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 cfg: PlannerConfig, playable_maps: set[str] | None) -> list[_Cand]:
     calib = _Calibration(account, strategies)
     durations = _Durations(account, cfg)
-    unmet_towers = {n.tower for n in _unmet_needs(account)}
     usable = {sid: s for sid, s in strategies.items() if _strategy_available(s, account)[0]}
-    pf = _player_xp_factor(account, cfg)
     out: list[_Cand] = []
     # Hard-build towers: missing upgrades of a strategy that, with its full
     # build, would clear the Hard fallback bar on some open Hard-family medal.
@@ -1142,16 +1170,15 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 out.append(_Cand(m, mode, s, p, n, t_full, xp_win, mm, first,
                                  value_win=0.0, value_fail=xp_fail, score=0.0, notes=notes,
                                  fail_minutes=t_fail, learned=learned))
-    # XP value: account level needs, STRATEGY_NEEDS and the Hard build
-    tf_cache: dict[str, tuple[float, float]] = {}
+    # XP + MM value; tower XP that unblocks the Hard roster counts extra
+    hb_cache: dict[str, float] = {}
     for c in out:
-        if c.s.id not in tf_cache:
-            tf = _tower_need_factor(c.s, account, unmet_towers | hard_build, cfg)
-            hb = sum(sh for t, sh in c.s.share().items() if t in hard_build)
-            tf_cache[c.s.id] = (0.6 * pf + 0.4 * tf + cfg.hard_build_xp_weight * hb, hb)
-        xp_w, hb = tf_cache[c.s.id]
+        if c.s.id not in hb_cache:
+            hb_cache[c.s.id] = sum(sh for t, sh in c.s.share().items() if t in hard_build)
+        hb = hb_cache[c.s.id]
+        xp_w = cfg.w_xp * (1.0 + cfg.hard_build_xp_weight * hb)
         c.build = hb
-        c.value_win = c.xp_win * xp_w + cfg.mm_weight * c.mm
+        c.value_win = c.xp_win * xp_w + cfg.w_mm * c.mm
         c.value_fail = c.value_fail * xp_w
         c.notes.insert(2, f"xp {c.xp_win:,.0f}x{xp_w:.2f}"
                        + (f" (builds Hard roster {hb:.0%})" if hb else ""))
@@ -1255,12 +1282,14 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
     cands = _candidates(account, strategies, cfg, pm)
     uniq = account.unique_map_wins()
     thresholds = sorted(v for v in CATEGORY_UNLOCK_WINS.values() if v > 0)
-    farming = _farm_needed(account, cfg)
 
     for c in cands:
         bonus = 0.0
         if c.first:
-            bonus += cfg.goal_medal_value
+            bb = black_border_value(account, c.map, c.mode, cfg)
+            bonus += bb
+            k = map_medal_count(account, c.map)
+            c.notes.append(f"black border {k}->{k + 1}/{len(BB_MODES)} (+{bb:,.0f})")
             nu = len(mode_unlocks(c.mode))
             if nu:
                 bonus += cfg.unlock_value * nu
@@ -1271,19 +1300,15 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
                     c.notes.append(f"win #{uniq + 1} opens a category")
                 bonus += u
                 c.notes.append("new unique map")
-            if c.mode == "hard" and c.p >= cfg.hard_ready_p:
-                bonus += cfg.hard_medal_value
-                c.notes.append("reliable Hard medal")
         _achievement_values(c, goals, cfg)
         bonus += c.ach
         vw = c.value_win + bonus
         vf = c.value_fail - cfg.loss_penalty
-        if farming and not c.first and c.map in FARM_MAPS and c.mode == "deflation":
-            vw = c.value_win * cfg.farm_bonus
-            c.notes.append("designated farm")
         minutes = c.p * c.minutes + (1 - c.p) * (c.fail_minutes or c.minutes * cfg.fail_time_frac)
         score = (c.p * vw + (1 - c.p) * vf) / minutes
         score *= 1.0 + cfg.explore_bonus / math.sqrt(c.n + 1)
+        c.per_hour = score * 60.0
+        c.notes.append(f"{c.per_hour:,.0f} pts/h")
         # an achievement game is a new goal: it needs the new-medal threshold
         thr = p_threshold(c.mode, c.first or bool(c.ach), cfg)
         c.ok = c.p >= thr
