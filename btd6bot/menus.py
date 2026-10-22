@@ -115,7 +115,7 @@ class Menus:
         ks = [norm(k) for k in keys]
         return any(k in norm(w.text) for w in words for k in ks)
 
-    def find(self, *keys, words=None, region=None):
+    def find(self, *keys, words=None, region=None, exact=False):
         """First word matching a key. A word that IS a key beats one that only
         contains it: the Collection Event screen's title "COLLECTION EVENT"
         contains "collect", and the bot clicked the title four times instead
@@ -130,6 +130,8 @@ class Menus:
             for w in words:
                 if k == norm(w.text):
                     return w
+        if exact:
+            return None
         for k in ks:                       # 2. then words containing a key
             for w in words:
                 if len(k) > 3 and k in norm(w.text):
@@ -307,6 +309,7 @@ class Menus:
     # every card is turned the event screen returns (crate at 0/N) with a
     # PLAY button. Free rewards: nothing here costs anything.
     CARD_BLUE = ((100, 150, 90), (118, 255, 230))   # face-down card, OpenCV HSV
+    COLLECT_REGION = (0.35, 0.56, 0.65, 0.72)       # the COLLECT button under the crate
 
     def reward_cards(self, frame=None):
         """Centres (fx, fy) of the cards on a crate-opening screen, left to
@@ -345,8 +348,14 @@ class Menus:
                 self.inp.click(*cards[0])
                 time.sleep(1.5)
             elif st == "collection_event":
-                if self.click_word("collect"):
+                # COLLECT shows only under a full crate, and only as the whole
+                # word: the title "COLLECTION EVENT" contains "collect", and a
+                # partial match clicked it 5,576 times over 4.7 hours while
+                # the crate sat at 0/20 (2026-10-22 07:41-12:25)
+                w = self.find("collect", region=self.COLLECT_REGION, exact=True)
+                if w is not None and not forbidden(w.text):
                     log.info("collection event: crate full - collecting")
+                    self.inp.click(w.x, w.y)
                     time.sleep(2.0)
                     continue
                 # nothing to collect: PLAY leads on to map select, from where

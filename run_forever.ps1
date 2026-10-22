@@ -55,6 +55,17 @@ while ((Get-Date) -lt $deadline) {
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
             break
         }
+        # A bot can keep writing log lines while making no progress: on
+        # 2026-10-22 it clicked the same screen for 4.7 hours. state.txt is
+        # refreshed every round in a game and every 2 minutes while idle, so
+        # a stale one means a loop: stop the bot and restart BTD6 too.
+        if ((Test-Path $state) -and ((Get-Date) - (Get-Item $state).LastWriteTime).TotalMinutes -gt 25) {
+            Note "watchdog: status unchanged for 25 min while the log runs - stuck in a loop; restarting the bot and BTD6"
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+            Stop-Process -Name BloonsTD6 -Force -ErrorAction SilentlyContinue
+            Start-Sleep 10
+            break
+        }
     }
     $p.WaitForExit()
     $code = $p.ExitCode
