@@ -677,7 +677,7 @@ class Executor:
         self.hero_ok = self._hero_placeable()
         self._id_kind = {s.get("id"): s.get("kind") for _, s in _all_steps(strat)
                          if s.get("do") == "place" and s.get("id")}
-        self.plan = [dict(s) for s in strat.get("plan") or [] if self._step_allowed(s)]
+        self.plan = self._with_opener([dict(s) for s in strat.get("plan") or [] if self._step_allowed(s)])
         self.fill = [dict(s) for s in strat.get("fill") or [] if self._step_allowed(s)]
         self.panic_steps = [dict(s) for s in strat.get("panic") or [] if self._step_allowed(s)]
         if not self.panic_steps and not c.get("no_default_panic"):
@@ -707,6 +707,23 @@ class Executor:
                 or c.get("forbidden_heroes") or c.get("land_only")):
             return True
         return _hero_fits(getattr(self.g, "hero", None), c)
+
+    CHEAP_OPENERS = ("dart", "tack", "boomerang", "sniper", "sub", "wizard")
+
+    def _with_opener(self, plan):
+        """Rounds 1-5 leak when a plan opens with one slow/expensive tower (seen:
+        lone base Ninja on Medium). Prepend a $200 Dart near the entrance unless
+        the plan already opens cheap or the mode/constraints forbid darts."""
+        first = next((st for st in plan if st.get("do") == "place"), None)
+        if first is None or first.get("kind") in self.CHEAP_OPENERS + ("hero",):
+            return plan  # a hero (or cheap tower) already holds the early rounds
+        cons = self.strat.get("constraints") or {}
+        if self.strat.get("achievement") or cons.get("no_opener") or cons.get("allowed_towers") is not None                 or cons.get("max_towers_on_screen") or cons.get("max_towers_purchased"):
+            return plan  # restricted plans are exact; never add towers to them
+        if not self.kind_allowed("dart"):
+            return plan
+        return [{"do": "place", "id": "opener", "kind": "dart", "role": "dps",
+                 "segment": [0.05, 0.45]}] + plan
 
     def kind_allowed(self, kind):
         """May a tower of this kind be placed at all in this game?"""
