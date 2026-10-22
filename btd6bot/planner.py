@@ -784,10 +784,24 @@ def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
     return min(0.98, max(0.01, base * cat_f * ease_f))
 
 
+# Double Cash (boosts.py) pays every pop twice. Hard-family games are lost
+# when the defence cannot be afforded in time - and map difficulty mostly
+# acts through that - so with twice the money the chance of LOSING is
+# multiplied by this factor. An estimate: the per-strategy calibration and the
+# win/loss record correct it as games are played. (Two Hard games on the
+# main account right after it was introduced: 2 wins, 0 lives lost.)
+DOUBLE_CASH_LOSS_FACTOR = 0.35
+
+
 def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> float:
-    """Prior p before any record/calibration: declared rate x map x readiness."""
+    """Prior p before any record/calibration: declared rate x map x readiness,
+    then the account's Double Cash (when it pays in this mode)."""
+    from .boosts import double_cash_applies
     p = _prior(s, map_name, account.map_category(map_name), mode)
-    return min(0.98, max(0.01, p * strategy_readiness(s, account, mode)))
+    p *= strategy_readiness(s, account, mode)
+    if double_cash_applies(getattr(account, "boosts", {}), mode):
+        p = 1.0 - (1.0 - p) * DOUBLE_CASH_LOSS_FACTOR
+    return min(0.98, max(0.01, p))
 
 
 class _Calibration:

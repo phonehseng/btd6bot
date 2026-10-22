@@ -360,6 +360,16 @@ class Bot:
             self.account.save()
         return lvl
 
+    def _note_boosts(self):
+        """On map select: read the Double Cash / Fast Track toggles and keep
+        them with the account (the planner's win chances depend on them)."""
+        from . import boosts
+        seen = boosts.read(self.s.grab())
+        if seen != self.account.boosts:
+            log.info("boosts on this account: %s", ", ".join(k for k, v in seen.items() if v) or "none")
+            self.account.boosts = seen
+            self.account.save()
+
     def open_map(self, map_name):
         """Main menu -> map select -> search -> map's difficulty screen."""
         set_state(f"opening map {map_name}")
@@ -375,6 +385,7 @@ class Bot:
         else:
             log.warning("open_map: PLAY did not reach map select")
             return False
+        self._note_boosts()
         self.inp.click(0.044, 0.154)  # search (magnifier)
         time.sleep(0.5)
         self.inp.click(0.52, 0.04)    # focus the search box

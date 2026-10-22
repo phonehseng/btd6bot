@@ -335,6 +335,9 @@ class AccountState:
     # the hero equipped in the HEROES menu (heroes.HeroPicker, or read in a
     # game); kept so a restart does not reopen the menu to check it
     selected_hero: str | None = None
+    # Monkey Money boosts switched on at the bottom-left of map select:
+    # {"double_cash": bool, "fast_track": bool} (read by read_boosts)
+    boosts: dict = field(default_factory=dict)
     tower_xp: dict[str, float] = field(default_factory=dict)       # unspent per tower
     unlocked_upgrades: dict[str, list[int]] = field(default_factory=dict)  # tower -> [p1,p2,p3]
     # tower -> is its paragon unlocked? Read from the upgrade tree (purple
@@ -393,6 +396,7 @@ class AccountState:
         st.unlocked_towers = set(raw.get("unlocked_towers", STARTING_TOWERS))
         st.unlocked_heroes = set(raw.get("unlocked_heroes", STARTING_HEROES))
         st.selected_hero = raw.get("selected_hero")
+        st.boosts = dict(raw.get("boosts", {}))
         st.tower_xp = {k: float(v) for k, v in raw.get("tower_xp", {}).items()}
         st.unlocked_upgrades = {k: list(v) for k, v in raw.get("unlocked_upgrades", {}).items()}
         st.paragons = {k: bool(v) for k, v in raw.get("paragons", {}).items()}
@@ -423,6 +427,7 @@ class AccountState:
             "unlocked_towers": sorted(self.unlocked_towers),
             "unlocked_heroes": sorted(self.unlocked_heroes),
             "selected_hero": self.selected_hero,
+            "boosts": self.boosts,
             "tower_xp": self.tower_xp,
             "unlocked_upgrades": self.unlocked_upgrades,
             "paragons": self.paragons,
