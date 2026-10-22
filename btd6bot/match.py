@@ -255,6 +255,20 @@ class Match:
                         log.info("round tracking reset %s -> %s", last_round, rnd)
                         last_round = rnd
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
+                if getattr(self.g, "unconfirmed_streak", 0) >= 2:
+                    # Placements that leave no tower are clicks landing on
+                    # something else - an end screen or a popup over the game
+                    # (a missed Victory screen once took four minutes of them):
+                    # look at the screen before clicking any more.
+                    self.g.unconfirmed_streak = 0
+                    st = self.menus.identify()
+                    if st in ("victory", "defeat") and self._real_end(st, self.g.fresh()):
+                        return self._finish(st, last_round)
+                    if st not in ("in_game", "unknown"):
+                        outcome = self._off_screen(st)
+                        if outcome:
+                            return self._finish(outcome, last_round)
+                        continue
                 saving = getattr(self.ex, "wait_cost", None) and cash is not None                     and cash < self.ex.wait_cost and not dropped
                 # Saving up for a big upgrade is fine, briefly - these are seconds
                 # of fast-forward, several rounds; never while lives are falling

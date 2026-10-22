@@ -473,7 +473,9 @@ class Game:
             log.warning("placement of %s at %.3f,%.3f NOT confirmed (cash %s -> %s, nothing "
                         "to select there) - not recorded", kind, fx, fy, before, self._seen_cash)
             self.fail_reason = "unverified"
+            self.unconfirmed_streak = getattr(self, "unconfirmed_streak", 0) + 1
             return None
+        self.unconfirmed_streak = 0
         self.towers[tid] = p
         log.info("placed %s (%s) at %.3f,%.3f", tid, kind, fx, fy)
         return p
