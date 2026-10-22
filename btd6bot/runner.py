@@ -781,7 +781,7 @@ class Bot:
         ok, reason = offline.check()
         if ok:
             if getattr(self, "_online_reason", None):
-                log.warning("game is offline now - resuming")
+                log.warning("%s - resuming", reason)
                 self._online_reason = None
             return True
         if reason != getattr(self, "_online_reason", None):
