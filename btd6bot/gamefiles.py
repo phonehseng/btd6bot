@@ -23,7 +23,10 @@ folder outside the game (CACHE) and only the copies are opened, read-only.
 No game code is run, injected or patched.
 
 Output: data/map_geometry/<map id>.json, small JSON files in world
-coordinates (x right, z up; the play field is centred on the origin).
+coordinates: every point is [x, z, y] with x to the right, z up the screen
+and y the height above the ground (some maps have raised or sunken paths;
+the camera is tilted, so height moves things on screen). The play field is
+centred on the origin.
 Use mapgeom.py to turn them into the bot's grids.
 """
 import glob
@@ -42,7 +45,7 @@ log = logging.getLogger("gamefiles")
 ROOT = Path(__file__).resolve().parents[1]
 GEOMETRY_DIR = ROOT / "data" / "map_geometry"
 CACHE = Path.home() / ".btd6bot_cache" / "bundles"   # copies of game bundles
-GEOMETRY_VERSION = 2   # bump when the extracted format changes
+GEOMETRY_VERSION = 3   # bump when the extracted format changes
 
 AREA_TYPES = {0: "track", 1: "water", 2: "land", 3: "unplaceable"}
 
@@ -182,7 +185,7 @@ def _read_paths(scene):
             "name": scene.go_name.get(go, ""),
             "active": bool(tree.get("isActive", 1)),
             "hidden": bool(tree.get("isHidden", 0)),
-            "points": [[round(float(p[0]), 2), round(float(p[2]), 2)] for p in points],
+            "points": [[round(float(p[0]), 2), round(float(p[2]), 2), round(float(p[1]), 2)] for p in points],
         })
     return paths
 
@@ -192,7 +195,7 @@ def _read_areas(scene):
     for tree in scene.components("Area"):
         go = tree["m_GameObject"]["m_PathID"]
         tid = scene.go_transform[go]
-        polygons = [[[round(float(w[0]), 2), round(float(w[2]), 2)]
+        polygons = [[[round(float(w[0]), 2), round(float(w[2]), 2), round(float(w[1]), 2)]
                      for w in (scene.world(tid, (p["x"], p["y"], p["z"])) for p in poly["points"])]
                     for poly in tree.get("polygons", [])]
         circles = []
@@ -201,7 +204,8 @@ def _read_areas(scene):
             pos = c.get("position") or c.get("center") or {}
             if pos:
                 w = scene.world(tid, (pos.get("x", 0), pos.get("y", 0), pos.get("z", 0)))
-                circles.append([round(float(w[0]), 2), round(float(w[2]), 2), float(c.get("radius", 0))])
+                circles.append([round(float(w[0]), 2), round(float(w[2]), 2), float(c.get("radius", 0)),
+                                round(float(w[1]), 2)])
         areas.append({
             "name": scene.go_name.get(go, ""),
             "type": AREA_TYPES.get(tree.get("type"), str(tree.get("type"))),

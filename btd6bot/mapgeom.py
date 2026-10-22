@@ -27,6 +27,10 @@ from .maplearn import GRID
 log = logging.getLogger("mapgeom")
 
 WORLD_PX_PER_UNIT_1920 = 5.3   # refined by calibrate(); see module docstring
+# The game camera is tilted: a point raised by h units appears HEIGHT_FACTOR*h
+# units further up the screen. Fitted to live bloons on Luminous Cove, whose
+# paths run at heights 54 -> 28 -> 2 (2026-10-22); flat maps are unaffected.
+HEIGHT_FACTOR = 0.55
 TRACK_HEAT = 10.0              # heat painted on track cells (track_mask needs > 2)
 TRACK_THICKNESS = 3            # cells; the drawn width of a bloon lane
 
@@ -75,10 +79,12 @@ class Projection:
         self.uy = self.ux * aspect                   # screen-height fraction per unit
 
     def to_cells(self, points):
-        """[[x, z], ...] -> float array of grid (col, row)."""
-        p = np.asarray(points, float).reshape(-1, 2)
+        """[[x, z(, y)], ...] -> float array of grid (col, row). y = height."""
+        p = np.asarray(points, float)
+        p = p.reshape(-1, p.shape[-1]) if p.size else np.zeros((0, 2))
+        height = p[:, 2] if p.shape[1] > 2 else 0.0
         fx = self.cx + p[:, 0] * self.ux
-        fy = self.cy - p[:, 1] * self.uy
+        fy = self.cy - (p[:, 1] + HEIGHT_FACTOR * height) * self.uy
         w, h = GRID
         col = (fx - self.x0) / (self.x1 - self.x0) * w
         row = (fy - self.y0) / (self.y1 - self.y0) * h
@@ -109,8 +115,10 @@ def area_masks(geom, proj):
             out["small_only"] |= m
         if a.get("blocks_sight"):
             out["sight"] |= m
-            for x, z, r in a.get("circles", []):
-                c = proj.to_cells([[x, z]])[0]
+            for circle in a.get("circles", []):
+                x, z, r = circle[:3]
+                y = circle[3] if len(circle) > 3 else 0.0
+                c = proj.to_cells([[x, z, y]])[0]
                 rad = max(1, int(round(r * proj.ux / (proj.x1 - proj.x0) * GRID[0])))
                 cv2.circle(out["sight"].view(np.uint8), (int(c[0]), int(c[1])), rad, 1, -1)
     return out

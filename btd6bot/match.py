@@ -216,11 +216,25 @@ class Match:
         for key in keys:
             self.g.ability(key)
 
+    # Screens that only exist outside a game: seeing one of these a few times
+    # in a row means the game already ended (e.g. a click meant for the map
+    # landed on the defeat screen's Home button).
+    MENU_SCREENS = ("main_menu", "map_select", "difficulty", "mode_select", "monkeys_menu", "title")
+
     def _off_screen(self, st=None):
         st = st or self.menus.identify()
         log.info("off game screen: %s", st)
         if st in ("victory", "defeat"):
             return st
+        if st in self.MENU_SCREENS:
+            self._menu_reads = getattr(self, "_menu_reads", 0) + 1
+            if self._menu_reads >= 3:
+                lives = sorted(self._lives_reads)[len(self._lives_reads) // 2] if self._lives_reads else None
+                outcome = "defeat" if lives is None or lives <= 20 else "abandoned"
+                log.warning("back at the menus mid-game (%s; last lives %s) - recording %s", st, lives, outcome)
+                return outcome
+        else:
+            self._menu_reads = 0
         if st != "unknown":
             self._unknown = 0
         if st in ("level_up", "hero_unlock"):
