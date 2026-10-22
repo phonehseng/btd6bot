@@ -168,7 +168,7 @@ class Match:
                     if self.stats["rounds"] % 5 == 0:
                         self.m.save()
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
-                    status.in_game(f"round {rnd}, ${cash}, {lives} lives")
+                    status.in_game(f"round {rnd}, ${cash}, {last_lives} lives")
                     last_round = rnd
                 elif rnd is not None and rnd != last_round:
                     # a reading outside the expected step: adopt it only if it
