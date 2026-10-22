@@ -331,6 +331,7 @@ class Bot:
           * register maps the code does not know yet (new game updates), under
             the category tab they are listed in.
         Returns the number of maps read."""
+        from . import mapgeom
         from .account import MAPS, _norm, canonical_map, register_map
         from .medals import read_grid_card
         set_state("reading map medals from the map select pages")
@@ -350,9 +351,15 @@ class Bot:
             first_page[cat] = {_norm(t) for t, _ in self._page_names()}
             bar = next((re.search(r"(\d+)\s*/\s*(\d+)", w.text) for w in self.menus.words
                         if w.y < 0.08 and re.search(r"\d+\s*/\s*\d+", w.text)), None)
+            # Expert shows a banner instead: "Beat 13 more maps to unlock all Expert maps"
+            more = next((re.search(r"beat\s*(\d+)\s*more", w.text, re.I) for w in self.menus.words
+                         if re.search(r"beat\s*\d+\s*more", w.text, re.I)), None)
             if bar and int(bar.group(1)) < int(bar.group(2)):
                 self.account.category_progress[cat] = [int(bar.group(1)), int(bar.group(2))]
                 log.info("medal scan: %s maps locked (%s/%s map wins)", cat, bar.group(1), bar.group(2))
+            elif more:
+                self.account.category_progress[cat] = [0, int(more.group(1))]
+                log.info("medal scan: %s maps locked (%s more wins needed)", cat, more.group(1))
             else:
                 self.account.category_progress[cat] = [1, 1]  # no bar: unlocked
         self.inp.click(*self.CATEGORY_TABS["beginner"])
@@ -371,8 +378,9 @@ class Bot:
             page = []
             for text, cell in labels:
                 name = self._match_map(text)
-                if name is None and _looks_like_map_name(text):
-                    name = text.title()
+                if name is None and _looks_like_map_name(text) and mapgeom.unknown_map_id(text):
+                    # a card for a map bundle the game has and our list lacks
+                    name = text.strip().title()
                     if register_map(name, category):
                         new_maps.append(f"{name} ({category})")
                 if name is None or name in page:

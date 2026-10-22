@@ -44,6 +44,27 @@ def _norm(s):
     return "".join(c for c in s.lower() if c.isalnum())
 
 
+# Map bundles in the game that are not single-player maps the bot plays.
+NOT_PLAYABLE_IDS = {"baseeditormap", "blons", "protecttheyacht", "tutorialmap"}
+
+
+def unknown_map_id(card_label):
+    """Geometry id of a map the game has but the bot's map list lacks, whose
+    id matches an OCR'd map-select card label; None otherwise.
+
+    A new map must exist in BOTH places - as a bundle in the game files and as
+    a card on screen - so OCR debris and banners are never taken for maps."""
+    from .account import MAPS
+    known = {map_id_for(m) for m in MAPS} | NOT_PLAYABLE_IDS
+    candidates = {_norm(f.stem): f.stem for f in GEOMETRY_DIR.glob("*.json")
+                  if f.stem not in known}
+    key = _norm(card_label)
+    if len(key) < 4 or not candidates:
+        return None
+    close = difflib.get_close_matches(key, candidates, n=1, cutoff=0.85)
+    return candidates[close[0]] if close else None
+
+
 def map_id_for(display_name):
     """Geometry file id for a map's display name, or None if not extracted."""
     ids = [f.stem for f in GEOMETRY_DIR.glob("*.json")]
