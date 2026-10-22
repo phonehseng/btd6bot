@@ -38,6 +38,25 @@ def parse_int(text):
     return int(digits) if digits else None
 
 
+_CASH_FORMAT = re.compile(r"^\d{1,3}([,.]\d{3})*$")
+
+
+def parse_cash(text):
+    """'$8,475' -> 8475, or None when the text cannot be the game's cash.
+
+    The game always writes cash with thousands separators ($650, $8,475,
+    $20,002,398). OCR sometimes adds a digit (a seasonal decoration next to
+    the counter read as '7': '$650' -> '6507', or one inserted mid-number):
+    four or more digits without separators, or groups that are not three
+    digits long, are rejected instead of trusted."""
+    t = text.strip().lstrip("$sS").strip()
+    t = t.replace("O", "0").replace("o", "0").replace("l", "1").replace("I", "1")
+    t = re.sub(r"[^0-9,.]", "", t).strip(",.")   # drop stray symbols around the number
+    if not t or not _CASH_FORMAT.match(t):
+        return None
+    return int(re.sub(r"[^0-9]", "", t))
+
+
 class Hud:
     def __init__(self, layout):
         self.layout = layout
@@ -63,9 +82,9 @@ class Hud:
         dx: horizontal shift of the HUD (an upgrade panel on the left pushes it right).
         """
         text, _ = rec_text(crop(frame, _shift(self.layout["cash"], dx)))
-        value = parse_int(text)
+        value = parse_cash(text)
         if value is None:
-            return None
+            return None   # unreadable or malformed this frame: the next one will do
         self._cash_reads = (self._cash_reads + [value])[-3:]
         return sorted(self._cash_reads)[(len(self._cash_reads) - 1) // 2]  # lower median
 

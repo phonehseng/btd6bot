@@ -1,8 +1,8 @@
 {
  "schema": 1,
- "saved_at": "2026-10-21T21:16:30",
- "player_level": 34,
- "xp": 484000.0,
+ "saved_at": "2026-10-22T01:19:17",
+ "player_level": 35,
+ "xp": 536500.0,
  "monkey_money": 1885,
  "unlocked_towers": [
   "alchemist",
@@ -38,7 +38,7 @@
   "buccaneer": 0.0,
   "wizard": 0.0,
   "ninja": 0.0,
-  "alchemist": 103.0,
+  "alchemist": 823.0,
   "druid": 0.0,
   "spike": 0.0,
   "engineer": 0.0,
@@ -103,8 +103,8 @@
    4
   ],
   "alchemist": [
-   1,
-   0,
+   2,
+   2,
    0
   ],
   "druid": [
@@ -138,7 +138,7 @@
    1
   ]
  },
- "mk_points": 5,
+ "mk_points": 6,
  "mk_unlocked": [
   "Magic Tricks",
   "Speedy Brewing",
@@ -171,10 +171,116 @@
   "Bloonarius Prime": {},
   "Cubism": {
    "hard": true,
-   "impoppable": true,
+   "impoppable": false,
    "easy": true,
    "medium": true
-  }
+  },
+  "Spice Islands": {
+   "easy": true,
+   "medium": true,
+   "hard": true,
+   "impoppable": false
+  },
+  "Lost Crevasse": {
+   "easy": true,
+   "medium": true,
+   "hard": true,
+   "impoppable": false
+  },
+  "Luminous Cove": {
+   "hard": true
+  },
+  "Skull Tweak": {},
+  "Three Mines 'Round": {},
+  "Spa Pits": {},
+  "Tinkerton": {},
+  "Middle of the Road": {},
+  "One Two Tree": {},
+  "Scrapyard": {},
+  "The Cabin": {},
+  "Resort": {},
+  "Skates": {},
+  "Lotus Island": {},
+  "Candy Falls": {},
+  "Winter Park": {},
+  "Carved": {},
+  "Four Circles": {},
+  "Hedge": {},
+  "End Of The Road": {},
+  "Ancient Portal": {},
+  "Sulfur Springs": {},
+  "Water Park": {},
+  "Polyphemus": {},
+  "Quarry": {},
+  "Quiet Street": {},
+  "Balance": {},
+  "Encrypted": {},
+  "Bazaar": {},
+  "Adora's Temple": {},
+  "Spring Spring": {},
+  "KartsNDarts": {},
+  "Moon Landing": {},
+  "Downstream": {},
+  "Firing Range": {},
+  "Cracked": {},
+  "Streambed": {},
+  "Chutes": {},
+  "Rake": {},
+  "Ship Capture": {},
+  "Ascent": {},
+  "Mushroom Grotto": {},
+  "Party Parade": {},
+  "Sunset Gulch": {},
+  "Enchanted Glade": {},
+  "Last Resort": {},
+  "Castle Revenge": {},
+  "Dark Path": {},
+  "Erosion": {},
+  "Midnight Mansion": {},
+  "Sunken Columns": {},
+  "X Factor": {},
+  "Mesa": {},
+  "Geared": {},
+  "Spillway": {},
+  "Cargo": {},
+  "Pat's Pond": {},
+  "Peninsula": {},
+  "High Finance": {},
+  "Another Brick": {},
+  "Off The Coast": {},
+  "Cornfield": {},
+  "Underground": {},
+  "Tricky Tracks": {},
+  "Glacial Trail": {},
+  "Dark Dungeons": {},
+  "Lley": {
+   "easy": true,
+   "medium": true,
+   "reverse": true,
+   "half_cash": false
+  },
+  "Beat 13 More Maps To Unlock All Expert Maps": {
+   "easy": true,
+   "medium": true,
+   "reverse": true,
+   "impoppable": false,
+   "chimps": false
+  },
+  "Sanctuary": {},
+  "Ravine": {
+   "easy": true,
+   "medium": true,
+   "impoppable": false
+  },
+  "Flooded Valley": {},
+  "Infernal": {},
+  "Bloody Puddles": {},
+  "Workshop": {},
+  "Quad": {},
+  "Dark Castle": {},
+  "Muddy Puddles": {},
+  "#Ouch": {},
+  "Frozen Over": {}
  },
  "map_stats": {
   "Monkey Meadow": {
@@ -219,7 +325,7 @@
   },
   "Logs": {
    "wins": 1,
-   "losses": 3,
+   "losses": 4,
    "best_round": 51,
    "avg_minutes": {
     "easy": 5.62
@@ -255,6 +361,13 @@
     "easy": 1,
     "medium": 1
    }
+  },
+  "Ancient Portal": {
+   "wins": 0,
+   "losses": 1,
+   "best_round": 54,
+   "avg_minutes": {},
+   "observed_rewards": {}
   }
  },
  "strategy_stats": {
@@ -359,10 +472,49 @@
    "games": 1,
    "best_round": 63,
    "avg_minutes": null
+  },
+  "Ancient Portal|medium|hard_ninja_alch_sniper": {
+   "wins": 0,
+   "losses": 1,
+   "games": 1,
+   "best_round": 54,
+   "avg_minutes": null
+  },
+  "Logs|medium|hard_ninja_alch_sniper": {
+   "wins": 0,
+   "losses": 1,
+   "games": 1,
+   "best_round": 4,
+   "avg_minutes": null
   }
  },
  "pending_tower_choices": [],
- "map_category_overrides": {},
+ "map_category_overrides": {
+  "Monkey Meadow": "expert",
+  "In The Loop": "expert",
+  "Skull Tweak": "expert",
+  "Three Mines 'Round": "expert",
+  "Spa Pits": "expert",
+  "Tinkerton": "expert"
+ },
+ "category_progress": {
+  "beginner": [
+   1,
+   1
+  ],
+  "intermediate": [
+   1,
+   1
+  ],
+  "advanced": [
+   7,
+   12
+  ],
+  "expert": [
+   7,
+   20
+  ]
+ },
  "observed_upgrade_costs": {
   "tack": {
    "0-5": 32500
@@ -375,10 +527,11 @@
    "2-4": 15500
   },
   "alchemist": {
-   "0-1": 140
+   "0-1": 140,
+   "0-2": 550
   }
  },
- "games_played": 14,
+ "games_played": 16,
  "history": [
   {
    "t": "2026-10-21T15:55:26",
@@ -545,6 +698,30 @@
    "won": false,
    "round": 63,
    "minutes": 9.924335141976675,
+   "xp": null,
+   "mm": 0
+  },
+  {
+   "t": "2026-10-22T01:11:24",
+   "map": "Ancient Portal",
+   "mode": "medium",
+   "strategy": "hard_ninja_alch_sniper",
+   "hero": "quincy",
+   "won": false,
+   "round": 54,
+   "minutes": 8.04032996892929,
+   "xp": null,
+   "mm": 0
+  },
+  {
+   "t": "2026-10-22T01:17:45",
+   "map": "Logs",
+   "mode": "medium",
+   "strategy": "hard_ninja_alch_sniper",
+   "hero": "quincy",
+   "won": false,
+   "round": 4,
+   "minutes": 1.8467360099156698,
    "xp": null,
    "mm": 0
   }

@@ -541,17 +541,18 @@ class Bot:
         hero = self.account_selected_hero()  # what is actually equipped
         g = Game(self.s, self.inp, self.lay, difficulty=diff, hero=hero)
         self.menus.g = g
-        from .strategy import MODE_TOWER_FILTER
-        # the save file is the truth, not our notes: probe once per session
+        # probe which towers the hotkeys can pick up, once per session
         # (later unlocks are seen on the level-up screen)
         roster = {} if self._roster_done else g.probe_roster()
         self._roster_done = True
-        only = MODE_TOWER_FILTER.get(plan.mode_key)  # restricted modes hide other towers
+        # The probe only ADDS towers. Ownership is read in the Monkeys menu
+        # (xpspend.sync_all); a probe can fail wholesale (a popup, a slow
+        # load) and once removed every tower, leaving a hero alone to lose.
+        if roster and not any(roster.values()):
+            log.warning("roster probe found no tower at all - ignoring it")
         for kind, ok in roster.items():
             if ok:
                 self.account.unlocked_towers.add(kind)
-            elif not only or T.TOWERS[kind]["category"] == only:
-                self.account.unlocked_towers.discard(kind)
         self.account.save()
         from .strategy import rules
         # Reverse runs the same track backwards: its progress map is mirrored
