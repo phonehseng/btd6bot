@@ -6,6 +6,7 @@ buttons are clicked by their text where possible. Hard rules:
   * never press Esc (other programs treat a global Esc as "stop")
 """
 import logging
+import re
 import time
 
 from .vision import Vision, norm
@@ -19,7 +20,8 @@ SCREENS = [
     ("collection_event", [["collectionevent", "collegtionevent"]]),
     # opening an event crate: "INSTA MONKEY! New <tower> 0-2-2" over a card
     ("insta_reward", [["instamonkey"]]),
-    ("defeat", [["defeat", "gameover", "bloonsleaked", "youlost"]]),
+    # the word alone is not enough: the Legends screen says "defeat the Bloons"
+    ("defeat", [["defeat", "gameover", "bloonsleaked", "youlost"], ["restart", "home", "tryagain", "continue"]]),
     # HEROES screen: SELECT/SELECTED (OCR often reads the C as a G) and the
     # hero's "Ingame cost:", which the upgrade tree shows too - so it goes first
     ("hero_select", [["select", "selegt"], ["ingamecost"]]),
@@ -54,12 +56,18 @@ OCR_VARIANTS = {"collect": ("collegt", "colleci"), "select": ("selegt",), "selec
 # never click anything containing these (real-money or Monkey Money purchases)
 FORBIDDEN = ["unlockall", "buy", "purchase", "store", "bundle", "offer", "usd", "insta", "powers",
              "trophystore", "continuefor", "signin", "signup", "resetpassword", "password", "logout",
-             "deleteaccount"]
+             "deleteaccount",
+             # the Legends screen sells DLC: "GET NOW $9.99" (reached by stray
+             # clicks on 2026-10-22 - never clicked, but never clickable)
+             "getnow", "dlc"]
+# A price in real money: "$9.99", "4,99 EUR". Monkey Money and in-game cash
+# never have cents, so two decimals mark real money.
+_REAL_PRICE = re.compile(r"\d[.,]\d\d\b")
 
 
 def forbidden(text):
     n = norm(text)
-    return any(f in n for f in FORBIDDEN)
+    return any(f in n for f in FORBIDDEN) or bool(_REAL_PRICE.search(text or ""))
 
 
 CONFIRM_WORDS = ("yes", "ok", "confirm", "continue", "buy", "purchase", "unlock")

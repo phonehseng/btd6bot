@@ -191,7 +191,10 @@ class Match:
                 continue
             now = time.time()
             end_round = self.ex.rules.get("end_round", 80)
-            if last_round is not None and last_round >= end_round and now - getattr(self, "_t_end", 0) > 2.5:
+            # the end screen is looked for from 3 rounds before the end: a round
+            # reader stuck at 39 of 40 once hid a VICTORY screen for 4 minutes
+            # while placement clicks landed on it (Downstream Easy)
+            if last_round is not None and last_round >= end_round - 3 and now - getattr(self, "_t_end", 0) > 2.5:
                 # final round: the victory overlay dims but does not hide the HUD
                 self._t_end = now
                 st = self.menus.identify()
@@ -335,8 +338,15 @@ class Match:
     def _off_screen(self, st=None):
         st = st or self.menus.identify()
         log.info("off game screen: %s", st)
-        if st in ("victory", "defeat"):
+        if st == "victory":
             return st
+        if st == "defeat":
+            # a defeat needs evidence: lives near zero (the Legends page once
+            # read as "defeat" with all 200 lives - a game that had been WON)
+            lives = self._lives.median()
+            if lives is None or lives <= 20:
+                return st
+            log.warning("'defeat' read with %s lives - not believed", lives)
         if st in self.MENU_SCREENS:
             self._menu_reads = getattr(self, "_menu_reads", 0) + 1
             if self._menu_reads >= 3:
