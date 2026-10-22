@@ -30,6 +30,14 @@ TREE_COST = (0.03, 0.655, 0.26, 0.725)  # "UNLOCK FOR: / 2,700XP"
 TREE_XP = (0.52, 0.01, 0.70, 0.065)     # "XP: 3,373"
 TREE_TITLE = (0.28, 0.005, 0.56, 0.07)
 BACK = (0.044, 0.055)
+# With all three tier 5s unlocked, the tree ends in a purple paragon column;
+# selecting it fills the side panel with the paragon and "UNLOCK FOR: N XP".
+# (Measured 2026-10-22 on the Tack Shooter: Crucible of Steel and Flame,
+# 500,000 XP. No confirmation box: the click unlocks it, the tree turns
+# purple.) Never near: UNLOCK ALL (bottom right) and the "+" next to the XP,
+# both real money.
+PARAGON_COLUMN = (0.895, 0.507)
+PARAGON_PRICE_TOLERANCE = 0.02   # the panel's price may differ this much from data/tower_xp.json
 
 
 def _title_matches(title, kind):
@@ -250,6 +258,67 @@ def scan_owned(inp, menus):
                 owned.add(kind)
     log.info("owned towers: %d (%s)", len(owned), ", ".join(sorted(owned)))
     return owned
+
+
+def unlock_paragons(screen, inp, menus, account, towers):
+    """Unlock the paragon of each tower in `towers` (all tier 5s unlocked,
+    paragon not yet) whose tower XP pays for it - the point of the paragon
+    focus. Starts and ends at the main menu. Each unlock is checked three
+    ways before the click: the panel shows "UNLOCK FOR: N XP" (an XP price,
+    never money), N is the paragon's price from data/tower_xp.json, and the
+    tower's XP covers it; after it, the tree must turn purple. The XP read on
+    screen also corrects the counted XP (towerxp.py). Returns the towers
+    whose paragon was unlocked."""
+    from .meta import paragon_tree
+    from .planner import DEFAULT_CONFIG, load_tower_xp_prices
+    prices = load_tower_xp_prices(DEFAULT_CONFIG.tower_xp_path)
+    sp = XpSpender(screen, inp, menus, account)
+    done = []
+    if not towers or menus.identify() != "main_menu":
+        return done
+    inp.click(*MONKEYS_BUTTON)
+    time.sleep(1.5)
+    try:
+        for kind in towers:
+            price = getattr(prices.get(kind), "paragon_xp", 0)
+            if not price or not sp.open_tower(kind):
+                continue
+            inp.click(0.5, 0.94)            # close a tooltip the opening click may have raised
+            inp.move(0.97, 0.97)
+            time.sleep(0.5)
+            if paragon_tree(screen.grab()):
+                account.paragons[kind] = True   # unlocked already
+            else:
+                inp.click(*PARAGON_COLUMN)
+                time.sleep(0.8)
+                cost, have = sp._cost(), sp._xp()
+                if have is not None:
+                    account.tower_xp[kind] = float(have)
+                if cost is None or abs(cost - price) > PARAGON_PRICE_TOLERANCE * price:
+                    log.info("%s: no paragon price on the panel (read %s, expected %s) - not clicking",
+                             kind, cost, f"{price:,}")
+                elif have is None or have < cost:
+                    log.info("%s: paragon needs %s XP, the tower has %s", kind, f"{cost:,}", have)
+                else:
+                    inp.click(*TREE_UNLOCK)
+                    time.sleep(1.5)
+                    if paragon_tree(screen.grab()):
+                        account.paragons[kind] = True
+                        after = sp._xp()
+                        account.tower_xp[kind] = float(after if after is not None else have - cost)
+                        log.warning("PARAGON unlocked: %s (%s XP)", T.TOWERS[kind]["name"], f"{cost:,}")
+                        done.append(kind)
+                    else:
+                        log.warning("%s: clicked UNLOCK for the paragon but the tree did not turn purple", kind)
+            inp.click(*BACK)
+            time.sleep(0.8)
+    finally:
+        for _ in range(3):
+            if menus.identify() == "main_menu":
+                break
+            inp.click(*BACK)
+            time.sleep(0.8)
+    return done
 
 
 def sync_all(screen, inp, menus, account, towers=None):

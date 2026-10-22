@@ -9,7 +9,7 @@ from . import progress
 from . import towers as T
 from .account import AccountState
 from .achievements import Achievements
-from .xpspend import forget_short, strategy_towers, sync_all, unlock_for_strategy
+from .xpspend import forget_short, strategy_towers, sync_all, unlock_for_strategy, unlock_paragons
 from .mk import Knowledge
 from .identity import current_path, is_stale, load_for, mark_synced, read_user_id
 from .choices import tower_chooser
@@ -986,6 +986,7 @@ class Bot:
             sync_all(self.s, self.inp, self.menus, self.account)
             self.to_main_menu()
             mark_synced(uid)
+        self._unlock_ready_paragons()
         if self._medals_due or _medal_sweep_due(uid):
             # ~40 s: every map's medals (and any new maps) at once. It used to
             # run at every process start - 14 sweeps in one night of code
@@ -1079,6 +1080,27 @@ class Bot:
         while time.time() < end and not PAUSE_FILE.exists():
             time.sleep(2)
         return False
+
+    def _unlock_ready_paragons(self):
+        """Between games: buy every paragon the tower XP now pays for (the
+        games' XP is counted as it is earned, towerxp.py). Only towers with
+        all three tier 5s; the XP on screen decides (xpspend.unlock_paragons)."""
+        from .planner import paragon_status
+        try:
+            ready = [t for t in paragon_status(self.account).banked
+                     if list(self.account.upgrades(t)) == [5, 5, 5]]
+        except Exception:
+            log.exception("paragon check failed")
+            return
+        if not ready:
+            return
+        log.info("paragon XP reached for %s - unlocking", ", ".join(ready))
+        set_state(f"unlocking paragons: {', '.join(ready)}")
+        try:
+            unlock_paragons(self.s, self.inp, self.menus, self.account, ready)
+        finally:
+            self.to_main_menu()
+            self.account.save()
 
     def pause_at_menu(self):
         """Park at the main menu while the PAUSE file exists (between games only),
