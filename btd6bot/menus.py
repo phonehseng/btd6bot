@@ -310,6 +310,7 @@ class Menus:
     # PLAY button. Free rewards: nothing here costs anything.
     CARD_BLUE = ((100, 150, 90), (118, 255, 230))   # face-down card, OpenCV HSV
     COLLECT_REGION = (0.35, 0.56, 0.65, 0.72)       # the COLLECT button under the crate
+    BACK_ARROW = (0.044, 0.055)                     # top-left back arrow of menu screens
 
     def reward_cards(self, frame=None):
         """Centres (fx, fy) of the cards on a crate-opening screen, left to
@@ -333,6 +334,7 @@ class Menus:
         MONKEY!" popup: collect a full crate, turn every card, and leave the
         event screen. Returns True when none of these screens is up."""
         turned = set()
+        self._event_backs = 0
         for _ in range(max_steps):
             st = self.identify()
             if st == "insta_reward":
@@ -358,9 +360,15 @@ class Menus:
                     self.inp.click(w.x, w.y)
                     time.sleep(2.0)
                     continue
-                # nothing to collect: PLAY leads on to map select, from where
-                # the caller's back arrow returns to the main menu
-                if not self.click_word("play"):
+                # Nothing to collect: the back arrow (top left, shown while
+                # the crate is not full) returns to the main menu. PLAY is
+                # only a last resort: it opens map select, whose back arrow
+                # leads straight back here (seen looping on 2026-10-22).
+                left_by_back = getattr(self, "_event_backs", 0) < 2
+                if left_by_back:
+                    self._event_backs = getattr(self, "_event_backs", 0) + 1
+                    self.inp.click(*self.BACK_ARROW)
+                elif not self.click_word("play"):
                     self.inp.click(0.94, 0.97)
                 time.sleep(1.5)
             else:
