@@ -6,7 +6,11 @@ from . import status
 from .vision import norm
 from . import towers as T
 from .abilities import AbilityPlanner
+from .bloonwatch import BloonWatch
 from .forecast import RoundForecast
+
+WATCH_EVERY = 0.2       # seconds between looks of the bloon watch during a round
+EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
 from .maplearn import PathTracer
 
 log = logging.getLogger("match")
@@ -108,6 +112,19 @@ class Match:
         # the damage model's view of each round as it starts (forecast.py)
         self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None))
         self._crisis_round = None
+        # how far along the route the bloons really get (bloonwatch.py; observe only)
+        self.watch = self._make_watch()
+        self._t_watch = 0.0
+        self.depths = []           # per-round summaries of the watch
+
+    def _make_watch(self):
+        try:
+            lay = getattr(self.g, "lay", None) or {}
+            closes = [lay[s]["close"] for s in ("upg_left", "upg_right") if s in lay]
+            return BloonWatch(getattr(self.m, "name", None), self.m.playfield, closes)
+        except Exception as e:      # an observer must never cost a game
+            log.info("bloon watch not available: %s", e)
+            return None
 
     def _exclude(self):
         out = []
@@ -179,6 +196,7 @@ class Match:
             max_minutes = max(60, 0.75 * rounds)
         if not self.setup():
             raise RuntimeError("no defence could be placed - refusing to start the round")
+        self._learn_empty_map()
         self.g.go_fast(allow_start=True)
         self._in_round = True
         last_round = self.g.round()
@@ -220,6 +238,9 @@ class Match:
                 continue
             if self.m.rounds_traced < 25:  # the track is learned by then
                 self.tracer.feed(f, self._exclude())
+            if self._in_round and now - self._t_watch > WATCH_EVERY:
+                self._t_watch = now
+                self._watch_look(f, now)
             dropped = False
             if now - t_hud > 0.35:
                 t_hud = now
@@ -248,6 +269,7 @@ class Match:
                     self.stats["rounds"] += rnd - last_round
                     if self.stats["rounds"] % 5 == 0:
                         self.m.save()
+                    self._watch_round_end(last_round)
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
@@ -364,6 +386,45 @@ class Match:
         else:
             log.info("round %d: the damage model rates the defence %.2f", rnd, margin)
 
+    # -- the bloon watch (bloonwatch.py): observe only ------------------------------
+    def _learn_empty_map(self):
+        """Look at the empty map (towers placed, no bloons yet, no panel
+        open) for about a second and a half before round 1 starts."""
+        if self.watch is None:
+            return
+        try:
+            self.g.close_panels()
+            for _ in range(15):
+                self.watch.learn_empty(self.g.fresh())
+                time.sleep(EMPTY_LOOK_GAP)
+        except Exception:
+            log.exception("bloon watch: learning the empty map failed - watch off")
+            self.watch = None
+
+    def _watch_look(self, f, now):
+        if self.watch is None:
+            return
+        try:
+            self.watch.look(f, now, [p for p in self.g.towers.values()])
+        except Exception:
+            log.exception("bloon watch failed - off for the rest of this game")
+            self.watch = None
+
+    def _watch_round_end(self, rnd):
+        """Log how far the bloons got in the round that just ended."""
+        if self.watch is None or rnd is None:
+            return
+        try:
+            s = self.watch.end_round(rnd, label=f"{getattr(self.m, 'name', '')}_{getattr(self.ex, 'mode', '')}")
+        except Exception:
+            log.exception("bloon watch summary failed - watch off")
+            self.watch = None
+            return
+        if s:
+            self.depths.append(s)
+            log.info("round %d: bloons got %.0f%% along the route at most, past 80%% in %.0f%% of %d looks",
+                     rnd, 100 * s["deepest"], 100 * s["deep_share"], s["looks"])
+
     def _in_crisis(self, rnd):
         return rnd is not None and self._crisis_round == rnd
 
@@ -477,6 +538,10 @@ class Match:
             log.exception("spot learning failed")
         self.tracer.end_round()
         self.m.save()
+        self._watch_round_end(rnd)
+        if self.depths:
+            # the deepest point bloons reached in any round (bloonwatch.py)
+            self.stats["bloon_depth"] = max(s["deepest"] for s in self.depths)
         self.stats.update(outcome=outcome, round=rnd, minutes=(time.time() - self.stats["start"]) / 60)
         log.info("game over: %s", self.stats)
         return self.stats
