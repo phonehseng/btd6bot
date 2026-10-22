@@ -1,0 +1,75 @@
+# Castle Revenge, Medium/Hard: one defence per lane plus global towers.
+#
+# Why: two lanes run at the SAME time along the top and bottom castle walls
+# (bloons are invulnerable while climbing the wheels: 38% of the track). No
+# ground spot lets a short-range tower hit both lanes (best ~1% of the other
+# lane), so the ninja/alchemist/sniper plan (hard_ninja_alch_sniper) held one
+# lane, leaked the other and lost at round 46 (map geometry).
+#
+# Sources:
+#   * BlueCliff, Castle Revenge Hard: four snipers, one per courtyard quarter,
+#     Quincy, Spectre ace, alchemist, village 2-3-0
+#     (https://www.youtube.com/watch?v=au45yv7NhS8) - the guide sells two
+#     snipers mid-game; this plan keeps them.
+#   * bloonswiki Castle_Revenge: towers on the raised central platform see the
+#     whole track; Juggernaut/Carpet of Spikes recommended
+#     (https://www.bloonswiki.com/Castle_Revenge)
+#   * OneEyedDeacon, CHIMPS with Sauda (v53.1): mirrored damage at the top and
+#     bottom right corners (https://www.youtube.com/watch?v=JfjH7gMVRGw)
+# Rule: every short-range purchase comes in a top/bottom pair.
+#
+# `at` = exact spot (screen fractions), checked legal in
+# tests/test_map_hints_offline.py; same spots as the "hard" build of Castle
+# Revenge in data/map_strategy_hints.json. Low base_success until played.
+id: castlerevenge_hard
+map: Castle Revenge
+hero: quincy
+modes: [medium, hard]
+planner:
+  towers: {ninja: [4, 0, 2], sniper: [4, 2, 5], alchemist: [4, 0, 1], ace: [2, 0, 4], village: [2, 3, 0]}
+  base_success: {medium: 0.8, hard: 0.72}
+  maps: [Castle Revenge]
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.612, 0.232]}    # top-right corner (top lane)
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.612, 0.76]}     # bottom-right corner (bottom lane)
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: upgrade, id: n2, to: 2-0-1}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.548, 0.325]}   # courtyard top-right
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.558, 0.683]}   # courtyard bottom-right
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.37, 0.4]}      # raised central platform
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 3-0-2}
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.59, 0.283]}   # next to the top ninja
+  - {do: place, id: a2, kind: alchemist, role: support, at: [0.59, 0.717]}   # next to the bottom ninja
+  - {do: upgrade, id: a1, to: 3-0-1}
+  - {do: upgrade, id: a2, to: 3-0-1}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.42, 0.46]}       # raised central platform
+  - {do: upgrade, id: ac1, to: 2-0-3}                                   # Neva-Miss
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: n2, to: 4-0-2}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.2, 0.317]}     # courtyard top-left
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.19, 0.683]}    # courtyard bottom-left
+  - {do: upgrade, id: s2, to: 4-2-0}                                    # Maim MOAB
+  - {do: place, id: v1, kind: village, role: support, at: [0.3, 0.52]} # raised platform, left
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: upgrade, id: a1, to: 4-0-1}
+  - {do: upgrade, id: a2, to: 4-0-1}
+  - {do: upgrade, id: s1, to: 0-2-4}
+  - {do: upgrade, id: ac1, to: 2-0-4}                                   # Spectre
+  - {do: upgrade, id: s1, to: 0-2-5}                                    # Elite Defender
+  - {do: upgrade, id: v1, to: 2-3-0}
+fill:
+  - {do: upgrade, id: s3, to: 0-2-4}
+  - {do: upgrade, id: s4, to: 4-2-0}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: s2, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: s2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s2, to: 4-2-0}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}, {do: upgrade, id: n2, to: 4-0-2}]
+  zomg: [{do: upgrade, id: s2, to: 4-2-0}]

@@ -1,0 +1,64 @@
+# Enchanted Glade, Medium/Hard: the bottom-centre island under the shared
+# stretch, with a Glue Bloon Solver bought before round 63.
+#
+# Why: the two lanes alternate (odd rounds from the bottom-left, even rounds
+# from the top-right) but both run through the wavy stretch below the centre
+# and climb into the cherry-tree exit at (0.43, 0.39). From the top edge of
+# the bottom-centre island a ninja reaches the last ~45% of BOTH lanes, the
+# best ground on the map. Round 63 (122 ceramics + 75 leads) is odd, so it
+# comes down the bottom-left lane straight into that chokepoint. The bot lost
+# all lives inside round 63 with $16,699 unspent, its spike factories on the
+# top-left island (no track in range) and its ninjas on the wrong path.
+#
+# Sources:
+#   * BlueCliff, Enchanted Glade Hard: Quincy, Ninja 3-0-2 by R17 -> 4-0-2
+#     R34, Alchemist 2-0-0 R23 -> 4-0-2 R37, Glue 3-1-0 R39 -> 3-2-0 -> 4-2-0
+#     R45 -> 5-2-0 The Bloon Solver R62, Village 3-0-0 -> 4-2-0 -> 5-2-0
+#     (https://www.youtube.com/watch?v=WTBG33Bey-M) - the order below.
+#   * bloonswiki Enchanted_Glade: winning strategies use the bottom-centre space
+#     or global towers (https://www.bloonswiki.com/Enchanted_Glade)
+# Added: a Sticky Bomb ninja on the right-centre island for the even-round
+# lane's MOAB-class bloons (the bot's threat table wants a BFB/ZOMG answer).
+#
+# `at` = exact spot (screen fractions), checked legal in
+# tests/test_map_hints_offline.py; same spots as the "hard" build of
+# Enchanted Glade in data/map_strategy_hints.json. Low base_success.
+id: enchantedglade_hard
+map: Enchanted Glade
+hero: quincy
+modes: [medium, hard]
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [4, 0, 2], glue: [5, 2, 0], village: [5, 2, 0]}
+  base_success: {medium: 0.8, hard: 0.72}
+  maps: [Enchanted Glade]
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.43, 0.785]}     # top edge of the bottom-centre island
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.387, 0.819]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.468, 0.819]}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: a1, to: 3-0-1}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: a1, to: 4-0-2}
+  - {do: place, id: g1, kind: glue, role: dps, target: strong, at: [0.425, 0.845]}
+  - {do: upgrade, id: g1, to: 3-1-0}
+  - {do: upgrade, id: g1, to: 3-2-0}
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.671, 0.453]}    # right-centre island (even lane)
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: g1, to: 4-2-0}
+  - {do: place, id: v1, kind: village, role: support, at: [0.462, 0.905]}
+  - {do: upgrade, id: v1, to: 3-0-0}
+  - {do: upgrade, id: v1, to: 4-2-0}
+  - {do: upgrade, id: n2, to: 2-0-4}                                    # Sticky Bomb
+  - {do: upgrade, id: g1, to: 5-2-0}                                    # The Bloon Solver before R63
+  - {do: upgrade, id: v1, to: 5-2-0}
+panic:
+  - {do: place, kind: ninja, role: dps}
+answers:
+  lead: [{do: upgrade, id: a1, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: n2, to: 2-0-3}]
+  bfb: [{do: upgrade, id: n2, to: 2-0-4}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: n2, to: 2-0-4}]

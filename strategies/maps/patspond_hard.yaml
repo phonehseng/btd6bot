@@ -1,0 +1,68 @@
+# Pat's Pond, Medium/Hard: everything packed at the RIGHT junction, with a
+# MOAB-capable boat in the water next to it.
+#
+# Why: two lanes run at the same time round a big pond in opposite directions
+# and meet at two junctions (each is one lane's entrance and the other's
+# exit). In the middle they are far apart, so players cram short-range towers
+# at one junction - usually the right one, where the BAD/top lane exits
+# (bloonswiki). The bot's boomerang/tack build (primary_core) had no MOAB
+# damage and lost to the first MOAB at round 40.
+#
+# Sources:
+#   * BlueCliff, Pat's Pond Hard: Obyn, Ninja 3-0-2 by R17 -> 4-0-2,
+#     Buccaneer 0-2-2 -> 0-3-2 -> 0-4-2 (Monkey Pirates) by R38, Alchemist
+#     4-0-1, Village 4-2-0, two 0-2-4 bombs, Sniper 4-0-2
+#     (https://www.youtube.com/watch?v=PpP_z82AN9o) - the guide sells the boat
+#     after R40 and buys the $500 right rock; this plan keeps the boat.
+#   * bloonswiki Pat's_Pond: junction strategy, right side preferred, Pursuit
+#     helis chase between the lanes (https://www.bloonswiki.com/Pat%27s_Pond)
+#   * bloons fandom Pat's_Pond/Strategies: an early sub at the right junction
+#     (https://bloons.fandom.com/wiki/Pat%27s_Pond/Strategies). Its "crack
+#     between the path and the rock" overlaps the boat's spot, so the sub goes
+#     in the water below-left of the junction, where the bottom lane starts.
+#
+# `at` = exact spot (screen fractions), checked legal in
+# tests/test_map_hints_offline.py. Low base_success until played.
+id: patspond_hard
+map: Pat's Pond
+hero: obyn
+modes: [medium, hard]
+planner:
+  towers: {ninja: [4, 0, 2], buccaneer: [0, 4, 2], alchemist: [4, 0, 1], village: [4, 2, 0], bomb: [0, 2, 4], sniper: [4, 2, 0]}
+  base_success: {medium: 0.8, hard: 0.72}
+  maps: ["Pat's Pond"]
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.772, 0.394]}    # right junction, above-left
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.778, 0.572]}   # right junction, below
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.351]}   # pond water left of the junction
+  - {do: upgrade, id: b1, to: 0-2-2}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.633, 0.683]}     # pond water below-left of the junction (bottom lane)
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.756, 0.624]}
+  - {do: upgrade, id: a1, to: 3-0-0}
+  - {do: upgrade, id: b1, to: 0-3-2}
+  - {do: upgrade, id: b1, to: 0-4-2}                                    # Monkey Pirates before R40
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: a1, to: 4-0-1}
+  - {do: place, id: v1, kind: village, role: support, at: [0.815, 0.359]}
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.804, 0.624]}    # bottom lane side
+  - {do: upgrade, id: bo1, to: 0-2-4}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.291]}
+  - {do: upgrade, id: s1, to: 4-2-0}                                    # Maim MOAB
+  - {do: upgrade, id: sb1, to: 2-0-4}
+  - {do: upgrade, id: v1, to: 4-2-0}
+fill:
+  - {do: place, kind: bomb, role: dps, max: 2}
+  - {do: upgrade, kind: bomb, to: 0-2-4}
+panic:
+  - {do: place, kind: ninja, role: dps}
+answers:
+  lead: [{do: upgrade, id: a1, to: 1-0-0}, {do: place, id: a1, kind: alchemist, role: support, at: [0.756, 0.624]}]
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: b1, to: 0-4-2}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}, {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.291]}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-2-0}]

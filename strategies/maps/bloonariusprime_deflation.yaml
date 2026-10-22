@@ -1,0 +1,44 @@
+# Bloonarius Prime, Deflation: global towers that do not care which lane is
+# active.
+#
+# Why: on prime-numbered rounds (31, 37, 41, 43, 47, 53, 59 in Deflation)
+# bloons drop into the swamp hole by the entrance and take the short right
+# lane; every other round they take the long left lane. No land spot covers
+# both lanes well, so the generated Spike Factory build (solo_spike), which
+# sits by one exit, lost at round 49 (map geometry, bloonswiki).
+#
+# Sources:
+#   * bloonswiki Bloonarius_Prime: heli/global towers excel on the alternating
+#     lanes; prime-round list (https://www.bloonswiki.com/Bloonarius_Prime)
+#   * bloonswiki Strategy:Deflation_(BTD6): Neva-Miss aces beat Deflation on
+#     practically all maps (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#   * a sniper at the top-left by the entrance sees the whole long lane and
+#     ~44% of the short one (map geometry; the rock column between the lanes
+#     blocks the rest).
+# No map-specific Deflation guide was found, so this is an adaptation: two
+# Neva-Miss aces with Spy Plane (0-2-3: camo, lead) and one Maim MOAB sniper
+# (4-2-0: ceramics, MOAB-class) - inside $20,000 at Easy prices.
+#
+# `at` = exact spot (screen fractions), checked legal in
+# tests/test_map_hints_offline.py.
+id: bloonariusprime_deflation
+map: Bloonarius Prime
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {ace: [0, 2, 3], sniper: [4, 2, 0]}
+  base_success: {deflation: 0.75}
+  maps: [Bloonarius Prime]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.248, 0.198]}   # sees all of the long lane
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.47, 0.85]}         # bottom centre open ground
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.8, 0.7]}           # right side open ground
+  - {do: upgrade, id: s1, to: 4-2-0}
+  - {do: upgrade, id: a1, to: 0-2-3}
+  - {do: upgrade, id: a2, to: 0-2-3}
+  - {do: place, id: hero, kind: hero, role: dps}                        # only if cash is left
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

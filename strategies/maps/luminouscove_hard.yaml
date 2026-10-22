@@ -1,0 +1,83 @@
+# Luminous Cove, Medium/Hard: a water build in the heart-shaped pond.
+#
+# Why: the two lanes alternate by round (odd rounds from the top-left, even
+# rounds from the top-right) and both loop round the heart-shaped pond in
+# the middle. The only land is the strip along the bottom and every land
+# spot reaches ONE lane only, so the land plan (chimps_ninja_sun) defended
+# every other round and lost at round 49. The heart pond touches both lanes:
+# a sub there reaches ~20% of each lane, a buccaneer ~46% (map geometry).
+#
+# Sources:
+#   * bloonswiki Luminous_Cove, Strategy: "water-based strategies are optimal";
+#     recommended Carrier Flagship + Admiral Brickell
+#     (https://www.bloonswiki.com/Luminous_Cove)
+#   * BlueCliff, Luminous Cove Hard: Sub 2-0-4 by R43 -> Sub Commander
+#     (https://www.youtube.com/watch?v=67rUzMWVE-Q)
+#   * metaldevil, Brickell CHIMPS: buccaneer 2-2-0 by R23, 3-2-0 by R35,
+#     4-2-0 by R48, Carrier Flagship by R81
+#     (https://www.youtube.com/watch?v=O65H67unAwA)
+#   * snipers on the bottom-left land see ~70% of BOTH lanes (map geometry):
+#     0-1-x Night Vision gives the pond camo detection, 4-2-0 Maim MOAB the
+#     BFB/ZOMG/DDT answer.
+#   * one Ninja 4-0-2 on the bottom-right land tip, as in BlueCliff's guide,
+#     for the round-63 ceramic rush on the odd-round lane (it reaches one
+#     lane only, so it is a helper, never the core).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in tests/test_map_hints_offline.py; same spots as the "hard" build of
+# Luminous Cove in data/map_strategy_hints.json. Untested in play: the
+# base_success values are deliberately low until the record calibrates them.
+id: luminouscove_hard
+map: Luminous Cove
+hero: admiral_brickell
+modes: [medium, hard]
+planner:
+  towers: {sub: [2, 0, 5], buccaneer: [5, 2, 0], sniper: [4, 2, 0]}
+  base_success: {medium: 0.8, hard: 0.72}
+  maps: [Luminous Cove]
+# (planner.towers lists the core; the helper ninja is optional)
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.35, 0.53]}       # heart pond, lower left
+  - {do: upgrade, id: sb1, to: 2-0-1}
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.51, 0.53]}       # heart pond, lower right
+  - {do: upgrade, id: sb2, to: 2-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.43, 0.58]}     # Brickell, heart pond bottom
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.248, 0.675]}   # sees both lanes
+  - {do: upgrade, id: s1, to: 0-1-0}                                    # camo for the pond
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: upgrade, id: sb2, to: 2-0-2}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.47]}  # heart pond middle
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: upgrade, id: b1, to: 2-2-0}
+  - {do: upgrade, id: sb1, to: 2-0-3}
+  - {do: upgrade, id: sb2, to: 2-0-3}
+  - {do: upgrade, id: b1, to: 3-2-0}                                    # Destroyer
+  - {do: upgrade, id: sb1, to: 2-0-4}
+  - {do: upgrade, id: s1, to: 4-2-0}                                    # Maim MOAB before the BFBs
+  - {do: upgrade, id: sb2, to: 2-0-4}
+  - {do: upgrade, id: b1, to: 4-2-0}                                    # Aircraft Carrier
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.612, 0.666]}    # bottom-right land tip
+  - {do: upgrade, id: n1, to: 4-0-2}                                    # Bloonjitsu for the R63 rush
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.211, 0.717]}
+  - {do: upgrade, id: s2, to: 4-2-0}
+  - {do: upgrade, id: sb1, to: 2-0-5}                                   # Sub Commander
+  - {do: upgrade, id: b1, to: 5-2-0}                                    # Carrier Flagship
+fill:
+  - {do: place, kind: sub, role: dps, max: 6}
+  - {do: upgrade, kind: sub, to: 2-0-4}
+  - {do: place, kind: sniper, role: dps, target: strong, max: 4}
+  - {do: upgrade, kind: sniper, to: 4-2-0}
+panic:
+  - {do: place, kind: sub, role: dps}
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo:
+    - {do: upgrade, id: s1, to: 0-1-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.248, 0.675]}
+  lead:
+    - {do: upgrade, id: s1, to: 1-1-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.248, 0.675]}
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: sb1, to: 2-0-3}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
+  zomg: [{do: upgrade, id: s2, to: 4-2-0}, {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.211, 0.717]}]

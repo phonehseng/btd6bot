@@ -229,6 +229,9 @@ def planner_specs(strats, account):
         allow = s["id"] in wanted
         if s.get("achievement") and not allow:
             continue  # achievement plans only while their achievement is wanted
+        boosts = getattr(account, "boosts", None) or {}
+        if any(not boosts.get(b) for b in s.get("needs_boosts") or ()):
+            continue  # an optimized build planned on income this account lacks
         modes = [m for m in s.get("modes", []) if usable(s, m, account, allow_achievement=allow)[0]]
         # only modes whose threats (camo, lead, MOAB ... DDT) this build answers
         # with the upgrades this account has actually unlocked

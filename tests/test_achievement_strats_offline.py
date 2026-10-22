@@ -134,7 +134,11 @@ def test_all_achievement_yamls_load():
         for mode in s.get("modes", []):
             assert mode in S.MODE_RULES, (sid, mode)
     for sid, s in strats.items():
-        if not s.get("achievement"):
+        if s.get("source") == "optimized":
+            # valid always; held back only when the model's margin is too thin
+            assert S.validate(s) == [], (sid, S.validate(s))
+            assert s["bot_ready"] or all("margin" in r for r in s["bot_ready_reasons"]), sid
+        elif not s.get("achievement"):
             assert s["bot_ready"] is True and S.validate(s) == [], (sid, S.validate(s))
 
 

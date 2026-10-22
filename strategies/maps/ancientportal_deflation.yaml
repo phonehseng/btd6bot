@@ -1,0 +1,43 @@
+# Ancient Portal, Deflation: ninjas inside the spiral, bought at once.
+#
+# Why: bloons spiral clockwise from the top into a portal and, unless the
+# player clicks the free realign device (the bot never does), leave through
+# the right lane. The generated Spike Factory build (solo_spike) lost here at
+# round 54 with 194 lives leaked: from the exit a Spike Factory sees under
+# 40% of the right lane and none of the spiral (map geometry).
+#
+# Source: Eleado, "Ancient Portal Deflation AFK": buy 3 Ninja 4-0-2 and an
+# Alchemist 4-2-0 with the $20,000 and let it run
+# (https://www.youtube.com/watch?v=OmUQCYE8XQw). The land strip INSIDE the
+# spiral lets a ninja hit ~60% of the spiral; the ground below the spiral
+# (the hero pedestal area) reaches the spiral and the start of the right lane.
+# Adapted to the bot's threat table: the third ninja goes 2-0-4 Sticky Bomb
+# (the round-60 BFB answer) and the alchemist stops at 3-0-0 Berserker Brew
+# to stay inside the $20,000 (Easy prices: 4,685 + 4,685 + 7,745 + 2,175 =
+# $19,290, plus the executor's $170 opener dart and a $460 Quincy).
+#
+# `at` = exact spot (screen fractions), checked legal in
+# tests/test_map_hints_offline.py; same spots as the "deflation" build of
+# Ancient Portal in data/map_strategy_hints.json.
+id: ancientportal_deflation
+map: Ancient Portal
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [3, 0, 0]}
+  base_success: {deflation: 0.8}
+  maps: [Ancient Portal]
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.607, 0.181]}    # inside the spiral, top
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.596, 0.232]}    # inside the spiral, middle
+  - {do: place, id: n3, kind: ninja, role: dps, at: [0.617, 0.436]}    # below the spiral (pedestal ground)
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1, n2], at: [0.607, 0.283]}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: n2, to: 4-0-2}
+  - {do: upgrade, id: n3, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 3-0-0}                                    # Berserker Brew
+  - {do: place, id: hero, kind: hero, role: dps}                        # only if cash is left
+panic:
+  - {do: place, kind: ninja, role: dps}
+answers:
+  bfb: [{do: upgrade, id: n3, to: 2-0-4}]

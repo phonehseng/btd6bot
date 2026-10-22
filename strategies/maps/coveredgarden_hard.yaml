@@ -1,0 +1,72 @@
+# Covered Garden, Medium/Hard: global towers on the always-open strip left of
+# the garden.
+#
+# Why: glass panes cover three of the four garden quarters and the open
+# quarter moves clockwise every round (bottom-left on round 1, then top-left,
+# top-right, bottom-right). A tower under the glass can only be placed or
+# upgraded one round in four; the bot counts pane ground as closed, so a
+# plan that needs it (the wizard plan ach_abracadabmonkey) found no spots
+# and lost at round 76 with $49,876 unspent. Ground outside the garden is
+# always open: the strip on the left (and a small strip by the exit).
+#
+# Sources:
+#   * bloonswiki Covered_Garden: pane rule, heli recommended (Comanche
+#     Commander), Etienne/Psi long range (https://www.bloonswiki.com/Covered_Garden)
+#   * bloons fandom Covered_Garden/Strategies: heli "perfect for this map",
+#     engineers/farms bad under glass (https://bloons.fandom.com/wiki/Covered_Garden/Strategies)
+#   * OneEyedDeacon, Covered Garden CHIMPS (v50.0): village, ace (Flying
+#     Fortress) and alchemist stacked up the left strip
+#     (https://www.youtube.com/watch?v=u0-X2o8hfQQ)
+#   * the only spot a heli pad fits is the lower left strip; a sniper at the
+#     bottom of the strip sees ~51% of the track (map geometry).
+# The heli is a Pursuit heli from its first upgrade (2-x-x) and ends 5-0-2
+# Apache Prime. One ninja on the small right strip by the exit catches
+# leaks and answers the round-63 rush.
+#
+# `at` = exact spot (screen fractions), checked legal in
+# tests/test_map_hints_offline.py. Untested in play: low base_success.
+id: coveredgarden_hard
+map: Covered Garden
+hero: etienne
+modes: [medium, hard]
+planner:
+  towers: {heli: [5, 0, 2], sniper: [4, 2, 0], ace: [2, 0, 4], village: [2, 2, 0]}
+  base_success: {medium: 0.78, hard: 0.7}
+  maps: [Covered Garden]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.051, 0.92]}   # lower left strip
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.051, 0.624]}   # Etienne, left strip
+  - {do: upgrade, id: s1, to: 1-1-0}                                    # lead + camo
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.051, 0.777]}     # the only heli spot
+  - {do: upgrade, id: h1, to: 2-0-0}                                    # Pursuit: never follows the mouse
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.81, 0.462]}     # right strip by the exit
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: v1, kind: village, role: support, at: [0.051, 0.504]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                    # radar: camo for the heli
+  - {do: upgrade, id: s1, to: 2-2-0}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.051, 0.4]}
+  - {do: upgrade, id: a1, to: 2-0-3}                                    # Neva-Miss
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: s1, to: 4-2-0}                                    # Maim MOAB
+  - {do: upgrade, id: h1, to: 4-0-2}                                    # Apache Dartship
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: place, id: al1, kind: alchemist, role: support, at: [0.051, 0.25]}
+  - {do: upgrade, id: al1, to: 3-0-0}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: a1, to: 2-0-4}                                    # Spectre
+  - {do: upgrade, id: al1, to: 4-0-0}
+  - {do: upgrade, id: h1, to: 5-0-2}                                    # Apache Prime
+fill:
+  - {do: upgrade, id: s1, to: 5-2-0}
+  - {do: upgrade, id: v1, to: 2-3-0}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: s1, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: h1, to: 3-0-2}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: h1, to: 4-0-2}]

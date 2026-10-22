@@ -1,0 +1,70 @@
+# Last Resort, Medium/Hard: snipers that see the shared top lane, a Pursuit
+# heli, and a ninja/alchemist pair where every loop comes down the right side.
+#
+# Why: bloons always enter along the top edge, then take one of four routes in
+# a 4-round cycle (round mod 4 = 1 big loop, 2 medium, 3 small, 0 straight
+# along the top), each faster than the last; only the top lane is used every
+# round. The farm plan (farm_sun_avatar) put its short-range towers where they
+# only reached the big and medium loops, so the small-loop round 23 leaked
+# 64 lives and round 24 (straight) ended it.
+#
+# Sources:
+#   * BlueCliff, Last Resort Hard: Quincy, Ninja 3-0-2 by R17 -> 4-0-2 R35,
+#     Alchemist 4-0-2, Heli 2-0-0 "on top path" R39 -> 2-0-4, Dart 4-0-2 ->
+#     5-0-2, Sniper 3-2-0 -> 4-2-0, Wizard 4-0-2
+#     (https://www.youtube.com/watch?v=z_4kPTV47MI)
+#   * OneEyedDeacon, Last Resort CHIMPS (v49.3): a row of snipers on Strong
+#     carries the map (https://www.youtube.com/watch?v=7fpYt6w9ziE)
+#   * from the inner strip of the big loop a sniper sees ~75% of the top lane
+#     (map geometry; snow does not block sight - bloonswiki Last_Resort).
+#   * the $1,000 frozen pool (RemovableWater) opens the best spot on the map
+#     for a sub/boat (bloons fandom); not used here because the bot does not
+#     buy obstacles yet - see data/map_strategy_hints.json.
+#
+# `at` = exact spot (screen fractions), checked legal in
+# tests/test_map_hints_offline.py. Low base_success until played.
+id: lastresort_hard
+map: Last Resort
+hero: quincy
+modes: [medium, hard]
+planner:
+  towers: {sniper: [4, 2, 4], ninja: [4, 0, 2], alchemist: [4, 0, 2], heli: [2, 0, 4], dart: [5, 0, 2]}
+  base_success: {medium: 0.8, hard: 0.72}
+  maps: [Last Resort]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.607, 0.598]}   # inner big-loop strip
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.617, 0.675]}
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.783, 0.487]}    # right block, where the loops come down
+  - {do: upgrade, id: s1, to: 1-1-0}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.649, 0.905]}   # bottom strip
+  - {do: upgrade, id: s2, to: 0-1-1}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.783, 0.428]}
+  - {do: upgrade, id: a1, to: 3-0-1}
+  - {do: upgrade, id: s1, to: 3-2-0}
+  - {do: upgrade, id: s2, to: 0-2-2}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: a1, to: 4-0-2}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.81, 0.896]}      # bottom-right corner
+  - {do: upgrade, id: h1, to: 2-0-2}                                    # Pursuit first
+  - {do: upgrade, id: s1, to: 4-2-0}                                    # Maim MOAB
+  - {do: upgrade, id: h1, to: 2-0-3}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.457, 0.675]}     # inner big-loop strip, middle
+  - {do: upgrade, id: d1, to: 4-0-2}
+  - {do: upgrade, id: s2, to: 0-2-4}
+  - {do: upgrade, id: h1, to: 2-0-4}
+  - {do: upgrade, id: d1, to: 5-0-2}
+fill:
+  - {do: place, kind: sniper, role: dps, target: strong, max: 5}
+  - {do: upgrade, kind: sniper, to: 0-2-4}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: s1, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-2-0}]

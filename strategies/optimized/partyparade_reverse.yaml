@@ -1,0 +1,102 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Party Parade, reverse: planned for rounds 15-60, starting with $6,057 and the game's own income x2 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R15 2.46, R34 2.48, R54 2.65, R58 2.71, R45 2.74 (worst 2.46).
+# Cash by tower kind at the end: spike $14,750 (31%), desperado $10,750 (23%), sniper $8,350 (18%), tack $3,110 (7%), dart $2,950 (6%), skywarden $2,910 (6%), mermonkey $2,700 (6%), ninja $2,000 (4%)
+# XP: XP target spike; the game gives 65,484 tower XP in about 7.8 min, 19,866 of it to the target
+# (152,426/h); weighted by what each tower's XP is worth to the account: 384,219/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_partyparade_reverse
+map: Party Parade
+modes: [reverse]
+xp_target: spike
+hero: quincy
+planner:
+  maps: [Party Parade]
+  towers: {skywarden: [1, 0, 1], tack: [3, 2, 0], desperado: [4, 1, 3], spike: [4, 0, 2], mermonkey: [3, 0, 1], dart: [4, 0, 2], sniper: [1, 2, 3], ninja: [3, 0, 0]}
+optimizer:
+  scenario: {start_round: 15, start_cash: 6057, income_multiplier: 2, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 2.46
+  unsafe_rounds: []
+  minutes: 7.8
+  target_xp_per_hour: 152426
+  valued_xp_per_hour: 384219
+plan:
+  - {do: place, id: sky1, kind: skywarden, role: dps, segment: [0.3, 0.99], at: [0.227, 0.487]}   # R15: $205, secures round 15; cash left $5,852
+  - {do: place, id: sky2, kind: skywarden, role: dps, segment: [0.27, 0.95], at: [0.633, 0.504]}   # R15: $205, secures round 15; cash left $5,647
+  - {do: place, id: sky3, kind: skywarden, role: dps, segment: [0.24, 0.82], at: [0.601, 0.487]}   # R15: $205, secures round 15; cash left $5,442
+  - {do: place, id: sky4, kind: skywarden, role: dps, segment: [0.27, 0.83], at: [0.259, 0.504]}   # R15: $205, secures round 15; cash left $5,237
+  - {do: place, id: sky5, kind: skywarden, role: dps, segment: [0.58, 1.0], at: [0.227, 0.215]}   # R15: $205, secures round 15; cash left $5,032
+  - {do: place, id: sky6, kind: skywarden, role: dps, segment: [0.48, 1.0], at: [0.238, 0.402]}   # R15: $205, secures round 15; cash left $4,827
+  - {do: place, id: sky7, kind: skywarden, role: dps, segment: [0.41, 0.93], at: [0.644, 0.555]}   # R15: $205, secures round 15; cash left $4,622
+  - {do: place, id: sky8, kind: skywarden, role: dps, segment: [0.55, 1.0], at: [0.623, 0.777]}   # R15: $205, secures round 15; cash left $4,417
+  - {do: place, id: tac9, kind: tack, role: dps, segment: [0.31, 0.51], at: [0.655, 0.402]}   # R15: $260, secures round 15; cash left $4,157
+  - {do: place, id: tac10, kind: tack, role: dps, segment: [0.34, 0.52], at: [0.206, 0.589]}   # R15: $260, secures round 15; cash left $3,897
+  - {do: upgrade, id: tac10, to: 0-1-0}   # R15: $100, secures round 15; cash left $3,797
+  - {do: upgrade, id: tac9, to: 0-1-0}   # R15: $100, secures round 15; cash left $3,697
+  - {do: place, id: des11, kind: desperado, role: dps, segment: [0.24, 0.98], at: [0.580, 0.555]}   # R15: $300, secures round 15; cash left $3,397
+  - {do: target, id: des11, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: tac10, to: 0-2-0}   # R15: $225, secures round 15; cash left $3,172
+  - {do: upgrade, id: sky7, to: 1-0-0}   # R15: $140, secures round 15; cash left $3,032
+  - {do: upgrade, id: sky6, to: 1-0-0}   # R15: $140, secures round 15; cash left $2,892
+  - {do: upgrade, id: sky5, to: 1-0-0}   # R15: $140, secures round 15; cash left $2,752
+  - {do: upgrade, id: sky3, to: 1-0-0}   # R15: $140, secures round 15; cash left $2,612
+  - {do: place, id: hero, kind: hero, role: dps}   # R15: $540; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: tac9, to: 0-2-0}   # R15: $225, ahead of round 21; cash left $1,847
+  - {do: upgrade, id: tac10, to: 1-2-0}   # R15: $150, ahead of round 21; cash left $1,697
+  - {do: upgrade, id: sky4, to: 1-0-0}   # R15: $140, ahead of round 21; cash left $1,557
+  - {do: place, id: spi12, kind: spike, role: dps, segment: [0.14, 0.51], at: [0.623, 0.215]}   # R15: $1,000, XP: surplus into the target tower; cash left $557
+  - {do: upgrade, id: spi12, to: 0-0-1}   # R15: $150, XP: surplus into the target tower; cash left $407
+  - {do: upgrade, id: spi12, to: 0-0-2}   # R15: $400, XP: surplus into the target tower; cash left $7
+  - {do: place, id: des13, kind: desperado, role: dps, segment: [0.2, 0.94], at: [0.281, 0.555]}   # R16: $450, ahead of round 24; cash left $89
+  - {do: upgrade, id: des13, to: 0-1-0}
+  - {do: target, id: des13, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: tac9, to: 1-2-0}   # R17: $150, ahead of round 24; cash left $475
+  - {do: upgrade, id: tac10, to: 2-2-0}   # R17: $220, ahead of round 24; cash left $255
+  - {do: place, id: mer14, kind: mermonkey, role: dps, segment: [0.18, 0.46], at: [0.248, 0.777]}   # R18: $300, ahead of round 24; cash left $285
+  - {do: upgrade, id: mer14, to: 0-0-1}   # R18: $200, ahead of round 24; cash left $85
+  - {do: upgrade, id: spi12, to: 1-0-2}   # R19: $800, XP: surplus into the target tower; cash left $1
+  - {do: upgrade, id: tac10, to: 3-2-0}   # R21: $600, ahead of round 28; cash left $293
+  - {do: upgrade, id: tac9, to: 3-2-0}   # R22: $820, ahead of round 28; cash left $175
+  - {do: upgrade, id: spi12, to: 2-0-2}   # R23: $600, XP: surplus into the target tower; cash left $171
+  - {do: upgrade, id: mer14, to: 2-0-1}   # R25: $400, ahead of round 33; cash left $659
+  - {do: place, id: dar15, kind: dart, role: dps, segment: [0.45, 0.96], at: [0.206, 0.419]}   # R25: $630, ahead of round 33; cash left $29
+  - {do: upgrade, id: dar15, to: 1-0-2}
+  - {do: upgrade, id: des13, to: 3-1-0}   # R28: $1,600, ahead of round 33; cash left $1,089
+  - {do: place, id: sni16, kind: sniper, role: dps, at: [0.195, 0.129]}   # R29: $1,050, ahead of round 34; cash left $571
+  - {do: upgrade, id: sni16, to: 0-2-0}
+  - {do: target, id: sni16, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sky1, to: 1-0-0}   # R29: $140, ahead of round 34; cash left $431
+  - {do: upgrade, id: mer14, to: 3-0-1}   # R31: $1,800, ahead of round 34; cash left $83
+  - {do: upgrade, id: spi12, to: 3-0-2}   # R33: $2,300, ahead of round 34; cash left $111
+  - {do: upgrade, id: sni16, to: 1-2-0}   # R34: $350, ahead of round 39; cash left $171
+  - {do: upgrade, id: sky2, to: 1-0-0}   # R34: $140, ahead of round 39; cash left $31
+  - {do: place, id: nin17, kind: ninja, role: dps, segment: [0.27, 0.71], at: [0.644, 0.453]}   # R35: $400, ahead of round 39; cash left $1,455
+  - {do: upgrade, id: des11, to: 0-0-3}   # R36: $2,600, ahead of round 40; cash left $1,155
+  - {do: upgrade, id: nin17, to: 3-0-0}   # R37: $1,600, ahead of round 43; cash left $1,347
+  - {do: upgrade, id: sky8, to: 1-0-0}   # R37: $140, ahead of round 43; cash left $1,207
+  - {do: place, id: sni18, kind: sniper, role: dps, at: [0.238, 0.129]}   # R39: $1,050, ahead of round 43; cash left $5,389
+  - {do: upgrade, id: sni18, to: 0-2-0}
+  - {do: target, id: sni18, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni18, to: 0-2-3}   # R39: $3,600, ahead of round 43; cash left $1,789
+  - {do: place, id: sni19, kind: sniper, role: dps, at: [0.612, 0.129]}   # R39: $350, ahead of round 47; cash left $1,439
+  - {do: target, id: sni19, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni19, to: 0-2-0}   # R39: $700, ahead of round 47; cash left $739
+  - {do: upgrade, id: sky8, to: 1-0-1}   # R41: $150, ahead of round 49; cash left $5,149
+  - {do: upgrade, id: spi12, to: 4-0-2}   # R42: $9,500, ahead of round 49; cash left $11
+  - {do: upgrade, id: sni19, to: 0-2-2}   # R50: $900, ahead of round 58; cash left $30,325
+  - {do: place, id: sni20, kind: sniper, role: dps, at: [0.655, 0.129]}   # R50: $350, ahead of round 58; cash left $29,975
+  - {do: target, id: sni20, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: dar15, to: 2-0-2}   # R50: $200, ahead of round 58; cash left $29,775
+  - {do: upgrade, id: dar15, to: 4-0-2}   # R51: $2,120, ahead of round 59; cash left $33,687
+  - {do: upgrade, id: des13, to: 4-1-0}   # R51: $5,800, ahead of round 59; cash left $27,887
+fill:
+  - {do: upgrade, kind: spike, to: 4-0-2}   # surplus: the target's own path
+  - {do: place, kind: spike, role: dps, max: 10}

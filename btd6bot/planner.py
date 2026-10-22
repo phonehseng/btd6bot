@@ -230,6 +230,9 @@ MODE_GROUP_MAP_WEIGHT = {"easy": 0.45, "medium": 0.75, "hard": 1.0, "chimps": 1.
 # Hard. (Ancient Portal Deflation, rated 0.86 with the Easy weight, leaked
 # 91 lives in one wave at round 52; Bloonarius Prime died to one blimp.)
 MODE_MAP_WEIGHT = {"deflation": 0.9}
+# Share of the map-difficulty penalty a map's own build still takes (its
+# base_success was set for that map; a little caution remains until played).
+OWN_MAP_WEIGHT = 0.25
 # Win-rate factor of a strategy whose upgrade build is entirely locked
 # (towers placed at low tiers; the executor skips what it cannot buy). It
 # rises linearly to 1.0 as the build's tower-XP cost gets unlocked.
@@ -801,6 +804,10 @@ def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
     """Declared success rate scaled by map difficulty (complete build)."""
     base = s.base_success.get(mode, 0.0)
     w = MODE_MAP_WEIGHT.get(mode, MODE_GROUP_MAP_WEIGHT[MODES[mode].group])
+    if s.maps is not None and len(s.maps) == 1 and not s.achievement:
+        # a map's own researched build (strategies/maps): its declared rate
+        # is already about THIS map, so its difficulty is not counted twice
+        w *= OWN_MAP_WEIGHT
     cat_f = max(0.05, 1.0 - (1.0 - CATEGORY_SUCCESS[category]) * w)
     ease_f = max(0.05, 1.0 + (MAP_EASE.get(map_name, 1.0) - 1.0) * w)
     return min(0.98, max(0.01, base * cat_f * ease_f))
@@ -1502,7 +1509,10 @@ def _sort_key(c: _Cand) -> tuple:
     tier that is about safety."""
     rank = -TIERS.index(c.tier)
     confident = 1 if c.p >= CONFIDENT_P else 0
-    preferred = 1 if c.s.id in PREFERRED_STRATEGIES else 0
+    # a map's own researched build (strategies/maps: one map only) and the
+    # owner's preferred plans come first
+    own_map = c.s.maps is not None and len(c.s.maps) == 1 and not c.s.achievement
+    preferred = 1 if own_map or c.s.id in PREFERRED_STRATEGIES else 0
     learned = 1 if c.tier in ("H", "HS") and c.learned else 0
     within = c.p if c.tier == "HF" else c.score
     return (rank, confident, c.ease, preferred, learned, within)
