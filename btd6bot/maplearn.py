@@ -44,6 +44,8 @@ class MapModel:
         self.px_per_unit = None
         # placement scan per footprint class ("land"/"water"): 0 unknown, 1 ok, 2 blocked
         self.scan = {}
+        # experience: "kind|cx|cy" -> [sum of relative pops-per-dollar, games]
+        self.spot_stats = {}
 
     # -- persistence ------------------------------------------------------
     @property
@@ -60,7 +62,8 @@ class MapModel:
                 np.savez_compressed(
                     tmp, heat=self.heat, t_sum=self.t_sum, t_cnt=self.t_cnt, **scans,
                     meta=json.dumps({"rounds_traced": self.rounds_traced, "valid": self.valid,
-                                     "px_per_unit": self.px_per_unit, "playfield": self.playfield}),
+                                     "px_per_unit": self.px_per_unit, "playfield": self.playfield,
+                             "spot_stats": self.spot_stats}),
                 )
                 os.replace(tmp, self.path)
                 return True
@@ -80,6 +83,7 @@ class MapModel:
                 m.rounds_traced = meta.get("rounds_traced", 0)
                 m.valid = meta.get("valid", {})
                 m.px_per_unit = meta.get("px_per_unit")
+                m.spot_stats = meta.get("spot_stats", {})
                 for k in d.files:
                     if k.startswith("scan_"):
                         m.scan[k[5:]] = d[k]
@@ -420,3 +424,37 @@ class PathTracer:
             self.m.t_cnt[seen] += 1
             self.m.rounds_traced += 1
         self.first_seen = None
+
+
+def _spot_key(kind, cx, cy, cell=4):
+    return f"{kind}|{int(cx) // cell}|{int(cy) // cell}"  # 4x4-cell buckets
+
+
+def record_spot_results(model, towers):
+    """After a game: each damage tower's pops per dollar relative to the game's
+    median. Spots where a tower type keeps underperforming (blocked line of
+    sight, wrong elevation, poor angle) get avoided next time."""
+    rows = [(p, p.pops / max(p.spent, 1)) for p in towers
+            if p.kind not in ("hero", "village", "alchemist", "farm")
+            and getattr(p, "pops", None) and p.spent > 0]
+    if len(rows) < 3:
+        return
+    med = sorted(r for _, r in rows)[len(rows) // 2] or 1e-9
+    for p, r in rows:
+        cx, cy = model.frac_to_cell(p.x, p.y)
+        k = _spot_key(p.kind, cx, cy)
+        tot, n = model.spot_stats.get(k, [0.0, 0])
+        model.spot_stats[k] = [tot + min(r / med, 5.0), n + 1]
+
+
+def spot_factor(model, kind, cx, cy):
+    """Score multiplier learned from experience (1.0 when unknown)."""
+    tot, n = (getattr(model, "spot_stats", None) or {}).get(_spot_key(kind, cx, cy), [0.0, 0])
+    if not n:
+        return 1.0
+    rel = tot / n
+    if rel < 0.35:
+        return 0.3   # this tower type barely pops here
+    if rel > 1.5:
+        return 1.25
+    return 1.0

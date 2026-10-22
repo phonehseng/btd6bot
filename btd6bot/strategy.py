@@ -858,7 +858,10 @@ class Executor:
             cover = self.m.score_spots(rc, seg, self._occupied(), near=near, near_radius=near_r,
                                        placement=placement, extra_block=self.blocked,
                                        covered=None if role == "support" else self._covered())
-        for cx, cy, score in self.m.best_spots(cover, n=12):
+        from .maplearn import spot_factor
+        ranked = sorted(((cx, cy, sc * spot_factor(self.m, kind, cx, cy))
+                         for cx, cy, sc in self.m.best_spots(cover, n=12)), key=lambda t: -t[2])
+        for cx, cy, score in ranked:
             if (kind, cx, cy) in self.failed_spots:
                 continue
             return (cx, cy, score)

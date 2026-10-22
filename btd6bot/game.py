@@ -309,11 +309,26 @@ class Game:
                 side = self._open_side()
                 if side:
                     p.panel_side = side
+                    self._read_pops(p)
                     return True
             # nudge: the click may have hit the edge of the sprite
             p_dx = (0.004, -0.004, 0.0)[attempt]
             p.x += p_dx
         return False
+
+    def _read_pops(self, p):
+        """Pop counter shown under the tower's name (used to learn good spots)."""
+        try:
+            img = crop(self.fresh(), self.panel(p)["pops"])
+            if not getattr(Game, "_pops_crop_saved", False):
+                Game._pops_crop_saved = True  # one crop per session, for calibration
+                from .vision import save
+                save(img, "logs/pops_crop.png")
+            v = parse_int(rec_text(img)[0])
+            if v is not None and v >= getattr(p, "pops", 0):
+                p.pops = v
+        except Exception:
+            pass
 
     def deselect(self, p):
         if self.panel_open(p):

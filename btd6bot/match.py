@@ -247,6 +247,11 @@ class Match:
         return None
 
     def _finish(self, outcome, rnd):
+        try:
+            from .maplearn import record_spot_results
+            record_spot_results(self.m, list(self.g.towers.values()))
+        except Exception:
+            log.exception("spot learning failed")
         self.tracer.end_round()
         self.m.save()
         self.stats.update(outcome=outcome, round=rnd, minutes=(time.time() - self.stats["start"]) / 60)
