@@ -34,15 +34,7 @@ ROOT_DIR = __import__("pathlib").Path(__file__).resolve().parents[1]
 ID_CHECK_EVERY = 10                   # games between account (User ID) checks
 ACH_EVERY = 6 * 3600                   # seconds between achievement scans
 PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main menu
-STATE_FILE = ROOT_DIR / "logs" / "state.txt"
-
-
-def set_state(text):
-    try:
-        STATE_FILE.parent.mkdir(exist_ok=True)
-        STATE_FILE.write_text(time.strftime("%Y-%m-%d %H:%M:%S ") + text + "\n", encoding="utf-8")
-    except OSError:
-        pass
+from .status import STATE_FILE, set_state  # noqa: E402,F401
 
 
 ACH_STAMP = ROOT_DIR / "logs" / "achievements_scanned_at.txt"
@@ -370,6 +362,7 @@ class Bot:
             model.scan = dict(base.scan)  # placement is identical
         if not model.scanned("land"):
             log.info("first visit to %s: scanning placement", plan.map)
+            set_state("first visit: scanning where towers can be placed")
             scan_placement(g, model, "dart", "land")
             model.save()
         # water towers in this plan: find the water once (cheap, land-blocked cells only)
@@ -450,6 +443,7 @@ class Bot:
                 if self.account.player_level >= 30 and self._games_since_mk >= 3:
                     self._games_since_mk = 0
                     try:  # spend new Monkey Knowledge points (MM / XP boosts first)
+                        set_state("spending Monkey Knowledge points")
                         got = Knowledge(self.s, self.inp, self.menus, self.account).spend()
                         if got:
                             log.info("Monkey Knowledge: %s", got)
@@ -462,6 +456,7 @@ class Bot:
                     self._ach_at = time.time()
                     _ach_mark(self._ach_at)
                     try:  # claim finished achievements' rewards, refresh progress
+                        set_state("scanning achievements, claiming rewards")
                         Achievements(self.s, self.inp, self.menus).scan(collect=True)
                     except (FocusLost, Aborted):
                         raise
@@ -475,9 +470,10 @@ class Bot:
                     time.sleep(1800)
                     continue
                 log.info("NEXT: %s", plan.reason)
-                set_state(f"playing {plan.map} {plan.mode_key}")
+                set_state(f"opening {plan.map} {plan.mode_key}", game=f"{plan.map} {plan.mode_key}")
                 self._mm_before = self.read_mm()
                 try:  # spend tower XP on this plan's upgrades before it needs them
+                    set_state("unlocking upgrades with tower XP")
                     got = unlock_for_strategy(self.s, self.inp, self.menus, self.account,
                                               self.strats[plan.strategy_id])
                     if got:
@@ -537,6 +533,7 @@ class Bot:
                 self._ach_at = 0.0  # scan achievements right away
         if is_stale(uid):
             log.info("syncing account %s from the game (upgrades, level)", uid)
+            set_state("reading the account: owned towers and upgrade trees")
             sync_all(self.s, self.inp, self.menus, self.account)
             mark_synced(uid)
             self.to_main_menu()

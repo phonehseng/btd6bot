@@ -33,6 +33,8 @@ while ((Get-Date) -lt $deadline) {
         Start-Process "steam://rungameid/960090"
         Start-Sleep 75
     }
+    # on-screen status strip (single instance, click-through)
+    Start-Process -FilePath ($py -replace 'python\.exe$', 'pythonw.exe') -ArgumentList "tools\overlay.py" -WorkingDirectory $PSScriptRoot
     $before = Results
     $p = Start-Process -FilePath $py -ArgumentList "bot.py", "run", "--hours", "24" -WorkingDirectory $PSScriptRoot -PassThru -WindowStyle Hidden
     while (-not $p.HasExited) {

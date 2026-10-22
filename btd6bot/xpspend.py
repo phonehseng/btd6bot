@@ -11,6 +11,7 @@ import logging
 import re
 import time
 
+from . import status
 from . import towers as T
 from .hud import parse_int
 from .vision import norm
@@ -217,7 +218,8 @@ def sync_all(screen, inp, menus, account, towers=None):
             if owned:
                 account.unlocked_towers |= owned
         kinds = towers or [k for k in T.TOWERS if k in account.unlocked_towers]
-        for kind in kinds:
+        for i, kind in enumerate(kinds):
+            status.set_state(f"reading upgrade trees: {T.TOWERS[kind]['name']} ({i + 1}/{len(kinds)})")
             if not sp.open_tower(kind):
                 continue
             # the click that opened the tree may land on a node, whose tooltip

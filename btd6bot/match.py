@@ -2,6 +2,7 @@
 import logging
 import time
 
+from . import status
 from . import towers as T
 from .abilities import AbilityPlanner
 from .maplearn import PathTracer
@@ -129,6 +130,7 @@ class Match:
                     if self.stats["rounds"] % 5 == 0:
                         self.m.save()
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
+                    status.in_game(f"round {rnd}, ${cash}, {lives} lives")
                     last_round = rnd
                 elif rnd is not None and rnd != last_round:
                     # a reading outside the expected step: adopt it only if it
