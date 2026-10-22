@@ -843,6 +843,11 @@ def usable(strat, mode, account, map_name=None, allow_achievement=False):
             return False, f"{k} is a water tower (land_only)"
         if account is not None and k not in account.unlocked_towers:
             return False, f"{k} locked"
+        if not T.TOWERS[k].get("hotkey"):
+            # placed by hotkey only: Desperado, Mermonkey and Skywarden have
+            # none by default (docs/backlog.md) - a build leaning on them
+            # would start its rounds with towers missing
+            return False, f"{k} has no hotkey bound"
     if (mode == "chimps" or c.get("no_income_towers")) and strat.get("uses_income"):
         return False, "income not allowed"
     # a locked preferred hero falls back to an owned one (see hero_for) - unless
@@ -949,6 +954,10 @@ class Executor:
         if kind == "hero":
             return self.hero_ok
         if kind not in T.TOWERS:
+            return False
+        if not T.TOWERS[kind].get("hotkey"):
+            # it cannot be picked up (Game.hold): a threat answer chose a
+            # Mermonkey, which has no hotkey bound, on every tick of a game
             return False
         if self.allowed is not None and kind not in self.allowed:
             return False

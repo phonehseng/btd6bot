@@ -1,0 +1,57 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Flooded Valley, deflation: planned for rounds 31-60, starting with $40,000 and the game's own income x0 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R54 2.04, R49 2.18, R60 2.46, R55 2.77, R59 2.86 (worst 2.04).
+# Cash by tower kind at the end: ice $32,650 (89%), buccaneer $3,875 (11%)
+# XP: XP target ice; the game gives 59,735 tower XP in about 8.3 min, 53,398 of it to the target
+# (386,007/h); weighted by what each tower's XP is worth to the account: 313,801/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_floodedvalley_deflation
+map: Flooded Valley
+modes: [deflation]
+xp_target: ice
+hero: quincy
+planner:
+  maps: [Flooded Valley]
+  towers: {buccaneer: [0, 3, 2], ice: [5, 2, 0]}
+optimizer:
+  scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 2.04
+  unsafe_rounds: []
+  minutes: 8.3
+  target_xp_per_hour: 386007
+  valued_xp_per_hour: 313801
+plan:
+  - {do: place, id: buc1, kind: buccaneer, role: dps, segment: [0.46, 1.0], at: [0.526, 0.709]}   # R31: $980, secures round 31; cash left $39,020
+  - {do: upgrade, id: buc1, to: 0-1-1}
+  - {do: upgrade, id: buc1, to: 0-3-1}   # R31: $1,190, ahead of round 33; cash left $37,830
+  - {do: upgrade, id: buc1, to: 0-3-2}   # R31: $300, ahead of round 33; cash left $37,530
+  - {do: place, id: buc2, kind: buccaneer, role: dps, segment: [0.52, 1.0], at: [0.569, 0.743]}   # R31: $1,235, ahead of round 54; cash left $36,295
+  - {do: upgrade, id: buc2, to: 0-2-0}
+  - {do: upgrade, id: buc2, to: 0-2-1}   # R31: $170, ahead of round 54; cash left $36,125
+  - {do: place, id: hero, kind: hero, role: dps}   # R31: $460; hero: not counted by the model (extra safety)
+  - {do: place, id: ice3, kind: ice, role: dps, segment: [0.56, 0.62], at: [0.548, 0.624]}   # R31: $340, XP: surplus into the target tower; cash left $35,325
+  - {do: place, id: ice4, kind: ice, role: dps, segment: [0.54, 0.56], at: [0.569, 0.555]}   # R31: $340, XP: surplus into the target tower; cash left $34,985
+  - {do: upgrade, id: ice3, to: 1-0-0}   # R31: $130, XP: surplus into the target tower; cash left $34,855
+  - {do: upgrade, id: ice3, to: 2-0-0}   # R31: $300, XP: surplus into the target tower; cash left $34,555
+  - {do: upgrade, id: ice3, to: 3-0-0}   # R31: $1,275, XP: surplus into the target tower; cash left $33,280
+  - {do: upgrade, id: ice3, to: 4-0-0}   # R31: $1,955, XP: surplus into the target tower; cash left $31,325
+  - {do: upgrade, id: ice3, to: 5-0-0}   # R31: $23,800, XP: surplus into the target tower; cash left $7,525
+  - {do: upgrade, id: ice3, to: 5-1-0}   # R31: $170, XP: surplus into the target tower; cash left $7,355
+  - {do: upgrade, id: ice3, to: 5-2-0}   # R31: $255, XP: surplus into the target tower; cash left $7,100
+  - {do: upgrade, id: ice4, to: 1-0-0}   # R31: $130, XP: surplus into the target tower; cash left $6,970
+  - {do: upgrade, id: ice4, to: 2-0-0}   # R31: $300, XP: surplus into the target tower; cash left $6,670
+  - {do: upgrade, id: ice4, to: 3-0-0}   # R31: $1,275, XP: surplus into the target tower; cash left $5,395
+  - {do: upgrade, id: ice4, to: 4-0-0}   # R31: $1,955, XP: surplus into the target tower; cash left $3,440
+  - {do: upgrade, id: ice4, to: 4-1-0}   # R31: $170, XP: surplus into the target tower; cash left $3,270
+  - {do: upgrade, id: ice4, to: 4-2-0}   # R31: $255, XP: surplus into the target tower; cash left $3,015
+fill:
+  - {do: upgrade, kind: ice, to: 5-2-0}   # surplus: the target's own path
+  - {do: place, kind: ice, role: dps, max: 10}

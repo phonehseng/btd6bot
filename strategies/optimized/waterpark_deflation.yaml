@@ -1,0 +1,88 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Water Park, deflation: planned for rounds 31-60, starting with $40,000 and the game's own income x0 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R58 3.71, R54 5.48, R57 5.91, R59 6.73, R52 7.91 (worst 3.71).
+# Cash by tower kind at the end: spike $22,190 (57%), ace $6,770 (17%), sub $2,980 (8%), sniper $2,400 (6%), alchemist $1,840 (5%), buccaneer $1,320 (3%), tack $1,285 (3%)
+# XP: XP target spike; the game gives 50,545 tower XP in about 8.3 min, 28,918 of it to the target
+# (209,047/h); weighted by what each tower's XP is worth to the account: 240,244/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_waterpark_deflation
+map: "Water Park"
+modes: [deflation]
+xp_target: spike
+hero: quincy
+planner:
+  maps: ["Water Park"]
+  towers: {alchemist: [0, 1, 0], tack: [2, 3, 0], sub: [2, 0, 3], sniper: [1, 2, 0], ace: [2, 3, 0], buccaneer: [0, 1, 1], spike: [4, 2, 2]}
+optimizer:
+  scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 3.71
+  unsafe_rounds: []
+  minutes: 8.3
+  target_xp_per_hour: 209047
+  valued_xp_per_hour: 240244
+plan:
+  - {do: place, id: alc1, kind: alchemist, role: dps, segment: [0.53, 0.98], at: [0.516, 0.589]}   # R31: $470, secures round 31; cash left $39,530
+  - {do: place, id: alc2, kind: alchemist, role: dps, segment: [0.51, 0.91], at: [0.484, 0.606]}   # R31: $470, secures round 31; cash left $39,060
+  - {do: place, id: alc3, kind: alchemist, role: dps, segment: [0.52, 0.84], at: [0.505, 0.658]}   # R31: $470, secures round 31; cash left $38,590
+  - {do: place, id: tac4, kind: tack, role: dps, segment: [0.21, 0.38], at: [0.719, 0.283]}   # R31: $495, secures round 31; cash left $38,095
+  - {do: upgrade, id: tac4, to: 0-2-0}
+  - {do: upgrade, id: alc1, to: 0-1-0}   # R31: $215, secures round 31; cash left $37,880
+  - {do: upgrade, id: alc2, to: 0-1-0}   # R31: $215, secures round 31; cash left $37,665
+  - {do: place, id: sub5, kind: sub, role: dps, at: [0.110, 0.896]}   # R31: $810, secures round 31; cash left $36,855
+  - {do: upgrade, id: sub5, to: 2-0-0}
+  - {do: upgrade, id: sub5, to: 2-0-2}   # R31: $1,235, secures round 31; cash left $35,620
+  - {do: upgrade, id: sub5, to: 2-0-3}   # R31: $935, ahead of round 33; cash left $34,685
+  - {do: upgrade, id: tac4, to: 1-2-0}   # R31: $130, ahead of round 33; cash left $34,555
+  - {do: upgrade, id: tac4, to: 2-2-0}   # R31: $190, ahead of round 33; cash left $34,365
+  - {do: upgrade, id: tac4, to: 2-3-0}   # R31: $470, ahead of round 33; cash left $33,895
+  - {do: place, id: sni6, kind: sniper, role: dps, at: [0.334, 0.078]}   # R31: $1,200, ahead of round 33; cash left $32,695
+  - {do: upgrade, id: sni6, to: 1-2-0}
+  - {do: target, id: sni6, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sni7, kind: sniper, role: dps, at: [0.377, 0.078]}   # R31: $1,200, ahead of round 37; cash left $31,495
+  - {do: upgrade, id: sni7, to: 1-2-0}
+  - {do: target, id: sni7, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: ace8, kind: ace, role: dps, at: [0.516, 0.402]}   # R31: $850, ahead of round 39; cash left $30,645
+  - {do: upgrade, id: ace8, to: 0-1-0}
+  - {do: upgrade, id: ace8, to: 0-3-0}   # R31: $1,065, ahead of round 43; cash left $29,580
+  - {do: upgrade, id: ace8, to: 1-3-0}   # R31: $385, ahead of round 43; cash left $29,195
+  - {do: place, id: buc9, kind: buccaneer, role: dps, segment: [0.56, 0.9], at: [0.291, 0.896]}   # R31: $810, ahead of round 47; cash left $28,385
+  - {do: upgrade, id: buc9, to: 0-1-0}
+  - {do: upgrade, id: ace8, to: 2-3-0}   # R31: $470, ahead of round 49; cash left $27,915
+  - {do: upgrade, id: buc9, to: 0-1-1}   # R31: $170, ahead of round 49; cash left $27,745
+  - {do: place, id: ace10, kind: ace, role: dps, at: [0.195, 0.726]}   # R31: $850, ahead of round 49; cash left $26,895
+  - {do: upgrade, id: ace10, to: 0-1-0}
+  - {do: place, id: ace11, kind: ace, role: dps, at: [0.697, 0.862]}   # R31: $850, ahead of round 49; cash left $26,045
+  - {do: upgrade, id: ace11, to: 0-1-0}
+  - {do: place, id: ace12, kind: ace, role: dps, at: [0.216, 0.215]}   # R31: $850, ahead of round 54; cash left $25,195
+  - {do: upgrade, id: ace12, to: 0-1-0}
+  - {do: place, id: spi13, kind: spike, role: dps, segment: [0.58, 0.75], at: [0.612, 0.470]}   # R31: $1,530, ahead of round 54; cash left $23,665
+  - {do: upgrade, id: spi13, to: 1-0-0}
+  - {do: place, id: spi14, kind: spike, role: dps, segment: [0.56, 0.8], at: [0.569, 0.436]}   # R31: $980, ahead of round 54; cash left $22,685
+  - {do: upgrade, id: spi14, to: 0-0-1}
+  - {do: upgrade, id: spi14, to: 1-0-1}   # R31: $680, ahead of round 54; cash left $22,005
+  - {do: place, id: spi15, kind: spike, role: dps, segment: [0.58, 0.77], at: [0.345, 0.828]}   # R31: $1,530, ahead of round 54; cash left $20,475
+  - {do: upgrade, id: spi15, to: 1-0-0}
+  - {do: upgrade, id: ace12, to: 0-3-0}   # R31: $1,065, ahead of round 54; cash left $19,410
+  - {do: upgrade, id: ace12, to: 1-3-0}   # R31: $385, ahead of round 58; cash left $19,025
+  - {do: upgrade, id: spi13, to: 1-2-0}   # R31: $1,190, ahead of round 58; cash left $17,835
+  - {do: upgrade, id: spi15, to: 1-0-1}   # R31: $130, ahead of round 58; cash left $17,705
+  - {do: place, id: buc16, kind: buccaneer, role: dps, segment: [0.6, 0.93], at: [0.248, 0.777]}   # R31: $340, ahead of round 58; cash left $17,365
+  - {do: place, id: hero, kind: hero, role: dps}   # R31: $460; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: spi13, to: 4-2-0}   # R31: $10,540, XP: surplus into the target tower; cash left $6,365
+  - {do: upgrade, id: spi14, to: 2-0-1}   # R31: $510, XP: surplus into the target tower; cash left $5,855
+  - {do: upgrade, id: spi14, to: 3-0-1}   # R31: $1,955, XP: surplus into the target tower; cash left $3,900
+  - {do: upgrade, id: spi14, to: 3-0-2}   # R31: $340, XP: surplus into the target tower; cash left $3,560
+  - {do: upgrade, id: spi15, to: 2-0-1}   # R31: $510, XP: surplus into the target tower; cash left $3,050
+  - {do: upgrade, id: spi15, to: 3-0-1}   # R31: $1,955, XP: surplus into the target tower; cash left $1,095
+  - {do: upgrade, id: spi15, to: 3-0-2}   # R31: $340, XP: surplus into the target tower; cash left $755
+fill:
+  - {do: upgrade, kind: spike, to: 4-2-0}   # surplus: the target's own path
+  - {do: place, kind: spike, role: dps, max: 10}

@@ -1,0 +1,44 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Bloody Puddles, deflation: planned for rounds 31-60, starting with $40,000 and the game's own income x0 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60.
+# Lowest margins: R31 0.06, R32 0.06, R33 0.06, R34 0.06, R35 0.06 (worst 0.06).
+# Cash by tower kind at the end: ace $4,600 (72%), buccaneer $1,745 (28%)
+# XP: XP target tack; the game gives 59,735 tower XP in about 8.3 min, 0 of it to the target
+# (0/h); weighted by what each tower's XP is worth to the account: 21,398/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_bloodypuddles_deflation
+map: "Bloody Puddles"
+modes: [deflation]
+xp_target: tack
+hero: quincy
+planner:
+  maps: ["Bloody Puddles"]
+  towers: {ace: [1, 3, 0], buccaneer: [0, 2, 1]}
+optimizer:
+  scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 0.06
+  unsafe_rounds: [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
+  minutes: 8.3
+  target_xp_per_hour: 0
+  valued_xp_per_hour: 21398
+plan:
+  - {do: place, id: ace1, kind: ace, role: dps, at: [0.398, 0.879]}   # R50: $1,915, secures round 50; cash left $38,085
+  - {do: upgrade, id: ace1, to: 0-3-0}
+  - {do: upgrade, id: ace1, to: 1-3-0}   # R50: $385, secures round 50; cash left $37,700
+  - {do: place, id: buc2, kind: buccaneer, role: dps, segment: [0.41, 1.0], at: [0.334, 0.606]}   # R50: $1,405, secures round 50; cash left $36,295
+  - {do: upgrade, id: buc2, to: 0-2-1}
+  - {do: place, id: buc3, kind: buccaneer, role: dps, segment: [0.46, 1.0], at: [0.270, 0.641]}   # R50: $340, secures round 50; cash left $35,955
+  - {do: place, id: hero, kind: hero, role: dps}   # R50: $460; hero: not counted by the model (extra safety)
+  - {do: place, id: ace4, kind: ace, role: dps, at: [0.452, 0.181]}   # R60: $1,915, secures round 60; cash left $33,580
+  - {do: upgrade, id: ace4, to: 0-3-0}
+  - {do: upgrade, id: ace4, to: 1-3-0}   # R60: $385, secures round 60; cash left $33,195
+fill:
+  - {do: upgrade, kind: tack, to: 0-0-0}   # surplus: the target's own path
+  - {do: place, kind: tack, role: dps, max: 10}

@@ -351,9 +351,15 @@ def test_no_sell_no_income_land_only():
                       {"do": "sell", "id": "m"}]}
     g = FakeGame()
     model = FakeModel()
-    ex = S.Executor(g, model, strat, "easy", full_account())
-    for _ in range(40):
-        ex.tick(10 ** 7, 10)
+    # the Mermonkey (the one amphibious tower) has no hotkey by default: as
+    # if one were bound, which the land-only rule is about
+    bound, S.T.TOWERS["mermonkey"]["hotkey"] = S.T.TOWERS["mermonkey"]["hotkey"], "-"
+    try:
+        ex = S.Executor(g, model, strat, "easy", full_account())
+        for _ in range(40):
+            ex.tick(10 ** 7, 10)
+    finally:
+        S.T.TOWERS["mermonkey"]["hotkey"] = bound
     assert set(g.placed) == {"mermonkey", "engineer"}, g.placed
     assert g.sold == [] and "m" in g.towers
     assert g.towers["e"].tiers == [0, 0, 3]  # Bloon Trap (income) skipped

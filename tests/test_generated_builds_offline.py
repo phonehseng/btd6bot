@@ -62,6 +62,8 @@ def test_builds_load_bot_ready_and_valid():
 def test_usable_and_covered_in_every_listed_mode():
     acct = G.SIM.full_account()
     for kind, s in generated().items():
+        if not T.TOWERS[kind].get("hotkey"):
+            continue   # cannot be placed until a hotkey is bound in the game (docs/backlog.md)
         for mode in s["modes"]:
             ok, why = S.usable(s, mode, acct)
             assert ok, (kind, mode, why)
@@ -88,6 +90,8 @@ def test_simulation_passes_every_listed_mode():
     bloon nobody can pop, enough blimp damage (Hard: the build's own), and
     the tower keeps at least MIN_SHARE of the cash."""
     for kind, s in generated().items():
+        if not T.TOWERS[kind].get("hotkey"):
+            continue   # cannot be placed until a hotkey is bound in the game (docs/backlog.md)
         b = SimpleNamespace(kind=kind)
         defence = G.defence_only_strategy(b, s) if G.needs_aim(kind) else None
         for mode in s["modes"]:

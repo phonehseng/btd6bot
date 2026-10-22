@@ -1,0 +1,73 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# #Ouch, deflation: planned for rounds 31-60, starting with $40,000 and the game's own income x0 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R56 2.11, R54 2.59, R58 2.92, R57 2.99, R49 3.15 (worst 2.11).
+# Cash by tower kind at the end: tack $34,880 (88%), buccaneer $4,640 (12%)
+# XP: XP target tack; the game gives 59,735 tower XP in about 8.3 min, 52,722 of it to the target
+# (381,120/h); weighted by what each tower's XP is worth to the account: 386,190/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_-ouch_deflation
+map: "#Ouch"
+modes: [deflation]
+xp_target: tack
+hero: quincy
+planner:
+  maps: ["#Ouch"]
+  towers: {buccaneer: [0, 3, 2], tack: [4, 4, 5]}
+optimizer:
+  scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 2.11
+  unsafe_rounds: []
+  minutes: 8.3
+  target_xp_per_hour: 381120
+  valued_xp_per_hour: 386190
+plan:
+  - {do: place, id: buc1, kind: buccaneer, role: dps, segment: [0.42, 0.77], at: [0.452, 0.521]}   # R31: $980, secures round 31; cash left $39,020
+  - {do: upgrade, id: buc1, to: 0-1-1}
+  - {do: upgrade, id: buc1, to: 0-3-1}   # R31: $1,190, ahead of round 33; cash left $37,830
+  - {do: upgrade, id: buc1, to: 0-3-2}   # R31: $300, ahead of round 33; cash left $37,530
+  - {do: place, id: buc2, kind: buccaneer, role: dps, segment: [0.4, 0.74], at: [0.409, 0.487]}   # R31: $980, ahead of round 47; cash left $36,550
+  - {do: upgrade, id: buc2, to: 0-1-1}
+  - {do: upgrade, id: buc2, to: 0-3-1}   # R31: $1,190, ahead of round 49; cash left $35,360
+  - {do: place, id: hero, kind: hero, role: dps}   # R31: $460; hero: not counted by the model (extra safety)
+  - {do: place, id: tac3, kind: tack, role: dps, segment: [0.58, 0.7], at: [0.590, 0.624]}   # R31: $220, XP: surplus into the target tower; cash left $34,680
+  - {do: place, id: tac4, kind: tack, role: dps, segment: [0.35, 0.6], at: [0.281, 0.624]}   # R31: $965, XP: surplus into the target tower; cash left $33,715
+  - {do: upgrade, id: tac4, to: 0-3-0}
+  - {do: place, id: tac5, kind: tack, role: dps, segment: [0.39, 0.5], at: [0.281, 0.283]}   # R31: $220, XP: surplus into the target tower; cash left $33,495
+  - {do: upgrade, id: tac3, to: 0-0-5}   # R31: $20,365, XP: surplus into the target tower; cash left $13,130
+  - {do: place, id: tac6, kind: tack, role: dps, segment: [0.55, 0.68], at: [0.281, 0.726]}   # R31: $220, XP: surplus into the target tower; cash left $12,910
+  - {do: place, id: tac7, kind: tack, role: dps, segment: [0.58, 0.69], at: [0.590, 0.283]}   # R31: $220, XP: surplus into the target tower; cash left $12,690
+  - {do: place, id: tac8, kind: tack, role: dps, segment: [0.58, 0.69], at: [0.590, 0.726]}   # R31: $220, XP: surplus into the target tower; cash left $12,470
+  - {do: place, id: tac9, kind: tack, role: dps, segment: [0.4, 0.53], at: [0.281, 0.402]}   # R31: $220, XP: surplus into the target tower; cash left $12,250
+  - {do: place, id: tac10, kind: tack, role: dps, segment: [0.54, 0.64], at: [0.516, 0.726]}   # R31: $220, XP: surplus into the target tower; cash left $12,030
+  - {do: upgrade, id: tac3, to: 1-0-5}   # R31: $130, XP: surplus into the target tower; cash left $11,900
+  - {do: upgrade, id: tac3, to: 2-0-5}   # R31: $190, XP: surplus into the target tower; cash left $11,710
+  - {do: upgrade, id: tac4, to: 1-3-0}   # R31: $130, XP: surplus into the target tower; cash left $11,580
+  - {do: upgrade, id: tac4, to: 2-3-0}   # R31: $190, XP: surplus into the target tower; cash left $11,390
+  - {do: upgrade, id: tac4, to: 2-4-0}   # R31: $2,295, XP: surplus into the target tower; cash left $9,095
+  - {do: upgrade, id: tac5, to: 1-0-0}   # R31: $130, XP: surplus into the target tower; cash left $8,965
+  - {do: upgrade, id: tac5, to: 2-0-0}   # R31: $190, XP: surplus into the target tower; cash left $8,775
+  - {do: upgrade, id: tac5, to: 3-0-0}   # R31: $510, XP: surplus into the target tower; cash left $8,265
+  - {do: upgrade, id: tac5, to: 4-0-0}   # R31: $2,975, XP: surplus into the target tower; cash left $5,290
+  - {do: upgrade, id: tac5, to: 4-1-0}   # R31: $85, XP: surplus into the target tower; cash left $5,205
+  - {do: upgrade, id: tac5, to: 4-2-0}   # R31: $190, XP: surplus into the target tower; cash left $5,015
+  - {do: upgrade, id: tac6, to: 1-0-0}   # R31: $130, XP: surplus into the target tower; cash left $4,885
+  - {do: upgrade, id: tac6, to: 2-0-0}   # R31: $190, XP: surplus into the target tower; cash left $4,695
+  - {do: upgrade, id: tac6, to: 3-0-0}   # R31: $510, XP: surplus into the target tower; cash left $4,185
+  - {do: upgrade, id: tac6, to: 4-0-0}   # R31: $2,975, XP: surplus into the target tower; cash left $1,210
+  - {do: upgrade, id: tac6, to: 4-1-0}   # R31: $85, XP: surplus into the target tower; cash left $1,125
+  - {do: upgrade, id: tac6, to: 4-2-0}   # R31: $190, XP: surplus into the target tower; cash left $935
+  - {do: upgrade, id: tac7, to: 1-0-0}   # R31: $130, XP: surplus into the target tower; cash left $805
+  - {do: upgrade, id: tac7, to: 2-0-0}   # R31: $190, XP: surplus into the target tower; cash left $615
+  - {do: upgrade, id: tac7, to: 3-0-0}   # R31: $510, XP: surplus into the target tower; cash left $105
+  - {do: upgrade, id: tac7, to: 3-1-0}   # R31: $85, XP: surplus into the target tower; cash left $20
+fill:
+  - {do: upgrade, kind: tack, to: 2-0-5}   # surplus: the target's own path
+  - {do: place, kind: tack, role: dps, max: 10}

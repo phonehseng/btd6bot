@@ -39,6 +39,7 @@ from btd6bot.game import Placed  # noqa: E402
 # Deflation gives $20,000 and nothing after).
 START_CASH = {"half_cash": 325, "deflation": 20000}
 DEFAULT_START_CASH = 650
+SETUP_TICKS = 80     # plan steps a late start may buy before its first round
 
 
 class CashGame:
@@ -141,8 +142,11 @@ def full_account():
     return a
 
 
-def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, account=None):
-    """Run one game offline. Returns a dict:
+def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, account=None, scenario=None):
+    """Run one game offline. scenario: {"start_round", "start_cash",
+    "income_multiplier"} to play an optimized build as it was planned (Fast
+    Track start, Double Cash income: its `optimizer.scenario`); default the
+    mode's own start and income. Returns a dict:
     gaps      [(round, need, what is missing)] signatures the defence could not
               pop at the start of a round that brings them
     ramp      [(round, ratio)] blimp damage ratio at the start of blimp rounds
@@ -160,10 +164,16 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
     plan_ids = {st.get("id") for _, st in S._all_steps(strat) if st.get("id")}
     out = {"gaps": [], "ramp": [], "answers": [], "build": {}, "spent": 0.0}
     start, end = rules.get("start_round", 1), rules.get("end_round", 80)
+    if scenario:
+        start = scenario.get("start_round", start)
+        g.cash = scenario.get("start_cash", g.cash)
+        mult = scenario.get("income_multiplier", mult)
     total_in = g.cash
     for rnd in range(start, end + 1):
         g.round = rnd
-        for _ in range(ticks):            # between rounds: build
+        # between rounds: build. A late (Fast Track) start spends down its
+        # cash before the first Play (Match.setup), not a few steps of it
+        for _ in range(SETUP_TICKS if scenario and rnd == start else ticks):
             if not ex.tick(g.cash, rnd):
                 break
         # the match loop spends idle cash (over $800) on surplus damage after a while

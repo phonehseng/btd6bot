@@ -322,10 +322,13 @@ def test_every_strategy_pops_every_bloon_in_time():
     for sid, s in sorted(strats.items()):
         if s.get("achievement") or not s.get("bot_ready", True):
             continue
+        # an optimized build is played as it was planned: its Fast Track
+        # start and Double Cash income (strategies/optimized, docs/optimizer.md)
+        scenario = (s.get("optimizer") or {}).get("scenario") if s.get("source") == "optimized" else None
         for mode in s.get("modes", []):
             if mode == "apopalypse":
                 continue
-            r = SIM.simulate(s, mode, ticks=8)
+            r = SIM.simulate(s, mode, ticks=8, scenario=scenario)
             gaps += [(sid, mode, rnd, need, how) for rnd, need, how in r["gaps"]]
     assert not gaps, gaps[:10]
 

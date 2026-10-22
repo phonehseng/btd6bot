@@ -98,6 +98,9 @@ SPOT_STRIDE = 2          # grid cells between candidate spots (the grid is 160 x
 MAX_PLACE_TIERS = 3      # a new tower may come with up to this many tiers at once
 MAX_UPGRADE_STEP = 5     # an upgrade action buys up to this many tiers of one path at once
 NEVER_KINDS = {"mortar", "dartling"}   # aimed by hand: they do nothing for the bot (dps_model)
+# ... and towers the bot cannot pick up: it places by hotkey, and Desperado,
+# Mermonkey and Skywarden have none bound by default (docs/backlog.md)
+NEVER_KINDS |= {k for k, t in T.TOWERS.items() if not t.get("hotkey")}
 INCOME_KINDS = {"farm"}  # banana farms: only as an XP target (their cash is not modelled)
 SHORTLIST = 16           # actions simulated per purchase (the rest are ranked out by a quick yardstick)
 SHORTLIST_TARGET = 4     # ... plus this many more on the XP target
@@ -829,7 +832,7 @@ def plan_yaml(plan, setup, weights, xp):
         "# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.",
         "# The hero's damage is not modelled (extra safety).",
         f"id: opt_{map_id(plan.map_name)}_{plan.mode}",
-        f"map: {plan.map_name}",
+        f"map: {json.dumps(plan.map_name)}",   # quoted: "#Ouch" would start a YAML comment
         f"modes: [{plan.mode}]",
     ]
     if plan.target:
@@ -841,7 +844,7 @@ def plan_yaml(plan, setup, weights, xp):
             final[t.kind] = [max(a, b) for a, b in zip(final.get(t.kind, [0, 0, 0]), t.tiers)]
     lines += [
         "planner:",
-        f"  maps: [{plan.map_name}]",
+        f"  maps: [{json.dumps(plan.map_name)}]",
         "  towers: {" + ", ".join(f"{k}: [{', '.join(map(str, v))}]" for k, v in final.items()) + "}",
         "optimizer:",
         f"  scenario: {{start_round: {econ.start_round}, start_cash: {econ.start_cash:.0f}, "
@@ -966,6 +969,11 @@ def optimize(map_name, mode, target=None, account=None, write=True, candidates=3
             best = (key, plan, opt.setup, xp)
     _, plan, setup, xp = best
     text = plan_yaml(plan, setup, weights, xp)
+    if not any(t.kind != "hero" for t in plan.towers):
+        # nothing on this map/mode pops a round (Bloody Puddles Primary Only):
+        # a plan with the hero alone is no build - write nothing
+        log.warning("%s %s: no tower could be planned - nothing written", map_name, mode)
+        write = False
     path = write_plan(text, map_name, mode) if write else None
     return plan, xp, path
 

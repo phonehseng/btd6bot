@@ -1,0 +1,58 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Glacial Trail, primary_only: planned for rounds 10-40, starting with $3,832 and the game's own income x2 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R15 2.13, R34 2.20, R24 2.43, R33 2.46, R19 2.51 (worst 2.13).
+# Cash by tower kind at the end: tack $12,180 (81%), dart $2,895 (19%)
+# XP: XP target ice; the game gives 26,416 tower XP in about 5.0 min, 0 of it to the target
+# (0/h); weighted by what each tower's XP is worth to the account: 263,340/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_glacialtrail_primary_only
+map: Glacial Trail
+modes: [primary_only]
+xp_target: ice
+hero: quincy
+planner:
+  maps: [Glacial Trail]
+  towers: {tack: [4, 4, 0], dart: [0, 2, 4]}
+optimizer:
+  scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 2.13
+  unsafe_rounds: []
+  minutes: 5.0
+  target_xp_per_hour: 0
+  valued_xp_per_hour: 263340
+plan:
+  - {do: place, id: tac1, kind: tack, role: dps, segment: [0.65, 0.79], at: [0.719, 0.641]}   # R10: $220, secures round 10; cash left $3,612
+  - {do: upgrade, id: tac1, to: 0-2-0}   # R10: $275, secures round 10; cash left $3,337
+  - {do: upgrade, id: tac1, to: 1-2-0}   # R10: $130, secures round 10; cash left $3,207
+  - {do: upgrade, id: tac1, to: 2-2-0}   # R10: $190, secures round 10; cash left $3,017
+  - {do: place, id: tac2, kind: tack, role: dps, segment: [0.1, 0.22], at: [0.099, 0.368]}   # R10: $220, ahead of round 12; cash left $2,797
+  - {do: upgrade, id: tac2, to: 0-1-0}   # R10: $85, ahead of round 13; cash left $2,712
+  - {do: upgrade, id: tac2, to: 1-1-0}   # R10: $130, ahead of round 13; cash left $2,582
+  - {do: place, id: hero, kind: hero, role: dps}   # R10: $460; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: tac2, to: 1-2-0}   # R10: $190, ahead of round 15; cash left $1,932
+  - {do: upgrade, id: tac2, to: 2-2-0}   # R10: $190, ahead of round 15; cash left $1,742
+  - {do: upgrade, id: tac1, to: 2-3-0}   # R10: $470, ahead of round 15; cash left $1,272
+  - {do: place, id: tac3, kind: tack, role: dps, segment: [0.14, 0.28], at: [0.163, 0.504]}   # R10: $495, ahead of round 15; cash left $777
+  - {do: upgrade, id: tac3, to: 0-2-0}
+  - {do: place, id: dar4, kind: dart, role: dps, segment: [0.63, 0.84], at: [0.729, 0.692]}   # R16: $415, ahead of round 24; cash left $3,366
+  - {do: upgrade, id: dar4, to: 0-0-2}
+  - {do: upgrade, id: dar4, to: 0-1-2}   # R16: $85, ahead of round 24; cash left $3,281
+  - {do: upgrade, id: dar4, to: 0-2-2}   # R16: $160, ahead of round 24; cash left $3,121
+  - {do: upgrade, id: tac2, to: 3-2-0}   # R20: $510, ahead of round 28; cash left $4,713
+  - {do: upgrade, id: dar4, to: 0-2-3}   # R25: $490, ahead of round 33; cash left $6,781
+  - {do: upgrade, id: dar4, to: 0-2-4}   # R25: $1,745, ahead of round 33; cash left $5,036
+  - {do: upgrade, id: tac1, to: 2-4-0}   # R26: $2,295, ahead of round 34; cash left $3,411
+  - {do: upgrade, id: tac3, to: 3-2-0}   # R26: $830, ahead of round 34; cash left $2,581
+  - {do: upgrade, id: tac2, to: 4-2-0}   # R27: $2,975, ahead of round 34; cash left $272
+  - {do: upgrade, id: tac3, to: 4-2-0}   # R31: $2,975, ahead of round 34; cash left $605
+fill:
+  - {do: upgrade, kind: ice, to: 0-0-0}   # surplus: the target's own path
+  - {do: place, kind: ice, role: dps, max: 10}

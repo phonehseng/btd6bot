@@ -1,0 +1,107 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# #Ouch, easy: planned for rounds 10-40, starting with $3,832 and the game's own income x2 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R15 2.04, R37 2.18, R28 2.54, R34 2.59, R39 2.68 (worst 2.04).
+# Cash by tower kind at the end: tack $23,525 (72%), buccaneer $2,215 (7%), sub $2,005 (6%), bomb $1,895 (6%), engineer $1,770 (5%), dart $1,045 (3%)
+# XP: XP target tack; the game gives 26,416 tower XP in about 5.0 min, 17,816 of it to the target
+# (213,795/h); weighted by what each tower's XP is worth to the account: 246,112/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_-ouch_easy
+map: "#Ouch"
+modes: [easy]
+xp_target: tack
+hero: quincy
+planner:
+  maps: ["#Ouch"]
+  towers: {tack: [4, 4, 0], dart: [0, 3, 2], buccaneer: [2, 0, 2], sub: [1, 0, 2], engineer: [3, 1, 0], bomb: [0, 2, 3]}
+optimizer:
+  scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 2.04
+  unsafe_rounds: []
+  minutes: 5.0
+  target_xp_per_hour: 213795
+  valued_xp_per_hour: 246112
+plan:
+  - {do: place, id: tac1, kind: tack, role: dps, segment: [0.58, 0.7], at: [0.590, 0.624]}   # R10: $220, secures round 10; cash left $3,612
+  - {do: place, id: tac2, kind: tack, role: dps, segment: [0.39, 0.5], at: [0.281, 0.624]}   # R10: $220, secures round 10; cash left $3,392
+  - {do: place, id: tac3, kind: tack, role: dps, segment: [0.39, 0.5], at: [0.281, 0.283]}   # R10: $220, secures round 10; cash left $3,172
+  - {do: upgrade, id: tac3, to: 0-1-0}   # R10: $85, secures round 10; cash left $3,087
+  - {do: upgrade, id: tac3, to: 0-2-0}   # R10: $190, secures round 10; cash left $2,897
+  - {do: upgrade, id: tac3, to: 1-2-0}   # R10: $130, secures round 10; cash left $2,767
+  - {do: upgrade, id: tac1, to: 0-2-0}   # R10: $275, secures round 10; cash left $2,492
+  - {do: upgrade, id: tac1, to: 1-2-0}   # R10: $130, secures round 10; cash left $2,362
+  - {do: upgrade, id: tac3, to: 2-2-0}   # R10: $190, secures round 10; cash left $2,172
+  - {do: upgrade, id: tac1, to: 2-2-0}   # R10: $190, secures round 10; cash left $1,982
+  - {do: upgrade, id: tac3, to: 2-3-0}   # R10: $470, ahead of round 12; cash left $1,512
+  - {do: place, id: dar4, kind: dart, role: dps, segment: [0.57, 0.73], at: [0.590, 0.283]}   # R10: $170, ahead of round 13; cash left $1,342
+  - {do: place, id: hero, kind: hero, role: dps}   # R10: $460; hero: not counted by the model (extra safety)
+  - {do: place, id: tac5, kind: tack, role: dps, segment: [0.55, 0.68], at: [0.281, 0.726]}   # R10: $220, ahead of round 15; cash left $662
+  - {do: place, id: tac6, kind: tack, role: dps, segment: [0.58, 0.69], at: [0.590, 0.726]}   # R10: $220, ahead of round 15; cash left $442
+  - {do: place, id: tac7, kind: tack, role: dps, segment: [0.4, 0.53], at: [0.281, 0.402]}   # R10: $220, ahead of round 15; cash left $222
+  - {do: upgrade, id: tac6, to: 0-1-0}   # R10: $85, ahead of round 15; cash left $137
+  - {do: upgrade, id: tac6, to: 0-2-0}   # R11: $190, ahead of round 15; cash left $575
+  - {do: upgrade, id: tac6, to: 1-2-0}   # R11: $130, ahead of round 15; cash left $445
+  - {do: upgrade, id: tac7, to: 0-2-0}   # R11: $275, ahead of round 15; cash left $170
+  - {do: upgrade, id: tac7, to: 1-2-0}   # R11: $130, ahead of round 15; cash left $40
+  - {do: upgrade, id: tac7, to: 2-2-0}   # R12: $190, ahead of round 15; cash left $228
+  - {do: upgrade, id: tac5, to: 0-1-0}   # R12: $85, ahead of round 15; cash left $143
+  - {do: upgrade, id: tac6, to: 2-2-0}   # R13: $190, ahead of round 15; cash left $337
+  - {do: upgrade, id: tac5, to: 0-2-0}   # R13: $190, ahead of round 15; cash left $147
+  - {do: upgrade, id: tac7, to: 2-3-0}   # R14: $470, ahead of round 15; cash left $241
+  - {do: place, id: buc8, kind: buccaneer, role: dps, segment: [0.44, 0.73], at: [0.452, 0.521]}   # R15: $340, secures round 15; cash left $419
+  - {do: place, id: tac9, kind: tack, role: dps, segment: [0.54, 0.64], at: [0.516, 0.726]}   # R15: $220, XP: surplus into the target tower; cash left $199
+  - {do: upgrade, id: tac2, to: 1-0-0}   # R15: $130, XP: surplus into the target tower; cash left $69
+  - {do: upgrade, id: buc8, to: 0-0-2}   # R16: $470, ahead of round 24; cash left $131
+  - {do: upgrade, id: tac2, to: 1-1-0}   # R16: $85, XP: surplus into the target tower; cash left $46
+  - {do: upgrade, id: tac2, to: 1-2-0}   # R17: $190, ahead of round 25; cash left $392
+  - {do: upgrade, id: tac2, to: 2-2-0}   # R17: $190, ahead of round 25; cash left $202
+  - {do: upgrade, id: tac2, to: 2-3-0}   # R18: $470, ahead of round 25; cash left $62
+  - {do: place, id: sub10, kind: sub, role: dps, segment: [0.4, 0.69], at: [0.377, 0.504]}   # R19: $385, ahead of round 27; cash left $393
+  - {do: upgrade, id: sub10, to: 1-0-0}
+  - {do: place, id: eng11, kind: engineer, role: dps, segment: [0.51, 0.72], at: [0.516, 0.283]}   # R19: $300, ahead of round 27; cash left $93
+  - {do: place, id: bom12, kind: bomb, role: dps, segment: [0.4, 0.62], at: [0.355, 0.283]}   # R20: $320, ahead of round 27; cash left $293
+  - {do: upgrade, id: tac1, to: 3-2-0}   # R21: $510, ahead of round 27; cash left $155
+  - {do: upgrade, id: buc8, to: 1-0-2}   # R22: $235, ahead of round 27; cash left $622
+  - {do: upgrade, id: tac5, to: 1-2-0}   # R22: $130, XP: surplus into the target tower; cash left $492
+  - {do: upgrade, id: tac5, to: 2-2-0}   # R22: $190, XP: surplus into the target tower; cash left $302
+  - {do: upgrade, id: tac9, to: 1-0-0}   # R22: $130, XP: surplus into the target tower; cash left $172
+  - {do: upgrade, id: tac9, to: 1-1-0}   # R22: $85, XP: surplus into the target tower; cash left $87
+  - {do: upgrade, id: bom12, to: 0-0-2}   # R23: $425, ahead of round 31; cash left $258
+  - {do: upgrade, id: bom12, to: 0-2-2}   # R24: $555, ahead of round 28; cash left $257
+  - {do: upgrade, id: tac9, to: 2-1-0}   # R24: $190, XP: surplus into the target tower; cash left $67
+  - {do: upgrade, id: buc8, to: 2-0-2}   # R25: $360, ahead of round 33; cash left $41
+  - {do: upgrade, id: tac9, to: 2-2-0}   # R26: $190, ahead of round 33; cash left $521
+  - {do: upgrade, id: tac6, to: 2-3-0}   # R26: $470, ahead of round 33; cash left $51
+  - {do: upgrade, id: tac5, to: 2-3-0}   # R27: $470, ahead of round 33; cash left $247
+  - {do: upgrade, id: tac9, to: 3-2-0}   # R28: $510, ahead of round 33; cash left $1,061
+  - {do: upgrade, id: eng11, to: 1-0-0}   # R28: $425, ahead of round 33; cash left $636
+  - {do: upgrade, id: eng11, to: 1-1-0}   # R28: $215, ahead of round 33; cash left $421
+  - {do: upgrade, id: eng11, to: 2-1-0}   # R28: $340, ahead of round 33; cash left $81
+  - {do: upgrade, id: bom12, to: 0-2-3}   # R29: $595, ahead of round 33; cash left $18
+  - {do: upgrade, id: dar4, to: 0-0-2}   # R30: $245, ahead of round 33; cash left $551
+  - {do: upgrade, id: dar4, to: 0-1-2}   # R30: $85, ahead of round 33; cash left $466
+  - {do: upgrade, id: dar4, to: 0-2-2}   # R30: $160, ahead of round 33; cash left $306
+  - {do: place, id: sub13, kind: sub, role: dps, segment: [0.42, 0.65], at: [0.494, 0.504]}   # R31: $275, ahead of round 33; cash left $705
+  - {do: upgrade, id: sub13, to: 1-0-0}   # R31: $110, ahead of round 33; cash left $595
+  - {do: upgrade, id: sub10, to: 1-0-1}   # R31: $385, ahead of round 33; cash left $210
+  - {do: upgrade, id: eng11, to: 3-1-0}   # R32: $490, ahead of round 33; cash left $794
+  - {do: upgrade, id: dar4, to: 0-3-2}   # R32: $385, ahead of round 33; cash left $409
+  - {do: upgrade, id: sub10, to: 1-0-2}   # R33: $850, ahead of round 37; cash left $813
+  - {do: place, id: buc14, kind: buccaneer, role: dps, segment: [0.39, 0.77], at: [0.419, 0.572]}   # R33: $810, ahead of round 37; cash left $3
+  - {do: upgrade, id: buc14, to: 0-0-2}
+  - {do: upgrade, id: tac1, to: 4-2-0}   # R36: $2,975, XP: surplus into the target tower; cash left $1,562
+  - {do: upgrade, id: tac2, to: 2-4-0}   # R37: $2,295, XP: surplus into the target tower; cash left $1,059
+  - {do: upgrade, id: tac3, to: 2-4-0}   # R38: $2,295, XP: surplus into the target tower; cash left $1,442
+  - {do: upgrade, id: tac5, to: 2-4-0}   # R39: $2,295, XP: surplus into the target tower; cash left $1,701
+  - {do: upgrade, id: tac6, to: 2-4-0}   # R40: $2,295, XP: surplus into the target tower; cash left $2,924
+  - {do: upgrade, id: tac7, to: 2-4-0}   # R40: $2,295, XP: surplus into the target tower; cash left $629
+fill:
+  - {do: upgrade, kind: tack, to: 4-2-0}   # surplus: the target's own path
+  - {do: place, kind: tack, role: dps, max: 10}
