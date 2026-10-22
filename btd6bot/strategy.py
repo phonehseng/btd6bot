@@ -87,6 +87,18 @@ def _first_appearance():
 
 _STD, _ABR = _first_appearance()
 _STD["rush"] = _ABR["rush"] = 63   # 122 ceramics + 75 leads (14,413 RBE)
+# camo in bulk: one camo-capable tower handles round 24's lone camo green, not
+# camo ceramics (51) or camo leads (59; ABR 24) - those need "strong camo"
+try:
+    import json as _json
+    from pathlib import Path as _Path
+    _fa = _json.loads((_Path(__file__).resolve().parents[1] / "data" / "rounds.json")
+                      .read_text(encoding="utf-8"))["first_appearance"]
+    _STD["camo_ceramic"], _ABR["camo_ceramic"] = _fa["standard"]["camo_ceramic"], _fa["abr"]["camo_ceramic"]
+    _STD["camo_lead"], _ABR["camo_lead"] = _fa["standard"]["camo_lead"], _fa["abr"]["camo_lead"]
+except (OSError, ValueError, KeyError):
+    _STD.update(camo_ceramic=51, camo_lead=59)
+    _ABR.update(camo_ceramic=51, camo_lead=24)
 THREATS = sorted((r, t) for t, r in _STD.items())
 ABR_SHIFT = {t: r for t, r in _ABR.items() if r != _STD.get(t)}
 
@@ -122,6 +134,22 @@ ANSWERS = {
 }
 # camo-requiring threats also need camo on the answering tower (or village MIB)
 NEEDS_CAMO = {"ddt"}
+STRONG_CAMO = {"camo_ceramic", "camo_lead"}
+RADAR = ("village", 2, 2)   # Radar Scanner: every tower in range sees camo
+
+
+def strong_camo(builds):
+    """builds: iterable of (kind, tiers). Village Radar Scanner, or at least two
+    camo-capable towers upgraded to tier 3+ on some path."""
+    n = 0
+    for kind, tiers in builds:
+        if kind == RADAR[0] and tiers[RADAR[1] - 1] >= RADAR[2]:
+            return True
+        for k, path, tier in ANSWERS["camo"]:
+            if k == kind and (path == 0 or tiers[path - 1] >= tier) and max(tiers) >= 3:
+                n += 1
+                break
+    return n >= 2
 
 # What each mode changes. Used by the executor (spending), match loop
 # (starting rounds) and runner (map model key).
@@ -203,11 +231,12 @@ def final_build(strat, account=None):
     """{kind: [p1, p2, p3]} the plan ends with (plan + answers), each path capped
     at what the account has unlocked (unknown upgrades count as locked above
     tier 2: tiers 1-2 are cheap and usually unlockable in-game)."""
-    ids = {st["id"]: st["kind"] for st in strat.get("plan", [])
-           if st.get("do") == "place" and st.get("id") and st.get("kind")}
+    answer_steps = [a for v in (strat.get("answers") or {}).values() for a in v]
+    places = [st for st in strat.get("plan", []) + answer_steps if st.get("do") == "place"]
+    ids = {st["id"]: st["kind"] for st in places if st.get("id") and st.get("kind")}
     build = {}
-    for st in strat.get("plan", []):
-        if st.get("do") == "place" and st.get("kind") not in (None, "hero"):
+    for st in places:
+        if st.get("kind") not in (None, "hero"):
             build.setdefault(st["kind"], [0, 0, 0])
     steps = strat.get("plan", []) + [a for v in (strat.get("answers") or {}).values() for a in v]         + strat.get("fill", [])
     for st in steps:
@@ -222,20 +251,78 @@ def final_build(strat, account=None):
             have[i] = max(have[i], tgt[i])
     if account is not None:
         for kind, tiers in build.items():
-            unl = account.upgrades(kind)
-            build[kind] = [min(t, max(u, 2)) for t, u in zip(tiers, unl)]
+            build[kind] = [min(t, reachable_tier(account, kind, i)) for i, t in enumerate(tiers)]
     return build
+
+
+def reachable_tier(account, kind, path0):
+    """Highest tier on path (0-based) this account has, or can unlock before the
+    game: unlocked tiers, plus tiers 1-2 when the tower has banked XP for them."""
+    unl = account.upgrades(kind)[path0]
+    xp = float((account.tower_xp or {}).get(kind, 0) or 0)
+    if unl < 2 and xp >= 1200:
+        return 2
+    if unl < 1 and xp >= 300:
+        return 1
+    return unl
+
+
+# Camo backups, best first: (kind, crosspath) giving strong camo help.
+CAMO_BACKUPS = [("village", "0-2-0"), ("dart", "0-2-3"), ("sniper", "3-2-0"),
+                ("ninja", "3-0-0"), ("wizard", "0-0-3"), ("sub", "3-0-0")]
+
+
+def camo_backup(strat, account=None, mode=None):
+    """Steps adding strong camo when the strategy's own build lacks it: the best
+    backup this account has unlocked and the mode allows. [] if not needed."""
+    if strong_camo(final_build(strat, account).items()):
+        return []
+    cons = strat.get("constraints") or {}
+    allowed = cons.get("allowed_towers")
+    only = MODE_TOWER_FILTER.get(mode)
+    for kind, cross in CAMO_BACKUPS:
+        if allowed is not None and kind not in allowed:
+            continue
+        if kind in (cons.get("forbidden_towers") or ()):
+            continue
+        if only and T.TOWERS[kind]["category"] != only:
+            continue
+        if account is not None:
+            if kind not in account.unlocked_towers:
+                continue
+            need = parse_cross(cross)
+            if any(n > reachable_tier(account, kind, i) for i, n in enumerate(need)):
+                continue
+        sid = f"camo_{kind}"
+        place = {"do": "place", "id": sid, "kind": kind}
+        place.update({"role": "support", "near": [st["id"] for st in strat.get("plan", [])
+                                                 if st.get("do") == "place" and st.get("id")][:4],
+                      "near_radius": 8} if kind == "village" else {"role": "dps", "segment": [0.0, 0.7]})
+        return [place, {"do": "upgrade", "id": sid, "to": cross}]
+    return []
 
 
 def coverage(strat, mode, account=None):
     """(ok, missing): does the strategy's final build answer every threat that
     appears in this mode's rounds, given the account's unlocked upgrades?"""
+    backup = camo_backup(strat, account, mode)
+    if backup:
+        strat = dict(strat, answers=dict(strat.get("answers") or {}, camo_ceramic=backup))
     build = final_build(strat, account)
     r = rules(mode)
     start, end = r.get("start_round", 1), r.get("end_round", 80)
     shift = r.get("threat_shift", {})
 
+    # tower instances per kind (the build is per kind; strong camo counts towers)
+    answer_steps = [a for v in (strat.get("answers") or {}).values() for a in v]
+    copies = {}
+    for st in strat.get("plan", []) + answer_steps:
+        if st.get("do") == "place" and st.get("kind") in build:
+            copies[st["kind"]] = copies.get(st["kind"], 0) + 1
+
     def answered(threat):
+        if threat in STRONG_CAMO:
+            return strong_camo([(k, t) for k, t in build.items() for _ in range(copies.get(k, 1))])
         if threat in NEEDS_CAMO and not answered("camo"):
             return False
         for kind, path, tier in ANSWERS.get(threat, []):
@@ -567,6 +654,12 @@ class Executor:
     def __init__(self, game, model, strat, mode, account=None):
         self.g = game
         self.m = model
+        backup = camo_backup(strat, account, mode)
+        if backup:  # strong camo for rounds 51/59 the plan itself lacks
+            answers = dict(strat.get("answers") or {})
+            answers.setdefault("camo_ceramic", backup)
+            answers.setdefault("camo_lead", backup)
+            strat = dict(strat, answers=answers)
         self.strat = strat
         self.mode = mode
         self.account = account
@@ -855,6 +948,8 @@ class Executor:
 
     # -- threat calendar ---------------------------------------------------------
     def has_answer(self, threat):
+        if threat in STRONG_CAMO:
+            return strong_camo((p.kind, p.tiers) for p in self.g.towers.values() if p.kind != "hero")
         if threat in NEEDS_CAMO and not self.has_answer("camo"):
             return False  # DDTs are camo: the blimp popper must be able to see them
         for p in self.g.towers.values():
@@ -902,6 +997,21 @@ class Executor:
     def _generic_answer(self, threat):
         """Upgrade an existing tower (from its current tiers) toward a listed answer."""
         steps = []
+        if threat in STRONG_CAMO:
+            # a Radar Scanner village beside the main towers lets all of them see camo
+            if self.kind_allowed("village"):
+                village = next((p for p in self.g.towers.values() if p.kind == "village"), None)
+                if village is None:
+                    main = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
+                                  key=lambda p: -p.spent)[:3]
+                    steps.append({"do": "place", "kind": "village", "role": "support",
+                                  "near": [p.tid for p in main], "near_radius": 8})
+                else:
+                    to = list(village.tiers)
+                    to[1] = max(to[1], 2)
+                    if sum(t > 0 for t in to) <= 2 and sum(t > 2 for t in to) <= 1:
+                        steps.append({"do": "upgrade", "id": village.tid, "to": "-".join(map(str, to))})
+            threat = "camo"  # and/or upgrade camo towers to tier 3+
         for p in self.g.towers.values():
             for kind, path, tier in ANSWERS.get(threat, []):
                 if p.kind != kind or not path:
