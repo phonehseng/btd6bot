@@ -30,6 +30,11 @@ maps. Never lose, never replay a beaten map/mode.
 - [x] Banana farms: bananas collected, Marketplace first
 - [x] Sniper Elite Defender + radar village plan (works on any map)
 - [x] Glaive Lord boomerang plan
+- [x] Damage towers must reach the route (45% of the best spot); ones reaching under 25% are sold
+- [ ] Towers that pop nothing in 6 rounds are sold (pop counter, two reads)
+- [ ] Villages and alchemists placed beside the towers they buff, never alone
+- [x] Round forecast: the damage model rates every round as it starts
+- [ ] Abilities in a crisis: before panic buys on a leak, early in forecast crisis rounds
 - [ ] Win Hard reliably on most maps
 - [ ] CHIMPS strategies and wins
 
@@ -43,6 +48,9 @@ maps. Never lose, never replay a beaten map/mode.
 - [x] Dynamic map mechanics: moving parts, sometimes-blocking windows, removable obstacles
 - [x] Raised platforms placeable (the highest area decides, as in the game)
 - [ ] Buy removable obstacles when the freed space is worth it
+- [ ] Blocked spots that reach far more track are probed; the game's answer is learned
+- [ ] Researched map builds with exact spots won in real games
+- [ ] Optimizer builds (margin 2.0 on every round) won in real games; more maps optimized
 
 ## Account and planning
 - [x] Account detection and full sync (towers, upgrades)

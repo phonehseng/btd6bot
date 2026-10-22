@@ -183,6 +183,32 @@ def test_emergency_fires_everything_once_ready_or_not():
     assert all(r == "emergency" for _, _, r in pl.last_fired)
 
 
+def test_emergency_presses_do_not_reset_the_cooldown_clock():
+    pl = A.AbilityPlanner("quincy", MODE_RULES["easy"])
+    pl.update_towers([HERO], 1)
+    assert pl.decide(0.0, 30, True) == [1]          # Rapid Shot, on cooldown use
+    # lives fall twice a second for 5 s: pressed at most every EMERGENCY_REPEAT_S
+    presses = [t for t in [x / 2 for x in range(1, 11)]
+               if pl.decide(t, 30, True, lives_dropped=True)]
+    assert len(presses) <= 5 / A.EMERGENCY_REPEAT_S + 1
+    # the cooldown still counts from the first (real) press at t=0: Rapid
+    # Shot (60 s at 1x, 2x speed) is pressed again after 30 real seconds
+    out = run(pl, [HERO], 30, True, 6.0, 40.0)
+    assert out and out[0][0] <= 31.0
+
+
+def test_crisis_round_fires_everything_after_a_short_delay():
+    pl = A.AbilityPlanner("churchill", MODE_RULES["hard"])
+    pl.update_towers([HERO], 3)
+    # round 30 is no MOAB round: Armor Piercing Shells (moab use) waits ...
+    assert pl.decide(0.0, 30, True) == []
+    # ... unless the round is forecast to leak
+    assert pl.decide(1.0, 30, True, crisis=True) == []      # bloons not out yet
+    keys = pl.decide(A.MOAB_DELAY_S + 0.5, 30, True, crisis=True)
+    assert keys == [1] and pl.last_fired[0][2] == "crisis round"
+    assert pl.decide(A.MOAB_DELAY_S + 1.5, 30, True, crisis=True) == []   # cooldown respected
+
+
 def test_emergency_skips_never():
     pl = A.AbilityPlanner("ezili", MODE_RULES["hard"])
     pl.update_towers([HERO], 3)

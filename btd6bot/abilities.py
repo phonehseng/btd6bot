@@ -44,7 +44,9 @@ log = logging.getLogger("abilities")
 
 MAX_HOTKEY = 9                # ability hotkeys 1..9 (0/-/= exist but are not used)
 RETRY_GAME_S = 20.0           # retry interval for unconfirmed presses (game seconds)
-MOAB_DELAY_S = 3.0            # real seconds into a MOAB round before 'moab' abilities fire
+MOAB_DELAY_S = 3.0            # real seconds into a MOAB / crisis round before abilities fire
+EMERGENCY_REPEAT_S = 2.0      # while lives fall: an ability maybe still cooling down is
+                              # pressed again at most this often (real seconds)
 MAX_DT_S = 10.0               # longest real gap counted toward cooldowns between calls
 HERO_XP_OPTIMISM = 1.5        # "maybe unlocked": XP estimate x this
 HERO_XP_PESSIMISM = 0.8       # "certainly unlocked": XP estimate x this
@@ -196,12 +198,13 @@ def is_moab_round(rnd, rules=None):
 # -- planner ------------------------------------------------------------------------
 
 class _Slot:
-    __slots__ = ("name", "last_press", "last_certain")
+    __slots__ = ("name", "last_press", "last_certain", "last_emergency")
 
     def __init__(self, name):
         self.name = name
         self.last_press = None      # game time of the last press
         self.last_certain = False   # was the ability certainly available then?
+        self.last_emergency = None  # real time of the last emergency press while not due
 
 
 class AbilityPlanner:
@@ -292,11 +295,20 @@ class AbilityPlanner:
             wait = min(RETRY_GAME_S, cooldown or RETRY_GAME_S)
         return self.game_t - slot.last_press >= wait
 
-    def decide(self, now, rnd, in_round, lives_dropped=False):
-        """Hotkey numbers to press now. Call update_towers() first."""
+    def decide(self, now, rnd, in_round, lives_dropped=False, crisis=False):
+        """Hotkey numbers to press now. Call update_towers() first.
+
+        lives_dropped: bloons are leaking right now - every ability that is
+        not 'never' fires (an emergency).
+        crisis: the damage model expects this round to leak (Match's round
+        forecast) - every ability that is not 'never' fires a few seconds
+        into the round, once bloons are on the track, instead of waiting
+        for the first lives to go."""
         if rnd is None:
             rnd = self._prev_round  # keep the last good reading (slots depend on it)
         in_round = self._advance(now, rnd, in_round)
+        crisis_now = (crisis and in_round and self.round_start is not None
+                      and now - self.round_start >= MOAB_DELAY_S)
         fired = []
         live = {}
         for key, name, use, cd, certain in self.hotkeys(rnd):
@@ -305,6 +317,8 @@ class AbilityPlanner:
                 continue
             if lives_dropped:
                 reason = "emergency"
+            elif crisis_now:
+                reason = "crisis round"
             elif not in_round or use == "save":
                 continue
             elif use == "on_cooldown":
@@ -316,7 +330,18 @@ class AbilityPlanner:
                 reason = "moab round"
             else:
                 continue
-            if reason != "emergency" and not self._due(slot, cd):
+            due = self._due(slot, cd)
+            if reason == "emergency" and not due:
+                # It may be off cooldown already (the cooldowns are upper
+                # bounds): press anyway, but not on every tick, and leave the
+                # cooldown clock alone - a press that did nothing must not
+                # push the next real use a whole cooldown later.
+                if slot.last_emergency is not None and now - slot.last_emergency < EMERGENCY_REPEAT_S:
+                    continue
+                slot.last_emergency = now
+                fired.append((key, name, reason))
+                continue
+            if not due:
                 continue
             slot.last_press, slot.last_certain = self.game_t, certain
             fired.append((key, name, reason))

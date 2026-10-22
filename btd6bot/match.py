@@ -6,6 +6,7 @@ from . import status
 from .vision import norm
 from . import towers as T
 from .abilities import AbilityPlanner
+from .forecast import RoundForecast
 from .maplearn import PathTracer
 
 log = logging.getLogger("match")
@@ -104,6 +105,9 @@ class Match:
         self._t_bananas = 0.0      # last pass over the farms' bananas
         self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
         self._in_round = False
+        # the damage model's view of each round as it starts (forecast.py)
+        self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None))
+        self._crisis_round = None
 
     def _exclude(self):
         out = []
@@ -230,6 +234,12 @@ class Match:
                     self.stats["lives_lost"] += lost
                     dropped = True
                     log.warning("lost %d lives (now %d)", lost, self._lives.confirmed)
+                    # abilities first: a key press takes milliseconds, the panic
+                    # purchases below take seconds (Water Park: Rapid Shot came
+                    # 4 s after the first leak, behind the buying)
+                    if self.g.towers:
+                        t_ability = now
+                        self._abilities(last_round, dropped=True)
                 self._prev_lives_read = lives
                 # rounds only move forward, one or two at a time
                 if rnd is not None and last_round is not None and last_round < rnd <= last_round + 2:
@@ -241,6 +251,7 @@ class Match:
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
+                    self._forecast_round(rnd)
                     # once a round: a tower whose range barely reaches the
                     # track is sold, its cash goes to towers that pop bloons
                     try:
@@ -275,11 +286,14 @@ class Match:
                         if outcome:
                             return self._finish(outcome, last_round)
                         continue
-                saving = getattr(self.ex, "wait_cost", None) and cash is not None                     and cash < self.ex.wait_cost and not dropped
+                crisis = dropped or self._in_crisis(last_round)
+                saving = (getattr(self.ex, "wait_cost", None) and cash is not None
+                          and cash < self.ex.wait_cost and not crisis)
                 # Saving up for a big upgrade is fine, briefly - these are seconds
                 # of fast-forward, several rounds; never while lives are falling
-                # (losses showed $3-6k idle during leaks).
-                patience = 0 if dropped else (12 if saving else 3)
+                # (losses showed $3-6k idle during leaks) or in a round the
+                # damage model expects to leak.
+                patience = 0 if crisis else (12 if saving else 3)
                 if not bought and cash is not None and cash > 800 and now - self._last_buy > patience:
                     # cash is piling up while the plan waits: say why, then spend it
                     if now - self._last_wait_log > 20:
@@ -305,9 +319,9 @@ class Match:
                 elif st == "play_idle" and self.ex.defended() and not self._hold_round(last_round, cash):
                     self.g.go_fast(allow_start=True)
                     self._in_round = True
-            if self.g.towers and (dropped or now - t_ability > 1.0):
+            if self.g.towers and now - t_ability > 1.0:
                 t_ability = now
-                self._abilities(last_round, dropped)
+                self._abilities(last_round)
             time.sleep(0.02)
         return self._finish("timeout", last_round)
 
@@ -337,11 +351,28 @@ class Match:
             return True
         return False
 
+    def _forecast_round(self, rnd):
+        """Ask the damage model about the round that just started; a round it
+        expects to leak becomes a crisis round (see forecast.py)."""
+        margin = self.forecast.margin(list(self.g.towers.values()), rnd)
+        if margin is None:
+            return
+        if self.forecast.is_crisis(margin):
+            self._crisis_round = rnd
+            log.warning("round %d: the damage model rates the defence %.2f - crisis round: "
+                        "abilities as soon as bloons are out, no saving up", rnd, margin)
+        else:
+            log.info("round %d: the damage model rates the defence %.2f", rnd, margin)
+
+    def _in_crisis(self, rnd):
+        return rnd is not None and self._crisis_round == rnd
+
     def _abilities(self, rnd, dropped=False):
         """Press the ability hotkeys the planner picks (see abilities.py)."""
         try:
             self.abil.update_towers(list(self.g.towers.values()), rnd)
-            keys = self.abil.decide(time.time(), rnd, self._in_round, lives_dropped=dropped)
+            keys = self.abil.decide(time.time(), rnd, self._in_round, lives_dropped=dropped,
+                                    crisis=self._in_crisis(rnd))
         except Exception:  # never let ability bookkeeping end a game
             log.exception("ability planner failed")
             return
