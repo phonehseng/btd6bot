@@ -71,6 +71,20 @@ and the next game on the new code. It also builds
 before/after clips per commit. So write commit messages that say what was
 wrong and why: they become the narration.
 
+**Diagnostic pictures.** The dev log also shows the pictures in
+`docs/devlog/media/`, listed with a time, topic and caption in
+`docs/devlog/media.json`. Pictures about how the bot sees the map open the
+video as a *progression arc* (motion heat maps, the Sandbox learner, geometry
+from the game files, the height correction, placement, the latest loss), early
+bad attempts included; every other picture is shown after the title card of
+the next commit. The script gets the same pictures, captions as narration.
+To add one from code, call
+`btd6bot.devmedia.save(image_or_path, caption, topic)`: it shrinks the
+picture to the video frame, stores it as a small JPEG (a short `.mp4` is
+copied as it is) and records it, and it never raises. Topics named in
+`ARC_STAGES` in `tools/devlog.py` join the arc; any other topic is shown with
+its commit.
+
 - Needs ffmpeg (not in the repo): unzip a BtbN Windows build into
   `~/.btd6bot_cache/tools/ffmpeg/`, or point `BTD6BOT_FFMPEG` at an `ffmpeg.exe`.
 - A file named `NO_RECORD` in the project folder pauses recording.
