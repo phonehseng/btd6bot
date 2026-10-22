@@ -429,12 +429,15 @@ class Bot:
         geom = mapgeom.load(map_name)
         if geom is None:
             return False
-        if model.geometry_bundle == geom.get("bundle") and model.scanned("land"):
+        # the stamp names the game bundle AND our extraction version, so both a
+        # game update and an improved extractor re-apply the geometry
+        stamp = f'{geom.get("bundle")}#v{geom.get("version")}'
+        if model.geometry_bundle == stamp and model.scanned("land"):
             return True
         mapgeom.apply(model, geom)
         if reverse:  # Reverse runs the same track backwards
             model.t_sum = np.where(model.t_cnt > 0, model.t_cnt - model.t_sum, 0).astype(np.float32)
-        model.geometry_bundle = geom.get("bundle")
+        model.geometry_bundle = stamp
         model.rounds_traced = max(model.rounds_traced, LEARNED_ROUNDS)  # no noisy in-game tracing
         model.save()
         return True
