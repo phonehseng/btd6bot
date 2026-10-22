@@ -37,8 +37,9 @@ def main():
     setup_logging()
 
     from btd6bot.account import AccountState
+    from btd6bot.identity import current_path
     if args.cmd == "status":
-        a = AccountState.load()
+        a = AccountState.load(current_path())
         print(f"level {a.player_level}  towers {sorted(a.unlocked_towers)}  heroes {sorted(a.unlocked_heroes)}")
         print(f"medals {a.medal_count()}  unique wins {a.unique_map_wins()}  games {a.games_played}")
         print(f"upgrades {a.unlocked_upgrades}")
@@ -47,7 +48,7 @@ def main():
         from btd6bot.planner import next_game
         from btd6bot.runner import planner_specs
         from btd6bot.strategy import load_all
-        a = AccountState.load()
+        a = AccountState.load(current_path())
         plan = next_game(a, planner_specs(load_all(), a))
         print(plan.reason if plan else "nothing playable")
         for line in (plan.reasons if plan else []):

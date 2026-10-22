@@ -234,13 +234,27 @@ def icon_fractions(bgr_patch):
 
 
 def icon_state(bgr_patch):
-    """'unlocked' (blue disc) | 'available' (bright green: unlockable now) | 'locked'."""
-    blue, green = icon_fractions(bgr_patch)
-    if blue >= ICON_FRAC and blue >= green:
-        return "unlocked"
-    if green >= ICON_FRAC:
+    """'unlocked' | 'available' (bright green: unlockable now) | 'locked'.
+
+    Calibrated live on the Tack Shooter tree: unlocked icons are vivid (blue
+    discs for tiers 1-3, full-colour art for tiers 4-5 such as Inferno Ring),
+    locked ones are dull grey-green / khaki stone, and the next affordable tier
+    is a bright green disc.
+      unlocked  saturated >= 0.40, green ~0
+      available saturated ~0.33-0.60, green ~= saturated
+      locked    saturated <= 0.03
+    """
+    if bgr_patch is None or bgr_patch.size == 0:
+        return "locked"
+    hsv = cv2.cvtColor(bgr_patch, cv2.COLOR_BGR2HSV).reshape(-1, 3).astype(np.float32)
+    h, s, v = hsv[:, 0], hsv[:, 1], hsv[:, 2]
+    sat = float(np.mean((s > 150) & (v > 200)))  # vivid AND bright (not the hex background)
+    green = float(np.mean((h > 35) & (h < 85) & (s > 150) & (v > 150)))
+    if sat < 0.15:
+        return "locked"
+    if green >= 0.6 * sat:
         return "available"
-    return "locked"
+    return "unlocked"
 
 
 def classify_icon(bgr_patch):

@@ -87,8 +87,10 @@ class XpSpender:
         for w in words:
             if w.y < 0.08 or w.y > 0.9:
                 continue
-            if T.find_tower(w.text) == kind or (len(norm(w.text)) >= 5 and
-                                                norm(w.text) in norm(T.TOWERS[kind]["name"])):
+            n = norm(w.text)
+            if n in ("monkey", "monkeys") or len(n) < 3:
+                continue  # second line of a two-line name, matches everything
+            if T.find_tower(w.text) == kind or _title_matches(w.text, kind) or                     (len(n) >= 4 and norm(T.TOWERS[kind]["name"]).startswith(n)):
                 self.inp.click(w.x, min(0.85, w.y + 0.12))  # portrait sits under the name
                 time.sleep(1.2)
                 title = self._read(TREE_TITLE)
@@ -157,3 +159,48 @@ class XpSpender:
 
 def unlock_for_strategy(screen, inp, menus, account, strat):
     return XpSpender(screen, inp, menus, account).unlock(needed_upgrades(strat))
+
+
+def sync_all(screen, inp, menus, account, towers=None):
+    """Read every owned tower's upgrade tree and store the true unlocked tiers.
+    Used when an account is first seen (e.g. a higher-level save) and daily."""
+    from .meta import tiers_from_states, tree_states
+    sp = XpSpender(screen, inp, menus, account)
+    if menus.identify() != "main_menu":
+        return {}
+    kinds = towers or [k for k in T.TOWERS if k in account.unlocked_towers]
+    inp.click(*MONKEYS_BUTTON)
+    time.sleep(1.5)
+    seen = {}
+    try:
+        for kind in kinds:
+            if not sp.open_tower(kind):
+                continue
+            time.sleep(0.4)
+            tiers = tiers_from_states(tree_states(screen.grab()))
+            # colour alone is unsure for tiers 4-5 (a locked tier 5 that is next
+            # in line is drawn as a gold face): confirm by the side panel, which
+            # shows "UNLOCK FOR: N XP" only for upgrades not yet unlocked
+            for path in range(3):
+                while tiers[path] >= 4:
+                    inp.click(TREE_ICON_X[tiers[path] - 1], TREE_ICON_Y[path])
+                    time.sleep(0.6)
+                    if sp._cost() is None:
+                        break  # "UNLOCKED" (no XP price shown): really unlocked
+                    tiers[path] -= 1  # "UNLOCK FOR: N XP": still locked
+            xp = sp._xp()
+            account.unlocked_upgrades[kind] = list(tiers)
+            if xp is not None:
+                account.tower_xp[kind] = float(xp)
+            seen[kind] = tiers
+            inp.click(*BACK)
+            time.sleep(0.8)
+    finally:
+        for _ in range(3):
+            if menus.identify() == "main_menu":
+                break
+            inp.click(*BACK)
+            time.sleep(0.8)
+        account.save()
+    log.info("upgrade sync: %s", seen)
+    return seen

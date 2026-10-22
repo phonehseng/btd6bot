@@ -1,0 +1,515 @@
+{
+ "scanned_at": "2026-10-21 19:08:23",
+ "cards": {
+  "Grasshopper": {
+   "desc": "Win on9differentBeginnermaps",
+   "status": "progress",
+   "progress": 77
+  },
+  "First Monkeys First": {
+   "desc": "Win 10 games using only Primary monkeys",
+   "status": "progress",
+   "progress": 60
+  },
+  "Epic Hero": {
+   "desc": "LevelanyHero toLevel20",
+   "status": "progress",
+   "progress": 40
+  },
+  "Monkey Avenger League": {
+   "desc": "Win a game for4 different Heroes",
+   "status": "progress",
+   "progress": 25
+  },
+  "Decorated Hero": {
+   "desc": "Get36 difficultymedalsonBeginnermaps",
+   "status": "progress",
+   "progress": 19
+  },
+  "War Monkeys": {
+   "desc": "Win 10 games using only Military monkeys",
+   "status": "progress",
+   "progress": 10
+  },
+  "Medal Winner": {
+   "desc": "Get all medalsforamap",
+   "status": "progress",
+   "progress": 7
+  },
+  "Tower Keeper": {
+   "desc": "Have 2o0 insta monkeys in your inventory at",
+   "status": "progress",
+   "progress": 0
+  },
+  "rUPPABLe": {
+   "desc": "Pop 100,000,000 Bloons",
+   "status": "progress",
+   "progress": 0
+  },
+  "BFB Brawler": {
+   "desc": "Destroy10,000 BFBs",
+   "status": "progress",
+   "progress": 0
+  },
+  "Me Did A Job on DDT": {
+   "desc": "Destroy 5,000 DDTs",
+   "status": "progress",
+   "progress": 0
+  },
+  "Sapper": {
+   "desc": "Pop 5,000,000Fortified Bloons or MOAB-Class. Avoid insta-kills and Fort stripping for best results.",
+   "status": "progress",
+   "progress": 0
+  },
+  "Next Level": {
+   "desc": "Win 1 game on an Intermediate map",
+   "status": "progress",
+   "progress": 0
+  },
+  "Acolyte": {
+   "desc": "Win games on 5 different Intermediate maps",
+   "status": "progress",
+   "progress": 0
+  },
+  "AcHlevements": {
+   "desc": "y ,vvo monkey towers using the",
+   "status": "progress",
+   "progress": 0
+  },
+  "Advanced Player": {
+   "desc": "Win 1 game on an Advanced map",
+   "status": "progress",
+   "progress": 0
+  },
+  "Bigger, Badder": {
+   "desc": "Use any Hero Level 10 Ability",
+   "status": "progress",
+   "progress": 0
+  },
+  "ADVANCeD": {
+   "desc": "Win 1 game onan huvan",
+   "status": "progress",
+   "progress": 0
+  },
+  "You've Got the Power": {
+   "desc": "Use Powers for the first time",
+   "status": "progress",
+   "progress": 0
+  },
+  "Student": {
+   "desc": "Apply your first Monkey Knowledge point",
+   "status": "progress",
+   "progress": 0
+  },
+  "Scholar": {
+   "desc": "Apply 10 Monkey Knowledge points",
+   "status": "progress",
+   "progress": 0
+  },
+  "Dr. Monkey": {
+   "desc": "Spend 106 Monkey Knowledge points",
+   "status": "progress",
+   "progress": 0
+  },
+  "Abracadabmonkey": {
+   "desc": "Win 10 games using only Magic monkeys",
+   "status": "progress",
+   "progress": 0
+  },
+  "Unsung Monkeys": {
+   "desc": "Win 10 games using only Support monkeys",
+   "status": "progress",
+   "progress": 0
+  },
+  "Survivor": {
+   "desc": "Beat round 100 in Apopalypse mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Indie": {
+   "desc": "Win 25 games with Alternate Bloon Rounds",
+   "status": "progress",
+   "progress": 0
+  },
+  "Poppable": {
+   "desc": "Win 25 games on Impoppable Difficulty",
+   "status": "progress",
+   "progress": 0
+  },
+  "Thrifty": {
+   "desc": "Win 10gamesin Half Cashmode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Bloonzilla!": {
+   "desc": "Win 25 games against Double HP MoABs",
+   "status": "progress",
+   "progress": 0
+  },
+  "Role Reverser": {
+   "desc": "Win a game in Reverse mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Challenger": {
+   "desc": "Win 1 Daily Challenge",
+   "status": "progress",
+   "progress": 0
+  },
+  "Challenge Apprentice": {
+   "desc": "Win 10Daily Challenges",
+   "status": "progress",
+   "progress": 0
+  },
+  "Challenge Master": {
+   "desc": "Win 100Daily Challenges",
+   "status": "progress",
+   "progress": 0
+  },
+  "OURPOWeI": {
+   "desc": "Collect at least Iz a\"e",
+   "status": "collect",
+   "progress": null
+  },
+  "Perfect Week": {
+   "desc": "Completeall DailyChallengesinaweek",
+   "status": "progress",
+   "progress": 100
+  },
+  "Knowledgeable Primate": {
+   "desc": "Unlock all Monkey Knowledge in one branch",
+   "status": "progress",
+   "progress": 0
+  },
+  "Bloons Master": {
+   "desc": "Beat 1 map in CHIMPS mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Co-operation": {
+   "desc": "Beat1 mapinCo-opmode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Four times the fun": {
+   "desc": "Beat 1 map in 4-player Co-op mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Triple threat": {
+   "desc": "Beat 1 map in 3-player Co-op mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Collaborate!": {
+   "desc": "Have 4 Heroes on screen at once",
+   "status": "progress",
+   "progress": 0
+  },
+  "Kind Benefactor": {
+   "desc": "Give 10,000 Cashin Co-op mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Generous Benefactor": {
+   "desc": "Give 50,000 Cash in Co-op mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Monkey Contributor": {
+   "desc": "Give 100,000 Cash in Co-op mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Monkey Philanthropist": {
+   "desc": "Give 1,000,000 Cash in Co-opmode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Powershare": {
+   "desc": "Use 10 Powers in Co-op mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Power overwhelming!": {
+   "desc": "Use100Powersin Co-opmode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Insta-defense": {
+   "desc": "Use 5 Insta Monkeys in Co-op mode",
+   "status": "progress",
+   "progress": 0
+  },
+  "Co-op Popper": {
+   "desc": "Pop 10,000,000 Bloons in (",
+   "status": "progress",
+   "progress": 0
+  },
+  "Snap of your fingers": {
+   "desc": "Finish a game with exactly half your starting lives and half your starting cash",
+   "status": "progress",
+   "progress": 0
+  },
+  "Rookie of the year": {
+   "desc": "Complete arace in under10 minutes",
+   "status": "progress",
+   "progress": 0
+  },
+  "Top of your game": {
+   "desc": "Complete any race in under 3 minutes",
+   "status": "progress",
+   "progress": 0
+  },
+  "Therpopylae": {
+   "desc": "Pop200,000Bloonson Peninsula",
+   "status": "progress",
+   "progress": 0
+  },
+  "Bloon Master Populous": {
+   "desc": "Deal 1 billion damage with the Bloon Master",
+   "status": "progress",
+   "progress": 0
+  },
+  "THeGReATeST": {
+   "desc": "Create or Play",
+   "status": "unknown",
+   "progress": null
+  },
+  "I see you": {
+   "desc": "Reveal10,0o0 Bloons usingShimmer",
+   "status": "progress",
+   "progress": 0
+  },
+  "Tetrimino": {
+   "desc": "Place50monkeytowers on amap at once",
+   "status": "progress",
+   "progress": 0
+  },
+  "All for one and one for one": {
+   "desc": "Win a game with only 1 monkey tower on screen at any one time in any Hard Difficulty game",
+   "status": "progress",
+   "progress": 0
+  },
+  "Master of life": {
+   "desc": "Have 10oo lives at once in a single game",
+   "status": "progress",
+   "progress": 0
+  },
+  "Rainbow is Magic": {
+   "desc": "Pop 20,000 Rainbow Bloons with Magic",
+   "status": "progress",
+   "progress": 0
+  },
+  "What did it cost? - Everything": {
+   "desc": "Sacrificeeverytower typein thegame to the",
+   "status": "progress",
+   "progress": 0
+  },
+  "2 MegaPops": {
+   "desc": "Complete a game of CHiMPS with more than 2 million damage dealt by one tower",
+   "status": "progress",
+   "progress": 0
+  },
+  "A Crate Time": {
+   "desc": "Open a Diamond Crate in any Collection",
+   "status": "progress",
+   "progress": 0
+  },
+  "Axis of Havoc": {
+   "desc": "Have one of each T5 sniperin one game of",
+   "status": "progress",
+   "progress": 0
+  },
+  "Kali Maaaaaaaa": {
+   "desc": "Gain 10 levels forAdora in one round",
+   "status": "progress",
+   "progress": 0
+  },
+  "Seasoned Adventurer": {
+   "desc": "Complete a Hard Odyssey",
+   "status": "progress",
+   "progress": 0
+  },
+  "No Stone Left Unturned": {
+   "desc": "Complete all 3 difficulties of a single Odyssey",
+   "status": "progress",
+   "progress": 0
+  },
+  "12 Tasks of Monk-ules": {
+   "desc": "Complete 12 different 0dysseys",
+   "status": "progress",
+   "progress": 0
+  },
+  "Full Speed Ahead!": {
+   "desc": "Complete an Odyssey in under 1 hour",
+   "status": "progress",
+   "progress": 0
+  },
+  "All About That Bling": {
+   "desc": "Purchase a Trophy Store item",
+   "status": "progress",
+   "progress": 0
+  },
+  "MODYSSeu": {
+   "desc": "Complete 50 0ayss-ys",
+   "status": "progress",
+   "progress": 0
+  },
+  "Oathbreakers": {
+   "desc": "Reanimate 250,000 Bloons to fight on your side using the NecromancerWizard",
+   "status": "progress",
+   "progress": 0
+  },
+  "Living on the Edge": {
+   "desc": "Win any non-CHIMPs/Impoppable game with only1 life remaining",
+   "status": "progress",
+   "progress": 0
+  },
+  "Freaky Friday": {
+   "desc": "Use the Alchemist's Transforming Tonic abilities 100 times",
+   "status": "progress",
+   "progress": 0
+  },
+  "Ready Player One?": {
+   "desc": "Host and win 10 Co-op games",
+   "status": "progress",
+   "progress": 0
+  },
+  "Regifted": {
+   "desc": "Pop 1,ooo,0o0 Bloons with Dartling Gunners",
+   "status": "progress",
+   "progress": 0
+  },
+  "Instant Gratification": {
+   "desc": "Use a Tier 5 Insta Monkey.NoTE:even afterbeing used, Instas still count toward your collection!",
+   "status": "progress",
+   "progress": 0
+  },
+  "Insta Century": {
+   "desc": "Use 100 Insta Monkeys.NOTE:even after being used, Instas still count toward your collection!",
+   "status": "progress",
+   "progress": 0
+  },
+  "Limited Run": {
+   "desc": "Purchase at least 1 new Limited Time item in the Trophy Store",
+   "status": "progress",
+   "progress": 0
+  },
+  "INSTANTGRATI": {
+   "desc": "used, Instas sti",
+   "status": "unknown",
+   "progress": null
+  },
+  "Hook, Line, and Sinker": {
+   "desc": "Rope in 3,0oo MoAB-Class Bloons using the",
+   "status": "progress",
+   "progress": 0
+  },
+  "Moving House": {
+   "desc": "Redeploy 1,oo0 monkey towers using the",
+   "status": "progress",
+   "progress": 0
+  },
+  "Social Butterfly": {
+   "desc": "Use emotes 100 times in co-op games",
+   "status": "progress",
+   "progress": 0
+  },
+  "HooK,LIne": {
+   "desc": "Rope in3,000MUAL",
+   "status": "progress",
+   "progress": 0
+  },
+  "Glittering Gold": {
+   "desc": "Pop 100 Golden Bloons",
+   "status": "progress",
+   "progress": 0
+  },
+  "Magical Gold": {
+   "desc": "Pop50 Golden Bloons inMagicMonkeys only",
+   "status": "progress",
+   "progress": 0
+  },
+  "Team Captain": {
+   "desc": "Win50 timeswith MonkeyTeams",
+   "status": "progress",
+   "progress": 0
+  },
+  "Ultimate Team-up": {
+   "desc": "Win100timeswithMonkey Teams",
+   "status": "progress",
+   "progress": 0
+  },
+  "What is this new Bloonery?": {
+   "desc": "Defeata Tier1 Boss",
+   "status": "progress",
+   "progress": 0
+  },
+  "Apotheosis": {
+   "desc": "Upgrade to a Monkey Paragon Tower",
+   "status": "progress",
+   "progress": 0
+  },
+  "Like a Boss": {
+   "desc": "Pop 50 Boss Bloons",
+   "status": "progress",
+   "progress": 0
+  },
+  "Davids vs Goliath": {
+   "desc": "Win a boss battle without using a Hero",
+   "status": "progress",
+   "progress": 0
+  },
+  "So Spiiicey Ninja Kiwi": {
+   "desc": "Beat Spice Islands on Alternate Bloon Rounds with only land towers",
+   "status": "progress",
+   "progress": 0
+  },
+  "No Harvest": {
+   "desc": "Beat Cornfield on CHIMPS without removing",
+   "status": "progress",
+   "progress": 0
+  },
+  "The Daily Reid": {
+   "desc": "Win365uniquedaily challenges",
+   "status": "progress",
+   "progress": 0
+  },
+  "I'll Be Back": {
+   "desc": "Spend 1,ooo MMonContinues or",
+   "status": "progress",
+   "progress": 0
+  },
+  "Territory Sampler": {
+   "desc": "Capture 1ofeach:Boss,Time Attack,Least Tiers and LeastCash Tiles",
+   "status": "progress",
+   "progress": 0
+  },
+  "Invigoration": {
+   "desc": "Have 75 buffs active on your Monkeys at",
+   "status": "progress",
+   "progress": 0
+  },
+  "World League Training": {
+   "desc": "Have 150,000 Beast HandlerXPatonce",
+   "status": "progress",
+   "progress": 0
+  },
+  "Heavy Investment": {
+   "desc": "Invest at least$401,626extra when creating",
+   "status": "progress",
+   "progress": 0
+  },
+  "25 to Life": {
+   "desc": "orChallenge Mode)",
+   "status": "progress",
+   "progress": 0
+  },
+  "Community Connoisseur": {
+   "desc": "Win1o0 differentcommunity submissionsin the Content Browser.(Challenges,Odysseys,Maps)",
+   "status": "progress",
+   "progress": 0
+  }
+ }
+}

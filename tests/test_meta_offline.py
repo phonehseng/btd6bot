@@ -47,8 +47,8 @@ def test_classify_icon_synthetic():
     art = blue.copy()
     art[:, :20] = (230, 230, 230)
     assert M.classify_icon(art)
-    # a mostly-covered disc (15% blue) is not
-    art[:, :34] = (230, 230, 230)
+    # a sliver of colour (5%) is not (real unlocked icons measure 0.40-0.95)
+    art[:, :38] = (230, 230, 230)
     assert not M.classify_icon(art)
     assert not M.classify_icon(np.zeros((0, 0, 3), np.uint8))
 

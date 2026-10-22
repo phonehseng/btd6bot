@@ -6,7 +6,8 @@ from . import layout as L
 from . import towers as T
 from .account import AccountState
 from .achievements import Achievements
-from .xpspend import unlock_for_strategy
+from .xpspend import sync_all, unlock_for_strategy
+from .identity import current_path, is_stale, load_for, mark_synced, read_user_id
 from .choices import tower_chooser
 from .game import Game
 from .inputs import Aborted, FocusLost, Input
@@ -29,6 +30,7 @@ MODE_BUTTON_TEXT = {
 
 
 ROOT_DIR = __import__("pathlib").Path(__file__).resolve().parents[1]
+ID_CHECK_EVERY = 6                    # games between account (User ID) checks
 ACH_EVERY = 2 * 3600                   # seconds between achievement scans
 PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main menu
 STATE_FILE = ROOT_DIR / "logs" / "state.txt"
@@ -136,7 +138,7 @@ class Bot:
         self.s = Screen()
         self.inp = Input(self.s)
         self.lay = L.get(self.s.width, self.s.height)
-        self.account = AccountState.load(account_path)
+        self.account = AccountState.load(account_path or current_path())
         self.menus = Menus(self.s, self.inp)
         self.strats = load_all()
         self.failures = 0
@@ -145,6 +147,8 @@ class Bot:
         self.skip_known = None
         self._roster_done = False
         self._ach_at = _ach_last()  # every ACH_EVERY, remembered across restarts
+        self.uid = None             # signed-in account, read from Settings
+        self._games_since_id = 0
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -201,6 +205,11 @@ class Bot:
         # the first read of a session may adopt any save file's level
         cur = self.account.player_level
         plausible = cur <= lvl2 <= cur + 4 if self._level_synced else (lvl2 or 0) >= 1
+        if lvl and lvl == lvl2 and not plausible and self._level_synced:
+            log.warning("level reads %d but notes say %d - checking which account is signed in",
+                        lvl, cur)
+            self._check_account(force=True)
+            return lvl
         if lvl and lvl == lvl2 and plausible:
             if lvl > cur + 4:
                 log.warning("adopting save-file level %d (notes said %d)", lvl, cur)
@@ -394,6 +403,7 @@ class Bot:
                     self.failures += 1
                     time.sleep(5)
                     continue
+                self._check_account()
                 self.read_level()
                 if time.time() - self._ach_at > ACH_EVERY:
                     self._ach_at = time.time()
@@ -431,6 +441,7 @@ class Bot:
                     self.failures += 1
                     continue
                 res = self.play(plan)
+                self._games_since_id += 1
                 log.info("RESULT %s", res)
                 self.failures = 0
             except Aborted:
@@ -443,6 +454,31 @@ class Bot:
             except Exception:
                 log.exception("game loop error - recovering to main menu")
                 self.failures += 1
+
+    def _check_account(self, force=False):
+        """Read the signed-in account's User ID; switch state files if it changed,
+        and fully re-sync an account that is new or not synced for a day."""
+        if not force and self._games_since_id < ID_CHECK_EVERY and self.uid:
+            return
+        self._games_since_id = 0
+        uid = read_user_id(self.s, self.inp, self.menus)
+        if not uid:
+            log.warning("could not read the account's User ID")
+            return
+        if uid != self.uid:
+            if self.uid:
+                log.warning("account changed: %s -> %s", self.uid, uid)
+            self.account, is_new = load_for(uid)
+            self.uid = uid
+            self._level_synced = False
+            self._roster_done = False  # re-probe towers in the next game
+            if is_new:
+                self._ach_at = 0.0  # scan achievements right away
+        if is_stale(uid):
+            log.info("syncing account %s from the game (upgrades, level)", uid)
+            sync_all(self.s, self.inp, self.menus, self.account)
+            mark_synced(uid)
+            self.to_main_menu()
 
     def account_selected_hero(self):
         return getattr(self.account, "selected_hero", None) or "quincy"
