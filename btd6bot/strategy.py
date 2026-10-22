@@ -1550,6 +1550,8 @@ class Executor:
             if self.calendar and threat != "ddt" and threat not in STRONG_CAMO \
                     and TH.sig_from_name(threat) is not None:
                 continue  # camo, lead, purple: property threats, timed from the round set above
+            if r > self.rules.get("end_round", 80):
+                continue  # arrives after the game's last round (rush 63 in a 60-round Medium game)
             # threats that began before our first round are present from the start
             r = max(r, start)
             # past r+1 it is no longer "early"; stop holding the plan hostage
@@ -2153,8 +2155,12 @@ class Executor:
         that money is being saved for a bloon the defence cannot pop yet."""
         if cash is None or getattr(self, "saving_for_threat", False):
             return False
+        # An XP build (strategies/generated: `xp_target`) puts surplus into the
+        # tower it levels up first - tower XP follows invested cash - and only
+        # then into helpers, side paths or the opener.
+        target = self.strat.get("xp_target") if isinstance(getattr(self, "strat", None), dict) else None
         towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
-                        key=lambda p: -p.spent)
+                        key=lambda p: (p.kind != target, -p.spent))
         for p in towers:
             for path in sorted(range(3), key=lambda i: -p.tiers[i]):
                 if (p.tid, path + 1) in self.capped or p.tiers[path] >= 5:
@@ -2172,7 +2178,7 @@ class Executor:
                 if r in ("bought", "progress"):
                     log.info("surplus: upgraded %s -> %s", p.tid, p.crosspath)
                     return True
-        main = self._main_kind()
+        main = target if target and self._allowed(target) else self._main_kind()
         if main and cash >= self.g.price(main):
             r = self.try_step({"do": "place", "kind": main, "role": "dps", "segment": [0.2, 1.0]}, cash, rnd)
             if r == "bought":
