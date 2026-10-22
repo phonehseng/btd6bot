@@ -143,6 +143,12 @@ class Match:
                     continue
                 # lives: median of the last 5 reads (OCR flickers 120/121), any
                 # size of drop counts - a MOAB leak is the worst case, not noise
+                # Lives never jump up by more than a few (+25 from a bonus at
+                # most): a read far above the confirmed count is a misread
+                # (Easy's 200 read as "2001"), and letting it in would later
+                # look like a huge leak and trigger panic buying.
+                if lives is not None and last_lives is not None and lives > last_lives + 50:
+                    lives = None
                 if lives is not None:
                     self._lives_reads = (self._lives_reads + [lives])[-5:]
                 med = sorted(self._lives_reads)[len(self._lives_reads) // 2] if self._lives_reads else None
