@@ -1,0 +1,2385 @@
+[
+ {
+  "id": 1,
+  "name": "Impoppable",
+  "type": "AchievementImpoppable",
+  "goal": 100000000,
+  "counts": "bloonsPopped",
+  "reward": {
+   "monkey_money": 1000,
+   "other": [
+    "Power:SuperMonkeyStorm ,5",
+    "InstaMonkey:SuperMonkey,302"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 2,
+  "name": "MOAB Assassin",
+  "type": "AchievementMoabAssasin",
+  "goal": 25000,
+  "counts": "moabsPopped",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "InstaMonkey:BombShooter,000"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 3,
+  "name": "BFB Brawler",
+  "type": "AchievementBfbBrawler",
+  "goal": 10000,
+  "counts": "bfbsPopped",
+  "reward": {
+   "monkey_money": 500,
+   "other": [
+    "Power:MoabMine,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 4,
+  "name": "ZOMGinator",
+  "type": "AchievementZomginator",
+  "goal": 5000,
+  "counts": "zomgsPopped",
+  "reward": {
+   "monkey_money": 750,
+   "other": [
+    "Power:MonkeyBoost,3",
+    "InstaMonkey:SniperMonkey,400"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 5,
+  "name": "Me Did A Job on DDT",
+  "type": "AchievementMeDidAJobOnDdt",
+  "goal": 5000,
+  "counts": "ddtsPopped",
+  "reward": {
+   "monkey_money": 750,
+   "other": [
+    "Power:SuperMonkeyStorm,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 6,
+  "name": "Sapper",
+  "type": "AchievementSapper",
+  "goal": 5000000,
+  "counts": "fortifiedPopped",
+  "reward": {
+   "monkey_money": 500,
+   "other": [
+    "KnowledgePoints:1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 7,
+  "name": "First Win",
+  "type": "AchievementFirstWin",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 20,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 8,
+  "name": "Grasshopper",
+  "type": "AchievementGrasshopper",
+  "goal": 9,
+  "counts": "differentBeginnerWins",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "InstaMonkey:Druid,000"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 9,
+  "name": "Next Level",
+  "type": "AchievementNextLevel",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": [
+    "Power:RoadSpikes,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 10,
+  "name": "Acolyte",
+  "type": "AchievementAcolyte",
+  "goal": 5,
+  "counts": "differentIntermediateWins",
+  "reward": {
+   "monkey_money": 250,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 11,
+  "name": "Advanced Player",
+  "type": "AchievementAdvancedPlayer",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:BananaFarmer"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 13,
+  "name": "Big Monkey",
+  "type": "AchievementBigMonkey",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 20,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 14,
+  "name": "Mega Monkey",
+  "type": "AchievementMegaMonkey",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 15,
+  "name": "Hero Time",
+  "type": "AchievementHeroTime",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 20,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 16,
+  "name": "Hero Powers Activate",
+  "type": "AchievementHeroPowersActivate",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 20,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 17,
+  "name": "Bigger, Badder",
+  "type": "AchievementBiggerBadder",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 18,
+  "name": "Epic Hero",
+  "type": "AchievementEpicHero",
+  "goal": 20,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 19,
+  "name": "Monkey Avenger League",
+  "type": "AchievementMonkeyAvengerLeague",
+  "goal": 4,
+  "counts": "differentHeroWins",
+  "reward": {
+   "monkey_money": 100,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 20,
+  "name": "You've Got the Power",
+  "type": "AchievementYouveGotThePower",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:MonkeyBoost"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 21,
+  "name": "Power User",
+  "type": "AchievementPowerUser",
+  "goal": 25,
+  "counts": "totalPowersActivated",
+  "reward": {
+   "monkey_money": 150,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 22,
+  "name": "Empowered",
+  "type": "AchievementEmpowered",
+  "goal": 100,
+  "counts": "totalPowersActivated",
+  "reward": {
+   "monkey_money": 250,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 23,
+  "name": "Student",
+  "type": "AchievementStudent",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CashDrop,2",
+    "InstaMonkey:WizardMonkey,000"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 24,
+  "name": "Scholar",
+  "type": "AchievementScholar",
+  "goal": 10,
+  "counts": "knowledgePointsApplied",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "InstaMonkey:Druid,001"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 25,
+  "name": "Dr. Monkey",
+  "type": "AchievementDrMonkey",
+  "goal": 106,
+  "counts": "knowledgePointsApplied",
+  "reward": {
+   "monkey_money": 1000,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 26,
+  "name": "First Monkeys First",
+  "type": "AchievementFirstMonkeysFirst",
+  "goal": 10,
+  "counts": "onlyPrimaryWins",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:MonkeyBoost,2",
+    "InstaMonkey:DartMonkey,300"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 27,
+  "name": "War Monkeys",
+  "type": "AchievementWarMonkeys",
+  "goal": 10,
+  "counts": "onlyMilitaryWins",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:MoabMine,3",
+    "InstaMonkey:SniperMonkey,202"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 28,
+  "name": "Abracadabmonkey",
+  "type": "AchievementAbracadabmonkey",
+  "goal": 10,
+  "counts": "onlyMagicWins",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:SuperMonkeyStorm",
+    "InstaMonkey:Druid,003"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 29,
+  "name": "Unsung Monkeys",
+  "type": "AchievementUnsungMonkeys",
+  "goal": 10,
+  "counts": "onlySupportWins",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:BananaFarmer,2",
+    "InstaMonkey:BananaFarm,200"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 30,
+  "name": "Inflated",
+  "type": "AchievementInflated",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 31,
+  "name": "Survivor",
+  "type": "AchievementSurvivor",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 32,
+  "name": "Indie",
+  "type": "AchievementIndie",
+  "goal": 25,
+  "counts": "alternateBloonRoundsWins",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:GlueTrap,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 33,
+  "name": "Poppable",
+  "type": "AchievementPoppable",
+  "goal": 25,
+  "counts": "impoppableWins",
+  "reward": {
+   "monkey_money": 500,
+   "other": [
+    "Power:SuperMonkeyStorm,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 34,
+  "name": "Thrifty",
+  "type": "AchievementThrifty",
+  "goal": 10,
+  "counts": "halfCashWins",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "Power:CashDrop,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 35,
+  "name": "Bloonzilla!",
+  "type": "AchievementBloonzilla",
+  "goal": 25,
+  "counts": "doubleHpWins",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "Power:MoabMine,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 36,
+  "name": "Role Reverser",
+  "type": "AchievementRoleReverser",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 37,
+  "name": "Medal Winner",
+  "type": "AchievementMedalWinner",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:PortableLake"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 38,
+  "name": "Decorated Hero",
+  "type": "AchievementDecoratedHero",
+  "goal": 36,
+  "counts": "beginnerMapMedals",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "Power:Thrive,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 39,
+  "name": "Red and Blue Makes...",
+  "type": "AchievementRedAndBlueMakes",
+  "goal": 100000,
+  "counts": "purplesPopped",
+  "reward": {
+   "monkey_money": 200,
+   "other": [
+    "Power:DartTime,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 40,
+  "name": "Infrared",
+  "type": "AchievementInfrared",
+  "goal": 250000,
+  "counts": "camosPopped",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:CamoTrap,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 41,
+  "name": "Our Powers Combined",
+  "type": "AchievementOurPowersCombined",
+  "goal": 12,
+  "counts": "differentPowersCollected",
+  "reward": {
+   "monkey_money": 200,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 42,
+  "name": "Challenger",
+  "type": "AchievementChallenger",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 25,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 43,
+  "name": "Challenge Apprentice",
+  "type": "AchievementChallengeApprentice",
+  "goal": 10,
+  "counts": "dailyChallengeWins",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:Pontoon"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 44,
+  "name": "Challenge Master",
+  "type": "AchievementChallengeMaster",
+  "goal": 100,
+  "counts": "dailyChallengeWins",
+  "reward": {
+   "monkey_money": 500,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 45,
+  "name": "Perfect Week",
+  "type": "AchievementPerfectWeek",
+  "goal": 7,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 46,
+  "name": "Knowledgable Primate",
+  "type": "AchievementKnowledgablePrimate",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:WizardMonkey,300",
+    "Power:Thrive"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 47,
+  "name": "Clicker",
+  "type": "AchievementClicker",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "KnowledgePoints:1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 48,
+  "name": "Superior Clicker",
+  "type": "AchievementSuperiorClicker",
+  "goal": 5,
+  "counts": "chimpsWins",
+  "reward": {
+   "monkey_money": 1000,
+   "other": [
+    "KnowledgePoints:2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 49,
+  "name": "Ultimate Clicker",
+  "type": "AchievementUltimateClicker",
+  "goal": 15,
+  "counts": "chimpsWins",
+  "reward": {
+   "monkey_money": 2000,
+   "other": [
+    "KnowledgePoints:4"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 50,
+  "name": "Super BAD",
+  "type": "AchievementSuperBad",
+  "goal": 1000,
+  "counts": "badsPopped",
+  "reward": {
+   "monkey_money": 500,
+   "other": [
+    "Power:RoadSpikes,10"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 51,
+  "name": "Co-operation",
+  "type": "AchievementCooperation",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 52,
+  "name": "Four times the fun",
+  "type": "AchievementFourTimesTheFun",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 53,
+  "name": "Triple Threat",
+  "type": "AchievementTripleThreat",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 75,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 54,
+  "name": "Collaborate!",
+  "type": "AchievementCollaborate",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 55,
+  "name": "When the going gets tough...",
+  "type": "AchievementWhenTheGoingGetsTough",
+  "goal": 10,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": [
+    "Power:SuperMonkeyStorm,2"
+   ]
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 56,
+  "name": "Kind Benefactor",
+  "type": "AchievementKindBenefactor",
+  "goal": 10000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 25,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 57,
+  "name": "Generous Benefactor",
+  "type": "AchievementGenerousBenefactor",
+  "goal": 50000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 58,
+  "name": "Monkey Contributor",
+  "type": "AchievementMonkeyContributor",
+  "goal": 100000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 59,
+  "name": "Monkey Philanthropist",
+  "type": "AchievementMonkeyPhilanthropist",
+  "goal": 1000000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "KnowledgePoints:1"
+   ]
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 60,
+  "name": "Powershare",
+  "type": "AchievementPowershare",
+  "goal": 10,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 61,
+  "name": "Power overwhelming!",
+  "type": "AchievementPowerOverwhelming",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 62,
+  "name": "Insta-defense",
+  "type": "AchievementInstaDefence",
+  "goal": 5,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CashDrop,2",
+    "Power:PortableLake,1"
+   ]
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 63,
+  "name": "Co-op Popper!",
+  "type": "AchievementCoopPopper",
+  "goal": 10000000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 300,
+   "other": []
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 64,
+  "name": "Big Bloons",
+  "type": "AchievementBigBloons",
+  "goal": 10,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "BigBloonsMode"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 65,
+  "name": "Small Bloons",
+  "type": "AchievementSmallBloons",
+  "goal": 900000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "SmallBloonsMode"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 66,
+  "name": "2TC",
+  "type": "Achievement2TC",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "KnowledgePoints:2",
+    "InstaMonkey:WizardMonkey,040"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 67,
+  "name": "Snap of your fingers",
+  "type": "AchievementSnapOfYourFingers",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:1,2",
+    "RandomInstaMonkey:2,2",
+    "RandomInstaMonkey:3,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 68,
+  "name": "Bill Greates",
+  "type": "AchievementBillGreates",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CashDrop,5"
+   ]
+  },
+  "coop": true,
+  "hidden": true
+ },
+ {
+  "id": 69,
+  "name": "Bloontona 500",
+  "type": "AchievementBloontona500",
+  "goal": 500,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 70,
+  "name": "Rookie of the year",
+  "type": "AchievementRookieOfTheYear",
+  "goal": 1,
+  "counts": "raceEntryGained",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:MonkeyBoost,2",
+    "Power:DartTime,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 71,
+  "name": "Rising star",
+  "type": "AchievementRisingStar",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "KnowledgePoints:1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 72,
+  "name": "Top of your game",
+  "type": "AchievementTopOfYourGame",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:HeliPilot,130"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 73,
+  "name": "The greatest challenge",
+  "type": "AchievementTheGreatestChallenge",
+  "goal": 200,
+  "counts": "challengesCreatedOrPlayed",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CashDrop",
+    "Power:TechBot,5"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 74,
+  "name": "Looking fab",
+  "type": "AchievementLookingFab",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 500,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 75,
+  "name": "Therpopylae",
+  "type": "AchievementTherpopylae",
+  "goal": 200000,
+  "counts": "peninsulaBloonsPopped",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:PortableLake,2",
+    "InstaMonkey:MonkeyBuccaneer,040"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 76,
+  "name": "Bloon Master Populous",
+  "type": "AchievementBloonMasterPopulous",
+  "goal": 1000000000,
+  "counts": "masterAlchemistDamage",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:Alchemist,104"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 77,
+  "name": "I see you",
+  "type": "AchievementISeeYou",
+  "goal": 10000,
+  "counts": "shimmeredBloons",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CamoTrap,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 78,
+  "name": "Tetrimino",
+  "type": "AchievementTetrimino",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:0,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 80,
+  "name": "All for one and one for one",
+  "type": "AchievementAllForOne",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "KnowledgePoints:1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 81,
+  "name": "Master of Life",
+  "type": "AchievementMasterOfLife",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:SuperMonkeyStorm,1",
+    "Power:GlueTrap,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 82,
+  "name": "Rainbow is Magic",
+  "type": "AchievementRainbowIsMagic",
+  "goal": 20000,
+  "counts": "rainbowPopsWithMagic",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:MonkeyBoost,1",
+    "Power:EnergisingTotem,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 83,
+  "name": "Strangely Adorable",
+  "type": "AchievementStrangelyAdorable",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:SuperMonkey,300"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 84,
+  "name": "Josh's Constant",
+  "type": "AchievementJoshsConstant",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:SpikeFactory,003"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 85,
+  "name": "What did it cost",
+  "type": "AchievementWhatDidItCost",
+  "goal": 1,
+  "counts": "differentTowersSacrificed",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:BoomerangMonkey,001",
+    "InstaMonkey:MonkeyAce,001",
+    "InstaMonkey:Druid,010",
+    "InstaMonkey:BananaFarm,001"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 86,
+  "name": "2 Mega Pops",
+  "type": "Achievement2MegaPops",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:MonkeyBoost",
+    "Power:DartTime"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 87,
+  "name": "A Crate Time",
+  "type": "AchievementACrateTime",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:4,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 88,
+  "name": "Axis of Havok",
+  "type": "AchievementAxisOfHavoc",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:GlueTrap,2",
+    "Power:CamoTrap,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 89,
+  "name": "Tower Keeper",
+  "type": "AchievementTowerKeeper",
+  "goal": 200,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 90,
+  "name": "A year in the making",
+  "type": "AchievementAYearInTheMaking",
+  "goal": 365,
+  "counts": "dailyChestsOpened",
+  "reward": {
+   "monkey_money": 365,
+   "other": [
+    "KnowledgePoints:1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 91,
+  "name": "Kali Maaaaaaaa",
+  "type": "AchievementKaliMaa",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CashDrop"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 92,
+  "name": "GoldenTicket",
+  "type": "AchievementSmallTowers",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "SmallTowersMode"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 93,
+  "name": "Adventurer",
+  "type": "AchievementAdventurer",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 94,
+  "name": "Seasoned Adventurer",
+  "type": "AchievementSeasonedAdventurer",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:CashDrop"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 95,
+  "name": "No Stone Left Unturned",
+  "type": "AchievementNoStoneLeftUnturned",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 150,
+   "other": [
+    "RandomInstaMonkey:2,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 96,
+  "name": "12 Tasks of Monk-ules",
+  "type": "Achievement12TasksOfMonkules",
+  "goal": 12,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:SuperMonkeyStorm",
+    "Power:DartTime"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 97,
+  "name": "Modysseus Rises",
+  "type": "AchievementModysseusRises",
+  "goal": 50,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "RandomInstaMonkey:3,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 98,
+  "name": "Modysseus Forever",
+  "type": "AchievementModysseusForever",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 500,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 99,
+  "name": "Full Speed Ahead!",
+  "type": "AchievementFullSpeedAhead",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:GlueTrap",
+    "Power:CamoTrap"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 100,
+  "name": "All About That Bling",
+  "type": "AchievementAllAboutThatBling",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:TechBot,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 101,
+  "name": "Mo Heroes, Mo Problems",
+  "type": "AchievementMoHeroesMoProblems",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:1,3"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 102,
+  "name": "Chunky Monkeys",
+  "type": "AchievementChunkyMonkeys",
+  "goal": 10,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "BigTowersMode"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 103,
+  "name": "Oathbreakers",
+  "type": "AchievementOathbreakers",
+  "goal": 250000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "InstaMonkey:WizardMonkey,004"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 104,
+  "name": "Living on the Edge",
+  "type": "AchievementLivingOnTheEdge",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "InstaMonkey:Druid,002"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 105,
+  "name": "Freaky Friday",
+  "type": "AchievementFreakyFriday",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 150,
+   "other": [
+    "InstaMonkey:Alchemist,040"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 106,
+  "name": "Monkey Fan Club",
+  "type": "AchievementMonkeyFanClub",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 500,
+   "other": [
+    "InstaMonkey:DartMonkey,040"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 107,
+  "name": "ReadyPlayerOne",
+  "type": "AchievementReadyPlayerOne",
+  "goal": 10,
+  "counts": "",
+  "reward": {
+   "monkey_money": 150,
+   "other": [
+    "Power:SuperMonkeyStorm"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 108,
+  "name": "CrashOfTheTitans",
+  "type": "AchievementCrashOfTheTitans",
+  "goal": 3000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 300,
+   "other": [
+    "InstaMonkey:MortarMonkey,004"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 109,
+  "name": "ALaCode",
+  "type": "AchievementALaCode",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 110,
+  "name": "Regifted",
+  "type": "AchievementRegifted",
+  "goal": 1000000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": [
+    "InstaMonkey:DartlingGunner,300",
+    "InstaMonkey:DartlingGunner,030",
+    "InstaMonkey:DartlingGunner,003"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 111,
+  "name": "CouponCrazy",
+  "type": "AchievementCouponCrazy",
+  "goal": 50,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Trophy:25"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 112,
+  "name": "InstantGratification",
+  "type": "AchievementInstantGratification",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "RandomInstaMonkey:5,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 113,
+  "name": "InstaCentury",
+  "type": "AchievementInstaCentury",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 1000,
+   "other": [
+    "Power:MonkeyBoost,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 114,
+  "name": "LimitedRun",
+  "type": "AchievementLimitedRun",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:DartTime"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 115,
+  "name": "ToolsToDarwin",
+  "type": "AchievementToolsToDarwin",
+  "goal": 20000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": [
+    "RandomInstaMonkey:2,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 116,
+  "name": "StubbornStrategy",
+  "type": "AchievementStubbornStrategy",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 500,
+   "other": [
+    "Power:CashDrop,3"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 117,
+  "name": "Achievement Of Achievements",
+  "type": "AchievementAchievementOfAchievements",
+  "goal": 35,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 118,
+  "name": "Hook Line And Sinker",
+  "type": "AchievementHookLineAndSinker",
+  "goal": 3000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "InstaMonkey:MonkeyBuccaneer,040",
+    "InstaMonkey:Druid,030"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 119,
+  "name": "Moving House",
+  "type": "AchievementMovingHouse",
+  "goal": 1000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 150,
+   "other": [
+    "Power:CashDrop",
+    "Power:Thrive"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 120,
+  "name": "Social Butterfly",
+  "type": "AchievementSocialButterfly",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Trophy:20"
+   ]
+  },
+  "coop": true,
+  "hidden": false
+ },
+ {
+  "id": 121,
+  "name": "So Shiny",
+  "type": "AchievementSoShiny",
+  "goal": 20,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": [
+    "InstaMonkey:IceMonkey,011"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 122,
+  "name": "Glittering Gold",
+  "type": "AchievementGlitteringGold",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "InstaMonkey:GlueGunner,020"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 123,
+  "name": "Glorious Gold",
+  "type": "AchievementGloriousGold",
+  "goal": 500,
+  "counts": "",
+  "reward": {
+   "monkey_money": 150,
+   "other": [
+    "InstaMonkey:SniperMonkey,003"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 124,
+  "name": "Magical Gold",
+  "type": "AchievementMagicalGold",
+  "goal": 50,
+  "counts": "",
+  "reward": {
+   "monkey_money": 150,
+   "other": [
+    "InstaMonkey:NinjaMonkey,003"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 125,
+  "name": "Team Player",
+  "type": "AchievementTeamPlayer",
+  "goal": 25,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:1,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 126,
+  "name": "Team Captain",
+  "type": "AchievementTeamCaptain",
+  "goal": 50,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:2,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 127,
+  "name": "Ultimate Team Up",
+  "type": "AchievementUltimateTeamUp",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:3,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 128,
+  "name": "What is this new Bloonery",
+  "type": "AchievementWhatIsThisNewBloonery",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 129,
+  "name": "Who's the Boss",
+  "type": "AchievementWhosTheBoss",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "RandomInstaMonkey:4,1,DartMonkey",
+    "RandomInstaMonkey:4,1,BoomerangMonkey"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 130,
+  "name": "I'm the Boss",
+  "type": "AchievementImTheBoss",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "RandomInstaMonkey:5,1,DartMonkey",
+    "RandomInstaMonkey:5,1,BoomerangMonkey"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 131,
+  "name": "Apotheosis",
+  "type": "AchievementApotheosis",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:3,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 132,
+  "name": "Like a Boss",
+  "type": "AchievementLikeABoss",
+  "goal": 50,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CashDrop,2",
+    "RandomInstaMonkey:0,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 133,
+  "name": "Perfect Paragon",
+  "type": "AchievementPerfectParagon",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 1000,
+   "other": []
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 134,
+  "name": "DavidsVsGoliath",
+  "type": "AchievementDavidsVsGoliath",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": [
+    "InstaMonkey:BananaFarm,003"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 135,
+  "name": "SoSpiiiceyNinjaKiwi",
+  "type": "AchievementSoSpiiiceyNinjaKiwi",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 150,
+   "other": [
+    "Power:Pontoon,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 136,
+  "name": "NoHarvest",
+  "type": "AchievementNoHarvest",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 400,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 137,
+  "name": "StudentLoans",
+  "type": "AchievementStudentLoans",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CashDrop,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 138,
+  "name": "NotLackingCriticalInformation",
+  "type": "AchievementNotLackingCriticalInformation",
+  "goal": 25000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:DartMonkey,004",
+    "InstaMonkey:SuperMonkey,030"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 139,
+  "name": "StickySituation",
+  "type": "AchievementStickySituation",
+  "goal": 500000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:GlueGunner,000",
+    "Power:GlueTrap,5"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 140,
+  "name": "BigSpender",
+  "type": "AchievementBigSpender",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": [
+    "InstaMonkey:BananaFarm,200"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 141,
+  "name": "TheDailyReid",
+  "type": "AchievementTheDailyReid",
+  "goal": 365,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:5,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 142,
+  "name": "I'llBeBack",
+  "type": "AchievementIllBeBack",
+  "goal": 1000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CashDrop,2",
+    "Power:DartTime,2",
+    "Power:EnergisingTotem,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 143,
+  "name": "Conquested Territory",
+  "type": "AchievementConquestedTerritory",
+  "goal": 5,
+  "counts": "",
+  "reward": {
+   "monkey_money": 150,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 144,
+  "name": "Stage of Empires",
+  "type": "AchievementStageOfEmpires",
+  "goal": 50,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "RandomInstaMonkey:2,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 145,
+  "name": "Territory Sampler",
+  "type": "AchievementTerritorySampler",
+  "goal": 4,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": [
+    "Power:CashDrop,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 146,
+  "name": "Side Quest",
+  "type": "AchievementSideQuest",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "RandomInstaMonkey:2,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 147,
+  "name": "Invigoration",
+  "type": "AchievementInvigoration",
+  "goal": 75,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:MonkeyBoost,3",
+    "Power:EnergisingTotem,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 148,
+  "name": "World League Training",
+  "type": "AchievementWorldLeagueTraining",
+  "goal": 150000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 149,
+  "name": "Life Experience",
+  "type": "AchievementLifeExperience",
+  "goal": 5368709,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:DartTime,5",
+    "RandomInstaMonkey:4,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 151,
+  "name": "Heavy Investment",
+  "type": "AchievementHeavyInvestment",
+  "goal": 401626,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "InstaMonkey:DartMonkey,300",
+    "InstaMonkey:DartMonkey,030",
+    "InstaMonkey:DartMonkey,003"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 152,
+  "name": "25 to Life",
+  "type": "Achievement25toLife",
+  "goal": 5,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "SmallBossesMode"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 153,
+  "name": "Community Connoisseur",
+  "type": "AchievementCommunityConnoisseur",
+  "goal": 100,
+  "counts": "",
+  "reward": {
+   "monkey_money": 600,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 154,
+  "name": "Nah I'd win",
+  "type": "AchievementNahIdWin",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 1200,
+   "other": []
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 155,
+  "name": "They call me Cave Monkey!",
+  "type": "AchievementTheyCallMeCaveMonkey",
+  "goal": 50000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "Power:CaveMonkey,3"
+   ]
+  },
+  "coop": false,
+  "hidden": true
+ },
+ {
+  "id": 156,
+  "name": "FirstSteps",
+  "type": "AchievementFirstSteps",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 157,
+  "name": "Season Starts",
+  "type": "AchievementSeasonStarts",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 50,
+   "other": [
+    "Power:CashDrop,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 158,
+  "name": "Mid Season",
+  "type": "AchievementMidSeason",
+  "goal": 7500,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "KnowledgePoints:1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 159,
+  "name": "Season Champion",
+  "type": "AchievementSeasonChampion",
+  "goal": 15000,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": [
+    "RandomInstaMonkey:5,1"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 160,
+  "name": "Full Strength Posse",
+  "type": "AchievementFullStrengthPosse",
+  "goal": 6,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": []
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 161,
+  "name": "Gon' Fishin'",
+  "type": "AchievementGonFishin",
+  "goal": 30,
+  "counts": "",
+  "reward": {
+   "monkey_money": 0,
+   "other": [
+    "InstaMonkey:BeastHandler,010",
+    "InstaMonkey:BeastHandler,020",
+    "InstaMonkey:BeastHandler,030",
+    "InstaMonkey:BeastHandler,040"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 162,
+  "name": "New Stuff, Same ol' Bloons",
+  "type": "AchievementNewStuffSameOlBloons",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 100,
+   "other": [
+    "Power:MonkeyBoost,3"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 163,
+  "name": "Double Trouble",
+  "type": "AchievementDoubleTrouble",
+  "goal": 2,
+  "counts": "",
+  "reward": {
+   "monkey_money": 200,
+   "other": [
+    "Power:CashDrop,2",
+    "Power:MoabMine,2"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 164,
+  "name": "Marshmallow Maxing",
+  "type": "AchievementMarshmallowMaxing",
+  "goal": 1,
+  "counts": "",
+  "reward": {
+   "monkey_money": 300,
+   "other": [
+    "Trophy:100"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ },
+ {
+  "id": 165,
+  "name": "Power Creep",
+  "type": "AchievementPowerCreep",
+  "goal": 250,
+  "counts": "",
+  "reward": {
+   "monkey_money": 250,
+   "other": [
+    "Trophy:250"
+   ]
+  },
+  "coop": false,
+  "hidden": false
+ }
+]

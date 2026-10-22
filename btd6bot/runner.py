@@ -413,8 +413,9 @@ class Bot:
         """Read maps that are new or changed in the game files (a game update
         adds or rebuilds map bundles). Takes ~15 s the first time, ~1 s after."""
         try:
-            from . import gamefiles
+            from . import gamedata, gamefiles
             gamefiles.refresh(status=set_state)
+            gamedata.refresh()   # round sets and achievements
         except Exception:  # never let this stop the bot: learning still works
             log.exception("reading map geometry from the game files failed")
 
