@@ -24,6 +24,26 @@ schtasks /end /tn BTD6Bot                                         # stop the sup
 - The game must run fullscreen at 1920×1200. This is the calibrated layout; other 16:10 resolutions scale.
 - **Ctrl+Alt+F8** (or a `STOP` file) stops the bot immediately; a `PAUSE` file parks it at the main menu between games.
 
+## Offline play
+
+The bot plays only while the game itself is offline (a dummy account on a game
+that cannot reach the internet). Before every game it checks the connections
+owned by `BloonsTD6.exe`; if the game has any internet connection it parks at
+the main menu, shows the reason in the status overlay and waits. It never
+changes network or firewall settings itself.
+
+Block only the game, so the rest of the PC (Steam, browser, etc.) keeps its
+internet. In an **administrator** PowerShell:
+
+```powershell
+New-NetFirewallRule -DisplayName "BTD6 offline (bot)" -Direction Outbound -Action Block -Program "C:\Program Files (x86)\Steam\steamapps\common\BloonsTD6\BloonsTD6.exe"
+```
+
+Then restart the game (connections opened before the rule keep working until
+the game closes). To undo: `Remove-NetFirewallRule -DisplayName "BTD6 offline (bot)"`.
+For testing with an online game, create an empty file named `ALLOW_ONLINE` in
+the project folder.
+
 ## How it plays
 
 | Piece | What it does |

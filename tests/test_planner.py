@@ -481,7 +481,7 @@ def test_learned_tracks_first():
     with tempfile.TemporaryDirectory() as d:
         for m in ("Cubism", "Hedge"):
             Path(d, P.map_slug(m) + ".npz").write_bytes(b"")
-        cfg = P.PlannerConfig(maps_dir=d)
+        cfg = P.PlannerConfig(maps_dir=d, use_game_geometry=False)
         assert P.expected_minutes(acc, P.EXAMPLE_STRATEGIES[2], "Cubism", "hard", cfg) < \
             P.expected_minutes(acc, P.EXAMPLE_STRATEGIES[2], "Carved", "hard", cfg) - 2.0
         _, _, cands = P.rank_games(acc, config=cfg)

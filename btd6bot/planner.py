@@ -137,6 +137,9 @@ class PlannerConfig:
     # Where learned map tracks live (None: only maps already played count as
     # learned - used by tests so they do not depend on data/maps).
     maps_dir: str | None = str(MAPS_DIR)
+    # Maps whose geometry was read from the game files need no first-visit
+    # scan either (False: ignore data/map_geometry - used by tests).
+    use_game_geometry: bool = True
     # Achievements: catalog + live scan (None: no achievement planning).
     # A win that advances an incomplete achievement is worth
     # achievement_value / wins_needed extra (moderate: medals still lead).
@@ -848,13 +851,17 @@ class _Durations:
         self._learned: dict[str, bool] = {}
 
     def learned(self, map_name: str) -> bool:
-        """Track already learned: played before, or data/maps/<slug>.npz exists."""
+        """Track already known: played before, data/maps/<slug>.npz exists, or
+        the map's geometry was read from the game files (no scan needed)."""
         if map_name in self.visited:
             return True
         if map_name not in self._learned:
             d = self.cfg.maps_dir
-            self._learned[map_name] = bool(d) and os.path.exists(
-                os.path.join(d, map_slug(map_name) + ".npz"))
+            known = bool(d) and os.path.exists(os.path.join(d, map_slug(map_name) + ".npz"))
+            if d and not known and self.cfg.use_game_geometry:
+                from . import mapgeom
+                known = mapgeom.map_id_for(map_name) is not None
+            self._learned[map_name] = known
         return self._learned[map_name]
 
     def game_minutes(self, s: StrategySpec, map_name: str, mode: str) -> tuple[float, str]:

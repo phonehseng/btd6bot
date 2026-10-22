@@ -605,6 +605,8 @@ class Bot:
                     raise SystemExit(4)
                 log.error("changed code does not import - staying on the running version")
                 code_stamp = _code_stamp()
+            if not self.wait_until_offline():
+                continue
             if self.failures >= 8:
                 log.error("too many consecutive failures; stopping")
                 return
@@ -714,8 +716,12 @@ class Bot:
             set_state("reading the account: owned towers and upgrade trees")
             sync_all(self.s, self.inp, self.menus, self.account)
             self.to_main_menu()
-            self.scan_all_medals()
             mark_synced(uid)
+        if getattr(self, "_medals_swept", None) != uid:
+            # ~30 s once per session: every map's medals (and any new maps) at
+            # once, instead of discovering earned medals one map search at a time
+            self.scan_all_medals()
+            self._medals_swept = uid
             self.to_main_menu()
 
     # -- benches: (map, mode) that just lost or broke are not retried for a while
@@ -755,6 +761,28 @@ class Bot:
         hero, so the game always matches what Game() is told."""
         log.info("strategy prefers %s; hero switching not calibrated yet - keeping %s",
                  hero, self.account_selected_hero())
+
+    def wait_until_offline(self, poll=30):
+        """The bot only plays while the game is offline (dummy account rule).
+        Returns True when it may play; otherwise parks at the main menu, says
+        why in the status line, waits `poll` seconds and returns False."""
+        from . import offline
+        ok, reason = offline.check()
+        if ok:
+            if getattr(self, "_online_reason", None):
+                log.warning("game is offline now - resuming")
+                self._online_reason = None
+            return True
+        if reason != getattr(self, "_online_reason", None):
+            log.error("%s - not playing until the game is offline "
+                      "(block BloonsTD6.exe in Windows Firewall; see README)", reason)
+            self._online_reason = reason
+            self.to_main_menu()
+        set_state(f"waiting: {reason}")
+        end = time.time() + poll
+        while time.time() < end and not PAUSE_FILE.exists():
+            time.sleep(2)
+        return False
 
     def pause_at_menu(self):
         """Park at the main menu while the PAUSE file exists (between games only),
