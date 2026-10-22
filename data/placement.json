@@ -10,9 +10,10 @@
   "segment_preference": "[lo, hi] progress range where the tower performs best; null = irrelevant (no attack)",
   "range_type": "radius = attacks within display_range; global = map-wide (still LOS-limited if needs_line_of_sight); track_adjacent = places things on track inside its range",
   "units": "display_range / footprint_radius / support_radius are BTD6 game units (as on bloonswiki). null = unknown/not applicable. Convert with the bot's own unit->pixel scale.",
-  "footprint": "small <= 6, medium 7-8, large >= 9 or rectangular (ace runway 28x18, heli pad 27x27)",
+  "footprint": "the game's size class from footprint_radius (TowerModel.GetTowerSize): small <= 6, medium 7, large 8, xl above; Ace, Heli Pilot, Banana Farm and Rosalia have rectangular footprints (see data/game_model)",
   "uncertain": "'?' marks unverified values",
-  "upgrade_notation": "a-b-c = top-middle-bottom path tiers; 'x' = any"
+  "upgrade_notation": "a-b-c = top-middle-bottom path tiers; 'x' = any",
+  "game_model": "footprint_radius, footprint, placement and the display_range of radius towers are copied from data/game_model (the game's own model) by `python tools/decode_sim_model.py --sync-placement`; edit them there, not here"
  },
  "line_of_sight": {
   "mechanic": "Most towers can only target a bloon if a straight line from the tower to some part of the bloon is not blocked. Blockers are walls and objects, removables, and higher terrain: a tower cannot see bloons on ground higher than itself, but can see lower ground. Targeting is checked when an attack starts, so projectiles already in flight keep going. Most LOS projectiles are destroyed when they hit a blocker; some rebound (Juggernaut, Skywarden/Mermonkey ice balls) or pass through it (Glaive Ricochet glaives).",
@@ -285,7 +286,7 @@
    "aiming": null,
    "default_targeting": "First",
    "placement": "water",
-   "footprint": "medium",
+   "footprint": "large",
    "footprint_radius": 8,
    "support_radius": null,
    "notes": "Water only, two broadside guns. Best where the track runs on both sides of the water cell (central ponds, rivers between lanes). Aircraft Carrier (4-x-x) planes fly the whole map."
@@ -314,8 +315,8 @@
    },
    "default_targeting": "Circle",
    "placement": "land",
-   "footprint": "large",
-   "footprint_radius": null,
+   "footprint": "xl",
+   "footprint_radius": 12.0,
    "support_radius": null,
    "notes": "Flying: ignores all LOS blockers and elevation. The base attack fires 8 radial darts continuously with no targeting. Bomber Ace runs drop only while crossing the track. The runway footprint is a 28x18 rectangle."
   },
@@ -343,8 +344,8 @@
    },
    "default_targeting": "Follow Touch ? (verify in game)",
    "placement": "land",
-   "footprint": "large",
-   "footprint_radius": null,
+   "footprint": "xl",
+   "footprint_radius": 14.0,
    "support_radius": null,
    "notes": "Flying: ignores LOS and elevation. A 42-unit detection circle moves with the heli. Excellent on alternating-lane, walled and elevated maps. Heli pad footprint is 27x27. The pad itself can go anywhere with space. The Support Chinook and Special Poperations abilities need clicks."
   },
@@ -369,7 +370,7 @@
    },
    "default_targeting": "target point",
    "placement": "land",
-   "footprint": "large",
+   "footprint": "xl",
    "footprint_radius": 11,
    "support_radius": null,
    "notes": "Lobbed: ignores all LOS blockers and elevation, and the pad can sit anywhere. Burny Stuff / Shattering Shells reward long tracks with wide bends. It also fires with no target in sight (works in Mushroom Grotto darkness)."
@@ -416,7 +417,7 @@
    "aiming": null,
    "default_targeting": "First",
    "placement": "land",
-   "footprint": "small",
+   "footprint": "medium",
    "footprint_radius": 7,
    "support_radius": null,
    "notes": "Guided Magic (1-x-x) bolts seek bloons behind cover: buy it first on walled maps. Wall of Fire (x-2-x) drops on the closest track point. Dragon's Breath (x-3-x) is a short flamethrower, so put it near a bend close to the track. Necromancer / Prince of Darkness zombies walk backwards from the exit and ignore LOS."
@@ -435,7 +436,7 @@
    "aiming": null,
    "default_targeting": "First",
    "placement": "land",
-   "footprint": "large",
+   "footprint": "xl",
    "footprint_radius": 11,
    "support_radius": null,
    "notes": "Huge DPS within 50: the cell with the most track in range (loop centres, spots where several passes overlap). Large footprint (radius 11), so reserve the space before cheaper towers crowd it."
@@ -511,7 +512,7 @@
    "aiming": null,
    "default_targeting": "First",
    "placement": "land_or_water",
-   "footprint": "medium",
+   "footprint": "large",
    "footprint_radius": 8,
    "support_radius": null,
    "notes": "Magic tower (v44): splashing tridents. Range is 28 on land, +35% (about 38) on water, so prefer water cells next to the track. Lord of the Abyss (5-x-x) lets water towers be placed on land within its range (the reverse of Arctic Wind). The Final Harmonic song totem can be placed anywhere and pulls bloons through walls. Arctic Knight / Popseidon ice balls bounce off walls."
@@ -538,7 +539,7 @@
   "farm": {
    "kind": "tower",
    "range_type": "radius",
-   "display_range": null,
+   "display_range": 40.0,
    "needs_line_of_sight": false,
    "los_exceptions": null,
    "segment_preference": null,
@@ -546,8 +547,8 @@
    "aiming": null,
    "default_targeting": null,
    "placement": "land",
-   "footprint": "large",
-   "footprint_radius": null,
+   "footprint": "xl",
+   "footprint_radius": 15.0,
    "support_radius": null,
    "notes": "Income only, no attack. Place far from the track and from prime damage cells (corners, leftover space). Marketplace (x-x-3) auto-collects. Its range only matters for collection upgrades."
   },
@@ -565,7 +566,7 @@
    "aiming": null,
    "default_targeting": "Normal (random point within range)",
    "placement": "land",
-   "footprint": "medium",
+   "footprint": "large",
    "footprint_radius": 8,
    "support_radius": null,
    "notes": "Drops spike piles on a random point of the track within 34. It attacks with no bloons nearby and can drop behind LOS blockers, but needs track in range. Last line of defence: place it so its range covers only the final ~15-25% of the track. Barely reaching the track makes piles denser. Smart Spikes (x-x-2) adds Close / Smart / Set Target / Automatic. Smart targets the track nearest the exit; Set Target can cover two exits at a split."
@@ -581,8 +582,8 @@
    "aiming": null,
    "default_targeting": null,
    "placement": "land",
-   "footprint": "large",
-   "footprint_radius": null,
+   "footprint": "xl",
+   "footprint_radius": 11.0,
    "support_radius": 40,
    "notes": "No attack. It buffs towers inside its radius (+range, Radar Scanner camo, MIB, discounts, Jungle Drums attack speed). Place it at the centroid of the damage-tower cluster; it does not need to be near the track."
   },
@@ -600,7 +601,7 @@
    "aiming": null,
    "default_targeting": "First",
    "placement": "land",
-   "footprint": "small",
+   "footprint": "medium",
    "footprint_radius": 7,
    "support_radius": null,
    "notes": "The nail gun needs LOS. Sentries spawn on nearby land. Cleansing Foam (x-3-x) and Bloon Trap (x-x-4) are placed onto track within range (track_adjacent behaviour; the trap needs collecting). Overclock (x-4-x) is an ability that needs a target click. Sentry Gun is 1-x-x."
@@ -684,7 +685,7 @@
   "obyn": {
    "kind": "hero",
    "range_type": "radius",
-   "display_range": 40,
+   "display_range": 43.0,
    "needs_line_of_sight": false,
    "los_exceptions": null,
    "segment_preference": [
@@ -696,7 +697,7 @@
    "default_targeting": "First",
    "placement": "land",
    "footprint": "medium",
-   "footprint_radius": null,
+   "footprint_radius": 7.0,
    "support_radius": 40,
    "notes": "Spirit wolf attack goes through solid obstacles. Nature's Wrath / Nature's Clarity buff Magic towers in his radius (+pierce, +5 range at lvl 11): place him inside the Magic cluster (druids, ninjas, wizards) near the main kill zone. Brambles / Wall of Trees drop on the track."
   },
@@ -715,7 +716,7 @@
    "default_targeting": "First",
    "placement": "land",
    "footprint": "large",
-   "footprint_radius": null,
+   "footprint_radius": 8.0,
    "support_radius": null,
    "notes": "Tank shells: high single-target damage; acquisition range about 65 (75 at higher level). MOAB Barrage targets up to 10 blimps anywhere on the map. Large footprint."
   },
@@ -730,15 +731,15 @@
    "aiming": null,
    "default_targeting": null,
    "placement": "land",
-   "footprint": "small",
-   "footprint_radius": null,
+   "footprint": "medium",
+   "footprint_radius": 7.0,
    "support_radius": null,
    "notes": "Income/support hero with no damage attack. Placement barely matters. Trojan (lvl 7) has infinite range but cannot see through blockers, and some players hide him behind a blocker to keep it from shrinking bloons. Put him on a spare cell away from prime spots."
   },
   "ezili": {
    "kind": "hero",
    "range_type": "radius",
-   "display_range": 52,
+   "display_range": 40.0,
    "needs_line_of_sight": false,
    "los_exceptions": null,
    "segment_preference": [
@@ -749,15 +750,15 @@
    "aiming": null,
    "default_targeting": "First ?",
    "placement": "land",
-   "footprint": "medium",
-   "footprint_radius": null,
+   "footprint": "small",
+   "footprint_radius": 6.0,
    "support_radius": null,
    "notes": "Instant-hit curse that targets over LOS blockers. Totem (78 range) placed inside her range. MOAB Hex / Sacrificial Totem are abilities; MOAB Hex is global."
   },
   "pat_fusty": {
    "kind": "hero",
    "range_type": "radius",
-   "display_range": 30,
+   "display_range": 27.0,
    "needs_line_of_sight": true,
    "los_exceptions": null,
    "segment_preference": [
@@ -767,9 +768,9 @@
    "geometry": "bends",
    "aiming": null,
    "default_targeting": "First",
-   "placement": "land",
+   "placement": "land_or_water",
    "footprint": "large",
-   "footprint_radius": null,
+   "footprint_radius": 8.0,
    "support_radius": null,
    "notes": "Short range (30 at max): put him inside a tight bend near the front half. Rallying Roar buffs nearby towers. Big Squeeze grabs blimps. Large footprint."
   },
@@ -807,7 +808,7 @@
    "default_targeting": "First",
    "placement": "water",
    "footprint": "medium",
-   "footprint_radius": null,
+   "footprint_radius": 7.0,
    "support_radius": null,
    "notes": "Water only. Sea mines drop on water within her range every 3 s and ignore LOS, but only hurt bloons passing near that water. Naval Tactics / water-tower buffs reach water towers in range (global at lvl 19). Mega Mine can go on any water. Place her in water close to the track and to the other water towers."
   },
@@ -826,7 +827,7 @@
    "default_targeting": "First",
    "placement": "land",
    "footprint": "medium",
-   "footprint_radius": null,
+   "footprint_radius": 7.0,
    "support_radius": 55,
    "notes": "Drones fly over blockers but only pursue bloons inside his range (55, later 60/80), so place him centrally with the most track inside 55. The lvl 8 UAV gives global camo detection. UCAV missiles have infinite range and ignore LOS. His range buff helps nearby towers."
   },
@@ -864,7 +865,7 @@
    "default_targeting": "First ?",
    "placement": "land",
    "footprint": "medium",
-   "footprint_radius": null,
+   "footprint_radius": 7.0,
    "support_radius": null,
    "notes": "Attacks anywhere on the map through blockers and sees camo. Placement only matters for the Psychic Blast ability radius (about Buccaneer range). Put Psi near the densest/most-overlapping track region."
   },
@@ -883,7 +884,7 @@
    "default_targeting": "First ?",
    "placement": "land",
    "footprint": "medium",
-   "footprint_radius": null,
+   "footprint_radius": 7.0,
    "support_radius": null,
    "notes": "Shop hero. Most items (turrets, idols, blade trap, Pet Rabbit) are placed by the player on or near the track. His own attack is modest. Not bot-friendly unless the item placement is scripted."
   },
@@ -902,14 +903,14 @@
    "default_targeting": "First ?",
    "placement": "land",
    "footprint": "medium",
-   "footprint_radius": null,
+   "footprint_radius": 7.0,
    "support_radius": null,
    "notes": "The flying Spirit attacks anywhere on the map (ignores LOS). Corvus gains mana by haunting bloons near himself, so community placement is near the entrance/front of the track. Spells (Spear, Ancestral Might, ...) need active casting, which is not bot-friendly."
   },
   "rosalia": {
    "kind": "hero",
    "range_type": "radius",
-   "display_range": 40,
+   "display_range": 60.0,
    "needs_line_of_sight": true,
    "los_exceptions": null,
    "segment_preference": [
@@ -920,15 +921,15 @@
    "aiming": null,
    "default_targeting": "First ?",
    "placement": "land",
-   "footprint": "large",
-   "footprint_radius": null,
+   "footprint": "small",
+   "footprint_radius": 6.0,
    "support_radius": 60,
    "notes": "Placing her drops a workshop launch pad (60 range) and she hovers anywhere inside it. Her own attack range is 40. From lvl 7 the jetpack has no footprint. Discounts Aces and Helis."
   },
   "silas": {
    "kind": "hero",
    "range_type": "radius",
-   "display_range": null,
+   "display_range": 55.0,
    "needs_line_of_sight": true,
    "los_exceptions": null,
    "segment_preference": [
@@ -939,8 +940,8 @@
    "aiming": null,
    "default_targeting": "First ?",
    "placement": "land_or_water",
-   "footprint": "medium",
-   "footprint_radius": null,
+   "footprint": "small",
+   "footprint_radius": 6.0,
    "support_radius": 30,
    "notes": "Ice hero: placeable on land or water, slows bloons 15% within 30, and lets land towers be placed on water within 30 (Arctic Wind-like). He can attack inside any Ice Monkey's range, even out of his own LOS (since v50); the orb passes through blockers but he can't target behind them himself. Global freeze buffs. Never frozen on Glacial Trail. Place near Ice Monkeys / early track."
   },
@@ -958,8 +959,8 @@
    "aiming": null,
    "default_targeting": "First ?",
    "placement": "land",
-   "footprint": "medium",
-   "footprint_radius": null,
+   "footprint": "large",
+   "footprint_radius": 8.0,
    "support_radius": null,
    "notes": "Short range (30). Volant Strike / Reposition (lvl 7) let him move. Heals leaked lives at lvl 14. Never frozen on Glacial Trail. Place inside a dense bend."
   }

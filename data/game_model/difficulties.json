@@ -1,0 +1,86 @@
+{
+ "AlternateBloonsRounds": {
+  "cost_multipliers": []
+ },
+ "Apopalypse": {
+  "cost_multipliers": [],
+  "end_round": 60
+ },
+ "Clicks": {
+  "cost_multipliers": [],
+  "start_round": 6,
+  "end_round": 100
+ },
+ "CoopDeflationCash2": {
+  "cost_multipliers": []
+ },
+ "CoopDeflationCash3": {
+  "cost_multipliers": []
+ },
+ "CoopDeflationCash4": {
+  "cost_multipliers": []
+ },
+ "CoopStandardCash2": {
+  "cost_multipliers": []
+ },
+ "CoopStandardCash3": {
+  "cost_multipliers": []
+ },
+ "CoopStandardCash4": {
+  "cost_multipliers": []
+ },
+ "Deflation": {
+  "cost_multipliers": [],
+  "start_round": 31,
+  "end_round": 60
+ },
+ "DoubleMoabHealth": {
+  "cost_multipliers": []
+ },
+ "Easy": {
+  "cost_multipliers": [
+   0.85
+  ],
+  "end_round": 40
+ },
+ "HalfCash": {
+  "cost_multipliers": []
+ },
+ "Hard": {
+  "cost_multipliers": [
+   1.08
+  ],
+  "start_round": 3,
+  "end_round": 80
+ },
+ "Impoppable": {
+  "cost_multipliers": [
+   1.12
+  ],
+  "start_round": 6,
+  "end_round": 100
+ },
+ "MagicOnly": {
+  "cost_multipliers": []
+ },
+ "Medium": {
+  "cost_multipliers": [],
+  "end_round": 60
+ },
+ "MilitaryOnly": {
+  "cost_multipliers": []
+ },
+ "PrimaryOnly": {
+  "cost_multipliers": []
+ },
+ "Reverse": {
+  "cost_multipliers": []
+ },
+ "Sandbox": {
+  "cost_multipliers": []
+ },
+ "Tutorial": {
+  "cost_multipliers": [],
+  "end_round": 10
+ }
+}

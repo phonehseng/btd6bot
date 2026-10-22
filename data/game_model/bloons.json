@@ -1,0 +1,5518 @@
+{
+ "Bad": {
+  "base": "bad",
+  "speed": 4.5,
+  "speed_vs_red": 0.18,
+  "health": 20000,
+  "layer": 13,
+  "children": {
+   "Zomg": 2,
+   "DdtCamo": 3
+  },
+  "rbe": 55760,
+  "leak_damage": 20000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Bad",
+   "Moabs"
+  ]
+ },
+ "BadFortified": {
+  "base": "bad",
+  "speed": 4.5,
+  "speed_vs_red": 0.18,
+  "health": 40000,
+  "layer": 13,
+  "children": {
+   "ZomgFortified": 2,
+   "DdtFortifiedCamo": 3
+  },
+  "rbe": 98360,
+  "leak_damage": 40000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": true,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Fortified"
+  ]
+ },
+ "Bfb": {
+  "base": "bfb",
+  "speed": 6.25,
+  "speed_vs_red": 0.25,
+  "health": 700,
+  "layer": 11,
+  "children": {
+   "Moab": 4
+  },
+  "rbe": 3164,
+  "leak_damage": 700.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 30.0,
+  "tags": [
+   "Bfb",
+   "Moabs"
+  ]
+ },
+ "BfbFortified": {
+  "base": "bfb",
+  "speed": 6.25,
+  "speed_vs_red": 0.25,
+  "health": 1400,
+  "layer": 11,
+  "children": {
+   "MoabFortified": 4
+  },
+  "rbe": 4824,
+  "leak_damage": 1400.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": true,
+  "boss": false,
+  "radius": 30.0,
+  "tags": [
+   "Bfb",
+   "Moabs",
+   "Fortified"
+  ]
+ },
+ "Black": {
+  "base": "black",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "Pink": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "black"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Black"
+  ]
+ },
+ "BlackCamo": {
+  "base": "black",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkCamo": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "black"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Black",
+   "Camo"
+  ]
+ },
+ "BlackRegrow": {
+  "base": "black",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkRegrow": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "black"
+  ],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Black",
+   "Grow"
+  ]
+ },
+ "BlackRegrowCamo": {
+  "base": "black",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkRegrowCamo": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "black"
+  ],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Black",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Blue": {
+  "base": "blue",
+  "speed": 35.0,
+  "speed_vs_red": 1.4,
+  "health": 1,
+  "layer": 2,
+  "children": {
+   "Red": 1
+  },
+  "rbe": 2,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Blue"
+  ]
+ },
+ "BlueCamo": {
+  "base": "blue",
+  "speed": 35.0,
+  "speed_vs_red": 1.4,
+  "health": 1,
+  "layer": 2,
+  "children": {
+   "RedCamo": 1
+  },
+  "rbe": 2,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Blue",
+   "Camo"
+  ]
+ },
+ "BlueRegrow": {
+  "base": "blue",
+  "speed": 35.0,
+  "speed_vs_red": 1.4,
+  "health": 1,
+  "layer": 2,
+  "children": {
+   "RedRegrow": 1
+  },
+  "rbe": 2,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Blue",
+   "Grow"
+  ]
+ },
+ "BlueRegrowCamo": {
+  "base": "blue",
+  "speed": 35.0,
+  "speed_vs_red": 1.4,
+  "health": 1,
+  "layer": 2,
+  "children": {
+   "RedRegrowCamo": 1
+  },
+  "rbe": 2,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Blue",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Blastapopoulos1": {
+  "base": "blastapopoulos",
+  "speed": 1.0,
+  "speed_vs_red": 0.04,
+  "health": 17500,
+  "layer": 1,
+  "children": {},
+  "rbe": 17500,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple"
+  ]
+ },
+ "Blastapopoulos2": {
+  "base": "blastapopoulos",
+  "speed": 1.05,
+  "speed_vs_red": 0.042,
+  "health": 65000,
+  "layer": 1,
+  "children": {},
+  "rbe": 65000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple"
+  ]
+ },
+ "Blastapopoulos3": {
+  "base": "blastapopoulos",
+  "speed": 1.1,
+  "speed_vs_red": 0.044,
+  "health": 300000,
+  "layer": 1,
+  "children": {},
+  "rbe": 300000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple"
+  ]
+ },
+ "Blastapopoulos4": {
+  "base": "blastapopoulos",
+  "speed": 1.15,
+  "speed_vs_red": 0.046,
+  "health": 650000,
+  "layer": 1,
+  "children": {},
+  "rbe": 650000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple"
+  ]
+ },
+ "Blastapopoulos5": {
+  "base": "blastapopoulos",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 3000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 3000000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple"
+  ]
+ },
+ "BlastapopoulosElite1": {
+  "base": "blastapopoulos",
+  "speed": 1.0,
+  "speed_vs_red": 0.04,
+  "health": 43000,
+  "layer": 1,
+  "children": {},
+  "rbe": 43000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple",
+   "Elite"
+  ]
+ },
+ "BlastapopoulosElite2": {
+  "base": "blastapopoulos",
+  "speed": 1.05,
+  "speed_vs_red": 0.042,
+  "health": 270000,
+  "layer": 1,
+  "children": {},
+  "rbe": 270000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple",
+   "Elite"
+  ]
+ },
+ "BlastapopoulosElite3": {
+  "base": "blastapopoulos",
+  "speed": 1.1,
+  "speed_vs_red": 0.044,
+  "health": 1700000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1700000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple",
+   "Elite"
+  ]
+ },
+ "BlastapopoulosElite4": {
+  "base": "blastapopoulos",
+  "speed": 1.15,
+  "speed_vs_red": 0.046,
+  "health": 7000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 7000000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple",
+   "Elite"
+  ]
+ },
+ "BlastapopoulosElite5": {
+  "base": "blastapopoulos",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 35000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 35000000,
+  "leak_damage": 0.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Purple",
+   "Elite"
+  ]
+ },
+ "Bloonarius1": {
+  "base": "bloonarius",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 20000,
+  "layer": 1,
+  "children": {},
+  "rbe": 20000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Bloonarius2": {
+  "base": "bloonarius",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 75000,
+  "layer": 1,
+  "children": {},
+  "rbe": 75000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Bloonarius3": {
+  "base": "bloonarius",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 350000,
+  "layer": 1,
+  "children": {},
+  "rbe": 350000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Bloonarius4": {
+  "base": "bloonarius",
+  "speed": 1.5,
+  "speed_vs_red": 0.06,
+  "health": 750000,
+  "layer": 1,
+  "children": {},
+  "rbe": 750000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Bloonarius5": {
+  "base": "bloonarius",
+  "speed": 1.5,
+  "speed_vs_red": 0.06,
+  "health": 3000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 3000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "BloonariusElite1": {
+  "base": "bloonarius",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 50000,
+  "layer": 1,
+  "children": {},
+  "rbe": 50000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "BloonariusElite2": {
+  "base": "bloonarius",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 300000,
+  "layer": 1,
+  "children": {},
+  "rbe": 300000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "BloonariusElite3": {
+  "base": "bloonarius",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 2000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 2000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "BloonariusElite4": {
+  "base": "bloonarius",
+  "speed": 1.5,
+  "speed_vs_red": 0.06,
+  "health": 8000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 8000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "BloonariusElite5": {
+  "base": "bloonarius",
+  "speed": 1.5,
+  "speed_vs_red": 0.06,
+  "health": 40000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 40000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "Diamondback1": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 20000,
+  "layer": 1,
+  "children": {},
+  "rbe": 20000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "Diamondback2": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 95000,
+  "layer": 1,
+  "children": {},
+  "rbe": 95000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "Diamondback3": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 444000,
+  "layer": 1,
+  "children": {},
+  "rbe": 444000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "Diamondback4": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 900000,
+  "layer": 1,
+  "children": {},
+  "rbe": 900000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "Diamondback5": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 3800000,
+  "layer": 1,
+  "children": {},
+  "rbe": 3800000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackElite1": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 95000,
+  "layer": 1,
+  "children": {},
+  "rbe": 95000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackElite2": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 550000,
+  "layer": 1,
+  "children": {},
+  "rbe": 550000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackElite3": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 4000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 4000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackElite4": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 15000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 15000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackElite5": {
+  "base": "diamondback",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 65000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 65000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackHead1": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackHead2": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackHead3": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackHead4": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackHead5": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackHeadElite1": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackHeadElite2": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackHeadElite3": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackHeadElite4": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackHeadElite5": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackMiddle1": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackMiddle2": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackMiddle3": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackMiddle4": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackMiddle5": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackMiddleElite1": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackMiddleElite2": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackMiddleElite3": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackMiddleElite4": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackMiddleElite5": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackDiamondBloon1": {
+  "base": "diamondbloon",
+  "speed": 20.0,
+  "speed_vs_red": 0.8,
+  "health": 20,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 134,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloon2": {
+  "base": "diamondbloon",
+  "speed": 20.0,
+  "speed_vs_red": 0.8,
+  "health": 30,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 144,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloon3": {
+  "base": "diamondbloon",
+  "speed": 20.0,
+  "speed_vs_red": 0.8,
+  "health": 40,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 154,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloon4": {
+  "base": "diamondbloon",
+  "speed": 20.0,
+  "speed_vs_red": 0.8,
+  "health": 50,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 164,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloon5": {
+  "base": "diamondbloon",
+  "speed": 20.0,
+  "speed_vs_red": 0.8,
+  "health": 80,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 194,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloonElite1": {
+  "base": "diamondbloon",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 50,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 164,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloonElite2": {
+  "base": "diamondbloon",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 60,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 174,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloonElite3": {
+  "base": "diamondbloon",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 70,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 184,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloonElite4": {
+  "base": "diamondbloon",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 80,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 194,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackDiamondBloonElite5": {
+  "base": "diamondbloon",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 100,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 214,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Boss"
+  ]
+ },
+ "DiamondbackTail1": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackTail2": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackTail3": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackTail4": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackTail5": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss"
+  ]
+ },
+ "DiamondbackTailElite1": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackTailElite2": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackTailElite3": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackTailElite4": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "DiamondbackTailElite5": {
+  "base": "diamondback",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 999999999,
+  "layer": 1,
+  "children": {},
+  "rbe": 999999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 30.0,
+  "tags": [
+   "Bad",
+   "Moabs",
+   "Boss",
+   "Elite"
+  ]
+ },
+ "Dreadbloon1": {
+  "base": "dreadbloon",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 7500,
+  "layer": 1,
+  "children": {},
+  "rbe": 7500,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "Dreadbloon2": {
+  "base": "dreadbloon",
+  "speed": 1.3,
+  "speed_vs_red": 0.052,
+  "health": 25000,
+  "layer": 1,
+  "children": {},
+  "rbe": 25000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "Dreadbloon3": {
+  "base": "dreadbloon",
+  "speed": 1.4,
+  "speed_vs_red": 0.056,
+  "health": 120000,
+  "layer": 1,
+  "children": {},
+  "rbe": 120000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "Dreadbloon4": {
+  "base": "dreadbloon",
+  "speed": 1.5,
+  "speed_vs_red": 0.06,
+  "health": 260000,
+  "layer": 1,
+  "children": {},
+  "rbe": 260000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "Dreadbloon5": {
+  "base": "dreadbloon",
+  "speed": 1.6,
+  "speed_vs_red": 0.064,
+  "health": 1000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "DreadbloonElite1": {
+  "base": "dreadbloon",
+  "speed": 1.25,
+  "speed_vs_red": 0.05,
+  "health": 15000,
+  "layer": 1,
+  "children": {},
+  "rbe": 15000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "DreadbloonElite2": {
+  "base": "dreadbloon",
+  "speed": 1.3,
+  "speed_vs_red": 0.052,
+  "health": 90000,
+  "layer": 1,
+  "children": {},
+  "rbe": 90000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "DreadbloonElite3": {
+  "base": "dreadbloon",
+  "speed": 1.4,
+  "speed_vs_red": 0.056,
+  "health": 650000,
+  "layer": 1,
+  "children": {},
+  "rbe": 650000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "DreadbloonElite4": {
+  "base": "dreadbloon",
+  "speed": 1.5,
+  "speed_vs_red": 0.06,
+  "health": 2625000,
+  "layer": 1,
+  "children": {},
+  "rbe": 2625000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "DreadbloonElite5": {
+  "base": "dreadbloon",
+  "speed": 1.6,
+  "speed_vs_red": 0.064,
+  "health": 12500000,
+  "layer": 1,
+  "children": {},
+  "rbe": 12500000,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Rock",
+   "Bad"
+  ]
+ },
+ "DreadRockBloonElite1": {
+  "base": "dreadrockbloonelite1",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 500,
+  "layer": 1,
+  "children": {},
+  "rbe": 500,
+  "leak_damage": 20.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonElite2": {
+  "base": "dreadrockbloonelite2",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 2200,
+  "layer": 1,
+  "children": {},
+  "rbe": 2200,
+  "leak_damage": 30.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonElite3": {
+  "base": "dreadrockbloonelite3",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 8000,
+  "layer": 1,
+  "children": {},
+  "rbe": 8000,
+  "leak_damage": 50.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonElite4": {
+  "base": "dreadrockbloonelite4",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 19500,
+  "layer": 1,
+  "children": {},
+  "rbe": 19500,
+  "leak_damage": 75.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonElite5": {
+  "base": "dreadrockbloonelite5",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 40000,
+  "layer": 1,
+  "children": {},
+  "rbe": 40000,
+  "leak_damage": 100.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonStandard1": {
+  "base": "dreadrockbloonstandard1",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 250,
+  "layer": 1,
+  "children": {},
+  "rbe": 250,
+  "leak_damage": 5.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonStandard2": {
+  "base": "dreadrockbloonstandard2",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 500,
+  "layer": 1,
+  "children": {},
+  "rbe": 500,
+  "leak_damage": 10.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonStandard3": {
+  "base": "dreadrockbloonstandard3",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 750,
+  "layer": 1,
+  "children": {},
+  "rbe": 750,
+  "leak_damage": 15.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonStandard4": {
+  "base": "dreadrockbloonstandard4",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 8000,
+  "layer": 1,
+  "children": {},
+  "rbe": 8000,
+  "leak_damage": 20.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "DreadRockBloonStandard5": {
+  "base": "dreadrockbloonstandard5",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 20000,
+  "layer": 1,
+  "children": {},
+  "rbe": 20000,
+  "leak_damage": 25.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "DreadRockBloon",
+   "Moabs",
+   "Boss",
+   "Rock"
+  ]
+ },
+ "Lych1": {
+  "base": "lych",
+  "speed": 2.0,
+  "speed_vs_red": 0.08,
+  "health": 14000,
+  "layer": 1,
+  "children": {},
+  "rbe": 14000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Lych2": {
+  "base": "lych",
+  "speed": 2.05,
+  "speed_vs_red": 0.082,
+  "health": 52500,
+  "layer": 1,
+  "children": {},
+  "rbe": 52500,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Lych3": {
+  "base": "lych",
+  "speed": 2.1,
+  "speed_vs_red": 0.084,
+  "health": 220000,
+  "layer": 1,
+  "children": {},
+  "rbe": 220000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Lych4": {
+  "base": "lych",
+  "speed": 2.15,
+  "speed_vs_red": 0.086,
+  "health": 525000,
+  "layer": 1,
+  "children": {},
+  "rbe": 525000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Lych5": {
+  "base": "lych",
+  "speed": 2.2,
+  "speed_vs_red": 0.088,
+  "health": 2100000,
+  "layer": 1,
+  "children": {},
+  "rbe": 2100000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "LychElite1": {
+  "base": "lych",
+  "speed": 2.4,
+  "speed_vs_red": 0.096,
+  "health": 30000,
+  "layer": 1,
+  "children": {},
+  "rbe": 30000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "LychElite2": {
+  "base": "lych",
+  "speed": 2.5,
+  "speed_vs_red": 0.1,
+  "health": 180000,
+  "layer": 1,
+  "children": {},
+  "rbe": 180000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "LychElite3": {
+  "base": "lych",
+  "speed": 2.7,
+  "speed_vs_red": 0.108,
+  "health": 1100000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1100000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "LychElite4": {
+  "base": "lych",
+  "speed": 2.8,
+  "speed_vs_red": 0.112,
+  "health": 4800000,
+  "layer": 1,
+  "children": {},
+  "rbe": 4800000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "LychElite5": {
+  "base": "lych",
+  "speed": 2.9,
+  "speed_vs_red": 0.116,
+  "health": 24000000,
+  "layer": 1,
+  "children": {},
+  "rbe": 24000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "MiniLych1": {
+  "base": "minilych",
+  "speed": 17.0,
+  "speed_vs_red": 0.68,
+  "health": 750,
+  "layer": 1,
+  "children": {},
+  "rbe": 750,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLych2": {
+  "base": "minilych",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 2500,
+  "layer": 1,
+  "children": {},
+  "rbe": 2500,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLych3": {
+  "base": "minilych",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 5000,
+  "layer": 1,
+  "children": {},
+  "rbe": 5000,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLych4": {
+  "base": "minilych",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 12500,
+  "layer": 1,
+  "children": {},
+  "rbe": 12500,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLych5": {
+  "base": "minilych",
+  "speed": 18.0,
+  "speed_vs_red": 0.72,
+  "health": 45000,
+  "layer": 1,
+  "children": {},
+  "rbe": 45000,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLychElite1": {
+  "base": "minilych",
+  "speed": 21.0,
+  "speed_vs_red": 0.84,
+  "health": 1400,
+  "layer": 1,
+  "children": {},
+  "rbe": 1400,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLychElite2": {
+  "base": "minilych",
+  "speed": 23.0,
+  "speed_vs_red": 0.92,
+  "health": 5600,
+  "layer": 1,
+  "children": {},
+  "rbe": 5600,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLychElite3": {
+  "base": "minilych",
+  "speed": 23.0,
+  "speed_vs_red": 0.92,
+  "health": 25000,
+  "layer": 1,
+  "children": {},
+  "rbe": 25000,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLychElite4": {
+  "base": "minilych",
+  "speed": 23.0,
+  "speed_vs_red": 0.92,
+  "health": 100000,
+  "layer": 1,
+  "children": {},
+  "rbe": 100000,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "MiniLychElite5": {
+  "base": "minilych",
+  "speed": 23.0,
+  "speed_vs_red": 0.92,
+  "health": 485000,
+  "layer": 1,
+  "children": {},
+  "rbe": 485000,
+  "leak_damage": 100000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Reanimated",
+   "Miniboss",
+   "LychSoul"
+  ]
+ },
+ "Tombstone": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Tombstone1": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Tombstone2": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Tombstone3": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Tombstone4": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Tombstone5": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "TombstoneElite1": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "TombstoneElite2": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "TombstoneElite3": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "TombstoneElite4": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "TombstoneElite5": {
+  "base": "tombstone",
+  "speed": 0.0,
+  "speed_vs_red": 0.0,
+  "health": 1000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Tombstone",
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "UndeadBfb": {
+  "base": "undeadbfb",
+  "speed": 6.25,
+  "speed_vs_red": 0.25,
+  "health": 700,
+  "layer": 11,
+  "children": {},
+  "rbe": 700,
+  "leak_damage": 700.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 30.0,
+  "tags": [
+   "Bfb",
+   "Moabs"
+  ]
+ },
+ "UndeadMoab": {
+  "base": "undeadmoab",
+  "speed": 20.0,
+  "speed_vs_red": 0.8,
+  "health": 200,
+  "layer": 10,
+  "children": {},
+  "rbe": 200,
+  "leak_damage": 70.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 21.0,
+  "tags": [
+   "Moab",
+   "Moabs"
+  ]
+ },
+ "UndeadZomg": {
+  "base": "undeadzomg",
+  "speed": 4.5,
+  "speed_vs_red": 0.18,
+  "health": 4000,
+  "layer": 12,
+  "children": {},
+  "rbe": 4000,
+  "leak_damage": 4000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Zomg",
+   "Moabs"
+  ]
+ },
+ "Phayze1": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 9500,
+  "layer": 1,
+  "children": {},
+  "rbe": 9500,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Phayze2": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 35000,
+  "layer": 1,
+  "children": {},
+  "rbe": 35000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Phayze3": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 160000,
+  "layer": 1,
+  "children": {},
+  "rbe": 160000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Phayze4": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 350000,
+  "layer": 1,
+  "children": {},
+  "rbe": 350000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Phayze5": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 1450000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1450000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "PhayzeElite1": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 19000,
+  "layer": 1,
+  "children": {},
+  "rbe": 19000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "PhayzeElite2": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 110000,
+  "layer": 1,
+  "children": {},
+  "rbe": 110000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "PhayzeElite3": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 770000,
+  "layer": 1,
+  "children": {},
+  "rbe": 770000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "PhayzeElite4": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 3100000,
+  "layer": 1,
+  "children": {},
+  "rbe": 3100000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "PhayzeElite5": {
+  "base": "phayze",
+  "speed": 0.8,
+  "speed_vs_red": 0.032,
+  "health": 15500000,
+  "layer": 1,
+  "children": {},
+  "rbe": 15500000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad",
+   "Elite"
+  ]
+ },
+ "Vortex1": {
+  "base": "vortex",
+  "speed": 3.6,
+  "speed_vs_red": 0.144,
+  "health": 20000,
+  "layer": 1,
+  "children": {},
+  "rbe": 20000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Vortex2": {
+  "base": "vortex",
+  "speed": 3.6,
+  "speed_vs_red": 0.144,
+  "health": 62800,
+  "layer": 1,
+  "children": {},
+  "rbe": 62800,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Vortex3": {
+  "base": "vortex",
+  "speed": 3.9,
+  "speed_vs_red": 0.156,
+  "health": 294000,
+  "layer": 1,
+  "children": {},
+  "rbe": 294000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Vortex4": {
+  "base": "vortex",
+  "speed": 4.05,
+  "speed_vs_red": 0.162,
+  "health": 628000,
+  "layer": 1,
+  "children": {},
+  "rbe": 628000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "Vortex5": {
+  "base": "vortex",
+  "speed": 4.2,
+  "speed_vs_red": 0.168,
+  "health": 2512500,
+  "layer": 1,
+  "children": {},
+  "rbe": 2512500,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Bad"
+  ]
+ },
+ "VortexElite1": {
+  "base": "vortex",
+  "speed": 3.75,
+  "speed_vs_red": 0.15,
+  "health": 41800,
+  "layer": 1,
+  "children": {},
+  "rbe": 41800,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "VortexElite2": {
+  "base": "vortex",
+  "speed": 4.05,
+  "speed_vs_red": 0.162,
+  "health": 251000,
+  "layer": 1,
+  "children": {},
+  "rbe": 251000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "VortexElite3": {
+  "base": "vortex",
+  "speed": 4.5,
+  "speed_vs_red": 0.18,
+  "health": 1675000,
+  "layer": 1,
+  "children": {},
+  "rbe": 1675000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "VortexElite4": {
+  "base": "vortex",
+  "speed": 4.65,
+  "speed_vs_red": 0.186,
+  "health": 6700000,
+  "layer": 1,
+  "children": {},
+  "rbe": 6700000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "VortexElite5": {
+  "base": "vortex",
+  "speed": 4.8,
+  "speed_vs_red": 0.192,
+  "health": 33500000,
+  "layer": 1,
+  "children": {},
+  "rbe": 33500000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": true,
+  "radius": 40.0,
+  "tags": [
+   "Moabs",
+   "Boss",
+   "Elite",
+   "Bad"
+  ]
+ },
+ "Ceramic": {
+  "base": "ceramic",
+  "speed": 62.5,
+  "speed_vs_red": 2.5,
+  "health": 10,
+  "layer": 9,
+  "children": {
+   "Rainbow": 2
+  },
+  "rbe": 104,
+  "leak_damage": 10.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Ceramic"
+  ]
+ },
+ "CeramicCamo": {
+  "base": "ceramic",
+  "speed": 62.5,
+  "speed_vs_red": 2.5,
+  "health": 10,
+  "layer": 9,
+  "children": {
+   "RainbowCamo": 2
+  },
+  "rbe": 104,
+  "leak_damage": 10.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Ceramic",
+   "Camo"
+  ]
+ },
+ "CeramicFortified": {
+  "base": "ceramic",
+  "speed": 62.5,
+  "speed_vs_red": 2.5,
+  "health": 20,
+  "layer": 9,
+  "children": {
+   "Rainbow": 2
+  },
+  "rbe": 114,
+  "leak_damage": 20.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Ceramic",
+   "Fortified"
+  ]
+ },
+ "CeramicFortifiedCamo": {
+  "base": "ceramic",
+  "speed": 62.5,
+  "speed_vs_red": 2.5,
+  "health": 20,
+  "layer": 9,
+  "children": {
+   "RainbowCamo": 2
+  },
+  "rbe": 114,
+  "leak_damage": 20.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Ceramic",
+   "Fortified",
+   "Camo"
+  ]
+ },
+ "CeramicRegrow": {
+  "base": "ceramic",
+  "speed": 62.5,
+  "speed_vs_red": 2.5,
+  "health": 10,
+  "layer": 9,
+  "children": {
+   "RainbowRegrow": 2
+  },
+  "rbe": 104,
+  "leak_damage": 10.0,
+  "immune": [],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Ceramic",
+   "Grow"
+  ]
+ },
+ "CeramicRegrowCamo": {
+  "base": "ceramic",
+  "speed": 62.5,
+  "speed_vs_red": 2.5,
+  "health": 10,
+  "layer": 9,
+  "children": {
+   "RainbowRegrowCamo": 2
+  },
+  "rbe": 104,
+  "leak_damage": 10.0,
+  "immune": [],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Ceramic",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "CeramicRegrowFortified": {
+  "base": "ceramic",
+  "speed": 62.5,
+  "speed_vs_red": 2.5,
+  "health": 20,
+  "layer": 9,
+  "children": {
+   "RainbowRegrow": 2
+  },
+  "rbe": 114,
+  "leak_damage": 20.0,
+  "immune": [],
+  "camo": false,
+  "regrow": true,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Ceramic",
+   "Grow",
+   "Fortified"
+  ]
+ },
+ "CeramicRegrowFortifiedCamo": {
+  "base": "ceramic",
+  "speed": 62.5,
+  "speed_vs_red": 2.5,
+  "health": 20,
+  "layer": 9,
+  "children": {
+   "RainbowRegrowCamo": 2
+  },
+  "rbe": 114,
+  "leak_damage": 20.0,
+  "immune": [],
+  "camo": true,
+  "regrow": true,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Ceramic",
+   "Grow",
+   "Fortified",
+   "Camo"
+  ]
+ },
+ "Ddt": {
+  "base": "ddt",
+  "speed": 66.0,
+  "speed_vs_red": 2.64,
+  "health": 400,
+  "layer": 12,
+  "children": {
+   "CeramicRegrow": 4
+  },
+  "rbe": 816,
+  "leak_damage": 400.0,
+  "immune": [
+   "lead",
+   "black"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 30.0,
+  "tags": [
+   "Ddt",
+   "Moabs"
+  ]
+ },
+ "DdtFortified": {
+  "base": "ddt",
+  "speed": 66.0,
+  "speed_vs_red": 2.64,
+  "health": 800,
+  "layer": 12,
+  "children": {
+   "CeramicRegrowFortified": 4
+  },
+  "rbe": 1256,
+  "leak_damage": 800.0,
+  "immune": [
+   "lead",
+   "black"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": true,
+  "boss": false,
+  "radius": 30.0,
+  "tags": [
+   "Ddt",
+   "Moabs",
+   "Fortified"
+  ]
+ },
+ "DdtCamo": {
+  "base": "ddt",
+  "speed": 66.0,
+  "speed_vs_red": 2.64,
+  "health": 400,
+  "layer": 12,
+  "children": {
+   "CeramicRegrowCamo": 4
+  },
+  "rbe": 816,
+  "leak_damage": 400.0,
+  "immune": [
+   "lead",
+   "black"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 30.0,
+  "tags": [
+   "Ddt",
+   "Moabs",
+   "Camo"
+  ]
+ },
+ "DdtFortifiedCamo": {
+  "base": "ddt",
+  "speed": 66.0,
+  "speed_vs_red": 2.64,
+  "health": 800,
+  "layer": 12,
+  "children": {
+   "CeramicRegrowFortifiedCamo": 4
+  },
+  "rbe": 1256,
+  "leak_damage": 800.0,
+  "immune": [
+   "lead",
+   "black"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": true,
+  "boss": false,
+  "radius": 30.0,
+  "tags": [
+   "Ddt",
+   "Moabs",
+   "Fortified",
+   "Camo"
+  ]
+ },
+ "AuraBloon": {
+  "base": "aurabloon",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 40,
+  "layer": 6,
+  "children": {
+   "Pink": 3,
+   "Yellow": 3,
+   "Green": 3,
+   "Blue": 3,
+   "Red": 3
+  },
+  "rbe": 85,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Frontier",
+   "AuraBloon"
+  ]
+ },
+ "DiamondBloon": {
+  "base": "diamondbloon",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 80,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 1
+  },
+  "rbe": 194,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Frontier",
+   "DiamondBloon"
+  ]
+ },
+ "DoshBloon": {
+  "base": "doshbloon",
+  "speed": 100.0,
+  "speed_vs_red": 4.0,
+  "health": 50,
+  "layer": 7,
+  "children": {},
+  "rbe": 50,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Frontier",
+   "DoshBloon"
+  ]
+ },
+ "DynamiteBloon": {
+  "base": "dynamitebloon",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 30,
+  "layer": 7,
+  "children": {
+   "RedRegrow": 3,
+   "Black": 2
+  },
+  "rbe": 55,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Frontier",
+   "DynamiteBloon"
+  ]
+ },
+ "GlassBloon": {
+  "base": "glassbloon",
+  "speed": 88.0,
+  "speed_vs_red": 3.52,
+  "health": 20,
+  "layer": 8,
+  "children": {
+   "Zebra": 1,
+   "ZebraRegrow": 1,
+   "ZebraCamo": 1
+  },
+  "rbe": 89,
+  "leak_damage": 0.0,
+  "immune": [
+   "glass"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Glass",
+   "Frontier",
+   "GlassBloon"
+  ]
+ },
+ "RetributionBloon": {
+  "base": "retributionbloon",
+  "speed": 15.0,
+  "speed_vs_red": 0.6,
+  "health": 100,
+  "layer": 9,
+  "children": {
+   "Purple": 2,
+   "Yellow": 4
+  },
+  "rbe": 138,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Frontier",
+   "RetributionBloon"
+  ]
+ },
+ "RingleaderBloon": {
+  "base": "ringleaderbloon",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 30,
+  "layer": 9,
+  "children": {
+   "Rainbow": 3
+  },
+  "rbe": 171,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Frontier",
+   "RingleaderBloon"
+  ]
+ },
+ "Golden": {
+  "base": "golden",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 8,
+  "layer": 1,
+  "children": {},
+  "rbe": 8,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden"
+  ]
+ },
+ "GoldenCamo": {
+  "base": "golden",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 8,
+  "layer": 1,
+  "children": {},
+  "rbe": 8,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Camo"
+  ]
+ },
+ "GoldenLead": {
+  "base": "goldenlead",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 14,
+  "layer": 1,
+  "children": {},
+  "rbe": 14,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden"
+  ]
+ },
+ "GoldenLeadCamo": {
+  "base": "goldenlead",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 14,
+  "layer": 1,
+  "children": {},
+  "rbe": 14,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Camo"
+  ]
+ },
+ "GoldenLeadFortified": {
+  "base": "goldenlead",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 21,
+  "layer": 1,
+  "children": {},
+  "rbe": 21,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Fortified"
+  ]
+ },
+ "GoldenLeadFortifiedCamo": {
+  "base": "goldenlead",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 21,
+  "layer": 1,
+  "children": {},
+  "rbe": 21,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Fortified",
+   "Camo"
+  ]
+ },
+ "GoldenLeadPurple": {
+  "base": "goldenleadpurple",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 15,
+  "layer": 1,
+  "children": {},
+  "rbe": 15,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead",
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden"
+  ]
+ },
+ "GoldenLeadPurpleCamo": {
+  "base": "goldenleadpurple",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 15,
+  "layer": 1,
+  "children": {},
+  "rbe": 15,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead",
+   "purple"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Camo"
+  ]
+ },
+ "GoldenLeadPurpleFortified": {
+  "base": "goldenleadpurple",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 23,
+  "layer": 1,
+  "children": {},
+  "rbe": 23,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead",
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Fortified"
+  ]
+ },
+ "GoldenLeadPurpleFortifiedCamo": {
+  "base": "goldenleadpurple",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 23,
+  "layer": 1,
+  "children": {},
+  "rbe": 23,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead",
+   "purple"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Fortified",
+   "Camo"
+  ]
+ },
+ "GoldenLeadPurpleZebra": {
+  "base": "goldenleadpurplezebra",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 18,
+  "layer": 1,
+  "children": {},
+  "rbe": 18,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead",
+   "black",
+   "white",
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden"
+  ]
+ },
+ "GoldenLeadPurpleZebraCamo": {
+  "base": "goldenleadpurplezebra",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 18,
+  "layer": 1,
+  "children": {},
+  "rbe": 18,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead",
+   "black",
+   "white",
+   "purple"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Camo"
+  ]
+ },
+ "GoldenLeadPurpleZebraFortified": {
+  "base": "goldenleadpurplezebra",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 27,
+  "layer": 1,
+  "children": {},
+  "rbe": 27,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead",
+   "black",
+   "white",
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Fortified"
+  ]
+ },
+ "GoldenLeadPurpleZebraFortifiedCamo": {
+  "base": "goldenleadpurplezebra",
+  "speed": 30.0,
+  "speed_vs_red": 1.2,
+  "health": 27,
+  "layer": 1,
+  "children": {},
+  "rbe": 27,
+  "leak_damage": 0.0,
+  "immune": [
+   "lead",
+   "black",
+   "white",
+   "purple"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Golden",
+   "Fortified",
+   "Camo"
+  ]
+ },
+ "Green": {
+  "base": "green",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 3,
+  "children": {
+   "Blue": 1
+  },
+  "rbe": 3,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Green"
+  ]
+ },
+ "GreenCamo": {
+  "base": "green",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 3,
+  "children": {
+   "BlueCamo": 1
+  },
+  "rbe": 3,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Green",
+   "Camo"
+  ]
+ },
+ "GreenRegrow": {
+  "base": "green",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 3,
+  "children": {
+   "BlueRegrow": 1
+  },
+  "rbe": 3,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Green",
+   "Grow"
+  ]
+ },
+ "GreenRegrowCamo": {
+  "base": "green",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 3,
+  "children": {
+   "BlueRegrowCamo": 1
+  },
+  "rbe": 3,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Green",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Lead": {
+  "base": "lead",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 1,
+  "layer": 7,
+  "children": {
+   "Black": 2
+  },
+  "rbe": 23,
+  "leak_damage": 1.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Lead"
+  ]
+ },
+ "LeadCamo": {
+  "base": "lead",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 1,
+  "layer": 7,
+  "children": {
+   "BlackCamo": 2
+  },
+  "rbe": 23,
+  "leak_damage": 1.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Lead",
+   "Camo"
+  ]
+ },
+ "LeadFortified": {
+  "base": "lead",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 4,
+  "layer": 7,
+  "children": {
+   "Black": 2
+  },
+  "rbe": 26,
+  "leak_damage": 4.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Lead",
+   "Fortified"
+  ]
+ },
+ "LeadFortifiedCamo": {
+  "base": "lead",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 4,
+  "layer": 7,
+  "children": {
+   "BlackCamo": 2
+  },
+  "rbe": 26,
+  "leak_damage": 4.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Lead",
+   "Fortified",
+   "Camo"
+  ]
+ },
+ "LeadRegrow": {
+  "base": "lead",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 1,
+  "layer": 7,
+  "children": {
+   "BlackRegrow": 2
+  },
+  "rbe": 23,
+  "leak_damage": 1.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Lead",
+   "Grow"
+  ]
+ },
+ "LeadRegrowCamo": {
+  "base": "lead",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 1,
+  "layer": 7,
+  "children": {
+   "BlackRegrowCamo": 2
+  },
+  "rbe": 23,
+  "leak_damage": 1.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Lead",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "LeadRegrowFortified": {
+  "base": "lead",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 4,
+  "layer": 7,
+  "children": {
+   "BlackRegrow": 2
+  },
+  "rbe": 26,
+  "leak_damage": 4.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": false,
+  "regrow": true,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Lead",
+   "Grow",
+   "Fortified"
+  ]
+ },
+ "LeadRegrowFortifiedCamo": {
+  "base": "lead",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 4,
+  "layer": 7,
+  "children": {
+   "BlackRegrowCamo": 2
+  },
+  "rbe": 26,
+  "leak_damage": 4.0,
+  "immune": [
+   "lead"
+  ],
+  "camo": true,
+  "regrow": true,
+  "fortified": true,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Lead",
+   "Grow",
+   "Fortified",
+   "Camo"
+  ]
+ },
+ "Moab": {
+  "base": "moab",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 200,
+  "layer": 10,
+  "children": {
+   "Ceramic": 4
+  },
+  "rbe": 616,
+  "leak_damage": 200.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 21.0,
+  "tags": [
+   "Moab",
+   "Moabs"
+  ]
+ },
+ "MoabFortified": {
+  "base": "moab",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 400,
+  "layer": 10,
+  "children": {
+   "CeramicFortified": 4
+  },
+  "rbe": 856,
+  "leak_damage": 400.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": true,
+  "boss": false,
+  "radius": 21.0,
+  "tags": [
+   "Moab",
+   "Moabs",
+   "Fortified"
+  ]
+ },
+ "Pink": {
+  "base": "pink",
+  "speed": 87.5,
+  "speed_vs_red": 3.5,
+  "health": 1,
+  "layer": 5,
+  "children": {
+   "Yellow": 1
+  },
+  "rbe": 5,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Pink"
+  ]
+ },
+ "PinkCamo": {
+  "base": "pink",
+  "speed": 87.5,
+  "speed_vs_red": 3.5,
+  "health": 1,
+  "layer": 5,
+  "children": {
+   "YellowCamo": 1
+  },
+  "rbe": 5,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Pink",
+   "Camo"
+  ]
+ },
+ "PinkRegrow": {
+  "base": "pink",
+  "speed": 87.5,
+  "speed_vs_red": 3.5,
+  "health": 1,
+  "layer": 5,
+  "children": {
+   "YellowRegrow": 1
+  },
+  "rbe": 5,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Pink",
+   "Grow"
+  ]
+ },
+ "PinkRegrowCamo": {
+  "base": "pink",
+  "speed": 87.5,
+  "speed_vs_red": 3.5,
+  "health": 1,
+  "layer": 5,
+  "children": {
+   "YellowRegrowCamo": 1
+  },
+  "rbe": 5,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Pink",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Purple": {
+  "base": "purple",
+  "speed": 75.0,
+  "speed_vs_red": 3.0,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "Pink": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Purple"
+  ]
+ },
+ "PurpleCamo": {
+  "base": "purple",
+  "speed": 75.0,
+  "speed_vs_red": 3.0,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkCamo": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Purple",
+   "Camo"
+  ]
+ },
+ "PurpleRegrow": {
+  "base": "purple",
+  "speed": 75.0,
+  "speed_vs_red": 3.0,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkRegrow": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Purple",
+   "Grow"
+  ]
+ },
+ "PurpleRegrowCamo": {
+  "base": "purple",
+  "speed": 75.0,
+  "speed_vs_red": 3.0,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkRegrowCamo": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "purple"
+  ],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Purple",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Rainbow": {
+  "base": "rainbow",
+  "speed": 55.0,
+  "speed_vs_red": 2.2,
+  "health": 1,
+  "layer": 8,
+  "children": {
+   "Zebra": 2
+  },
+  "rbe": 47,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Rainbow"
+  ]
+ },
+ "RainbowCamo": {
+  "base": "rainbow",
+  "speed": 55.0,
+  "speed_vs_red": 2.2,
+  "health": 1,
+  "layer": 8,
+  "children": {
+   "ZebraCamo": 2
+  },
+  "rbe": 47,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Rainbow",
+   "Camo"
+  ]
+ },
+ "RainbowRegrow": {
+  "base": "rainbow",
+  "speed": 55.0,
+  "speed_vs_red": 2.2,
+  "health": 1,
+  "layer": 8,
+  "children": {
+   "ZebraRegrow": 2
+  },
+  "rbe": 47,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Rainbow",
+   "Grow"
+  ]
+ },
+ "RainbowRegrowCamo": {
+  "base": "rainbow",
+  "speed": 55.0,
+  "speed_vs_red": 2.2,
+  "health": 1,
+  "layer": 8,
+  "children": {
+   "ZebraRegrowCamo": 2
+  },
+  "rbe": 47,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Rainbow",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Red": {
+  "base": "red",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 1,
+  "layer": 1,
+  "children": {},
+  "rbe": 1,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Red"
+  ]
+ },
+ "RedCamo": {
+  "base": "red",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 1,
+  "layer": 1,
+  "children": {},
+  "rbe": 1,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Red",
+   "Camo"
+  ]
+ },
+ "RedRegrow": {
+  "base": "red",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 1,
+  "layer": 1,
+  "children": {},
+  "rbe": 1,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Red",
+   "Grow"
+  ]
+ },
+ "RedRegrowCamo": {
+  "base": "red",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 1,
+  "layer": 1,
+  "children": {},
+  "rbe": 1,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Red",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "TestBloon": {
+  "base": "testbloon",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 999999,
+  "layer": 0,
+  "children": {},
+  "rbe": 999999,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Test"
+  ]
+ },
+ "TestBloonMoab": {
+  "base": "testbloonmoab",
+  "speed": 25.0,
+  "speed_vs_red": 1.0,
+  "health": 100000000,
+  "layer": 0,
+  "children": {},
+  "rbe": 100000000,
+  "leak_damage": 0.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 21.0,
+  "tags": [
+   "Moab",
+   "Moabs",
+   "Test"
+  ]
+ },
+ "White": {
+  "base": "white",
+  "speed": 50.0,
+  "speed_vs_red": 2.0,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "Pink": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "white"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "White",
+   "Ice"
+  ]
+ },
+ "WhiteCamo": {
+  "base": "white",
+  "speed": 50.0,
+  "speed_vs_red": 2.0,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkCamo": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "white"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "White",
+   "Ice",
+   "Camo"
+  ]
+ },
+ "WhiteRegrow": {
+  "base": "white",
+  "speed": 50.0,
+  "speed_vs_red": 2.0,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkRegrow": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "white"
+  ],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "White",
+   "Ice",
+   "Grow"
+  ]
+ },
+ "WhiteRegrowCamo": {
+  "base": "white",
+  "speed": 50.0,
+  "speed_vs_red": 2.0,
+  "health": 1,
+  "layer": 6,
+  "children": {
+   "PinkRegrowCamo": 2
+  },
+  "rbe": 11,
+  "leak_damage": 1.0,
+  "immune": [
+   "white"
+  ],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "White",
+   "Ice",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Yellow": {
+  "base": "yellow",
+  "speed": 80.0,
+  "speed_vs_red": 3.2,
+  "health": 1,
+  "layer": 4,
+  "children": {
+   "Green": 1
+  },
+  "rbe": 4,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Yellow"
+  ]
+ },
+ "YellowCamo": {
+  "base": "yellow",
+  "speed": 80.0,
+  "speed_vs_red": 3.2,
+  "health": 1,
+  "layer": 4,
+  "children": {
+   "GreenCamo": 1
+  },
+  "rbe": 4,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Yellow",
+   "Camo"
+  ]
+ },
+ "YellowRegrow": {
+  "base": "yellow",
+  "speed": 80.0,
+  "speed_vs_red": 3.2,
+  "health": 1,
+  "layer": 4,
+  "children": {
+   "GreenRegrow": 1
+  },
+  "rbe": 4,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Yellow",
+   "Grow"
+  ]
+ },
+ "YellowRegrowCamo": {
+  "base": "yellow",
+  "speed": 80.0,
+  "speed_vs_red": 3.2,
+  "health": 1,
+  "layer": 4,
+  "children": {
+   "GreenRegrowCamo": 1
+  },
+  "rbe": 4,
+  "leak_damage": 1.0,
+  "immune": [],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Yellow",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Zebra": {
+  "base": "zebra",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 7,
+  "children": {
+   "Black": 1,
+   "White": 1
+  },
+  "rbe": 23,
+  "leak_damage": 1.0,
+  "immune": [
+   "black",
+   "white"
+  ],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Zebra",
+   "Ice"
+  ]
+ },
+ "ZebraCamo": {
+  "base": "zebra",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 7,
+  "children": {
+   "BlackCamo": 1,
+   "WhiteCamo": 1
+  },
+  "rbe": 23,
+  "leak_damage": 1.0,
+  "immune": [
+   "black",
+   "white"
+  ],
+  "camo": true,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Zebra",
+   "Ice",
+   "Camo"
+  ]
+ },
+ "ZebraRegrow": {
+  "base": "zebra",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 7,
+  "children": {
+   "BlackRegrow": 1,
+   "WhiteRegrow": 1
+  },
+  "rbe": 23,
+  "leak_damage": 1.0,
+  "immune": [
+   "black",
+   "white"
+  ],
+  "camo": false,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Zebra",
+   "Ice",
+   "Grow"
+  ]
+ },
+ "ZebraRegrowCamo": {
+  "base": "zebra",
+  "speed": 45.0,
+  "speed_vs_red": 1.8,
+  "health": 1,
+  "layer": 7,
+  "children": {
+   "BlackRegrowCamo": 1,
+   "WhiteRegrowCamo": 1
+  },
+  "rbe": 23,
+  "leak_damage": 1.0,
+  "immune": [
+   "black",
+   "white"
+  ],
+  "camo": true,
+  "regrow": true,
+  "fortified": false,
+  "moab_class": false,
+  "boss": false,
+  "radius": 8.0,
+  "tags": [
+   "Zebra",
+   "Ice",
+   "Grow",
+   "Camo"
+  ]
+ },
+ "Zomg": {
+  "base": "zomg",
+  "speed": 4.5,
+  "speed_vs_red": 0.18,
+  "health": 4000,
+  "layer": 12,
+  "children": {
+   "Bfb": 4
+  },
+  "rbe": 16656,
+  "leak_damage": 4000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": false,
+  "moab_class": true,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Zomg",
+   "Moabs"
+  ]
+ },
+ "ZomgFortified": {
+  "base": "zomg",
+  "speed": 4.5,
+  "speed_vs_red": 0.18,
+  "health": 8000,
+  "layer": 12,
+  "children": {
+   "BfbFortified": 4
+  },
+  "rbe": 27296,
+  "leak_damage": 8000.0,
+  "immune": [],
+  "camo": false,
+  "regrow": false,
+  "fortified": true,
+  "moab_class": true,
+  "boss": false,
+  "radius": 40.0,
+  "tags": [
+   "Zomg",
+   "Moabs",
+   "Fortified"
+  ]
+ }
+}

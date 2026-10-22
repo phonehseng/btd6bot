@@ -1,0 +1,12110 @@
+{
+ "dart": {
+  "game_id": "DartMonkey",
+  "name": "Dart Monkey",
+  "category": "primary",
+  "shop_index": 0,
+  "available": true,
+  "cost": 200.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 32.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "005": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "020": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "030": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "031": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "040": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "041": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "050": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "051": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "104": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "105": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "130": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "140": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "150": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "230": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "240": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "250": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "300": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "boomerang": {
+  "game_id": "BoomerangMonkey",
+  "name": "Boomerang Monkey",
+  "category": "primary",
+  "shop_index": 1,
+  "available": true,
+  "cost": 315.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 43.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "003": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "005": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "015": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "020": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "025": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "031": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "032": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "040": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "041": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "042": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "050": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "051": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "052": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "130": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "140": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "150": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "205": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "230": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "240": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "250": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "300": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "301": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "320": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "400": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "401": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "420": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "500": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "bomb": {
+  "game_id": "BombShooter",
+  "name": "Bomb Shooter",
+  "category": "primary",
+  "shop_index": 2,
+  "available": true,
+  "cost": 375.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 40.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": true,
+   "black": false,
+   "white": true,
+   "purple": true,
+   "frozen": true
+  },
+  "damage_types": [
+   "explosion"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "001": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "002": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "003": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "005": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "010": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "011": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "012": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "015": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "020": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "025": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "030": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "031": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "032": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "040": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "041": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "042": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "050": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "051": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "052": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "101": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "140": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "150": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "200": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "210": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "240": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "250": [
+    "lead",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "tack": {
+  "game_id": "TackShooter",
+  "name": "Tack Shooter",
+  "category": "primary",
+  "shop_index": 3,
+  "available": true,
+  "cost": 260.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 23.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "005": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "014": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "015": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "020": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "023": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "024": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "025": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "030": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "031": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "032": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "040": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "041": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "042": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "051": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "052": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "104": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "105": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "130": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "204": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "205": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "230": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ]
+  }
+ },
+ "ice": {
+  "game_id": "IceMonkey",
+  "name": "Ice Monkey",
+  "category": "primary",
+  "shop_index": 4,
+  "available": true,
+  "cost": 400.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "water",
+   "land"
+  ],
+  "range": 20.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": false,
+   "purple": true,
+   "frozen": true
+  },
+  "damage_types": [
+   "cold"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "001": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "002": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "003": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "005": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "010": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "011": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "012": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "015": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "020": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "025": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "031": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "032": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "040": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "041": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "042": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "050": [
+    "hits_camo",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "051": [
+    "hits_camo",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "052": [
+    "hits_camo",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "100": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "101": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "105": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "110": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "hits_camo",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "301": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "310": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "320": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "400": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "401": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "410": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "500": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ]
+  }
+ },
+ "glue": {
+  "game_id": "GlueGunner",
+  "name": "Glue Gunner",
+  "category": "primary",
+  "shop_index": 5,
+  "available": true,
+  "cost": 225.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 46.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": false,
+   "white": false,
+   "purple": false,
+   "frozen": false
+  },
+  "damage_types": [],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [],
+   "001": [],
+   "002": [],
+   "003": [],
+   "004": [],
+   "005": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "010": [],
+   "011": [],
+   "012": [],
+   "013": [],
+   "014": [],
+   "015": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "020": [],
+   "021": [],
+   "022": [],
+   "023": [],
+   "024": [],
+   "025": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "030": [],
+   "031": [],
+   "032": [],
+   "040": [],
+   "041": [],
+   "042": [],
+   "050": [],
+   "051": [],
+   "052": [],
+   "100": [],
+   "101": [],
+   "102": [],
+   "103": [],
+   "104": [],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [],
+   "120": [],
+   "130": [],
+   "140": [],
+   "150": [],
+   "200": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "204": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "205": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ]
+  }
+ },
+ "desperado": {
+  "game_id": "Desperado",
+  "name": "Desperado",
+  "category": "primary",
+  "shop_index": 6,
+  "available": true,
+  "cost": 300.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 60.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": true,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "005": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "010": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "020": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "031": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "040": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "041": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "050": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "051": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "100": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "110": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "130": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "230": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "sniper": {
+  "game_id": "SniperMonkey",
+  "name": "Sniper Monkey",
+  "category": "military",
+  "shop_index": 7,
+  "available": true,
+  "cost": 350.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 20.0,
+  "global_range": true,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "005": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "010": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "020": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "030": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "031": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "040": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "041": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "050": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "051": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "100": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "101": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "110": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "205": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "sub": {
+  "game_id": "MonkeySub",
+  "name": "Monkey Sub",
+  "category": "military",
+  "shop_index": 8,
+  "available": true,
+  "cost": 325.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "water"
+  ],
+  "range": 42.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "005": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "014": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "015": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "020": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "025": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "031": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "032": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "041": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "042": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "050": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "051": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "052": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "104": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "105": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "150": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "204": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "205": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "250": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "301": [
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "302": [
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "310": [
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "400": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "401": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "410": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "500": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ]
+  }
+ },
+ "buccaneer": {
+  "game_id": "MonkeyBuccaneer",
+  "name": "Monkey Buccaneer",
+  "category": "military",
+  "shop_index": 9,
+  "available": true,
+  "cost": 400.0,
+  "radius": 8.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 8.0
+  },
+  "placement": [
+   "water"
+  ],
+  "range": 60.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "005": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "020": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "031": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "041": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "051": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "104": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "105": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "301": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "310": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "ace": {
+  "game_id": "MonkeyAce",
+  "name": "Monkey Ace",
+  "category": "military",
+  "shop_index": 10,
+  "available": true,
+  "cost": 800.0,
+  "radius": 12.0,
+  "footprint": {
+   "shape": "rectangle",
+   "width": 28.0,
+   "height": 18.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 22.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {
+   "Camo": {
+    "add": 0.0,
+    "mult": 1.0
+   }
+  },
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "005": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "010": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "011": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "012": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "015": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "020": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "031": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "040": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "041": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "050": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "051": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "104": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "110": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "204": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "heli": {
+  "game_id": "HeliPilot",
+  "name": "Heli Pilot",
+  "category": "military",
+  "shop_index": 11,
+  "available": true,
+  "cost": 1500.0,
+  "radius": 14.0,
+  "footprint": {
+   "shape": "rectangle",
+   "width": 27.0,
+   "height": 27.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 22.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "004": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "005": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "014": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "015": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "020": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "031": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "040": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "041": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "050": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "051": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "104": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "130": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "140": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "150": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "204": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "205": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "230": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "240": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "250": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "300": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ]
+  }
+ },
+ "mortar": {
+  "game_id": "MortarMonkey",
+  "name": "Mortar Monkey",
+  "category": "military",
+  "shop_index": 12,
+  "available": true,
+  "cost": 600.0,
+  "radius": 11.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 11.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 30.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": true,
+   "black": false,
+   "white": true,
+   "purple": true,
+   "frozen": true
+  },
+  "damage_types": [
+   "explosion"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "001": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "002": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "003": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "004": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "005": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "010": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "011": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "020": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "030": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "031": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "041": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "051": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "101": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "104": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "105": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "110": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "200": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "210": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "lead",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ]
+  }
+ },
+ "dartling": {
+  "game_id": "DartlingGunner",
+  "name": "Dartling Gunner",
+  "category": "military",
+  "shop_index": 13,
+  "available": true,
+  "cost": 850.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 20.0,
+  "global_range": true,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "003": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "005": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "010": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "020": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "030": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "031": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "040": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "041": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "050": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "051": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "130": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "210": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "230": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "301": [
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "302": [
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "310": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "320": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "410": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "wizard": {
+  "game_id": "WizardMonkey",
+  "name": "Wizard Monkey",
+  "category": "magic",
+  "shop_index": 14,
+  "available": true,
+  "cost": 250.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 40.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": false,
+   "frozen": true
+  },
+  "damage_types": [
+   "not Lead/Purple"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "001": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "002": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "003": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen",
+    "decamo"
+   ],
+   "004": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "005": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "010": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "011": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "020": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "030": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "031": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "041": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "051": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "100": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "101": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "102": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "103": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen",
+    "decamo"
+   ],
+   "104": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "105": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "110": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "201": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen",
+    "decamo"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "210": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "301": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ]
+  }
+ },
+ "super": {
+  "game_id": "SuperMonkey",
+  "name": "Super Monkey",
+  "category": "magic",
+  "shop_index": 15,
+  "available": true,
+  "cost": 2500.0,
+  "radius": 11.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 11.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 50.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {
+   "Camo": {
+    "add": 0.0,
+    "mult": 1.0
+   }
+  },
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "004": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "005": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "020": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "031": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "041": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "051": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "100": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "101": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "102": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "103": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "104": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "105": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "110": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "120": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "130": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "201": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "220": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "301": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ]
+  }
+ },
+ "ninja": {
+  "game_id": "NinjaMonkey",
+  "name": "Ninja Monkey",
+  "category": "magic",
+  "shop_index": 16,
+  "available": true,
+  "cost": 400.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 40.0,
+  "global_range": false,
+  "camo": true,
+  "hits_camo": true,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {
+   "Camo": {
+    "add": 0.0,
+    "mult": 1.0
+   }
+  },
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "005": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "010": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "020": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "021": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "030": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "031": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "040": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "041": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "050": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "051": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "100": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "130": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "140": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "150": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "200": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "210": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "230": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "240": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "250": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "300": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "301": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "310": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "320": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "400": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "401": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "410": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ],
+   "500": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "decamo"
+   ]
+  }
+ },
+ "alchemist": {
+  "game_id": "Alchemist",
+  "name": "Alchemist",
+  "category": "magic",
+  "shop_index": 17,
+  "available": true,
+  "cost": 550.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 45.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": true,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": true
+  },
+  "damage_types": [
+   "normal"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "001": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "002": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "003": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "005": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "010": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "011": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "012": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "015": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "020": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "021": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "022": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "023": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "024": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "025": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "031": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "032": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "041": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "042": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "051": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "052": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "101": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "200": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "201": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "202": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "203": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "204": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "205": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "220": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "301": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "310": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ]
+  }
+ },
+ "druid": {
+  "game_id": "Druid",
+  "name": "Druid",
+  "category": "magic",
+  "shop_index": 18,
+  "available": true,
+  "cost": 400.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 35.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "005": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "014": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "015": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "020": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "023": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "024": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "025": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "030": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "031": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "032": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "040": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "041": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "042": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "050": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "051": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "052": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "100": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "101": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "210": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "mermonkey": {
+  "game_id": "Mermonkey",
+  "name": "Mermonkey",
+  "category": "magic",
+  "shop_index": 19,
+  "available": true,
+  "cost": 300.0,
+  "radius": 8.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 8.0
+  },
+  "placement": [
+   "water",
+   "land"
+  ],
+  "range": 28.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": true
+  },
+  "damage_types": [
+   "shatter"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "001": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "002": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "003": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "004": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "005": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "011": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "012": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "014": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "015": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "020": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "024": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "025": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "030": [
+    "lead",
+    "black",
+    "frozen"
+   ],
+   "031": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "frozen"
+   ],
+   "032": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "frozen"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "041": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "042": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "051": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "052": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "101": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "104": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "105": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "frozen"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "frozen"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "skywarden": {
+  "game_id": "Skywarden",
+  "name": "Skywarden",
+  "category": "magic",
+  "shop_index": 20,
+  "available": true,
+  "cost": 205.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 48.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "005": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "010": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "011": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "012": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "013": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "014": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "015": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "020": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "021": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "022": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "023": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "024": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "025": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "030": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "031": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "032": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "041": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "042": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "051": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "052": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "120": [
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "200": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "202": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "203": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "210": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "220": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "230": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "240": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "250": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "301": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "302": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "310": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "320": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "400": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "401": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "402": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "410": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "420": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "500": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "black",
+    "white",
+    "frozen"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "frozen"
+   ]
+  }
+ },
+ "farm": {
+  "game_id": "BananaFarm",
+  "name": "Banana Farm",
+  "category": "support",
+  "shop_index": 21,
+  "available": true,
+  "cost": 1250.0,
+  "radius": 15.0,
+  "footprint": {
+   "shape": "rectangle",
+   "width": 30.0,
+   "height": 30.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 40.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": false,
+   "white": false,
+   "purple": false,
+   "frozen": false
+  },
+  "damage_types": [],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [],
+   "001": [],
+   "002": [],
+   "003": [],
+   "004": [],
+   "005": [],
+   "010": [],
+   "011": [],
+   "012": [],
+   "013": [],
+   "014": [],
+   "015": [],
+   "020": [],
+   "021": [],
+   "022": [],
+   "023": [],
+   "024": [],
+   "025": [],
+   "030": [],
+   "031": [],
+   "032": [],
+   "040": [],
+   "041": [],
+   "042": [],
+   "050": [],
+   "051": [],
+   "052": [],
+   "100": [],
+   "101": [],
+   "102": [],
+   "103": [],
+   "104": [],
+   "105": [],
+   "110": [],
+   "120": [],
+   "130": [],
+   "140": [],
+   "150": [],
+   "200": [],
+   "201": [],
+   "202": [],
+   "203": [],
+   "204": [],
+   "205": [],
+   "210": [],
+   "220": [],
+   "230": [],
+   "240": [],
+   "250": [],
+   "300": [],
+   "301": [],
+   "302": [],
+   "310": [],
+   "320": [],
+   "400": [],
+   "401": [],
+   "402": [],
+   "410": [],
+   "420": [],
+   "500": [],
+   "501": [],
+   "502": [],
+   "510": [],
+   "520": []
+  }
+ },
+ "spike": {
+  "game_id": "SpikeFactory",
+  "name": "Spike Factory",
+  "category": "support",
+  "shop_index": 22,
+  "available": true,
+  "cost": 1000.0,
+  "radius": 8.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 8.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 34.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": true,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "005": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "010": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "014": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "015": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "020": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "021": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "022": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "023": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "024": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "025": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "030": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "031": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "032": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "040": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "041": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "042": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "050": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "051": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "052": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "100": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "102": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "103": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "104": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "105": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "110": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple"
+   ],
+   "130": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "140": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "150": [
+    "hits_camo",
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "200": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "210": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "240": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "250": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "300": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "301": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "320": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "401": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "402": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "410": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "420": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "village": {
+  "game_id": "MonkeyVillage",
+  "name": "Monkey Village",
+  "category": "support",
+  "shop_index": 23,
+  "available": true,
+  "cost": 1200.0,
+  "radius": 11.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 11.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 40.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": false,
+   "white": false,
+   "purple": false,
+   "frozen": false
+  },
+  "damage_types": [],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [],
+   "001": [],
+   "002": [],
+   "003": [],
+   "004": [],
+   "005": [],
+   "010": [],
+   "011": [],
+   "012": [],
+   "013": [],
+   "014": [],
+   "015": [],
+   "020": [
+    "gives_camo"
+   ],
+   "021": [
+    "gives_camo"
+   ],
+   "022": [
+    "gives_camo"
+   ],
+   "023": [
+    "gives_camo"
+   ],
+   "024": [
+    "gives_camo"
+   ],
+   "025": [
+    "gives_camo"
+   ],
+   "030": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "031": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "032": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "040": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "041": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "042": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "050": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "051": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "052": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "100": [],
+   "101": [],
+   "102": [],
+   "103": [],
+   "104": [],
+   "105": [],
+   "110": [],
+   "120": [
+    "gives_camo"
+   ],
+   "130": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "140": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "150": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "200": [],
+   "201": [],
+   "202": [],
+   "203": [],
+   "204": [],
+   "205": [],
+   "210": [],
+   "220": [
+    "gives_camo"
+   ],
+   "230": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "240": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "250": [
+    "gives_camo",
+    "gives_damage_type"
+   ],
+   "300": [],
+   "301": [],
+   "302": [],
+   "310": [],
+   "320": [
+    "gives_camo"
+   ],
+   "400": [],
+   "401": [],
+   "402": [],
+   "410": [],
+   "420": [
+    "gives_camo"
+   ],
+   "500": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "501": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "502": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "510": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "520": [
+    "camo",
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "gives_camo",
+    "moab_bonus"
+   ]
+  }
+ },
+ "engineer": {
+  "game_id": "EngineerMonkey",
+  "name": "Engineer Monkey",
+  "category": "support",
+  "shop_index": 24,
+  "available": true,
+  "cost": 350.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 40.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": false
+  },
+  "damage_types": [
+   "sharp"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "003": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "004": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "005": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "012": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "013": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "014": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "015": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "020": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "021": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "022": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "023": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "024": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "025": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "031": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "032": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "040": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "041": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "042": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "050": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "051": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "052": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "decamo",
+    "moab_bonus"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "105": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "120": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "130": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "140": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "150": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "205": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "220": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "230": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "240": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "250": [
+    "black",
+    "white",
+    "purple",
+    "decamo",
+    "moab_bonus"
+   ],
+   "300": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "301": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "302": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "310": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "320": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "400": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "401": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "402": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "410": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "500": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "501": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "502": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "510": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ]
+  }
+ },
+ "beast_handler": {
+  "game_id": "BeastHandler",
+  "name": "Beast Handler",
+  "category": "support",
+  "shop_index": 25,
+  "available": true,
+  "cost": 250.0,
+  "radius": 7.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 7.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 20.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": false,
+  "pops": {
+   "lead": false,
+   "black": true,
+   "white": true,
+   "purple": false,
+   "frozen": true
+  },
+  "damage_types": [
+   "not Lead/Purple"
+  ],
+  "damage_bonus": {},
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [],
+  "max_tiers": [
+   5,
+   5,
+   5
+  ],
+  "crosspaths": {
+   "000": [
+    "black",
+    "white",
+    "frozen"
+   ],
+   "001": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "002": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "003": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "004": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "005": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "010": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "011": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "012": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "013": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "014": [
+    "black",
+    "white",
+    "purple",
+    "moab_bonus"
+   ],
+   "015": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "020": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "021": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "022": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "023": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "024": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "025": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "030": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "031": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "032": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "040": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "041": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "042": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "050": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "051": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "052": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "100": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "101": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "102": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "103": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "104": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "105": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "110": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "120": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "130": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "140": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "150": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "200": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "201": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "202": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "203": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "204": [
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "205": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ],
+   "210": [
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "220": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "230": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "240": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "250": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "300": [],
+   "301": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "302": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "310": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "320": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "400": [],
+   "401": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "402": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "410": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "420": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ],
+   "500": [],
+   "501": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "502": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "510": [
+    "black",
+    "white",
+    "purple"
+   ],
+   "520": [
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen"
+   ]
+  }
+ },
+ "sheriff": {
+  "game_id": "Sheriff",
+  "name": "Sheriff",
+  "category": "hero",
+  "shop_index": 26,
+  "available": false,
+  "cost": 0.0,
+  "radius": 6.0,
+  "footprint": {
+   "shape": "circle",
+   "radius": 6.0
+  },
+  "placement": [
+   "land"
+  ],
+  "range": 50.0,
+  "global_range": false,
+  "camo": false,
+  "hits_camo": true,
+  "pops": {
+   "lead": true,
+   "black": true,
+   "white": true,
+   "purple": true,
+   "frozen": true
+  },
+  "damage_types": [
+   "energy",
+   "explosion",
+   "normal",
+   "sharp",
+   "shatter"
+  ],
+  "damage_bonus": {
+   "Boss": {
+    "add": 15.0,
+    "mult": 1.0
+   },
+   "Ceramic": {
+    "add": 5.0,
+    "mult": 1.0
+   },
+   "Moabs": {
+    "add": 20.0,
+    "mult": 1.0
+   }
+  },
+  "decamo": false,
+  "gives_camo": false,
+  "gives_damage_type": false,
+  "abilities": [
+   {
+    "name": "DeActivate Zone Ability",
+    "cooldown": 0.0
+   },
+   {
+    "name": "Activate Zone Ability",
+    "cooldown": 3.0
+   }
+  ],
+  "max_tiers": [
+   0,
+   0,
+   0
+  ],
+  "crosspaths": {
+   "000": [
+    "hits_camo",
+    "lead",
+    "black",
+    "white",
+    "purple",
+    "frozen",
+    "moab_bonus"
+   ]
+  }
+ }
+}

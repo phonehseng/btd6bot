@@ -17,6 +17,14 @@ This module adds each tower's own footprint on top, with a
 distance transform: a centre is valid when the nearest forbidden cell is at
 least r away.
 
+Where the numbers come from, best first:
+  1. the game's own model (gamemodel.py, data/game_model/towers.json and
+     heroes.json): each tower's radius and allowed surfaces, exact;
+  2. data/placement.json (kept in step with 1 by
+     `python tools/decode_sim_model.py --sync-placement`), which also holds
+     the hand-written line-of-sight and strategy notes;
+  3. the size word, then a default, for anything unknown.
+
 Line of sight: most towers cannot shoot through walls and other blockers
 (data/placement.json "needs_line_of_sight"). visible_cover() counts only the
 track a spot can see, by sampling straight lines to every track cell in range.
@@ -28,15 +36,16 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from . import gamemodel
 from . import towers as T
 from .maplearn import GRID
 
 DATA = Path(__file__).resolve().parents[1] / "data"
 
-# Fallback footprint radii (world units) when only a size word is known. The
-# small/medium/large values mirror the game's own size thresholds (6/7/8).
-# Rectangular footprints (Ace, Heli, Farm, Village) get a generous circle.
-SIZE_WORD_RADIUS = {"small": 6.0, "medium": 7.0, "large": 10.0}
+# Fallback footprint radii (world units) when only a size word is known: a
+# typical radius of each of the game's size classes (small <= 6, medium 7,
+# large 8, XL above; Super Monkey, Mortar and Village are 11).
+SIZE_WORD_RADIUS = {"small": 6.0, "medium": 7.0, "large": 8.0, "xl": 11.0}
 DEFAULT_RADIUS = 7.0
 SIGHT_SAMPLES = 16          # points checked along each line of sight
 
@@ -65,7 +74,11 @@ def _entry(kind, hero=None):
 
 
 def footprint_radius(kind, hero=None):
-    """Footprint radius in world units."""
+    """Footprint radius in world units: the game's own radius for the tower
+    (EntityModel.radius), else placement.json, else a size-word guess."""
+    r = gamemodel.footprint_radius(kind, hero)
+    if r:
+        return r
     e = _entry(kind, hero)
     r = e.get("footprint_radius")
     if r:
@@ -75,18 +88,15 @@ def footprint_radius(kind, hero=None):
 
 def size_level(kind, hero=None):
     """The game's size class 1-4 (small, medium, large, XL) from the radius."""
-    r = footprint_radius(kind, hero)
-    if r <= 6.0:
-        return 1
-    if r == 7.0:
-        return 2
-    if r == 8.0:
-        return 3
-    return 4
+    return gamemodel.size_class(footprint_radius(kind, hero))
 
 
 def surfaces(kind, hero=None):
-    """{'land'}, {'water'} or both."""
+    """{'land'}, {'water'} or both: the area types the game lets the tower
+    stand on, else the bot's own tables."""
+    decoded = gamemodel.surfaces(kind, hero)
+    if decoded:
+        return decoded
     if kind == "hero":
         where = T.HEROES.get(hero, {}).get("placement") or _entry(kind, hero).get("placement") or "land"
     else:

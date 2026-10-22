@@ -1,0 +1,15 @@
+{
+ "bundle": "game_model_assets_all_69b103c64d8d80e0b05c09896f676c56.bundle",
+ "game_data_bundle": "game_data_assets_all_2a017725970f506fa345bb24498babd1.bundle",
+ "localization_bundle": "localization_assets_all_00465cd62f5a122019c9ddae5a3f4e64.bundle",
+ "version": 1,
+ "sim_model_sha1": "edb2fd06d305e37817a40087c18438ffbf61d58d",
+ "sim_model_bytes": 17076980,
+ "objects": 224031,
+ "types_in_loader": 1048,
+ "towers": 27,
+ "upgrades": 390,
+ "heroes": 18,
+ "bloons": 235,
+ "seconds": 6.2
+}

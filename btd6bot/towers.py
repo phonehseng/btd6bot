@@ -19,8 +19,10 @@ Sources
 * Skywarden (v56): bloonswiki.com / bloons.fandom.com search snippets (Magic class, range 48,
   gift box 3.5M pops, XP for some upgrades).
 * Round XP formula + map multipliers: bloonswiki "Experience" / Fandom "Experience Points".
-* Difficulty multipliers / rounding: checked against several published Easy/Hard/Impoppable
-  price rows (e.g. Skywarden 175/205/220/245, Galesage 2550/3000/3240/3600).
+* Since October 2026 every Medium cost above (towers, all 390 upgrades, heroes) is checked
+  against the game's own simulation model (data/game_model, see docs/game_model.md) by
+  tests/test_game_model_offline.py, and all of them matched. Difficulty prices follow the
+  game's own formula (gamemodel.price), read from its code and difficulty data.
 
 Everything not directly confirmed is marked with ``# ?``.  In particular:
 * upgrade ``xp`` values are mostly per-tier *estimates* (``xp_exact`` False) - only a few
@@ -32,24 +34,30 @@ Everything not directly confirmed is marked with ``# ?``.  In particular:
 
 from __future__ import annotations
 
-import math
-
 # ---------------------------------------------------------------------------
 # Difficulty pricing
 # ---------------------------------------------------------------------------
+#
+# The Medium costs in the tables below match the game's own model exactly
+# (data/game_model, decoded by tools/decode_sim_model.py;
+# tests/test_game_model_offline.py fails when they drift apart). The price
+# functions at the bottom of this file prefer the decoded costs, so a game
+# update that changes a price is picked up even before these tables are
+# edited. How a difficulty changes a price is the game's own formula, in
+# gamemodel.price: the multipliers below are only its summary.
 
 DIFFICULTY_COST_MULT = {"easy": 0.85, "medium": 1.0, "hard": 1.08, "impoppable": 1.2}
 
 
-def price(base: int, difficulty: str = "medium", discount: float = 0.0) -> int:
-    """Price on ``difficulty`` for a Medium ``base`` cost.
+def price(base: int, difficulty: str = "medium", discount: float = 0.0, kind: str = "tower") -> int:
+    """Price on ``difficulty`` for a Medium ``base`` cost, as the game computes it.
 
-    BTD6 multiplies the Medium price and rounds to the nearest $5 (half up).
-    ``discount`` (0..1) is applied before rounding (village/MK discounts; approximate).
+    kind: "tower" (towers and heroes) or "upgrade" - the game rounds the
+    difficulty change of upgrade costs differently (see gamemodel.price).
+    ``discount`` (0..1) is applied before rounding (village/MK discounts).
     """
-    mult = DIFFICULTY_COST_MULT[difficulty.lower()]
-    raw = base * mult * (1.0 - discount)
-    return int(math.floor(raw / 5.0 + 0.5) * 5)
+    from . import gamemodel
+    return gamemodel.price(base, difficulty.lower(), kind=kind, discount=discount)
 
 
 # ---------------------------------------------------------------------------
@@ -817,12 +825,20 @@ def upgrade(tower: str, path: int, tier: int) -> dict:
     return TOWERS[tower]["upgrades"][path - 1][tier - 1]
 
 
+def _game_cost(entry, fallback):
+    """Medium cost from the decoded game model when it has one, else ours."""
+    return entry["cost"] if entry and entry.get("cost") is not None else fallback
+
+
 def upgrade_cost(tower: str, path: int, tier: int, difficulty: str = "medium") -> int:
-    return price(upgrade(tower, path, tier)["cost"], difficulty)
+    from . import gamemodel
+    base = _game_cost(gamemodel.upgrade(tower, path, tier), upgrade(tower, path, tier)["cost"])
+    return price(base, difficulty, kind="upgrade")
 
 
 def tower_cost(tower: str, difficulty: str = "medium") -> int:
-    return price(TOWERS[tower]["cost"], difficulty)
+    from . import gamemodel
+    return price(_game_cost(gamemodel.tower(tower), TOWERS[tower]["cost"]), difficulty)
 
 
 def total_cost(tower: str, crosspath: str | tuple, difficulty: str = "medium") -> int:
@@ -837,7 +853,8 @@ def total_cost(tower: str, crosspath: str | tuple, difficulty: str = "medium") -
 
 
 def hero_cost(hero: str, difficulty: str = "medium") -> int:
-    return price(HEROES[hero]["cost"], difficulty)
+    from . import gamemodel
+    return price(_game_cost(gamemodel.hero(hero), HEROES[hero]["cost"]), difficulty)
 
 
 def find_tower(name: str) -> str | None:

@@ -92,8 +92,48 @@ game code was run. Newest finds are at the bottom.
     parent type's routine, then reads fields in a fixed order with BinaryReader
     calls: float, bool, int, string, and object references as indexes into a
     big object table.
-- Decoding it means replaying those routines. A separate effort is building
-  that decoder (see `docs/game_model.md` once it lands).
+- Decoding it means replaying those routines. That decoder now exists:
+  `tools/decode_sim_model.py`, explained in [`docs/game_model.md`](game_model.md).
+
+## The simulation model, decoded
+
+- The file is **354,277 table slots**: 224,031 objects of 999 types, 130,171
+  arrays and lists, 74 dictionaries. It decodes in about a second, using every
+  byte, once the format is known.
+- The format is **derived from the loader's code**, not typed in: a small
+  symbolic walk over each `Set_v_<Type>_Fields` routine's ISIL finds which
+  `BinaryReader` method is called and where the value is stored (a field
+  offset from the class declarations, or a `GetField("name")` for private
+  fields). See `data/game_model/loader_schema.json` for the result.
+- **BinaryReader vtable slots, verified**: byte offset `0x138 + 16 x slot`,
+  slots in token order of `BinaryReader.cs` after `System.Object`'s 4: 456
+  ReadBoolean, 536 ReadUInt16 (one enum is a `ushort`), 552 ReadInt32, 616
+  ReadSingle, 664 ReadString. In `Load` the same reads go through IL2CPP's
+  virtual-invoke helper with the slot number (15 = ReadInt32).
+- Strings are `ReadBoolean() ? null : ReadString()`; asset references
+  (prefabs, sprites) are a plain `ReadString()` into a struct; objects are
+  Int32 indexes into the table. Four classes under an abstract parent get an
+  extra loop for the parent's fields.
+- **Every upgrade combination is its own TowerModel** (`DartMonkey-205`),
+  every hero level too (`Quincy 7`). That is where per-upgrade facts (camo,
+  lead popping, range) come from.
+- **Upgrade ids are not the shown names**: "Metal Freeze" is Cold Snap,
+  "Soulbind" Prince of Darkness, "Bionc Boomerang" (sic) Bionic Boomerang. The
+  English names are in `localization_assets_all_<hash>.bundle`, a TextAsset
+  per language (XML: `<UpgradeNames><T id="Metal Freeze">Cold Snap</T>`).
+- **Every Medium cost in the bot's tables was right** (26 towers, 390
+  upgrades, 18 heroes). Footprints and ranges were not: e.g. Monkey Village and
+  Super Monkey are radius 11, Banana Farm a 30 x 30 square, Ice Monkey, Pat
+  Fusty and Silas may stand on water.
+- **Difficulty prices**: the multipliers are `GlobalCostModModel` entries in the
+  game_data bundle's difficulty and mode `Mod` assets (Easy 0.85, Hard 1.08,
+  Impoppable +0.12 on top of Hard; CHIMPS adds nothing: Hard prices). Upgrade
+  changes are cut to whole dollars, and the final price is rounded to $5 with
+  **banker's rounding** (`Math.RoundToNearestInt`, IL2CPP `bankers_roundf`,
+  confirmed from the DLL's code bytes and its 1.0 / 0.5 constants). 23 Easy /
+  Hard / Impoppable prices differed by $5 from the bot's old half-up formula.
+- A tower called **Sheriff** is in the shop list with 0 copies allowed and no
+  upgrades: present in the files, not purchasable.
 
 ## Smaller finds
 
