@@ -15,9 +15,9 @@ Safety rules (on top of menus.FORBIDDEN):
     confirmed explicitly after the price check, or cancelled
 
 The caller owns persistence: Meta updates the AccountState in memory and the
-caller should ``account.save()`` afterwards. ``account.selected_hero`` is set
-as a dynamic attribute (AccountState has no such field and does not persist
-it); runner.account_selected_hero() already reads it with getattr.
+caller should ``account.save()`` afterwards. (The equipped hero,
+``account.selected_hero``, is set by heroes.HeroPicker and saved with the
+account.)
 
 Every position or wording that still needs a live check is marked
 ``# VERIFY LIVE:``.
