@@ -419,9 +419,14 @@ class Bot:
         target = norm(map_name)
         label = None
         end = time.time() + 5
+        reads = 0
         while label is None and time.time() < end:  # results filter in as you type
             time.sleep(0.3)
-            for w in sorted(self.menus.read(), key=lambda w: (w.y, w.x)):
+            # every other read at full resolution: at half, the titles of some
+            # cards were never read (Candy Falls, Frozen Over, Polyphemus:
+            # only the search box's own text came back, and the maps were benched)
+            reads += 1
+            for w in sorted(self.menus.read(scale=1.0 if reads % 2 == 0 else 0.5), key=lambda w: (w.y, w.x)):
                 if w.y < 0.1 or w.y > 0.9:
                     continue  # the search box itself / bottom buttons
                 if target in norm(w.text) or norm(w.text) in target and len(norm(w.text)) > 4:
