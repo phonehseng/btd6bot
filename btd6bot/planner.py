@@ -456,6 +456,10 @@ class StrategySpec:
     # Tower XP split = cash invested per tower type; the runner passes the
     # YAML plan's cash (strategy.invested_cash). Default: an equal split.
     cost_share: dict[str, float] | None = None
+    # The towers that do the plan's damage (placed with role "dps"): whether
+    # they can reach a map's track decides how well the plan fits the map
+    # (mapfit). Empty: not known, no map-fit adjustment.
+    dps_kinds: tuple[str, ...] = ()
     minutes: dict[str, float] = field(default_factory=dict)  # per-mode runtime override
     notes: str = ""
     # Achievement strategies (strategies/achievements/*.yaml): the achievement
@@ -497,6 +501,7 @@ class StrategySpec:
             excluded_maps=frozenset(canonical_map(m) for m in (get("excluded_maps") or ())),
             categories=frozenset(cats) if cats else None,
             cost_share=dict(get("cost_share")) if get("cost_share") else None,
+            dps_kinds=tuple(canon_tower(k) for k in (get("dps_kinds") or ())),
             minutes=dict(get("minutes") or {}),
             notes=str(get("notes") or ""),
             achievement=str(ach) if ach else None,
@@ -793,14 +798,36 @@ def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
 DOUBLE_CASH_LOSS_FACTOR = 0.35
 
 
+# Map fit (mapfit.py): the share of the early track that the plan's damage
+# towers can reach from cells where they may stand. At FULL_FIT or more the
+# plan fits; below it the win chance shrinks in proportion, down to
+# MIN_FIT_FACTOR. Money does not help a plan whose towers cannot reach the
+# bloons, so this applies after Double Cash. (Luminous Cove Hard with a land
+# plan - ninjas 0.33, super monkeys 0.09 - was rated 0.86 and lost.)
+FULL_FIT = 0.6
+MIN_FIT_FACTOR = 0.3
+
+
+def map_fit_factor(s: StrategySpec, map_name: str, mode: str) -> float:
+    """1.0 when the plan's damage towers reach enough of the track (or when
+    that is not measured), less when they do not."""
+    from .mapfit import strategy_fit
+    fit = strategy_fit(map_name, s.dps_kinds, reverse=(mode == "reverse"), weights=s.cost_share)
+    if fit is None:
+        return 1.0
+    return min(1.0, max(MIN_FIT_FACTOR, fit / FULL_FIT))
+
+
 def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> float:
     """Prior p before any record/calibration: declared rate x map x readiness,
-    then the account's Double Cash (when it pays in this mode)."""
+    then the account's Double Cash (when it pays in this mode), then how well
+    the plan's towers can reach this map's track."""
     from .boosts import double_cash_applies
     p = _prior(s, map_name, account.map_category(map_name), mode)
     p *= strategy_readiness(s, account, mode)
     if double_cash_applies(getattr(account, "boosts", {}), mode):
         p = 1.0 - (1.0 - p) * DOUBLE_CASH_LOSS_FACTOR
+    p *= map_fit_factor(s, map_name, mode)
     return min(0.98, max(0.01, p))
 
 

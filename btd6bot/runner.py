@@ -206,6 +206,19 @@ def _tested(account, sid, mode):
     return False
 
 
+def damage_kinds(strat):
+    """Tower kinds a plan places to do its damage: role "dps" (the default
+    role), not support/exit/far towers (villages, alchemists' buffs, spike
+    factories at the exit, farms). Used by the planner's map fit."""
+    kinds = []
+    for st in strat.get("plan", []) + strat.get("fill", []):
+        kind = st.get("kind")
+        if st.get("do") == "place" and kind and kind != "hero" and st.get("role", "dps") == "dps":
+            if kind not in kinds:
+                kinds.append(kind)
+    return kinds
+
+
 def planner_specs(strats, account):
     from .planner import StrategySpec
     from .strategy import achievement_strategies
@@ -247,6 +260,8 @@ def planner_specs(strats, account):
             "categories": p.get("categories"), "minutes": p.get("minutes"),
             # tower XP follows invested cash: which towers this game levels up
             "cost_share": invested_cash(s),
+            # the towers that do the damage: can they reach this map's track?
+            "dps_kinds": damage_kinds(s),
         }))
     return specs
 
@@ -567,6 +582,8 @@ class Bot:
             from . import gamedata, gamefiles
             gamefiles.refresh(status=set_state)
             gamedata.refresh()   # round sets and achievements
+            from . import mapfit
+            mapfit.refresh()     # which towers can reach each map's track
         except Exception:  # never let this stop the bot: learning still works
             log.exception("reading map geometry from the game files failed")
 
