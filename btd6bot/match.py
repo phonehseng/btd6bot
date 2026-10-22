@@ -3,6 +3,7 @@ import logging
 import time
 
 from . import status
+from .vision import norm
 from . import towers as T
 from .abilities import AbilityPlanner
 from .maplearn import PathTracer
@@ -48,18 +49,29 @@ class Match:
         return out
 
     def setup(self, max_seconds=60):
-        """Before round 1: buy everything affordable from the plan."""
+        """Before the first round: buy everything affordable from the plan.
+        Fast Track starts Hard at round ~22 with thousands in cash (double with
+        Double Cash): that money must become a full defence before Play, since
+        those rounds come fast and mixed - so spend down, plan first, then surplus."""
         t = time.time()
         idle = 0
+        rnd = self.g.round()
+        late = rnd is not None and rnd >= 10
+        if late:
+            max_seconds = 150
+            log.info("game starts at round %d (Fast Track?) - building the full defence first", rnd)
         # failed spots are blocked one by one, so keep trying for a while
         # before concluding nothing can be placed (never start undefended)
         while time.time() - t < max_seconds and idle < 8:
             cash = self.g.cash_stable()
-            if self.ex.tick(cash, self.g.round()):
+            bought = self.ex.tick(cash, rnd)
+            if not bought and late and cash is not None and cash > 600:
+                bought = self.ex.surplus(cash, rnd)
+            if bought:
                 idle = 0
             else:
                 idle += 1
-            if self.ex.defended() and idle >= 2:
+            if self.ex.defended() and idle >= 2 and (not late or (cash or 0) < 600 or idle >= 4):
                 break
         return self.ex.defended()
 
@@ -86,14 +98,17 @@ class Match:
                 # final round: the victory overlay dims but does not hide the HUD
                 self._t_end = now
                 st = self.menus.identify()
-                if st in ("victory", "defeat"):
+                if st in ("victory", "defeat") and self._real_end(st, f):
                     return self._finish(st, last_round)
             if self._frozen(f, now):
                 # a modal popup pauses the game while the HUD stays visible
                 st = self.menus.identify()
                 log.info("screen frozen (%s) - looking for a popup", st)
-                if st in ("victory", "defeat"):
+                if st in ("victory", "defeat") and self._real_end(st, f):
                     return self._finish(st, last_round)  # the end screen overlays the HUD
+                if st == "defeat":
+                    self.g.close_panels()
+                    continue
                 if st in ("in_game", "unknown"):
                     self.menus.dismiss_popup()
                 else:
@@ -247,6 +262,26 @@ class Match:
                     self.menus.inp.click(0.5, 0.5)
                 time.sleep(0.8)
         return None
+
+    def _real_end(self, st, f):
+        """A defeat needs the lives counter to agree: a word like 'defeat' can
+        show up in tower/upgrade panels and once made the bot quit three games
+        it was winning at full lives."""
+        if st != "defeat":
+            return True
+        lives = self.g.hud.lives(f) if f is not None else None
+        known = sorted(self._lives_reads)[len(self._lives_reads) // 2] if self._lives_reads else None
+        if lives and lives > 0 and (known is None or known > 0):
+            hits = [w.text for w in self.menus.words
+                    if any(k in norm(w.text) for k in ("defeat", "gameover", "bloonsleaked", "youlost"))]
+            log.warning("ignoring 'defeat' screen: lives still %s (matched %s)", lives, hits)
+            try:
+                import cv2
+                cv2.imwrite(f"logs/false_defeat_{int(time.time())}.png", f)
+            except Exception:
+                pass
+            return False
+        return True
 
     def _finish(self, outcome, rnd):
         try:
