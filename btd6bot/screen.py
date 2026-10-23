@@ -52,33 +52,12 @@ class Screen:
         return win32process.GetWindowThreadProcessId(self.hwnd)[1]
 
     def focus(self):
-        """Bring BTD6 to the front without sending any keystrokes.
+        """True when BTD6 is the foreground window.
 
-        Never synthesises keys to get focus: a stray key (Esc especially) landing
-        in another window can have real consequences.
+        The bot never brings the game to the front itself (owner's rule,
+        2026-10-23): the person at the PC decides which window is in front,
+        and the bot pauses until they put the game back.
         """
-        if self.is_foreground():
-            return True
-        if win32gui.IsIconic(self.hwnd):
-            win32gui.ShowWindow(self.hwnd, win32con.SW_RESTORE)
-        self._move_aside_foreground()
-        # Joining the foreground thread's input queue lifts the focus-steal lock.
-        fg = win32gui.GetForegroundWindow()
-        me = win32api.GetCurrentThreadId()
-        other = win32process.GetWindowThreadProcessId(fg)[0] if fg else 0
-        attached = False
-        try:
-            if other and other != me:
-                attached = bool(ctypes.windll.user32.AttachThreadInput(me, other, True))
-            win32gui.BringWindowToTop(self.hwnd)
-            win32gui.SetForegroundWindow(self.hwnd)
-        except Exception:
-            pass
-        finally:
-            if attached:
-                ctypes.windll.user32.AttachThreadInput(me, other, False)
-        time.sleep(0.3)
-        self.refresh()
         return self.is_foreground()
 
     # -- coordinates ------------------------------------------------------
@@ -101,48 +80,6 @@ class Screen:
         if not h:
             return False
         return h == self.hwnd or win32process.GetWindowThreadProcessId(h)[1] == self._pid()
-
-    # Windows the bot may minimize when they cover the game (title of the
-    # top-level window). The Claude desktop app restores its window over the
-    # game's right side when a message arrives; twice on 2026-10-22 the bot
-    # then waited for minutes, refusing to click under it.
-    MINIMIZE_WHEN_COVERING = ("Claude",)
-
-    USER_IDLE_S = 20.0   # no keyboard/mouse input this long: nobody is using the PC
-
-    @staticmethod
-    def user_idle_s():
-        """Seconds since the last keyboard or mouse input (GetLastInputInfo)."""
-        class LASTINPUTINFO(ctypes.Structure):
-            _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
-        info = LASTINPUTINFO(ctypes.sizeof(LASTINPUTINFO), 0)
-        if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(info)):
-            return 0.0
-        return (ctypes.windll.kernel32.GetTickCount() - info.dwTime) / 1000.0
-
-    def _move_aside_foreground(self):
-        """The Claude app took the foreground (a message arrived, 2026-10-22
-        20:53: the bot left a game in progress after a minute of waiting):
-        minimize it - only while nobody is using the PC, so a person typing
-        there is never interrupted."""
-        fg = win32gui.GetForegroundWindow()
-        if not fg or fg == self.hwnd or win32gui.GetWindowText(fg) not in self.MINIMIZE_WHEN_COVERING:
-            return
-        if self.user_idle_s() >= self.USER_IDLE_S:
-            win32gui.ShowWindow(fg, win32con.SW_MINIMIZE)
-
-    def clear_point(self, fx, fy):
-        """If a known app window covers the game at (fx, fy), minimize it.
-        Returns its title when it did, else None (other windows are left
-        alone: the bot waits for them)."""
-        x, y = self.to_px(fx, fy)
-        h = win32gui.WindowFromPoint((x, y))
-        top = win32gui.GetAncestor(h, 2) if h else 0     # GA_ROOT: the top-level window
-        title = win32gui.GetWindowText(top) if top else ""
-        if top and top != self.hwnd and title in self.MINIMIZE_WHEN_COVERING:
-            win32gui.ShowWindow(top, win32con.SW_MINIMIZE)
-            return title
-        return None
 
     # -- capture ----------------------------------------------------------
     def grab(self, region=None):

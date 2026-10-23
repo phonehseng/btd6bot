@@ -14,7 +14,7 @@ from .mk import Knowledge
 from .identity import current_path, is_stale, load_for, mark_synced, read_user_id
 from .choices import tower_chooser
 from .game import Game
-from .inputs import Aborted, FocusLost, Input
+from .inputs import Aborted, FocusLost, Input, kill_requested
 from .maplearn import MapModel
 from .match import Match
 from .menus import Menus
@@ -291,7 +291,7 @@ class Bot:
         import ctypes
         # ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED: no sleep, no screen-off
         ctypes.windll.kernel32.SetThreadExecutionState(0x80000003)
-        self.s = Screen()
+        self.s = self._attach_screen()
         self.inp = Input(self.s)
         self.lay = L.get(self.s.width, self.s.height)
         self.account = AccountState.load(account_path or current_path())
@@ -881,7 +881,6 @@ class Bot:
                 log.error("too many consecutive failures; stopping")
                 return
             try:
-                self.s.focus()
                 if not self.to_main_menu():
                     log.error("cannot reach main menu")
                     self.failures += 1
@@ -965,7 +964,7 @@ class Bot:
             except Aborted:
                 raise
             except GameNotFound:
-                self.relaunch_game()
+                self.wait_for_game()
             except FocusLost as e:
                 log.warning("%s - waiting for the game to be in front again", e)
                 time.sleep(10)
@@ -1241,28 +1240,43 @@ class Bot:
         self._errors["maps"].pop(f"{plan.map}|{plan.mode_key}", None)
         _save_errors(self._errors)
 
-    def relaunch_game(self, wait=90):
-        """BTD6 closed or crashed: start it again through Steam and reattach."""
-        import os
-        log.error("BTD6 window not found - relaunching through Steam")
-        os.startfile("steam://rungameid/960090")
-        t = time.time()
-        while time.time() - t < wait:
-            time.sleep(5)
+    @staticmethod
+    def _attach_screen():
+        """The game's window - waiting, without launching anything, until the
+        person at the PC has BTD6 open."""
+        from .status import set_state
+        noted = 0.0
+        while True:
+            try:
+                return Screen()
+            except GameNotFound:
+                if kill_requested():
+                    raise Aborted("stop requested")
+                if time.time() - noted >= 120:
+                    noted = time.time()
+                    log.warning("BTD6 is not open - paused until it is")
+                    set_state("paused: BTD6 is not open - waiting for it")
+                time.sleep(5)
+
+    def wait_for_game(self):
+        """BTD6 closed or crashed: pause until the person at the PC opens it
+        again. The bot never launches the game itself (owner's rule,
+        2026-10-23)."""
+        from .status import set_state
+        log.error("BTD6 window not found - paused until the game is open again")
+        noted = 0.0
+        while True:
+            if kill_requested():
+                raise Aborted("stop requested")
             try:
                 self.s.refresh()
-                time.sleep(20)  # let the title screen finish loading
-                self.s.refresh()
-                log.info("BTD6 is back (%dx%d)", self.s.width, self.s.height)
-                for _ in range(6):  # title screen: click through to the main menu
-                    if self.menus.identify() == "main_menu":
-                        break
-                    self.inp.click(0.5, 0.6)
-                    time.sleep(3)
-                return True
+                break
             except GameNotFound:
-                continue
-        return False
+                if time.time() - noted >= 120:   # keep the watchdog fed
+                    noted = time.time()
+                    set_state("paused: BTD6 is not open - waiting for it")
+                time.sleep(5)
+        log.info("BTD6 is open again (%dx%d) - resuming", self.s.width, self.s.height)
 
     def next_plan(self):
         """Best plan whose (map, mode) has not failed to start this session."""

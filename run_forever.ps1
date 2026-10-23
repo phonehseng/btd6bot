@@ -1,8 +1,8 @@
 # Supervisor: keeps the bot running forever, unattended.
 #  - restarts the bot whenever it exits (exit 3 = user stop via Ctrl+Alt+F8 or a STOP file)
 #  - watchdog: kills the bot if its log/state has not changed for 10 minutes (hung)
-#  - after 2 exits in a row without a finished game, restarts BTD6 itself
-#  - starts BTD6 through Steam whenever it is not running
+#  - never starts, restarts or closes BTD6: the person at the PC keeps the game
+#    open; while it is closed or not in front the bot pauses and waits for it
 # Usage:  powershell -ExecutionPolicy Bypass -File run_forever.ps1
 param([double]$Hours = 0)   # 0 = forever
 
@@ -34,14 +34,8 @@ function LastChange {
 function Results { if (Test-Path $botlog) { (Select-String -Path $botlog -Pattern "RESULT" -SimpleMatch | Measure-Object).Count } else { 0 } }
 
 $deadline = if ($Hours -gt 0) { (Get-Date).AddHours($Hours) } else { [datetime]::MaxValue }
-$noResult = 0
 while ((Get-Date) -lt $deadline) {
     if (Test-Path (Join-Path $PSScriptRoot "STOP")) { Note "STOP file present - supervisor exiting"; break }
-    if (-not (Get-Process BloonsTD6 -ErrorAction SilentlyContinue)) {
-        Note "starting BTD6"
-        Start-Process "steam://rungameid/960090"
-        Start-Sleep 75
-    }
     # on-screen status strip (single instance, click-through)
     Start-Process -FilePath ($py -replace 'python\.exe$', 'pythonw.exe') -ArgumentList "tools\overlay.py" -WorkingDirectory $PSScriptRoot
     # rolling screen recording + daily highlight videos (single instance; NO_RECORD file turns it off)
@@ -58,11 +52,10 @@ while ((Get-Date) -lt $deadline) {
         # A bot can keep writing log lines while making no progress: on
         # 2026-10-22 it clicked the same screen for 4.7 hours. state.txt is
         # refreshed every round in a game and every 2 minutes while idle, so
-        # a stale one means a loop: stop the bot and restart BTD6 too.
+        # a stale one means a loop: restart the bot (never the game).
         if ((Test-Path $state) -and ((Get-Date) - (Get-Item $state).LastWriteTime).TotalMinutes -gt 25) {
-            Note "watchdog: status unchanged for 25 min while the log runs - stuck in a loop; restarting the bot and BTD6"
+            Note "watchdog: status unchanged for 25 min while the log runs - stuck in a loop; restarting the bot"
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
-            Stop-Process -Name BloonsTD6 -Force -ErrorAction SilentlyContinue
             Start-Sleep 10
             break
         }
@@ -72,13 +65,6 @@ while ((Get-Date) -lt $deadline) {
     Note "bot exited with code $code"
     if ($code -eq 3) { break }        # user stop
     if ($code -eq 5) { Start-Sleep 60; continue }   # another instance is running
-    if ((Results) -gt $before) { $noResult = 0 } elseif ($code -ne 4) { $noResult++ }
-    if ($noResult -ge 2) {
-        Note "2 exits without a finished game - restarting BTD6"
-        Stop-Process -Name BloonsTD6 -Force -ErrorAction SilentlyContinue
-        Start-Sleep 10
-        $noResult = 0
-    }
     if ($code -eq 4) { continue }     # reload for new code: right away
     Start-Sleep 15
 }

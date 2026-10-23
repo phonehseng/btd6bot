@@ -44,22 +44,40 @@ class Input:
         self.delay = delay
         self._held_keys = []
 
+    # While paused for the game, say so this often in the log and status, so
+    # the supervisor's watchdog sees a live bot rather than a hung one.
+    PAUSE_NOTE_S = 120
+
+    def _wait_for(self, ready, why):
+        """Pause until ready() is true - for as long as it takes.
+
+        The bot never raises, restores or launches the game and never moves
+        other windows aside: whoever is at the PC brings BTD6 back to the
+        front, and the bot carries on from where it stopped.
+        """
+        from .status import set_state
+        self.release_all()
+        log.warning("paused: %s - waiting for BTD6 to be back in front", why)
+        noted = time.time()
+        set_state(f"paused: {why} - waiting for BTD6 to be back in front")
+        while not ready():
+            if kill_requested():
+                raise Aborted("stop requested")
+            time.sleep(1)
+            if time.time() - noted >= self.PAUSE_NOTE_S:
+                noted = time.time()
+                log.info("still paused: %s", why)
+                set_state(f"paused: {why} - waiting for BTD6 to be back in front")
+        log.info("BTD6 is back in front - resuming")
+        time.sleep(0.5)          # let the window settle before the next input
+        self.screen.refresh()    # it may have moved or been resized meanwhile
+
     def guard(self):
         if kill_requested():
             self.release_all()
             raise Aborted("F8 pressed")
-        if self.screen.is_foreground():
-            return
-        self.release_all()
-        # a toast or another window took focus: wait (up to a minute) for the
-        # game to come back rather than abandoning the game in progress
-        for _ in range(30):
-            if self.screen.focus():
-                return
-            if kill_requested():
-                raise Aborted("stop requested")
-            time.sleep(2)
-        raise FocusLost("BTD6 is not the foreground window - refusing to send input")
+        if not self.screen.is_foreground():
+            self._wait_for(self.screen.is_foreground, "BTD6 is not the foreground window")
 
     def release_all(self):
         for k in reversed(self._held_keys):
@@ -79,17 +97,12 @@ class Input:
             time.sleep(self.delay)
 
     def guard_point(self, fx, fy):
+        """Never click through another window (a notification, an overlay):
+        pause while one covers the game at (fx, fy)."""
         self.guard()
-        for _ in range(10):  # e.g. a notification sliding over the click point
-            if self.screen.owns_point(fx, fy):
-                return
-            cleared = getattr(self.screen, "clear_point", lambda *a: None)(fx, fy)
-            if cleared:
-                log.warning("minimized the %r window covering the game", cleared)
-                time.sleep(0.5)
-                continue
-            time.sleep(2)
-        raise FocusLost(f"another window covers the game at ({fx:.3f}, {fy:.3f}) - not clicking")
+        if not self.screen.owns_point(fx, fy):
+            self._wait_for(lambda: self.screen.is_foreground() and self.screen.owns_point(fx, fy),
+                           f"another window covers the game at ({fx:.3f}, {fy:.3f})")
 
     def click(self, fx, fy, hold=0.07):
         self.move(fx, fy)
