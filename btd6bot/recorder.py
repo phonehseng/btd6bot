@@ -114,7 +114,7 @@ def main():
         log.error("ffmpeg not found - see the module docstring")
         return 1
     REC_DIR.mkdir(parents=True, exist_ok=True)
-    from . import highlights, timelapse
+    from . import highlights, losses, timelapse
     proc, last_highlights = None, 0.0
     log.info("recorder started (%s)", ffmpeg)
     # the game's own sound (BloonsTD6.exe only, never the microphone), in
@@ -144,6 +144,10 @@ def main():
                 timelapse.update(ffmpeg)
             except Exception:
                 log.exception("full-run pass failed")
+            try:
+                losses.update(ffmpeg)    # a case file for every lost game (losses.py)
+            except Exception:
+                log.exception("loss filing failed")
         time.sleep(10)
     audio_stop.set()
     if proc is not None and proc.poll() is None:
