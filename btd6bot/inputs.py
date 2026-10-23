@@ -10,6 +10,7 @@ import time
 import pydirectinput as pdi
 import win32api
 import win32con
+import win32gui
 
 log = logging.getLogger("inputs")
 
@@ -63,6 +64,11 @@ class Input:
         while not ready():
             if kill_requested():
                 raise Aborted("stop requested")
+            if not win32gui.IsWindow(self.screen.hwnd):
+                # the game closed (its crash dialog's EXIT quits it): find a
+                # new window, or raise GameNotFound so the runner waits for
+                # the game to be opened again
+                self.screen.refresh()
             time.sleep(1)
             if time.time() - noted >= self.PAUSE_NOTE_S:
                 noted = time.time()
