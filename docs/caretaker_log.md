@@ -33,3 +33,8 @@
 - Bot status: found DOWN. The supervisor and bot.py were gone, BTD6 was open but not in front, and bot.log showed "paused: BTD6 is not the foreground window" from 15:00 (Off The Coast easy, round 32, 200 lives) onward, so about 40 minutes of play were lost and that game has no RESULT line. Restarted with `schtasks /run /tn BTD6Bot`, brought the BTD6 window forward; the bot reached the main menu and started Another Brick / easy (military_heli_sniper).
 - Wins/losses since the 15:00 entry: none recorded (last result 14:56, Off The Coast easy, a win). Safe mode ON (streak 6 of 16, trips 2). No developer active (dev_active.txt from 00:51).
 - Likely cause: something took focus from BTD6 at 15:00 (the overlay.py process is still running) and the supervisor died later; not diagnosed further. No code edits this run; open items remain the Ravine easy loss, the lives_lost 0 defeats and the double_hp MOAB answer.
+
+## 2026-10-23 16:20
+- Bot status: healthy. BTD6Bot task Running, bot.py run (pid 34444) and the recorder are up, BTD6 open; state.txt is 5 seconds old (High Finance / easy, round 32, 200 lives). No tracebacks or loops in the last 300 log lines; supervisor restarts are the normal exit-code-4 code reloads.
+- Since the 15:40 entry: 6 wins, 0 defeats (results.jsonl). Safe mode ON (streak 12, trips 2) and running Easy-family medals as intended.
+- Only warnings seen: "giving up on step" for heli/sniper placements with 0 refused spots on the current map (a new map's spot list is empty for those steps). No code edits this run; open items unchanged (Ravine easy loss, lives_lost 0 defeats, double_hp MOAB answer).
