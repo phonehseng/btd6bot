@@ -1,0 +1,69 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Infernal, easy: planned for rounds 10-40, starting with $3,832 and the game's own income x2 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37.
+# Lowest margins: R10 0.06, R11 0.06, R12 0.06, R13 0.06, R14 0.06 (worst 0.06).
+# Cash by tower kind at the end: desperado $6,975 (41%), sub $2,980 (18%), ace $2,770 (16%), sniper $1,200 (7%), skywarden $1,115 (7%), buccaneer $1,105 (7%), bomb $745 (4%)
+# XP: XP target desperado; the game gives 26,416 tower XP in about 5.2 min, 1,900 of it to the target
+# (21,929/h); weighted by what each tower's XP is worth to the account: 33,786/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_infernal_easy
+map: "Infernal"
+modes: [easy]
+xp_target: desperado
+hero: quincy
+planner:
+  maps: ["Infernal"]
+  towers: {ace: [2, 3, 0], skywarden: [1, 0, 0], sub: [2, 0, 3], desperado: [4, 2, 0], buccaneer: [2, 0, 1], sniper: [1, 2, 0], bomb: [0, 0, 2]}
+optimizer:
+  scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 0.06
+  unsafe_rounds: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37]
+  minutes: 5.2
+  target_xp_per_hour: 21929
+  valued_xp_per_hour: 33786
+plan:
+  - {do: place, id: ace1, kind: ace, role: dps, at: [0.430, 0.692]}   # R38: $850, secures round 38; cash left $26,622
+  - {do: upgrade, id: ace1, to: 0-1-0}
+  - {do: place, id: sky2, kind: skywarden, role: dps, segment: [0.38, 0.82], at: [0.441, 0.351]}   # R38: $175, secures round 38; cash left $26,447
+  - {do: upgrade, id: ace1, to: 1-1-0}   # R38: $385, secures round 38; cash left $26,062
+  - {do: place, id: sky3, kind: skywarden, role: dps, segment: [0.2, 0.64], at: [0.259, 0.215]}   # R38: $175, secures round 38; cash left $25,887
+  - {do: place, id: sky4, kind: skywarden, role: dps, segment: [0.54, 0.98], at: [0.601, 0.777]}   # R38: $175, secures round 38; cash left $25,712
+  - {do: upgrade, id: sky3, to: 1-0-0}   # R38: $120, secures round 38; cash left $25,592
+  - {do: upgrade, id: sky4, to: 1-0-0}   # R38: $120, secures round 38; cash left $25,472
+  - {do: place, id: sky5, kind: skywarden, role: dps, segment: [0.36, 0.79], at: [0.409, 0.334]}   # R38: $175, secures round 38; cash left $25,297
+  - {do: place, id: sub6, kind: sub, role: dps, segment: [0.22, 0.6], at: [0.259, 0.760]}   # R38: $275, secures round 38; cash left $25,022
+  - {do: place, id: des7, kind: desperado, role: dps, segment: [0.15, 0.39], at: [0.056, 0.624]}   # R38: $255, secures round 38; cash left $24,767
+  - {do: target, id: des7, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sub6, to: 2-0-0}   # R38: $535, secures round 38; cash left $24,232
+  - {do: upgrade, id: sub6, to: 2-0-1}   # R38: $385, secures round 38; cash left $23,847
+  - {do: upgrade, id: sub6, to: 2-0-2}   # R38: $850, secures round 38; cash left $22,997
+  - {do: upgrade, id: ace1, to: 1-3-0}   # R38: $1,065, secures round 38; cash left $21,932
+  - {do: upgrade, id: sub6, to: 2-0-3}   # R38: $935, ahead of round 39; cash left $20,997
+  - {do: place, id: sky8, kind: skywarden, role: dps, segment: [0.4, 0.81], at: [0.452, 0.300]}   # R38: $175, ahead of round 39; cash left $20,822
+  - {do: place, id: buc9, kind: buccaneer, role: dps, segment: [0.5, 1.0], at: [0.601, 0.181]}   # R38: $510, ahead of round 39; cash left $20,312
+  - {do: upgrade, id: buc9, to: 0-0-1}
+  - {do: upgrade, id: buc9, to: 1-0-1}   # R38: $235, ahead of round 39; cash left $20,077
+  - {do: upgrade, id: ace1, to: 2-3-0}   # R38: $470, ahead of round 39; cash left $19,607
+  - {do: place, id: sni10, kind: sniper, role: dps, at: [0.248, 0.164]}   # R38: $1,200, ahead of round 39; cash left $18,407
+  - {do: upgrade, id: sni10, to: 1-2-0}
+  - {do: target, id: sni10, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: buc9, to: 2-0-1}   # R38: $360, ahead of round 39; cash left $18,047
+  - {do: place, id: bom11, kind: bomb, role: dps, segment: [0.64, 0.99], at: [0.623, 0.828]}   # R38: $745, ahead of round 39; cash left $17,302
+  - {do: upgrade, id: bom11, to: 0-0-2}
+  - {do: place, id: hero, kind: hero, role: dps}   # R38: $460; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: des7, to: 1-0-0}   # R38: $170, XP: surplus into the target tower; cash left $16,672
+  - {do: upgrade, id: des7, to: 2-0-0}   # R38: $170, XP: surplus into the target tower; cash left $16,502
+  - {do: upgrade, id: des7, to: 3-0-0}   # R38: $1,020, XP: surplus into the target tower; cash left $15,482
+  - {do: upgrade, id: des7, to: 4-0-0}   # R38: $4,930, XP: surplus into the target tower; cash left $10,552
+  - {do: upgrade, id: des7, to: 4-1-0}   # R38: $130, XP: surplus into the target tower; cash left $10,422
+  - {do: upgrade, id: des7, to: 4-2-0}   # R38: $300, XP: surplus into the target tower; cash left $10,122
+fill:
+  - {do: upgrade, kind: desperado, to: 4-2-0}   # surplus: the target's own path
+  - {do: place, kind: desperado, role: dps, max: 10}

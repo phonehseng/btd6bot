@@ -1,0 +1,105 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Dark Castle, deflation: planned for rounds 31-60, starting with $40,000 and the game's own income x0 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R54 2.04, R57 2.46, R58 2.48, R56 2.65, R59 2.74 (worst 2.04).
+# Cash by tower kind at the end: desperado $10,975 (32%), buccaneer $9,485 (28%), sniper $5,270 (15%), bomb $3,790 (11%), boomerang $2,040 (6%), skywarden $1,880 (5%), mermonkey $510 (1%), druid $425 (1%)
+# XP: XP target desperado; the game gives 59,735 tower XP in about 8.3 min, 19,072 of it to the target
+# (137,868/h); weighted by what each tower's XP is worth to the account: 219,974/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_darkcastle_deflation
+map: "Dark Castle"
+modes: [deflation]
+xp_target: desperado
+hero: quincy
+planner:
+  maps: ["Dark Castle"]
+  towers: {skywarden: [1, 0, 0], desperado: [0, 2, 4], bomb: [0, 2, 3], buccaneer: [2, 3, 2], sniper: [1, 2, 2], boomerang: [0, 3, 2], druid: [0, 0, 1], mermonkey: [0, 0, 0]}
+optimizer:
+  scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 2.04
+  unsafe_rounds: []
+  minutes: 8.3
+  target_xp_per_hour: 137868
+  valued_xp_per_hour: 219974
+plan:
+  - {do: place, id: sky1, kind: skywarden, role: dps, segment: [0.15, 0.65], at: [0.387, 0.385]}   # R31: $175, secures round 31; cash left $39,825
+  - {do: place, id: sky2, kind: skywarden, role: dps, segment: [0.16, 0.65], at: [0.419, 0.402]}   # R31: $175, secures round 31; cash left $39,650
+  - {do: place, id: sky3, kind: skywarden, role: dps, segment: [0.16, 0.63], at: [0.430, 0.351]}   # R31: $175, secures round 31; cash left $39,475
+  - {do: place, id: sky4, kind: skywarden, role: dps, segment: [0.18, 0.64], at: [0.462, 0.402]}   # R31: $175, secures round 31; cash left $39,300
+  - {do: place, id: sky5, kind: skywarden, role: dps, segment: [0.18, 0.64], at: [0.366, 0.641]}   # R31: $175, secures round 31; cash left $39,125
+  - {do: place, id: sky6, kind: skywarden, role: dps, segment: [0.19, 0.64], at: [0.409, 0.641]}   # R31: $175, secures round 31; cash left $38,950
+  - {do: place, id: sky7, kind: skywarden, role: dps, segment: [0.19, 0.63], at: [0.452, 0.641]}   # R31: $175, secures round 31; cash left $38,775
+  - {do: place, id: sky8, kind: skywarden, role: dps, segment: [0.2, 0.63], at: [0.505, 0.402]}   # R31: $175, secures round 31; cash left $38,600
+  - {do: place, id: des9, kind: desperado, role: dps, segment: [0.13, 0.65], at: [0.377, 0.300]}   # R31: $255, secures round 31; cash left $38,345
+  - {do: target, id: des9, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: bom10, kind: bomb, role: dps, segment: [0.2, 0.65], at: [0.516, 0.641]}   # R31: $745, secures round 31; cash left $37,600
+  - {do: upgrade, id: bom10, to: 0-0-2}
+  - {do: upgrade, id: bom10, to: 0-1-2}   # R31: $215, secures round 31; cash left $37,385
+  - {do: upgrade, id: bom10, to: 0-2-2}   # R31: $340, secures round 31; cash left $37,045
+  - {do: place, id: bom11, kind: bomb, role: dps, segment: [0.14, 0.37], at: [0.281, 0.436]}   # R31: $745, secures round 31; cash left $36,300
+  - {do: upgrade, id: bom11, to: 0-0-2}
+  - {do: upgrade, id: bom11, to: 0-1-2}   # R31: $215, ahead of round 33; cash left $36,085
+  - {do: upgrade, id: bom11, to: 0-2-2}   # R31: $340, ahead of round 33; cash left $35,745
+  - {do: upgrade, id: des9, to: 0-0-3}   # R31: $2,215, ahead of round 33; cash left $33,530
+  - {do: upgrade, id: des9, to: 0-1-3}   # R31: $130, ahead of round 33; cash left $33,400
+  - {do: place, id: buc12, kind: buccaneer, role: dps, segment: [0.21, 0.65], at: [0.569, 0.385]}   # R31: $340, ahead of round 36; cash left $33,060
+  - {do: place, id: buc13, kind: buccaneer, role: dps, segment: [0.21, 0.64], at: [0.569, 0.675]}   # R31: $340, ahead of round 36; cash left $32,720
+  - {do: upgrade, id: buc13, to: 2-0-0}   # R31: $595, ahead of round 36; cash left $32,125
+  - {do: upgrade, id: buc12, to: 2-0-0}   # R31: $595, ahead of round 36; cash left $31,530
+  - {do: upgrade, id: buc12, to: 2-2-0}   # R31: $895, ahead of round 36; cash left $30,635
+  - {do: upgrade, id: buc12, to: 2-3-0}   # R31: $765, ahead of round 36; cash left $29,870
+  - {do: place, id: sni14, kind: sniper, role: dps, at: [0.216, 0.078]}   # R31: $1,200, ahead of round 36; cash left $28,670
+  - {do: upgrade, id: sni14, to: 1-2-0}
+  - {do: target, id: sni14, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sni15, kind: sniper, role: dps, at: [0.259, 0.078]}   # R31: $1,200, ahead of round 42; cash left $27,470
+  - {do: upgrade, id: sni15, to: 1-2-0}
+  - {do: target, id: sni15, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: buc13, to: 2-0-1}   # R31: $170, ahead of round 43; cash left $27,300
+  - {do: place, id: sni16, kind: sniper, role: dps, at: [0.302, 0.078]}   # R31: $1,200, ahead of round 43; cash left $26,100
+  - {do: upgrade, id: sni16, to: 1-2-0}
+  - {do: target, id: sni16, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: buc17, kind: buccaneer, role: dps, segment: [0.22, 0.64], at: [0.601, 0.334]}   # R31: $510, ahead of round 47; cash left $25,590
+  - {do: upgrade, id: buc17, to: 0-0-1}
+  - {do: upgrade, id: buc17, to: 0-2-1}   # R31: $895, ahead of round 47; cash left $24,695
+  - {do: upgrade, id: buc17, to: 0-3-1}   # R31: $765, ahead of round 47; cash left $23,930
+  - {do: upgrade, id: buc17, to: 0-3-2}   # R31: $300, ahead of round 47; cash left $23,630
+  - {do: upgrade, id: bom10, to: 0-2-3}   # R31: $595, ahead of round 49; cash left $23,035
+  - {do: upgrade, id: sky1, to: 1-0-0}   # R31: $120, ahead of round 49; cash left $22,915
+  - {do: place, id: buc18, kind: buccaneer, role: dps, segment: [0.22, 0.63], at: [0.623, 0.675]}   # R31: $510, ahead of round 49; cash left $22,405
+  - {do: upgrade, id: buc18, to: 0-0-1}
+  - {do: upgrade, id: buc18, to: 2-0-1}   # R31: $595, ahead of round 49; cash left $21,810
+  - {do: place, id: buc19, kind: buccaneer, role: dps, segment: [0.22, 0.63], at: [0.590, 0.743]}   # R31: $510, ahead of round 54; cash left $21,300
+  - {do: upgrade, id: buc19, to: 0-0-1}
+  - {do: upgrade, id: buc19, to: 2-0-1}   # R31: $595, ahead of round 54; cash left $20,705
+  - {do: place, id: buc20, kind: buccaneer, role: dps, segment: [0.22, 0.63], at: [0.569, 0.283]}   # R31: $510, ahead of round 54; cash left $20,195
+  - {do: upgrade, id: buc20, to: 0-0-1}
+  - {do: upgrade, id: buc20, to: 2-0-1}   # R31: $595, ahead of round 54; cash left $19,600
+  - {do: upgrade, id: bom11, to: 0-2-3}   # R31: $595, ahead of round 54; cash left $19,005
+  - {do: place, id: boo21, kind: boomerang, role: dps, segment: [0.21, 0.55], at: [0.441, 0.709]}   # R31: $270, ahead of round 54; cash left $18,735
+  - {do: place, id: sni22, kind: sniper, role: dps, at: [0.345, 0.078]}   # R31: $900, ahead of round 54; cash left $17,835
+  - {do: upgrade, id: sni22, to: 0-2-0}
+  - {do: target, id: sni22, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: dru23, kind: druid, role: dps, segment: [0.13, 0.32], at: [0.270, 0.368]}   # R31: $425, ahead of round 54; cash left $17,410
+  - {do: upgrade, id: dru23, to: 0-0-1}
+  - {do: upgrade, id: sni22, to: 0-2-2}   # R31: $770, ahead of round 54; cash left $16,640
+  - {do: place, id: mer24, kind: mermonkey, role: dps, segment: [0.13, 0.2], at: [0.259, 0.300]}   # R31: $255, ahead of round 54; cash left $16,385
+  - {do: place, id: mer25, kind: mermonkey, role: dps, segment: [0.61, 0.68], at: [0.291, 0.589]}   # R31: $255, ahead of round 54; cash left $16,130
+  - {do: upgrade, id: boo21, to: 0-2-0}   # R31: $365, ahead of round 54; cash left $15,765
+  - {do: upgrade, id: boo21, to: 0-3-0}   # R31: $1,065, ahead of round 54; cash left $14,700
+  - {do: upgrade, id: boo21, to: 0-3-2}   # R31: $340, ahead of round 54; cash left $14,360
+  - {do: upgrade, id: sky6, to: 1-0-0}   # R31: $120, ahead of round 54; cash left $14,240
+  - {do: upgrade, id: sky5, to: 1-0-0}   # R31: $120, ahead of round 54; cash left $14,120
+  - {do: upgrade, id: sky7, to: 1-0-0}   # R31: $120, ahead of round 54; cash left $14,000
+  - {do: place, id: hero, kind: hero, role: dps}   # R31: $460; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: des9, to: 0-2-3}   # R31: $300, XP: surplus into the target tower; cash left $13,240
+  - {do: upgrade, id: des9, to: 0-2-4}   # R31: $8,075, XP: surplus into the target tower; cash left $5,165
+fill:
+  - {do: upgrade, kind: desperado, to: 0-2-4}   # surplus: the target's own path
+  - {do: place, kind: desperado, role: dps, max: 10}

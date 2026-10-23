@@ -1,0 +1,106 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Dark Dungeons, easy: planned for rounds 10-40, starting with $3,832 and the game's own income x2 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: 15.
+# Lowest margins: R15 1.78, R25 2.28, R13 2.30, R33 2.33, R28 2.48 (worst 1.78).
+# Cash by tower kind at the end: desperado $15,995 (50%), sub $7,175 (22%), mermonkey $3,760 (12%), tack $1,545 (5%), skywarden $1,170 (4%), spike $980 (3%), boomerang $975 (3%), alchemist $470 (1%)
+# XP: XP target desperado; the game gives 26,416 tower XP in about 5.2 min, 5,299 of it to the target
+# (61,140/h); weighted by what each tower's XP is worth to the account: 203,337/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_darkdungeons_easy
+map: "Dark Dungeons"
+modes: [easy]
+xp_target: desperado
+hero: quincy
+planner:
+  maps: ["Dark Dungeons"]
+  towers: {skywarden: [1, 0, 0], sub: [2, 2, 3], mermonkey: [2, 0, 1], desperado: [4, 2, 0], boomerang: [0, 2, 2], tack: [3, 2, 0], alchemist: [0, 0, 0], spike: [0, 0, 1]}
+optimizer:
+  scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 1.78
+  unsafe_rounds: [15]
+  minutes: 5.2
+  target_xp_per_hour: 61140
+  valued_xp_per_hour: 203337
+plan:
+  - {do: place, id: sky1, kind: skywarden, role: dps, segment: [0.15, 0.8], at: [0.387, 0.896]}   # R10: $175, secures round 10; cash left $3,657
+  - {do: place, id: sub2, kind: sub, role: dps, segment: [0.13, 0.77], at: [0.708, 0.794]}   # R10: $275, secures round 10; cash left $3,382
+  - {do: place, id: sky3, kind: skywarden, role: dps, segment: [0.15, 0.73], at: [0.398, 0.845]}   # R10: $175, secures round 10; cash left $3,207
+  - {do: place, id: sub4, kind: sub, role: dps, segment: [0.13, 0.65], at: [0.740, 0.845]}   # R10: $275, secures round 10; cash left $2,932
+  - {do: upgrade, id: sub4, to: 1-0-0}   # R10: $110, secures round 10; cash left $2,822
+  - {do: place, id: sky5, kind: skywarden, role: dps, segment: [0.61, 1.0], at: [0.377, 0.624]}   # R10: $175, secures round 10; cash left $2,647
+  - {do: place, id: mer6, kind: mermonkey, role: dps, segment: [0.18, 0.42], at: [0.729, 0.266]}   # R10: $255, secures round 10; cash left $2,392
+  - {do: place, id: mer7, kind: mermonkey, role: dps, segment: [0.65, 0.89], at: [0.174, 0.232]}   # R10: $255, secures round 10; cash left $2,137
+  - {do: place, id: mer8, kind: mermonkey, role: dps, segment: [0.77, 0.93], at: [0.088, 0.249]}   # R10: $255, secures round 10; cash left $1,882
+  - {do: place, id: mer9, kind: mermonkey, role: dps, segment: [0.62, 0.82], at: [0.088, 0.385]}   # R10: $255, secures round 10; cash left $1,627
+  - {do: upgrade, id: mer9, to: 1-0-0}   # R10: $130, secures round 10; cash left $1,497
+  - {do: upgrade, id: mer9, to: 2-0-0}   # R10: $215, secures round 10; cash left $1,282
+  - {do: upgrade, id: mer8, to: 1-0-0}   # R10: $130, secures round 10; cash left $1,152
+  - {do: upgrade, id: mer7, to: 1-0-0}   # R10: $130, secures round 10; cash left $1,022
+  - {do: upgrade, id: mer8, to: 2-0-0}   # R10: $215, secures round 10; cash left $807
+  - {do: upgrade, id: mer7, to: 2-0-0}   # R10: $215, ahead of round 13; cash left $592
+  - {do: place, id: hero, kind: hero, role: dps}   # R10: $460; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: mer6, to: 1-0-0}   # R11: $130, ahead of round 13; cash left $630
+  - {do: place, id: sky10, kind: skywarden, role: dps, segment: [0.64, 1.0], at: [0.409, 0.606]}   # R11: $175, ahead of round 13; cash left $455
+  - {do: place, id: sub11, kind: sub, role: dps, segment: [0.13, 0.65], at: [0.751, 0.777]}   # R11: $275, ahead of round 13; cash left $180
+  - {do: place, id: des12, kind: desperado, role: dps, segment: [0.57, 1.0], at: [0.302, 0.624]}   # R12: $255, ahead of round 13; cash left $303
+  - {do: target, id: des12, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sky13, kind: skywarden, role: dps, segment: [0.66, 1.0], at: [0.441, 0.624]}   # R12: $175, ahead of round 13; cash left $128
+  - {do: place, id: sky14, kind: skywarden, role: dps, segment: [0.12, 0.9], at: [0.142, 0.760]}   # R13: $175, secures round 13; cash left $337
+  - {do: upgrade, id: sub4, to: 1-0-1}   # R14: $385, ahead of round 15; cash left $516
+  - {do: upgrade, id: sub2, to: 0-0-1}   # R14: $385, ahead of round 15; cash left $131
+  - {do: place, id: boo15, kind: boomerang, role: dps, segment: [0.12, 0.77], at: [0.099, 0.862]}   # R15: $270, secures round 15; cash left $379
+  - {do: upgrade, id: boo15, to: 0-0-1}   # R15: $85, secures round 15; cash left $294
+  - {do: upgrade, id: boo15, to: 0-1-1}   # R15: $150, secures round 15; cash left $144
+  - {do: upgrade, id: sky10, to: 1-0-0}   # R15: $120, secures round 15; cash left $24
+  - {do: upgrade, id: boo15, to: 0-2-1}   # R16: $215, ahead of round 21; cash left $341
+  - {do: upgrade, id: des12, to: 0-1-0}   # R16: $130, ahead of round 21; cash left $211
+  - {do: upgrade, id: mer7, to: 2-0-1}   # R16: $170, ahead of round 21; cash left $41
+  - {do: place, id: des16, kind: desperado, role: dps, segment: [0.14, 0.72], at: [0.473, 0.913]}   # R17: $255, ahead of round 21; cash left $322
+  - {do: target, id: des16, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: tac17, kind: tack, role: dps, segment: [0.33, 0.7], at: [0.088, 0.743]}   # R17: $220, ahead of round 21; cash left $102
+  - {do: place, id: des18, kind: desperado, role: dps, segment: [0.27, 0.84], at: [0.302, 0.862]}   # R18: $255, ahead of round 24; cash left $177
+  - {do: target, id: des18, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: mer6, to: 1-0-1}   # R18: $170, ahead of round 24; cash left $7
+  - {do: upgrade, id: sub11, to: 0-0-1}   # R19: $385, ahead of round 24; cash left $338
+  - {do: place, id: tac19, kind: tack, role: dps, segment: [0.12, 0.48], at: [0.163, 0.879]}   # R19: $220, ahead of round 24; cash left $118
+  - {do: upgrade, id: boo15, to: 0-2-2}   # R20: $255, ahead of round 24; cash left $383
+  - {do: upgrade, id: mer6, to: 2-0-1}   # R21: $215, ahead of round 24; cash left $540
+  - {do: upgrade, id: sub2, to: 0-2-1}   # R22: $640, ahead of round 27; cash left $602
+  - {do: place, id: mer20, kind: mermonkey, role: dps, segment: [0.76, 0.97], at: [0.345, 0.470]}   # R24: $255, ahead of round 27; cash left $1,497
+  - {do: upgrade, id: sub11, to: 1-0-1}   # R24: $110, ahead of round 27; cash left $1,387
+  - {do: upgrade, id: des12, to: 3-1-0}   # R24: $1,360, ahead of round 28; cash left $27
+  - {do: upgrade, id: mer9, to: 2-0-1}   # R25: $170, ahead of round 28; cash left $191
+  - {do: upgrade, id: mer8, to: 2-0-1}   # R25: $170, ahead of round 28; cash left $21
+  - {do: place, id: alc21, kind: alchemist, role: dps, segment: [0.48, 0.74], at: [0.366, 0.300]}   # R26: $470, ahead of round 28; cash left $221
+  - {do: upgrade, id: sub2, to: 0-2-2}   # R27: $850, ahead of round 30; cash left $37
+  - {do: upgrade, id: sub4, to: 2-0-1}   # R28: $425, ahead of round 33; cash left $936
+  - {do: upgrade, id: sub11, to: 2-0-1}   # R28: $425, ahead of round 33; cash left $511
+  - {do: upgrade, id: tac17, to: 0-2-0}   # R28: $275, ahead of round 33; cash left $236
+  - {do: upgrade, id: tac17, to: 1-2-0}   # R28: $130, ahead of round 33; cash left $106
+  - {do: place, id: spi22, kind: spike, role: dps, segment: [0.41, 0.89], at: [0.729, 0.470]}   # R30: $980, ahead of round 33; cash left $436
+  - {do: upgrade, id: spi22, to: 0-0-1}
+  - {do: place, id: mer23, kind: mermonkey, role: dps, segment: [0.72, 0.85], at: [0.174, 0.385]}   # R30: $425, ahead of round 33; cash left $11
+  - {do: upgrade, id: mer23, to: 0-0-1}
+  - {do: upgrade, id: sub4, to: 2-0-2}   # R32: $850, ahead of round 34; cash left $909
+  - {do: upgrade, id: sub11, to: 2-0-2}   # R32: $850, ahead of round 37; cash left $59
+  - {do: upgrade, id: des16, to: 3-0-0}   # R34: $1,360, ahead of round 37; cash left $363
+  - {do: upgrade, id: des16, to: 3-1-0}   # R34: $130, ahead of round 37; cash left $233
+  - {do: upgrade, id: tac17, to: 3-2-0}   # R35: $700, ahead of round 37; cash left $1,357
+  - {do: upgrade, id: sub4, to: 2-0-3}   # R35: $935, ahead of round 40; cash left $422
+  - {do: upgrade, id: des12, to: 3-2-0}   # R35: $300, XP: surplus into the target tower; cash left $122
+  - {do: upgrade, id: des18, to: 3-0-0}   # R36: $1,360, XP: surplus into the target tower; cash left $1,062
+  - {do: upgrade, id: des16, to: 3-2-0}   # R36: $300, XP: surplus into the target tower; cash left $762
+  - {do: upgrade, id: des18, to: 3-1-0}   # R36: $130, XP: surplus into the target tower; cash left $632
+  - {do: upgrade, id: des18, to: 3-2-0}   # R36: $300, XP: surplus into the target tower; cash left $332
+  - {do: upgrade, id: des12, to: 4-2-0}   # R39: $4,930, XP: surplus into the target tower; cash left $2,426
+  - {do: upgrade, id: des16, to: 4-2-0}   # R40: $4,930, XP: surplus into the target tower; cash left $1,014
+fill:
+  - {do: upgrade, kind: desperado, to: 4-2-0}   # surplus: the target's own path
+  - {do: place, kind: desperado, role: dps, max: 10}

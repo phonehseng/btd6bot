@@ -23,7 +23,7 @@ planner:
 optimizer:
   scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
   safety_margin: 2.0
-  worst_margin: 2.13
+  worst_margin: 2.20
   unsafe_rounds: []
   minutes: 5.0
   target_xp_per_hour: 0

@@ -418,6 +418,31 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             _flatten_attack(a, out, multiplier=alive, depth=depth + 1, parent_camo=camo_chain)
 
 
+def _trigger_rates(weapons):
+    """{index of a triggered weapon: the rate it really fires at}.
+
+    A weapon fired by another (FireAlternateWeaponModel) shoots at that
+    one's rate; its own rate (0.05 s) is only a readiness check. The export's
+    `fires_weapon` index is used when it points at a triggered weapon;
+    otherwise the trigger is the nearest untriggered weapon before it, as the
+    export lists each primary right before its secondary. (The buccaneer's
+    Grape Shot and Cannon pairs carried indexes that point at the primary
+    itself or past the list: their secondaries were counted at 20 shots a
+    second - 100 Grape Shot shots/s instead of 3.7 - and boat builds were
+    rated many times too strong.)"""
+    rates = {}
+    for i, w in enumerate(weapons):
+        j = w.get("fires_weapon")
+        if j is not None and j != i and 0 <= j < len(weapons) and weapons[j].get("triggered"):
+            rates.setdefault(j, w.get("rate", 1.0))
+    for i, w in enumerate(weapons):
+        if w.get("triggered") and i not in rates:
+            prev = next((k for k in range(i - 1, -1, -1) if not weapons[k].get("triggered")), None)
+            if prev is not None:
+                rates[i] = weapons[prev].get("rate", 1.0)
+    return rates
+
+
 def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=False):
     """Add an attack's damage sources (per weapon) to out.
     follows: the tower is a helicopter that flies to the bloons (global reach)."""
@@ -437,12 +462,13 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
         placement = "aimed"
         camo_chain = a.get("camo", False)
     weapons = a.get("weapons", [])
-    # a weapon fired by another (FireAlternateWeaponModel) shoots at that one's rate
-    trigger_rate = {w["fires_weapon"]: w.get("rate", 1.0) for w in weapons if w.get("fires_weapon") is not None}
+    trigger_rate = _trigger_rates(weapons)
     for i, w in enumerate(weapons):
         rate = w.get("rate", 1.0)
         if w.get("triggered"):
-            rate = trigger_rate.get(i, rate)
+            if i not in trigger_rate:
+                continue      # nothing fires it: its own rate is only a readiness check
+            rate = trigger_rate[i]
         rate = max(rate, w.get("rate_min", 0.0), 1e-3)
         shots = multiplier * w.get("count", 1.0) * w.get("burst", 1.0) / rate
         p = w.get("projectile")
@@ -758,10 +784,11 @@ class Track:
             else:
                 d2 = (xyz[:, 0] - x) ** 2 + (xyz[:, 1] - z) ** 2
                 inside = ok & (d2 <= radius * radius)
-                if sight is not None and inside.any():
-                    vis = sight(x, z, xyz[inside])
-                    idx = np.nonzero(inside)[0]
-                    inside[idx[~vis]] = False
+            if sight is not None and inside.any():
+                # map-wide or not, a tower that needs sight hits only what it sees
+                vis = sight(x, z, xyz[inside])
+                idx = np.nonzero(inside)[0]
+                inside[idx[~vis]] = False
             if not inside.any():
                 out.append(None)
                 continue
@@ -1244,6 +1271,9 @@ def _buffed_sources(p, buffs_here):
     return out
 
 
+MAP_WIDE_NEEDS_SIGHT = ("sniper",)
+
+
 def station_for(t, placed, track, sight=None):
     """The Station of one Placed tower, or None when it does no damage or
     reaches no track. Support buffs of the other towers in `placed`
@@ -1277,7 +1307,12 @@ def station_for(t, placed, track, sight=None):
         reach_radius = p.pattern_radius + p.range * range_mult
     is_global = p.is_global or any(s.placement == "global" for s in sources)
     travel = max((s.travel for s in sources if s.radial), default=0.0)
-    blocked = sight if (sight is not None and not is_global and needs_sight(t.kind)) else None
+    # Snipers reach the whole map but still need line of sight; the other
+    # map-wide towers (planes, helis, mortars, Advanced Intel subs) do not.
+    # Skipping the sight test for snipers let the optimizer line them up in
+    # corners that see little of the track (Balance's top row).
+    sees = needs_sight(t.kind) and (not is_global or t.kind in MAP_WIDE_NEEDS_SIGHT)
+    blocked = sight if (sight is not None and sees) else None
     zones = track.zones(t.x, t.z, None if is_global else reach_radius, travel=travel, sight=blocked)
     if not any(zones):
         return None
@@ -1290,6 +1325,27 @@ def station_for(t, placed, track, sight=None):
     strong = any(s.reach == 0.0 for s in sources)
     return Station(tid=t.tid, kind=t.kind, tiers=tuple(t.tiers), zones=zones, sources=sources,
                    order=order, banked=banked, bank_seconds=bank, bank_start=start, strong=strong)
+
+
+def sight_test(grid, track, samples=12):
+    """A sight(x, z, pts) function for station_for from a MapModel's bool
+    sight grid (True = blocks sight): a track point is visible from a tower
+    when no blocking cell lies on the straight line between (sampled
+    `samples` times). None when the map has no sight blockers."""
+    if grid is None or not grid.any():
+        return None
+    h, w = grid.shape
+    t = np.linspace(0.1, 0.9, samples)[:, None]
+
+    def sight(x, z, pts):
+        px = x + (pts[:, 0][None, :] - x) * t
+        pz = z + (pts[:, 1][None, :] - z) * t
+        ph = pts[:, 2][None, :] * t
+        cells = np.rint(track.proj.to_cells(np.stack([px.ravel(), pz.ravel(), ph.ravel()], axis=1))).astype(int)
+        cells[:, 0] = np.clip(cells[:, 0], 0, w - 1)
+        cells[:, 1] = np.clip(cells[:, 1], 0, h - 1)
+        return ~grid[cells[:, 1], cells[:, 0]].reshape(samples, -1).any(axis=0)
+    return sight
 
 
 def stations_for(placed, track, sight=None):

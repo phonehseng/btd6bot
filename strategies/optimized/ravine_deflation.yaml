@@ -1,0 +1,79 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Ravine, deflation: planned for rounds 31-60, starting with $40,000 and the game's own income x0 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R55 2.09, R45 2.11, R47 2.11, R58 2.20, R57 2.59 (worst 2.09).
+# Cash by tower kind at the end: bomb $8,990 (38%), ice $8,850 (38%), ace $2,770 (12%), sniper $2,100 (9%), alchemist $470 (2%), ninja $340 (1%)
+# XP: XP target ice; the game gives 59,735 tower XP in about 8.3 min, 22,477 of it to the target
+# (162,483/h); weighted by what each tower's XP is worth to the account: 248,875/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_ravine_deflation
+map: "Ravine"
+modes: [deflation]
+xp_target: ice
+hero: quincy
+planner:
+  maps: ["Ravine"]
+  towers: {bomb: [3, 2, 3], sniper: [1, 2, 0], ace: [2, 3, 0], alchemist: [0, 0, 0], ninja: [0, 0, 0], ice: [4, 2, 0]}
+optimizer:
+  scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 2.04
+  unsafe_rounds: []
+  minutes: 8.3
+  target_xp_per_hour: 162483
+  valued_xp_per_hour: 248875
+plan:
+  - {do: place, id: bom1, kind: bomb, role: dps, segment: [0.0, 0.23], at: [0.687, 0.266]}   # R31: $960, secures round 31; cash left $39,040
+  - {do: upgrade, id: bom1, to: 0-1-2}
+  - {do: upgrade, id: bom1, to: 0-2-2}   # R31: $340, secures round 31; cash left $38,700
+  - {do: place, id: bom2, kind: bomb, role: dps, segment: [0.14, 0.38], at: [0.302, 0.777]}   # R31: $960, secures round 31; cash left $37,740
+  - {do: upgrade, id: bom2, to: 0-1-2}
+  - {do: upgrade, id: bom2, to: 0-2-2}   # R31: $340, secures round 31; cash left $37,400
+  - {do: place, id: bom3, kind: bomb, role: dps, segment: [0.15, 0.37], at: [0.259, 0.760]}   # R31: $745, secures round 31; cash left $36,655
+  - {do: upgrade, id: bom3, to: 0-0-2}
+  - {do: upgrade, id: bom3, to: 3-0-2}   # R31: $1,705, ahead of round 33; cash left $34,950
+  - {do: upgrade, id: bom2, to: 0-2-3}   # R31: $595, ahead of round 33; cash left $34,355
+  - {do: place, id: sni4, kind: sniper, role: dps, at: [0.623, 0.078]}   # R31: $1,200, ahead of round 33; cash left $33,155
+  - {do: upgrade, id: sni4, to: 1-2-0}
+  - {do: target, id: sni4, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: ace5, kind: ace, role: dps, at: [0.195, 0.862]}   # R31: $1,915, ahead of round 36; cash left $31,240
+  - {do: upgrade, id: ace5, to: 0-3-0}
+  - {do: upgrade, id: ace5, to: 1-3-0}   # R31: $385, ahead of round 45; cash left $30,855
+  - {do: place, id: sni6, kind: sniper, role: dps, at: [0.665, 0.078]}   # R31: $900, ahead of round 45; cash left $29,955
+  - {do: upgrade, id: sni6, to: 0-2-0}
+  - {do: target, id: sni6, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: ace5, to: 2-3-0}   # R31: $470, ahead of round 45; cash left $29,485
+  - {do: place, id: bom7, kind: bomb, role: dps, segment: [0.0, 0.23], at: [0.687, 0.334]}   # R31: $745, ahead of round 47; cash left $28,740
+  - {do: upgrade, id: bom7, to: 0-0-2}
+  - {do: upgrade, id: bom7, to: 0-2-2}   # R31: $555, ahead of round 47; cash left $28,185
+  - {do: place, id: alc8, kind: alchemist, role: dps, segment: [0.14, 0.33], at: [0.345, 0.777]}   # R31: $470, ahead of round 47; cash left $27,715
+  - {do: place, id: bom9, kind: bomb, role: dps, segment: [0.0, 0.24], at: [0.644, 0.300]}   # R31: $960, ahead of round 47; cash left $26,755
+  - {do: upgrade, id: bom9, to: 0-1-2}
+  - {do: upgrade, id: bom9, to: 0-2-2}   # R31: $340, ahead of round 47; cash left $26,415
+  - {do: place, id: bom10, kind: bomb, role: dps, segment: [0.16, 0.34], at: [0.248, 0.828]}   # R31: $745, ahead of round 47; cash left $25,670
+  - {do: upgrade, id: bom10, to: 0-0-2}
+  - {do: place, id: nin11, kind: ninja, role: dps, segment: [0.0, 0.14], at: [0.644, 0.129]}   # R31: $340, ahead of round 47; cash left $25,330
+  - {do: place, id: hero, kind: hero, role: dps}   # R31: $460; hero: not counted by the model (extra safety)
+  - {do: place, id: ice12, kind: ice, role: dps, segment: [0.04, 0.08], at: [0.580, 0.300]}   # R31: $340, XP: surplus into the target tower; cash left $24,530
+  - {do: place, id: ice13, kind: ice, role: dps, segment: [0.0, 0.04], at: [0.761, 0.095]}   # R31: $340, XP: surplus into the target tower; cash left $24,190
+  - {do: upgrade, id: ice12, to: 1-0-0}   # R31: $130, XP: surplus into the target tower; cash left $24,060
+  - {do: upgrade, id: ice12, to: 2-0-0}   # R31: $300, XP: surplus into the target tower; cash left $23,760
+  - {do: upgrade, id: ice12, to: 3-0-0}   # R31: $1,275, XP: surplus into the target tower; cash left $22,485
+  - {do: upgrade, id: ice12, to: 4-0-0}   # R31: $1,955, XP: surplus into the target tower; cash left $20,530
+  - {do: upgrade, id: ice12, to: 4-1-0}   # R31: $170, XP: surplus into the target tower; cash left $20,360
+  - {do: upgrade, id: ice12, to: 4-2-0}   # R31: $255, XP: surplus into the target tower; cash left $20,105
+  - {do: upgrade, id: ice13, to: 1-0-0}   # R31: $130, XP: surplus into the target tower; cash left $19,975
+  - {do: upgrade, id: ice13, to: 2-0-0}   # R31: $300, XP: surplus into the target tower; cash left $19,675
+  - {do: upgrade, id: ice13, to: 3-0-0}   # R31: $1,275, XP: surplus into the target tower; cash left $18,400
+  - {do: upgrade, id: ice13, to: 4-0-0}   # R31: $1,955, XP: surplus into the target tower; cash left $16,445
+  - {do: upgrade, id: ice13, to: 4-1-0}   # R31: $170, XP: surplus into the target tower; cash left $16,275
+  - {do: upgrade, id: ice13, to: 4-2-0}   # R31: $255, XP: surplus into the target tower; cash left $16,020
+fill:
+  - {do: upgrade, kind: ice, to: 4-2-0}   # surplus: the target's own path
+  - {do: place, kind: ice, role: dps, max: 10}

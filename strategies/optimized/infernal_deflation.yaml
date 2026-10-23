@@ -1,0 +1,87 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Infernal, deflation: planned for rounds 31-60, starting with $40,000 and the game's own income x0 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41.
+# Lowest margins: R31 0.06, R32 0.06, R33 0.06, R34 0.06, R35 0.06 (worst 0.06).
+# Cash by tower kind at the end: sub $14,215 (41%), sniper $12,720 (36%), ace $5,540 (16%), desperado $2,045 (6%), skywarden $525 (1%)
+# XP: XP target desperado; the game gives 59,735 tower XP in about 8.3 min, 2,601 of it to the target
+# (18,804/h); weighted by what each tower's XP is worth to the account: 115,022/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_infernal_deflation
+map: "Infernal"
+modes: [deflation]
+xp_target: desperado
+hero: quincy
+planner:
+  maps: ["Infernal"]
+  towers: {sniper: [1, 2, 4], ace: [2, 3, 0], skywarden: [0, 0, 0], sub: [4, 1, 3], desperado: [3, 2, 0]}
+optimizer:
+  scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 0.06
+  unsafe_rounds: [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41]
+  minutes: 8.3
+  target_xp_per_hour: 18804
+  valued_xp_per_hour: 115022
+plan:
+  - {do: place, id: sni1, kind: sniper, role: dps, at: [0.248, 0.164]}   # R42: $1,200, secures round 42; cash left $38,800
+  - {do: upgrade, id: sni1, to: 1-2-0}
+  - {do: target, id: sni1, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sni2, kind: sniper, role: dps, at: [0.216, 0.198]}   # R42: $900, secures round 42; cash left $37,900
+  - {do: upgrade, id: sni2, to: 0-2-0}
+  - {do: target, id: sni2, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni2, to: 0-2-2}   # R42: $770, secures round 42; cash left $37,130
+  - {do: place, id: sni3, kind: sniper, role: dps, at: [0.259, 0.215]}   # R42: $900, secures round 42; cash left $36,230
+  - {do: upgrade, id: sni3, to: 0-2-0}
+  - {do: target, id: sni3, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni3, to: 0-2-2}   # R42: $770, secures round 42; cash left $35,460
+  - {do: place, id: ace4, kind: ace, role: dps, at: [0.430, 0.692]}   # R42: $850, secures round 42; cash left $34,610
+  - {do: upgrade, id: ace4, to: 0-1-0}
+  - {do: upgrade, id: ace4, to: 0-3-0}   # R42: $1,065, secures round 42; cash left $33,545
+  - {do: upgrade, id: ace4, to: 1-3-0}   # R42: $385, ahead of round 43; cash left $33,160
+  - {do: place, id: sky5, kind: skywarden, role: dps, segment: [0.38, 0.82], at: [0.441, 0.351]}   # R42: $175, ahead of round 43; cash left $32,985
+  - {do: place, id: ace6, kind: ace, role: dps, at: [0.623, 0.777]}   # R42: $850, ahead of round 43; cash left $32,135
+  - {do: upgrade, id: ace6, to: 0-1-0}
+  - {do: place, id: sky7, kind: skywarden, role: dps, segment: [0.36, 0.79], at: [0.409, 0.334]}   # R42: $175, ahead of round 43; cash left $31,960
+  - {do: place, id: sky8, kind: skywarden, role: dps, segment: [0.4, 0.81], at: [0.452, 0.300]}   # R42: $175, ahead of round 43; cash left $31,785
+  - {do: upgrade, id: ace6, to: 0-3-0}   # R42: $1,065, ahead of round 43; cash left $30,720
+  - {do: upgrade, id: ace6, to: 2-3-0}   # R42: $855, ahead of round 43; cash left $29,865
+  - {do: place, id: sni9, kind: sniper, role: dps, at: [0.227, 0.249]}   # R42: $1,200, ahead of round 43; cash left $28,665
+  - {do: upgrade, id: sni9, to: 1-2-0}
+  - {do: target, id: sni9, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sni10, kind: sniper, role: dps, at: [0.024, 0.419]}   # R42: $1,200, ahead of round 43; cash left $27,465
+  - {do: upgrade, id: sni10, to: 1-2-0}
+  - {do: target, id: sni10, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sub11, kind: sub, role: dps, at: [0.259, 0.760]}   # R42: $1,195, ahead of round 43; cash left $26,270
+  - {do: upgrade, id: sub11, to: 2-1-0}
+  - {do: place, id: sub12, kind: sub, role: dps, segment: [0.58, 0.92], at: [0.601, 0.232]}   # R42: $1,895, ahead of round 43; cash left $24,375
+  - {do: upgrade, id: sub12, to: 0-1-2}
+  - {do: upgrade, id: sub11, to: 4-1-0}   # R42: $2,635, ahead of round 47; cash left $21,740
+  - {do: upgrade, id: ace4, to: 2-3-0}   # R42: $470, ahead of round 54; cash left $21,270
+  - {do: place, id: sub13, kind: sub, role: dps, segment: [0.18, 0.45], at: [0.216, 0.777]}   # R42: $1,895, ahead of round 54; cash left $19,375
+  - {do: upgrade, id: sub13, to: 0-1-2}
+  - {do: upgrade, id: sub12, to: 0-1-3}   # R42: $935, ahead of round 54; cash left $18,440
+  - {do: upgrade, id: sub13, to: 0-1-3}   # R42: $935, ahead of round 54; cash left $17,505
+  - {do: place, id: sub14, kind: sub, role: dps, segment: [0.68, 0.92], at: [0.633, 0.181]}   # R42: $1,895, ahead of round 54; cash left $15,610
+  - {do: upgrade, id: sub14, to: 0-1-2}
+  - {do: place, id: sub15, kind: sub, role: dps, segment: [0.21, 0.39], at: [0.248, 0.828]}   # R42: $1,895, ahead of round 54; cash left $13,715
+  - {do: upgrade, id: sub15, to: 0-1-2}
+  - {do: upgrade, id: sni3, to: 0-2-3}   # R42: $2,295, ahead of round 54; cash left $11,420
+  - {do: upgrade, id: sni3, to: 0-2-4}   # R42: $3,485, ahead of round 54; cash left $7,935
+  - {do: upgrade, id: sub14, to: 0-1-3}   # R42: $935, ahead of round 54; cash left $7,000
+  - {do: place, id: hero, kind: hero, role: dps}   # R42: $460; hero: not counted by the model (extra safety)
+  - {do: place, id: des16, kind: desperado, role: dps, segment: [0.15, 0.39], at: [0.056, 0.624]}   # R42: $255, XP: surplus into the target tower; cash left $6,285
+  - {do: target, id: des16, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: des16, to: 1-0-0}   # R42: $170, XP: surplus into the target tower; cash left $6,115
+  - {do: upgrade, id: des16, to: 2-0-0}   # R42: $170, XP: surplus into the target tower; cash left $5,945
+  - {do: upgrade, id: des16, to: 3-0-0}   # R42: $1,020, XP: surplus into the target tower; cash left $4,925
+  - {do: upgrade, id: des16, to: 3-1-0}   # R42: $130, XP: surplus into the target tower; cash left $4,795
+  - {do: upgrade, id: des16, to: 3-2-0}   # R42: $300, XP: surplus into the target tower; cash left $4,495
+fill:
+  - {do: upgrade, kind: desperado, to: 3-2-0}   # surplus: the target's own path
+  - {do: place, kind: desperado, role: dps, max: 10}

@@ -1,0 +1,86 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Tricky Tracks, easy: planned for rounds 10-40, starting with $3,832 and the game's own income x2 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R36 3.19, R15 3.26, R39 3.40, R34 3.55, R27 3.59 (worst 3.19).
+# Cash by tower kind at the end: sniper $31,240 (100%)
+# XP: XP target sniper; the game gives 26,416 tower XP in about 5.2 min, 26,416 of it to the target
+# (304,800/h); weighted by what each tower's XP is worth to the account: 30,480/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_trickytracks_easy
+map: "Tricky Tracks"
+modes: [easy]
+xp_target: sniper
+hero: quincy
+planner:
+  maps: ["Tricky Tracks"]
+  towers: {sniper: [3, 3, 2]}
+optimizer:
+  scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 3.19
+  unsafe_rounds: []
+  minutes: 5.2
+  target_xp_per_hour: 304800
+  valued_xp_per_hour: 30480
+plan:
+  - {do: place, id: sni1, kind: sniper, role: dps, at: [0.377, 0.078]}   # R10: $900, secures round 10; cash left $2,932
+  - {do: upgrade, id: sni1, to: 0-2-0}
+  - {do: target, id: sni1, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni1, to: 0-2-1}   # R10: $385, secures round 10; cash left $2,547
+  - {do: upgrade, id: sni1, to: 0-2-2}   # R10: $385, secures round 10; cash left $2,162
+  - {do: place, id: sni2, kind: sniper, role: dps, at: [0.419, 0.078]}   # R10: $300, ahead of round 13; cash left $1,862
+  - {do: target, id: sni2, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: hero, kind: hero, role: dps}   # R10: $460; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: sni2, to: 0-2-0}   # R10: $600, ahead of round 15; cash left $802
+  - {do: upgrade, id: sni2, to: 0-2-1}   # R10: $385, ahead of round 15; cash left $417
+  - {do: upgrade, id: sni2, to: 0-2-2}   # R10: $385, ahead of round 15; cash left $32
+  - {do: place, id: sni3, kind: sniper, role: dps, at: [0.612, 0.078]}   # R11: $300, XP: surplus into the target tower; cash left $360
+  - {do: target, id: sni3, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sni4, kind: sniper, role: dps, at: [0.655, 0.078]}   # R11: $300, XP: surplus into the target tower; cash left $60
+  - {do: target, id: sni4, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sni5, kind: sniper, role: dps, at: [0.580, 0.112]}   # R12: $300, XP: surplus into the target tower; cash left $138
+  - {do: target, id: sni5, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni5, to: 0-2-0}   # R14: $600, ahead of round 21; cash left $486
+  - {do: upgrade, id: sni5, to: 0-2-1}   # R14: $385, ahead of round 21; cash left $101
+  - {do: place, id: sni6, kind: sniper, role: dps, at: [0.826, 0.112]}   # R15: $300, XP: surplus into the target tower; cash left $319
+  - {do: target, id: sni6, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sni7, kind: sniper, role: dps, at: [0.345, 0.129]}   # R15: $300, XP: surplus into the target tower; cash left $19
+  - {do: target, id: sni7, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni5, to: 0-2-2}   # R16: $385, XP: surplus into the target tower; cash left $166
+  - {do: place, id: sni8, kind: sniper, role: dps, at: [0.387, 0.129]}   # R17: $300, XP: surplus into the target tower; cash left $402
+  - {do: target, id: sni8, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni3, to: 1-0-0}   # R17: $300, XP: surplus into the target tower; cash left $102
+  - {do: upgrade, id: sni3, to: 1-1-0}   # R18: $215, XP: surplus into the target tower; cash left $217
+  - {do: upgrade, id: sni4, to: 0-1-0}   # R18: $215, XP: surplus into the target tower; cash left $2
+  - {do: upgrade, id: sni3, to: 1-2-0}   # R19: $385, ahead of round 27; cash left $333
+  - {do: upgrade, id: sni4, to: 0-2-0}   # R20: $385, ahead of round 27; cash left $468
+  - {do: upgrade, id: sni4, to: 1-2-0}   # R20: $300, XP: surplus into the target tower; cash left $168
+  - {do: upgrade, id: sni6, to: 1-0-0}   # R21: $300, XP: surplus into the target tower; cash left $240
+  - {do: upgrade, id: sni6, to: 1-1-0}   # R21: $215, XP: surplus into the target tower; cash left $25
+  - {do: upgrade, id: sni6, to: 1-2-0}   # R22: $385, XP: surplus into the target tower; cash left $342
+  - {do: upgrade, id: sni7, to: 1-0-0}   # R22: $300, XP: surplus into the target tower; cash left $42
+  - {do: upgrade, id: sni7, to: 1-2-0}   # R23: $600, XP: surplus into the target tower; cash left $38
+  - {do: upgrade, id: sni8, to: 1-0-0}   # R24: $300, XP: surplus into the target tower; cash left $292
+  - {do: upgrade, id: sni8, to: 1-1-0}   # R24: $215, XP: surplus into the target tower; cash left $77
+  - {do: upgrade, id: sni8, to: 1-2-0}   # R25: $385, XP: surplus into the target tower; cash left $26
+  - {do: upgrade, id: sni7, to: 2-2-0}   # R27: $1,105, XP: surplus into the target tower; cash left $257
+  - {do: upgrade, id: sni3, to: 2-2-0}   # R28: $1,105, XP: surplus into the target tower; cash left $476
+  - {do: upgrade, id: sni4, to: 2-2-0}   # R30: $1,105, XP: surplus into the target tower; cash left $681
+  - {do: upgrade, id: sni3, to: 3-2-0}   # R32: $1,870, ahead of round 39; cash left $559
+  - {do: upgrade, id: sni1, to: 0-3-2}   # R33: $1,785, XP: surplus into the target tower; cash left $28
+  - {do: upgrade, id: sni4, to: 3-2-0}   # R35: $1,870, XP: surplus into the target tower; cash left $392
+  - {do: upgrade, id: sni7, to: 3-2-0}   # R36: $1,870, XP: surplus into the target tower; cash left $822
+  - {do: upgrade, id: sni2, to: 0-3-2}   # R37: $1,785, XP: surplus into the target tower; cash left $829
+  - {do: upgrade, id: sni8, to: 3-2-0}   # R38: $2,975, XP: surplus into the target tower; cash left $532
+  - {do: upgrade, id: sni5, to: 0-3-2}   # R39: $1,785, XP: surplus into the target tower; cash left $1,301
+  - {do: upgrade, id: sni6, to: 2-2-0}   # R39: $1,105, XP: surplus into the target tower; cash left $196
+  - {do: upgrade, id: sni6, to: 3-2-0}   # R40: $1,870, XP: surplus into the target tower; cash left $1,844
+fill:
+  - {do: upgrade, kind: sniper, to: 0-3-2}   # surplus: the target's own path
+  - {do: place, kind: sniper, role: dps, max: 10}

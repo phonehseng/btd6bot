@@ -1,0 +1,47 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Glacial Trail, deflation: planned for rounds 31-60, starting with $40,000 and the game's own income x0 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60.
+# Lowest margins: R33 0.06, R36 0.06, R37 0.06, R42 0.06, R45 0.06 (worst 0.06).
+# Cash by tower kind at the end: alchemist $1,305 (53%), skywarden $1,180 (47%)
+# XP: XP target desperado; the game gives 59,735 tower XP in about 8.3 min, 0 of it to the target
+# (0/h); weighted by what each tower's XP is worth to the account: 211,344/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_glacialtrail_deflation
+map: "Glacial Trail"
+modes: [deflation]
+xp_target: desperado
+hero: quincy
+planner:
+  maps: ["Glacial Trail"]
+  towers: {skywarden: [1, 0, 0], alchemist: [1, 2, 0]}
+optimizer:
+  scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 0.06
+  unsafe_rounds: [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
+  minutes: 8.3
+  target_xp_per_hour: 0
+  valued_xp_per_hour: 211344
+plan:
+  - {do: place, id: sky1, kind: skywarden, role: dps, segment: [0.62, 0.97], at: [0.719, 0.641]}   # R31: $175, secures round 31; cash left $39,825
+  - {do: place, id: sky2, kind: skywarden, role: dps, segment: [0.08, 0.34], at: [0.099, 0.368]}   # R31: $175, secures round 31; cash left $39,650
+  - {do: place, id: sky3, kind: skywarden, role: dps, segment: [0.11, 0.34], at: [0.163, 0.504]}   # R31: $175, secures round 31; cash left $39,475
+  - {do: place, id: sky4, kind: skywarden, role: dps, segment: [0.63, 0.84], at: [0.729, 0.692]}   # R31: $175, secures round 31; cash left $39,300
+  - {do: place, id: alc5, kind: alchemist, role: dps, segment: [0.11, 0.38], at: [0.131, 0.521]}   # R31: $470, secures round 31; cash left $38,830
+  - {do: upgrade, id: sky2, to: 1-0-0}   # R31: $120, secures round 31; cash left $38,710
+  - {do: upgrade, id: alc5, to: 0-1-0}   # R31: $215, secures round 31; cash left $38,495
+  - {do: upgrade, id: sky3, to: 1-0-0}   # R31: $120, secures round 31; cash left $38,375
+  - {do: upgrade, id: alc5, to: 1-1-0}   # R31: $215, secures round 31; cash left $38,160
+  - {do: upgrade, id: alc5, to: 1-2-0}   # R31: $405, secures round 31; cash left $37,755
+  - {do: upgrade, id: sky4, to: 1-0-0}   # R31: $120, secures round 31; cash left $37,635
+  - {do: upgrade, id: sky1, to: 1-0-0}   # R31: $120, secures round 31; cash left $37,515
+  - {do: place, id: hero, kind: hero, role: dps}   # R31: $460; hero: not counted by the model (extra safety)
+fill:
+  - {do: upgrade, kind: desperado, to: 0-0-0}   # surplus: the target's own path
+  - {do: place, kind: desperado, role: dps, max: 10}

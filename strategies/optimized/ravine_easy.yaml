@@ -1,0 +1,85 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Ravine, easy: planned for rounds 10-40, starting with $3,832 and the game's own income x2 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: none.
+# Lowest margins: R24 3.75, R23 4.91, R20 5.60, R15 5.78, R26 5.97 (worst 3.75).
+# Cash by tower kind at the end: bomb $28,815 (93%), sniper $1,670 (5%), ninja $340 (1%)
+# XP: XP target bomb; the game gives 26,416 tower XP in about 5.2 min, 24,379 of it to the target
+# (281,292/h); weighted by what each tower's XP is worth to the account: 186,896/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_ravine_easy
+map: "Ravine"
+modes: [easy]
+xp_target: bomb
+hero: quincy
+planner:
+  maps: ["Ravine"]
+  towers: {bomb: [4, 3, 4], ninja: [0, 0, 0], sniper: [0, 2, 2]}
+optimizer:
+  scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 2.99
+  unsafe_rounds: []
+  minutes: 5.2
+  target_xp_per_hour: 281292
+  valued_xp_per_hour: 186896
+plan:
+  - {do: place, id: bom1, kind: bomb, role: dps, segment: [0.0, 0.23], at: [0.687, 0.266]}   # R10: $745, secures round 10; cash left $3,087
+  - {do: upgrade, id: bom1, to: 0-0-2}
+  - {do: place, id: hero, kind: hero, role: dps}   # R10: $460; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: bom1, to: 0-1-2}   # R10: $215, ahead of round 15; cash left $2,412
+  - {do: upgrade, id: bom1, to: 0-2-2}   # R10: $340, ahead of round 15; cash left $2,072
+  - {do: place, id: bom2, kind: bomb, role: dps, segment: [0.14, 0.38], at: [0.302, 0.777]}   # R10: $960, XP: surplus into the target tower; cash left $1,112
+  - {do: upgrade, id: bom2, to: 0-1-2}
+  - {do: upgrade, id: bom2, to: 0-2-2}   # R10: $340, XP: surplus into the target tower; cash left $772
+  - {do: place, id: bom3, kind: bomb, role: dps, segment: [0.15, 0.37], at: [0.259, 0.760]}   # R10: $745, XP: surplus into the target tower; cash left $27
+  - {do: upgrade, id: bom3, to: 0-0-2}
+  - {do: upgrade, id: bom3, to: 0-2-2}   # R11: $555, XP: surplus into the target tower; cash left $100
+  - {do: place, id: bom4, kind: bomb, role: dps, segment: [0.01, 0.15], at: [0.687, 0.334]}   # R12: $320, XP: surplus into the target tower; cash left $158
+  - {do: upgrade, id: bom4, to: 0-0-2}   # R13: $425, XP: surplus into the target tower; cash left $117
+  - {do: upgrade, id: bom4, to: 0-1-2}   # R14: $215, XP: surplus into the target tower; cash left $466
+  - {do: upgrade, id: bom4, to: 0-2-2}   # R14: $340, XP: surplus into the target tower; cash left $126
+  - {do: upgrade, id: bom1, to: 0-2-3}   # R15: $595, XP: surplus into the target tower; cash left $49
+  - {do: place, id: nin5, kind: ninja, role: dps, segment: [0.14, 0.31], at: [0.345, 0.777]}   # R16: $340, ahead of round 24; cash left $241
+  - {do: place, id: bom6, kind: bomb, role: dps, segment: [0.01, 0.15], at: [0.644, 0.300]}   # R17: $320, XP: surplus into the target tower; cash left $457
+  - {do: place, id: bom7, kind: bomb, role: dps, segment: [0.0, 0.14], at: [0.633, 0.129]}   # R17: $320, XP: surplus into the target tower; cash left $137
+  - {do: place, id: bom8, kind: bomb, role: dps, segment: [0.17, 0.29], at: [0.248, 0.828]}   # R18: $320, XP: surplus into the target tower; cash left $147
+  - {do: place, id: bom9, kind: bomb, role: dps, segment: [0.0, 0.12], at: [0.783, 0.232]}   # R19: $320, XP: surplus into the target tower; cash left $543
+  - {do: upgrade, id: bom6, to: 1-0-0}   # R19: $215, XP: surplus into the target tower; cash left $328
+  - {do: upgrade, id: bom6, to: 1-1-0}   # R19: $215, XP: surplus into the target tower; cash left $113
+  - {do: upgrade, id: bom2, to: 0-2-3}   # R20: $595, XP: surplus into the target tower; cash left $38
+  - {do: upgrade, id: bom6, to: 1-2-0}   # R21: $340, XP: surplus into the target tower; cash left $70
+  - {do: upgrade, id: bom7, to: 0-0-2}   # R22: $425, XP: surplus into the target tower; cash left $347
+  - {do: upgrade, id: bom7, to: 1-0-2}   # R22: $215, XP: surplus into the target tower; cash left $132
+  - {do: upgrade, id: bom6, to: 2-2-0}   # R23: $555, XP: surplus into the target tower; cash left $173
+  - {do: upgrade, id: bom8, to: 0-0-1}   # R23: $170, XP: surplus into the target tower; cash left $3
+  - {do: upgrade, id: bom7, to: 2-0-2}   # R24: $555, XP: surplus into the target tower; cash left $2
+  - {do: place, id: sni10, kind: sniper, role: dps, at: [0.665, 0.078]}   # R26: $900, ahead of round 33; cash left $106
+  - {do: upgrade, id: sni10, to: 0-2-0}
+  - {do: target, id: sni10, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: bom9, to: 0-0-2}   # R27: $425, XP: surplus into the target tower; cash left $347
+  - {do: upgrade, id: bom8, to: 1-0-1}   # R27: $215, XP: surplus into the target tower; cash left $132
+  - {do: upgrade, id: bom7, to: 2-0-3}   # R28: $595, XP: surplus into the target tower; cash left $861
+  - {do: upgrade, id: bom8, to: 1-0-2}   # R28: $255, XP: surplus into the target tower; cash left $606
+  - {do: upgrade, id: bom8, to: 2-0-2}   # R28: $555, XP: surplus into the target tower; cash left $51
+  - {do: upgrade, id: sni10, to: 0-2-1}   # R29: $385, ahead of round 37; cash left $198
+  - {do: upgrade, id: sni10, to: 0-2-2}   # R30: $385, ahead of round 37; cash left $591
+  - {do: upgrade, id: bom9, to: 1-0-2}   # R30: $215, XP: surplus into the target tower; cash left $376
+  - {do: upgrade, id: bom8, to: 3-0-2}   # R31: $935, ahead of round 39; cash left $115
+  - {do: upgrade, id: bom3, to: 0-3-2}   # R32: $850, XP: surplus into the target tower; cash left $339
+  - {do: upgrade, id: bom9, to: 3-0-2}   # R33: $1,490, XP: surplus into the target tower; cash left $103
+  - {do: upgrade, id: bom1, to: 0-2-4}   # R35: $2,125, XP: surplus into the target tower; cash left $212
+  - {do: upgrade, id: bom9, to: 4-0-2}   # R36: $2,380, XP: surplus into the target tower; cash left $132
+  - {do: upgrade, id: bom4, to: 0-3-2}   # R37: $850, XP: surplus into the target tower; cash left $1,074
+  - {do: upgrade, id: bom6, to: 3-2-0}   # R37: $935, XP: surplus into the target tower; cash left $139
+  - {do: upgrade, id: bom8, to: 4-0-2}   # R38: $2,380, XP: surplus into the target tower; cash left $437
+  - {do: upgrade, id: bom2, to: 0-2-4}   # R39: $2,125, XP: surplus into the target tower; cash left $866
+  - {do: upgrade, id: bom7, to: 2-0-4}   # R40: $2,125, XP: surplus into the target tower; cash left $2,259
+fill:
+  - {do: upgrade, kind: bomb, to: 0-2-4}   # surplus: the target's own path
+  - {do: place, kind: bomb, role: dps, max: 10}

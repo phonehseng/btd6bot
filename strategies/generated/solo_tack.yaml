@@ -26,8 +26,7 @@
 #   54%, answers bought: ace, bomb, ninja
 #   primary_only: kept - no gaps, min blimp ratio 0.64, Tack Shooter share of
 #   the cash 74%, answers bought: bomb, desperado
-#   deflation: kept - no gaps, min blimp ratio 0.40, Tack Shooter share of the
-#   cash 81%, answers bought: ace
+#   deflation: dropped - blimp damage 0.29 < 0.40
 #   medium: kept - no gaps, min blimp ratio 0.56, Tack Shooter share of the cash
 #   82%, answers bought: ace, bomb, ninja
 #   reverse: kept - no gaps, min blimp ratio 0.56, Tack Shooter share of the
@@ -41,10 +40,10 @@
 id: solo_tack
 xp_target: tack   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, primary_only, deflation, medium, reverse]
+modes: [easy, primary_only, medium, reverse]
 planner:
   towers: {tack: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.83, primary_only: 0.84, deflation: 0.86, medium: 0.75, reverse: 0.75}
+  base_success: {easy: 0.83, primary_only: 0.84, medium: 0.75, reverse: 0.75}
 plan:
   - {do: place, id: a1, kind: tack, role: dps, segment: [0.0, 0.5]}   # main line: 4-0-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

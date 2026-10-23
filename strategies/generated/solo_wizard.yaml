@@ -22,8 +22,8 @@
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
 #   easy: dropped - blimp damage 0.37 < 0.40
-#   deflation: kept - no gaps, min blimp ratio 0.55, Wizard Monkey share of the
-#   cash 93%, answers bought: dart
+#   deflation: kept - no gaps, min blimp ratio 0.56, Wizard Monkey share of the
+#   cash 94%, answers bought: dart
 #   medium: dropped - blimp damage 0.35 < 0.40
 #   reverse: dropped - blimp damage 0.35 < 0.40
 #   apopalypse: dropped - blimp damage 0.11 < 1.00

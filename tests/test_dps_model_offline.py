@@ -63,6 +63,17 @@ def test_base_towers_match_known_numbers():
     assert farm["income"]["bananas_per_round"] == 80.0   # 4 bananas of $20
 
 
+def test_triggered_weapons_fire_at_their_trigger_rate():
+    # The buccaneer's Grape Shot / Cannon secondaries are fired by their
+    # primaries; their own 0.05 s rate was once counted (100 shots/s).
+    if not D.available():
+        return
+    for tiers in ((0, 1, 0), (0, 4, 2)):
+        assert max(s.shots for s in D.profile("buccaneer", tiers).sources) < 30, tiers
+    grape = [s.shots for s in D.profile("buccaneer", (0, 1, 0)).sources]
+    assert grape.count(grape[-1]) >= 2      # secondary = primary's rate (3.7/s)
+
+
 def test_upgrades_change_the_numbers():
     assert _headline("dart", "200")["pierce"] == 5.0      # Sharp Shots +1, Razor Sharp Shots +2
     assert _headline("dart", "003")["damage"] == 3.0      # Crossbow

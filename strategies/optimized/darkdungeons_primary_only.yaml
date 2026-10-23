@@ -1,0 +1,92 @@
+# OPTIMIZED by tools/optimize_builds.py from the game's own numbers - do not edit by hand:
+# change the optimizer or its data and run it again (see docs/optimizer.md).
+#
+# Dark Dungeons, primary_only: planned for rounds 10-40, starting with $3,832 and the game's own income x2 (account boosts: double cash, fast track). More money at every round only makes
+# it safer; with less (an account without these boosts) it is not proven safe - run with --base for that.
+# Safety: every round pops without a leak with all towers at 1/2 of their modelled
+# strength (dps_model), except: 10, 11, 12, 13, 15, 16, 18, 19, 21, 33, 34, 36, 37, 38, 39, 40.
+# Lowest margins: R37 0.68, R34 1.01, R12 1.04, R10 1.10, R15 1.11 (worst 0.68).
+# Cash by tower kind at the end: desperado $16,340 (64%), boomerang $4,080 (16%), tack $3,040 (12%), dart $2,195 (9%)
+# XP: XP target desperado; the game gives 26,416 tower XP in about 5.1 min, 11,418 of it to the target
+# (133,461/h); weighted by what each tower's XP is worth to the account: 150,991/h.
+# Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
+# `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
+# The hero's damage is not modelled (extra safety).
+id: opt_darkdungeons_primary_only
+map: "Dark Dungeons"
+modes: [primary_only]
+xp_target: desperado
+hero: quincy
+planner:
+  maps: ["Dark Dungeons"]
+  towers: {tack: [2, 0, 3], desperado: [4, 3, 3], dart: [0, 3, 3], boomerang: [0, 3, 2]}
+optimizer:
+  scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
+  safety_margin: 2.0
+  worst_margin: 0.68
+  unsafe_rounds: [10, 11, 12, 13, 15, 16, 18, 19, 21, 33, 34, 36, 37, 38, 39, 40]
+  minutes: 5.1
+  target_xp_per_hour: 133461
+  valued_xp_per_hour: 150991
+plan:
+  - {do: place, id: tac1, kind: tack, role: dps, segment: [0.14, 0.53], at: [0.473, 0.896]}   # R10: $220, secures round 10; cash left $3,612
+  - {do: place, id: des2, kind: desperado, role: dps, segment: [0.14, 0.9], at: [0.377, 0.879]}   # R10: $255, secures round 10; cash left $3,357
+  - {do: target, id: des2, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: hero, kind: hero, role: dps}   # R10: $460; hero: not counted by the model (extra safety)
+  - {do: place, id: des3, kind: desperado, role: dps, segment: [0.57, 1.0], at: [0.377, 0.624]}   # R10: $255, secures round 10; cash left $2,642
+  - {do: target, id: des3, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: dar4, kind: dart, role: dps, segment: [0.16, 0.44], at: [0.729, 0.283]}   # R10: $170, secures round 10; cash left $2,472
+  - {do: place, id: dar5, kind: dart, role: dps, segment: [0.65, 0.92], at: [0.163, 0.232]}   # R10: $170, secures round 10; cash left $2,302
+  - {do: place, id: tac6, kind: tack, role: dps, segment: [0.33, 0.7], at: [0.088, 0.743]}   # R10: $220, secures round 10; cash left $2,082
+  - {do: upgrade, id: dar4, to: 0-0-1}   # R10: $75, secures round 10; cash left $2,007
+  - {do: upgrade, id: dar4, to: 0-1-1}   # R10: $85, secures round 10; cash left $1,922
+  - {do: upgrade, id: dar4, to: 0-2-1}   # R10: $160, secures round 10; cash left $1,762
+  - {do: upgrade, id: tac6, to: 1-0-0}   # R10: $130, secures round 10; cash left $1,632
+  - {do: upgrade, id: tac6, to: 1-0-1}   # R10: $130, secures round 10; cash left $1,502
+  - {do: place, id: des7, kind: desperado, role: dps, segment: [0.57, 1.0], at: [0.302, 0.624]}   # R10: $255, secures round 10; cash left $1,247
+  - {do: target, id: des7, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: dar4, to: 0-2-2}   # R10: $170, secures round 10; cash left $1,077
+  - {do: upgrade, id: tac6, to: 1-0-2}   # R10: $130, secures round 10; cash left $947
+  - {do: place, id: des8, kind: desperado, role: dps, segment: [0.27, 0.84], at: [0.302, 0.862]}   # R10: $255, secures round 10; cash left $692
+  - {do: target, id: des8, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: tac6, to: 2-0-2}   # R13: $190, secures round 13; cash left $1,892
+  - {do: place, id: des9, kind: desperado, role: dps, segment: [0.63, 1.0], at: [0.419, 0.589]}   # R13: $255, secures round 13; cash left $1,637
+  - {do: target, id: des9, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: boo10, kind: boomerang, role: dps, segment: [0.16, 0.5], at: [0.729, 0.215]}   # R13: $270, secures round 13; cash left $1,367
+  - {do: upgrade, id: boo10, to: 0-0-1}   # R13: $85, secures round 13; cash left $1,282
+  - {do: upgrade, id: boo10, to: 0-2-1}   # R13: $365, secures round 13; cash left $917
+  - {do: upgrade, id: dar4, to: 0-3-2}   # R13: $385, secures round 13; cash left $532
+  - {do: upgrade, id: tac1, to: 1-0-0}   # R14: $130, ahead of round 15; cash left $966
+  - {do: upgrade, id: tac1, to: 1-0-1}   # R15: $130, secures round 15; cash left $1,354
+  - {do: place, id: tac11, kind: tack, role: dps, segment: [0.12, 0.48], at: [0.163, 0.879]}   # R17: $220, ahead of round 18; cash left $2,202
+  - {do: upgrade, id: tac1, to: 1-0-2}   # R19: $130, secures round 19; cash left $3,118
+  - {do: upgrade, id: tac1, to: 2-0-2}   # R19: $190, secures round 19; cash left $2,928
+  - {do: place, id: boo12, kind: boomerang, role: dps, segment: [0.12, 0.77], at: [0.099, 0.862]}   # R19: $270, secures round 19; cash left $2,658
+  - {do: upgrade, id: boo10, to: 0-2-2}   # R20: $255, ahead of round 21; cash left $2,923
+  - {do: upgrade, id: boo12, to: 0-0-2}   # R20: $340, ahead of round 21; cash left $2,583
+  - {do: upgrade, id: boo12, to: 0-1-2}   # R20: $150, ahead of round 21; cash left $2,433
+  - {do: upgrade, id: des2, to: 3-0-0}   # R20: $1,360, ahead of round 21; cash left $1,073
+  - {do: upgrade, id: des2, to: 3-1-0}   # R20: $130, ahead of round 21; cash left $943
+  - {do: upgrade, id: dar5, to: 0-0-3}   # R20: $735, ahead of round 21; cash left $208
+  - {do: upgrade, id: boo12, to: 0-2-2}   # R21: $215, secures round 21; cash left $365
+  - {do: upgrade, id: boo10, to: 0-3-2}   # R22: $1,065, secures round 22; cash left $2
+  - {do: upgrade, id: des2, to: 3-2-0}   # R23: $300, XP: surplus into the target tower; cash left $298
+  - {do: upgrade, id: des3, to: 1-0-0}   # R23: $170, XP: surplus into the target tower; cash left $128
+  - {do: upgrade, id: des3, to: 2-0-0}   # R24: $170, XP: surplus into the target tower; cash left $512
+  - {do: upgrade, id: des3, to: 2-1-0}   # R24: $130, XP: surplus into the target tower; cash left $382
+  - {do: upgrade, id: des3, to: 2-2-0}   # R24: $300, XP: surplus into the target tower; cash left $82
+  - {do: upgrade, id: dar5, to: 0-1-3}   # R25: $85, ahead of round 33; cash left $331
+  - {do: upgrade, id: dar5, to: 0-2-3}   # R25: $160, ahead of round 33; cash left $171
+  - {do: upgrade, id: tac6, to: 2-0-3}   # R26: $385, ahead of round 33; cash left $456
+  - {do: upgrade, id: tac1, to: 2-0-3}   # R26: $385, ahead of round 33; cash left $71
+  - {do: upgrade, id: des3, to: 3-2-0}   # R28: $1,020, ahead of round 33; cash left $1,041
+  - {do: upgrade, id: tac11, to: 2-0-0}   # R28: $320, ahead of round 33; cash left $721
+  - {do: upgrade, id: tac11, to: 2-0-1}   # R28: $130, ahead of round 33; cash left $591
+  - {do: upgrade, id: boo12, to: 0-3-2}   # R29: $1,065, ahead of round 33; cash left $58
+  - {do: upgrade, id: des7, to: 3-0-0}   # R31: $1,360, ahead of round 33; cash left $150
+  - {do: upgrade, id: des9, to: 0-0-3}   # R33: $2,215, secures round 33; cash left $263
+  - {do: upgrade, id: des8, to: 0-3-0}   # R36: $2,980, secures round 36; cash left $1,817
+  - {do: upgrade, id: des2, to: 4-2-0}   # R38: $4,930, secures round 38; cash left $1,357
+fill:
+  - {do: upgrade, kind: desperado, to: 4-2-0}   # surplus: the target's own path
+  - {do: place, kind: desperado, role: dps, max: 10}

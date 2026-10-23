@@ -39,7 +39,7 @@ from btd6bot.game import Placed  # noqa: E402
 # Deflation gives $20,000 and nothing after).
 START_CASH = {"half_cash": 325, "deflation": 20000}
 DEFAULT_START_CASH = 650
-SETUP_TICKS = 80     # plan steps a late start may buy before its first round
+SETUP_TICKS = 80     # plan steps the setup may buy before the first round
 
 
 class CashGame:
@@ -171,9 +171,10 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
     total_in = g.cash
     for rnd in range(start, end + 1):
         g.round = rnd
-        # between rounds: build. A late (Fast Track) start spends down its
-        # cash before the first Play (Match.setup), not a few steps of it
-        for _ in range(SETUP_TICKS if scenario and rnd == start else ticks):
+        # between rounds: build. Before the first Play the bot spends down
+        # what it has (Match.setup), not a few steps of it: a Fast Track
+        # start, and Deflation's $20,000 at round 31
+        for _ in range(SETUP_TICKS if rnd == start else ticks):
             if not ex.tick(g.cash, rnd):
                 break
         # the match loop spends idle cash (over $800) on surplus damage after a while

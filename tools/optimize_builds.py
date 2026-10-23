@@ -290,23 +290,15 @@ class MapSetup:
         self._spots = {}
 
     # -- line of sight ---------------------------------------------------------
-    def sight(self, x, z, pts, samples=12):
+    def sight(self, x, z, pts):
         """Visible mask of world points pts (N x 3) from a tower at (x, z):
-        no sight-blocking cell of the MapModel on the straight line between."""
-        grid = self.model.sight
-        if grid is None or not grid.any():
+        no sight-blocking cell of the MapModel on the straight line between
+        (dps_model.sight_test, shared with the live forecast)."""
+        if not hasattr(self, "_sight"):
+            self._sight = D.sight_test(self.model.sight, self.track)
+        if self._sight is None:
             return np.ones(len(pts), bool)
-        t = np.linspace(0.1, 0.9, samples)[:, None]
-        px = x + (pts[:, 0][None, :] - x) * t
-        pz = z + (pts[:, 1][None, :] - z) * t
-        ph = pts[:, 2][None, :] * t
-        flat = np.stack([px.ravel(), pz.ravel(), ph.ravel()], axis=1)
-        cells = np.rint(self.track.proj.to_cells(flat)).astype(int)
-        h, w = grid.shape
-        cells[:, 0] = np.clip(cells[:, 0], 0, w - 1)
-        cells[:, 1] = np.clip(cells[:, 1], 0, h - 1)
-        blocked = grid[cells[:, 1], cells[:, 0]].reshape(samples, -1).any(axis=0)
-        return ~blocked
+        return self._sight(x, z, pts)
 
     def sight_for(self, kind):
         from btd6bot import placement as P
@@ -1229,13 +1221,15 @@ def calibrate():
 # ===========================================================================
 
 def lower_priority():
-    """Below-normal CPU priority, so a long run never slows the live bot
-    (Windows: SetPriorityClass; elsewhere os.nice)."""
+    """Idle CPU priority, so a long run never slows the live bot (Windows:
+    SetPriorityClass; elsewhere os.nice). The ctypes call used before had no
+    argument types and left the process at normal priority (measured
+    2026-10-22, while runs beside the bot pushed the CPU to 100%)."""
     try:
         if sys.platform == "win32":
-            import ctypes
-            below_normal = 0x4000          # BELOW_NORMAL_PRIORITY_CLASS
-            ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), below_normal)
+            import win32api
+            import win32process
+            win32process.SetPriorityClass(win32api.GetCurrentProcess(), win32process.IDLE_PRIORITY_CLASS)
         else:
             import os
             os.nice(10)
