@@ -168,6 +168,7 @@ _answers_from_game_model()
 # MODE_FAMILY keeps it with Impoppable for difficulty order (min_difficulty).
 PRICE_FAMILY = dict(MODE_FAMILY, chimps="hard")
 UNREAD_RETRY_S = 10.0   # seconds before a path whose price was not read is tried again
+RESERVED_CELLS = 4      # a tower placed by role keeps this far from a later step's exact spot
 
 # Towers that belong at the end of the track: spike factories throw their
 # spikes onto the last stretch and catch what leaks past everything else.
@@ -619,10 +620,13 @@ def readiness(strat):
 # An optimized build's win chance before it has been played, from the
 # model's lowest margin over all its rounds (docs/optimizer.md, section 3:
 # 0.5% of logged rounds at a margin of 2.0 or more lost lives, 5.4% below
-# 1.0). Below OPTIMIZED_MIN_MARGIN it is never auto-played.
+# 1.0). Below OPTIMIZED_MIN_MARGIN it is never auto-played. Kept under
+# the researched map builds (0.9): the model misses what some map files do
+# not record - Ravine Easy, rated 2.99, was lost at round 18 (2026-10-23),
+# while researched builds won their first seven Hard games.
 OPTIMIZED_SAFE_MARGIN = 2.0
 OPTIMIZED_MIN_MARGIN = 1.0
-OPTIMIZED_PRIOR = {"safe": 0.95, "thin": 0.85}
+OPTIMIZED_PRIOR = {"safe": 0.88, "thin": 0.8}
 
 
 def _optimized_prior(d, planner):
@@ -1161,16 +1165,35 @@ class Executor:
         probe = self._probe_spot(kind, valid) if role in ("dps", "exit") else None
         if probe is not None:
             out.append(probe)       # tried first; a refusal costs ~0.1 s and is learned
+        reserved = self._reserved_cells(step)
         for cx, cy, score in ranked:
             if (kind, cx, cy) in self.failed_spots:
                 continue
             if floor is not None and self._reach(kind)[cy, cx] < floor:
                 continue  # its range only grazes the track (see MIN_REACH_SHARE)
+            if any((cx - rx) ** 2 + (cy - ry) ** 2 < RESERVED_CELLS ** 2 for rx, ry in reserved):
+                continue  # a later step of the build places a tower right here
             if any((cx - ox) ** 2 + (cy - oy) ** 2 < 9 for ox, oy, _ in out):
                 continue
             out.append((cx, cy, score))
             if len(out) >= n:
                 break
+        return out
+
+    def _reserved_cells(self, step):
+        """Cells of the exact spots (`at`) the build's later place steps
+        still need. A tower placed by role must leave them free: on Ravine
+        Easy the hero, placed by role, sat beside two planned bomb spots,
+        and those bombs went to the far side of the map."""
+        out = []
+        strat = getattr(self, "strat", None) or {}
+        for st in list(getattr(self, "plan", None) or []) + list(strat.get("fill") or []):
+            at = st.get("at")
+            if st.get("do") != "place" or not at or st is step or st.get("id") == step.get("id"):
+                continue
+            if st.get("id") in self.g.towers:
+                continue    # placed already
+            out.append(self.m.frac_to_cell(float(at[0]), float(at[1])))
         return out
 
     def _next_path(self, p, target):

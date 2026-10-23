@@ -525,6 +525,22 @@ def test_map_modes_no_build_holds_are_not_trusted():
     assert P.prior_win_probability(acc, s, "Logs", "hard") > P.CEILING_P_CAP
 
 
+def test_losses_on_a_map_mode_count_against_every_general_build():
+    """Last Resort Hard: lost by one general build, the next starts lower;
+    a build made for that map keeps its own record."""
+    acc = _fresh_ish_account()
+    general = _spec(id="g2", modes=("hard",), rate=0.9)
+    before = P.prior_win_probability(acc, general, "Ravine", "hard")
+    acc.record_result("Ravine", "hard", "g1", False, round_reached=27)
+    after = P.prior_win_probability(acc, general, "Ravine", "hard")
+    assert abs(after - before * P.MAP_LOSS_FACTOR) < 1e-6, (before, after)
+    own = _spec(id="ravine_hard", modes=("hard",), rate=0.9, maps=["Ravine"])
+    acc2 = _fresh_ish_account()
+    p0 = P.prior_win_probability(acc2, own, "Ravine", "hard")
+    acc2.record_result("Ravine", "hard", "g1", False, round_reached=27)
+    assert P.prior_win_probability(acc2, own, "Ravine", "hard") == p0
+
+
 def test_hard_first_by_default():
     """The owner's order (evening of 2026-10-22): Hard medals before the
     Easy and Medium families."""
@@ -1008,7 +1024,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_losses_on_a_map_mode_count_against_every_general_build", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",

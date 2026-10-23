@@ -1274,11 +1274,16 @@ class Bot:
         phase, reasons, cands = rank_games(self.account, specs)
         if safety.active():
             # loss circuit breaker (safety.py): Easy-family medals, then
-            # Medium-family once those are all earned, else anything left
+            # Medium-family once those are all earned, else anything left -
+            # the surest first: confident games, the easiest maps, the
+            # highest p. (Hard-first order put Ravine, an Expert map, first:
+            # lost at round 18 right after the breaker tripped.)
+            from .planner import CONFIDENT_P
             for family in (EASY_FAMILY, MEDIUM_FAMILY):
                 safe = [c for c in cands if c.mode in family and not self.benched(c.map, c.mode)]
                 if safe:
-                    cands = safe
+                    cands = sorted(safe, key=lambda c: (c.p >= CONFIDENT_P, c.ease, c.p), reverse=True)
+                    phase = "SAFE"
                     break
             log.info("%s", safety.status())
         for c in cands:

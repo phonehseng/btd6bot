@@ -860,12 +860,42 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     if double_cash_applies(getattr(account, "boosts", {}), mode):
         p = 1.0 - (1.0 - p) * DOUBLE_CASH_LOSS_FACTOR
     p *= map_fit_factor(s, map_name, mode)
+    if s.maps is None:
+        # a general build answers for the map's record too: Last Resort Hard
+        # was lost by three general builds in turn, each of them rated 0.8-0.9
+        # untested there because only its own record counted
+        lost = map_mode_losses(account).get((canonical_map(map_name), mode), 0)
+        p *= max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR ** lost)
     ceiling = model_ceiling(map_name, mode)
     if ceiling is not None and ceiling < CEILING_PLAYABLE:
         # no build the map research found holds there: not trusted until a
         # win on record raises the posterior (win_probability)
         p = min(p, CEILING_P_CAP)
     return min(0.98, max(0.01, p))
+
+
+# Every loss on a (map, mode), by any strategy, scales the prior of the
+# general builds there by MAP_LOSS_FACTOR (two losses: 0.49), down to
+# MAP_LOSS_FLOOR. Map-specific builds keep only their own record.
+MAP_LOSS_FACTOR = 0.7
+MAP_LOSS_FLOOR = 0.3
+
+
+def map_mode_losses(account: AccountState) -> dict[tuple[str, str], int]:
+    """{(map, mode): losses by any strategy}, rebuilt when a game was added."""
+    key = (id(account), account.games_played, len(account.strategy_stats))
+    cached = getattr(account, "_map_mode_losses", None)
+    if cached is None or cached[0] != key:
+        out: dict[tuple[str, str], int] = {}
+        for m, mode, _sid, st in account.iter_strategy_stats():
+            if st.get("losses"):
+                out[(m, mode)] = out.get((m, mode), 0) + int(st["losses"])
+        cached = (key, out)
+        try:
+            account._map_mode_losses = cached
+        except AttributeError:
+            pass
+    return cached[1]
 
 
 # Map/modes where even the best build found rates under this margin
