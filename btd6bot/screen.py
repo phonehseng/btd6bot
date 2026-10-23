@@ -88,6 +88,11 @@ class Screen:
         Uses PrintWindow so overlapping windows do not end up in the image;
         falls back to a screen grab if the game returns a black frame.
         """
+        if not win32gui.IsWindow(self.hwnd):
+            # the window was replaced: a freshly started game shows a splash
+            # window with the same title first (2026-10-23: the bot kept
+            # capturing the dead splash and read every screen as "unknown")
+            self.refresh()
         img = self._grab_window()
         if img is None:
             img = self._grab_screen()
