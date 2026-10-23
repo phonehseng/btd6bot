@@ -24,6 +24,7 @@ import logging
 import os
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -69,19 +70,33 @@ def record_command(ffmpeg):
     else:
         codec = ["-c:v", "libx264", "-preset", "veryfast", "-crf", "30", "-g", str(FPS * 2)]
     return [str(ffmpeg), "-hide_banner", "-loglevel", "error", *source, *codec,
-            "-f", "segment", "-segment_time", str(SEGMENT_SECONDS), "-reset_timestamps", "1",
+            "-f", "segment", "-segment_time", str(SEGMENT_SECONDS), "-segment_atclocktime", "1", "-reset_timestamps", "1",
             "-strftime", "1", pattern]
 
 
 def prune(keep_hours=KEEP_HOURS):
     """Delete chunks older than keep_hours (finished clips are kept elsewhere)."""
     cutoff = time.time() - keep_hours * 3600
-    for f in REC_DIR.glob("rec_*.mkv"):
+    for f in [*REC_DIR.glob("rec_*.mkv"), *REC_DIR.glob("aud_*.*")]:
         try:
             if f.stat().st_mtime < cutoff:
                 f.unlink()
         except OSError:
             pass
+
+
+def _record_audio(stop, ffmpeg):
+    """Game audio in its own thread; a failure there never stops the video."""
+    from . import gameaudio
+    while not stop.is_set():
+        if (ROOT / "NO_RECORD").exists():
+            stop.wait(30)
+            continue
+        try:
+            gameaudio.run(stop=stop, ffmpeg=ffmpeg)
+        except Exception:
+            log.exception("game audio failed - retrying in a minute")
+            stop.wait(60)
 
 
 def _single_instance():
@@ -102,6 +117,12 @@ def main():
     from . import highlights, timelapse
     proc, last_highlights = None, 0.0
     log.info("recorder started (%s)", ffmpeg)
+    # the game's own sound (BloonsTD6.exe only, never the microphone), in
+    # minute files next to the video chunks: see gameaudio.py
+    from . import gameaudio
+    audio_stop = threading.Event()
+    audio = threading.Thread(target=_record_audio, args=(audio_stop, ffmpeg), name="gameaudio", daemon=True)
+    audio.start()
     while not (ROOT / "STOP").exists():
         recording_wanted = not (ROOT / "NO_RECORD").exists()
         if recording_wanted and (proc is None or proc.poll() is not None):
@@ -124,6 +145,7 @@ def main():
             except Exception:
                 log.exception("full-run pass failed")
         time.sleep(10)
+    audio_stop.set()
     if proc is not None and proc.poll() is None:
         proc.terminate()
     log.info("recorder stopped")
