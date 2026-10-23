@@ -1024,6 +1024,17 @@ class Executor:
         refuse = getattr(self.m, "refuse", None)
         if refuse is None:
             return
+        # Ground under a cycling pane (Covered Garden) is only open one round
+        # in four: a refusal there most likely means the round turned over
+        # between reading it and clicking, not that the ground is bad.
+        try:
+            from . import mapgeom
+            if mapgeom.pane_at(self.m, *self.m.cell_to_frac(cx, cy), None)[0] is not None:
+                log.info("spot (%d,%d) under a pane refused - not learned (the pane may have just closed)",
+                         cx, cy)
+                return
+        except Exception:
+            pass
         # an amphibious tower refused here stands neither on land nor on water
         for surface in (("land", "water") if cls == "land_or_water" else (cls,)):
             refuse(surface, cx, cy)
@@ -1137,7 +1148,7 @@ class Executor:
         # melts after round 54) is usable in a shorter game
         valid = PL.valid_spots(self.m, kind, hero, placed,
                                where={"land"} if self.land_only else None,
-                               last_round=self.rules.get("end_round"))
+                               last_round=self.rules.get("end_round"), now_round=self._pane_round())
         covered = None if role == "support" else self._covered()
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
@@ -1246,6 +1257,28 @@ class Executor:
         return (step.get("do"), step.get("kind"), step.get("role", "dps"), step.get("id"),
                 tuple(step.get("near") or ()), tuple(step.get("segment") or ()))
 
+    def _pane_round(self):
+        """The round being played, on maps whose panes open in turn (Covered
+        Garden): the open pane's ground takes towers this round. None
+        elsewhere, so other maps keep their whole-game grids."""
+        from . import mapgeom
+        try:
+            grids = mapgeom.grids_for(self.m)
+        except Exception:
+            return None
+        if grids and grids.get("panes"):
+            return getattr(self, "now_round", None)
+        return None
+
+    def _reachable(self, p):
+        """False while a closed pane covers tower p: a click there hits the
+        glass, so it cannot be upgraded or sold this round."""
+        from . import mapgeom
+        try:
+            return mapgeom.pane_at(self.m, p.x, p.y, getattr(self, "now_round", None))[1]
+        except Exception:
+            return True
+
     def try_step(self, step, cash, rnd):
         """Returns 'done', 'wait', 'skip', 'bought' or 'progress'."""
         if rnd is not None and step.get("round") and rnd < step["round"]:
@@ -1262,6 +1295,8 @@ class Executor:
                 nxt = self._next_path(p, target)
                 if nxt is None:
                     continue
+                if not self._reachable(p):
+                    return "wait"     # under a closed pane: its round comes
                 path, cost = nxt
                 # a panel that asked more than the price table is believed
                 cost = max(cost, self.panel_price.get((p.tid, path, p.tiers[path - 1] + 1), 0))
@@ -1283,7 +1318,10 @@ class Executor:
         if do == "sell":
             if self.no_sell:
                 return "skip"
-            for p in self._resolve_targets(step):
+            targets = self._resolve_targets(step)
+            if any(not self._reachable(p) for p in targets):
+                return "wait"         # under a closed pane: its round comes
+            for p in targets:
                 self.g.sell(p)
             return "bought"
         return "skip"
@@ -1398,7 +1436,8 @@ class Executor:
             return []
         placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
                   for p in self.g.towers.values()]
-        valid = PL.valid_spots(self.m, kind, None, placed, where={"land"} if self.land_only else None)
+        valid = PL.valid_spots(self.m, kind, None, placed, where={"land"} if self.land_only else None,
+                               now_round=self._pane_round())
         if valid is None:
             return []
         ys, xs = np.nonzero(valid & ~self.blocked)
@@ -1653,7 +1692,7 @@ class Executor:
                   for p in self.g.towers.values()]
         valid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                                where={"land"} if self.land_only else None,
-                               last_round=self.rules.get("end_round"))
+                               last_round=self.rules.get("end_round"), now_round=self._pane_round())
         if valid is None:
             return []
         legal = int(valid.sum())
@@ -2486,6 +2525,7 @@ class Executor:
 
     def tick(self, cash, rnd, lives_dropped=False):
         """Do at most one action. Returns True if something was bought."""
+        self.now_round = rnd
         if cash is None:
             return False  # never act on an unreadable cash value
         self.wait_cost = None
@@ -2538,6 +2578,7 @@ class Executor:
         Never violates constraints (kind_allowed) and never sells. Never
         spends cash that the last tick() held back for a threat's answer:
         that money is being saved for a bloon the defence cannot pop yet."""
+        self.now_round = rnd
         if cash is None or getattr(self, "saving_for_threat", False):
             return False
         # An XP build (strategies/generated: `xp_target`) puts surplus into the
@@ -2577,6 +2618,8 @@ class Executor:
         family = PRICE_FAMILY.get(self.mode, "hard")
         unread = getattr(self, "unread_until", {})
         for p in towers:
+            if not self._reachable(p):
+                continue          # under a closed pane this round
             for path in sorted(range(3), key=lambda i: -p.tiers[i]):
                 if (p.tid, path + 1) in self.capped or p.tiers[path] >= 5:
                     continue

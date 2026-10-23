@@ -656,6 +656,7 @@ class Bot:
         # the stamp names the game bundle AND our extraction version, so both a
         # game update and an improved extractor re-apply the geometry
         stamp = f'{geom.get("bundle")}#v{geom.get("version")}'
+        mapgeom.forget_pane_refusals(model, geom)
         if model.geometry_bundle == stamp and model.scanned("land"):
             return True
         mapgeom.apply(model, geom)

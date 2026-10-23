@@ -503,6 +503,34 @@ class Dynamics:
         self.sold = set()      # removable ids bought (asked for, or sold along with them)
         self.offered = {}      # removable id -> first round it can be bought
         self.fired = {}        # event id -> (automatic, first round, certain)
+        self.panes = []        # timed pane cycles, see _pane_cycle_of()
+
+
+def _pane_cycle_of(act, areas_by_id):
+    """A cycle of panes: a CycleAreasAction with `invert` over plain
+    unplaceable areas - all of them there but one, the gap moving one step
+    along the list every `roundsPerRotate` rounds (Covered Garden's four
+    glass panes). Towers under a pane stay when it closes; while it is
+    closed they cannot be clicked (placed, upgraded, sold). Returns
+    {"areas": [ids in cycle order], "per": rounds per step, "start"} or None.
+
+    The order is the game's: Covered Garden lists LowerLeft, UpperLeft,
+    UpperRight, LowerRight, and the guides say the bottom-left quarter is
+    open on round 1 and the open one moves clockwise every round."""
+    if act.get("type") != "CycleAreasAction" or not act.get("invert"):
+        return None
+    ids = [i for i in _ids(act.get("areas")) if i in areas_by_id]
+    if len(ids) < 2 or any(areas_by_id[i]["type"] != "unplaceable" or areas_by_id[i].get("blocks_sight")
+                           for i in ids):
+        return None
+    return {"areas": ids, "per": max(1, act.get("roundsPerRotate") or 1),
+            "start": act.get("fromStartingRound") or 0}
+
+
+def pane_open(cycle, rnd):
+    """Index (in cycle["areas"]) of the pane open during round rnd (the
+    round the HUD shows)."""
+    return ((max(1, rnd) - 1 - cycle["start"]) // cycle["per"]) % len(cycle["areas"])
 
 
 def dynamics(geom, sold=(), now_round=None, last_round=None):
@@ -606,6 +634,16 @@ def dynamics(geom, sold=(), now_round=None, last_round=None):
     for eid, (auto, first, certain) in dyn.fired.items():
         for act in actions_of(events[eid]):
             kind = act.get("type")
+            cycle = _pane_cycle_of(act, areas_by_id) if auto else None
+            if cycle:
+                dyn.panes.append(cycle)
+                if now_round is not None and now_round >= 1:
+                    # the round is known: exactly one pane is open now, and
+                    # the ground under it takes towers this round (they stay
+                    # when the pane closes again)
+                    shut = set(cycle["areas"]) - {cycle["areas"][pane_open(cycle, now_round)]}
+                    dyn.present = (dyn.present - set(cycle["areas"])) | shut
+                    continue
             if kind in AREA_ACTIONS:
                 field, effect = AREA_ACTIONS[kind]
                 ids = [i for i in _ids(act.get(field)) if i in areas_by_id]
@@ -749,6 +787,31 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
     return out
 
 
+def forget_pane_refusals(model, geom, aspect=1920 / 1200):
+    """Refusals under a cycling pane were clicks on glass that was shut at
+    the time (before the bot knew the cycle: 567 such cells on Covered
+    Garden): they say nothing about the ground, so they are forgotten.
+    Returns how many refused cells were dropped."""
+    panes = dynamics(geom).panes
+    if not panes:
+        return 0
+    proj = Projection(model.playfield, aspect)
+    by_id = {a["id"]: a for a in geom.get("areas", []) if "id" in a}
+    under = None
+    for cycle in panes:
+        for aid in cycle["areas"]:
+            mask = _poly_mask(by_id[aid]["polygons"], proj)
+            under = mask if under is None else under | mask
+    dropped = 0
+    for grid in getattr(model, "refused", {}).values():
+        if grid is not None and grid.shape == under.shape:
+            dropped += int((grid & under).sum())
+            grid &= ~under
+    if dropped:
+        log.info("%s: forgot %d refused cells under the panes", model.name, dropped)
+    return dropped
+
+
 def apply(model, geom, aspect=1920 / 1200):
     """Overwrite a MapModel's track and placement grids from geometry.
 
@@ -770,6 +833,7 @@ def apply(model, geom, aspect=1920 / 1200):
     model.small_only = grids["size_limit"] <= 1
     model.sight = grids["sight"]
     model.geometry_version = geom.get("version", 1)
+    forget_pane_refusals(model, geom)
     log.info("%s: geometry applied (%d paths, %d areas)", model.name,
              len(geom.get("paths", [])), len(geom.get("areas", [])))
     return model
@@ -811,9 +875,29 @@ def grids_for(model, removed=(), now_round=None, last_round=None):
         grids["scan"] = {k: np.where(grids[k], 1, 2).astype(np.uint8) for k in ("land", "water")}
         grids["track"] = heat > 0
         grids["proj"] = proj
+        areas_by_id = {a["id"]: a for a in geom.get("areas", []) if "id" in a}
+        grids["panes"] = [(c, [_poly_mask(areas_by_id[i]["polygons"], proj) for i in c["areas"]])
+                          for c in dyn.panes]
         grids["steady"] = {}
         _GRIDS_CACHE[key] = grids
     return _GRIDS_CACHE[key]
+
+
+def pane_at(model, fx, fy, rnd):
+    """For a spot (screen fractions) under a cycling pane: (pane index, open
+    during round rnd). (None, True) for ground no pane covers, and on maps
+    without panes. A tower there can be clicked - upgraded, sold - only
+    while its pane is open."""
+    grids = grids_for(model)
+    panes = grids.get("panes") if grids else None
+    if not panes:
+        return None, True
+    cx, cy = model.frac_to_cell(fx, fy)
+    for cycle, masks in panes:
+        for i, mask in enumerate(masks):
+            if 0 <= cy < mask.shape[0] and 0 <= cx < mask.shape[1] and mask[cy, cx]:
+                return i, rnd is not None and pane_open(cycle, rnd) == i
+    return None, True
 
 
 # A tower on moving ground (a gear, a platform) is carried to other places

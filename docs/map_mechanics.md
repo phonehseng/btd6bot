@@ -91,7 +91,7 @@ that are there at any time count as always there.
 |---|---|---|
 | Removable obstacle | 37 maps, 120 obstacles ($250-$5,000; two $0 easter-egg popups) | Stays an obstacle. `mapgeom.removables(map)` lists name, price, position (world and screen), outline, whether it can be bought yet; `mapgeom.removal_effect(model, name)` says which cells it frees and which it ruins; `placement.valid_spots(..., removed=[names])` places as if bought. Not bought by the strategy (see "Wiring" below). |
 | Ore to mine | Three Mines 'Round (6) | Recorded with price, rounds and payout; not used. |
-| Areas that open and close in turn | Covered Garden (roof panes, every round), Midnight Mansion (magic fires, every 2 rounds, line-of-sight blockers) | Counted as always closed: no tower is placed under a pane; fires block sight for the whole game. |
+| Areas that open and close in turn | Covered Garden (roof panes, every round), Midnight Mansion (magic fires, every 2 rounds, line-of-sight blockers) | Covered Garden's panes are timed (`mapgeom.pane_open`): the open pane's ground takes towers in its round (bottom-left on round 1, then clockwise), and a tower under a pane is upgraded or sold only in its pane's rounds. Fires block sight for the whole game. |
 | Areas that vanish by themselves | Erosion (ice melts after rounds 18, 36, 54, 72, 90), Cargo/Quarry (trucks/rocks cleared at the first MOAB), One Two Tree (blockers cleared as plots open), Skull Tweak/Spa Pits (easter-egg click areas), Polyphemus/Ancient Portal (click areas) | Ground that may go is never used (towers on it would be destroyed). Obstacles that may go still block until they are gone. With `last_round` a short game ignores later melts; with `now_round` ground that has certainly opened counts. |
 | Areas that appear by themselves | One Two Tree (land plots at rounds 2-77), Polyphemus/Castle Revenge/Ancient Portal (click areas) | Counted as there for obstacles, as not there for ground (plots are used once `now_round` passes their round). |
 | Rotating ground | Geared (two gears, 45 and 108 degrees after every round) | Carries its towers. Global-range towers may stand on it; other towers only on "steady" spots that keep covering at least 60 % of their track in every position (`mapgeom.steady_spots`). On Geared there are none: finite-range plans fit it at 0. |
@@ -190,9 +190,10 @@ and planner to pass the round and the game's length.
 - Sanctuary's platform offsets: the curves are applied as shifts relative
   to each platform's starting state, in the scene's x/z (sign of z and the
   turning centre not confirmed).
-- Covered Garden: which pane is open in which round (step =
-  round / roundsPerRotate; the scene has 0, presumably treated as 1).
-  Knowing it would let the bot build under the open pane.
+- Covered Garden's pane timing is taken from the guides (bottom-left open
+  on round 1, clockwise every round), which matches the scene's cycle order
+  (LowerLeft, UpperLeft, UpperRight, LowerRight) with roundsPerRotate 0 read
+  as 1. A pane that shuts mid-click is not learned as a refused spot.
 - Whether `OnMapLoadedWithActiveRegenRemovableTrigger` fires in a fresh
   game (treated as "may happen", which paints both Ancient Portal paths).
 - Removal prices on Easy/Hard/Impoppable compared with the scene's.
