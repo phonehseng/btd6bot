@@ -7,9 +7,12 @@ from .vision import norm
 from . import towers as T
 from .abilities import AbilityPlanner
 from .bloonwatch import BloonWatch
+from . import reinforce as R
 from .forecast import RoundForecast
 from .towerxp import TowerXpCounter
 
+REINFORCE_EVERY = 2.0   # seconds between model-chosen purchases (each choice takes ~1 s)
+REINFORCE_WAIT = 8.0    # ... and after a look that found nothing affordable to help
 WATCH_EVERY = 0.2       # seconds between looks of the bloon watch during a round
 EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
 from .maplearn import PathTracer
@@ -111,7 +114,10 @@ class Match:
         self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
         self._in_round = False
         # the damage model's view of each round as it starts (forecast.py)
-        self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None))
+        self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None),
+                                      getattr(model, "sight", None))
+        self._weak_round = None     # a round whose look-ahead is weak: reinforce (reinforce.py)
+        self._t_reinforce = 0.0
         self._crisis_round = None
         # how far along the route the bloons really get (bloonwatch.py; observe only)
         self.watch = self._make_watch()
@@ -318,6 +324,7 @@ class Match:
                         if outcome:
                             return self._finish(outcome, last_round)
                         continue
+                weak = self._weak_round is not None and self._weak_round == last_round
                 crisis = dropped or self._in_crisis(last_round)
                 saving = (getattr(self.ex, "wait_cost", None) and cash is not None
                           and cash < self.ex.wait_cost and not crisis)
@@ -331,7 +338,14 @@ class Match:
                     if now - self._last_wait_log > 20:
                         self._last_wait_log = now
                         log.info("idle with $%d: %s", cash, getattr(self.ex, "waiting", "?"))
-                    bought = self.ex.surplus(cash, last_round)
+                    if weak and now - self._t_reinforce > REINFORCE_EVERY:
+                        # the coming rounds look weak: the damage model picks
+                        # what the spare cash buys (reinforce.py), the plan's
+                        # own steps and patience keep their place before it
+                        self._t_reinforce = now
+                        bought = self._reinforce(cash, last_round)
+                    if not bought:
+                        bought = self.ex.surplus(cash, last_round)
                 if bought:
                     self._last_buy = now
                     if dropped:
@@ -385,8 +399,10 @@ class Match:
 
     def _forecast_round(self, rnd):
         """Ask the damage model about the round that just started; a round it
-        expects to leak becomes a crisis round (see forecast.py)."""
-        margin = self.forecast.margin(list(self.g.towers.values()), rnd)
+        expects to leak becomes a crisis round (see forecast.py), and a
+        weak look-ahead (this round and the next three) starts reinforcing."""
+        towers = list(self.g.towers.values())
+        margin = self.forecast.margin(towers, rnd)
         if margin is None:
             return
         if self.forecast.is_crisis(margin):
@@ -395,6 +411,29 @@ class Match:
                         "abilities as soon as bloons are out, no saving up", rnd, margin)
         else:
             log.info("round %d: the damage model rates the defence %.2f", rnd, margin)
+        end = self.ex.rules.get("end_round", 80)
+        ahead = self.forecast.worst(towers, R.lookahead_rounds(rnd, end))
+        self._weak_round = None
+        if ahead is not None and ahead[0] < R.WEAK_MARGIN:
+            self._weak_round = rnd
+            log.warning("rounds %d-%d: the damage model rates round %d at %.2f - reinforcing where it "
+                        "helps most", rnd, min(rnd + R.LOOKAHEAD - 1, end), ahead[1], ahead[0])
+
+    def _reinforce(self, cash, rnd):
+        """One model-chosen purchase (reinforce.py). True when one was bought;
+        the weak state ends when nothing affordable helps any more."""
+        try:
+            r = R.buy_best(self.ex, self.forecast, cash, rnd, self.ex.rules.get("end_round", 80))
+        except Exception:
+            log.exception("reinforcing failed - back to the usual spending")
+            self._weak_round = None
+            return False
+        if r == "safe":
+            self._weak_round = None   # the look-ahead holds: surplus as usual
+        elif r == "wait":
+            # nothing the cash buys helps yet: look again once more cash came in
+            self._t_reinforce = time.time() + REINFORCE_WAIT - REINFORCE_EVERY
+        return r == "bought"
 
     # -- the bloon watch (bloonwatch.py): observe only ------------------------------
     def _learn_empty_map(self):

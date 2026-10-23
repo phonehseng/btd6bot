@@ -26,41 +26,91 @@ REVERSE_SUFFIX = " reverse"   # map models of Reverse games are keyed "<map> rev
 
 
 class RoundForecast:
-    def __init__(self, map_key, mode):
+    def __init__(self, map_key, mode, sight_grid=None):
+        """sight_grid: the MapModel's line-of-sight blockers (MapModel.sight),
+        so towers that need sight - snipers included - count only the track
+        they can see."""
         reverse = bool(map_key) and map_key.endswith(REVERSE_SUFFIX)
         self.map_name = map_key[:-len(REVERSE_SUFFIX)] if reverse else map_key
         self.reverse = reverse
         self.mode = mode or "medium"
         self.track = None
+        self.sight = None
+        self._sight_grid = sight_grid
         self.off = not map_key
 
-    def margin(self, towers, rnd):
-        """The model's margin of round `rnd` for `towers` (objects with tid,
-        kind, tiers, x, y in screen fractions; the hero is left out), or
-        None when there is no answer."""
-        if self.off or rnd is None:
+    def _ready(self):
+        """Load the track once; False when the forecast is off."""
+        if self.off:
+            return False
+        if self.track is None:
+            from . import dps_model as D
+            if not D.available():
+                self.off = True
+                return False
+            self.track = D.Track(self.map_name, reverse=self.reverse)
+            self.sight = D.sight_test(self._sight_grid, self.track)
+        return True
+
+    def stations(self, towers):
+        """The model's stations for `towers` (objects with tid, kind, tiers,
+        x, y in screen fractions; the hero is left out), or None."""
+        from . import dps_model as D
+        from . import towers as T
+        placed = []
+        for p in towers:
+            if p.kind == "hero" or p.kind not in T.TOWERS:
+                continue
+            x, z, _ = self.track.frac_to_world(p.x, p.y)
+            placed.append(D.Placed(p.tid, p.kind, tuple(p.tiers), x, z))
+        return D.stations_for(placed, self.track, self.sight) if placed else None
+
+    def worst(self, towers, rounds, iterations=9):
+        """(lowest margin, its round) over `rounds` for `towers`, or None.
+        The defence is built once and rated round by round (~70 ms each;
+        fewer `iterations` of the margin search are quicker and coarser)."""
+        if not rounds:
             return None
         try:
-            from . import dps_model as D
-            from . import towers as T
-            if self.track is None:
-                if not D.available():
-                    self.off = True
-                    return None
-                self.track = D.Track(self.map_name, reverse=self.reverse)
-            placed = []
-            for p in towers:
-                if p.kind == "hero" or p.kind not in T.TOWERS:
-                    continue
-                x, z, _ = self.track.frac_to_world(p.x, p.y)
-                placed.append(D.Placed(p.tid, p.kind, tuple(p.tiers), x, z))
-            if not placed:
+            if not self._ready():
                 return None
-            return D.round_margin(D.stations_for(placed, self.track), self.mode, rnd, self.track)
+            from . import dps_model as D
+            st = self.stations(towers)
+            if not st:
+                return None
+            return min((D.round_margin(st, self.mode, r, self.track, iterations=iterations), r) for r in rounds)
         except Exception:   # a forecast must never cost a game
             log.exception("round forecast failed - off for the rest of this game")
             self.off = True
             return None
+
+    def leaks(self, towers, rounds, strength, per_round=False):
+        """Lives the model's defence would lose over `rounds` with every
+        tower at `strength` (0.5 = half strength: what a margin of 2 must
+        hold); {round: lives} with per_round. One simulation per round, and
+        it moves with every purchase - unlike the margin search, whose steps
+        hide small gains. None when it cannot be rated."""
+        try:
+            if not self._ready():
+                return None
+            from . import dps_model as D
+            st = self.stations(towers)
+            if not st:
+                return None
+            lost = {r: D.simulate_round(st, self.mode, r, self.track, strength=strength).lives_lost
+                    for r in rounds}
+            return lost if per_round else sum(lost.values())
+        except Exception:   # a forecast must never cost a game
+            log.exception("round forecast failed - off for the rest of this game")
+            self.off = True
+            return None
+
+    def margin(self, towers, rnd):
+        """The model's margin of round `rnd` for `towers`, or None."""
+        if rnd is None:
+            return None
+        w = self.worst(towers, [rnd])
+        return None if w is None else w[0]
 
     @staticmethod
     def is_crisis(margin):

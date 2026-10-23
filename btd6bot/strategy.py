@@ -1047,8 +1047,19 @@ class Executor:
         return None
 
     def _new_tid(self, kind):
-        self.counter[kind] = self.counter.get(kind, 0) + 1
-        return f"{kind}{self.counter[kind]}"
+        """An id for a tower placed without one (surplus, fills, answers):
+        never one the board or the build already uses - a surplus "sub1"
+        made the plan's own sub1 look placed, so it was never built and its
+        upgrades went to the other tower."""
+        if not hasattr(self, "_reserved_ids"):
+            steps = list(self.plan) + list(self.strat.get("fill") or []) \
+                + [a for v in (self.strat.get("answers") or {}).values() for a in v]
+            self._reserved_ids = {st["id"] for st in steps if st.get("id")}
+        while True:
+            self.counter[kind] = self.counter.get(kind, 0) + 1
+            tid = f"{kind}{self.counter[kind]}"
+            if tid not in self._reserved_ids and tid not in self.g.towers:
+                return tid
 
     def _range_cells(self, kind):
         if kind == "hero":
@@ -2502,8 +2513,37 @@ class Executor:
         # tower it levels up first - tower XP follows invested cash - and only
         # then into helpers, side paths or the opener.
         target = self.strat.get("xp_target") if isinstance(getattr(self, "strat", None), dict) else None
+        for p, t, cost in self.upgrade_choices(first=target):
+            if cost > cash:
+                continue
+            r = self.try_step({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, t))}, cash, rnd)
+            if r in ("bought", "progress"):
+                log.info("surplus: upgraded %s -> %s", p.tid, p.crosspath)
+                return True
+        main = target if target and self._allowed(target) else self._main_kind()
+        if main and cash >= self.g.price(main):
+            r = self.try_step({"do": "place", "kind": main, "role": "dps", "segment": [0.2, 1.0]}, cash, rnd)
+            if r == "bought":
+                log.info("surplus: placed another %s", main)
+                return True
+        return False
+
+    def upgrade_choices(self, first=None, past_plan=False):
+        """Every next tier the towers standing may take, as (tower, tiers
+        after it, price): crosspath rules (two paths at most, one past tier
+        2), tower XP locks, paths the panel showed closed (capped), and the
+        crosspath the plan wants for the tower (_planned_cap). Biggest
+        investment first, `first` (an XP target kind) before the rest, and
+        each tower's furthest path first - the order surplus() buys in.
+
+        past_plan: a tower's leading path (its highest tier) may go past
+        the plan's crosspath - the cap is there to keep a tower from being
+        turned onto another path, and more of the same path does not
+        (reinforce.py: Water Park Hard reached round 63 with every tower at
+        its planned crosspath and $24k unspent)."""
         towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
-                        key=lambda p: (p.kind != target, -p.spent))
+                        key=lambda p: (p.kind != first, -p.spent))
+        family = PRICE_FAMILY.get(self.mode, "hard")
         for p in towers:
             for path in sorted(range(3), key=lambda i: -p.tiers[i]):
                 if (p.tid, path + 1) in self.capped or p.tiers[path] >= 5:
@@ -2513,24 +2553,12 @@ class Executor:
                 if sum(x > 0 for x in t) > 2 or sum(x > 2 for x in t) > 1:
                     continue
                 cap = self._planned_cap(p)
-                if cap is not None and t[path] > cap[path]:
+                leading = p.tiers[path] > 0 and p.tiers[path] == max(p.tiers)
+                if cap is not None and t[path] > cap[path] and not (past_plan and leading):
                     continue  # past the crosspath the plan wants for this tower
                 if self.account and t[path] > self.account.upgrades(p.kind)[path] and t[path] > 2:
                     continue  # known XP-locked beyond tier 2
-                cost = T.upgrade_cost(p.kind, path + 1, t[path], PRICE_FAMILY.get(self.mode, "hard"))
-                if cost > cash:
-                    continue
-                r = self.try_step({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, t))}, cash, rnd)
-                if r in ("bought", "progress"):
-                    log.info("surplus: upgraded %s -> %s", p.tid, p.crosspath)
-                    return True
-        main = target if target and self._allowed(target) else self._main_kind()
-        if main and cash >= self.g.price(main):
-            r = self.try_step({"do": "place", "kind": main, "role": "dps", "segment": [0.2, 1.0]}, cash, rnd)
-            if r == "bought":
-                log.info("surplus: placed another %s", main)
-                return True
-        return False
+                yield p, t, T.upgrade_cost(p.kind, path + 1, t[path], family)
 
     def _planned_cap(self, p):
         """The crosspath the plan wants this tower to end at (its upgrade steps
