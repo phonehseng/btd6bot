@@ -293,16 +293,20 @@ def test_long_run_reaches_everything():
     games = sum(st["wins"] + st["losses"] for st in acc.strategy_stats.values())
     losses = sum(st["losses"] for st in acc.strategy_stats.values())
     assert losses / games < 0.2, (losses, games)
-    # warm-up order: most Easy-family medals before most Medium-family ones,
-    # and most Easy-family medals before most Hard medals
+    # the tier order shows: Hard first (the default since the evening of
+    # 2026-10-22) - most Hard medals before most Easy-family ones; with the
+    # warm-up order it is the other way round
     order = _medal_order(acc)
     idx = {k: i for i, k in enumerate(order)}
     easy = sorted(i for k, i in idx.items() if k[1] in P.EASY_FAMILY)
     medium = sorted(i for k, i in idx.items() if k[1] in P.MEDIUM_FAMILY)
     hard_idx = sorted(i for k, i in idx.items() if k[1] == "hard")
     assert easy and medium and hard_idx
-    assert easy[len(easy) // 2] < medium[len(medium) // 2], (easy[len(easy) // 2], medium[len(medium) // 2])
-    assert easy[len(easy) // 2] < hard_idx[len(hard_idx) // 2]
+    if P.TIERS is P.TIERS_WARM_UP:
+        assert easy[len(easy) // 2] < medium[len(medium) // 2], (easy[len(easy) // 2], medium[len(medium) // 2])
+        assert easy[len(easy) // 2] < hard_idx[len(hard_idx) // 2]
+    else:
+        assert hard_idx[len(hard_idx) // 2] < easy[len(easy) // 2], (hard_idx[len(hard_idx) // 2], easy[len(easy) // 2])
 
 
 # ------------------------------------------------------------ durations
@@ -479,9 +483,24 @@ def _runner_like_roster(acc: AccountState) -> list[P.StrategySpec]:
     ]
 
 
-def test_fresh_ish_account_warms_up():
-    """Level ~20, mid roster, Easy medals on six beginner maps: the warm-up
-    order plays the remaining Easy-family medals first, easier maps first."""
+def _warm_up(fn):
+    """Run a test with the warm-up tier order (Easy, Medium, then Hard) and
+    easier maps first - the order of the morning of 2026-10-22."""
+    import functools
+
+    @functools.wraps(fn)
+    def run(*a, **kw):
+        saved = P.TIERS, P.HARD_MAPS_FIRST
+        P.TIERS, P.HARD_MAPS_FIRST = P.TIERS_WARM_UP, False
+        try:
+            return fn(*a, **kw)
+        finally:
+            P.TIERS, P.HARD_MAPS_FIRST = saved
+    return run
+
+
+def _fresh_ish_account():
+    """Level ~20, mid roster, Easy medals on six beginner maps."""
     acc = AccountState()
     acc.apply_level(20)
     acc.pending_tower_choices.clear()
@@ -493,6 +512,25 @@ def test_fresh_ish_account_warms_up():
                              "bomb": [0, 1, 1]}
     for m in ["Monkey Meadow", "In The Loop", "Tree Stump", "Town Center", "Logs", "Alpine Run"]:
         acc.record_result(m, "easy", "primary_core", True, minutes=7.5)
+    return acc
+
+
+def test_hard_first_by_default():
+    """The owner's order (evening of 2026-10-22): Hard medals before the
+    Easy and Medium families."""
+    acc = _fresh_ish_account()
+    plan = P.next_game(acc, _runner_like_roster(acc))
+    assert plan.mode_key in P.HARD_FAMILY, (plan.reason, plan.reasons)
+    _, _, cands = P.rank_games(acc, _runner_like_roster(acc))
+    tiers = [c.tier for c in cands]
+    assert tiers == sorted(tiers, key=P.TIERS.index), "tiers out of order"
+
+
+@_warm_up
+def test_fresh_ish_account_warms_up():
+    """With the warm-up order the remaining Easy-family medals come first,
+    easier maps first."""
+    acc = _fresh_ish_account()
     plan = P.next_game(acc, _runner_like_roster(acc))
     assert plan.mode_key in P.EASY_FAMILY, (plan.reason, plan.reasons)
     assert plan.phase == "E", plan.reasons
@@ -960,7 +998,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",

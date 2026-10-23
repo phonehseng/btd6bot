@@ -61,6 +61,7 @@ class Screen:
             return True
         if win32gui.IsIconic(self.hwnd):
             win32gui.ShowWindow(self.hwnd, win32con.SW_RESTORE)
+        self._move_aside_foreground()
         # Joining the foreground thread's input queue lifts the focus-steal lock.
         fg = win32gui.GetForegroundWindow()
         me = win32api.GetCurrentThreadId()
@@ -107,6 +108,29 @@ class Screen:
     # then waited for minutes, refusing to click under it.
     MINIMIZE_WHEN_COVERING = ("Claude",)
 
+    USER_IDLE_S = 20.0   # no keyboard/mouse input this long: nobody is using the PC
+
+    @staticmethod
+    def user_idle_s():
+        """Seconds since the last keyboard or mouse input (GetLastInputInfo)."""
+        class LASTINPUTINFO(ctypes.Structure):
+            _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+        info = LASTINPUTINFO(ctypes.sizeof(LASTINPUTINFO), 0)
+        if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(info)):
+            return 0.0
+        return (ctypes.windll.kernel32.GetTickCount() - info.dwTime) / 1000.0
+
+    def _move_aside_foreground(self):
+        """The Claude app took the foreground (a message arrived, 2026-10-22
+        20:53: the bot left a game in progress after a minute of waiting):
+        minimize it - only while nobody is using the PC, so a person typing
+        there is never interrupted."""
+        fg = win32gui.GetForegroundWindow()
+        if not fg or fg == self.hwnd or win32gui.GetWindowText(fg) not in self.MINIMIZE_WHEN_COVERING:
+            return
+        if self.user_idle_s() >= self.USER_IDLE_S:
+            win32gui.ShowWindow(fg, win32con.SW_MINIMIZE)
+
     def clear_point(self, fx, fy):
         """If a known app window covers the game at (fx, fy), minimize it.
         Returns its title when it did, else None (other windows are left
@@ -137,23 +161,35 @@ class Screen:
         return np.ascontiguousarray(img)
 
     def _grab_window(self):
+        """The game window's own pixels (PrintWindow), or None - then grab()
+        falls back to a screen grab. A failing GDI call must not end a game:
+        on 2026-10-22, with the CPU at 100%, CreateCompatibleDC failed on a
+        last round, and the cleanup itself then raised and skipped freeing
+        the other handles."""
         w, h = self.width, self.height
-        hdc = win32gui.GetWindowDC(self.hwnd)
-        dc = win32ui.CreateDCFromHandle(hdc)
-        mem = dc.CreateCompatibleDC()
-        bmp = win32ui.CreateBitmap()
+        hdc = dc = mem = bmp = None
         try:
+            hdc = win32gui.GetWindowDC(self.hwnd)
+            dc = win32ui.CreateDCFromHandle(hdc)
+            mem = dc.CreateCompatibleDC()
+            bmp = win32ui.CreateBitmap()
             bmp.CreateCompatibleBitmap(dc, w, h)
             mem.SelectObject(bmp)
             # 3 = PW_CLIENTONLY | PW_RENDERFULLCONTENT (needed for DirectX surfaces)
             ok = ctypes.windll.user32.PrintWindow(self.hwnd, mem.GetSafeHdc(), 3)
             arr = np.frombuffer(bmp.GetBitmapBits(True), dtype=np.uint8).reshape(h, w, 4)
             img = arr[:, :, :3].copy()
+        except Exception:
+            return None
         finally:
-            win32gui.DeleteObject(bmp.GetHandle())
-            mem.DeleteDC()
-            dc.DeleteDC()
-            win32gui.ReleaseDC(self.hwnd, hdc)
+            # every handle on its own: one that was never created must not
+            # keep the others from being freed
+            for free in (lambda: win32gui.DeleteObject(bmp.GetHandle()), lambda: mem.DeleteDC(),
+                         lambda: dc.DeleteDC(), lambda: win32gui.ReleaseDC(self.hwnd, hdc)):
+                try:
+                    free()
+                except Exception:
+                    pass
         if not ok or img[::50, ::50].max() == 0:
             return None
         return img

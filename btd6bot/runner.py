@@ -569,19 +569,22 @@ class Bot:
                 break  # wrapped around to a page we already read
             seen_pages.append(page)
             self.inp.click(*self.NEXT_PAGE)
-        # The cards are the truth: set every mode exactly as shown (adds medals
-        # earned elsewhere and drops ones our notes got wrong).
-        dropped_medals = []
+        # The cards ADD medals (earned elsewhere, or before the bot), never
+        # take one away: a medal cannot be lost in the game, and reading a
+        # card wrong is far likelier. Removing them made a loop - the bot won
+        # Park Path Easy and Logs Easy, the next scan "removed" them, and the
+        # planner played them again (2026-10-22: 02:33, 15:30, 20:39).
+        unseen = []
         for name, medals in found.items():
             rec = self.account.medals.setdefault(canonical_map(name), {})
             for mode, earned in medals.items():
                 if earned and not rec.get(mode):
                     new_medals += 1
+                    rec[mode] = True
                 elif rec.get(mode) and not earned:
-                    dropped_medals.append(f"{name} {mode}")
-                rec[mode] = bool(earned)
-        if dropped_medals:
-            log.warning("medal scan: removed medals the game does not show: %s", ", ".join(dropped_medals))
+                    unseen.append(f"{name} {mode}")
+        if unseen:
+            log.info("medal scan: medals on record the cards did not show (kept): %s", ", ".join(unseen))
         odd = self.account.out_of_chain_medals()
         if odd:   # kept: earned in someone else's co-op lobby (see AccountState.out_of_chain_medals)
             log.info("%d medals earned outside the unlock chain (co-op): %s", len(odd), odd[:8])
@@ -1195,7 +1198,24 @@ class Bot:
         mode failed twice, and stop benching altogether when the same error
         hits game after game - that is a bug in the bot, not a bad map (log
         2026-10-22 02:04-02:15: one setup bug benched 13 maps for 6 h each).
-        The counts are kept on disk, so a restart does not reset them."""
+        The counts are kept on disk, so a restart does not reset them.
+
+        An error at the very end of a game can leave its Victory screen up
+        (Candy Falls Easy, 2026-10-22: a screen-capture failure on the last
+        round): that game was won, and is recorded as a win - else its medal
+        stays unknown and the planner plays the map/mode again."""
+        if plan is not None:
+            try:
+                won = self.menus.identify() == "victory"
+            except Exception:
+                won = False
+            if won:
+                log.warning("%s %s: error at the end, but the Victory screen is up - recorded as a win",
+                            plan.map, plan.mode_key)
+                self.account.record_result(plan.map, plan.mode_key, plan.strategy_id, True)
+                self.account.save()
+                self._game_done(plan)
+                return
         errors = self._errors
         sig = _error_signature(e)
         errors["streak"] = errors["streak"] + 1 if sig == errors["sig"] else 1

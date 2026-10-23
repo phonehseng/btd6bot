@@ -283,14 +283,19 @@ NORMAL_GROUP = EASY_FAMILY + MEDIUM_FAMILY
 
 # Tiers, best first (index = rank); every candidate in them is a first-time
 # medal. See the module docstring.
-# Progression, best first. The owner's order since 2026-10-22: "focus on the
-# easy maps and every single medal, then normal, and warm up to the harder
-# maps" - Easy-family medals, then Medium-family, then Hard and its sub-modes
-# (which also get likelier as the record and tower XP grow), then the
-# riskier fallbacks. (Before: Hard first - TIERS_HARD_FIRST.)
+# Progression, best first. The owner's order since the evening of
+# 2026-10-22: "go back to prioritizing hard mode and hard maps" - Hard
+# medals, then the Hard sub-modes, then the safer fallbacks, Medium-family
+# and Easy-family last (they pay the least XP and Monkey Money per minute).
+# Within a tier, harder maps first (HARD_MAPS_FIRST). Safety stays ahead
+# of both: confident games (p >= CONFIDENT_P) sort first in every tier, and
+# after repeated losses the circuit breaker (safety.py) allows Easy-family
+# medals only. (The morning's warm-up order is TIERS_WARM_UP.)
 TIERS_HARD_FIRST = ("H", "HS", "HF", "B", "M", "E")
-TIERS = ("E", "M", "H", "HS", "HF", "B")
-# Within a tier, easier map categories first (warm-up).
+TIERS_WARM_UP = ("E", "M", "H", "HS", "HF", "B")
+TIERS = TIERS_HARD_FIRST
+HARD_MAPS_FIRST = True
+# Map categories by ease: 3 beginner .. 0 expert.
 CATEGORY_EASE = {"beginner": 3, "intermediate": 2, "advanced": 1, "expert": 0}
 PHASES = {
     "H": "Hard standard medal on every open map (learned tracks first; "
@@ -1515,7 +1520,12 @@ def _sort_key(c: _Cand) -> tuple:
     preferred = 1 if own_map or c.s.id in PREFERRED_STRATEGIES else 0
     learned = 1 if c.tier in ("H", "HS") and c.learned else 0
     within = c.p if c.tier == "HF" else c.score
-    return (rank, confident, c.ease, preferred, learned, within)
+    maps = -c.ease if HARD_MAPS_FIRST else c.ease     # expert maps first, or beginner first
+    if HARD_MAPS_FIRST:
+        # safer first among confident games: a map's own build, a learned
+        # track - then the hardest map
+        return (rank, confident, preferred, learned, maps, within)
+    return (rank, confident, maps, preferred, learned, within)
 
 
 def _open_unearned(account: AccountState, modes: Iterable[str]) -> bool:
@@ -1546,7 +1556,7 @@ def _phase_reasons(account: AccountState, scored: list[_Cand], cands: list[_Cand
     not_yet = len({(c.map, c.mode) for c in scored} - seen)
     reasons = [f"{top}: {PHASES[top]} (open medals by tier: "
                + ", ".join(f"{t}={count[t]}" for t in TIERS) + f"; not winnable yet: {not_yet})"]
-    if top in ("M", "E") and any(c.tier in ("H", "HS") for c in scored):
+    if TIERS is TIERS_WARM_UP and top in ("M", "E") and any(c.tier in ("H", "HS") for c in scored):
         reasons.append("warm-up order: Easy-family medals first, then Medium, then Hard "
                        "(the Hard medals already in reach wait their turn)")
     elif top in ("B", "M", "E"):
