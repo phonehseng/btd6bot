@@ -109,6 +109,41 @@ def _load_errors():
     return {"sig": d.get("sig"), "streak": int(d.get("streak", 0)), "maps": dict(d.get("maps", {}))}
 
 
+# The game being played, kept on disk while it runs. A bot that was stopped
+# or killed on the game's Victory screen (2026-10-23: Karts N Darts Easy was
+# won, the bot hung there and was restarted, the win was never written down
+# and the map was played again) finds it at the next start and records the win.
+GAME_FILE = ROOT_DIR / "logs" / "game_in_progress.json"
+
+
+def _note_game_started(plan):
+    import json
+    try:
+        GAME_FILE.write_text(json.dumps({"map": plan.map, "mode": plan.mode_key,
+                                         "strategy": plan.strategy_id, "t": time.time()}),
+                             encoding="utf-8")
+    except OSError:
+        log.warning("could not note the game in progress")
+
+
+def _note_game_over():
+    try:
+        GAME_FILE.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def _game_in_progress():
+    """(map, mode, strategy) of the game the last bot started and never
+    finished, or None."""
+    import json
+    try:
+        g = json.loads(GAME_FILE.read_text(encoding="utf-8"))
+        return g["map"], g["mode"], g["strategy"]
+    except (OSError, ValueError, KeyError):
+        return None
+
+
 def _save_errors(errors):
     import json
     try:
@@ -323,6 +358,7 @@ class Bot:
             if st == "pause":
                 self.menus.click_word("home")
             elif st == "victory":
+                self._credit_unfinished_win()
                 self.menus.leave_victory()
             elif st == "defeat":
                 self.menus.leave_defeat()
@@ -947,6 +983,7 @@ class Bot:
                     self.bench(plan.map, plan.mode_key, hours=2, why="failed to start")
                     self.failures += 1
                     continue
+                _note_game_started(plan)
                 # the plan's towers earn XP from here on (even if the game breaks)
                 forget_short(self.account, strategy_towers(self.strats[plan.strategy_id]))
                 res = self.play(plan)
@@ -1234,8 +1271,25 @@ class Bot:
         elif key:
             log.warning("%s %s failed (%s) - it is benched only if it fails again", plan.map, plan.mode_key, sig)
 
+    def _credit_unfinished_win(self):
+        """A Victory screen with a game noted as in progress: the last bot
+        won that game but stopped before writing it down. Record the win, or
+        the planner would play the map/mode again."""
+        game = _game_in_progress()
+        if not game:
+            return
+        map_name, mode, strategy = game
+        log.warning("Victory screen of an unfinished %s %s - recorded as a win", map_name, mode)
+        try:
+            self.account.record_result(map_name, mode, strategy, True)
+            self.account.save()
+        except Exception:
+            log.exception("could not record the unfinished win")
+        _note_game_over()
+
     def _game_done(self, plan):
         """A game ran to its end: the error streak and this map's count reset."""
+        _note_game_over()
         self._errors["sig"], self._errors["streak"] = None, 0
         self._errors["maps"].pop(f"{plan.map}|{plan.mode_key}", None)
         _save_errors(self._errors)
