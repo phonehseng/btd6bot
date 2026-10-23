@@ -240,6 +240,9 @@ class Match:
                 # a modal popup pauses the game while the HUD stays visible
                 st = self.menus.identify()
                 log.info("screen frozen (%s) - looking for a popup", st)
+                if st == "game_error":
+                    # the game crashed under the match: not a loss of this map
+                    raise RuntimeError("the game showed its own error dialog")
                 if st in ("victory", "defeat") and self._real_end(st, f):
                     return self._finish(st, last_round)  # the end screen overlays the HUD
                 if st == "defeat":

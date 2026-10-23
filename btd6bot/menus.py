@@ -15,6 +15,11 @@ log = logging.getLogger("menus")
 
 # screen -> list of keyword groups; all groups must match (any word within a group)
 SCREENS = [
+    # the game's own crash dialog: "ERROR - We've encountered an unexpected
+    # error ... EXIT" (2026-10-23, Another Brick: an ArgumentNullException in
+    # the map's OnClickHandler). Over a match the HUD still shows, so it must
+    # come before everything else, or the bot thinks it is playing.
+    ("game_error", [["unexpectederror", "encounteredan", "contactsupport"], ["exit"]]),
     # after a win during a collection event (title "COLLECTION EVENT"; the
     # font's C reads as G): a crate fills up, and a full one shows COLLECT
     ("collection_event", [["collectionevent", "collegtionevent"]]),

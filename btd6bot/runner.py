@@ -357,6 +357,12 @@ class Bot:
                 return True
             if st == "pause":
                 self.menus.click_word("home")
+            elif st == "game_error":
+                # the game's own error dialog: its EXIT button leaves the
+                # match (nothing was won or lost there)
+                log.warning("the game showed its own error dialog - pressing EXIT")
+                self.menus.click_word("exit")
+                time.sleep(3)
             elif st == "victory":
                 self._credit_unfinished_win()
                 self.menus.leave_victory()
