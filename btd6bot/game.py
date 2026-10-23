@@ -876,8 +876,89 @@ class Game:
         self.towers.pop(p.tid, None)
         return True
 
+    def remove_obstacle(self, fx, fy, cost, name=""):
+        """Buy the removal of the obstacle at (fx, fy) with in-game cash
+        (never Monkey Money - removals are paid from the round's cash).
+
+        The price is read off the game's box (the map file's price can
+        differ by difficulty), the green check is clicked only if the cash
+        covers it, and the purchase counts only when the cash then drops by
+        about that price. Anything unexpected cancels: nothing is bought."""
+        before = self.cash_stable()
+        if before is None or before < cost:
+            return False
+        self.inp.click(fx, fy)
+        time.sleep(0.6)
+        f = self.fresh()
+        box = find_removal_box(f, self._vision().read(img=f))
+        if box is None:
+            log.info("obstacle %s: no removal box after clicking it", name)
+            self.close_panels()          # the click may have opened something else
+            return False
+        price = box["price"] or cost
+        if box["confirm"] is None or price > before:
+            log.info("obstacle %s: box read %s, confirm %s, cash %s - cancelled", name, price, box["confirm"], before)
+            self.inp.click(*(box["cancel"] or (0.5, 0.012)))   # the X, or anywhere outside the box
+            time.sleep(0.4)
+            return False
+        self.inp.click(*box["confirm"])
+        time.sleep(0.7)
+        after = self.cash_stable()
+        paid = None if after is None else before - after
+        if paid is not None and paid >= 0.6 * price:
+            log.info("removed obstacle %s for $%s", name, price)
+            return True
+        log.warning("obstacle %s: cash %s -> %s after confirming $%s - not counted as removed", name, before, after, price)
+        return False
+
     def ability(self, n):
         self.inp.press(str(n))
+
+
+# -- removable obstacles ------------------------------------------------------
+# Clicking a removable obstacle (Peninsula's kelp, Dark Castle's trees...)
+# opens a box "Remove FOR $500" with a red X and a green check under the text;
+# the box pauses the game. Clicking outside it cancels.
+REMOVE_BOX_BELOW = 0.16     # how far below the text (screen height) the buttons sit
+REMOVE_BOX_SIDE = 0.16      # and how far left/right of the text's centre
+
+
+def _colour_blob(img, region, lo, hi):
+    """Centre (screen fractions) of the largest blob within HSV [lo, hi]
+    inside region (fx0, fy0, fx1, fy1) of img, or None."""
+    h, w = img.shape[:2]
+    x0, y0 = max(0, int(region[0] * w)), max(0, int(region[1] * h))
+    x1, y1 = min(w, int(region[2] * w)), min(h, int(region[3] * h))
+    if x1 <= x0 or y1 <= y0:
+        return None
+    hsv = cv2.cvtColor(img[y0:y1, x0:x1], cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, lo, hi)
+    n, _, stats, cents = cv2.connectedComponentsWithStats(mask)
+    if n <= 1:
+        return None
+    best = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+    if stats[best, cv2.CC_STAT_AREA] < 0.0004 * w * h:      # a button, not a stray pixel
+        return None
+    cx, cy = cents[best]
+    return (x0 + cx) / w, (y0 + cy) / h
+
+
+def find_removal_box(img, words):
+    """The "Remove FOR $N" box in a frame: {"price", "confirm", "cancel"}
+    (button centres as screen fractions; a button may be None), or None when
+    no such box is showing."""
+    import re
+    from .vision import norm
+    text = next((w for w in words if "remove" in norm(w.text)), None)
+    if text is None:
+        return None
+    digits = re.findall(r"\d[\d,]*", text.text.split("$")[-1]) or re.findall(r"\d[\d,]*", text.text)
+    price = parse_int(digits[-1]) if digits else None
+    below = (text.y, text.y + REMOVE_BOX_BELOW)
+    # the green check sits right of the text's centre, the red X left of it
+    confirm = _colour_blob(img, (text.x, below[0], text.x + REMOVE_BOX_SIDE, below[1]), (40, 120, 120), (85, 255, 255))
+    cancel = _colour_blob(img, (text.x - REMOVE_BOX_SIDE, below[0], text.x, below[1]), (0, 120, 140), (12, 255, 255))
+    return {"price": price, "confirm": confirm, "cancel": cancel}
 
 
 def _red_mask(img):

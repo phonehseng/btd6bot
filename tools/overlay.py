@@ -25,6 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LOG = ROOT / "logs" / "bot.log"
 STATE = ROOT / "logs" / "state.txt"
+FOCUS = ROOT / "logs" / "focus.txt"    # the game's XP focus (btd6bot.status.set_focus)
 HOLD = ROOT / "HOLD"                # the same file btd6bot.inputs.HOLD_FILE waits on
 GAME_TITLE = "BloonsTD6"            # btd6bot.screen.WINDOW_TITLE
 
@@ -116,9 +117,14 @@ def main():
     # top centre, above the play field: the game's HUD sits further down
     x0 = (sw - w) // 2
     root.geometry(f"{w}x{h}+{x0}+0")
-    top = tk.Label(root, text="", fg="#7CFC9A", bg=BG, font=("Segoe UI", 10, "bold"), anchor="w")
+    line1 = tk.Frame(root, bg=BG)
+    line1.pack(fill="x", padx=8)
+    top = tk.Label(line1, text="", fg="#7CFC9A", bg=BG, font=("Segoe UI", 10, "bold"), anchor="w")
+    top.pack(side="left")
+    # which tower the game is favouring for XP (paragon focus / XP build)
+    focus = tk.Label(line1, text="", fg="#FFD54F", bg=BG, font=("Segoe UI", 10, "bold"), anchor="e")
+    focus.pack(side="right")
     bot = tk.Label(root, text="", fg="#E0E0E0", bg=BG, font=("Segoe UI", 9), anchor="w")
-    top.pack(fill="x", padx=8)
     bot.pack(fill="x", padx=8)
     # the strip: click-through, never focused
     set_ex_style(root, WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST)
@@ -159,6 +165,10 @@ def main():
             colour = "#FF6E6E"
         top.config(text=f"BTD6 bot: {st}{flags}   ({q})", fg=colour)
         bot.config(text=msg[:150])
+        xp = ""
+        if FOCUS.exists() and (age(FOCUS) or 0) < 3 * 3600:      # a stale note from a crashed game is ignored
+            xp = "XP: " + last_line(FOCUS)[:60]
+        focus.config(text=xp)
         # the pressed state shows on the buttons too
         stop_btn.config(bg="#c62828" if HOLD.exists() else "#7a1e1e")
         go_btn.config(bg="#1e6b34" if HOLD.exists() else "#2e7d32")

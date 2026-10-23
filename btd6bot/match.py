@@ -19,6 +19,12 @@ from .maplearn import PathTracer
 
 log = logging.getLogger("match")
 BANANA_EVERY = 2.0   # seconds between passes over the bananas around farms
+# Dartling Gunners (and a heli before its targeting is set) aim at the mouse:
+# while the bot has nothing to click, the cursor rests on the busiest stretch
+# of track instead of wherever its last click left it.
+PARK_EVERY = 1.5     # seconds between checks of where the cursor rests
+PARK_WINDOW = 15     # grid cells: the track density is measured over this square
+PARK_SLACK = 12      # pixels: closer than this to the spot, the cursor stays put
 
 
 class LivesTracker:
@@ -111,6 +117,8 @@ class Match:
         self._last_buy = time.time()
         self._last_wait_log = 0.0
         self._t_bananas = 0.0      # last pass over the farms' bananas
+        self._t_park = 0.0         # last cursor park (PARK_EVERY)
+        self._park = None          # where the cursor rests: the busiest track (screen fractions)
         self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
         self._in_round = False
         # the damage model's view of each round as it starts (forecast.py)
@@ -354,6 +362,8 @@ class Match:
                     if dropped:
                         self.stats["panic"] += 1
                     t_hud = 0  # re-read cash right away after spending
+                if not bought:
+                    self._park_cursor(now)
                 # bananas pay only when the cursor passes over them
                 if now - self._t_bananas > BANANA_EVERY:
                     self._t_bananas = now
@@ -561,6 +571,44 @@ class Match:
                     self.menus.inp.click(0.5, 0.5)
                 time.sleep(0.8)
         return None
+
+    def _park_point(self):
+        """Screen spot over the busiest stretch of track: the track cell with
+        the most track around it (a bend or a stretch where lanes meet), so
+        a tower aiming at the cursor fires into the thick of the bloons."""
+        if self._park is None:
+            import cv2
+            import numpy as np
+            heat = getattr(self.m, "heat", None)
+            if heat is None or not (heat > 0).any():
+                return None
+            track = (heat > 0).astype(np.float32)
+            dens = cv2.boxFilter(track, -1, (PARK_WINDOW, PARK_WINDOW))
+            dens[track == 0] = 0
+            y, x = np.unravel_index(int(np.argmax(dens)), dens.shape)
+            self._park = self.m.cell_to_frac(int(x), int(y))
+        return self._park
+
+    def _park_cursor(self, now):
+        """Rest the cursor on the busiest track while something follows it
+        (a Dartling Gunner, or a heli whose targeting is not set yet)."""
+        if now - self._t_park < PARK_EVERY:
+            return
+        self._t_park = now
+        towers = self.g.towers.values()
+        if not any(p.kind == "dartling" or (p.kind == "heli" and getattr(p, "aim", None) not in ("lock", "pursuit"))
+                   for p in towers):
+            return
+        spot = self._park_point()
+        if spot is None:
+            return
+        import win32api
+        x, y = self.g.s.to_px(*spot) if hasattr(self.g, "s") else (None, None)
+        if x is not None:
+            cx, cy = win32api.GetCursorPos()
+            if abs(cx - x) <= PARK_SLACK and abs(cy - y) <= PARK_SLACK:
+                return                        # already resting there
+        self.g.inp.move(*spot, fast=True)
 
     def _real_end(self, st, f):
         """A defeat needs the lives counter to agree: a word like 'defeat' can

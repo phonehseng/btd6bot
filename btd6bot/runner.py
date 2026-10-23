@@ -126,7 +126,25 @@ def _note_game_started(plan):
         log.warning("could not note the game in progress")
 
 
+def xp_focus(plan, strat):
+    """What this game is biased toward for tower XP, in words for the HUD,
+    or None: an XP build's `xp_target` (surplus cash goes into that tower
+    first) and the planner's paragon focus (it chose this game partly
+    because its towers feed a paragon)."""
+    import re
+    parts = []
+    target = strat.get("xp_target") if isinstance(strat, dict) else None
+    if target:
+        parts.append(f"{target} - surplus goes into it first")
+    m = re.search(r"paragon focus: (.+?\))\)?(,|$)", getattr(plan, "reason", "") or "")
+    if m:
+        parts.append(f"paragon: {m.group(1)}")
+    return "; ".join(parts) or None
+
+
 def _note_game_over():
+    from .status import set_focus
+    set_focus(None)
     try:
         GAME_FILE.unlink(missing_ok=True)
     except OSError:
@@ -992,6 +1010,8 @@ class Bot:
                     self.failures += 1
                     continue
                 _note_game_started(plan)
+                from .status import set_focus
+                set_focus(xp_focus(plan, self.strats[plan.strategy_id]))
                 # the plan's towers earn XP from here on (even if the game breaks)
                 forget_short(self.account, strategy_towers(self.strats[plan.strategy_id]))
                 res = self.play(plan)

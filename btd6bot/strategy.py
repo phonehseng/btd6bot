@@ -885,6 +885,9 @@ class Executor:
         self.no_sell = bool(self.rules.get("no_sell") or c.get("no_sell"))
         self.no_income = bool(self.rules.get("no_income_towers") or c.get("no_income_towers"))
         self.no_answers = bool(c.get("no_answers"))
+        self.no_removals = bool(self.rules.get("no_removables") or c.get("no_removables"))
+        self.removed = []           # obstacles bought this game (names, mapgeom.removables)
+        self.removal_fails = {}     # obstacle name -> failed attempts
         self.allowed = set(c["allowed_towers"]) if c.get("allowed_towers") is not None else None
         self.forbidden = set(c.get("forbidden_towers") or ())
         self.land_only = bool(c.get("land_only"))
@@ -1148,7 +1151,8 @@ class Executor:
         # melts after round 54) is usable in a shorter game
         valid = PL.valid_spots(self.m, kind, hero, placed,
                                where={"land"} if self.land_only else None,
-                               last_round=self.rules.get("end_round"), now_round=self._pane_round())
+                               last_round=self.rules.get("end_round"), now_round=self._pane_round(),
+                               removed=tuple(self.removed))
         covered = None if role == "support" else self._covered()
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
@@ -1306,6 +1310,7 @@ class Executor:
                 if self.g.upgrade(p, path):
                     if self.account and p.kind != "hero":
                         self.account.note_bought(p.kind, path, p.tiers[path - 1])
+                    self._aim(p)       # a heli reaching 2xx can now pursue
                     return "progress" if self._next_path(p, target) else "bought"
                 self._upgrade_failed(p, path, cash)
                 return "wait"
@@ -1371,6 +1376,8 @@ class Executor:
             self._block(*self.m.frac_to_cell(p.x, p.y), 3)
             if step.get("target"):
                 self.g.target(p, step["target"])
+            else:
+                self._aim(p)
             return "bought"
         reason = self.g.fail_reason
         if reason == "hold":
@@ -1437,7 +1444,7 @@ class Executor:
         placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
                   for p in self.g.towers.values()]
         valid = PL.valid_spots(self.m, kind, None, placed, where={"land"} if self.land_only else None,
-                               now_round=self._pane_round())
+                               now_round=self._pane_round(), removed=tuple(self.removed))
         if valid is None:
             return []
         ys, xs = np.nonzero(valid & ~self.blocked)
@@ -1578,7 +1585,7 @@ class Executor:
             if p.kind in ("farm", "spike") or T.TOWERS.get(p.kind, {}).get("range") is None:
                 continue   # income, exit and global-range towers stay
             reach = self._reach(p.kind)
-            valid = PL.valid_spots(self.m, p.kind)
+            valid = PL.valid_spots(self.m, p.kind, removed=tuple(self.removed))
             if reach is None or valid is None or not valid.any():
                 continue
             best = float(reach[valid].max())
@@ -1692,7 +1699,8 @@ class Executor:
                   for p in self.g.towers.values()]
         valid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                                where={"land"} if self.land_only else None,
-                               last_round=self.rules.get("end_round"), now_round=self._pane_round())
+                               last_round=self.rules.get("end_round"), now_round=self._pane_round(),
+                               removed=tuple(self.removed))
         if valid is None:
             return []
         legal = int(valid.sum())
@@ -2593,11 +2601,100 @@ class Executor:
                 log.info("surplus: upgraded %s -> %s", p.tid, p.crosspath)
                 return True
         main = target if target and self._allowed(target) else self._main_kind()
+        if main and self.clear_obstacle(cash, main):
+            return True
         if main and cash >= self.g.price(main):
             r = self.try_step({"do": "place", "kind": main, "role": "dps", "segment": [0.2, 1.0]}, cash, rnd)
             if r == "bought":
                 log.info("surplus: placed another %s", main)
                 return True
+        return False
+
+    # -- towers that aim at the mouse --------------------------------------
+    # The Heli Pilot ("Follow Touch") and the Dartling Gunner aim at the mouse
+    # by default - and the bot's mouse is all over the screen, placing and
+    # upgrading. A heli is set to Lock in Place where it was placed (spot
+    # picking chose that spot for its coverage), and to Pursuit, which chases
+    # the bloons, once it has 2xx (the upgrade that unlocks Pursuit). A
+    # strategy that sets a tower's targeting itself keeps it. Dartlings keep
+    # Follow Touch: the match parks the cursor on the busiest stretch of track
+    # while the bot is idle (Match._park_cursor).
+    HELI_PURSUIT_TIER = 2
+
+    def _explicit_target(self, p):
+        """Does the plan set this tower's targeting itself?"""
+        return any(st.get("do") == "target" and st.get("id") == p.tid for st in self.plan + self.fill)
+
+    def _aim(self, p):
+        """Set a heli's targeting so it stops following the mouse."""
+        if p.kind != "heli" or self._explicit_target(p):
+            return
+        want = "pursuit" if p.tiers[0] >= self.HELI_PURSUIT_TIER else "lock"
+        if getattr(p, "aim", None) in (want, "failed " + want):
+            return
+        try:
+            ok = self.g.target(p, want)
+        except Exception:          # targeting is a nicety: never cost a game over it
+            log.exception("setting %s's targeting failed", p.tid)
+            ok = False
+        p.aim = want if ok else "failed " + want
+        if ok:
+            log.info("%s targeting: %s (no longer follows the mouse)", p.tid, "Pursuit" if want == "pursuit" else "Lock in Place")
+        else:
+            log.warning("%s: could not find the %s targeting - left as it was", p.tid, want)
+
+    # -- removable obstacles ----------------------------------------------
+    # Obstacles a player pays to remove with the round's cash (Peninsula's
+    # kelp, Dark Castle's trees, Quad's trusses...): the ground under them
+    # becomes land or water for more towers. The map file lists them, their
+    # price and where to click (mapgeom.removables); placement counts the
+    # freed ground once one is bought (valid_spots(removed=...)).
+    REMOVAL_MIN_CELLS = 4       # it must free at least this much legal ground for the tower
+    REMOVAL_TRIES = 2           # attempts per obstacle before it is left alone for the game
+
+    def _obstacles(self):
+        """This map's obstacles that can be bought now, not yet removed."""
+        if getattr(self, "_obstacle_list", None) is None:
+            from . import mapgeom
+            name = getattr(self.m, "name", "") or ""
+            name = name[:-len(" reverse")] if name.endswith(" reverse") else name
+            try:
+                self._obstacle_list = [r for r in mapgeom.removables(name, self.m.playfield)
+                                       if r["available"] and r.get("frac") and r["after"] != "uncovered"]
+            except Exception:       # a map-file problem must never cost a game
+                self._obstacle_list = []
+        return [r for r in self._obstacle_list
+                if r["name"] not in self.removed and self.removal_fails.get(r["name"], 0) < self.REMOVAL_TRIES]
+
+    def clear_obstacle(self, cash, kind):
+        """Surplus spending: when the cash covers an obstacle's price and the
+        next tower too, buy the removal that frees the most legal ground for
+        `kind`. Returns True when one was bought."""
+        if self.no_removals or not kind:
+            return False
+        affordable = [r for r in self._obstacles() if cash >= r["cost"] + self.g.price(kind)]
+        if not affordable:
+            return False
+        from . import placement as PL
+        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
+                  for p in self.g.towers.values()]
+        where = {"land"} if self.land_only else None
+        base = PL.valid_spots(self.m, kind, None, placed, where=where, removed=tuple(self.removed))
+        if base is None:
+            return False
+        best, gain = None, 0
+        for r in affordable:
+            after = PL.valid_spots(self.m, kind, None, placed, where=where, removed=tuple(self.removed) + (r["name"],))
+            g = int((after & ~base).sum()) if after is not None else 0
+            if g > gain:
+                best, gain = r, g
+        if best is None or gain < self.REMOVAL_MIN_CELLS:
+            return False
+        log.info("clearing obstacle %s ($%s): frees %d legal cells for %s", best["name"], best["cost"], gain, kind)
+        if self.g.remove_obstacle(*best["frac"], best["cost"], name=best["name"]):
+            self.removed.append(best["name"])
+            return True
+        self.removal_fails[best["name"]] = self.removal_fails.get(best["name"], 0) + 1
         return False
 
     def upgrade_choices(self, first=None, past_plan=False):

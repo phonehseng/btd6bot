@@ -6,6 +6,22 @@ STATE_FILE = Path(__file__).resolve().parents[1] / "logs" / "state.txt"
 _game = ""
 
 
+FOCUS_FILE = STATE_FILE.with_name("focus.txt")
+
+
+def set_focus(text):
+    """What the current game is biased toward for tower XP (shown by the
+    HUD, tools/overlay.py), e.g. "bomb - paragon focus, needs 208k XP";
+    None clears it."""
+    try:
+        if text:
+            FOCUS_FILE.write_text(text, encoding="utf-8")
+        else:
+            FOCUS_FILE.unlink(missing_ok=True)
+    except OSError:
+        pass     # the HUD is a convenience; a locked file must not stop a game
+
+
 def set_state(text, game=None):
     """game: sticky prefix for in-game updates ('playing Logs hard')."""
     global _game
