@@ -28,10 +28,10 @@
 id: darkpath_hard
 map: Dark Path
 hero: quincy
-modes: [medium, hard]
+modes: [medium]
 planner:
   towers: {ninja: [4, 0, 2], alchemist: [4, 2, 0], village: [2, 3, 0], heli: [5, 0, 2], spike: [0, 2, 5]}
-  base_success: {medium: 0.82, hard: 0.74}
+  base_success: {medium: 0.82}
   maps: [Dark Path]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, at: [0.163, 0.802]}    # exit pocket, left of the lane

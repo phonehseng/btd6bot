@@ -26,10 +26,10 @@
 id: patspond_hard
 map: Pat's Pond
 hero: obyn
-modes: [medium, hard]
+modes: [medium]
 planner:
   towers: {ninja: [4, 0, 2], buccaneer: [0, 4, 2], alchemist: [4, 0, 1], village: [4, 2, 0], bomb: [0, 2, 4], sniper: [4, 2, 0]}
-  base_success: {medium: 0.8, hard: 0.72}
+  base_success: {medium: 0.8}
   maps: ["Pat's Pond"]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, at: [0.772, 0.394]}    # right junction, above-left

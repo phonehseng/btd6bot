@@ -28,10 +28,10 @@
 id: coveredgarden_hard
 map: Covered Garden
 hero: etienne
-modes: [medium, hard]
+modes: [medium]
 planner:
   towers: {heli: [5, 0, 2], sniper: [4, 2, 0], ace: [2, 0, 4], village: [2, 2, 0]}
-  base_success: {medium: 0.78, hard: 0.7}
+  base_success: {medium: 0.78}
   maps: [Covered Garden]
 plan:
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.051, 0.92]}   # lower left strip
