@@ -173,6 +173,20 @@ def test_closed_path_is_capped_without_clicking():
     assert g.selects == selects, "a known closed path is not even selected again"
 
 
+def test_blank_price_on_a_path_the_tiers_allow_is_read_again():
+    """s1, a Super Monkey just placed (0-0-0), showed no price on path 1 and
+    lost that path for the game (Bazaar Hard): it is a misread until it
+    repeats in separate attempts."""
+    import btd6bot.game as G
+    g = upgrade_game([(None, None), ("cash", 1620), ("cash", 3240)])
+    p = Placed("s1", "super", 0.12, 0.79, tiers=[0, 0, 0])
+    for _ in range(G.CLOSED_AFTER_MISSES - 1):
+        assert g.upgrade(p, 1) is False and g.fail_reason == "unread"
+        assert ("s1", 1) not in g.closed and not path_clicks(g, p)
+    assert g.upgrade(p, 1) is False and g.fail_reason == "capped"
+    assert ("s1", 1) in g.closed
+
+
 def test_unreadable_panel_caps_nothing():
     g = upgrade_game([(None, None)] * 3)
     p = Placed("sp1", "spike", 0.06, 0.63, tiers=[0, 0, 0])

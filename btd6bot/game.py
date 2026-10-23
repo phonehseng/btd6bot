@@ -19,6 +19,7 @@ log = logging.getLogger("game")
 
 PLAY_BTN = (0.905, 0.835, 1.0, 0.975)
 TARGETS = ["first", "last", "close", "strong"]
+CLOSED_AFTER_MISSES = 3   # blank price reads (separate attempts) before a path its tiers allow counts closed
 
 
 @dataclass
@@ -56,6 +57,7 @@ class Game:
         self.unlocked_now = None   # (kind, path, tier) last upgrade unlocked with XP
         self._retry_at = {}        # (tower id, path) -> (time, reason): upgrade on hold
         self.closed = set()        # (tower id, path) the panel showed closed or maxed
+        self._closed_misses = {}   # (tower id, path) -> blank reads of a path its tiers allow
         self.last_price = None     # panel price of the last upgrade tried (None: unread)
         self.refused_spots = []    # (fx, fy) the last place() call found refused
         self.last_spot = None      # (fx, fy) where the last place() released its hold
@@ -603,12 +605,34 @@ class Game:
         Seen: Spike Factory sp1 clicked three times on a closed path 3.
 
         A second read must agree (one OCR miss looks the same), and some other
-        path must show something (a panel still sliding in shows nothing)."""
+        path must show something (a panel still sliding in shows nothing).
+
+        When the tower's own tiers say the path is open (crosspath allows it,
+        not maxed), a blank price is likelier a misread: the Super Monkey s1,
+        just placed at 0-0-0, had its top path closed for a whole game
+        (2026-10-22, Bazaar Hard). Then the path closes only after
+        CLOSED_AFTER_MISSES blank reads in separate attempts; until then the
+        attempt just fails ("unread") and is tried again later."""
         if costs[path - 1] != (None, None) or all(c == (None, None) for c in costs):
             return False
         time.sleep(0.1)
         if self.path_costs(p)[path - 1] != (None, None):
             return False
+        if _path_open_by_tiers(p.tiers, path):
+            misses = self._closed_misses
+            misses[(p.tid, path)] = misses.get((p.tid, path), 0) + 1
+            if misses[(p.tid, path)] < CLOSED_AFTER_MISSES:
+                if not getattr(self, "_misread_saved", False):
+                    self._misread_saved = True       # one picture per game, to see what it was
+                    try:
+                        from .vision import save
+                        save(crop(self.fresh(), self.panel(p)["box"]), "logs/closed_misread.png")
+                    except Exception:
+                        pass
+                log.info("%s path %d shows no price although its tiers %s allow it - "
+                         "trying again later (panel %s)", p.tid, path, p.crosspath, costs)
+                self.fail_reason = "unread"
+                return True
         self.closed.add((p.tid, path))
         log.info("%s path %d is closed or maxed (panel %s) - not buying it this game",
                  p.tid, path, costs)
@@ -871,6 +895,17 @@ def _red_frac(img):
 def _expand(pt, dx, dy):
     x, y = pt
     return (x - dx, y - dy, x + dx, y + dy)
+
+
+def _path_open_by_tiers(tiers, path):
+    """Can a tower with these tiers take the next tier of `path` (1-3)?
+    Not maxed, and the crosspath stays legal: two paths at most, only one
+    past tier 2."""
+    t = list(tiers)
+    if t[path - 1] >= 5:
+        return False
+    t[path - 1] += 1
+    return sum(x > 0 for x in t) <= 2 and sum(x > 2 for x in t) <= 1
 
 
 def _legal_cross(tiers):

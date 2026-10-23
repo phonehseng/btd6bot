@@ -167,6 +167,7 @@ _answers_from_game_model()
 # Prices: CHIMPS is a Hard mode in the game (x1.08), not Impoppable (x1.2);
 # MODE_FAMILY keeps it with Impoppable for difficulty order (min_difficulty).
 PRICE_FAMILY = dict(MODE_FAMILY, chimps="hard")
+UNREAD_RETRY_S = 10.0   # seconds before a path whose price was not read is tried again
 
 # Towers that belong at the end of the track: spike factories throw their
 # spikes onto the last stretch and catch what leaks past everything else.
@@ -899,6 +900,7 @@ class Executor:
         self.idx = 0
         self.counter = {}
         self.capped = set()          # (tid, path) that turned out locked
+        self.unread_until = {}       # (tid, path) -> time: its price was not read, try later
         self.failed_spots = set()
         self.panic_pending = 0
         self.unanswerable = set()
@@ -1179,6 +1181,8 @@ class Executor:
         for i in range(3):
             if p.tiers[i] >= target[i] or (p.tid, i + 1) in self.capped:
                 continue
+            if time.time() < getattr(self, "unread_until", {}).get((p.tid, i + 1), 0):
+                continue      # its price was just unreadable (Game._path_closed): later
             tier = p.tiers[i] + 1
             cost = (T.upgrade_cost(p.kind, i + 1, tier, PRICE_FAMILY.get(self.mode, "hard"))
                     if p.kind != "hero" else 0)
@@ -1704,6 +1708,10 @@ class Executor:
                 self.account.note_locked(*self.g.locked_seen)
         elif reason == "capped":
             self.capped.add((p.tid, path))   # the panel shows the path closed or maxed
+        elif reason == "unread":
+            # no price on a path its tiers allow: likelier a misread - another
+            # look in a while (three blank looks close it, Game._path_closed)
+            self.unread_until[(p.tid, path)] = time.time() + UNREAD_RETRY_S
         elif reason == "drift":
             pass   # tiers corrected from the panel prices: the next tick re-plans
         elif reason == "cash" and price and cash is not None and price > cash:
@@ -2544,10 +2552,13 @@ class Executor:
         towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
                         key=lambda p: (p.kind != first, -p.spent))
         family = PRICE_FAMILY.get(self.mode, "hard")
+        unread = getattr(self, "unread_until", {})
         for p in towers:
             for path in sorted(range(3), key=lambda i: -p.tiers[i]):
                 if (p.tid, path + 1) in self.capped or p.tiers[path] >= 5:
                     continue
+                if time.time() < unread.get((p.tid, path + 1), 0):
+                    continue      # its price was just unreadable: tried again later
                 t = list(p.tiers)
                 t[path] += 1
                 if sum(x > 0 for x in t) > 2 or sum(x > 2 for x in t) > 1:
