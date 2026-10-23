@@ -26,6 +26,37 @@ def setup_logging():
     logging.basicConfig(level=logging.INFO, handlers=[fh, sh])
 
 
+STACKS_EVERY_S = 60
+
+
+def keep_stack_snapshot():
+    """Every minute, write where every thread of the bot is to logs/stacks.txt.
+
+    On 2026-10-23 the bot sat 25 minutes on a Victory screen with its log
+    silent; nothing showed which loop it was in. This file always holds
+    the latest answer (it is overwritten, not appended).
+    """
+    import threading
+    import time
+    import traceback
+
+    def loop():
+        while True:
+            time.sleep(STACKS_EVERY_S)
+            frames = sys._current_frames()
+            text = [time.strftime("%Y-%m-%d %H:%M:%S")]
+            for t in threading.enumerate():
+                if t.ident in frames and t is not threading.current_thread():
+                    text.append(f"\n--- thread {t.name}")
+                    text.append("".join(traceback.format_stack(frames[t.ident])))
+            try:
+                (ROOT / "logs" / "stacks.txt").write_text("\n".join(text), encoding="utf-8")
+            except OSError:
+                pass   # a locked file must never stop the bot
+
+    threading.Thread(target=loop, name="stack-snapshot", daemon=True).start()
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -35,6 +66,7 @@ def main():
     sub.add_parser("status")
     args = ap.parse_args()
     setup_logging()
+    keep_stack_snapshot()
 
     from btd6bot.account import AccountState
     from btd6bot.identity import current_path
