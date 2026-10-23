@@ -1,0 +1,80 @@
+# Ravine, Deflation: bomb, ace, druid, dart from the guides; spots and order from the
+# game's numbers.
+#
+# Why (map data):
+#   Two entrances alternate by round and each one forks in two, so a round runs
+#   on two of four lanes. The model's own routes merge the Ravine forks into one
+#   route; these builds were checked on the corrected routes (Path1 -> split1
+#   or split2 in even rounds, Path2 -> split1 or split2 in odd rounds). Bridges
+#   and trees block sight; the river is too low for water towers.
+#
+# Sources:
+#   * OneEyedDeacon, Ravine Chimps is SIMPLE with Etienne + Sky Shredder
+#     (https://www.youtube.com/watch?v=OpHwKwqMcOY)
+#   * bloonswiki Ravine: the bottom-left area touches the lanes; aces ignore the
+#     sight blockers (https://www.bloonswiki.com/Ravine)
+#   * bloonswiki Strategy:Deflation_(BTD6): no income from round 31, so buy the whole defence
+#     up front; it must pop the camo purples of R45/R48 and the camo leads of R59
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# The build: 3 bombs (0-2-2, 0-1-2); 4 aces (2-3-0, 1-3-0); 5 druids (0-3-1, 0-3-0); 1
+# dart (0-2-4); hero etienne.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Deflation (from round 31, $40,000): worst margin 2.16 at round 58;
+#     next lowest R51 2.51, R54 2.59
+# Routes in the comments (map data): 1 = Path1+Path1-split1, 2 = Path1+Path1-split2, 3 =
+# Path2+Path2-split1, 4 = Path2+Path2-split2.
+# The plan fits the base $20,000 (the hero last, only if cash is left); `fill`
+# spends the rest of the account's $40,000.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: ravine_deflation
+map: Ravine
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {bomb: [0, 2, 2], ace: [2, 3, 0], druid: [0, 3, 1], dart: [0, 2, 4]}
+  base_success: {deflation: 0.78}
+  maps: [Ravine]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.152, 0.658]}    # reaches routes 1, 4
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.131, 0.743]}    # reaches route 1
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.398, 0.181]}     # reaches route 2
+  - {do: upgrade, id: ac1, to: 1-3-0}
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.687, 0.266]}   # reaches routes 3, 4
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.27, 0.777]}      # reaches routes 3, 4
+  - {do: upgrade, id: ac2, to: 1-3-0}
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.783, 0.317]}   # reaches route 3
+  - {do: upgrade, id: dr2, to: 0-3-0}
+  - {do: upgrade, id: ac2, to: 2-3-0}
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.195, 0.709]}     # reaches route 4
+  - {do: upgrade, id: ac3, to: 1-3-0}
+  - {do: place, id: dr3, kind: druid, role: dps, at: [0.783, 0.249]}   # reaches route 3
+  - {do: upgrade, id: dr3, to: 0-3-0}
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.195, 0.862]}     # reaches route 3
+  - {do: upgrade, id: ac4, to: 0-3-0}
+  - {do: place, id: dr4, kind: druid, role: dps, at: [0.11, 0.811]}    # reaches route 1
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.612, 0.368]}   # etienne
+fill:
+  - {do: upgrade, id: dr4, to: 0-3-0}
+  - {do: upgrade, id: dr3, to: 0-3-1}
+  - {do: upgrade, id: ac4, to: 1-3-0}
+  - {do: place, id: dr5, kind: druid, role: dps, at: [0.687, 0.334]}   # reaches routes 3, 4
+  - {do: upgrade, id: dr5, to: 0-3-1}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.537, 0.164]}     # reaches routes 2, 4
+  - {do: upgrade, id: d1, to: 0-2-3}
+  - {do: place, id: bm3, kind: bomb, role: dps, at: [0.601, 0.3]}      # reaches routes 2, 4
+  - {do: upgrade, id: bm3, to: 0-1-2}
+  - {do: upgrade, id: d1, to: 0-2-4}
+answers:
+  bfb: [{do: upgrade, id: bm1, to: 0-4-2}]

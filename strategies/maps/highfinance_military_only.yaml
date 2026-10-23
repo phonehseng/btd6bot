@@ -1,0 +1,75 @@
+# High Finance, Medium Military Monkeys Only: Snipers and Subs.
+#
+# Map: Lanes alternate by round: odd rounds take the long S lane, even
+# rounds (with the round-40 MOAB) the short U lane. The only free ground
+# is the central park with its two ponds, which touches both lanes; the
+# 15 buildings can be bought for room ($350-$1,500, the bot leaves
+# them). Every round is checked on both lanes.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sniper, sub. Each
+# purchase is the cheapest that keeps the coming rounds popping at 3x the
+# strength they need. Spare cash goes into the Sub, whose XP the account needs
+# most.
+#
+# Economy: Fast Track starts Medium Military Monkeys Only at round 15 with
+# about $6,057, with Double Cash income.
+# Model check, Medium Military Monkeys Only (btd6bot/dps_model.py
+# round_margin; purchases replayed in order as cash allows, account boosts):
+# the plan alone has a worst round margin of 2.43 (round 47); every round at
+# 2.0 or more. Threat simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: Carrier Flagship in the pond
+#     (https://www.bloonswiki.com/High_Finance)
+#   * fandom: buccaneer in the pond, Bloon Solver on the $750 building
+#     (https://bloons.fandom.com/wiki/High_Finance)
+#   * BlueCliff, High Finance Hard (ninja on the park corners, buccaneer)
+#     (https://www.youtube.com/watch?v=C5QklAgqeGQ)
+#   * bloonswiki Military Only: subs/buccaneers on water maps, snipers and
+#     aces on dry ones; camo by R24, lead by R28
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: highfinance_military_only
+map: High Finance
+hero: quincy
+modes: [military_only]
+planner:
+  towers: {sub: [4, 0, 2], sniper: [5, 5, 0]}
+  base_success: {military_only: 0.8}
+  maps: [High Finance]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.43, 0.606]}             # R15: bottom pond in the central park; sees 9% of the S lane (odd rounds), 19% of the U lane (even rounds)
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R15: Advanced Intel
+  - {do: place, id: hero, kind: hero, role: dps}                              # R15: Quincy, wherever it fits (no room left; not counted by the model)
+  - {do: upgrade, id: sb1, to: 4-0-2}                                         # R15: Bloontonium Reactor (surplus: XP)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.377, 0.385]} # R20: central park, top corners; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R20: Shrapnel Shot
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.484, 0.385]} # R21: top pond in the central park; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R21: Shrapnel Shot
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.377, 0.675]} # R29: central park, bottom; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R29: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.473, 0.675]} # R29: central park, bottom; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R29: Shrapnel Shot
+  - {do: upgrade, id: s4, to: 3-2-0}                                          # R35: Deadly Precision
+  - {do: upgrade, id: s1, to: 3-2-0}                                          # R35: Deadly Precision
+  - {do: upgrade, id: s3, to: 1-3-0}                                          # R36: Bouncing Bullet
+  - {do: upgrade, id: s2, to: 3-2-0}                                          # R37: Deadly Precision
+  - {do: upgrade, id: s3, to: 2-3-0}                                          # R38: Bouncing Bullet
+  - {do: upgrade, id: s3, to: 2-4-0}                                          # R40: Supply Drop
+  - {do: upgrade, id: s2, to: 4-2-0}                                          # R43: Maim MOAB
+  - {do: upgrade, id: s4, to: 4-2-0}                                          # R46: Maim MOAB
+  - {do: upgrade, id: s3, to: 2-5-0}                                          # R49: Elite Sniper
+  - {do: upgrade, id: s1, to: 4-2-0}                                          # R50: Maim MOAB
+  - {do: upgrade, id: s4, to: 5-2-0}                                          # R58: Cripple MOAB
+panic:
+  - {do: place, kind: sniper, role: dps}

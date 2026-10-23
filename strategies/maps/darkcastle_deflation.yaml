@@ -1,0 +1,82 @@
+# Dark Castle, Deflation: bomb, sub, druid, ninja, dart, spike from the guides; spots
+# and order from the game's numbers.
+#
+# Why (map data):
+#   Four entrances on the left run under tree packs (bloons immune there) and
+#   merge into one stretch through the castle door to the exit. The model's
+#   own routes for this map follow the Reverse-mode splitters; these builds were
+#   checked on the corrected forward routes (Path1/Path4 -> PathMerge2,
+#   Path2/Path3 -> PathMerge1 -> PathMerge2). Castle walls block a third of the
+#   map's sight lines. The trees can be bought ($1,000 each; not done here).
+#
+# Sources:
+#   * BlueCliff, Dark Castle Hard No MK (ft. Obyn): ninja 4-0-2 + sub + alchemist
+#     at the merge (https://www.youtube.com/watch?v=QB0bitxGZn0)
+#   * Yoboi3li, Dark Castle CHIMPS (no abilities, no micro): druids, Obyn
+#     (https://www.youtube.com/watch?v=YUR_SIL0trE)
+#   * bloonswiki Dark_Castle_(BTD6): the lanes converge near the end, spike
+#     factories by the castle are useful (https://www.bloonswiki.com/Dark_Castle_(BTD6))
+#   * bloonswiki Strategy:Deflation_(BTD6): no income from round 31, so buy the whole defence
+#     up front; it must pop the camo purples of R45/R48 and the camo leads of R59
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# The build: 6 bombs (0-3-2, 0-2-2); 1 sub (4-0-2); 1 druid (0-3-1); 4 ninjas (0-0-0); 2
+# darts (0-2-4); 2 spikes (4-0-1, 2-0-1); hero obyn.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Deflation (from round 31, $40,000): worst margin 2.40 at round 51;
+#     next lowest R56 2.51, R54 3.08
+# Routes in the comments (map data): 1 = Path1+PathMerge2, 2 = Path4+PathMerge2, 3 =
+# Path2+PathMerge1+PathMerge2, 4 = Path3+PathMerge1+PathMerge2.
+# The plan fits the base $20,000 (the hero last, only if cash is left); `fill`
+# spends the rest of the account's $40,000.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: darkcastle_deflation
+map: Dark Castle
+hero: obyn
+modes: [deflation]
+planner:
+  towers: {bomb: [0, 3, 2], sub: [4, 0, 2], druid: [0, 3, 1], ninja: [0, 0, 0], dart: [0, 2, 4], spike: [4, 0, 1]}
+  base_success: {deflation: 0.78}
+  maps: [Dark Castle]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.291, 0.589]}    # reaches all 4 routes
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.387, 0.641]}    # reaches all 4 routes
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: place, id: bm3, kind: bomb, role: dps, at: [0.43, 0.641]}     # reaches all 4 routes
+  - {do: upgrade, id: bm3, to: 0-2-2}
+  - {do: place, id: bm4, kind: bomb, role: dps, at: [0.281, 0.436]}    # reaches routes 1, 3, 4
+  - {do: upgrade, id: bm4, to: 0-2-2}
+  - {do: place, id: bm5, kind: bomb, role: dps, at: [0.419, 0.402]}    # reaches all 4 routes
+  - {do: upgrade, id: bm5, to: 0-2-2}
+  - {do: place, id: bm6, kind: bomb, role: dps, at: [0.516, 0.641]}    # reaches all 4 routes
+  - {do: upgrade, id: bm6, to: 0-2-2}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.623, 0.658]}     # reaches all 4 routes
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.473, 0.641]}   # reaches all 4 routes
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: upgrade, id: bm1, to: 0-3-2}
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.248, 0.658]}    # reaches routes 2, 3, 4
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.355, 0.692]}     # reaches route 2
+  - {do: upgrade, id: d1, to: 0-2-4}
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.27, 0.709]}     # reaches routes 2, 4
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.516, 0.402]}   # obyn
+fill:
+  - {do: upgrade, id: sb1, to: 4-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit, at: [0.377, 0.368]}   # reaches route 1
+  - {do: upgrade, id: sp1, to: 2-0-1}
+  - {do: place, id: sp2, kind: spike, role: exit, at: [0.473, 0.402]}   # reaches all 4 routes
+  - {do: upgrade, id: sp2, to: 2-0-1}
+  - {do: place, id: n3, kind: ninja, role: dps, at: [0.27, 0.351]}      # reaches routes 1, 3, 4
+  - {do: upgrade, id: sp1, to: 4-0-1}
+  - {do: place, id: n4, kind: ninja, role: dps, at: [0.248, 0.402]}     # reaches routes 1, 3, 4
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.355, 0.3]}        # reaches route 1
+  - {do: upgrade, id: d2, to: 0-2-4}

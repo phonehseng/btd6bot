@@ -1,0 +1,71 @@
+# Geared, Easy (Standard): Aces and Snipers.
+#
+# Map: The land is a big gear and a small gear that turn after every round
+# (45 and 108 degrees, map file) and carry their towers with them, so a
+# finite-range tower is carried away from the lane; the placement
+# model only allows such towers on cells that barely move. Global
+# towers (snipers, aces) keep working anywhere. No water.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses ace, sniper. Each
+# purchase is the cheapest that keeps the coming rounds popping at 2.5x the
+# strength they need. Spare cash goes into the Desperado, whose XP the account
+# needs most.
+#
+# Economy: Fast Track starts Easy (Standard) at round 10 with about $3,832 and
+# Double Cash. The plan costs $10,540, which a game without the boosts also
+# earns by round 40 (the offline test plays it that way); the fill holds the
+# rest, which the bot buys right after the plan.
+# Model check, Easy (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.51 (round 39); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: global towers; the early game is the hard part
+#     (https://www.bloonswiki.com/Geared)
+#   * fandom strategies: four snipers on Strong + heli; 1-1-0 snipers for the
+#     R59 camo leads (https://bloons.fandom.com/wiki/Geared/Strategies)
+#   * G-Horizon, Geared CHIMPS: sniper spam on Strong
+#     (https://www.youtube.com/watch?v=6QOiPh3CY1w)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: geared_easy
+map: Geared
+hero: quincy
+modes: [easy]
+planner:
+  towers: {ace: [2, 3, 0], sniper: [1, 2, 2]}
+  base_success: {easy: 0.85}
+  maps: [Geared]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.457, 0.828]}          # R10: Quincy, big gear (not counted by the model)
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.612, 0.47]}             # R10: big gear; sees 10% of the lane
+  - {do: upgrade, id: ac1, to: 1-1-0}                                         # R10: Rapid Fire
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.398, 0.198]} # R10: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 0-2-0}                                          # R10: Shrapnel Shot
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.441, 0.198]} # R10: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R10: Shrapnel Shot
+  - {do: upgrade, id: s1, to: 0-2-1}                                          # R13: Shrapnel Shot
+  - {do: upgrade, id: s1, to: 0-2-2}                                          # R17: Shrapnel Shot
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.248, 0.47]}             # R19: big gear; sees 10% of the lane
+  - {do: upgrade, id: ac2, to: 1-1-0}                                         # R19: Rapid Fire
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.345, 0.215]} # R19: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 0-2-1}                                          # R23: Shrapnel Shot
+  - {do: upgrade, id: ac2, to: 1-3-0}                                         # R26: Bomber Ace
+  - {do: upgrade, id: ac1, to: 1-3-0}                                         # R31: Bomber Ace
+  - {do: upgrade, id: ac2, to: 2-3-0}                                         # R31: Bomber Ace
+  - {do: upgrade, id: ac1, to: 2-3-0}                                         # R31: Bomber Ace
+  - {do: upgrade, id: s3, to: 0-2-2}                                          # R31: Shrapnel Shot
+panic:
+  - {do: place, kind: sniper, role: dps}
+answers:
+  ceramic: [{do: upgrade, id: s2, to: 2-2-0}]

@@ -1,0 +1,120 @@
+# Erosion, Easy (Standard): Desperados, Aces and Subs.
+#
+# Map: Six lanes, one active at a time; the active lane moves across the
+# map, and after rounds 17, 35, 53, 71 and 89 the ice melts and towers
+# on it are sold (map file: areas that vanish). Only the top-right
+# glacier and the bottom-left water last the whole game. The damage
+# model plays every round on all six lanes (the worst counts), so a
+# build that passes it holds whichever lane is active.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses desperado, ace,
+# sub, sniper, alchemist, buccaneer, skywarden, mermonkey. Each purchase is
+# the cheapest that keeps the coming rounds popping at 2.5x the strength they
+# need. Spare cash goes into the Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Easy (Standard) at round 10 with about $3,832 and
+# Double Cash. The plan costs $17,000, which a game without the boosts also
+# earns by round 40 (the offline test plays it that way); the fill holds the
+# rest, which the bot buys right after the plan.
+# Model check, Easy (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 1.13 (round 40); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 2.51 (round 40); every
+# round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: lane changes and melting ice; Ice Monkeys turn into water
+#     towers (https://www.bloonswiki.com/Erosion)
+#   * fandom: Neva-Miss aces in Deflation; sub start into snipers
+#     (https://bloons.fandom.com/wiki/Erosion)
+#   * G-Horizon, Erosion CHIMPS: sub, snipers, village and alchemist on the
+#     glacier (https://www.youtube.com/watch?v=No3NYnNZV1c)
+#   * BlueCliff, Erosion Hard (sub, snipers, glacier)
+#     (https://www.youtube.com/watch?v=jlkIyVLVjmI)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: erosion_easy
+map: Erosion
+hero: psi
+modes: [easy]
+planner:
+  towers: {sniper: [2, 2, 0], skywarden: [1, 0, 1], sub: [2, 2, 3], mermonkey: [2, 1, 0], alchemist: [0, 1, 0], ace: [2, 3, 0], buccaneer: [2, 0, 1], desperado: [3, 2, 0]}
+  base_success: {easy: 0.85}
+  maps: [Erosion]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.131, 0.138]} # R10: ice between the lanes; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R10: Shrapnel Shot
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.687, 0.283]}      # R10: permanent glacier (top-right); sees 81% of lane 6, 48% of lane 5
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.142, 0.93]}             # R10: bottom-left water; sees 65% of lane 1
+  - {do: upgrade, id: sb1, to: 2-0-0}                                         # R10: Advanced Intel
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.74, 0.334]}       # R10: permanent glacier (top-right); sees 84% of lane 6, 46% of lane 5
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.184, 0.913]}       # R10: bottom-left water; sees 50% of lane 1
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.724, 0.487]}          # R10: Psi, ice between the lanes (not counted by the model)
+  - {do: upgrade, id: sb1, to: 2-0-1}                                         # R11: Advanced Intel
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R12: Advanced Intel
+  - {do: upgrade, id: sb1, to: 2-0-3}                                         # R20: Triple Guns
+  - {do: upgrade, id: s1, to: 2-2-0}                                          # R22: Large Caliber
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.719, 0.249], near: [sk1, sk2]} # R23: permanent glacier (top-right); sees 83% of lane 6, 35% of lane 5
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.056, 0.794]}            # R24: bottom-left water; sees 60% of lane 1
+  - {do: upgrade, id: sb2, to: 0-2-0}                                         # R24: Heat-tipped Darts
+  - {do: upgrade, id: sb2, to: 1-2-0}                                         # R25: Heat-tipped Darts
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.516, 0.641]}            # R26: ice between the lanes; sees 12% of lane 3
+  - {do: upgrade, id: ac1, to: 0-1-0}                                         # R26: Exploding Pineapple
+  - {do: upgrade, id: sb2, to: 2-2-0}                                         # R27: Advanced Intel
+  - {do: upgrade, id: ac1, to: 1-1-0}                                         # R27: Rapid Fire
+  - {do: upgrade, id: m1, to: 0-1-0}                                          # R28: Sharper Prongs
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.676, 0.232]}      # R28: permanent glacier (top-right); sees 76% of lane 6, 47% of lane 5
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.409, 0.487]}            # R28: ice between the lanes; sees 12% of lane 3
+  - {do: upgrade, id: ac2, to: 0-1-0}                                         # R28: Exploding Pineapple
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.74, 0.777]}             # R30: ice between the lanes; sees 12% of lane 4
+  - {do: upgrade, id: ac3, to: 0-1-0}                                         # R30: Exploding Pineapple
+  - {do: upgrade, id: ac2, to: 1-1-0}                                         # R30: Rapid Fire
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk3, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: ac3, to: 1-1-0}                                         # R31: Rapid Fire
+  - {do: upgrade, id: m1, to: 1-1-0}                                          # R33: Trident Efficiency
+  - {do: place, id: a2, kind: alchemist, role: support, at: [0.751, 0.266], near: [sk2, sk1, sk3]} # R33: permanent glacier (top-right); sees 82% of lane 6, 30% of lane 5
+  - {do: upgrade, id: m1, to: 2-1-0}                                          # R33: Trident Swiftness
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.067, 0.726]}            # R34: bottom-left water; sees 53% of lane 1
+  - {do: upgrade, id: sb3, to: 2-0-0}                                         # R34: Advanced Intel
+  - {do: upgrade, id: a1, to: 0-1-0}                                          # R34: Stronger Acid
+  - {do: upgrade, id: sb3, to: 2-1-0}                                         # R35: Advanced Intel
+  - {do: upgrade, id: ac3, to: 1-2-0}                                         # R35: Spy Plane
+  - {do: upgrade, id: sk2, to: 1-0-1}                                         # R35: Aerial Attunement
+  - {do: upgrade, id: ac3, to: 1-3-0}                                         # R35: Bomber Ace
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.067, 0.913]}      # R36: bottom-left water; sees 69% of lane 1
+  - {do: upgrade, id: bc1, to: 0-0-1}                                         # R36: Long Range
+fill:
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.687, 0.453]} # R13: ice between the lanes; sees 39% of lane 6, 59% of lane 5, 38% of lane 4
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.633, 0.385]} # R13: ice between the lanes; sees 34% of lane 6, 58% of lane 5, 37% of lane 4
+  - {do: upgrade, id: de1, to: 2-0-0}                                         # R16: Standoff (surplus: XP)
+  - {do: upgrade, id: de1, to: 2-2-0}                                         # R17: Standoff (surplus: XP)
+  - {do: upgrade, id: de2, to: 2-0-0}                                         # R18: Standoff (surplus: XP)
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R32: Big Iron
+  - {do: upgrade, id: ac3, to: 2-3-0}                                         # R36: Bomber Ace
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.168, 0.138]} # R36: ice between the lanes; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 0-2-0}                                          # R36: Shrapnel Shot
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R36: Shrapnel Shot
+  - {do: upgrade, id: ac2, to: 2-3-0}                                         # R37: Bomber Ace
+  - {do: upgrade, id: bc1, to: 2-0-1}                                         # R37: Double Shot
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.024, 0.743]}            # R38: bottom-left water; sees 50% of lane 1
+  - {do: upgrade, id: sb4, to: 2-1-0}                                         # R38: Advanced Intel
+  - {do: upgrade, id: ac1, to: 2-3-0}                                         # R38: Bomber Ace
+  - {do: upgrade, id: de2, to: 3-0-0}                                         # R39: Big Iron
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.206, 0.138]} # R39: ice between the lanes; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-0-0}                                          # R39: Full Metal Jacket
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.361, 0.138]} # R39: ice between the lanes; map-wide (line of sight)
+  - {do: upgrade, id: de2, to: 3-2-0}                                         # R39: Big Iron (surplus: XP)
+panic:
+  - {do: place, kind: sniper, role: dps}

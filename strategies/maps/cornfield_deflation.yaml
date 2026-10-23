@@ -1,0 +1,70 @@
+# Cornfield, Easy Deflation: Darts, Bomb Shooters and Snipers.
+#
+# Map: One long lane snakes through a field of corn. Only the small plot in
+# the middle and thin strips along the lane are free; the corn blocks
+# placement and line of sight until bought ($350-$1,500 a patch, the bot
+# leaves them). No water.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses dart, bomb,
+# sniper. Each purchase is the cheapest that keeps the coming rounds popping
+# at 2x the strength they need.
+#
+# Economy: Deflation starts at round 31 with $40,000 (Double Cash) and no
+# income, and the executor buys plan and fill at once before round 31. The
+# plan costs $12,540 and fits the $20,000 of a game without Double Cash (the
+# offline test plays it that way).
+# Model check, Easy Deflation (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 0.23 (round 59); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 2.99 (round 53); every
+# round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: Ultra-Juggernaut (balls bounce off the corn), Obyn/Quincy
+#     (https://www.bloonswiki.com/Cornfield)
+#   * fandom strategies: corn prices, the middle plot
+#     (https://bloons.fandom.com/wiki/Cornfield/Strategies)
+#   * BlueCliff, Cornfield Hard (ninja, alchemist, Bloon Solver in the middle
+#     plot) (https://www.youtube.com/watch?v=qcnDjtGW6DU)
+#   * fandom Deflation: buy the whole defence before round 31; camo purples
+#     R45/R48, camo leads R59 (https://bloons.fandom.com/wiki/Deflation)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: cornfield_deflation
+map: Cornfield
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {bomb: [3, 2, 2], sniper: [1, 3, 0], dart: [0, 2, 5]}
+  base_success: {deflation: 0.85}
+  maps: [Cornfield]
+plan:
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.43, 0.521]}            # R31: free middle plot; sees 24% of the lane
+  - {do: upgrade, id: bo1, to: 0-2-2}                                         # R31: Missile Launcher
+  - {do: place, id: bo2, kind: bomb, role: dps, at: [0.398, 0.47]}            # R31: free middle plot; sees 20% of the lane
+  - {do: upgrade, id: bo2, to: 3-0-2}                                         # R31: Really Big Bombs
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.441, 0.453]} # R31: free middle plot; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: place, id: bo3, kind: bomb, role: dps, at: [0.398, 0.572]}           # R31: free middle plot; sees 15% of the lane
+  - {do: upgrade, id: bo3, to: 3-0-2}                                         # R31: Really Big Bombs
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.462, 0.572]}            # R31: free middle plot; sees 8% of the lane
+  - {do: upgrade, id: d1, to: 0-0-3}                                          # R31: Crossbow
+  - {do: upgrade, id: d1, to: 0-0-4}                                          # R31: Sharp Shooter
+  - {do: upgrade, id: d1, to: 0-1-4}                                          # R31: Sharp Shooter
+  - {do: upgrade, id: d1, to: 0-2-4}                                          # R31: Sharp Shooter
+  - {do: upgrade, id: s1, to: 1-3-0}                                          # R31: Bouncing Bullet
+  - {do: place, id: hero, kind: hero, role: dps}                              # R31: Quincy, wherever it fits (no room left; not counted by the model)
+fill:
+  - {do: upgrade, id: d1, to: 0-2-5}                                          # R31: Crossbow Master
+panic:
+  - {do: place, kind: bomb, role: dps}

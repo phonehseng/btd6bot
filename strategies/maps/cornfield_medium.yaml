@@ -1,0 +1,72 @@
+# Cornfield, Medium (Standard) / Medium Reverse: Darts and Desperados.
+#
+# Map: One long lane snakes through a field of corn. Only the small plot in
+# the middle and thin strips along the lane are free; the corn blocks
+# placement and line of sight until bought ($350-$1,500 a patch, the bot
+# leaves them). No water.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses dart, desperado.
+# Each purchase is the cheapest that keeps the coming rounds popping at 2.5x
+# the strength they need.
+#
+# Economy: Fast Track starts Medium (Standard) at round 15 with about $6,057,
+# with Double Cash income.
+# Model check, Medium (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.00 (round 27); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+# Model check, Medium Reverse (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.23 (round 28); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: Ultra-Juggernaut (balls bounce off the corn), Obyn/Quincy
+#     (https://www.bloonswiki.com/Cornfield)
+#   * fandom strategies: corn prices, the middle plot
+#     (https://bloons.fandom.com/wiki/Cornfield/Strategies)
+#   * BlueCliff, Cornfield Hard (ninja, alchemist, Bloon Solver in the middle
+#     plot) (https://www.youtube.com/watch?v=qcnDjtGW6DU)
+#   * bloonswiki Reverse: Medium strategies carry over; exit protection moves
+#     to the far end (https://www.bloonswiki.com/Strategy:Reverse_(BTD6))
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: cornfield_medium
+map: Cornfield
+hero: quincy
+modes: [medium, reverse]
+planner:
+  towers: {dart: [0, 3, 5], desperado: [4, 1, 0]}
+  base_success: {medium: 0.8, reverse: 0.8}
+  maps: [Cornfield]
+plan:
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.419, 0.47]}             # R15: free middle plot; sees 17% of the lane
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.398, 0.538]} # R15: free middle plot; sees 30% of the lane
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.462, 0.589]} # R15: free middle plot; sees 29% of the lane
+  - {do: place, id: de3, kind: desperado, role: dps, target: strong, at: [0.441, 0.521]} # R15: free middle plot; sees 29% of the lane
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.452, 0.453]}            # R15: free middle plot; sees 12% of the lane
+  - {do: upgrade, id: d1, to: 0-3-1}                                          # R15: Triple Shot
+  - {do: upgrade, id: d2, to: 0-2-3}                                          # R15: Crossbow
+  - {do: upgrade, id: d1, to: 0-3-2}                                          # R15: Triple Shot
+  - {do: upgrade, id: de2, to: 3-0-0}                                         # R15: Big Iron
+  - {do: place, id: hero, kind: hero, role: dps}                              # R15: Quincy, wherever it fits (no room left; not counted by the model)
+  - {do: upgrade, id: de1, to: 3-0-0}                                         # R18: Big Iron
+  - {do: upgrade, id: de3, to: 3-0-0}                                         # R21: Big Iron
+  - {do: upgrade, id: d2, to: 0-2-4}                                          # R24: Sharp Shooter
+  - {do: upgrade, id: de2, to: 3-1-0}                                         # R28: Big Iron
+  - {do: upgrade, id: de1, to: 3-1-0}                                         # R28: Big Iron
+  - {do: upgrade, id: de3, to: 4-0-0}                                         # R33: Twin Sixes
+  - {do: upgrade, id: de2, to: 4-1-0}                                         # R37: Twin Sixes
+  - {do: upgrade, id: de1, to: 4-1-0}                                         # R39: Twin Sixes
+  - {do: upgrade, id: d2, to: 0-2-5}                                          # R47: Crossbow Master
+panic:
+  - {do: place, kind: desperado, role: dps}

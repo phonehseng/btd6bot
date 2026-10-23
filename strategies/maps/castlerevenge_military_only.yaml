@@ -1,0 +1,111 @@
+# Castle Revenge, Medium Military Monkeys Only: Snipers, Aces and Subs.
+#
+# Map: Four entrances feed a top lane and a bottom lane that run at the same
+# time along the castle walls to two exits on the left; bloons cannot
+# be hit while they climb the wheels (about 38% of each route, map
+# file). No ground spot reaches both lanes with a short-range tower, so
+# the lost Hard game held one lane and leaked the other. Courtyard and
+# platform spots see both lanes only map-wide.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sniper, ace, sub.
+# Each purchase is the cheapest that keeps the coming rounds popping at 3x the
+# strength they need. Spare cash goes into the Sub, whose XP the account needs
+# most.
+#
+# Economy: Fast Track starts Medium Military Monkeys Only at round 15 with
+# about $6,057, with Double Cash income.
+# Model check, Medium Military Monkeys Only (btd6bot/dps_model.py
+# round_margin; purchases replayed in order as cash allows, account boosts):
+# the plan alone has a worst round margin of 2.20 (round 49); every round at
+# 2.0 or more. Threat simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: the raised platform sees the whole track; Juggernaut near
+#     each last bend (https://www.bloonswiki.com/Castle_Revenge)
+#   * BlueCliff, Castle Revenge Hard: snipers in the courtyard quarters,
+#     Spectre ace (https://www.youtube.com/watch?v=au45yv7NhS8)
+#   * OneEyedDeacon, Castle Revenge CHIMPS with Sauda: mirrored damage top and
+#     bottom (https://www.youtube.com/watch?v=JfjH7gMVRGw)
+#   * bloonswiki Military Only: subs/buccaneers on water maps, snipers and
+#     aces on dry ones; camo by R24, lead by R28
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: castlerevenge_military_only
+map: Castle Revenge
+hero: quincy
+modes: [military_only]
+planner:
+  towers: {sub: [4, 2, 4], sniper: [4, 3, 0], ace: [2, 4, 0]}
+  base_success: {military_only: 0.8}
+  maps: [Castle Revenge]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.142, 0.283]}            # R15: top-left pond; sees 36% of the top lane
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R15: Advanced Intel
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.131, 0.675]}          # R15: Quincy, courtyard, bottom-left (not counted by the model)
+  - {do: upgrade, id: sb1, to: 2-0-3}                                         # R15: Triple Guns
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.142, 0.215]}            # R15: top-left pond; sees 32% of the top lane
+  - {do: upgrade, id: sb2, to: 3-0-0}                                         # R15: Submerge and Support (surplus: XP)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.612, 0.198]} # R16: top-right corner inside the castle; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 0-1-0}                                          # R16: Night Vision Goggles
+  - {do: upgrade, id: sb2, to: 3-2-0}                                         # R17: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb2, to: 4-2-0}                                         # R22: Bloontonium Reactor
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R24: Shrapnel Shot
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.355, 0.249]} # R26: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R26: Shrapnel Shot
+  - {do: upgrade, id: sb1, to: 2-0-4}                                         # R29: Armor Piercing Darts
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.398, 0.249]} # R31: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.441, 0.249]} # R32: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R32: Shrapnel Shot
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.601, 0.249]} # R34: top-right corner inside the castle; map-wide (line of sight)
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R34: Shrapnel Shot
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.473, 0.266]} # R35: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s6, to: 1-2-0}                                          # R35: Shrapnel Shot
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.623, 0.76]}             # R36: bottom-right corner inside the castle; sees 23% of the bottom lane
+  - {do: upgrade, id: ac1, to: 0-1-0}                                         # R36: Exploding Pineapple
+  - {do: upgrade, id: ac1, to: 1-3-0}                                         # R36: Bomber Ace
+  - {do: upgrade, id: ac1, to: 2-3-0}                                         # R37: Bomber Ace
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.131, 0.76]}             # R38: courtyard, bottom-left; sees 20% of the bottom lane
+  - {do: upgrade, id: ac2, to: 2-3-0}                                         # R38: Bomber Ace
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.452, 0.726]}            # R39: courtyard, bottom; sees 11% of the bottom lane
+  - {do: upgrade, id: ac3, to: 1-3-0}                                         # R39: Bomber Ace
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.633, 0.266]} # R39: top-right corner inside the castle; map-wide (line of sight)
+  - {do: upgrade, id: s7, to: 1-0-0}                                          # R39: Full Metal Jacket
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.323, 0.3]} # R40: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s8, to: 1-2-0}                                          # R40: Shrapnel Shot
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.366, 0.726]}            # R41: courtyard, bottom; sees 11% of the bottom lane
+  - {do: upgrade, id: ac4, to: 1-3-0}                                         # R41: Bomber Ace
+  - {do: place, id: ac5, kind: ace, role: dps, at: [0.184, 0.658]}            # R42: courtyard, bottom-left; sees 6% of the bottom lane
+  - {do: upgrade, id: ac5, to: 1-3-0}                                         # R42: Bomber Ace
+  - {do: upgrade, id: ac4, to: 2-3-0}                                         # R42: Bomber Ace
+  - {do: place, id: ac6, kind: ace, role: dps, at: [0.59, 0.658]}             # R43: courtyard, right side between the lanes; sees 7% of the bottom lane
+  - {do: upgrade, id: ac6, to: 0-3-0}                                         # R43: Bomber Ace
+  - {do: upgrade, id: s7, to: 1-2-0}                                          # R43: Shrapnel Shot
+  - {do: upgrade, id: ac6, to: 1-3-0}                                         # R44: Bomber Ace
+  - {do: upgrade, id: s6, to: 3-2-0}                                          # R45: Deadly Precision
+  - {do: upgrade, id: s4, to: 3-2-0}                                          # R46: Deadly Precision
+  - {do: upgrade, id: s7, to: 3-2-0}                                          # R47: Deadly Precision
+  - {do: upgrade, id: s3, to: 3-2-0}                                          # R48: Deadly Precision
+  - {do: upgrade, id: ac3, to: 2-3-0}                                         # R49: Bomber Ace
+  - {do: upgrade, id: ac6, to: 2-3-0}                                         # R49: Bomber Ace
+  - {do: upgrade, id: s8, to: 3-2-0}                                          # R49: Deadly Precision
+  - {do: upgrade, id: ac5, to: 2-3-0}                                         # R49: Bomber Ace
+  - {do: upgrade, id: s2, to: 3-2-0}                                          # R50: Deadly Precision
+  - {do: upgrade, id: s5, to: 3-2-0}                                          # R50: Deadly Precision
+  - {do: upgrade, id: s1, to: 1-3-0}                                          # R50: Bouncing Bullet
+  - {do: upgrade, id: s2, to: 4-2-0}                                          # R51: Maim MOAB
+  - {do: upgrade, id: s1, to: 2-3-0}                                          # R52: Bouncing Bullet
+  - {do: upgrade, id: s3, to: 4-2-0}                                          # R54: Maim MOAB
+  - {do: upgrade, id: ac1, to: 2-4-0}                                         # R58: Ground Zero
+panic:
+  - {do: place, kind: sniper, role: dps}

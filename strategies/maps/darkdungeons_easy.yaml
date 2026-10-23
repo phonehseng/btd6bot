@@ -1,0 +1,129 @@
+# Dark Dungeons, Easy: tack, dart, boomerang, spike, bomb, druid from the guides; spots
+# and order from the game's numbers.
+#
+# Why (map data):
+#   Six walled rooms; three bloon lanes run at once (left, middle, right) and
+#   MOAB-class take their own two lanes (MoabOnlySplitter). Walls block more
+#   than a third of all sight lines, so each lane needs towers in its own room;
+#   the middle lane sits lower. A small sludge pool is the only water.
+#
+# Sources:
+#   * ApexZ, Dark Dungeons CHIMPS Full Auto Start: darts per room, spikes, tacks
+#     (https://www.youtube.com/watch?v=wqGrbHhDv3U)
+#   * OneEyedDeacon, CLASSIC and EASY Dark Dungeons w/ Sauda
+#     (https://www.youtube.com/watch?v=zVL8Gs1MyLw)
+#   * bloonswiki Dark_Dungeons (https://www.bloonswiki.com/Dark_Dungeons)
+#
+# The build: 5 tacks (2-3-0, 3-0-2, 2-0-2, 1-2-0); 11 darts (0-2-3, 0-1-2, 1-0-2,
+# 1-0-1); 6 boomerangs (0-2-3, 0-3-2, 0-2-2, 0-2-1); 2 spikes (0-0-0); 2 bombs (0-2-2,
+# 0-0-0); 1 druid (0-3-1); hero sauda.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Easy (from round 10, $3,832): worst margin 2.38 at round 40;
+#     next lowest R34 2.43, R37 2.71
+# Routes in the comments (map data): 1 = PathMiddle, 2 = PathRight, 3 = PathLeft, 4 =
+# PathMiddleMoab, 5 = PathTopMoab.
+# The plan is paid for by round 40 even without Double Cash; `fill` holds what
+# Double Cash buys after it.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: darkdungeons_easy
+map: Dark Dungeons
+hero: sauda
+modes: [easy]
+planner:
+  towers: {tack: [3, 3, 2], dart: [1, 2, 3], boomerang: [0, 3, 3], spike: [0, 0, 0], bomb: [0, 2, 2], druid: [0, 3, 1]}
+  base_success: {easy: 0.8}
+  maps: [Dark Dungeons]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.088, 0.743]}        # reaches route 3
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.473, 0.896]}        # reaches routes 1, 4
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.804, 0.283]}        # reaches routes 2, 5
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.729, 0.283]}        # reaches routes 2, 5
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.815, 0.232]}        # reaches routes 2, 5
+  - {do: place, id: d4, kind: dart, role: dps, at: [0.729, 0.419]}        # reaches routes 2, 5
+  - {do: upgrade, id: d2, to: 0-1-1}
+  - {do: upgrade, id: t2, to: 1-0-0}
+  - {do: upgrade, id: t1, to: 1-0-0}
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.655, 0.334]}   # reaches routes 2, 5
+  - {do: upgrade, id: r1, to: 0-2-1}
+  - {do: upgrade, id: t2, to: 1-0-1}
+  - {do: upgrade, id: t1, to: 1-0-1}
+  - {do: place, id: r2, kind: boomerang, role: dps, at: [0.655, 0.266]}   # reaches routes 2, 5
+  - {do: upgrade, id: r2, to: 0-2-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.088, 0.249]}      # sauda
+  - {do: upgrade, id: t2, to: 1-0-2}
+  - {do: upgrade, id: t1, to: 1-0-2}
+  - {do: place, id: d5, kind: dart, role: dps, at: [0.377, 0.589]}        # reaches routes 1, 4
+  - {do: upgrade, id: t1, to: 2-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit, at: [0.815, 0.709]}
+  - {do: upgrade, id: t2, to: 2-0-2}
+  - {do: place, id: d6, kind: dart, role: dps, at: [0.398, 0.862]}        # reaches routes 1, 4
+  - {do: place, id: d7, kind: dart, role: dps, at: [0.163, 0.862]}        # reaches route 3
+  - {do: place, id: t3, kind: tack, role: dps, at: [0.131, 0.743]}        # reaches route 3
+  - {do: upgrade, id: t3, to: 0-2-0}
+  - {do: place, id: d8, kind: dart, role: dps, at: [0.409, 0.606]}        # reaches routes 1, 4
+  - {do: upgrade, id: r1, to: 0-2-2}
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.174, 0.76]}        # reaches route 3
+  - {do: upgrade, id: d2, to: 0-2-1}
+  - {do: upgrade, id: r2, to: 0-2-2}
+  - {do: upgrade, id: t2, to: 3-0-2}
+  - {do: upgrade, id: d2, to: 0-1-2}
+  - {do: upgrade, id: d5, to: 0-0-2}
+  - {do: upgrade, id: d7, to: 0-0-2}
+  - {do: upgrade, id: d1, to: 0-0-2}
+  - {do: upgrade, id: d6, to: 0-0-2}
+  - {do: upgrade, id: d7, to: 0-0-3}
+  - {do: upgrade, id: d8, to: 0-0-2}
+  - {do: upgrade, id: d2, to: 0-2-3}
+  - {do: upgrade, id: d6, to: 0-1-2}
+  - {do: upgrade, id: d8, to: 0-1-2}
+  - {do: upgrade, id: d1, to: 1-0-2}
+  - {do: upgrade, id: d7, to: 0-1-3}
+  - {do: upgrade, id: bm1, to: 0-1-2}
+  - {do: place, id: d9, kind: dart, role: dps, at: [0.387, 0.913]}        # reaches routes 1, 4
+  - {do: upgrade, id: t3, to: 1-2-0}
+  - {do: place, id: d10, kind: dart, role: dps, at: [0.302, 0.624]}       # reaches routes 1, 4
+  - {do: place, id: d11, kind: dart, role: dps, at: [0.345, 0.47]}        # reaches routes 1, 4
+fill:
+  - {do: place, id: r3, kind: boomerang, role: dps, at: [0.302, 0.555]}   # reaches routes 1, 4
+  - {do: upgrade, id: r3, to: 0-0-1}
+  - {do: place, id: r4, kind: boomerang, role: dps, at: [0.302, 0.862]}   # reaches routes 1, 4
+  - {do: place, id: sp2, kind: spike, role: exit, at: [0.473, 0.521]}
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.302, 0.487]}
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: upgrade, id: r4, to: 0-2-1}
+  - {do: upgrade, id: r3, to: 0-2-1}
+  - {do: place, id: r5, kind: boomerang, role: dps, at: [0.558, 0.845]}   # reaches routes 1, 4
+  - {do: upgrade, id: r5, to: 0-0-1}
+  - {do: place, id: r6, kind: boomerang, role: dps, at: [0.302, 0.93]}    # reaches routes 1, 4
+  - {do: upgrade, id: r6, to: 0-2-1}
+  - {do: upgrade, id: r5, to: 0-2-1}
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: upgrade, id: d7, to: 0-2-3}
+  - {do: upgrade, id: d5, to: 1-0-2}
+  - {do: place, id: t4, kind: tack, role: dps, at: [0.804, 0.419]}        # reaches routes 2, 5
+  - {do: upgrade, id: t4, to: 2-3-0}
+  - {do: place, id: t5, kind: tack, role: dps, at: [0.163, 0.249]}        # reaches routes 3, 5
+  - {do: upgrade, id: t5, to: 1-2-0}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.163, 0.181]}       # reaches routes 3, 5
+  - {do: upgrade, id: d9, to: 0-1-3}
+  - {do: upgrade, id: t5, to: 2-2-0}
+  - {do: upgrade, id: d3, to: 1-0-0}
+  - {do: upgrade, id: d4, to: 1-0-1}
+  - {do: upgrade, id: d3, to: 1-0-1}
+  - {do: upgrade, id: t5, to: 2-3-0}
+  - {do: upgrade, id: d4, to: 1-0-2}
+  - {do: upgrade, id: r1, to: 0-3-2}
+  - {do: upgrade, id: r4, to: 0-2-3}
+  - {do: upgrade, id: r3, to: 0-2-3}
+  - {do: upgrade, id: d9, to: 0-2-3}
+  - {do: upgrade, id: r6, to: 0-2-3}
+answers:
+  moab: [{do: upgrade, id: bm1, to: 0-3-2}]

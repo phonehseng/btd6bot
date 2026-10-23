@@ -1,0 +1,100 @@
+# Muddy Puddles, Deflation: buccaneer, sniper, ninja, dart from the guides; spots and
+# order from the game's numbers.
+#
+# Why (map data):
+#   Four lanes take turns, one lane per round (AlternateRoundSplitter:
+#   1, 2, 3, 4, 3, 2). Long-range and map-wide towers cover the lane schedule
+#   best; the ponds between the lanes take water towers. No sight blockers.
+#
+# Sources:
+#   * G-Horizon, Muddy Puddles CHIMPS Easy Guide: buccaneer, snipers,
+#     Advanced-Intel subs, Psi (https://www.youtube.com/watch?v=gJLFvkHiOBk)
+#   * BlueCliff, Muddy Puddles Hard No MK (https://www.youtube.com/watch?v=2oT7VyTQKKk)
+#   * bloonswiki Muddy_Puddles: long range does well because only one lane is
+#     active at a time (https://www.bloonswiki.com/Muddy_Puddles)
+#   * bloonswiki Strategy:Deflation_(BTD6): no income from round 31, so buy the whole defence
+#     up front; it must pop the camo purples of R45/R48 and the camo leads of R59
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# The build: 11 buccaneers (4-0-1, 0-3-2, 0-3-1, 2-0-1); 8 snipers (0-2-3, 1-3-0, 0-2-2,
+# 1-2-0); 1 ninja (3-0-0); 2 darts (0-0-0); hero psi.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Deflation (from round 31, $40,000): worst margin 2.74 at round 59;
+#     next lowest R56 2.95, R54 3.12
+# Routes in the comments (map data): 1 = Path2, 2 = Path3, 3 = Path4, 4 = Path1.
+# The plan fits the base $20,000 (the hero last, only if cash is left); `fill`
+# spends the rest of the account's $40,000.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: muddypuddles_deflation
+map: Muddy Puddles
+hero: psi
+modes: [deflation]
+planner:
+  towers: {buccaneer: [4, 3, 2], sniper: [1, 3, 3], ninja: [3, 0, 0], dart: [0, 0, 0]}
+  base_success: {deflation: 0.78}
+  maps: [Muddy Puddles]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.419, 0.658]}          # reaches routes 1, 2
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.623, 0.436]}          # reaches routes 2, 3
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.398, 0.589]}          # reaches routes 1, 2
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.665, 0.47]}           # reaches routes 2, 3
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: b2, to: 0-3-1}
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.11, 0.487]}           # reaches route 4
+  - {do: upgrade, id: b5, to: 0-3-1}
+  - {do: upgrade, id: b3, to: 0-3-1}
+  - {do: upgrade, id: b2, to: 0-3-2}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.045, 0.129]}   # map-wide
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.687, 0.402]}          # reaches routes 2, 3
+  - {do: upgrade, id: b6, to: 0-0-1}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.174, 0.129]}   # map-wide
+  - {do: upgrade, id: s2, to: 0-2-0}
+fill:
+  - {do: upgrade, id: b6, to: 0-3-1}
+  - {do: upgrade, id: b3, to: 0-3-2}
+  - {do: place, id: b7, kind: buccaneer, role: dps, at: [0.11, 0.385]}           # reaches route 4
+  - {do: place, id: b8, kind: buccaneer, role: dps, at: [0.152, 0.453]}          # reaches routes 1, 4
+  - {do: upgrade, id: b8, to: 2-0-1}
+  - {do: upgrade, id: s2, to: 0-2-1}
+  - {do: place, id: b9, kind: buccaneer, role: dps, at: [0.377, 0.692]}          # reaches routes 1, 2
+  - {do: upgrade, id: b9, to: 2-0-1}
+  - {do: place, id: b10, kind: buccaneer, role: dps, at: [0.334, 0.606]}         # reaches routes 1, 2, 4
+  - {do: upgrade, id: b10, to: 2-0-1}
+  - {do: upgrade, id: b5, to: 0-3-2}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.216, 0.129]}   # map-wide
+  - {do: upgrade, id: s3, to: 0-2-2}
+  - {do: upgrade, id: b8, to: 4-0-1}
+  - {do: place, id: b11, kind: buccaneer, role: dps, at: [0.077, 0.436]}         # reaches route 4
+  - {do: upgrade, id: b11, to: 0-3-1}
+  - {do: upgrade, id: s3, to: 0-2-3}
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.345, 0.129]}   # map-wide
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.387, 0.129]}   # map-wide
+  - {do: upgrade, id: s5, to: 1-2-0}
+  - {do: upgrade, id: b4, to: 0-3-1}
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.43, 0.129]}   # map-wide
+  - {do: upgrade, id: s6, to: 1-2-0}
+  - {do: upgrade, id: b7, to: 0-3-1}
+  - {do: upgrade, id: s2, to: 0-2-3}
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.526, 0.129]}   # map-wide
+  - {do: upgrade, id: s7, to: 1-2-0}
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.569, 0.129]}   # map-wide
+  - {do: upgrade, id: s8, to: 1-2-0}
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.281, 0.419]}              # reaches routes 1, 4
+  - {do: upgrade, id: n1, to: 3-0-0}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.313, 0.402]}               # reaches route 1
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.345, 0.419]}               # reaches route 1
+  - {do: upgrade, id: s5, to: 1-3-0}
+answers:
+  ceramic: [{do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.345, 0.129]}, {do: upgrade, id: s4, to: 2-2-0}]
+  moab: [{do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.345, 0.129]}, {do: upgrade, id: s4, to: 3-2-0}]
+  bfb: [{do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.345, 0.129]}, {do: upgrade, id: s4, to: 4-2-0}]

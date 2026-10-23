@@ -1,0 +1,117 @@
+# Quad, Military Only: buccaneer, heli, ace, sniper from the guides; spots and order
+# from the game's numbers.
+#
+# Why (map data):
+#   Four entrances are active every round and each route loops through two
+#   quadrants; bloons are immune under the four trusses, which also block
+#   sight ($1,500 each to remove; not done here). A central pond.
+#
+# Sources:
+#   * BlueCliff, Quad Hard No MK (ft. Quincy): a dart in each corner, sub, sniper,
+#     cluster bombs (https://www.youtube.com/watch?v=DAJAobKFCLE)
+#   * fandom Quad/Strategies: the two kill zones (https://bloons.fandom.com/wiki/Quad/Strategies)
+#   * bloonswiki Quad: spike factories and bombs at the kill zones
+#     (https://www.bloonswiki.com/Quad)
+#   * bloonswiki Military_Only: 60 rounds on Medium; leads with Full Metal Jacket
+#     (sniper 1-x-x), camo with Night Vision or Submerge and Support
+#     (https://www.bloonswiki.com/Military_Only)
+#
+# The build: 8 buccaneers (0-3-2, 2-0-2); 4 helis (3-0-2, 0-2-2); 7 aces (2-3-0, 1-3-0,
+# 2-1-0, 0-1-0); 5 snipers (0-2-3, 0-2-1, 1-2-0); hero quincy.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Military Only (from round 15, $6,057): worst margin 2.00 at round 15;
+#     next lowest R54 2.02, R58 2.25
+# Routes in the comments (map data): 1 = TopToBottom, 2 = RighttoLeft, 3 = BottomtoTop,
+# 4 = LefttoRight.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: quad_military_only
+map: Quad
+hero: quincy
+modes: [military_only]
+planner:
+  towers: {buccaneer: [2, 3, 2], heli: [3, 2, 2], ace: [2, 3, 0], sniper: [1, 2, 3]}
+  base_success: {military_only: 0.72}
+  maps: [Quad]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.606]}           # reaches routes 1, 2, 3
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.505, 0.521]}          # reaches routes 1, 2, 4
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.419, 0.419]}          # reaches routes 1, 3, 4
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.366, 0.504]}          # reaches routes 2, 3, 4
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.484, 0.589]}          # reaches routes 1, 2
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.398, 0.555]}          # reaches routes 2, 3
+  - {do: place, id: b7, kind: buccaneer, role: dps, at: [0.473, 0.453]}          # reaches routes 1, 4
+  - {do: upgrade, id: b6, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: b5, to: 1-0-0}
+  - {do: upgrade, id: b7, to: 0-0-1}
+  - {do: upgrade, id: b4, to: 0-0-1}
+  - {do: upgrade, id: b3, to: 1-0-0}
+  - {do: upgrade, id: b2, to: 0-0-1}
+  - {do: upgrade, id: b6, to: 2-0-1}
+  - {do: upgrade, id: b3, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.238, 0.521]}             # quincy
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: b2, to: 0-0-2}
+  - {do: upgrade, id: b3, to: 2-0-1}
+  - {do: upgrade, id: b5, to: 1-0-1}
+  - {do: upgrade, id: b2, to: 1-0-2}
+  - {do: upgrade, id: b5, to: 2-0-1}
+  - {do: upgrade, id: b4, to: 0-2-1}
+  - {do: upgrade, id: b7, to: 0-2-1}
+  - {do: upgrade, id: b4, to: 0-3-1}
+  - {do: upgrade, id: b7, to: 0-3-1}
+  - {do: upgrade, id: b3, to: 2-0-2}
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: b8, kind: buccaneer, role: dps, at: [0.452, 0.538]}          # no lane in range
+  - {do: upgrade, id: b8, to: 2-0-1}
+  - {do: upgrade, id: b4, to: 0-3-2}
+  - {do: upgrade, id: b7, to: 0-3-2}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.174, 0.334]}               # reaches routes 3, 4
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.248, 0.232]}               # reaches routes 3, 4
+  - {do: upgrade, id: h2, to: 1-0-2}
+  - {do: upgrade, id: h1, to: 1-0-2}
+  - {do: upgrade, id: h2, to: 3-0-2}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: place, id: h3, kind: heli, role: dps, at: [0.59, 0.215]}                # reaches routes 1, 4
+  - {do: upgrade, id: b5, to: 2-0-2}
+  - {do: upgrade, id: b8, to: 2-0-2}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.27, 0.794]}                # reaches routes 2, 3
+  - {do: upgrade, id: ac1, to: 0-3-0}
+  - {do: upgrade, id: b6, to: 2-0-2}
+  - {do: upgrade, id: h3, to: 1-0-0}
+  - {do: upgrade, id: ac1, to: 1-3-0}
+  - {do: upgrade, id: h3, to: 3-0-2}
+  - {do: place, id: h4, kind: heli, role: dps, at: [0.665, 0.726]}               # reaches routes 1, 2
+  - {do: upgrade, id: h4, to: 0-2-2}
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.27, 0.589]}                # reaches routes 2, 3
+  - {do: upgrade, id: ac2, to: 2-3-0}
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.644, 0.3]}                 # reaches routes 1, 4
+  - {do: upgrade, id: ac3, to: 1-3-0}
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.195, 0.709]}               # reaches routes 2, 3
+  - {do: upgrade, id: ac4, to: 0-1-0}
+  - {do: place, id: ac5, kind: ace, role: dps, at: [0.345, 0.675]}               # reaches routes 2, 3
+  - {do: upgrade, id: ac5, to: 1-3-0}
+  - {do: place, id: ac6, kind: ace, role: dps, at: [0.398, 0.743]}               # reaches routes 2, 3
+  - {do: upgrade, id: ac6, to: 2-3-0}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.024, 0.129]}   # map-wide
+  - {do: upgrade, id: s1, to: 0-2-3}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.067, 0.129]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: ac7, kind: ace, role: dps, at: [0.558, 0.845]}               # reaches routes 1, 2
+  - {do: upgrade, id: ac7, to: 2-1-0}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.11, 0.129]}   # map-wide
+  - {do: upgrade, id: s3, to: 1-2-0}
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.152, 0.129]}   # map-wide
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.195, 0.129]}   # map-wide
+  - {do: upgrade, id: s5, to: 0-2-1}
+answers:
+  bfb: [{do: upgrade, id: s2, to: 4-2-0}]

@@ -1,0 +1,65 @@
+# Glacial Trail, Easy: Druids of the Jungle bought in three groups three rounds apart,
+# so the freezes never stop more than one group.
+#
+# Why (map data):
+#   One long lane, 16% of it hidden under ice. Every tower except Ice Monkeys
+#   (and the heroes Silas and Dan) is frozen for 2 rounds in every 10, counted
+#   from the round it was placed. The checks here count a tower bought before
+#   round r as frozen on r+8, r+9, r+10, r+18, ... (either placement round).
+#   Ice walls block 60% of the sight lines.
+#
+# Sources:
+#   * G-Horizon, Glacial Trail CHIMPS Easy Guide: ice monkeys + Perma-Spike
+#     (https://www.youtube.com/watch?v=Hv8M3AOfwS0)
+#   * bloonswiki Glacial_Trail: the freeze rule and which towers are immune
+#     (https://www.bloonswiki.com/Glacial_Trail)
+#
+# The build: 3 druids (1-3-0); 2 ninjas (4-0-1); 1 dart (2-0-4); hero dan_dmonke.
+# Freezes: every tower but Ice Monkeys (and Dan) is frozen 2 rounds in 10 from the round it
+# was placed. The druids come in three groups (before round 10, from round 13, from round
+# 16: `round:` makes the executor wait), so at most one group is frozen at a time.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Easy (from round 10, $3,832): worst margin 2.62 at round 40;
+#     next lowest R10 5.42, R27 5.78
+# Routes in the comments (map data): 1 = Path.
+# The plan is paid for by round 40 even without Double Cash; `fill` holds what
+# Double Cash buys after it.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: glacialtrail_easy
+map: Glacial Trail
+hero: dan_dmonke
+modes: [easy]
+planner:
+  towers: {druid: [1, 3, 0], ninja: [4, 0, 1], dart: [2, 0, 4]}
+  base_success: {easy: 0.78}
+  maps: [Glacial Trail]
+plan:
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.665, 0.232]}             # far land, top right: vines reach the whole lane
+  - {do: upgrade, id: dr1, to: 0-3-0}                                            # Druid of the Jungle
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.719, 0.641]}              # bottom-right loop: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.152, 0.521]}             # Dan (never frozen)
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.719, 0.249], round: 13}   # far land: second group
+  - {do: upgrade, id: dr2, to: 0-3-0}
+  - {do: place, id: dr3, kind: druid, role: dps, at: [0.772, 0.249], round: 16}   # far land: third group
+  - {do: upgrade, id: dr3, to: 0-3-0}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.099, 0.368], round: 19}   # left loop: camo, another group
+  - {do: upgrade, id: n2, to: 2-0-1}
+  - {do: upgrade, id: dr1, to: 1-3-0}
+  - {do: upgrade, id: dr2, to: 1-3-0}
+  - {do: upgrade, id: dr3, to: 1-3-0}
+fill:
+  - {do: upgrade, id: n1, to: 4-0-1}                                            # Bloonjitsu
+  - {do: upgrade, id: n2, to: 4-0-1}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.729, 0.692], round: 33}   # bottom-right loop: Sharp Shooter for the R40 MOAB
+  - {do: upgrade, id: d1, to: 2-0-4}                                            # bought from round 33: not frozen on round 40
+answers:
+  moab: [{do: place, id: d1, kind: dart, role: dps, at: [0.729, 0.692]}, {do: upgrade, id: d1, to: 2-0-4}]

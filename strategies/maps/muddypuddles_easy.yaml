@@ -1,0 +1,60 @@
+# Muddy Puddles, Easy: Druids of the Jungle (their vines reach every lane), snipers for
+# camo, lead and the MOAB.
+#
+# Why (map data):
+#   Four lanes take turns, one lane per round (AlternateRoundSplitter:
+#   1, 2, 3, 4, 3, 2). Long-range and map-wide towers cover the lane schedule
+#   best; the ponds between the lanes take water towers. No sight blockers.
+#
+# Sources:
+#   * G-Horizon, Muddy Puddles CHIMPS Easy Guide: buccaneer, snipers,
+#     Advanced-Intel subs, Psi (https://www.youtube.com/watch?v=gJLFvkHiOBk)
+#   * BlueCliff, Muddy Puddles Hard No MK (https://www.youtube.com/watch?v=2oT7VyTQKKk)
+#   * bloonswiki Muddy_Puddles: long range does well because only one lane is
+#     active at a time (https://www.bloonswiki.com/Muddy_Puddles)
+#
+# The build: 4 druids (1-3-0); 2 snipers (3-2-0, 2-2-0); hero psi.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Easy (from round 10, $3,832): worst margin 4.65 at round 37;
+#     next lowest R27 4.91, R40 5.02
+# Routes in the comments (map data): 1 = Path2, 2 = Path3, 3 = Path4, 4 = Path1.
+# The plan is paid for by round 40 even without Double Cash; `fill` holds what
+# Double Cash buys after it.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: muddypuddles_easy
+map: Muddy Puddles
+hero: psi
+modes: [easy]
+planner:
+  towers: {druid: [1, 3, 0], sniper: [3, 2, 0]}
+  base_success: {easy: 0.8}
+  maps: [Muddy Puddles]
+plan:
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.334, 0.419]}             # between lanes 1 and 2
+  - {do: upgrade, id: dr1, to: 0-3-0}                                            # Druid of the Jungle: vines on every lane
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.558, 0.641]}             # between lanes 2 and 3
+  - {do: upgrade, id: dr2, to: 0-3-0}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.174, 0.129]}   # map-wide
+  - {do: upgrade, id: s1, to: 0-1-0}                                             # Night Vision: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.281, 0.419]}             # Psi
+  - {do: place, id: dr3, kind: druid, role: dps, at: [0.195, 0.641]}             # left of lane 1
+  - {do: upgrade, id: dr3, to: 0-3-0}
+  - {do: upgrade, id: s1, to: 1-2-0}                                             # lead + shrapnel
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.216, 0.129]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-1-0}
+  - {do: upgrade, id: dr1, to: 1-3-0}
+  - {do: upgrade, id: dr2, to: 1-3-0}
+  - {do: upgrade, id: s1, to: 3-2-0}                                             # Deadly Precision: the R40 MOAB
+  - {do: upgrade, id: dr3, to: 1-3-0}
+fill:
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: place, id: dr4, kind: druid, role: dps, at: [0.291, 0.845]}   # below lanes 1 and 2
+  - {do: upgrade, id: dr4, to: 1-3-0}

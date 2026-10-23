@@ -1,0 +1,98 @@
+# Geared, Medium (Standard) / Medium Reverse: Snipers and Aces.
+#
+# Map: The land is a big gear and a small gear that turn after every round
+# (45 and 108 degrees, map file) and carry their towers with them, so a
+# finite-range tower is carried away from the lane; the placement
+# model only allows such towers on cells that barely move. Global
+# towers (snipers, aces) keep working anywhere. No water.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sniper, ace. Each
+# purchase is the cheapest that keeps the coming rounds popping at 3x the
+# strength they need. Spare cash goes into the Desperado, whose XP the account
+# needs most.
+#
+# Economy: Fast Track starts Medium (Standard) at round 15 with about $6,057,
+# with Double Cash income.
+# Model check, Medium (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 3.05 (round 54); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+# Model check, Medium Reverse (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 3.22 (round 54); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: global towers; the early game is the hard part
+#     (https://www.bloonswiki.com/Geared)
+#   * fandom strategies: four snipers on Strong + heli; 1-1-0 snipers for the
+#     R59 camo leads (https://bloons.fandom.com/wiki/Geared/Strategies)
+#   * G-Horizon, Geared CHIMPS: sniper spam on Strong
+#     (https://www.youtube.com/watch?v=6QOiPh3CY1w)
+#   * bloonswiki Reverse: Medium strategies carry over; exit protection moves
+#     to the far end (https://www.bloonswiki.com/Strategy:Reverse_(BTD6))
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: geared_medium
+map: Geared
+hero: quincy
+modes: [medium, reverse]
+planner:
+  towers: {sniper: [3, 3, 4], ace: [2, 3, 0]}
+  base_success: {medium: 0.8, reverse: 0.8}
+  maps: [Geared]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.398, 0.198]} # R15: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R15: Shrapnel Shot
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.441, 0.198]} # R15: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R15: Shrapnel Shot
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.345, 0.215]} # R15: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 0-2-0}                                          # R15: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.473, 0.215]} # R15: big gear; map-wide (line of sight)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.457, 0.828]}          # R15: Quincy, big gear (not counted by the model)
+  - {do: upgrade, id: s3, to: 0-2-2}                                          # R15: Shrapnel Shot
+  - {do: upgrade, id: s4, to: 0-2-0}                                          # R17: Shrapnel Shot
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.612, 0.47]}             # R19: big gear; sees 10% of the lane
+  - {do: upgrade, id: ac1, to: 0-1-0}                                         # R19: Exploding Pineapple
+  - {do: upgrade, id: ac1, to: 0-3-0}                                         # R20: Bomber Ace
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.505, 0.232]} # R26: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R27: Shrapnel Shot
+  - {do: upgrade, id: s5, to: 0-2-0}                                          # R29: Shrapnel Shot
+  - {do: upgrade, id: ac1, to: 1-3-0}                                         # R30: Bomber Ace
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R30: Shrapnel Shot
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.248, 0.47]}             # R31: big gear; sees 10% of the lane
+  - {do: upgrade, id: ac2, to: 2-3-0}                                         # R31: Bomber Ace
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.655, 0.555]}            # R32: big gear; sees 8% of the lane
+  - {do: upgrade, id: ac3, to: 0-3-0}                                         # R32: Bomber Ace
+  - {do: upgrade, id: ac3, to: 2-3-0}                                         # R35: Bomber Ace
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.206, 0.555]}            # R35: big gear; sees 6% of the lane
+  - {do: upgrade, id: ac4, to: 1-3-0}                                         # R35: Bomber Ace
+  - {do: upgrade, id: ac4, to: 2-3-0}                                         # R41: Bomber Ace
+  - {do: upgrade, id: s3, to: 0-2-3}                                          # R41: Semi-Automatic
+  - {do: upgrade, id: ac1, to: 2-3-0}                                         # R41: Bomber Ace
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.302, 0.249]} # R41: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s6, to: 1-2-0}                                          # R41: Shrapnel Shot
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.377, 0.249]} # R41: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s7, to: 1-2-0}                                          # R41: Shrapnel Shot
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.419, 0.249]} # R41: big gear; map-wide (line of sight)
+  - {do: upgrade, id: s8, to: 0-2-0}                                          # R41: Shrapnel Shot
+  - {do: upgrade, id: s3, to: 0-2-4}                                          # R46: Full Auto Rifle
+  - {do: upgrade, id: s2, to: 3-2-0}                                          # R46: Deadly Precision
+  - {do: upgrade, id: s1, to: 3-2-0}                                          # R46: Deadly Precision
+  - {do: upgrade, id: s5, to: 3-2-0}                                          # R46: Deadly Precision
+  - {do: upgrade, id: s8, to: 0-2-3}                                          # R46: Semi-Automatic
+  - {do: upgrade, id: s6, to: 1-3-0}                                          # R46: Bouncing Bullet
+  - {do: upgrade, id: s8, to: 0-2-4}                                          # R52: Full Auto Rifle
+panic:
+  - {do: place, kind: sniper, role: dps}
+answers:
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

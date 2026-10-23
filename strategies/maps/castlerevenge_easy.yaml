@@ -1,0 +1,110 @@
+# Castle Revenge, Easy (Standard): Desperados, Subs and Snipers.
+#
+# Map: Four entrances feed a top lane and a bottom lane that run at the same
+# time along the castle walls to two exits on the left; bloons cannot
+# be hit while they climb the wheels (about 38% of each route, map
+# file). No ground spot reaches both lanes with a short-range tower, so
+# the lost Hard game held one lane and leaked the other. Courtyard and
+# platform spots see both lanes only map-wide.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses desperado, sub,
+# sniper, tack, village, bomb, skywarden, mermonkey. Each purchase is the
+# cheapest that keeps the coming rounds popping at 2x the strength they need.
+# Spare cash goes into the Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Easy (Standard) at round 10 with about $3,832 and
+# Double Cash. The plan costs $14,110, which a game without the boosts also
+# earns by round 40 (the offline test plays it that way); the fill holds the
+# rest, which the bot buys right after the plan.
+# Model check, Easy (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 0.93 (round 38); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 2.00 (round 22); every
+# round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: the raised platform sees the whole track; Juggernaut near
+#     each last bend (https://www.bloonswiki.com/Castle_Revenge)
+#   * BlueCliff, Castle Revenge Hard: snipers in the courtyard quarters,
+#     Spectre ace (https://www.youtube.com/watch?v=au45yv7NhS8)
+#   * OneEyedDeacon, Castle Revenge CHIMPS with Sauda: mirrored damage top and
+#     bottom (https://www.youtube.com/watch?v=JfjH7gMVRGw)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: castlerevenge_easy
+map: Castle Revenge
+hero: quincy
+modes: [easy]
+planner:
+  towers: {engineer: [0, 0, 0], tack: [2, 3, 0], sub: [2, 0, 3], sniper: [1, 2, 0], skywarden: [1, 0, 0], desperado: [4, 2, 0], village: [0, 0, 0], mermonkey: [0, 0, 0], bomb: [0, 1, 2]}
+  base_success: {easy: 0.85}
+  maps: [Castle Revenge]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.43, 0.675]}           # R10: Quincy, courtyard, bottom (not counted by the model)
+  - {do: place, id: xe, kind: engineer, role: dps, at: [0.601, 0.308]}        # R10: top-right corner inside the castle; sees 36% of the top lane
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.623, 0.76]}             # R10: bottom-right corner inside the castle; sees 24% of the bottom lane
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.142, 0.283]}            # R10: top-left pond; sees 36% of the top lane
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.142, 0.215]}            # R10: top-left pond; sees 32% of the top lane
+  - {do: upgrade, id: t1, to: 0-1-0}                                          # R10: Long Range Tacks
+  - {do: upgrade, id: sb2, to: 1-0-0}                                         # R10: Longer Range
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.612, 0.198]} # R10: top-right corner inside the castle; map-wide (line of sight)
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.355, 0.249]} # R10: courtyard, top; map-wide (line of sight)
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.398, 0.249]} # R10: courtyard, top; map-wide (line of sight)
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.441, 0.249]} # R10: courtyard, top; map-wide (line of sight)
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.601, 0.249]} # R10: top-right corner inside the castle; map-wide (line of sight)
+  - {do: upgrade, id: t1, to: 1-1-0}                                          # R10: Faster Shooting
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.473, 0.266]} # R10: courtyard, top; map-wide (line of sight)
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.633, 0.266]} # R10: top-right corner inside the castle; map-wide (line of sight)
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.323, 0.3]} # R11: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: sb1, to: 0-0-1}                                         # R11: Twin Guns
+  - {do: upgrade, id: sb2, to: 1-0-1}                                         # R12: Longer Range
+  - {do: upgrade, id: sb1, to: 1-0-1}                                         # R12: Longer Range
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.184, 0.675]}      # R13: courtyard, bottom-left; sees 40% of the bottom lane
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.526, 0.675]} # R14: courtyard, bottom; sees 47% of the bottom lane
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.152, 0.606]} # R14: courtyard, bottom-left; sees 44% of the bottom lane
+  - {do: upgrade, id: t1, to: 1-2-0}                                          # R14: Super Range Tacks
+  - {do: place, id: v1, kind: village, role: support, at: [0.142, 0.777], near: [sk1, de2]} # R16: courtyard, bottom-left; 
+  - {do: upgrade, id: de2, to: 0-1-0}                                         # R17: Eagle Eye
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.131, 0.675]}      # R17: courtyard, bottom-left; sees 40% of the bottom lane
+  - {do: place, id: de3, kind: desperado, role: dps, target: strong, at: [0.558, 0.624]} # R17: courtyard, bottom; sees 42% of the bottom lane
+  - {do: upgrade, id: t1, to: 2-2-0}                                          # R18: Even Faster Shooting
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.569, 0.692]}      # R19: bottom-right corner inside the castle; sees 40% of the bottom lane
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.601, 0.675]}      # R19: courtyard, right side between the lanes; sees 37% of the bottom lane
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R19: Aerial Attunement
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.355, 0.743]}       # R19: courtyard, bottom; sees 15% of the bottom lane
+  - {do: upgrade, id: de3, to: 0-1-0}                                         # R19: Eagle Eye
+  - {do: upgrade, id: t1, to: 2-3-0}                                          # R20: Blade Shooter
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.398, 0.726]}           # R21: courtyard, bottom; sees 24% of the bottom lane
+  - {do: upgrade, id: sb1, to: 1-0-2}                                         # R22: Airburst Darts
+  - {do: upgrade, id: de2, to: 3-1-0}                                         # R25: Big Iron
+  - {do: upgrade, id: s8, to: 1-0-0}                                          # R26: Full Metal Jacket
+  - {do: upgrade, id: s8, to: 1-2-0}                                          # R27: Shrapnel Shot
+  - {do: place, id: m2, kind: mermonkey, role: dps, at: [0.441, 0.743]}       # R27: courtyard, bottom; sees 15% of the bottom lane
+  - {do: place, id: m3, kind: mermonkey, role: dps, at: [0.484, 0.709]}       # R27: courtyard, bottom; sees 14% of the bottom lane
+  - {do: upgrade, id: bo1, to: 0-0-2}                                         # R28: Frag Bombs
+  - {do: upgrade, id: sb2, to: 2-0-1}                                         # R28: Advanced Intel
+  - {do: upgrade, id: bo1, to: 0-1-2}                                         # R30: Frag Bombs
+fill:
+  - {do: upgrade, id: de1, to: 2-1-0}                                         # R28: Standoff (surplus: XP)
+  - {do: upgrade, id: de1, to: 3-1-0}                                         # R30: Big Iron
+  - {do: upgrade, id: sb2, to: 2-0-3}                                         # R32: Triple Guns
+  - {do: upgrade, id: de3, to: 3-1-0}                                         # R33: Big Iron
+  - {do: upgrade, id: s4, to: 1-0-0}                                          # R34: Full Metal Jacket
+  - {do: upgrade, id: s6, to: 1-0-0}                                          # R35: Full Metal Jacket
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R35: Big Iron (surplus: XP)
+  - {do: upgrade, id: de3, to: 3-2-0}                                         # R35: Big Iron (surplus: XP)
+  - {do: upgrade, id: de3, to: 4-2-0}                                         # R39: Twin Sixes (surplus: XP)
+panic:
+  - {do: place, kind: sniper, role: dps}
+answers:
+  ceramic: [{do: upgrade, id: bo1, to: 0-2-2}]

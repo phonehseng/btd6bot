@@ -1,0 +1,150 @@
+# Cargo, Medium (Standard): Desperados, Buccaneers and Subs.
+#
+# Map: One road: in along the top, down the right-hand bend and out at the
+# bottom right. Parked trucks on the dock block line of sight until
+# round 39, then drive off and open a MOAB-only lane (PathSpecial in the
+# map file) that comes up between the dock and the right-hand strip,
+# runs left along the top of the dock and leaves at the top. Water all
+# round the dock; two $500 truck removables (the bot leaves them).
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses desperado,
+# buccaneer, sub, spike, mermonkey, sniper, skywarden, alchemist, bomb,
+# boomerang, dart. Each purchase is the cheapest that keeps the coming rounds
+# popping at 3x the strength they need. Spare cash goes into the Desperado,
+# whose XP the account needs most.
+#
+# Economy: Fast Track starts Medium (Standard) at round 15 with about $6,057,
+# with Double Cash income.
+# Model check, Medium (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.71 (round 33); every round at 2.0 or more. With the
+# MOAB lane the model leaves out added for MOAB-class bloons: worst 2.71
+# (round 33). Threat simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: separate bloon and MOAB lanes; trucks block sight
+#     (https://www.bloonswiki.com/Cargo)
+#   * fandom strategies: water towers right of the MOAB exit, Glaive Lord
+#     below the first bend, Perma-Spike where the lanes meet
+#     (https://bloons.fandom.com/wiki/Cargo/Strategies)
+#   * BlueCliff, Cargo Hard (Quincy, ninja, wizard, bombs)
+#     (https://www.youtube.com/watch?v=JwH3d8_WOBQ)
+#   * Mathgodpi, Cargo CHIMPS with subs
+#     (https://www.youtube.com/watch?v=hzVxMvuAEOI)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: cargo_medium
+map: Cargo
+hero: quincy
+modes: [medium]
+planner:
+  towers: {skywarden: [1, 0, 1], buccaneer: [4, 3, 2], sub: [4, 3, 3], dart: [0, 0, 0], desperado: [4, 2, 0], mermonkey: [3, 1, 1], sniper: [2, 3, 0], alchemist: [0, 1, 0], spike: [3, 0, 1]}
+  base_success: {medium: 0.8}
+  maps: [Cargo]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.47]}           # R15: Quincy, big dock (not counted by the model)
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.216, 0.198]}      # R15: top strip above the lane; sees 20% of the lane
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.612, 0.402]}      # R15: strip inside the lane's right-hand bend; sees 31% of the lane
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.623, 0.453]}      # R15: strip inside the lane's right-hand bend; sees 30% of the lane
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.623, 0.692]}      # R15: strip inside the lane's right-hand bend; sees 22% of the lane
+  - {do: place, id: sk5, kind: skywarden, role: dps, at: [0.623, 0.624]}      # R15: strip inside the lane's right-hand bend; sees 21% of the lane
+  - {do: place, id: sk6, kind: skywarden, role: dps, at: [0.623, 0.521]}      # R15: strip inside the lane's right-hand bend; sees 21% of the lane
+  - {do: place, id: sk7, kind: skywarden, role: dps, at: [0.12, 0.198]}       # R15: top strip above the lane; sees 20% of the lane
+  - {do: place, id: sk8, kind: skywarden, role: dps, at: [0.612, 0.572]}      # R15: strip inside the lane's right-hand bend; sees 20% of the lane
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.601, 0.138]}      # R15: water by the top strip above the lane; sees 21% of the lane
+  - {do: upgrade, id: sk6, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.387, 0.146]}            # R15: water by the top strip above the lane; sees 12% of the lane
+  - {do: place, id: bc2, kind: buccaneer, role: dps, at: [0.697, 0.913]}      # R15: water; sees 24% of the lane
+  - {do: place, id: bc3, kind: buccaneer, role: dps, at: [0.088, 0.436]}      # R15: water; sees 17% of the lane
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.067, 0.198]}            # R15: top strip above the lane; sees 11% of the lane
+  - {do: upgrade, id: bc1, to: 0-0-1}                                         # R15: Long Range
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.74, 0.896]}             # R15: water; sees 19% of the lane
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.11, 0.368]}             # R15: water; sees 18% of the lane
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.644, 0.896]}            # R15: water; sees 12% of the lane
+  - {do: place, id: bc4, kind: buccaneer, role: dps, at: [0.761, 0.453]}      # R15: water; sees 24% of the lane
+  - {do: place, id: bc5, kind: buccaneer, role: dps, at: [0.045, 0.462]}      # R15: water; sees 15% of the lane
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.248, 0.47]} # R15: big dock; sees 5% of the lane
+  - {do: upgrade, id: bc1, to: 0-0-2}                                         # R17: Crow's Nest
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.174, 0.47]} # R17: big dock; sees 7% of the lane
+  - {do: place, id: de3, kind: desperado, role: dps, target: strong, at: [0.334, 0.479]} # R18: big dock; sees little track
+  - {do: upgrade, id: bc3, to: 0-0-1}                                         # R19: Long Range
+  - {do: upgrade, id: sk5, to: 1-0-0}                                         # R19: Aerial Attunement
+  - {do: upgrade, id: bc5, to: 0-0-1}                                         # R19: Long Range
+  - {do: upgrade, id: de1, to: 1-0-0}                                         # R19: Quickdraw (surplus: XP)
+  - {do: upgrade, id: bc1, to: 0-2-2}                                         # R22: Hot Shot
+  - {do: upgrade, id: sb3, to: 0-2-0}                                         # R23: Heat-tipped Darts
+  - {do: upgrade, id: sb3, to: 0-2-1}                                         # R24: Heat-tipped Darts
+  - {do: upgrade, id: sb2, to: 0-2-0}                                         # R25: Heat-tipped Darts
+  - {do: upgrade, id: sb2, to: 1-2-0}                                         # R26: Heat-tipped Darts
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R26: Aerial Attunement
+  - {do: upgrade, id: bc4, to: 0-0-1}                                         # R26: Long Range
+  - {do: upgrade, id: sb2, to: 2-2-0}                                         # R27: Advanced Intel
+  - {do: upgrade, id: bc4, to: 1-0-1}                                         # R27: Faster Shooting
+  - {do: upgrade, id: bc4, to: 2-0-1}                                         # R28: Double Shot
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.794, 0.913]}       # R28: water; sees 8% of the lane
+  - {do: place, id: m2, kind: mermonkey, role: dps, at: [0.056, 0.385]}       # R28: water; sees 8% of the lane
+  - {do: upgrade, id: bc2, to: 0-0-1}                                         # R28: Long Range
+  - {do: upgrade, id: sk4, to: 1-0-1}                                         # R28: Aerial Attunement
+  - {do: upgrade, id: bc4, to: 2-0-2}                                         # R30: Double Shot
+  - {do: upgrade, id: de2, to: 0-1-0}                                         # R30: Eagle Eye
+  - {do: upgrade, id: de1, to: 1-1-0}                                         # R30: Quickdraw
+  - {do: upgrade, id: sb3, to: 0-2-2}                                         # R31: Heat-tipped Darts
+  - {do: upgrade, id: sb4, to: 2-0-1}                                         # R32: Advanced Intel
+  - {do: upgrade, id: sb4, to: 2-0-2}                                         # R33: Advanced Intel
+  - {do: upgrade, id: sb3, to: 0-2-3}                                         # R35: Triple Guns
+  - {do: upgrade, id: sb4, to: 4-0-2}                                         # R36: Bloontonium Reactor
+  - {do: upgrade, id: sb2, to: 2-3-0}                                         # R37: Ballistic Missile
+  - {do: upgrade, id: bc3, to: 1-0-2}                                         # R37: Crow's Nest
+  - {do: upgrade, id: de1, to: 2-2-0}                                         # R37: Standoff (surplus: XP)
+  - {do: upgrade, id: de2, to: 1-1-0}                                         # R37: Quickdraw (surplus: XP)
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R38: Big Iron (surplus: XP)
+  - {do: upgrade, id: de2, to: 3-1-0}                                         # R38: Big Iron (surplus: XP)
+  - {do: upgrade, id: de3, to: 1-0-0}                                         # R38: Quickdraw (surplus: XP)
+  - {do: upgrade, id: bc3, to: 2-0-2}                                         # R39: Double Shot
+  - {do: upgrade, id: bc1, to: 0-3-2}                                         # R39: Cannon Ship
+  - {do: upgrade, id: bc2, to: 0-0-2}                                         # R39: Crow's Nest
+  - {do: upgrade, id: bc5, to: 0-0-2}                                         # R39: Crow's Nest
+  - {do: upgrade, id: bc2, to: 1-0-2}                                         # R39: Crow's Nest
+  - {do: upgrade, id: bc5, to: 1-0-2}                                         # R40: Crow's Nest
+  - {do: upgrade, id: de2, to: 3-2-0}                                         # R40: Big Iron (surplus: XP)
+  - {do: upgrade, id: de3, to: 3-2-0}                                         # R40: Big Iron (surplus: XP)
+  - {do: upgrade, id: m2, to: 0-1-0}                                          # R41: Sharper Prongs
+  - {do: upgrade, id: sk8, to: 0-0-1}                                         # R41: Shatterpoint
+  - {do: upgrade, id: sb1, to: 0-1-2}                                         # R41: Airburst Darts
+  - {do: upgrade, id: bc2, to: 2-0-2}                                         # R42: Double Shot
+  - {do: upgrade, id: m2, to: 0-1-1}                                          # R43: Sharper Prongs
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.024, 0.198]} # R43: top strip above the lane; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R43: Shrapnel Shot
+  - {do: upgrade, id: m1, to: 3-0-1}                                          # R43: Abyss Dweller
+  - {do: upgrade, id: bc3, to: 3-0-2}                                         # R46: Destroyer
+  - {do: upgrade, id: bc5, to: 2-0-2}                                         # R46: Double Shot
+  - {do: upgrade, id: de1, to: 4-2-0}                                         # R47: Twin Sixes (surplus: XP)
+  - {do: upgrade, id: sb1, to: 0-3-2}                                         # R49: Ballistic Missile
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.473, 0.47], near: [de3]} # R49: big dock; sees 10% of the lane
+  - {do: place, id: a2, kind: alchemist, role: support, at: [0.43, 0.47], near: [de3]} # R49: big dock; sees 9% of the lane
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.377, 0.47]}           # R49: big dock; sees little track
+  - {do: upgrade, id: a1, to: 0-1-0}                                          # R49: Stronger Acid
+  - {do: upgrade, id: a2, to: 0-1-0}                                          # R49: Stronger Acid
+  - {do: place, id: sp2, kind: spike, role: dps, at: [0.473, 0.589]}          # R50: big dock; sees little track
+  - {do: place, id: sp3, kind: spike, role: dps, at: [0.473, 0.675]}          # R50: big dock; sees little track
+  - {do: upgrade, id: de3, to: 4-2-0}                                         # R50: Twin Sixes
+  - {do: upgrade, id: s1, to: 2-3-0}                                          # R51: Bouncing Bullet
+  - {do: upgrade, id: sp3, to: 0-0-1}                                         # R52: Long Reach
+  - {do: upgrade, id: sp1, to: 2-0-1}                                         # R52: White Hot Spikes
+  - {do: upgrade, id: bc3, to: 4-0-2}                                         # R53: Aircraft Carrier
+  - {do: upgrade, id: sp1, to: 3-0-1}                                         # R53: Spiked Balls
+  - {do: upgrade, id: de2, to: 4-2-0}                                         # R55: Twin Sixes (surplus: XP)
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  bfb: [{do: upgrade, id: d1, to: 0-0-4}]

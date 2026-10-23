@@ -1,0 +1,82 @@
+# High Finance, Easy Deflation: Buccaneers, Ice Monkeys and Mermonkeys.
+#
+# Map: Lanes alternate by round: odd rounds take the long S lane, even
+# rounds (with the round-40 MOAB) the short U lane. The only free ground
+# is the central park with its two ponds, which touches both lanes; the
+# 15 buildings can be bought for room ($350-$1,500, the bot leaves
+# them). Every round is checked on both lanes.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses buccaneer, ice,
+# mermonkey, skywarden. Each purchase is the cheapest that keeps the coming
+# rounds popping at 2.2x the strength they need. Spare cash goes into the
+# Desperado, whose XP the account needs most.
+#
+# Economy: Deflation starts at round 31 with $40,000 (Double Cash) and no
+# income, and the executor buys plan and fill at once before round 31. The
+# plan costs $14,880 and fits the $20,000 of a game without Double Cash (the
+# offline test plays it that way).
+# Model check, Easy Deflation (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 1.20 (round 58); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 4.41 (round 55); every
+# round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: Carrier Flagship in the pond
+#     (https://www.bloonswiki.com/High_Finance)
+#   * fandom: buccaneer in the pond, Bloon Solver on the $750 building
+#     (https://bloons.fandom.com/wiki/High_Finance)
+#   * BlueCliff, High Finance Hard (ninja on the park corners, buccaneer)
+#     (https://www.youtube.com/watch?v=C5QklAgqeGQ)
+#   * fandom Deflation: buy the whole defence before round 31; camo purples
+#     R45/R48, camo leads R59 (https://bloons.fandom.com/wiki/Deflation)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: highfinance_deflation
+map: High Finance
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {skywarden: [1, 0, 1], buccaneer: [0, 5, 2], mermonkey: [3, 0, 1], ice: [0, 1, 4]}
+  base_success: {deflation: 0.85}
+  maps: [High Finance]
+plan:
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.484, 0.675]}      # R31: central park, bottom; sees 9% of the S lane (odd rounds), 25% of the U lane (even rounds)
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.377, 0.675]}      # R31: central park, bottom; sees 8% of the S lane (odd rounds), 24% of the U lane (even rounds)
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.377, 0.385]}      # R31: central park, top corners; sees 10% of the S lane (odd rounds), 17% of the U lane (even rounds)
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.484, 0.385]}      # R31: top pond in the central park; sees 9% of the S lane (odd rounds), 19% of the U lane (even rounds)
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.452, 0.624]}      # R31: bottom pond in the central park; sees 16% of the S lane (odd rounds), 44% of the U lane (even rounds)
+  - {do: upgrade, id: bc1, to: 0-0-1}                                         # R31: Long Range
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.377, 0.606]}       # R31: central park, bottom; sees 10% of the U lane (even rounds)
+  - {do: upgrade, id: m1, to: 3-0-0}                                          # R31: Abyss Dweller
+  - {do: upgrade, id: m1, to: 3-0-1}                                          # R31: Abyss Dweller
+  - {do: upgrade, id: bc1, to: 0-3-1}                                         # R31: Cannon Ship
+  - {do: upgrade, id: bc1, to: 0-3-2}                                         # R31: Cannon Ship
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: bc1, to: 0-4-2}                                         # R31: Monkey Pirates
+  - {do: upgrade, id: sk3, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: place, id: i1, kind: ice, role: dps, at: [0.419, 0.419]}             # R31: top pond in the central park; sees 3% of the S lane (odd rounds)
+  - {do: upgrade, id: i1, to: 0-1-4}                                          # R31: Icicles
+  - {do: upgrade, id: sk1, to: 1-0-1}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk2, to: 1-0-1}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk4, to: 1-0-1}                                         # R31: Aerial Attunement
+  - {do: place, id: hero, kind: hero, role: dps}                              # R31: Quincy, wherever it fits (no room left; not counted by the model)
+fill:
+  - {do: upgrade, id: bc1, to: 0-5-2}                                         # R31: Pirate Lord
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  ceramic: [{do: place, id: ans_ceramic, kind: sniper, role: dps, target: strong}, {do: upgrade, id: ans_ceramic, to: 2-0-0}]
+  bfb: [{do: place, id: ans_bfb, kind: sniper, role: dps, target: strong}, {do: upgrade, id: ans_bfb, to: 4-0-0}]

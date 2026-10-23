@@ -1,0 +1,166 @@
+# Another Brick, Medium (Standard) / Medium Reverse: Subs, Desperados and Snipers.
+#
+# Map: One lane: down from the top, right along the top half, a U-turn at the
+# far right, back left along the bottom half and down to the exit. A
+# sight-blocking brick wall runs between the two halves (map geometry:
+# blocking areas), so ground towers see one half only; two $1,000 brick
+# piles on the left are removable (the bot leaves them). Water: a pond
+# top-right and a pond bottom-left beside the exit bend, which sees the
+# last stretch best.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sub, desperado,
+# sniper, buccaneer, bomb, skywarden, boomerang, mermonkey. Each purchase is
+# the cheapest that keeps the coming rounds popping at 3x the strength they
+# need. Spare cash goes into the Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Medium (Standard) at round 15 with about $6,057,
+# with Double Cash income.
+# Model check, Medium (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.99 (round 34); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+# Model check, Medium Reverse (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.43 (round 37); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: towers that ignore the wall (Flagship, sniper, guided magic)
+#     and the exit stretch (https://www.bloonswiki.com/Another_Brick)
+#   * fandom strategies: water towers in the ponds, Perma-Spike by the exit
+#     (https://bloons.fandom.com/wiki/Another_Brick/Strategies)
+#   * BlueCliff, Another Brick Hard (Quincy, ninja, alchemist)
+#     (https://www.youtube.com/watch?v=igJ6Bsvrnwc)
+#   * bloonswiki Reverse: Medium strategies carry over; exit protection moves
+#     to the far end (https://www.bloonswiki.com/Strategy:Reverse_(BTD6))
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: anotherbrick_medium
+map: Another Brick
+hero: quincy
+modes: [medium, reverse]
+planner:
+  towers: {skywarden: [1, 0, 1], desperado: [4, 2, 0], sub: [2, 3, 4], buccaneer: [3, 0, 2], bomb: [0, 2, 3], mermonkey: [0, 1, 1], sniper: [1, 2, 2], boomerang: [0, 2, 3]}
+  base_success: {medium: 0.8, reverse: 0.8}
+  maps: [Another Brick]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.574, 0.641]}          # R15: Quincy, bottom land below the bottom half of the lane (not counted by the model)
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.323, 0.232]}      # R15: top-left land inside the first bend; sees 24% of the lane
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.334, 0.283]}      # R15: top-left land inside the first bend; sees 23% of the lane
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.302, 0.3]}        # R15: top-left land inside the first bend; sees 22% of the lane
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.366, 0.3]}        # R15: top-left land inside the first bend; sees 22% of the lane
+  - {do: place, id: sk5, kind: skywarden, role: dps, at: [0.302, 0.641]}      # R15: bottom-left land beside the exit lane; sees 21% of the lane
+  - {do: place, id: sk6, kind: skywarden, role: dps, at: [0.355, 0.215]}      # R15: top-left land inside the first bend; sees 20% of the lane
+  - {do: place, id: sk7, kind: skywarden, role: dps, at: [0.302, 0.181]}      # R15: top-left land inside the first bend; sees 18% of the lane
+  - {do: place, id: sk8, kind: skywarden, role: dps, at: [0.505, 0.3]}        # R15: top land above the top half of the lane; sees 16% of the lane
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.409, 0.641]} # R15: bottom-left pond; sees 26% of the lane
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.409, 0.249]} # R15: top land above the top half of the lane; sees 22% of the lane
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.345, 0.675]}            # R15: bottom-left pond; sees 20% of the lane
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.601, 0.283]}            # R15: top-right pond; sees 13% of the lane
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.676, 0.283]}            # R15: top-right pond; sees 12% of the lane
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.377, 0.726]}      # R15: bottom-left pond; sees 29% of the lane
+  - {do: place, id: bc2, kind: buccaneer, role: dps, at: [0.345, 0.777]}      # R15: bottom-left pond; sees 27% of the lane
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: sb1, to: 0-0-1}                                         # R15: Twin Guns
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: bc2, to: 1-0-0}                                         # R15: Faster Shooting
+  - {do: place, id: bc3, kind: buccaneer, role: dps, at: [0.612, 0.215]}      # R15: top-right pond; sees 16% of the lane
+  - {do: upgrade, id: sb1, to: 1-0-1}                                         # R15: Longer Range
+  - {do: upgrade, id: de1, to: 2-0-0}                                         # R15: Standoff (surplus: XP)
+  - {do: upgrade, id: de1, to: 2-1-0}                                         # R17: Standoff
+  - {do: upgrade, id: de2, to: 0-1-0}                                         # R17: Eagle Eye
+  - {do: upgrade, id: de2, to: 1-1-0}                                         # R17: Quickdraw (surplus: XP)
+  - {do: upgrade, id: de1, to: 2-2-0}                                         # R18: Standoff (surplus: XP)
+  - {do: upgrade, id: bc2, to: 1-0-1}                                         # R19: Faster Shooting
+  - {do: upgrade, id: sk4, to: 1-0-1}                                         # R19: Aerial Attunement
+  - {do: upgrade, id: bc3, to: 0-0-1}                                         # R19: Long Range
+  - {do: upgrade, id: sb3, to: 1-0-0}                                         # R19: Longer Range
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.484, 0.641]}           # R20: bottom land below the bottom half of the lane; sees 12% of the lane
+  - {do: upgrade, id: bo1, to: 0-0-1}                                         # R20: Extra Range
+  - {do: upgrade, id: sk5, to: 0-0-1}                                         # R21: Shatterpoint
+  - {do: place, id: bo2, kind: bomb, role: dps, at: [0.644, 0.641]}           # R22: bottom land below the bottom half of the lane; sees 12% of the lane
+  - {do: upgrade, id: bo2, to: 0-2-2}                                         # R23: Missile Launcher
+  - {do: upgrade, id: sk5, to: 1-0-1}                                         # R24: Aerial Attunement
+  - {do: upgrade, id: de2, to: 2-1-0}                                         # R24: Standoff (surplus: XP)
+  - {do: upgrade, id: bc2, to: 1-0-2}                                         # R25: Crow's Nest
+  - {do: upgrade, id: sk6, to: 1-0-0}                                         # R26: Aerial Attunement
+  - {do: upgrade, id: bc2, to: 2-0-2}                                         # R26: Double Shot
+  - {do: upgrade, id: bo1, to: 0-0-2}                                         # R26: Frag Bombs
+  - {do: place, id: bo3, kind: bomb, role: dps, at: [0.462, 0.3]}             # R27: top land above the top half of the lane; sees 12% of the lane
+  - {do: upgrade, id: bc1, to: 0-0-1}                                         # R27: Long Range
+  - {do: upgrade, id: bo1, to: 0-2-2}                                         # R28: Missile Launcher
+  - {do: upgrade, id: bo3, to: 0-0-2}                                         # R28: Frag Bombs
+  - {do: upgrade, id: bo3, to: 0-1-2}                                         # R28: Frag Bombs
+  - {do: upgrade, id: bc1, to: 0-0-2}                                         # R30: Crow's Nest
+  - {do: upgrade, id: bo3, to: 0-1-3}                                         # R30: Cluster Bombs
+  - {do: upgrade, id: bo3, to: 0-2-3}                                         # R31: Cluster Bombs
+  - {do: upgrade, id: sb1, to: 2-0-1}                                         # R31: Advanced Intel
+  - {do: upgrade, id: bc1, to: 2-0-2}                                         # R32: Double Shot
+  - {do: upgrade, id: bo2, to: 0-2-3}                                         # R33: Cluster Bombs
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.558, 0.3]}         # R33: top-right pond; sees 7% of the lane
+  - {do: upgrade, id: bo1, to: 0-2-3}                                         # R33: Cluster Bombs
+  - {do: upgrade, id: sk8, to: 0-0-1}                                         # R34: Shatterpoint
+  - {do: upgrade, id: sk6, to: 1-0-1}                                         # R34: Aerial Attunement
+  - {do: upgrade, id: sk2, to: 1-0-1}                                         # R34: Aerial Attunement
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R35: Advanced Intel
+  - {do: upgrade, id: bc3, to: 1-0-1}                                         # R35: Faster Shooting
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R35: Aerial Attunement
+  - {do: upgrade, id: bc3, to: 2-0-1}                                         # R35: Double Shot
+  - {do: upgrade, id: m1, to: 0-1-0}                                          # R36: Sharper Prongs
+  - {do: upgrade, id: sb1, to: 2-0-3}                                         # R36: Triple Guns
+  - {do: upgrade, id: sb3, to: 2-0-2}                                         # R37: Advanced Intel
+  - {do: upgrade, id: sb3, to: 2-0-3}                                         # R38: Triple Guns
+  - {do: upgrade, id: bc3, to: 2-0-2}                                         # R38: Double Shot
+  - {do: upgrade, id: m1, to: 0-1-1}                                          # R39: Sharper Prongs
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.377, 0.138]} # R39: top-left land inside the first bend; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R39: Shrapnel Shot
+  - {do: upgrade, id: sb2, to: 0-1-3}                                         # R39: Triple Guns
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R40: Big Iron
+  - {do: upgrade, id: de1, to: 4-2-0}                                         # R42: Twin Sixes
+  - {do: upgrade, id: sk3, to: 0-0-1}                                         # R42: Shatterpoint
+  - {do: place, id: bc4, kind: buccaneer, role: dps, at: [0.377, 0.828]}      # R42: bottom-left pond; sees 12% of the lane
+  - {do: upgrade, id: bc4, to: 2-0-1}                                         # R42: Double Shot
+  - {do: upgrade, id: bc4, to: 2-0-2}                                         # R43: Double Shot
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.478, 0.138]} # R43: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R43: Shrapnel Shot
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.639, 0.266]}            # R44: top-right pond; sees 11% of the lane
+  - {do: upgrade, id: sb4, to: 0-1-2}                                         # R44: Airburst Darts
+  - {do: upgrade, id: sb4, to: 0-3-2}                                         # R45: Ballistic Missile
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.51, 0.164]} # R45: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 0-2-0}                                          # R45: Shrapnel Shot
+  - {do: upgrade, id: de2, to: 3-1-0}                                         # R46: Big Iron
+  - {do: upgrade, id: sk7, to: 1-0-0}                                         # R46: Aerial Attunement
+  - {do: upgrade, id: sb1, to: 2-0-4}                                         # R46: Armor Piercing Darts
+  - {do: upgrade, id: sk7, to: 1-0-1}                                         # R46: Aerial Attunement
+  - {do: upgrade, id: sb3, to: 2-0-4}                                         # R47: Armor Piercing Darts
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R48: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.43, 0.138]} # R49: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R49: Shrapnel Shot
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.574, 0.138]} # R49: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R49: Shrapnel Shot
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.548, 0.172]} # R49: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s6, to: 0-2-0}                                          # R49: Shrapnel Shot
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.735, 0.181]} # R49: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s7, to: 1-2-0}                                          # R49: Shrapnel Shot
+  - {do: upgrade, id: de2, to: 4-1-0}                                         # R50: Twin Sixes
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.772, 0.172]} # R50: top-right corner land; map-wide (line of sight)
+  - {do: upgrade, id: s8, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: upgrade, id: s6, to: 0-2-2}                                          # R50: Shrapnel Shot
+  - {do: upgrade, id: sk8, to: 1-0-1}                                         # R50: Aerial Attunement
+  - {do: place, id: b1, kind: boomerang, role: dps, at: [0.526, 0.641]}       # R50: bottom land below the bottom half of the lane; sees 13% of the lane
+  - {do: upgrade, id: b1, to: 0-2-3}                                          # R50: Kylie Boomerang
+  - {do: upgrade, id: bc1, to: 3-0-2}                                         # R51: Destroyer
+  - {do: upgrade, id: de2, to: 4-2-0}                                         # R51: Twin Sixes (surplus: XP)
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

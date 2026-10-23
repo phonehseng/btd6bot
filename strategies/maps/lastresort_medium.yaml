@@ -1,0 +1,118 @@
+# Last Resort, Medium (Standard): Snipers, Druids and Desperados.
+#
+# Map: Bloons always enter along the top edge, then take one of four loops
+# in a 4-round cycle (big, medium, small, straight: map file
+# AlternateRoundSplitter), each faster than the last, and leave at the
+# top right. Only the top stretch is used every round; the damage model
+# plays every round on all four routes. The bot lost Hard at round 24
+# with towers that missed the small-loop rounds. The $1,000 frozen pool
+# is removable (the bot leaves it).
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sniper, druid,
+# desperado, skywarden. Each purchase is the cheapest that keeps the coming
+# rounds popping at 3x the strength they need. Spare cash goes into the
+# Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Medium (Standard) at round 15 with about $6,057,
+# with Double Cash income.
+# Model check, Medium (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.20 (round 60); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: loop cycle; Perma-Spike as far right as possible
+#     (https://www.bloonswiki.com/Last_Resort)
+#   * BlueCliff, Last Resort Hard (Quincy, ninja, alchemist, heli, sniper)
+#     (https://www.youtube.com/watch?v=z_4kPTV47MI)
+#   * OneEyedDeacon, Last Resort CHIMPS no abilities: snipers from the inner
+#     strip, Perma-Spike (https://www.youtube.com/watch?v=7fpYt6w9ziE)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: lastresort_medium
+map: Last Resort
+hero: quincy
+modes: [medium]
+planner:
+  towers: {skywarden: [1, 0, 0], sniper: [4, 5, 0], desperado: [3, 2, 0], druid: [0, 3, 1]}
+  base_success: {medium: 0.8}
+  maps: [Last Resort]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.783, 0.47]}           # R15: Quincy, right land outside the big loop (not counted by the model)
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.035, 0.249]}      # R15: left land outside the big loop; sees 11% of the big loop, 11% of the small loop, 8% of the medium loop, 16% of the straight
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.045, 0.3]}        # R15: left land outside the big loop; sees 11% of the big loop, 9% of the small loop, 6% of the medium loop, 13% of the straight
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.024, 0.351]} # R15: left land outside the big loop; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R15: Shrapnel Shot
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.067, 0.351]} # R15: left land outside the big loop; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R15: Shrapnel Shot
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.035, 0.402]} # R15: left land outside the big loop; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R15: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.804, 0.419]} # R15: right land outside the big loop; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 0-2-0}                                          # R15: Shrapnel Shot
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R17: Shrapnel Shot
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.836, 0.436]} # R19: right land outside the big loop; map-wide (line of sight)
+  - {do: upgrade, id: s5, to: 0-2-0}                                          # R19: Shrapnel Shot
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R20: Shrapnel Shot
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.024, 0.453]} # R22: left land outside the big loop; map-wide (line of sight)
+  - {do: upgrade, id: s6, to: 1-2-0}                                          # R22: Shrapnel Shot
+  - {do: upgrade, id: s1, to: 2-2-0}                                          # R25: Large Caliber
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.601, 0.606]} # R25: inner strip of the big loop; sees 16% of the big loop, 16% of the medium loop
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.227, 0.675]}          # R28: inner strip of the big loop; sees 7% of the big loop
+  - {do: upgrade, id: dr1, to: 0-3-1}                                         # R28: Druid of the Jungle
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.601, 0.675]} # R28: inner strip of the big loop; sees 16% of the big loop, 12% of the medium loop
+  - {do: upgrade, id: de1, to: 1-0-0}                                         # R28: Quickdraw (surplus: XP)
+  - {do: upgrade, id: s1, to: 3-2-0}                                          # R32: Deadly Precision
+  - {do: upgrade, id: s2, to: 2-2-0}                                          # R33: Large Caliber
+  - {do: upgrade, id: s3, to: 2-2-0}                                          # R35: Large Caliber
+  - {do: upgrade, id: s6, to: 2-2-0}                                          # R35: Large Caliber
+  - {do: upgrade, id: s4, to: 2-2-0}                                          # R36: Large Caliber
+  - {do: place, id: de3, kind: desperado, role: dps, target: strong, at: [0.558, 0.624]} # R36: inner strip of the big loop; sees 13% of the big loop, 15% of the medium loop
+  - {do: place, id: de4, kind: desperado, role: dps, target: strong, at: [0.505, 0.641]} # R36: inner strip of the big loop; sees 10% of the big loop, 11% of the medium loop
+  - {do: place, id: de5, kind: desperado, role: dps, target: strong, at: [0.462, 0.641]} # R36: inner strip of the big loop; sees 10% of the big loop, 9% of the medium loop
+  - {do: upgrade, id: de1, to: 2-1-0}                                         # R36: Standoff (surplus: XP)
+  - {do: upgrade, id: de2, to: 1-0-0}                                         # R36: Quickdraw (surplus: XP)
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R37: Big Iron (surplus: XP)
+  - {do: upgrade, id: de2, to: 2-0-0}                                         # R37: Standoff (surplus: XP)
+  - {do: upgrade, id: de2, to: 3-2-0}                                         # R38: Big Iron (surplus: XP)
+  - {do: upgrade, id: de3, to: 2-2-0}                                         # R38: Standoff (surplus: XP)
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.077, 0.555]}          # R39: left land outside the big loop; sees 6% of the big loop
+  - {do: upgrade, id: dr2, to: 0-3-0}                                         # R39: Druid of the Jungle
+  - {do: upgrade, id: de4, to: 2-1-0}                                         # R39: Standoff (surplus: XP)
+  - {do: upgrade, id: de3, to: 3-2-0}                                         # R40: Big Iron (surplus: XP)
+  - {do: upgrade, id: de4, to: 3-2-0}                                         # R40: Big Iron (surplus: XP)
+  - {do: upgrade, id: de5, to: 2-1-0}                                         # R40: Standoff (surplus: XP)
+  - {do: upgrade, id: dr2, to: 0-3-1}                                         # R41: Druid of the Jungle
+  - {do: place, id: dr3, kind: druid, role: dps, at: [0.077, 0.624]}          # R42: left land outside the big loop; sees 6% of the big loop
+  - {do: upgrade, id: dr3, to: 0-3-1}                                         # R42: Druid of the Jungle
+  - {do: upgrade, id: s5, to: 2-2-0}                                          # R42: Large Caliber
+  - {do: place, id: dr4, kind: druid, role: dps, at: [0.345, 0.675]}          # R42: inner strip of the big loop; sees 5% of the big loop
+  - {do: upgrade, id: dr4, to: 0-3-0}                                         # R42: Druid of the Jungle
+  - {do: upgrade, id: s4, to: 2-3-0}                                          # R44: Bouncing Bullet
+  - {do: upgrade, id: s2, to: 3-2-0}                                          # R45: Deadly Precision
+  - {do: upgrade, id: s5, to: 2-3-0}                                          # R45: Bouncing Bullet
+  - {do: upgrade, id: dr4, to: 0-3-1}                                         # R46: Druid of the Jungle
+  - {do: upgrade, id: s6, to: 3-2-0}                                          # R46: Deadly Precision
+  - {do: upgrade, id: s3, to: 2-3-0}                                          # R46: Bouncing Bullet
+  - {do: upgrade, id: s4, to: 2-4-0}                                          # R49: Supply Drop
+  - {do: upgrade, id: s6, to: 4-2-0}                                          # R50: Maim MOAB
+  - {do: place, id: dr5, kind: druid, role: dps, at: [0.387, 0.675]}          # R50: inner strip of the big loop; sees 5% of the big loop
+  - {do: upgrade, id: dr5, to: 0-3-0}                                         # R50: Druid of the Jungle
+  - {do: upgrade, id: s1, to: 4-2-0}                                          # R51: Maim MOAB
+  - {do: upgrade, id: dr5, to: 0-3-1}                                         # R51: Druid of the Jungle
+  - {do: upgrade, id: s2, to: 4-2-0}                                          # R52: Maim MOAB
+  - {do: upgrade, id: s5, to: 2-4-0}                                          # R55: Supply Drop
+  - {do: upgrade, id: s3, to: 2-4-0}                                          # R57: Supply Drop
+  - {do: upgrade, id: s3, to: 2-5-0}                                          # R60: Elite Sniper
+panic:
+  - {do: place, kind: sniper, role: dps}

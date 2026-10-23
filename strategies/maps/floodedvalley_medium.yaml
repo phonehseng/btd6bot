@@ -1,0 +1,91 @@
+# Flooded Valley, Medium/Military Only/Reverse: buccaneer, sub from the guides; spots
+# and order from the game's numbers.
+#
+# Why (map data):
+#   Two lanes run on top of the dam in opposite directions at the same time.
+#   The dam blocks sight from the big left land, so land towers there see
+#   nothing; the water on the right side touches the track at the dam's bends.
+#   Water towers (subs, buccaneers, mermonkeys) carry every guide.
+#
+# Sources:
+#   * G-Horizon, Flooded Valley CHIMPS Easy Guide: two mermonkeys, buccaneer
+#     (https://www.youtube.com/watch?v=68Jbc9m1zts)
+#   * Tiggy Gaming, Flooded Valley: buccaneer start, sub, Brickell, Carrier Flagship
+#     (https://www.youtube.com/watch?v=5x1IfnoZy2c)
+#   * bloonswiki Flooded_Valley (https://www.bloonswiki.com/Flooded_Valley)
+#   * bloonswiki Military_Only: 60 rounds on Medium; leads with Full Metal Jacket
+#     (sniper 1-x-x), camo with Night Vision or Submerge and Support
+#     (https://www.bloonswiki.com/Military_Only)
+#
+# The build: 13 buccaneers (0-4-2, 0-3-2, 3-0-2, 3-0-1); 1 sub (0-1-3); hero
+# admiral_brickell.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Medium (from round 15, $6,057): worst margin 2.33 at round 15;
+#     next lowest R60 2.38, R54 2.43
+#   Military Only (from round 15, $6,057): worst margin 2.33 at round 15;
+#     next lowest R60 2.38, R54 2.43
+#   Reverse (from round 15, $6,057): worst margin 2.25 at round 55;
+#     next lowest R54 2.30, R60 2.38
+# Routes in the comments (map data): 1 = Path, 2 = Path (1).
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: floodedvalley_medium
+map: Flooded Valley
+hero: admiral_brickell
+modes: [medium, military_only, reverse]
+planner:
+  towers: {buccaneer: [3, 4, 2], sub: [0, 1, 3]}
+  base_success: {medium: 0.75, military_only: 0.72, reverse: 0.72}
+  maps: [Flooded Valley]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.526, 0.709]}    # reaches all 2 routes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.569, 0.743]}    # reaches all 2 routes
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.548, 0.641]}    # reaches all 2 routes
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.537, 0.794]}    # reaches all 2 routes
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.569, 0.572]}    # reaches all 2 routes
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.537, 0.215]}    # reaches all 2 routes
+  - {do: upgrade, id: b6, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 0-1-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.537, 0.146]}       # admiral_brickell
+  - {do: upgrade, id: b3, to: 0-1-0}
+  - {do: upgrade, id: b1, to: 0-3-2}
+  - {do: upgrade, id: b3, to: 0-2-1}
+  - {do: upgrade, id: b6, to: 2-0-1}
+  - {do: upgrade, id: b3, to: 0-3-2}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.494, 0.164]}         # reaches all 2 routes
+  - {do: upgrade, id: sb1, to: 0-1-2}
+  - {do: upgrade, id: b5, to: 0-0-1}
+  - {do: place, id: b7, kind: buccaneer, role: dps, at: [0.58, 0.453]}     # reaches all 2 routes
+  - {do: upgrade, id: b7, to: 0-0-1}
+  - {do: upgrade, id: b5, to: 1-0-2}
+  - {do: upgrade, id: sb1, to: 0-1-3}
+  - {do: upgrade, id: b5, to: 2-0-2}
+  - {do: upgrade, id: b7, to: 2-0-1}
+  - {do: place, id: b8, kind: buccaneer, role: dps, at: [0.59, 0.675]}     # reaches all 2 routes
+  - {do: upgrade, id: b8, to: 2-0-1}
+  - {do: place, id: b9, kind: buccaneer, role: dps, at: [0.612, 0.777]}    # reaches all 2 routes
+  - {do: upgrade, id: b7, to: 2-0-2}
+  - {do: place, id: b10, kind: buccaneer, role: dps, at: [0.58, 0.368]}    # reaches all 2 routes
+  - {do: upgrade, id: b10, to: 2-0-1}
+  - {do: place, id: b11, kind: buccaneer, role: dps, at: [0.569, 0.266]}   # reaches all 2 routes
+  - {do: upgrade, id: b11, to: 2-0-0}
+  - {do: upgrade, id: b9, to: 1-0-1}
+  - {do: upgrade, id: b11, to: 2-0-1}
+  - {do: upgrade, id: b9, to: 2-0-1}
+  - {do: upgrade, id: b7, to: 3-0-2}
+  - {do: place, id: b12, kind: buccaneer, role: dps, at: [0.58, 0.828]}    # reaches all 2 routes
+  - {do: place, id: b13, kind: buccaneer, role: dps, at: [0.601, 0.521]}   # reaches all 2 routes
+  - {do: upgrade, id: b13, to: 2-0-1}
+  - {do: upgrade, id: b12, to: 2-0-1}
+  - {do: upgrade, id: b1, to: 0-4-2}
+  - {do: upgrade, id: b8, to: 3-0-1}
+answers:
+  ceramic: [{do: place, kind: heli, id: ans_ceramic_heli, role: dps}, {do: upgrade, id: ans_ceramic_heli, to: 2-0-0}]
+  bfb: [{do: place, kind: heli, id: ans_bfb_heli, role: dps}, {do: upgrade, id: ans_bfb_heli, to: 4-0-0}]

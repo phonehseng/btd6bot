@@ -1,0 +1,85 @@
+# Infernal, Easy: sniper, dart, sub from the guides; spots and order from the game's
+# numbers.
+#
+# Why (map data):
+#   Two long lanes alternate by round (odd rounds top, even rounds bottom:
+#   AlternateRoundSplitter). Very little ground: islands and two middle
+#   pillars inside the waves reach both lanes; two small ponds.
+#
+# Sources:
+#   * TNR Omega, How to Beat Infernal on Hard with No MK: Quincy, ninja on the
+#     middle pillars, Advanced-Intel subs, ace (https://www.youtube.com/watch?v=MrI-1g5eITI)
+#   * BlueCliff, Infernal Hard No MK (ft. Quincy) (https://www.youtube.com/watch?v=5vrEQFKBWmI)
+#   * fandom Infernal: the lane rule and the islands (https://bloons.fandom.com/wiki/Infernal)
+#
+# The build: 8 snipers (3-2-0, 0-2-2, 1-2-0); 5 darts (0-2-1, 1-0-1, 0-0-1); 2 subs
+# (2-0-2, 1-0-1); hero quincy.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Easy (from round 10, $3,832): worst margin 2.23 at round 10;
+#     next lowest R12 2.35, R39 2.38
+# Routes in the comments (map data): 1 = PathTop, 2 = PathBottom.
+# The plan is paid for by round 40 even without Double Cash; `fill` holds what
+# Double Cash buys after it.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: infernal_easy
+map: Infernal
+hero: quincy
+modes: [easy]
+planner:
+  towers: {sniper: [3, 2, 2], dart: [1, 2, 1], sub: [2, 0, 2]}
+  base_success: {easy: 0.8}
+  maps: [Infernal]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.248, 0.164]}   # map-wide
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.216, 0.198]}   # map-wide
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.259, 0.215]}   # map-wide
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.227, 0.249]}   # map-wide
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.43, 0.283]}   # map-wide
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.409, 0.334]}   # map-wide
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.441, 0.351]}   # map-wide
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.024, 0.419]}   # map-wide
+  - {do: upgrade, id: s5, to: 0-0-2}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.43, 0.658]}                # reaches route 2
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.601, 0.232]}               # reaches route 1
+  - {do: upgrade, id: d1, to: 0-1-1}
+  - {do: upgrade, id: sb1, to: 1-0-0}
+  - {do: upgrade, id: d1, to: 0-2-1}
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.633, 0.181]}               # reaches route 1
+  - {do: upgrade, id: s5, to: 0-2-2}
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.419, 0.709]}               # reaches route 2
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.644, 0.777]}               # reaches route 2
+  - {do: upgrade, id: sb1, to: 1-0-1}
+  - {do: place, id: d4, kind: dart, role: dps, at: [0.612, 0.76]}                # reaches route 2
+  - {do: upgrade, id: d4, to: 0-0-1}
+  - {do: upgrade, id: d3, to: 0-0-1}
+  - {do: upgrade, id: sb2, to: 1-0-0}
+  - {do: place, id: d5, kind: dart, role: dps, at: [0.623, 0.828]}               # reaches route 2
+  - {do: upgrade, id: sb2, to: 1-0-1}
+  - {do: upgrade, id: d5, to: 0-0-1}
+  - {do: upgrade, id: d2, to: 1-0-1}
+  - {do: upgrade, id: sb2, to: 2-0-1}
+  - {do: upgrade, id: s5, to: 0-2-2}
+  - {do: upgrade, id: s1, to: 0-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.056, 0.624]}             # quincy
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: upgrade, id: s6, to: 0-2-0}
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: s6, to: 0-2-2}
+  - {do: upgrade, id: s3, to: 0-2-0}
+fill:
+  - {do: upgrade, id: s2, to: 3-2-0}
+  - {do: upgrade, id: s8, to: 0-2-0}
+  - {do: upgrade, id: s3, to: 0-2-1}
+  - {do: upgrade, id: s8, to: 0-2-2}
+  - {do: upgrade, id: s3, to: 0-2-2}
+  - {do: upgrade, id: s7, to: 1-2-0}
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: upgrade, id: sb2, to: 2-0-2}

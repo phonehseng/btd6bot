@@ -1,0 +1,143 @@
+# Erosion, Medium Military Monkeys Only: Snipers, Subs and Aces.
+#
+# Map: Six lanes, one active at a time; the active lane moves across the
+# map, and after rounds 17, 35, 53, 71 and 89 the ice melts and towers
+# on it are sold (map file: areas that vanish). Only the top-right
+# glacier and the bottom-left water last the whole game. The damage
+# model plays every round on all six lanes (the worst counts), so a
+# build that passes it holds whichever lane is active.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sniper, sub, ace,
+# buccaneer. Each purchase is the cheapest that keeps the coming rounds
+# popping at 3x the strength they need. Spare cash goes into the Sub, whose XP
+# the account needs most.
+#
+# Economy: Fast Track starts Medium Military Monkeys Only at round 15 with
+# about $6,057, with Double Cash income.
+# Model check, Medium Military Monkeys Only (btd6bot/dps_model.py
+# round_margin; purchases replayed in order as cash allows, account boosts):
+# the plan alone has a worst round margin of 2.86 (round 55); every round at
+# 2.0 or more. Threat simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: lane changes and melting ice; Ice Monkeys turn into water
+#     towers (https://www.bloonswiki.com/Erosion)
+#   * fandom: Neva-Miss aces in Deflation; sub start into snipers
+#     (https://bloons.fandom.com/wiki/Erosion)
+#   * G-Horizon, Erosion CHIMPS: sub, snipers, village and alchemist on the
+#     glacier (https://www.youtube.com/watch?v=No3NYnNZV1c)
+#   * BlueCliff, Erosion Hard (sub, snipers, glacier)
+#     (https://www.youtube.com/watch?v=jlkIyVLVjmI)
+#   * bloonswiki Military Only: subs/buccaneers on water maps, snipers and
+#     aces on dry ones; camo by R24, lead by R28
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: erosion_military_only
+map: Erosion
+hero: psi
+modes: [military_only]
+planner:
+  towers: {sub: [4, 3, 4], sniper: [3, 3, 0], ace: [2, 3, 1], buccaneer: [4, 0, 2]}
+  base_success: {military_only: 0.8}
+  maps: [Erosion]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.142, 0.93]}             # R15: bottom-left water; sees 65% of lane 1
+  - {do: upgrade, id: sb1, to: 2-0-3}                                         # R15: Triple Guns
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.676, 0.462]}          # R15: Psi, ice between the lanes (not counted by the model)
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.195, 0.896]}            # R15: bottom-left water; sees 63% of lane 1
+  - {do: upgrade, id: sb2, to: 2-1-0}                                         # R15: Advanced Intel
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.43, 0.223]} # R16: ice between the lanes; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 0-1-0}                                          # R16: Night Vision Goggles
+  - {do: upgrade, id: s1, to: 0-2-0}                                          # R17: Shrapnel Shot
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R18: Shrapnel Shot
+  - {do: upgrade, id: sb2, to: 2-2-0}                                         # R20: Advanced Intel
+  - {do: upgrade, id: sb2, to: 2-3-0}                                         # R21: Ballistic Missile
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.462, 0.249]} # R23: ice between the lanes; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R23: Shrapnel Shot
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.056, 0.794]}            # R24: bottom-left water; sees 60% of lane 1
+  - {do: upgrade, id: sb3, to: 1-0-0}                                         # R24: Longer Range (surplus: XP)
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.067, 0.726]}            # R25: bottom-left water; sees 53% of lane 1
+  - {do: upgrade, id: sb3, to: 2-0-0}                                         # R26: Advanced Intel
+  - {do: upgrade, id: sb3, to: 2-0-2}                                         # R28: Advanced Intel
+  - {do: upgrade, id: sb3, to: 2-0-3}                                         # R29: Triple Guns
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.644, 0.232]}            # R30: permanent glacier (top-right); sees 3% of lane 6, 14% of lane 5
+  - {do: upgrade, id: ac1, to: 0-1-0}                                         # R30: Exploding Pineapple
+  - {do: upgrade, id: sb4, to: 2-0-0}                                         # R31: Advanced Intel
+  - {do: upgrade, id: sb4, to: 2-0-2}                                         # R33: Advanced Intel
+  - {do: upgrade, id: sb4, to: 2-0-3}                                         # R34: Triple Guns
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.5, 0.232]} # R35: ice between the lanes; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R35: Shrapnel Shot
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.067, 0.913]}      # R35: bottom-left water; sees 69% of lane 1
+  - {do: upgrade, id: bc1, to: 0-0-1}                                         # R35: Long Range
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.596, 0.138]} # R36: ice between the lanes; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R36: Shrapnel Shot
+  - {do: upgrade, id: sb1, to: 2-0-4}                                         # R37: Armor Piercing Darts
+  - {do: upgrade, id: ac1, to: 1-1-0}                                         # R38: Rapid Fire
+  - {do: upgrade, id: sb3, to: 2-0-4}                                         # R38: Armor Piercing Darts
+  - {do: upgrade, id: sb4, to: 2-0-4}                                         # R39: Armor Piercing Darts
+  - {do: upgrade, id: ac1, to: 1-3-0}                                         # R40: Bomber Ace
+  - {do: place, id: bc2, kind: buccaneer, role: dps, at: [0.024, 0.879]}      # R40: bottom-left water; sees 69% of lane 1
+  - {do: place, id: sb5, kind: sub, role: dps, at: [0.024, 0.743]}            # R40: bottom-left water; sees 50% of lane 1
+  - {do: upgrade, id: sb5, to: 2-1-0}                                         # R40: Advanced Intel
+  - {do: upgrade, id: sb5, to: 4-1-0}                                         # R42: Bloontonium Reactor
+  - {do: upgrade, id: ac1, to: 2-3-0}                                         # R42: Bomber Ace
+  - {do: upgrade, id: bc2, to: 0-0-1}                                         # R42: Long Range
+  - {do: upgrade, id: bc1, to: 1-0-1}                                         # R42: Faster Shooting
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.628, 0.155]} # R42: permanent glacier (top-right); map-wide (line of sight)
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R42: Shrapnel Shot
+  - {do: upgrade, id: bc1, to: 2-0-2}                                         # R43: Double Shot
+  - {do: upgrade, id: bc2, to: 0-0-2}                                         # R43: Crow's Nest
+  - {do: upgrade, id: bc2, to: 2-0-2}                                         # R44: Double Shot
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.82, 0.172]} # R44: permanent glacier (top-right); map-wide (line of sight)
+  - {do: upgrade, id: s6, to: 1-2-0}                                          # R44: Shrapnel Shot
+  - {do: upgrade, id: s4, to: 2-2-0}                                          # R45: Large Caliber
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.473, 0.164]}            # R45: ice between the lanes; sees 16% of lane 5
+  - {do: upgrade, id: ac2, to: 0-3-0}                                         # R45: Bomber Ace
+  - {do: upgrade, id: ac2, to: 1-3-0}                                         # R46: Bomber Ace
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.831, 0.223]} # R46: permanent glacier (top-right); map-wide (line of sight)
+  - {do: upgrade, id: s7, to: 1-2-0}                                          # R46: Shrapnel Shot
+  - {do: upgrade, id: ac2, to: 2-3-0}                                         # R46: Bomber Ace
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.82, 0.274]} # R46: permanent glacier (top-right); map-wide (line of sight)
+  - {do: upgrade, id: s8, to: 1-2-0}                                          # R46: Shrapnel Shot
+  - {do: upgrade, id: s4, to: 2-3-0}                                          # R47: Bouncing Bullet
+  - {do: upgrade, id: s5, to: 1-3-0}                                          # R48: Bouncing Bullet
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.751, 0.606]}            # R49: ice between the lanes; sees 11% of lane 4
+  - {do: upgrade, id: ac3, to: 0-1-1}                                         # R49: Exploding Pineapple
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.623, 0.504]}            # R49: ice between the lanes; sees 10% of lane 4
+  - {do: upgrade, id: ac4, to: 0-1-0}                                         # R49: Exploding Pineapple
+  - {do: upgrade, id: ac3, to: 0-3-1}                                         # R49: Bomber Ace
+  - {do: upgrade, id: ac4, to: 2-3-0}                                         # R50: Bomber Ace
+  - {do: place, id: ac5, kind: ace, role: dps, at: [0.729, 0.504]}            # R50: ice between the lanes; sees 15% of lane 5
+  - {do: upgrade, id: ac5, to: 2-3-0}                                         # R50: Bomber Ace
+  - {do: upgrade, id: s3, to: 3-2-0}                                          # R50: Deadly Precision
+  - {do: upgrade, id: s6, to: 3-2-0}                                          # R50: Deadly Precision
+  - {do: place, id: ac6, kind: ace, role: dps, at: [0.387, 0.181]}            # R51: ice between the lanes; sees 9% of lane 4
+  - {do: upgrade, id: ac6, to: 0-1-0}                                         # R51: Exploding Pineapple
+  - {do: upgrade, id: s5, to: 2-3-0}                                          # R51: Bouncing Bullet
+  - {do: upgrade, id: ac6, to: 0-3-1}                                         # R51: Bomber Ace
+  - {do: place, id: ac7, kind: ace, role: dps, at: [0.729, 0.3]}              # R51: permanent glacier (top-right); sees 11% of lane 6, 5% of lane 5
+  - {do: upgrade, id: ac7, to: 0-1-0}                                         # R51: Exploding Pineapple
+  - {do: place, id: ac8, kind: ace, role: dps, at: [0.537, 0.317]}            # R51: ice between the lanes; sees 6% of lane 4
+  - {do: upgrade, id: ac8, to: 0-1-0}                                         # R51: Exploding Pineapple
+  - {do: upgrade, id: ac7, to: 0-3-1}                                         # R52: Bomber Ace
+  - {do: upgrade, id: ac8, to: 0-3-1}                                         # R53: Bomber Ace
+  - {do: upgrade, id: s7, to: 1-3-0}                                          # R54: Bouncing Bullet
+  - {do: upgrade, id: s2, to: 1-3-0}                                          # R54: Bouncing Bullet
+  - {do: upgrade, id: s1, to: 3-2-0}                                          # R55: Deadly Precision
+  - {do: upgrade, id: s2, to: 2-3-0}                                          # R56: Bouncing Bullet
+  - {do: upgrade, id: bc1, to: 4-0-2}                                         # R59: Aircraft Carrier
+  - {do: upgrade, id: sb5, to: 4-2-0}                                         # R59: Bloontonium Reactor (surplus: XP)
+panic:
+  - {do: place, kind: sniper, role: dps}
+answers:
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

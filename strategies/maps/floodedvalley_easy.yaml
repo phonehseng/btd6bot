@@ -1,0 +1,57 @@
+# Flooded Valley, Easy: buccaneer, sub, mermonkey from the guides; spots and order from
+# the game's numbers.
+#
+# Why (map data):
+#   Two lanes run on top of the dam in opposite directions at the same time.
+#   The dam blocks sight from the big left land, so land towers there see
+#   nothing; the water on the right side touches the track at the dam's bends.
+#   Water towers (subs, buccaneers, mermonkeys) carry every guide.
+#
+# Sources:
+#   * G-Horizon, Flooded Valley CHIMPS Easy Guide: two mermonkeys, buccaneer
+#     (https://www.youtube.com/watch?v=68Jbc9m1zts)
+#   * Tiggy Gaming, Flooded Valley: buccaneer start, sub, Brickell, Carrier Flagship
+#     (https://www.youtube.com/watch?v=5x1IfnoZy2c)
+#   * bloonswiki Flooded_Valley (https://www.bloonswiki.com/Flooded_Valley)
+#
+# The build: 3 buccaneers (2-3-0, 2-0-2, 0-0-0); 1 sub (0-1-2); 1 mermonkey (0-0-1);
+# hero admiral_brickell.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Easy (from round 10, $3,832): worst margin 2.33 at round 39;
+#     next lowest R40 2.51, R33 2.54
+# Routes in the comments (map data): 1 = Path, 2 = Path (1).
+# The plan is paid for by round 40 even without Double Cash; `fill` holds what
+# Double Cash buys after it.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: floodedvalley_easy
+map: Flooded Valley
+hero: admiral_brickell
+modes: [easy]
+planner:
+  towers: {buccaneer: [2, 3, 2], sub: [0, 1, 2], mermonkey: [0, 0, 1]}
+  base_success: {easy: 0.8}
+  maps: [Flooded Valley]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.526, 0.709]}    # reaches all 2 routes
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.569, 0.743]}    # reaches all 2 routes
+  - {do: upgrade, id: b1, to: 2-2-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.526, 0.794]}         # reaches all 2 routes
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.569, 0.572]}       # admiral_brickell
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.548, 0.641]}    # reaches all 2 routes
+  - {do: upgrade, id: b1, to: 2-3-0}
+  - {do: place, id: mm1, kind: mermonkey, role: dps, at: [0.494, 0.164]}   # reaches all 2 routes
+  - {do: upgrade, id: mm1, to: 0-0-1}
+  - {do: upgrade, id: sb1, to: 0-1-2}
+answers:
+  ceramic: [{do: place, kind: heli, id: ans_ceramic_heli, role: dps}, {do: upgrade, id: ans_ceramic_heli, to: 2-0-0}]
+  moab: [{do: upgrade, id: sb1, to: 0-1-3}]

@@ -1,0 +1,112 @@
+# Cargo, Medium Military Monkeys Only: Subs and Snipers.
+#
+# Map: One road: in along the top, down the right-hand bend and out at the
+# bottom right. Parked trucks on the dock block line of sight until
+# round 39, then drive off and open a MOAB-only lane (PathSpecial in the
+# map file) that comes up between the dock and the right-hand strip,
+# runs left along the top of the dock and leaves at the top. Water all
+# round the dock; two $500 truck removables (the bot leaves them).
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sub, sniper. Each
+# purchase is the cheapest that keeps the coming rounds popping at 3x the
+# strength they need. Spare cash goes into the Sub, whose XP the account needs
+# most.
+#
+# Economy: Fast Track starts Medium Military Monkeys Only at round 15 with
+# about $6,057, with Double Cash income.
+# Model check, Medium Military Monkeys Only (btd6bot/dps_model.py
+# round_margin; purchases replayed in order as cash allows, account boosts):
+# the plan alone has a worst round margin of 3.67 (round 58); every round at
+# 2.0 or more. With the MOAB lane the model leaves out added for MOAB-class
+# bloons: worst 3.22 (round 58). Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: separate bloon and MOAB lanes; trucks block sight
+#     (https://www.bloonswiki.com/Cargo)
+#   * fandom strategies: water towers right of the MOAB exit, Glaive Lord
+#     below the first bend, Perma-Spike where the lanes meet
+#     (https://bloons.fandom.com/wiki/Cargo/Strategies)
+#   * BlueCliff, Cargo Hard (Quincy, ninja, wizard, bombs)
+#     (https://www.youtube.com/watch?v=JwH3d8_WOBQ)
+#   * Mathgodpi, Cargo CHIMPS with subs
+#     (https://www.youtube.com/watch?v=hzVxMvuAEOI)
+#   * bloonswiki Military Only: subs/buccaneers on water maps, snipers and
+#     aces on dry ones; camo by R24, lead by R28
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: cargo_military_only
+map: Cargo
+hero: quincy
+modes: [military_only]
+planner:
+  towers: {sub: [4, 5, 2], sniper: [1, 3, 2]}
+  base_success: {military_only: 0.8}
+  maps: [Cargo]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.387, 0.146]}            # R15: water by the top strip above the lane; sees 12% of the lane
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R15: Advanced Intel
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.612, 0.47]}           # R15: Quincy, strip inside the lane's right-hand bend (not counted by the model)
+  - {do: upgrade, id: sb1, to: 4-0-2}                                         # R15: Bloontonium Reactor (surplus: XP)
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.248, 0.138]}            # R16: water by the top strip above the lane; sees 11% of the lane
+  - {do: upgrade, id: sb2, to: 1-0-0}                                         # R16: Longer Range (surplus: XP)
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.74, 0.896]}             # R17: water; sees 19% of the lane
+  - {do: upgrade, id: sb3, to: 1-0-0}                                         # R17: Longer Range (surplus: XP)
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.11, 0.368]}             # R18: water; sees 18% of the lane
+  - {do: upgrade, id: sb4, to: 1-0-0}                                         # R18: Longer Range (surplus: XP)
+  - {do: place, id: sb5, kind: sub, role: dps, at: [0.206, 0.138]}            # R19: water by the top strip above the lane; sees 11% of the lane
+  - {do: place, id: sb6, kind: sub, role: dps, at: [0.644, 0.896]}            # R19: water; sees 12% of the lane
+  - {do: upgrade, id: sb3, to: 1-3-0}                                         # R23: Ballistic Missile
+  - {do: upgrade, id: sb3, to: 2-3-0}                                         # R24: Ballistic Missile
+  - {do: upgrade, id: sb5, to: 1-0-0}                                         # R24: Longer Range (surplus: XP)
+  - {do: place, id: sb7, kind: sub, role: dps, at: [0.697, 0.896]}            # R25: water; sees 16% of the lane
+  - {do: upgrade, id: sb6, to: 1-0-0}                                         # R25: Longer Range (surplus: XP)
+  - {do: place, id: sb8, kind: sub, role: dps, at: [0.783, 0.896]}            # R26: water; sees 15% of the lane
+  - {do: upgrade, id: sb7, to: 1-0-0}                                         # R26: Longer Range (surplus: XP)
+  - {do: upgrade, id: sb8, to: 1-0-0}                                         # R26: Longer Range (surplus: XP)
+  - {do: upgrade, id: sb2, to: 2-0-0}                                         # R27: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb2, to: 3-2-0}                                         # R28: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb7, to: 1-3-0}                                         # R31: Ballistic Missile
+  - {do: upgrade, id: sb7, to: 2-3-0}                                         # R32: Ballistic Missile
+  - {do: upgrade, id: sb4, to: 2-0-0}                                         # R32: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb4, to: 3-1-0}                                         # R33: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb4, to: 4-1-0}                                         # R35: Bloontonium Reactor
+  - {do: upgrade, id: sb2, to: 4-2-0}                                         # R37: Bloontonium Reactor
+  - {do: upgrade, id: sb4, to: 4-2-0}                                         # R37: Bloontonium Reactor (surplus: XP)
+  - {do: upgrade, id: sb5, to: 3-0-0}                                         # R37: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb5, to: 3-0-2}                                         # R38: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb6, to: 3-0-0}                                         # R38: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb5, to: 4-0-2}                                         # R39: Bloontonium Reactor
+  - {do: upgrade, id: sb6, to: 4-0-2}                                         # R40: Bloontonium Reactor (surplus: XP)
+  - {do: upgrade, id: sb8, to: 2-1-0}                                         # R41: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb8, to: 4-2-0}                                         # R42: Bloontonium Reactor (surplus: XP)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.024, 0.198]} # R43: top strip above the lane; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R43: Shrapnel Shot
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.067, 0.198]} # R44: top strip above the lane; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 0-2-0}                                          # R44: Shrapnel Shot
+  - {do: upgrade, id: sb3, to: 2-4-0}                                         # R48: First Strike Capability (surplus: XP)
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.11, 0.198]} # R50: top strip above the lane; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.206, 0.198]} # R50: top strip above the lane; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: upgrade, id: s2, to: 0-3-2}                                          # R50: Bouncing Bullet
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.612, 0.368]} # R50: strip inside the lane's right-hand bend; map-wide (line of sight)
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: upgrade, id: sb3, to: 2-5-0}                                         # R56: Pre-emptive Strike
+  - {do: upgrade, id: sb7, to: 2-4-0}                                         # R59: First Strike Capability (surplus: XP)
+panic:
+  - {do: place, kind: sub, role: dps}
+answers:
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

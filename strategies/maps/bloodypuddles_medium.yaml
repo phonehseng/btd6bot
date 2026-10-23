@@ -1,0 +1,86 @@
+# Bloody Puddles, Medium/Reverse: druid, sniper from the guides; spots and order from
+# the game's numbers.
+#
+# Why (map data):
+#   Five short vertical lanes; every round two of them spawn (the pair
+#   changes each round: AlternateRoundMultiPathSplitter in the map data). The
+#   model plays each lane alone with the whole round, which is harder than
+#   the real pairs. Small ponds between the lanes; the crashed jeep blocks
+#   sight and space until bought ($1,000 + $500, never bought here).
+#
+# Sources:
+#   * BlueCliff, Bloody Puddles Hard No MK (ft. Quincy): Advanced-Intel subs in the
+#     ponds, snipers (https://www.youtube.com/watch?v=7LdEUBMskzk)
+#   * bloonswiki Bloody_Puddles: Airburst subs early, desperados at R6, snipers
+#     see every lane (https://www.bloonswiki.com/Bloody_Puddles)
+#   * fandom Bloody_Puddles/Strategies: spawn pairs repeat every 4 rounds
+#     (https://bloons.fandom.com/wiki/Bloody_Puddles/Strategies)
+#
+# The build: 7 druids (2-3-0, 0-3-1, 1-3-0); 7 snipers (2-5-0, 0-3-2, 2-2-0, 0-2-2);
+# hero quincy.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Medium (from round 15, $6,057): worst margin 2.83 at round 59;
+#     next lowest R60 3.29, R53 4.00
+#   Reverse (from round 15, $6,057): worst margin 2.18 at round 59;
+#     next lowest R56 2.89, R60 3.29
+# Routes in the comments (map data): 1 = Path3R, 2 = Path5, 3 = Path3, 4 = Path2, 5 =
+# Path4, 6 = Path1.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: bloodypuddles_medium
+map: Bloody Puddles
+hero: quincy
+modes: [medium, reverse]
+planner:
+  towers: {druid: [2, 3, 1], sniper: [2, 5, 2]}
+  base_success: {medium: 0.75, reverse: 0.72}
+  maps: [Bloody Puddles]
+plan:
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.377, 0.845]}             # reaches routes 1, 3, 4
+  - {do: upgrade, id: dr1, to: 0-3-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.505, 0.368]}             # quincy
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.024, 0.129]}   # map-wide
+  - {do: upgrade, id: s1, to: 0-1-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.067, 0.129]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.152, 0.129]}   # map-wide
+  - {do: upgrade, id: s3, to: 1-2-0}
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.195, 0.129]}   # map-wide
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.174, 0.658]}             # reaches routes 4, 6
+  - {do: upgrade, id: dr2, to: 0-3-0}
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.281, 0.129]}   # map-wide
+  - {do: upgrade, id: s5, to: 0-2-1}
+  - {do: place, id: dr3, kind: druid, role: dps, at: [0.74, 0.641]}              # reaches route 2
+  - {do: upgrade, id: dr3, to: 0-3-1}
+  - {do: upgrade, id: dr2, to: 0-3-1}
+  - {do: place, id: dr4, kind: druid, role: dps, at: [0.462, 0.181]}             # reaches routes 1, 3, 5
+  - {do: upgrade, id: dr4, to: 1-3-0}
+  - {do: upgrade, id: s5, to: 0-2-2}
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.323, 0.129]}   # map-wide
+  - {do: upgrade, id: s6, to: 0-2-2}
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.43, 0.129]}   # map-wide
+  - {do: upgrade, id: s7, to: 0-2-2}
+  - {do: upgrade, id: s5, to: 0-3-2}
+  - {do: place, id: dr5, kind: druid, role: dps, at: [0.708, 0.419]}             # reaches routes 2, 5
+  - {do: upgrade, id: dr5, to: 0-3-0}
+  - {do: upgrade, id: s4, to: 2-4-0}
+  - {do: upgrade, id: s3, to: 2-2-0}
+  - {do: place, id: dr6, kind: druid, role: dps, at: [0.248, 0.419]}             # reaches routes 4, 6
+  - {do: upgrade, id: dr6, to: 2-3-0}
+  - {do: upgrade, id: dr5, to: 1-3-0}
+  - {do: place, id: dr7, kind: druid, role: dps, at: [0.248, 0.351]}             # reaches routes 4, 6
+  - {do: upgrade, id: dr7, to: 0-3-1}
+  - {do: upgrade, id: s4, to: 2-5-0}
+answers:
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

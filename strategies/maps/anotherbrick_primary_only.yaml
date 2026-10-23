@@ -1,0 +1,113 @@
+# Another Brick, Easy Primary Monkeys Only: Desperados, Bomb Shooters and Boomerangs.
+#
+# Map: One lane: down from the top, right along the top half, a U-turn at the
+# far right, back left along the bottom half and down to the exit. A
+# sight-blocking brick wall runs between the two halves (map geometry:
+# blocking areas), so ground towers see one half only; two $1,000 brick
+# piles on the left are removable (the bot leaves them). Water: a pond
+# top-right and a pond bottom-left beside the exit bend, which sees the
+# last stretch best.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses desperado, bomb,
+# boomerang, dart, glue. Each purchase is the cheapest that keeps the coming
+# rounds popping at 2.5x the strength they need. Spare cash goes into the
+# Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Easy Primary Monkeys Only at round 10 with about
+# $3,832 and Double Cash. The plan costs $14,585, which a game without the
+# boosts also earns by round 40 (the offline test plays it that way); the fill
+# holds the rest, which the bot buys right after the plan.
+# Model check, Easy Primary Monkeys Only (btd6bot/dps_model.py round_margin;
+# purchases replayed in order as cash allows, account boosts): the plan alone
+# has a worst round margin of 0.91 (round 40); with the fill bought the way
+# the executor buys it (any affordable fill step, in order) 2.54 (round 31);
+# every round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: towers that ignore the wall (Flagship, sniper, guided magic)
+#     and the exit stretch (https://www.bloonswiki.com/Another_Brick)
+#   * fandom strategies: water towers in the ponds, Perma-Spike by the exit
+#     (https://bloons.fandom.com/wiki/Another_Brick/Strategies)
+#   * BlueCliff, Another Brick Hard (Quincy, ninja, alchemist)
+#     (https://www.youtube.com/watch?v=igJ6Bsvrnwc)
+#   * Bacanator, Another Brick Primary Only: bomb for lead, dart for camo
+#     (https://www.youtube.com/watch?v=_H05l61THCQ)
+#   * bloonswiki Primary Only: Crossbow/Glaives/bombs; the round-40 MOAB needs
+#     real damage (https://www.bloonswiki.com/Strategy:Primary_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: anotherbrick_primary_only
+map: Another Brick
+hero: quincy
+modes: [primary_only]
+planner:
+  towers: {desperado: [3, 2, 0], bomb: [0, 2, 3], boomerang: [2, 3, 3], dart: [1, 0, 4], glue: [2, 2, 0]}
+  base_success: {primary_only: 0.85}
+  maps: [Another Brick]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.692, 0.641]}          # R10: Quincy, bottom land below the bottom half of the lane (not counted by the model)
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.366, 0.232]} # R10: top-left land inside the first bend; sees 30% of the lane
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.334, 0.283]} # R10: top-left land inside the first bend; sees 28% of the lane
+  - {do: place, id: de3, kind: desperado, role: dps, target: strong, at: [0.377, 0.3]} # R10: top-left land inside the first bend; sees 28% of the lane
+  - {do: place, id: de4, kind: desperado, role: dps, target: strong, at: [0.323, 0.215]} # R10: top-left land inside the first bend; sees 27% of the lane
+  - {do: place, id: de5, kind: desperado, role: dps, target: strong, at: [0.409, 0.641]} # R10: bottom-left pond; sees 26% of the lane
+  - {do: place, id: de6, kind: desperado, role: dps, target: strong, at: [0.355, 0.164]} # R10: top-left land inside the first bend; sees 24% of the lane
+  - {do: place, id: de7, kind: desperado, role: dps, target: strong, at: [0.313, 0.146]} # R10: top-left land inside the first bend; sees 23% of the lane
+  - {do: place, id: de8, kind: desperado, role: dps, target: strong, at: [0.409, 0.249]} # R10: top land above the top half of the lane; sees 22% of the lane
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.484, 0.641]}           # R10: bottom land below the bottom half of the lane; sees 12% of the lane
+  - {do: upgrade, id: bo1, to: 0-0-2}                                         # R10: Frag Bombs
+  - {do: upgrade, id: bo1, to: 0-1-2}                                         # R10: Frag Bombs
+  - {do: upgrade, id: bo1, to: 0-2-2}                                         # R10: Missile Launcher
+  - {do: place, id: bo2, kind: bomb, role: dps, at: [0.644, 0.641]}           # R12: bottom land below the bottom half of the lane; sees 12% of the lane
+  - {do: upgrade, id: bo2, to: 0-0-2}                                         # R12: Frag Bombs
+  - {do: upgrade, id: bo2, to: 0-1-2}                                         # R14: Frag Bombs
+  - {do: upgrade, id: bo2, to: 0-2-2}                                         # R17: Missile Launcher
+  - {do: upgrade, id: bo2, to: 0-2-3}                                         # R19: Cluster Bombs
+  - {do: place, id: b1, kind: boomerang, role: dps, at: [0.462, 0.3]}         # R20: top land above the top half of the lane; sees 14% of the lane
+  - {do: upgrade, id: b1, to: 1-0-0}                                          # R20: Improved Rangs
+  - {do: place, id: bo3, kind: bomb, role: dps, at: [0.505, 0.3]}             # R20: top land above the top half of the lane; sees 12% of the lane
+  - {do: upgrade, id: bo3, to: 0-0-2}                                         # R20: Frag Bombs
+  - {do: upgrade, id: bo3, to: 0-1-2}                                         # R21: Frag Bombs
+  - {do: upgrade, id: bo3, to: 0-2-2}                                         # R22: Missile Launcher
+  - {do: place, id: b2, kind: boomerang, role: dps, at: [0.526, 0.641]}       # R22: bottom land below the bottom half of the lane; sees 13% of the lane
+  - {do: upgrade, id: de2, to: 3-2-0}                                         # R24: Big Iron
+  - {do: upgrade, id: b2, to: 0-0-1}                                          # R24: Long Range Rangs
+  - {do: upgrade, id: b1, to: 1-2-0}                                          # R25: Faster Rangs
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R27: Big Iron
+  - {do: upgrade, id: de4, to: 3-0-0}                                         # R28: Big Iron
+  - {do: upgrade, id: de4, to: 3-1-0}                                         # R29: Big Iron
+  - {do: upgrade, id: de5, to: 3-0-0}                                         # R30: Big Iron
+fill:
+  - {do: upgrade, id: de3, to: 2-1-0}                                         # R16: Standoff (surplus: XP)
+  - {do: upgrade, id: bo1, to: 0-2-3}                                         # R31: Cluster Bombs
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.302, 0.641]}            # R31: bottom-left land beside the exit lane; sees 15% of the lane
+  - {do: upgrade, id: b1, to: 2-3-0}                                          # R32: Bionic Boomerang
+  - {do: upgrade, id: d1, to: 0-0-3}                                          # R33: Crossbow
+  - {do: upgrade, id: d1, to: 1-0-3}                                          # R33: Crossbow
+  - {do: upgrade, id: b2, to: 0-2-1}                                          # R33: Faster Rangs
+  - {do: upgrade, id: b2, to: 0-2-3}                                          # R35: Kylie Boomerang
+  - {do: upgrade, id: de5, to: 3-1-0}                                         # R35: Big Iron
+  - {do: upgrade, id: de3, to: 3-1-0}                                         # R36: Big Iron
+  - {do: upgrade, id: de6, to: 3-0-0}                                         # R36: Big Iron
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.58, 0.641]}             # R36: bottom land below the bottom half of the lane; 
+  - {do: upgrade, id: g1, to: 2-0-0}                                          # R36: Corrosive Glue
+  - {do: upgrade, id: d1, to: 1-0-4}                                          # R37: Sharp Shooter
+  - {do: upgrade, id: g1, to: 2-2-0}                                          # R38: Corrosive Glue
+  - {do: upgrade, id: de3, to: 3-2-0}                                         # R38: Big Iron (surplus: XP)
+  - {do: upgrade, id: de6, to: 3-1-0}                                         # R38: Big Iron (surplus: XP)
+  - {do: upgrade, id: de5, to: 3-2-0}                                         # R39: Big Iron (surplus: XP)
+  - {do: upgrade, id: de6, to: 3-2-0}                                         # R39: Big Iron (surplus: XP)
+panic:
+  - {do: place, kind: desperado, role: dps}
+answers:
+  moab: [{do: upgrade, id: bo3, to: 0-3-2}]

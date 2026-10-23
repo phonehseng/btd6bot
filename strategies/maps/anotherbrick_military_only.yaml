@@ -1,0 +1,115 @@
+# Another Brick, Medium Military Monkeys Only: Subs and Snipers.
+#
+# Map: One lane: down from the top, right along the top half, a U-turn at the
+# far right, back left along the bottom half and down to the exit. A
+# sight-blocking brick wall runs between the two halves (map geometry:
+# blocking areas), so ground towers see one half only; two $1,000 brick
+# piles on the left are removable (the bot leaves them). Water: a pond
+# top-right and a pond bottom-left beside the exit bend, which sees the
+# last stretch best.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sub, sniper. Each
+# purchase is the cheapest that keeps the coming rounds popping at 3x the
+# strength they need. Spare cash goes into the Sub, whose XP the account needs
+# most.
+#
+# Economy: Fast Track starts Medium Military Monkeys Only at round 15 with
+# about $6,057, with Double Cash income.
+# Model check, Medium Military Monkeys Only (btd6bot/dps_model.py
+# round_margin; purchases replayed in order as cash allows, account boosts):
+# the plan alone has a worst round margin of 2.80 (round 58); every round at
+# 2.0 or more. Threat simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: towers that ignore the wall (Flagship, sniper, guided magic)
+#     and the exit stretch (https://www.bloonswiki.com/Another_Brick)
+#   * fandom strategies: water towers in the ponds, Perma-Spike by the exit
+#     (https://bloons.fandom.com/wiki/Another_Brick/Strategies)
+#   * BlueCliff, Another Brick Hard (Quincy, ninja, alchemist)
+#     (https://www.youtube.com/watch?v=igJ6Bsvrnwc)
+#   * Another Brick Military Only run
+#     (https://www.youtube.com/watch?v=ICYRjlf2NsA)
+#   * bloonswiki Military Only: subs/buccaneers on water maps, snipers and
+#     aces on dry ones; camo by R24, lead by R28
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: anotherbrick_military_only
+map: Another Brick
+hero: quincy
+modes: [military_only]
+planner:
+  towers: {sub: [4, 4, 2], sniper: [2, 3, 3]}
+  base_success: {military_only: 0.8}
+  maps: [Another Brick]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.345, 0.675]}            # R15: bottom-left pond; sees 20% of the lane
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R15: Advanced Intel
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.323, 0.223]}          # R15: Quincy, top-left land inside the first bend (not counted by the model)
+  - {do: upgrade, id: sb1, to: 4-0-2}                                         # R15: Bloontonium Reactor (surplus: XP)
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.601, 0.283]}            # R16: top-right pond; sees 13% of the lane
+  - {do: upgrade, id: sb2, to: 1-0-0}                                         # R16: Longer Range (surplus: XP)
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.676, 0.283]}            # R17: top-right pond; sees 12% of the lane
+  - {do: upgrade, id: sb3, to: 1-0-0}                                         # R17: Longer Range (surplus: XP)
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.323, 0.777]}            # R18: water by the bottom-left land beside the exit lane; sees 11% of the lane
+  - {do: upgrade, id: sb4, to: 1-0-0}                                         # R18: Longer Range (surplus: XP)
+  - {do: place, id: sb5, kind: sub, role: dps, at: [0.633, 0.232]}            # R19: top-right pond; sees 8% of the lane
+  - {do: place, id: sb6, kind: sub, role: dps, at: [0.345, 0.845]}            # R19: bottom-left pond; sees 8% of the lane
+  - {do: upgrade, id: sb4, to: 1-3-0}                                         # R23: Ballistic Missile
+  - {do: upgrade, id: sb4, to: 2-3-0}                                         # R24: Ballistic Missile
+  - {do: upgrade, id: sb5, to: 1-0-0}                                         # R24: Longer Range (surplus: XP)
+  - {do: place, id: sb7, kind: sub, role: dps, at: [0.387, 0.709]}            # R25: bottom-left pond; sees 8% of the lane
+  - {do: upgrade, id: sb6, to: 1-0-0}                                         # R25: Longer Range (surplus: XP)
+  - {do: upgrade, id: sb7, to: 1-0-0}                                         # R26: Longer Range (surplus: XP)
+  - {do: upgrade, id: sb2, to: 2-0-0}                                         # R27: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb2, to: 3-2-0}                                         # R28: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb3, to: 2-0-0}                                         # R29: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb3, to: 2-2-0}                                         # R30: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb3, to: 3-2-0}                                         # R31: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb5, to: 3-0-0}                                         # R32: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb5, to: 3-2-0}                                         # R33: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb6, to: 2-0-0}                                         # R33: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb2, to: 4-2-0}                                         # R36: Bloontonium Reactor
+  - {do: upgrade, id: sb6, to: 3-0-2}                                         # R36: Submerge and Support (surplus: XP)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.377, 0.146]} # R37: top-left land inside the first bend; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 0-2-0}                                          # R37: Shrapnel Shot
+  - {do: upgrade, id: sb7, to: 2-0-0}                                         # R37: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb6, to: 4-0-2}                                         # R38: Bloontonium Reactor (surplus: XP)
+  - {do: upgrade, id: sb7, to: 2-1-0}                                         # R38: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb7, to: 2-3-0}                                         # R39: Ballistic Missile (surplus: XP)
+  - {do: upgrade, id: sb3, to: 4-2-0}                                         # R40: Bloontonium Reactor (surplus: XP)
+  - {do: upgrade, id: sb5, to: 4-2-0}                                         # R42: Bloontonium Reactor (surplus: XP)
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.414, 0.138]} # R43: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R43: Shrapnel Shot
+  - {do: upgrade, id: sb4, to: 2-4-0}                                         # R48: First Strike Capability (surplus: XP)
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.452, 0.138]} # R50: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.489, 0.138]} # R50: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.548, 0.146]} # R50: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.601, 0.138]} # R50: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s6, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.548, 0.206]} # R50: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s7, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.735, 0.181]} # R50: top land above the top half of the lane; map-wide (line of sight)
+  - {do: upgrade, id: s8, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: upgrade, id: s1, to: 0-2-3}                                          # R50: Semi-Automatic
+  - {do: upgrade, id: s8, to: 1-3-0}                                          # R50: Bouncing Bullet
+  - {do: upgrade, id: s2, to: 2-2-0}                                          # R50: Large Caliber
+  - {do: upgrade, id: s7, to: 1-3-0}                                          # R50: Bouncing Bullet
+  - {do: upgrade, id: sb7, to: 2-4-0}                                         # R54: First Strike Capability (surplus: XP)
+panic:
+  - {do: place, kind: sniper, role: dps}
+answers:
+  moab: [{do: upgrade, id: s2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s2, to: 4-2-0}]

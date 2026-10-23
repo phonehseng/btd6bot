@@ -1,0 +1,84 @@
+# Enchanted Glade, Easy (Standard): Subs, Mermonkeys and Skywardens.
+#
+# Map: Two lanes alternate by round (odd rounds from the bottom-left, even
+# rounds from the top-right) and meet in the wavy stretch below the
+# centre before the climb into the cherry-tree exit. Trees block line of
+# sight. Land: top-left, right-centre and bottom-centre islands, and a
+# bottom-right island inside a ring of water. The bot lost Hard at round
+# 63 with towers on one lane only; every round here is checked on both
+# lanes.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sub, mermonkey,
+# skywarden, sniper. Each purchase is the cheapest that keeps the coming
+# rounds popping at 2.5x the strength they need. Spare cash goes into the
+# Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Easy (Standard) at round 10 with about $3,832 and
+# Double Cash. The plan costs $11,305, which a game without the boosts also
+# earns by round 40 (the offline test plays it that way); the fill holds the
+# rest, which the bot buys right after the plan.
+# Model check, Easy (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.83 (round 34); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: use the bottom-centre space, the area below the centre, or
+#     global towers (https://www.bloonswiki.com/Enchanted_Glade)
+#   * BlueCliff, Enchanted Glade Hard (ninja, alchemist, Bloon Solver)
+#     (https://www.youtube.com/watch?v=WTBG33Bey-M)
+#   * SnartFarts, Enchanted Glade CHIMPS with Carrier Flagship
+#     (https://www.youtube.com/watch?v=MEHLrD12TMk)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: enchantedglade_easy
+map: Enchanted Glade
+hero: quincy
+modes: [easy]
+planner:
+  towers: {skywarden: [1, 0, 0], mermonkey: [3, 0, 1], sub: [2, 3, 2], sniper: [1, 2, 0]}
+  base_success: {easy: 0.85}
+  maps: [Enchanted Glade]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.419, 0.922]}          # R10: Quincy, bottom-centre island (not counted by the model)
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.43, 0.794]}       # R10: bottom-centre island; sees 32% of the top-right lane (even rounds), 37% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.398, 0.811]}      # R10: bottom-centre island; sees 32% of the top-right lane (even rounds), 32% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.462, 0.811]}      # R10: bottom-centre island; sees 28% of the top-right lane (even rounds), 36% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.43, 0.862]}       # R10: bottom-centre island; sees 25% of the top-right lane (even rounds), 28% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk5, kind: skywarden, role: dps, at: [0.387, 0.862]}      # R10: bottom-centre island; sees 26% of the top-right lane (even rounds), 22% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk6, kind: skywarden, role: dps, at: [0.473, 0.862]}      # R10: bottom-centre island; sees 20% of the top-right lane (even rounds), 29% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: sk6, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: upgrade, id: sk5, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: place, id: sk7, kind: skywarden, role: dps, at: [0.462, 0.913]}      # R10: bottom-centre island; sees 16% of the top-right lane (even rounds), 19% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk8, kind: skywarden, role: dps, at: [0.612, 0.811]}      # R10: bottom-right island and its water ring; sees 12% of the top-right lane (even rounds), 23% of the bottom-left lane (odd rounds)
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.623, 0.726]}       # R10: bottom-right island and its water ring; sees 6% of the top-right lane (even rounds), 9% of the bottom-left lane (odd rounds)
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.569, 0.828]}            # R10: bottom-right island and its water ring; sees 8% of the top-right lane (even rounds), 15% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: sb1, to: 0-0-1}                                         # R10: Twin Guns
+  - {do: upgrade, id: sk7, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: upgrade, id: m1, to: 2-0-0}                                          # R10: Trident Swiftness
+  - {do: upgrade, id: sb1, to: 0-0-2}                                         # R12: Airburst Darts
+  - {do: upgrade, id: m1, to: 2-0-1}                                          # R16: Trident Swiftness
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.051, 0.181]} # R16: top-left island; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 0-2-0}                                          # R16: Shrapnel Shot
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R19: Advanced Intel
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R20: Shrapnel Shot
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.569, 0.896]}            # R20: bottom-right island and its water ring; sees 4% of the top-right lane (even rounds), 5% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: sb2, to: 0-3-1}                                         # R20: Ballistic Missile
+  - {do: upgrade, id: sb2, to: 0-3-2}                                         # R22: Ballistic Missile
+  - {do: upgrade, id: m1, to: 3-0-1}                                          # R25: Abyss Dweller
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: sb1, to: 2-0-3}]

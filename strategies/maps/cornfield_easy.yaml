@@ -1,0 +1,74 @@
+# Cornfield, Easy (Standard): Wizards, Bomb Shooters and Desperados.
+#
+# Map: One long lane snakes through a field of corn. Only the small plot in
+# the middle and thin strips along the lane are free; the corn blocks
+# placement and line of sight until bought ($350-$1,500 a patch, the bot
+# leaves them). No water.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses wizard, bomb,
+# desperado. Each purchase is the cheapest that keeps the coming rounds
+# popping at 2.2x the strength they need.
+#
+# Economy: Fast Track starts Easy (Standard) at round 10 with about $3,832 and
+# Double Cash. The plan costs $8,895, which a game without the boosts also
+# earns by round 40 (the offline test plays it that way); the fill holds the
+# rest, which the bot buys right after the plan.
+# Model check, Easy (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 0.54 (round 39); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 2.25 (round 26); every
+# round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: Ultra-Juggernaut (balls bounce off the corn), Obyn/Quincy
+#     (https://www.bloonswiki.com/Cornfield)
+#   * fandom strategies: corn prices, the middle plot
+#     (https://bloons.fandom.com/wiki/Cornfield/Strategies)
+#   * BlueCliff, Cornfield Hard (ninja, alchemist, Bloon Solver in the middle
+#     plot) (https://www.youtube.com/watch?v=qcnDjtGW6DU)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: cornfield_easy
+map: Cornfield
+hero: quincy
+modes: [easy]
+planner:
+  towers: {wizard: [0, 3, 2], desperado: [3, 0, 0], bomb: [0, 2, 4]}
+  base_success: {easy: 0.85}
+  maps: [Cornfield]
+plan:
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.43, 0.521]}           # R10: free middle plot; sees 24% of the lane
+  - {do: place, id: w2, kind: wizard, role: dps, at: [0.398, 0.47]}           # R10: free middle plot; sees 20% of the lane
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.462, 0.589]} # R10: free middle plot; sees 29% of the lane
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.452, 0.453]} # R10: free middle plot; sees 27% of the lane
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.398, 0.572]}           # R10: free middle plot; sees 15% of the lane
+  - {do: upgrade, id: bo1, to: 0-0-2}                                         # R10: Frag Bombs
+  - {do: place, id: hero, kind: hero, role: dps}                              # R10: Quincy, wherever it fits (no room left; not counted by the model)
+  - {do: upgrade, id: bo1, to: 0-2-2}                                         # R10: Missile Launcher
+  - {do: upgrade, id: w1, to: 0-1-0}                                          # R11: Fireball
+  - {do: upgrade, id: w2, to: 0-1-0}                                          # R13: Fireball
+  - {do: upgrade, id: bo1, to: 0-2-3}                                         # R14: Cluster Bombs
+  - {do: upgrade, id: de1, to: 3-0-0}                                         # R14: Big Iron
+  - {do: upgrade, id: w1, to: 0-1-1}                                          # R15: Fireball
+  - {do: upgrade, id: w2, to: 0-1-2}                                          # R15: Monkey Sense
+  - {do: upgrade, id: w1, to: 0-1-2}                                          # R15: Monkey Sense
+  - {do: upgrade, id: w1, to: 0-2-2}                                          # R17: Wall of Fire
+  - {do: upgrade, id: de2, to: 3-0-0}                                         # R19: Big Iron
+  - {do: upgrade, id: w2, to: 0-2-2}                                          # R20: Wall of Fire
+fill:
+  - {do: upgrade, id: bo1, to: 0-2-4}                                         # R26: Recursive Cluster
+  - {do: upgrade, id: w1, to: 0-3-2}                                          # R28: Dragon's Breath
+panic:
+  - {do: place, kind: wizard, role: dps}
+answers:
+  moab: [{do: upgrade, id: w1, to: 0-4-2}]

@@ -1,0 +1,80 @@
+# Ravine, Medium/Reverse: druid, ninja, ace from the guides; spots and order from the
+# game's numbers.
+#
+# Why (map data):
+#   Two entrances alternate by round and each one forks in two, so a round runs
+#   on two of four lanes. The model's own routes merge the Ravine forks into one
+#   route; these builds were checked on the corrected routes (Path1 -> split1
+#   or split2 in even rounds, Path2 -> split1 or split2 in odd rounds). Bridges
+#   and trees block sight; the river is too low for water towers.
+#
+# Sources:
+#   * OneEyedDeacon, Ravine Chimps is SIMPLE with Etienne + Sky Shredder
+#     (https://www.youtube.com/watch?v=OpHwKwqMcOY)
+#   * bloonswiki Ravine: the bottom-left area touches the lanes; aces ignore the
+#     sight blockers (https://www.bloonswiki.com/Ravine)
+#
+# The build: 6 druids (2-3-0, 0-4-1, 0-3-1); 2 ninjas (1-0-1, 0-0-0); 5 aces (2-3-0,
+# 1-3-0); hero etienne.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Medium (from round 15, $6,057): worst margin 2.51 at round 58;
+#     next lowest R51 2.65, R54 2.77
+#   Reverse (from round 15, $6,057): worst margin 2.54 at round 58;
+#     next lowest R56 2.57, R51 2.65
+# Routes in the comments (map data): 1 = Path1+Path1-split1, 2 = Path1+Path1-split2, 3 =
+# Path2+Path2-split1, 4 = Path2+Path2-split2.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: ravine_medium
+map: Ravine
+hero: etienne
+modes: [medium, reverse]
+planner:
+  towers: {druid: [2, 4, 1], ninja: [1, 0, 1], ace: [2, 3, 0]}
+  base_success: {medium: 0.75, reverse: 0.72}
+  maps: [Ravine]
+plan:
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.152, 0.658]}   # reaches routes 1, 4
+  - {do: upgrade, id: dr1, to: 0-3-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.601, 0.3]}     # etienne
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.345, 0.777]}    # reaches routes 2, 3, 4
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.12, 0.76]}      # reaches route 1
+  - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.398, 0.181]}     # reaches route 2
+  - {do: upgrade, id: ac1, to: 1-3-0}
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.27, 0.777]}      # reaches routes 3, 4
+  - {do: upgrade, id: ac2, to: 1-3-0}
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.067, 0.436]}   # reaches routes 1, 4
+  - {do: upgrade, id: dr2, to: 0-3-0}
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.195, 0.862]}     # reaches route 3
+  - {do: upgrade, id: ac3, to: 0-3-0}
+  - {do: upgrade, id: dr2, to: 0-3-1}
+  - {do: place, id: dr3, kind: druid, role: dps, at: [0.687, 0.266]}   # reaches routes 3, 4
+  - {do: upgrade, id: dr3, to: 0-3-0}
+  - {do: upgrade, id: ac3, to: 1-3-0}
+  - {do: upgrade, id: ac1, to: 2-3-0}
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.676, 0.368]}     # reaches route 3
+  - {do: upgrade, id: ac4, to: 1-3-0}
+  - {do: place, id: dr4, kind: druid, role: dps, at: [0.783, 0.317]}   # reaches route 3
+  - {do: upgrade, id: dr4, to: 0-3-0}
+  - {do: place, id: ac5, kind: ace, role: dps, at: [0.195, 0.709]}     # reaches route 4
+  - {do: upgrade, id: ac5, to: 1-3-0}
+  - {do: place, id: dr5, kind: druid, role: dps, at: [0.783, 0.249]}   # reaches route 3
+  - {do: upgrade, id: dr5, to: 0-3-0}
+  - {do: upgrade, id: dr3, to: 0-3-1}
+  - {do: upgrade, id: dr5, to: 2-3-0}
+  - {do: place, id: dr6, kind: druid, role: dps, at: [0.633, 0.129]}   # reaches routes 3, 4
+  - {do: upgrade, id: dr6, to: 0-3-0}
+  - {do: upgrade, id: dr4, to: 0-3-1}
+  - {do: upgrade, id: dr6, to: 0-3-1}
+  - {do: upgrade, id: dr1, to: 0-4-1}
+answers:
+  ceramic: [{do: upgrade, id: n1, to: 3-0-1}]

@@ -1,0 +1,100 @@
+# Dark Path, Easy Deflation: Spike Factories, Desperados and Mermonkeys.
+#
+# Map: One diagonal lane in a sunken gully from the top-right to the
+# bottom-left. Rock walls block line of sight almost everywhere (12
+# walls plus 8 buyable ones in the map file), so only the open pocket
+# by the exit, the pocket by the entrance and global towers see much of
+# it; the bot lost Hard at round 25 with towers that saw nothing. No
+# water. The cave walls can be bought ($250-$1,000 a tier; the bot
+# leaves them).
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses spike, desperado,
+# mermonkey, super, skywarden, alchemist. Each purchase is the cheapest that
+# keeps the coming rounds popping at 2.5x the strength they need. Spare cash
+# goes into the Desperado, whose XP the account needs most.
+#
+# Economy: Deflation starts at round 31 with $40,000 (Double Cash) and no
+# income, and the executor buys plan and fill at once before round 31. The
+# plan costs $15,190 and fits the $20,000 of a game without Double Cash (the
+# offline test plays it that way).
+# Model check, Easy Deflation (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 0.24 (round 59); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 2.38 (round 58); every
+# round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: walls block sight; the raised platforms see over them;
+#     Perma-Spike at the exit (https://www.bloonswiki.com/Dark_Path)
+#   * SnartFarts, Dark Path CHIMPS: everything in the exit pocket
+#     (https://www.youtube.com/watch?v=4AAtx2p1bwE)
+#   * BlueCliff, Dark Path Hard (Quincy, ninja, alchemist)
+#     (https://www.youtube.com/watch?v=WZMh1KPqgyQ)
+#   * fandom Deflation: buy the whole defence before round 31; camo purples
+#     R45/R48, camo leads R59 (https://bloons.fandom.com/wiki/Deflation)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: darkpath_deflation
+map: Dark Path
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {ninja: [0, 0, 0], skywarden: [1, 0, 0], mermonkey: [3, 0, 1], alchemist: [0, 2, 0], desperado: [4, 3, 0], spike: [4, 0, 1], super: [1, 2, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Dark Path]
+plan:
+  - {do: place, id: xn, kind: ninja, role: dps, at: [0.088, 0.811]}           # R31: exit pocket (bottom-left); sees 15% of the lane
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.174, 0.777]}      # R31: exit pocket (bottom-left); sees 26% of the lane
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.142, 0.794]}      # R31: exit pocket (bottom-left); sees 24% of the lane
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.569, 0.266]}      # R31: pocket right of the top-centre rock stack; sees 23% of the lane
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.227, 0.93]}       # R31: exit pocket (bottom-left); sees 23% of the lane
+  - {do: place, id: sk5, kind: skywarden, role: dps, at: [0.537, 0.283]}      # R31: pocket right of the top-centre rock stack; sees 22% of the lane
+  - {do: place, id: sk6, kind: skywarden, role: dps, at: [0.131, 0.743]}      # R31: exit pocket (bottom-left); sees 21% of the lane
+  - {do: place, id: sk7, kind: skywarden, role: dps, at: [0.12, 0.845]}       # R31: exit pocket (bottom-left); sees 21% of the lane
+  - {do: place, id: sk8, kind: skywarden, role: dps, at: [0.099, 0.76]}       # R31: exit pocket (bottom-left); sees 19% of the lane
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.077, 0.879]}       # R31: exit pocket (bottom-left); sees 9% of the lane
+  - {do: upgrade, id: m1, to: 3-0-0}                                          # R31: Abyss Dweller
+  - {do: upgrade, id: m1, to: 3-0-1}                                          # R31: Abyss Dweller
+  - {do: place, id: m2, kind: mermonkey, role: dps, at: [0.174, 0.709]}       # R31: exit pocket (bottom-left); sees 4% of the lane
+  - {do: upgrade, id: m2, to: 3-0-1}                                          # R31: Abyss Dweller
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk6, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk5, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk3, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.671, 0.146], near: [sk3]} # R31: right-hand green by the entrance; sees 21% of the lane
+  - {do: upgrade, id: a1, to: 0-2-0}                                          # R31: Perishing Potions
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.537, 0.215]} # R31: pocket right of the top-centre rock stack; sees 25% of the lane
+  - {do: upgrade, id: de1, to: 3-1-0}                                         # R31: Big Iron
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.794, 0.385]} # R31: right-hand green by the entrance; sees 24% of the lane
+  - {do: upgrade, id: de2, to: 0-3-0}                                         # R31: Deadeye
+  - {do: place, id: m3, kind: mermonkey, role: dps, at: [0.035, 0.913]}       # R31: exit pocket (bottom-left); sees 3% of the lane
+  - {do: upgrade, id: m3, to: 3-0-1}                                          # R31: Abyss Dweller
+fill:
+  - {do: upgrade, id: de1, to: 4-1-0}                                         # R31: Twin Sixes
+  - {do: place, id: a2, kind: alchemist, role: support, at: [0.259, 0.879], near: [sk4, sk1]} # R31: exit pocket (bottom-left); sees 22% of the lane
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.462, 0.283]}          # R31: raised rock stack, top centre; sees 12% of the lane
+  - {do: upgrade, id: sp1, to: 2-0-1}                                         # R31: White Hot Spikes
+  - {do: upgrade, id: sp1, to: 4-0-1}                                         # R31: Spiked Mines
+  - {do: place, id: su1, kind: super, role: dps, at: [0.045, 0.777]}          # R31: exit pocket (bottom-left); sees 11% of the lane
+  - {do: upgrade, id: su1, to: 0-2-0}                                         # R31: Epic Range
+  - {do: place, id: a3, kind: alchemist, role: support, at: [0.238, 0.589], near: [m2]} # R31: rings left of the lane; sees 17% of the lane
+  - {do: upgrade, id: su1, to: 1-2-0}                                         # R31: Epic Range
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk8, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R31: Aerial Attunement
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  ceramic: [{do: upgrade, id: xn, to: 3-0-0}]
+  moab: [{do: place, id: ans_moab, kind: bomb, role: dps}, {do: upgrade, id: ans_moab, to: 0-3-0}]
+  bfb: [{do: place, id: ans_bfb, kind: dart, role: dps}, {do: upgrade, id: ans_bfb, to: 0-0-4}]

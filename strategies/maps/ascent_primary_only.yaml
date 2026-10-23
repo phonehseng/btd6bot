@@ -1,0 +1,94 @@
+# Ascent, Easy Primary Monkeys Only: Desperados, Bomb Shooters and Boomerangs.
+#
+# Map: Two lanes run side by side at the same time, from the bottom-left up
+# and across the top to the exits at the bottom right; few sight
+# blockers. The big central island sits inside both lanes, the top
+# edge of it and the top-centre land (with a small pond) see long
+# stretches of both (map geometry). Ponds: top centre, by the right-hand
+# crossing and bottom-left.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses desperado, bomb,
+# boomerang. Each purchase is the cheapest that keeps the coming rounds
+# popping at 2.2x the strength they need. Spare cash goes into the Desperado,
+# whose XP the account needs most.
+#
+# Economy: Fast Track starts Easy Primary Monkeys Only at round 10 with about
+# $3,832 and Double Cash. The plan costs $14,570, which a game without the
+# boosts also earns by round 40 (the offline test plays it that way); the fill
+# holds the rest, which the bot buys right after the plan.
+# Model check, Easy Primary Monkeys Only (btd6bot/dps_model.py round_margin;
+# purchases replayed in order as cash allows, account boosts): the plan alone
+# has a worst round margin of 0.91 (round 40); with the fill bought the way
+# the executor buys it (any affordable fill step, in order) 2.04 (round 40);
+# every round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: one of the easiest Advanced maps; Perma-Spike on the
+#     bottom-right platform, submerged sub at the start
+#     (https://www.bloonswiki.com/Ascent)
+#   * CrimsonPlanet, Ascent CHIMPS no micro: wizard, druid, sub, village on
+#     the central island (https://www.youtube.com/watch?v=KEmm-iPaHl0)
+#   * HyperF3, Ascent CHIMPS: sub in the top pond, druids on the island
+#     (https://www.youtube.com/watch?v=TZg8hFFquZA)
+#   * Ascent Primary Only run (https://www.youtube.com/watch?v=NE1ckrFcds8)
+#   * bloonswiki Primary Only: Crossbow/Glaives/bombs; the round-40 MOAB needs
+#     real damage (https://www.bloonswiki.com/Strategy:Primary_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: ascent_primary_only
+map: Ascent
+hero: obyn
+modes: [primary_only]
+planner:
+  towers: {desperado: [4, 3, 3], bomb: [0, 2, 4], boomerang: [0, 3, 2]}
+  base_success: {primary_only: 0.85}
+  maps: [Ascent]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.377, 0.538]}          # R10: Obyn Greenfoot, big central island (not counted by the model)
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.484, 0.487]} # R10: big central island; sees 34% of lane 1, 15% of lane 2
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.281, 0.232]} # R10: top-centre land; sees 16% of lane 1, 28% of lane 2
+  - {do: place, id: de3, kind: desperado, role: dps, target: strong, at: [0.74, 0.521]} # R10: spot (0.74, 0.52); sees 22% of lane 1, 22% of lane 2
+  - {do: place, id: de4, kind: desperado, role: dps, target: strong, at: [0.377, 0.47]} # R10: big central island; sees 27% of lane 1, 16% of lane 2
+  - {do: place, id: de5, kind: desperado, role: dps, target: strong, at: [0.419, 0.453]} # R10: big central island; sees 26% of lane 1, 15% of lane 2
+  - {do: place, id: de6, kind: desperado, role: dps, target: strong, at: [0.633, 0.181]} # R10: top-right land; sees 23% of lane 1, 16% of lane 2
+  - {do: place, id: de7, kind: desperado, role: dps, target: strong, at: [0.313, 0.181]} # R10: top-centre land; sees 13% of lane 1, 24% of lane 2
+  - {do: place, id: de8, kind: desperado, role: dps, target: strong, at: [0.334, 0.521]} # R10: big central island; sees 27% of lane 1, 11% of lane 2
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.302, 0.606]}           # R10: big central island; sees 14% of lane 1
+  - {do: upgrade, id: bo1, to: 0-0-2}                                         # R10: Frag Bombs
+  - {do: upgrade, id: bo1, to: 0-1-2}                                         # R10: Frag Bombs
+  - {do: upgrade, id: bo1, to: 0-2-2}                                         # R11: Missile Launcher
+  - {do: upgrade, id: de7, to: 3-0-0}                                         # R14: Big Iron
+  - {do: place, id: b1, kind: boomerang, role: dps, at: [0.783, 0.76]}        # R15: small right island; sees 6% of lane 1, 11% of lane 2
+  - {do: upgrade, id: b1, to: 0-2-1}                                          # R15: Faster Rangs
+  - {do: upgrade, id: de7, to: 3-1-0}                                         # R16: Big Iron
+  - {do: upgrade, id: b1, to: 0-2-2}                                          # R17: Faster Rangs
+  - {do: upgrade, id: bo1, to: 0-2-3}                                         # R18: Cluster Bombs
+  - {do: upgrade, id: de1, to: 3-1-0}                                         # R20: Big Iron
+  - {do: upgrade, id: de2, to: 3-0-0}                                         # R22: Big Iron
+  - {do: upgrade, id: b1, to: 0-3-2}                                          # R24: Bionic Boomerang
+  - {do: upgrade, id: de5, to: 0-1-3}                                         # R28: Enforcer
+  - {do: upgrade, id: de4, to: 3-0-0}                                         # R32: Big Iron
+fill:
+  - {do: upgrade, id: de1, to: 1-1-0}                                         # R15: Quickdraw (surplus: XP)
+  - {do: upgrade, id: de1, to: 2-1-0}                                         # R16: Standoff (surplus: XP)
+  - {do: upgrade, id: de3, to: 0-1-0}                                         # R24: Eagle Eye (surplus: XP)
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R25: Big Iron (surplus: XP)
+  - {do: upgrade, id: bo1, to: 0-2-4}                                         # R33: Recursive Cluster
+  - {do: upgrade, id: de8, to: 0-0-3}                                         # R35: Enforcer
+  - {do: upgrade, id: de1, to: 4-2-0}                                         # R37: Twin Sixes
+  - {do: upgrade, id: de3, to: 0-1-3}                                         # R38: Enforcer
+  - {do: upgrade, id: de6, to: 0-3-0}                                         # R39: Deadeye
+panic:
+  - {do: place, kind: desperado, role: dps}
+answers:
+  moab: [{do: place, id: ans_moab, kind: bomb, role: dps}, {do: upgrade, id: ans_moab, to: 0-3-0}]

@@ -1,0 +1,89 @@
+# Tricky Tracks, Deflation: sniper, mermonkey, wizard, boomerang from the guides; spots
+# and order from the game's numbers.
+#
+# Why (map data):
+#   Six short lanes run at once on three diagonal tracks. The strips between
+#   the tracks reach two lanes (one track) or more; no water. The train
+#   ($2,500, rising) is never used by the bot.
+#
+# Sources:
+#   * ApexZ, Tricky Tracks CHIMPS Full Auto Start: darts, mermonkeys, Etienne,
+#     boomerangs (https://www.youtube.com/watch?v=fWry_CuR6GI)
+#   * OneEyedDeacon, Tricky Tracks Chimps Guide (https://www.youtube.com/watch?v=ZaqClazQHSM)
+#   * bloonswiki Tricky_Tracks (https://www.bloonswiki.com/Tricky_Tracks)
+#   * bloonswiki Strategy:Deflation_(BTD6): no income from round 31, so buy the whole defence
+#     up front; it must pop the camo purples of R45/R48 and the camo leads of R59
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# The build: 8 snipers (0-2-2, 1-2-0); 4 mermonkeys (3-0-1); 5 wizards (0-3-2, 0-0-0); 2
+# boomerangs (0-3-2, 0-3-1); hero etienne.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Deflation (from round 31, $40,000): worst margin 2.18 at round 54;
+#     next lowest R59 2.28, R58 2.51
+# Routes in the comments (map data): 1 = Path 5, 2 = Path 4, 3 = Path 1, 4 = Path 3, 5 =
+# Path 6, 6 = Path 2.
+# The plan fits the base $20,000 (the hero last, only if cash is left); `fill`
+# spends the rest of the account's $40,000.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: trickytracks_deflation
+map: Tricky Tracks
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {sniper: [1, 2, 2], mermonkey: [3, 0, 1], wizard: [0, 3, 2], boomerang: [0, 3, 2]}
+  base_success: {deflation: 0.78}
+  maps: [Tricky Tracks]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.345, 0.129]}   # map-wide
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.387, 0.129]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.569, 0.129]}   # map-wide
+  - {do: upgrade, id: s3, to: 1-2-0}
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.612, 0.129]}   # map-wide
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.313, 0.164]}   # map-wide
+  - {do: upgrade, id: s5, to: 1-2-0}
+  - {do: place, id: mm1, kind: mermonkey, role: dps, at: [0.291, 0.845]}         # reaches routes 1, 5, 6
+  - {do: upgrade, id: mm1, to: 3-0-0}
+  - {do: place, id: mm2, kind: mermonkey, role: dps, at: [0.035, 0.572]}         # reaches routes 2, 4
+  - {do: upgrade, id: mm2, to: 3-0-0}
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.355, 0.181]}   # map-wide
+  - {do: upgrade, id: s6, to: 1-2-0}
+  - {do: place, id: mm3, kind: mermonkey, role: dps, at: [0.099, 0.777]}         # reaches routes 2, 3
+  - {do: upgrade, id: mm3, to: 3-0-0}
+  - {do: upgrade, id: mm2, to: 3-0-1}
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.633, 0.419]}             # reaches routes 1, 5, 6
+  - {do: place, id: w2, kind: wizard, role: dps, at: [0.345, 0.777]}             # reaches routes 1, 5, 6
+  - {do: upgrade, id: mm1, to: 3-0-1}
+  - {do: place, id: w3, kind: wizard, role: dps, at: [0.537, 0.538]}             # reaches routes 1, 5, 6
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.601, 0.692]}          # reaches routes 1, 5
+  - {do: upgrade, id: r1, to: 0-3-1}
+  - {do: place, id: mm4, kind: mermonkey, role: dps, at: [0.794, 0.453]}         # reaches routes 1, 5
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.302, 0.487]}             # etienne
+fill:
+  - {do: upgrade, id: mm4, to: 3-0-1}
+  - {do: upgrade, id: r1, to: 0-3-2}
+  - {do: upgrade, id: mm3, to: 3-0-1}
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.526, 0.181]}   # map-wide
+  - {do: upgrade, id: s7, to: 1-2-0}
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.58, 0.181]}   # map-wide
+  - {do: upgrade, id: s8, to: 1-2-0}
+  - {do: place, id: w4, kind: wizard, role: dps, at: [0.227, 0.589]}             # reaches routes 2, 3, 4, 6
+  - {do: upgrade, id: w4, to: 0-3-2}
+  - {do: place, id: w5, kind: wizard, role: dps, at: [0.751, 0.504]}             # reaches routes 1, 5
+  - {do: upgrade, id: w5, to: 0-3-2}
+  - {do: place, id: r2, kind: boomerang, role: dps, at: [0.345, 0.453]}          # reaches routes 2, 3, 4, 6
+  - {do: upgrade, id: r2, to: 0-3-1}
+answers:
+  ceramic: [{do: upgrade, id: s2, to: 2-2-0}]
+  moab: [{do: upgrade, id: s2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s2, to: 4-2-0}]

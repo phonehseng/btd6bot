@@ -1,0 +1,84 @@
+# High Finance, Medium (Standard) / Medium Reverse: Buccaneers, Ice Monkeys and Mermonkeys.
+#
+# Map: Lanes alternate by round: odd rounds take the long S lane, even
+# rounds (with the round-40 MOAB) the short U lane. The only free ground
+# is the central park with its two ponds, which touches both lanes; the
+# 15 buildings can be bought for room ($350-$1,500, the bot leaves
+# them). Every round is checked on both lanes.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses buccaneer, ice,
+# mermonkey, skywarden. Each purchase is the cheapest that keeps the coming
+# rounds popping at 3x the strength they need. Spare cash goes into the
+# Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Medium (Standard) at round 15 with about $6,057,
+# with Double Cash income.
+# Model check, Medium (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.86 (round 43); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+# Model check, Medium Reverse (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.77 (round 60); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: Carrier Flagship in the pond
+#     (https://www.bloonswiki.com/High_Finance)
+#   * fandom: buccaneer in the pond, Bloon Solver on the $750 building
+#     (https://bloons.fandom.com/wiki/High_Finance)
+#   * BlueCliff, High Finance Hard (ninja on the park corners, buccaneer)
+#     (https://www.youtube.com/watch?v=C5QklAgqeGQ)
+#   * bloonswiki Reverse: Medium strategies carry over; exit protection moves
+#     to the far end (https://www.bloonswiki.com/Strategy:Reverse_(BTD6))
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: highfinance_medium
+map: High Finance
+hero: quincy
+modes: [medium, reverse]
+planner:
+  towers: {skywarden: [1, 0, 1], buccaneer: [0, 5, 2], mermonkey: [3, 2, 0], ice: [0, 1, 4]}
+  base_success: {medium: 0.8, reverse: 0.8}
+  maps: [High Finance]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps}                              # R15: Quincy, wherever it fits (no room left; not counted by the model)
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.484, 0.675]}      # R15: central park, bottom; sees 9% of the S lane (odd rounds), 25% of the U lane (even rounds)
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.377, 0.675]}      # R15: central park, bottom; sees 8% of the S lane (odd rounds), 24% of the U lane (even rounds)
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.377, 0.385]}      # R15: central park, top corners; sees 10% of the S lane (odd rounds), 17% of the U lane (even rounds)
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.484, 0.385]}      # R15: top pond in the central park; sees 9% of the S lane (odd rounds), 19% of the U lane (even rounds)
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.452, 0.624]}      # R15: bottom pond in the central park; sees 16% of the S lane (odd rounds), 44% of the U lane (even rounds)
+  - {do: upgrade, id: bc1, to: 0-2-1}                                         # R15: Hot Shot
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: bc1, to: 0-3-1}                                         # R15: Cannon Ship
+  - {do: upgrade, id: bc1, to: 0-3-2}                                         # R16: Cannon Ship
+  - {do: upgrade, id: sk3, to: 1-0-0}                                         # R26: Aerial Attunement
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.377, 0.606]}       # R26: central park, bottom; sees 10% of the U lane (even rounds)
+  - {do: upgrade, id: m1, to: 3-1-0}                                          # R26: Abyss Dweller
+  - {do: upgrade, id: bc1, to: 0-4-2}                                         # R26: Monkey Pirates
+  - {do: upgrade, id: sk1, to: 1-0-1}                                         # R32: Aerial Attunement
+  - {do: place, id: i1, kind: ice, role: dps, at: [0.419, 0.419]}             # R32: top pond in the central park; sees 3% of the S lane (odd rounds)
+  - {do: upgrade, id: i1, to: 0-0-1}                                          # R32: Larger Radius
+  - {do: upgrade, id: sk2, to: 1-0-1}                                         # R32: Aerial Attunement
+  - {do: upgrade, id: i1, to: 0-0-4}                                          # R33: Icicles
+  - {do: upgrade, id: m1, to: 3-2-0}                                          # R35: Abyss Dweller
+  - {do: upgrade, id: sk4, to: 1-0-1}                                         # R35: Aerial Attunement
+  - {do: upgrade, id: i1, to: 0-1-4}                                          # R41: Icicles
+  - {do: upgrade, id: sk3, to: 1-0-1}                                         # R41: Aerial Attunement
+  - {do: upgrade, id: bc1, to: 0-5-2}                                         # R46: Pirate Lord
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  ceramic: [{do: place, id: ans_ceramic, kind: sniper, role: dps, target: strong}, {do: upgrade, id: ans_ceramic, to: 2-0-0}]
+  bfb: [{do: place, id: ans_bfb, kind: sniper, role: dps, target: strong}, {do: upgrade, id: ans_bfb, to: 4-0-0}]

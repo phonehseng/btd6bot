@@ -1,0 +1,66 @@
+# #Ouch, Easy: a buccaneer and two Advanced-Intel subs in the central pond, snipers for
+# camo.
+#
+# Why (map data):
+#   Four very short lanes are all active every round (two vertical, two
+#   horizontal; map data: 4 routes of 209-310 hittable units, one scenario).
+#   The only water is the central pond, and it touches all four lanes: a
+#   buccaneer there covers ~350 units of track (a third of every lane), a land
+#   tower in a corner covers two lanes. No sight blockers. The pond can be
+#   drained for $1,000 (never bought here: the bot does not click map objects).
+#
+# Sources:
+#   * BlueCliff, #Ouch Hard No MK (ft. Quincy): subs in the pond, sniper, then
+#     Pirate Lord (https://www.youtube.com/watch?v=Kxojxz7wJlE)
+#   * CurlyFrys, #OUCH Hard Standard Easy Tutorial: Sauda + subs + Pirate Lord
+#     (https://www.youtube.com/watch?v=UYXG9xnWkX0)
+#   * bloonswiki #Ouch / fandom Ouch: the pond holds 9 buccaneers or 13 subs and
+#     reaches all four lanes (https://www.bloonswiki.com/Ouch, https://bloons.fandom.com/wiki/Ouch)
+#
+# The build: 2 subs (2-0-4); 1 buccaneer (3-2-0); 2 snipers (2-2-0, 1-2-0); hero
+# admiral_brickell.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Easy (from round 10, $3,832): worst margin 2.40 at round 14;
+#     next lowest R15 2.77, R12 2.86
+# Routes in the comments (map data): 1 = Path1, 2 = Path4, 3 = Path2, 4 = Path3.
+# The plan is paid for by round 40 even without Double Cash; `fill` holds what
+# Double Cash buys after it.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: ouch_easy
+map: "#Ouch"
+hero: admiral_brickell
+modes: [easy]
+planner:
+  towers: {sub: [2, 0, 4], buccaneer: [3, 2, 0], sniper: [2, 2, 0]}
+  base_success: {easy: 0.8}
+  maps: ["#Ouch"]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.377, 0.504]}               # pond, left
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.521]}           # pond centre: reaches all four lanes
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.494, 0.504]}               # pond, right
+  - {do: upgrade, id: b1, to: 0-1-0}
+  - {do: upgrade, id: sb1, to: 2-0-0}
+  - {do: upgrade, id: sb2, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.43, 0.44]}               # Brickell
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.281, 0.283]}   # camo: Night Vision
+  - {do: upgrade, id: s1, to: 0-1-0}
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: upgrade, id: sb2, to: 2-0-2}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.59, 0.283]}   # second camo sniper
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: sb1, to: 2-0-3}
+  - {do: upgrade, id: sb2, to: 2-0-3}
+  - {do: upgrade, id: s1, to: 2-2-0}
+fill:
+  - {do: upgrade, id: b1, to: 3-2-0}
+  - {do: upgrade, id: sb1, to: 2-0-4}
+  - {do: upgrade, id: sb2, to: 2-0-4}

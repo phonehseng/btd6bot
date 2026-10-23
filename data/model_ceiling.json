@@ -1,5 +1,5 @@
 {
- "about": "Best worst-round damage-model margin any build reached for these map/modes (map research of 2026-10-22, docs/map_strategies/*.md, after the buccaneer and sniper fixes). Under planner.CEILING_PLAYABLE no general build is trusted there until one has won: Party Parade Hard (1.33) and Pat's Pond Hard (1.35) were both lost at the end that night. '*' = every mode of the map.",
+ "about": "Best worst-round damage-model margin any build reached for these map/modes (map research of 2026-10-22/23, docs/map_strategies/*.md, after the buccaneer and sniper fixes). Under planner.CEILING_PLAYABLE no general build is trusted there until one has won: Party Parade Hard (1.33) and Pat's Pond Hard (1.35) were both lost at the end that night. '*' = every mode of the map.",
  "ceilings": {
   "Party Parade|hard": 1.33,
   "Party Parade|medium": 1.43,
@@ -24,6 +24,32 @@
   "Spice Islands|primary_only": 0.72,
   "Quiet Street|primary_only": 1.38,
   "Sulfur Springs|primary_only": 0.71,
-  "Sulfur Springs|deflation": 1.22
+  "Sulfur Springs|deflation": 1.22,
+  "Mesa|*": 0.8,
+  "Cargo|primary_only": 0.66,
+  "Castle Revenge|primary_only": 0.84,
+  "Dark Path|primary_only": 0.92,
+  "Enchanted Glade|primary_only": 1.74,
+  "High Finance|primary_only": 1.53,
+  "Last Resort|primary_only": 0.33,
+  "Geared|primary_only": 0.06,
+  "Erosion|primary_only": 0.06,
+  "Ascent|deflation": 1.54,
+  "Cargo|deflation": 0.86,
+  "Castle Revenge|deflation": 1.28,
+  "Erosion|deflation": 1.51,
+  "Last Resort|deflation": 1.92,
+  "Dark Path|medium": 1.48,
+  "Dark Path|reverse": 1.48,
+  "Erosion|medium": 1.1,
+  "Erosion|reverse": 1.1,
+  "Castle Revenge|reverse": 1.51,
+  "Last Resort|reverse": 1.72,
+  "Cargo|reverse": 1.78,
+  "Cornfield|military_only": 1.79,
+  "Dark Path|military_only": 1.41,
+  "Last Resort|military_only": 1.35,
+  "Ascent|hard": 1.41,
+  "Last Resort|hard": 0.14
  }
 }

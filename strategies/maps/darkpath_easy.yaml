@@ -1,0 +1,108 @@
+# Dark Path, Easy (Standard): Desperados, Mermonkeys and Spike Factories.
+#
+# Map: One diagonal lane in a sunken gully from the top-right to the
+# bottom-left. Rock walls block line of sight almost everywhere (12
+# walls plus 8 buyable ones in the map file), so only the open pocket
+# by the exit, the pocket by the entrance and global towers see much of
+# it; the bot lost Hard at round 25 with towers that saw nothing. No
+# water. The cave walls can be bought ($250-$1,000 a tier; the bot
+# leaves them).
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses desperado,
+# mermonkey, spike, alchemist, skywarden, dart. Each purchase is the cheapest
+# that keeps the coming rounds popping at 2.5x the strength they need. Spare
+# cash goes into the Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Easy (Standard) at round 10 with about $3,832 and
+# Double Cash. The plan costs $15,985, which a game without the boosts also
+# earns by round 40 (the offline test plays it that way); the fill holds the
+# rest, which the bot buys right after the plan.
+# Model check, Easy (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 1.01 (round 38); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 2.30 (round 34); every
+# round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: walls block sight; the raised platforms see over them;
+#     Perma-Spike at the exit (https://www.bloonswiki.com/Dark_Path)
+#   * SnartFarts, Dark Path CHIMPS: everything in the exit pocket
+#     (https://www.youtube.com/watch?v=4AAtx2p1bwE)
+#   * BlueCliff, Dark Path Hard (Quincy, ninja, alchemist)
+#     (https://www.youtube.com/watch?v=WZMh1KPqgyQ)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: darkpath_easy
+map: Dark Path
+hero: quincy
+modes: [easy]
+planner:
+  towers: {skywarden: [1, 0, 1], desperado: [4, 2, 0], mermonkey: [3, 2, 0], dart: [3, 0, 2], alchemist: [1, 1, 0], spike: [1, 2, 0]}
+  base_success: {easy: 0.85}
+  maps: [Dark Path]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.077, 0.811]}          # R10: Quincy, exit pocket (bottom-left) (not counted by the model)
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.174, 0.777]}      # R10: exit pocket (bottom-left); sees 26% of the lane
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.142, 0.794]}      # R10: exit pocket (bottom-left); sees 24% of the lane
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.569, 0.266]}      # R10: pocket right of the top-centre rock stack; sees 23% of the lane
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.227, 0.93]}       # R10: exit pocket (bottom-left); sees 23% of the lane
+  - {do: place, id: sk5, kind: skywarden, role: dps, at: [0.537, 0.283]}      # R10: pocket right of the top-centre rock stack; sees 22% of the lane
+  - {do: place, id: sk6, kind: skywarden, role: dps, at: [0.131, 0.743]}      # R10: exit pocket (bottom-left); sees 21% of the lane
+  - {do: place, id: sk7, kind: skywarden, role: dps, at: [0.12, 0.845]}       # R10: exit pocket (bottom-left); sees 21% of the lane
+  - {do: upgrade, id: sk5, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.537, 0.215]} # R10: pocket right of the top-centre rock stack; sees 25% of the lane
+  - {do: place, id: sk8, kind: skywarden, role: dps, at: [0.099, 0.76]}       # R10: exit pocket (bottom-left); sees 19% of the lane
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.794, 0.385]} # R10: right-hand green by the entrance; sees 24% of the lane
+  - {do: upgrade, id: sk3, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.077, 0.879]}       # R10: exit pocket (bottom-left); sees 9% of the lane
+  - {do: upgrade, id: m1, to: 0-1-0}                                          # R10: Sharper Prongs
+  - {do: upgrade, id: de2, to: 3-0-0}                                         # R12: Big Iron
+  - {do: upgrade, id: de1, to: 3-0-0}                                         # R15: Big Iron
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: sk8, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.163, 0.726]}            # R15: exit pocket (bottom-left); sees 11% of the lane
+  - {do: upgrade, id: m1, to: 1-1-0}                                          # R16: Trident Efficiency
+  - {do: upgrade, id: de1, to: 3-1-0}                                         # R16: Big Iron
+  - {do: upgrade, id: sk7, to: 1-0-0}                                         # R16: Aerial Attunement
+  - {do: upgrade, id: m1, to: 2-1-0}                                          # R17: Trident Swiftness
+  - {do: upgrade, id: d1, to: 1-0-1}                                          # R17: Sharp Shots
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.671, 0.146], near: [sk3]} # R20: right-hand green by the entrance; sees 21% of the lane
+  - {do: place, id: a2, kind: alchemist, role: support, at: [0.259, 0.879], near: [sk4, sk1]} # R20: exit pocket (bottom-left); sees 22% of the lane
+  - {do: place, id: a3, kind: alchemist, role: support, at: [0.238, 0.589], near: [d1]} # R20: rings left of the lane; sees 17% of the lane
+  - {do: upgrade, id: a3, to: 0-1-0}                                          # R20: Stronger Acid
+  - {do: upgrade, id: a2, to: 0-1-0}                                          # R21: Stronger Acid
+  - {do: upgrade, id: d1, to: 3-0-1}                                          # R22: Spike-o-pult
+  - {do: upgrade, id: a1, to: 0-1-0}                                          # R22: Stronger Acid
+  - {do: upgrade, id: sk6, to: 1-0-0}                                         # R22: Aerial Attunement
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R22: Aerial Attunement
+  - {do: upgrade, id: d1, to: 3-0-2}                                          # R25: Spike-o-pult
+  - {do: upgrade, id: sk1, to: 1-0-1}                                         # R28: Aerial Attunement
+  - {do: upgrade, id: m1, to: 3-1-0}                                          # R28: Abyss Dweller
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.462, 0.283]}          # R30: raised rock stack, top centre; sees 12% of the lane
+  - {do: place, id: m2, kind: mermonkey, role: dps, at: [0.035, 0.913]}       # R31: exit pocket (bottom-left); sees 3% of the lane
+  - {do: upgrade, id: m2, to: 3-1-0}                                          # R31: Abyss Dweller
+  - {do: upgrade, id: sp1, to: 1-1-0}                                         # R32: Bigger Stacks
+fill:
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R23: Big Iron (surplus: XP)
+  - {do: upgrade, id: sp1, to: 1-2-0}                                         # R33: Even Faster Production
+  - {do: upgrade, id: m1, to: 3-2-0}                                          # R33: Abyss Dweller
+  - {do: upgrade, id: m2, to: 3-2-0}                                          # R33: Abyss Dweller
+  - {do: upgrade, id: a1, to: 1-1-0}                                          # R33: Larger Potions
+  - {do: upgrade, id: a2, to: 1-1-0}                                          # R33: Larger Potions
+  - {do: upgrade, id: a3, to: 1-1-0}                                          # R33: Larger Potions
+  - {do: upgrade, id: de1, to: 4-2-0}                                         # R37: Twin Sixes
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  moab: [{do: place, id: ans_moab, kind: bomb, role: dps}, {do: upgrade, id: ans_moab, to: 0-3-0}]

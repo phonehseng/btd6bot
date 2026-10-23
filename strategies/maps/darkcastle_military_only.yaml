@@ -1,0 +1,82 @@
+# Dark Castle, Military Only: buccaneer, heli, ace from the guides; spots and order from
+# the game's numbers.
+#
+# Why (map data):
+#   Four entrances on the left run under tree packs (bloons immune there) and
+#   merge into one stretch through the castle door to the exit. The model's
+#   own routes for this map follow the Reverse-mode splitters; these builds were
+#   checked on the corrected forward routes (Path1/Path4 -> PathMerge2,
+#   Path2/Path3 -> PathMerge1 -> PathMerge2). Castle walls block a third of the
+#   map's sight lines. The trees can be bought ($1,000 each; not done here).
+#
+# Sources:
+#   * BlueCliff, Dark Castle Hard No MK (ft. Obyn): ninja 4-0-2 + sub + alchemist
+#     at the merge (https://www.youtube.com/watch?v=QB0bitxGZn0)
+#   * Yoboi3li, Dark Castle CHIMPS (no abilities, no micro): druids, Obyn
+#     (https://www.youtube.com/watch?v=YUR_SIL0trE)
+#   * bloonswiki Dark_Castle_(BTD6): the lanes converge near the end, spike
+#     factories by the castle are useful (https://www.bloonswiki.com/Dark_Castle_(BTD6))
+#   * bloonswiki Military_Only: 60 rounds on Medium; leads with Full Metal Jacket
+#     (sniper 1-x-x), camo with Night Vision or Submerge and Support
+#     (https://www.bloonswiki.com/Military_Only)
+#
+# The build: 6 buccaneers (4-0-2, 2-3-0, 3-0-2, 3-0-1); 1 heli (3-0-2); 3 aces (2-3-0,
+# 1-3-0); hero obyn.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Military Only (from round 15, $6,057): worst margin 2.16 at round 34;
+#     next lowest R33 2.38, R43 2.62
+# Routes in the comments (map data): 1 = Path1+PathMerge2, 2 = Path4+PathMerge2, 3 =
+# Path2+PathMerge1+PathMerge2, 4 = Path3+PathMerge1+PathMerge2.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: darkcastle_military_only
+map: Dark Castle
+hero: obyn
+modes: [military_only]
+planner:
+  towers: {buccaneer: [4, 3, 2], heli: [3, 0, 2], ace: [2, 3, 0]}
+  base_success: {military_only: 0.72}
+  maps: [Dark Castle]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.569, 0.385]}   # reaches all 4 routes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.569, 0.675]}   # reaches all 4 routes
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: upgrade, id: b1, to: 2-3-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.43, 0.641]}       # obyn
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.601, 0.334]}   # reaches all 4 routes
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.623, 0.675]}   # reaches all 4 routes
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.59, 0.743]}    # reaches all 4 routes
+  - {do: upgrade, id: b3, to: 2-0-2}
+  - {do: upgrade, id: b4, to: 2-0-0}
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.569, 0.283]}   # reaches all 4 routes
+  - {do: upgrade, id: b6, to: 2-0-1}
+  - {do: upgrade, id: b4, to: 2-0-1}
+  - {do: upgrade, id: b5, to: 2-0-1}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.377, 0.692]}        # reaches route 2
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.248, 0.743]}        # reaches route 2
+  - {do: upgrade, id: ac1, to: 0-2-0}
+  - {do: upgrade, id: ac1, to: 1-3-0}
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.238, 0.266]}        # reaches route 1
+  - {do: upgrade, id: ac2, to: 2-3-0}
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.366, 0.3]}          # reaches route 1
+  - {do: upgrade, id: ac3, to: 0-1-0}
+  - {do: upgrade, id: b4, to: 2-0-2}
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: b6, to: 3-0-1}
+  - {do: upgrade, id: ac1, to: 2-3-0}
+  - {do: upgrade, id: ac3, to: 1-3-0}
+  - {do: upgrade, id: b3, to: 3-0-2}
+  - {do: upgrade, id: b4, to: 3-0-2}
+  - {do: upgrade, id: b2, to: 4-0-2}
+answers:
+  bfb: [{do: upgrade, id: h1, to: 4-0-2}]

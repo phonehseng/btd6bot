@@ -1,0 +1,91 @@
+# Ascent, Medium Military Monkeys Only: Snipers, Subs and Aces.
+#
+# Map: Two lanes run side by side at the same time, from the bottom-left up
+# and across the top to the exits at the bottom right; few sight
+# blockers. The big central island sits inside both lanes, the top
+# edge of it and the top-centre land (with a small pond) see long
+# stretches of both (map geometry). Ponds: top centre, by the right-hand
+# crossing and bottom-left.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sniper, sub, ace.
+# Each purchase is the cheapest that keeps the coming rounds popping at 3x the
+# strength they need. Spare cash goes into the Sub, whose XP the account needs
+# most.
+#
+# Economy: Fast Track starts Medium Military Monkeys Only at round 15 with
+# about $6,057, with Double Cash income.
+# Model check, Medium Military Monkeys Only (btd6bot/dps_model.py
+# round_margin; purchases replayed in order as cash allows, account boosts):
+# the plan alone has a worst round margin of 2.99 (round 54); every round at
+# 2.0 or more. Threat simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: one of the easiest Advanced maps; Perma-Spike on the
+#     bottom-right platform, submerged sub at the start
+#     (https://www.bloonswiki.com/Ascent)
+#   * CrimsonPlanet, Ascent CHIMPS no micro: wizard, druid, sub, village on
+#     the central island (https://www.youtube.com/watch?v=KEmm-iPaHl0)
+#   * HyperF3, Ascent CHIMPS: sub in the top pond, druids on the island
+#     (https://www.youtube.com/watch?v=TZg8hFFquZA)
+#   * Ascent Military Only run (https://www.youtube.com/watch?v=_nqlccGB1YU)
+#   * bloonswiki Military Only: subs/buccaneers on water maps, snipers and
+#     aces on dry ones; camo by R24, lead by R28
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: ascent_military_only
+map: Ascent
+hero: obyn
+modes: [military_only]
+planner:
+  towers: {sub: [2, 0, 5], sniper: [4, 3, 0], ace: [2, 4, 0]}
+  base_success: {military_only: 0.8}
+  maps: [Ascent]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.387, 0.146]}            # R15: top pond; sees 12% of lane 2
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R15: Advanced Intel
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.735, 0.521]}          # R15: Obyn Greenfoot, spot (0.73, 0.52) (not counted by the model)
+  - {do: upgrade, id: sb1, to: 2-0-3}                                         # R15: Triple Guns (surplus: XP)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.419, 0.572]} # R16: big central island; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 0-1-0}                                          # R16: Night Vision Goggles
+  - {do: upgrade, id: sb1, to: 2-0-4}                                         # R18: Armor Piercing Darts (surplus: XP)
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.345, 0.146]} # R20: top-centre land; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R20: Shrapnel Shot
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.345, 0.521]}            # R22: big central island; sees little track
+  - {do: upgrade, id: ac1, to: 0-1-0}                                         # R22: Exploding Pineapple
+  - {do: upgrade, id: s1, to: 1-1-0}                                          # R23: Full Metal Jacket
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R24: Shrapnel Shot
+  - {do: upgrade, id: ac1, to: 1-3-0}                                         # R29: Bomber Ace
+  - {do: upgrade, id: ac1, to: 2-3-0}                                         # R31: Bomber Ace
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.633, 0.164]} # R31: top-right land; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.291, 0.181]} # R31: top-centre land; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.27, 0.232]} # R35: top-centre land; map-wide (line of sight)
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R35: Shrapnel Shot
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.409, 0.453]} # R35: big central island; map-wide (line of sight)
+  - {do: upgrade, id: s6, to: 1-2-0}                                          # R35: Shrapnel Shot
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.441, 0.47]} # R35: big central island; map-wide (line of sight)
+  - {do: upgrade, id: s7, to: 1-2-0}                                          # R35: Shrapnel Shot
+  - {do: upgrade, id: s3, to: 3-2-0}                                          # R37: Deadly Precision
+  - {do: upgrade, id: s2, to: 3-2-0}                                          # R38: Deadly Precision
+  - {do: upgrade, id: s6, to: 1-3-0}                                          # R40: Bouncing Bullet
+  - {do: upgrade, id: s5, to: 3-2-0}                                          # R40: Deadly Precision
+  - {do: upgrade, id: s7, to: 3-2-0}                                          # R42: Deadly Precision
+  - {do: upgrade, id: s4, to: 3-2-0}                                          # R43: Deadly Precision
+  - {do: upgrade, id: s6, to: 2-3-0}                                          # R44: Bouncing Bullet
+  - {do: upgrade, id: ac1, to: 2-4-0}                                         # R49: Ground Zero
+  - {do: upgrade, id: s1, to: 2-2-0}                                          # R49: Large Caliber
+  - {do: upgrade, id: s1, to: 4-2-0}                                          # R50: Maim MOAB
+  - {do: upgrade, id: sb1, to: 2-0-5}                                         # R56: Sub Commander (surplus: XP)
+panic:
+  - {do: place, kind: sniper, role: dps}

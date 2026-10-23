@@ -1,0 +1,57 @@
+# Flooded Valley, Deflation: mermonkey, buccaneer from the guides; spots and order from
+# the game's numbers.
+#
+# Why (map data):
+#   Two lanes run on top of the dam in opposite directions at the same time.
+#   The dam blocks sight from the big left land, so land towers there see
+#   nothing; the water on the right side touches the track at the dam's bends.
+#   Water towers (subs, buccaneers, mermonkeys) carry every guide.
+#
+# Sources:
+#   * G-Horizon, Flooded Valley CHIMPS Easy Guide: two mermonkeys, buccaneer
+#     (https://www.youtube.com/watch?v=68Jbc9m1zts)
+#   * Tiggy Gaming, Flooded Valley: buccaneer start, sub, Brickell, Carrier Flagship
+#     (https://www.youtube.com/watch?v=5x1IfnoZy2c)
+#   * bloonswiki Flooded_Valley (https://www.bloonswiki.com/Flooded_Valley)
+#   * bloonswiki Strategy:Deflation_(BTD6): no income from round 31, so buy the whole defence
+#     up front; it must pop the camo purples of R45/R48 and the camo leads of R59
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# The build: 2 mermonkeys (3-0-1); 2 buccaneers (0-5-2, 2-3-0); hero admiral_brickell.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Deflation (from round 31, $40,000): worst margin 3.79 at round 54;
+#     next lowest R58 4.32, R57 4.91
+# Routes in the comments (map data): 1 = Path, 2 = Path (1).
+# The plan fits the base $20,000 (the hero last, only if cash is left); `fill`
+# spends the rest of the account's $40,000.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: floodedvalley_deflation
+map: Flooded Valley
+hero: admiral_brickell
+modes: [deflation]
+planner:
+  towers: {mermonkey: [3, 0, 1], buccaneer: [2, 5, 2]}
+  base_success: {deflation: 0.78}
+  maps: [Flooded Valley]
+plan:
+  - {do: place, id: mm1, kind: mermonkey, role: dps, at: [0.526, 0.709]}   # reaches all 2 routes
+  - {do: upgrade, id: mm1, to: 3-0-1}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.569, 0.743]}    # reaches all 2 routes
+  - {do: upgrade, id: b1, to: 2-3-0}
+  - {do: place, id: mm2, kind: mermonkey, role: dps, at: [0.494, 0.164]}   # reaches all 2 routes
+  - {do: upgrade, id: mm2, to: 3-0-1}
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.548, 0.641]}    # reaches all 2 routes
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.526, 0.777]}       # admiral_brickell
+fill:
+  - {do: upgrade, id: b2, to: 0-5-2}
+answers:
+  ceramic: [{do: place, kind: heli, id: ans_ceramic_heli, role: dps}, {do: upgrade, id: ans_ceramic_heli, to: 2-0-0}]
+  bfb: [{do: place, kind: heli, id: ans_bfb_heli, role: dps}, {do: upgrade, id: ans_bfb_heli, to: 4-0-0}]

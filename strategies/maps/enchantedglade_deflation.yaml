@@ -1,0 +1,106 @@
+# Enchanted Glade, Easy Deflation: Snipers, Subs and Mermonkeys.
+#
+# Map: Two lanes alternate by round (odd rounds from the bottom-left, even
+# rounds from the top-right) and meet in the wavy stretch below the
+# centre before the climb into the cherry-tree exit. Trees block line of
+# sight. Land: top-left, right-centre and bottom-centre islands, and a
+# bottom-right island inside a ring of water. The bot lost Hard at round
+# 63 with towers on one lane only; every round here is checked on both
+# lanes.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses sniper, sub,
+# mermonkey, skywarden. Each purchase is the cheapest that keeps the coming
+# rounds popping at 2x the strength they need. Spare cash goes into the
+# Desperado, whose XP the account needs most.
+#
+# Economy: Deflation starts at round 31 with $40,000 (Double Cash) and no
+# income, and the executor buys plan and fill at once before round 31. The
+# plan costs $19,560 and fits the $20,000 of a game without Double Cash (the
+# offline test plays it that way).
+# Model check, Easy Deflation (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 0.58 (round 59); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 2.02 (round 58); every
+# round at 2.0 or more once the fill is bought. Threat simulation
+# (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: use the bottom-centre space, the area below the centre, or
+#     global towers (https://www.bloonswiki.com/Enchanted_Glade)
+#   * BlueCliff, Enchanted Glade Hard (ninja, alchemist, Bloon Solver)
+#     (https://www.youtube.com/watch?v=WTBG33Bey-M)
+#   * SnartFarts, Enchanted Glade CHIMPS with Carrier Flagship
+#     (https://www.youtube.com/watch?v=MEHLrD12TMk)
+#   * fandom Deflation: buy the whole defence before round 31; camo purples
+#     R45/R48, camo leads R59 (https://bloons.fandom.com/wiki/Deflation)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: enchantedglade_deflation
+map: Enchanted Glade
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {skywarden: [1, 0, 0], mermonkey: [3, 0, 1], sub: [4, 3, 2], sniper: [2, 2, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Enchanted Glade]
+plan:
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.43, 0.794]}       # R31: bottom-centre island; sees 32% of the top-right lane (even rounds), 37% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.398, 0.811]}      # R31: bottom-centre island; sees 32% of the top-right lane (even rounds), 32% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.462, 0.811]}      # R31: bottom-centre island; sees 28% of the top-right lane (even rounds), 36% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.43, 0.862]}       # R31: bottom-centre island; sees 25% of the top-right lane (even rounds), 28% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk5, kind: skywarden, role: dps, at: [0.387, 0.862]}      # R31: bottom-centre island; sees 26% of the top-right lane (even rounds), 22% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk6, kind: skywarden, role: dps, at: [0.473, 0.862]}      # R31: bottom-centre island; sees 20% of the top-right lane (even rounds), 29% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk7, kind: skywarden, role: dps, at: [0.462, 0.913]}      # R31: bottom-centre island; sees 16% of the top-right lane (even rounds), 19% of the bottom-left lane (odd rounds)
+  - {do: place, id: sk8, kind: skywarden, role: dps, at: [0.612, 0.811]}      # R31: bottom-right island and its water ring; sees 12% of the top-right lane (even rounds), 23% of the bottom-left lane (odd rounds)
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.623, 0.726]}       # R31: bottom-right island and its water ring; sees 6% of the top-right lane (even rounds), 9% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: m1, to: 3-0-0}                                          # R31: Abyss Dweller
+  - {do: upgrade, id: m1, to: 3-0-1}                                          # R31: Abyss Dweller
+  - {do: upgrade, id: sk5, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk3, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk6, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: upgrade, id: sk7, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: place, id: m2, kind: mermonkey, role: dps, at: [0.676, 0.521]}       # R31: right-centre island; sees 8% of the top-right lane (even rounds)
+  - {do: upgrade, id: m2, to: 3-0-1}                                          # R31: Abyss Dweller
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.569, 0.828]}            # R31: bottom-right island and its water ring; sees 8% of the top-right lane (even rounds), 15% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: sb1, to: 1-0-2}                                         # R31: Airburst Darts
+  - {do: upgrade, id: sb1, to: 4-0-2}                                         # R31: Bloontonium Reactor
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.569, 0.896]}            # R31: bottom-right island and its water ring; sees 4% of the top-right lane (even rounds), 5% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: sb2, to: 2-3-0}                                         # R31: Ballistic Missile
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.051, 0.181]} # R31: top-left island; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: upgrade, id: sk8, to: 1-0-0}                                         # R31: Aerial Attunement
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.163, 0.138]} # R31: top-left island; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.211, 0.146]} # R31: top-left island; map-wide (line of sight)
+  - {do: upgrade, id: s3, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.259, 0.146]} # R31: top-left island; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.232, 0.223]} # R31: top-left island; map-wide (line of sight)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.419, 0.922]}          # R31: Quincy, bottom-centre island (not counted by the model)
+fill:
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.2, 0.198]} # R31: top-left island; map-wide (line of sight)
+  - {do: upgrade, id: s6, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: upgrade, id: s3, to: 2-2-0}                                          # R31: Large Caliber
+  - {do: upgrade, id: s4, to: 2-2-0}                                          # R31: Large Caliber
+  - {do: upgrade, id: s5, to: 2-2-0}                                          # R31: Large Caliber
+  - {do: upgrade, id: s6, to: 2-2-0}                                          # R31: Large Caliber
+  - {do: upgrade, id: s2, to: 2-2-0}                                          # R31: Large Caliber
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.676, 0.675]}            # R31: bottom-right island and its water ring; sees little track
+  - {do: upgrade, id: sb3, to: 4-0-1}                                         # R31: Bloontonium Reactor
+  - {do: upgrade, id: sb3, to: 4-0-2}                                         # R31: Bloontonium Reactor
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  moab: [{do: upgrade, id: s2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s2, to: 4-2-0}]

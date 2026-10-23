@@ -1,0 +1,82 @@
+# Enchanted Glade, Medium Military Monkeys Only: Aces, Snipers and Subs.
+#
+# Map: Two lanes alternate by round (odd rounds from the bottom-left, even
+# rounds from the top-right) and meet in the wavy stretch below the
+# centre before the climb into the cherry-tree exit. Trees block line of
+# sight. Land: top-left, right-centre and bottom-centre islands, and a
+# bottom-right island inside a ring of water. The bot lost Hard at round
+# 63 with towers on one lane only; every round here is checked on both
+# lanes.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses ace, sniper, sub.
+# Each purchase is the cheapest that keeps the coming rounds popping at 3x the
+# strength they need. Spare cash goes into the Sub, whose XP the account needs
+# most.
+#
+# Economy: Fast Track starts Medium Military Monkeys Only at round 15 with
+# about $6,057, with Double Cash income.
+# Model check, Medium Military Monkeys Only (btd6bot/dps_model.py
+# round_margin; purchases replayed in order as cash allows, account boosts):
+# the plan alone has a worst round margin of 3.47 (round 54); every round at
+# 2.0 or more. Threat simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: use the bottom-centre space, the area below the centre, or
+#     global towers (https://www.bloonswiki.com/Enchanted_Glade)
+#   * BlueCliff, Enchanted Glade Hard (ninja, alchemist, Bloon Solver)
+#     (https://www.youtube.com/watch?v=WTBG33Bey-M)
+#   * SnartFarts, Enchanted Glade CHIMPS with Carrier Flagship
+#     (https://www.youtube.com/watch?v=MEHLrD12TMk)
+#   * bloonswiki Military Only: subs/buccaneers on water maps, snipers and
+#     aces on dry ones; camo by R24, lead by R28
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: enchantedglade_military_only
+map: Enchanted Glade
+hero: quincy
+modes: [military_only]
+planner:
+  towers: {sub: [4, 2, 2], ace: [2, 5, 0], sniper: [1, 5, 0]}
+  base_success: {military_only: 0.8}
+  maps: [Enchanted Glade]
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.569, 0.828]}            # R15: bottom-right island and its water ring; sees 8% of the top-right lane (even rounds), 15% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R15: Advanced Intel
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.845]}          # R15: Quincy, bottom-centre island (not counted by the model)
+  - {do: upgrade, id: sb1, to: 4-0-2}                                         # R15: Bloontonium Reactor (surplus: XP)
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.569, 0.896]}            # R16: bottom-right island and its water ring; sees 4% of the top-right lane (even rounds), 5% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: sb2, to: 1-0-0}                                         # R16: Longer Range (surplus: XP)
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.676, 0.675]}            # R17: bottom-right island and its water ring; sees little track
+  - {do: upgrade, id: sb3, to: 1-0-0}                                         # R17: Longer Range (surplus: XP)
+  - {do: upgrade, id: sb2, to: 2-0-0}                                         # R18: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb2, to: 3-0-0}                                         # R19: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb2, to: 3-2-0}                                         # R21: Submerge and Support
+  - {do: upgrade, id: sb2, to: 4-2-0}                                         # R26: Bloontonium Reactor
+  - {do: upgrade, id: sb3, to: 2-0-0}                                         # R26: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb3, to: 2-2-0}                                         # R27: Advanced Intel (surplus: XP)
+  - {do: upgrade, id: sb3, to: 3-2-0}                                         # R28: Submerge and Support (surplus: XP)
+  - {do: upgrade, id: sb3, to: 4-2-0}                                         # R31: Bloontonium Reactor (surplus: XP)
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.43, 0.811]}             # R35: bottom-centre island; sees 9% of the top-right lane (even rounds), 10% of the bottom-left lane (odd rounds)
+  - {do: upgrade, id: ac1, to: 0-1-0}                                         # R35: Exploding Pineapple
+  - {do: upgrade, id: ac1, to: 0-3-0}                                         # R39: Bomber Ace
+  - {do: upgrade, id: ac1, to: 2-3-0}                                         # R41: Bomber Ace
+  - {do: upgrade, id: ac1, to: 2-4-0}                                         # R42: Ground Zero
+  - {do: upgrade, id: ac1, to: 2-5-0}                                         # R50: Tsar Bomba
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.051, 0.181]} # R50: top-left island; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R50: Shrapnel Shot
+  - {do: upgrade, id: s1, to: 1-5-0}                                          # R55: Elite Sniper
+panic:
+  - {do: place, kind: sub, role: dps}
+answers:
+  ceramic: [{do: upgrade, id: s1, to: 2-5-0}]
+  bfb: [{do: place, id: ans_bfb, kind: sniper, role: dps, target: strong}, {do: upgrade, id: ans_bfb, to: 4-0-0}]

@@ -1,0 +1,115 @@
+# Muddy Puddles, Military Only: sniper, buccaneer, heli, ace from the guides; spots and
+# order from the game's numbers.
+#
+# Why (map data):
+#   Four lanes take turns, one lane per round (AlternateRoundSplitter:
+#   1, 2, 3, 4, 3, 2). Long-range and map-wide towers cover the lane schedule
+#   best; the ponds between the lanes take water towers. No sight blockers.
+#
+# Sources:
+#   * G-Horizon, Muddy Puddles CHIMPS Easy Guide: buccaneer, snipers,
+#     Advanced-Intel subs, Psi (https://www.youtube.com/watch?v=gJLFvkHiOBk)
+#   * BlueCliff, Muddy Puddles Hard No MK (https://www.youtube.com/watch?v=2oT7VyTQKKk)
+#   * bloonswiki Muddy_Puddles: long range does well because only one lane is
+#     active at a time (https://www.bloonswiki.com/Muddy_Puddles)
+#   * bloonswiki Military_Only: 60 rounds on Medium; leads with Full Metal Jacket
+#     (sniper 1-x-x), camo with Night Vision or Submerge and Support
+#     (https://www.bloonswiki.com/Military_Only)
+#
+# The build: 2 snipers (1-2-0); 11 buccaneers (0-3-2, 0-3-1, 2-0-2, 2-0-1); 1 heli
+# (3-0-2); 10 aces (2-3-0, 1-3-0, 1-1-0, 0-1-0); hero psi.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Military Only (from round 15, $6,057): worst margin 2.25 at round 58;
+#     next lowest R15 2.33, R34 2.48
+# Routes in the comments (map data): 1 = Path2, 2 = Path3, 3 = Path4, 4 = Path1.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: muddypuddles_military_only
+map: Muddy Puddles
+hero: psi
+modes: [military_only]
+planner:
+  towers: {sniper: [1, 2, 0], buccaneer: [2, 3, 2], heli: [3, 0, 2], ace: [2, 3, 0]}
+  base_success: {military_only: 0.72}
+  maps: [Muddy Puddles]
+plan:
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.174, 0.129]}
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.045, 0.129]}
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.419, 0.658]}          # reaches routes 1, 2
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.623, 0.436]}          # reaches routes 2, 3
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.398, 0.589]}          # reaches routes 1, 2
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.665, 0.47]}           # reaches routes 2, 3
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.11, 0.487]}           # reaches route 4
+  - {do: upgrade, id: b5, to: 0-1-1}
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.687, 0.402]}          # reaches routes 2, 3
+  - {do: upgrade, id: b5, to: 0-2-1}
+  - {do: place, id: b7, kind: buccaneer, role: dps, at: [0.377, 0.692]}          # reaches routes 1, 2
+  - {do: upgrade, id: b4, to: 0-1-1}
+  - {do: place, id: b8, kind: buccaneer, role: dps, at: [0.334, 0.606]}          # reaches routes 1, 2, 4
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b4, to: 0-2-1}
+  - {do: upgrade, id: b1, to: 1-0-1}
+  - {do: upgrade, id: b8, to: 0-0-1}
+  - {do: place, id: b9, kind: buccaneer, role: dps, at: [0.152, 0.453]}          # reaches routes 1, 4
+  - {do: upgrade, id: b8, to: 0-0-2}
+  - {do: upgrade, id: b9, to: 0-0-1}
+  - {do: upgrade, id: b4, to: 0-2-2}
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.206, 0.658]}             # psi
+  - {do: upgrade, id: b8, to: 0-2-2}
+  - {do: upgrade, id: b4, to: 0-3-2}
+  - {do: upgrade, id: b9, to: 2-0-1}
+  - {do: upgrade, id: b5, to: 0-2-2}
+  - {do: upgrade, id: b8, to: 0-3-2}
+  - {do: place, id: b10, kind: buccaneer, role: dps, at: [0.11, 0.385]}          # reaches route 4
+  - {do: place, id: b11, kind: buccaneer, role: dps, at: [0.077, 0.436]}         # reaches route 4
+  - {do: upgrade, id: b11, to: 0-0-1}
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: upgrade, id: b3, to: 2-0-1}
+  - {do: upgrade, id: b10, to: 0-1-1}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.313, 0.845]}               # reaches route 1
+  - {do: upgrade, id: h1, to: 1-0-0}
+  - {do: upgrade, id: b11, to: 2-0-1}
+  - {do: upgrade, id: b5, to: 0-3-2}
+  - {do: upgrade, id: b6, to: 0-3-1}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: upgrade, id: b7, to: 2-0-1}
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: b7, to: 2-0-2}
+  - {do: upgrade, id: b9, to: 2-0-2}
+  - {do: upgrade, id: b3, to: 2-0-2}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.323, 0.436]}               # reaches route 1
+  - {do: upgrade, id: ac1, to: 1-3-0}
+  - {do: upgrade, id: b10, to: 0-3-1}
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.259, 0.76]}                # reaches route 1
+  - {do: upgrade, id: ac2, to: 0-1-0}
+  - {do: upgrade, id: b6, to: 0-3-2}
+  - {do: upgrade, id: ac2, to: 1-3-0}
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.494, 0.828]}               # reaches route 2
+  - {do: upgrade, id: ac3, to: 2-3-0}
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.505, 0.385]}               # reaches route 2
+  - {do: upgrade, id: ac4, to: 2-3-0}
+  - {do: place, id: ac5, kind: ace, role: dps, at: [0.238, 0.164]}               # reaches route 1
+  - {do: upgrade, id: ac5, to: 0-1-0}
+  - {do: place, id: ac6, kind: ace, role: dps, at: [0.526, 0.624]}               # reaches route 2
+  - {do: upgrade, id: ac6, to: 1-3-0}
+  - {do: place, id: ac7, kind: ace, role: dps, at: [0.473, 0.487]}               # reaches route 2
+  - {do: upgrade, id: ac7, to: 2-3-0}
+  - {do: place, id: ac8, kind: ace, role: dps, at: [0.441, 0.249]}               # reaches route 2
+  - {do: upgrade, id: ac8, to: 1-3-0}
+  - {do: place, id: ac9, kind: ace, role: dps, at: [0.569, 0.709]}               # reaches route 2
+  - {do: upgrade, id: ac9, to: 1-3-0}
+  - {do: place, id: ac10, kind: ace, role: dps, at: [0.238, 0.555]}              # reaches route 1
+  - {do: upgrade, id: ac10, to: 1-1-0}
+  - {do: upgrade, id: ac1, to: 2-3-0}
+answers:
+  bfb: [{do: upgrade, id: s2, to: 4-2-0}]

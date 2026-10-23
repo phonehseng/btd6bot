@@ -1,0 +1,85 @@
+# Sanctuary, Military Only: sniper, ace from the guides; spots and order from the game's
+# numbers.
+#
+# Why (map data):
+#   Two entrances meet in the middle and leave through four exits, all at
+#   once. The model's own routes follow the Reverse-mode splitters; these builds
+#   were checked on the corrected routes (left entrance -> exits 3/4, right
+#   entrance -> exits 1/2). Towers stand on round platforms that move every
+#   round: only map-wide towers or spots that barely move are used.
+#
+# Sources:
+#   * OneEyedDeacon, Sanctuary Chimps is EASY with Permaspike: Obyn, desperados,
+#     snipers, Archmage (https://www.youtube.com/watch?v=auCq92xN0nk)
+#   * bloonswiki Sanctuary (https://www.bloonswiki.com/Sanctuary)
+#   * bloonswiki Military_Only: 60 rounds on Medium; leads with Full Metal Jacket
+#     (sniper 1-x-x), camo with Night Vision or Submerge and Support
+#     (https://www.bloonswiki.com/Military_Only)
+#
+# The build: 8 snipers (1-5-0, 0-2-4, 2-3-0, 3-2-0); 2 aces (2-3-0); hero obyn.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Military Only (from round 15, $6,057): worst margin 2.48 at round 49;
+#     next lowest R16 2.65, R15 2.74
+# Routes in the comments (map data): 1 = PathEntranceL+PathExit3, 2 =
+# PathEntranceL+PathExit4, 3 = PathEntranceR+PathExit1, 4 = PathEntranceR+PathExit2.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: sanctuary_military_only
+map: Sanctuary
+hero: obyn
+modes: [military_only]
+planner:
+  towers: {sniper: [3, 5, 4], ace: [2, 3, 0]}
+  base_success: {military_only: 0.72}
+  maps: [Sanctuary]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.334, 0.198]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.377, 0.198]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.302, 0.215]}   # map-wide
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.409, 0.215]}   # map-wide
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.419, 0.896]}             # obyn
+  - {do: upgrade, id: s3, to: 0-2-0}
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.345, 0.249]}   # map-wide
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.548, 0.436]}   # map-wide
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.558, 0.487]}   # map-wide
+  - {do: upgrade, id: s5, to: 0-2-2}
+  - {do: upgrade, id: s6, to: 0-2-0}
+  - {do: upgrade, id: s3, to: 0-2-2}
+  - {do: upgrade, id: s6, to: 0-2-1}
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.59, 0.521]}   # map-wide
+  - {do: upgrade, id: s8, to: 1-2-0}
+  - {do: upgrade, id: s6, to: 0-2-2}
+  - {do: upgrade, id: s7, to: 0-2-2}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.238, 0.794]}               # reaches route 3
+  - {do: upgrade, id: ac1, to: 0-1-0}
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: upgrade, id: ac1, to: 1-3-0}
+  - {do: upgrade, id: s6, to: 0-2-3}
+  - {do: upgrade, id: ac1, to: 2-3-0}
+  - {do: upgrade, id: s7, to: 0-2-3}
+  - {do: upgrade, id: s3, to: 0-2-3}
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.623, 0.794]}               # reaches route 2
+  - {do: upgrade, id: ac2, to: 0-1-0}
+  - {do: upgrade, id: s5, to: 0-2-3}
+  - {do: upgrade, id: ac2, to: 1-3-0}
+  - {do: upgrade, id: s5, to: 0-2-4}
+  - {do: upgrade, id: ac2, to: 2-3-0}
+  - {do: upgrade, id: s7, to: 0-2-4}
+  - {do: upgrade, id: s4, to: 2-2-0}
+  - {do: upgrade, id: s8, to: 1-3-0}
+  - {do: upgrade, id: s3, to: 0-2-4}
+  - {do: upgrade, id: s6, to: 0-2-4}
+  - {do: upgrade, id: s1, to: 3-2-0}
+  - {do: upgrade, id: s4, to: 2-3-0}
+  - {do: upgrade, id: s8, to: 1-5-0}
+answers:
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

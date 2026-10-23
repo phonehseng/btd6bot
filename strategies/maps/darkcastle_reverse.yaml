@@ -1,0 +1,129 @@
+# Dark Castle, Reverse: druid, ninja, dart, sub, bomb, spike, village from the guides;
+# spots and order from the game's numbers.
+#
+# Why (map data):
+#   Four entrances on the left run under tree packs (bloons immune there) and
+#   merge into one stretch through the castle door to the exit. The model's
+#   own routes for this map follow the Reverse-mode splitters; these builds were
+#   checked on the corrected forward routes (Path1/Path4 -> PathMerge2,
+#   Path2/Path3 -> PathMerge1 -> PathMerge2). Castle walls block a third of the
+#   map's sight lines. The trees can be bought ($1,000 each; not done here).
+#
+# Sources:
+#   * BlueCliff, Dark Castle Hard No MK (ft. Obyn): ninja 4-0-2 + sub + alchemist
+#     at the merge (https://www.youtube.com/watch?v=QB0bitxGZn0)
+#   * Yoboi3li, Dark Castle CHIMPS (no abilities, no micro): druids, Obyn
+#     (https://www.youtube.com/watch?v=YUR_SIL0trE)
+#   * bloonswiki Dark_Castle_(BTD6): the lanes converge near the end, spike
+#     factories by the castle are useful (https://www.bloonswiki.com/Dark_Castle_(BTD6))
+#
+# The build: 3 druids (2-3-0, 0-4-1, 1-3-0); 12 ninjas (3-2-0, 0-2-3, 2-0-3, 1-0-3); 5
+# darts (0-2-4, 1-0-4, 0-3-2, 0-0-3); 2 subs (2-0-3, 0-3-2); 2 bombs (0-2-2, 0-3-0); 4
+# spikes (4-2-0, 4-0-1, 2-0-2); 1 village (4-0-0); hero obyn.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Reverse (from round 15, $6,057): worst margin 2.02 at round 59;
+#     next lowest R53 2.07, R51 2.16
+# Routes in the comments (map data): 1 = Path1+PathMerge2, 2 = Path4+PathMerge2, 3 =
+# Path2+PathMerge1+PathMerge2, 4 = Path3+PathMerge1+PathMerge2.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: darkcastle_reverse
+map: Dark Castle
+hero: obyn
+modes: [reverse]
+planner:
+  towers: {druid: [2, 4, 1], ninja: [3, 2, 3], dart: [1, 3, 4], sub: [2, 3, 3], bomb: [0, 3, 2], spike: [4, 2, 2], village: [4, 0, 0]}
+  base_success: {reverse: 0.72}
+  maps: [Dark Castle]
+plan:
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.43, 0.641]}         # reaches all 4 routes
+  - {do: upgrade, id: dr1, to: 0-3-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.174, 0.572]}        # obyn
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.291, 0.589]}         # reaches all 4 routes
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.387, 0.641]}         # reaches all 4 routes
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.281, 0.436]}          # reaches routes 1, 3, 4
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.281, 0.641]}          # reaches routes 2, 3, 4
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.248, 0.402]}          # reaches routes 1, 3, 4
+  - {do: place, id: d4, kind: dart, role: dps, at: [0.195, 0.521]}          # reaches routes 3, 4
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.473, 0.641]}        # reaches all 4 routes
+  - {do: upgrade, id: dr2, to: 1-3-0}
+  - {do: upgrade, id: d1, to: 0-0-2}
+  - {do: upgrade, id: d3, to: 0-0-2}
+  - {do: place, id: n3, kind: ninja, role: dps, at: [0.516, 0.641]}         # reaches all 4 routes
+  - {do: place, id: n4, kind: ninja, role: dps, at: [0.387, 0.385]}         # reaches all 4 routes
+  - {do: place, id: n5, kind: ninja, role: dps, at: [0.355, 0.675]}         # reaches routes 2, 3, 4
+  - {do: place, id: n6, kind: ninja, role: dps, at: [0.398, 0.692]}         # reaches routes 2, 3, 4
+  - {do: place, id: n7, kind: ninja, role: dps, at: [0.27, 0.709]}          # reaches routes 2, 4
+  - {do: place, id: n8, kind: ninja, role: dps, at: [0.419, 0.402]}         # reaches all 4 routes
+  - {do: upgrade, id: n8, to: 0-1-0}
+  - {do: upgrade, id: d4, to: 1-0-2}
+  - {do: upgrade, id: d1, to: 0-2-3}
+  - {do: upgrade, id: n8, to: 2-2-0}
+  - {do: upgrade, id: d4, to: 1-0-3}
+  - {do: upgrade, id: d1, to: 0-2-4}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.623, 0.658]}          # reaches all 4 routes
+  - {do: upgrade, id: sb1, to: 0-1-2}
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.558, 0.658]}          # reaches all 4 routes
+  - {do: upgrade, id: sb2, to: 2-0-2}
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.462, 0.402]}         # reaches all 4 routes
+  - {do: upgrade, id: bm1, to: 0-0-2}
+  - {do: upgrade, id: n8, to: 3-2-0}
+  - {do: upgrade, id: d2, to: 0-0-2}
+  - {do: place, id: n9, kind: ninja, role: dps, at: [0.505, 0.402]}         # reaches all 4 routes
+  - {do: place, id: n10, kind: ninja, role: dps, at: [0.27, 0.351]}         # reaches routes 1, 3, 4
+  - {do: place, id: n11, kind: ninja, role: dps, at: [0.355, 0.334]}        # reaches route 1
+  - {do: upgrade, id: d2, to: 0-3-2}
+  - {do: place, id: d5, kind: dart, role: dps, at: [0.184, 0.47]}           # reaches routes 3, 4
+  - {do: upgrade, id: d5, to: 0-2-3}
+  - {do: place, id: n12, kind: ninja, role: dps, at: [0.248, 0.658]}        # reaches routes 2, 3, 4
+  - {do: place, id: sp1, kind: spike, role: exit, at: [0.355, 0.76]}        # reaches route 2
+  - {do: upgrade, id: sp1, to: 1-0-1}
+  - {do: upgrade, id: n10, to: 1-0-0}
+  - {do: upgrade, id: n9, to: 1-0-0}
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: upgrade, id: sb2, to: 2-0-3}
+  - {do: upgrade, id: d5, to: 0-2-4}
+  - {do: upgrade, id: n7, to: 3-2-0}
+  - {do: upgrade, id: n1, to: 3-2-0}
+  - {do: upgrade, id: n10, to: 3-2-0}
+  - {do: upgrade, id: n2, to: 3-2-0}
+  - {do: upgrade, id: n9, to: 3-2-0}
+  - {do: upgrade, id: d3, to: 0-0-3}
+  - {do: upgrade, id: n5, to: 3-2-0}
+  - {do: upgrade, id: n4, to: 1-2-0}
+  - {do: upgrade, id: n6, to: 0-2-0}
+  - {do: place, id: dr3, kind: druid, role: dps, at: [0.216, 0.726]}        # reaches routes 2, 4
+  - {do: upgrade, id: dr3, to: 0-3-0}
+  - {do: upgrade, id: sp1, to: 2-0-1}
+  - {do: upgrade, id: n12, to: 1-0-3}
+  - {do: upgrade, id: n3, to: 1-0-3}
+  - {do: upgrade, id: n6, to: 0-2-3}
+  - {do: upgrade, id: sp1, to: 3-0-1}
+  - {do: place, id: sp2, kind: spike, role: exit, at: [0.206, 0.317]}       # reaches route 3
+  - {do: upgrade, id: sp2, to: 3-2-0}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.398, 0.317]}
+  - {do: upgrade, id: bm2, to: 0-3-0}
+  - {do: upgrade, id: n11, to: 1-0-3}
+  - {do: upgrade, id: d4, to: 1-0-4}
+  - {do: upgrade, id: dr1, to: 0-4-1}
+  - {do: upgrade, id: sb1, to: 0-3-2}
+  - {do: upgrade, id: dr3, to: 2-3-0}
+  - {do: place, id: sp3, kind: spike, role: exit, at: [0.248, 0.777]}
+  - {do: upgrade, id: sp3, to: 2-0-2}
+  - {do: place, id: sp4, kind: spike, role: exit, at: [0.355, 0.266]}
+  - {do: upgrade, id: sp4, to: 2-0-2}
+  - {do: upgrade, id: sp1, to: 4-0-1}
+  - {do: upgrade, id: dr3, to: 1-3-0}
+  - {do: upgrade, id: sp2, to: 4-2-0}
+  - {do: upgrade, id: n11, to: 2-0-3}
+  - {do: place, id: v1, kind: village, role: support, at: [0.345, 0.845]}
+  - {do: upgrade, id: v1, to: 2-0-0}
+  - {do: upgrade, id: v1, to: 4-0-0}

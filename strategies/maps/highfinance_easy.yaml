@@ -1,0 +1,77 @@
+# High Finance, Easy (Standard): Ice Monkeys, Mermonkeys and Buccaneers.
+#
+# Map: Lanes alternate by round: odd rounds take the long S lane, even
+# rounds (with the round-40 MOAB) the short U lane. The only free ground
+# is the central park with its two ponds, which touches both lanes; the
+# 15 buildings can be bought for room ($350-$1,500, the bot leaves
+# them). Every round is checked on both lanes.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses ice, mermonkey,
+# buccaneer, skywarden. Each purchase is the cheapest that keeps the coming
+# rounds popping at 2.5x the strength they need. Spare cash goes into the
+# Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Easy (Standard) at round 10 with about $3,832 and
+# Double Cash. The plan costs $7,240, which a game without the boosts also
+# earns by round 40 (the offline test plays it that way); the fill holds the
+# rest, which the bot buys right after the plan.
+# Model check, Easy (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.43 (round 38); with the fill bought the way the
+# executor buys it (any affordable fill step, in order) 2.51 (round 38); every
+# round at 2.0 or more. Threat simulation (tools/simulate_threats.py): no
+# gaps.
+#
+# Sources:
+#   * bloonswiki: Carrier Flagship in the pond
+#     (https://www.bloonswiki.com/High_Finance)
+#   * fandom: buccaneer in the pond, Bloon Solver on the $750 building
+#     (https://bloons.fandom.com/wiki/High_Finance)
+#   * BlueCliff, High Finance Hard (ninja on the park corners, buccaneer)
+#     (https://www.youtube.com/watch?v=C5QklAgqeGQ)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: highfinance_easy
+map: High Finance
+hero: quincy
+modes: [easy]
+planner:
+  towers: {skywarden: [1, 0, 0], buccaneer: [0, 3, 2], mermonkey: [3, 2, 0], ice: [0, 1, 4]}
+  base_success: {easy: 0.85}
+  maps: [High Finance]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps}                              # R10: Quincy, wherever it fits (no room left; not counted by the model)
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.484, 0.675]}      # R10: central park, bottom; sees 9% of the S lane (odd rounds), 25% of the U lane (even rounds)
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.377, 0.675]}      # R10: central park, bottom; sees 8% of the S lane (odd rounds), 24% of the U lane (even rounds)
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.377, 0.385]}      # R10: central park, top corners; sees 10% of the S lane (odd rounds), 17% of the U lane (even rounds)
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.484, 0.385]}      # R10: top pond in the central park; sees 9% of the S lane (odd rounds), 19% of the U lane (even rounds)
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.452, 0.624]}      # R10: bottom pond in the central park; sees 16% of the S lane (odd rounds), 44% of the U lane (even rounds)
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R10: Aerial Attunement
+  - {do: upgrade, id: bc1, to: 0-0-1}                                         # R10: Long Range
+  - {do: upgrade, id: bc1, to: 0-2-1}                                         # R10: Hot Shot
+  - {do: upgrade, id: bc1, to: 0-2-2}                                         # R16: Hot Shot
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.377, 0.606]}       # R17: central park, bottom; sees 10% of the U lane (even rounds)
+  - {do: upgrade, id: bc1, to: 0-3-2}                                         # R17: Cannon Ship
+  - {do: upgrade, id: sk3, to: 1-0-0}                                         # R26: Aerial Attunement
+  - {do: upgrade, id: m1, to: 2-2-0}                                          # R26: Trident Swiftness
+  - {do: place, id: i1, kind: ice, role: dps, at: [0.419, 0.419]}             # R26: top pond in the central park; sees 3% of the S lane (odd rounds)
+  - {do: upgrade, id: i1, to: 0-1-1}                                          # R26: Enhanced Freeze
+  - {do: upgrade, id: m1, to: 3-2-0}                                          # R26: Abyss Dweller
+fill:
+  - {do: upgrade, id: i1, to: 0-1-4}                                          # R30: Icicles
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  moab: [{do: upgrade, id: bc1, to: 0-4-2}]
+  ceramic: [{do: place, id: ans_ceramic, kind: sniper, role: dps, target: strong}, {do: upgrade, id: ans_ceramic, to: 2-0-0}]

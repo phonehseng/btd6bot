@@ -1,0 +1,117 @@
+# Quad, Deflation: village, dart, bomb, sniper, spike, ninja from the guides; spots and
+# order from the game's numbers.
+#
+# Why (map data):
+#   Four entrances are active every round and each route loops through two
+#   quadrants; bloons are immune under the four trusses, which also block
+#   sight ($1,500 each to remove; not done here). A central pond.
+#
+# Sources:
+#   * BlueCliff, Quad Hard No MK (ft. Quincy): a dart in each corner, sub, sniper,
+#     cluster bombs (https://www.youtube.com/watch?v=DAJAobKFCLE)
+#   * fandom Quad/Strategies: the two kill zones (https://bloons.fandom.com/wiki/Quad/Strategies)
+#   * bloonswiki Quad: spike factories and bombs at the kill zones
+#     (https://www.bloonswiki.com/Quad)
+#   * bloonswiki Strategy:Deflation_(BTD6): no income from round 31, so buy the whole defence
+#     up front; it must pop the camo purples of R45/R48 and the camo leads of R59
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# The build: 1 village (2-2-0); 5 darts (2-0-4, 0-2-3, 1-0-3, 0-0-3); 16 bombs (0-2-3,
+# 0-2-2); 8 snipers (1-3-0, 1-2-0); 3 spikes (1-0-0, 0-0-0); 1 ninja (0-0-0); hero
+# quincy.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Deflation (from round 31, $40,000): worst margin 2.00 at round 54;
+#     next lowest R59 2.02, R49 2.54
+# Routes in the comments (map data): 1 = TopToBottom, 2 = RighttoLeft, 3 = BottomtoTop,
+# 4 = LefttoRight.
+# The plan fits the base $20,000 (the hero last, only if cash is left); `fill`
+# spends the rest of the account's $40,000.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: quad_deflation
+map: Quad
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {village: [2, 2, 0], dart: [2, 2, 4], bomb: [0, 2, 3], sniper: [1, 3, 0], spike: [1, 0, 0], ninja: [0, 0, 0]}
+  base_success: {deflation: 0.78}
+  maps: [Quad]
+plan:
+  - {do: place, id: v2, kind: village, role: support, at: [0.345, 0.675]}
+  - {do: upgrade, id: v2, to: 2-2-0}
+  - {do: place, id: d5, kind: dart, role: dps, at: [0.623, 0.572]}
+  - {do: upgrade, id: d5, to: 0-2-3}
+  - {do: place, id: d4, kind: dart, role: dps, at: [0.281, 0.777]}
+  - {do: upgrade, id: d4, to: 2-0-4}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.633, 0.521]}               # reaches routes 1, 2, 4
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.59, 0.521]}               # reaches routes 1, 2, 4
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.227, 0.521]}              # reaches routes 2, 3, 4
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: place, id: bm3, kind: bomb, role: dps, at: [0.441, 0.743]}              # reaches routes 1, 2, 3
+  - {do: upgrade, id: bm3, to: 0-2-2}
+  - {do: place, id: bm4, kind: bomb, role: dps, at: [0.419, 0.283]}              # reaches routes 1, 3, 4
+  - {do: upgrade, id: bm4, to: 0-2-2}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.024, 0.129]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: bm5, kind: bomb, role: dps, at: [0.259, 0.47]}               # reaches routes 2, 3, 4
+  - {do: upgrade, id: bm5, to: 0-2-2}
+  - {do: place, id: bm6, kind: bomb, role: dps, at: [0.623, 0.743]}              # reaches routes 1, 2
+  - {do: upgrade, id: bm6, to: 0-2-2}
+fill:
+  - {do: place, id: bm7, kind: bomb, role: dps, at: [0.462, 0.283]}              # reaches routes 1, 4
+  - {do: upgrade, id: bm7, to: 0-1-2}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.067, 0.129]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: bm7, to: 0-2-2}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.11, 0.129]}   # map-wide
+  - {do: upgrade, id: s3, to: 1-2-0}
+  - {do: place, id: bm8, kind: bomb, role: dps, at: [0.398, 0.76]}               # reaches routes 1, 2, 3
+  - {do: upgrade, id: bm8, to: 0-2-2}
+  - {do: place, id: bm9, kind: bomb, role: dps, at: [0.248, 0.589]}              # reaches routes 2, 3
+  - {do: upgrade, id: bm9, to: 0-2-2}
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.152, 0.129]}   # map-wide
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.195, 0.129]}   # map-wide
+  - {do: upgrade, id: s5, to: 1-2-0}
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.238, 0.129]}   # map-wide
+  - {do: upgrade, id: s6, to: 1-2-0}
+  - {do: place, id: bm10, kind: bomb, role: dps, at: [0.601, 0.266]}             # reaches routes 1, 4
+  - {do: upgrade, id: bm1, to: 0-2-3}
+  - {do: place, id: sp1, kind: spike, role: exit, at: [0.548, 0.198]}
+  - {do: place, id: sp2, kind: spike, role: exit, at: [0.313, 0.828]}
+  - {do: place, id: sp3, kind: spike, role: exit, at: [0.665, 0.692]}
+  - {do: upgrade, id: sp1, to: 1-0-0}
+  - {do: upgrade, id: bm10, to: 0-2-2}
+  - {do: place, id: bm11, kind: bomb, role: dps, at: [0.484, 0.743]}             # reaches routes 1, 2
+  - {do: upgrade, id: bm11, to: 0-2-2}
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.281, 0.129]}   # map-wide
+  - {do: upgrade, id: s7, to: 1-2-0}
+  - {do: place, id: bm12, kind: bomb, role: dps, at: [0.216, 0.709]}             # reaches routes 2, 3
+  - {do: upgrade, id: bm12, to: 0-2-2}
+  - {do: place, id: bm13, kind: bomb, role: dps, at: [0.644, 0.317]}             # reaches routes 1, 4
+  - {do: upgrade, id: bm13, to: 0-2-2}
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.558, 0.129]}   # map-wide
+  - {do: upgrade, id: s8, to: 1-2-0}
+  - {do: place, id: bm14, kind: bomb, role: dps, at: [0.558, 0.828]}             # reaches routes 1, 2
+  - {do: upgrade, id: bm14, to: 0-2-2}
+  - {do: place, id: bm15, kind: bomb, role: dps, at: [0.601, 0.453]}             # reaches routes 1, 4
+  - {do: upgrade, id: bm15, to: 0-2-2}
+  - {do: upgrade, id: s8, to: 1-3-0}
+  - {do: upgrade, id: s7, to: 1-3-0}
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.259, 0.266]}              # reaches routes 3, 4
+  - {do: place, id: bm16, kind: bomb, role: dps, at: [0.227, 0.3]}               # reaches routes 3, 4
+  - {do: upgrade, id: bm16, to: 0-2-2}
+  - {do: upgrade, id: s6, to: 1-3-0}
+  - {do: upgrade, id: s5, to: 1-3-0}
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.184, 0.368]}               # reaches routes 3, 4
+  - {do: upgrade, id: d2, to: 1-0-3}
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.302, 0.198]}               # reaches routes 3, 4
+  - {do: upgrade, id: d3, to: 0-0-3}

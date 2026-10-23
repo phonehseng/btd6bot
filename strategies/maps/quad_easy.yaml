@@ -1,0 +1,116 @@
+# Quad, Easy: dart, boomerang, bomb from the guides; spots and order from the game's
+# numbers.
+#
+# Why (map data):
+#   Four entrances are active every round and each route loops through two
+#   quadrants; bloons are immune under the four trusses, which also block
+#   sight ($1,500 each to remove; not done here). A central pond.
+#
+# Sources:
+#   * BlueCliff, Quad Hard No MK (ft. Quincy): a dart in each corner, sub, sniper,
+#     cluster bombs (https://www.youtube.com/watch?v=DAJAobKFCLE)
+#   * fandom Quad/Strategies: the two kill zones (https://bloons.fandom.com/wiki/Quad/Strategies)
+#   * bloonswiki Quad: spike factories and bombs at the kill zones
+#     (https://www.bloonswiki.com/Quad)
+#
+# The build: 20 darts (0-2-4, 0-2-3, 1-0-3, 0-1-3); 6 boomerangs (0-3-2, 0-2-2, 0-2-1,
+# 0-0-1); 1 bomb (0-2-2); hero quincy.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Easy (from round 10, $3,832): worst margin 2.23 at round 34;
+#     next lowest R15 2.46, R18 2.65
+# Routes in the comments (map data): 1 = TopToBottom, 2 = RighttoLeft, 3 = BottomtoTop,
+# 4 = LefttoRight.
+# The plan is paid for by round 40 even without Double Cash; `fill` holds what
+# Double Cash buys after it.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: quad_easy
+map: Quad
+hero: quincy
+modes: [easy]
+planner:
+  towers: {dart: [1, 3, 4], boomerang: [0, 3, 2], bomb: [0, 2, 2]}
+  base_success: {easy: 0.8}
+  maps: [Quad]
+plan:
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.633, 0.521]}        # reaches routes 1, 2, 4
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.43, 0.76]}          # reaches routes 1, 2, 3
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.227, 0.504]}        # reaches routes 2, 3, 4
+  - {do: place, id: d4, kind: dart, role: dps, at: [0.184, 0.368]}        # reaches routes 3, 4
+  - {do: place, id: d5, kind: dart, role: dps, at: [0.58, 0.249]}         # reaches routes 1, 4
+  - {do: place, id: d6, kind: dart, role: dps, at: [0.398, 0.777]}        # reaches routes 2, 3
+  - {do: upgrade, id: d6, to: 0-0-1}
+  - {do: place, id: d7, kind: dart, role: dps, at: [0.27, 0.249]}         # reaches routes 3, 4
+  - {do: place, id: d8, kind: dart, role: dps, at: [0.462, 0.777]}        # reaches routes 1, 2
+  - {do: place, id: d9, kind: dart, role: dps, at: [0.612, 0.283]}        # reaches routes 1, 4
+  - {do: place, id: d10, kind: dart, role: dps, at: [0.227, 0.572]}       # reaches routes 2, 3
+  - {do: place, id: d11, kind: dart, role: dps, at: [0.281, 0.777]}       # reaches routes 2, 3
+  - {do: place, id: d12, kind: dart, role: dps, at: [0.665, 0.351]}       # reaches routes 1, 4
+  - {do: place, id: d13, kind: dart, role: dps, at: [0.238, 0.283]}       # reaches routes 3, 4
+  - {do: upgrade, id: d2, to: 0-0-1}
+  - {do: place, id: d14, kind: dart, role: dps, at: [0.623, 0.47]}        # reaches routes 1, 4
+  - {do: upgrade, id: d14, to: 0-0-1}
+  - {do: place, id: d15, kind: dart, role: dps, at: [0.623, 0.572]}       # reaches routes 1, 2
+  - {do: place, id: d16, kind: dart, role: dps, at: [0.548, 0.828]}       # reaches routes 1, 2
+  - {do: place, id: d17, kind: dart, role: dps, at: [0.238, 0.726]}       # reaches routes 2, 3
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.419, 0.283]}   # reaches routes 1, 3, 4
+  - {do: upgrade, id: r1, to: 0-2-0}
+  - {do: place, id: r2, kind: boomerang, role: dps, at: [0.27, 0.504]}    # reaches routes 2, 3, 4
+  - {do: upgrade, id: d10, to: 0-0-1}
+  - {do: upgrade, id: r2, to: 0-1-1}
+  - {do: place, id: d18, kind: dart, role: dps, at: [0.259, 0.606]}       # reaches routes 2, 3
+  - {do: place, id: r3, kind: boomerang, role: dps, at: [0.58, 0.521]}    # reaches routes 1, 2, 4
+  - {do: upgrade, id: d15, to: 0-0-1}
+  - {do: upgrade, id: r1, to: 0-2-2}
+  - {do: upgrade, id: r2, to: 0-2-1}
+  - {do: place, id: r4, kind: boomerang, role: dps, at: [0.462, 0.283]}   # reaches routes 1, 4
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.58, 0.453]}       # quincy
+  - {do: place, id: d19, kind: dart, role: dps, at: [0.313, 0.828]}       # reaches routes 2, 3
+  - {do: place, id: r5, kind: boomerang, role: dps, at: [0.398, 0.709]}   # reaches routes 2, 3
+  - {do: upgrade, id: r5, to: 0-0-1}
+  - {do: upgrade, id: d8, to: 0-0-1}
+  - {do: upgrade, id: r4, to: 0-1-1}
+  - {do: upgrade, id: d10, to: 0-0-2}
+  - {do: upgrade, id: d8, to: 0-0-2}
+  - {do: upgrade, id: r5, to: 0-1-1}
+  - {do: upgrade, id: d8, to: 0-2-3}
+  - {do: upgrade, id: r2, to: 0-2-2}
+  - {do: upgrade, id: r5, to: 0-2-2}
+  - {do: place, id: d20, kind: dart, role: dps, at: [0.302, 0.198]}       # reaches routes 3, 4
+  - {do: upgrade, id: r4, to: 0-2-1}
+  - {do: upgrade, id: d2, to: 1-0-1}
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.623, 0.743]}       # reaches routes 1, 2
+  - {do: upgrade, id: d14, to: 0-0-2}
+  - {do: upgrade, id: d3, to: 0-0-2}
+  - {do: upgrade, id: d15, to: 0-0-2}
+  - {do: upgrade, id: d3, to: 0-1-3}
+  - {do: upgrade, id: d14, to: 1-0-2}
+  - {do: upgrade, id: bm1, to: 0-1-2}
+  - {do: upgrade, id: d3, to: 0-2-3}
+fill:
+  - {do: upgrade, id: d15, to: 0-0-4}
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: upgrade, id: r3, to: 0-0-1}
+  - {do: upgrade, id: d14, to: 1-0-3}
+  - {do: upgrade, id: d1, to: 0-0-1}
+  - {do: upgrade, id: d10, to: 0-2-3}
+  - {do: place, id: r6, kind: boomerang, role: dps, at: [0.184, 0.675]}   # reaches routes 2, 3
+  - {do: upgrade, id: r6, to: 0-2-2}
+  - {do: upgrade, id: d15, to: 0-2-3}
+  - {do: upgrade, id: d1, to: 0-3-1}
+  - {do: upgrade, id: d13, to: 0-1-3}
+  - {do: upgrade, id: r5, to: 0-3-2}
+  - {do: upgrade, id: d17, to: 0-0-1}
+  - {do: upgrade, id: d7, to: 0-1-0}
+  - {do: upgrade, id: d18, to: 0-1-0}
+  - {do: upgrade, id: d5, to: 0-1-0}
+  - {do: upgrade, id: d11, to: 0-1-0}
+  - {do: upgrade, id: d19, to: 0-1-0}
+  - {do: upgrade, id: d18, to: 0-1-3}

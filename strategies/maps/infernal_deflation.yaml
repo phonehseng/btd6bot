@@ -1,0 +1,79 @@
+# Infernal, Deflation: sniper, ace, buccaneer from the guides; spots and order from the
+# game's numbers.
+#
+# Why (map data):
+#   Two long lanes alternate by round (odd rounds top, even rounds bottom:
+#   AlternateRoundSplitter). Very little ground: islands and two middle
+#   pillars inside the waves reach both lanes; two small ponds.
+#
+# Sources:
+#   * TNR Omega, How to Beat Infernal on Hard with No MK: Quincy, ninja on the
+#     middle pillars, Advanced-Intel subs, ace (https://www.youtube.com/watch?v=MrI-1g5eITI)
+#   * BlueCliff, Infernal Hard No MK (ft. Quincy) (https://www.youtube.com/watch?v=5vrEQFKBWmI)
+#   * fandom Infernal: the lane rule and the islands (https://bloons.fandom.com/wiki/Infernal)
+#   * bloonswiki Strategy:Deflation_(BTD6): no income from round 31, so buy the whole defence
+#     up front; it must pop the camo purples of R45/R48 and the camo leads of R59
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# The build: 8 snipers (0-2-3, 1-3-0); 2 aces (2-3-0); 1 buccaneer (4-0-1); hero quincy.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Deflation (from round 31, $40,000): worst margin 4.32 at round 54;
+#     next lowest R60 4.81, R58 4.97
+# Routes in the comments (map data): 1 = PathTop, 2 = PathBottom.
+# The plan fits the base $20,000 (the hero last, only if cash is left); `fill`
+# spends the rest of the account's $40,000.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: infernal_deflation
+map: Infernal
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {sniper: [1, 3, 3], ace: [2, 3, 0], buccaneer: [4, 0, 1]}
+  base_success: {deflation: 0.78}
+  maps: [Infernal]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.248, 0.164]}   # map-wide
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.216, 0.198]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.259, 0.215]}   # map-wide
+  - {do: upgrade, id: s3, to: 1-2-0}
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.227, 0.249]}   # map-wide
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.43, 0.283]}   # map-wide
+  - {do: upgrade, id: s5, to: 1-2-0}
+  - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.409, 0.334]}   # map-wide
+  - {do: upgrade, id: s6, to: 1-2-0}
+  - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.441, 0.351]}   # map-wide
+  - {do: upgrade, id: s7, to: 1-2-0}
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.024, 0.419]}   # map-wide
+  - {do: upgrade, id: s8, to: 1-2-0}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.43, 0.692]}                # reaches route 2
+  - {do: upgrade, id: ac1, to: 1-3-0}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.601, 0.181]}          # reaches route 1
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: ac1, to: 2-3-0}
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.623, 0.777]}               # reaches route 2
+  - {do: upgrade, id: ac2, to: 2-3-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.056, 0.624]}             # quincy
+fill:
+  - {do: upgrade, id: s4, to: 1-3-0}
+  - {do: upgrade, id: b1, to: 4-0-1}
+  - {do: upgrade, id: s5, to: 1-3-0}
+  - {do: upgrade, id: s6, to: 1-3-0}
+  - {do: upgrade, id: s7, to: 1-3-0}
+  - {do: upgrade, id: s8, to: 1-3-0}
+  - {do: upgrade, id: s1, to: 0-2-3}
+  - {do: upgrade, id: s3, to: 1-3-0}
+  - {do: upgrade, id: s2, to: 1-3-0}
+answers:
+  ceramic: [{do: upgrade, id: s2, to: 2-3-0}]
+  bfb: [{do: place, kind: heli, id: ans_bfb_heli, role: dps}, {do: upgrade, id: ans_bfb_heli, to: 4-0-0}]

@@ -1,0 +1,138 @@
+# Castle Revenge, Medium (Standard): Desperados, Snipers and Buccaneers.
+#
+# Map: Four entrances feed a top lane and a bottom lane that run at the same
+# time along the castle walls to two exits on the left; bloons cannot
+# be hit while they climb the wheels (about 38% of each route, map
+# file). No ground spot reaches both lanes with a short-range tower, so
+# the lost Hard game held one lane and leaked the other. Courtyard and
+# platform spots see both lanes only map-wide.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses desperado, sniper,
+# buccaneer, tack, sub, bomb, skywarden. Each purchase is the cheapest that
+# keeps the coming rounds popping at 3x the strength they need. Spare cash
+# goes into the Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Medium (Standard) at round 15 with about $6,057,
+# with Double Cash income.
+# Model check, Medium (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.16 (round 47); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: the raised platform sees the whole track; Juggernaut near
+#     each last bend (https://www.bloonswiki.com/Castle_Revenge)
+#   * BlueCliff, Castle Revenge Hard: snipers in the courtyard quarters,
+#     Spectre ace (https://www.youtube.com/watch?v=au45yv7NhS8)
+#   * OneEyedDeacon, Castle Revenge CHIMPS with Sauda: mirrored damage top and
+#     bottom (https://www.youtube.com/watch?v=JfjH7gMVRGw)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: castlerevenge_medium
+map: Castle Revenge
+hero: quincy
+modes: [medium]
+planner:
+  towers: {tack: [3, 3, 4], skywarden: [1, 0, 0], sub: [2, 0, 4], buccaneer: [4, 2, 0], desperado: [4, 4, 0], bomb: [0, 2, 3], sniper: [2, 2, 4]}
+  base_success: {medium: 0.8}
+  maps: [Castle Revenge]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.623, 0.76]}             # R15: bottom-right corner inside the castle; sees 24% of the bottom lane
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.131, 0.76]}             # R15: courtyard, bottom-left; sees 21% of the bottom lane
+  - {do: place, id: t3, kind: tack, role: dps, at: [0.612, 0.232]}            # R15: top-right corner inside the castle; sees 25% of the top lane
+  - {do: upgrade, id: t3, to: 2-0-2}                                          # R15: Even Faster Shooting
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.184, 0.675]}      # R15: courtyard, bottom-left; sees 40% of the bottom lane
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.131, 0.675]}      # R15: courtyard, bottom-left; sees 40% of the bottom lane
+  - {do: upgrade, id: t1, to: 1-0-2}                                          # R15: Even More Tacks
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.142, 0.283]}            # R15: top-left pond; sees 36% of the top lane
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.163, 0.726]}      # R15: courtyard, bottom-left; sees 39% of the bottom lane
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.12, 0.215]}       # R15: top-left pond; sees 37% of the top lane
+  - {do: upgrade, id: t1, to: 2-0-2}                                          # R15: Even Faster Shooting
+  - {do: upgrade, id: bc1, to: 1-0-0}                                         # R15: Faster Shooting
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.43, 0.675]}           # R15: Quincy, courtyard, bottom (not counted by the model)
+  - {do: upgrade, id: bc1, to: 2-0-0}                                         # R15: Double Shot
+  - {do: upgrade, id: t1, to: 2-0-3}                                          # R15: Tack Sprayer
+  - {do: upgrade, id: t3, to: 2-0-3}                                          # R15: Tack Sprayer
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.526, 0.675]} # R15: courtyard, bottom; sees 47% of the bottom lane
+  - {do: upgrade, id: de1, to: 0-1-0}                                         # R15: Eagle Eye (surplus: XP)
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.569, 0.692]}      # R17: bottom-right corner inside the castle; sees 40% of the bottom lane
+  - {do: upgrade, id: bc1, to: 2-1-0}                                         # R17: Double Shot
+  - {do: place, id: t4, kind: tack, role: dps, at: [0.355, 0.743]}            # R17: courtyard, bottom; sees 12% of the bottom lane
+  - {do: place, id: sk5, kind: skywarden, role: dps, at: [0.601, 0.675]}      # R19: courtyard, right side between the lanes; sees 37% of the bottom lane
+  - {do: upgrade, id: t2, to: 1-2-0}                                          # R19: Super Range Tacks
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.59, 0.3]}              # R20: top-right corner inside the castle; sees 37% of the top lane
+  - {do: place, id: bo2, kind: bomb, role: dps, at: [0.398, 0.726]}           # R20: courtyard, bottom; sees 24% of the bottom lane
+  - {do: upgrade, id: bc1, to: 2-2-0}                                         # R21: Double Shot
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.355, 0.249]} # R22: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s1, to: 0-1-0}                                          # R22: Night Vision Goggles
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R25: Shrapnel Shot
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.152, 0.606]} # R25: courtyard, bottom-left; sees 44% of the bottom lane
+  - {do: place, id: de3, kind: desperado, role: dps, target: strong, at: [0.558, 0.624]} # R25: courtyard, bottom; sees 42% of the bottom lane
+  - {do: upgrade, id: de1, to: 1-1-0}                                         # R25: Quickdraw (surplus: XP)
+  - {do: upgrade, id: bo2, to: 0-0-2}                                         # R26: Frag Bombs
+  - {do: upgrade, id: bo2, to: 0-2-2}                                         # R27: Missile Launcher
+  - {do: upgrade, id: bo2, to: 0-2-3}                                         # R28: Cluster Bombs
+  - {do: upgrade, id: bo1, to: 0-1-2}                                         # R28: Frag Bombs
+  - {do: upgrade, id: bo1, to: 0-2-2}                                         # R29: Missile Launcher
+  - {do: upgrade, id: t2, to: 2-2-0}                                          # R29: Even Faster Shooting
+  - {do: place, id: t5, kind: tack, role: dps, at: [0.452, 0.743]}            # R30: courtyard, bottom; sees 12% of the bottom lane
+  - {do: upgrade, id: t2, to: 2-3-0}                                          # R31: Blade Shooter
+  - {do: place, id: t6, kind: tack, role: dps, at: [0.484, 0.709]}            # R31: courtyard, bottom; sees 10% of the bottom lane
+  - {do: upgrade, id: sb1, to: 0-0-2}                                         # R32: Airburst Darts
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R33: Advanced Intel
+  - {do: upgrade, id: de3, to: 0-1-0}                                         # R33: Eagle Eye
+  - {do: upgrade, id: de2, to: 0-1-0}                                         # R33: Eagle Eye
+  - {do: upgrade, id: t4, to: 0-2-0}                                          # R33: Super Range Tacks
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.398, 0.249]} # R34: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s2, to: 0-2-0}                                          # R35: Shrapnel Shot
+  - {do: upgrade, id: s2, to: 0-2-2}                                          # R35: Shrapnel Shot
+  - {do: upgrade, id: sb1, to: 2-0-3}                                         # R36: Triple Guns
+  - {do: upgrade, id: t4, to: 3-2-0}                                          # R36: Hot Shots
+  - {do: upgrade, id: de3, to: 3-1-0}                                         # R37: Big Iron
+  - {do: upgrade, id: t5, to: 1-2-0}                                          # R37: Super Range Tacks
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.441, 0.249]} # R38: courtyard, top; map-wide (line of sight)
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.473, 0.266]} # R38: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s4, to: 1-2-0}                                          # R38: Shrapnel Shot
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.323, 0.3]} # R39: courtyard, top; map-wide (line of sight)
+  - {do: upgrade, id: s5, to: 1-2-0}                                          # R39: Shrapnel Shot
+  - {do: upgrade, id: de3, to: 4-1-0}                                         # R40: Twin Sixes
+  - {do: upgrade, id: s2, to: 0-2-3}                                          # R42: Semi-Automatic
+  - {do: upgrade, id: de1, to: 1-3-0}                                         # R43: Deadeye
+  - {do: upgrade, id: s3, to: 0-2-0}                                          # R43: Shrapnel Shot
+  - {do: upgrade, id: de2, to: 4-1-0}                                         # R46: Twin Sixes
+  - {do: upgrade, id: bo1, to: 0-2-3}                                         # R46: Cluster Bombs
+  - {do: upgrade, id: s3, to: 0-2-2}                                          # R46: Shrapnel Shot
+  - {do: upgrade, id: t5, to: 2-2-0}                                          # R46: Even Faster Shooting
+  - {do: upgrade, id: s1, to: 2-2-0}                                          # R47: Large Caliber
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R47: Aerial Attunement
+  - {do: upgrade, id: t6, to: 0-0-3}                                          # R47: Tack Sprayer
+  - {do: upgrade, id: s3, to: 0-2-3}                                          # R48: Semi-Automatic
+  - {do: upgrade, id: bc1, to: 3-2-0}                                         # R49: Destroyer
+  - {do: upgrade, id: sk5, to: 1-0-0}                                         # R49: Aerial Attunement
+  - {do: upgrade, id: t5, to: 3-2-0}                                          # R49: Hot Shots
+  - {do: upgrade, id: t6, to: 0-2-3}                                          # R49: Tack Sprayer
+  - {do: upgrade, id: sb1, to: 2-0-4}                                         # R50: Armor Piercing Darts
+  - {do: upgrade, id: s2, to: 0-2-4}                                          # R50: Full Auto Rifle
+  - {do: upgrade, id: t1, to: 2-0-4}                                          # R50: Overdrive
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R50: Aerial Attunement
+  - {do: upgrade, id: s5, to: 2-2-0}                                          # R51: Large Caliber
+  - {do: upgrade, id: s4, to: 2-2-0}                                          # R51: Large Caliber
+  - {do: upgrade, id: s3, to: 0-2-4}                                          # R51: Full Auto Rifle
+  - {do: upgrade, id: bc1, to: 4-2-0}                                         # R54: Aircraft Carrier
+  - {do: upgrade, id: de1, to: 2-3-0}                                         # R55: Deadeye (surplus: XP)
+  - {do: upgrade, id: de2, to: 4-2-0}                                         # R55: Twin Sixes (surplus: XP)
+  - {do: upgrade, id: de3, to: 4-2-0}                                         # R55: Twin Sixes (surplus: XP)
+  - {do: upgrade, id: de1, to: 2-4-0}                                         # R56: Bounty Hunter (surplus: XP)
+panic:
+  - {do: place, kind: tack, role: dps}
+answers:
+  bfb: [{do: upgrade, id: t4, to: 4-2-0}]

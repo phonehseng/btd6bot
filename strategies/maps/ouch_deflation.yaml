@@ -1,0 +1,86 @@
+# #Ouch, Deflation: buccaneer, sniper, bomb, boomerang from the guides; spots and order
+# from the game's numbers.
+#
+# Why (map data):
+#   Four very short lanes are all active every round (two vertical, two
+#   horizontal; map data: 4 routes of 209-310 hittable units, one scenario).
+#   The only water is the central pond, and it touches all four lanes: a
+#   buccaneer there covers ~350 units of track (a third of every lane), a land
+#   tower in a corner covers two lanes. No sight blockers. The pond can be
+#   drained for $1,000 (never bought here: the bot does not click map objects).
+#
+# Sources:
+#   * BlueCliff, #Ouch Hard No MK (ft. Quincy): subs in the pond, sniper, then
+#     Pirate Lord (https://www.youtube.com/watch?v=Kxojxz7wJlE)
+#   * CurlyFrys, #OUCH Hard Standard Easy Tutorial: Sauda + subs + Pirate Lord
+#     (https://www.youtube.com/watch?v=UYXG9xnWkX0)
+#   * bloonswiki #Ouch / fandom Ouch: the pond holds 9 buccaneers or 13 subs and
+#     reaches all four lanes (https://www.bloonswiki.com/Ouch, https://bloons.fandom.com/wiki/Ouch)
+#   * bloonswiki Strategy:Deflation_(BTD6): no income from round 31, so buy the whole defence
+#     up front; it must pop the camo purples of R45/R48 and the camo leads of R59
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# The build: 7 buccaneers (0-3-2, 0-3-1, 2-0-1); 5 snipers (1-2-0); 3 bombs (0-2-4,
+# 0-1-2, 0-0-2); 1 boomerang (0-0-0); hero quincy.
+# How it was made: tower kinds from the guides above; spots and buying order chosen
+# on the game's own numbers (btd6bot/dps_model.py, the model behind
+# tools/optimize_builds.py, with candidate spots for every route) and checked round
+# by round, buying in order as cash allows, on the account's economy (Double Cash
+# + Fast Track). Margin 2.0 = every round still pops at half the towers' strength:
+#   Deflation (from round 31, $40,000): worst margin 2.16 at round 54;
+#     next lowest R53 2.33, R56 2.33
+# Routes in the comments (map data): 1 = Path1, 2 = Path4, 3 = Path2, 4 = Path3.
+# The plan fits the base $20,000 (the hero last, only if cash is left); `fill`
+# spends the rest of the account's $40,000.
+# The hero's damage, alchemist brews, slows and abilities are not counted (extra safety).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
+# (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
+# play: base_success is set low until the record calibrates it.
+id: ouch_deflation
+map: "#Ouch"
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {buccaneer: [2, 3, 2], sniper: [1, 2, 0], bomb: [0, 2, 4], boomerang: [0, 0, 0]}
+  base_success: {deflation: 0.78}
+  maps: ["#Ouch"]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.505, 0.521]}          # reaches routes 2, 3, 4
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.473, 0.453]}          # reaches all 4 routes
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.377, 0.436]}          # reaches routes 1, 2, 4
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.452, 0.521]}          # reaches all 4 routes
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.409, 0.487]}          # reaches all 4 routes
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.419, 0.572]}          # reaches all 4 routes
+  - {do: place, id: b7, kind: buccaneer, role: dps, at: [0.377, 0.538]}          # reaches routes 1, 2, 4
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.024, 0.129]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.067, 0.129]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.11, 0.129]}   # map-wide
+  - {do: upgrade, id: s3, to: 1-2-0}
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.152, 0.129]}   # map-wide
+  - {do: upgrade, id: s4, to: 1-2-0}
+  - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.195, 0.129]}   # map-wide
+  - {do: upgrade, id: s5, to: 1-2-0}
+  - {do: upgrade, id: b1, to: 0-3-1}
+  - {do: upgrade, id: b3, to: 0-3-1}
+  - {do: upgrade, id: b6, to: 0-3-2}
+  - {do: upgrade, id: b2, to: 0-3-1}
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.281, 0.624]}              # reaches routes 1, 2
+  - {do: upgrade, id: bm1, to: 0-2-3}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.59, 0.504]}              # quincy
+fill:
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.281, 0.283]}
+  - {do: upgrade, id: bm1, to: 0-2-4}
+  - {do: upgrade, id: b7, to: 0-3-1}
+  - {do: upgrade, id: b1, to: 0-3-2}
+  - {do: upgrade, id: b4, to: 0-3-1}
+  - {do: upgrade, id: b5, to: 2-0-1}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.281, 0.402]}       # reaches routes 1, 4
+  - {do: upgrade, id: bm2, to: 0-1-2}
+  - {do: place, id: bm3, kind: bomb, role: dps, at: [0.281, 0.76]}        # reaches routes 1, 2
+  - {do: upgrade, id: bm3, to: 0-0-2}
+answers:
+  moab: [{do: place, id: bm2, kind: bomb, role: dps, at: [0.281, 0.402]}, {do: upgrade, id: bm2, to: 0-3-2}]
+  bfb: [{do: place, id: bm2, kind: bomb, role: dps, at: [0.281, 0.402]}, {do: upgrade, id: bm2, to: 0-4-2}]

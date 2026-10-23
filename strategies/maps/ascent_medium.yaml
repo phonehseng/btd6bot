@@ -1,0 +1,104 @@
+# Ascent, Medium (Standard): Super Monkeys, Desperados and Subs.
+#
+# Map: Two lanes run side by side at the same time, from the bottom-left up
+# and across the top to the exits at the bottom right; few sight
+# blockers. The big central island sits inside both lanes, the top
+# edge of it and the top-centre land (with a small pond) see long
+# stretches of both (map geometry). Ponds: top centre, by the right-hand
+# crossing and bottom-left.
+#
+# Build: chosen round by round with the game's own numbers
+# (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
+# guides below use on this map, the towers the account needs XP for, and cheap
+# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
+# Handler: they need aiming or hand-set targeting). It uses super, desperado,
+# sub, sniper, skywarden, bomb. Each purchase is the cheapest that keeps the
+# coming rounds popping at 2x the strength they need. Spare cash goes into the
+# Desperado, whose XP the account needs most.
+#
+# Economy: Fast Track starts Medium (Standard) at round 15 with about $6,057,
+# with Double Cash income.
+# Model check, Medium (Standard) (btd6bot/dps_model.py round_margin; purchases
+# replayed in order as cash allows, account boosts): the plan alone has a
+# worst round margin of 2.09 (round 58); every round at 2.0 or more. Threat
+# simulation (tools/simulate_threats.py): no gaps.
+#
+# Sources:
+#   * bloonswiki: one of the easiest Advanced maps; Perma-Spike on the
+#     bottom-right platform, submerged sub at the start
+#     (https://www.bloonswiki.com/Ascent)
+#   * CrimsonPlanet, Ascent CHIMPS no micro: wizard, druid, sub, village on
+#     the central island (https://www.youtube.com/watch?v=KEmm-iPaHl0)
+#   * HyperF3, Ascent CHIMPS: sub in the top pond, druids on the island
+#     (https://www.youtube.com/watch?v=TZg8hFFquZA)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# as in tests/test_map_hints_offline.py, at least 4 grid cells from every
+# other tower. Comments: R = round the model buys it before; "sees" = share
+# of the lane inside its range (line of sight counted). The hero is not
+# counted by the model (extra safety). Untested in play: base_success stays
+# low until the record calibrates it.
+id: ascent_medium
+map: Ascent
+hero: obyn
+modes: [medium]
+planner:
+  towers: {skywarden: [1, 0, 1], desperado: [4, 2, 0], sub: [2, 0, 4], bomb: [0, 2, 3], sniper: [2, 3, 0], super: [0, 3, 2]}
+  base_success: {medium: 0.8}
+  maps: [Ascent]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.339, 0.564]}          # R15: Obyn Greenfoot, big central island (not counted by the model)
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.74, 0.538]}       # R15: spot (0.74, 0.54); sees 15% of lane 1, 17% of lane 2
+  - {do: place, id: sk2, kind: skywarden, role: dps, at: [0.633, 0.181]}      # R15: top-right land; sees 18% of lane 1, 13% of lane 2
+  - {do: place, id: sk3, kind: skywarden, role: dps, at: [0.409, 0.453]}      # R15: big central island; sees 20% of lane 1, 10% of lane 2
+  - {do: place, id: sk4, kind: skywarden, role: dps, at: [0.366, 0.47]}       # R15: big central island; sees 21% of lane 1, 9% of lane 2
+  - {do: place, id: sk5, kind: skywarden, role: dps, at: [0.291, 0.232]}      # R15: top-centre land; sees 7% of lane 1, 19% of lane 2
+  - {do: place, id: sk6, kind: skywarden, role: dps, at: [0.783, 0.76]}       # R15: small right island; sees 11% of lane 1, 14% of lane 2
+  - {do: place, id: sk7, kind: skywarden, role: dps, at: [0.334, 0.504]}      # R15: big central island; sees 21% of lane 1, 4% of lane 2
+  - {do: place, id: sk8, kind: skywarden, role: dps, at: [0.441, 0.47]}       # R15: big central island; sees 19% of lane 1, 5% of lane 2
+  - {do: place, id: de1, kind: desperado, role: dps, target: strong, at: [0.484, 0.487]} # R15: big central island; sees 34% of lane 1, 15% of lane 2
+  - {do: place, id: de2, kind: desperado, role: dps, target: strong, at: [0.313, 0.181]} # R15: top-centre land; sees 13% of lane 1, 24% of lane 2
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.387, 0.146]}            # R15: top pond; sees 12% of lane 2
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.302, 0.606]}           # R15: big central island; sees 14% of lane 1
+  - {do: upgrade, id: bo1, to: 0-1-2}                                         # R15: Frag Bombs
+  - {do: upgrade, id: sk8, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: sk2, to: 1-0-0}                                         # R15: Aerial Attunement
+  - {do: upgrade, id: sb1, to: 1-0-0}                                         # R15: Longer Range
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.345, 0.146]} # R15: top-centre land; map-wide (line of sight)
+  - {do: upgrade, id: de1, to: 2-2-0}                                         # R15: Standoff (surplus: XP)
+  - {do: upgrade, id: de2, to: 0-1-0}                                         # R16: Eagle Eye
+  - {do: upgrade, id: de2, to: 2-1-0}                                         # R16: Standoff (surplus: XP)
+  - {do: upgrade, id: bo1, to: 0-2-2}                                         # R17: Missile Launcher
+  - {do: upgrade, id: de2, to: 2-2-0}                                         # R18: Standoff (surplus: XP)
+  - {do: upgrade, id: bo1, to: 0-2-3}                                         # R20: Cluster Bombs
+  - {do: upgrade, id: de1, to: 3-2-0}                                         # R22: Big Iron
+  - {do: upgrade, id: de2, to: 3-2-0}                                         # R24: Big Iron
+  - {do: upgrade, id: sb1, to: 2-0-1}                                         # R26: Advanced Intel
+  - {do: upgrade, id: sb1, to: 2-0-2}                                         # R28: Advanced Intel
+  - {do: upgrade, id: sk5, to: 1-0-0}                                         # R28: Aerial Attunement
+  - {do: upgrade, id: sb1, to: 2-0-3}                                         # R28: Triple Guns
+  - {do: upgrade, id: s1, to: 0-1-0}                                          # R28: Night Vision Goggles
+  - {do: upgrade, id: sk8, to: 1-0-1}                                         # R29: Aerial Attunement
+  - {do: upgrade, id: s1, to: 0-2-0}                                          # R29: Shrapnel Shot
+  - {do: upgrade, id: s1, to: 1-2-0}                                          # R31: Shrapnel Shot
+  - {do: upgrade, id: sk6, to: 1-0-0}                                         # R34: Aerial Attunement
+  - {do: upgrade, id: sk1, to: 1-0-0}                                         # R34: Aerial Attunement
+  - {do: upgrade, id: sk3, to: 1-0-0}                                         # R34: Aerial Attunement
+  - {do: upgrade, id: s1, to: 1-3-0}                                          # R34: Bouncing Bullet
+  - {do: upgrade, id: sk4, to: 1-0-0}                                         # R34: Aerial Attunement
+  - {do: upgrade, id: sk7, to: 1-0-0}                                         # R34: Aerial Attunement
+  - {do: upgrade, id: sb1, to: 2-0-4}                                         # R35: Armor Piercing Darts
+  - {do: upgrade, id: de1, to: 4-2-0}                                         # R38: Twin Sixes
+  - {do: upgrade, id: de2, to: 4-2-0}                                         # R40: Twin Sixes
+  - {do: upgrade, id: s1, to: 2-3-0}                                          # R40: Bouncing Bullet
+  - {do: place, id: su1, kind: super, role: dps, at: [0.313, 0.692]}          # R42: big central island; sees 11% of lane 1
+  - {do: upgrade, id: su1, to: 0-1-0}                                         # R42: Super Range
+  - {do: place, id: su2, kind: super, role: dps, at: [0.387, 0.589]}          # R44: big central island; sees 13% of lane 1
+  - {do: upgrade, id: su1, to: 0-1-2}                                         # R45: Ultravision
+  - {do: upgrade, id: su2, to: 0-2-0}                                         # R46: Epic Range
+  - {do: upgrade, id: su1, to: 0-2-2}                                         # R47: Epic Range
+  - {do: upgrade, id: su1, to: 0-3-2}                                         # R49: Robo Monkey
+panic:
+  - {do: place, kind: skywarden, role: dps}
+answers:
+  bfb: [{do: upgrade, id: su2, to: 3-2-0}]
