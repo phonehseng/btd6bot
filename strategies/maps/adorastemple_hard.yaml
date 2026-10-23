@@ -1,0 +1,106 @@
+# Adora's Temple, Medium / Military Only / Reverse / Hard: two boats in each
+# corner pond, Etienne on the grass.
+#
+# Map analysis (data/map_geometry/adorastemple.json, dps_model.Track):
+#   * four entrances; the AlternateRoundMultiPathSplitter sends each round down
+#     one pair (left+right on odd rounds, top+bottom on even rounds); every lane
+#     loops round the temple base, climbs it and leaves opposite. The damage
+#     model plays each of the four lanes as its own scenario and keeps the
+#     worst (stricter than the real half-and-half split);
+#   * the temple is one big line-of-sight block: a sniper on the outer grass
+#     sees ~44% of each lane; ground towers reach ~10-14% of one or two lanes;
+#     the temple steps/peak are not placeable in the bot's map model;
+#   * four corner ponds: each sits where two lanes run past (a boat there
+#     reaches ~14% of each of two lanes) - the best spots on the map.
+# Sources:
+#   * bloonswiki Adora's Temple: 4 entrances, two lanes a round, layered
+#     sight blocking; Carrier Flagship and peak towers recommended
+#     (https://www.bloonswiki.com/Adora%27s_Temple)
+#   * bloons fandom Adora's Temple: avoid 2-0-0 Pursuit helis (the far-apart
+#     lanes confuse them); Carrier Flagship, Ace Centered Path
+#     (https://bloons.fandom.com/wiki/Adora%27s_Temple)
+#   * Bacanator Gamer, Medium Military Only: Buccaneer, Etienne and Sniper
+#     (https://www.youtube.com/watch?v=QVkEb1zMVAI)
+#   * btd6index: 204 two-tower CHIMPS wins on the map (https://btd6index.win)
+#
+# The boats are military, so the same build serves Military Only. Each
+# pond gets a Cannon Ship / Monkey Pirates or Destroyer / Aircraft Carrier
+# and a Merchantman line (Favored Trades, one Trade Empire) whose cash and
+# buff pay for the rest. Towers, spots and order come from the damage
+# model's own search (tools/optimize_builds.py Optimizer, run in memory
+# with the military towers, surplus into buccaneers) - no Pursuit heli, as
+# the wiki warns. Hard: the threat check may add a sniper (ceramics, BFB,
+# ZOMG) and a Ninja 4-0-2 for the round-63 rush (answers below).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   medium 3.19 (R15), military_only 3.19 (R15), reverse 3.75 (R59), hard 2.62 (R80).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: adorastemple_hard
+map: "Adora's Temple"
+hero: etienne
+modes: [medium, military_only, reverse, hard]
+planner:
+  towers: {buccaneer: [4, 4, 5]}
+  base_success: {medium: 0.78, military_only: 0.78, reverse: 0.78, hard: 0.7}
+  maps: ["Adora's Temple"]
+plan:
+  - {do: place, id: buc1, kind: buccaneer, role: dps, at: [0.254, 0.845]}   # bottom-left pond: reaches 13% of the left lane, 14% of the bottom lane, 13% of the right lane, 14% of the top lane
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.168, 0.709]}       # Etienne on the grass: drones reach every lane
+  - {do: place, id: buc2, kind: buccaneer, role: dps, at: [0.633, 0.76]}   # bottom-right pond: reaches 14% of the left lane, 15% of the bottom lane, 14% of the right lane, 15% of the top lane
+  - {do: place, id: buc3, kind: buccaneer, role: dps, at: [0.607, 0.828]}   # bottom-right pond: reaches 13% of the left lane, 14% of the bottom lane, 13% of the right lane, 14% of the top lane
+  - {do: place, id: buc4, kind: buccaneer, role: dps, at: [0.227, 0.76]}   # bottom-left pond: reaches 14% of the left lane, 15% of the bottom lane, 14% of the right lane, 15% of the top lane
+  - {do: place, id: buc5, kind: buccaneer, role: dps, at: [0.227, 0.266]}   # top-left pond: reaches 13% of the left lane, 15% of the bottom lane, 13% of the right lane, 15% of the top lane
+  - {do: place, id: buc6, kind: buccaneer, role: dps, at: [0.27, 0.198]}   # top-left pond: reaches 13% of the left lane, 15% of the bottom lane, 13% of the right lane, 15% of the top lane
+  - {do: place, id: buc7, kind: buccaneer, role: dps, at: [0.623, 0.223]}   # top-right pond: reaches 12% of the left lane, 14% of the bottom lane, 12% of the right lane, 14% of the top lane
+  - {do: place, id: buc8, kind: buccaneer, role: dps, at: [0.58, 0.181]}   # top-right pond: reaches 12% of the left lane, 15% of the bottom lane, 12% of the right lane, 15% of the top lane
+  - {do: upgrade, id: buc3, to: 0-3-2}                                     # Grape Shot + Hot Shot + Cannon Ship + Long Range + Crow's Nest
+  - {do: upgrade, id: buc1, to: 0-1-2}                                     # Grape Shot + Long Range + Crow's Nest
+  - {do: upgrade, id: buc2, to: 2-0-0}                                     # Faster Shooting + Double Shot
+  - {do: upgrade, id: buc1, to: 0-2-2}                                     # Hot Shot
+  - {do: upgrade, id: buc2, to: 2-0-1}                                     # Long Range
+  - {do: upgrade, id: buc4, to: 1-0-0}                                     # Faster Shooting
+  - {do: upgrade, id: buc2, to: 2-0-2}                                     # Crow's Nest
+  - {do: upgrade, id: buc4, to: 1-0-1}                                     # Long Range
+  - {do: upgrade, id: buc5, to: 0-0-1}                                     # Long Range
+  - {do: upgrade, id: buc4, to: 2-0-1}                                     # Double Shot
+  - {do: upgrade, id: buc6, to: 0-0-1}                                     # Long Range
+  - {do: upgrade, id: buc4, to: 2-0-2}                                     # Crow's Nest
+  - {do: upgrade, id: buc5, to: 1-0-1}                                     # Faster Shooting
+  - {do: upgrade, id: buc7, to: 0-0-1}                                     # Long Range
+  - {do: upgrade, id: buc5, to: 2-0-1}                                     # Double Shot
+  - {do: upgrade, id: buc6, to: 1-0-1}                                     # Faster Shooting
+  - {do: upgrade, id: buc7, to: 1-0-1}                                     # Faster Shooting
+  - {do: upgrade, id: buc5, to: 2-0-2}                                     # Crow's Nest
+  - {do: upgrade, id: buc1, to: 0-3-2}                                     # Cannon Ship
+  - {do: upgrade, id: buc6, to: 2-0-2}                                     # Double Shot + Crow's Nest
+  - {do: upgrade, id: buc8, to: 0-0-1}                                     # Long Range
+  - {do: upgrade, id: buc7, to: 2-0-2}                                     # Double Shot + Crow's Nest
+  - {do: upgrade, id: buc8, to: 2-0-2}                                     # Faster Shooting + Double Shot + Crow's Nest
+  - {do: upgrade, id: buc2, to: 3-0-2}                                     # Destroyer
+  - {do: upgrade, id: buc4, to: 2-0-3}                                     # Merchantman
+  - {do: upgrade, id: buc5, to: 2-0-3}                                     # Merchantman
+  - {do: upgrade, id: buc6, to: 2-0-3}                                     # Merchantman
+  - {do: upgrade, id: buc7, to: 2-0-3}                                     # Merchantman
+  - {do: upgrade, id: buc3, to: 0-4-2}                                     # Monkey Pirates
+  - {do: upgrade, id: buc8, to: 3-0-2}                                     # Destroyer
+  - {do: upgrade, id: buc1, to: 0-4-2}                                     # Monkey Pirates
+  - {do: upgrade, id: buc2, to: 4-0-2}                                     # Aircraft Carrier
+  - {do: upgrade, id: buc4, to: 2-0-4}                                     # Favored Trades
+  - {do: upgrade, id: buc5, to: 2-0-4}                                     # Favored Trades
+  - {do: upgrade, id: buc8, to: 4-0-2}                                     # Aircraft Carrier
+  - {do: upgrade, id: buc6, to: 2-0-4}                                     # Favored Trades
+  - {do: upgrade, id: buc7, to: 2-0-4}                                     # Favored Trades
+  - {do: upgrade, id: buc4, to: 2-0-5}                                     # Trade Empire
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: buc1, to: 0-2-2}]
+  ceramic: [{do: place, id: s1, kind: sniper, role: dps, target: strong}, {do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: buc2, to: 3-0-2}]
+  bfb: [{do: place, id: s1, kind: sniper, role: dps, target: strong}, {do: upgrade, id: s1, to: 4-2-0}]
+  zomg: [{do: place, id: s1, kind: sniper, role: dps, target: strong}, {do: upgrade, id: s1, to: 4-2-0}]
+  rush: [{do: place, id: n1, kind: ninja, role: dps}, {do: upgrade, id: n1, to: 4-0-2}]

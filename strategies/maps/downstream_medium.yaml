@@ -1,0 +1,63 @@
+# Downstream, Medium / Military Only / Reverse: a sniper on the top edge,
+# Destroyer boats in the river by the start, a Pursuit heli, Brickell.
+#
+# Map analysis (data/map_geometry/downstream.json, dps_model.Track):
+#   * one lane: in at the top, a loop bottom-left, back through the middle, a
+#     loop top-right, out at the bottom right (~800 hittable world units);
+#   * no line-of-sight blockers: a sniper on the top edge sees all of it;
+#   * the river left of the start reaches ~27% of the lane for a buccaneer
+#     (0.355, 0.368) - the best single spot on the map; the two $350 rocks
+#     inside the loops are never bought by the bot.
+# Sources:
+#   * bloonswiki Downstream: one lane, two loops, no sight blockers; long-range
+#     towers in the open top middle, short-range towers in the loops; the water
+#     right of the start suits buccaneers / the Destroyer, which hit both
+#     sides (https://www.bloonswiki.com/Downstream_(BTD6))
+#   * AutoBTD6 CHIMPS script for Downstream (v50): Sauda, Sniper 4-2-0, Heli
+#     4-0-2, Heli 2-0-5, Village 2-3-0, Glue 0-2-4 - fixed spots, no rocks
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#   * Bacanator Gamer, 'How to Beat Downstream Deflation with 5 Towers': a
+#     buccaneer is the key tower (https://www.youtube.com/watch?v=RAqaQS9ZvHg)
+#
+# Every tower is military, so the same build serves Military Only. The
+# boats go Crow's Nest (camo) -> Destroyer -> Aircraft Carrier; the heli
+# takes Pursuit first, then IFR (camo) and Razor Rotors.
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   medium 3.51 (R38), military_only 3.51 (R38), reverse 4.46 (R37).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: downstream_medium
+map: Downstream
+hero: admiral_brickell
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 2, 0], buccaneer: [4, 0, 2], heli: [4, 2, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Downstream]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.138]}   # top edge: no sight blockers, sees 100% of the lane
+  - {do: upgrade, id: s1, to: 0-1-0}                                       # Night Vision: camo
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.355, 0.368]}    # river left of the start: ~27% of the lane
+  - {do: upgrade, id: b1, to: 2-0-2}                                       # Double Shot + Crow's Nest (camo)
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.478, 0.385]}         # pad between the loops
+  - {do: upgrade, id: h1, to: 2-0-0}                                       # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: h1, to: 3-2-0}                                       # IFR (camo) + Razor Rotors
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.318, 0.325]}       # Brickell in the river by the boat
+  - {do: upgrade, id: b1, to: 3-0-2}                                       # Destroyer
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.216, 0.385]}    # river, second boat
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: s1, to: 2-2-0}                                       # Full Metal Jacket + Large Calibre
+  - {do: upgrade, id: s1, to: 4-2-0}                                       # Maim MOAB
+  - {do: upgrade, id: b1, to: 4-0-2}                                       # Aircraft Carrier
+  - {do: upgrade, id: h1, to: 4-2-0}                                       # Apache Dartship
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

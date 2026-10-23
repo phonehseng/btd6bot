@@ -1,0 +1,80 @@
+# Encrypted, Primary Only: bombs and desperados on the grass
+# by the two exits.
+#
+# Map analysis (data/map_geometry/encrypted.json, dps_model.Track):
+#   * one entrance at the top; the lane splits round the walled middle and
+#     each bloon takes the left or the right exit (spawn splitter: half each);
+#   * the walled middle and the four $250 class pads are closed to the bot
+#     (it never buys removables); what is left is the grass outside the walls
+#     and two small pools: a ground tower there reaches ~8-10% of one or both
+#     exits, a sniper on the bottom grass sees ~44% of each (MapModel.sight).
+# Sources:
+#   * bloonswiki Encrypted: one entrance, two exits, the four class pads ($250
+#     each), walls block sight (https://www.bloonswiki.com/Encrypted)
+#   * AutoBTD6 CHIMPS script for Encrypted (v50): Sauda, Sniper 4-2-0, two
+#     helis (5-0-2, 2-0-5), Village 2-3-0, Glue on a pad
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#   * Rydeon Gaming, Encrypted Deflation (Etienne; Berserker Brew over Monkey
+#     Sense) (https://www.youtube.com/watch?v=7KPApjy9LAU)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, helis forced onto
+# Pursuit, snipers ranked by the track they can see), checked again below.
+# `plan` is what the offline threat simulation's base economy buys by round
+# 40; `fill` is the rest (the account's Fast Track + Double Cash money).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   primary_only 0.79 (R37).
+#   with the fill: primary_only 2.30 (R37).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: encrypted_primary_only
+map: Encrypted
+hero: etienne
+modes: [primary_only]
+planner:
+  towers: {bomb: [4, 4, 4], desperado: [3, 1, 3]}
+  base_success: {primary_only: 0.8}
+  maps: [Encrypted]
+plan:
+  - {do: place, id: bom1, kind: bomb, role: dps, at: [0.12, 0.726]}        # reaches 7% of the left exit, 10% of the right exit
+  - {do: upgrade, id: bom1, to: 0-1-2}                                     # Faster Reload + Extra Range + Frag Bombs
+  - {do: place, id: des2, kind: desperado, role: dps, at: [0.729, 0.641]}   # reaches 15% of the left exit, 9% of the right exit
+  - {do: upgrade, id: bom1, to: 0-2-2}                                     # Missile Launcher
+  - {do: place, id: des3, kind: desperado, role: dps, at: [0.152, 0.93]}   # reaches 9% of the left exit, 14% of the right exit
+  - {do: place, id: bom4, kind: bomb, role: dps, at: [0.74, 0.76]}         # reaches 9% of the left exit, 8% of the right exit
+  - {do: upgrade, id: bom4, to: 0-0-2}                                     # Extra Range + Frag Bombs
+  - {do: place, id: bom5, kind: bomb, role: dps, at: [0.152, 0.658]}       # reaches 4% of the left exit, 11% of the right exit
+  - {do: upgrade, id: bom5, to: 0-2-2}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: upgrade, id: bom4, to: 0-2-2}                                     # Faster Reload + Missile Launcher
+  - {do: place, id: bom6, kind: bomb, role: dps, at: [0.783, 0.76]}        # reaches 6% of the left exit, 9% of the right exit
+  - {do: upgrade, id: bom6, to: 0-2-2}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: upgrade, id: des3, to: 0-1-0}                                     # Eagle Eye
+  - {do: upgrade, id: des2, to: 0-1-0}                                     # Eagle Eye
+  - {do: place, id: bom7, kind: bomb, role: dps, at: [0.077, 0.76]}        # reaches 8% of the left exit, 6% of the right exit
+  - {do: place, id: bom8, kind: bomb, role: dps, at: [0.719, 0.93]}        # reaches 8% of the left exit, 6% of the right exit
+  - {do: upgrade, id: bom7, to: 1-1-0}                                     # Bigger Bombs + Faster Reload
+  - {do: upgrade, id: bom8, to: 0-0-2}                                     # Extra Range + Frag Bombs
+  - {do: upgrade, id: bom7, to: 1-2-0}                                     # Missile Launcher
+  - {do: upgrade, id: bom1, to: 0-2-3}                                     # Cluster Bombs
+  - {do: upgrade, id: bom8, to: 3-0-2}                                     # Bigger Bombs + Heavy Bombs + Really Big Bombs
+  - {do: upgrade, id: bom4, to: 0-2-3}                                     # Cluster Bombs
+  - {do: upgrade, id: des3, to: 3-1-0}                                     # Quickdraw + Standoff + Big Iron
+  - {do: place, id: des9, kind: desperado, role: dps, at: [0.687, 0.641]}   # reaches 16% of the left exit, 7% of the right exit
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.115, 0.624]}
+fill:
+  - {do: upgrade, id: des9, to: 0-1-3}                                     # Eagle Eye + Wanderer + Nomad + Enforcer
+  - {do: upgrade, id: bom5, to: 0-3-2}                                     # MOAB Mauler
+  - {do: upgrade, id: bom6, to: 0-3-2}                                     # MOAB Mauler
+  - {do: upgrade, id: bom7, to: 3-2-0}                                     # Heavy Bombs + Really Big Bombs
+  - {do: upgrade, id: bom1, to: 0-2-4}                                     # Recursive Cluster
+  - {do: upgrade, id: bom4, to: 0-2-4}                                     # Recursive Cluster
+  - {do: upgrade, id: bom8, to: 4-0-2}                                     # Bloon Impact
+  - {do: upgrade, id: bom7, to: 4-2-0}                                     # Bloon Impact
+  - {do: upgrade, id: bom5, to: 0-4-2}                                     # MOAB Assassin
+  - {do: upgrade, id: bom6, to: 0-4-2}                                     # MOAB Assassin
+panic:
+  - {do: place, kind: desperado, role: dps}

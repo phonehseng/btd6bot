@@ -1,0 +1,79 @@
+# Chutes, Medium / Military Only / Reverse: map-wide heli and snipers plus
+# one boat per pool, because the lanes alternate.
+#
+# Map analysis (data/map_geometry/chutes.json, dps_model.Track):
+#   * two lanes that ALTERNATE every round (AlternateRoundSplitter): odd rounds
+#     enter top-left and leave top-middle-right, even rounds enter top-right
+#     and leave top-middle-left; both cross in the X at the bottom middle.
+#     Each lane is very short (~460 hittable world units, ~16 s for a red on
+#     Hard), so whatever covers only one lane defends every other round. That
+#     is why the general land builds leaked 112 and 90 lives on Easy and
+#     Primary Only (2026-10-22).
+#   * the two statues ($350 each, not bought by the bot) block line of sight;
+#     the two small pools each reach ONE lane (left pool: even rounds, right
+#     pool: odd rounds, ~31% of it for a buccaneer);
+#   * a sniper on the top strip sees ~85% of BOTH lanes (MapModel.sight);
+#     a ground tower in the middle between the lanes reaches only ~16%.
+# Sources:
+#   * bloonswiki Chutes: alternating lanes, pools, $350 statues; recommends
+#     Comanche Commander and Carrier Flagship + Brickell
+#     (https://www.bloonswiki.com/Chutes)
+#   * bloons fandom Chutes/Strategies: map-wide heli/ace damage, Advanced
+#     Intel and Triple Guns subs in the pools, snipers where the statues do
+#     not block (https://bloons.fandom.com/wiki/Chutes/Strategies)
+#   * btd6index 2TC records on Chutes: Geraldo + MOAB Domination, Perma
+#     Charge, Overclock (https://btd6index.win/fetch-2tc?map=Chutes)
+# No written Medium/Hard/Deflation build order was found; the build below
+# follows the wiki's tower choice (heli + water towers + Brickell-style pool
+# boats) and was ordered and checked round by round with the damage model.
+#
+# Every tower is military, so the same build serves Military Only. The heli
+# takes Pursuit first (it then chases bloons instead of the mouse) and IFR
+# for camo; the boats get Crow's Nest (camo) and go Cannon Ship -> Monkey
+# Pirates; the sub's Advanced Intel shoots wherever the heli reaches.
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   medium 2.95 (R39), military_only 2.95 (R39), reverse 2.89 (R54).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: chutes_medium
+map: Chutes
+hero: etienne
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 2, 2], heli: [5, 2, 0], buccaneer: [0, 4, 2], sub: [2, 3, 0]}
+  base_success: {medium: 0.78, military_only: 0.78, reverse: 0.78}
+  maps: [Chutes]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.206, 0.138]}   # top strip: sees 86% of the odd-round lane, 84% of the even-round lane
+  - {do: upgrade, id: s1, to: 0-1-0}                                       # Night Vision: camo
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.43, 0.802]}          # pad below the X (Pursuit flies anywhere)
+  - {do: upgrade, id: h1, to: 2-0-0}                                       # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: h1, to: 2-2-0}                                       # IFR: camo
+  - {do: upgrade, id: h1, to: 3-2-0}                                       # Razor Rotors
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.516, 0.453]}    # right pool: the odd-round lane
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.345, 0.368]}    # left pool: the even-round lane
+  - {do: upgrade, id: s1, to: 0-2-2}                                       # Shrapnel + faster firing
+  - {do: upgrade, id: b1, to: 0-2-2}                                       # Crow's Nest: camo
+  - {do: upgrade, id: b2, to: 0-2-2}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.537, 0.385]}         # right pool, above the boat
+  - {do: upgrade, id: sb1, to: 2-3-0}                                      # Advanced Intel + Triple Guns
+  - {do: upgrade, id: b1, to: 0-3-2}                                       # Cannon Ship
+  - {do: upgrade, id: b2, to: 0-3-2}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.43, 0.453]}        # Etienne between the lanes (drones fly to both)
+  - {do: upgrade, id: h1, to: 4-2-0}                                       # Apache Dartship
+  - {do: upgrade, id: b1, to: 0-4-2}                                       # Monkey Pirates
+  - {do: upgrade, id: b2, to: 0-4-2}
+  - {do: upgrade, id: h1, to: 5-2-0}                                       # Apache Prime (camo through IFR)
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.639, 0.164]}   # top strip, right
+  - {do: upgrade, id: s2, to: 4-2-0}                                       # Maim MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  ceramic: [{do: upgrade, id: s1, to: 0-2-2}]
+  moab: [{do: upgrade, id: b1, to: 0-3-2}]
+  bfb: [{do: upgrade, id: h1, to: 4-2-0}]

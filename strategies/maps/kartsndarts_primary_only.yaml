@@ -1,0 +1,76 @@
+# KartsNDarts, Primary Only: desperados above the tunnel and towers by the
+# entrance and exit straights.
+#
+# Map analysis (data/map_geometry/kartsndarts.json, data/map_mechanics.json):
+#   * one figure-eight lane, in on the left, out on the right; 24% of it runs
+#     through tunnels where non-MOAB bloons cannot be hit (only 347 of the 810
+#     world units are hittable on screen);
+#   * the tyre stacks inside both loops ($500 removables, never bought by the
+#     bot) leave the grass outside the loops: ground towers by the entrance
+#     straight or the exit straight reach ~20-24% of the lane, a desperado
+#     ~39%; there are no sight blockers, so a sniper anywhere sees all of it.
+# Sources:
+#   * bloonswiki KartsNDarts: figure eight, tunnel, $500 tyre stacks, best spots
+#     above the tunnel between the loops (https://www.bloonswiki.com/KartsNDarts)
+#   * AutoBTD6 KartsNDarts scripts (v50): Hard no-MK - Sauda, Tack 4-0-2, Heli
+#     2-0-3 and 4-0-2, Village 0-2-0, Sniper 4-0-2; CHIMPS - Sauda, Heli 5-0-2,
+#     Heli 2-0-5, Sniper 4-2-0, Village 2-3-0, Glue 0-2-4 (fixed spots, no tyres)
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, helis forced onto
+# Pursuit, snipers ranked by the track they can see), checked again below.
+# `plan` is what the offline threat simulation's base economy buys by round
+# 40; `fill` is the rest (the account's Fast Track + Double Cash money).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   primary_only 1.07 (R40).
+#   with the fill: primary_only 2.09 (R34).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: kartsndarts_primary_only
+map: KartsNDarts
+hero: etienne
+modes: [primary_only]
+planner:
+  towers: {desperado: [4, 3, 3], bomb: [0, 3, 3], boomerang: [0, 2, 3], tack: [2, 3, 0]}
+  base_success: {primary_only: 0.78}
+  maps: [KartsNDarts]
+plan:
+  - {do: place, id: des1, kind: desperado, role: dps, at: [0.377, 0.3]}    # reaches 39% of the lane
+  - {do: place, id: des2, kind: desperado, role: dps, at: [0.163, 0.266]}   # reaches 33% of the lane
+  - {do: place, id: des3, kind: desperado, role: dps, at: [0.238, 0.266]}   # reaches 31% of the lane
+  - {do: place, id: des4, kind: desperado, role: dps, at: [0.131, 0.215]}   # reaches 29% of the lane
+  - {do: place, id: des5, kind: desperado, role: dps, at: [0.195, 0.215]}   # reaches 29% of the lane
+  - {do: place, id: des6, kind: desperado, role: dps, at: [0.281, 0.266]}   # reaches 29% of the lane
+  - {do: place, id: des7, kind: desperado, role: dps, at: [0.12, 0.453]}   # reaches 28% of the lane
+  - {do: place, id: des8, kind: desperado, role: dps, at: [0.099, 0.266]}   # reaches 27% of the lane
+  - {do: place, id: bom9, kind: bomb, role: dps, at: [0.751, 0.572]}       # reaches 22% of the lane
+  - {do: upgrade, id: bom9, to: 0-2-3}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs + Cluster Bombs
+  - {do: place, id: bom10, kind: bomb, role: dps, at: [0.761, 0.743]}      # reaches 19% of the lane
+  - {do: upgrade, id: bom10, to: 0-2-2}                                    # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: boo11, kind: boomerang, role: dps, at: [0.708, 0.743]}   # reaches 20% of the lane
+  - {do: upgrade, id: des1, to: 0-1-0}                                     # Eagle Eye
+  - {do: upgrade, id: des2, to: 0-1-0}                                     # Eagle Eye
+  - {do: upgrade, id: des1, to: 3-1-0}                                     # Quickdraw + Standoff + Big Iron
+  - {do: upgrade, id: boo11, to: 0-2-2}                                    # Faster Throwing + Faster Rangs + Long Range Rangs + Red Hot Rangs
+  - {do: upgrade, id: des2, to: 3-1-0}                                     # Quickdraw + Standoff + Big Iron
+  - {do: upgrade, id: bom10, to: 0-3-2}                                    # MOAB Mauler
+  - {do: upgrade, id: boo11, to: 0-2-3}                                    # Kylie Boomerang
+  - {do: upgrade, id: des3, to: 0-1-3}                                     # Eagle Eye + Wanderer + Nomad + Enforcer
+  - {do: upgrade, id: des5, to: 3-0-0}                                     # Quickdraw + Standoff + Big Iron
+  - {do: place, id: tac12, kind: tack, role: dps, at: [0.056, 0.453]}      # reaches 6% of the lane
+  - {do: upgrade, id: tac12, to: 2-3-0}                                    # Faster Shooting + Even Faster Shooting + Long Range Tacks + Super Range Tacks + Blade Shooter
+  - {do: upgrade, id: des5, to: 3-1-0}                                     # Eagle Eye
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.761, 0.504]}
+fill:
+  - {do: upgrade, id: des4, to: 3-0-0}                                     # Quickdraw + Standoff + Big Iron
+  - {do: upgrade, id: des6, to: 0-0-3}                                     # Wanderer + Nomad + Enforcer
+  - {do: upgrade, id: des7, to: 0-3-0}                                     # Eagle Eye + Bullseye + Deadeye
+  - {do: upgrade, id: des8, to: 3-0-0}                                     # Quickdraw + Standoff + Big Iron
+  - {do: upgrade, id: des1, to: 4-1-0}                                     # Twin Sixes
+panic:
+  - {do: place, kind: desperado, role: dps}

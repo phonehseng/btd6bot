@@ -1,0 +1,69 @@
+# Cracked, Deflation: tack rings and a cluster bomb in the bends, a Sharp
+# Shooter, sniper and ace for camo/purple, bought at once at round 31.
+#
+# Map analysis (data/map_geometry/cracked.json, dps_model.Track):
+#   * one long winding lane (top-left to bottom-right, ~1,030 hittable world
+#     units: the longest Intermediate track); no alternation, no water (the
+#     only pond is under the $1,000 rock, which the bot never buys);
+#   * the rock in the middle and the tree clumps block line of sight; a sniper
+#     right of the rock (0.751, 0.317) still sees ~93% of the lane
+#     (MapModel.sight); the land inside the left bends and the right-hand
+#     bends puts short-range towers on two or three stretches at once.
+# Sources:
+#   * bloonswiki Cracked: long single lane, $1,000 rock (blocks sight, hides a
+#     pond), long-range towers right of the rock, map-wide towers do well
+#     (https://www.bloonswiki.com/Cracked)
+#   * AutoBTD6 CHIMPS script for Cracked (v50): Sauda, Sniper 4-2-0, Heli
+#     4-0-2, Heli 2-0-4, Village 2-3-0, Glue 0-2-4 - placements and upgrades
+#     only, no rock (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#   * bloonswiki Strategy:Deflation_(BTD6): a few tier 3-4 towers beat many
+#     tier 2s; tack/ring towers where the track loops
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#   * btd6index: lowest-cost CHIMPS on Cracked $26,605 (v49.3) - one of the
+#     easiest Intermediate maps (https://btd6index.win)
+#
+# Deflation: no income. `plan` costs $18,945 at Easy prices with the hero
+# (inside the $20,000 of an account without Double Cash); `fill` spends the
+# account's second $20,000 (Double Cash: $40,400): Maim MOAB and a ninja.
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   deflation 1.66 (R58).
+#   with the fill: deflation 2.48 (R58).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: cracked_deflation
+map: Cracked
+hero: sauda
+modes: [deflation]
+planner:
+  towers: {tack: [4, 0, 2], bomb: [0, 2, 3], dart: [0, 2, 4], sniper: [2, 2, 0], ace: [2, 3, 0]}
+  base_success: {deflation: 0.78}
+  maps: [Cracked]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.612, 0.564]}         # below the right-hand bends
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.484, 0.7]}           # inside the lower-middle bend
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.302, 0.334]}        # inside the left bends
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.339, 0.325]}         # inside the left bends
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.783, 0.3]}   # right of the rock: sees ~92% of the lane
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.82, 0.479]}           # right side
+  - {do: upgrade, id: t1, to: 4-0-2}                                       # Inferno Ring
+  - {do: upgrade, id: t2, to: 4-0-2}
+  - {do: upgrade, id: bo1, to: 0-2-3}                                      # Missile Launcher + Cluster Bombs
+  - {do: upgrade, id: d1, to: 0-2-4}                                       # Sharp Shooter (camo from Enhanced Eyesight)
+  - {do: upgrade, id: s1, to: 2-2-0}                                       # Night Vision (camo) + Shrapnel
+  - {do: upgrade, id: a1, to: 2-3-0}                                       # Spy Plane (camo) + Bomber Ace
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.558, 0.572]}       # Sauda, only if cash is left
+fill:
+  - {do: upgrade, id: s1, to: 4-2-0}                                       # Maim MOAB (the Double Cash half)
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.323, 0.385]}        # left bends
+  - {do: upgrade, id: n1, to: 4-0-2}                                       # Bloonjitsu
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.51, 0.581]}         # right-hand bends
+  - {do: upgrade, id: n2, to: 4-0-2}                                       # Bloonjitsu
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: bo1, to: 0-2-3}]

@@ -1,0 +1,88 @@
+# KartsNDarts, Easy: snipers (no sight blockers here) and helpers by the
+# straights.
+#
+# Map analysis (data/map_geometry/kartsndarts.json, data/map_mechanics.json):
+#   * one figure-eight lane, in on the left, out on the right; 24% of it runs
+#     through tunnels where non-MOAB bloons cannot be hit (only 347 of the 810
+#     world units are hittable on screen);
+#   * the tyre stacks inside both loops ($500 removables, never bought by the
+#     bot) leave the grass outside the loops: ground towers by the entrance
+#     straight or the exit straight reach ~20-24% of the lane, a desperado
+#     ~39%; there are no sight blockers, so a sniper anywhere sees all of it.
+# Sources:
+#   * bloonswiki KartsNDarts: figure eight, tunnel, $500 tyre stacks, best spots
+#     above the tunnel between the loops (https://www.bloonswiki.com/KartsNDarts)
+#   * AutoBTD6 KartsNDarts scripts (v50): Hard no-MK - Sauda, Tack 4-0-2, Heli
+#     2-0-3 and 4-0-2, Village 0-2-0, Sniper 4-0-2; CHIMPS - Sauda, Heli 5-0-2,
+#     Heli 2-0-5, Sniper 4-2-0, Village 2-3-0, Glue 0-2-4 (fixed spots, no tyres)
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, helis forced onto
+# Pursuit, snipers ranked by the track they can see), checked again below.
+# `plan` is what the offline threat simulation's base economy buys by round
+# 40; `fill` is the rest (the account's Fast Track + Double Cash money).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   easy 1.89 (R39).
+#   with the fill: easy 3.26 (R39).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: kartsndarts_easy
+map: KartsNDarts
+hero: etienne
+modes: [easy]
+planner:
+  towers: {sniper: [3, 3, 2], ace: [0, 1, 0]}
+  base_success: {easy: 0.82}
+  maps: [KartsNDarts]
+plan:
+  - {do: place, id: sni1, kind: sniper, role: dps, target: strong, at: [0.045, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni1, to: 0-2-1}                                     # Night Vision Goggles + Shrapnel Shot + Fast Firing
+  - {do: place, id: sni2, kind: sniper, role: dps, target: strong, at: [0.088, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni1, to: 0-2-2}                                     # Even Faster Firing
+  - {do: upgrade, id: sni2, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.131, 0.138]}   # sees 100% of the lane
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.174, 0.138]}   # sees 100% of the lane
+  - {do: place, id: sni5, kind: sniper, role: dps, target: strong, at: [0.216, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni3, to: 0-1-0}                                     # Night Vision Goggles
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.259, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni3, to: 1-2-0}                                     # Full Metal Jacket + Shrapnel Shot
+  - {do: upgrade, id: sni4, to: 1-0-0}                                     # Full Metal Jacket
+  - {do: place, id: sni7, kind: sniper, role: dps, target: strong, at: [0.302, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni4, to: 1-2-0}                                     # Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.345, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni5, to: 1-1-0}                                     # Full Metal Jacket + Night Vision Goggles
+  - {do: upgrade, id: sni6, to: 0-1-0}                                     # Night Vision Goggles
+  - {do: upgrade, id: sni5, to: 1-2-0}                                     # Shrapnel Shot
+  - {do: upgrade, id: sni6, to: 1-2-0}                                     # Full Metal Jacket + Shrapnel Shot
+  - {do: upgrade, id: sni7, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni2, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni8, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni3, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni4, to: 2-2-0}                                     # Large Calibre
+  - {do: place, id: ace9, kind: ace, role: dps, at: [0.27, 0.249]}         # plane circles this spot
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.371, 0.3]}
+fill:
+  - {do: upgrade, id: ace9, to: 0-1-0}                                     # Exploding Pineapple
+  - {do: upgrade, id: sni5, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni6, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni2, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni1, to: 0-3-2}                                     # Bouncing Bullet
+  - {do: upgrade, id: sni7, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni3, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni4, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni5, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni6, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni7, to: 3-2-0}                                     # Deadly Precision
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni2, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni2, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni2, to: 4-2-0}]

@@ -1,0 +1,80 @@
+# Ancient Portal, Medium / Military Only / Reverse: seven Pursuit helis and a
+# camo sniper; Etienne inside the spiral.
+#
+# Map analysis (data/map_geometry/ancientportal.json, dps_model.Track):
+#   * one entrance: bloons spiral clockwise from the top into a portal and,
+#     unless the player clicks the free realign device (the bot never does),
+#     leave through the right lane; the damage model also plays the walled
+#     left lane as a second scenario and keeps the worst (stricter than play);
+#   * ground inside the spiral reaches ~50% of the spiral for a ninja; a
+#     sniper right of the pond sees ~81% of the right route; the pond reaches
+#     ~27% of the right lane for a boat. Bloonswiki/fandom: the hero pedestal
+#     above the spiral gives camo + MIB, the one below +1 damage, +30% range.
+# Sources:
+#   * bloonswiki Ancient Portal: portal realign device, pedestals, totems
+#     (https://www.bloonswiki.com/Ancient_Portal)
+#   * AutoBTD6 CHIMPS script for Ancient Portal (v50): Sauda, Sniper 4-2-0,
+#     Heli 2-0-5, Heli 5-0-2, Village 2-3-0, Glue - fixed spots, no portal
+#     clicks (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#   * BlueCliff, Ancient Portal Hard: ninja + alchemist, Glaive Lord
+#     (https://www.youtube.com/watch?v=-QdOnx826eA)
+#
+# Every tower is military, so the same build serves Military Only. Each heli
+# takes Pursuit first (it then chases bloons instead of the mouse), then
+# Razor Rotors (IFR for camo on most) and two become Apache Dartships. Towers,
+# spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory with the military
+# towers, surplus into helis - the heli XP the account still needs for its
+# paragon), checked again below; the camo sniper was moved to the front so
+# the threat simulation's slow no-boost economy has camo by round 24.
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   medium 4.32 (R15), military_only 4.32 (R15), reverse 4.46 (R15).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: ancientportal_medium
+map: Ancient Portal
+hero: etienne
+modes: [medium, military_only, reverse]
+planner:
+  towers: {heli: [4, 2, 2], sniper: [0, 2, 0]}
+  base_success: {medium: 0.78, military_only: 0.78, reverse: 0.78}
+  maps: [Ancient Portal]
+plan:
+  - {do: place, id: sni2, kind: sniper, role: dps, target: strong, at: [0.12, 0.138]}   # sees 15% of the right lane (default), 11% of the left lane (after a realign)
+  - {do: upgrade, id: sni2, to: 0-1-0}                                     # Night Vision first: the camo answer before round 24
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.59, 0.436]}        # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel1, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel1, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.601, 0.232]}       # Etienne inside the spiral (the camo/MIB pedestal is next to it)
+  - {do: place, id: hel3, kind: heli, role: dps, at: [0.804, 0.47]}        # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel3, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel3, to: 3-0-2}                                     # Razor Rotors + Faster Darts + Faster Firing
+  - {do: upgrade, id: sni2, to: 0-2-0}                                     # Shrapnel Shot
+  - {do: place, id: hel4, kind: heli, role: dps, at: [0.804, 0.7]}         # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel4, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel4, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hel5, kind: heli, role: dps, at: [0.045, 0.589]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel5, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel5, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hel6, kind: heli, role: dps, at: [0.708, 0.862]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel6, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel6, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hel7, kind: heli, role: dps, at: [0.473, 0.181]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel7, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel7, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hel8, kind: heli, role: dps, at: [0.505, 0.47]}        # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel8, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel8, to: 4-2-0}                                     # Razor Rotors + Apache Dartship + Bigger Jets + IFR
+  - {do: upgrade, id: hel1, to: 4-2-0}                                     # Apache Dartship
+  - {do: upgrade, id: hel3, to: 4-0-2}                                     # Apache Dartship
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni2, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni2, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni2, to: 4-2-0}]

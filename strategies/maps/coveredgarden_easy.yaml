@@ -1,0 +1,87 @@
+# Covered Garden, Easy: snipers on the always-open strips left and right of
+# the garden.
+#
+# Map analysis (data/map_geometry/coveredgarden.json, data/map_mechanics.json):
+#   * one lane: in from the left, round the fountain quarter, along the top and
+#     out on the right; glass panes cover three of the four garden quarters and
+#     the open quarter moves every round, so the bot (which treats pane ground
+#     as closed) can only use the strips left and right of the garden;
+#   * from those strips a ground tower reaches only the entrance or exit
+#     stretch (~10%); a sniper on the lower left strip sees ~60-67% of the lane
+#     (MapModel.sight) - the snipers carry this build.
+# Sources:
+#   * bloonswiki Covered Garden: pane rule; heli, Etienne/Psi long range
+#     recommended (https://www.bloonswiki.com/Covered_Garden)
+#   * Touch, Tap, Play Covered Garden guide: heli on the outside-left strip,
+#     snipers near the fountain, Sauda/Psi/Etienne
+#     (https://www.touchtapplay.com/btd6-covered-garden-strategy-guide/)
+#   * bloons fandom Covered_Garden/Strategies: long-range and flying towers
+#     (https://bloons.fandom.com/wiki/Covered_Garden/Strategies)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, snipers ranked by the
+# track they can see, surplus into snipers), checked again below. `plan`
+# is what the offline threat simulation's base economy (no Fast Track, no
+# Double Cash) buys by round 40; `fill` is the rest, bought with the
+# account's Fast Track + Double Cash money. Primary Only, Deflation,
+# Military Only and Reverse were not written: from the open strips no build
+# reached a 2.0 margin (see docs/map_strategies/intermediate_a.md).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   easy 0.87 (R40).
+#   with the fill: easy 2.02 (R34).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: coveredgarden_easy
+map: Covered Garden
+hero: etienne
+modes: [easy]
+planner:
+  towers: {sniper: [3, 3, 4], bomb: [0, 2, 2], ninja: [0, 0, 0]}
+  base_success: {easy: 0.82}
+  maps: [Covered Garden]
+plan:
+  - {do: place, id: sni1, kind: sniper, role: dps, target: strong, at: [0.056, 0.777]}   # sees 66% of the lane
+  - {do: upgrade, id: sni1, to: 0-2-1}                                     # Night Vision Goggles + Shrapnel Shot + Fast Firing
+  - {do: place, id: sni2, kind: sniper, role: dps, target: strong, at: [0.035, 0.828]}   # sees 44% of the lane
+  - {do: upgrade, id: sni2, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.04, 0.581]}   # sees 33% of the lane
+  - {do: upgrade, id: sni1, to: 0-2-2}                                     # Even Faster Firing
+  - {do: upgrade, id: sni3, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.045, 0.521]}   # sees 13% of the lane
+  - {do: place, id: sni5, kind: sniper, role: dps, target: strong, at: [0.035, 0.896]}   # sees 29% of the lane
+  - {do: upgrade, id: sni4, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni5, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.82, 0.291]}   # sees 13% of the lane
+  - {do: place, id: sni7, kind: sniper, role: dps, target: strong, at: [0.067, 0.845]}   # sees 22% of the lane
+  - {do: upgrade, id: sni6, to: 0-2-0}                                     # Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni7, to: 0-1-0}                                     # Night Vision Goggles
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.82, 0.232]}   # sees 7% of the lane
+  - {do: upgrade, id: sni8, to: 0-1-0}                                     # Night Vision Goggles
+  - {do: upgrade, id: sni6, to: 1-2-0}                                     # Full Metal Jacket
+  - {do: upgrade, id: sni7, to: 1-2-0}                                     # Full Metal Jacket + Shrapnel Shot
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Shrapnel Shot
+  - {do: upgrade, id: sni2, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni3, to: 2-2-0}                                     # Large Calibre
+  - {do: place, id: bom9, kind: bomb, role: dps, at: [0.035, 0.419]}       # reaches 0% of the lane
+  - {do: upgrade, id: bom9, to: 0-2-2}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: nin10, kind: ninja, role: dps, at: [0.81, 0.181]}      # reaches 0% of the lane
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.067, 0.308]}       # Etienne on the left strip: drones fly over the panes
+fill:
+  - {do: upgrade, id: sni3, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni1, to: 0-2-3}                                     # Semi-Automatic
+  - {do: upgrade, id: sni2, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni4, to: 2-3-0}                                     # Large Calibre + Bouncing Bullet
+  - {do: upgrade, id: sni5, to: 3-2-0}                                     # Large Calibre + Deadly Precision
+  - {do: upgrade, id: sni6, to: 3-2-0}                                     # Large Calibre + Deadly Precision
+  - {do: upgrade, id: sni1, to: 0-2-4}                                     # Full Auto Rifle
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni2, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni2, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni2, to: 4-2-0}]

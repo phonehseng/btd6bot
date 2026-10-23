@@ -1,0 +1,89 @@
+# Encrypted, Easy: snipers on the grass below the walls (they see ~44% of
+# each exit), a few towers by the exits.
+#
+# Map analysis (data/map_geometry/encrypted.json, dps_model.Track):
+#   * one entrance at the top; the lane splits round the walled middle and
+#     each bloon takes the left or the right exit (spawn splitter: half each);
+#   * the walled middle and the four $250 class pads are closed to the bot
+#     (it never buys removables); what is left is the grass outside the walls
+#     and two small pools: a ground tower there reaches ~8-10% of one or both
+#     exits, a sniper on the bottom grass sees ~44% of each (MapModel.sight).
+# Sources:
+#   * bloonswiki Encrypted: one entrance, two exits, the four class pads ($250
+#     each), walls block sight (https://www.bloonswiki.com/Encrypted)
+#   * AutoBTD6 CHIMPS script for Encrypted (v50): Sauda, Sniper 4-2-0, two
+#     helis (5-0-2, 2-0-5), Village 2-3-0, Glue on a pad
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#   * Rydeon Gaming, Encrypted Deflation (Etienne; Berserker Brew over Monkey
+#     Sense) (https://www.youtube.com/watch?v=7KPApjy9LAU)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, helis forced onto
+# Pursuit, snipers ranked by the track they can see), checked again below.
+# `plan` is what the offline threat simulation's base economy buys by round
+# 40; `fill` is the rest (the account's Fast Track + Double Cash money).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   easy 1.87 (R39).
+#   with the fill: easy 3.12 (R39).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: encrypted_easy
+map: Encrypted
+hero: etienne
+modes: [easy]
+planner:
+  towers: {sniper: [3, 3, 2], bomb: [0, 1, 2]}
+  base_success: {easy: 0.82}
+  maps: [Encrypted]
+plan:
+  - {do: place, id: sni1, kind: sniper, role: dps, target: strong, at: [0.12, 0.93]}   # sees 41% of the left exit, 46% of the right exit
+  - {do: upgrade, id: sni1, to: 0-2-0}                                     # Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni2, kind: sniper, role: dps, target: strong, at: [0.729, 0.93]}   # sees 47% of the left exit, 40% of the right exit
+  - {do: upgrade, id: sni1, to: 0-2-1}                                     # Fast Firing
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.772, 0.93]}   # sees 50% of the left exit, 31% of the right exit
+  - {do: upgrade, id: sni1, to: 0-2-2}                                     # Even Faster Firing
+  - {do: upgrade, id: sni2, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.077, 0.93]}   # sees 31% of the left exit, 49% of the right exit
+  - {do: place, id: sni5, kind: sniper, role: dps, target: strong, at: [0.815, 0.93]}   # sees 50% of the left exit, 28% of the right exit
+  - {do: upgrade, id: sni3, to: 0-1-0}                                     # Night Vision Goggles
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.024, 0.93]}   # sees 29% of the left exit, 49% of the right exit
+  - {do: place, id: sni7, kind: sniper, role: dps, target: strong, at: [0.815, 0.172]}   # sees 34% of the left exit, 12% of the right exit
+  - {do: upgrade, id: sni3, to: 0-2-0}                                     # Shrapnel Shot
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.772, 0.172]}   # sees 32% of the left exit, 10% of the right exit
+  - {do: upgrade, id: sni3, to: 1-2-0}                                     # Full Metal Jacket
+  - {do: upgrade, id: sni4, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni5, to: 1-1-0}                                     # Full Metal Jacket + Night Vision Goggles
+  - {do: upgrade, id: sni6, to: 0-1-0}                                     # Night Vision Goggles
+  - {do: upgrade, id: sni5, to: 1-2-0}                                     # Shrapnel Shot
+  - {do: upgrade, id: sni6, to: 1-2-0}                                     # Full Metal Jacket + Shrapnel Shot
+  - {do: upgrade, id: sni7, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni2, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni3, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni4, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni5, to: 2-2-0}                                     # Large Calibre
+  - {do: place, id: bom9, kind: bomb, role: dps, at: [0.12, 0.726]}        # reaches 7% of the left exit, 10% of the right exit
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.158, 0.93]}
+fill:
+  - {do: upgrade, id: bom9, to: 0-1-2}                                     # Faster Reload + Extra Range + Frag Bombs
+  - {do: upgrade, id: sni6, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni7, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni4, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni1, to: 0-3-2}                                     # Bouncing Bullet
+  - {do: upgrade, id: sni8, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni5, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni2, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni7, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni3, to: 2-3-0}                                     # Bouncing Bullet
+  - {do: upgrade, id: sni6, to: 3-2-0}                                     # Deadly Precision
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni2, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni2, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni2, to: 4-2-0}]

@@ -1,0 +1,85 @@
+# Firing Range, Deflation: snipers on the bottom grass plus helpers, bought
+# at once at round 31.
+#
+# Map analysis (data/map_geometry/firingrange.json, dps_model.Track):
+#   * two lanes AT THE SAME TIME: bloons enter top-left and top-right, run
+#     along the top, then down the sides and out at the bottom on the opposite
+#     side (the spawn shares them out);
+#   * the fence and the central outpost (a $1,000 removable, never bought by
+#     the bot) keep ground towers away from the early track: from the open
+#     ground a tack or ninja reaches under 10% of one lane; a sniper on the
+#     bottom grass sees ~84% of BOTH lanes (MapModel.sight) - the core here;
+#   * Pursuit helis were left out of the military build: with two lanes live
+#     at once they chase back and forth (bloons fandom warns of this on maps
+#     with simultaneous far-apart lanes).
+# Sources:
+#   * bloonswiki Firing Range: two simultaneous lanes, removable outpost,
+#     benches that take small towers only, a Destroyer with camo for the
+#     mid-game (https://www.bloonswiki.com/Firing_Range)
+#   * Bacanator Gamer, Firing Range Deflation (removes the outpost; the bot
+#     cannot) (https://www.youtube.com/watch?v=CRYbas43SsI)
+#   * btd6index single-tower CHIMPS entries: Apache Dartship and Aircraft
+#     Carrier (https://btd6index.win)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, snipers ranked by the
+# track they can see), checked again below.
+# Deflation: no income. `plan` fits the $20,000 of an account without Double
+# Cash ($19,665 at Easy prices, the hero last); `fill` spends the
+# account's second $20,000 (Double Cash: $40,400).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   deflation 1.94 (R58).
+#   with the fill: deflation 2.99 (R58).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: firingrange_deflation
+map: Firing Range
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {sniper: [1, 2, 0], buccaneer: [0, 3, 1], bomb: [0, 2, 2], sub: [0, 1, 3], ace: [0, 3, 0]}
+  base_success: {deflation: 0.75}
+  maps: [Firing Range]
+plan:
+  - {do: place, id: sni1, kind: sniper, role: dps, target: strong, at: [0.409, 0.93]}   # sees 84% of the left-entrance lane, 84% of the right-entrance lane
+  - {do: upgrade, id: sni1, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni2, kind: sniper, role: dps, target: strong, at: [0.366, 0.93]}   # sees 83% of the left-entrance lane, 83% of the right-entrance lane
+  - {do: upgrade, id: sni2, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.452, 0.93]}   # sees 83% of the left-entrance lane, 83% of the right-entrance lane
+  - {do: upgrade, id: sni3, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.409, 0.845]}   # sees 82% of the left-entrance lane, 82% of the right-entrance lane
+  - {do: upgrade, id: sni4, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni5, kind: sniper, role: dps, target: strong, at: [0.377, 0.862]}   # sees 82% of the left-entrance lane, 82% of the right-entrance lane
+  - {do: upgrade, id: sni5, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.441, 0.862]}   # sees 82% of the left-entrance lane, 81% of the right-entrance lane
+  - {do: upgrade, id: sni6, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni7, kind: sniper, role: dps, target: strong, at: [0.494, 0.93]}   # sees 81% of the left-entrance lane, 80% of the right-entrance lane
+  - {do: upgrade, id: sni7, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.323, 0.93]}   # sees 80% of the left-entrance lane, 80% of the right-entrance lane
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: buc9, kind: buccaneer, role: dps, at: [0.687, 0.453]}   # reaches 28% of the left-entrance lane, 20% of the right-entrance lane
+  - {do: upgrade, id: buc9, to: 0-3-1}                                     # Grape Shot + Hot Shot + Cannon Ship + Long Range
+  - {do: place, id: bom10, kind: bomb, role: dps, at: [0.74, 0.555]}       # reaches 8% of the left-entrance lane, 0% of the right-entrance lane
+  - {do: upgrade, id: bom10, to: 0-1-2}                                    # Faster Reload + Extra Range + Frag Bombs
+  - {do: place, id: sub11, kind: sub, role: dps, at: [0.729, 0.436]}       # reaches 15% of the left-entrance lane, 9% of the right-entrance lane
+  - {do: upgrade, id: sub11, to: 0-1-3}                                    # Barbed Darts + Twin Guns + Airburst Darts + Triple Guns
+  - {do: upgrade, id: bom10, to: 0-2-2}                                    # Missile Launcher
+  - {do: place, id: bom12, kind: bomb, role: dps, at: [0.74, 0.76]}        # reaches 8% of the left-entrance lane, 0% of the right-entrance lane
+  - {do: upgrade, id: bom12, to: 0-2-2}                                    # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: ace13, kind: ace, role: dps, at: [0.152, 0.709]}       # plane circles this spot
+  - {do: upgrade, id: ace13, to: 0-3-0}                                    # Exploding Pineapple + Spy Plane + Bomber Ace
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.211, 0.547]}       # only if cash is left
+fill:
+  - {do: upgrade, id: sni6, to: 1-5-0}                                     # Bouncing Bullet + Supply Drop + Elite Sniper
+  - {do: upgrade, id: sni1, to: 1-3-0}                                     # Bouncing Bullet
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni2, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni2, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni2, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni2, to: 4-2-0}]

@@ -1,0 +1,99 @@
+# Bloonarius Prime, Deflation: Pursuit helis, bombs and Advanced Intel subs,
+# bought at once at round 31 - map-wide damage for both lanes.
+#
+# Map analysis (data/map_geometry/bloonariusprime.json, dps_model.Track):
+#   * on prime-numbered rounds bloons drop into the swamp hole by the entrance
+#     and take the short right lane (RuleSplitter); every other round takes
+#     the long left lane round the lake; the damage model plays both and keeps
+#     the worst;
+#   * the rock column between the lanes blocks sight; a sniper at the top
+#     middle (0.441, 0.078) still sees ~87-92% of both lanes; a boat in the
+#     right lake reaches ~30% of the prime lane only. Map-wide towers do not
+#     care which lane a round takes.
+# Sources:
+#   * bloonswiki Bloonarius Prime: prime-round rule, heli/global towers excel
+#     on the alternating lanes (https://www.bloonswiki.com/Bloonarius_Prime)
+#   * OneEyedDeacon CHIMPS (Rosalia + Flying Fortress, v49.3): snipers and an
+#     ace as the map-wide core (https://www.youtube.com/watch?v=mLpg86Zc7Rs)
+#   * AutoBTD6 CHIMPS / Impoppable scripts for Bloonarius Prime (v50): subs,
+#     buccaneers, Heli 2-0-4, Sniper 5-2-0 with Etienne/Benjamin
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#
+# Replaces the earlier bloonariusprime_deflation build (two Neva-Miss aces and a
+# sniper), which the damage model rated far below 2.0 and which is no longer
+# in strategies/maps. Towers, spots and order come from the damage model's
+# own search (tools/optimize_builds.py Optimizer, run in memory, helis forced
+# onto Pursuit, snipers ranked by the track they can see, surplus into helis).
+# `plan` fits the $20,000 of an account without Double Cash ($19,090 at
+# Easy prices, the hero last); `fill` spends the account's second $20,000
+# (Double Cash: $40,400).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   deflation 1.33 (R58).
+#   with the fill: deflation 2.18 (R56).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: bloonariusprime_deflation
+map: Bloonarius Prime
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {heli: [3, 2, 2], sniper: [1, 2, 0], bomb: [0, 0, 0]}
+  base_success: {deflation: 0.75}
+  maps: [Bloonarius Prime]
+plan:
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.094, 0.325]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel1, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel1, to: 3-0-2}                                     # Razor Rotors + Faster Darts + Faster Firing
+  - {do: place, id: hel2, kind: heli, role: dps, at: [0.783, 0.675]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel2, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel2, to: 3-0-2}                                     # Razor Rotors + Faster Darts + Faster Firing
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.441, 0.138]}   # sees 84% of the prime-round lane, 89% of the long lane, 79% of the prime-round lane (other half)
+  - {do: upgrade, id: sni3, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: hel4, kind: heli, role: dps, at: [0.248, 0.283]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel4, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel4, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hel5, kind: heli, role: dps, at: [0.484, 0.896]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel5, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel5, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: bom6, kind: bomb, role: dps, at: [0.184, 0.198]}       # reaches 28% of the prime-round lane, 13% of the long lane, 6% of the prime-round lane (other half)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.152, 0.368]}       # only if cash is left
+fill:
+  - {do: upgrade, id: bom6, to: 0-2-2}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: bom7, kind: bomb, role: dps, at: [0.216, 0.146]}       # reaches 28% of the prime-round lane, 10% of the long lane, 6% of the prime-round lane (other half)
+  - {do: upgrade, id: bom7, to: 0-2-2}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.387, 0.138]}   # sees 78% of the prime-round lane, 100% of the long lane, 71% of the prime-round lane (other half)
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: buc9, kind: buccaneer, role: dps, at: [0.644, 0.317]}   # reaches 36% of the prime-round lane, 0% of the long lane, 48% of the prime-round lane (other half)
+  - {do: place, id: bom10, kind: bomb, role: dps, at: [0.174, 0.138]}      # reaches 28% of the prime-round lane, 10% of the long lane, 6% of the prime-round lane (other half)
+  - {do: upgrade, id: bom10, to: 0-2-2}                                    # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: bom11, kind: bomb, role: dps, at: [0.088, 0.164]}      # reaches 28% of the prime-round lane, 9% of the long lane, 6% of the prime-round lane (other half)
+  - {do: upgrade, id: bom11, to: 0-2-2}                                    # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: sub12, kind: sub, role: dps, at: [0.655, 0.504]}       # Advanced Intel: shoots whatever the other towers reach
+  - {do: upgrade, id: sub12, to: 2-1-0}                                    # Longer Range + Advanced Intel + Barbed Darts
+  - {do: place, id: bom13, kind: bomb, role: dps, at: [0.665, 0.606]}      # reaches 21% of the prime-round lane, 0% of the long lane, 27% of the prime-round lane (other half)
+  - {do: upgrade, id: bom13, to: 0-1-2}                                    # Faster Reload + Extra Range + Frag Bombs
+  - {do: place, id: sub14, kind: sub, role: dps, at: [0.655, 0.436]}       # Advanced Intel: shoots whatever the other towers reach
+  - {do: upgrade, id: sub14, to: 2-1-0}                                    # Longer Range + Advanced Intel + Barbed Darts
+  - {do: place, id: sub15, kind: sub, role: dps, at: [0.601, 0.266]}       # Advanced Intel: shoots whatever the other towers reach
+  - {do: upgrade, id: sub15, to: 2-0-0}                                    # Longer Range + Advanced Intel
+  - {do: upgrade, id: buc9, to: 0-1-1}                                     # Grape Shot + Long Range
+  - {do: upgrade, id: sub15, to: 2-1-0}                                    # Barbed Darts
+  - {do: place, id: sub16, kind: sub, role: dps, at: [0.601, 0.198]}       # Advanced Intel: shoots whatever the other towers reach
+  - {do: upgrade, id: sub16, to: 2-1-0}                                    # Longer Range + Advanced Intel + Barbed Darts
+  - {do: upgrade, id: bom13, to: 0-2-2}                                    # Missile Launcher
+  - {do: place, id: buc17, kind: buccaneer, role: dps, at: [0.655, 0.232]}   # reaches 33% of the prime-round lane, 0% of the long lane, 43% of the prime-round lane (other half)
+  - {do: place, id: buc18, kind: buccaneer, role: dps, at: [0.281, 0.641]}   # reaches 0% of the prime-round lane, 55% of the long lane, 0% of the prime-round lane (other half)
+  - {do: upgrade, id: buc9, to: 0-2-1}                                     # Hot Shot
+  - {do: upgrade, id: sni3, to: 3-2-0}                                     # Large Calibre + Deadly Precision
+  - {do: upgrade, id: sni8, to: 3-2-0}                                     # Large Calibre + Deadly Precision
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni3, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni3, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni3, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni3, to: 4-2-0}]

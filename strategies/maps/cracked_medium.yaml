@@ -1,0 +1,68 @@
+# Cracked, Medium / Military Only / Reverse: three Pursuit helis and a
+# sniper right of the rock.
+#
+# Map analysis (data/map_geometry/cracked.json, dps_model.Track):
+#   * one long winding lane (top-left to bottom-right, ~1,030 hittable world
+#     units: the longest Intermediate track); no alternation, no water (the
+#     only pond is under the $1,000 rock, which the bot never buys);
+#   * the rock in the middle and the tree clumps block line of sight; a sniper
+#     right of the rock (0.751, 0.317) still sees ~93% of the lane
+#     (MapModel.sight); the land inside the left bends and the right-hand
+#     bends puts short-range towers on two or three stretches at once.
+# Sources:
+#   * bloonswiki Cracked: long single lane, $1,000 rock (blocks sight, hides a
+#     pond), long-range towers right of the rock, map-wide towers do well
+#     (https://www.bloonswiki.com/Cracked)
+#   * AutoBTD6 CHIMPS script for Cracked (v50): Sauda, Sniper 4-2-0, Heli
+#     4-0-2, Heli 2-0-4, Village 2-3-0, Glue 0-2-4 - placements and upgrades
+#     only, no rock (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#   * bloonswiki Strategy:Deflation_(BTD6): a few tier 3-4 towers beat many
+#     tier 2s; tack/ring towers where the track loops
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#   * btd6index: lowest-cost CHIMPS on Cracked $26,605 (v49.3) - one of the
+#     easiest Intermediate maps (https://btd6index.win)
+#
+# Built from the AutoBTD6 CHIMPS core (sniper + helis) with the support
+# towers left out, so every tower is military: the same build serves
+# Military Only. Helis take Pursuit first (they then chase bloons instead
+# of the mouse) and IFR for camo; Razor Rotors, then Apache Dartship.
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   medium 4.00 (R45), military_only 4.00 (R45), reverse 4.76 (R45).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: cracked_medium
+map: Cracked
+hero: sauda
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 2, 0], heli: [4, 2, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Cracked]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.783, 0.3]}   # right of the rock: sees 92% of the lane
+  - {do: upgrade, id: s1, to: 0-1-0}                                       # Night Vision: camo
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.227, 0.402]}         # pad in the left bends
+  - {do: upgrade, id: h1, to: 2-0-0}                                       # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: h1, to: 2-2-0}                                       # IFR: camo
+  - {do: upgrade, id: h1, to: 3-2-0}                                       # Razor Rotors
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.623, 0.572]}       # Sauda in the right-hand bends
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.548, 0.257]}         # second pad
+  - {do: upgrade, id: h2, to: 2-0-0}                                       # Pursuit first
+  - {do: upgrade, id: h2, to: 3-2-0}
+  - {do: upgrade, id: s1, to: 2-2-0}                                       # Shrapnel
+  - {do: place, id: h3, kind: heli, role: dps, at: [0.532, 0.538]}         # third pad
+  - {do: upgrade, id: h3, to: 2-0-0}                                       # Pursuit first
+  - {do: upgrade, id: h3, to: 3-2-0}
+  - {do: upgrade, id: s1, to: 4-2-0}                                       # Maim MOAB
+  - {do: upgrade, id: h1, to: 4-2-0}                                       # Apache Dartship
+  - {do: upgrade, id: h2, to: 4-2-0}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  ceramic: [{do: upgrade, id: h1, to: 3-2-0}]
+  moab: [{do: upgrade, id: s1, to: 4-2-0}]

@@ -1,0 +1,81 @@
+# Adora's Temple, Deflation: boats in the corner ponds and two bombs on the
+# grass, bought at once at round 31.
+#
+# Map analysis (data/map_geometry/adorastemple.json, dps_model.Track):
+#   * four entrances; the AlternateRoundMultiPathSplitter sends each round down
+#     one pair (left+right on odd rounds, top+bottom on even rounds); every lane
+#     loops round the temple base, climbs it and leaves opposite. The damage
+#     model plays each of the four lanes as its own scenario and keeps the
+#     worst (stricter than the real half-and-half split);
+#   * the temple is one big line-of-sight block: a sniper on the outer grass
+#     sees ~44% of each lane; ground towers reach ~10-14% of one or two lanes;
+#     the temple steps/peak are not placeable in the bot's map model;
+#   * four corner ponds: each sits where two lanes run past (a boat there
+#     reaches ~14% of each of two lanes) - the best spots on the map.
+# Sources:
+#   * bloonswiki Adora's Temple: 4 entrances, two lanes a round, layered
+#     sight blocking; Carrier Flagship and peak towers recommended
+#     (https://www.bloonswiki.com/Adora%27s_Temple)
+#   * bloons fandom Adora's Temple: avoid 2-0-0 Pursuit helis (the far-apart
+#     lanes confuse them); Carrier Flagship, Ace Centered Path
+#     (https://bloons.fandom.com/wiki/Adora%27s_Temple)
+#   * Bacanator Gamer, Medium Military Only: Buccaneer, Etienne and Sniper
+#     (https://www.youtube.com/watch?v=QVkEb1zMVAI)
+#   * btd6index: 204 two-tower CHIMPS wins on the map (https://btd6index.win)
+#
+# Deflation: no income. Towers and order from the damage model's own search
+# (Optimizer in memory, bot-friendly towers, surplus into buccaneers).
+# `plan` fits the $20,000 of an account without Double Cash ($15,535 at
+# Easy prices, the hero last); `fill` spends the account's second $20,000
+# (Double Cash: $40,400).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   deflation 1.92 (R55).
+#   with the fill: deflation 6.65 (R59).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: adorastemple_deflation
+map: "Adora's Temple"
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {buccaneer: [2, 3, 2], bomb: [0, 2, 3]}
+  base_success: {deflation: 0.75}
+  maps: ["Adora's Temple"]
+plan:
+  - {do: place, id: buc1, kind: buccaneer, role: dps, at: [0.254, 0.845]}   # reaches 13% of the left lane, 14% of the bottom lane, 13% of the right lane, 14% of the top lane
+  - {do: upgrade, id: buc1, to: 0-3-2}                                     # Grape Shot + Hot Shot + Cannon Ship + Long Range + Crow's Nest
+  - {do: place, id: buc2, kind: buccaneer, role: dps, at: [0.633, 0.76]}   # reaches 14% of the left lane, 15% of the bottom lane, 14% of the right lane, 15% of the top lane
+  - {do: upgrade, id: buc2, to: 0-3-2}                                     # Grape Shot + Hot Shot + Cannon Ship + Long Range + Crow's Nest
+  - {do: place, id: bom3, kind: bomb, role: dps, at: [0.142, 0.624]}       # reaches 14% of the left lane, 10% of the bottom lane, 14% of the right lane, 10% of the top lane
+  - {do: upgrade, id: bom3, to: 0-2-2}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: bom4, kind: bomb, role: dps, at: [0.719, 0.624]}       # reaches 14% of the left lane, 9% of the bottom lane, 14% of the right lane, 9% of the top lane
+  - {do: upgrade, id: bom4, to: 0-1-2}                                     # Faster Reload + Extra Range + Frag Bombs
+  - {do: place, id: buc5, kind: buccaneer, role: dps, at: [0.607, 0.828]}   # reaches 13% of the left lane, 14% of the bottom lane, 13% of the right lane, 14% of the top lane
+  - {do: upgrade, id: buc5, to: 0-3-1}                                     # Grape Shot + Hot Shot + Cannon Ship + Long Range
+  - {do: place, id: buc6, kind: buccaneer, role: dps, at: [0.227, 0.76]}   # reaches 14% of the left lane, 15% of the bottom lane, 14% of the right lane, 15% of the top lane
+  - {do: upgrade, id: buc6, to: 0-3-1}                                     # Grape Shot + Hot Shot + Cannon Ship + Long Range
+  - {do: upgrade, id: bom3, to: 0-2-3}                                     # Cluster Bombs
+  - {do: upgrade, id: bom4, to: 0-2-2}                                     # Missile Launcher
+  - {do: upgrade, id: buc5, to: 0-3-2}                                     # Crow's Nest
+  - {do: place, id: buc7, kind: buccaneer, role: dps, at: [0.227, 0.266]}   # reaches 13% of the left lane, 15% of the bottom lane, 13% of the right lane, 15% of the top lane
+  - {do: upgrade, id: buc7, to: 2-0-1}                                     # Faster Shooting + Double Shot + Long Range
+  - {do: upgrade, id: bom4, to: 0-2-3}                                     # Cluster Bombs
+  - {do: place, id: buc8, kind: buccaneer, role: dps, at: [0.27, 0.198]}   # reaches 13% of the left lane, 15% of the bottom lane, 13% of the right lane, 15% of the top lane
+  - {do: upgrade, id: buc8, to: 0-0-1}                                     # Long Range
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.168, 0.709]}       # only if cash is left
+fill:
+  - {do: upgrade, id: buc7, to: 4-0-2}                                     # Destroyer + Aircraft Carrier + Crow's Nest
+  - {do: upgrade, id: buc6, to: 0-3-2}                                     # Crow's Nest
+  - {do: upgrade, id: buc8, to: 4-0-1}                                     # Faster Shooting + Double Shot + Destroyer + Aircraft Carrier
+  - {do: upgrade, id: buc2, to: 0-4-2}                                     # Monkey Pirates
+  - {do: place, id: buc9, kind: buccaneer, role: dps, at: [0.623, 0.223]}   # reaches 12% of the left lane, 14% of the bottom lane, 12% of the right lane, 14% of the top lane
+  - {do: place, id: buc10, kind: buccaneer, role: dps, at: [0.58, 0.181]}   # reaches 12% of the left lane, 15% of the bottom lane, 12% of the right lane, 15% of the top lane
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: place, id: s1, kind: sniper, role: dps, target: strong}, {do: upgrade, id: s1, to: 2-2-0}]
+  bfb: [{do: place, id: s1, kind: sniper, role: dps, target: strong}, {do: upgrade, id: s1, to: 4-2-0}]

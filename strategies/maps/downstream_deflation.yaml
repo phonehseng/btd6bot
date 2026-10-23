@@ -1,0 +1,65 @@
+# Downstream, Deflation: the same towers as the Medium build (sniper,
+# Destroyers, Pursuit heli) bought at once at round 31, ninjas in the loops
+# with the Double Cash half.
+#
+# Map analysis (data/map_geometry/downstream.json, dps_model.Track):
+#   * one lane: in at the top, a loop bottom-left, back through the middle, a
+#     loop top-right, out at the bottom right (~800 hittable world units);
+#   * no line-of-sight blockers: a sniper on the top edge sees all of it;
+#   * the river left of the start reaches ~27% of the lane for a buccaneer
+#     (0.355, 0.368) - the best single spot on the map; the two $350 rocks
+#     inside the loops are never bought by the bot.
+# Sources:
+#   * bloonswiki Downstream: one lane, two loops, no sight blockers; long-range
+#     towers in the open top middle, short-range towers in the loops; the water
+#     right of the start suits buccaneers / the Destroyer, which hit both
+#     sides (https://www.bloonswiki.com/Downstream_(BTD6))
+#   * AutoBTD6 CHIMPS script for Downstream (v50): Sauda, Sniper 4-2-0, Heli
+#     4-0-2, Heli 2-0-5, Village 2-3-0, Glue 0-2-4 - fixed spots, no rocks
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#   * Bacanator Gamer, 'How to Beat Downstream Deflation with 5 Towers': a
+#     buccaneer is the key tower (https://www.youtube.com/watch?v=RAqaQS9ZvHg)
+#
+# Deflation: no income. `plan` costs $15,960 at Easy prices with the hero
+# (inside the $20,000 of an account without Double Cash); `fill` spends the
+# account's second $20,000 (Double Cash: $40,400).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   deflation 1.66 (R55).
+#   with the fill: deflation 3.55 (R59).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: downstream_deflation
+map: Downstream
+hero: admiral_brickell
+modes: [deflation]
+planner:
+  towers: {sniper: [2, 2, 0], buccaneer: [3, 0, 2], heli: [3, 2, 0]}
+  base_success: {deflation: 0.78}
+  maps: [Downstream]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.138]}   # top edge: sees 100% of the lane
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.355, 0.368]}    # river left of the start: ~27% of the lane
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.478, 0.385]}         # pad between the loops
+  - {do: upgrade, id: h1, to: 2-0-0}                                       # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: s1, to: 2-2-0}                                       # Full Metal Jacket (lead) + Night Vision (camo)
+  - {do: upgrade, id: b1, to: 3-0-2}                                       # Destroyer + Crow's Nest (camo)
+  - {do: upgrade, id: h1, to: 3-2-0}                                       # IFR (camo) + Razor Rotors
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.216, 0.385]}    # river, second boat
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.318, 0.325]}       # Brickell, only if cash is left
+fill:
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.633, 0.47]}         # inside the top-right loop (Double Cash half)
+  - {do: upgrade, id: n1, to: 4-0-2}                                       # Bloonjitsu
+  - {do: upgrade, id: s1, to: 4-2-0}                                       # Maim MOAB
+  - {do: upgrade, id: b1, to: 4-0-2}                                       # Aircraft Carrier
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.216, 0.538]}        # inside the bottom-left loop
+  - {do: upgrade, id: n2, to: 4-0-2}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  moab: [{do: upgrade, id: s1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

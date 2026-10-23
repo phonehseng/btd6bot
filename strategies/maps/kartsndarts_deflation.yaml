@@ -1,0 +1,76 @@
+# KartsNDarts, Deflation: a Pursuit heli, bombs and snipers, bought at once
+# at round 31.
+#
+# Map analysis (data/map_geometry/kartsndarts.json, data/map_mechanics.json):
+#   * one figure-eight lane, in on the left, out on the right; 24% of it runs
+#     through tunnels where non-MOAB bloons cannot be hit (only 347 of the 810
+#     world units are hittable on screen);
+#   * the tyre stacks inside both loops ($500 removables, never bought by the
+#     bot) leave the grass outside the loops: ground towers by the entrance
+#     straight or the exit straight reach ~20-24% of the lane, a desperado
+#     ~39%; there are no sight blockers, so a sniper anywhere sees all of it.
+# Sources:
+#   * bloonswiki KartsNDarts: figure eight, tunnel, $500 tyre stacks, best spots
+#     above the tunnel between the loops (https://www.bloonswiki.com/KartsNDarts)
+#   * AutoBTD6 KartsNDarts scripts (v50): Hard no-MK - Sauda, Tack 4-0-2, Heli
+#     2-0-3 and 4-0-2, Village 0-2-0, Sniper 4-0-2; CHIMPS - Sauda, Heli 5-0-2,
+#     Heli 2-0-5, Sniper 4-2-0, Village 2-3-0, Glue 0-2-4 (fixed spots, no tyres)
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, helis forced onto
+# Pursuit, snipers ranked by the track they can see), checked again below.
+# Deflation: no income. `plan` fits the $20,000 of an account without Double
+# Cash ($19,805 at Easy prices, the hero last); `fill` spends the
+# account's second $20,000 (Double Cash: $40,400).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   deflation 1.94 (R58).
+#   with the fill: deflation 2.28 (R51).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: kartsndarts_deflation
+map: KartsNDarts
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {heli: [3, 0, 2], ace: [2, 3, 0], bomb: [3, 2, 3], sniper: [1, 2, 0]}
+  base_success: {deflation: 0.75}
+  maps: [KartsNDarts]
+plan:
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.334, 0.249]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel1, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel1, to: 3-0-2}                                     # Razor Rotors + Faster Darts + Faster Firing
+  - {do: place, id: ace2, kind: ace, role: dps, at: [0.195, 0.249]}        # plane circles this spot
+  - {do: upgrade, id: ace2, to: 2-3-0}                                     # Rapid Fire + Lots More Darts + Exploding Pineapple + Spy Plane + Bomber Ace
+  - {do: place, id: bom3, kind: bomb, role: dps, at: [0.751, 0.572]}       # reaches 22% of the lane
+  - {do: upgrade, id: bom3, to: 0-1-2}                                     # Faster Reload + Extra Range + Frag Bombs
+  - {do: place, id: bom4, kind: bomb, role: dps, at: [0.142, 0.266]}       # reaches 20% of the lane
+  - {do: upgrade, id: bom4, to: 3-0-2}                                     # Bigger Bombs + Heavy Bombs + Really Big Bombs + Extra Range + Frag Bombs
+  - {do: place, id: bom5, kind: bomb, role: dps, at: [0.099, 0.266]}       # reaches 20% of the lane
+  - {do: upgrade, id: bom5, to: 0-0-3}                                     # Extra Range + Frag Bombs + Cluster Bombs
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.045, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni6, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: bom5, to: 0-2-3}                                     # Faster Reload + Missile Launcher
+  - {do: place, id: sni7, kind: sniper, role: dps, target: strong, at: [0.088, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni7, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: bom8, kind: bomb, role: dps, at: [0.761, 0.743]}       # reaches 19% of the lane
+  - {do: upgrade, id: bom8, to: 0-2-2}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: bom9, kind: bomb, role: dps, at: [0.099, 0.453]}       # reaches 18% of the lane
+  - {do: upgrade, id: bom9, to: 3-0-2}                                     # Bigger Bombs + Heavy Bombs + Really Big Bombs + Extra Range + Frag Bombs
+  - {do: place, id: sni10, kind: sniper, role: dps, target: strong, at: [0.131, 0.138]}   # sees 100% of the lane
+  - {do: upgrade, id: sni10, to: 0-2-0}                                    # Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.387, 0.308]}       # only if cash is left
+fill:
+  - {do: upgrade, id: bom3, to: 0-2-2}                                     # Missile Launcher
+  - {do: upgrade, id: hel1, to: 4-0-2}                                     # Apache Dartship
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni6, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni6, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni6, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni6, to: 4-2-0}]

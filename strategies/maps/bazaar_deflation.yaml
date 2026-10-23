@@ -1,0 +1,86 @@
+# Bazaar, Deflation: Advanced Intel subs in the canal and snipers on the open
+# grass, bought at once at round 31.
+#
+# Map analysis (data/map_geometry/bazaar.json, dps_model.Track):
+#   * two lanes that ALTERNATE every round (AlternateRoundSplitter): the top
+#     lane runs left to right, the bottom lane right to left; each S-bends,
+#     crosses the middle and S-bends again;
+#   * the market stalls (and the $500 palm trees, never bought) block line of
+#     sight; no spot fits a heli pad; ground between the lanes reaches ~10% of
+#     each lane;
+#   * the canal by the bridge (top and bottom) is the one place that reaches
+#     both lanes' middle stretches: a buccaneer there covers ~16% of one lane
+#     and ~9% of the other; a sniper on the left or right grass column sees
+#     ~58% of both lanes (MapModel.sight).
+# Sources:
+#   * bloonswiki Bazaar: alternating lanes, canal, stalls and $500 trees;
+#     recommends Carrier Flagship + Brickell, Comanche Commander, Corvus
+#     (https://www.bloonswiki.com/Bazaar)
+#   * bloons fandom Bazaar/Strategies: heli 3-2-0 by R25-39, Armor Piercing
+#     Darts subs or a Destroyer, more subs for Medium, Bloontonium/1-2-0
+#     sniper for the round-59 camo leads
+#     (https://bloons.fandom.com/wiki/Bazaar/Strategies)
+#   * btd6index 2TC records on Bazaar (Geraldo + one tower; Blooncineration +
+#     Apache Prime) (https://btd6index.win/fetch-2tc?map=Bazaar)
+# No heli fits (model) and the live game has refused most grass cells, so the
+# wiki's water half carries the builds: Advanced Intel subs in the canal (they
+# shoot whatever the snipers see), snipers where the grass is still open,
+# Brickell in the canal.
+#
+# Deflation: no income. Towers and order from the damage model's own search
+# (Optimizer in memory, bot-friendly towers, surplus into subs; the live
+# game's refused cells and the HUD band excluded).
+# `plan` fits the $20,000 of an account without Double Cash ($18,955 at
+# Easy prices, the hero last); `fill` spends the account's second $20,000
+# (Double Cash: $40,400). The plan alone is NOT safe by the model; the
+# account's full $40,400 (plan + fill) is (see below).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   deflation 1.02 (R58).
+#   with the fill: deflation 2.35 (R58).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: bazaar_deflation
+map: Bazaar
+hero: admiral_brickell
+modes: [deflation]
+planner:
+  towers: {sub: [4, 3, 0], sniper: [1, 2, 0]}
+  base_success: {deflation: 0.75}
+  maps: [Bazaar]
+plan:
+  - {do: place, id: sub1, kind: sub, role: dps, at: [0.398, 0.334]}        # Advanced Intel: shoots whatever the other towers reach
+  - {do: upgrade, id: sub1, to: 2-3-0}                                     # Longer Range + Advanced Intel + Barbed Darts + Heat-tipped Darts + Ballistic Missile
+  - {do: place, id: sub2, kind: sub, role: dps, at: [0.441, 0.334]}        # reaches 10% of the top lane, 0% of the bottom lane
+  - {do: upgrade, id: sub2, to: 4-2-0}                                     # Longer Range + Advanced Intel + Submerge and Support + Bloontonium Reactor + Barbed Darts + Heat-tipped Darts
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.761, 0.436]}   # sees 57% of the top lane, 67% of the bottom lane
+  - {do: upgrade, id: sni3, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sub4, kind: sub, role: dps, at: [0.398, 0.709]}        # reaches 0% of the top lane, 7% of the bottom lane
+  - {do: upgrade, id: sub4, to: 4-1-0}                                     # Longer Range + Advanced Intel + Submerge and Support + Bloontonium Reactor + Barbed Darts
+  - {do: place, id: sni5, kind: sniper, role: dps, target: strong, at: [0.11, 0.487]}   # sees 53% of the top lane, 70% of the bottom lane
+  - {do: upgrade, id: sni5, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.74, 0.504]}   # sees 56% of the top lane, 65% of the bottom lane
+  - {do: upgrade, id: sni6, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sub7, kind: sub, role: dps, at: [0.441, 0.709]}        # Advanced Intel: shoots whatever the other towers reach
+  - {do: upgrade, id: sub7, to: 2-3-0}                                     # Longer Range + Advanced Intel + Barbed Darts + Heat-tipped Darts + Ballistic Missile
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.142, 0.504]}   # sees 51% of the top lane, 69% of the bottom lane
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sub9, kind: sub, role: dps, at: [0.398, 0.266]}        # Advanced Intel: shoots whatever the other towers reach
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.468, 0.76]}        # only if cash is left
+fill:
+  - {do: upgrade, id: sub9, to: 2-0-4}                                     # Longer Range + Advanced Intel + Twin Guns + Airburst Darts + Triple Guns + Armor Piercing Darts
+  - {do: place, id: sub10, kind: sub, role: dps, at: [0.452, 0.266]}       # Advanced Intel: shoots whatever the other towers reach
+  - {do: upgrade, id: sub10, to: 2-1-0}                                    # Longer Range + Advanced Intel + Barbed Darts
+  - {do: upgrade, id: sub1, to: 2-4-0}                                     # First Strike Capability
+  - {do: upgrade, id: sub4, to: 4-2-0}                                     # Heat-tipped Darts
+  - {do: upgrade, id: sub10, to: 4-2-0}                                    # Submerge and Support + Bloontonium Reactor + Heat-tipped Darts
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni3, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni3, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni3, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni3, to: 4-2-0}]

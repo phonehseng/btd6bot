@@ -1,0 +1,78 @@
+# Bloonarius Prime, Military Only / Reverse: Pursuit helis and a sniper,
+# map-wide, so the prime-round lane switch never matters.
+#
+# Map analysis (data/map_geometry/bloonariusprime.json, dps_model.Track):
+#   * on prime-numbered rounds bloons drop into the swamp hole by the entrance
+#     and take the short right lane (RuleSplitter); every other round takes
+#     the long left lane round the lake; the damage model plays both and keeps
+#     the worst;
+#   * the rock column between the lanes blocks sight; a sniper at the top
+#     middle (0.441, 0.078) still sees ~87-92% of both lanes; a boat in the
+#     right lake reaches ~30% of the prime lane only. Map-wide towers do not
+#     care which lane a round takes.
+# Sources:
+#   * bloonswiki Bloonarius Prime: prime-round rule, heli/global towers excel
+#     on the alternating lanes (https://www.bloonswiki.com/Bloonarius_Prime)
+#   * OneEyedDeacon CHIMPS (Rosalia + Flying Fortress, v49.3): snipers and an
+#     ace as the map-wide core (https://www.youtube.com/watch?v=mLpg86Zc7Rs)
+#   * AutoBTD6 CHIMPS / Impoppable scripts for Bloonarius Prime (v50): subs,
+#     buccaneers, Heli 2-0-4, Sniper 5-2-0 with Etienne/Benjamin
+#     (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#
+# Every tower is military. Each heli takes Pursuit first (it then chases
+# bloons instead of the mouse). Towers, spots and order come from the damage
+# model's own search (tools/optimize_builds.py Optimizer, run in memory with
+# the military towers, surplus into helis - the heli XP the account still
+# needs for its paragon), checked again below.
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   military_only 2.83 (R15), reverse 3.08 (R15).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: bloonariusprime_military_only
+map: Bloonarius Prime
+hero: etienne
+modes: [military_only, reverse]
+planner:
+  towers: {heli: [4, 2, 2], sub: [1, 0, 0], sniper: [1, 2, 1]}
+  base_success: {military_only: 0.78, reverse: 0.78}
+  maps: [Bloonarius Prime]
+plan:
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.094, 0.325]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel1, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.238, 0.146]}       # Etienne by the entrance, where both lanes start
+  - {do: place, id: sub2, kind: sub, role: dps, at: [0.655, 0.504]}        # reaches 22% of the prime-round lane, 0% of the long lane, 29% of the prime-round lane (other half)
+  - {do: upgrade, id: hel1, to: 2-0-2}                                     # Faster Darts + Faster Firing
+  - {do: place, id: sub3, kind: sub, role: dps, at: [0.655, 0.436]}        # reaches 21% of the prime-round lane, 0% of the long lane, 27% of the prime-round lane (other half)
+  - {do: upgrade, id: sub3, to: 1-0-0}                                     # Longer Range
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.077, 0.138]}   # sees 60% of the prime-round lane, 100% of the long lane, 48% of the prime-round lane (other half)
+  - {do: upgrade, id: sni4, to: 0-1-0}                                     # Night Vision Goggles
+  - {do: upgrade, id: hel1, to: 3-0-2}                                     # Razor Rotors
+  - {do: place, id: hel5, kind: heli, role: dps, at: [0.783, 0.675]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel5, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel5, to: 2-0-2}                                     # Faster Darts + Faster Firing
+  - {do: upgrade, id: sni4, to: 0-2-0}                                     # Shrapnel Shot
+  - {do: upgrade, id: hel5, to: 3-0-2}                                     # Razor Rotors
+  - {do: place, id: hel6, kind: heli, role: dps, at: [0.248, 0.283]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel6, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel6, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hel7, kind: heli, role: dps, at: [0.484, 0.896]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel7, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel7, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.168, 0.138]}   # sees 61% of the prime-round lane, 100% of the long lane, 49% of the prime-round lane (other half)
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: hel5, to: 4-0-2}                                     # Apache Dartship
+  - {do: upgrade, id: sni4, to: 0-2-1}                                     # Fast Firing
+  - {do: upgrade, id: hel6, to: 4-2-0}                                     # Apache Dartship
+  - {do: upgrade, id: hel1, to: 4-0-2}                                     # Apache Dartship
+  - {do: upgrade, id: hel7, to: 4-2-0}                                     # Apache Dartship
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni8, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni8, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni8, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni8, to: 4-2-0}]

@@ -1,0 +1,85 @@
+# Ancient Portal, Deflation: Pursuit helis plus helpers, bought at once at
+# round 31.
+#
+# Map analysis (data/map_geometry/ancientportal.json, dps_model.Track):
+#   * one entrance: bloons spiral clockwise from the top into a portal and,
+#     unless the player clicks the free realign device (the bot never does),
+#     leave through the right lane; the damage model also plays the walled
+#     left lane as a second scenario and keeps the worst (stricter than play);
+#   * ground inside the spiral reaches ~50% of the spiral for a ninja; a
+#     sniper right of the pond sees ~81% of the right route; the pond reaches
+#     ~27% of the right lane for a boat. Bloonswiki/fandom: the hero pedestal
+#     above the spiral gives camo + MIB, the one below +1 damage, +30% range.
+# Sources:
+#   * bloonswiki Ancient Portal: portal realign device, pedestals, totems
+#     (https://www.bloonswiki.com/Ancient_Portal)
+#   * AutoBTD6 CHIMPS script for Ancient Portal (v50): Sauda, Sniper 4-2-0,
+#     Heli 2-0-5, Heli 5-0-2, Village 2-3-0, Glue - fixed spots, no portal
+#     clicks (https://github.com/ANRAR4/AutoBTD6, playthroughs/)
+#   * BlueCliff, Ancient Portal Hard: ninja + alchemist, Glaive Lord
+#     (https://www.youtube.com/watch?v=-QdOnx826eA)
+#
+# Replaces the earlier ancientportal_deflation build (three ninjas and an
+# alchemist, after Eleado's AFK video), which the damage model rated far
+# below 2.0 (alchemist brews are not modelled) and which is no longer in
+# strategies/maps. Towers, spots and order come from the damage model's own
+# search (tools/optimize_builds.py Optimizer, run in memory, helis forced
+# onto Pursuit, snipers ranked by the track they can see, surplus into helis).
+# `plan` fits the $20,000 of an account without Double Cash ($19,090 at
+# Easy prices, the hero last); `fill` spends the account's second $20,000
+# (Double Cash: $40,400).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   deflation 1.54 (R58).
+#   with the fill: deflation 2.77 (R58).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: ancientportal_deflation
+map: Ancient Portal
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {heli: [3, 2, 2], sniper: [1, 2, 0], bomb: [0, 0, 0]}
+  base_success: {deflation: 0.75}
+  maps: [Ancient Portal]
+plan:
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.59, 0.436]}        # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel1, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel1, to: 3-0-2}                                     # Razor Rotors + Faster Darts + Faster Firing
+  - {do: place, id: hel2, kind: heli, role: dps, at: [0.804, 0.47]}        # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel2, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel2, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hel3, kind: heli, role: dps, at: [0.804, 0.7]}         # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel3, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel3, to: 3-0-2}                                     # Razor Rotors + Faster Darts + Faster Firing
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.756, 0.606]}   # sees 79% of the right lane (default), 42% of the left lane (after a realign)
+  - {do: upgrade, id: sni4, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: hel5, kind: heli, role: dps, at: [0.045, 0.589]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel5, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel5, to: 3-2-0}                                     # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: bom6, kind: bomb, role: dps, at: [0.601, 0.206]}       # reaches 51% of the right lane (default), 46% of the left lane (after a realign)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.799, 0.172]}       # only if cash is left
+fill:
+  - {do: upgrade, id: bom6, to: 0-2-2}                                     # Faster Reload + Missile Launcher + Extra Range + Frag Bombs
+  - {do: place, id: hel7, kind: heli, role: dps, at: [0.708, 0.862]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel7, to: 2-0-0}                                     # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel7, to: 3-0-2}                                     # Razor Rotors + Faster Darts + Faster Firing
+  - {do: place, id: nin8, kind: ninja, role: dps, at: [0.601, 0.266]}      # reaches 49% of the right lane (default), 44% of the left lane (after a realign)
+  - {do: place, id: des9, kind: desperado, role: dps, at: [0.697, 0.453]}   # reaches 61% of the right lane (default), 42% of the left lane (after a realign)
+  - {do: upgrade, id: des9, to: 0-1-0}                                     # Eagle Eye
+  - {do: place, id: hel10, kind: heli, role: dps, at: [0.473, 0.181]}      # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel10, to: 2-0-0}                                    # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel10, to: 3-2-0}                                    # Razor Rotors + Bigger Jets + IFR
+  - {do: place, id: hel11, kind: heli, role: dps, at: [0.505, 0.47]}       # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel11, to: 2-0-0}                                    # Pursuit first: then it never follows the mouse
+  - {do: upgrade, id: hel11, to: 3-2-0}                                    # Razor Rotors + Bigger Jets + IFR
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni4, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni4, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni4, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni4, to: 4-2-0}]

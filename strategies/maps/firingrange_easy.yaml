@@ -1,0 +1,91 @@
+# Firing Range, Easy: snipers on the bottom grass (they see ~84% of both
+# lanes).
+#
+# Map analysis (data/map_geometry/firingrange.json, dps_model.Track):
+#   * two lanes AT THE SAME TIME: bloons enter top-left and top-right, run
+#     along the top, then down the sides and out at the bottom on the opposite
+#     side (the spawn shares them out);
+#   * the fence and the central outpost (a $1,000 removable, never bought by
+#     the bot) keep ground towers away from the early track: from the open
+#     ground a tack or ninja reaches under 10% of one lane; a sniper on the
+#     bottom grass sees ~84% of BOTH lanes (MapModel.sight) - the core here;
+#   * Pursuit helis were left out of the military build: with two lanes live
+#     at once they chase back and forth (bloons fandom warns of this on maps
+#     with simultaneous far-apart lanes).
+# Sources:
+#   * bloonswiki Firing Range: two simultaneous lanes, removable outpost,
+#     benches that take small towers only, a Destroyer with camo for the
+#     mid-game (https://www.bloonswiki.com/Firing_Range)
+#   * Bacanator Gamer, Firing Range Deflation (removes the outpost; the bot
+#     cannot) (https://www.youtube.com/watch?v=CRYbas43SsI)
+#   * btd6index single-tower CHIMPS entries: Apache Dartship and Aircraft
+#     Carrier (https://btd6index.win)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, snipers ranked by the
+# track they can see), checked again below.
+# `plan` is what the offline threat simulation's base economy buys by round
+# 40; `fill` is the rest (the account's Fast Track + Double Cash money).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   easy 2.51 (R39).
+#   with the fill: easy 4.60 (R39).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: firingrange_easy
+map: Firing Range
+hero: etienne
+modes: [easy]
+planner:
+  towers: {sub: [0, 0, 0], sniper: [3, 3, 2]}
+  base_success: {easy: 0.82}
+  maps: [Firing Range]
+plan:
+  - {do: place, id: sub1, kind: sub, role: dps, at: [0.687, 0.436]}        # reaches 16% of the left-entrance lane, 12% of the right-entrance lane
+  - {do: place, id: sub2, kind: sub, role: dps, at: [0.729, 0.436]}        # reaches 15% of the left-entrance lane, 9% of the right-entrance lane
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.409, 0.93]}   # sees 84% of the left-entrance lane, 84% of the right-entrance lane
+  - {do: upgrade, id: sni3, to: 0-2-0}                                     # Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.366, 0.93]}   # sees 83% of the left-entrance lane, 83% of the right-entrance lane
+  - {do: upgrade, id: sni3, to: 0-2-2}                                     # Fast Firing + Even Faster Firing
+  - {do: upgrade, id: sni4, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni5, kind: sniper, role: dps, target: strong, at: [0.452, 0.93]}   # sees 83% of the left-entrance lane, 83% of the right-entrance lane
+  - {do: upgrade, id: sni5, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.409, 0.845]}   # sees 82% of the left-entrance lane, 82% of the right-entrance lane
+  - {do: place, id: sni7, kind: sniper, role: dps, target: strong, at: [0.377, 0.862]}   # sees 82% of the left-entrance lane, 82% of the right-entrance lane
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.441, 0.862]}   # sees 82% of the left-entrance lane, 81% of the right-entrance lane
+  - {do: place, id: sni9, kind: sniper, role: dps, target: strong, at: [0.494, 0.93]}   # sees 81% of the left-entrance lane, 80% of the right-entrance lane
+  - {do: place, id: sni10, kind: sniper, role: dps, target: strong, at: [0.323, 0.93]}   # sees 80% of the left-entrance lane, 80% of the right-entrance lane
+  - {do: upgrade, id: sni6, to: 1-1-0}                                     # Full Metal Jacket + Night Vision Goggles
+  - {do: upgrade, id: sni7, to: 0-1-0}                                     # Night Vision Goggles
+  - {do: upgrade, id: sni6, to: 1-2-0}                                     # Shrapnel Shot
+  - {do: upgrade, id: sni7, to: 1-2-0}                                     # Full Metal Jacket + Shrapnel Shot
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni9, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni10, to: 1-2-0}                                    # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni4, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni5, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni6, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni7, to: 2-2-0}                                     # Large Calibre
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.211, 0.547]}
+fill:
+  - {do: upgrade, id: sni8, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni3, to: 0-3-2}                                     # Bouncing Bullet
+  - {do: upgrade, id: sni4, to: 2-3-0}                                     # Bouncing Bullet
+  - {do: upgrade, id: sni5, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni6, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni7, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni9, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni8, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni10, to: 2-2-0}                                    # Large Calibre
+  - {do: upgrade, id: sni9, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni10, to: 2-3-0}                                    # Bouncing Bullet
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni5, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni5, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni5, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni5, to: 4-2-0}]

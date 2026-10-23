@@ -1,0 +1,106 @@
+# Firing Range, Primary Only: darts and desperados where the open ground
+# touches the lanes.
+#
+# Map analysis (data/map_geometry/firingrange.json, dps_model.Track):
+#   * two lanes AT THE SAME TIME: bloons enter top-left and top-right, run
+#     along the top, then down the sides and out at the bottom on the opposite
+#     side (the spawn shares them out);
+#   * the fence and the central outpost (a $1,000 removable, never bought by
+#     the bot) keep ground towers away from the early track: from the open
+#     ground a tack or ninja reaches under 10% of one lane; a sniper on the
+#     bottom grass sees ~84% of BOTH lanes (MapModel.sight) - the core here;
+#   * Pursuit helis were left out of the military build: with two lanes live
+#     at once they chase back and forth (bloons fandom warns of this on maps
+#     with simultaneous far-apart lanes).
+# Sources:
+#   * bloonswiki Firing Range: two simultaneous lanes, removable outpost,
+#     benches that take small towers only, a Destroyer with camo for the
+#     mid-game (https://www.bloonswiki.com/Firing_Range)
+#   * Bacanator Gamer, Firing Range Deflation (removes the outpost; the bot
+#     cannot) (https://www.youtube.com/watch?v=CRYbas43SsI)
+#   * btd6index single-tower CHIMPS entries: Apache Dartship and Aircraft
+#     Carrier (https://btd6index.win)
+#
+# Towers, spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory, snipers ranked by the
+# track they can see), checked again below.
+# `plan` is what the offline threat simulation's base economy buys by round
+# 40; `fill` is the rest (the account's Fast Track + Double Cash money).
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   primary_only 0.95 (R40).
+#   with the fill: primary_only 2.09 (R37).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: firingrange_primary_only
+map: Firing Range
+hero: etienne
+modes: [primary_only]
+planner:
+  towers: {dart: [4, 3, 4], desperado: [3, 0, 0]}
+  base_success: {primary_only: 0.78}
+  maps: [Firing Range]
+plan:
+  - {do: place, id: dar1, kind: dart, role: dps, at: [0.74, 0.675]}        # reaches 7% of the left-entrance lane, 0% of the right-entrance lane
+  - {do: place, id: dar2, kind: dart, role: dps, at: [0.74, 0.606]}        # reaches 7% of the left-entrance lane, 0% of the right-entrance lane
+  - {do: place, id: dar3, kind: dart, role: dps, at: [0.74, 0.794]}        # reaches 6% of the left-entrance lane, 0% of the right-entrance lane
+  - {do: place, id: dar4, kind: dart, role: dps, at: [0.729, 0.555]}       # reaches 6% of the left-entrance lane, 0% of the right-entrance lane
+  - {do: place, id: dar5, kind: dart, role: dps, at: [0.142, 0.692]}       # reaches 0% of the left-entrance lane, 6% of the right-entrance lane
+  - {do: place, id: dar6, kind: dart, role: dps, at: [0.142, 0.606]}       # reaches 0% of the left-entrance lane, 6% of the right-entrance lane
+  - {do: place, id: dar7, kind: dart, role: dps, at: [0.142, 0.811]}       # reaches 0% of the left-entrance lane, 6% of the right-entrance lane
+  - {do: place, id: dar8, kind: dart, role: dps, at: [0.729, 0.726]}       # reaches 6% of the left-entrance lane, 0% of the right-entrance lane
+  - {do: upgrade, id: dar4, to: 0-0-2}                                     # Long Range Darts + Enhanced Eyesight
+  - {do: upgrade, id: dar5, to: 0-0-1}                                     # Long Range Darts
+  - {do: upgrade, id: dar6, to: 0-0-1}                                     # Long Range Darts
+  - {do: upgrade, id: dar5, to: 0-1-1}                                     # Quick Shots
+  - {do: upgrade, id: dar7, to: 0-0-1}                                     # Long Range Darts
+  - {do: upgrade, id: dar6, to: 0-1-1}                                     # Quick Shots
+  - {do: upgrade, id: dar7, to: 0-1-1}                                     # Quick Shots
+  - {do: upgrade, id: dar5, to: 0-2-1}                                     # Very Quick Shots
+  - {do: upgrade, id: dar6, to: 0-2-1}                                     # Very Quick Shots
+  - {do: upgrade, id: dar7, to: 0-2-1}                                     # Very Quick Shots
+  - {do: upgrade, id: dar3, to: 0-0-1}                                     # Long Range Darts
+  - {do: upgrade, id: dar4, to: 0-1-2}                                     # Quick Shots
+  - {do: upgrade, id: dar8, to: 0-0-1}                                     # Long Range Darts
+  - {do: place, id: des9, kind: desperado, role: dps, at: [0.206, 0.555]}   # reaches 8% of the left-entrance lane, 18% of the right-entrance lane
+  - {do: place, id: des10, kind: desperado, role: dps, at: [0.655, 0.555]}   # reaches 18% of the left-entrance lane, 8% of the right-entrance lane
+  - {do: upgrade, id: dar4, to: 0-2-2}                                     # Very Quick Shots
+  - {do: upgrade, id: dar5, to: 0-2-2}                                     # Enhanced Eyesight
+  - {do: upgrade, id: dar4, to: 0-2-3}                                     # Crossbow
+  - {do: place, id: des11, kind: desperado, role: dps, at: [0.163, 0.555]}   # reaches 7% of the left-entrance lane, 18% of the right-entrance lane
+  - {do: upgrade, id: dar3, to: 0-1-1}                                     # Quick Shots
+  - {do: upgrade, id: dar1, to: 0-0-1}                                     # Long Range Darts
+  - {do: upgrade, id: dar2, to: 0-0-1}                                     # Long Range Darts
+  - {do: upgrade, id: dar1, to: 1-0-1}                                     # Sharp Shots
+  - {do: upgrade, id: dar3, to: 0-3-1}                                     # Very Quick Shots + Triple Shot
+  - {do: upgrade, id: dar5, to: 0-2-3}                                     # Crossbow
+  - {do: upgrade, id: dar3, to: 0-3-2}                                     # Enhanced Eyesight
+  - {do: place, id: des12, kind: desperado, role: dps, at: [0.248, 0.555]}   # reaches 8% of the left-entrance lane, 13% of the right-entrance lane
+  - {do: upgrade, id: dar1, to: 3-0-2}                                     # Razor Sharp Shots + Spike-o-pult + Enhanced Eyesight
+  - {do: upgrade, id: dar6, to: 0-2-2}                                     # Enhanced Eyesight
+  - {do: upgrade, id: dar2, to: 0-1-1}                                     # Quick Shots
+  - {do: upgrade, id: dar8, to: 0-1-1}                                     # Quick Shots
+  - {do: upgrade, id: dar6, to: 0-2-3}                                     # Crossbow
+  - {do: upgrade, id: des11, to: 3-0-0}                                    # Quickdraw + Standoff + Big Iron
+  - {do: upgrade, id: dar2, to: 0-2-3}                                     # Very Quick Shots + Enhanced Eyesight + Crossbow
+  - {do: upgrade, id: dar8, to: 0-1-3}                                     # Enhanced Eyesight + Crossbow
+  - {do: upgrade, id: des10, to: 3-0-0}                                    # Quickdraw + Standoff + Big Iron
+  - {do: upgrade, id: des9, to: 3-0-0}                                     # Quickdraw + Standoff + Big Iron
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.692, 0.572]}
+fill:
+  - {do: upgrade, id: dar4, to: 0-2-4}                                     # Sharp Shooter
+  - {do: upgrade, id: dar7, to: 0-2-3}                                     # Enhanced Eyesight + Crossbow
+  - {do: place, id: des13, kind: desperado, role: dps, at: [0.58, 0.555]}   # reaches 8% of the left-entrance lane, 8% of the right-entrance lane
+  - {do: place, id: des14, kind: desperado, role: dps, at: [0.291, 0.555]}   # reaches 8% of the left-entrance lane, 8% of the right-entrance lane
+  - {do: upgrade, id: dar2, to: 0-2-4}                                     # Sharp Shooter
+  - {do: upgrade, id: des12, to: 3-0-0}                                    # Quickdraw + Standoff + Big Iron
+  - {do: upgrade, id: dar1, to: 4-0-2}                                     # Juggernaut
+  - {do: upgrade, id: dar7, to: 0-2-4}                                     # Sharp Shooter
+  - {do: upgrade, id: dar5, to: 0-2-4}                                     # Sharp Shooter
+  - {do: upgrade, id: dar6, to: 0-2-4}                                     # Sharp Shooter
+  - {do: upgrade, id: dar8, to: 0-2-4}                                     # Very Quick Shots + Sharp Shooter
+panic:
+  - {do: place, kind: desperado, role: dps}

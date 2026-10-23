@@ -1,0 +1,104 @@
+# Balance, Medium / Military Only / Reverse: snipers where the hedges leave
+# them sight, plus map-wide helpers, so the side bloons enter from never matters.
+#
+# Map analysis (data/map_geometry/balance.json, dps_model.Track):
+#   * bloons enter from the left AND the right edge (a plain spawn splitter
+#     shares them out), cross the garden by one of four sub-paths that wind
+#     round the central loop, and leave on the far side; hedges wall most of
+#     the track, leaving small square plots inside the garden;
+#   * model gap: dps_model only builds the routes from the RIGHT entrance (the
+#     map's paths form a loop, so map_routes starts from the first spawn path
+#     only) and sends every bloon that way. The map is left-right symmetric, so
+#     the builds below lean on map-wide towers and put ground towers in
+#     mirrored pairs; the model still counts every bloon on one side, which is
+#     stricter than the real half-and-half split;
+#   * a sniper anywhere near the middle sees the whole track; the four central
+#     plots reach ~22% of the track for a ninja or bomb; the bottom pond ~24%
+#     for a buccaneer.
+# Sources:
+#   * bloonswiki Balance: two entrances, eight sub-paths round a central loop,
+#     tight medium-footprint plots inside the hedges
+#     (https://www.bloonswiki.com/Balance)
+#   * sarahs-btd6-site Balance guide: bloons circle the central loop before
+#     leaving (https://sarahs-btd6-site.onrender.com/guides/maps/med-maps/balance)
+#   * Bloonyah Bloons, Medium Military Only (also for Reverse), v24.1
+#     (https://www.youtube.com/watch?v=ZF8KVb7Rxss); CarlyleX2, Deflation
+#     (https://www.youtube.com/watch?v=CS98QvSVm7k)
+#   * btd6index: 456 two-tower CHIMPS wins - one of the easiest Intermediate
+#     maps (https://btd6index.win/fetch-2tc?map=Balance)
+#
+# Every tower is military, so the same build serves Military Only. Towers,
+# spots and order come from the damage model's own search
+# (tools/optimize_builds.py Optimizer, run in memory with the military
+# towers, surplus into snipers; the live game's refused cells and the HUD
+# band excluded), checked again below.
+#
+# Damage model (dps_model via the tools/optimize_builds.py replay, on the
+# account's Fast Track + Double Cash economy, plan bought in order as cash
+# allows; heroes and alchemist brews not counted): worst margin per mode:
+#   medium 2.62 (R16), military_only 2.62 (R16), reverse 2.89 (R16).
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal
+# in plan order as tests/test_map_hints_offline.py does. Untested in play:
+# base_success is deliberately low until the record calibrates it.
+id: balance_medium
+map: Balance
+hero: etienne
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 4, 0], sub: [2, 0, 4], buccaneer: [4, 0, 2]}
+  base_success: {medium: 0.78, military_only: 0.78, reverse: 0.78}
+  maps: [Balance]
+plan:
+  - {do: place, id: sni1, kind: sniper, role: dps, target: strong, at: [0.505, 0.504]}   # sees ~100% of the track (mean of its 12 routes)
+  - {do: upgrade, id: sni1, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.083, 0.419]}       # Etienne: drones reach both sides
+  - {do: place, id: sni2, kind: sniper, role: dps, target: strong, at: [0.056, 0.47]}   # sees ~49% of the track (mean of its 12 routes)
+  - {do: upgrade, id: sni2, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.836, 0.47]}   # sees ~42% of the track (mean of its 12 routes)
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.024, 0.453]}   # sees ~39% of the track (mean of its 12 routes)
+  - {do: place, id: sni5, kind: sniper, role: dps, target: strong, at: [0.826, 0.589]}   # sees ~35% of the track (mean of its 12 routes)
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.067, 0.589]}   # sees ~33% of the track (mean of its 12 routes)
+  - {do: place, id: sni7, kind: sniper, role: dps, target: strong, at: [0.794, 0.419]}   # sees ~28% of the track (mean of its 12 routes)
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.804, 0.641]}   # sees ~28% of the track (mean of its 12 routes)
+  - {do: upgrade, id: sni3, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni4, to: 1-1-0}                                     # Full Metal Jacket + Night Vision Goggles
+  - {do: upgrade, id: sni5, to: 1-0-0}                                     # Full Metal Jacket
+  - {do: upgrade, id: sni4, to: 1-2-0}                                     # Shrapnel Shot
+  - {do: upgrade, id: sni5, to: 1-2-0}                                     # Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni6, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni7, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni8, to: 1-2-0}                                     # Full Metal Jacket + Night Vision Goggles + Shrapnel Shot
+  - {do: upgrade, id: sni2, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni7, to: 2-2-0}                                     # Large Calibre
+  - {do: place, id: sub9, kind: sub, role: dps, at: [0.43, 0.76]}          # Advanced Intel: shoots whatever the other towers reach
+  - {do: upgrade, id: sub9, to: 2-0-2}                                     # Longer Range + Advanced Intel + Twin Guns + Airburst Darts
+  - {do: place, id: buc10, kind: buccaneer, role: dps, at: [0.419, 0.896]}   # reaches ~11% of the track (mean of its 12 routes)
+  - {do: upgrade, id: buc10, to: 0-0-1}                                    # Long Range
+  - {do: upgrade, id: sni2, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sub9, to: 2-0-3}                                     # Triple Guns
+  - {do: upgrade, id: sni1, to: 3-2-0}                                     # Large Calibre + Deadly Precision
+  - {do: upgrade, id: sni7, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni3, to: 2-3-0}                                     # Large Calibre + Bouncing Bullet
+  - {do: upgrade, id: sni4, to: 3-2-0}                                     # Large Calibre + Deadly Precision
+  - {do: upgrade, id: sni6, to: 3-2-0}                                     # Large Calibre + Deadly Precision
+  - {do: upgrade, id: sub9, to: 2-0-4}                                     # Armor Piercing Darts
+  - {do: upgrade, id: sni5, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: sni8, to: 2-2-0}                                     # Large Calibre
+  - {do: upgrade, id: buc10, to: 3-0-1}                                    # Faster Shooting + Double Shot + Destroyer
+  - {do: upgrade, id: sni8, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: sni5, to: 3-2-0}                                     # Deadly Precision
+  - {do: upgrade, id: buc10, to: 4-0-2}                                    # Aircraft Carrier + Crow's Nest
+  - {do: upgrade, id: sni1, to: 4-2-0}                                     # Maim MOAB
+  - {do: upgrade, id: sni2, to: 4-2-0}                                     # Maim MOAB
+  - {do: upgrade, id: sni4, to: 4-2-0}                                     # Maim MOAB
+  - {do: upgrade, id: sni3, to: 2-4-0}                                     # Supply Drop
+  - {do: upgrade, id: sni5, to: 4-2-0}                                     # Maim MOAB
+  - {do: upgrade, id: sni6, to: 4-2-0}                                     # Maim MOAB
+  - {do: upgrade, id: sni7, to: 4-2-0}                                     # Maim MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  ceramic: [{do: upgrade, id: sni1, to: 2-2-0}]
+  moab: [{do: upgrade, id: sni1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sni1, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni1, to: 4-2-0}]
