@@ -31,6 +31,16 @@ class Aborted(RuntimeError):
 _STOP_FILE = __import__("pathlib").Path(__file__).resolve().parents[1] / "STOP"
 
 
+# The HUD's STOP button writes this file and GO removes it (tools/overlay.py):
+# while it exists the bot sends no input at all and waits where it is.
+HOLD_FILE = _STOP_FILE.with_name("HOLD")
+
+
+def held():
+    """Has the owner pressed STOP in the HUD (and not GO yet)?"""
+    return HOLD_FILE.exists()
+
+
 def kill_requested():
     """Ctrl+Alt+F8 (plain F8 is too easy to hit by accident) or a STOP file."""
     down = lambda vk: bool(win32api.GetAsyncKeyState(vk) & 0x8000)  # noqa: E731
@@ -82,6 +92,9 @@ class Input:
         if kill_requested():
             self.release_all()
             raise Aborted("F8 pressed")
+        if held():
+            self._wait_for(lambda: not held() and self.screen.is_foreground(),
+                           "stopped from the HUD - press GO to continue")
         if not self.screen.is_foreground():
             self._wait_for(self.screen.is_foreground, "BTD6 is not the foreground window")
 
