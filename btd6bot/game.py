@@ -853,14 +853,24 @@ class Game:
         return "unknown"
 
     def target(self, p, mode):
-        mode = mode.lower()
+        """Cycle p's targeting until its button shows `mode` (a word of it is
+        enough: "lock" for Lock In Place, "pursuit", "strong"...).
+
+        The button's label can wrap onto two lines ("LOCK IN / PLACE" on a
+        heli), which the one-line recogniser garbles ("Ck"), so the label is
+        read with the full OCR and its words joined."""
+        from .vision import norm
+        want = norm(mode)
         if not self.select(p):
             return False
         try:
             pan = self.panel(p)
+            x0, y0, x1, y1 = pan["target_text"]
+            region = (x0, y0 - 0.012, x1, y1 + 0.012)
             for _ in range(8):
-                text, _ = rec_text(crop(self.fresh(), pan["target_text"]))
-                if mode in text.lower():
+                f = self.fresh()
+                words = self._vision().read(region=region, img=f)
+                if want in norm(" ".join(w.text for w in words)):
                     return True
                 self.inp.click(*pan["target_next"])
                 time.sleep(0.2)
