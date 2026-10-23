@@ -292,6 +292,19 @@ NORMAL_GROUP = EASY_FAMILY + MEDIUM_FAMILY
 # after repeated losses the circuit breaker (safety.py) allows Easy-family
 # medals only. (The morning's warm-up order is TIERS_WARM_UP.)
 TIERS_HARD_FIRST = ("H", "HS", "HF", "B", "M", "E")
+
+# The owner's order inside the Hard family (2026-10-23): "beating all maps on
+# hard, then all maps on hard's next medal, then next, then next, then work
+# on chimps". One medal at a time across every map, in the order the game's
+# Hard screen shows them (it also respects both unlock chains above):
+# a Magic Monkeys Only game waits until no Hard medal is left that the bot
+# can play, and so on. H, HS and HF (see _tier) are one group for this.
+# Never losing still comes first: the order applies among the games the
+# planner is confident of (CONFIDENT_P), then again among the rest - with
+# one Hard medal left at p=0.82, the strict order would have played Magic
+# Monkeys Only games at p=0.71 next.
+HARD_MEDAL_ORDER = ("hard", "magic_only", "double_hp", "half_cash", "abr", "impoppable", "chimps")
+HARD_TIERS = ("H", "HS", "HF")
 TIERS_WARM_UP = ("E", "M", "H", "HS", "HF", "B")
 TIERS = TIERS_HARD_FIRST
 HARD_MAPS_FIRST = True
@@ -1569,11 +1582,16 @@ PREFERRED_STRATEGIES = ("hard_sniper_elite",)
 
 
 def _sort_key(c: _Cand) -> tuple:
-    """Best first with reverse=True: tier, then confident games (p >=
-    CONFIDENT_P), then the owner's preferred plans (PREFERRED_STRATEGIES),
+    """Best first with reverse=True: tier (the Hard family as one group,
+    worked through HARD_MEDAL_ORDER one medal at a time), then confident
+    games (p >= CONFIDENT_P), then the owner's preferred plans (PREFERRED_STRATEGIES),
     then (H/HS) learned tracks, then score - or p in HF, the
     tier that is about safety."""
-    rank = -TIERS.index(c.tier)
+    hard = c.tier in HARD_TIERS
+    # the Hard family is one group, worked through medal by medal
+    rank = -min(TIERS.index(t) for t in HARD_TIERS) if hard else -TIERS.index(c.tier)
+    stage = -HARD_MEDAL_ORDER.index(c.mode) if hard and c.mode in HARD_MEDAL_ORDER else 0
+    sure = 0 if c.tier == "HF" else 1     # HF: the fallback bar, below the mode's own
     confident = 1 if c.p >= CONFIDENT_P else 0
     # a map's own researched build (strategies/maps: one map only) and the
     # owner's preferred plans come first
@@ -1585,8 +1603,8 @@ def _sort_key(c: _Cand) -> tuple:
     if HARD_MAPS_FIRST:
         # safer first among confident games: a map's own build, a learned
         # track - then the hardest map
-        return (rank, confident, preferred, learned, maps, within)
-    return (rank, confident, maps, preferred, learned, within)
+        return (rank, confident, stage, sure, preferred, learned, maps, within)
+    return (rank, confident, stage, sure, maps, preferred, learned, within)
 
 
 def _open_unearned(account: AccountState, modes: Iterable[str]) -> bool:
