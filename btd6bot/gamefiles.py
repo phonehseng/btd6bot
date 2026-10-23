@@ -85,7 +85,7 @@ def find_install():
         out = subprocess.run(
             ["powershell", "-NoProfile", "-Command",
              "(Get-Process BloonsTD6 -ErrorAction SilentlyContinue | Select-Object -First 1).Path"],
-            capture_output=True, text=True, timeout=15).stdout.strip()
+            capture_output=True, text=True, timeout=15, creationflags=subprocess.CREATE_NO_WINDOW).stdout.strip()
         if out:
             return Path(out).parent
     except (OSError, subprocess.SubprocessError):

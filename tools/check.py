@@ -13,7 +13,7 @@ if __name__ == "__main__":
     steps += [[sys.executable, str(t)] for t in sorted((ROOT / "tests").glob("test_*.py"))]
     failed = []
     for cmd in steps:
-        r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", creationflags=subprocess.CREATE_NO_WINDOW)
         name = Path(cmd[-1]).name if cmd[-1].endswith(".py") else "import"
         ok = r.returncode == 0
         print(("PASS " if ok else "FAIL ") + name)

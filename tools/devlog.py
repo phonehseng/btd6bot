@@ -122,7 +122,7 @@ def day_commits(day):
         try:
             out = subprocess.run([git, "-C", str(ROOT), "log", f"--since={start:%Y-%m-%d %H:%M}",
                                   f"--until={end:%Y-%m-%d %H:%M}", "--format=%ct%x1f%h%x1f%s%x1f%b%x1e"],
-                                 capture_output=True, text=True, timeout=30)
+                                 capture_output=True, text=True, timeout=30, creationflags=subprocess.CREATE_NO_WINDOW)
         except OSError:
             continue
         if out.returncode == 0:
@@ -325,7 +325,7 @@ def media_clip(ffmpeg, m, folder=MEDIA_CACHE):
         source = ["-loop", "1", "-framerate", _fps(ffmpeg), "-t", f"{seconds:.2f}", "-i", str(m["path"])]
     cmd = [str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y", *source,
            "-vf", frame_filter(srt.name), *_encoder(ffmpeg), "-an", out.name]
-    done = subprocess.run(cmd, cwd=str(folder), capture_output=True, text=True, timeout=300)
+    done = subprocess.run(cmd, cwd=str(folder), capture_output=True, text=True, timeout=300, creationflags=subprocess.CREATE_NO_WINDOW)
     srt.unlink(missing_ok=True)
     if done.returncode != 0:
         H.log.warning("dev log picture %s failed: %s", m["file"], done.stderr[-300:])
@@ -498,7 +498,7 @@ def build(day):
             lst.write_text("".join(f"file '{p.as_posix()}'\n" for p in order), encoding="utf-8")
             video = H.VIDEO_DIR / f"BTD6 bot devlog {day}.mp4"
             subprocess.run([str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0",
-                            "-i", str(lst), "-c", "copy", str(video)], capture_output=True, timeout=600)
+                            "-i", str(lst), "-c", "copy", str(video)], capture_output=True, timeout=600, creationflags=subprocess.CREATE_NO_WINDOW)
     # a shared moment only counts as "shown with" another commit if that one got the clip
     by_hash = {it["hash"]: it for it in items}
     for it in items:

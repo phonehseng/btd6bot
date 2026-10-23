@@ -52,7 +52,7 @@ def ffmpeg_path():
 def _has(ffmpeg, kind, name):
     """Does this ffmpeg build offer an encoder/filter called `name`?"""
     out = subprocess.run([str(ffmpeg), "-hide_banner", f"-{kind}"], capture_output=True,
-                         text=True, timeout=30).stdout
+                         text=True, timeout=30, creationflags=subprocess.CREATE_NO_WINDOW).stdout
     return any(line.split()[1:2] == [name] for line in out.splitlines() if len(line.split()) > 1)
 
 

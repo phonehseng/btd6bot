@@ -42,7 +42,7 @@ def game_connections():
     None when the check itself failed (PowerShell missing, timeout)."""
     try:
         out = subprocess.run(["powershell", "-NoProfile", "-Command", _PS],
-                             capture_output=True, text=True, timeout=20).stdout.strip()
+                             capture_output=True, text=True, timeout=20, creationflags=subprocess.CREATE_NO_WINDOW).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return None
     if not out:

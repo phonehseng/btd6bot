@@ -148,7 +148,7 @@ def commits():
     for git in ("git", GIT):
         try:
             out = subprocess.run([git, "-C", str(ROOT), "log", "--format=%ct|%h|%s"],
-                                 capture_output=True, text=True, timeout=30)
+                                 capture_output=True, text=True, timeout=30, creationflags=subprocess.CREATE_NO_WINDOW)
         except OSError:
             continue
         if out.returncode == 0:
@@ -178,7 +178,7 @@ def chunks():
 
 
 def _encoder_args(ffmpeg):
-    out = subprocess.run([str(ffmpeg), "-hide_banner", "-encoders"], capture_output=True, text=True).stdout
+    out = subprocess.run([str(ffmpeg), "-hide_banner", "-encoders"], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW).stdout
     if " h264_nvenc " in out:
         return ["-c:v", "h264_nvenc", "-preset", "p5", "-cq", "26", "-r", "30", "-pix_fmt", "yuv420p"]
     return ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-r", "30", "-pix_fmt", "yuv420p"]
@@ -216,7 +216,7 @@ def cut_clip(ffmpeg, t0, t1, text, out_path, label=""):
     cmd = [str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0",
            "-i", lst.name, "-vf", f"scale={CARD_SIZE.replace('x', ':')},subtitles={srt.name}:force_style='{SUBTITLE_STYLE}'",
            *_encoder_args(ffmpeg), "-an", out_path.name]
-    done = subprocess.run(cmd, cwd=str(work), capture_output=True, text=True, timeout=300)
+    done = subprocess.run(cmd, cwd=str(work), capture_output=True, text=True, timeout=300, creationflags=subprocess.CREATE_NO_WINDOW)
     for tmp in (lst, srt):
         tmp.unlink(missing_ok=True)
     if done.returncode != 0:
@@ -234,7 +234,7 @@ def title_card(ffmpeg, text, out_path, seconds=4.0):
            "-i", f"color=c=0x101418:s={CARD_SIZE}:r=30:d={seconds}",
            "-vf", f"subtitles={srt.name}:force_style='{style}'",
            *_encoder_args(ffmpeg), "-an", out_path.name]
-    done = subprocess.run(cmd, cwd=str(out_path.parent), capture_output=True, text=True, timeout=120)
+    done = subprocess.run(cmd, cwd=str(out_path.parent), capture_output=True, text=True, timeout=120, creationflags=subprocess.CREATE_NO_WINDOW)
     srt.unlink(missing_ok=True)
     if done.returncode != 0:
         log.warning("title card failed: %s", done.stderr[-300:])
@@ -272,7 +272,7 @@ def build_day_video(ffmpeg, day):
     lst.write_text("".join(f"file '{c.as_posix()}'\n" for c in order), encoding="utf-8")
     out = VIDEO_DIR / f"BTD6 bot highlights {day}.mp4"
     subprocess.run([str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0",
-                    "-i", str(lst), "-c", "copy", str(out)], capture_output=True, timeout=600)
+                    "-i", str(lst), "-c", "copy", str(out)], capture_output=True, timeout=600, creationflags=subprocess.CREATE_NO_WINDOW)
     return out
 
 

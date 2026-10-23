@@ -233,7 +233,7 @@ def render(ffmpeg, game, history):
     joined = work / "all.txt"
     joined.write_text("".join(f"file '{p.as_posix()}'\n" for p in (card, body) if p.exists()), encoding="utf-8")
     subprocess.run([str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0",
-                    "-i", str(joined), "-c", "copy", str(out)], capture_output=True, timeout=600)
+                    "-i", str(joined), "-c", "copy", str(out)], capture_output=True, timeout=600, creationflags=subprocess.CREATE_NO_WINDOW)
     for f in work.iterdir():      # the pieces are not needed once joined
         f.unlink(missing_ok=True)
     work.rmdir()

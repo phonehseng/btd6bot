@@ -219,7 +219,7 @@ def _code_imports():
     try:
         r = subprocess.run([sys.executable, "-c",
                             "import btd6bot.runner, btd6bot.strategy as s; s.load_all()"],
-                           cwd=str(ROOT_DIR), capture_output=True, timeout=60)
+                           cwd=str(ROOT_DIR), capture_output=True, timeout=60, creationflags=subprocess.CREATE_NO_WINDOW)
         return r.returncode == 0
     except Exception:
         return False
