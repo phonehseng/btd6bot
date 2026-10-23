@@ -860,7 +860,38 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     if double_cash_applies(getattr(account, "boosts", {}), mode):
         p = 1.0 - (1.0 - p) * DOUBLE_CASH_LOSS_FACTOR
     p *= map_fit_factor(s, map_name, mode)
+    ceiling = model_ceiling(map_name, mode)
+    if ceiling is not None and ceiling < CEILING_PLAYABLE:
+        # no build the map research found holds there: not trusted until a
+        # win on record raises the posterior (win_probability)
+        p = min(p, CEILING_P_CAP)
     return min(0.98, max(0.01, p))
+
+
+# Map/modes where even the best build found rates under this margin
+# (data/model_ceiling.json) are capped at CEILING_P_CAP - below every play
+# threshold - until a win is on record. Bazaar Hard (best 1.76) and Balance
+# Hard (1.63) were won the same night; Party Parade Hard (1.33) and Pat's
+# Pond Hard (1.35) were lost at their last rounds.
+CEILING_PLAYABLE = 1.5
+CEILING_P_CAP = 0.5
+_CEILINGS = None
+
+
+def model_ceiling(map_name: str, mode: str) -> float | None:
+    """The best margin any researched build reached for (map, mode), or None
+    when it was not measured (data/model_ceiling.json; "Map|*" = all modes)."""
+    global _CEILINGS
+    if _CEILINGS is None:
+        import json
+        from pathlib import Path
+        path = Path(__file__).resolve().parents[1] / "data" / "model_ceiling.json"
+        try:
+            _CEILINGS = json.loads(path.read_text(encoding="utf-8")).get("ceilings", {})
+        except (OSError, ValueError):
+            _CEILINGS = {}
+    m = canonical_map(map_name)
+    return _CEILINGS.get(f"{m}|{mode}", _CEILINGS.get(f"{m}|*"))
 
 
 class _Calibration:

@@ -1,0 +1,29 @@
+{
+ "about": "Best worst-round damage-model margin any build reached for these map/modes (map research of 2026-10-22, docs/map_strategies/*.md, after the buccaneer and sniper fixes). Under planner.CEILING_PLAYABLE no general build is trusted there until one has won: Party Parade Hard (1.33) and Pat's Pond Hard (1.35) were both lost at the end that night. '*' = every mode of the map.",
+ "ceilings": {
+  "Party Parade|hard": 1.33,
+  "Party Parade|medium": 1.43,
+  "Party Parade|military_only": 1.43,
+  "Party Parade|reverse": 1.43,
+  "Pat's Pond|hard": 1.35,
+  "Pat's Pond|military_only": 0.94,
+  "Ship Capture|hard": 1.26,
+  "Peninsula|primary_only": 1.04,
+  "X Factor|primary_only": 0.67,
+  "X Factor|deflation": 1.24,
+  "Midnight Mansion|*": 0.78,
+  "Sunken Columns|*": 0.5,
+  "Covered Garden|primary_only": 1.07,
+  "Covered Garden|deflation": 1.04,
+  "Water Park|easy": 1.27,
+  "Water Park|primary_only": 0.06,
+  "Water Park|medium": 0.98,
+  "Water Park|military_only": 0.98,
+  "Water Park|reverse": 1.18,
+  "Luminous Cove|primary_only": 0.76,
+  "Spice Islands|primary_only": 0.72,
+  "Quiet Street|primary_only": 1.38,
+  "Sulfur Springs|primary_only": 0.71,
+  "Sulfur Springs|deflation": 1.22
+ }
+}
