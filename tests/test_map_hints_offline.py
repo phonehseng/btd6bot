@@ -202,7 +202,9 @@ def test_map_strategies_load_valid_and_ready():
     for sid, s in strats.items():
         assert canonical_map(s["map"]) == s["map"], sid
         assert s["planner"].get("maps") == [s["map"]], sid
-        assert pinned.get(sid) == s["map"], (sid, "not listed in the map's hints")
+        # builds listed in data/map_strategy_hints.json must be listed under
+        # their own map; the per-group research builds are not listed there
+        assert sid not in pinned or pinned[sid] == s["map"], (sid, "listed under another map's hints")
         assert S.validate(s) == [], (sid, S.validate(s))
         assert readiness_with_at(s) == [], (sid, readiness_with_at(s))
         assert set(s["planner"]["base_success"]) == set(s["modes"]), sid
@@ -242,7 +244,14 @@ def test_map_strategy_spots_are_legal():
         for steps in (s.get("answers") or {}).values():
             for st in steps:
                 if st.get("do") == "place" and st.get("at"):
-                    assert where.get(st.get("id")) == tuple(st["at"]), (sid, st)
+                    if st.get("id") in where:
+                        # re-placing a planned tower: at that tower's own spot
+                        assert where[st["id"]] == tuple(st["at"]), (sid, st)
+                    else:
+                        # a tower of the answer's own: a legal spot
+                        kind = st["kind"]
+                        one = [(kind, hero if kind == "hero" else None, tuple(st["at"]))]
+                        assert not illegal_spots(s["map"], one, longest(s["modes"])), (sid, st)
 
 
 def test_map_strategies_pass_the_threat_simulation():

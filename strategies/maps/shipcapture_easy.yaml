@@ -1,0 +1,96 @@
+# Ship Capture, Easy / Primary Only: Desperados on the central grate and both decks,
+# where the four plank lanes meet, with Primary helpers.
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): four short
+# plank lanes (two from the left, two from the right) board the ship and meet under it.
+# Bloons come from the LEFT side, the RIGHT side or both, depending on the round
+# (AlternateBloonSplitter; bloonswiki table). dps_model shares every round over all four
+# lanes, so these builds were checked with left-only, right-only and both-sides rounds
+# (the worst counts). The $1,000 hatch (it turns to water) is not bought.
+#
+# Why: only Primary towers, so one build serves Easy and Primary Only. Desperado is the
+# tower whose XP the account needs most (optimize_builds.xp_weights), so the surplus
+# goes into Desperados.
+# All four plank lanes end under the ship, so the grate and the decks beside it
+# reach whichever side the round boards from.
+#
+# Sources:
+#   * bloonswiki Ship_Capture: side rotation table, the central grate is where the lanes meet
+#     (https://www.bloonswiki.com/Ship_Capture)
+#   * dq7reimagined, Ship Capture CHIMPS without micro: everything on the central grate
+#     (https://dq7reimagined.com/btd6/ship-capture-chimps/)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-easy-on-ship-capture/
+#     https://bloon.games/how-to-beat-primary-only-on-ship-capture/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Easy starts at round 10 with ~$3,832),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what the base income (no Double Cash) pays for by round 40, so the offline
+# threat test finishes it; fill = the rest of the build, in order, paid by Double Cash
+# (the executor buys the first affordable fill step).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: shipcapture_easy
+map: Ship Capture
+hero: obyn
+modes: [easy, primary_only]
+planner:
+  towers: {desperado: [4, 2, 3], boomerang: [0, 2, 3], dart: [3, 2, 4], bomb: [0, 3, 2], tack: [0, 3, 0]}
+  base_success: {easy: 0.85, primary_only: 0.85}
+  maps: [Ship Capture]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.500, 0.726]}                                     # R10, $550; central grate, between the lanes
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.430, 0.589]}                # R10, $255; central grate, between the lanes
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.430, 0.658]}                # R10, $255; central grate, between the lanes
+  - {do: place, id: dsp3, kind: desperado, role: dps, target: strong, at: [0.387, 0.624]}                # R10, $255; central grate, between the lanes
+  - {do: place, id: dsp4, kind: desperado, role: dps, target: strong, at: [0.387, 0.692]}                # R10, $255; central grate, between the lanes
+  - {do: place, id: dsp5, kind: desperado, role: dps, target: strong, at: [0.387, 0.138]}                # R10, $255; crow's nest / bow
+  - {do: place, id: dsp6, kind: desperado, role: dps, target: strong, at: [0.462, 0.709]}                # R10, $255; central grate, between the lanes
+  - {do: place, id: dsp7, kind: desperado, role: dps, target: strong, at: [0.473, 0.606]}                # R10, $255; central grate, between the lanes
+  - {do: place, id: dsp8, kind: desperado, role: dps, target: strong, at: [0.468, 0.138]}                # R10, $255; crow's nest / bow
+  - {do: place, id: bmr1, kind: boomerang, role: dps, at: [0.452, 0.198]}                                # R10, $270; crow's nest / bow
+  - {do: upgrade, id: bmr1, to: 0-2-1}                                                                   # R10, $450
+  - {do: place, id: drt1, kind: dart, role: dps, at: [0.505, 0.658]}                                     # R10, $170; right deck
+  - {do: place, id: drt2, kind: dart, role: dps, at: [0.355, 0.658]}                                     # R10, $170; left deck
+  - {do: place, id: drt3, kind: dart, role: dps, at: [0.345, 0.709]}                                     # R10, $170; left deck
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.409, 0.198]}                                     # R11, $320; bow, above the top lanes: MOAB Mauler
+  - {do: upgrade, id: bmb1, to: 0-2-2}                                                                   # R13, $980
+  - {do: upgrade, id: bmb1, to: 0-3-2}                                                                   # R15, $850
+  - {do: upgrade, id: dsp1, to: 1-0-0}                                                                   # R15, $170
+  - {do: upgrade, id: dsp1, to: 3-1-0}                                                                   # R18, $1,320
+  - {do: upgrade, id: drt3, to: 0-0-1}                                                                   # R18, $75
+  - {do: upgrade, id: drt1, to: 1-0-3}                                                                   # R19, $855
+  - {do: upgrade, id: dsp2, to: 3-0-0}                                                                   # R22, $1,360
+  - {do: upgrade, id: drt3, to: 0-1-1}                                                                   # R22, $85
+  - {do: upgrade, id: drt2, to: 0-1-0}                                                                   # R22, $85
+fill:
+  - {do: upgrade, id: dsp7, to: 3-0-0, round: 25}                                                        # R25, $1,360
+  - {do: upgrade, id: dsp3, to: 3-0-0, round: 27}                                                        # R27, $1,360
+  - {do: upgrade, id: dsp8, to: 3-0-0, round: 28}                                                        # R28, $1,360
+  - {do: upgrade, id: bmr1, to: 0-2-2, round: 29}                                                        # R29, $255
+  - {do: upgrade, id: dsp3, to: 3-1-0, round: 29}                                                        # R29, $130
+  - {do: upgrade, id: dsp8, to: 3-1-0, round: 29}                                                        # R29, $130
+  - {do: upgrade, id: bmr1, to: 0-2-3, round: 31}                                                        # R31, $1,105
+  - {do: upgrade, id: drt2, to: 3-2-0, round: 32}                                                        # R32, $725
+  - {do: upgrade, id: drt3, to: 0-2-3, round: 32}                                                        # R32, $820
+  - {do: upgrade, id: drt1, to: 1-0-4, round: 35}                                                        # R35, $1,745
+  - {do: place, id: tck1, kind: tack, role: dps, round: 35, at: [0.430, 0.760]}                          # R35, $220; central grate, between the lanes
+  - {do: upgrade, id: tck1, to: 0-2-0, round: 35}                                                        # R35, $275
+  - {do: place, id: tck2, kind: tack, role: dps, round: 35, at: [0.281, 0.675]}                          # R35, $220; left deck
+  - {do: upgrade, id: tck2, to: 0-3-0, round: 35}                                                        # R35, $745
+  - {do: upgrade, id: dsp1, to: 4-1-0, round: 38}                                                        # R38, $4,930
+  - {do: upgrade, id: dsp4, to: 0-0-3, round: 39}                                                        # R39, $2,215
+  - {do: upgrade, id: dsp1, to: 4-2-0, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp2, to: 3-2-0, round: 39}                                                        # R39, $430
+  - {do: upgrade, id: dsp3, to: 3-2-0, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp4, to: 2-0-3, round: 39}                                                        # R39, $340
+  - {do: upgrade, id: dsp5, to: 3-2-0, round: 40}                                                        # R40, $1,790
+  - {do: upgrade, id: dsp6, to: 3-2-0, round: 40}                                                        # R40, $1,790
+  - {do: upgrade, id: dsp7, to: 3-2-0, round: 40}                                                        # R40, $430
+  - {do: upgrade, id: dsp8, to: 3-2-0, round: 40}                                                        # R40, $300
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}

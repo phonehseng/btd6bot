@@ -1,0 +1,78 @@
+# Sulfur Springs, Medium/Military Only/Reverse/Hard: map-wide snipers and
+# Monkey Aces over the sulfur pit.
+#
+# Why: one long lane loops round the sulfur pit in three circuits. All land is
+# on cliffs 50 units above the lane: in the bot's screen grid a cliff tower
+# looks far from the track (the executor sells such towers), and the central
+# island inside the big loop overlaps the lane on screen, so the model treats
+# it as blocked. What remains: map-wide snipers, planes over the pit, and the
+# few low islands next to the lane.
+#
+# Sources:
+#   * bloonswiki Sulfur_Springs: the track loops round the springs, very
+#     long-range towers excel, land round the central spring is the best real
+#     estate (https://www.bloonswiki.com/Sulfur_Springs)
+#   * bloons.fandom Sulfur_Springs
+#     (https://bloons.fandom.com/wiki/Sulfur_Springs)
+#   * Sulfur Springs Hard Standard guide
+#     (https://www.youtube.com/watch?v=5hJNtpBwDiA)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): medium
+# 4.91 (R43), military_only 4.91 (R43), reverse 4.86 (R49), hard 3.40 (R61).
+# Notes and checks: docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: sulfursprings_military
+map: Sulfur Springs
+hero: admiral_brickell
+modes: [medium, military_only, reverse, hard]
+planner:
+  towers: {sniper: [5, 3, 5], ace: [2, 5, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8, hard: 0.72}
+  maps: [Sulfur Springs]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.163, 0.164]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.206, 0.164]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.099, 0.181]}   # map-wide
+  - {do: upgrade, id: s3, to: 1-0-0}
+  - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.794, 0.181]}   # map-wide
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.024, 0.138]}                   # hero (not counted by the damage model)
+  - {do: upgrade, id: s3, to: 1-2-0}
+  - {do: upgrade, id: s4, to: 0-2-2}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.131, 0.521]}                      # reaches 104 units of the lane
+  - {do: upgrade, id: a1, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: s4, to: 0-2-3}                                                   # Semi-Automatic
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.147, 0.257]}                      # reaches 94 units of the lane
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: place, id: a3, kind: ace, role: dps, at: [0.697, 0.266]}                      # reaches 79 units of the lane
+  - {do: upgrade, id: a3, to: 2-3-0}                                                   # Bomber Ace
+  - {do: place, id: a4, kind: ace, role: dps, at: [0.633, 0.564]}                      # reaches 78 units of the lane
+  - {do: upgrade, id: a4, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: s3, to: 1-3-0}                                                   # Bouncing Bullet
+  - {do: upgrade, id: s4, to: 0-2-5}                                                   # Elite Defender
+  - {do: upgrade, id: s2, to: 3-2-0}                                                   # Deadly Precision
+  - {do: upgrade, id: s1, to: 3-2-0}                                                   # Deadly Precision
+  - {do: upgrade, id: s3, to: 2-3-0}
+  - {do: upgrade, id: a1, to: 2-4-0}                                                   # Ground Zero
+  - {do: upgrade, id: s2, to: 4-2-0}                                                   # Maim MOAB
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+  - {do: upgrade, id: a2, to: 2-4-0}                                                   # Ground Zero
+fill:
+  - {do: upgrade, id: s1, to: 5-2-0}                                                   # Cripple MOAB
+  - {do: upgrade, id: a1, to: 2-5-0}                                                   # Tsar Bomba
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # Hard R63 rush: the model already rates it safe; an answer may only carry
+  # `at` when it re-places a planned tower, so this one is placed by role
+  rush:
+    - {do: place, id: su1, kind: super, role: dps}

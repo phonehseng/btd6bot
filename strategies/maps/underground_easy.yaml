@@ -1,0 +1,110 @@
+# Underground, Easy / Primary Only: Desperados inside and round the central ring,
+# where both lanes loop, with darts, a boomerang and a tack.
+#
+# Map (game data: data/map_geometry, dps_model Track): two short lanes at once (one from
+# the top, one from the bottom) that both loop through the central ring and cross at its
+# left and right edges. Lots of cave floor; no water, no removable obstacles.
+#
+# Why: only Primary towers, so one build serves Easy and Primary Only. Both lanes loop
+# through the central ring, so a Desperado (range 60) inside or beside the ring covers
+# both lanes at once. Desperado is the tower whose XP the account needs most.
+#
+# Sources:
+#   * bloonswiki Underground: the centre and the spaces above and below it cover both lanes;
+#     stall towers are valuable on the short lanes (https://www.bloonswiki.com/Underground)
+#   * BlueCliff, Underground Hard: Quincy inside the ring, ninja 4-0-2, alchemist, bombs 0-2-4
+#     (https://www.youtube.com/watch?v=9jvPhl28e5E)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-easy-on-underground/
+#     https://bloon.games/how-to-beat-primary-only-on-underground/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Easy starts at round 10 with ~$3,832),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what the base income (no Double Cash) pays for by round 40, so the offline
+# threat test finishes it; fill = the rest of the build, in order, paid by Double Cash
+# (the executor buys the first affordable fill step).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: underground_easy
+map: Underground
+hero: quincy
+modes: [easy, primary_only]
+planner:
+  towers: {desperado: [3, 2, 3], dart: [1, 2, 4], boomerang: [0, 2, 3], tack: [2, 3, 0]}
+  base_success: {easy: 0.85, primary_only: 0.85}
+  maps: [Underground]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.430, 0.751]}                                     # R10, $460; below the ring, between both lanes
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.430, 0.555]}                # R10, $255; inside the central ring
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.430, 0.436]}                # R10, $255; inside the central ring
+  - {do: place, id: dsp3, kind: desperado, role: dps, target: strong, at: [0.398, 0.504]}                # R10, $255; inside the central ring
+  - {do: place, id: dsp4, kind: desperado, role: dps, target: strong, at: [0.462, 0.487]}                # R10, $255; inside the central ring
+  - {do: place, id: dsp5, kind: desperado, role: dps, target: strong, at: [0.387, 0.436]}                # R10, $255; inside the central ring
+  - {do: place, id: dsp6, kind: desperado, role: dps, target: strong, at: [0.355, 0.487]}                # R10, $255; inside the central ring
+  - {do: place, id: dsp7, kind: desperado, role: dps, target: strong, at: [0.419, 0.300]}                # R10, $255; above the ring, between both lanes
+  - {do: place, id: dsp8, kind: desperado, role: dps, target: strong, at: [0.441, 0.692]}                # R10, $255; below the ring, between both lanes
+  - {do: place, id: dsp9, kind: desperado, role: dps, target: strong, at: [0.505, 0.470]}                # R10, $255; inside the central ring
+  - {do: place, id: dsp10, kind: desperado, role: dps, target: strong, at: [0.398, 0.692]}               # R10, $255; below the ring, between both lanes
+  - {do: place, id: dsp11, kind: desperado, role: dps, target: strong, at: [0.462, 0.300]}               # R10, $255; above the ring, between both lanes
+  - {do: place, id: dsp12, kind: desperado, role: dps, target: strong, at: [0.377, 0.300]}               # R10, $255; above the ring, between both lanes
+  - {do: place, id: drt1, kind: dart, role: dps, at: [0.526, 0.351]}                                     # R10, $170; above the ring, between both lanes
+  - {do: place, id: bmr1, kind: boomerang, role: dps, at: [0.323, 0.351]}                                # R11, $270; above the ring, between both lanes
+  - {do: upgrade, id: bmr1, to: 0-1-1}                                                                   # R11, $235
+  - {do: place, id: drt2, kind: dart, role: dps, at: [0.494, 0.538]}                                     # R11, $170; inside the central ring
+  - {do: place, id: drt3, kind: dart, role: dps, at: [0.537, 0.624]}                                     # R12, $170; below the ring, between both lanes
+  - {do: place, id: drt4, kind: dart, role: dps, at: [0.323, 0.624]}                                     # R12, $170; below the ring, between both lanes
+  - {do: place, id: drt5, kind: dart, role: dps, at: [0.505, 0.658]}                                     # R13, $170; below the ring, between both lanes
+  - {do: place, id: tck1, kind: tack, role: dps, at: [0.430, 0.879]}                                     # R13, $220; below the ring, between both lanes
+  - {do: upgrade, id: tck1, to: 1-2-0}                                                                   # R14, $405
+  - {do: place, id: drt6, kind: dart, role: dps, at: [0.355, 0.658]}                                     # R14, $170; below the ring, between both lanes
+  - {do: upgrade, id: tck1, to: 2-2-0}                                                                   # R15, $190
+  - {do: upgrade, id: drt5, to: 0-0-1}                                                                   # R15, $75
+  - {do: upgrade, id: drt6, to: 0-0-1}                                                                   # R15, $75
+  - {do: upgrade, id: drt2, to: 0-0-1}                                                                   # R15, $75
+  - {do: upgrade, id: drt4, to: 0-0-1}                                                                   # R15, $75
+  - {do: upgrade, id: dsp1, to: 2-1-0}                                                                   # R16, $470
+  - {do: upgrade, id: dsp2, to: 1-0-0}                                                                   # R16, $170
+  - {do: upgrade, id: bmr1, to: 0-2-2}                                                                   # R17, $470
+  - {do: upgrade, id: dsp1, to: 2-2-0}                                                                   # R18, $300
+  - {do: upgrade, id: dsp2, to: 1-1-0}                                                                   # R18, $130
+  - {do: upgrade, id: dsp1, to: 3-2-0}                                                                   # R20, $1,020
+  - {do: upgrade, id: dsp2, to: 3-1-0}                                                                   # R22, $1,190
+  - {do: upgrade, id: drt4, to: 1-0-1}                                                                   # R23, $120
+fill:
+  - {do: upgrade, id: dsp5, to: 3-0-0, round: 25}                                                        # R25, $1,360
+  - {do: upgrade, id: dsp8, to: 3-0-0, round: 27}                                                        # R27, $1,360
+  - {do: upgrade, id: drt6, to: 0-2-3, round: 28}                                                        # R28, $905
+  - {do: upgrade, id: dsp6, to: 3-0-0, round: 30}                                                        # R30, $1,360
+  - {do: upgrade, id: bmr1, to: 0-2-3, round: 31}                                                        # R31, $1,105
+  - {do: upgrade, id: dsp5, to: 3-1-0, round: 32}                                                        # R32, $130
+  - {do: upgrade, id: drt2, to: 0-0-3, round: 32}                                                        # R32, $660
+  - {do: upgrade, id: dsp7, to: 0-0-3, round: 35}                                                        # R35, $2,215
+  - {do: upgrade, id: drt2, to: 0-2-3, round: 35}                                                        # R35, $245
+  - {do: upgrade, id: drt2, to: 0-2-4, round: 36}                                                        # R36, $1,745
+  - {do: upgrade, id: tck1, to: 2-3-0, round: 36}                                                        # R36, $470
+  - {do: upgrade, id: dsp10, to: 0-0-3, round: 37}                                                       # R37, $2,215
+  - {do: upgrade, id: dsp2, to: 3-2-0, round: 37}                                                        # R37, $300
+  - {do: upgrade, id: dsp3, to: 2-1-0, round: 37}                                                        # R37, $470
+  - {do: upgrade, id: dsp4, to: 1-0-0, round: 37}                                                        # R37, $170
+  - {do: upgrade, id: dsp3, to: 3-2-0, round: 38}                                                        # R38, $1,320
+  - {do: upgrade, id: dsp4, to: 2-1-0, round: 38}                                                        # R38, $300
+  - {do: upgrade, id: dsp6, to: 3-1-0, round: 38}                                                        # R38, $130
+  - {do: upgrade, id: dsp11, to: 0-0-3, round: 39}                                                       # R39, $2,215
+  - {do: upgrade, id: dsp4, to: 2-2-0, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp7, to: 1-0-3, round: 39}                                                        # R39, $170
+  - {do: upgrade, id: dsp9, to: 0-0-3, round: 40}                                                        # R40, $2,215
+  - {do: upgrade, id: dsp5, to: 3-2-0, round: 40}                                                        # R40, $300
+  - {do: upgrade, id: dsp4, to: 3-2-0, round: 40}                                                        # R40, $1,020
+  - {do: upgrade, id: dsp6, to: 3-2-0, round: 40}                                                        # R40, $300
+  - {do: upgrade, id: dsp7, to: 2-0-3, round: 40}                                                        # R40, $170
+  - {do: upgrade, id: dsp8, to: 3-2-0}                                                                   # late, $430
+  - {do: upgrade, id: dsp9, to: 2-0-3}                                                                   # late, $340
+  - {do: upgrade, id: dsp10, to: 2-0-3}                                                                  # late, $340
+  - {do: upgrade, id: dsp11, to: 2-0-3}                                                                  # late, $340
+  - {do: upgrade, id: dsp12, to: 2-1-0}                                                                  # late, $470
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}

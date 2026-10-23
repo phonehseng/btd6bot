@@ -1,0 +1,76 @@
+# Water Park, Deflation: snipers and planes for the slide, boats for the lazy
+# river, bought at once.
+#
+# Why: the two lanes alternate every round (AlternateRoundSplitter: Path1 =
+# the raised water slide, Path2 = the lazy river). The slide stands on a sight
+# blocker ("BlockingTrack"), so in the bot's damage model no aimed tower sees
+# it; the towers that reach it need no line of sight.
+#
+# Sources:
+#   * bloonswiki Water_Park: lanes alternate each round, water towers only
+#     reach the lazy river, Heli Pilots suit the alternating lanes
+#     (https://www.bloonswiki.com/Water_Park)
+#   * OneEyedDeacon, Water Park CHIMPS (v49.3): Sniper on Strong, Monkey Ace
+#     on the centre circle (https://youtu.be/dYsOxUMQV_g)
+#   * Tadomika, Water Park CHIMPS: Buccaneer 3-2-0 -> 5-2-0 in the bottom
+#     water (https://youtu.be/ZEYL9gm5ZXk)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 4.60 (R51). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: waterpark_deflation
+map: Water Park
+hero: admiral_brickell
+modes: [deflation]
+planner:
+  towers: {ace: [2, 3, 0], buccaneer: [4, 0, 1], sniper: [4, 3, 0], sub: [2, 3, 3], tack: [0, 3, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Water Park]
+plan:
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.516, 0.624]}                      # reaches 161 / 314 units of the lanes
+  - {do: upgrade, id: a1, to: 0-1-0}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.291, 0.896]}                # reaches 144 / 0 units of the lanes
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.419, 0.146]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.516, 0.351]}                      # reaches 52 / 182 units of the lanes
+  - {do: upgrade, id: a2, to: 0-1-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.452, 0.164]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: a2, to: 1-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: a1, to: 1-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: a2, to: 2-3-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.11, 0.896]}                      # reaches 108 / 0 units of the lanes
+  - {do: upgrade, id: sb1, to: 0-1-2}
+  - {do: upgrade, id: a1, to: 2-3-0}
+  - {do: upgrade, id: sb1, to: 0-1-3}                                                  # Triple Guns
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.227, 0.811]}                     # reaches 101 / 0 units of the lanes
+  - {do: upgrade, id: sb2, to: 2-3-0}                                                  # Ballistic Missile
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: s1, to: 2-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.655, 0.138]}                   # hero (not counted by the damage model)
+fill:
+  - {do: upgrade, id: s2, to: 2-3-0}
+  - {do: upgrade, id: b1, to: 3-0-1}
+  - {do: upgrade, id: s1, to: 2-3-0}
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.345, 0.828]}
+  - {do: upgrade, id: t1, to: 0-3-0}
+  - {do: upgrade, id: b1, to: 4-0-1}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.468, 0.215]}
+  - {do: upgrade, id: s3, to: 4-1-0}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); the plan buys them
+  bfb:
+    - {do: upgrade, id: s3, to: 4-1-0}
+    - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.468, 0.215]}

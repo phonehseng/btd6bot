@@ -1,0 +1,72 @@
+# Streambed, Deflation: towers bought at once round the pond.
+#
+# Why: one long winding lane (1,202 units, a third of it off screen) round a
+# pond. Water towers in the pond reach three stretches of the lane; the dino
+# skull next to it blocks line of sight ($1,000 to remove; the bot never buys
+# obstacles).
+#
+# Sources:
+#   * bloonswiki Streambed: Destroyer at the top of the pool with Berserker
+#     Brew, Buccaneers there reach the lane on both sides
+#     (https://www.bloonswiki.com/Streambed)
+#   * bloons.fandom Streambed/Strategies
+#     (https://bloons.fandom.com/wiki/Streambed/Strategies)
+#   * Streambed black border with a pirate army (v48.2)
+#     (https://www.youtube.com/watch?v=aWxRSpYd54g)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 2.99 (R54). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: streambed_deflation
+map: Streambed
+hero: sauda
+modes: [deflation]
+planner:
+  towers: {bomb: [0, 2, 3], buccaneer: [2, 0, 2], sniper: [4, 2, 0], sub: [0, 1, 3], tack: [2, 3, 0], druid: [2, 3, 0], ace: [1, 3, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Streambed]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.569, 0.572]}                    # reaches 173 units of the lane
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.377, 0.317]}                    # reaches 164 units of the lane
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.494, 0.709]}                # reaches 232 units of the lane
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.462, 0.658]}                # reaches 203 units of the lane
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.019, 0.215]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.035, 0.138]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.462, 0.76]}                      # reaches 137 units of the lane
+  - {do: upgrade, id: sb1, to: 0-1-3}                                                  # Triple Guns
+  - {do: upgrade, id: bm2, to: 0-2-3}                                                  # Cluster Bombs
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.612, 0.453]}                     # reaches 77 units of the lane
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+fill:
+  - {do: upgrade, id: t1, to: 2-3-0}
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.59, 0.641]}
+  - {do: upgrade, id: t2, to: 2-3-0}
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.313, 0.215]}
+  - {do: upgrade, id: dr1, to: 1-3-0}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.537, 0.368]}
+  - {do: upgrade, id: a1, to: 1-3-0}
+  - {do: upgrade, id: dr1, to: 2-3-0}
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: s1, to: 2-2-0}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); the plan buys them
+  bfb:
+    - {do: upgrade, id: s1, to: 4-2-0}

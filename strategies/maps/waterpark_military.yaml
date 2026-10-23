@@ -1,0 +1,94 @@
+# Water Park, Medium/Military Only/Reverse/Hard: snipers and planes for the
+# slide, boats in the bottom water for the lazy river. (Easy: waterpark_easy.)
+#
+# Why: the two lanes alternate every round (map data: AlternateRoundSplitter
+# on Path1/Path2). Path1 is the raised water slide (heights 13-54); Path2 is
+# the lazy river through the bottom water. The slide sits on a sight blocker
+# ("BlockingTrack", height 50), so in the bot's damage model no aimed tower
+# can see it at all. The all-tack plan (solo_tack) that lost 191 lives here
+# had tacks that barely reached either lane. The towers that reach the slide
+# here need no line of sight: snipers (map-wide), Monkey Aces (they fly over
+# it) and a Heli Pilot. The lazy river gets subs and a buccaneer in
+# the bottom-left water, where it runs for half the screen.
+#
+# Sources:
+#   * bloonswiki Water_Park, Strategy: lanes alternate each round, water towers
+#     only reach the lazy river, Heli Pilots suit the alternating lanes
+#     (https://www.bloonswiki.com/Water_Park)
+#   * OneEyedDeacon, Water Park CHIMPS (v49.3): Sniper on Strong at R12 to
+#     0-2-2, Monkey Ace on the centre circle 2-0-4 -> Flying Fortress
+#     (https://youtu.be/dYsOxUMQV_g)
+#   * Tadomika, Water Park CHIMPS: Sniper on Strong at R8, Buccaneer 3-2-0 by
+#     R44 -> 5-2-0 in the bottom water (https://youtu.be/ZEYL9gm5ZXk)
+#   * Mr. Moe's Military Only / Hard runs (https://youtu.be/ddCtehEKnlQ,
+#     https://youtu.be/aGmL6pBJVaQ) and ixbert's Hard guide with a Heli Pilot
+#     (https://youtu.be/usUnNxayMZU)
+#
+# Order and spots were chosen with tools/optimize_builds.py restricted to
+# these towers (safety margin 2.5), then replayed as the executor buys (in
+# order, as cash allows) with the account's Fast Track and Double Cash:
+# worst damage-model margin medium/military_only 2.62, reverse 3.47, hard
+# 3.47 (docs/map_strategies/intermediate_b.md).
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order; none is a spot the bot has seen the game refuse.
+id: waterpark_military
+map: Water Park
+hero: admiral_brickell
+modes: [hard]
+planner:
+  towers: {sniper: [5, 2, 0], buccaneer: [5, 0, 2], sub: [2, 3, 0], ace: [2, 4, 0], heli: [5, 2, 0]}
+  base_success: {hard: 0.72}
+  maps: [Water Park]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.457, 0.138]}   # top edge: map-wide, hits both lanes
+  - {do: upgrade, id: s1, to: 1-2-0}                                                  # lead (Full Metal Jacket), camo (Night Vision)
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.291, 0.896]}               # bottom water, lazy river
+  - {do: upgrade, id: b1, to: 0-0-1}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.11, 0.896]}                    # bottom-left water, river exit
+  - {do: upgrade, id: sb1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 1-0-1}
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.227, 0.811]}                   # bottom water, river bend
+  - {do: upgrade, id: sb2, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.516, 0.624]}                    # centre circle inside the slide loop
+  - {do: upgrade, id: a1, to: 0-1-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.655, 0.138]}                 # Brickell: top-right water, river start
+  - {do: upgrade, id: a1, to: 0-3-0}                                                  # Bomber Ace
+  - {do: upgrade, id: a1, to: 1-3-0}
+  - {do: upgrade, id: sb1, to: 2-3-0}                                                 # Ballistic Missile
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.468, 0.189]}
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: a1, to: 2-3-0}
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.516, 0.402]}                    # big middle land, over the slide
+  - {do: upgrade, id: a2, to: 1-3-0}
+  - {do: upgrade, id: a2, to: 2-3-0}
+  - {do: upgrade, id: sb2, to: 2-3-0}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.687, 0.862]}                   # follows the bloons on either lane
+  - {do: upgrade, id: h1, to: 3-0-0}
+  - {do: upgrade, id: h1, to: 3-2-0}
+  - {do: upgrade, id: b1, to: 3-0-1}                                                 # Destroyer
+  - {do: upgrade, id: s1, to: 3-2-0}
+  - {do: upgrade, id: b1, to: 4-0-1}                                                 # Aircraft Carrier
+  - {do: upgrade, id: h1, to: 4-2-0}                                                 # Apache Dartship
+  - {do: upgrade, id: b1, to: 4-0-2}
+  - {do: upgrade, id: s2, to: 4-2-0}                                                 # Maim MOAB
+  - {do: upgrade, id: s1, to: 4-2-0}
+  - {do: upgrade, id: a1, to: 2-4-0}
+fill:
+  # Hard and Medium end with $20k-$95k unspent: tier 5s for safety and XP
+  - {do: upgrade, id: b1, to: 5-0-2}                                                 # Carrier Flagship
+  - {do: upgrade, id: s1, to: 5-2-0}                                                 # Cripple MOAB
+  - {do: upgrade, id: h1, to: 5-2-0}                                                 # Apache Prime
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo:
+    - {do: upgrade, id: s1, to: 0-1-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.457, 0.138]}
+  lead:
+    - {do: upgrade, id: s1, to: 1-0-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.457, 0.138]}
+  # Hard R63 (122 ceramics + 75 leads): the threat table wants a rush tower;
+  # the model already rates R63 safe, so this is extra (spot picked by role:
+  # an answer may only carry `at` when it re-places a planned tower)
+  rush: [{do: place, id: su1, kind: super, role: dps}]

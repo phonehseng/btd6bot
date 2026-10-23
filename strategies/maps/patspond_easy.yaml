@@ -1,0 +1,116 @@
+# Pat's Pond, Easy / Primary Only: Desperados on the grass beside both junctions,
+# MOAB Mauler bombs and darts with them.
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): two lanes
+# at once go round a big pond in opposite directions and meet at the left and right
+# junctions (each is one lane's entrance and the other's exit). Water fills the middle.
+# Four $500 obstacles (two rocks in the water, two trees) block sight and space; the bot
+# cannot buy them.
+#
+# Why: only Primary towers, so one build serves Easy and Primary Only. Both lanes run
+# past the left and the right junction; Desperados (range 60) on the grass next to a
+# junction cover the start of one lane and the end of the other at once. Desperado is
+# the tower whose XP the account needs most (optimize_builds.xp_weights).
+#
+# Sources:
+#   * bloonswiki Pat's_Pond: short-range towers packed at a junction, the right one preferred
+#     (https://www.bloonswiki.com/Pat%27s_Pond)
+#   * BlueCliff, Pat's Pond Hard: ninja + buccaneer at the right junction
+#     (https://www.youtube.com/watch?v=PpP_z82AN9o)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-easy-on-pats-pond/
+#     https://bloon.games/how-to-beat-primary-only-on-pats-pond/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Easy starts at round 10 with ~$3,832),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what the base income (no Double Cash) pays for by round 40, so the offline
+# threat test finishes it; fill = the rest of the build, in order, paid by Double Cash
+# (the executor buys the first affordable fill step).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: patspond_easy
+map: "Pat's Pond"
+hero: obyn
+modes: [easy, primary_only]
+planner:
+  towers: {desperado: [3, 3, 3], dart: [0, 2, 3], bomb: [0, 3, 4], tack: [0, 3, 0]}
+  base_success: {easy: 0.85, primary_only: 0.85}
+  maps: ["Pat's Pond"]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.088, 0.325]}                                     # R10, $550; left junction, on the grass
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.745, 0.317]}                # R10, $255; right junction, on the grass
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.794, 0.700]}                # R10, $255; right junction, on the grass
+  - {do: place, id: dsp3, kind: desperado, role: dps, target: strong, at: [0.131, 0.274]}                # R10, $255; left junction, on the grass
+  - {do: place, id: dsp4, kind: desperado, role: dps, target: strong, at: [0.099, 0.675]}                # R10, $255; left junction, on the grass
+  - {do: place, id: dsp5, kind: desperado, role: dps, target: strong, at: [0.077, 0.589]}                # R10, $255; left junction, on the grass
+  - {do: place, id: dsp6, kind: desperado, role: dps, target: strong, at: [0.783, 0.419]}                # R10, $255; right junction, on the grass
+  - {do: place, id: dsp7, kind: desperado, role: dps, target: strong, at: [0.061, 0.709]}                # R10, $255; left junction, on the grass
+  - {do: place, id: dsp8, kind: desperado, role: dps, target: strong, at: [0.783, 0.572]}                # R10, $255; right junction, on the grass
+  - {do: place, id: dsp9, kind: desperado, role: dps, target: strong, at: [0.756, 0.683]}                # R10, $255; right junction, on the grass
+  - {do: place, id: dsp10, kind: desperado, role: dps, target: strong, at: [0.056, 0.436]}               # R10, $255; left junction, on the grass
+  - {do: place, id: dsp11, kind: desperado, role: dps, target: strong, at: [0.794, 0.351]}               # R10, $255; right junction, on the grass
+  - {do: place, id: dsp12, kind: desperado, role: dps, target: strong, at: [0.772, 0.266]}               # R10, $255; right junction, on the grass
+  - {do: place, id: drt1, kind: dart, role: dps, at: [0.826, 0.402]}                                     # R10, $170; right junction, on the grass
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.045, 0.641]}                                     # R11, $320; left junction, on the grass
+  - {do: upgrade, id: bmb1, to: 0-1-2}                                                                   # R12, $640
+  - {do: place, id: bmb2, kind: bomb, role: dps, at: [0.056, 0.368]}                                     # R13, $320; left junction: MOAB Mauler
+  - {do: upgrade, id: bmb2, to: 0-1-2}                                                                   # R14, $640
+  - {do: place, id: bmb3, kind: bomb, role: dps, at: [0.035, 0.572]}                                     # R15, $320; left junction, on the grass
+  - {do: upgrade, id: dsp1, to: 2-0-0}                                                                   # R16, $340
+  - {do: upgrade, id: dsp6, to: 0-1-0}                                                                   # R16, $130
+  - {do: upgrade, id: dsp12, to: 0-1-0}                                                                  # R16, $130
+  - {do: upgrade, id: dsp1, to: 2-1-0}                                                                   # R16, $130
+  - {do: upgrade, id: dsp2, to: 1-0-0}                                                                   # R17, $170
+  - {do: upgrade, id: dsp1, to: 2-2-0}                                                                   # R17, $300
+  - {do: upgrade, id: dsp2, to: 2-1-0}                                                                   # R18, $300
+  - {do: upgrade, id: dsp3, to: 1-0-0}                                                                   # R18, $170
+  - {do: upgrade, id: bmb3, to: 0-0-2}                                                                   # R19, $425
+  - {do: place, id: bmb4, kind: bomb, role: dps, at: [0.804, 0.641]}                                     # R20, $320; right junction: MOAB Mauler
+  - {do: upgrade, id: bmb4, to: 0-1-2}                                                                   # R21, $640
+  - {do: upgrade, id: bmb2, to: 0-2-2}                                                                   # R22, $340
+  - {do: upgrade, id: bmb2, to: 0-3-2}                                                                   # R23, $850
+  - {do: upgrade, id: dsp2, to: 2-2-0}                                                                   # R23, $300
+  - {do: upgrade, id: dsp3, to: 2-1-0}                                                                   # R24, $300
+  - {do: upgrade, id: bmb3, to: 0-1-2}                                                                   # R24, $215
+  - {do: upgrade, id: dsp3, to: 2-2-0}                                                                   # R25, $300
+  - {do: upgrade, id: dsp4, to: 2-1-0}                                                                   # R26, $470
+  - {do: upgrade, id: dsp5, to: 1-0-0}                                                                   # R26, $170
+  - {do: upgrade, id: dsp7, to: 0-1-0}                                                                   # R26, $130
+  - {do: upgrade, id: dsp9, to: 0-1-0}                                                                   # R27, $130
+  - {do: upgrade, id: dsp10, to: 0-1-0}                                                                  # R27, $130
+  - {do: upgrade, id: bmb4, to: 0-2-2}                                                                   # R27, $340
+  - {do: upgrade, id: bmb4, to: 0-3-2}                                                                   # R28, $850
+  - {do: upgrade, id: bmb3, to: 0-2-2}                                                                   # R28, $340
+  - {do: upgrade, id: dsp1, to: 3-2-0}                                                                   # R30, $1,020
+fill:
+  - {do: upgrade, id: dsp3, to: 3-2-0, round: 31}                                                        # R31, $1,020
+  - {do: upgrade, id: dsp5, to: 3-0-0, round: 32}                                                        # R32, $1,190
+  - {do: upgrade, id: bmb1, to: 0-2-2, round: 33}                                                        # R33, $340
+  - {do: upgrade, id: dsp11, to: 3-1-0, round: 35}                                                       # R35, $1,490
+  - {do: upgrade, id: bmb1, to: 0-2-3, round: 35}                                                        # R35, $595
+  - {do: upgrade, id: dsp5, to: 3-1-0, round: 35}                                                        # R35, $130
+  - {do: upgrade, id: dsp8, to: 0-1-0, round: 35}                                                        # R35, $130
+  - {do: upgrade, id: dsp2, to: 3-2-0, round: 36}                                                        # R36, $1,020
+  - {do: upgrade, id: drt1, to: 0-0-1, round: 36}                                                        # R36, $75
+  - {do: place, id: tck1, kind: tack, role: dps, round: 36, at: [0.826, 0.572]}                          # R36, $220; right junction, on the grass
+  - {do: upgrade, id: tck1, to: 0-2-0, round: 36}                                                        # R36, $275
+  - {do: upgrade, id: dsp6, to: 0-1-3, round: 37}                                                        # R37, $2,215
+  - {do: upgrade, id: drt1, to: 0-2-3, round: 37}                                                        # R37, $905
+  - {do: upgrade, id: bmb1, to: 0-2-4, round: 38}                                                        # R38, $2,125
+  - {do: upgrade, id: dsp4, to: 3-1-0, round: 39}                                                        # R39, $1,020
+  - {do: upgrade, id: tck1, to: 0-3-0, round: 39}                                                        # R39, $470
+  - {do: upgrade, id: dsp4, to: 3-2-0, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp5, to: 3-2-0, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp6, to: 0-2-3, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp7, to: 1-1-0, round: 39}                                                        # R39, $170
+  - {do: upgrade, id: dsp8, to: 0-1-3, round: 40}                                                        # R40, $2,215
+  - {do: upgrade, id: dsp7, to: 2-1-0, round: 40}                                                        # R40, $170
+  - {do: upgrade, id: dsp9, to: 1-3-0}                                                                   # late, $3,020
+  - {do: upgrade, id: dsp7, to: 2-2-0}                                                                   # late, $300
+  - {do: upgrade, id: dsp8, to: 0-2-3}                                                                   # late, $300
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}

@@ -1,0 +1,108 @@
+# Off The Coast, Easy / Primary Only: Desperados inside both bends of the lane, MOAB
+# Mauler bombs under the top arch, a boomerang and two darts as helpers.
+#
+# Map (game data: data/map_geometry, btd6bot/dps_model.py Track): ONE lane, 901 units long,
+# that starts and ends in the sea below the screen, so 559 units can be hit. The upper
+# half is beach (land), the lower half sea; the shipwreck has three small land pieces and
+# the crane slightly blocks sight. No removable obstacles, no moving parts, no glass
+# (data/map_mechanics.json has no entry). Best water: the left bay inside the lane by the
+# entrance (x 0.11-0.23, y 0.53-0.83) and the right bay by the exit (x 0.61-0.75).
+#
+# Why: only Primary towers, so one build serves Easy and Primary Only. The lane bends
+# round the beach twice (left and right) and arches over the top; a Desperado (range 60)
+# inside a bend covers the whole bend. Desperado is the tower whose XP the account needs
+# most (tools/optimize_builds.py xp_weights), so the surplus goes into it. The bomb in
+# the right bend becomes a MOAB Mauler (0-3-2) for the round-40 MOAB; Cluster bombs
+# (0-2-3) under the arch thin the crowds; Desperados 0-1-0 see camo.
+#
+# Sources:
+#   * bloonswiki Off_The_Coast: one long lane with three wide loops, start and exit in
+#     the sea (https://www.bloonswiki.com/Off_The_Coast)
+#   * BlueCliff, Off the Coast Hard: the early carry stands on the inner side of the left
+#     bend (https://www.youtube.com/watch?v=Oc2ihV126QM)
+#   * bloon.games Easy / Primary Only guides for this map (video-only pages):
+#     https://bloon.games/how-to-beat-standard-easy-on-off-the-coast/ ,
+#     https://bloon.games/how-to-beat-primary-only-on-off-the-coast/
+# Build order: tools/optimize_builds.py greedy search limited to Primary towers on the
+# account economy (Double Cash + Fast Track: Easy starts at round 10 with ~$3,832), then
+# re-checked by replay. Comments: round each step is bought by in Easy, and its price.
+#
+# plan = what the base income (no Double Cash) pays for by round 40, so the offline
+# threat test finishes it; fill = the rest of the build, in order, paid by Double Cash
+# (the executor buys the first affordable fill step).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: offthecoast_easy
+map: Off The Coast
+hero: sauda
+modes: [easy, primary_only]
+planner:
+  towers: {desperado: [4, 3, 3], bomb: [0, 3, 3], boomerang: [0, 2, 3], dart: [1, 0, 2]}
+  base_success: {easy: 0.85, primary_only: 0.85}
+  maps: [Off The Coast]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.655, 0.291]}                                     # R10, $510; Sauda on the beach next to the lane
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.227, 0.470]}                # R10, $255; inside the left bend
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.644, 0.487]}                # R10, $255; inside the right bend
+  - {do: place, id: dsp3, kind: desperado, role: dps, target: strong, at: [0.184, 0.453]}                # R10, $255; inside the left bend
+  - {do: place, id: dsp4, kind: desperado, role: dps, target: strong, at: [0.687, 0.487]}                # R10, $255; inside the right bend
+  - {do: place, id: dsp5, kind: desperado, role: dps, target: strong, at: [0.644, 0.419]}                # R10, $255; inside the right bend
+  - {do: place, id: dsp6, kind: desperado, role: dps, target: strong, at: [0.142, 0.487]}                # R10, $255; left bend, outer edge
+  - {do: place, id: dsp7, kind: desperado, role: dps, target: strong, at: [0.601, 0.470]}                # R10, $255; inside the right bend
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.729, 0.470]}                                     # R10, $320; right bend, by the lane
+  - {do: upgrade, id: bmb1, to: 0-0-1}                                                                   # R10, $170
+  - {do: upgrade, id: bmb1, to: 0-2-2}                                                                   # R10, $810
+  - {do: place, id: dsp8, kind: desperado, role: dps, target: strong, at: [0.419, 0.300]}                # R11, $255; under the top arch
+  - {do: upgrade, id: dsp1, to: 2-1-0}                                                                   # R11, $470
+  - {do: upgrade, id: dsp2, to: 1-0-0}                                                                   # R12, $170
+  - {do: upgrade, id: bmb1, to: 0-3-2}                                                                   # R14, $850
+  - {do: upgrade, id: dsp1, to: 2-2-0}                                                                   # R14, $300
+  - {do: upgrade, id: dsp2, to: 2-1-0}                                                                   # R15, $300
+  - {do: upgrade, id: dsp3, to: 1-0-0}                                                                   # R15, $170
+  - {do: place, id: bmr1, kind: boomerang, role: dps, at: [0.398, 0.232]}                                # R16, $270; under the top arch
+  - {do: upgrade, id: bmr1, to: 0-1-0}                                                                   # R16, $150
+  - {do: upgrade, id: dsp2, to: 2-2-0}                                                                   # R16, $300
+  - {do: upgrade, id: dsp3, to: 2-2-0}                                                                   # R18, $600
+  - {do: upgrade, id: dsp4, to: 1-1-0}                                                                   # R19, $300
+  - {do: upgrade, id: bmr1, to: 0-2-2}                                                                   # R19, $555
+  - {do: upgrade, id: dsp4, to: 2-1-0}                                                                   # R20, $170
+  - {do: upgrade, id: dsp5, to: 0-1-0}                                                                   # R20, $130
+  - {do: place, id: bmb2, kind: bomb, role: dps, at: [0.452, 0.215]}                                     # R20, $320; under the top arch
+  - {do: upgrade, id: bmb2, to: 0-0-3}                                                                   # R22, $1,020
+  - {do: upgrade, id: dsp5, to: 1-1-0}                                                                   # R23, $170
+  - {do: upgrade, id: dsp4, to: 2-2-0}                                                                   # R23, $300
+  - {do: upgrade, id: dsp5, to: 2-2-0}                                                                   # R24, $470
+fill:
+  - {do: place, id: bmb3, kind: bomb, role: dps, round: 25, at: [0.494, 0.232]}                          # R25, $320; under the top arch, right
+  - {do: upgrade, id: bmb3, to: 0-0-2, round: 26}                                                        # R26, $425
+  - {do: upgrade, id: dsp6, to: 2-0-0, round: 26}                                                        # R26, $340
+  - {do: upgrade, id: dsp7, to: 0-1-0, round: 26}                                                        # R26, $130
+  - {do: upgrade, id: dsp8, to: 0-1-0, round: 27}                                                        # R27, $130
+  - {do: upgrade, id: dsp6, to: 2-1-0, round: 27}                                                        # R27, $130
+  - {do: upgrade, id: bmb2, to: 0-2-3, round: 28}                                                        # R28, $555
+  - {do: upgrade, id: bmb3, to: 0-2-2, round: 28}                                                        # R28, $555
+  - {do: upgrade, id: dsp2, to: 3-2-0, round: 29}                                                        # R29, $1,020
+  - {do: upgrade, id: dsp1, to: 3-2-0, round: 31}                                                        # R31, $1,020
+  - {do: place, id: drt1, kind: dart, role: dps, round: 31, at: [0.227, 0.283]}                          # R31, $170; left of the arch
+  - {do: place, id: drt2, kind: dart, role: dps, round: 31, at: [0.612, 0.266]}                          # R31, $170; right of the arch
+  - {do: upgrade, id: drt1, to: 1-0-0, round: 31}                                                        # R31, $120
+  - {do: place, id: bmb4, kind: bomb, role: dps, round: 32, at: [0.345, 0.249]}                          # R32, $320; under the top arch, left
+  - {do: upgrade, id: bmb4, to: 0-2-2, round: 33}                                                        # R33, $980
+  - {do: upgrade, id: bmr1, to: 0-2-3, round: 33}                                                        # R33, $1,105
+  - {do: upgrade, id: dsp3, to: 3-2-0, round: 35}                                                        # R35, $1,020
+  - {do: upgrade, id: drt2, to: 0-0-2, round: 35}                                                        # R35, $245
+  - {do: upgrade, id: dsp4, to: 3-2-0, round: 35}                                                        # R35, $1,020
+  - {do: upgrade, id: dsp6, to: 2-2-0, round: 36}                                                        # R36, $300
+  - {do: upgrade, id: dsp7, to: 2-2-0, round: 36}                                                        # R36, $640
+  - {do: upgrade, id: dsp8, to: 0-1-3, round: 37}                                                        # R37, $2,215
+  - {do: upgrade, id: dsp5, to: 3-2-0, round: 38}                                                        # R38, $1,020
+  - {do: upgrade, id: dsp8, to: 0-2-3, round: 38}                                                        # R38, $300
+  - {do: upgrade, id: dsp7, to: 2-3-0, round: 39}                                                        # R39, $2,550
+  - {do: upgrade, id: dsp6, to: 3-2-0, round: 39}                                                        # R39, $1,020
+  - {do: upgrade, id: dsp2, to: 4-2-0}                                                                   # late, $4,930
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}
+answers:
+  moab: [{do: upgrade, id: bmb1, to: 0-3-2}]

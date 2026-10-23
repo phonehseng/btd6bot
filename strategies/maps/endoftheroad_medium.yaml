@@ -1,0 +1,77 @@
+# End Of The Road, Medium / Military Only / Reverse: the pool at the far end
+# holds two Destroyers, an Armor Piercing sub and Brickell; snipers and a
+# Bomber Ace on the open ground.
+#
+# Why: the shortest beginner map (994 world units, 818 hittable). Bloons run
+# out along the top lane of the road, loop round the pool at the right and
+# come back along the bottom lane, so every tower near the road sees both
+# lanes. The pool is surrounded by track on both sides: a buccaneer there
+# reaches 50% of the route, a sub 40% (map geometry). The ground is open (82%
+# placeable, the cacti block almost nothing). Military towers only: one build
+# for all three modes.
+#
+# Sources:
+#   * bloonswiki Strategy:Military_Only: Destroyer "best with the 3-2-0 crosspath",
+#     Armor Piercing Darts subs, Maim MOAB snipers on Strong for the round-60 BFB,
+#     Full Metal Jacket for leads, every military tower has a cheap camo upgrade
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#   * bloonswiki Reverse_(BTD6): Medium strategies work unchanged in Reverse
+#     except on a few named maps (none of the beginner maps)
+#     (https://www.bloonswiki.com/Reverse_(BTD6))
+#   * bloonswiki End_Of_The_Road: Destroyers in the pool fire both broadsides,
+#     with Admiral Brickell and camo detection
+#     (https://www.bloonswiki.com/End_Of_The_Road)
+#
+# Surplus cash goes into more Armor Piercing subs (`xp_target: sub`; the
+# account still needs sub XP), capped at 2-0-4 by the fill step.
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method):
+#   * every `at` is legal for its tower in plan order, on the map geometry (as
+#     tests/test_map_hints_offline.py checks) and on the live map model;
+#   * the plan replayed the executor's way (tools/optimize_builds.replay_plan)
+#     on the account's economy (Fast Track R15, Double Cash) keeps every
+#     round at a damage-model margin of 2.0 or more. Worst margin:
+#       3.29 (Medium and Military Only); 3.08 (Reverse)
+#   * sight-strict (snipers only count the track they can see, subs their own
+#     range, aces their flight circle):
+#       3.05 (Medium and Military Only); 3.12 (Reverse)
+#   * executor-faithful replay (tools/simulate_threats' loop, with the match
+#     loop's surplus spending), strict, with its extra towers / plan only:
+#       3.36 / 2.74 (Medium and Military Only); 3.63 / 2.95 (Reverse)
+#   * tools/simulate_threats finds no gaps; strategy.coverage nothing missing.
+id: endoftheroad_medium
+map: End Of The Road
+hero: admiral_brickell
+modes: [medium, military_only, reverse]
+xp_target: sub
+planner:
+  towers: {sniper: [4, 2, 0], buccaneer: [3, 2, 2], ace: [2, 3, 0], sub: [2, 0, 4]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [End Of The Road]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.450, 0.850]}   # open ground below the road
+  - {do: upgrade, id: s1, to: 1-2-0}   # lead (Full Metal Jacket) + camo (Night Vision) + shrapnel
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.590, 0.470]}   # pool, top: 50% of the route
+  - {do: upgrade, id: b1, to: 2-0-2}   # Crow's Nest: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.601, 0.624]}   # Brickell, bottom of the pool
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.590, 0.555]}   # pool, middle: 49% of the route
+  - {do: upgrade, id: b2, to: 2-2-0}   # Hot Shot: lead
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.238, 0.504]}   # inside the left S-bend: both lanes, 45% of the route
+  - {do: upgrade, id: a1, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.633, 0.538]}   # pool, right
+  - {do: upgrade, id: sb1, to: 2-0-3}   # Advanced Intel + Triple Guns
+  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.450, 0.920]}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: upgrade, id: s2, to: 4-2-0}   # second Maim MOAB for round 60
+fill:
+  - {do: upgrade, kind: sub, to: 2-0-4}   # surplus subs (xp_target) stop at Armor Piercing Darts
+answers:
+  camo: [{do: upgrade, id: s1, to: 1-2-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

@@ -1,0 +1,79 @@
+# Rake, Deflation: towers bought at once in the centre box between the
+# crossings.
+#
+# Why: two short lanes run at the same time and cross in the middle (they
+# confuse "first" targeting). Over half of each lane is off screen, so the
+# defence has little track to work with; the centre box between the crossings
+# and the pool on the upper left reach both lanes.
+#
+# Sources:
+#   * bloonswiki Rake: one of the hardest Intermediate maps, two lanes at
+#     once, best spots in and just below the centre, a pool for water towers
+#     (https://www.bloonswiki.com/Rake)
+#   * bloons.fandom Rake: Dart and Sub, or Dart and Sniper, as CHIMPS openers;
+#     a line of Buccaneers and a Carrier Flagship mid-game
+#     (https://bloons.fandom.com/wiki/Rake)
+#   * Rake guide (v29.4): Sky Shredder (Monkey Ace) works well
+#     (https://www.youtube.com/watch?v=hW90iCVeSXA)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 3.83 (R56). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: rake_deflation
+map: Rake
+hero: psi
+modes: [deflation]
+planner:
+  towers: {bomb: [0, 3, 2], buccaneer: [3, 0, 2], sniper: [4, 2, 0], ace: [2, 3, 0], druid: [0, 3, 1], heli: [3, 0, 2], spike: [0, 0, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Rake]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.494, 0.794]}                    # reaches 160 / 38 units of the lanes
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.537, 0.419]}                    # reaches 106 / 77 units of the lanes
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.484, 0.385]}                # reaches 183 / 114 units of the lanes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.43, 0.385]}                 # reaches 154 / 114 units of the lanes
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.601, 0.146]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.644, 0.146]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.644, 0.385]}                      # reaches 114 / 124 units of the lanes
+  - {do: upgrade, id: a1, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.484, 0.555]}                   # hero (not counted by the damage model)
+fill:
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.441, 0.181]}
+  - {do: upgrade, id: a2, to: 0-3-0}
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.526, 0.555]}
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: upgrade, id: a2, to: 1-3-0}
+  - {do: upgrade, id: bm2, to: 0-3-2}
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: a2, to: 2-3-0}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.366, 0.811]}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.366, 0.675]}
+  - {do: upgrade, id: h2, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 3-0-2}
+  - {do: upgrade, id: b2, to: 3-0-1}
+  - {do: upgrade, id: h2, to: 1-0-2}
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.644, 0.828]}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); the plan buys them
+  bfb:
+    - {do: upgrade, id: s1, to: 4-2-0}

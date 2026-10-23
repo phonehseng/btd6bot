@@ -1,0 +1,65 @@
+# Moon Landing, Medium/Military Only/Reverse: map-wide snipers and Monkey Aces
+# over the crater walls.
+#
+# Why: one long lane (1,240 units) loops out of three walled craters. The
+# crater walls block line of sight for most land towers, so the core here is
+# map-wide: snipers, and Monkey Aces flying over the craters. No water.
+#
+# Sources:
+#   * bloonswiki Moon_Landing: craters with walls, Snipers and Mortars do
+#     well, Ultra-Juggernaut inside the craters
+#     (https://www.bloonswiki.com/Moon_Landing_(BTD6))
+#   * BeatbloonsBob, Moon Landing CHIMPS (no abilities): Sniper "as high as
+#     you can", Sniper 0-2-4 -> 0-2-5, Heli 3-0-2
+#     (https://youtu.be/cSmSH9JAgBQ)
+#   * OneEyedDeacon, Moon Landing CHIMPS with a Flying Fortress (Monkey Ace)
+#     (https://youtu.be/SXHjsD-CCLU)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): medium
+# 3.22 (R41), military_only 3.22 (R41), reverse 3.55 (R41). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: moonlanding_military
+map: Moon Landing
+hero: obyn
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [5, 3, 5], ace: [2, 5, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Moon Landing]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.836, 0.811]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.452, 0.181]}                      # reaches 189 units of the lane
+  - {do: upgrade, id: a1, to: 0-1-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.548, 0.496]}                   # hero (not counted by the damage model)
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.836, 0.871]}   # map-wide
+  - {do: upgrade, id: s2, to: 0-2-2}
+  - {do: upgrade, id: a1, to: 1-3-0}                                                   # Bomber Ace
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.056, 0.419]}                      # reaches 101 units of the lane
+  - {do: upgrade, id: a2, to: 0-1-0}
+  - {do: upgrade, id: a1, to: 2-3-0}
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: s1, to: 2-3-0}                                                   # Bouncing Bullet
+  - {do: upgrade, id: s2, to: 0-2-5}                                                   # Elite Defender
+  - {do: upgrade, id: a1, to: 2-4-0}                                                   # Ground Zero
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.836, 0.751]}   # map-wide
+  - {do: upgrade, id: s3, to: 4-1-0}                                                   # Maim MOAB
+fill:
+  - {do: upgrade, id: a1, to: 2-5-0}                                                   # Tsar Bomba
+  - {do: upgrade, id: s3, to: 5-1-0}                                                   # Cripple MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); plan or fill already buys them
+  bfb:
+    - {do: upgrade, id: s3, to: 4-1-0}
+    - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.836, 0.751]}

@@ -1,0 +1,77 @@
+# Luminous Cove, Military Only/Reverse: boats in the heart pond, which touches
+# both lanes, and map-wide snipers on the bottom land.
+#
+# Why: the two lanes alternate by round (AlternateRoundSplitter) and both loop
+# round the heart-shaped pond in the middle; the only land is the bottom
+# strip, and the bot has seen the game refuse most of it. The heart pond
+# touches both lanes: boats there reach ~45% of each lane, and snipers on the
+# bottom land are map-wide.
+#
+# Sources:
+#   * bloonswiki Luminous_Cove, Strategy: "water-based strategies are
+#     optimal", the water inside the central loop is the best spot
+#     (https://www.bloonswiki.com/Luminous_Cove)
+#   * BlueCliff, Luminous Cove Hard: Sub 2-0-4 in the heart pond
+#     (https://www.youtube.com/watch?v=67rUzMWVE-Q)
+#   * metaldevil, Brickell CHIMPS: buccaneer Destroyer -> Aircraft Carrier
+#     (https://www.youtube.com/watch?v=O65H67unAwA)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted):
+# military_only 3.87 (R37), reverse 3.87 (R37). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: luminouscove_military
+map: Luminous Cove
+hero: admiral_brickell
+modes: [military_only, reverse]
+planner:
+  towers: {buccaneer: [5, 0, 2], sub: [2, 0, 5], sniper: [5, 5, 2]}
+  base_success: {military_only: 0.8, reverse: 0.8}
+  maps: [Luminous Cove]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.47]}                  # reaches 411 / 410 units of the lanes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.398, 0.538]}                # reaches 363 / 373 units of the lanes
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.462, 0.538]}                     # reaches 191 / 179 units of the lanes
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: sb1, to: 2-0-1}
+  - {do: upgrade, id: b2, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.425, 0.589]}                   # hero (not counted by the damage model)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.11, 0.743]}    # map-wide
+  - {do: upgrade, id: s1, to: 0-1-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.163, 0.743]}   # map-wide
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: upgrade, id: s1, to: 0-2-1}
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: upgrade, id: s2, to: 1-3-0}                                                   # Bouncing Bullet
+  - {do: upgrade, id: sb1, to: 2-0-3}                                                  # Triple Guns
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: upgrade, id: s2, to: 2-3-0}
+  - {do: upgrade, id: sb1, to: 2-0-4}                                                  # Armor Piercing Darts
+  - {do: upgrade, id: b1, to: 3-0-2}                                                   # Destroyer
+  - {do: upgrade, id: b2, to: 3-0-1}                                                   # Destroyer
+  - {do: upgrade, id: s2, to: 2-4-0}                                                   # Supply Drop
+  - {do: upgrade, id: s1, to: 0-3-2}                                                   # Bouncing Bullet
+  - {do: upgrade, id: b1, to: 4-0-2}                                                   # Aircraft Carrier
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.526, 0.93]}    # map-wide
+  - {do: upgrade, id: s3, to: 4-1-0}                                                   # Maim MOAB
+fill:
+  - {do: upgrade, id: b1, to: 5-0-2}                                                   # Carrier Flagship
+  - {do: upgrade, id: sb1, to: 2-0-5}                                                  # Sub Commander
+  - {do: upgrade, id: s2, to: 2-5-0}                                                   # Elite Sniper
+  - {do: upgrade, id: s3, to: 5-1-0}                                                   # Cripple MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); plan or fill already buys them
+  bfb:
+    - {do: upgrade, id: s3, to: 4-1-0}
+    - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.526, 0.93]}

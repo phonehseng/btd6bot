@@ -1,0 +1,78 @@
+# Lost Crevasse, Medium/Military Only/Reverse: boats in the lake where the
+# lanes split, snipers, Monkey Aces and a Heli Pilot for both lanes.
+#
+# Why: two lanes run at the same time (map data: a BloonTagOnlySplitter sends
+# bloons down Path1 and Path2 by turns; the boss path is unused here). They
+# cross the middle on one long diagonal in opposite directions and split again
+# at the bottom. Ice crystals block placement and line of sight on the upper
+# right; the lake on the lower right touches both lanes after the split.
+#
+# Sources:
+#   * bloonswiki Lost_Crevasse: two entrances, all paths active at once, left
+#     side has more land, right side a lake for water towers
+#     (https://www.bloonswiki.com/Lost_Crevasse)
+#   * OneEyedDeacon, Lost Crevasse CHIMPS (v53.2): Sniper on Strong next to a
+#     crystal, where it sees both ends of the track
+#     (https://youtu.be/yjRUMBRZOss)
+#   * Lost Crevasse CHIMPS comments: two Monkey Aces and a Buccaneer beat it
+#     (https://youtu.be/AjYKwKvdNV4)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): medium
+# 4.81 (R27), military_only 4.81 (R27), reverse 4.27 (R21). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: lostcrevasse_military
+map: Lost Crevasse
+hero: sauda
+modes: [medium, military_only, reverse]
+planner:
+  towers: {buccaneer: [5, 0, 2], sub: [2, 0, 5], sniper: [5, 2, 1], ace: [2, 3, 0], heli: [3, 0, 2]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Lost Crevasse]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.623, 0.709]}                # reaches 157 / 82 units of the lanes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.665, 0.675]}                # reaches 143 / 87 units of the lanes
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b2, to: 2-0-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.633, 0.794]}                     # reaches 117 / 0 units of the lanes
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.521, 0.606]}                   # hero (not counted by the damage model)
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.398, 0.181]}   # map-wide
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.441, 0.181]}   # map-wide
+  - {do: upgrade, id: s1, to: 0-0-1}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.537, 0.453]}                      # reaches 127 / 143 units of the lanes
+  - {do: upgrade, id: a1, to: 0-1-0}
+  - {do: upgrade, id: s1, to: 1-0-1}
+  - {do: upgrade, id: a1, to: 1-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: sb1, to: 2-0-4}                                                  # Armor Piercing Darts
+  - {do: upgrade, id: a1, to: 2-3-0}
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.462, 0.385]}                      # reaches 123 / 125 units of the lanes
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.366, 0.266]}                     # map-wide
+  - {do: upgrade, id: h1, to: 3-0-2}                                                   # Razor Rotors
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 3-0-2}                                                   # Destroyer
+  - {do: upgrade, id: b2, to: 3-0-2}                                                   # Destroyer
+  - {do: upgrade, id: b1, to: 4-0-2}                                                   # Aircraft Carrier
+  - {do: upgrade, id: s1, to: 4-0-1}                                                   # Maim MOAB
+fill:
+  - {do: upgrade, id: b1, to: 5-0-2}                                                   # Carrier Flagship
+  - {do: upgrade, id: sb1, to: 2-0-5}                                                  # Sub Commander
+  - {do: upgrade, id: s1, to: 5-0-1}                                                   # Cripple MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); plan or fill already buys them
+  bfb:
+    - {do: upgrade, id: s1, to: 4-0-1}

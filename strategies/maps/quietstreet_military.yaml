@@ -1,0 +1,61 @@
+# Quiet Street, Medium/Military Only/Reverse: map-wide snipers and Monkey Aces
+# over the roundabout.
+#
+# Why: non-MOAB bloons enter at the top and the bottom on the left, go round
+# the roundabout and leave by the other entrance; MOAB-class bloons take the
+# thick road from the bottom to the top (MoabOnlySplitter). Walls on the left,
+# cars and bushes block line of sight, and there is no water until the $500
+# ice is bought (the bot never buys obstacles).
+#
+# Sources:
+#   * bloonswiki Quiet_Street: bloons from both sides, blimps on one lane,
+#     cars and bushes block line of sight, long-range towers excel
+#     (https://www.bloonswiki.com/Quiet_Street)
+#   * bloons.fandom Quiet_Street: main defences on the top side
+#     (https://bloons.fandom.com/wiki/Quiet_Street)
+#   * Quiet Street CHIMPS with Sauda, Carrier Flagship and a Bloon Exclusion
+#     Zone (https://www.youtube.com/watch?v=9604D3Mx-pA)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): medium
+# 2.68 (R49), military_only 2.68 (R49), reverse 2.35 (R49). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: quietstreet_military
+map: Quiet Street
+hero: psi
+modes: [medium, military_only]
+planner:
+  towers: {sniper: [5, 2, 0], ace: [2, 5, 0]}
+  base_success: {medium: 0.8, military_only: 0.8}
+  maps: [Quiet Street]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.804, 0.76]}    # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.799, 0.266]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.291, 0.334]}                      # reaches 154 / 193 / 154 units of the lanes
+  - {do: upgrade, id: a1, to: 1-1-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.675]}                   # hero (not counted by the damage model)
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.216, 0.334]}                      # reaches 203 / 242 / 203 units of the lanes
+  - {do: upgrade, id: a2, to: 1-1-0}
+  - {do: upgrade, id: a1, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: s1, to: 2-2-0}
+  - {do: upgrade, id: s2, to: 3-2-0}                                                   # Deadly Precision
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+  - {do: upgrade, id: a1, to: 2-4-0}                                                   # Ground Zero
+  - {do: upgrade, id: s2, to: 4-2-0}                                                   # Maim MOAB
+  - {do: upgrade, id: a2, to: 2-4-0}                                                   # Ground Zero
+  - {do: upgrade, id: a1, to: 2-5-0}                                                   # Tsar Bomba
+fill:
+  - {do: upgrade, id: s1, to: 5-2-0}                                                   # Cripple MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

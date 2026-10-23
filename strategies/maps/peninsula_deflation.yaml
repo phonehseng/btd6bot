@@ -1,0 +1,81 @@
+# Peninsula, Deflation: a fleet of subs round the lane (all bought before round 31).
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): ONE short
+# lane (705 units, 400 hittable) round a mountain that blocks sight. Over 80% of the room
+# is water; land is the mountaintop (sight blocked: only map-wide towers work there) and
+# a small plot by the bottom-right bend. Three $500 kelp rocks would add land; the bot
+# cannot buy them.
+#
+# Why: Deflation pays no income, so everything is bought with the starting cash
+# (account: Double Cash doubles it to ~$40,000). Water towers carry this water map
+# (bloonswiki; 0Python's Brickell sub spam). The threat answers name a sniper on the
+# bottom-right plot (the mountain blocks sight from the top).
+#
+# Sources:
+#   * bloonswiki Peninsula: water builds (subs, Carrier Flagship), snipers on the mountaintop
+#     (https://www.bloonswiki.com/Peninsula)
+#   * 0Python BTD6, Peninsula CHIMPS with Brickell: 2-0-4 sub spam + buccaneer 0-3-2
+#     (https://www.youtube.com/watch?v=bkeuo0q7XbY)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-deflation-on-peninsula/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Deflation starts at round 31 with ~$40,000 and no income),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what $20,000 (Deflation without Double Cash) buys, so the offline threat test
+# finishes it; fill = the rest, in order, paid by the Double Cash half of the start cash.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: peninsula_deflation
+map: Peninsula
+hero: admiral_brickell
+modes: [deflation]
+planner:
+  towers: {sub: [4, 3, 3]}
+  base_success: {deflation: 0.85}
+  maps: [Peninsula]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.152, 0.291]}                                     # R31, $765; top left
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.655, 0.436]}                                       # R31, $275; middle right, in the water
+  - {do: upgrade, id: sb1, to: 0-1-3}                                                                    # R31, $2,555
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.163, 0.232]}                                       # R31, $275; top left, in the water
+  - {do: upgrade, id: sb2, to: 0-1-2}                                                                    # R31, $1,620
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.195, 0.521]}                                       # R31, $275; middle left, in the water
+  - {do: upgrade, id: sb3, to: 0-1-2}                                                                    # R31, $1,620
+  - {do: upgrade, id: sb1, to: 0-2-3}                                                                    # R31, $255
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.644, 0.521]}                                       # R31, $275; middle right, in the water
+  - {do: upgrade, id: sb4, to: 0-1-3}                                                                    # R31, $2,555
+  - {do: place, id: sb5, kind: sub, role: dps, at: [0.687, 0.300]}                                       # R31, $275; top right, in the water
+  - {do: upgrade, id: sb5, to: 0-3-2}                                                                    # R31, $3,025
+  - {do: place, id: sb6, kind: sub, role: dps, at: [0.676, 0.368]}                                       # R31, $275; middle right, in the water
+fill:
+  - {do: upgrade, id: sb6, to: 0-3-2}                                                                    # R31, $3,025
+  - {do: place, id: sb7, kind: sub, role: dps, at: [0.195, 0.589]}                                       # R31, $275; middle left, in the water
+  - {do: upgrade, id: sb7, to: 4-0-2}                                                                    # R31, $4,405
+  - {do: upgrade, id: sb3, to: 0-3-2}                                                                    # R31, $1,405
+  - {do: upgrade, id: sb2, to: 0-3-2}                                                                    # R31, $1,405
+  - {do: place, id: sb8, kind: sub, role: dps, at: [0.644, 0.589]}                                       # R31, $275; middle right, in the water
+  - {do: upgrade, id: sb8, to: 4-0-2}                                                                    # R31, $4,405
+  - {do: place, id: sb9, kind: sub, role: dps, at: [0.206, 0.658]}                                       # R31, $275; bottom left, in the water
+  - {do: upgrade, id: sb9, to: 4-2-0}                                                                    # R31, $3,810
+  - {do: place, id: sb10, kind: sub, role: dps, at: [0.409, 0.862]}                                      # R31, $275; bottom centre, in the water
+  - {do: upgrade, id: sb10, to: 4-0-1}                                                                   # R31, $3,555
+  - {do: upgrade, id: sb10, to: 4-0-2}                                                                   # R31, $850
+  - {do: place, id: sb11, kind: sub, role: dps, at: [0.366, 0.862]}                                      # R31, $275; bottom centre, in the water
+  - {do: place, id: sb12, kind: sub, role: dps, at: [0.216, 0.726]}                                      # R31, $275; bottom left, in the water
+  - {do: place, id: sb13, kind: sub, role: dps, at: [0.302, 0.845]}                                      # R31, $275; bottom centre, in the water
+  - {do: place, id: sb14, kind: sub, role: dps, at: [0.142, 0.164]}                                      # R31, $275; top left, in the water
+  - {do: place, id: sb15, kind: sub, role: dps, at: [0.259, 0.811]}                                      # R31, $275; bottom left, in the water
+  - {do: place, id: sb16, kind: sub, role: dps, at: [0.452, 0.879]}                                      # R31, $275; bottom centre, in the water
+  - {do: upgrade, id: sb4, to: 0-2-3}                                                                    # R31, $255
+  - {do: upgrade, id: sb11, to: 1-0-0}                                                                   # late, $110
+  - {do: upgrade, id: sb12, to: 1-0-0}                                                                   # late, $110
+  - {do: upgrade, id: sb13, to: 1-0-0}                                                                   # late, $110
+panic:
+  - {do: place, kind: sub, role: dps}
+answers:
+  ceramic: [{do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.580, 0.709]}, {do: upgrade, id: snp1, to: 2-2-0}]
+  bfb: [{do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.580, 0.709]}, {do: upgrade, id: snp1, to: 4-2-0}]

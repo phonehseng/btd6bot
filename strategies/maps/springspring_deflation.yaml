@@ -1,0 +1,77 @@
+# Spring Spring, Deflation: towers bought at once at the exit where both lanes
+# meet.
+#
+# Why: two lanes run at the same time from the same entrance on the left to
+# the same exit on the right, one over the top of the big island and one under
+# it. Over 40% of each lane is off screen; both lanes meet again at the exit,
+# so the right end of the island and the water around it reach both.
+#
+# Sources:
+#   * bloonswiki Spring_Spring: towers near the right end of the island, a Sub
+#     fits where the paths split, global blimp damage (Aircraft Carrier,
+#     Carrier Flagship), Sub Commanders at the back
+#     (https://www.bloonswiki.com/Spring_Spring)
+#   * bloons.fandom Spring_Spring/Strategies: Dart and Sniper start, Carrier
+#     Flagship and a 4-0-2 Ace mid-game
+#     (https://bloons.fandom.com/wiki/Spring_Spring/Strategies)
+#   * Spring Spring black border with Psi and Sub Commanders
+#     (https://www.youtube.com/watch?v=hFDd_GO9cb4)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 2.18 (R54). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: springspring_deflation
+map: Spring Spring
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {bomb: [0, 3, 4], buccaneer: [4, 0, 2], sniper: [4, 2, 0], sub: [0, 1, 3], ace: [2, 3, 0], heli: [3, 0, 2], boomerang: [0, 2, 3]}
+  base_success: {deflation: 0.85}
+  maps: [Spring Spring]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.152, 0.504]}                    # reaches 61 / 57 units of the lanes
+  - {do: upgrade, id: bm1, to: 0-1-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.345, 0.146]}                    # reaches 97 / 0 units of the lanes
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.624]}                # reaches 72 / 123 units of the lanes
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.259, 0.146]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.772, 0.419]}                     # reaches 80 / 54 units of the lanes
+  - {do: upgrade, id: sb1, to: 0-1-3}                                                  # Triple Guns
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.772, 0.692]}                # reaches 54 / 123 units of the lanes
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.623, 0.521]}                   # hero (not counted by the damage model)
+fill:
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.216, 0.402]}
+  - {do: upgrade, id: a1, to: 2-3-0}
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.248, 0.879]}
+  - {do: upgrade, id: a2, to: 1-3-0}
+  - {do: upgrade, id: bm1, to: 0-2-4}
+  - {do: upgrade, id: a2, to: 2-3-0}
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.43, 0.334]}
+  - {do: upgrade, id: h1, to: 3-0-2}
+  - {do: place, id: bo1, kind: boomerang, role: dps, at: [0.163, 0.572]}
+  - {do: upgrade, id: bo1, to: 0-2-3}
+  - {do: upgrade, id: b1, to: 3-0-2}
+  - {do: upgrade, id: bm2, to: 0-3-2}
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: b1, to: 4-0-2}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); the plan buys them
+  bfb:
+    - {do: upgrade, id: s1, to: 4-2-0}

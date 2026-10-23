@@ -1,0 +1,105 @@
+# Peninsula, Medium / Military Only / Reverse: a fleet of subs round the lane, a
+# sniper on the bottom-right plot, Admiral Brickell.
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): ONE short
+# lane (705 units, 400 hittable) round a mountain that blocks sight. Over 80% of the room
+# is water; land is the mountaintop (sight blocked: only map-wide towers work there) and
+# a small plot by the bottom-right bend. Three $500 kelp rocks would add land; the bot
+# cannot buy them.
+#
+# Why: every tower here is a Military tower, so one build serves Medium, Military Only
+# and Reverse. Water towers carry this water map (bloonswiki, 0Python's Brickell sub
+# spam): a sub fleet round the lane, Sub Commander buffing it. A sniper on the
+# bottom-right plot (night vision, Full Metal Jacket, later Maim MOAB) covers the camo
+# and lead bloons the subs cannot see or pop. (The damage model has no heights, so
+# it counts a mountaintop sniper as blind behind the mountain; the plot sniper is
+# the one it can check.)
+#
+# Sources:
+#   * bloonswiki Peninsula: water builds (subs, Carrier Flagship), snipers on the mountaintop
+#     (https://www.bloonswiki.com/Peninsula)
+#   * 0Python BTD6, Peninsula CHIMPS with Brickell: 2-0-4 sub spam + buccaneer 0-3-2
+#     (https://www.youtube.com/watch?v=bkeuo0q7XbY)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-medium-on-peninsula/
+#     https://bloon.games/how-to-beat-military-only-on-peninsula/
+#     https://bloon.games/how-to-beat-reverse-on-peninsula/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Medium starts at round 15 with ~$6,057),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: peninsula_medium
+map: Peninsula
+hero: admiral_brickell
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sub: [4, 4, 2], sniper: [4, 2, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Peninsula]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.152, 0.291]}                                     # R15, $900; top left
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.655, 0.436]}                                       # R15, $325; middle right, in the water
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.580, 0.709]}                   # R15, $350; bottom-right land plot by the bend: camo and lead sight, Maim MOAB later
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R15, $1,050
+  - {do: upgrade, id: sb1, to: 2-0-2}                                                                    # R15, $2,080
+  - {do: upgrade, id: sb1, to: 4-0-2}                                                                    # R19, $3,100
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.163, 0.232]}                                       # R19, $325; top left, in the water
+  - {do: upgrade, id: sb2, to: 1-0-0}                                                                    # R20, $130
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.195, 0.521]}                                       # R20, $325; middle left, in the water
+  - {do: upgrade, id: sb3, to: 1-0-0}                                                                    # R21, $130
+  - {do: upgrade, id: sb2, to: 2-0-0}                                                                    # R22, $500
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.644, 0.521]}                                       # R22, $325; middle right, in the water
+  - {do: place, id: sb5, kind: sub, role: dps, at: [0.687, 0.300]}                                       # R23, $325; top right, in the water
+  - {do: upgrade, id: sb2, to: 2-3-0}                                                                    # R27, $2,100
+  - {do: upgrade, id: sb4, to: 1-0-0}                                                                    # R27, $130
+  - {do: place, id: sb6, kind: sub, role: dps, at: [0.676, 0.368]}                                       # R27, $325; middle right, in the water
+  - {do: upgrade, id: sb5, to: 1-0-0}                                                                    # R27, $130
+  - {do: place, id: sb7, kind: sub, role: dps, at: [0.195, 0.589]}                                       # R28, $325; middle left, in the water
+  - {do: upgrade, id: sb6, to: 1-0-0}                                                                    # R28, $130
+  - {do: place, id: sb8, kind: sub, role: dps, at: [0.644, 0.589]}                                       # R28, $325; middle right, in the water
+  - {do: place, id: sb9, kind: sub, role: dps, at: [0.206, 0.658]}                                       # R28, $325; bottom left, in the water
+  - {do: place, id: sb10, kind: sub, role: dps, at: [0.409, 0.862]}                                      # R29, $325; bottom centre, in the water
+  - {do: place, id: sb11, kind: sub, role: dps, at: [0.366, 0.862]}                                      # R29, $325; bottom centre, in the water
+  - {do: place, id: sb12, kind: sub, role: dps, at: [0.216, 0.726]}                                      # R30, $325; bottom left, in the water
+  - {do: place, id: sb13, kind: sub, role: dps, at: [0.302, 0.845]}                                      # R30, $325; bottom centre, in the water
+  - {do: place, id: sb14, kind: sub, role: dps, at: [0.142, 0.164]}                                      # R31, $325; top left, in the water
+  - {do: upgrade, id: sb7, to: 1-0-0}                                                                    # R31, $130
+  - {do: upgrade, id: sb8, to: 1-0-0}                                                                    # R31, $130
+  - {do: upgrade, id: sb4, to: 2-3-0}                                                                    # R33, $2,600
+  - {do: upgrade, id: sb3, to: 3-1-0}                                                                    # R35, $1,650
+  - {do: upgrade, id: sb9, to: 1-0-0}                                                                    # R35, $130
+  - {do: upgrade, id: sb3, to: 4-1-0}                                                                    # R36, $2,400
+  - {do: upgrade, id: sb5, to: 2-0-2}                                                                    # R37, $1,950
+  - {do: upgrade, id: sb10, to: 1-0-0}                                                                   # R37, $130
+  - {do: upgrade, id: sb3, to: 4-2-0}                                                                    # R38, $300
+  - {do: upgrade, id: sb5, to: 3-0-2}                                                                    # R38, $700
+  - {do: upgrade, id: sb6, to: 2-0-0}                                                                    # R38, $500
+  - {do: upgrade, id: sb11, to: 1-0-0}                                                                   # R38, $130
+  - {do: upgrade, id: sb12, to: 1-0-0}                                                                   # R38, $130
+  - {do: upgrade, id: sb13, to: 1-0-0}                                                                   # R38, $130
+  - {do: upgrade, id: sb5, to: 4-0-2}                                                                    # R39, $2,400
+  - {do: upgrade, id: sb14, to: 1-0-0}                                                                   # R39, $130
+  - {do: upgrade, id: sb6, to: 4-2-0}                                                                    # R40, $3,850
+  - {do: upgrade, id: sb7, to: 3-2-0}                                                                    # R42, $1,950
+  - {do: upgrade, id: sb8, to: 3-0-0}                                                                    # R42, $1,200
+  - {do: upgrade, id: sb7, to: 4-2-0}                                                                    # R42, $2,400
+  - {do: upgrade, id: sb8, to: 3-2-0}                                                                    # R43, $750
+  - {do: upgrade, id: sb9, to: 3-0-0}                                                                    # R44, $1,200
+  - {do: upgrade, id: sb8, to: 4-2-0}                                                                    # R44, $2,400
+  - {do: upgrade, id: sb9, to: 4-0-2}                                                                    # R46, $3,850
+  - {do: upgrade, id: sb10, to: 4-0-2}                                                                   # R48, $5,050
+  - {do: upgrade, id: sb11, to: 4-2-0}                                                                   # R49, $4,350
+  - {do: upgrade, id: sb12, to: 4-2-0}                                                                   # R49, $4,350
+  - {do: upgrade, id: sb13, to: 4-2-0}                                                                   # R50, $4,350
+  - {do: upgrade, id: sb14, to: 4-0-2}                                                                   # R50, $5,050
+  - {do: upgrade, id: sb2, to: 2-4-0}                                                                    # R54, $13,000
+  - {do: upgrade, id: sb4, to: 2-4-0}                                                                    # R58, $13,000
+fill:
+  - {do: upgrade, id: snp1, to: 2-2-0, round: 58}                                                        # R58, $1,300
+  - {do: upgrade, id: snp1, to: 4-2-0, round: 60}                                                        # R60, $8,500
+panic:
+  - {do: place, kind: sub, role: dps}

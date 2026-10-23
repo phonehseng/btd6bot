@@ -1,0 +1,62 @@
+# Spice Islands, Deflation: boats bought at once on the water beside the lane.
+#
+# Why: the most water of any map: one long lane winds between five small
+# islands. The bot has seen the game refuse most of the island cells, and the
+# palm trees block line of sight, so the core is boats on the water next to
+# the lane, with snipers on the island cells left.
+#
+# Sources:
+#   * bloonswiki Spice_Islands: Brickell with Destroyers, Carrier Flagship,
+#     several Sub Commanders; palm trees block line of sight
+#     (https://www.bloonswiki.com/Spice_Islands)
+#   * bloons.fandom Spice_Islands/Strategies
+#     (https://bloons.fandom.com/wiki/Spice_Islands/Strategies)
+#   * SnartFarts, Spice Islands CHIMPS (v52.2): Buccaneer 2-2-0 -> 3-2-0 ->
+#     5-2-0, Monkey Ace, Village (https://youtu.be/EKeFfENEBCU)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 7.18 (R59). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: spiceislands_deflation
+map: Spice Islands
+hero: admiral_brickell
+modes: [deflation]
+planner:
+  towers: {bomb: [0, 4, 2], buccaneer: [4, 0, 2], sub: [0, 2, 3], sniper: [1, 5, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Spice Islands]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.323, 0.453]}                    # reaches 169 units of the lane
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.313, 0.521]}                    # reaches 118 units of the lane
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.366, 0.402]}                # reaches 264 units of the lane
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.355, 0.555]}                # reaches 254 units of the lane
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.184, 0.589]}                     # reaches 145 units of the lane
+  - {do: upgrade, id: sb1, to: 0-1-3}                                                  # Triple Guns
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.687, 0.3]}     # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: upgrade, id: b2, to: 3-0-2}                                                   # Destroyer
+  - {do: upgrade, id: sb1, to: 0-2-3}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.628, 0.402]}                   # hero (not counted by the damage model)
+fill:
+  - {do: upgrade, id: s1, to: 1-5-0}                                                   # Elite Sniper
+  - {do: upgrade, id: b2, to: 4-0-2}                                                   # Aircraft Carrier
+  - {do: upgrade, id: bm1, to: 0-4-2}                                                  # MOAB Assassin (threat table's BFB answer; bought if cash is left)
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's BFB answer (strategy.coverage); the model rates R60 safe without it
+  bfb:
+    - {do: upgrade, id: bm1, to: 0-4-2}

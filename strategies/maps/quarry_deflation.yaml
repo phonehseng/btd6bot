@@ -1,0 +1,73 @@
+# Quarry, Deflation: towers bought at once on the second half of the lane.
+#
+# Why: one long zig-zag lane (1,336 units). From round 40 MOAB-class bloons
+# take their own track (PathMoab, opened by MapEventMoabTrack): it starts at
+# the top right and joins the lane at the first bend, skipping the top
+# stretch. The stock damage model sends MOABs down the normal lane; these
+# builds were checked with PathMoab added as a MOAB-only route, so nothing
+# here counts on the top stretch against MOABs.
+#
+# Sources:
+#   * bloonswiki Quarry: long lane, MOAB-only entrance top right after round
+#     39, walls block line of sight, Heli Pilots get around them, a river
+#     along the bottom takes boats (https://www.bloonswiki.com/Quarry)
+#   * bloons.fandom Quarry: main damage on the second half of the lane
+#     (https://bloons.fandom.com/wiki/Quarry)
+#   * BloonsPlayer Quarry CHIMPS script (Tack 2-0-5, Spike Factory, Village,
+#     Alchemists, Ice) (https://github.com/piweiblen/BloonsPlayer/blob/HEAD/sr
+#     c/data/tas/CHIMPS/quarry%20CHIMPS.txt)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 2.30 (R58). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: quarry_deflation
+map: Quarry
+hero: etienne
+modes: [deflation]
+planner:
+  towers: {bomb: [0, 2, 3], ace: [2, 3, 0], sniper: [4, 2, 0], alchemist: [1, 1, 0], sub: [0, 1, 3], buccaneer: [2, 0, 1]}
+  base_success: {deflation: 0.85}
+  maps: [Quarry]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.313, 0.504]}                    # reaches 148 / 148 units of the lanes
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.505, 0.76]}                     # reaches 146 / 146 units of the lanes
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.505, 0.47]}                       # reaches 340 / 340 units of the lanes
+  - {do: upgrade, id: a1, to: 2-3-0}                                                   # Bomber Ace
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.612, 0.453]}                      # reaches 261 / 260 units of the lanes
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.761, 0.359]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.04, 0.342]}    # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: al1, kind: alchemist, role: dps, at: [0.174, 0.726]}               # reaches 240 / 239 units of the lanes
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+fill:
+  - {do: place, id: al2, kind: alchemist, role: dps, at: [0.59, 0.726]}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.099, 0.93]}
+  - {do: upgrade, id: sb1, to: 0-1-3}
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.484, 0.913]}
+  - {do: upgrade, id: sb2, to: 0-1-2}
+  - {do: upgrade, id: bm1, to: 0-2-3}
+  - {do: upgrade, id: sb2, to: 0-1-3}
+  - {do: upgrade, id: al1, to: 1-1-0}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.913]}
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: al2, to: 1-1-0}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); the plan buys them
+  bfb:
+    - {do: upgrade, id: s1, to: 4-2-0}

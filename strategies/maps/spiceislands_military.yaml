@@ -1,0 +1,66 @@
+# Spice Islands, Military Only/Reverse: boats on the water beside the lane,
+# map-wide snipers on the islands.
+#
+# Why: the most water of any map: one long lane winds between five small
+# islands. The bot has seen the game refuse most of the island cells, and the
+# palm trees block line of sight, so the core is boats on the water next to
+# the lane, with snipers on the island cells left.
+#
+# Sources:
+#   * bloonswiki Spice_Islands: Brickell with Destroyers, Carrier Flagship,
+#     several Sub Commanders; palm trees block line of sight
+#     (https://www.bloonswiki.com/Spice_Islands)
+#   * bloons.fandom Spice_Islands/Strategies
+#     (https://bloons.fandom.com/wiki/Spice_Islands/Strategies)
+#   * SnartFarts, Spice Islands CHIMPS (v52.2): Buccaneer 2-2-0 -> 3-2-0 ->
+#     5-2-0, Monkey Ace, Village (https://youtu.be/EKeFfENEBCU)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted):
+# military_only 4.13 (R15), reverse 4.46 (R59). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: spiceislands_military
+map: Spice Islands
+hero: admiral_brickell
+modes: [military_only, reverse]
+planner:
+  towers: {buccaneer: [5, 0, 2], sub: [0, 2, 5], sniper: [5, 2, 5]}
+  base_success: {military_only: 0.8, reverse: 0.8}
+  maps: [Spice Islands]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.366, 0.402]}                # reaches 264 units of the lane
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.355, 0.555]}                # reaches 254 units of the lane
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.184, 0.589]}                     # reaches 145 units of the lane
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: sb1, to: 0-0-2}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.628, 0.402]}                   # hero (not counted by the damage model)
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: sb1, to: 0-2-2}
+  - {do: upgrade, id: b2, to: 0-0-2}
+  - {do: upgrade, id: sb1, to: 0-2-3}                                                  # Triple Guns
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.687, 0.3]}     # map-wide
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.323, 0.453]}   # map-wide
+  - {do: upgrade, id: sb1, to: 0-2-4}                                                  # Armor Piercing Darts
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: upgrade, id: b1, to: 3-0-2}                                                   # Destroyer
+  - {do: upgrade, id: s2, to: 0-2-0}
+  - {do: upgrade, id: b2, to: 3-0-2}                                                   # Destroyer
+  - {do: upgrade, id: s2, to: 0-2-4}                                                   # Full Auto Rifle
+  - {do: upgrade, id: s1, to: 3-2-0}                                                   # Deadly Precision
+  - {do: upgrade, id: b1, to: 4-0-2}                                                   # Aircraft Carrier
+  - {do: upgrade, id: s1, to: 5-2-0}                                                   # Cripple MOAB
+fill:
+  - {do: upgrade, id: b1, to: 5-0-2}                                                   # Carrier Flagship
+  - {do: upgrade, id: sb1, to: 0-2-5}                                                  # Sub Commander
+  - {do: upgrade, id: s2, to: 0-2-5}                                                   # Elite Defender
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

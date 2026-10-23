@@ -1,0 +1,73 @@
+# Winter Park, Medium / Military Only / Reverse: two Destroyers at the left
+# and right edges of the fountain, two Bomber Aces over the top loops, snipers
+# on the left edge.
+#
+# Why: a route (1,228 world units) with one square loop in each quarter of the
+# map, round a small central fountain (2% of the map is water). The fountain
+# fits two buccaneers, each reaching a third of the route (map geometry) - the
+# wiki's "leftmost or rightmost point of the fountain" spots that cover four
+# sections. No room for subs. The barrier at the edges barely blocks sight:
+# snipers on the left edge see the whole route. Surplus cash is left to the
+# executor's usual surplus spending (more aces, capped at the Bomber Ace by
+# the fill step). Military towers only: one build for all three modes.
+#
+# Sources:
+#   * bloonswiki Strategy:Military_Only: Destroyer "best with the 3-2-0 crosspath",
+#     Armor Piercing Darts subs, Maim MOAB snipers on Strong for the round-60 BFB,
+#     Full Metal Jacket for leads, every military tower has a cheap camo upgrade
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#   * bloonswiki Reverse_(BTD6): Medium strategies work unchanged in Reverse
+#     except on a few named maps (none of the beginner maps)
+#     (https://www.bloonswiki.com/Reverse_(BTD6))
+#   * bloonswiki Winter_Park: buccaneers at the leftmost or rightmost point of
+#     the fountain cover four sections; Destroyer 3-2-0 with camo detection
+#     (https://www.bloonswiki.com/Winter_Park)
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method):
+#   * every `at` is legal for its tower in plan order, on the map geometry (as
+#     tests/test_map_hints_offline.py checks) and on the live map model;
+#   * the plan replayed the executor's way (tools/optimize_builds.replay_plan)
+#     on the account's economy (Fast Track R15, Double Cash) keeps every
+#     round at a damage-model margin of 2.0 or more. Worst margin:
+#       2.95
+#   * sight-strict (snipers only count the track they can see, subs their own
+#     range, aces their flight circle):
+#       2.71 (Medium and Military Only); 2.92 (Reverse)
+#   * executor-faithful replay (tools/simulate_threats' loop, with the match
+#     loop's surplus spending), strict, with its extra towers / plan only:
+#       3.71 / 2.46 (Medium and Military Only); 3.79 / 2.54 (Reverse)
+#   * tools/simulate_threats finds no gaps; strategy.coverage nothing missing.
+id: winterpark_medium
+map: Winter Park
+hero: quincy
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 2, 0], buccaneer: [3, 2, 2], ace: [2, 3, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Winter Park]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.060, 0.500]}   # left edge: sees the whole route
+  - {do: upgrade, id: s1, to: 1-2-0}   # lead (Full Metal Jacket) + camo (Night Vision) + shrapnel
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.419, 0.453]}   # fountain, west: 36% of the route
+  - {do: upgrade, id: b1, to: 2-0-2}   # Crow's Nest: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.281, 0.641]}   # Quincy by the bottom-left loop
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.462, 0.487]}   # fountain, east: 33% of the route
+  - {do: upgrade, id: b2, to: 2-2-0}   # Hot Shot: lead
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.537, 0.232]}   # between the entrance and the top-right loop
+  - {do: upgrade, id: a1, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.060, 0.600]}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.313, 0.215]}   # over the top-left loop
+  - {do: upgrade, id: a2, to: 2-3-0}
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+  - {do: upgrade, id: s2, to: 4-2-0}   # second Maim MOAB for round 60
+fill:
+  - {do: upgrade, kind: ace, to: 2-3-0}   # surplus aces stop at Bomber Ace
+answers:
+  camo: [{do: upgrade, id: s1, to: 1-2-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

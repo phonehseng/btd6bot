@@ -1,0 +1,98 @@
+# Sunset Gulch, Easy: towers on both rock outcrops beside the lane and the bridge, with
+# snipers for the MOAB that takes the rail at round 40.
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json): one winding bloon lane; from
+# round 40 MOAB-class bloons take a straight MOAB-only rail along the top (PathSpecial),
+# whose exit is past the right edge of the play area. dps_model drops that rail (it is
+# also the boss path) and lets MOABs walk the bloon lane, so these builds were checked
+# with the rail added back as a MOAB-only route (docs/map_strategies/advanced_b.md).
+#
+# Why: the round-40 MOAB leaves the winding lane for the straight rail, so the build
+# needs damage that reaches the rail (snipers, towers by the bridge) as well as the
+# lane. Primary Only is not written: with the rail added back no Primary build
+# reached the 2.0 margin at round 34 and 40 (best 1.87). The fill puts the money the
+# plan does not need into the Desperados (the account's XP need).
+#
+# Sources:
+#   * bloonswiki Sunset_Gulch: MOABs take the rail; cover the short MOAB exit
+#     (https://www.bloonswiki.com/Sunset_Gulch)
+#   * bloon.games Sunset Gulch mode guides (Easy: Obyn, Ninja 4-0-2, Alchemist; Military:
+#     three snipers; Medium/Reverse: sniper 0-2-4 + Alchemist)
+#     (https://bloon.games/how-to-beat-standard-easy-on-sunset-gulch/)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-easy-on-sunset-gulch/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Easy starts at round 10 with ~$3,832),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what the base income (no Double Cash) pays for by round 40, so the offline
+# threat test finishes it; fill = the rest of the build, in order, paid by Double Cash
+# (the executor buys the first affordable fill step).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: sunsetgulch_easy
+map: Sunset Gulch
+hero: obyn
+modes: [easy]
+planner:
+  towers: {desperado: [3, 2, 0], tack: [2, 3, 0], bomb: [3, 3, 3], sniper: [0, 2, 2]}
+  base_success: {easy: 0.85}
+  maps: [Sunset Gulch]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.072, 0.836]}                                     # R10, $550; bottom left
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.665, 0.453]}                # R10, $255; middle right
+  - {do: place, id: tck1, kind: tack, role: dps, at: [0.745, 0.854]}                                     # R10, $220; bottom right
+  - {do: upgrade, id: tck1, to: 2-2-0}                                                                   # R10, $595
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.206, 0.453]}                # R10, $255; middle left
+  - {do: place, id: dsp3, kind: desperado, role: dps, target: strong, at: [0.227, 0.675]}                # R10, $255; bottom left
+  - {do: place, id: dsp4, kind: desperado, role: dps, target: strong, at: [0.761, 0.215]}                # R10, $255; top right
+  - {do: upgrade, id: tck1, to: 2-3-0}                                                                   # R10, $470
+  - {do: place, id: dsp5, kind: desperado, role: dps, target: strong, at: [0.088, 0.581]}                # R10, $255; middle left
+  - {do: place, id: dsp6, kind: desperado, role: dps, target: strong, at: [0.184, 0.266]}                # R10, $255; top left
+  - {do: upgrade, id: dsp3, to: 0-1-0}                                                                   # R10, $130
+  - {do: upgrade, id: dsp1, to: 0-1-0}                                                                   # R10, $130
+  - {do: place, id: dsp7, kind: desperado, role: dps, target: strong, at: [0.794, 0.266]}                # R11, $255; top right
+  - {do: place, id: dsp8, kind: desperado, role: dps, target: strong, at: [0.179, 0.692]}                # R11, $255; bottom left
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.740, 0.453]}                                     # R11, $320; middle right
+  - {do: upgrade, id: bmb1, to: 0-0-2}                                                                   # R13, $425
+  - {do: place, id: bmb2, kind: bomb, role: dps, at: [0.778, 0.760]}                                     # R13, $320; bottom right
+  - {do: upgrade, id: bmb2, to: 0-1-0}                                                                   # R14, $215
+  - {do: upgrade, id: dsp2, to: 0-1-0}                                                                   # R14, $130
+  - {do: upgrade, id: dsp5, to: 0-1-0}                                                                   # R14, $130
+  - {do: upgrade, id: dsp8, to: 0-1-0}                                                                   # R15, $130
+  - {do: upgrade, id: dsp4, to: 0-1-0}                                                                   # R15, $130
+  - {do: upgrade, id: dsp7, to: 0-1-0}                                                                   # R15, $130
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.174, 0.155]}                   # R16, $300; top-left cliff: map-wide, Strong for the rail
+  - {do: upgrade, id: snp1, to: 0-1-0}                                                                   # R16, $215
+  - {do: upgrade, id: bmb2, to: 0-2-2}                                                                   # R17, $765
+  - {do: upgrade, id: snp1, to: 0-2-0}                                                                   # R19, $385
+  - {do: upgrade, id: bmb2, to: 0-2-3}                                                                   # R19, $595
+  - {do: upgrade, id: snp1, to: 0-2-1}                                                                   # R20, $385
+  - {do: upgrade, id: bmb1, to: 0-2-3}                                                                   # R22, $1,150
+  - {do: place, id: bmb3, kind: bomb, role: dps, at: [0.147, 0.249]}                                     # R23, $320; top-left, beside the MOAB rail: MOAB Mauler
+  - {do: upgrade, id: bmb3, to: 0-1-2}                                                                   # R24, $640
+  - {do: place, id: dsp9, kind: desperado, role: dps, target: strong, at: [0.729, 0.266]}                # R24, $255; top right
+  - {do: place, id: dsp10, kind: desperado, role: dps, target: strong, at: [0.537, 0.164]}               # R25, $255; top centre
+  - {do: upgrade, id: bmb3, to: 0-2-2}                                                                   # R26, $340
+  - {do: upgrade, id: bmb3, to: 0-3-2}                                                                   # R27, $850
+  - {do: place, id: dsp11, kind: desperado, role: dps, target: strong, at: [0.697, 0.198]}               # R27, $255; top right
+  - {do: upgrade, id: snp1, to: 0-2-2}                                                                   # R28, $385
+  - {do: place, id: dsp12, kind: desperado, role: dps, target: strong, at: [0.184, 0.598]}               # R28, $255; middle left
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.190, 0.206]}                   # R28, $300; top-left cliff
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.142, 0.138]}                   # R28, $300; top-left cliff
+  - {do: place, id: bmb4, kind: bomb, role: dps, at: [0.788, 0.453]}                                     # R29, $320; middle right
+fill:
+  - {do: upgrade, id: bmb4, to: 3-0-2, round: 32}                                                        # R32, $2,130
+  - {do: upgrade, id: dsp1, to: 3-1-0, round: 33}                                                        # R33, $1,360
+  - {do: upgrade, id: dsp2, to: 3-1-0, round: 35}                                                        # R35, $1,360
+  - {do: upgrade, id: dsp4, to: 3-1-0, round: 35}                                                        # R35, $1,360
+  - {do: upgrade, id: dsp7, to: 3-1-0, round: 36}                                                        # R36, $1,360
+  - {do: upgrade, id: dsp1, to: 3-2-0, round: 36}                                                        # R36, $300
+  - {do: upgrade, id: dsp2, to: 3-2-0, round: 36}                                                        # R36, $300
+  - {do: upgrade, id: dsp4, to: 3-2-0, round: 36}                                                        # R36, $300
+  - {do: upgrade, id: dsp7, to: 3-2-0, round: 37}                                                        # R37, $300
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

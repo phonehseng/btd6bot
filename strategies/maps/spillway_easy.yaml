@@ -1,0 +1,95 @@
+# Spillway, Easy / Primary Only: Desperados and helpers on the land beside the four
+# diagonal lanes and round the central loop.
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): four lanes
+# at once from the four corners into a central loop that each lane circles before it
+# leaves. Four $2,000 inflatable walls between the side pools and the loop block sight
+# (the bot cannot buy them); the centre barrel has no legal cell in the bot's model.
+#
+# Why: only Primary towers, so one build serves Easy and Primary Only. Desperado is the
+# tower whose XP the account needs most (optimize_builds.xp_weights), so the surplus
+# goes into Desperados.
+# The barrel in the centre has no legal cell in the bot's model, so the towers stand
+# where they see the diagonal lanes and the loop past the walls.
+#
+# Sources:
+#   * bloonswiki Spillway: walls block sight; Archmage, Carrier Flagship, global towers
+#     (https://www.bloonswiki.com/Spillway)
+#   * BlueCliff, Spillway Hard: barrel ninja, sniper, Sub Commander (https://www.youtube.com/watch?v=e-cqKdIJ7pM)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-easy-on-spillway/
+#     https://bloon.games/how-to-beat-primary-only-on-spillway/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Easy starts at round 10 with ~$3,832),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what the base income (no Double Cash) pays for by round 40, so the offline
+# threat test finishes it; fill = the rest of the build, in order, paid by Double Cash
+# (the executor buys the first affordable fill step).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: spillway_easy
+map: Spillway
+hero: sauda
+modes: [easy, primary_only]
+planner:
+  towers: {desperado: [4, 2, 3], boomerang: [0, 3, 3], dart: [3, 2, 3], tack: [2, 3, 0], bomb: [0, 3, 0]}
+  base_success: {easy: 0.85, primary_only: 0.85}
+  maps: [Spillway]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.232, 0.666]}                                     # R10, $510; bottom left
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.184, 0.726]}                # R10, $255; bottom left
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.601, 0.862]}                # R10, $255; bottom right
+  - {do: place, id: dsp3, kind: desperado, role: dps, target: strong, at: [0.259, 0.862]}                # R10, $255; bottom left
+  - {do: place, id: dsp4, kind: desperado, role: dps, target: strong, at: [0.687, 0.726]}                # R10, $255; bottom right
+  - {do: place, id: bmr1, kind: boomerang, role: dps, at: [0.601, 0.146]}                                # R10, $270; top right
+  - {do: upgrade, id: bmr1, to: 0-2-1}                                                                   # R10, $450
+  - {do: place, id: dsp5, kind: desperado, role: dps, target: strong, at: [0.142, 0.726]}                # R10, $255; bottom left
+  - {do: place, id: dsp6, kind: desperado, role: dps, target: strong, at: [0.254, 0.138]}                # R10, $255; top left
+  - {do: place, id: dsp7, kind: desperado, role: dps, target: strong, at: [0.569, 0.811]}                # R10, $255; bottom right
+  - {do: upgrade, id: dsp6, to: 3-0-0}                                                                   # R11, $1,360
+  - {do: upgrade, id: bmr1, to: 0-2-2}                                                                   # R12, $255
+  - {do: place, id: drt1, kind: dart, role: dps, at: [0.142, 0.794]}                                     # R12, $170; bottom left
+  - {do: upgrade, id: drt1, to: 0-0-1}                                                                   # R13, $75
+  - {do: place, id: tck1, kind: tack, role: dps, at: [0.099, 0.845]}                                     # R13, $220; bottom left
+  - {do: upgrade, id: tck1, to: 2-2-0}                                                                   # R14, $595
+  - {do: place, id: drt2, kind: dart, role: dps, at: [0.574, 0.189]}                                     # R15, $170; top right
+  - {do: upgrade, id: tck1, to: 2-3-0}                                                                   # R16, $470
+  - {do: upgrade, id: dsp6, to: 3-1-0}                                                                   # R16, $130
+  - {do: upgrade, id: dsp2, to: 3-1-0}                                                                   # R19, $1,490
+  - {do: upgrade, id: dsp4, to: 3-0-0}                                                                   # R21, $1,360
+  - {do: place, id: bmr2, kind: boomerang, role: dps, at: [0.142, 0.232]}                                # R22, $270; top left
+  - {do: upgrade, id: bmr2, to: 0-2-2}                                                                   # R23, $705
+  - {do: upgrade, id: drt1, to: 0-2-1}                                                                   # R23, $245
+  - {do: upgrade, id: dsp1, to: 2-1-0}                                                                   # R24, $470
+fill:
+  - {do: upgrade, id: dsp3, to: 1-0-0, round: 25}                                                        # R25, $170
+  - {do: upgrade, id: dsp1, to: 3-2-0, round: 27}                                                        # R27, $1,320
+  - {do: upgrade, id: bmr1, to: 0-2-3, round: 28}                                                        # R28, $1,105
+  - {do: upgrade, id: dsp4, to: 3-1-0, round: 28}                                                        # R28, $130
+  - {do: upgrade, id: dsp3, to: 3-0-0, round: 30}                                                        # R30, $1,190
+  - {do: place, id: bmb1, kind: bomb, role: dps, round: 30, at: [0.184, 0.649]}                          # R30, $320; bottom-left land between the bottom and left lanes: MOAB Mauler
+  - {do: upgrade, id: bmb1, to: 0-3-0, round: 32}                                                        # R32, $1,405
+  - {do: place, id: bmb2, kind: bomb, role: dps, round: 32, at: [0.660, 0.308]}                          # R32, $320; top-right land between the top and right lanes: MOAB Mauler
+  - {do: upgrade, id: bmb2, to: 0-3-0, round: 33}                                                        # R33, $1,405
+  - {do: upgrade, id: dsp7, to: 0-1-0, round: 34}                                                        # R34, $130
+  - {do: upgrade, id: drt2, to: 0-0-2, round: 34}                                                        # R34, $245
+  - {do: upgrade, id: dsp7, to: 0-1-3, round: 36}                                                        # R36, $2,215
+  - {do: upgrade, id: drt2, to: 3-0-2, round: 36}                                                        # R36, $565
+  - {do: upgrade, id: bmr2, to: 0-3-2, round: 36}                                                        # R36, $1,065
+  - {do: upgrade, id: drt1, to: 0-2-3, round: 37}                                                        # R37, $660
+  - {do: upgrade, id: dsp5, to: 0-0-3, round: 38}                                                        # R38, $2,215
+  - {do: upgrade, id: dsp2, to: 3-2-0, round: 38}                                                        # R38, $300
+  - {do: upgrade, id: dsp3, to: 3-2-0, round: 38}                                                        # R38, $430
+  - {do: upgrade, id: dsp4, to: 3-2-0, round: 38}                                                        # R38, $300
+  - {do: upgrade, id: dsp5, to: 2-0-3, round: 38}                                                        # R38, $340
+  - {do: upgrade, id: dsp6, to: 3-2-0, round: 38}                                                        # R38, $300
+  - {do: upgrade, id: dsp7, to: 0-2-3, round: 38}                                                        # R38, $300
+  - {do: upgrade, id: dsp1, to: 4-2-0, round: 40}                                                        # R40, $4,930
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}
+answers:
+  moab: [{do: place, id: bmb1, kind: bomb, role: dps, at: [0.184, 0.649]}, {do: upgrade, id: bmb1, to: 0-3-0}]

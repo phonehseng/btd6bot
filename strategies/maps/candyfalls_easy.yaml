@@ -1,0 +1,80 @@
+# Candy Falls, Easy / Primary Only: Tack Sprayers in the top-left loop and the
+# first S-bend, Desperados for camo and lead, Bomb Shooters for the leads and
+# the round-40 MOAB, a Crossbow for the camo whites.
+#
+# Why: one very long route (1,406 world units, 1,290 hittable) with a small
+# loop at the top left and another at the bottom right. A tack shooter inside
+# a loop hits bloons on every side of it (its spray covers the loop twice);
+# the bottom-right loop is refused on the live map model, so the second tack
+# stands in the first S-bend. The Desperado's long range (60) reaches a third
+# of the route from the lawns either side of the river (map geometry). Candy
+# Falls has no logged game yet. Only primary towers, so the same build serves
+# Easy and Primary Only; the Desperado is the account's most wanted tower XP
+# (`xp_target: desperado`: surplus cash buys more of them, capped at 3-2-0 by
+# the fill step).
+#
+# Sources:
+#   * bloonswiki Strategy:Primary_Only: "only accessible upgrades that can pop
+#     Camo" are Enhanced Eyesight (Dart x-x-2), Cold Snap and Eagle Eye; leads
+#     by Bomb Shooters; one 0-2-3 Crossbow handles the camos on most maps;
+#     Quincy as a simple hero (https://www.bloonswiki.com/Strategy:Primary_Only)
+#   * bloonswiki Crossbow_(BTD6): Crossbow can "solo all Camos that spawn before
+#     Round 40 on easier maps" (https://www.bloonswiki.com/Crossbow_(BTD6))
+#   * bloonswiki Desperado_(BTD6): high range, Strong and First targeting
+#     (https://www.bloonswiki.com/Desperado_(BTD6))
+#   * bloonswiki Candy_Falls: one of the easiest maps; long, many loops
+#     (https://www.bloonswiki.com/Candy_Falls)
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method):
+#   * every `at` is legal for its tower in plan + fill order, on the map
+#     geometry (as tests/test_map_hints_offline.py checks) and on the live map
+#     model;
+#   * the plan replayed the executor's way (tools/optimize_builds.replay_plan)
+#     on the account's economy (Fast Track R10, $3,832, Double Cash) keeps every
+#     round at a damage-model margin of 2.0 or more. Worst margin: 2.13;
+#     with the fill's Twin Sixes: 4.51;
+#   * executor-faithful replay (tools/simulate_threats' loop, with the match
+#     loop's surplus spending), with its extra towers / plan only:
+#       3.12 / 2.13 (Easy); 2.48 / 2.13 (Primary Only)
+#   * the whole plan fits the game's base income (no Double Cash) before round
+#     40, as the offline test requires; tools/simulate_threats finds no gaps.
+id: candyfalls_easy
+map: Candy Falls
+hero: quincy
+modes: [easy, primary_only]
+xp_target: desperado
+planner:
+  towers: {tack: [2, 0, 3], desperado: [4, 2, 0], bomb: [0, 3, 3], dart: [2, 0, 3]}
+  base_success: {easy: 0.85, primary_only: 0.85}
+  maps: [Candy Falls]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.142, 0.845]}   # inside the first S-bend, bottom left
+  - {do: upgrade, id: t1, to: 2-0-2}
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.184, 0.351]}   # inside the top-left loop
+  - {do: upgrade, id: t2, to: 2-0-2}
+  - {do: place, id: d1, kind: desperado, role: dps, target: strong, at: [0.590, 0.589]}   # east lawn: a third of the route
+  - {do: upgrade, id: d1, to: 2-2-0}   # Eagle Eye: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.290, 0.620]}   # Quincy on the west lawn
+  - {do: place, id: b1, kind: bomb, role: dps, at: [0.665, 0.777]}   # south of the bottom-right loop
+  - {do: upgrade, id: b1, to: 0-2-2}   # leads in crowds
+  - {do: upgrade, id: t1, to: 2-0-3}   # Tack Sprayer
+  - {do: upgrade, id: t2, to: 2-0-3}   # Tack Sprayer
+  - {do: place, id: d2, kind: desperado, role: dps, target: strong, at: [0.227, 0.504]}   # west lawn
+  - {do: upgrade, id: d2, to: 2-2-0}
+  - {do: upgrade, id: d1, to: 3-2-0}   # Big Iron: pops lead
+  - {do: upgrade, id: d2, to: 3-2-0}
+  - {do: place, id: dt1, kind: dart, role: dps, at: [0.633, 0.555]}   # east lawn
+  - {do: upgrade, id: dt1, to: 2-0-3}   # Crossbow with Enhanced Eyesight: the round-37 camo whites
+  - {do: upgrade, id: b1, to: 0-3-2}   # MOAB Mauler: the round-40 MOAB
+  - {do: place, id: b2, kind: bomb, role: dps, at: [0.184, 0.521]}   # west lawn
+  - {do: upgrade, id: b2, to: 0-2-3}   # Cluster Bombs: leads at rounds 37-39
+  - {do: place, id: d3, kind: desperado, role: dps, target: strong, at: [0.195, 0.692]}   # west lawn, south
+  - {do: upgrade, id: d3, to: 3-2-0}
+fill:
+  - {do: upgrade, id: d1, to: 4-2-0}   # Twin Sixes once the plan is done (Double Cash pays for it)
+  - {do: upgrade, id: d2, to: 4-2-0}
+  - {do: upgrade, kind: desperado, to: 3-2-0}   # surplus desperados (xp_target) stop at Big Iron
+answers:
+  camo: [{do: upgrade, id: d1, to: 2-2-0}]
+  lead: [{do: upgrade, id: b1, to: 0-2-2}]
+  moab: [{do: upgrade, id: b1, to: 0-3-2}]

@@ -1,0 +1,77 @@
+# Polyphemus, Easy/Primary Only: desperados, darts, a tack, a boomerang and a
+# bomb on the land inside the C.
+#
+# Why: two lanes share one C-shaped road in opposite directions (map data:
+# PathStandard and PathStandard (1), both active, boss path unused) round the
+# cyclops eye. The eye closes every 10 rounds from round 6 and switches its
+# towers off, so nothing stands in it; the land inside the C and the sea on
+# the right reach both lanes.
+#
+# Sources:
+#   * bloonswiki Polyphemus: top and bottom paths of equal length, the eye
+#     closes on rounds ending in 6 and must be paid to reopen, land towers go
+#     above and below the eye (https://www.bloonswiki.com/Polyphemus)
+#   * btd6index Polyphemus: two entrances and exits, CHIMPS starts with a Sub
+#     (https://btd6index.win)
+#   * ZoozieBloons, Polyphemus CHIMPS: Sauda with a Wizard, a Dart for camo
+#     (https://youtu.be/uf-VHe6MenY)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): easy 2.65
+# (R40), primary_only 2.65 (R40). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: polyphemus_easy
+map: Polyphemus
+hero: sauda
+modes: [easy, primary_only]
+planner:
+  towers: {dart: [1, 2, 5], desperado: [0, 1, 3], tack: [2, 3, 0], boomerang: [0, 2, 3], bomb: [0, 2, 3]}
+  base_success: {easy: 0.85, primary_only: 0.85}
+  maps: [Polyphemus]
+plan:
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.494, 0.726]}                     # reaches 63 / 63 units of the lanes
+  - {do: place, id: de1, kind: desperado, role: dps, at: [0.43, 0.555]}                # reaches 166 / 166 units of the lanes
+  - {do: place, id: de2, kind: desperado, role: dps, at: [0.43, 0.487]}                # reaches 164 / 164 units of the lanes
+  - {do: place, id: de3, kind: desperado, role: dps, at: [0.398, 0.658]}               # reaches 121 / 121 units of the lanes
+  - {do: place, id: de4, kind: desperado, role: dps, at: [0.601, 0.76]}                # reaches 121 / 121 units of the lanes
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.462, 0.709]}                     # reaches 63 / 63 units of the lanes
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.537, 0.743]}                     # reaches 42 / 42 units of the lanes
+  - {do: upgrade, id: t1, to: 2-2-0}
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.387, 0.76]}                      # reaches 62 / 62 units of the lanes
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.425, 0.266]}                   # hero (not counted by the damage model)
+  - {do: place, id: bo1, kind: boomerang, role: dps, at: [0.719, 0.794]}               # reaches 85 / 85 units of the lanes
+  - {do: upgrade, id: bo1, to: 0-2-1}
+  - {do: upgrade, id: d3, to: 0-0-1}
+  - {do: upgrade, id: d2, to: 0-0-1}
+  - {do: upgrade, id: t1, to: 2-3-0}                                                   # Blade Shooter
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.644, 0.777]}                    # reaches 79 / 79 units of the lanes
+  - {do: upgrade, id: d3, to: 0-1-1}
+  - {do: upgrade, id: bo1, to: 0-2-2}
+  - {do: upgrade, id: de3, to: 0-1-0}
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: upgrade, id: d2, to: 1-0-1}
+  - {do: upgrade, id: d1, to: 1-1-0}
+  - {do: upgrade, id: d2, to: 1-0-3}                                                   # Crossbow
+  - {do: upgrade, id: d1, to: 1-2-0}
+  - {do: upgrade, id: d3, to: 0-1-2}
+  - {do: upgrade, id: de1, to: 0-1-0}
+  - {do: upgrade, id: de2, to: 0-1-0}
+  - {do: upgrade, id: de4, to: 0-1-0}
+  - {do: upgrade, id: d3, to: 0-1-3}                                                   # Crossbow
+  - {do: upgrade, id: bo1, to: 0-2-3}                                                  # Kylie Boomerang
+  - {do: upgrade, id: d3, to: 0-2-3}
+  - {do: upgrade, id: bm1, to: 0-2-3}                                                  # Cluster Bombs
+  - {do: upgrade, id: d3, to: 0-2-4}                                                   # Sharp Shooter
+  - {do: upgrade, id: de2, to: 0-1-3}                                                  # Enforcer
+fill:
+  - {do: upgrade, id: d3, to: 0-2-5}                                                   # Crossbow Master
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

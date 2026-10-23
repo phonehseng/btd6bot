@@ -1,0 +1,64 @@
+# Candy Falls, Deflation: two Destroyers in the chocolate river (one with
+# Crow's Nest for camo, one with Hot Shot for lead), a MOAB Assassin, a Bomber
+# Ace and a 2-2-0 sniper, all bought at round 31.
+#
+# Why: Deflation starts at round 31 with fixed cash and no income. The river
+# is the best place on Candy Falls: buccaneers at its two bends reach 28% and
+# 27% of the long route (map geometry) and fire both broadsides. Round 59
+# brings camo leads: the sniper (camo + Full Metal Jacket) and the Bomber Ace
+# (camo bombs) pop them; the Assassin's MOAB damage covers rounds 40-60
+# including the round-60 BFB. No logged game on this map yet.
+#
+# Sources:
+#   * bloonswiki Strategy:Deflation_(BTD6): Destroyer 3-2-0 "given Camo
+#     detection, does immense damage"; Admiral Brickell with buccaneers;
+#     Armor Piercing Darts subs; camo leads on round 59, camo purples on 45/48
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#   * bloonswiki Strategy:Primary_Only: the MOAB Assassin "defeats the MOAB on
+#     all maps" (https://www.bloonswiki.com/Strategy:Primary_Only)
+#   * bloonswiki Candy_Falls: Destroyers near the centre of the river fire
+#     both broadsides; Admiral Brickell (https://www.bloonswiki.com/Candy_Falls)
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method):
+#   * every `at` (plan and fill) is legal for its tower in order, on the map
+#     geometry (as tests/test_map_hints_offline.py checks) and on the live map
+#     model;
+#   * the plan costs under $20,000 (the game's own Deflation cash, so the
+#     offline test buys all of it) and alone keeps every round from 31 to 60
+#     at a damage-model margin of 2.0 or more. Worst margin: 2.92
+#     (2.46 with snipers limited to what they see and aces to their
+#     flight circle);
+#   * the account's Double Cash starts Deflation with $40,000: the fill spends
+#     the rest, and plan + fill reach a worst margin of 5.08;
+#   * tools/simulate_threats finds no gaps.
+id: candyfalls_deflation
+map: Candy Falls
+hero: admiral_brickell
+modes: [deflation]
+xp_target: sub
+planner:
+  towers: {buccaneer: [3, 2, 2], bomb: [0, 4, 0], sniper: [2, 2, 0], ace: [2, 3, 0]}
+  base_success: {deflation: 0.8}
+  maps: [Candy Falls]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.494, 0.436]}   # river, upper bend: 28% of the route
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.377, 0.624]}   # river, lower bend: 27% of the route
+  - {do: place, id: bm, kind: bomb, role: dps, at: [0.206, 0.538]}   # west lawn: a third of the route in range
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.290, 0.620]}   # west lawn
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.590, 0.555]}   # east lawn
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer + Crow's Nest (camo)
+  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer + Hot Shot (lead)
+  - {do: upgrade, id: bm, to: 0-4-0}   # MOAB Assassin: MOABs and the round-60 BFB
+  - {do: upgrade, id: s1, to: 2-2-0}   # camo + lead: the round-59 camo leads
+  - {do: upgrade, id: a1, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.430, 0.402]}   # Brickell in the river (last: the plan fits $20,000 without her)
+fill:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.419, 0.658]}   # the account's Double Cash doubles the start cash: spend the rest
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.665, 0.794]}
+  - {do: upgrade, id: a2, to: 3-2-0}
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.387, 0.402]}
+  - {do: upgrade, id: sb2, to: 2-0-4}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.290, 0.300]}
+  - {do: upgrade, id: s2, to: 3-2-0}
+  - {do: upgrade, kind: sub, to: 2-0-4}   # surplus subs (xp_target) stop at Armor Piercing Darts

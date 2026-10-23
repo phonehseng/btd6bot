@@ -1,0 +1,89 @@
+# Ship Capture, Deflation: towers on the central grate and both decks, where the four
+# plank lanes meet (all bought before round 31).
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): four short
+# plank lanes (two from the left, two from the right) board the ship and meet under it.
+# Bloons come from the LEFT side, the RIGHT side or both, depending on the round
+# (AlternateBloonSplitter; bloonswiki table). dps_model shares every round over all four
+# lanes, so these builds were checked with left-only, right-only and both-sides rounds
+# (the worst counts). The $1,000 hatch (it turns to water) is not bought.
+#
+# Why: Deflation pays no income, so everything is bought with the starting cash
+# (account: Double Cash doubles it to ~$40,000). The grate and the decks beside it
+# reach whichever side the round boards from; Desperados take the account's XP.
+#
+# Sources:
+#   * bloonswiki Ship_Capture: side rotation table, the central grate is where the lanes meet
+#     (https://www.bloonswiki.com/Ship_Capture)
+#   * dq7reimagined, Ship Capture CHIMPS without micro: everything on the central grate
+#     (https://dq7reimagined.com/btd6/ship-capture-chimps/)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-deflation-on-ship-capture/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Deflation starts at round 31 with ~$40,000 and no income),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what $20,000 (Deflation without Double Cash) buys, so the offline threat test
+# finishes it; fill = the rest, in order, paid by the Double Cash half of the start cash.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: shipcapture_deflation
+map: Ship Capture
+hero: obyn
+modes: [deflation]
+planner:
+  towers: {sniper: [1, 2, 0], bomb: [3, 2, 3], mermonkey: [3, 0, 1], desperado: [4, 3, 0], ice: [2, 0, 4]}
+  base_success: {deflation: 0.85}
+  maps: [Ship Capture]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.500, 0.624]}                                     # R31, $550; central grate, between the lanes
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.409, 0.215]}                   # R31, $300; bow: first buy, pops the black and zebra bloons of round 31
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.452, 0.692]}                                     # R31, $320; central grate, between the lanes
+  - {do: upgrade, id: bmb1, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb2, kind: bomb, role: dps, at: [0.409, 0.692]}                                     # R31, $320; central grate, between the lanes
+  - {do: upgrade, id: bmb2, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb3, kind: bomb, role: dps, at: [0.387, 0.138]}                                     # R31, $320; crow's nest / bow
+  - {do: upgrade, id: bmb3, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb4, kind: bomb, role: dps, at: [0.468, 0.138]}                                     # R31, $320; crow's nest / bow
+  - {do: upgrade, id: bmb4, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb5, kind: bomb, role: dps, at: [0.366, 0.709]}                                     # R31, $320; central grate, between the lanes
+  - {do: upgrade, id: bmb5, to: 3-0-2}                                                                   # R31, $2,130
+  - {do: upgrade, id: bmb4, to: 0-2-3}                                                                   # R31, $595
+  - {do: place, id: mer1, kind: mermonkey, role: dps, at: [0.494, 0.692]}                                # R31, $255; central grate, between the lanes
+  - {do: upgrade, id: mer1, to: 3-0-0}                                                                   # R31, $1,875
+  - {do: place, id: mer2, kind: mermonkey, role: dps, at: [0.270, 0.675]}                                # R31, $255; left deck
+  - {do: upgrade, id: mer2, to: 3-0-0}                                                                   # R31, $1,875
+  - {do: upgrade, id: mer1, to: 3-0-1}                                                                   # R31, $170
+  - {do: upgrade, id: mer2, to: 3-0-1}                                                                   # R31, $170
+  - {do: place, id: mer3, kind: mermonkey, role: dps, at: [0.590, 0.675]}                                # R31, $255; right deck
+fill:
+  - {do: upgrade, id: mer3, to: 3-0-0}                                                                   # R31, $1,875
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.430, 0.589]}                # R31, $255; central grate, between the lanes
+  - {do: upgrade, id: dsp1, to: 0-3-0}                                                                   # R31, $2,980
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.387, 0.624]}                # R31, $255; central grate, between the lanes
+  - {do: upgrade, id: dsp2, to: 4-1-0}                                                                   # R31, $6,420
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.452, 0.215]}                   # R31, $300; crow's nest / bow
+  - {do: upgrade, id: snp2, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.526, 0.266]}                   # R31, $300; crow's nest / bow
+  - {do: upgrade, id: snp3, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: ic1, kind: ice, role: dps, at: [0.430, 0.760]}                                       # R31, $340; central grate, between the lanes
+  - {do: upgrade, id: ic1, to: 2-0-4}                                                                    # R31, $4,685
+  - {do: place, id: snp4, kind: sniper, role: dps, target: strong, at: [0.355, 0.283]}                   # R31, $300; crow's nest / bow
+  - {do: upgrade, id: snp4, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: snp5, kind: sniper, role: dps, target: strong, at: [0.473, 0.283]}                   # R31, $300; crow's nest / bow
+  - {do: upgrade, id: snp5, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: snp6, kind: sniper, role: dps, target: strong, at: [0.377, 0.385]}                   # R31, $300; central grate, between the lanes
+  - {do: upgrade, id: snp6, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: snp7, kind: sniper, role: dps, target: strong, at: [0.473, 0.385]}                   # R31, $300; central grate, between the lanes
+  - {do: upgrade, id: snp7, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: snp8, kind: sniper, role: dps, target: strong, at: [0.302, 0.402]}                   # R31, $300; left deck
+  - {do: upgrade, id: snp8, to: 1-2-0}                                                                   # late, $900
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}
+answers:
+  moab: [{do: upgrade, id: bmb1, to: 0-3-2}]
+  bfb: [{do: upgrade, id: bmb1, to: 0-4-2}]

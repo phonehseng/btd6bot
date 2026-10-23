@@ -1,0 +1,85 @@
+# Alpine Run, Medium / Military Only / Reverse: Bomber Aces and a Neva-Miss
+# Ace over the zig-zags, snipers in the bottom-left corner.
+#
+# Why: one long, spread-out route (1,389 world units; the top 17% runs off
+# screen) - four sharp zig-zags down the left, the ski-lift lane up the
+# middle, three more zig-zags down the right. No water (no subs or buccaneers)
+# and no line-of-sight blockers: snipers anywhere see the whole route. Range
+# towers cover little of such a spread track (the best ace circle reaches 36%
+# of it, map geometry), so the damage comes from several aces spread over the
+# zig-zags plus map-wide snipers. Military towers only: one build for all
+# three modes.
+#
+# A Spectre (Ace 2-0-4) would carry the late game in the model, but at $23,400
+# for one tier the executor's surplus spending never lets the cash pile up for
+# it (offline simulation: never bought); the plan therefore buys smaller
+# steps.
+#
+# Sources:
+#   * bloonswiki Strategy:Military_Only: Destroyer "best with the 3-2-0 crosspath",
+#     Armor Piercing Darts subs, Maim MOAB snipers on Strong for the round-60 BFB,
+#     Full Metal Jacket for leads, every military tower has a cheap camo upgrade
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#   * bloonswiki Reverse_(BTD6): Medium strategies work unchanged in Reverse
+#     except on a few named maps (none of the beginner maps)
+#     (https://www.bloonswiki.com/Reverse_(BTD6))
+#   * bloonswiki Alpine_Run: above-average difficulty for a beginner map due to
+#     the dispersed track; no line-of-sight blockers
+#     (https://www.bloonswiki.com/Alpine_Run)
+#   * bloonswiki Bomber_Ace_(BTD6): bombs inherit Spy Plane's camo damage and pop
+#     leads (https://www.bloonswiki.com/Bomber_Ace_(BTD6))
+#   * bloonswiki Strategy:Deflation_(BTD6): 2-0-3 Neva-Miss aces "easily
+#     defeat" deflation on practically all maps
+#     (https://www.bloonswiki.com/Strategy:Deflation_(BTD6))
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method):
+#   * every `at` is legal for its tower in plan order, on the map geometry (as
+#     tests/test_map_hints_offline.py checks) and on the live map model;
+#   * the plan replayed the executor's way (tools/optimize_builds.replay_plan)
+#     on the account's economy (Fast Track R15, Double Cash) keeps every
+#     round at a damage-model margin of 2.0 or more. Worst margin:
+#       3.55
+#   * sight-strict (snipers only count the track they can see, subs their own
+#     range, aces their flight circle):
+#       2.65 (Medium and Military Only); 2.80 (Reverse)
+#   * executor-faithful replay (tools/simulate_threats' loop, with the match
+#     loop's surplus spending), strict, with its extra towers / plan only:
+#       3.83 / 2.65 (Medium and Military Only); 3.91 / 2.80 (Reverse)
+#   * tools/simulate_threats finds no gaps; strategy.coverage nothing missing.
+id: alpinerun_medium
+map: Alpine Run
+hero: quincy
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 2, 4], ace: [2, 3, 3]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Alpine Run]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.147, 0.913]}   # bottom-left corner: sees the whole route
+  - {do: upgrade, id: s1, to: 1-2-0}   # lead (Full Metal Jacket) + camo (Night Vision) + shrapnel
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.366, 0.692]}   # left of the lift, low: 36% of the route under its circle
+  - {do: upgrade, id: a1, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.248, 0.589]}   # Quincy inside the left zig-zags
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.569, 0.334]}   # right of the lift, high: the right zig-zags
+  - {do: upgrade, id: a2, to: 2-3-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.147, 0.811]}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: place, id: a3, kind: ace, role: dps, at: [0.302, 0.385]}   # left of the lift, high: the first zig-zags
+  - {do: upgrade, id: a3, to: 2-0-3}   # Neva-Miss Targeting
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+  - {do: place, id: a4, kind: ace, role: dps, at: [0.516, 0.504]}   # middle: the lift lane
+  - {do: upgrade, id: a4, to: 2-3-0}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.147, 0.709]}
+  - {do: upgrade, id: s3, to: 0-2-3}   # Semi-Automatic with camo: rainbow and ceramic rounds
+  - {do: upgrade, id: s2, to: 4-2-0}   # second Maim MOAB for round 60
+  - {do: place, id: a5, kind: ace, role: dps, at: [0.334, 0.785]}   # left of the lift, bottom
+  - {do: upgrade, id: a5, to: 2-3-0}
+  - {do: upgrade, id: s3, to: 0-2-4}   # Full Auto Rifle
+fill:
+  - {do: upgrade, kind: ace, to: 2-3-0}   # surplus aces stop at Bomber Ace
+answers:
+  camo: [{do: upgrade, id: s1, to: 1-2-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

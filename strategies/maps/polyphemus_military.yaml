@@ -1,0 +1,77 @@
+# Polyphemus, Medium/Military Only/Reverse/Hard: boats in the sea at both ends
+# of the road, map-wide snipers and Monkey Aces over the land inside the C.
+#
+# Why: two lanes share one C-shaped road in opposite directions (map data:
+# PathStandard and PathStandard (1), both active, boss path unused) round the
+# cyclops eye. The eye closes every 10 rounds from round 6 and switches its
+# towers off, so nothing stands in it; the land inside the C and the sea on
+# the right reach both lanes.
+#
+# Sources:
+#   * bloonswiki Polyphemus: top and bottom paths of equal length, the eye
+#     closes on rounds ending in 6 and must be paid to reopen, land towers go
+#     above and below the eye (https://www.bloonswiki.com/Polyphemus)
+#   * btd6index Polyphemus: two entrances and exits, CHIMPS starts with a Sub
+#     (https://btd6index.win)
+#   * ZoozieBloons, Polyphemus CHIMPS: Sauda with a Wizard, a Dart for camo
+#     (https://youtu.be/uf-VHe6MenY)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): medium
+# 2.86 (R21), military_only 2.86 (R21), reverse 2.89 (R21), hard 3.63 (R78).
+# Notes and checks: docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: polyphemus_military
+map: Polyphemus
+hero: admiral_brickell
+modes: [medium, military_only, reverse, hard]
+planner:
+  towers: {buccaneer: [5, 0, 2], sniper: [5, 2, 5], ace: [2, 5, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8, hard: 0.72}
+  maps: [Polyphemus]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.815, 0.249]}                # reaches 73 / 73 units of the lanes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.804, 0.726]}                # reaches 73 / 73 units of the lanes
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.462, 0.249]}   # map-wide
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.74, 0.249]}    # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.81, 0.325]}                    # hero (not counted by the damage model)
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.484, 0.692]}                      # reaches 124 / 124 units of the lanes
+  - {do: upgrade, id: a1, to: 1-3-0}                                                   # Bomber Ace
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.655, 0.76]}                       # reaches 123 / 123 units of the lanes
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: b2, to: 3-0-1}                                                   # Destroyer
+  - {do: upgrade, id: b1, to: 3-0-2}                                                   # Destroyer
+  - {do: upgrade, id: s1, to: 0-2-4}                                                   # Full Auto Rifle
+  - {do: upgrade, id: a1, to: 2-3-0}
+  - {do: upgrade, id: b1, to: 4-0-2}                                                   # Aircraft Carrier
+  - {do: upgrade, id: b2, to: 4-0-1}                                                   # Aircraft Carrier
+  - {do: upgrade, id: a1, to: 2-4-0}                                                   # Ground Zero
+  - {do: upgrade, id: b2, to: 4-0-2}
+  - {do: upgrade, id: a2, to: 2-4-0}                                                   # Ground Zero
+  - {do: upgrade, id: s2, to: 4-2-0}                                                   # Maim MOAB
+fill:
+  - {do: upgrade, id: b1, to: 5-0-2}                                                   # Carrier Flagship
+  - {do: upgrade, id: s1, to: 0-2-5}                                                   # Elite Defender
+  - {do: upgrade, id: s2, to: 5-2-0}                                                   # Cripple MOAB
+  - {do: upgrade, id: a1, to: 2-5-0}                                                   # Tsar Bomba
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); plan or fill already buys them
+  # Hard R63 rush: the model already rates it safe; an answer may only carry
+  # `at` when it re-places a planned tower, so this one is placed by role
+  rush:
+    - {do: place, id: su1, kind: super, role: dps}
+  zomg:
+    - {do: upgrade, id: s2, to: 4-2-0}

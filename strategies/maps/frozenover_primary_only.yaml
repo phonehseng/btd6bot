@@ -1,0 +1,82 @@
+# Frozen Over, Primary Only: Desperados for camo and lead, Crossbows for the
+# camo whites and zebras, Bomb Shooters for the leads and the round-40 MOAB, a
+# Tack Sprayer between the crossings.
+#
+# Why: a long route (1,503 world units; the first 15% runs off screen) that
+# crosses itself again and again. A tack shooter between two crossings hits
+# the lane twice; a Desperado (range 60) south of the crossings reaches 30% of
+# the route (map geometry). The live map model refuses many cells on the ice
+# (630 refused cells, mostly near the crossings), so the spots are the best
+# ones still legal there and Crossbows replace a second tack. The only logged
+# game here, Easy with the generated solo_ice build, was won. Easy is already
+# won; this build is for Primary Only. The Desperado is the account's most
+# wanted tower XP (`xp_target: desperado`: surplus cash buys more of them,
+# capped at 3-2-0).
+#
+# Sources:
+#   * bloonswiki Strategy:Primary_Only: "only accessible upgrades that can pop
+#     Camo" are Enhanced Eyesight (Dart x-x-2), Cold Snap and Eagle Eye; leads
+#     by Bomb Shooters; one 0-2-3 Crossbow handles the camos on most maps;
+#     Quincy as a simple hero (https://www.bloonswiki.com/Strategy:Primary_Only)
+#   * bloonswiki Crossbow_(BTD6): Crossbow can "solo all Camos that spawn before
+#     Round 40 on easier maps" (https://www.bloonswiki.com/Crossbow_(BTD6))
+#   * bloonswiki Desperado_(BTD6): high range, Strong and First targeting
+#     (https://www.bloonswiki.com/Desperado_(BTD6))
+#   * bloonswiki Frozen_Over: "an extreme abundance of loops", Overdrive tack
+#     shooters near the loops (https://www.bloonswiki.com/Frozen_Over)
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method):
+#   * every `at` is legal for its tower in plan + fill order, on the map
+#     geometry (as tests/test_map_hints_offline.py checks) and on the live map
+#     model;
+#   * the plan replayed the executor's way (tools/optimize_builds.replay_plan)
+#     on the account's economy (Fast Track R10, $3,832, Double Cash) keeps every
+#     round at a damage-model margin of 2.0 or more. Worst margin: 2.28;
+#     with the fill's Twin Sixes: 3.75;
+#   * executor-faithful replay (tools/simulate_threats' loop, with the match
+#     loop's surplus spending), with its extra towers / plan only:
+#       2.80 / 2.28
+#   * the whole plan fits the game's base income (no Double Cash) before round
+#     40, as the offline test requires; tools/simulate_threats finds no gaps.
+id: frozenover_primary_only
+map: Frozen Over
+hero: quincy
+modes: [primary_only]
+xp_target: desperado
+planner:
+  towers: {tack: [2, 0, 3], dart: [2, 0, 3], desperado: [4, 2, 0], bomb: [0, 3, 3]}
+  base_success: {primary_only: 0.85}
+  maps: [Frozen Over]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.345, 0.504]}   # between the middle crossings
+  - {do: upgrade, id: t1, to: 2-0-2}
+  - {do: place, id: dt2, kind: dart, role: dps, at: [0.334, 0.743]}   # ice inside the bottom loop
+  - {do: upgrade, id: dt2, to: 2-0-2}   # Enhanced Eyesight: camo
+  - {do: place, id: d1, kind: desperado, role: dps, target: strong, at: [0.366, 0.709]}   # ice south of the crossings: 30% of the route
+  - {do: upgrade, id: d1, to: 2-2-0}   # Eagle Eye: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.184, 0.692]}   # Quincy by the first loops
+  - {do: place, id: b1, kind: bomb, role: dps, at: [0.403, 0.692]}   # ice south of the crossings, east
+  - {do: upgrade, id: b1, to: 0-2-2}   # leads in crowds
+  - {do: upgrade, id: t1, to: 2-0-3}   # Tack Sprayer
+  - {do: upgrade, id: dt2, to: 2-0-3}   # Crossbow
+  - {do: place, id: d2, kind: desperado, role: dps, target: strong, at: [0.569, 0.300]}   # north ice: the last loops
+  - {do: upgrade, id: d2, to: 2-2-0}
+  - {do: upgrade, id: d1, to: 3-2-0}   # Big Iron: pops lead
+  - {do: upgrade, id: d2, to: 3-2-0}
+  - {do: place, id: dt1, kind: dart, role: dps, at: [0.665, 0.572]}   # east ice
+  - {do: upgrade, id: dt1, to: 2-0-3}   # Crossbow with Enhanced Eyesight: the round-37 camo whites
+  - {do: upgrade, id: b1, to: 0-3-2}   # MOAB Mauler: the round-40 MOAB
+  - {do: place, id: b2, kind: bomb, role: dps, at: [0.152, 0.743]}   # south-west ice: the first loops
+  - {do: upgrade, id: b2, to: 0-2-3}   # Cluster Bombs: leads at rounds 37-39
+  - {do: place, id: d3, kind: desperado, role: dps, target: strong, at: [0.649, 0.632]}   # east ice
+  - {do: upgrade, id: d3, to: 3-2-0}
+  - {do: place, id: dt3, kind: dart, role: dps, at: [0.366, 0.777]}   # ice south of the crossings
+  - {do: upgrade, id: dt3, to: 2-0-3}   # third Crossbow: zebras and rainbows at rounds 39-40
+fill:
+  - {do: upgrade, id: d1, to: 4-2-0}   # Twin Sixes once the plan is done (Double Cash pays for it)
+  - {do: upgrade, id: d2, to: 4-2-0}
+  - {do: upgrade, kind: desperado, to: 3-2-0}   # surplus desperados (xp_target) stop at Big Iron
+answers:
+  camo: [{do: upgrade, id: d1, to: 2-2-0}]
+  lead: [{do: upgrade, id: b1, to: 0-2-2}]
+  moab: [{do: upgrade, id: b1, to: 0-3-2}]

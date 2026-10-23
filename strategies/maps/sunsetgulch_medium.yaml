@@ -1,0 +1,83 @@
+# Sunset Gulch, Medium / Military Only / Reverse: snipers on Strong (map-wide, they reach the MOAB rail)
+# and aces circling over the lane.
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json): one winding bloon lane; from
+# round 40 MOAB-class bloons take a straight MOAB-only rail along the top (PathSpecial),
+# whose exit is past the right edge of the play area. dps_model drops that rail (it is
+# also the boss path) and lets MOABs walk the bloon lane, so these builds were checked
+# with the rail added back as a MOAB-only route (docs/map_strategies/advanced_b.md).
+#
+# Why: every tower here is a Military tower, so one build serves Medium, Military Only, Reverse.
+# Snipers ignore the split between the bloon lane and the MOAB rail (every text guide for
+# this map is sniper-based: OneEyedDeacon's Axis of Havoc CHIMPS, bloon.games Military: three
+# snipers); aces add crowd damage over the winding lane.
+#
+# Sources:
+#   * bloonswiki Sunset_Gulch: MOABs take the rail; cover the short MOAB exit
+#     (https://www.bloonswiki.com/Sunset_Gulch)
+#   * bloon.games Sunset Gulch mode guides (Easy: Obyn, Ninja 4-0-2, Alchemist; Military:
+#     three snipers; Medium/Reverse: sniper 0-2-4 + Alchemist)
+#     (https://bloon.games/how-to-beat-standard-easy-on-sunset-gulch/)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-medium-on-sunset-gulch/
+#     https://bloon.games/how-to-beat-military-only-on-sunset-gulch/
+#     https://bloon.games/how-to-beat-reverse-on-sunset-gulch/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Medium starts at round 15 with ~$6,057),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: sunsetgulch_medium
+map: Sunset Gulch
+hero: obyn
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 3, 5]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Sunset Gulch]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.665, 0.453]}                                     # R15, $650; middle right
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.537, 0.146]}                   # R15, $350; top centre
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R15, $1,050
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.174, 0.164]}                   # R15, $350; top left
+  - {do: upgrade, id: snp2, to: 0-2-1}                                                                   # R15, $1,150
+  - {do: upgrade, id: snp2, to: 0-2-2}                                                                   # R15, $450
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.131, 0.181]}                   # R15, $350; top left
+  - {do: place, id: snp4, kind: sniper, role: dps, target: strong, at: [0.740, 0.453]}                   # R15, $350; middle right
+  - {do: place, id: snp5, kind: sniper, role: dps, target: strong, at: [0.088, 0.521]}                   # R15, $350; middle left
+  - {do: place, id: snp6, kind: sniper, role: dps, target: strong, at: [0.184, 0.589]}                   # R15, $350; middle left
+  - {do: upgrade, id: snp6, to: 0-2-2}                                                                   # R17, $1,600
+  - {do: place, id: snp7, kind: sniper, role: dps, target: strong, at: [0.206, 0.641]}                   # R18, $350; middle left
+  - {do: upgrade, id: snp7, to: 0-2-2}                                                                   # R21, $1,600
+  - {do: place, id: snp8, kind: sniper, role: dps, target: strong, at: [0.377, 0.675]}                   # R22, $350; bottom centre
+  - {do: upgrade, id: snp8, to: 1-2-0}                                                                   # R23, $1,050
+  - {do: upgrade, id: snp3, to: 0-2-2}                                                                   # R27, $1,600
+  - {do: place, id: snp9, kind: sniper, role: dps, target: strong, at: [0.216, 0.692]}                   # R27, $350; bottom left
+  - {do: upgrade, id: snp9, to: 1-2-0}                                                                   # R28, $1,050
+  - {do: upgrade, id: snp4, to: 0-2-0}                                                                   # R29, $700
+  - {do: upgrade, id: snp3, to: 0-2-3}                                                                   # R32, $2,700
+  - {do: upgrade, id: snp6, to: 0-2-3}                                                                   # R35, $2,700
+  - {do: upgrade, id: snp3, to: 0-2-4}                                                                   # R37, $4,100
+  - {do: upgrade, id: snp5, to: 0-2-0}                                                                   # R37, $700
+  - {do: upgrade, id: snp7, to: 0-2-3}                                                                   # R38, $2,700
+  - {do: upgrade, id: snp5, to: 0-2-2}                                                                   # R39, $900
+  - {do: upgrade, id: snp4, to: 0-2-2}                                                                   # R39, $900
+  - {do: upgrade, id: snp8, to: 2-2-0}                                                                   # R40, $1,300
+  - {do: upgrade, id: snp2, to: 0-2-3}                                                                   # R40, $2,700
+  - {do: upgrade, id: snp4, to: 0-2-3}                                                                   # R42, $2,700
+  - {do: upgrade, id: snp7, to: 0-2-4}                                                                   # R43, $4,100
+  - {do: upgrade, id: snp5, to: 0-2-3}                                                                   # R44, $2,700
+  - {do: upgrade, id: snp8, to: 2-3-0}                                                                   # R45, $2,100
+  - {do: upgrade, id: snp2, to: 0-2-4}                                                                   # R46, $4,100
+  - {do: upgrade, id: snp5, to: 0-2-4}                                                                   # R48, $4,100
+  - {do: upgrade, id: snp4, to: 0-2-4}                                                                   # R49, $4,100
+  - {do: upgrade, id: snp6, to: 0-2-4}                                                                   # R50, $4,100
+  - {do: upgrade, id: snp1, to: 3-2-0}                                                                   # R50, $3,500
+  - {do: upgrade, id: snp9, to: 3-2-0}                                                                   # R50, $3,500
+  - {do: upgrade, id: snp1, to: 4-2-0}                                                                   # R51, $6,300
+  - {do: upgrade, id: snp3, to: 0-2-5}                                                                   # R56, $14,900
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

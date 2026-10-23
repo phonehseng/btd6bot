@@ -1,0 +1,69 @@
+# Quiet Street, Deflation: towers bought at once round the roundabout.
+#
+# Why: non-MOAB bloons enter at the top and the bottom on the left, go round
+# the roundabout and leave by the other entrance; MOAB-class bloons take the
+# thick road from the bottom to the top (MoabOnlySplitter). Walls on the left,
+# cars and bushes block line of sight, and there is no water until the $500
+# ice is bought (the bot never buys obstacles).
+#
+# Sources:
+#   * bloonswiki Quiet_Street: bloons from both sides, blimps on one lane,
+#     cars and bushes block line of sight, long-range towers excel
+#     (https://www.bloonswiki.com/Quiet_Street)
+#   * bloons.fandom Quiet_Street: main defences on the top side
+#     (https://bloons.fandom.com/wiki/Quiet_Street)
+#   * Quiet Street CHIMPS with Sauda, Carrier Flagship and a Bloon Exclusion
+#     Zone (https://www.youtube.com/watch?v=9604D3Mx-pA)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 2.28 (R54). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: quietstreet_deflation
+map: Quiet Street
+hero: psi
+modes: [deflation]
+planner:
+  towers: {bomb: [4, 3, 2], sniper: [4, 5, 0], village: [0, 2, 0], alchemist: [1, 2, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Quiet Street]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.302, 0.351]}                    # reaches 84 / 76 / 84 units of the lanes
+  - {do: upgrade, id: bm1, to: 0-1-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.291, 0.675]}                    # reaches 85 / 72 / 85 units of the lanes
+  - {do: upgrade, id: bm2, to: 0-2-2}
+  - {do: place, id: bm3, kind: bomb, role: dps, at: [0.259, 0.351]}                    # reaches 84 / 60 / 84 units of the lanes
+  - {do: upgrade, id: bm3, to: 3-0-2}                                                  # Really Big Bombs
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.377, 0.164]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.313, 0.181]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.345, 0.198]}   # map-wide
+  - {do: upgrade, id: bm3, to: 4-0-2}                                                  # Bloon Impact
+fill:
+  - {do: place, id: v1, kind: village, role: support, at: [0.318, 0.274]}
+  - {do: upgrade, id: v1, to: 0-2-0}
+  - {do: place, id: al1, kind: alchemist, role: dps, at: [0.184, 0.351]}
+  - {do: place, id: al2, kind: alchemist, role: dps, at: [0.216, 0.675]}
+  - {do: place, id: al3, kind: alchemist, role: dps, at: [0.184, 0.283]}
+  - {do: upgrade, id: al2, to: 0-1-0}
+  - {do: upgrade, id: al1, to: 0-1-0}
+  - {do: upgrade, id: al3, to: 1-2-0}
+  - {do: upgrade, id: al2, to: 1-1-0}
+  - {do: upgrade, id: s1, to: 2-5-0}
+  - {do: upgrade, id: al1, to: 1-1-0}
+  - {do: upgrade, id: bm1, to: 0-3-2}
+  - {do: upgrade, id: al1, to: 1-2-0}
+  - {do: upgrade, id: s3, to: 4-0-0}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

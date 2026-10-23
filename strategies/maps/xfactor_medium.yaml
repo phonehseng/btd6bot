@@ -1,0 +1,92 @@
+# X Factor, Medium / Military Only / Reverse: snipers on Strong and aces over the corners.
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): eight path
+# variants, two per corner; each round a group of four is active and the spawn side turns
+# 90 degrees every round (AlternateRoundMultiPathSplitter). The middle of every path is a
+# tunnel where bloons cannot be hit (31-44% of each path). dps_model plays every path on
+# its own (harsher than the game's four at a time), so towers must cover all four corners.
+#
+# Why: every tower here is a Military tower, so one build serves Medium, Military Only, Reverse.
+# Snipers are the only towers that reach every one of the eight paths outside the tunnels
+# (G-Horizon's X Factor CHIMPS is sniper spam on Strong); aces circle the corner loops.
+# Psi is a map-wide hero. The fill puts later cash into Deadly Precision / Maim MOAB /
+# Full Auto snipers.
+#
+# Sources:
+#   * bloonswiki X_Factor: central tunnels hide every bloon; global towers get split
+#     (https://www.bloonswiki.com/X_Factor)
+#   * G-Horizon, X Factor CHIMPS: Desperados in the right corners, sniper spam on Strong
+#     (https://www.youtube.com/watch?v=cbqYU4k5f0o)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-medium-on-x-factor/
+#     https://bloon.games/how-to-beat-military-only-on-x-factor/
+#     https://bloon.games/how-to-beat-reverse-on-x-factor/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Medium starts at round 15 with ~$6,057),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: xfactor_medium
+map: X Factor
+hero: psi
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 3, 4], ace: [2, 3, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [X Factor]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.596, 0.453]}                                     # R15, $1,000; top-right corner
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.024, 0.138]}                   # R15, $350; top-left corner
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R15, $1,050
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.259, 0.138]}                   # R15, $350; top-left corner
+  - {do: upgrade, id: snp2, to: 0-2-2}                                                                   # R15, $1,600
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.297, 0.138]}                   # R15, $350; top-left corner
+  - {do: upgrade, id: snp3, to: 0-2-1}                                                                   # R15, $1,150
+  - {do: place, id: snp4, kind: sniper, role: dps, target: strong, at: [0.334, 0.138]}                   # R16, $350; top-left corner
+  - {do: upgrade, id: snp4, to: 1-2-0}                                                                   # R18, $1,050
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.163, 0.487]}                                       # R19, $800; top-left corner
+  - {do: upgrade, id: ac1, to: 1-3-0}                                                                    # R23, $1,900
+  - {do: upgrade, id: snp3, to: 0-2-2}                                                                   # R24, $450
+  - {do: upgrade, id: ac1, to: 2-3-0}                                                                    # R25, $550
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.697, 0.504]}                                       # R26, $800; bottom-right corner
+  - {do: upgrade, id: ac2, to: 0-1-0}                                                                    # R27, $200
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.644, 0.419]}                                       # R28, $800; top-right corner
+  - {do: upgrade, id: ac3, to: 1-3-0}                                                                    # R30, $1,900
+  - {do: upgrade, id: ac2, to: 1-1-0}                                                                    # R30, $450
+  - {do: upgrade, id: ac3, to: 2-3-0}                                                                    # R31, $550
+  - {do: upgrade, id: ac2, to: 2-3-0}                                                                    # R33, $1,800
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.227, 0.453]}                                       # R34, $800; top-left corner
+  - {do: upgrade, id: ac4, to: 2-3-0}                                                                    # R36, $2,450
+  - {do: upgrade, id: snp1, to: 1-3-0}                                                                   # R37, $2,100
+  - {do: place, id: snp5, kind: sniper, role: dps, target: strong, at: [0.371, 0.138]}                   # R37, $350; top-left corner
+  - {do: upgrade, id: snp5, to: 0-2-1}                                                                   # R37, $1,150
+  - {do: place, id: snp6, kind: sniper, role: dps, target: strong, at: [0.409, 0.138]}                   # R38, $350; top-left corner
+  - {do: upgrade, id: snp6, to: 1-2-0}                                                                   # R38, $1,050
+  - {do: place, id: snp7, kind: sniper, role: dps, target: strong, at: [0.452, 0.138]}                   # R38, $350; top-right corner
+  - {do: upgrade, id: snp7, to: 1-2-0}                                                                   # R38, $1,050
+  - {do: upgrade, id: snp5, to: 0-2-2}                                                                   # R39, $450
+  - {do: place, id: snp8, kind: sniper, role: dps, target: strong, at: [0.494, 0.138]}                   # R39, $350; top-right corner
+  - {do: upgrade, id: snp8, to: 1-2-0}                                                                   # R39, $1,050
+  - {do: place, id: ac5, kind: ace, role: dps, at: [0.120, 0.572]}                                       # R39, $800; bottom-left corner
+  - {do: upgrade, id: ac5, to: 0-1-0}                                                                    # R40, $200
+  - {do: place, id: ac6, kind: ace, role: dps, at: [0.751, 0.572]}                                       # R40, $800; bottom-right corner
+  - {do: upgrade, id: ac6, to: 2-3-0}                                                                    # R40, $2,450
+  - {do: upgrade, id: ac5, to: 2-3-0}                                                                    # R42, $2,250
+  - {do: place, id: ac7, kind: ace, role: dps, at: [0.142, 0.385]}                                       # R42, $800; top-left corner
+  - {do: upgrade, id: ac7, to: 2-3-0}                                                                    # R42, $2,450
+  - {do: place, id: ac8, kind: ace, role: dps, at: [0.719, 0.402]}                                       # R43, $800; top-right corner
+  - {do: upgrade, id: ac8, to: 2-3-0}                                                                    # R44, $2,450
+  - {do: upgrade, id: snp2, to: 0-2-3}                                                                   # R45, $2,700
+fill:
+  - {do: upgrade, id: snp4, to: 3-2-0, round: 46}                                                        # R46, $3,500
+  - {do: upgrade, id: snp6, to: 3-2-0, round: 48}                                                        # R48, $3,500
+  - {do: upgrade, id: snp4, to: 4-2-0, round: 49}                                                        # R49, $6,300
+  - {do: upgrade, id: snp7, to: 3-2-0, round: 50}                                                        # R50, $3,500
+  - {do: upgrade, id: snp8, to: 3-2-0, round: 50}                                                        # R50, $3,500
+  - {do: upgrade, id: snp2, to: 0-2-4, round: 50}                                                        # R50, $4,100
+  - {do: upgrade, id: snp1, to: 2-3-0, round: 51}                                                        # R51, $1,300
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

@@ -1,0 +1,110 @@
+# Party Parade, Easy / Primary Only: Desperados in mirrored pairs inside both lane
+# rectangles, darts and tacks at each lane's ends, a MOAB Mauler bomb at each exit.
+#
+# Map (game data: data/map_geometry, dps_model Track): two separate short lanes at once
+# (411 units each) on either side of a wide hedge wall that blocks placement and sight.
+# Each lane bulges round a grass rectangle; a tower inside the rectangle covers most of
+# its lane. No water, no removable obstacles. Everything is built in mirrored pairs.
+#
+# Why: only Primary towers, so one build serves Easy and Primary Only. Each lane bulges
+# round a grass rectangle; a Desperado (range 60) inside it covers almost all of its
+# lane, and every Desperado is bought with its mirror on the other lane. Desperado is
+# the tower whose XP the account needs most (optimize_builds.xp_weights).
+#
+# Sources:
+#   * bloonswiki Party_Parade: the wall blocks placement and sight; snipers see one side
+#     (https://www.bloonswiki.com/Party_Parade)
+#   * BeatbloonsBob, Party Parade Double HP: one main tower per lane, mirrored
+#     (https://www.youtube.com/watch?v=t6BTGKOaVck)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-easy-on-party-parade/
+#     https://bloon.games/how-to-beat-primary-only-on-party-parade/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Easy starts at round 10 with ~$3,832),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what the base income (no Double Cash) pays for by round 40, so the offline
+# threat test finishes it; fill = the rest of the build, in order, paid by Double Cash
+# (the executor buys the first affordable fill step).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: partyparade_easy
+map: Party Parade
+hero: sauda
+modes: [easy, primary_only]
+planner:
+  towers: {dart: [2, 3, 1], desperado: [3, 2, 3], bomb: [0, 3, 3], tack: [3, 3, 0]}
+  base_success: {easy: 0.85, primary_only: 0.85}
+  maps: [Party Parade]
+plan:
+  - {do: place, id: drt1, kind: dart, role: dps, at: [0.248, 0.777]}                                     # R10, $170; left lane, bottom
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.270, 0.487]}                # R10, $255; left lane, inside its rectangle
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.590, 0.487]}                # R10, $255; right lane, inside its rectangle
+  - {do: place, id: dsp3, kind: desperado, role: dps, target: strong, at: [0.238, 0.538]}                # R10, $255; left lane, inside its rectangle
+  - {do: place, id: dsp4, kind: desperado, role: dps, target: strong, at: [0.623, 0.538]}                # R10, $255; right lane, inside its rectangle
+  - {do: place, id: dsp5, kind: desperado, role: dps, target: strong, at: [0.227, 0.453]}                # R10, $255; left lane, inside its rectangle
+  - {do: place, id: dsp6, kind: desperado, role: dps, target: strong, at: [0.633, 0.453]}                # R10, $255; right lane, inside its rectangle
+  - {do: place, id: dsp7, kind: desperado, role: dps, target: strong, at: [0.580, 0.555]}                # R10, $255; right lane, inside its rectangle
+  - {do: place, id: dsp8, kind: desperado, role: dps, target: strong, at: [0.281, 0.555]}                # R10, $255; left lane, inside its rectangle
+  - {do: place, id: dsp9, kind: desperado, role: dps, target: strong, at: [0.590, 0.419]}                # R10, $255; right lane, inside its rectangle
+  - {do: place, id: dsp10, kind: desperado, role: dps, target: strong, at: [0.270, 0.419]}               # R10, $255; left lane, inside its rectangle
+  - {do: place, id: dsp11, kind: desperado, role: dps, target: strong, at: [0.639, 0.598]}               # R10, $255; right lane, inside its rectangle
+  - {do: place, id: dsp12, kind: desperado, role: dps, target: strong, at: [0.206, 0.589]}               # R10, $255; left lane, inside its rectangle
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.607, 0.240]}                                     # R10, $510; right lane, top
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.623, 0.181]}                                     # R11, $320; right lane, top
+  - {do: place, id: drt2, kind: dart, role: dps, at: [0.248, 0.215]}                                     # R11, $170; left lane, top
+  - {do: place, id: drt3, kind: dart, role: dps, at: [0.612, 0.777]}                                     # R11, $170; right lane, bottom
+  - {do: upgrade, id: bmb1, to: 0-0-2}                                                                   # R12, $425
+  - {do: upgrade, id: dsp1, to: 3-0-0}                                                                   # R15, $1,360
+  - {do: upgrade, id: bmb1, to: 0-1-2}                                                                   # R16, $215
+  - {do: upgrade, id: dsp1, to: 3-1-0}                                                                   # R16, $130
+  - {do: upgrade, id: drt2, to: 0-3-1}                                                                   # R17, $705
+  - {do: upgrade, id: bmb1, to: 0-2-2}                                                                   # R18, $340
+  - {do: upgrade, id: bmb1, to: 0-3-2}                                                                   # R20, $850
+  - {do: upgrade, id: dsp3, to: 3-0-0}                                                                   # R22, $1,360
+  - {do: upgrade, id: dsp2, to: 0-1-0}                                                                   # R22, $130
+  - {do: place, id: bmb2, kind: bomb, role: dps, at: [0.655, 0.232]}                                     # R23, $320; right lane, top
+  - {do: upgrade, id: bmb2, to: 0-0-2}                                                                   # R24, $425
+  - {do: place, id: bmb3, kind: bomb, role: dps, at: [0.248, 0.845]}                                     # R24, $320; left lane, bottom
+  - {do: upgrade, id: bmb3, to: 0-0-2}                                                                   # R25, $425
+  - {do: upgrade, id: dsp1, to: 3-2-0}                                                                   # R26, $300
+  - {do: upgrade, id: dsp2, to: 2-1-0}                                                                   # R26, $340
+  - {do: upgrade, id: dsp4, to: 0-1-0}                                                                   # R27, $130
+  - {do: upgrade, id: dsp11, to: 0-1-0}                                                                  # R27, $130
+  - {do: upgrade, id: bmb2, to: 0-2-2}                                                                   # R28, $555
+  - {do: upgrade, id: bmb3, to: 0-2-2}                                                                   # R28, $555
+  - {do: upgrade, id: bmb3, to: 0-3-2}                                                                   # R29, $850
+fill:
+  - {do: upgrade, id: dsp2, to: 3-1-0, round: 30}                                                        # R30, $1,020
+  - {do: upgrade, id: dsp3, to: 3-1-0, round: 30}                                                        # R30, $130
+  - {do: upgrade, id: dsp5, to: 3-0-0, round: 32}                                                        # R32, $1,360
+  - {do: place, id: tck1, kind: tack, role: dps, round: 32, at: [0.655, 0.402]}                          # R32, $220; right lane, inside its rectangle
+  - {do: upgrade, id: tck1, to: 2-2-0, round: 33}                                                        # R33, $595
+  - {do: place, id: tck2, kind: tack, role: dps, round: 33, at: [0.206, 0.402]}                          # R33, $220; left lane, inside its rectangle
+  - {do: upgrade, id: tck2, to: 3-2-0, round: 35}                                                        # R35, $1,105
+  - {do: upgrade, id: bmb2, to: 0-2-3, round: 35}                                                        # R35, $595
+  - {do: upgrade, id: tck1, to: 2-3-0, round: 35}                                                        # R35, $470
+  - {do: upgrade, id: dsp6, to: 3-1-0, round: 36}                                                        # R36, $1,490
+  - {do: upgrade, id: dsp4, to: 0-1-3, round: 37}                                                        # R37, $2,215
+  - {do: place, id: drt4, kind: dart, role: dps, round: 37, at: [0.216, 0.232]}                          # R37, $170; left lane, top
+  - {do: upgrade, id: drt4, to: 1-1-0, round: 37}                                                        # R37, $205
+  - {do: upgrade, id: drt1, to: 2-0-0, round: 37}                                                        # R37, $290
+  - {do: upgrade, id: dsp11, to: 0-1-3, round: 38}                                                       # R38, $2,215
+  - {do: upgrade, id: drt1, to: 2-0-1, round: 38}                                                        # R38, $75
+  - {do: upgrade, id: dsp12, to: 0-0-3, round: 39}                                                       # R39, $2,215
+  - {do: upgrade, id: dsp2, to: 3-2-0, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp3, to: 3-2-0, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp4, to: 0-2-3, round: 39}                                                        # R39, $300
+  - {do: upgrade, id: dsp5, to: 3-2-0, round: 40}                                                        # R40, $430
+  - {do: upgrade, id: dsp6, to: 3-2-0, round: 40}                                                        # R40, $300
+  - {do: upgrade, id: dsp7, to: 2-2-0, round: 40}                                                        # R40, $770
+  - {do: upgrade, id: dsp8, to: 2-1-0, round: 40}                                                        # R40, $470
+  - {do: upgrade, id: dsp7, to: 3-2-0, round: 40}                                                        # R40, $1,020
+  - {do: upgrade, id: dsp8, to: 3-2-0}                                                                   # late, $1,320
+  - {do: upgrade, id: dsp9, to: 2-2-0}                                                                   # late, $770
+  - {do: upgrade, id: dsp10, to: 2-0-0}                                                                  # late, $340
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}

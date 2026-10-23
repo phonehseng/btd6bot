@@ -1,0 +1,67 @@
+# Polyphemus, Deflation: towers bought at once inside the C and in the sea at
+# both ends.
+#
+# Why: two lanes share one C-shaped road in opposite directions (map data:
+# PathStandard and PathStandard (1), both active, boss path unused) round the
+# cyclops eye. The eye closes every 10 rounds from round 6 and switches its
+# towers off, so nothing stands in it; the land inside the C and the sea on
+# the right reach both lanes.
+#
+# Sources:
+#   * bloonswiki Polyphemus: top and bottom paths of equal length, the eye
+#     closes on rounds ending in 6 and must be paid to reopen, land towers go
+#     above and below the eye (https://www.bloonswiki.com/Polyphemus)
+#   * btd6index Polyphemus: two entrances and exits, CHIMPS starts with a Sub
+#     (https://btd6index.win)
+#   * ZoozieBloons, Polyphemus CHIMPS: Sauda with a Wizard, a Dart for camo
+#     (https://youtu.be/uf-VHe6MenY)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 2.38 (R58). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: polyphemus_deflation
+map: Polyphemus
+hero: sauda
+modes: [deflation]
+planner:
+  towers: {bomb: [4, 2, 2], sniper: [4, 4, 0], sub: [0, 1, 4], ace: [2, 3, 0], boomerang: [0, 2, 3]}
+  base_success: {deflation: 0.85}
+  maps: [Polyphemus]
+plan:
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.644, 0.777]}                    # reaches 79 / 79 units of the lanes
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: bm2, kind: bomb, role: dps, at: [0.719, 0.794]}                    # reaches 79 / 79 units of the lanes
+  - {do: upgrade, id: bm2, to: 3-0-2}                                                  # Really Big Bombs
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.462, 0.249]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.804, 0.777]}                     # reaches 59 / 59 units of the lanes
+  - {do: upgrade, id: sb1, to: 0-1-3}                                                  # Triple Guns
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.484, 0.692]}                      # reaches 124 / 124 units of the lanes
+  - {do: upgrade, id: a1, to: 1-3-0}                                                   # Bomber Ace
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.815, 0.249]}                     # reaches 55 / 55 units of the lanes
+  - {do: upgrade, id: sb2, to: 0-1-3}                                                  # Triple Guns
+  - {do: upgrade, id: bm2, to: 4-0-2}                                                  # Bloon Impact
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.74, 0.249]}    # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: a1, to: 2-3-0}
+  - {do: place, id: bo1, kind: boomerang, role: dps, at: [0.398, 0.658]}               # reaches 85 / 85 units of the lanes
+fill:
+  - {do: upgrade, id: bo1, to: 0-2-3}
+  - {do: upgrade, id: s1, to: 3-2-0}
+  - {do: upgrade, id: sb1, to: 0-1-4}
+  - {do: upgrade, id: s2, to: 1-3-0}
+  - {do: upgrade, id: sb2, to: 0-1-4}
+  - {do: upgrade, id: s1, to: 4-2-0}
+  - {do: upgrade, id: s2, to: 1-4-0}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

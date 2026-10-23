@@ -1,0 +1,62 @@
+# Quiet Street, Easy: map-wide snipers, a Monkey Ace and short-range towers by
+# the two entrances.
+#
+# Why: non-MOAB bloons enter at the top and the bottom on the left, go round
+# the roundabout and leave by the other entrance; MOAB-class bloons take the
+# thick road from the bottom to the top (MoabOnlySplitter). Walls on the left,
+# cars and bushes block line of sight, and there is no water until the $500
+# ice is bought (the bot never buys obstacles).
+#
+# Sources:
+#   * bloonswiki Quiet_Street: bloons from both sides, blimps on one lane,
+#     cars and bushes block line of sight, long-range towers excel
+#     (https://www.bloonswiki.com/Quiet_Street)
+#   * bloons.fandom Quiet_Street: main defences on the top side
+#     (https://bloons.fandom.com/wiki/Quiet_Street)
+#   * Quiet Street CHIMPS with Sauda, Carrier Flagship and a Bloon Exclusion
+#     Zone (https://www.youtube.com/watch?v=9604D3Mx-pA)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with the account's Fast Track and
+# Double Cash. The tests' threat simulation plays Easy on the base economy (no
+# boosts) and wants the whole plan bought, so `plan` is the part that economy
+# completes and the rest is `fill`; with the account's boosts both are bought.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# easy 2.48 (R34). Notes and checks: docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: quietstreet_easy
+map: Quiet Street
+hero: psi
+modes: [easy]
+planner:
+  towers: {dart: [0, 3, 2], alchemist: [1, 1, 0], sniper: [3, 2, 5]}
+  base_success: {easy: 0.85}
+  maps: [Quiet Street]
+plan:
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.27, 0.351]}                      # reaches 68 / 36 / 68 units of the lanes
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.281, 0.675]}                     # reaches 68 / 35 / 68 units of the lanes
+  - {do: place, id: al1, kind: alchemist, role: dps, at: [0.184, 0.351]}               # reaches 122 / 108 / 122 units of the lanes
+  - {do: place, id: al2, kind: alchemist, role: dps, at: [0.216, 0.675]}               # reaches 127 / 73 / 127 units of the lanes
+  - {do: upgrade, id: d1, to: 0-0-1}
+  - {do: upgrade, id: d2, to: 0-3-2}                                                   # Triple Shot
+  - {do: upgrade, id: d1, to: 0-3-2}                                                   # Triple Shot
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.377, 0.164]}   # map-wide
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.227, 0.359]}                   # hero (not counted by the damage model)
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.313, 0.181]}   # map-wide
+  - {do: upgrade, id: al2, to: 0-1-0}
+  - {do: upgrade, id: al1, to: 0-1-0}
+  - {do: upgrade, id: s2, to: 1-0-0}
+  - {do: upgrade, id: al2, to: 1-1-0}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: al1, to: 1-1-0}
+  - {do: upgrade, id: s1, to: 0-2-3}                                                   # Semi-Automatic
+  - {do: upgrade, id: s2, to: 3-2-0}                                                   # Deadly Precision
+fill:
+  - {do: upgrade, id: s1, to: 0-2-5}
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

@@ -1,0 +1,84 @@
+# Spillway, Medium / Military Only / Reverse: Advanced Intel subs in the side pools, helis, snipers
+# and an ace.
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): four lanes
+# at once from the four corners into a central loop that each lane circles before it
+# leaves. Four $2,000 inflatable walls between the side pools and the loop block sight
+# (the bot cannot buy them); the centre barrel has no legal cell in the bot's model.
+#
+# Why: every tower here is a Military tower, so one build serves Medium, Military Only, Reverse.
+# Walls block sight into the loop from almost everywhere; map-wide snipers, Pursuit helis
+# and an ace ignore them, and 2-0-x subs (Advanced Intel) shoot what the snipers see
+# (BlueCliff's Hard guide: sub in the right pool, sniper). Psi is a map-wide hero.
+#
+# Sources:
+#   * bloonswiki Spillway: walls block sight; Archmage, Carrier Flagship, global towers
+#     (https://www.bloonswiki.com/Spillway)
+#   * BlueCliff, Spillway Hard: barrel ninja, sniper, Sub Commander (https://www.youtube.com/watch?v=e-cqKdIJ7pM)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-medium-on-spillway/
+#     https://bloon.games/how-to-beat-military-only-on-spillway/
+#     https://bloon.games/how-to-beat-reverse-on-spillway/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Medium starts at round 15 with ~$6,057),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: spillway_medium
+map: Spillway
+hero: psi
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sub: [4, 5, 2], ace: [2, 3, 0], heli: [3, 2, 2], sniper: [1, 2, 2]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Spillway]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.607, 0.138]}                                     # R15, $1,000; top right
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.601, 0.572]}                                       # R15, $325; middle right, in the water
+  - {do: upgrade, id: sb1, to: 2-0-2}                                                                    # R15, $2,080
+  - {do: upgrade, id: sb1, to: 4-0-2}                                                                    # R16, $3,100
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.259, 0.572]}                                       # R17, $325; middle left, in the water
+  - {do: upgrade, id: sb2, to: 2-0-0}                                                                    # R19, $630
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.494, 0.777]}                                       # R19, $325; bottom centre, in the water
+  - {do: upgrade, id: sb3, to: 1-0-0}                                                                    # R19, $130
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.366, 0.777]}                                       # R20, $325; bottom centre, in the water
+  - {do: upgrade, id: sb4, to: 1-0-0}                                                                    # R20, $130
+  - {do: upgrade, id: sb2, to: 2-3-0}                                                                    # R24, $2,100
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.206, 0.675]}                                       # R26, $800; bottom left
+  - {do: upgrade, id: ac1, to: 0-3-0}                                                                    # R28, $1,450
+  - {do: upgrade, id: sb3, to: 3-2-0}                                                                    # R30, $1,950
+  - {do: upgrade, id: sb4, to: 2-0-1}                                                                    # R31, $950
+  - {do: upgrade, id: ac1, to: 1-3-0}                                                                    # R32, $450
+  - {do: upgrade, id: sb4, to: 3-0-2}                                                                    # R33, $1,700
+  - {do: upgrade, id: ac1, to: 2-3-0}                                                                    # R34, $550
+  - {do: upgrade, id: sb4, to: 4-0-2}                                                                    # R36, $2,400
+  - {do: upgrade, id: sb3, to: 4-2-0}                                                                    # R37, $2,400
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.131, 0.760]}                                     # R38, $1,500; bottom left
+  - {do: upgrade, id: hel1, to: 1-0-2}                                                                   # R38, $1,400
+  - {do: place, id: hel2, kind: heli, role: dps, at: [0.687, 0.692]}                                     # R39, $1,500; bottom right
+  - {do: upgrade, id: hel2, to: 3-0-2}                                                                   # R40, $3,350
+  - {do: place, id: hel3, kind: heli, role: dps, at: [0.291, 0.146]}                                     # R40, $1,500; top left
+  - {do: upgrade, id: hel3, to: 1-0-0}                                                                   # R40, $800
+  - {do: upgrade, id: hel1, to: 3-0-2}                                                                   # R42, $1,950
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.088, 0.181]}                   # R42, $350; top left
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R42, $1,050
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.569, 0.181]}                   # R42, $350; top right
+  - {do: upgrade, id: snp2, to: 1-2-0}                                                                   # R42, $1,050
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.751, 0.181]}                   # R42, $350; top right
+  - {do: upgrade, id: snp3, to: 1-2-0}                                                                   # R43, $1,050
+  - {do: upgrade, id: hel3, to: 1-2-0}                                                                   # R44, $900
+  - {do: place, id: snp4, kind: sniper, role: dps, target: strong, at: [0.120, 0.198]}                   # R44, $350; top left
+  - {do: upgrade, id: snp4, to: 0-2-0}                                                                   # R44, $700
+  - {do: place, id: snp5, kind: sniper, role: dps, target: strong, at: [0.783, 0.198]}                   # R44, $350; top right
+  - {do: upgrade, id: snp5, to: 1-2-0}                                                                   # R45, $1,050
+  - {do: upgrade, id: snp4, to: 0-2-2}                                                                   # R45, $900
+  - {do: place, id: hel4, kind: heli, role: dps, at: [0.580, 0.862]}                                     # R45, $1,500; bottom right
+  - {do: upgrade, id: hel4, to: 3-0-0}                                                                   # R46, $2,750
+  - {do: upgrade, id: sb2, to: 2-5-0}                                                                    # R56, $42,000
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  bfb: [{do: upgrade, id: snp1, to: 4-2-0}]

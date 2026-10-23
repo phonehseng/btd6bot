@@ -1,0 +1,85 @@
+# Rake, Medium/Military Only/Reverse/Hard: boats in the centre pool, map-wide
+# snipers, Heli Pilots and Monkey Aces for both lanes.
+#
+# Why: two short lanes run at the same time and cross in the middle (they
+# confuse "first" targeting). Over half of each lane is off screen, so the
+# defence has little track to work with; the centre box between the crossings
+# and the pool on the upper left reach both lanes.
+#
+# Sources:
+#   * bloonswiki Rake: one of the hardest Intermediate maps, two lanes at
+#     once, best spots in and just below the centre, a pool for water towers
+#     (https://www.bloonswiki.com/Rake)
+#   * bloons.fandom Rake: Dart and Sub, or Dart and Sniper, as CHIMPS openers;
+#     a line of Buccaneers and a Carrier Flagship mid-game
+#     (https://bloons.fandom.com/wiki/Rake)
+#   * Rake guide (v29.4): Sky Shredder (Monkey Ace) works well
+#     (https://www.youtube.com/watch?v=hW90iCVeSXA)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): medium
+# 3.87 (R15), military_only 3.87 (R15), reverse 3.75 (R21), hard 2.59 (R27).
+# Notes and checks: docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: rake_military
+map: Rake
+hero: psi
+modes: [medium, military_only, reverse, hard]
+planner:
+  towers: {buccaneer: [5, 0, 2], sniper: [5, 5, 0], heli: [3, 0, 2], ace: [2, 3, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8, hard: 0.72}
+  maps: [Rake]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.484, 0.385]}                # reaches 183 / 114 units of the lanes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.43, 0.385]}                 # reaches 154 / 114 units of the lanes
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b2, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.088, 0.215]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.126, 0.223]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.494, 0.794]}                   # hero (not counted by the damage model)
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.366, 0.811]}                     # map-wide
+  - {do: upgrade, id: h1, to: 1-0-2}
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.366, 0.675]}                     # map-wide
+  - {do: upgrade, id: h2, to: 1-0-2}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.644, 0.385]}                      # reaches 114 / 124 units of the lanes
+  - {do: upgrade, id: a1, to: 0-1-0}
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.441, 0.181]}                      # reaches 131 / 0 units of the lanes
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: a1, to: 0-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: h1, to: 3-0-2}                                                   # Razor Rotors
+  - {do: upgrade, id: a1, to: 1-3-0}
+  - {do: upgrade, id: h2, to: 3-0-2}                                                   # Razor Rotors
+  - {do: upgrade, id: b1, to: 3-0-2}                                                   # Destroyer
+  - {do: upgrade, id: s1, to: 2-2-0}
+  - {do: upgrade, id: a1, to: 2-3-0}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: b2, to: 3-0-1}                                                   # Destroyer
+  - {do: upgrade, id: s1, to: 3-2-0}                                                   # Deadly Precision
+  - {do: upgrade, id: b1, to: 4-0-2}                                                   # Aircraft Carrier
+  - {do: upgrade, id: b2, to: 4-0-2}                                                   # Aircraft Carrier
+  - {do: upgrade, id: s2, to: 2-5-0}                                                   # Elite Sniper
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+fill:
+  - {do: upgrade, id: b1, to: 5-0-2}                                                   # Carrier Flagship
+  - {do: upgrade, id: s1, to: 5-2-0}                                                   # Cripple MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); plan or fill already buys them
+  # Hard R63 rush: the model already rates it safe; an answer may only carry
+  # `at` when it re-places a planned tower, so this one is placed by role
+  rush:
+    - {do: place, id: su1, kind: super, role: dps}
+  zomg:
+    - {do: upgrade, id: s1, to: 4-2-0}

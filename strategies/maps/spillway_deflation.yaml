@@ -1,0 +1,100 @@
+# Spillway, Deflation: bombs beside the four diagonal lanes, aces over the map, snipers
+# and subs (all bought before round 31).
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): four lanes
+# at once from the four corners into a central loop that each lane circles before it
+# leaves. Four $2,000 inflatable walls between the side pools and the loop block sight
+# (the bot cannot buy them); the centre barrel has no legal cell in the bot's model.
+#
+# Why: Deflation pays no income, so everything is bought with the starting cash
+# (account: Double Cash doubles it to ~$40,000). The walls block sight into the loop,
+# so bombs cover the four diagonal lanes before they reach it, aces fly over the
+# walls, and snipers and Advanced Intel subs add map-wide damage; Psi is a map-wide
+# hero.
+#
+# Sources:
+#   * bloonswiki Spillway: walls block sight; Archmage, Carrier Flagship, global towers
+#     (https://www.bloonswiki.com/Spillway)
+#   * BlueCliff, Spillway Hard: barrel ninja, sniper, Sub Commander (https://www.youtube.com/watch?v=e-cqKdIJ7pM)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-deflation-on-spillway/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Deflation starts at round 31 with ~$40,000 and no income),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what $20,000 (Deflation without Double Cash) buys, so the offline threat test
+# finishes it; fill = the rest, in order, paid by the Double Cash half of the start cash.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: spillway_deflation
+map: Spillway
+hero: psi
+modes: [deflation]
+planner:
+  towers: {bomb: [3, 3, 3], sniper: [1, 2, 0], mermonkey: [3, 0, 1], ace: [2, 3, 0], tack: [2, 3, 0], sub: [2, 0, 3], buccaneer: [2, 0, 1], alchemist: [0, 0, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Spillway]
+plan:
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.184, 0.726]}                                     # R31, $320; bottom left
+  - {do: upgrade, id: bmb1, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb2, kind: bomb, role: dps, at: [0.142, 0.777]}                                     # R31, $320; bottom left
+  - {do: upgrade, id: bmb2, to: 3-0-2}                                                                   # R31, $2,130
+  - {do: place, id: bmb3, kind: bomb, role: dps, at: [0.612, 0.862]}                                     # R31, $320; bottom right
+  - {do: upgrade, id: bmb3, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.088, 0.181]}                   # R31, $300; top left
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: mer1, kind: mermonkey, role: dps, at: [0.601, 0.146]}                                # R31, $255; top right
+  - {do: upgrade, id: mer1, to: 3-0-1}                                                                   # R31, $2,045
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.687, 0.709]}                                       # R31, $680; bottom right
+  - {do: upgrade, id: ac1, to: 1-3-0}                                                                    # R31, $1,620
+  - {do: place, id: bmb4, kind: bomb, role: dps, at: [0.281, 0.828]}                                     # R31, $320; bottom left
+  - {do: upgrade, id: bmb4, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb5, kind: bomb, role: dps, at: [0.238, 0.879]}                                     # R31, $320; bottom left
+  - {do: upgrade, id: bmb5, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb6, kind: bomb, role: dps, at: [0.644, 0.913]}                                     # R31, $320; bottom right
+  - {do: upgrade, id: bmb6, to: 0-1-3}                                                                   # R31, $1,235
+  - {do: upgrade, id: ac1, to: 2-3-0}                                                                    # R31, $470
+fill:
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.740, 0.777]}                                       # R31, $680; bottom right
+  - {do: upgrade, id: ac2, to: 0-3-0}                                                                    # R31, $1,235
+  - {do: place, id: bmb7, kind: bomb, role: dps, at: [0.569, 0.811]}                                     # R31, $320; bottom right
+  - {do: upgrade, id: bmb7, to: 0-0-2}                                                                   # R31, $425
+  - {do: place, id: bmb8, kind: bomb, role: dps, at: [0.142, 0.232]}                                     # R31, $320; top left
+  - {do: upgrade, id: bmb8, to: 0-1-2}                                                                   # R31, $640
+  - {do: upgrade, id: ac2, to: 1-3-0}                                                                    # R31, $385
+  - {do: upgrade, id: bmb7, to: 0-2-2}                                                                   # R31, $555
+  - {do: upgrade, id: ac2, to: 2-3-0}                                                                    # R31, $470
+  - {do: place, id: bmb9, kind: bomb, role: dps, at: [0.216, 0.675]}                                     # R31, $320; bottom left
+  - {do: upgrade, id: bmb9, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb10, kind: bomb, role: dps, at: [0.174, 0.283]}                                    # R31, $320; top left
+  - {do: upgrade, id: bmb10, to: 0-2-2}                                                                  # R31, $980
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.281, 0.146]}                                       # R31, $680; top left
+  - {do: upgrade, id: ac3, to: 2-3-0}                                                                    # R31, $2,090
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.751, 0.181]}                   # R31, $300; top right
+  - {do: upgrade, id: snp2, to: 1-2-0}                                                                   # R31, $900
+  - {do: upgrade, id: bmb8, to: 0-2-2}                                                                   # R31, $340
+  - {do: place, id: bmb11, kind: bomb, role: dps, at: [0.206, 0.930]}                                    # R31, $320; bottom left
+  - {do: upgrade, id: bmb11, to: 0-2-3}                                                                  # R31, $1,575
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.783, 0.198]}                   # R31, $300; top right
+  - {do: upgrade, id: snp3, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: tck1, kind: tack, role: dps, at: [0.099, 0.845]}                                     # R31, $220; bottom left
+  - {do: upgrade, id: tck1, to: 2-2-0}                                                                   # R31, $595
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.601, 0.572]}                                       # R31, $275; middle right, in the water
+  - {do: upgrade, id: sb1, to: 2-0-2}                                                                    # R31, $1,770
+  - {do: place, id: buc1, kind: buccaneer, role: dps, at: [0.601, 0.487]}                                # R31, $340; middle right, in the water
+  - {do: upgrade, id: buc1, to: 2-0-1}                                                                   # R31, $765
+  - {do: upgrade, id: sb1, to: 2-0-3}                                                                    # R31, $935
+  - {do: upgrade, id: tck1, to: 2-3-0}                                                                   # R31, $470
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.697, 0.283]}                                       # R31, $680; top right
+  - {do: upgrade, id: ac4, to: 2-2-0}                                                                    # R31, $1,325
+  - {do: upgrade, id: bmb3, to: 0-3-2}                                                                   # R31, $850
+  - {do: place, id: alc1, kind: alchemist, role: support, near: [mer1], at: [0.569, 0.198]}              # R31, $470; top right
+  - {do: place, id: alc2, kind: alchemist, role: support, near: [sb1, ac1, buc1], at: [0.623, 0.658]}    # R31, $470; bottom right
+  - {do: place, id: snp4, kind: sniper, role: dps, target: strong, at: [0.056, 0.215]}                   # R31, $300; top left
+panic:
+  - {do: place, kind: sub, role: dps}
+answers:
+  bfb: [{do: upgrade, id: snp1, to: 4-2-0}]

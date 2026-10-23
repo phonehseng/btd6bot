@@ -1,0 +1,57 @@
+# Moon Landing, Deflation: towers bought at once over the craters.
+#
+# Why: one long lane (1,240 units) loops out of three walled craters. The
+# crater walls block line of sight for most land towers, so the core here is
+# map-wide: snipers, and Monkey Aces flying over the craters. No water.
+#
+# Sources:
+#   * bloonswiki Moon_Landing: craters with walls, Snipers and Mortars do
+#     well, Ultra-Juggernaut inside the craters
+#     (https://www.bloonswiki.com/Moon_Landing_(BTD6))
+#   * BeatbloonsBob, Moon Landing CHIMPS (no abilities): Sniper "as high as
+#     you can", Sniper 0-2-4 -> 0-2-5, Heli 3-0-2
+#     (https://youtu.be/cSmSH9JAgBQ)
+#   * OneEyedDeacon, Moon Landing CHIMPS with a Flying Fortress (Monkey Ace)
+#     (https://youtu.be/SXHjsD-CCLU)
+#
+# Towers from the sources; order and spots from tools/optimize_builds.py
+# restricted to them (safety margin 3.0) with all the cash at round 31. The
+# tests' threat simulation plays Deflation on the base $20,000 and wants the
+# whole plan bought, so `plan` is the part $20,000 buys and the rest of the
+# account's $40,000 (Double Cash) is `fill`; both are bought before round 31.
+#
+# Worst damage-model margin per mode (plan + fill, as the account buys them):
+# deflation 3.12 (R54). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: moonlanding_deflation
+map: Moon Landing
+hero: obyn
+modes: [deflation]
+planner:
+  towers: {sniper: [4, 2, 0], ace: [2, 3, 0], druid: [0, 3, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Moon Landing]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.836, 0.811]}   # map-wide
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.836, 0.871]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.452, 0.181]}                      # reaches 189 units of the lane
+  - {do: upgrade, id: a1, to: 2-3-0}                                                   # Bomber Ace
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.056, 0.419]}                      # reaches 101 units of the lane
+  - {do: upgrade, id: a2, to: 0-1-0}
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.537, 0.487]}                   # reaches 73 units of the lane
+  - {do: upgrade, id: dr1, to: 0-3-0}                                                  # Druid of the Jungle
+  - {do: upgrade, id: s1, to: 3-2-0}                                                   # Deadly Precision
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.542, 0.555]}                   # hero (not counted by the damage model)
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); the plan buys them
+  bfb:
+    - {do: upgrade, id: s1, to: 4-2-0}

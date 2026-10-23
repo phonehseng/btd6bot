@@ -1,0 +1,107 @@
+# Underground, Deflation: towers inside and round the central ring, where both lanes
+# loop and cross (all bought before round 31).
+#
+# Map (game data: data/map_geometry, dps_model Track): two short lanes at once (one from
+# the top, one from the bottom) that both loop through the central ring and cross at its
+# left and right edges. Lots of cave floor; no water, no removable obstacles.
+#
+# Why: Deflation pays no income, so everything is bought with the starting cash
+# (account: Double Cash doubles it to ~$40,000). Both lanes loop through the central
+# ring, so towers inside it and above or below it cover both lanes at once.
+#
+# Sources:
+#   * bloonswiki Underground: the centre and the spaces above and below it cover both lanes;
+#     stall towers are valuable on the short lanes (https://www.bloonswiki.com/Underground)
+#   * BlueCliff, Underground Hard: Quincy inside the ring, ninja 4-0-2, alchemist, bombs 0-2-4
+#     (https://www.youtube.com/watch?v=9jvPhl28e5E)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-deflation-on-underground/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Deflation starts at round 31 with ~$40,000 and no income),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what $20,000 (Deflation without Double Cash) buys, so the offline threat test
+# finishes it; fill = the rest, in order, paid by the Double Cash half of the start cash.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: underground_deflation
+map: Underground
+hero: quincy
+modes: [deflation]
+planner:
+  towers: {desperado: [0, 3, 3], bomb: [0, 3, 3], sniper: [1, 2, 0], tack: [2, 3, 0], alchemist: [0, 0, 0], mermonkey: [0, 0, 0]}
+  base_success: {deflation: 0.85}
+  maps: [Underground]
+plan:
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.430, 0.555]}                # R31, $255; inside the central ring
+  - {do: upgrade, id: dsp1, to: 0-1-3}                                                                   # R31, $2,345
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.494, 0.487]}                                     # R31, $320; inside the central ring
+  - {do: upgrade, id: bmb1, to: 0-1-2}                                                                   # R31, $640
+  - {do: place, id: bmb2, kind: bomb, role: dps, at: [0.345, 0.487]}                                     # R31, $320; inside the central ring
+  - {do: upgrade, id: bmb2, to: 0-2-2}                                                                   # R31, $980
+  - {do: upgrade, id: bmb1, to: 0-2-2}                                                                   # R31, $340
+  - {do: place, id: bmb3, kind: bomb, role: dps, at: [0.387, 0.487]}                                     # R31, $320; inside the central ring
+  - {do: upgrade, id: bmb3, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb4, kind: bomb, role: dps, at: [0.452, 0.487]}                                     # R31, $320; inside the central ring
+  - {do: upgrade, id: bmb4, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb5, kind: bomb, role: dps, at: [0.323, 0.351]}                                     # R31, $320; above the ring, between both lanes
+  - {do: upgrade, id: bmb5, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: bmb6, kind: bomb, role: dps, at: [0.334, 0.641]}                                     # R31, $320; below the ring, between both lanes
+  - {do: upgrade, id: bmb6, to: 0-1-2}                                                                   # R31, $640
+  - {do: place, id: bmb7, kind: bomb, role: dps, at: [0.516, 0.334]}                                     # R31, $320; above the ring, between both lanes
+  - {do: upgrade, id: bmb7, to: 0-2-2}                                                                   # R31, $980
+  - {do: upgrade, id: bmb6, to: 0-2-2}                                                                   # R31, $340
+  - {do: place, id: bmb8, kind: bomb, role: dps, at: [0.526, 0.641]}                                     # R31, $320; below the ring, between both lanes
+  - {do: upgrade, id: bmb8, to: 0-2-2}                                                                   # R31, $980
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.142, 0.138]}                   # R31, $300; left cave floor
+fill:
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: bmb9, kind: bomb, role: dps, at: [0.419, 0.743]}                                     # R31, $320; below the ring, between both lanes
+  - {do: upgrade, id: bmb9, to: 0-1-2}                                                                   # R31, $640
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.184, 0.138]}                   # R31, $300; left cave floor
+  - {do: upgrade, id: snp2, to: 1-2-0}                                                                   # R31, $900
+  - {do: upgrade, id: bmb6, to: 0-2-3}                                                                   # R31, $595
+  - {do: place, id: bmb10, kind: bomb, role: dps, at: [0.409, 0.249]}                                    # R31, $320; above the ring, between both lanes
+  - {do: upgrade, id: bmb10, to: 0-2-2}                                                                  # R31, $980
+  - {do: place, id: bmb11, kind: bomb, role: dps, at: [0.366, 0.317]}                                    # R31, $320; above the ring, between both lanes
+  - {do: upgrade, id: bmb11, to: 0-2-2}                                                                  # R31, $980
+  - {do: place, id: bmb12, kind: bomb, role: dps, at: [0.484, 0.675]}                                    # R31, $320; below the ring, between both lanes
+  - {do: upgrade, id: bmb12, to: 0-2-2}                                                                  # R31, $980
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.227, 0.138]}                   # R31, $300; beside the ring
+  - {do: upgrade, id: snp3, to: 1-2-0}                                                                   # R31, $900
+  - {do: upgrade, id: bmb9, to: 0-2-2}                                                                   # R31, $340
+  - {do: place, id: snp4, kind: sniper, role: dps, target: strong, at: [0.270, 0.138]}                   # R31, $300; beside the ring
+  - {do: upgrade, id: snp4, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: snp5, kind: sniper, role: dps, target: strong, at: [0.313, 0.138]}                   # R31, $300; above the ring, between both lanes
+  - {do: upgrade, id: snp5, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: tck1, kind: tack, role: dps, at: [0.430, 0.879]}                                     # R31, $220; below the ring, between both lanes
+  - {do: upgrade, id: tck1, to: 1-2-0}                                                                   # R31, $405
+  - {do: place, id: snp6, kind: sniper, role: dps, target: strong, at: [0.350, 0.138]}                   # R31, $300; above the ring, between both lanes
+  - {do: upgrade, id: snp6, to: 1-2-0}                                                                   # R31, $900
+  - {do: upgrade, id: tck1, to: 2-3-0}                                                                   # R31, $660
+  - {do: place, id: snp7, kind: sniper, role: dps, target: strong, at: [0.430, 0.138]}                   # R31, $300; above the ring, between both lanes
+  - {do: upgrade, id: snp7, to: 1-2-0}                                                                   # R31, $900
+  - {do: upgrade, id: bmb9, to: 0-3-2}                                                                   # R31, $850
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.462, 0.300]}                # R31, $255; above the ring, between both lanes
+  - {do: upgrade, id: dsp2, to: 0-3-0}                                                                   # R31, $2,980
+  - {do: place, id: snp8, kind: sniper, role: dps, target: strong, at: [0.505, 0.138]}                   # R31, $300; above the ring, between both lanes
+  - {do: upgrade, id: snp8, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: snp9, kind: sniper, role: dps, target: strong, at: [0.548, 0.138]}                   # R31, $300; above the ring, between both lanes
+  - {do: upgrade, id: snp9, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: snp10, kind: sniper, role: dps, target: strong, at: [0.590, 0.138]}                  # R31, $300; beside the ring
+  - {do: upgrade, id: snp10, to: 1-2-0}                                                                  # R31, $900
+  - {do: place, id: snp11, kind: sniper, role: dps, target: strong, at: [0.633, 0.138]}                  # R31, $300; beside the ring
+  - {do: upgrade, id: snp11, to: 1-2-0}                                                                  # R31, $900
+  - {do: place, id: snp12, kind: sniper, role: dps, target: strong, at: [0.671, 0.138]}                  # R31, $300; right cave floor
+  - {do: upgrade, id: snp12, to: 1-2-0}                                                                  # R31, $900
+  - {do: place, id: alc1, kind: alchemist, role: support, near: [bmb4, bmb1, bmb7], at: [0.473, 0.436]}  # R31, $470; inside the central ring
+  - {do: upgrade, id: bmb10, to: 0-2-3}                                                                  # R31, $595
+  - {do: place, id: mer1, kind: mermonkey, role: dps, at: [0.248, 0.487]}                                # R31, $255; beside the ring
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}
+answers:
+  moab: [{do: upgrade, id: snp1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: snp1, to: 4-2-0}]

@@ -1,0 +1,83 @@
+# Carved, Medium / Military Only / Reverse: buccaneers and a sub in the
+# pumpkin's water eyes, Bomber Aces above the mouth, snipers in the bottom-
+# left corner.
+#
+# Why: one route (1,312 world units) round the outline of the jack-o-lantern,
+# then into the mouth and a zig-zag loop, and out at the top. The two "eyes"
+# above the mouth are the only water big enough for towers (the cauldron on
+# the right holds one): a buccaneer in the right eye reaches 31% of the route,
+# in the left eye 27% (map geometry). The ground just above the mouth sees the
+# mouth's loop and both sides of the outline - the aces' spot (the ground
+# below the mouth, the wiki's tack spot, is refused on the live map model).
+# The wiki notes two trees by the entrance and exit that block line of sight;
+# the map file marks no sight blockers (model gap), so the snipers stand in
+# the open bottom-left corner, away from both trees. Military towers only: one
+# build for all three modes.
+#
+# Sources:
+#   * bloonswiki Strategy:Military_Only: Destroyer "best with the 3-2-0 crosspath",
+#     Armor Piercing Darts subs, Maim MOAB snipers on Strong for the round-60 BFB,
+#     Full Metal Jacket for leads, every military tower has a cheap camo upgrade
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#   * bloonswiki Reverse_(BTD6): Medium strategies work unchanged in Reverse
+#     except on a few named maps (none of the beginner maps)
+#     (https://www.bloonswiki.com/Reverse_(BTD6))
+#   * bloonswiki Carved: the best spots are "the right water patch, right below
+#     it, below the rightmost point of the pumpkin mouth"; trees by the entrance
+#     and exit block line of sight (https://www.bloonswiki.com/Carved)
+#
+# Surplus cash goes into more Armor Piercing subs (`xp_target: sub`; the
+# account still needs sub XP), capped at 2-0-4 by the fill step.
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method):
+#   * every `at` is legal for its tower in plan order, on the map geometry (as
+#     tests/test_map_hints_offline.py checks) and on the live map model;
+#   * the plan replayed the executor's way (tools/optimize_builds.replay_plan)
+#     on the account's economy (Fast Track R15, Double Cash) keeps every
+#     round at a damage-model margin of 2.0 or more. Worst margin:
+#       3.63 (Medium and Military Only); 3.51 (Reverse)
+#   * sight-strict (snipers only count the track they can see, subs their own
+#     range, aces their flight circle):
+#       2.99 (Medium and Military Only); 3.12 (Reverse)
+#   * executor-faithful replay (tools/simulate_threats' loop, with the match
+#     loop's surplus spending), strict, with its extra towers / plan only:
+#       3.12 / 2.35 (Medium and Military Only); 3.67 / 2.28 (Reverse)
+#   * tools/simulate_threats finds no gaps; strategy.coverage nothing missing.
+id: carved_medium
+map: Carved
+hero: admiral_brickell
+modes: [medium, military_only, reverse]
+xp_target: sub
+planner:
+  towers: {sniper: [4, 2, 0], buccaneer: [3, 2, 2], ace: [2, 3, 0], sub: [2, 0, 4]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Carved]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.060, 0.900]}   # bottom-left corner, clear of both trees
+  - {do: upgrade, id: s1, to: 1-2-0}   # lead (Full Metal Jacket) + camo (Night Vision) + shrapnel
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.526, 0.385]}   # right eye: 31% of the route
+  - {do: upgrade, id: b1, to: 2-0-2}   # Crow's Nest: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.334]}   # Brickell in the left eye
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.323, 0.385]}   # left eye: 27% of the route
+  - {do: upgrade, id: b2, to: 2-2-0}   # Hot Shot: lead
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.516, 0.487]}   # above the mouth, right: the mouth and its loop
+  - {do: upgrade, id: a1, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.580, 0.368]}   # right eye
+  - {do: upgrade, id: sb1, to: 2-0-3}   # Advanced Intel + Triple Guns
+  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.120, 0.900]}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.409, 0.487]}   # above the mouth, left
+  - {do: upgrade, id: a2, to: 2-3-0}
+  - {do: upgrade, id: s2, to: 4-2-0}   # second Maim MOAB for round 60
+fill:
+  - {do: upgrade, kind: sub, to: 2-0-4}   # surplus subs (xp_target) stop at Armor Piercing Darts
+answers:
+  camo: [{do: upgrade, id: s1, to: 1-2-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

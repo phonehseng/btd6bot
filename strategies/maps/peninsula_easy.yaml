@@ -1,0 +1,74 @@
+# Peninsula, Easy: buccaneers and Mermonkeys in the water beside the short lane, then
+# Advanced Intel subs and a mountaintop sniper (extra damage and XP).
+#
+# Map (game data: data/map_geometry, data/map_mechanics.json, dps_model Track): ONE short
+# lane (705 units, 400 hittable) round a mountain that blocks sight. Over 80% of the room
+# is water; land is the mountaintop (sight blocked: only map-wide towers work there) and
+# a small plot by the bottom-right bend. Three $500 kelp rocks would add land; the bot
+# cannot buy them.
+#
+# Why: over 80% of the room is water and the mountain blocks sight from the land, so
+# water towers carry: a Cannon Ship buccaneer (0-3-2) for the MOAB, a Double Shot one
+# (2-0-2) on the exit side, and Mermonkeys. Primary Only is not written: with only the
+# small bottom-right plot for land towers no Primary build reached the 2.0 margin
+# (best 1.04). Subs (2-0-x, Advanced Intel) are the sub XP the account still needs;
+# the mountaintop sniper sees the whole lane in the game (high ground, bloonswiki),
+# but the damage model has no heights and counts it blind, so the margins do not
+# rely on it.
+#
+# Sources:
+#   * bloonswiki Peninsula: water builds (subs, Carrier Flagship), snipers on the mountaintop
+#     (https://www.bloonswiki.com/Peninsula)
+#   * 0Python BTD6, Peninsula CHIMPS with Brickell: 2-0-4 sub spam + buccaneer 0-3-2
+#     (https://www.youtube.com/watch?v=bkeuo0q7XbY)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-easy-on-peninsula/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Easy starts at round 10 with ~$3,832),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# plan = what the base income (no Double Cash) pays for by round 40, so the offline
+# threat test finishes it; fill = the rest of the build, in order, paid by Double Cash
+# (the executor buys the first affordable fill step).
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: peninsula_easy
+map: Peninsula
+hero: admiral_brickell
+modes: [easy]
+planner:
+  towers: {mermonkey: [2, 2, 0], buccaneer: [2, 3, 2], sniper: [3, 1, 0], sub: [2, 0, 4]}
+  base_success: {easy: 0.85}
+  maps: [Peninsula]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.644, 0.513]}                                     # R10, $765; middle right
+  - {do: place, id: mer1, kind: mermonkey, role: dps, at: [0.580, 0.709]}                                # R10, $255; bottom-right land plot, by the bottom bend
+  - {do: place, id: buc1, kind: buccaneer, role: dps, at: [0.676, 0.351]}                                # R10, $340; water right of the exit side
+  - {do: upgrade, id: buc1, to: 2-0-1}                                                                   # R10, $765
+  - {do: upgrade, id: mer1, to: 2-1-0}                                                                   # R10, $515
+  - {do: upgrade, id: mer1, to: 2-2-0}                                                                   # R10, $190
+  - {do: place, id: buc2, kind: buccaneer, role: dps, at: [0.655, 0.436]}                                # R10, $340; water right of the exit side, lower
+  - {do: upgrade, id: buc2, to: 0-1-0}                                                                   # R10, $470
+  - {do: upgrade, id: buc1, to: 2-0-2}                                                                   # R11, $300
+  - {do: upgrade, id: buc2, to: 0-2-2}                                                                   # R12, $895
+  - {do: place, id: buc3, kind: buccaneer, role: dps, at: [0.195, 0.538]}                                # R13, $340; water left of the entrance side
+  - {do: upgrade, id: buc3, to: 1-0-1}                                                                   # R14, $405
+  - {do: place, id: mer2, kind: mermonkey, role: dps, at: [0.163, 0.198]}                                # R15, $255; water left of the entrance
+  - {do: upgrade, id: buc2, to: 0-3-2}                                                                   # R16, $765
+fill:
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, round: 17, at: [0.430, 0.150]}        # R17, $300; mountaintop (high ground)
+  - {do: upgrade, id: snp1, to: 0-1-0, round: 17}                                                        # R17, $215
+  - {do: place, id: sb1, kind: sub, role: dps, round: 18, at: [0.163, 0.266]}                            # R18, $275; water left of the entrance
+  - {do: upgrade, id: sb1, to: 2-0-2, round: 21}                                                         # R21, $1,770
+  - {do: place, id: sb2, kind: sub, role: dps, round: 22, at: [0.697, 0.266]}                            # R22, $275; water right of the exit
+  - {do: upgrade, id: sb2, to: 2-0-2, round: 25}                                                         # R25, $1,770
+  - {do: upgrade, id: snp1, to: 3-1-0, round: 29}                                                        # R29, $3,275
+  - {do: upgrade, id: sb1, to: 2-0-4, round: 33}                                                         # R33, $3,060
+panic:
+  - {do: place, kind: sub, role: dps}
+answers:
+  ceramic: [{do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.430, 0.150]}, {do: upgrade, id: snp1, to: 2-1-0}]
+  moab: [{do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.430, 0.150]}, {do: upgrade, id: snp1, to: 3-1-0}]

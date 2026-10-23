@@ -1,0 +1,88 @@
+# Off The Coast, Deflation: a fleet of Advanced Intel subs in both bays, two aces, a
+# sniper on the cliff and a bomb (all bought before round 31).
+#
+# Map (game data: data/map_geometry, btd6bot/dps_model.py Track): ONE lane, 901 units long,
+# that starts and ends in the sea below the screen, so 559 units can be hit. The upper
+# half is beach (land), the lower half sea; the shipwreck has three small land pieces and
+# the crane slightly blocks sight. No removable obstacles, no moving parts, no glass
+# (data/map_mechanics.json has no entry). Best water: the left bay inside the lane by the
+# entrance (x 0.11-0.23, y 0.53-0.83) and the right bay by the exit (x 0.61-0.75).
+#
+# Why: Deflation pays no income, so everything is bought with the starting cash
+# (account: Double Cash doubles it to ~$40,000). 2-0-x subs (Advanced Intel) shoot
+# anything another tower sees - the cliff sniper sees the whole map - so the fleet
+# covers the whole lane; Armor Piercing darts (x-x-4) and Sub Commander take the
+# MOAB-class rounds; aces circle over the beach. Subs are also XP the account needs.
+# (The first version leaned on a buccaneer; the dps_model fix of the buccaneer's
+# secondary shots dropped it below 2.0.)
+#
+# Sources:
+#   * bloonswiki Off_The_Coast: water towers recommended (https://www.bloonswiki.com/Off_The_Coast)
+#   * BTD6 Fenix, Off the Coast CHIMPS: subs 2-0-4 + a sniper (https://www.youtube.com/watch?v=hV74wqAusLI)
+#   * bloon.games Deflation on Off the Coast (video-only page):
+#     https://bloon.games/how-to-beat-deflation-on-off-the-coast/
+# Build order: tools/optimize_builds.py greedy search (Military towers, desperado, bomb,
+# village, alchemist, ninja allowed) with the account's Deflation cash, then re-checked by replay.
+#
+# plan = what $20,000 (Deflation without Double Cash) buys, so the offline threat test
+# finishes it; fill = the rest, in order, paid by the Double Cash half of the start cash.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: offthecoast_deflation
+map: Off The Coast
+hero: admiral_brickell
+modes: [deflation]
+planner:
+  towers: {sub: [3, 3, 4], ace: [2, 3, 0], sniper: [1, 2, 0], bomb: [0, 1, 2]}
+  base_success: {deflation: 0.85}
+  maps: [Off The Coast]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.243, 0.547]}                                     # R31, $765; Brickell in the right bay
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.184, 0.538]}                                       # R31, $275; middle left, in the water
+  - {do: upgrade, id: sb1, to: 0-1-3}                                                                    # R31, $2,555
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.687, 0.555]}                                       # R31, $275; middle right, in the water
+  - {do: upgrade, id: sb2, to: 0-3-2}                                                                    # R31, $3,025
+  - {do: place, id: sb3, kind: sub, role: dps, at: [0.142, 0.555]}                                       # R31, $275; middle left, in the water
+  - {do: upgrade, id: sb3, to: 2-0-2}                                                                    # R31, $1,770
+  - {do: place, id: sb4, kind: sub, role: dps, at: [0.719, 0.777]}                                       # R31, $275; bottom right, in the water
+  - {do: upgrade, id: sb4, to: 0-3-2}                                                                    # R31, $3,025
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.227, 0.249]}                                       # R31, $680; top left
+fill:
+  - {do: upgrade, id: ac1, to: 1-3-0}                                                                    # R31, $1,620
+  - {do: upgrade, id: sb3, to: 2-0-3}                                                                    # R31, $935
+  - {do: upgrade, id: ac1, to: 2-3-0}                                                                    # R31, $470
+  - {do: place, id: sb5, kind: sub, role: dps, at: [0.142, 0.760]}                                       # R31, $275; bottom left, in the water
+  - {do: upgrade, id: sb5, to: 0-1-2}                                                                    # R31, $1,620
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.152, 0.138]}                   # R31, $300; top-left cliff: map-wide sight for the Advanced Intel subs
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R31, $900
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.366, 0.249]}                                       # R31, $680; top centre
+  - {do: upgrade, id: ac2, to: 0-3-0}                                                                    # R31, $1,235
+  - {do: upgrade, id: sb5, to: 0-3-2}                                                                    # R31, $1,405
+  - {do: place, id: sb6, kind: sub, role: dps, at: [0.120, 0.828]}                                       # R31, $275; bottom left, in the water
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.687, 0.487]}                                     # R31, $320; middle right
+  - {do: upgrade, id: bmb1, to: 0-0-2}                                                                   # R31, $425
+  - {do: upgrade, id: sb6, to: 1-0-2}                                                                    # R31, $1,345
+  - {do: upgrade, id: bmb1, to: 0-1-2}                                                                   # R31, $215
+  - {do: upgrade, id: sb6, to: 2-0-2}                                                                    # R31, $425
+  - {do: upgrade, id: sb3, to: 2-0-4}                                                                    # R31, $2,125
+  - {do: upgrade, id: sb6, to: 2-0-4}                                                                    # R31, $3,060
+  - {do: place, id: sb7, kind: sub, role: dps, at: [0.751, 0.828]}                                       # R31, $275; bottom right, in the water
+  - {do: place, id: sb8, kind: sub, role: dps, at: [0.110, 0.709]}                                       # R31, $275; bottom left, in the water
+  - {do: place, id: sb9, kind: sub, role: dps, at: [0.708, 0.845]}                                       # R31, $275; bottom right, in the water
+  - {do: place, id: sb10, kind: sub, role: dps, at: [0.184, 0.606]}                                      # R31, $275; middle left, in the water
+  - {do: place, id: sb11, kind: sub, role: dps, at: [0.655, 0.606]}                                      # R31, $275; middle right, in the water
+  - {do: place, id: sb12, kind: sub, role: dps, at: [0.751, 0.726]}                                      # R31, $275; bottom right, in the water
+  - {do: place, id: sb13, kind: sub, role: dps, at: [0.783, 0.658]}                                      # R31, $275; bottom right, in the water
+  - {do: place, id: sb14, kind: sub, role: dps, at: [0.045, 0.572]}                                      # R31, $275; middle left, in the water
+  - {do: upgrade, id: sb1, to: 0-2-4}                                                                    # R31, $2,380
+  - {do: upgrade, id: sb7, to: 3-2-0}                                                                    # R31, $1,770
+  - {do: upgrade, id: sb8, to: 3-2-0}                                                                    # R31, $1,770
+  - {do: upgrade, id: sb9, to: 3-1-0}                                                                    # late, $1,515
+  - {do: upgrade, id: sb10, to: 1-0-0}                                                                   # late, $110
+panic:
+  - {do: place, kind: sub, role: dps}
+answers:
+  ceramic: [{do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.152, 0.138]}, {do: upgrade, id: snp1, to: 2-2-0}]
+  bfb: [{do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.152, 0.138]}, {do: upgrade, id: snp1, to: 4-2-0}]

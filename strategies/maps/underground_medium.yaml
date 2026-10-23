@@ -1,0 +1,92 @@
+# Underground, Medium / Military Only / Reverse: aces circling over the central ring, snipers on Strong,
+# a heli.
+#
+# Map (game data: data/map_geometry, dps_model Track): two short lanes at once (one from
+# the top, one from the bottom) that both loop through the central ring and cross at its
+# left and right edges. Lots of cave floor; no water, no removable obstacles.
+#
+# Why: every tower here is a Military tower, so one build serves Medium, Military Only, Reverse.
+# Both lanes loop through the central ring, so aces flying round it and map-wide snipers
+# reach both lanes at once (BlueCliff's Hard guide ends with a Strong sniper; bloonswiki
+# lists snipers and stalling as the map's strengths). The fill puts later cash into
+# Deadly Precision / Maim MOAB / Full Auto snipers.
+#
+# Sources:
+#   * bloonswiki Underground: the centre and the spaces above and below it cover both lanes;
+#     stall towers are valuable on the short lanes (https://www.bloonswiki.com/Underground)
+#   * BlueCliff, Underground Hard: Quincy inside the ring, ninja 4-0-2, alchemist, bombs 0-2-4
+#     (https://www.youtube.com/watch?v=9jvPhl28e5E)
+#   * bloon.games guides for these modes (video-only pages):
+#     https://bloon.games/how-to-beat-standard-medium-on-underground/
+#     https://bloon.games/how-to-beat-military-only-on-underground/
+#     https://bloon.games/how-to-beat-reverse-on-underground/
+# Build order: tools/optimize_builds.py greedy search (towers limited to the list in
+# planner.towers) on the account economy (Double Cash + Fast Track: Medium starts at round 15 with ~$6,057),
+# then re-checked by replay. Comments: the round each step is bought by in the first
+# listed mode, and its price.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), checked legal for each
+# tower in plan order (tests/test_map_hints_offline.py). Untested in play: base_success
+# stays low until the record calibrates it.
+id: underground_medium
+map: Underground
+hero: quincy
+modes: [medium, military_only, reverse]
+planner:
+  towers: {sniper: [4, 2, 4], ace: [2, 3, 0], heli: [2, 0, 3]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Underground]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.441, 0.487]}                                     # R15, $540; inside the central ring
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.142, 0.138]}                   # R15, $350; left cave floor
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                                   # R15, $1,050
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.184, 0.138]}                   # R15, $350; left cave floor
+  - {do: upgrade, id: snp2, to: 0-2-1}                                                                   # R15, $1,150
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.227, 0.138]}                   # R15, $350; beside the ring
+  - {do: upgrade, id: snp2, to: 0-2-2}                                                                   # R15, $450
+  - {do: place, id: snp4, kind: sniper, role: dps, target: strong, at: [0.270, 0.138]}                   # R15, $350; beside the ring
+  - {do: upgrade, id: snp3, to: 0-2-0}                                                                   # R15, $700
+  - {do: upgrade, id: snp4, to: 0-2-2}                                                                   # R17, $1,600
+  - {do: upgrade, id: snp3, to: 0-2-2}                                                                   # R19, $900
+  - {do: place, id: snp5, kind: sniper, role: dps, target: strong, at: [0.313, 0.138]}                   # R19, $350; above the ring, between both lanes
+  - {do: upgrade, id: snp5, to: 1-2-0}                                                                   # R22, $1,050
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.355, 0.487]}                                       # R23, $800; inside the central ring
+  - {do: upgrade, id: ac1, to: 0-1-0}                                                                    # R23, $200
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.355, 0.300]}                                       # R25, $800; above the ring, between both lanes
+  - {do: upgrade, id: ac2, to: 0-1-0}                                                                    # R25, $200
+  - {do: upgrade, id: ac1, to: 1-1-0}                                                                    # R26, $450
+  - {do: upgrade, id: ac2, to: 1-1-0}                                                                    # R27, $450
+  - {do: upgrade, id: ac1, to: 1-3-0}                                                                    # R28, $1,250
+  - {do: upgrade, id: ac2, to: 2-3-0}                                                                    # R30, $1,800
+  - {do: upgrade, id: ac1, to: 2-3-0}                                                                    # R31, $550
+  - {do: place, id: snp6, kind: sniper, role: dps, target: strong, at: [0.350, 0.138]}                   # R32, $350; above the ring, between both lanes
+  - {do: upgrade, id: snp6, to: 1-2-0}                                                                   # R33, $1,050
+  - {do: place, id: snp7, kind: sniper, role: dps, target: strong, at: [0.430, 0.138]}                   # R33, $350; above the ring, between both lanes
+  - {do: upgrade, id: snp7, to: 1-2-0}                                                                   # R34, $1,050
+  - {do: place, id: snp8, kind: sniper, role: dps, target: strong, at: [0.505, 0.138]}                   # R35, $350; above the ring, between both lanes
+  - {do: upgrade, id: snp8, to: 1-2-0}                                                                   # R35, $1,050
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.494, 0.692]}                                       # R36, $800; below the ring, between both lanes
+  - {do: upgrade, id: ac3, to: 2-3-0}                                                                    # R37, $2,450
+  - {do: place, id: ac4, kind: ace, role: dps, at: [0.366, 0.692]}                                       # R37, $800; below the ring, between both lanes
+  - {do: upgrade, id: ac4, to: 1-1-0}                                                                    # R38, $650
+  - {do: place, id: ac5, kind: ace, role: dps, at: [0.238, 0.487]}                                       # R38, $800; beside the ring
+  - {do: upgrade, id: ac5, to: 0-1-0}                                                                    # R38, $200
+  - {do: upgrade, id: ac4, to: 2-3-0}                                                                    # R39, $1,800
+  - {do: upgrade, id: ac5, to: 1-3-0}                                                                    # R39, $1,700
+  - {do: place, id: ac6, kind: ace, role: dps, at: [0.494, 0.487]}                                       # R40, $800; inside the central ring
+  - {do: upgrade, id: ac6, to: 2-3-0}                                                                    # R40, $2,450
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.623, 0.504]}                                     # R41, $1,500; beside the ring
+  - {do: upgrade, id: hel1, to: 1-0-2}                                                                   # R42, $1,400
+  - {do: place, id: hel2, kind: heli, role: dps, at: [0.227, 0.351]}                                     # R42, $1,500; beside the ring
+  - {do: upgrade, id: hel2, to: 0-0-2}                                                                   # R42, $600
+fill:
+  - {do: upgrade, id: snp1, to: 3-2-0, round: 44}                                                        # R44, $3,500
+  - {do: upgrade, id: snp5, to: 3-2-0, round: 45}                                                        # R45, $3,500
+  - {do: upgrade, id: snp6, to: 3-2-0, round: 46}                                                        # R46, $3,500
+  - {do: upgrade, id: snp1, to: 4-2-0, round: 48}                                                        # R48, $6,300
+  - {do: upgrade, id: snp7, to: 3-2-0, round: 49}                                                        # R49, $3,500
+  - {do: upgrade, id: snp8, to: 3-2-0, round: 50}                                                        # R50, $3,500
+  - {do: upgrade, id: snp2, to: 0-2-4, round: 50}                                                        # R50, $6,800
+  - {do: upgrade, id: hel1, to: 2-0-3, round: 51}                                                        # R51, $3,900
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}

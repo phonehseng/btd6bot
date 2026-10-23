@@ -1,0 +1,78 @@
+# Frozen Over, Medium / Military Only / Reverse: two Destroyers and an Armor
+# Piercing sub in the central pond, Bomber Aces on the ice, snipers bottom
+# right.
+#
+# Why: a long route (1,503 world units; the first 15% runs off screen) that
+# crosses itself in figure-eights. The small central pond sits inside the
+# crossings: a buccaneer there reaches 52% of the route and a sub 34% (map
+# geometry) - the best spot on the map by far. It holds two buccaneers and one
+# sub; Brickell goes in the big pond on the left. The cliff at the top blocks
+# sight (9% of the map) but snipers in the bottom-right corner see the whole
+# route. Military towers only: one build for all three modes.
+#
+# Sources:
+#   * bloonswiki Strategy:Military_Only: Destroyer "best with the 3-2-0 crosspath",
+#     Armor Piercing Darts subs, Maim MOAB snipers on Strong for the round-60 BFB,
+#     Full Metal Jacket for leads, every military tower has a cheap camo upgrade
+#     (https://www.bloonswiki.com/Strategy:Military_Only)
+#   * bloonswiki Reverse_(BTD6): Medium strategies work unchanged in Reverse
+#     except on a few named maps (none of the beginner maps)
+#     (https://www.bloonswiki.com/Reverse_(BTD6))
+#   * bloonswiki Frozen_Over: one of the easiest maps, long track, many loops
+#     (https://www.bloonswiki.com/Frozen_Over)
+#
+# Surplus cash goes into more Armor Piercing subs (`xp_target: sub`; the
+# account still needs sub XP), capped at 2-0-4 by the fill step.
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method):
+#   * every `at` is legal for its tower in plan order, on the map geometry (as
+#     tests/test_map_hints_offline.py checks) and on the live map model;
+#   * the plan replayed the executor's way (tools/optimize_builds.replay_plan)
+#     on the account's economy (Fast Track R15, Double Cash) keeps every
+#     round at a damage-model margin of 2.0 or more. Worst margin:
+#       5.19 (Medium and Military Only); 5.02 (Reverse)
+#   * sight-strict (snipers only count the track they can see, subs their own
+#     range, aces their flight circle):
+#       4.65 (Medium and Military Only); 4.51 (Reverse)
+#   * executor-faithful replay (tools/simulate_threats' loop, with the match
+#     loop's surplus spending), strict, with its extra towers / plan only:
+#       4.65 / 3.19 (Medium and Military Only); 4.51 / 3.91 (Reverse)
+#   * tools/simulate_threats finds no gaps; strategy.coverage nothing missing.
+id: frozenover_medium
+map: Frozen Over
+hero: admiral_brickell
+modes: [medium, military_only, reverse]
+xp_target: sub
+planner:
+  towers: {sniper: [4, 2, 0], buccaneer: [3, 2, 2], ace: [2, 3, 0], sub: [2, 0, 4]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Frozen Over]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.799, 0.879]}   # bottom-right corner: sees the whole route
+  - {do: upgrade, id: s1, to: 1-2-0}   # lead (Full Metal Jacket) + camo (Night Vision) + shrapnel
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.473, 0.436]}   # central pond, top: 52% of the route
+  - {do: upgrade, id: b1, to: 2-0-2}   # Crow's Nest: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.227, 0.385]}   # Brickell in the big left pond
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.473, 0.538]}   # central pond, bottom: 48% of the route
+  - {do: upgrade, id: b2, to: 2-2-0}   # Hot Shot: lead
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.355, 0.743]}   # ice south of the crossings
+  - {do: upgrade, id: a1, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.441, 0.487]}   # central pond, left: 30% of the route
+  - {do: upgrade, id: sb1, to: 2-0-3}   # Advanced Intel + Triple Guns
+  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.810, 0.828]}
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.553, 0.274]}   # top-middle: the last loops
+  - {do: upgrade, id: a2, to: 2-3-0}
+  - {do: upgrade, id: s2, to: 4-2-0}   # second Maim MOAB for round 60
+fill:
+  - {do: upgrade, kind: sub, to: 2-0-4}   # surplus subs (xp_target) stop at Armor Piercing Darts
+answers:
+  camo: [{do: upgrade, id: s1, to: 1-2-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

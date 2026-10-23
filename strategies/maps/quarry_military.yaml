@@ -1,0 +1,86 @@
+# Quarry, Medium/Military Only/Reverse: boats in the bottom river, Monkey Aces
+# over the middle, map-wide snipers.
+#
+# Why: one long zig-zag lane (1,336 units). From round 40 MOAB-class bloons
+# take their own track (PathMoab, opened by MapEventMoabTrack): it starts at
+# the top right and joins the lane at the first bend, skipping the top
+# stretch. The stock damage model sends MOABs down the normal lane; these
+# builds were checked with PathMoab added as a MOAB-only route, so nothing
+# here counts on the top stretch against MOABs.
+#
+# Sources:
+#   * bloonswiki Quarry: long lane, MOAB-only entrance top right after round
+#     39, walls block line of sight, Heli Pilots get around them, a river
+#     along the bottom takes boats (https://www.bloonswiki.com/Quarry)
+#   * bloons.fandom Quarry: main damage on the second half of the lane
+#     (https://bloons.fandom.com/wiki/Quarry)
+#   * BloonsPlayer Quarry CHIMPS script (Tack 2-0-5, Spike Factory, Village,
+#     Alchemists, Ice) (https://github.com/piweiblen/BloonsPlayer/blob/HEAD/sr
+#     c/data/tas/CHIMPS/quarry%20CHIMPS.txt)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): medium
+# 3.26 (R15), military_only 3.26 (R15), reverse 3.75 (R58). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: quarry_military
+map: Quarry
+hero: etienne
+modes: [medium, military_only, reverse]
+planner:
+  towers: {buccaneer: [2, 0, 2], sub: [2, 0, 5], ace: [2, 3, 0], sniper: [5, 2, 0]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Quarry]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.913]}                # reaches 132 / 133 units of the lanes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.719, 0.913]}                # reaches 102 / 102 units of the lanes
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.099, 0.93]}                      # reaches 81 / 81 units of the lanes
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.484, 0.913]}                     # reaches 77 / 77 units of the lanes
+  - {do: upgrade, id: b1, to: 2-0-1}
+  - {do: upgrade, id: b2, to: 2-0-0}
+  - {do: upgrade, id: sb1, to: 2-0-1}
+  - {do: upgrade, id: sb2, to: 1-0-0}
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: upgrade, id: sb2, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.5, 0.777]}                     # hero (not counted by the damage model)
+  - {do: upgrade, id: sb2, to: 2-0-1}
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.644, 0.743]}                      # reaches 266 / 266 units of the lanes
+  - {do: upgrade, id: a1, to: 1-1-0}
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.761, 0.359]}   # map-wide
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.04, 0.342]}    # map-wide
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.505, 0.47]}                       # reaches 340 / 340 units of the lanes
+  - {do: upgrade, id: a2, to: 0-1-0}
+  - {do: upgrade, id: s1, to: 1-0-0}
+  - {do: upgrade, id: sb2, to: 2-0-2}
+  - {do: upgrade, id: sb1, to: 2-0-3}                                                  # Triple Guns
+  - {do: upgrade, id: a1, to: 1-2-0}
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: upgrade, id: a2, to: 2-1-0}
+  - {do: upgrade, id: sb2, to: 2-0-3}                                                  # Triple Guns
+  - {do: upgrade, id: a1, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: sb1, to: 2-0-4}                                                  # Armor Piercing Darts
+  - {do: upgrade, id: sb2, to: 2-0-4}                                                  # Armor Piercing Darts
+  - {do: upgrade, id: s1, to: 2-2-0}
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+fill:
+  - {do: upgrade, id: sb1, to: 2-0-5}                                                  # Sub Commander
+  - {do: upgrade, id: s1, to: 5-2-0}                                                   # Cripple MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); plan or fill already buys them
+  ceramic:
+    - {do: upgrade, id: s1, to: 2-2-0}
+  bfb:
+    - {do: upgrade, id: s1, to: 4-2-0}

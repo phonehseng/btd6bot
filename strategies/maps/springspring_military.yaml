@@ -1,0 +1,75 @@
+# Spring Spring, Medium/Military Only/Reverse: boats in the water at the exit
+# where both lanes meet, map-wide snipers, Monkey Aces and a Heli Pilot.
+#
+# Why: two lanes run at the same time from the same entrance on the left to
+# the same exit on the right, one over the top of the big island and one under
+# it. Over 40% of each lane is off screen; both lanes meet again at the exit,
+# so the right end of the island and the water around it reach both.
+#
+# Sources:
+#   * bloonswiki Spring_Spring: towers near the right end of the island, a Sub
+#     fits where the paths split, global blimp damage (Aircraft Carrier,
+#     Carrier Flagship), Sub Commanders at the back
+#     (https://www.bloonswiki.com/Spring_Spring)
+#   * bloons.fandom Spring_Spring/Strategies: Dart and Sniper start, Carrier
+#     Flagship and a 4-0-2 Ace mid-game
+#     (https://bloons.fandom.com/wiki/Spring_Spring/Strategies)
+#   * Spring Spring black border with Psi and Sub Commanders
+#     (https://www.youtube.com/watch?v=hFDd_GO9cb4)
+#
+# Towers chosen from the sources; order and spots from
+# tools/optimize_builds.py restricted to them (safety margin 3.0), then
+# replayed as the executor buys (in order, as cash allows) with the account's
+# Fast Track and Double Cash.
+#
+# Worst damage-model margin per mode (plan only, fill not counted): medium
+# 3.87 (R28), military_only 3.87 (R28), reverse 3.87 (R28). Notes and checks:
+# docs/map_strategies/intermediate_b.md.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal for its
+# tower in plan order, clear of the top HUD and of spots the bot has seen the
+# game refuse.
+id: springspring_military
+map: Spring Spring
+hero: etienne
+modes: [medium, military_only, reverse]
+planner:
+  towers: {buccaneer: [5, 0, 2], sub: [2, 0, 5], sniper: [5, 2, 0], ace: [2, 3, 0], heli: [3, 0, 2]}
+  base_success: {medium: 0.8, military_only: 0.8, reverse: 0.8}
+  maps: [Spring Spring]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.624]}                # reaches 72 / 123 units of the lanes
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.772, 0.692]}                # reaches 54 / 123 units of the lanes
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.772, 0.419]}                     # reaches 80 / 54 units of the lanes
+  - {do: upgrade, id: b2, to: 2-0-0}
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.623, 0.521]}                   # hero (not counted by the damage model)
+  - {do: upgrade, id: b1, to: 2-0-2}
+  - {do: upgrade, id: sb1, to: 2-0-3}                                                  # Triple Guns
+  - {do: upgrade, id: b2, to: 2-0-1}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.259, 0.146]}   # map-wide
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.345, 0.146]}   # map-wide
+  - {do: upgrade, id: s2, to: 1-2-0}
+  - {do: upgrade, id: s1, to: 1-2-0}
+  - {do: upgrade, id: sb1, to: 2-0-4}                                                  # Armor Piercing Darts
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.216, 0.402]}                      # reaches 132 / 30 units of the lanes
+  - {do: upgrade, id: a1, to: 1-3-0}                                                   # Bomber Ace
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.43, 0.334]}                      # map-wide
+  - {do: upgrade, id: h1, to: 3-0-2}                                                   # Razor Rotors
+  - {do: upgrade, id: b1, to: 3-0-2}                                                   # Destroyer
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.248, 0.879]}                      # reaches 0 / 109 units of the lanes
+  - {do: upgrade, id: a2, to: 2-3-0}                                                   # Bomber Ace
+  - {do: upgrade, id: b2, to: 3-0-1}                                                   # Destroyer
+  - {do: upgrade, id: b1, to: 4-0-2}                                                   # Aircraft Carrier
+  - {do: upgrade, id: s1, to: 4-2-0}                                                   # Maim MOAB
+fill:
+  - {do: upgrade, id: b1, to: 5-0-2}                                                   # Carrier Flagship
+  - {do: upgrade, id: sb1, to: 2-0-5}                                                  # Sub Commander
+  - {do: upgrade, id: s1, to: 5-2-0}                                                   # Cripple MOAB
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  # the threat table's answers (strategy.coverage); plan or fill already buys them
+  bfb:
+    - {do: upgrade, id: s1, to: 4-2-0}
