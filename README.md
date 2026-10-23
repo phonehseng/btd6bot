@@ -12,7 +12,7 @@ python bot.py plan              # what would it play next, and why
 python bot.py status            # account summary (level, towers, medals)
 ```
 
-For unattended runs, the supervisor (`run_forever.ps1`) is installed as the Windows scheduled task **BTD6Bot**. It starts at logon, survives terminal restarts, launches BTD6 through Steam if needed, and restarts the bot if it exits, kills it if it hangs (watchdog), and restarts BTD6 if games stop finishing. **Ctrl+Alt+F8**, or creating a file named `STOP` in the project folder, stops it for good.
+For unattended runs, the supervisor (`run_forever.ps1`) is installed as the Windows scheduled task **BTD6Bot**. It starts at logon, survives terminal restarts, restarts the bot if it exits and kills it if it hangs (watchdog). It never starts, raises or closes BTD6: keep the game open and in front; while it is closed or behind another window the bot pauses and waits for it. **Ctrl+Alt+F8**, or creating a file named `STOP` in the project folder, stops it for good.
 
 ```
 powershell -ExecutionPolicy Bypass -File tools\install_task.ps1   # install and start
