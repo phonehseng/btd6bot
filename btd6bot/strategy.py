@@ -2442,10 +2442,12 @@ class Executor:
             r = self.answer_threat(threat, cash, rnd)
             if r == "bought":
                 return True
-            if r == "wait":
+            if r == "wait" and self.rules.get("income") is not False:
                 self.waiting = self.wait_note or f"saving for {threat} answer"
                 self.saving_for_threat = True
                 return False  # hold cash for the answer
+            # (no income, Deflation: saving cannot make the answer affordable
+            # later - the money is better spent on the rest of the defence)
             if r == "plan":
                 continue      # the plan's own next steps cover it in time
             log.warning("threat %s: nothing applicable to buy - not holding the plan for it", threat)
@@ -2455,7 +2457,7 @@ class Executor:
             r = self._answer_ramp(*ramp, cash, rnd)
             if r == "bought":
                 return True
-            if r == "wait":
+            if r == "wait" and self.rules.get("income") is not False:
                 self.waiting = f"saving for blimp damage before round {ramp[0]}"
                 self.saving_for_threat = True
                 return False
@@ -2569,6 +2571,16 @@ class Executor:
                 if r == "bought":
                     return True
                 continue
+            if r == "wait" and self.g.fail_reason == "spot" and self.rules.get("buy_all_upfront"):
+                # No income (Deflation): every dollar must be spent before the
+                # first round, so a step with no legal spot is put aside
+                # (deferred, retried later) instead of holding up the rest of
+                # the plan - Cracked Deflation started round 31 with $14,060
+                # unspent behind an exit spike that had nowhere to go.
+                log.info("plan step %d %s has no spot now - set aside, the plan goes on", self.idx, st)
+                self.deferred.append(st)
+                self.idx += 1
+                continue
             self.waiting = f"plan step {self.idx} {st} -> {r} ({self.g.fail_reason})"
             return r == "progress"  # waiting for cash / round, or mid-upgrade
         for st in self.fill:
@@ -2593,7 +2605,9 @@ class Executor:
         # tower it levels up first - tower XP follows invested cash - and only
         # then into helpers, side paths or the opener.
         target = self.strat.get("xp_target") if isinstance(getattr(self, "strat", None), dict) else None
-        for p, t, cost in self.upgrade_choices(first=target):
+        # with no income the plan's crosspath caps would strand cash: the
+        # leading path may go further (as reinforce.py does)
+        for p, t, cost in self.upgrade_choices(first=target, past_plan=bool(self.rules.get("buy_all_upfront"))):
             if cost > cash:
                 continue
             r = self.try_step({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, t))}, cash, rnd)

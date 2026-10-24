@@ -171,6 +171,10 @@ class Match:
         if late:
             max_seconds = 150
             log.info("game starts at round %d (Fast Track?) - building the full defence first", rnd)
+        if self.ex.rules.get("buy_all_upfront"):
+            # no income (Deflation): the round waits for Play and the cash
+            # never grows, so the build may take as long as it needs
+            max_seconds = 600
         # failed spots are blocked one by one, so keep trying for a while
         # before concluding nothing can be placed (never start undefended).
         # On a late (Fast Track) start every dollar goes in before Play: Dark
