@@ -10,8 +10,10 @@ in its OCR. The buttons sit in a small window of their own, right of the strip
   STOP  writes the HOLD file: the bot sends no more input and waits where it
         is (btd6bot/inputs.py). It stops the bot, not the game - a round in
         progress keeps running.
-  GO    removes the HOLD file and brings BTD6 to the front, so the bot can
-        carry on. (The bot itself never takes focus; GO is the owner's click.)
+  GO    resumes, whatever stopped the bot: removes HOLD, PAUSE and STOP,
+        brings BTD6 to the front (or starts it through Steam when it is
+        closed) and starts the supervisor when no bot is running. (The bot
+        itself never takes focus or opens the game; GO is the owner's click.)
 
 Started by run_forever.ps1; single instance. Close it with the STOP file or by
 ending the process.
@@ -90,6 +92,44 @@ def bring_game_forward():
     return user32.GetForegroundWindow() == hwnd
 
 
+STEAM_LAUNCH = "steam://rungameid/960090"     # BTD6's Steam id
+NO_WINDOW = 0x08000000                        # subprocess.CREATE_NO_WINDOW
+
+
+def bot_running():
+    """Is a bot (bot.py run) or its supervisor (run_forever.ps1) running?"""
+    import subprocess
+    ps = ("Get-CimInstance Win32_Process | ? { $_.CommandLine -match 'bot.py run|run_forever.ps1' "
+          "-and $_.Name -ne 'bash.exe' } | Measure-Object | % Count")
+    try:
+        out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True,
+                             timeout=20, creationflags=NO_WINDOW).stdout.strip()
+        return int(out or 0) > 0
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return True      # unknown: never start a second supervisor on a guess
+
+
+def go():
+    """The GO button: undo whatever stopped the bot, whatever it was.
+
+      * the HUD's STOP (HOLD), the PAUSE and STOP files are removed;
+      * BTD6 is brought to the front - or started through Steam when it is
+        not running (the owner's click; the bot itself never does either);
+      * the supervisor is started when no bot is running (it starts the bot).
+    """
+    import os
+    import subprocess
+    for name in ("HOLD", "PAUSE", "STOP"):
+        (ROOT / name).unlink(missing_ok=True)
+    if user32.FindWindowW(None, GAME_TITLE):
+        bring_game_forward()
+    else:
+        os.startfile(STEAM_LAUNCH)
+    if not bot_running():
+        subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
+                          "-File", str(ROOT / "run_forever.ps1")], cwd=str(ROOT), creationflags=NO_WINDOW)
+
+
 def set_ex_style(win, extra):
     """Add extended window styles to a Tk window (its real top-level hwnd)."""
     win.update_idletasks()
@@ -141,8 +181,7 @@ def main():
         HOLD.write_text(time.strftime("%Y-%m-%d %H:%M:%S stopped from the HUD\n"), encoding="utf-8")
 
     def press_go():
-        HOLD.unlink(missing_ok=True)
-        bring_game_forward()
+        go()
 
     style = dict(font=("Segoe UI", 11, "bold"), bd=0, relief="flat", width=7, cursor="hand2")
     stop_btn = tk.Button(panel, text="■ STOP", bg="#7a1e1e", fg="white", activebackground="#a32929",

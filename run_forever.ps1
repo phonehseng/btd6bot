@@ -4,7 +4,11 @@
 #  - never starts, restarts or closes BTD6: the person at the PC keeps the game
 #    open; while it is closed or not in front the bot pauses and waits for it
 # Usage:  powershell -ExecutionPolicy Bypass -File run_forever.ps1
-param([double]$Hours = 0)   # 0 = forever
+# -Hours is accepted but ignored: the scheduled task passed "-Hours 24", and
+# the supervisor then stopped restarting the bot a day after it started (the
+# bot sat idle from 2026-10-27 01:45). The supervisor now runs until a STOP
+# file; the bot's own --hours 24 just makes it restart once a day.
+param([double]$Hours = 0)
 
 $py = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
 Set-Location $PSScriptRoot
@@ -33,8 +37,7 @@ function LastChange {
 }
 function Results { if (Test-Path $botlog) { (Select-String -Path $botlog -Pattern "RESULT" -SimpleMatch | Measure-Object).Count } else { 0 } }
 
-$deadline = if ($Hours -gt 0) { (Get-Date).AddHours($Hours) } else { [datetime]::MaxValue }
-while ((Get-Date) -lt $deadline) {
+while ($true) {
     if (Test-Path (Join-Path $PSScriptRoot "STOP")) { Note "STOP file present - supervisor exiting"; break }
     # on-screen status strip (single instance, click-through)
     Start-Process -FilePath ($py -replace 'python\.exe$', 'pythonw.exe') -ArgumentList "tools\overlay.py" -WorkingDirectory $PSScriptRoot
