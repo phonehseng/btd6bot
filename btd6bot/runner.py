@@ -375,6 +375,8 @@ class Bot:
                 return True
             if st == "pause":
                 self.menus.click_word("home")
+            elif st == "mode_intro_play":
+                self._press_intro_play()      # into the game; it is left from there as usual
             elif st == "game_error":
                 # the game's own error dialog: its EXIT button closes the
                 # game (nothing was won or lost); the bot then waits for it
@@ -771,11 +773,13 @@ class Bot:
             return False
         end = time.time() + 30  # loading, overwrite prompt, mode intro popups
         while time.time() < end:
-            st = self.menus.wait_for({"in_game", "overwrite"}, timeout=3)
+            st = self.menus.wait_for({"in_game", "overwrite", "mode_intro_play"}, timeout=3)
             if st == "in_game":
                 self._close_mode_intro()
                 return True
-            if st == "overwrite":
+            if st == "mode_intro_play":
+                self._press_intro_play()
+            elif st == "overwrite":
                 self.menus.click_word("ok", "yes", "overwrite")
             elif st == "unknown":
                 self.menus.dismiss_popup()
@@ -787,6 +791,24 @@ class Bot:
     # no tower can be picked up: Alpine Run Deflation tried 14 pick-ups and
     # gave the game up. Its OK button sits in this region.
     MODE_INTRO_OK = (0.35, 0.6, 0.65, 0.8)
+
+    # The green Play arrow of a mode intro box without text on its button
+    # (Apopalypse) sits low in the middle of the box.
+    INTRO_PLAY_REGION = (0.4, 0.6, 0.6, 0.82)
+
+    def _press_intro_play(self):
+        """Press the green Play arrow of a mode's intro box (found by its
+        colour: the button has no text). It only loads the map - the bot
+        still builds its defence before the first wave starts."""
+        from .game import _colour_blob
+        spot = _colour_blob(self.s.grab(), self.INTRO_PLAY_REGION, (40, 120, 120), (85, 255, 255))
+        if spot is None:
+            log.warning("mode intro box: no green Play arrow found")
+            return False
+        log.info("mode intro box: pressing its Play arrow at %.3f,%.3f", *spot)
+        self.inp.click(*spot)
+        time.sleep(1.0)
+        return True
 
     def _close_mode_intro(self):
         """Click the OK of a mode's intro box if one is up (game just loaded)."""

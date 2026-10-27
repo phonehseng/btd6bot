@@ -20,6 +20,11 @@ SCREENS = [
     # the map's OnClickHandler). Over a match the HUD still shows, so it must
     # come before everything else, or the bot thinks it is playing.
     ("game_error", [["unexpectederror", "encounteredan", "contactsupport"], ["exit"]]),
+    # a mode's intro box whose only button is a green Play arrow with no text
+    # (Apopalypse: "Ever increasing Bloon waves, no breaks at the end of each
+    # round. How far can you get?"); it comes before the map loads, so the
+    # game never starts until the arrow is pressed (runner._press_intro_play)
+    ("mode_intro_play", [["everincreasing", "nobreaksattheend", "howfarcanyouget"]]),
     # after a win during a collection event (title "COLLECTION EVENT"; the
     # font's C reads as G): a crate fills up, and a full one shows COLLECT
     ("collection_event", [["collectionevent", "collegtionevent"]]),
