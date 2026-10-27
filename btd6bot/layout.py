@@ -8,7 +8,11 @@ alternate table below (selected automatically from the aspect ratio).
 LAYOUTS = {
     "16:10": {
         "playfield": (0.0, 0.04, 0.855, 0.96),
-        "lives": (0.059, 0.045, 0.135, 0.11),   # right of the heart icon
+        # right of the heart icon. It starts clear of the heart's rim: when
+        # bonus lives give the heart a pale ring, a crop starting at 0.059
+        # caught that rim and OCR read it as a leading '2' (86 -> 286,
+        # 200 -> 2200), which hid every leak of a whole Apopalypse game.
+        "lives": (0.064, 0.045, 0.135, 0.11),
         "cash": (0.183, 0.045, 0.32, 0.11),     # right of the coin icon
         # round counter moves left when an upgrade panel opens on the right
         "round": (0.705, 0.06, 0.815, 0.11),
