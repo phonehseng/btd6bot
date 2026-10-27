@@ -9,6 +9,7 @@ Items marked **[live]** need the game, so the bot has to be paused for them; onl
 3. **[live]** At level 30, calibrate `meta.buy_monkey_knowledge`, then call it from the runner after games when `account.mk_points > 0`.
 5. **[offline]** `tests/test_planner.py::test_long_run_reaches_everything` fails; investigate it.
 6. **[offline]** Planner: use the observed `minutes` per map/mode (`account.map_stats`) instead of estimates, to maximize Hard wins per hour.
+8. **[offline]** Blimp check (`threats.round_blimp_load`, `strategy._ramp_due`) counts only MOAB-class HP. On 2026-10-27 Medium, Mushroom Grotto passed it at 4.1x and Last Resort at 2.2x, yet the round-40 MOAB popped near the exit and its ceramics leaked. Count the ceramics a blimp releases (and the time left on the track after the pop), and act on a "short" check earlier than 3 rounds ahead: five of eight Medium losses that day were flagged "short" at round 37, with no cash left to answer.
 9. **[offline]** Look at each loss in `logs/bot.log` (`outcome': 'defeat'`), work out which threat leaked, and strengthen that strategy's `answers:` section.
 
 ## Done
