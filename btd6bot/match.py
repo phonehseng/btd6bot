@@ -614,11 +614,24 @@ class Match:
                 return                        # already resting there
         self.g.inp.move(*spot, fast=True)
 
+    DEFEAT_READS = 15    # this many defeat screens in a row count as a defeat, whatever the lives read
+
     def _real_end(self, st, f):
         """A defeat needs the lives counter to agree: a word like 'defeat' can
         show up in tower/upgrade panels and once made the bot quit three games
         it was winning at full lives."""
         if st != "defeat":
+            self._defeat_reads = 0
+            return True
+        words = {norm(w.text) for w in self.menus.words}
+        # The defeat card itself is proof: "Bloons Leaked" and its buttons
+        # (Restart, Review Map) appear nowhere else. On 2026-10-27 the lives
+        # counter behind the card read "1" and the bot ignored a real defeat
+        # for ten minutes.
+        card = any("bloonsleaked" in w for w in words) or (
+            any("defeat" in w for w in words) and any(k in w for w in words for k in ("restart", "reviewmap")))
+        self._defeat_reads = getattr(self, "_defeat_reads", 0) + 1
+        if card or self._defeat_reads >= self.DEFEAT_READS:
             return True
         lives = self.g.hud.lives(f) if f is not None else None
         known = self._lives.median()
@@ -626,11 +639,12 @@ class Match:
             hits = [w.text for w in self.menus.words
                     if any(k in norm(w.text) for k in ("defeat", "gameover", "bloonsleaked", "youlost"))]
             log.warning("ignoring 'defeat' screen: lives still %s (matched %s)", lives, hits)
-            try:
-                import cv2
-                cv2.imwrite(f"logs/false_defeat_{int(time.time())}.png", f)
-            except Exception:
-                pass
+            if self._defeat_reads == 1:           # one picture per false alarm, not one every 2 s
+                try:
+                    import cv2
+                    cv2.imwrite(f"logs/false_defeat_{int(time.time())}.png", f)
+                except Exception:
+                    pass
             return False
         return True
 
