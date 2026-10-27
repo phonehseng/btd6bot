@@ -11,7 +11,7 @@ in its OCR. The buttons sit in a small window of their own, right of the strip
         is (btd6bot/inputs.py). It stops the bot, not the game - a round in
         progress keeps running.
   GO    resumes, whatever stopped the bot: removes HOLD, PAUSE and STOP,
-        brings BTD6 to the front (or starts it through Steam when it is
+        brings BTD6 to the front (or starts BloonsTD6.exe when it is
         closed) and starts the supervisor when no bot is running. (The bot
         itself never takes focus or opens the game; GO is the owner's click.)
 
@@ -92,7 +92,8 @@ def bring_game_forward():
     return user32.GetForegroundWindow() == hwnd
 
 
-STEAM_LAUNCH = "steam://rungameid/960090"     # BTD6's Steam id
+# the game's own executable (started directly, not through Steam's URL)
+GAME_EXE = Path(r"C:\Program Files (x86)\Steam\steamapps\common\BloonsTD6\BloonsTD6.exe")
 NO_WINDOW = 0x08000000                        # subprocess.CREATE_NO_WINDOW
 
 
@@ -113,18 +114,17 @@ def go():
     """The GO button: undo whatever stopped the bot, whatever it was.
 
       * the HUD's STOP (HOLD), the PAUSE and STOP files are removed;
-      * BTD6 is brought to the front - or started through Steam when it is
+      * BTD6 is brought to the front - or started from its .exe when it is
         not running (the owner's click; the bot itself never does either);
       * the supervisor is started when no bot is running (it starts the bot).
     """
-    import os
     import subprocess
     for name in ("HOLD", "PAUSE", "STOP"):
         (ROOT / name).unlink(missing_ok=True)
     if user32.FindWindowW(None, GAME_TITLE):
         bring_game_forward()
-    else:
-        os.startfile(STEAM_LAUNCH)
+    elif GAME_EXE.exists():
+        subprocess.Popen([str(GAME_EXE)], cwd=str(GAME_EXE.parent))
     if not bot_running():
         subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
                           "-File", str(ROOT / "run_forever.ps1")], cwd=str(ROOT), creationflags=NO_WINDOW)
