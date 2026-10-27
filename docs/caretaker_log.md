@@ -38,3 +38,8 @@
 - Bot status: healthy. BTD6Bot task Running, bot.py run (pid 34444) and the recorder are up, BTD6 open; state.txt is 5 seconds old (High Finance / easy, round 32, 200 lives). No tracebacks or loops in the last 300 log lines; supervisor restarts are the normal exit-code-4 code reloads.
 - Since the 15:40 entry: 6 wins, 0 defeats (results.jsonl). Safe mode ON (streak 12, trips 2) and running Easy-family medals as intended.
 - Only warnings seen: "giving up on step" for heli/sniper placements with 0 refused spots on the current map (a new map's spot list is empty for those steps). No code edits this run; open items unchanged (Ravine easy loss, lives_lost 0 defeats, double_hp MOAB answer).
+
+## 2026-10-27 18:35
+- Bot status: healthy at last check (task Running, bot.py + recorder up, BTD6 open, state fresh). Safe mode ON (streak 8, trips 2); no developer active.
+- Diagnosed the Sunset Gulch easy loss (r18, 162 lives): ~107 learned refused spots (3x3 patches) were treated as walls in placement.valid_spots' footprint check, leaving 0 legal cells for hero/sniper/heli, so only one sniper was placed. Fixed: refused cells are removed after the footprint check (sniper spots 0 -> 1,024 on the saved model); regression test added; check.py ALL OK.
+- 27 older loss folders still say "status: new" (mostly Hard/double_hp/magic_only strategy deaths already noted above); not worked through this run. Open: why ~100 refusals accumulate per map; double_hp MOAB answer.

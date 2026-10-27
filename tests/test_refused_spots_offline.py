@@ -247,6 +247,22 @@ def test_refusals_survive_geometry_and_saving():
     assert back.refused_mask("land")[cy, cx] and not back.refused_mask("water").any()
 
 
+def test_many_refusals_do_not_erase_the_footprint_room():
+    """Sunset Gulch / Easy: ~100 learned refusals (3x3 patches) left no legal
+    cell at all, because refused cells were treated as walls in the footprint
+    check. They are single cells the game said no to: only they go."""
+    m, _ = _geometry_model()
+    if m is None:
+        return
+    before = int(placement.valid_spots(m, "sniper").sum())
+    for cy in range(2, m.heat.shape[0] - 2, 4):
+        for cx in range(2, m.heat.shape[1] - 2, 4):
+            m.refuse("land", cx, cy)
+    after = placement.valid_spots(m, "sniper")
+    assert after.sum() > before * 0.4, (before, int(after.sum()))
+    assert not after[2, 2], "the refused cells themselves are still excluded"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

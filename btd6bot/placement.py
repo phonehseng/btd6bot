@@ -169,6 +169,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
         return None
     where = surfaces(kind, hero) & set(where) if where else surfaces(kind, hero)
     ok = np.zeros(model.heat.shape, bool)
+    free = np.zeros(model.heat.shape, bool)   # ok minus the spots the game refused
     # spots the game refused in earlier play are learned per surface and kept
     # outside the geometry grids (MapModel.refused), so subtract them here
     def refused(surface):
@@ -187,31 +188,45 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
             scan = alt["scan"]
             mermonkey_water, size_limit = alt["mermonkey_water"], alt["size_limit"]
     if "land" in where:
-        ok |= ((scan["land"] == 1) | accepted("land")) & ~refused("land")
+        land = (scan["land"] == 1) | accepted("land")
+        ok |= land
+        free |= land & ~refused("land")
     if "water" in where:
         water = scan.get("water", np.full(ok.shape, 2)) == 1
         if kind == "mermonkey" and mermonkey_water is not None:
             water |= mermonkey_water
-        ok |= (water | accepted("water")) & ~refused("water")
+        water = water | accepted("water")
+        ok |= water
+        free |= water & ~refused("water")
     if size_limit is not None:
-        ok &= size_limit >= size_level(kind, hero)
+        fits = size_limit >= size_level(kind, hero)
+        ok &= fits
+        free &= fits
     if moving is not True:
         grids = _game_grids(model)
         if grids is not None and grids["moving"].any():
             rng = reach_units(kind, hero)
             if moving is False:
                 ok &= ~grids["moving"]
+                free &= ~grids["moving"]
             elif rng is not None:   # global range does not care where it is carried
                 from .mapgeom import steady_spots
                 steady = steady_spots(model, rng) if rng else None
-                ok &= ~grids["moving"] | (steady if steady is not None else False)
+                carried = ~grids["moving"] | (steady if steady is not None else False)
+                ok &= carried
+                free &= carried
     upc = units_per_cell(model)
     radius = footprint_radius(kind, hero) / upc
     # distance (in cells) from every allowed cell to the nearest forbidden one;
     # the border counts as forbidden so footprints stay on the map
     padded = np.pad(ok, 1, constant_values=False).astype(np.uint8)
     dist = cv2.distanceTransform(padded, cv2.DIST_L2, 5)[1:-1, 1:-1]
-    valid = dist >= radius
+    # Refused spots are taken out only after the footprint check: they are
+    # single cells the game said no to, not walls. (Sunset Gulch: ~100
+    # learned refusals, each a 3x3 patch, made every cell of the map "too
+    # close to a forbidden one" - no legal spot at all, and an Easy game
+    # was lost with one sniper.)
+    valid = (dist >= radius) & free
     if towers:
         hh, ww = valid.shape
         yy, xx = np.mgrid[0:hh, 0:ww]
