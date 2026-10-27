@@ -14,6 +14,9 @@ in its OCR. The buttons sit in a small window of their own, right of the strip
         brings BTD6 to the front (or starts BloonsTD6.exe when it is
         closed) and starts the supervisor when no bot is running. (The bot
         itself never takes focus or opens the game; GO is the owner's click.)
+  OFF   turns the bot off completely (tools/bot_off.ps1): bot, supervisor,
+        this HUD and the recorder close; BTD6 stays open. The STOP file it
+        leaves keeps everything off until tools/bot_on.ps1 (BTD6 Bot ON).
 
 Started by run_forever.ps1; single instance. Close it with the STOP file or by
 ending the process.
@@ -130,6 +133,15 @@ def go():
                           "-File", str(ROOT / "run_forever.ps1")], cwd=str(ROOT), creationflags=NO_WINDOW)
 
 
+def turn_off():
+    """The OFF button: run tools/bot_off.ps1, which writes the STOP file
+    (every part of the bot, this HUD included, exits on it) and ends anything
+    still running after 45 s."""
+    import subprocess
+    subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
+                      "-File", str(ROOT / "tools" / "bot_off.ps1")], cwd=str(ROOT), creationflags=NO_WINDOW)
+
+
 def set_ex_style(win, extra):
     """Add extended window styles to a Tk window (its real top-level hwnd)."""
     win.update_idletasks()
@@ -174,7 +186,7 @@ def main():
     panel.overrideredirect(True)
     panel.attributes("-topmost", True)
     panel.configure(bg=BG)
-    pw = 180
+    pw = 270
     panel.geometry(f"{pw}x{h}+{x0 + w + 6}+0")
 
     def press_stop():
@@ -183,13 +195,19 @@ def main():
     def press_go():
         go()
 
+    def press_off():
+        turn_off()
+
     style = dict(font=("Segoe UI", 11, "bold"), bd=0, relief="flat", width=7, cursor="hand2")
     stop_btn = tk.Button(panel, text="■ STOP", bg="#7a1e1e", fg="white", activebackground="#a32929",
                          activeforeground="white", command=press_stop, **style)
     go_btn = tk.Button(panel, text="▶ GO", bg="#1e6b34", fg="white", activebackground="#27914a",
                        activeforeground="white", command=press_go, **style)
+    off_btn = tk.Button(panel, text="⏻ OFF", bg="#333333", fg="white", activebackground="#555555",
+                        activeforeground="white", command=press_off, **style)
     stop_btn.pack(side="left", fill="y", padx=(4, 2), pady=4)
-    go_btn.pack(side="left", fill="y", padx=(2, 4), pady=4)
+    go_btn.pack(side="left", fill="y", padx=2, pady=4)
+    off_btn.pack(side="left", fill="y", padx=(2, 4), pady=4)
     set_ex_style(panel, WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST)
 
     def tick():
