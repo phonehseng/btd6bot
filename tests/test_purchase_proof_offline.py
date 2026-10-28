@@ -30,13 +30,13 @@ G.time = types.SimpleNamespace(sleep=lambda s: None, time=__import__("time").tim
 
 class FakeInput:
     def __init__(self):
-        self.clicks, self.keys = [], []
+        self.clicks, self.keys, self.moves = [], [], []
 
     def click(self, x, y):
         self.clicks.append((x, y))
 
-    def move(self, *a, **k):
-        pass
+    def move(self, x, y, **k):
+        self.moves.append((x, y))
 
     def press(self, key):
         self.keys.append(key)
@@ -185,6 +185,22 @@ def test_blank_price_on_a_path_the_tiers_allow_is_read_again():
         assert ("s1", 1) not in g.closed and not path_clicks(g, p)
     assert g.upgrade(p, 1) is False and g.fail_reason == "capped"
     assert ("s1", 1) in g.closed
+
+
+def test_blank_price_is_read_again_with_the_cursor_off_the_panel():
+    """Peninsula Medium: path 1 read blank right after a click (the cursor's
+    tooltip on the button), and that path was lost for the game. The second
+    read is made with the cursor moved off the panel, and when it shows the
+    price the path stays open and nothing is held back."""
+    g = upgrade_game([])
+    g.path_costs = scripted([[(None, None), ("cash", 1620), ("cash", 3240)],
+                             [("cash", 2200), ("cash", 1620), ("cash", 3240)]])
+    p = Placed("sb3", "sub", 0.12, 0.79, tiers=[1, 0, 4])
+    g.upgrade(p, 1)
+    assert g.fail_reason not in ("unread", "capped") and ("sb3", 1) not in g.closed
+    box = g.panel(p)["box"]
+    assert g.inp.moves and not any(box[0] <= x <= box[2] for x, _ in g.inp.moves), \
+        "the re-read happens with the cursor beside the panel, not on it"
 
 
 def test_unreadable_panel_caps_nothing():

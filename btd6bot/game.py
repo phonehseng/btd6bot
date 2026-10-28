@@ -20,6 +20,7 @@ log = logging.getLogger("game")
 PLAY_BTN = (0.905, 0.835, 1.0, 0.975)
 TARGETS = ["first", "last", "close", "strong"]
 CLOSED_AFTER_MISSES = 3   # blank price reads (separate attempts) before a path its tiers allow counts closed
+REREAD_SETTLE_S = 0.4     # wait after moving the cursor off the panel before reading a blank price again
 
 
 @dataclass
@@ -615,8 +616,7 @@ class Game:
         attempt just fails ("unread") and is tried again later."""
         if costs[path - 1] != (None, None) or all(c == (None, None) for c in costs):
             return False
-        time.sleep(0.1)
-        if self.path_costs(p)[path - 1] != (None, None):
+        if self._reread_clear(p)[path - 1] != (None, None):
             return False
         if _path_open_by_tiers(p.tiers, path):
             misses = self._closed_misses
@@ -638,6 +638,22 @@ class Game:
                  p.tid, path, costs)
         self.fail_reason = "capped"
         return True
+
+    def _reread_clear(self, p):
+        """Read the panel's prices again with nothing in the way.
+
+        A blank price right after a click is usually not a closed path: the
+        cursor still rests on the button just clicked, so its hover tooltip
+        or press animation covers the price. Peninsula Medium (2026-10-27)
+        read path 1 of three towers as blank three times this way and lost
+        that path for the game, although the saved picture reads $2,200 fine.
+        So the cursor moves onto the map beside the panel (a hover there does
+        nothing) and the button gets REREAD_SETTLE_S to settle first."""
+        box = self.panel(p)["box"]
+        x = box[0] - 0.05 if box[0] > 0.5 else box[2] + 0.05   # just off the panel's inner edge
+        self.inp.move(x, 0.5, fast=True)
+        time.sleep(REREAD_SETTLE_S)
+        return self.path_costs(p)
 
     def _tier_for_price(self, kind, path, price):
         """The tier of `path` whose price-table cost (this difficulty) is
