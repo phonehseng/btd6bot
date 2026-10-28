@@ -55,3 +55,9 @@
 - Since the 18:57 entry: 3 wins (Off The Coast reverse, Another Brick reverse, Pat's Pond medium), 1 defeat (Peninsula medium r42, water_sub_alch). The Peninsula case folder was missing, so it was filed with `python -m btd6bot.losses`.
 - Polyphemus apopalypse (17:21, r52): the lives crop started on the heart's bonus-lives ring and OCR read 86 as 286 for 30 rounds, so no leak was seen. Fixed in e3c6f82 (crop starts at x 0.064, regression test with real HUD frames; impossible reads on 400 stills go from 12 to 2). check.py ALL OK.
 - Peninsula medium: too little MOAB damage at r40-42. Reinforce bought zero-gain sub upgrades, and path-1 prices that read blank by mistake closed the plan's real upgrades. Diagnosed but not fixed yet: backlog items 10-12 (blank path-1 prices, reinforce saving for the worst round, Apopalypse cash piling up). Both folders are marked handled.
+
+## 2026-10-27 20:20
+- Bot status: OFF on purpose. At 19:33 it was stopped from the HUD, BTD6 was closed, and at 19:38 bot_off.ps1 wrote STOP (exit code 3, owner stop; commit 1217741 adds the OFF/ON buttons). Not restarted, STOP left in place; BTD6 not running. Safe mode ON (streak 2, trips 4); no developer active.
+- Since the 19:30 entry: no finished games (Pat's Pond reverse was a win at 19:29; the next game was cut off by the stop).
+- Bazaar Medium (06:16, r56, $33k unspent): the placement starvation already fixed in eb9514e. Diagnosis written, folder marked handled; 48 older folders still say "status: new".
+- Backlog item 10 fixed: a blank upgrade price is now read again with the cursor moved off the panel and 0.4 s to settle, so a hover tooltip right after a click no longer closes a path for the game (regression test in tests/test_purchase_proof_offline.py).
