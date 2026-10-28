@@ -525,6 +525,38 @@ def test_map_modes_no_build_holds_are_not_trusted():
     assert P.prior_win_probability(acc, s, "Logs", "hard") > P.CEILING_P_CAP
 
 
+def test_optimized_builds_set_the_ceiling():
+    """Dark Dungeons Primary Only (2026-10-27): the optimizer's best build
+    rated 0.68 and solo_bomb, rated without that number, lost at round 25.
+    An optimized build's worst_margin now counts as a ceiling; a better
+    researched value for the same map is kept."""
+    import tempfile
+    from pathlib import Path
+    root = Path(tempfile.mkdtemp())
+    (root / "data").mkdir()
+    (root / "data" / "model_ceiling.json").write_text(
+        '{"ceilings": {"Logs|*": 2.5}}', encoding="utf-8")
+    opt = root / "strategies" / "optimized"
+    opt.mkdir(parents=True)
+    (opt / "darkdungeons_primary_only.yaml").write_text(
+        "map: Dark Dungeons\nmodes: [primary_only]\noptimizer: {worst_margin: 0.68}\n", encoding="utf-8")
+    (opt / "logs_easy.yaml").write_text(
+        "map: Logs\nmodes: [easy]\noptimizer: {worst_margin: 0.9}\n", encoding="utf-8")
+    (opt / "broken.yaml").write_text("map: [unclosed\n", encoding="utf-8")
+    ceilings = P._load_ceilings(root)
+    assert ceilings["Dark Dungeons|primary_only"] == 0.68
+    assert ceilings["Logs|easy"] == 2.5          # research beats the optimizer here
+    assert "Dark Dungeons|easy" not in ceilings
+    saved = P._CEILINGS
+    P._CEILINGS = ceilings
+    try:
+        acc = _fresh_ish_account()
+        s = _spec(modes=("primary_only",), rate=0.95)
+        assert P.prior_win_probability(acc, s, "Dark Dungeons", "primary_only") <= P.CEILING_P_CAP
+    finally:
+        P._CEILINGS = saved
+
+
 def test_losses_on_a_map_mode_count_against_every_general_build():
     """Last Resort Hard: lost by one general build, the next starts lower;
     a build made for that map keeps its own record."""
@@ -1024,7 +1056,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_losses_on_a_map_mode_count_against_every_general_build", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",

@@ -912,7 +912,7 @@ def map_mode_losses(account: AccountState) -> dict[tuple[str, str], int]:
 
 
 # Map/modes where even the best build found rates under this margin
-# (data/model_ceiling.json) are capped at CEILING_P_CAP - below every play
+# (data/model_ceiling.json and the optimized builds) are capped at CEILING_P_CAP - below every play
 # threshold - until a win is on record. Bazaar Hard (best 1.76) and Balance
 # Hard (1.63) were won the same night; Party Parade Hard (1.33) and Pat's
 # Pond Hard (1.35) were lost at their last rounds.
@@ -921,18 +921,49 @@ CEILING_P_CAP = 0.5
 _CEILINGS = None
 
 
+def _load_ceilings(root=None) -> dict[str, float]:
+    """{"Map|mode": best margin} from both sources of measured builds, under
+    the project folder ``root`` (default: this checkout).
+
+    1. data/model_ceiling.json - the hand-run map research ("Map|*" = every mode).
+    2. strategies/optimized/*.yaml - every build tools/optimize_builds.py wrote
+       records its lowest round margin in `optimizer.worst_margin`. The
+       optimizer keeps the best of its targets, so that number is how far the
+       damage model thinks the (map, mode) can be made safe at all.
+
+    The best of the two is kept per key. On the bot's own record up to
+    2026-10-27, (map, mode)s whose optimized build rated under 1.5 were won
+    19 times and lost 19 times (Dark Dungeons Primary Only 0.68, Glacial
+    Trail Easy 0.06 twice), against 74 wins in 87 games at 2.0 or more."""
+    from pathlib import Path
+    import yaml
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[1]
+    try:
+        out = dict(json.loads((root / "data" / "model_ceiling.json").read_text(encoding="utf-8"))
+                   .get("ceilings", {}))
+    except (OSError, ValueError):
+        out = {}
+    for f in sorted((root / "strategies" / "optimized").glob("*.yaml")):
+        try:
+            d = yaml.safe_load(f.read_text(encoding="utf-8"))
+            worst = float((d.get("optimizer") or {})["worst_margin"])
+            m = canonical_map(d["map"])
+        except Exception:  # a half-written or foreign file is simply not counted
+            continue
+        for mode in d.get("modes") or ():
+            key = f"{m}|{mode}"
+            # a researched "Map|*" value also stands for this mode
+            known = out.get(key, out.get(f"{m}|*"))
+            out[key] = worst if known is None else max(known, worst)
+    return out
+
+
 def model_ceiling(map_name: str, mode: str) -> float | None:
-    """The best margin any researched build reached for (map, mode), or None
-    when it was not measured (data/model_ceiling.json; "Map|*" = all modes)."""
+    """The best margin any measured build reached for (map, mode), or None
+    when it was not measured (see :func:`_load_ceilings`)."""
     global _CEILINGS
     if _CEILINGS is None:
-        import json
-        from pathlib import Path
-        path = Path(__file__).resolve().parents[1] / "data" / "model_ceiling.json"
-        try:
-            _CEILINGS = json.loads(path.read_text(encoding="utf-8")).get("ceilings", {})
-        except (OSError, ValueError):
-            _CEILINGS = {}
+        _CEILINGS = _load_ceilings()
     m = canonical_map(map_name)
     return _CEILINGS.get(f"{m}|{mode}", _CEILINGS.get(f"{m}|*"))
 
