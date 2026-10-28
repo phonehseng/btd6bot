@@ -61,3 +61,9 @@
 - Since the 19:30 entry: no finished games (Pat's Pond reverse was a win at 19:29; the next game was cut off by the stop).
 - Bazaar Medium (06:16, r56, $33k unspent): the placement starvation already fixed in eb9514e. Diagnosis written, folder marked handled; 48 older folders still say "status: new".
 - Backlog item 10 fixed: a blank upgrade price is now read again with the cursor moved off the panel and 0.4 s to settle, so a hover tooltip right after a click no longer closes a path for the game (regression test in tests/test_purchase_proof_offline.py).
+
+## 2026-10-27 21:45
+- Bot status: still OFF on purpose (STOP from bot_off.ps1 at 19:38, exit code 3; HOLD from the HUD stop). Not restarted; BTD6 not running. Safe mode ON (streak 2, trips 4); no developer active.
+- Since the 20:20 entry: no games played (0 wins, 0 losses).
+- Diagnosed the three newest open losses (2026-10-27 early morning). Glacial Trail Easy and Spillway Deflation: placement starvation (0 refused spots, cash unspent), already fixed in eb9514e. Dark Dungeons Primary Only (solo_bomb): the damage model rated round 11 at 0.06 and the optimizer's best build only 0.68, but the planner never asked it.
+- Fixed in cd7ff76: each optimized build's worst_margin now counts as a map/mode ceiling, so map/modes under 1.5 are capped at p 0.5 until a win. On the record they went 19-19, against 74/87 at 2.0 or more; 60 of 185 optimized map/modes are now capped. check.py ALL OK. 45 older folders still say "status: new".
