@@ -49,12 +49,40 @@ def parse_cash(text):
     the counter read as '7': '$650' -> '6507', or one inserted mid-number):
     four or more digits without separators, or groups that are not three
     digits long, are rejected instead of trusted."""
-    t = text.strip().lstrip("$sS").strip()
-    t = t.replace("O", "0").replace("o", "0").replace("l", "1").replace("I", "1")
-    t = re.sub(r"[^0-9,.]", "", t).strip(",.")   # drop stray symbols around the number
-    if not t or not _CASH_FORMAT.match(t):
-        return None
-    return int(re.sub(r"[^0-9]", "", t))
+    t = _clean_cash_text(text)
+    whole = re.sub(r"[^0-9,.]", "", t).strip(",.")   # drop stray symbols around the number
+    if whole and _CASH_FORMAT.match(whole):
+        return int(re.sub(r"[^0-9]", "", whole))
+    # Scenery right of the counter read as more characters (Tricky Tracks'
+    # Halloween graffiti: '$3,700' -> '$3.700-00元'): the number ends at the
+    # first character that cannot be part of it. Only trusted when what is
+    # left still has a separator - a cut '$8'475' must not become $8.
+    head = re.match(r"[0-9,.]+", t)
+    head = head.group(0).strip(",.") if head else ""
+    if head != whole and re.search(r"[,.]", head) and _CASH_FORMAT.match(head):
+        return int(re.sub(r"[^0-9]", "", head))
+    return None
+
+
+def _clean_cash_text(text):
+    """The OCR text with '$' and spaces gone and letters that are digit
+    look-alikes (O, l, I) turned into digits."""
+    t = text.strip().lstrip("$sS").replace(" ", "")
+    return t.replace("O", "0").replace("o", "0").replace("l", "1").replace("I", "1")
+
+
+def cash_prefixes(text):
+    """Every well-formed cash value (with a separator) that the OCR text
+    starts with: '$6.2155' -> [6215]. A trailing phantom digit and a digit
+    inserted into the last group look the same, so a prefix is only a
+    candidate - Hud.cash accepts it when it repeats a recent clean read."""
+    digits = re.sub(r"[^0-9,.]", "", _clean_cash_text(text))
+    out = []
+    for end in range(len(digits) - 1, 0, -1):
+        head = digits[:end]
+        if re.search(r"[,.]", head) and _CASH_FORMAT.match(head):
+            out.append(int(re.sub(r"[^0-9]", "", head)))
+    return out
 
 
 class Hud:
@@ -83,6 +111,10 @@ class Hud:
         """
         text, _ = rec_text(crop(frame, _shift(self.layout["cash"], dx)))
         value = parse_cash(text)
+        if value is None:
+            # '$6.2155' on Encrypted (leaves falling past the counter): the
+            # padded read is believed only when its prefix repeats a clean read
+            value = next((v for v in cash_prefixes(text) if v in self._cash_reads), None)
         if value is None:
             return None   # unreadable or malformed this frame: the next one will do
         self._cash_reads = (self._cash_reads + [value])[-3:]

@@ -79,15 +79,22 @@ class Game:
         return self.hud.cash(f if f is not None else self.fresh())
 
     def cash_stable(self, tries=3, dx=0.0):
-        """Cash read twice in agreement (guards against OCR blips)."""
-        last = None
+        """Cash read twice in agreement (guards against OCR blips).
+
+        Without agreement the latest readable value is returned (Hud.cash is
+        already a median of recent reads): ending on one unreadable frame
+        used to return None, and the bot never acts on None - on Tricky
+        Tracks and Encrypted (2026-11-02) no tower was bought for a whole
+        setup and five games were refused in a row."""
+        last = readable = None
         for _ in range(tries):
             c = self.hud.cash(self.fresh(), dx)
             if c is not None and c == last:
                 return c
             last = c
+            readable = c if c is not None else readable
             time.sleep(0.05)
-        return last
+        return readable
 
     def lives(self):
         return self.hud.lives(self.fresh())
