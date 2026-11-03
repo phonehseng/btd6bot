@@ -25,6 +25,31 @@ BANANA_EVERY = 2.0   # seconds between passes over the bananas around farms
 PARK_EVERY = 1.5     # seconds between checks of where the cursor rests
 PARK_WINDOW = 15     # grid cells: the track density is measured over this square
 PARK_SLACK = 12      # pixels: closer than this to the spot, the cursor stays put
+# No-income modes (Deflation) buy the whole defence before Play and can never
+# add to it, so the damage model can judge the finished build before a single
+# bloon is out. Calibrated on the 26 logged Deflation games whose first
+# look-ahead (rounds 31/32-41) was rated: below 0.8 were 5 of the 7 losses
+# (0.06-0.78) and 1 of the 19 wins (Balance, 0.53). Leaving costs a minute;
+# a loss is never acceptable.
+NO_INCOME_MIN_MARGIN = 0.8
+
+
+class WeakBuild(RuntimeError):
+    """The finished no-income build rates too low to start: leave the game
+    before round one (not a defeat) and bench this map/mode (runner.py)."""
+
+    def __init__(self, margin, rnd):
+        super().__init__(f"the finished build rates round {rnd} at {margin:.2f} "
+                         f"(under {NO_INCOME_MIN_MARGIN}) - leaving before Play")
+        self.margin, self.round = margin, rnd
+
+
+def too_weak_to_start(ahead, rules):
+    """True when `ahead` - forecast.worst's (margin, round) of the opening
+    look-ahead, or None when the model cannot rate - says a buy_all_upfront
+    game would lose. Modes with income can still reinforce later, and an
+    unrated build is played as before."""
+    return bool(rules.get("buy_all_upfront")) and ahead is not None and ahead[0] < NO_INCOME_MIN_MARGIN
 
 
 class LivesTracker:
@@ -222,6 +247,7 @@ class Match:
             max_minutes = max(60, 0.75 * rounds)
         if not self.setup():
             raise RuntimeError("no defence could be placed - refusing to start the round")
+        self._check_no_income_build()
         self._learn_empty_map()
         self.g.go_fast(allow_start=True)
         self._in_round = True
@@ -413,6 +439,23 @@ class Match:
             self._still_since = now
             return True
         return False
+
+    def _check_no_income_build(self):
+        """Deflation: rate the finished build over the opening look-ahead
+        before Play and raise WeakBuild when it would not hold. Dark Path
+        Deflation (2026-11-02) spent all $40,400, its first look-ahead rated
+        round 40 at 0.48 once the game had started, and it lost at round 35."""
+        rules = self.ex.rules
+        if not rules.get("buy_all_upfront"):
+            return
+        start = rules.get("start_round", 1)
+        ahead = self.forecast.worst(list(self.g.towers.values()),
+                                    R.lookahead_rounds(start, rules.get("end_round", 80)))
+        if ahead is not None:
+            log.info("no-income build before Play: the damage model rates round %d at %.2f",
+                     ahead[1], ahead[0])
+        if too_weak_to_start(ahead, rules):
+            raise WeakBuild(*ahead)
 
     def _forecast_round(self, rnd):
         """Ask the damage model about the round that just started; a round it

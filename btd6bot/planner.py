@@ -879,6 +879,10 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
         # untested there because only its own record counted
         lost = map_mode_losses(account).get((canonical_map(map_name), mode), 0)
         p *= max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR ** lost)
+        if _no_income(mode):
+            # nothing can be fixed after Play: a general build is only as
+            # sure as its record in such modes, not as the map's best build
+            p = min(p, NO_INCOME_GENERAL_CAP)
     ceiling = model_ceiling(map_name, mode)
     if ceiling is not None and ceiling < CEILING_PLAYABLE:
         # no build the map research found holds there: not trusted until a
@@ -892,6 +896,21 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
 # MAP_LOSS_FLOOR. Map-specific builds keep only their own record.
 MAP_LOSS_FACTOR = 0.7
 MAP_LOSS_FLOOR = 0.3
+
+# No-income modes (Deflation: the whole defence is bought before Play) give a
+# general build no way to recover. Its prior there is capped at its record:
+# general solo builds won 29 of 38 Deflation games (0.76) up to 2026-11-02,
+# map-specific optimized builds 9 of 10. Dark Path Deflation was played with
+# solo_dartling at p=0.90 and lost at round 35. Below 0.85 such a game waits
+# until the confident ones are played, and match.WeakBuild still checks the
+# finished build before Play.
+NO_INCOME_GENERAL_CAP = 0.76
+
+
+def _no_income(mode: str) -> bool:
+    """True for modes whose cash never grows after the first purchase."""
+    from .strategy import rules
+    return bool(rules(mode).get("buy_all_upfront"))
 
 
 def map_mode_losses(account: AccountState) -> dict[tuple[str, str], int]:

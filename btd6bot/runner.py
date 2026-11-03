@@ -16,7 +16,7 @@ from .choices import tower_chooser
 from .game import Game
 from .inputs import Aborted, FocusLost, Input, kill_requested
 from .maplearn import MapModel
-from .match import Match
+from .match import Match, WeakBuild
 from .menus import Menus
 from .scanner import scan_placement, scan_water
 from .screen import GameNotFound, Screen
@@ -1055,6 +1055,13 @@ class Bot:
             except FocusLost as e:
                 log.warning("%s - waiting for the game to be in front again", e)
                 time.sleep(10)
+            except WeakBuild as e:
+                # a no-income build the damage model says would lose: leave
+                # before Play (nothing won or lost) and keep the map/mode out
+                # of the plan for a day; not an error, so no error streak
+                log.warning("%s %s: %s", plan.map, plan.mode_key, e)
+                self.bench(plan.map, plan.mode_key, hours=24, why=f"{plan.strategy_id} rated {e.margin:.2f}")
+                self.to_main_menu()
             except Exception as e:
                 log.exception("game loop error - recovering to main menu")
                 self.failures += 1
