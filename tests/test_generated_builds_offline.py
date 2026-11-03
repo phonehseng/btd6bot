@@ -146,12 +146,15 @@ def test_water_builds_only_where_they_reach():
 
 
 def test_base_success_is_conservative():
+    # Load every strategy once: load_all() reads and validates hundreds of
+    # YAML files, so calling it per tower and mode took over ten minutes.
+    everything = S.load_all().values()
     for kind, s in generated().items():
         for mode, p in s["planner"]["base_success"].items():
             fam = G.mode_family(mode)
             assert G.BASE_FLOOR <= p <= G.BASE_CEILING.get(fam, G.BASE_CEILING["hard"]), (kind, mode, p)
             # below every hand-written strategy of the same difficulty family
-            hand = [h["planner"]["base_success"][mode] for h in S.load_all().values()
+            hand = [h["planner"]["base_success"][mode] for h in everything
                     if not h.get("source") and not h.get("achievement")
                     and mode in ((h.get("planner") or {}).get("base_success") or {})]
             if hand:
