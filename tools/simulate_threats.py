@@ -85,6 +85,16 @@ class CashGame:
         self.bought.append((self.round, f"upgrade {p.tid} -> {p.crosspath}"))
         return True
 
+    def remove_obstacle(self, fx, fy, cost, name=""):
+        """Removable obstacles only exist on a real map (simulate(real_map=True));
+        the removal is paid like any purchase, at the map file's price."""
+        if cost > self.cash:
+            self.fail_reason = "cash"
+            return False
+        self.cash -= cost
+        self.bought.append((self.round, f"remove {name or 'obstacle'}"))
+        return True
+
     def target(self, p, mode):
         return True
 
@@ -133,6 +143,30 @@ class OpenModel:
                 if cover.flat[i] > 0][:n]
 
 
+_MAP_MODELS = {}
+
+
+def map_model(map_name):
+    """A MapModel filled from the map's own game geometry (data/map_geometry,
+    as mapfit does live), or None when the map has none.
+
+    With it the executor chooses spots on the real ground, and the blimp check
+    measures each tower's reach as the track cells inside its range
+    (strategy.Executor._reach_fn) instead of OpenModel's 2.5 x range, so the
+    simulated ratio sees short tracks, long tracks and towers that only cover
+    one lane. Built once per map: applying the geometry takes ~0.1 s."""
+    if map_name not in _MAP_MODELS:
+        from btd6bot import mapgeom
+        from btd6bot.layout import LAYOUTS
+        from btd6bot.maplearn import MapModel
+        geom = mapgeom.load(map_name)
+        model = None
+        if geom is not None:
+            model = mapgeom.apply(MapModel(map_name, LAYOUTS["16:10"]["playfield"]), geom)
+        _MAP_MODELS[map_name] = model
+    return _MAP_MODELS[map_name]
+
+
 def full_account():
     from btd6bot.account import AccountState
     a = AccountState()
@@ -142,11 +176,14 @@ def full_account():
     return a
 
 
-def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, account=None, scenario=None):
+def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, account=None, scenario=None,
+             real_map=False):
     """Run one game offline. scenario: {"start_round", "start_cash",
     "income_multiplier"} to play an optimized build as it was planned (Fast
     Track start, Double Cash income: its `optimizer.scenario`); default the
-    mode's own start and income. Returns a dict:
+    mode's own start and income. real_map: place on the map's own geometry
+    (map_model) rather than the open field, where the map has geometry.
+    Returns a dict:
     gaps      [(round, need, what is missing)] signatures the defence could not
               pop at the start of a round that brings them
     ramp      [(round, ratio)] blimp damage ratio at the start of blimp rounds
@@ -158,7 +195,8 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
     hero = strat.get("hero") or "quincy"
     g = CashGame(fam, hero)
     g.cash = START_CASH.get(mode, DEFAULT_START_CASH)
-    ex = S.Executor(g, OpenModel(map_name, water), strat, mode, account or full_account())
+    model = (map_model(map_name) if real_map else None) or OpenModel(map_name, water)
+    ex = S.Executor(g, model, strat, mode, account or full_account())
     set_name = TH.set_for_mode(mode)
     mult = 0.0 if rules.get("income") is False else (0.5 if rules.get("half_cash") else 1.0)
     plan_ids = {st.get("id") for _, st in S._all_steps(strat) if st.get("id")}
