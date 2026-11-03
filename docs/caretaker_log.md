@@ -142,3 +142,9 @@
 - Since the 05:35 entry: 0 wins, 0 losses. No new loss folders.
 - Backlog 17, cash part: on the Tricky Tracks stills the graffiti right of the cash was read as extra digits ('$2,873' -> '$2-87300', '$3.0260'), so cash was None at most round starts. hud.trim_to_digits re-reads a failed crop cut where the white digits end, and a dash before three last digits counts as the comma: correct reads 4 -> 11 of the first 17 frames. Test in tests/test_cash_offline.py.
 - Next run: Tricky Tracks refused spots (rest of backlog 17), or backlog 8 (rate builds' round-40 ratio offline to lift strong Medium medals over the safe-mode bar). "level reads 38 but notes say 137" still fires every 30-min idle check.
+
+## 2026-11-03 07:45
+- Bot status: running (BTD6Bot task Running, bot.py run since 06:20, recorder up, BTD6 responding), idle by design: safe mode (0/64, trips 4) has no p >= 0.85 game left (top: Peninsula Reverse 0.862 benched, Spillway Medium 0.849). No loops, no tracebacks, no PAUSE/STOP.
+- Since the 06:28 entry: 0 wins, 0 losses. No new loss folders.
+- Backlog 8: tested whether the offline simulator's round-40 blimp ratio could lift the strong open Medium builds over the bar. New `ramp_calibration.py --offline` says no: it does not predict losses (Easy 2x+ lost 15% vs 7% at 0.5-1x; Hard no better; only Medium trends). Planner unchanged; the estimate needs each map's real track reach first.
+- Next run: simulate with the map's track reach (mapgeom) and recheck, or backlog 17 (Tricky Tracks refused spots). Safe-mode forgiveness from ~2026-11-04 03:56.
