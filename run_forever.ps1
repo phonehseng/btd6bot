@@ -35,6 +35,17 @@ function LastChange {
     foreach ($f in @($botlog, $state)) { if (Test-Path $f) { $w = (Get-Item $f).LastWriteTime; if ($w -gt $t) { $t = $w } } }
     return $t
 }
+# Keep the hung bot's last thread snapshot. bot.py rewrites logs\stacks.txt
+# every minute, so the snapshot showing WHERE it hung was overwritten by the
+# restarted bot (2026-11-03 00:16: a 10-minute silence nobody could explain).
+# Copy it aside before killing; the newest 5 copies are kept.
+function KeepStacks($why) {
+    $src = Join-Path $PSScriptRoot "logs\stacks.txt"
+    if (-not (Test-Path $src)) { return }
+    $dst = Join-Path $PSScriptRoot ("logs\hang_stacks_{0}_{1}.txt" -f (Get-Date -Format "yyyyMMdd_HHmmss"), $why)
+    try { Copy-Item $src $dst -ErrorAction Stop } catch { return }
+    Get-ChildItem (Join-Path $PSScriptRoot "logs\hang_stacks_*.txt") | Sort-Object Name -Descending | Select-Object -Skip 5 | Remove-Item -ErrorAction SilentlyContinue
+}
 function Results { if (Test-Path $botlog) { (Select-String -Path $botlog -Pattern "RESULT" -SimpleMatch | Measure-Object).Count } else { 0 } }
 
 while ($true) {
@@ -49,6 +60,7 @@ while ($true) {
         Start-Sleep 30
         if (((Get-Date) - (LastChange)).TotalMinutes -gt 10) {
             Note "watchdog: no log activity for 10 min - killing hung bot (pid $($p.Id))"
+            KeepStacks "hung"
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
             break
         }
@@ -58,6 +70,7 @@ while ($true) {
         # a stale one means a loop: restart the bot (never the game).
         if ((Test-Path $state) -and ((Get-Date) - (Get-Item $state).LastWriteTime).TotalMinutes -gt 25) {
             Note "watchdog: status unchanged for 25 min while the log runs - stuck in a loop; restarting the bot"
+            KeepStacks "loop"
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
             Start-Sleep 10
             break
