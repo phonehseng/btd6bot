@@ -2632,20 +2632,29 @@ class Executor:
           (the click had no effect) and then on an exit spike with 8 refused
           spots while $2k grew to $15k, and lost 285 lives in one wave.
         A step with no legal spot ("spot") is set aside in both; an upgrade
-        whose click did nothing ("noeffect") only under continuous sends,
-        where one attempt is all the time there is (Game.upgrade already
-        holds such a retry back for 30 s and more).
+        whose click did nothing ("noeffect") or whose price could not be read
+        ("unread") only while rounds keep coming, where one attempt is all
+        the time there is (Game.upgrade already holds such a retry back for
+        30 s and more).
+
+        Rounds keep coming in every mode the bot plays, not just Apopalypse:
+        it starts each round as soon as the last one ends (holding Play only
+        briefly, Match._hold_round), so a step stuck on something
+        more cash will not fix strands cash there too. Spillway Medium
+        (2026-11-03) waited on "sb3 -> 2-0-4 (unread)" in round 38 with
+        $2,013 in hand, and two rounds later a MOAB its own blimp check had
+        called short went through. So the rule now holds
+        everywhere except no-income modes, which buy everything before round
+        one and only need the "spot" case.
 
         A set-aside placement takes the plan's later steps for the same tower
         with it, in order, so that once it is placed its upgrades follow; left
         in the plan they would be skipped for good (no such tower yet)."""
         reason = self.g.fail_reason
-        if self.rules.get("continuous"):
-            blocking = ("spot", "noeffect")
-        elif self.rules.get("buy_all_upfront"):
+        if self.rules.get("buy_all_upfront"):
             blocking = ("spot",)
         else:
-            return False
+            blocking = ("spot", "noeffect", "unread")
         if reason not in blocking:
             return False
         log.info("plan step %d %s is blocked (%s) - set aside, the plan goes on", self.idx, st, reason)

@@ -16,6 +16,15 @@ REINFORCE_EVERY = 2.0   # seconds between model-chosen purchases (each choice ta
 REINFORCE_WAIT = 8.0    # ... and after a look that found nothing affordable to help
 WATCH_EVERY = 0.2       # seconds between looks of the bloon watch during a round
 EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
+# Play waits while the damage model expects the coming round to leak and
+# purchases are still being made (Match._hold_for_crisis): the break between
+# rounds is free time to spend in.
+CRISIS_HOLD_S = 20.0       # longest wait per round
+CRISIS_HOLD_IDLE_S = 4.0   # ... ended early once this long passes without a purchase
+CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
+# Rounds played without ever seeing the Play button idle before the bot
+# concludes the game's own Auto Start is on (it then cannot hold a round).
+AUTO_START_ROUNDS = 8
 from .maplearn import PathTracer
 
 log = logging.getLogger("match")
@@ -218,6 +227,8 @@ class Match:
         self._t_reinforce = 0.0
         self._saving_until = 0.0    # reinforce saves for a dearer purchase until then
         self._crisis_round = None
+        self._crisis_hold = {}      # round -> time Play started waiting, or False (no hold)
+        self._idle_seen = False     # the Play button was seen idle between rounds
         # how far along the route the bloons really get (bloonwatch.py; observe only)
         self.watch = self._make_watch()
         # tower XP this game earns, round by round (towerxp.py): the paragon
@@ -476,6 +487,7 @@ class Match:
                 st = self.g.button_state()
                 if st in ("play_idle", "play_run", "play_fast"):
                     self._in_round = st != "play_idle"
+                    self._idle_seen = self._idle_seen or st == "play_idle"
                 if st == "play_run":
                     self.g.go_fast(allow_start=False)
                 elif st == "play_idle" and self.ex.defended() and not self._hold_round(last_round, cash):
@@ -493,10 +505,47 @@ class Match:
         executor bounds the wait, so a failing purchase never stalls a game)."""
         hold = getattr(self.ex, "hold_round", None)
         try:
-            return bool(hold and hold(rnd, cash))
+            return bool(hold and hold(rnd, cash)) or self._hold_for_crisis(rnd, cash)
         except Exception as e:   # the check must never stop the game from going on
             log.warning("hold_round failed: %r", e)
             return False
+
+    def _hold_for_crisis(self, rnd, cash):
+        """Keep Play waiting while the damage model expects the coming round
+        (rnd, or rnd + 1 if the HUD still shows the round just played) to
+        leak and the bot is still buying: reinforcing runs during the hold,
+        and it ends after CRISIS_HOLD_S, or once CRISIS_HOLD_IDLE_S pass
+        without a purchase. Before this the bot started every round the
+        moment the last one ended - Spillway Medium (2026-11-03) went into
+        round 40 with $2,329 and lost all 150 lives to its first MOAB.
+
+        Only when the game's Auto Start is off (the Play button goes idle
+        between rounds) and never under continuous sends."""
+        if rnd is None or cash is None or self.ex.rules.get("continuous"):
+            return False
+        now = time.time()
+        since = self._crisis_hold.get(rnd)
+        if since is None:
+            if cash < CRISIS_HOLD_MIN_CASH:
+                return False
+            towers = list(self.g.towers.values())
+            margins = [m for m in (self.forecast.margin(towers, r) for r in (rnd, rnd + 1)) if m is not None]
+            if not margins or not self.forecast.is_crisis(min(margins)):
+                self._crisis_hold[rnd] = False
+                return False
+            self._crisis_hold[rnd] = now
+            self._weak_round = rnd        # reinforce.py picks what to buy during the hold
+            self._t_reinforce = 0.0
+            log.warning("holding Play: the damage model rates the coming round at %.2f - "
+                        "spending the $%d first", min(margins), cash)
+            return True
+        if since is False:
+            return False
+        if now - since > CRISIS_HOLD_S or now - max(since, self._last_buy) > CRISIS_HOLD_IDLE_S:
+            log.info("holding Play over after %.0f s ($%d left)", now - since, cash)
+            self._crisis_hold[rnd] = False
+            return False
+        return True
 
     def _frozen(self, f, now):
         """True if the play field has not changed for ~2 s (game paused by a popup)."""
@@ -796,5 +845,10 @@ class Match:
             # the deepest point bloons reached in any round (bloonwatch.py)
             self.stats["bloon_depth"] = max(s["deepest"] for s in self.depths)
         self.stats.update(outcome=outcome, round=rnd, minutes=(time.time() - self.stats["start"]) / 60)
+        if not self._idle_seen and self.stats.get("rounds", 0) >= AUTO_START_ROUNDS                 and not self.ex.rules.get("continuous"):
+            log.warning("the Play button was never idle in %d rounds: BTD6's Auto Start setting looks "
+                        "ON, so the bot cannot hold a round to buy - turn it off in the game's settings",
+                        self.stats["rounds"])
+            self.stats["auto_start"] = True
         log.info("game over: %s", self.stats)
         return self.stats

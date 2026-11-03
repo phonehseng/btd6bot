@@ -1,7 +1,9 @@
 """Deflation has no income: the bot must spend everything before round 31.
 A plan step with no legal spot (Cracked Deflation's exit spike, 2026-10-24,
 which left $14,060 unspent) is set aside instead of holding up the rest of
-the plan; in modes with income the plan still waits as before.
+the plan. Since 2026-11-03 every mode does the same: rounds keep coming in
+all of them, and a step stuck on something cash will not fix stranded $2,013
+on Spillway Medium while a MOAB went through.
 Offline: the executor with a fake game."""
 import sys
 from pathlib import Path
@@ -45,12 +47,10 @@ def test_deflation_sets_the_blocked_step_aside():
     assert any(st.get("id") == "ex" for st in ex.deferred)
 
 
-def test_modes_with_income_still_wait_for_the_step():
-    # (a dart may still come from the threat answers; what matters here is
-    # that the plan itself is still held at the blocked step)
-    _, ex = placed_after("easy")
-    assert "'id': 'ex'" in ex.waiting and "(spot)" in ex.waiting, ex.waiting
-    assert not any(st.get("id") == "ex" for st in ex.deferred)
+def test_modes_with_income_also_set_the_blocked_step_aside():
+    placed, ex = placed_after("easy")
+    assert "dart" in placed, placed
+    assert any(st.get("id") == "ex" for st in ex.deferred), ex.waiting
 
 
 # --- continuous sends (Apopalypse): the bloons never wait for the plan -----
@@ -86,12 +86,12 @@ def test_apopalypse_sets_a_blocked_place_aside_with_its_upgrades():
     assert not any(st.get("id") == "ex" for st in ex.plan[ex.idx:])
 
 
-def test_apopalypse_sets_a_dead_upgrade_aside_but_easy_waits():
+def test_a_dead_upgrade_is_set_aside_in_every_mode_with_rounds():
     plan = {"id": "t", "name": "t", "hero": None,
             "plan": [{"do": "place", "id": "su1", "kind": "super", "role": "dps"},
                      {"do": "upgrade", "id": "su1", "to": "1-0-0"},
                      {"do": "place", "id": "d1", "kind": "dart", "role": "dps"}]}
-    for mode, sets_aside in (("apopalypse", True), ("easy", False)):
+    for mode, sets_aside in (("apopalypse", True), ("easy", True), ("chimps", True)):
         g = DeadButton("su1")
         ex = S.Executor(g, F.FakeModel(), dict(plan), mode, F.full_account())
         for _ in range(6):
@@ -100,6 +100,30 @@ def test_apopalypse_sets_a_dead_upgrade_aside_but_easy_waits():
         assert aside == sets_aside, (mode, ex.deferred, ex.waiting)
         if not sets_aside:
             assert "(noeffect)" in ex.waiting, ex.waiting
+
+
+class Unreadable(DeadButton):
+    """A game where one tower's upgrade price never reads."""
+
+    def upgrade(self, p, path, max_wait=0.0, allow_xp_unlock=True):
+        self.fail_reason = None
+        if p.tid == self.dead:
+            self.fail_reason = "unread"
+            return False
+        return F.FakeGame.upgrade(self, p, path, max_wait, allow_xp_unlock)
+
+
+def test_an_unreadable_upgrade_does_not_hold_the_cash():
+    # Spillway Medium (2026-11-03): "sb3 -> 2-0-4 (unread)" held $2,013 in round 38
+    plan = {"id": "t", "name": "t", "hero": None,
+            "plan": [{"do": "place", "id": "sb3", "kind": "sniper", "role": "dps"},
+                     {"do": "upgrade", "id": "sb3", "to": "1-0-0"},
+                     {"do": "place", "id": "d1", "kind": "dart", "role": "dps"}]}
+    g = Unreadable("sb3")
+    ex = S.Executor(g, F.FakeModel(), plan, "medium", F.full_account())
+    for _ in range(6):
+        ex.tick(40000, 38)
+    assert "dart" in g.placed, (g.placed, ex.waiting)
 
 
 if __name__ == "__main__":
