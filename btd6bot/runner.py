@@ -427,10 +427,15 @@ class Bot:
         """Player level from the star badge on the main menu."""
         from .hud import parse_int, rec_text
         from .vision import crop
+        # The badge is centred on the star, so a three-digit level is wider than
+        # a two-digit one: at level 138 the leading "1" spans x 0.089-0.099, and
+        # the old box (from x 0.095) cut it in half, so live reads came back "38".
+        # This box holds three digits and stops before the XP bar's text (x 0.14).
+        box = (0.083, 0.03, 0.13, 0.08)
         f = self.s.grab()
-        lvl = parse_int(rec_text(crop(f, (0.095, 0.03, 0.125, 0.08)))[0])
+        lvl = parse_int(rec_text(crop(f, box))[0])
         time.sleep(0.3)
-        lvl2 = parse_int(rec_text(crop(self.s.grab(), (0.095, 0.03, 0.125, 0.08)))[0])
+        lvl2 = parse_int(rec_text(crop(self.s.grab(), box))[0])
         # two agreeing reads; between games the level only rises a few steps, but
         # the first read of a session may adopt any save file's level
         cur = self.account.player_level
