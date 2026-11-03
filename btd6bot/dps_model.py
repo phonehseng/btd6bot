@@ -670,6 +670,27 @@ def map_routes(geom):
     return routes, scenarios
 
 
+# Maps whose towers are switched off for part of the game: (rounds off,
+# cycle length in rounds). Glacial Trail freezes every tower in ice for 2
+# rounds in 10, counted from that tower's own placement round
+# (docs/placement.md, "Map specials"). The model does not know each tower's
+# phase, so it counts the average: a tower works (cycle - off) / cycle of
+# the time, and every round is rated at that share of the build's strength.
+# (Glacial Trail Medium 2026-11-03 was rated safe and lost at round 25 with
+# most boomerangs frozen.)
+TOWER_FREEZE = {"Glacial Trail": (2, 10)}
+
+
+def tower_uptime(map_name):
+    """Share of the time a tower on this map can attack (1.0 on maps that
+    never switch towers off; see TOWER_FREEZE). Takes the display name or
+    the file key ("Glacial Trail" or "glacialtrail")."""
+    key = "".join(c for c in str(map_name).lower() if c.isalnum())
+    by_key = {"".join(c for c in m.lower() if c.isalnum()): v for m, v in TOWER_FREEZE.items()}
+    off, cycle = by_key.get(key, (0, 1))
+    return (cycle - off) / cycle
+
+
 class Track:
     """A map's bloon routes in world units, sampled every TRACK_STEP units,
     and the conversions between screen fractions and world positions.
@@ -686,6 +707,7 @@ class Track:
         from .maplearn import GRID
         self.map_name = map_name
         self.reverse = reverse
+        self.uptime = tower_uptime(map_name)   # < 1 where towers freeze
         self.geom = G.load(map_name)
         if self.geom is None:
             raise ValueError(f"no geometry for map {map_name!r}")
@@ -1180,6 +1202,8 @@ def _play(stations, track, lots, strength):
     order; what is left after the last one leaks."""
     lots = list(lots)
     end_time = 0.0
+    # towers frozen part of the time (Glacial Trail) attack at that share
+    strength *= getattr(track, "uptime", 1.0)
     for st in sorted(stations, key=lambda s: s.order):
         st.strength = strength
         out = []

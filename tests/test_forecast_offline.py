@@ -50,6 +50,22 @@ def test_a_failure_turns_it_off_quietly():
     assert f.off
 
 
+def test_glacial_trail_towers_count_their_frozen_rounds():
+    # towers freeze 2 rounds in 10 there: 80% uptime, by either map name
+    assert D.tower_uptime("Glacial Trail") == D.tower_uptime("glacialtrail") == 0.8
+    assert D.tower_uptime("Water Park") == 1.0
+    if not D.available():
+        return
+    # the same defence rated with towers off a fifth of the time keeps a
+    # fifth less margin (Glacial Trail Medium was lost at round 25 with most
+    # boomerangs frozen while the model rated it safe)
+    f = RoundForecast("Water Park", "easy")
+    always_on = f.margin(WATER_PARK_R28, 20)
+    f.track.uptime = 0.8
+    frozen = f.margin(WATER_PARK_R28, 20)
+    assert abs(frozen / always_on - 0.8) < 0.05, (always_on, frozen)
+
+
 def test_crisis_threshold():
     assert RoundForecast.is_crisis(CRISIS_MARGIN - 0.01)
     assert not RoundForecast.is_crisis(CRISIS_MARGIN)
