@@ -2608,15 +2608,7 @@ class Executor:
                 if r == "bought":
                     return True
                 continue
-            if r == "wait" and self.g.fail_reason == "spot" and self.rules.get("buy_all_upfront"):
-                # No income (Deflation): every dollar must be spent before the
-                # first round, so a step with no legal spot is put aside
-                # (deferred, retried later) instead of holding up the rest of
-                # the plan - Cracked Deflation started round 31 with $14,060
-                # unspent behind an exit spike that had nowhere to go.
-                log.info("plan step %d %s has no spot now - set aside, the plan goes on", self.idx, st)
-                self.deferred.append(st)
-                self.idx += 1
+            if r == "wait" and self._set_aside_blocked(st):
                 continue
             self.waiting = f"plan step {self.idx} {st} -> {r} ({self.g.fail_reason})"
             return r == "progress"  # waiting for cash / round, or mid-upgrade
@@ -2625,6 +2617,48 @@ class Executor:
                 return True
         self.waiting = "plan and fill exhausted"
         return False
+
+    def _set_aside_blocked(self, st):
+        """Put plan step st aside (self.deferred, retried every tick) when
+        waiting on it would strand cash; returns True when it did.
+
+        Two kinds of mode cannot afford to wait on a step that more cash will
+        not unblock:
+        - no income (Deflation, `buy_all_upfront`): every dollar must be spent
+          before the first round - Cracked Deflation started round 31 with
+          $14,060 unspent behind an exit spike that had nowhere to go;
+        - continuous sends (Apopalypse, `continuous`): the bloons never stop
+          for the plan - Polyphemus (2026-10-27) waited on `su1 -> 3-0-2`
+          (the click had no effect) and then on an exit spike with 8 refused
+          spots while $2k grew to $15k, and lost 285 lives in one wave.
+        A step with no legal spot ("spot") is set aside in both; an upgrade
+        whose click did nothing ("noeffect") only under continuous sends,
+        where one attempt is all the time there is (Game.upgrade already
+        holds such a retry back for 30 s and more).
+
+        A set-aside placement takes the plan's later steps for the same tower
+        with it, in order, so that once it is placed its upgrades follow; left
+        in the plan they would be skipped for good (no such tower yet)."""
+        reason = self.g.fail_reason
+        if self.rules.get("continuous"):
+            blocking = ("spot", "noeffect")
+        elif self.rules.get("buy_all_upfront"):
+            blocking = ("spot",)
+        else:
+            return False
+        if reason not in blocking:
+            return False
+        log.info("plan step %d %s is blocked (%s) - set aside, the plan goes on", self.idx, st, reason)
+        self.deferred.append(st)
+        self.idx += 1
+        tid = st.get("id")
+        if st.get("do") == "place" and tid:
+            later = [s for s in self.plan[self.idx:] if s.get("id") == tid]
+            if later:
+                log.info("  with its %d later step(s) for %s", len(later), tid)
+                self.deferred.extend(later)
+                self.plan[self.idx:] = [s for s in self.plan[self.idx:] if s.get("id") != tid]
+        return True
 
     def surplus(self, cash, rnd):
         """Cash is piling up while the plan waits: buy damage anyway.
