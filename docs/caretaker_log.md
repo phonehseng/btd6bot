@@ -130,3 +130,9 @@
 - Tricky Tracks (61fa7bb): the game refused every spot after hero + 2 snipers (heli/tack/sniper streaks, a step given up, $5,885 unspent) and cash read None; the map had already failed twice with "no defence could be placed", which taught the planner nothing. New AccountState.placement_trouble per map (no-defence errors + losses with a given-up step, cleared by a win) scales every mode's prior there by 0.7 per event. Tricky Tracks set to 3 and all modes benched 48 h. Real cause (refused valid spots, cash OCR) is backlog 17.
 - b3bb0a6: safe mode's "a clean day resets the doubling" never happened while safe mode stayed on (trips 4 from late Oct -> 64 wins). Now every day without a trip or defeat forgives one trip: 32 from ~2026-11-04 03:56 if no game is lost.
 - Next run: backlog 17 (Tricky Tracks overlay + cash OCR on frames/game_002.jpg); the safe-mode pool is still nearly empty - raising confidence with better Easy-family builds is the way to get games.
+
+## 2026-11-03 05:35
+- Bot status: running (BTD6Bot task Running, bot.py run since 04:31, recorder up, BTD6 responding), idle by design: safe mode (0/64, trips 4) has no p >= 0.85 game left (top: Peninsula Reverse 0.86, benched until ~13:00; Spillway Medium 0.849). No loops, no tracebacks, no PAUSE/STOP.
+- Since the 04:40 entry: 0 wins, 0 losses. No new loss folders (all handled).
+- Backlog 8 calibrated instead of changed blind: new tools/ramp_calibration.py pairs the logged round-40 blimp check with each game's outcome. Medium family lost 10 of 24 games rated under 1x but only 6 of 115 at 1x+ (Hard family 24% vs 12%), so the check is already a good loss predictor; the next step is to rate the round-40 ratio offline per (strategy, map) and feed it to the planner's p, which could lift the strong open Medium medals over the safe-mode bar.
+- Next run: that planner change (backlog 8), or backlog 17 (Tricky Tracks). Safe-mode forgiveness starts ~2026-11-04 03:56 if nothing is lost.
