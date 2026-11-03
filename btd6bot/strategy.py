@@ -1385,6 +1385,7 @@ class Executor:
         if placed:
             p = self.g.towers[tid]
             self._learn_probe(kind, p)
+            self._learn_accepted(kind, p)
             self.purchased += 1
             self.hold_fails.pop(kind, None)
             # refusals count in a row: a fill or panic step that keeps finding
@@ -1520,6 +1521,19 @@ class Executor:
                      "the best legal one %.0f)", kind, reach[cy, cx], best_legal)
             return (cx, cy, 2e9)
         return None
+
+    def _learn_accepted(self, kind, p):
+        """The tower stands: the ground under it is placeable, so any refusal
+        learned there in an earlier game was wrong and is forgotten
+        (MapModel.unrefuse). Without this a wrong refusal lived forever."""
+        unrefuse = getattr(self.m, "unrefuse", None)
+        if unrefuse is None or kind == "hero":
+            return
+        cx, cy = (int(round(v)) for v in self.m.frac_to_cell(p.x, p.y))
+        surface = "water" if T.TOWERS.get(kind, {}).get("placement") == "water" else "land"
+        n = unrefuse(surface, cx, cy)
+        if n:
+            log.info("learned: %s stands at (%d,%d) - forgot %d refused cells there", kind, cx, cy, n)
 
     def _learn_probe(self, kind, p):
         """The tower stands where a probe was tried: the game accepts that

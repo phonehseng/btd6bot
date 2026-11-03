@@ -8,6 +8,7 @@ reaches a pixel gives its progress along the track (entrance -> exit).
 Per-map knowledge is cached in data/maps/<map>.npz and improves every game.
 """
 import json
+import logging
 import os
 import time
 from pathlib import Path
@@ -15,6 +16,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+log = logging.getLogger(__name__)
 DATA = Path(__file__).resolve().parents[1] / "data" / "maps"
 # In-game buttons drawn over the play field (client fractions): placing a tower
 # there would click the button instead.
@@ -23,6 +25,10 @@ UI_OVERLAYS = [
     (0.00, 0.84, 0.14, 0.96),    # powers / hero ability buttons
 ]
 GRID = (160, 108)  # internal resolution of the learned maps (w, h) of the playfield
+SPOT_BUCKET = 4    # spot_stats groups tower spots into squares of this many cells
+# Bump to run MapModel.forget_contradicted_refusals once more on every map
+# (stored per map in the model's meta as "refusal_cleanup").
+REFUSAL_CLEANUP = 1
 
 
 def slug(name):
@@ -63,6 +69,8 @@ class MapModel:
         self.accepted = {}
         # experience: "kind|cx|cy" -> [sum of relative pops-per-dollar, games]
         self.spot_stats = {}
+        # which REFUSAL_CLEANUP last ran on this map (0 = never)
+        self.refusal_cleanup = 0
 
     # -- persistence ------------------------------------------------------
     @property
@@ -86,7 +94,8 @@ class MapModel:
                     meta=json.dumps({"rounds_traced": self.rounds_traced, "valid": self.valid,
                                      "px_per_unit": self.px_per_unit, "playfield": self.playfield,
                              "spot_stats": self.spot_stats, "sandbox_rounds": self.sandbox_rounds,
-                             "geometry_bundle": self.geometry_bundle}),
+                             "geometry_bundle": self.geometry_bundle,
+                             "refusal_cleanup": self.refusal_cleanup}),
                 )
                 os.replace(tmp, self.path)
                 return True
@@ -121,8 +130,16 @@ class MapModel:
                         m.refused[k[len("refused_"):]] = d[k].astype(bool)
                     elif k.startswith("accepted_"):
                         m.accepted[k[len("accepted_"):]] = d[k].astype(bool)
+                m.refusal_cleanup = meta.get("refusal_cleanup", 0)
             except Exception:
                 return cls(name, playfield)  # corrupt file: relearn rather than crash
+            if m.refusal_cleanup < REFUSAL_CLEANUP:
+                # in memory only; the game's own save at the end keeps it
+                cleared = m.forget_contradicted_refusals()
+                m.refusal_cleanup = REFUSAL_CLEANUP
+                if cleared:
+                    log.info(
+                        "%s: forgot %d refused cells that later placements contradict", name, cleared)
         return m
 
     # -- placement scan -------------------------------------------------------
@@ -166,6 +183,42 @@ class MapModel:
             grid = self.refused[surface] = np.zeros(self.heat.shape, bool)
         h, w = grid.shape
         grid[max(0, cy - r):min(h, cy + r + 1), max(0, cx - r):min(w, cx + r + 1)] = True
+
+    def unrefuse(self, surface, cx, cy, r=1):
+        """A tower now stands centred on cell (cx, cy): the ground there is
+        proven placeable, so any refusal learned for that square was wrong
+        (the opposite of refuse). Returns how many refused cells were cleared."""
+        grid = self.refused.get(surface)
+        if grid is None:
+            return 0
+        h, w = grid.shape
+        sq = grid[max(0, cy - r):min(h, cy + r + 1), max(0, cx - r):min(w, cx + r + 1)]
+        n = int(sq.sum())
+        sq[:] = False
+        return n
+
+    def forget_contradicted_refusals(self):
+        """One-off clean-up of refusals that later games contradicted.
+
+        Before strategy.refusals_are_trusted (2026-11-02), a run of clicks the
+        game ignored was learned as bad ground; Spice Islands had 55% of its
+        legal land marked refused, Polyphemus 35%. spot_stats holds a 4x4-cell
+        bucket for every damage tower that actually stood on the map, so any
+        refusal inside such a bucket is contradicted by a real placement and
+        is dropped (on the tower's own surface). Returns cells cleared."""
+        from . import towers as T   # only needed here: which surface each tower stands on
+        cleared = 0
+        for key in self.spot_stats:
+            kind, bx, by = key.split("|")
+            surface = "water" if T.TOWERS.get(kind, {}).get("placement") == "water" else "land"
+            grid = self.refused.get(surface)
+            if grid is None:
+                continue
+            cell = SPOT_BUCKET
+            sq = grid[int(by) * cell:(int(by) + 1) * cell, int(bx) * cell:(int(bx) + 1) * cell]
+            cleared += int(sq.sum())
+            sq[:] = False
+        return cleared
 
     def accepted_mask(self, surface):
         """bool grid: cells the game accepted a tower on although the map
@@ -507,8 +560,9 @@ class PathTracer:
         self.first_seen = None
 
 
-def _spot_key(kind, cx, cy, cell=4):
-    return f"{kind}|{int(cx) // cell}|{int(cy) // cell}"  # 4x4-cell buckets
+def _spot_key(kind, cx, cy, cell=None):
+    cell = cell or SPOT_BUCKET
+    return f"{kind}|{int(cx) // cell}|{int(cy) // cell}"  # SPOT_BUCKET-square buckets
 
 
 def record_spot_results(model, towers):
