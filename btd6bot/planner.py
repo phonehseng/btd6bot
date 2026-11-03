@@ -995,10 +995,21 @@ def model_ceiling(map_name: str, mode: str) -> float | None:
 
 
 class _Calibration:
-    """Per (strategy, mode): observed wins vs. prior-expected wins on all maps."""
+    """Per (strategy, mode): observed wins vs. prior-expected wins on all maps.
+
+    A strategy's record in its other modes is evidence for a mode it has not
+    played much: it is pooled into one factor per strategy, and a (strategy,
+    mode) factor is shrunk towards that factor instead of towards 1.0. Before
+    2026-11-03 a mode with no games used the bare hand-written prior, so
+    military_heli_sniper (131 of 137 games won in Easy, Medium, Military Only
+    and Reverse) ranked below chimps_ninja_sun on Hard (1 of 2) only because
+    the latter's YAML guessed higher."""
+
+    SHRINK = 2.0   # pseudo-games (in expected wins) that pull a factor to its parent
 
     def __init__(self, account: AccountState, strategies: Mapping[str, StrategySpec]):
         self.f: dict[tuple[str, str], float] = {}
+        self.pooled: dict[str, float] = {}
         acc: dict[tuple[str, str], list[float]] = {}
         for m, mode, sid, st in account.iter_strategy_stats():
             s = strategies.get(sid)
@@ -1009,11 +1020,34 @@ class _Calibration:
             a = acc.setdefault((sid, mode), [0.0, 0.0])
             a[0] += st.get("wins", 0)
             a[1] += exp
-        for k, (w, e) in acc.items():
-            self.f[k] = min(1.6, max(0.3, (w + 2.0) / (e + 2.0)))
+        k = self.SHRINK
+        per_strategy: dict[str, list[float]] = {}
+        for (sid, _mode), (w, e) in acc.items():
+            t = per_strategy.setdefault(sid, [0.0, 0.0])
+            t[0] += w
+            t[1] += e
+        for sid, (w, e) in per_strategy.items():
+            self.pooled[sid] = self._clip((w + k) / (e + k))
+        for (sid, mode), (w, e) in acc.items():
+            parent = self._transfer(self.pooled[sid])
+            self.f[(sid, mode)] = self._clip((w + k * parent) / (e + k))
+
+    @staticmethod
+    def _clip(f: float) -> float:
+        return min(1.6, max(0.3, f))
+
+    @staticmethod
+    def _transfer(f: float) -> float:
+        """How much of a strategy's pooled factor carries over to one mode:
+        doing worse than expected carries over in full, doing better only
+        half (in log terms) - winning Easy and Medium says less about Hard
+        than losing them does."""
+        return f if f <= 1.0 else f ** 0.5
 
     def get(self, sid: str, mode: str) -> float:
-        return self.f.get((sid, mode), 1.0)
+        if (sid, mode) in self.f:
+            return self.f[(sid, mode)]
+        return self._transfer(self.pooled.get(sid, 1.0))
 
 
 def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode: str,
@@ -1023,6 +1057,11 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
     prior = prior_win_probability(account, s, map_name, mode)
     if calib is not None:
         prior = min(0.98, max(0.01, prior * calib.get(s.id, mode)))
+        # a record from other modes can make a build likely in a Hard-family
+        # mode it has never played, never confident (CONFIDENT_P): that takes
+        # games in the mode itself
+        if MODES[mode].difficulty == "hard" and (s.id, mode) not in calib.f:
+            prior = min(prior, UNTESTED_HARD_P)
     st = account.strategy_record(map_name, mode, s.id)
     w, l = st.get("wins", 0), st.get("losses", 0)
     k = cfg.prior_strength
@@ -1630,6 +1669,9 @@ def _tier(c: _Cand, cfg: PlannerConfig) -> str | None:
 # bonus (an achievement, more Monkey Money) never puts a shaky game ahead of
 # a near-certain one: losses are never acceptable.
 CONFIDENT_P = 0.85
+# The most a build may be rated in a Hard-family mode it has no games in
+# (win_probability): just under CONFIDENT_P.
+UNTESTED_HARD_P = 0.84
 
 # The owner's preferred plans: within a tier and confidence class they come
 # first. Sniper Elite Defender + a radar village shoots the whole map from

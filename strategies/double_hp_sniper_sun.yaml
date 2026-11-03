@@ -6,10 +6,13 @@
 # as normal Hard, so Bloonjitsu + Stronger Stimulant cover it.
 id: double_hp_sniper_sun
 hero: obyn
-modes: [hard, double_hp]
+# ABR (Alternate Bloons Rounds) sends MOAB-class bloons earlier at normal
+# Hard prices and cash; the same MOAB control answers them (added
+# 2026-11-03 after 25 of 29 Double HP games were won).
+modes: [hard, double_hp, abr]
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], sniper: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
-  base_success: {hard: 0.88, double_hp: 0.75}
+  base_success: {hard: 0.88, double_hp: 0.75, abr: 0.75}
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
