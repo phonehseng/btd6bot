@@ -209,3 +209,10 @@
 - Stuck at 17:02-17:20: Cargo was lost while the bot was buying. It kept clicking on the DEFEAT card for 35 s (no Continue was bought), a click hit Home, and it then clicked the Legends page 430+ times. I stopped bot.py and the supervisor restarted it. Fix in 8fbe2f3: no clicks without the match HUD (Game.screen_ok), the defeat card is believed at any lives count, the Legends page is a named screen left by the back arrow, and unknown screens try the back arrow.
 - Same commit, reinforce: no saving for a later round when earlier rounds already cost the lives left (Cargo saved $30k and lost), and in a crisis it buys the biggest margin gain when nothing passes the half-strength test (Infernal sat on $77k). New tests; all check steps pass.
 - Glacial Trail: the ice-freeze mechanic is not modelled (backlog 18). Next run: watch the Double HP games for the new reinforce behaviour; backlog 18 or 8.
+
+## 2026-11-03 18:27
+- Bot status: running (task Running, bot.py restarted 18:13 by a code reload, recorder up, BTD6 responding); now opening Frozen Over. No loops, tracebacks, PAUSE or STOP. Safe mode on (trips 4), playing the normal medal order.
+- Since 17:47: 4 wins (Quad Magic Only, Lost Crevasse ABR, Hedge ABR, End Of The Road ABR, 0 lives lost), 0 losses. No new loss folders.
+- Backlog 18 (average part): the damage model now counts Glacial Trail's ice - every round there is rated at 80% of the build's strength (`dps_model.TOWER_FREEZE`, commit eda9c75), so the forecast and reinforce see the gap that lost the Medium game at round 25. Per-tower freeze phase still open.
+- A developer session committed unfinished-game settling / blind crisis spending / sell-and-avoid (19e038f) while this run was checking; its test helper in `tests/test_useless_towers_offline.py` lacked the map model and failed - fixed in 913b431 (that commit's message describes the whole feature but it holds only the helper fix). All 64 check steps pass.
+- Owner: please still check BTD6's Auto Start setting (logged ON at 17:34).
