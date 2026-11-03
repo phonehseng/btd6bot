@@ -100,3 +100,11 @@
 - run_forever.ps1 now copies stacks.txt to logs\hang_stacks_<time>_<hung|loop>.txt before the watchdog kills the bot (newest 5 kept). It takes effect the next time the supervisor itself restarts (it was not restarted, so the game in progress was not interrupted).
 - Backlog item 15 done: each map forgets, once on load, learned refusals inside buckets where a tower really stood (e.g. Polyphemus 397 cells, Frozen Over 265, Spice Islands 126), and every placed tower clears the refusals under it. Offline test tests/test_refusal_cleanup_offline.py.
 - Next run: if a hang_stacks file shows up, diagnose it; then the 28 old "status: new" loss folders (newest: Ravine Easy, Spillway Deflation).
+
+## 2026-11-03 01:47
+- Bot status: running (BTD6Bot task Running, bot.py run since 00:25, recorder up, BTD6 responding); playing Enchanted Glade Military Only, round 48, no lives lost. Safe mode ON (streak 2, trips 4). No hang_stacks file yet.
+- Since the 00:35 entry: 6 wins (Underground Medium/Reverse/Military Only, Peninsula Medium and Military Only, Enchanted Glade Medium), 3 losses (Party Parade Medium r40, Geared Medium r40, Peninsula Reverse r50) - all three diagnosed and handled.
+- Geared (1894329): the round reader froze at 23 while the game ran to 40 - placement ticks of 10-15 s let the game move on >2 rounds between reads and only identical reads were counted. match.RoundVotes now accepts readings the elapsed time explains. Test tests/test_round_votes_offline.py.
+- Peninsula Reverse (d225f14): OCR reads "$2,200" as "#2,200", so every sniper's path 1 was closed and $51,030 sat unspent; game.looks_like_price accepts it. This is also the root cause of backlog item 10. Test tests/test_price_text_offline.py.
+- Party Parade: round-40 MOAB with a weak general build (backlog item 8, no code change). New backlog item 16: follow towers carried by Geared's gears.
+- Next run: watch bot.log for "shows no price although its tiers" becoming rare (item 10); backlog item 16 or 8; then the 28 old "status: new" folders.
