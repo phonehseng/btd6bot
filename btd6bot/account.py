@@ -360,6 +360,12 @@ class AccountState:
     # category -> [map wins counted by the game, wins needed], read from the
     # bar at the top of each map-select category ("7 / 12"); absent = unknown
     category_progress: dict[str, list[int]] = field(default_factory=dict)
+    # map -> {mode: unix time} for modes whose button the game showed locked
+    # although our medals say the prerequisite is earned. Medals won as a
+    # co-op guest show on the map card but do not unlock the solo modes
+    # behind them (Lotus Island 2026-11-03: Medium medal shown, Military Only
+    # and Reverse padlocked), so the medal chain alone over-promises.
+    locked_modes: dict[str, dict[str, float]] = field(default_factory=dict)
     observed_upgrade_costs: dict[str, dict[str, int]] = field(default_factory=dict)  # tower -> "p-t" -> xp
     games_played: int = 0
     history: list[dict[str, Any]] = field(default_factory=list)
@@ -412,6 +418,7 @@ class AccountState:
                                      if m not in GAME_MAP_CATEGORIES}
         st.xp_short = {k: dict(v) for k, v in raw.get("xp_short", {}).items()}
         st.category_progress = {k: list(v) for k, v in raw.get("category_progress", {}).items()}
+        st.locked_modes = {k: dict(v) for k, v in raw.get("locked_modes", {}).items()}
         st.observed_upgrade_costs = raw.get("observed_upgrade_costs", {})
         st.games_played = int(raw.get("games_played", 0))
         st.history = list(raw.get("history", []))
@@ -440,6 +447,7 @@ class AccountState:
             "map_category_overrides": self.map_category_overrides,
             "xp_short": self.xp_short,
             "category_progress": self.category_progress,
+            "locked_modes": self.locked_modes,
             "observed_upgrade_costs": self.observed_upgrade_costs,
             "games_played": self.games_played,
             "history": self.history[-self.HISTORY_LIMIT:],
@@ -546,8 +554,49 @@ class AccountState:
             return False
         if not self.map_unlocked(map_name):
             return False
+        if self.seen_locked(map_name, mode):
+            return False
         req = MODES[mode].requires
         return req is None or self.has_medal(map_name, req)
+
+    # A lock seen in the game is trusted for this long, then the mode is
+    # offered again (one 30-second try), in case the save changed meanwhile.
+    LOCK_RECHECK_DAYS = 7
+
+    def seen_locked(self, map_name: str, mode: str, now: float | None = None) -> bool:
+        """Did the mode-select screen recently show this mode padlocked?"""
+        t = self.locked_modes.get(canonical_map(map_name), {}).get(mode)
+        if t is None:
+            return False
+        return (now or time.time()) - t < self.LOCK_RECHECK_DAYS * 86400
+
+    def note_mode_locked(self, map_name: str, mode: str, now: float | None = None) -> list[str]:
+        """The game would not start ``mode`` on this map: its button is locked.
+
+        Modes that share its prerequisite sit behind the same lock (Military
+        Only and Reverse both need Medium), and every mode further down the
+        chain (Apopalypse needs Military Only) is locked too, so all of them
+        are noted. Returns the modes noted."""
+        t = now or time.time()
+        req = MODES[mode].requires if mode in MODES else None
+        todo = [mode] + [m.key for m in MODES.values() if req is not None and m.requires == req]
+        found: set[str] = set()
+        while todo:
+            m = todo.pop()
+            if m not in found:
+                found.add(m)
+                todo.extend(mode_unlocks(m))
+        noted = sorted(found)
+        rec = self.locked_modes.setdefault(canonical_map(map_name), {})
+        for m in noted:
+            rec[m] = t
+        return noted
+
+    def note_mode_started(self, map_name: str, mode: str) -> None:
+        """A game of this mode started, so it is not locked (any more)."""
+        rec = self.locked_modes.get(canonical_map(map_name))
+        if rec and rec.pop(mode, None) is not None and not rec:
+            self.locked_modes.pop(canonical_map(map_name), None)
 
     def upgrades(self, tower: str) -> list[int]:
         return list(self.unlocked_upgrades.get(tower, [0, 0, 0]))

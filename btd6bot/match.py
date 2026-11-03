@@ -275,6 +275,10 @@ class Match:
                         getattr(self.ex, "waiting", "nothing more could be bought"))
         if not self.ex.defended():
             self._place_starter(rnd)
+        # kept for the error play() raises when nothing went down: Tricky
+        # Tracks Easy failed twice with no placement line at all, which points
+        # at the cash reading rather than at the spots (108 valid offline)
+        self._setup_cash = cash
         return self.ex.defended()
 
     def _place_starter(self, rnd, tries=6):
@@ -299,7 +303,9 @@ class Match:
             rounds = self.ex.rules.get("end_round", 80) - self.ex.rules.get("start_round", 1) + 1
             max_minutes = max(60, 0.75 * rounds)
         if not self.setup():
-            raise RuntimeError("no defence could be placed - refusing to start the round")
+            raise RuntimeError("no defence could be placed - refusing to start the round "
+                               f"(cash read {getattr(self, '_setup_cash', None)}, "
+                               f"plan: {getattr(self.ex, 'waiting', None) or 'nothing tried'})")
         self._check_no_income_build()
         self._learn_empty_map()
         self.g.go_fast(allow_start=True)

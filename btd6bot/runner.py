@@ -752,6 +752,7 @@ class Bot:
         else:
             log.warning("start: difficulty %s did not open its modes", plan.difficulty)
             return False
+        clicked_any = False
         for _ in range(3):
             words = self.menus.read()
             clicked = self.menus.click_word(MODE_BUTTON_TEXT.get(plan.mode, plan.mode), dy=-0.08)
@@ -766,9 +767,15 @@ class Bot:
                 self.inp.click(x, y)
                 clicked = True
             if clicked:
+                clicked_any = True
                 if self.menus.wait_for({"in_game", "overwrite", "unknown"}, timeout=3) != "mode_select":
                     break
         else:
+            if clicked_any and plan.mode != "standard":
+                # The button was there and took three clicks, yet the screen
+                # stayed on mode select: the game has the mode padlocked.
+                log.warning("start: mode %s did not start - its button is locked", plan.mode)
+                return "locked"
             log.warning("start: mode %s did not start", plan.mode)
             return False
         end = time.time() + 30  # loading, overwrite prompt, mode intro popups
@@ -1025,6 +1032,18 @@ class Bot:
                 started = self.start(plan)
                 if started == "known":
                     continue
+                if started == "locked":
+                    # our medals say the prerequisite is earned (e.g. as a
+                    # co-op guest) but the game keeps the mode locked: stop
+                    # planning it and its siblings instead of benching for 2 h
+                    # and failing again (Lotus Island, 2026-11-03)
+                    noted = self.account.note_mode_locked(plan.map, plan.mode_key)
+                    self.account.save()
+                    log.warning("%s: %s locked in the game although our medals unlock it - "
+                                "not planned for %d days: %s", plan.map, plan.mode_key,
+                                self.account.LOCK_RECHECK_DAYS, ", ".join(noted))
+                    self.to_main_menu()
+                    continue
                 if not started:
                     log.error("failed to start %s %s - skipping it this session",
                               plan.map, plan.mode_key)
@@ -1032,6 +1051,7 @@ class Bot:
                     self.failures += 1
                     continue
                 _note_game_started(plan)
+                self.account.note_mode_started(plan.map, plan.mode_key)
                 from .status import set_focus
                 set_focus(xp_focus(plan, self.strats[plan.strategy_id]))
                 # the plan's towers earn XP from here on (even if the game breaks)
