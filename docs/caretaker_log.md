@@ -190,3 +190,9 @@
 - Since the 13:35 entry: 1 win (Peninsula Reverse, peninsula_medium, 0 lives lost), 0 losses. No new loss folders.
 - Backlog 16, gear part: towers on Geared's gears are now followed round - `btd6bot/carried.py` turns each remembered click spot by the gear's angle (45/108 deg, from the map's RotateAreaAction data) whenever the round counter advances, so selections stop failing and towers are no longer "forgotten" and re-bought. Test `tests/test_carried_offline.py`; check.py ALL OK. Sanctuary's moving platforms still open.
 - Next run: backlog 8 (simulate with the map's track reach) or Sanctuary platforms (16 rest). Safe-mode forgiveness from ~2026-11-04 03:56.
+
+## 2026-11-03 15:45
+- Bot status: running (BTD6Bot task Running, bot.py run since 14:22, recorder up, BTD6 responding). It was PAUSED 14:22-15:18: a Steam "Refresh Sign In" window had taken the foreground. The caretaker brought BTD6 back to the front (not signed in to Steam; if the window keeps coming back, the owner may need to sign in). Since then idle by design: safe mode (1/64, trips 4) has no p >= 0.85 game left. No loops, no tracebacks, no PAUSE/STOP.
+- Since the 14:36 entry: 0 wins, 0 losses. No new loss folders.
+- Backlog 8: `tools/simulate_threats.py` can now play a build on the map's own geometry (`simulate(..., real_map=True)`, `map_model`), so the blimp check measures reach from real track cells instead of 2.5 x range; `ramp_calibration --offline --real-map` pairs per (strategy, mode, map). Easy and Medium show a trend (Medium 0.5-1x 32% lost vs 2x+ 9%), Hard still none, so the planner was not changed. Test `tests/test_simulate_real_map_offline.py`; check.py ALL OK.
+- Next run: Medium-family p penalty for real-map ratio under 1x (backlog 8), or Sanctuary platforms (16 rest). Safe-mode forgiveness from ~2026-11-04 03:56.
