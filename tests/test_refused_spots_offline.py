@@ -263,6 +263,18 @@ def test_many_refusals_do_not_erase_the_footprint_room():
     assert not after[2, 2], "the refused cells themselves are still excluded"
 
 
+def test_a_run_of_refused_clicks_is_not_learned_for_the_map():
+    """Sunset Gulch Medium (2026-11-02): 10 refused clicks for the hero that
+    placed nothing were learned as bad ground, and the map ran out of spots.
+    Such a run stays a this-game avoidance; single refusals, and refusals
+    of a call that did place the tower, are still learned."""
+    from btd6bot.strategy import SUSPECT_CLICK_STREAK, refusals_are_trusted
+    assert not refusals_are_trusted(10, placed=False)
+    assert not refusals_are_trusted(SUSPECT_CLICK_STREAK, placed=False)
+    assert refusals_are_trusted(SUSPECT_CLICK_STREAK - 1, placed=False)
+    assert refusals_are_trusted(10, placed=True)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

@@ -469,6 +469,23 @@ def _norm(s):
     return "".join(c for c in str(s).lower() if c.isalnum())
 
 
+# Refused spots are learned onto the map for every later game (MapModel.refuse,
+# a 3x3 square each). A long run of refused CLICKS (spots the probe passed)
+# that places nothing points at the game, not the ground: on Sunset Gulch
+# Medium (2026-11-02) the hero was "refused" at 10 spots in 8 s, then a sniper
+# was accepted beside them. Learned refusals had grown from 765 to 2,444 of the
+# map's 4,326 legal cells; the bot found 4 usable cells, placed one sniper and
+# lost at round 53 with $54,839 it could not spend.
+SUSPECT_CLICK_STREAK = 4
+
+
+def refusals_are_trusted(click_refusals, placed):
+    """False when the refusals of one Game.place call should not be learned
+    for the map: SUSPECT_CLICK_STREAK or more refused clicks and no tower
+    placed. They are still avoided for the rest of the game."""
+    return placed or click_refusals < SUSPECT_CLICK_STREAK
+
+
 def parse_cross(s):
     return [int(c) for c in str(s).split("-")]
 
@@ -1364,7 +1381,7 @@ class Executor:
         fracs = [self.m.cell_to_frac(cx, cy) for cx, cy, _ in spots]
         tid = step.get("id") or self._new_tid(kind)
         placed = self.g.place(tid, kind, *fracs[0], more_spots=fracs[1:])
-        self._note_refused(kind, key, spots, fracs)
+        self._note_refused(kind, key, spots, fracs, placed=bool(placed))
         if placed:
             p = self.g.towers[tid]
             self._learn_probe(kind, p)
@@ -1388,17 +1405,23 @@ class Executor:
             self._avoid_unverified(kind)
         return "wait"
 
-    def _note_refused(self, kind, key, spots, fracs):
+    def _note_refused(self, kind, key, spots, fracs, placed=False):
         """Learn every spot the last Game.place call found refused: never
         again in this game (failed_spots, blocked) nor on this map (refused
-        layer), and count it against the step."""
+        layer), and count it against the step. A run of refused clicks that
+        placed nothing is kept for this game only (see refusals_are_trusted)."""
+        persist = refusals_are_trusted(getattr(self.g, "click_refusals", 0), placed)
+        if not persist:
+            log.warning("%s: %d clicks in a row refused and nothing placed - more likely the "
+                        "game than the ground; not learned for this map", kind, self.g.click_refusals)
         for spot in getattr(self.g, "refused_spots", None) or ():
             if spot not in fracs:
                 continue
             cx, cy, _ = spots[fracs.index(spot)]
             self.failed_spots.add((kind, cx, cy))
             self._block(cx, cy, 2)
-            self._learn_blocked(kind, cx, cy)
+            if persist:
+                self._learn_blocked(kind, cx, cy)
             self.step_spot_fails[key] = self.step_spot_fails.get(key, 0) + 1
 
     # A support tower placed "near" others (an alchemist next to the ninja it

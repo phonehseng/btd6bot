@@ -61,6 +61,7 @@ class Game:
         self._closed_misses = {}   # (tower id, path) -> blank reads of a path its tiers allow
         self.last_price = None     # panel price of the last upgrade tried (None: unread)
         self.refused_spots = []    # (fx, fy) the last place() call found refused
+        self.click_refusals = 0    # ... of which the click (not the probe) was refused
         self.last_spot = None      # (fx, fy) where the last place() released its hold
         self._frame = None
         self._frame_t = 0
@@ -423,6 +424,7 @@ class Game:
         map shows a new tower)."""
         self.fail_reason = None
         self.refused_spots = []
+        self.click_refusals = 0     # spots the probe passed but the click did not take
         self.last_spot = None
         before = self.cash_stable()
         cost = self.price(kind)
@@ -448,6 +450,7 @@ class Game:
                 # spot it refuses (the probe missed it): try the next spot
                 log.info("spot %.3f,%.3f refused the click for %s", sx, sy, kind)
                 self.refused_spots.append((sx, sy))
+                self.click_refusals += 1
                 continue
             self.last_spot = (sx, sy)
             return self._confirm(tid, kind, sx, sy, pre if pre is not None else before)
