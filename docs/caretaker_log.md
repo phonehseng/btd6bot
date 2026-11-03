@@ -166,3 +166,9 @@
 - Since the 09:35 entry: 0 wins, 0 losses. No new loss folders.
 - Backlog 12 done: in Apopalypse (continuous sends) a plan step blocked by refused spots or an upgrade click with no effect is now set aside after one attempt and the plan goes on; a set-aside placement carries its later upgrades with it (also fixes Deflation dropping them). Polyphemus 2026-10-27 had idled from $2k to $15k on such steps. Offline tests added; check.py ALL OK.
 - Next run: why surplus() bought nothing in that Polyphemus minute; backlog 11 (reinforce spends while the plan saves) or 8. Safe-mode forgiveness from ~2026-11-04 03:56.
+
+## 2026-11-03 11:30
+- Bot status: running (BTD6Bot task Running, bot.py run since 10:19, recorder up, BTD6 responding), idle by design: safe mode (0/64, trips 4) has no p >= 0.85 game left. No loops, no tracebacks, no PAUSE/STOP.
+- Since the 10:45 entry: 0 wins, 0 losses. No new loss folders.
+- Backlog 5 and 6 were stale: `test_long_run_reaches_everything` passes (449 simulated games, 44 Hard medals, 18% losses) and the planner already learns per-map minutes from `map_stats`. Both moved to Done.
+- Next run: backlog 11 (reinforce spends while the plan saves for a step after the weakest round) or 8. Safe-mode forgiveness from ~2026-11-04 03:56.
