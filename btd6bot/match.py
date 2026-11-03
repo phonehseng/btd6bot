@@ -10,6 +10,7 @@ from .bloonwatch import BloonWatch
 from . import reinforce as R
 from .forecast import RoundForecast
 from .towerxp import TowerXpCounter
+from .carried import CarriedTowers
 
 REINFORCE_EVERY = 2.0   # seconds between model-chosen purchases (each choice takes ~1 s)
 REINFORCE_WAIT = 8.0    # ... and after a look that found nothing affordable to help
@@ -195,6 +196,13 @@ class Match:
         self._prev_lives_read = None
         self._lives = LivesTracker((getattr(executor, "rules", None) or {}).get("lives"))
         self._round_votes = RoundVotes()
+        # Geared's gears turn after each round and carry their towers with
+        # them: their remembered click spots are turned too (carried.py)
+        try:
+            self._carried = CarriedTowers.for_map(getattr(model, "name", None), model.playfield)
+        except Exception:
+            log.exception("could not set up towers on rotating ground - their spots stay fixed")
+            self._carried = None
         self._t_round_change = time.time()   # when the tracked round last changed
         self._last_buy = time.time()
         self._last_wait_log = 0.0
@@ -391,6 +399,7 @@ class Match:
                     self._watch_round_end(last_round)
                     for done in range(last_round, rnd):     # rounds completed: XP paid
                         self.tower_xp.round_end(done, list(self.g.towers.values()))
+                    self._follow_ground(last_round, rnd)
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
@@ -408,6 +417,7 @@ class Match:
                     # misfires threats, a stuck one ignores them
                     if self._round_votes.vote(rnd, last_round, now - self._t_round_change):
                         log.info("round tracking reset %s -> %s", last_round, rnd)
+                        self._follow_ground(last_round, rnd)
                         last_round = rnd
                         self._t_round_change = now
                         self._forecast_round(rnd)
@@ -519,6 +529,17 @@ class Match:
                      ahead[1], ahead[0])
         if too_weak_to_start(ahead, rules):
             raise WeakBuild(*ahead)
+
+    def _follow_ground(self, old_round, new_round):
+        """Turn the remembered spots of towers on rotating ground (Geared's
+        gears) by the turns made between the two rounds, so that selecting
+        them clicks where they stand now (carried.CarriedTowers)."""
+        if self._carried is None or old_round is None:
+            return
+        try:
+            self._carried.round_advanced(old_round, new_round, self.g.towers)
+        except Exception:
+            log.exception("moving towers with the ground failed - carrying on")
 
     def _forecast_round(self, rnd):
         """Ask the damage model about the round that just started; a round it
