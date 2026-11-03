@@ -1403,13 +1403,24 @@ class Bot:
             # the surest first: confident games, the easiest maps, the
             # highest p. (Hard-first order put Ravine, an Expert map, first:
             # lost at round 18 right after the breaker tripped.)
+            #
+            # Only confident games (p >= CONFIDENT_P) are played in safe mode;
+            # with none left the bot idles. Once the confident Medium games
+            # ran out (2026-11-03), safe mode went on to p 0.78-0.84 games
+            # with no record - High Finance, Cornfield and Sanctuary Medium,
+            # lost one after another within 15 minutes.
             from .planner import CONFIDENT_P
+            sure = [c for c in cands if c.p >= CONFIDENT_P and not self.benched(c.map, c.mode)]
+            if len(sure) < len(cands):
+                log.info("safe mode: %d games under p=%.2f are not played", len(cands) - len(sure), CONFIDENT_P)
+            cands = sure
             for family in (EASY_FAMILY, MEDIUM_FAMILY):
-                safe = [c for c in cands if c.mode in family and not self.benched(c.map, c.mode)]
+                safe = [c for c in cands if c.mode in family]
                 if safe:
-                    cands = sorted(safe, key=lambda c: (c.p >= CONFIDENT_P, c.ease, c.p), reverse=True)
-                    phase = "SAFE"
+                    cands = safe
                     break
+            cands = sorted(cands, key=lambda c: (c.ease, c.p), reverse=True)
+            phase = "SAFE"
             log.info("%s", safety.status())
         for c in cands:
             if self.benched(c.map, c.mode):
@@ -1428,6 +1439,10 @@ class Bot:
         # Nothing to play (run() then idles): say why. The planner only offers
         # first-time medals that clear their win-chance bar; its first reason
         # line explains an empty list.
+        if phase == "SAFE" and not cands:
+            log.warning("nothing to play right now: safe mode plays only games with p >= %.2f "
+                        "and none is left - idling", CONFIDENT_P)
+            return None
         log.warning("%s", "nothing to play right now: every winnable first-time medal is "
                           "benched after a recent loss or error" if cands else reasons[0])
         return None
