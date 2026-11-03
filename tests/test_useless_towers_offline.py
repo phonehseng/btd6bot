@@ -39,6 +39,9 @@ def _seller(pops):
     ex = Executor.__new__(Executor)
     ex.no_sell = False
     ex.g = FakeGame(pops)
+    # a sold tower's spot is remembered in failed_spots (_sell_and_avoid)
+    ex.failed_spots = set()
+    ex.m = SimpleNamespace(frac_to_cell=lambda x, y: (x * 100, y * 100))
     return ex
 
 
