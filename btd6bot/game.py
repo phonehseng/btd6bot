@@ -603,8 +603,8 @@ class Game:
             low = text.lower()
             if "xp" in low:
                 out.append(("xp", parse_int(low.replace("xp", ""))))
-            elif "$" in text or text[:1].isdigit() or (low[:1] == "s" and low[1:2].isdigit()):
-                out.append(("cash", parse_int(text)))   # OCR reads '$' as 'S' at times
+            elif looks_like_price(text):
+                out.append(("cash", parse_int(text)))
             else:
                 out.append((None, None))
         return out
@@ -1012,6 +1012,26 @@ def _red_frac(img):
 def _expand(pt, dx, dy):
     x, y = pt
     return (x - dx, y - dy, x + dx, y + dy)
+
+
+def looks_like_price(text):
+    """Is this OCR text of an upgrade button a cash price ('$2,200')?
+
+    The '$' is the shakiest character: OCR has read it as 'S', 's' and '#'.
+    '#2,200' was not accepted, so Deadly Precision ($2,200) read as a blank
+    button on every sniper, the path was closed for the game, and Peninsula
+    Reverse (2026-11-03) was lost at round 50 with $51,030 unspent. So up to
+    two leading symbols or an 'S' may stand before the first digit; words
+    ('PATH CLOSED', upgrade names) still do not count."""
+    t = text.strip()
+    if "$" in t:
+        return True
+    i = 0
+    while i < min(2, len(t)) and not t[i].isalnum():
+        i += 1
+    if t[i:i + 1] in ("s", "S"):
+        i += 1
+    return t[i:i + 1].isdigit()
 
 
 def _path_open_by_tiers(tiers, path):
