@@ -154,3 +154,9 @@
 - Since the 07:45 entry: 0 wins, 0 losses. No new loss folders.
 - "level reads 38 but notes say 137" (every 30-min idle check): the account is level 138 and the badge's leading "1" spans x 0.089-0.099, so the old OCR box (from x 0.095) cut it in half. runner.read_level now reads (0.083-0.13); on recorded menu frames it reads 138 at 0.99 confidence. The notes should adopt 138 at the next check.
 - Next run: confirm the warning is gone in bot.log; then backlog 17 (Tricky Tracks refused spots) or simulate with mapgeom track reach (backlog 8). Safe-mode forgiveness from ~2026-11-04 03:56.
+
+## 2026-11-03 09:35
+- Bot status: running (BTD6Bot task Running, bot.py run since 08:19, recorder up, BTD6 responding), idle by design: safe mode (0/64, trips 4) has no p >= 0.85 game left. No loops, no tracebacks, no PAUSE/STOP. The "level reads 38" warning is gone: the bot now reads L138.
+- Since the 08:30 entry: 0 wins, 0 losses. No new loss folders.
+- Backlog 17 (Tricky Tracks refused spots), checked offline: the map geometry fits the screen exactly, and 37 of the 48 refused spots are on the brick platforms at the same distance from the rails as the two snipers that were placed. So the ground data is not the cause; after the second sniper every click was refused everywhere. Item changed to a live check (overlay saved as dev media). The first heli spot was on a track the grid forbids - which code path picked it is still open.
+- Next run: backlog 8 (simulate with the map's track reach) or 11/12 (reinforce spends while the plan saves). tools/check.py takes ~6 min now: run it with a bounded wait. Safe-mode forgiveness from ~2026-11-04 03:56.

@@ -232,5 +232,11 @@
     "time": "2026-10-22T06:32:57",
     "topic": "menus",
     "caption": "Deflation's intro box sat over the game; the bot saw the HUD, thought it was playing and could not pick up a single tower."
+  },
+  {
+    "file": "20261103_092004_trickytracks_refused_spots.jpg",
+    "time": "2026-11-03T09:20:04",
+    "topic": "placement",
+    "caption": "Tricky Tracks: green = where the map data lets towers stand, crosses = clicks the game refused. Most refusals are on the platforms, so the map fit is right; the cause is elsewhere."
   }
 ]
