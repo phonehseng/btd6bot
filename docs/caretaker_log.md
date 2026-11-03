@@ -172,3 +172,9 @@
 - Since the 10:45 entry: 0 wins, 0 losses. No new loss folders.
 - Backlog 5 and 6 were stale: `test_long_run_reaches_everything` passes (449 simulated games, 44 Hard medals, 18% losses) and the planner already learns per-map minutes from `map_stats`. Both moved to Done.
 - Next run: backlog 11 (reinforce spends while the plan saves for a step after the weakest round) or 8. Safe-mode forgiveness from ~2026-11-04 03:56.
+
+## 2026-11-03 12:28
+- Bot status: running (BTD6Bot task Running, bot.py run since 10:19, recorder up, BTD6 responding), idle by design: safe mode (0/64, trips 4) has no p >= 0.85 game left. No loops, no tracebacks, no PAUSE/STOP.
+- Since the 11:30 entry: 0 wins, 0 losses. No new loss folders.
+- Backlog 11, Cornfield part: replayed the Cornfield Medium loss offline. Reinforce did run, but had nothing it was allowed to buy: no tower fitted, the big tiers cost $32-42k, and the sniper's 4-2-0 ($450, weakest round 0.71 -> 0.87) was past the plan's crosspath. Reinforcing may now take a side path up to tier 2 once the leading path is past 2 (Executor._side_path_ok), and reinforce logs when it finds nothing or a purchase fails (both were silent). Test added; check.py ALL OK.
+- Next run: backlog 11 rest (spend while the plan saves for a step landing after the weakest round) or 8. Safe-mode forgiveness from ~2026-11-04 03:56.

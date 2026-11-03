@@ -2794,7 +2794,9 @@ class Executor:
         the plan's crosspath - the cap is there to keep a tower from being
         turned onto another path, and more of the same path does not
         (reinforce.py: Water Park Hard reached round 63 with every tower at
-        its planned crosspath and $24k unspent)."""
+        its planned crosspath and $24k unspent). A tower whose leading path
+        is past tier 2 may also take its side path up to tier 2 (_side_path_ok):
+        that cannot turn it onto another path."""
         towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
                         key=lambda p: (p.kind != first, -p.spent))
         family = PRICE_FAMILY.get(self.mode, "hard")
@@ -2813,11 +2815,34 @@ class Executor:
                     continue
                 cap = self._planned_cap(p)
                 leading = p.tiers[path] > 0 and p.tiers[path] == max(p.tiers)
-                if cap is not None and t[path] > cap[path] and not (past_plan and leading):
+                if (cap is not None and t[path] > cap[path]
+                        and not (past_plan and (leading or self._side_path_ok(p, path, cap)))):
                     continue  # past the crosspath the plan wants for this tower
                 if self.account and t[path] > self.account.upgrades(p.kind)[path] and t[path] > 2:
                     continue  # known XP-locked beyond tier 2
                 yield p, t, T.upgrade_cost(p.kind, path + 1, t[path], family)
+
+    @staticmethod
+    def _side_path_ok(p, path, cap):
+        """May reinforcing (past_plan) buy the next tier of `path`, a path
+        other than the tower's leading one, beyond the plan's crosspath?
+
+        Yes when the leading path is past tier 2 - the crosspath rule then
+        keeps every other path at 2 or below, so the tower's main attack
+        cannot change - and `path` is the only side path the tower uses or
+        the plan wants (taking a different one would shut out the plan's
+        own side path: only two paths may be bought).
+
+        Cornfield Medium (2026-11-03, solo_ace): one ace fitted on the map,
+        the plan saved for its $42,500 5-2-0, and the opener sniper stood at
+        its planned 4-1-0. Reinforcing found nothing it was allowed to buy
+        while $4k-25k sat idle, although 4-2-0 ($450) lifted the weakest
+        round of the look-ahead from 0.71 to 0.87 in the damage model."""
+        lead = max(range(3), key=lambda i: p.tiers[i])
+        if path == lead or p.tiers[lead] <= 2 or p.tiers[path] >= 2:
+            return False
+        others = [i for i in range(3) if i not in (lead, path)]
+        return all(p.tiers[i] == 0 and cap[i] == 0 for i in others)
 
     def _planned_cap(self, p):
         """The crosspath the plan wants this tower to end at (its upgrade steps

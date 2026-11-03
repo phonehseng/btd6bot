@@ -127,7 +127,8 @@ def best(ex, forecast, cash, rnd, end_round):
     # per dollar (which kept buying the cheapest small step, see trim()).
     crisis = before is not None and before < 1.0
     pick = None
-    for o in options(ex, cash):
+    tried = options(ex, cash)
+    for o in tried:
         leak = forecast.leaks(o.towers, rounds_rated, half)
         if leak is None:
             continue
@@ -138,6 +139,11 @@ def best(ex, forecast, cash, rnd, end_round):
         if pick is None or value > pick[0]:
             pick = (value, o)
     if pick is None:
+        # said out loud: on Cornfield Medium (2026-11-03) this stayed silent
+        # for ten rounds while $25k sat idle, and the loss had to be worked
+        # out offline
+        log.info("reinforce: nothing $%d buys helps round %d (%.2f; %d purchases tried)",
+                 cash, worst, before or 0.0, len(tried))
         return "wait", None
     after = forecast.margin(pick[1].towers, worst)
     return "buy", (pick[1], worst, before, after)
@@ -156,4 +162,5 @@ def buy_best(ex, forecast, cash, rnd, end_round):
         log.warning("reinforce: %s ($%d) - round %d, the weakest ahead, goes %.2f -> %.2f in the model",
                     o.what, o.cost, worst, before or 0.0, after or 0.0)
         return "bought"
+    log.info("reinforce: %s ($%d) did not go through (%s)", o.what, o.cost, r)
     return "failed"
