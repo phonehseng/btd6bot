@@ -73,3 +73,10 @@
 - Since the 2026-10-27 21:45 entry: no finished games (0 wins, 0 losses).
 - Losses: 14 open case folders on map/modes with a model ceiling under 1.5 were diagnosed as one group: the planner played games the damage model rated unwinnable, now capped by cd7ff76 (each folder's ceiling re-checked today; 6 also show the placement starvation fixed in eb9514e). Marked handled; 28 older folders still say "status: new".
 - Not committed: the 2026-10-28 working-tree change to btd6bot/reinforce.py (trim() keeps the dearest options; under margin 1 the purchase saving the most lives wins), with its test and backlog item 13. tests/test_reinforce_offline.py passes, but tools/check.py did not finish within this run (over 12 min while the bot runs), so next run: run check.py and commit it if ALL OK. The bot already runs this code because it reloads from disk.
+
+## 2026-11-02 21:54
+- Bot status: running (BTD6Bot task Running, bot.py run since 20:29, recorder up, BTD6 responding); state.txt fresh (Sulfur Springs Deflation, round 32, 200 lives). No tracebacks or loops in bot.log. Safe mode ON (streak 7, trips 4).
+- Since the 20:45 entry: 5 wins, 0 losses (Spice Islands Primary Only + Deflation, Quiet Street Primary Only + Deflation, Sulfur Springs Primary Only). No new loss folders.
+- Committed the pending reinforce change (5dada26: the option list keeps the dearest purchases too; under margin 1 the most lives saved wins) after a full check.py ALL OK.
+- Fixed why check.py could not finish in a run (6af2640): test_base_success_is_conservative reloaded every strategy per tower and mode (over 10 min alone); it loads once now.
+- Next run: 28 old folders still "status: new", newest first: Ravine Easy (solo_buccaneer, round 28, 118 lives lost) and Spillway Deflation (round 50, report says 0 lives lost - check whether the defeat or the lives count was misread).
