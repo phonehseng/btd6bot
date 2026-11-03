@@ -1022,16 +1022,29 @@ def looks_like_price(text):
     button on every sniper, the path was closed for the game, and Peninsula
     Reverse (2026-11-03) was lost at round 50 with $51,030 unspent. So up to
     two leading symbols or an 'S' may stand before the first digit; words
-    ('PATH CLOSED', upgrade names) still do not count."""
+    ('PATH CLOSED', upgrade names) still do not count.
+
+    At the full 1920x1200 capture the '$' is also read as a CJK character
+    ('$500' -> '学500', Cargo Medium 2026-11-03, about 80 blank reads an
+    hour). Python's isalnum() is True for such characters, so "symbol" here
+    means anything that is not an ASCII letter or digit."""
     t = text.strip()
     if "$" in t:
         return True
     i = 0
-    while i < min(2, len(t)) and not t[i].isalnum():
+    while i < min(2, len(t)) and not _ascii_alnum(t[i]):
         i += 1
     if t[i:i + 1] in ("s", "S"):
         i += 1
-    return t[i:i + 1].isdigit()
+    return t[i:i + 1] in _ASCII_DIGITS
+
+
+_ASCII_DIGITS = frozenset("0123456789")
+
+
+def _ascii_alnum(ch):
+    """An ASCII letter or digit (str.isalnum also accepts e.g. '学')."""
+    return ch.isascii() and ch.isalnum()
 
 
 def _path_open_by_tiers(tiers, path):

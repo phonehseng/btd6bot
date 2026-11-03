@@ -16,14 +16,18 @@ from btd6bot.hud import parse_int  # noqa: E402
 
 def test_misread_dollar_signs():
     for text, value in (("$2,200", 2200), ("#2,200", 2200), ("S2,100", 2100),
-                        ("s550", 550), ("2,100", 2100), ("$ 500", 500)):
+                        ("s550", 550), ("2,100", 2100), ("$ 500", 500),
+                        # Cargo Medium (2026-11-03): the live 1920x1200 crop of
+                        # Advanced Intel's '$500' (logs/closed_misread.png) reads
+                        # as '学500' - a CJK glyph, which isalnum() accepts
+                        ("学500", 500), ("学1,000", 1000)):
         assert looks_like_price(text), text
         assert parse_int(text) == value, (text, parse_int(text))
-    print("ok '$', '#', 'S' and no sign all read as prices")
+    print("ok '$', '#', 'S', a CJK glyph and no sign all read as prices")
 
 
 def test_words_are_not_prices():
-    for text in ("", "PATH CLOSED", "BounonG", "Sell", "owned"):
+    for text in ("", "PATH CLOSED", "BounonG", "Sell", "owned", "学"):
         assert not looks_like_price(text), text
     print("ok words and blanks are not prices")
 
