@@ -1460,18 +1460,27 @@ class Bot:
             # ran out (2026-11-03), safe mode went on to p 0.78-0.84 games
             # with no record - High Finance, Cornfield and Sanctuary Medium,
             # lost one after another within 15 minutes.
+            #
+            # When no confident game is left, the normal order is played
+            # instead of idling: from 02:57 to 15:41 on 2026-11-03 the bot
+            # idled in 30-minute naps with 172 medals open, and the owner's
+            # rule is to keep playing Hard-family medals in medal order even
+            # at p 0.71-0.84.
             from .planner import CONFIDENT_P
             sure = [c for c in cands if c.p >= CONFIDENT_P and not self.benched(c.map, c.mode)]
             if len(sure) < len(cands):
                 log.info("safe mode: %d games under p=%.2f are not played", len(cands) - len(sure), CONFIDENT_P)
-            cands = sure
-            for family in (EASY_FAMILY, MEDIUM_FAMILY):
-                safe = [c for c in cands if c.mode in family]
-                if safe:
-                    cands = safe
-                    break
-            cands = sorted(cands, key=lambda c: (c.ease, c.p), reverse=True)
-            phase = "SAFE"
+            if sure:
+                cands = sure
+                for family in (EASY_FAMILY, MEDIUM_FAMILY):
+                    safe = [c for c in cands if c.mode in family]
+                    if safe:
+                        cands = safe
+                        break
+                cands = sorted(cands, key=lambda c: (c.ease, c.p), reverse=True)
+                phase = "SAFE"
+            else:
+                log.warning("safe mode: no confident game left - playing the normal medal order")
             log.info("%s", safety.status())
         for c in cands:
             if self.benched(c.map, c.mode):
@@ -1490,10 +1499,6 @@ class Bot:
         # Nothing to play (run() then idles): say why. The planner only offers
         # first-time medals that clear their win-chance bar; its first reason
         # line explains an empty list.
-        if phase == "SAFE" and not cands:
-            log.warning("nothing to play right now: safe mode plays only games with p >= %.2f "
-                        "and none is left - idling", CONFIDENT_P)
-            return None
         log.warning("%s", "nothing to play right now: every winnable first-time medal is "
                           "benched after a recent loss or error" if cands else reasons[0])
         return None

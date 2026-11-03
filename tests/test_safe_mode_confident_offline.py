@@ -1,9 +1,12 @@
-﻿"""Safe mode plays only confident games, and idles without one (no game needed).
+"""Safe mode plays confident games first; without one it plays the normal order.
 
 2026-11-03: with the confident Medium games used up, safe mode went on to
 p 0.78-0.84 games with no record (High Finance, Cornfield, Sanctuary
 Medium) and lost all three within 15 minutes. Runner.next_plan now keeps
-only p >= planner.CONFIDENT_P while the breaker is on.
+only p >= planner.CONFIDENT_P while the breaker is on and one is left.
+Without one it used to idle, and from 02:57 to 15:41 the bot did nothing
+with 172 medals open; the owner's rule is to keep playing in medal order,
+so it now falls back to the planner's normal order (no game needed).
 Run: python tests/test_safe_mode_confident_offline.py"""
 import sys
 from pathlib import Path
@@ -41,10 +44,10 @@ def test_unsure_games_are_skipped():
     print("ok safe mode skips p=0.84 for a p=0.90 game")
 
 
-def test_idle_without_a_confident_game():
-    plan = plan_with([cand("Cornfield", "medium", 0.78), cand("Sanctuary", "medium", 0.83)])
-    assert plan is None, plan
-    print("ok safe mode idles when every game is under p=0.85")
+def test_normal_order_without_a_confident_game():
+    plan = plan_with([cand("Sanctuary", "medium", 0.83), cand("Cornfield", "medium", 0.78)])
+    assert plan is not None and plan.map == "Sanctuary", plan
+    print("ok safe mode falls back to the planner's order when every game is under p=0.85")
 
 
 def test_normal_mode_unchanged():
@@ -55,6 +58,6 @@ def test_normal_mode_unchanged():
 
 if __name__ == "__main__":
     test_unsure_games_are_skipped()
-    test_idle_without_a_confident_game()
+    test_normal_order_without_a_confident_game()
     test_normal_mode_unchanged()
     print("ALL OK")
