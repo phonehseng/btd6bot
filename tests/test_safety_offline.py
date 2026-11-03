@@ -56,6 +56,28 @@ def test_abandoned_games_are_not_losses():
     _with_files(check)
 
 
+def test_clean_days_forgive_trips_while_safe():
+    """Four trips, the last one and the last defeat 2.5 days ago: two trips
+    are forgiven, so 16 wins (not 64) end safe mode."""
+    def check(folder):
+        now = 2_000_000_000.0
+        quiet = now - 2.5 * safety.FORGIVE_AFTER
+        (folder / "results.jsonl").write_text(
+            json.dumps({"t": quiet - 60, "outcome": "defeat"}) + "\n"
+            + json.dumps({"t": quiet + 60, "outcome": "victory"}) + "\n", encoding="utf-8")
+        state = {"on": True, "streak": 0, "trips": 4, "last_trip": quiet}
+        assert safety.exit_wins(state, now=quiet + 1) == 64
+        assert safety.effective_trips(state, now) == 2
+        assert safety.exit_wins(state, now) == 2 * safety.BASE_EXIT_WINS
+        # a fresh defeat restarts the clean-day count
+        with open(folder / "results.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps({"t": now - 10, "outcome": "defeat"}) + "\n")
+        assert safety.exit_wins(state, now) == 64
+        # never below one trip
+        assert safety.effective_trips(state, now + 30 * safety.FORGIVE_AFTER) == 1
+    _with_files(check)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

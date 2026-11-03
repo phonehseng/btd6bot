@@ -10,7 +10,8 @@ In safe mode the bot plays Easy-family medals only (Easy, Primary Only,
 Deflation); when every one of those is earned, Medium-family medals. Each
 time the breaker trips again, the wins needed to leave safe mode double
 (8, 16, 32, ...), so a bot that keeps failing at hard modes spends ever
-longer earning safe medals before it tries again; a clean day resets it.
+longer earning safe medals before it tries again; every clean day (no trip,
+no defeat) forgives one trip, even while safe mode is on.
 
 State lives in logs/safe_mode.json; logs/results.jsonl (progress.py) is the
 game history. Only "defeat" counts as a loss: games ended by something
@@ -62,8 +63,28 @@ def _recent(n):
     return rows[-n:]
 
 
-def exit_wins(state):
-    return BASE_EXIT_WINS * 2 ** max(0, state.get("trips", 1) - 1)
+def _last_defeat_time():
+    """Unix time of the newest defeat in results.jsonl (0 if none is dated)."""
+    return max((g.get("t") or 0 for g in _recent(200) if g.get("outcome") == "defeat"), default=0)
+
+
+def effective_trips(state, now=None):
+    """The trip count that sets the wins needed, after forgiveness: every full
+    FORGIVE_AFTER without a trip or a defeat forgives one trip (never below 1).
+
+    Before 2026-11-03 a clean day was forgiven only when the breaker tripped
+    again, so four trips from 2026-10-24 still asked for 64 wins in a row ten
+    days later - with safe mode playing only p >= 0.85 games, almost none of
+    which were left, the bot idled instead of earning its way out."""
+    trips = state.get("trips", 1)
+    quiet_since = max(state.get("last_trip", 0), _last_defeat_time())
+    forgiven = int(max(0.0, (now or time.time()) - quiet_since) // FORGIVE_AFTER)
+    return max(1, trips - forgiven)
+
+
+def exit_wins(state, now=None):
+    """Wins in a row that end safe mode: BASE_EXIT_WINS doubled per trip."""
+    return BASE_EXIT_WINS * 2 ** (effective_trips(state, now) - 1)
 
 
 def active():
