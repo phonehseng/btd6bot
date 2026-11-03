@@ -18,6 +18,10 @@ EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
 from .maplearn import PathTracer
 
 log = logging.getLogger("match")
+
+# Start of the error play() raises when not even one tower could be placed
+# before round 1; the runner recognises it to note placement trouble.
+NO_DEFENCE_ERROR = "no defence could be placed"
 BANANA_EVERY = 2.0   # seconds between passes over the bananas around farms
 # Dartling Gunners (and a heli before its targeting is set) aim at the mouse:
 # while the bot has nothing to click, the cursor rests on the busiest stretch
@@ -303,7 +307,7 @@ class Match:
             rounds = self.ex.rules.get("end_round", 80) - self.ex.rules.get("start_round", 1) + 1
             max_minutes = max(60, 0.75 * rounds)
         if not self.setup():
-            raise RuntimeError("no defence could be placed - refusing to start the round "
+            raise RuntimeError(f"{NO_DEFENCE_ERROR} - refusing to start the round "
                                f"(cash read {getattr(self, '_setup_cash', None)}, "
                                f"plan: {getattr(self.ex, 'waiting', None) or 'nothing tried'})")
         self._check_no_income_build()
@@ -759,6 +763,9 @@ class Match:
         if outcome == "victory":
             self.tower_xp.round_end(rnd, list(self.g.towers.values()))   # the last round paid too
         self.stats["tower_xp"] = self.tower_xp.rounded()
+        # plan steps given up because the game refused every spot tried: the
+        # runner notes a lost game with any as placement trouble on the map
+        self.stats["steps_given_up"] = len(getattr(self.ex, "dead_steps", ()))
         if self.depths:
             # the deepest point bloons reached in any round (bloonwatch.py)
             self.stats["bloon_depth"] = max(s["deepest"] for s in self.depths)

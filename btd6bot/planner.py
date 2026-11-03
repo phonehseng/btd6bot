@@ -873,6 +873,10 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     if double_cash_applies(getattr(account, "boosts", {}), mode):
         p = 1.0 - (1.0 - p) * DOUBLE_CASH_LOSS_FACTOR
     p *= map_fit_factor(s, map_name, mode)
+    # the bot could not build its defence on this map before (any mode, any
+    # build): every mode there is doubted like a lost one until a win
+    trouble = getattr(account, "placement_trouble", {}).get(canonical_map(map_name), 0)
+    p *= max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR ** trouble)
     if s.maps is None:
         # a general build answers for the map's record too: Last Resort Hard
         # was lost by three general builds in turn, each of them rated 0.8-0.9
@@ -894,6 +898,9 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
 # Every loss on a (map, mode), by any strategy, scales the prior of the
 # general builds there by MAP_LOSS_FACTOR (two losses: 0.49), down to
 # MAP_LOSS_FLOOR. Map-specific builds keep only their own record.
+# Placement trouble on a map (AccountState.placement_trouble) scales every
+# build in every mode there the same way: one event takes p=0.98 to 0.69,
+# under the safe-mode bar (0.85).
 MAP_LOSS_FACTOR = 0.7
 MAP_LOSS_FLOOR = 0.3
 

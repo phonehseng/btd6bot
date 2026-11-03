@@ -7,7 +7,7 @@ import numpy as np
 from . import layout as L
 from . import progress
 from . import towers as T
-from .account import AccountState
+from .account import AccountState, canonical_map
 from .achievements import Achievements
 from .xpspend import forget_short, strategy_towers, sync_all, unlock_for_strategy, unlock_paragons
 from .mk import Knowledge
@@ -16,7 +16,7 @@ from .choices import tower_chooser
 from .game import Game
 from .inputs import Aborted, FocusLost, Input, kill_requested
 from .maplearn import MapModel
-from .match import Match, WeakBuild
+from .match import NO_DEFENCE_ERROR, Match, WeakBuild
 from .menus import Menus
 from .scanner import scan_placement, scan_water
 from .screen import GameNotFound, Screen
@@ -1061,6 +1061,7 @@ class Bot:
                 self._games_since_mk += 1
                 if res.get("outcome") != "victory" and not res.get("outside_cause"):
                     self.bench(plan.map, plan.mode_key, hours=12, why=res.get("outcome", "loss"))
+                self._note_placement(plan, res)
                 log.info("RESULT %s", res)
                 self._game_done(plan)
                 progress.record_result(plan, res)
@@ -1085,9 +1086,34 @@ class Bot:
             except Exception as e:
                 log.exception("game loop error - recovering to main menu")
                 self.failures += 1
+                if NO_DEFENCE_ERROR in str(e):
+                    self._note_placement(plan, {"outcome": "no defence"})
                 # bench only a map/mode that fails twice; wait instead when the
                 # same error repeats game after game (a bot bug, not a bad map)
                 self._game_error(e, plan, code_stamp)
+
+    def _note_placement(self, plan, res):
+        """Keep the account's per-map placement record (planner prior) up to date.
+
+        A win on the map clears it. A game that never got its defence down
+        ("no defence could be placed") or was lost after a plan step was given
+        up because every spot was refused adds one: on Tricky Tracks both
+        happened and the planner still rated every mode there p=0.98."""
+        outcome = res.get("outcome")
+        if outcome == "victory":
+            if not self.account.placement_trouble.get(canonical_map(plan.map)):
+                return      # nothing to forget, nothing to save
+            self.account.note_map_won(plan.map)
+        elif outcome == "no defence" or (res.get("steps_given_up") and not res.get("outside_cause")):
+            n = self.account.note_placement_trouble(plan.map)
+            log.warning("%s: the defence could not be built (%s) - placement trouble %d, "
+                        "every mode there is trusted less until a win", plan.map, outcome, n)
+        else:
+            return
+        try:
+            self.account.save()
+        except OSError:
+            log.exception("could not save the placement record")
 
     def _check_account(self, force=False):
         """Read the signed-in account's User ID; switch state files if it changed,

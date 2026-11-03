@@ -366,6 +366,13 @@ class AccountState:
     # behind them (Lotus Island 2026-11-03: Medium medal shown, Military Only
     # and Reverse padlocked), so the medal chain alone over-promises.
     locked_modes: dict[str, dict[str, float]] = field(default_factory=dict)
+    # map -> times the bot could not build its defence there: "no defence
+    # could be placed" before round 1, or a lost game in which a placement
+    # step was given up because every spot was refused. It concerns the map
+    # (how the bot reads and clicks it), not one mode, and is cleared by a win
+    # on the map. Tricky Tracks 2026-11-02/03: two such errors, then a loss at
+    # p=0.98 - the map's other modes would have looked just as safe.
+    placement_trouble: dict[str, int] = field(default_factory=dict)
     observed_upgrade_costs: dict[str, dict[str, int]] = field(default_factory=dict)  # tower -> "p-t" -> xp
     games_played: int = 0
     history: list[dict[str, Any]] = field(default_factory=list)
@@ -419,6 +426,7 @@ class AccountState:
         st.xp_short = {k: dict(v) for k, v in raw.get("xp_short", {}).items()}
         st.category_progress = {k: list(v) for k, v in raw.get("category_progress", {}).items()}
         st.locked_modes = {k: dict(v) for k, v in raw.get("locked_modes", {}).items()}
+        st.placement_trouble = {k: int(v) for k, v in raw.get("placement_trouble", {}).items()}
         st.observed_upgrade_costs = raw.get("observed_upgrade_costs", {})
         st.games_played = int(raw.get("games_played", 0))
         st.history = list(raw.get("history", []))
@@ -448,6 +456,7 @@ class AccountState:
             "xp_short": self.xp_short,
             "category_progress": self.category_progress,
             "locked_modes": self.locked_modes,
+            "placement_trouble": self.placement_trouble,
             "observed_upgrade_costs": self.observed_upgrade_costs,
             "games_played": self.games_played,
             "history": self.history[-self.HISTORY_LIMIT:],
@@ -597,6 +606,17 @@ class AccountState:
         rec = self.locked_modes.get(canonical_map(map_name))
         if rec and rec.pop(mode, None) is not None and not rec:
             self.locked_modes.pop(canonical_map(map_name), None)
+
+    def note_placement_trouble(self, map_name: str) -> int:
+        """The bot could not build its defence on this map (see
+        ``placement_trouble``). Returns the new count."""
+        m = canonical_map(map_name)
+        self.placement_trouble[m] = self.placement_trouble.get(m, 0) + 1
+        return self.placement_trouble[m]
+
+    def note_map_won(self, map_name: str) -> None:
+        """A win on the map shows its defence can be built: forget the trouble."""
+        self.placement_trouble.pop(canonical_map(map_name), None)
 
     def upgrades(self, tower: str) -> list[int]:
         return list(self.unlocked_upgrades.get(tower, [0, 0, 0]))
