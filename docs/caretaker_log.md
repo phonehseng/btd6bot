@@ -111,7 +111,7 @@
 
 ## 2026-11-03 02:59
 - Bot status: running (BTD6Bot task Running, bot.py run since 01:41 with reloads, recorder up, BTD6 responding); playing Dark Castle Military Only, round 56, no lives lost. Safe mode ON (streak 1, trips 4).
-- Since the 01:47 entry: 5 wins (Enchanted Glade Military Only/Reverse, Cargo Medium/Military Only/Reverse, Dark Castle Medium - 6), 4 losses (Spillway, High Finance, Cornfield, Sanctuary Medium) - all diagnosed and handled.
+- Since the 01:47 entry: 6 wins (Enchanted Glade Military Only/Reverse, Cargo Medium/Military Only/Reverse, Dark Castle Medium), 4 losses (Spillway, High Finance, Cornfield, Sanctuary Medium) - all diagnosed and handled.
 - Spillway (01bc6af): OCR reads "$500" as "学500" at full resolution; str.isalnum() accepts the glyph, so the price looked blank and sub paths closed. Second root cause of backlog item 10 (~80 blank reads/hour after the '#' fix).
 - High Finance / Cornfield (2aed24b): mapfit gave global-range towers full coverage without checking room; now counts towers that fit (High Finance heli/ace/mortar 0, Cornfield ace 1/3). All 88 maps re-measured.
 - ddc7271: safe mode now plays only p >= 0.85 games and idles otherwise (the three p 0.78-0.84 safe-mode games all lost). Sanctuary: platforms carry towers (backlog 16). 28 old (Oct 22-24) loss folders triaged: 7 superseded by later wins, 21 grouped by cause.

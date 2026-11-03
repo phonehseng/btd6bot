@@ -2876,7 +2876,7 @@
   },
   "haunted": {
    "name": "Haunted",
-   "bundle": "map_haunted_scenes_all_430ec202f390f1eb3abf48abd93f8364.bundle",
+   "bundle": "map_haunted_scenes_all_8d159355917e07125bd7474336b332fd.bundle",
    "features": [
     {
      "kind": "removable",
@@ -6728,7 +6728,7 @@
   },
   "sulfursprings": {
    "name": "Sulfur Springs",
-   "bundle": "map_sulfursprings_scenes_all_7f687f2f6ef5da585599aed7fbb77540.bundle",
+   "bundle": "map_sulfursprings_scenes_all_21a55404b1fe17303cc3620d7b544a1e.bundle",
    "features": [
     {
      "kind": "click_event",
