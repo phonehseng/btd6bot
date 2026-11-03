@@ -184,3 +184,9 @@
 - Since the 12:28 entry: 0 wins, 0 losses. No new loss folders.
 - Backlog 11, Peninsula part: when the weakest round leaks even at full strength and nothing affordable lifts it over 1, reinforce now saves for the cheapest dearer purchase that does (up to 3x the cash, round 2+ away) and surplus() leaves that cash alone ("reinforce: saving for ..."). The "plan saves past the weakest round" case was already covered (reinforce ignores the plan's wait). Tests added; check.py ALL OK.
 - Next run: backlog 8 (simulate with the map's track reach) or 16 (Geared rotating tower positions). Safe-mode forgiveness from ~2026-11-04 03:56.
+
+## 2026-11-03 14:36
+- Bot status: running (BTD6Bot task Running, bot.py run since 13:19, BTD6 responding), idle by design since 13:58: safe mode (1/64, trips 4) has no p >= 0.85 game left. No loops, no tracebacks, no PAUSE/STOP.
+- Since the 13:35 entry: 1 win (Peninsula Reverse, peninsula_medium, 0 lives lost), 0 losses. No new loss folders.
+- Backlog 16, gear part: towers on Geared's gears are now followed round - `btd6bot/carried.py` turns each remembered click spot by the gear's angle (45/108 deg, from the map's RotateAreaAction data) whenever the round counter advances, so selections stop failing and towers are no longer "forgotten" and re-bought. Test `tests/test_carried_offline.py`; check.py ALL OK. Sanctuary's moving platforms still open.
+- Next run: backlog 8 (simulate with the map's track reach) or Sanctuary platforms (16 rest). Safe-mode forgiveness from ~2026-11-04 03:56.
