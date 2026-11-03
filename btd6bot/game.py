@@ -65,6 +65,10 @@ class Game:
         self.last_spot = None      # (fx, fy) where the last place() released its hold
         self._frame = None
         self._frame_t = 0
+        # Set by screen_ok() once the match HUD is gone; every click-making
+        # action then refuses until the match loop has looked at the screen
+        # and cleared it (Match.play).
+        self.screen_lost = False
 
     # -- observation --------------------------------------------------------
     def frame(self, max_age=0.05):
@@ -111,6 +115,33 @@ class Game:
         f = f if f is not None else self.fresh()
         best, scores = classify(f, ["play_idle", "play_run", "play_fast"], PLAY_BTN)
         return scores[best] > 0.75
+
+    # Pause between the two looks at the Play button before the HUD counts
+    # as gone (one look can catch a frame mid-redraw).
+    SCREEN_RECHECK_S = 0.25
+
+    def screen_ok(self):
+        """True while the match HUD (the Play / fast-forward button) is on
+        screen, so a click lands on the map and not on something above it.
+
+        Cargo Double HP Monkeys (2026-11-03): the game was lost at round 75
+        while the executor was in the middle of a long run of purchases. For
+        35 s it kept clicking spots and towers on the DEFEAT screen - whose
+        Continue button spends Monkey Money - until a placement click hit
+        Home, and stray clicks then opened the Legends page, where the bot
+        clicked for 18 minutes. Each placement and selection now looks
+        first; once the HUD is gone, nothing more is clicked until the match
+        loop has identified the screen (it clears screen_lost)."""
+        if self.screen_lost:
+            return False
+        if self.in_game():
+            return True
+        time.sleep(self.SCREEN_RECHECK_S)
+        if self.in_game():
+            return True
+        log.warning("the match HUD is gone (end screen or menu?) - no more clicks until the screen is identified")
+        self.screen_lost = True
+        return False
 
     # -- speed / rounds -------------------------------------------------------
     def go_fast(self, allow_start):
@@ -426,6 +457,9 @@ class Game:
         self.refused_spots = []
         self.click_refusals = 0     # spots the probe passed but the click did not take
         self.last_spot = None
+        if not self.screen_ok():
+            self.fail_reason = "screen"
+            return None
         before = self.cash_stable()
         cost = self.price(kind)
         if before is None or before < cost:
@@ -542,7 +576,10 @@ class Game:
 
         Keeps score on p: a success proves the tower is there (verified, and
         the failure streak resets); a failure makes it doubtful. Callers drop
-        a tower that fails twice in a row (Executor._forget_if_missing)."""
+        a tower that fails twice in a row (Executor._forget_if_missing).
+        Off the match screen nothing is clicked and no score is kept."""
+        if not self.screen_ok():
+            return False
         if self.is_holding():
             self.cancel_hold()
         for attempt in range(3):
@@ -920,6 +957,8 @@ class Game:
         differ by difficulty), the green check is clicked only if the cash
         covers it, and the purchase counts only when the cash then drops by
         about that price. Anything unexpected cancels: nothing is bought."""
+        if not self.screen_ok():
+            return False
         before = self.cash_stable()
         if before is None or before < cost:
             return False

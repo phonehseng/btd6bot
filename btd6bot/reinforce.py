@@ -107,12 +107,13 @@ def trim(out, k=MAX_OPTIONS):
     return out[:k - k // 2] + out[len(out) - k // 2:]
 
 
-def best(ex, forecast, cash, rnd, end_round):
+def best(ex, forecast, cash, rnd, end_round, lives=None):
     """("safe", None) when the look-ahead holds - nothing leaks at half
     strength, so every round's margin is at least TARGET_MARGIN - or cannot
     be rated; ("wait", None) when nothing the cash buys helps yet; ("save",
     (Option, ...)) when the worst round leaks even at full strength, nothing
-    affordable lifts it over 1 and a dearer purchase would (save_target); else
+    affordable lifts it over 1, a dearer purchase would (save_target) and
+    the rounds before it do not cost the `lives` left (dies_first); else
     ("buy", (Option, its worst round, that round's margin before, after))
     for the purchase that saves the most lives per dollar."""
     rounds = lookahead_rounds(rnd, end_round)
@@ -142,8 +143,10 @@ def best(ex, forecast, cash, rnd, end_round):
         value = saved if crisis else saved / max(o.cost, 1.0)
         if pick is None or value > pick[0]:
             pick = (value, o)
+    if pick is None and crisis:
+        pick = strongest(forecast, tried, worst, before)
     after = forecast.margin(pick[1].towers, worst) if pick else None
-    if crisis and (after is None or after < 1.0):
+    if crisis and (after is None or after < 1.0) and not dies_first(forecast, ex, rnd, worst, lives):
         # Nothing affordable stops the leak: spending now only delays the
         # purchase that would (see save_target).
         target = save_target(forecast, ex, cash, rnd, worst)
@@ -160,6 +163,37 @@ def best(ex, forecast, cash, rnd, end_round):
                  cash, worst, before or 0.0, len(tried))
         return "wait", None
     return "buy", (pick[1], worst, before, after)
+
+
+def strongest(forecast, tried, worst, before):
+    """(value, Option) for the purchase that lifts round `worst`'s margin
+    the most at full strength, or None when none lifts it at all.
+
+    The crisis fallback when no purchase saves MIN_SAVED lives at half
+    strength: once a round is far past saving at half strength (a ZOMG
+    leaks whole either way), that count no longer moves. Infernal Double
+    HP MOABs (2026-11-03) rated round 79 at 0.25 for ten rounds and sat on
+    up to $77,100 with "nothing buys helps" - then lost there."""
+    found = None
+    for o in tried:
+        m = forecast.margin(o.towers, worst)
+        if m is not None and m > (before or 0.0) + 0.01 and (found is None or m > found[0]):
+            found = (m, o)
+    return found
+
+
+def dies_first(forecast, ex, rnd, worst, lives):
+    """True when the rounds before `worst` already cost the lives left at
+    full strength: saving for `worst` would lose the game before it comes.
+
+    Cargo Double HP MOABs (2026-11-03) saved $29,951 toward a $45,900 Ace
+    upgrade for round 79 while round 75 itself was rated 0.27 - and was
+    lost at round 75 with the cash in the bank. Without a lives count this
+    cannot be judged and saving stays allowed."""
+    if lives is None or rnd is None or worst <= rnd:
+        return False
+    lost = forecast.leaks(board(ex), list(range(rnd, worst)), 1.0)
+    return lost is not None and lost >= lives
 
 
 def save_target(forecast, ex, cash, rnd, worst):
@@ -184,12 +218,12 @@ def save_target(forecast, ex, cash, rnd, worst):
     return None
 
 
-def buy_best(ex, forecast, cash, rnd, end_round):
+def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
     """Buy the best purchase (see best()). Returns 'bought', 'safe' (the
     look-ahead holds: stop), 'wait' (nothing affordable helps yet: more cash
     may), 'save' (keep the cash for a dearer purchase that does help) or
     'failed' (the purchase did not go through)."""
-    status, found = best(ex, forecast, cash, rnd, end_round)
+    status, found = best(ex, forecast, cash, rnd, end_round, lives)
     if status != "buy":
         return status
     o, worst, before, after = found

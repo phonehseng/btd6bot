@@ -390,7 +390,7 @@ class Bot:
             elif st == "defeat":
                 self.menus.leave_defeat()
             elif st in ("map_select", "difficulty", "mode_select", "hero_select", "upgrade_tree",
-                        "profile", "overwrite", "account", "monkeys_menu"):
+                        "profile", "overwrite", "account", "monkeys_menu", "legends"):
                 self.inp.click(0.044, 0.055)  # back arrow
                 time.sleep(0.4)
             elif st in ("collection_event", "reward_cards", "insta_reward"):

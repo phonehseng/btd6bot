@@ -346,6 +346,7 @@ class Match:
                 if outcome:
                     return self._finish(outcome, last_round)
                 continue
+            self.g.screen_lost = False      # the HUD is back: clicks are safe again
             now = time.time()
             end_round = self.ex.rules.get("end_round", 80)
             # the end screen is looked for from 3 rounds before the end: a round
@@ -433,11 +434,13 @@ class Match:
                         self._t_round_change = now
                         self._forecast_round(rnd)
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
-                if getattr(self.g, "unconfirmed_streak", 0) >= 2:
+                if getattr(self.g, "unconfirmed_streak", 0) >= 2 or self.g.screen_lost:
                     # Placements that leave no tower are clicks landing on
                     # something else - an end screen or a popup over the game
-                    # (a missed Victory screen once took four minutes of them):
-                    # look at the screen before clicking any more.
+                    # (a missed Victory screen once took four minutes of them);
+                    # screen_lost means a placement or selection found the HUD
+                    # gone (Game.screen_ok): look at the screen before
+                    # clicking any more.
                     self.g.unconfirmed_streak = 0
                     st = self.menus.identify()
                     if st in ("victory", "defeat") and self._real_end(st, self.g.fresh()):
@@ -616,7 +619,8 @@ class Match:
         """One model-chosen purchase (reinforce.py). True when one was bought;
         the weak state ends when nothing affordable helps any more."""
         try:
-            r = R.buy_best(self.ex, self.forecast, cash, rnd, self.ex.rules.get("end_round", 80))
+            r = R.buy_best(self.ex, self.forecast, cash, rnd, self.ex.rules.get("end_round", 80),
+                           lives=self._lives.confirmed)
         except Exception:
             log.exception("reinforcing failed - back to the usual spending")
             self._weak_round = None
@@ -689,7 +693,14 @@ class Match:
     # Screens that only exist outside a game: seeing one of these a few times
     # in a row means the game already ended (e.g. a click meant for the map
     # landed on the defeat screen's Home button).
-    MENU_SCREENS = ("main_menu", "map_select", "difficulty", "mode_select", "monkeys_menu", "title")
+    MENU_SCREENS = ("main_menu", "map_select", "difficulty", "mode_select", "monkeys_menu", "title", "legends")
+    # Unknown screens in a row before every UNKNOWN_BACK_EVERY-th click goes
+    # to the top-left back arrow instead of the centre: a full-screen
+    # announcement continues on a click anywhere, but a menu page only
+    # leaves by its back arrow (in a match that corner is the lives counter,
+    # where a click does nothing).
+    UNKNOWN_BACK_EVERY = 5
+    BACK_ARROW = (0.044, 0.055)
 
     def _off_screen(self, st=None):
         st = st or self.menus.identify()
@@ -698,9 +709,12 @@ class Match:
             return st
         if st == "defeat":
             # a defeat needs evidence: lives near zero (the Legends page once
-            # read as "defeat" with all 200 lives - a game that had been WON)
+            # read as "defeat" with all 200 lives - a game that had been WON).
+            # The card itself is evidence too: in Double HP MOABs one leaked
+            # MOAB takes 75 lives at once, so the counter never neared zero
+            # (Cargo, 2026-11-03).
             lives = self._lives.median()
-            if lives is None or lives <= 20:
+            if lives is None or lives <= 20 or self._defeat_card():
                 return st
             log.warning("'defeat' read with %s lives - not believed", lives)
         if st in self.MENU_SCREENS:
@@ -749,8 +763,12 @@ class Match:
                 self._unknown = getattr(self, "_unknown", 0) + 1
                 from .menus import page_forbidden
                 if self._unknown >= 3 and not page_forbidden(self.menus.words):
-                    log.info("unknown screen x%d - clicking to continue", self._unknown)
-                    self.menus.inp.click(0.5, 0.5)
+                    if self._unknown % self.UNKNOWN_BACK_EVERY == 0:
+                        log.info("unknown screen x%d - trying the back arrow", self._unknown)
+                        self.menus.inp.click(*self.BACK_ARROW)
+                    else:
+                        log.info("unknown screen x%d - clicking to continue", self._unknown)
+                        self.menus.inp.click(0.5, 0.5)
                 time.sleep(0.8)
         return None
 
@@ -794,6 +812,15 @@ class Match:
 
     DEFEAT_READS = 15    # this many defeat screens in a row count as a defeat, whatever the lives read
 
+    def _defeat_card(self):
+        """True when the last OCR read shows the defeat card itself: "Bloons
+        Leaked", or "Defeat" next to its Restart / Review Map buttons. These
+        appear nowhere else. On 2026-10-27 the lives counter behind the card
+        read "1" and the bot ignored a real defeat for ten minutes."""
+        words = {norm(w.text) for w in self.menus.words}
+        return any("bloonsleaked" in w for w in words) or (
+            any("defeat" in w for w in words) and any(k in w for w in words for k in ("restart", "reviewmap")))
+
     def _real_end(self, st, f):
         """A defeat needs the lives counter to agree: a word like 'defeat' can
         show up in tower/upgrade panels and once made the bot quit three games
@@ -801,15 +828,8 @@ class Match:
         if st != "defeat":
             self._defeat_reads = 0
             return True
-        words = {norm(w.text) for w in self.menus.words}
-        # The defeat card itself is proof: "Bloons Leaked" and its buttons
-        # (Restart, Review Map) appear nowhere else. On 2026-10-27 the lives
-        # counter behind the card read "1" and the bot ignored a real defeat
-        # for ten minutes.
-        card = any("bloonsleaked" in w for w in words) or (
-            any("defeat" in w for w in words) and any(k in w for w in words for k in ("restart", "reviewmap")))
         self._defeat_reads = getattr(self, "_defeat_reads", 0) + 1
-        if card or self._defeat_reads >= self.DEFEAT_READS:
+        if self._defeat_card() or self._defeat_reads >= self.DEFEAT_READS:
             return True
         lives = self.g.hud.lives(f) if f is not None else None
         known = self._lives.median()

@@ -30,6 +30,12 @@ SCREENS = [
     ("collection_event", [["collectionevent", "collegtionevent"]]),
     # opening an event crate: "INSTA MONKEY! New <tower> 0-2-2" over a card
     ("insta_reward", [["instamonkey"]]),
+    # the Legends page (Rogue Legends DLC): its text says "defeat the final
+    # Boss" and a preview shows a Home caption, so it must come before
+    # "defeat". Reached by stray clicks on the main menu (2026-10-22 and
+    # 2026-11-03, when it read as "unknown" for 18 minutes); left by the
+    # back arrow. Its GET NOW / DLC buttons are FORBIDDEN.
+    ("legends", [["roguelegends", "legends"], ["getnow", "dlc"]]),
     # the word alone is not enough: the Legends screen says "defeat the Bloons"
     ("defeat", [["defeat", "gameover", "bloonsleaked", "youlost"], ["restart", "home", "tryagain", "continue"]]),
     # HEROES screen: SELECT/SELECTED (OCR often reads the C as a G) and the

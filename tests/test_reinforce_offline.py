@@ -154,6 +154,31 @@ def test_no_saving_when_the_round_is_too_close_or_too_dear():
     assert status == "buy" and found[0].cost == 300, (status, found)
 
 
+def test_no_saving_when_the_rounds_before_cost_the_lives_left():
+    # Cargo Double HP (2026-11-03): saving for round 79 lost round 75.
+    # Rounds 37-39 each cost 7 lives at full strength (ToyForecast): with
+    # 15 lives left the game would end before the $2,000 upgrade arrives,
+    # so the affordable $300 one is bought now.
+    ex = ToyEx()
+    status, found = R.best(ex, ToyForecast(), 1000, 37, 80, lives=15)
+    assert status == "buy" and found[0].cost == 300, (status, found)
+    # with plenty of lives the saving rule is unchanged
+    assert R.best(ex, ToyForecast(), 1000, 37, 80, lives=100)[0] == "save"
+
+
+def test_crisis_falls_back_to_the_biggest_margin_gain():
+    # Infernal Double HP (2026-11-03): no purchase saved lives at half
+    # strength, so $77,100 sat idle; the one lifting the margin most is
+    # bought instead.
+    class Saturated(ToyForecast):
+        def leaks(self, towers, rounds, scale, per_round=False):
+            lost = {r: 100.0 for r in rounds}       # every round leaks whole
+            return lost if per_round else sum(lost.values())
+    ex = ToyEx()
+    status, found = R.best(ex, Saturated(), 5000, 40, 40, lives=100)
+    assert status == "buy" and found[0].cost == 2000, (status, found)
+
+
 def test_look_ahead_covers_the_rounds_left():
     assert R.lookahead_rounds(55, 80) == list(range(55, 65))
     assert R.lookahead_rounds(78, 80) == [78, 79, 80]

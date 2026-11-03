@@ -70,6 +70,7 @@ def make_game(difficulty="medium", cash=(1000,), drops=(None,), selectable=False
     g.hold = hold
     g.cancel_hold = lambda: None
     g.fresh = lambda: None
+    g.in_game = lambda f=None: True        # the match HUD is up (Game.screen_ok)
     g.probe = lambda fx, fy, baseline=None, settle=0.06: (fx, fy) not in bad_spots
     g.is_holding = lambda: bool(g.inp.clicks) and g.inp.clicks[-1] in click_refused
     g.selects = 0
