@@ -86,3 +86,10 @@
 - Since the 21:54 entry: 3 wins (Sunken Columns Easy, Dark Path Primary Only, Cargo Primary Only), 1 loss (Dark Path Deflation, round 35, solo_dartling).
 - Stuck cause, fixed in af14398: seasonal scenery next to the cash counter. Tricky Tracks' Halloween graffiti read as '$3.700-00元', and Encrypted's falling leaves added a phantom digit. Every read was rejected and the bot never buys on unknown cash. The cash parser now cuts trailing junk, accepts a padded read only when it repeats a clean one, and cash_stable no longer ends on a bad frame; all 52 recorded frames read correctly.
 - Loss diagnosed (diagnosis.md, handled): general Deflation build too weak (rated 0.48 for round 40 once fully bought, $115 left), while the planner trusted the optimized build's 2.04 ceiling. Code fix not done yet: backlog item 14 (rate the build before Play in no-income modes and leave the game instead of losing; planner uses the optimized build or the build's own rating). Next run: do item 14. The 28 old folders still say "status: new".
+
+## 2026-11-02 23:52
+- Bot status: running (BTD6Bot task Running, bot.py run since 22:28, recorder up, BTD6 responding); playing Castle Revenge Military Only. No tracebacks or loops. Safe mode ON (streak 7, trips 4).
+- Since the 22:40 entry: 8 wins (Dark Path, X Factor and Castle Revenge Medium/Reverse/Military Only), 1 loss (Sunset Gulch Medium, round 53).
+- Backlog item 14 done (ae96a28): Deflation builds are rated over rounds 31-40 before Play and left (benched 24 h, not a defeat) under 0.8 - calibrated on 26 logged Deflation games, it catches 5 of 7 losses for 1 of 19 wins; general builds capped at p=0.76 in no-income modes.
+- Sunset Gulch loss diagnosed and handled (6647c72): 10 false hero-click refusals were learned as bad ground; the map's refused layer had grown to 2,444 of 4,326 legal cells, leaving one sniper and $54,839 unspendable. Refused-click runs that place nothing are no longer learned; Sunset Gulch's layer reset. Other maps look poisoned too: backlog item 15.
+- Next run: backlog item 15 (clean refused layers), then the 28 old "status: new" folders.
