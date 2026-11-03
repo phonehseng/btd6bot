@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np  # noqa: E402
 
-from btd6bot.hud import Hud, cash_prefixes, parse_cash  # noqa: E402
+from btd6bot.hud import Hud, cash_prefixes, parse_cash, trim_to_digits  # noqa: E402
 
 
 def test_valid_cash():
@@ -30,6 +30,27 @@ def test_scenery_after_the_number_is_cut_off():
     assert parse_cash("$12,345克x") == 12345
     assert parse_cash("$8'475") is None            # a cut without separator is never trusted
     assert parse_cash("$3.70000") is None          # ambiguous on its own (see below)
+
+
+def test_dash_read_for_the_separator():
+    """Tricky Tracks (2026-11-03 stills): the comma came out as a dash."""
+    assert parse_cash("$2-873") == 2873
+    assert parse_cash("$3-127") == 3127
+    assert parse_cash("$2-87300") is None          # still padded: not trusted
+
+
+def test_trim_cuts_the_scenery_right_of_the_digits():
+    """White digits, then a gap, then a bright colourful wall (the graffiti):
+    the trimmed crop ends shortly after the digits and keeps all of them."""
+    import cv2
+    img = np.zeros((40, 200, 3), np.uint8)
+    cv2.putText(img, "$2,873", (2, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+    text_end = int(np.flatnonzero(img.max(axis=(0, 2)) > 200).max())
+    img[:, 150:] = (60, 220, 90)                   # saturated green: not text
+    short = trim_to_digits(img)
+    assert text_end < short.shape[1] < 150
+    blank = np.zeros((40, 200, 3), np.uint8)
+    assert trim_to_digits(blank) is blank          # no text: nothing to cut
 
 
 class _ScriptedHud(Hud):

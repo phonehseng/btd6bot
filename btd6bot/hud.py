@@ -50,6 +50,10 @@ def parse_cash(text):
     four or more digits without separators, or groups that are not three
     digits long, are rejected instead of trusted."""
     t = _clean_cash_text(text)
+    # a comma read as a dash ('$2-873', '$3-127' on Tricky Tracks): the game
+    # never writes a dash in the cash, so one before exactly three last
+    # digits can only be the separator
+    t = re.sub(r"(?<=\d)-(?=\d{3}(?!\d))", ",", t)
     whole = re.sub(r"[^0-9,.]", "", t).strip(",.")   # drop stray symbols around the number
     if whole and _CASH_FORMAT.match(whole):
         return int(re.sub(r"[^0-9]", "", whole))
@@ -85,6 +89,36 @@ def cash_prefixes(text):
     return out
 
 
+def trim_to_digits(img):
+    """The HUD crop cut off right of its white text.
+
+    The cash crop is wide enough for '$20,002,398', so with a few thousand
+    dollars most of it is scenery - on Tricky Tracks a colourful graffiti
+    wall that OCR reads as extra digits ('$2,980' -> '$2.98000'). HUD digits
+    are white (low saturation, high value); the text ends at the first gap
+    between white columns wider than ~half the text height (a separator or
+    the space between digits is much narrower). Returns ``img`` unchanged
+    when no white text is found.
+
+    Tested on the stills of the Tricky Tracks Easy loss of 2026-11-03: of the
+    first 17 frames, correct cash reads went from 4 to 11 (with the dash
+    rule in parse_cash); tests/test_cash_offline.py checks the cut."""
+    h = img.shape[0]
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    white = cv2.inRange(hsv, (0, 0, 205), (180, 60, 255)) > 0
+    # a column belongs to the text when enough of it is white (not a speck)
+    xs = np.flatnonzero(white.sum(axis=0) >= max(2, h // 12))
+    if xs.size == 0:
+        return img
+    end = xs[0]
+    for x in xs[1:]:
+        if x - end > h * 0.45:
+            break
+        end = x
+    # keep a small margin so the last digit's dark outline stays whole
+    return img[:, :min(img.shape[1], end + max(3, h // 6))]
+
+
 class Hud:
     def __init__(self, layout):
         self.layout = layout
@@ -109,8 +143,16 @@ class Hud:
         number ('$137' -> '$1237'); a single outlier never survives the median.
         dx: horizontal shift of the HUD (an upgrade panel on the left pushes it right).
         """
-        text, _ = rec_text(crop(frame, _shift(self.layout["cash"], dx)))
+        img = crop(frame, _shift(self.layout["cash"], dx))
+        text, _ = rec_text(img)
         value = parse_cash(text)
+        if value is None:
+            # scenery right of the number read as more digits ('$2,873' ->
+            # '$2-87300'): read again with the crop cut where the white
+            # digits end - only when that really cuts something off
+            short = trim_to_digits(img)
+            if short.shape[1] < img.shape[1]:
+                value = parse_cash(rec_text(short)[0])
         if value is None:
             # '$6.2155' on Encrypted (leaves falling past the counter): the
             # padded read is believed only when its prefix repeats a clean read

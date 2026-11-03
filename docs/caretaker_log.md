@@ -136,3 +136,9 @@
 - Since the 04:40 entry: 0 wins, 0 losses. No new loss folders (all handled).
 - Backlog 8 calibrated instead of changed blind: new tools/ramp_calibration.py pairs the logged round-40 blimp check with each game's outcome. Medium family lost 10 of 24 games rated under 1x but only 6 of 115 at 1x+ (Hard family 24% vs 12%), so the check is already a good loss predictor; the next step is to rate the round-40 ratio offline per (strategy, map) and feed it to the planner's p, which could lift the strong open Medium medals over the safe-mode bar.
 - Next run: that planner change (backlog 8), or backlog 17 (Tricky Tracks). Safe-mode forgiveness starts ~2026-11-04 03:56 if nothing is lost.
+
+## 2026-11-03 06:28
+- Bot status: running (BTD6Bot task Running, bot.py run since 04:31, recorder up, BTD6 responding), idle by design: safe mode (0/64, trips 4) has no p >= 0.85 game left. No loops, no tracebacks, no PAUSE/STOP.
+- Since the 05:35 entry: 0 wins, 0 losses. No new loss folders.
+- Backlog 17, cash part: on the Tricky Tracks stills the graffiti right of the cash was read as extra digits ('$2,873' -> '$2-87300', '$3.0260'), so cash was None at most round starts. hud.trim_to_digits re-reads a failed crop cut where the white digits end, and a dash before three last digits counts as the comma: correct reads 4 -> 11 of the first 17 frames. Test in tests/test_cash_offline.py.
+- Next run: Tricky Tracks refused spots (rest of backlog 17), or backlog 8 (rate builds' round-40 ratio offline to lift strong Medium medals over the safe-mode bar). "level reads 38 but notes say 137" still fires every 30-min idle check.
