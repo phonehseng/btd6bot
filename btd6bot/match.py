@@ -208,6 +208,7 @@ class Match:
                                       getattr(model, "sight", None))
         self._weak_round = None     # a round whose look-ahead is weak: reinforce (reinforce.py)
         self._t_reinforce = 0.0
+        self._saving_until = 0.0    # reinforce saves for a dearer purchase until then
         self._crisis_round = None
         # how far along the route the bloons really get (bloonwatch.py; observe only)
         self.watch = self._make_watch()
@@ -445,7 +446,9 @@ class Match:
                         # own steps and patience keep their place before it
                         self._t_reinforce = now
                         bought = self._reinforce(cash, last_round)
-                    if not bought:
+                    # reinforce is saving for a purchase that holds the weakest
+                    # round: the usual spending would eat that cash
+                    if not bought and not (weak and now < self._saving_until):
                         bought = self.ex.surplus(cash, last_round)
                 if bought:
                     self._last_buy = now
@@ -550,9 +553,11 @@ class Match:
             return False
         if r == "safe":
             self._weak_round = None   # the look-ahead holds: surplus as usual
-        elif r == "wait":
+        elif r in ("wait", "save"):
             # nothing the cash buys helps yet: look again once more cash came in
             self._t_reinforce = time.time() + REINFORCE_WAIT - REINFORCE_EVERY
+        # 'save': surplus() must not spend the cash either, until the next look
+        self._saving_until = self._t_reinforce + REINFORCE_EVERY if r == "save" else 0.0
         return r == "bought"
 
     # -- the bloon watch (bloonwatch.py): observe only ------------------------------

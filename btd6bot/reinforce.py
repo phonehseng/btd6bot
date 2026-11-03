@@ -40,6 +40,8 @@ TARGET_MARGIN = 2.0    # margin the defence is reinforced up to
 MIN_SAVED = 0.5        # lives (at half strength) a purchase must save to be worth it
 MAX_OPTIONS = 20       # purchases tried per call
 NOT_DAMAGE = ("village", "alchemist", "farm")
+SAVE_LEAD = 2          # rounds of income needed before saving for a dearer purchase pays
+SAVE_REACH = 3.0       # ... and it may cost at most this many times the cash in hand
 
 
 @dataclass
@@ -108,7 +110,9 @@ def trim(out, k=MAX_OPTIONS):
 def best(ex, forecast, cash, rnd, end_round):
     """("safe", None) when the look-ahead holds - nothing leaks at half
     strength, so every round's margin is at least TARGET_MARGIN - or cannot
-    be rated; ("wait", None) when nothing the cash buys helps yet; else
+    be rated; ("wait", None) when nothing the cash buys helps yet; ("save",
+    (Option, ...)) when the worst round leaks even at full strength, nothing
+    affordable lifts it over 1 and a dearer purchase would (save_target); else
     ("buy", (Option, its worst round, that round's margin before, after))
     for the purchase that saves the most lives per dollar."""
     rounds = lookahead_rounds(rnd, end_round)
@@ -138,6 +142,16 @@ def best(ex, forecast, cash, rnd, end_round):
         value = saved if crisis else saved / max(o.cost, 1.0)
         if pick is None or value > pick[0]:
             pick = (value, o)
+    after = forecast.margin(pick[1].towers, worst) if pick else None
+    if crisis and (after is None or after < 1.0):
+        # Nothing affordable stops the leak: spending now only delays the
+        # purchase that would (see save_target).
+        target = save_target(forecast, ex, cash, rnd, worst)
+        if target is not None:
+            o, lifted = target
+            log.info("reinforce: saving for %s ($%d) - round %d goes %.2f -> %.2f; nothing $%d buys "
+                     "gets it over 1", o.what, o.cost, worst, before or 0.0, lifted, cash)
+            return "save", (o, worst, before, lifted)
     if pick is None:
         # said out loud: on Cornfield Medium (2026-11-03) this stayed silent
         # for ten rounds while $25k sat idle, and the loss had to be worked
@@ -145,14 +159,36 @@ def best(ex, forecast, cash, rnd, end_round):
         log.info("reinforce: nothing $%d buys helps round %d (%.2f; %d purchases tried)",
                  cash, worst, before or 0.0, len(tried))
         return "wait", None
-    after = forecast.margin(pick[1].towers, worst)
     return "buy", (pick[1], worst, before, after)
+
+
+def save_target(forecast, ex, cash, rnd, worst):
+    """(Option, margin after) for the cheapest purchase the cash cannot buy
+    yet that gets round `worst` to margin 1 or better - or None.
+
+    Peninsula Medium (2026-10-27) rated round 40 at 0.06 from round 37 on,
+    and reinforcing kept buying $1,000 sub upgrades that each saved a few
+    lives at half strength but left that round at 0.06; the cash for an
+    upgrade that would have held it never piled up. Saving makes sense only
+    while the round is SAVE_LEAD or more rounds away (income needs rounds to
+    arrive) and the target costs at most SAVE_REACH times the cash in hand
+    (further than that it would not come in time)."""
+    if rnd is None or worst - rnd < SAVE_LEAD or cash <= 0:
+        return None
+    for o in options(ex, cash * SAVE_REACH):       # cheapest first
+        if o.cost <= cash:
+            continue
+        m = forecast.margin(o.towers, worst)
+        if m is not None and m >= 1.0:
+            return o, m
+    return None
 
 
 def buy_best(ex, forecast, cash, rnd, end_round):
     """Buy the best purchase (see best()). Returns 'bought', 'safe' (the
     look-ahead holds: stop), 'wait' (nothing affordable helps yet: more cash
-    may) or 'failed' (the purchase did not go through)."""
+    may), 'save' (keep the cash for a dearer purchase that does help) or
+    'failed' (the purchase did not go through)."""
     status, found = best(ex, forecast, cash, rnd, end_round)
     if status != "buy":
         return status

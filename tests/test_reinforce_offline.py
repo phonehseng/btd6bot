@@ -104,6 +104,56 @@ def test_trim_keeps_the_dear_options_too():
     assert R.trim(out[:5]) == out[:5]      # short lists are kept whole
 
 
+class ToyForecast:
+    """A stand-in damage model: a tower's margin grows 0.1 per path-1 tier
+    and 0.8 per path-2 tier, and a round loses 10 lives per missing unit of
+    margin, round 40 being 0.1 weaker than the rest. One cheap upgrade ($300,
+    +0.1) and one dear one ($2,000, +0.8)."""
+
+    def margin(self, towers, rnd):
+        return sum(0.3 + 0.1 * t.tiers[0] + 0.8 * t.tiers[1] for t in towers) - (0.1 if rnd == 40 else 0.0)
+
+    def leaks(self, towers, rounds, scale, per_round=False):
+        lost = {r: max(0.0, 10 * (1 - self.margin(towers, r) * scale)) for r in rounds}
+        return lost if per_round else sum(lost.values())
+
+
+class ToyEx(Ex):
+    """One tower and its two upgrades (ToyForecast), no room for another."""
+
+    def __init__(self):
+        self.g = N(towers={"s1": N(tid="s1", kind="sniper", tiers=[0, 0, 0], x=0.5, y=0.5)})
+        self.bought = []
+
+    def upgrade_choices(self, first=None, past_plan=False):
+        p = self.g.towers["s1"]
+        yield p, [1, 0, 0], 300
+        yield p, [0, 1, 0], 2000
+
+    def at_tower_cap(self):
+        return True
+
+
+def test_a_leaking_round_saves_for_the_purchase_that_holds_it():
+    # Peninsula Medium (2026-10-27): $1,000 upgrades left round 40 at 0.06.
+    # With $1,000 the cheap upgrade only nudges round 40 from 0.2 to 0.3;
+    # the $2,000 one holds it (1.0), so the cash is kept for it.
+    ex = ToyEx()
+    status, found = R.best(ex, ToyForecast(), 1000, 37, 80)
+    assert status == "save", status
+    assert found[0].cost == 2000 and found[3] >= 1.0
+    assert R.buy_best(ex, ToyForecast(), 1000, 37, 80) == "save" and not ex.bought
+
+
+def test_no_saving_when_the_round_is_too_close_or_too_dear():
+    ex = ToyEx()
+    # the weakest round is the one being played: no income will come in time
+    assert R.save_target(ToyForecast(), ex, 1000, 40, 40) is None
+    # $2,000 is more than SAVE_REACH times $500: buy what helps now
+    status, found = R.best(ex, ToyForecast(), 500, 37, 80)
+    assert status == "buy" and found[0].cost == 300, (status, found)
+
+
 def test_look_ahead_covers_the_rounds_left():
     assert R.lookahead_rounds(55, 80) == list(range(55, 65))
     assert R.lookahead_rounds(78, 80) == [78, 79, 80]
