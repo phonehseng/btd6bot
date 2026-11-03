@@ -89,7 +89,7 @@
 
 ## 2026-11-02 23:52
 - Bot status: running (BTD6Bot task Running, bot.py run since 22:28, recorder up, BTD6 responding); playing Castle Revenge Military Only. No tracebacks or loops. Safe mode ON (streak 7, trips 4).
-- Since the 22:40 entry: 8 wins (Dark Path, X Factor and Castle Revenge Medium/Reverse/Military Only), 1 loss (Sunset Gulch Medium, round 53).
+- Since the 22:40 entry: 8 wins (Dark Path and X Factor Medium/Reverse/Military Only, Castle Revenge Medium/Reverse), 1 loss (Sunset Gulch Medium, round 53).
 - Backlog item 14 done (ae96a28): Deflation builds are rated over rounds 31-40 before Play and left (benched 24 h, not a defeat) under 0.8 - calibrated on 26 logged Deflation games, it catches 5 of 7 losses for 1 of 19 wins; general builds capped at p=0.76 in no-income modes.
 - Sunset Gulch loss diagnosed and handled (6647c72): 10 false hero-click refusals were learned as bad ground; the map's refused layer had grown to 2,444 of 4,326 legal cells, leaving one sniper and $54,839 unspendable. Refused-click runs that place nothing are no longer learned; Sunset Gulch's layer reset. Other maps look poisoned too: backlog item 15.
 - Next run: backlog item 15 (clean refused layers), then the 28 old "status: new" folders.
