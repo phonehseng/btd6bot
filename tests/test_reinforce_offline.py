@@ -179,6 +179,22 @@ def test_crisis_falls_back_to_the_biggest_margin_gain():
     assert status == "buy" and found[0].cost == 2000, (status, found)
 
 
+def test_a_big_idle_bank_is_spent_even_when_the_model_sees_no_gain():
+    # the model rates every purchase as useless (it misses what it does not
+    # simulate): with $10,000+ in a crisis the dearest upgrade is bought;
+    # a small bank still waits
+    class Blind(ToyForecast):
+        def margin(self, towers, rnd):
+            return 0.2
+        def leaks(self, towers, rounds, scale, per_round=False):
+            lost = {r: 100.0 for r in rounds}
+            return lost if per_round else sum(lost.values())
+    ex = ToyEx()
+    status, found = R.best(ex, Blind(), R.BLIND_SPEND_CASH, 40, 40, lives=100)
+    assert status == "buy" and found[0].cost == 2000, (status, found)
+    assert R.best(ex, Blind(), 5000, 40, 40, lives=100)[0] == "wait"
+
+
 def test_look_ahead_covers_the_rounds_left():
     assert R.lookahead_rounds(55, 80) == list(range(55, 65))
     assert R.lookahead_rounds(78, 80) == [78, 79, 80]

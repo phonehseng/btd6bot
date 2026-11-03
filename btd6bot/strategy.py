@@ -1627,8 +1627,7 @@ class Executor:
             if getattr(p, "zero_reads", 0) >= 2:
                 log.warning("selling %s (%s): not a single pop in %d rounds", p.tid, p.kind,
                             rnd - p.placed_round)
-                self._sold_round = rnd
-                return bool(self.g.sell(p))
+                return self._sell_and_avoid(p, rnd)
         # 2. a buffer with no damage tower in its radius;
         # 3. a damage tower whose range barely reaches the track
         for p in towers:
@@ -1636,8 +1635,7 @@ class Executor:
                 cx, cy = self.m.frac_to_cell(p.x, p.y)
                 if len(self._damage_towers()) >= 2 and self._buffed(p.kind, cx, cy) == 0:
                     log.warning("selling %s (%s): no tower in its radius to buff", p.tid, p.kind)
-                    self._sold_round = rnd
-                    return bool(self.g.sell(p))
+                    return self._sell_and_avoid(p, rnd)
                 continue
             if p.kind in ("farm", "spike") or T.TOWERS.get(p.kind, {}).get("range") is None:
                 continue   # income, exit and global-range towers stay
@@ -1650,9 +1648,27 @@ class Executor:
             if best > 0 and reach[cy, cx] < self.SELL_REACH_SHARE * best:
                 log.warning("selling %s (%s): its range reaches %.0f track cells, the best spot "
                             "reaches %.0f", p.tid, p.kind, reach[cy, cx], best)
-                self._sold_round = rnd
-                return bool(self.g.sell(p))
+                return self._sell_and_avoid(p, rnd)
         return False
+
+    # Cells around a sold tower's spot that its kind may not use again this game.
+    SOLD_SPOT_CELLS = 3
+
+    def _sell_and_avoid(self, p, rnd):
+        """Sell p, and keep its kind off that spot (and the cells around it)
+        for the rest of the game. Every way of choosing a spot skips
+        failed_spots, so a tower sold as useless is never bought again in
+        the same place: on Cargo Double HP a Super Monkey was sold and
+        placed back every round from 69 to 75, on Glacial Trail Medium a
+        camo-answer Mermonkey within the same round."""
+        self._sold_round = rnd
+        cx, cy = (int(round(v)) for v in self.m.frac_to_cell(p.x, p.y))
+        r = self.SOLD_SPOT_CELLS
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
+                if dx * dx + dy * dy <= r * r:
+                    self.failed_spots.add((p.kind, cx + dx, cy + dy))
+        return bool(self.g.sell(p))
 
     def _exact_spot(self, step, valid):
         """The cell of a step's exact spot (`at: [fx, fy]`, from a map's own

@@ -162,6 +162,26 @@ def _game_in_progress():
         return None
 
 
+def _note_game_stopped():
+    """The owner stopped the bot mid-game (STOP/HOLD): the game in progress
+    is marked so the next start does not count it as a loss."""
+    import json
+    try:
+        g = json.loads(GAME_FILE.read_text(encoding="utf-8"))
+        g["stopped"] = True
+        GAME_FILE.write_text(json.dumps(g), encoding="utf-8")
+    except (OSError, ValueError):
+        pass
+
+
+def _game_was_stopped():
+    import json
+    try:
+        return bool(json.loads(GAME_FILE.read_text(encoding="utf-8")).get("stopped"))
+    except (OSError, ValueError):
+        return False
+
+
 def _save_errors(errors):
     import json
     try:
@@ -958,6 +978,7 @@ class Bot:
         code_stamp = _code_stamp()
         self._refresh_map_geometry()
         progress.write(self.account, "starting")
+        settled = False     # the last bot's unfinished game (see _settle_unfinished_game)
         while time.time() < end:
             plan = None
             if PAUSE_FILE.exists():
@@ -982,6 +1003,9 @@ class Bot:
                     self.failures += 1
                     time.sleep(5)
                     continue
+                if not settled:
+                    settled = True
+                    self._settle_unfinished_game()
                 self._check_account()
                 self.read_level()
                 # which heroes the account owns, from the HEROES screen (weekly)
@@ -1075,6 +1099,7 @@ class Bot:
                 progress.write(self.account, "game finished")
                 self.failures = 0
             except Aborted:
+                _note_game_stopped()   # a no-op between games (no file)
                 raise
             except GameNotFound:
                 self.wait_for_game()
@@ -1393,6 +1418,38 @@ class Bot:
             self.account.save()
         except Exception:
             log.exception("could not record the unfinished win")
+        _note_game_over()
+
+    def _settle_unfinished_game(self):
+        """At start-up, at the main menu: a game the last bot started but
+        neither finished nor won (no Victory screen was up) ended while no
+        bot watched - a crash, a hang the supervisor killed, a reboot.
+        It counts as a defeat and is benched, or the planner picks it again
+        straight away: Cargo Double HP (2026-11-03) was lost at 17:02 while
+        the bot hung, never written down, and lost again at 17:30.
+        A game the owner stopped (STOP/HOLD) is only forgotten."""
+        game = _game_in_progress()
+        if not game:
+            return
+        map_name, mode, strategy = game
+        if _game_was_stopped():
+            log.info("%s %s was stopped by the owner mid-game - not counted", map_name, mode)
+            _note_game_over()
+            return
+        log.warning("%s %s was left unfinished by the last bot (crash or hang) - "
+                    "recorded as a defeat", map_name, mode)
+        try:
+            self.account.record_result(map_name, mode, strategy, False)
+            self.account.save()
+        except Exception:
+            log.exception("could not record the unfinished game")
+        self.bench(map_name, mode, hours=12, why="unfinished game")
+        from types import SimpleNamespace
+        plan = SimpleNamespace(map=map_name, mode_key=mode, strategy_id=strategy)
+        res = {"outcome": "defeat", "unfinished": True}
+        progress.record_result(plan, res)
+        from . import safety
+        safety.after_game("defeat")
         _note_game_over()
 
     def _game_done(self, plan):

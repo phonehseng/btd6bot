@@ -55,6 +55,26 @@ def test_support_damage_tower_goes_where_it_reaches_the_track():
     assert all(cx >= NearVillageModel.W // 2 for cx, _, _ in spots), spots
 
 
+def test_a_sold_tower_is_never_bought_back_in_the_same_place():
+    # Glacial Trail Medium: a camo-answer Mermonkey sold for reaching no track
+    # was placed again on the same spot within the round
+    original, sight = PL.valid_spots, PL.needs_sight
+    PL.valid_spots = lambda *a, **k: np.ones((NearVillageModel.H, NearVillageModel.W), bool)
+    PL.needs_sight = lambda *a: False      # no walls on the fake map
+    try:
+        ex = executor()
+        su = F.Placed("su1", "super", 0.995, 0.5)   # on the best-ranked spot
+        ex.g.towers["su1"] = su
+        ex._sell_and_avoid(su, rnd=70)
+        sold_at = ex.m.frac_to_cell(su.x, su.y)
+        spots = ex.pick_spots("super", {"do": "place", "kind": "super", "role": "dps"}, n=10)
+    finally:
+        PL.valid_spots, PL.needs_sight = original, sight
+    assert spots
+    assert all((cx - sold_at[0]) ** 2 + (cy - sold_at[1]) ** 2 > S.Executor.SOLD_SPOT_CELLS ** 2
+               for cx, cy, _ in spots), spots
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

@@ -42,6 +42,7 @@ MAX_OPTIONS = 20       # purchases tried per call
 NOT_DAMAGE = ("village", "alchemist", "farm")
 SAVE_LEAD = 2          # rounds of income needed before saving for a dearer purchase pays
 SAVE_REACH = 3.0       # ... and it may cost at most this many times the cash in hand
+BLIND_SPEND_CASH = 10_000   # cash idle in a crisis the model sees no use for: spent anyway
 
 
 @dataclass
@@ -145,6 +146,11 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
             pick = (value, o)
     if pick is None and crisis:
         pick = strongest(forecast, tried, worst, before)
+    if pick is None and crisis and cash >= BLIND_SPEND_CASH:
+        pick = dearest_upgrade(tried)
+        if pick:
+            log.warning("reinforce: the model sees nothing that helps round %d (%.2f) - spending "
+                        "$%d anyway on the dearest upgrade, %s", worst, before or 0.0, cash, pick[1].what)
     after = forecast.margin(pick[1].towers, worst) if pick else None
     if crisis and (after is None or after < 1.0) and not dies_first(forecast, ex, rnd, worst, lives):
         # Nothing affordable stops the leak: spending now only delays the
@@ -180,6 +186,22 @@ def strongest(forecast, tried, worst, before):
         if m is not None and m > (before or 0.0) + 0.01 and (found is None or m > found[0]):
             found = (m, o)
     return found
+
+
+def dearest_upgrade(tried):
+    """(cost, Option) for the dearest upgrade among the purchases tried, or
+    None: the last resort when a crisis round lies ahead, BLIND_SPEND_CASH or
+    more sits in the bank and the model rates no purchase as helping at all.
+    The model misses what it does not simulate (a tier 5's ability, a
+    buff's reach, a map's own mechanics), and an idle bank never helps:
+    Infernal Double HP (2026-11-03) lost round 79 with $77,100 unspent. A
+    higher tier of a standing tower is the safest bet - it adds to what
+    already reaches the track."""
+    ups = [o for o in tried if o.step.get("do") == "upgrade"]
+    if not ups:
+        return None
+    o = max(ups, key=lambda o: o.cost)
+    return o.cost, o
 
 
 def dies_first(forecast, ex, rnd, worst, lives):
