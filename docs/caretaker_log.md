@@ -108,3 +108,11 @@
 - Peninsula Reverse (d225f14): OCR reads "$2,200" as "#2,200", so every sniper's path 1 was closed and $51,030 sat unspent; game.looks_like_price accepts it. This is also the root cause of backlog item 10. Test tests/test_price_text_offline.py.
 - Party Parade: round-40 MOAB with a weak general build (backlog item 8, no code change). New backlog item 16: follow towers carried by Geared's gears.
 - Next run: watch bot.log for "shows no price although its tiers" becoming rare (item 10); backlog item 16 or 8; then the 28 old "status: new" folders.
+
+## 2026-11-03 02:59
+- Bot status: running (BTD6Bot task Running, bot.py run since 01:41 with reloads, recorder up, BTD6 responding); playing Dark Castle Military Only, round 56, no lives lost. Safe mode ON (streak 1, trips 4).
+- Since the 01:47 entry: 5 wins (Enchanted Glade Military Only/Reverse, Cargo Medium/Military Only/Reverse, Dark Castle Medium - 6), 4 losses (Spillway, High Finance, Cornfield, Sanctuary Medium) - all diagnosed and handled.
+- Spillway (01bc6af): OCR reads "$500" as "学500" at full resolution; str.isalnum() accepts the glyph, so the price looked blank and sub paths closed. Second root cause of backlog item 10 (~80 blank reads/hour after the '#' fix).
+- High Finance / Cornfield (2aed24b): mapfit gave global-range towers full coverage without checking room; now counts towers that fit (High Finance heli/ace/mortar 0, Cornfield ace 1/3). All 88 maps re-measured.
+- ddc7271: safe mode now plays only p >= 0.85 games and idles otherwise (the three p 0.78-0.84 safe-mode games all lost). Sanctuary: platforms carry towers (backlog 16). 28 old (Oct 22-24) loss folders triaged: 7 superseded by later wins, 21 grouped by cause.
+- Next run: if the bot idles ("safe mode plays only games with p >= 0.85"), raise confidence with better builds rather than lowering the bar; check the "shows no price" hourly count fell; backlog 11 (reinforce while saving) and 16.
