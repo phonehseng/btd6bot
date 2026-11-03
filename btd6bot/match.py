@@ -118,6 +118,58 @@ class LivesTracker:
         return True
 
 
+class RoundVotes:
+    """Decides when a round reading that is not the expected next step (one
+    or two rounds on) replaces the tracked round.
+
+    A single odd reading is usually OCR noise ('11' read as '711'), so it has
+    to be confirmed by later readings. Readings used to count only when they
+    were IDENTICAL - but while the bot is busy (Geared Medium, 2026-11-03:
+    ticks of 10-15 s of refused placement clicks) the game moves on between
+    two readings, every reading differs, and the tracked round stayed at 23
+    while the game played on to round 40 and lost: no threats, crisis rounds
+    or reinforcements for 17 rounds. So a reading now also agrees with the
+    previous one when it is the same or as many rounds later as the time
+    between them allows (the game only moves forward, at most one round per
+    MIN_ROUND_SECONDS, plus MAX_STEP), and a forward jump that the elapsed time allows
+    (at most one round per MIN_ROUND_SECONDS) needs only PLAUSIBLE_VOTES.
+    """
+    MAX_STEP = 2               # rounds the game may move on between two readings
+    MIN_ROUND_SECONDS = 3.0    # no round is over faster than this, even on fast forward
+    PLAUSIBLE_VOTES = 3        # forward jumps the elapsed time explains
+    SMALL_VOTES = 4            # other changes of up to 3 rounds
+    BIG_VOTES = 15             # anything else (a misread like '11' -> '711')
+
+    def __init__(self):
+        self.cand, self.votes = None, 0
+        self.t_prev = None      # `since_change` of the previous reading
+
+    def vote(self, read, last_round, since_change):
+        """Feed one reading `read` that is not an expected step from
+        `last_round`, `since_change` seconds after the tracked round last
+        changed. True when the tracked round should become `read`."""
+        # how far the game can have moved on since the previous reading
+        step = self.MAX_STEP
+        if self.t_prev is not None and since_change >= self.t_prev:
+            step += (since_change - self.t_prev) / self.MIN_ROUND_SECONDS
+        if self.cand is not None and self.cand <= read <= self.cand + step:
+            self.votes += 1
+        else:
+            self.votes = 1
+        self.cand, self.t_prev = read, since_change
+        if last_round is None:
+            return True
+        jump = read - last_round
+        if 0 < jump <= self.MAX_STEP + since_change / self.MIN_ROUND_SECONDS:
+            need = self.PLAUSIBLE_VOTES
+        else:
+            need = self.SMALL_VOTES if abs(jump) <= 3 else self.BIG_VOTES
+        if self.votes >= need:
+            self.cand, self.votes, self.t_prev = None, 0, None
+            return True
+        return False
+
+
 def _hero_id(text):
     n = "".join(c for c in text.lower() if c.isalnum())
     for hid, h in T.HEROES.items():
@@ -138,7 +190,8 @@ class Match:
         self.stats = {"start": time.time(), "rounds": 0, "lives_lost": 0, "panic": 0}
         self._prev_lives_read = None
         self._lives = LivesTracker((getattr(executor, "rules", None) or {}).get("lives"))
-        self._round_cand, self._round_votes = None, 0
+        self._round_votes = RoundVotes()
+        self._t_round_change = time.time()   # when the tracked round last changed
         self._last_buy = time.time()
         self._last_wait_log = 0.0
         self._t_bananas = 0.0      # last pass over the farms' bananas
@@ -330,6 +383,7 @@ class Match:
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
+                    self._t_round_change = now
                     self._forecast_round(rnd)
                     # once a round: a tower whose range barely reaches the
                     # track is sold, its cash goes to towers that pop bloons
@@ -338,18 +392,14 @@ class Match:
                     except Exception:
                         log.exception("selling useless towers failed - carrying on")
                 elif rnd is not None and rnd != last_round:
-                    # a reading outside the expected step: adopt it only if it
-                    # persists (recovers from a bad first read)
-                    if rnd == self._round_cand:
-                        self._round_votes += 1
-                    else:
-                        self._round_cand, self._round_votes = rnd, 1
-                    # small corrections need 4 agreeing reads, big jumps (OCR
-                    # '11' -> '711') far more - a wrong round misfires threats
-                    big = last_round is not None and abs(rnd - last_round) > 3
-                    if last_round is None or self._round_votes >= (15 if big else 4):
+                    # a reading outside the expected step: adopt it only once
+                    # later readings agree (RoundVotes) - a wrong round
+                    # misfires threats, a stuck one ignores them
+                    if self._round_votes.vote(rnd, last_round, now - self._t_round_change):
                         log.info("round tracking reset %s -> %s", last_round, rnd)
                         last_round = rnd
+                        self._t_round_change = now
+                        self._forecast_round(rnd)
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
                 if getattr(self.g, "unconfirmed_streak", 0) >= 2:
                     # Placements that leave no tower are clicks landing on
