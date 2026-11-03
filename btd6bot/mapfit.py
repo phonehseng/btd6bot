@@ -11,7 +11,8 @@ For every map with game geometry (mapgeom) and every tower with a range
 share of the EARLY track (the first EARLY_SPAN of progress) that lies within
 that range of some cell where the tower may stand (placement.valid_spots:
 the right surface, the tower's footprint). Towers with a global range
-(sniper, mortar, heli, ace, dartling: range None) reach everything.
+(sniper, mortar, heli, ace, dartling: range None) reach everything - if
+the map has room for them to stand (room_for).
 Reverse runs the track backwards, so "early" there is the other end.
 
 Map mechanics count (docs/map_mechanics.md): the spots are those valid for
@@ -57,12 +58,38 @@ def _model_for(map_name):
     return model, stamp_of(geom)
 
 
+# Version of the measurement itself (kind_coverage); part of the stamp, so
+# bumping it re-measures every map. 2: global-range towers need room to stand.
+FIT_VERSION = 2
+
+# A global-range tower reaches the whole track from any cell it may stand on,
+# but only if there is such a cell. Its coverage is the number of them that
+# fit side by side (footprints apart), up to this many, as a share: a map
+# with room for one Apache pad is not a full fit for a build of six.
+GLOBAL_ROOM_FULL = 3
+
+
 def stamp_of(geom):
     """What a cached measurement depends on: the game's map bundle, the
-    extraction version, and the version of the rules that interpret the
-    map's mechanics (any of them changing re-measures the map)."""
+    extraction version, the version of the measurement and the version of
+    the rules that interpret the map's mechanics (any of them changing
+    re-measures the map)."""
     from .mapgeom import RULES_VERSION
-    return f'{geom.get("bundle")}#v{geom.get("version")}#r{RULES_VERSION}'
+    return f'{geom.get("bundle")}#v{geom.get("version")}#f{FIT_VERSION}#r{RULES_VERSION}'
+
+
+def room_for(model, kind, ok, limit=GLOBAL_ROOM_FULL):
+    """How many towers of this kind fit on the legal cells `ok` without
+    their footprints overlapping (greedy, in reading order), up to `limit`."""
+    from .placement import footprint_radius, units_per_cell
+    apart = 2 * footprint_radius(kind, None) / units_per_cell(model)
+    placed = []
+    for cy, cx in zip(*np.nonzero(ok)):
+        if all((cx - px) ** 2 + (cy - py) ** 2 >= apart * apart for px, py in placed):
+            placed.append((cx, cy))
+            if len(placed) >= limit:
+                break
+    return len(placed)
 
 
 def kind_coverage(model, kind, last_round=None):
@@ -71,11 +98,16 @@ def kind_coverage(model, kind, last_round=None):
     game ending at `last_round` (None: the longest game)."""
     from .placement import units_per_cell, valid_spots
     rng = T.TOWERS[kind].get("range")
-    if rng is None:
-        return {"early": 1.0, "late": 1.0}     # global range: the whole map
     ok = valid_spots(model, kind, last_round=last_round)
     if ok is None:
         return None
+    if rng is None:
+        # global range reaches the whole map - from wherever it can stand.
+        # Before, this was 1.0 without looking: High Finance has no cell big
+        # enough for a heli until its buildings are bought, yet solo_heli was
+        # rated 0.84 there and lost Medium with one sniper (2026-11-03).
+        share = room_for(model, kind, ok) / GLOBAL_ROOM_FULL
+        return {"early": round(share, 3), "late": round(share, 3)}
     track = model.t_cnt > 0
     if not track.any():
         return None
