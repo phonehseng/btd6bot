@@ -1193,7 +1193,16 @@ class Executor:
         exact = self._exact_spot(step, valid)
         if exact is not None:
             out.append(exact)       # the build's researched spot comes first
-        floor = self._reach_floor(kind, valid) if role in ("dps", "exit") else None
+        if role in ("dps", "exit"):
+            floor = self._reach_floor(kind, valid)
+        elif role == "support" and kind not in self.BUFFERS and kind not in ("farm", "spike"):
+            # a damage tower placed beside the towers it supports must still
+            # reach the track sell_useless asks of it: on Cargo Double HP a
+            # Super Monkey "near v1" reached 0 track cells and was sold and
+            # bought again every round from 69 to 75 ($16k-$30k idle each time)
+            floor = self._reach_floor(kind, valid, self.SELL_REACH_SHARE)
+        else:
+            floor = None
         probe = self._probe_spot(kind, valid) if role in ("dps", "exit") else None
         if probe is not None:
             out.append(probe)       # tried first; a refusal costs ~0.1 s and is learned
@@ -1573,16 +1582,18 @@ class Executor:
                 cache[kind] = cv2.filter2D(track, -1, disc, borderType=cv2.BORDER_CONSTANT)
         return cache[kind]
 
-    def _reach_floor(self, kind, valid):
-        """The least track a `kind` tower must reach here, or None when it
-        does not apply (global range, no track or no legal ground known)."""
+    def _reach_floor(self, kind, valid, share=None):
+        """The least track a `kind` tower must reach here (`share` of the best
+        legal spot's reach, MIN_REACH_SHARE by default), or None when it does
+        not apply (global range, no track or no legal ground known)."""
         if kind == "hero" or T.TOWERS.get(kind, {}).get("range") is None:
             return None
         reach = self._reach(kind)
         if reach is None or valid is None or not valid.any():
             return None
         best = float(reach[valid].max())
-        return self.MIN_REACH_SHARE * best if best > 0 else None
+        share = self.MIN_REACH_SHARE if share is None else share
+        return share * best if best > 0 else None
 
     def sell_useless(self, rnd, lives_dropped=False):
         """Sell one placed damage tower whose range reaches almost no track
