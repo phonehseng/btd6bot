@@ -19,7 +19,7 @@ def _executor(finds, standing=("s1", "v1", "a1")):
     ex.pick_spots = lambda kind, step, n=1: (ex.seen.append(dict(step)) or
                                               ([(10, 10, 1.0)] if finds(step) else []))
     ex._any_legal_spot = lambda kind: []
-    ex._buff_spots = lambda kind: [(5, 5, 2.0)] if ex.buff_ok else []
+    ex._buff_spots = lambda kind, step=None: [(5, 5, 2.0)] if ex.buff_ok else []
     ex.buff_ok = False
     return ex
 
@@ -66,6 +66,54 @@ def test_buffer_never_relaxes_into_a_role_only_spot():
     step = {"do": "place", "kind": "village", "role": "support", "near": ["s1"], "near_radius": 8}
     assert ex._spots_widening("village", step) == []
     assert all("near" in st for st in ex.seen)
+
+
+def _buff_executor(damage_at):
+    """An Executor on an open 40x40 grid with damage towers at the cells in
+    `damage_at`, for the real _buff_spots (see _buff_spots_on_open_ground)."""
+    import numpy as np
+    ex = Executor.__new__(Executor)
+    ex.SPOTS_PER_HOLD = 4
+    ex.blocked = np.zeros((40, 40), bool)
+    ex.failed_spots = set()
+    ex.land_only = False
+    ex.removed = []
+    ex._pane_round = lambda: 10
+    ex._range_cells = lambda kind: 5
+    ex.m = SimpleNamespace(frac_to_cell=lambda fx, fy: (fx * 40, fy * 40))
+    towers = {f"s{i}": SimpleNamespace(kind="sniper", x=cx / 40, y=cy / 40)
+              for i, (cx, cy) in enumerate(damage_at)}
+    ex.g = SimpleNamespace(towers=towers, hero=None)
+    return ex
+
+
+def _buff_spots_on_open_ground(ex, kind, step):
+    """ex._buff_spots with placement.valid_spots saying every cell is legal
+    (restored afterwards, so other tests see the real one)."""
+    import numpy as np
+    from btd6bot import placement as PL
+    real = PL.valid_spots
+    PL.valid_spots = lambda *a, **k: np.ones((40, 40), bool)
+    try:
+        return ex._buff_spots(kind, step)
+    finally:
+        PL.valid_spots = real
+
+
+def test_buffer_keeps_its_researched_spot_when_it_buffs_something():
+    # Castle Revenge Hard: alchemists with an `at` spot and no `near`
+    ex = _buff_executor([(10, 10), (30, 30), (31, 31)])
+    step = {"do": "place", "kind": "alchemist", "role": "support", "at": [12 / 40, 10 / 40]}
+    spots = _buff_spots_on_open_ground(ex, "alchemist", step)
+    assert spots[0][:2] == (12, 10)
+    assert len(spots) > 1         # the best buffing spots still follow as fallbacks
+
+
+def test_researched_spot_that_buffs_nothing_is_skipped():
+    ex = _buff_executor([(30, 30), (31, 31)])
+    step = {"do": "place", "kind": "village", "role": "support", "at": [5 / 40, 5 / 40]}
+    spots = _buff_spots_on_open_ground(ex, "village", step)
+    assert spots and all((x - 5) ** 2 + (y - 5) ** 2 > 25 for x, y, _ in spots)
 
 
 if __name__ == "__main__":

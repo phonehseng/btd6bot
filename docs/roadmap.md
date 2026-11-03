@@ -32,7 +32,7 @@ maps. Never lose, never replay a beaten map/mode.
 - [x] Glaive Lord boomerang plan
 - [x] Damage towers must reach the route (45% of the best spot); ones reaching under 25% are sold
 - [ ] Towers that pop nothing in 6 rounds are sold (pop counter, two reads)
-- [ ] Villages and alchemists placed beside the towers they buff, never alone
+- [x] Villages and alchemists placed beside the towers they buff, never alone
 - [x] Round forecast: the damage model rates every round as it starts
 - [ ] Abilities in a crisis: before panic buys on a leak, early in forecast crisis rounds
 - [ ] Bloon depth watch: how far along the route bloons get, per round (observing; act on it once it agrees with the lives counter - CHIMPS has one life)

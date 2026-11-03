@@ -1459,9 +1459,15 @@ class Executor:
             n += (tx - cx) ** 2 + (ty - cy) ** 2 <= r2
         return n
 
-    def _buff_spots(self, kind):
+    def _buff_spots(self, kind, step=None):
         """Legal cells where a buffer reaches the most damage towers (at least
-        one), best first; [] when no damage tower stands yet."""
+        one), best first; [] when no damage tower stands yet.
+
+        A step with a researched spot (`at`, from a map's own build) keeps
+        that spot first as long as a buffer there reaches a damage tower:
+        Castle Revenge Hard's alchemists and Dark Castle's village have
+        exact spots but no `near`, and were moved to wherever the most
+        towers happened to stand."""
         from . import placement as PL
         if not self._damage_towers():
             return []
@@ -1471,10 +1477,13 @@ class Executor:
                                now_round=self._pane_round(), removed=tuple(self.removed))
         if valid is None:
             return []
+        out = []
+        exact = self._exact_spot(step, valid) if step else None
+        if exact is not None and self._buffed(kind, exact[0], exact[1]) >= 1:
+            out.append(exact)
         ys, xs = np.nonzero(valid & ~self.blocked)
         scored = sorted(((self._buffed(kind, x, y), x, y) for x, y in zip(xs.tolist(), ys.tolist())
                          if (kind, x, y) not in self.failed_spots), reverse=True)
-        out = []
         for n, x, y in scored:
             if n < 1:
                 break
@@ -1688,7 +1697,7 @@ class Executor:
         if kind in self.BUFFERS and not any(i in self.g.towers for i in step.get("near") or ()):
             # none of the towers it was meant to buff stands (Water Park: a
             # lone village buffing nothing)
-            return self._buff_spots(kind)
+            return self._buff_spots(kind, step)
         spots = self.pick_spots(kind, step, n=self.SPOTS_PER_HOLD)
         if spots:
             return spots
