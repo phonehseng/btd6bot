@@ -196,3 +196,9 @@
 - Since the 14:36 entry: 0 wins, 0 losses. No new loss folders.
 - Backlog 8: `tools/simulate_threats.py` can now play a build on the map's own geometry (`simulate(..., real_map=True)`, `map_model`), so the blimp check measures reach from real track cells instead of 2.5 x range; `ramp_calibration --offline --real-map` pairs per (strategy, mode, map). Easy and Medium show a trend (Medium 0.5-1x 32% lost vs 2x+ 9%), Hard still none, so the planner was not changed. Test `tests/test_simulate_real_map_offline.py`; check.py ALL OK.
 - Next run: Medium-family p penalty for real-map ratio under 1x (backlog 8), or Sanctuary platforms (16 rest). Safe-mode forgiveness from ~2026-11-04 03:56.
+
+## 2026-11-03 16:35
+- Bot status: running (BTD6Bot task Running, bot.py run, recorder up, BTD6 responding), playing again since 16:01 (safe mode plays the normal medal order instead of idling, commit 93a2a66); now Infernal Double HP. No loops, no tracebacks, no PAUSE/STOP. Safe mode on (trips 4).
+- Since the 15:45 entry: 2 wins (KartsNDarts Double HP, Chutes Double HP, 0 lives lost), 0 losses. No new loss folders.
+- Roadmap "villages and alchemists beside the towers they buff": a buffer step with a researched `at` spot but no standing `near` towers ignored that spot (Castle Revenge Hard, Covered Garden Hard, Dark Castle). `_buff_spots` now tries the `at` spot first when it buffs at least one damage tower; tests in `tests/test_spot_relaxing_offline.py`; all 61 check steps OK (run in parallel - check.py one by one now takes over 10 minutes). Roadmap item ticked.
+- Next run: Medium-family p penalty for real-map ratio under 1x (backlog 8), or Sanctuary platforms (16 rest).
