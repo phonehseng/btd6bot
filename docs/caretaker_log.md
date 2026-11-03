@@ -148,3 +148,9 @@
 - Since the 06:28 entry: 0 wins, 0 losses. No new loss folders.
 - Backlog 8: tested whether the offline simulator's round-40 blimp ratio could lift the strong open Medium builds over the bar. New `ramp_calibration.py --offline` says no: it does not predict losses (Easy 2x+ lost 15% vs 7% at 0.5-1x; Hard no better; only Medium trends). Planner unchanged; the estimate needs each map's real track reach first.
 - Next run: simulate with the map's track reach (mapgeom) and recheck, or backlog 17 (Tricky Tracks refused spots). Safe-mode forgiveness from ~2026-11-04 03:56.
+
+## 2026-11-03 08:30
+- Bot status: running (BTD6Bot task Running, bot.py run since 06:20, recorder up, BTD6 responding), idle by design: safe mode (0/64, trips 4) has no p >= 0.85 game left. No loops, no tracebacks, no PAUSE/STOP.
+- Since the 07:45 entry: 0 wins, 0 losses. No new loss folders.
+- "level reads 38 but notes say 137" (every 30-min idle check): the account is level 138 and the badge's leading "1" spans x 0.089-0.099, so the old OCR box (from x 0.095) cut it in half. runner.read_level now reads (0.083-0.13); on recorded menu frames it reads 138 at 0.99 confidence. The notes should adopt 138 at the next check.
+- Next run: confirm the warning is gone in bot.log; then backlog 17 (Tricky Tracks refused spots) or simulate with mapgeom track reach (backlog 8). Safe-mode forgiveness from ~2026-11-04 03:56.
