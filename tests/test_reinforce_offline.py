@@ -93,6 +93,17 @@ def test_nothing_ahead_means_safe():
     assert R.best(ex, forecast(ex), 5000, 81, 80) == ("safe", None)     # past the last round
 
 
+def test_trim_keeps_the_dear_options_too():
+    # a crowded board: 30 cheap first tiers and 2 expensive upgrades
+    out = [R.Option(f"cheap{i}", 270 + i, {}) for i in range(30)]
+    out += [R.Option("t4", 9000, {}), R.Option("t5", 21000, {})]
+    kept = R.trim(out)
+    assert len(kept) == R.MAX_OPTIONS
+    assert {"t4", "t5"} <= {o.what for o in kept}
+    assert kept[0].what == "cheap0"
+    assert R.trim(out[:5]) == out[:5]      # short lists are kept whole
+
+
 def test_look_ahead_covers_the_rounds_left():
     assert R.lookahead_rounds(55, 80) == list(range(55, 65))
     assert R.lookahead_rounds(78, 80) == [78, 79, 80]

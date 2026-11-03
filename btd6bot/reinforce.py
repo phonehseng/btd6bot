@@ -22,7 +22,8 @@ none there). That count moves with every purchase and needs one simulation
 per round; the margin search moves in steps of several percent and hid
 most single upgrades (on Pat's Pond from round 47 it found nothing worth
 $15,000). The purchase that saves the most of those lives per dollar is
-bought. One purchase per call; Match calls again until the look-ahead is
+bought - or, when the worst round would leak even at full strength
+(margin under 1), the one that saves the most lives. One purchase per call; Match calls again until the look-ahead is
 safe or nothing the cash buys helps.
 """
 from __future__ import annotations
@@ -89,7 +90,19 @@ def options(ex, cash):
             new = SimpleNamespace(tid=f"_new_{kind}", kind=kind, tiers=(0, 0, 0), x=fx, y=fy)
             out.append(Option(f"another {kind}", cost, step, now + [new]))
     out.sort(key=lambda o: o.cost)
-    return out[:MAX_OPTIONS]
+    return trim(out)
+
+
+def trim(out, k=MAX_OPTIONS):
+    """At most k of the cost-sorted options: the cheapest half and the
+    dearest half. Keeping only the cheapest k hid every strong purchase on
+    a crowded board: Spillway Magic Monkeys Only (2026-10-24) had 14 ninjas
+    and 5 wizards, so their first tiers filled the list, and the bot bought
+    $270 wizards (round 54 rated 0.24 -> 0.26) with $19-27k in the bank
+    until it lost at round 60."""
+    if len(out) <= k:
+        return out
+    return out[:k - k // 2] + out[len(out) - k // 2:]
 
 
 def best(ex, forecast, cash, rnd, end_round):
@@ -107,6 +120,12 @@ def best(ex, forecast, cash, rnd, end_round):
     base = sum(by_round[r] for r in rounds_rated)
     if not base:
         return "safe", None
+    worst = max(rounds_rated, key=by_round.get)    # the round losing most
+    before = forecast.margin(board(ex), worst)
+    # Under margin 1 the worst round leaks even at full strength: the game
+    # is at stake, so the purchase saving the most lives wins, not the most
+    # per dollar (which kept buying the cheapest small step, see trim()).
+    crisis = before is not None and before < 1.0
     pick = None
     for o in options(ex, cash):
         leak = forecast.leaks(o.towers, rounds_rated, half)
@@ -115,13 +134,12 @@ def best(ex, forecast, cash, rnd, end_round):
         saved = base - leak
         if saved < MIN_SAVED:
             continue
-        value = saved / max(o.cost, 1.0)
+        value = saved if crisis else saved / max(o.cost, 1.0)
         if pick is None or value > pick[0]:
             pick = (value, o)
     if pick is None:
         return "wait", None
-    worst = max(rounds_rated, key=by_round.get)    # for the log: the round losing most
-    before, after = forecast.margin(board(ex), worst), forecast.margin(pick[1].towers, worst)
+    after = forecast.margin(pick[1].towers, worst)
     return "buy", (pick[1], worst, before, after)
 
 
