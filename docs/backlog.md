@@ -27,6 +27,9 @@ Items marked **[live]** need the game, so the bot has to be paused for them; onl
 
 9. **[offline]** Look at each loss in `logs/bot.log` (`outcome': 'defeat'`), work out which threat leaked, and strengthen that strategy's `answers:` section.
 
+29. **[offline]** (Filed 2026-11-04 12:00.) Sunken Columns Easy Primary Only lost on round 11 (loss case `20261104_104816_SunkenColumns_primary_only`): with 1,300-1,500 legal land cells the placer found "none in reach of the track" for dart and boomerang, while the stills show bloons on the top and right edges well inside the towers' sight. Check the geometry projection/track for Sunken Columns (3 paths, 15 areas, removable columns) against the stills, e.g. `placement.valid_spots` overlay vs `end_020.jpg`. Until then a primary-only build there should be rated low by the planner (only the global heli-sniper has won there).
+30. **[offline]** (Filed 2026-11-04 12:00.) Magic Monkeys Only with `magic_obyn_ninja_wizard` lost Bloody Puddles (round 43) and Workshop (round 40, sudden death, see 28) while the damage model rated the defence 0.06-0.23 for 5+ rounds before: the build has no MOAB answer it can afford by round 38-40 on short tracks. Give it an earlier MOAB answer (Alchemist + ninja 4-0-x / wizard 0-2-x+) and lower its p on short maps.
+
 ## Done
 - Long-run planner test (old item 5): `test_long_run_reaches_everything` passes again (checked 2026-11-03 11:25: 449 simulated games, 77 unique maps, 44 Hard medals, 83 losses = 18%, Hard medals before Easy ones) and `tools/check.py` runs it with the rest of `tests/test_planner.py`.
 - Observed durations (old item 6): the planner already learns minutes per (map, mode) from `account.map_stats` (`planner._Durations`, shrunk toward the mode's average), tested by `test_duration_learns_from_observed_games`.

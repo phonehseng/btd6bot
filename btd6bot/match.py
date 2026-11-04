@@ -794,6 +794,11 @@ class Match:
                         if t["category"] == cat and k not in T.GIFT_BOX_TOWERS:
                             self.account.unlocked_towers.add(k)
                     self.account.save()
+        elif st in ("collection_event", "reward_cards", "insta_reward"):
+            # free reward screens: Alpine Run Impoppable's round-100 win put an
+            # "INSTA MONKEY!" card up, and with no case here the loop read it
+            # 400 times in 8 minutes without a click (2026-11-04 11:17)
+            self.menus.handle_collection_event()
         elif st == "upgrade_tree":
             self.g.leave_tree()
         elif st == "pause":
