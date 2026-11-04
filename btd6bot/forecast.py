@@ -26,10 +26,12 @@ REVERSE_SUFFIX = " reverse"   # map models of Reverse games are keyed "<map> rev
 
 
 class RoundForecast:
-    def __init__(self, map_key, mode, sight_grid=None):
+    def __init__(self, map_key, mode, sight_grid=None, sight_heights=None):
         """sight_grid: the MapModel's line-of-sight blockers (MapModel.sight),
         so towers that need sight - snipers included - count only the track
-        they can see."""
+        they can see; sight_heights: (MapModel.sight_height,
+        MapModel.ground_height), so towers on raised ground see over
+        blockers no higher than it."""
         reverse = bool(map_key) and map_key.endswith(REVERSE_SUFFIX)
         self.map_name = map_key[:-len(REVERSE_SUFFIX)] if reverse else map_key
         self.reverse = reverse
@@ -37,6 +39,7 @@ class RoundForecast:
         self.track = None
         self.sight = None
         self._sight_grid = sight_grid
+        self._sight_heights = sight_heights
         self.off = not map_key
 
     def _ready(self):
@@ -49,7 +52,7 @@ class RoundForecast:
                 self.off = True
                 return False
             self.track = D.Track(self.map_name, reverse=self.reverse)
-            self.sight = D.sight_test(self._sight_grid, self.track)
+            self.sight = D.sight_test(self._sight_grid, self.track, heights=self._sight_heights)
         return True
 
     def stations(self, towers):

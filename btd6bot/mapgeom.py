@@ -217,6 +217,9 @@ def area_masks(geom, proj, present=None, retype=None):
              "water_mermonkey", "shallow_water", "sight", "blockers")
     out = {t: np.zeros((h, w), bool) for t in names}
     out["size_limit"] = np.full((h, w), 4, np.uint8)
+    # how high the blocker at each cell stands (-inf: no blocker), so a tower
+    # on ground as high as a blocker can see over it (see sight_blockers)
+    out["sight_height"] = np.full((h, w), -np.inf, np.float32)
     present = starting_areas(geom) if present is None else present
     retype = retype or {}
     drawn = []   # (area, its surface type now, cells, height)
@@ -248,7 +251,12 @@ def area_masks(geom, proj, present=None, retype=None):
                 c = proj.to_cells([[x, z, y]])[0]
                 rad = max(1, int(round(proj.units_to_cells(r))))
                 cv2.circle(circles, (int(c[0]), int(c[1])), rad, 1, -1)
-            out["sight"] |= (circles > 0) & (top <= height + HEIGHT_TIE)
+            ring = (circles > 0) & (top <= height + HEIGHT_TIE)
+            out["sight"] |= ring
+            blocked = eff | ring
+            out["sight_height"][blocked] = np.maximum(out["sight_height"][blocked], height)
+    # the ground a tower would stand on: the highest area that is not track
+    out["ground"] = np.where(np.isfinite(top), top, 0.0).astype(np.float32)
     return out
 
 
@@ -783,7 +791,12 @@ def _surfaces(geom, masks):
     land_ok &= ~masks["water"]
     land_ok |= masks["shallow_water"]          # shallow water takes both kinds
     water_ok |= masks["shallow_water"]
-    solid = masks["track"] | masks["unplaceable"] | masks["removable"] | masks["blockers"]
+    # A sight blocker is solid by its type (walls, rocks: "unplaceable"). A
+    # blocker typed as land is raised ground a tower may stand on - Sunken
+    # Columns' column tops, Mesa's plateaus: it blocks sight only for towers
+    # below it. Treating it as solid left Sunken Columns with no spot that
+    # could see the track (loss case 20261104_104816).
+    solid = masks["track"] | masks["unplaceable"] | masks["removable"]
     return land_ok, water_ok, solid
 
 
@@ -795,7 +808,9 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
 
     Returns {"land", "water", "mermonkey_water": bool grids of cells where a
     tower's centre may stand for the whole game as far as the ground goes;
-    "size_limit"; "sight": blockers that are there at any time; "moving":
+    "size_limit"; "sight": blockers that are there at any time, with
+    "sight_height" how high they stand and "ground" how high the ground a
+    tower stands on is (a tower sees over blockers no higher); "moving":
     cells on areas that carry towers around (gears, platforms) and "drift":
     how far (world units) each such cell travels; "unsafe": cells left out
     because the ground there changes (with "static_land"/"static_water", the
@@ -811,6 +826,7 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
     out = {k: np.ones(shape, bool) for k in ("land", "water", "mermonkey_water")}
     out["size_limit"] = np.full(shape, 4, np.uint8)
     out["sight"] = np.zeros(shape, bool)
+    out["sight_height"] = np.full(shape, -np.inf, np.float32)
     lanes = np.zeros(shape, bool) if lanes is None else lanes
     for i, present in enumerate(states):
         masks = area_masks(geom, proj, present=present, retype=dyn.retype)
@@ -818,11 +834,13 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
         solid = solid | lanes   # drawn bloon lanes can poke past the track polygon on curves
         if i == 0:
             out["static_land"], out["static_water"] = land_ok & ~solid, water_ok & ~solid
+            out["ground"] = masks["ground"]
         out["land"] &= land_ok & ~solid
         out["water"] &= water_ok & ~solid
         out["mermonkey_water"] &= masks["water_mermonkey"] & ~solid
         out["size_limit"] = np.minimum(out["size_limit"], masks["size_limit"])
         out["sight"] |= masks["sight"]
+        out["sight_height"] = np.maximum(out["sight_height"], masks["sight_height"])
 
     # Moving areas: solid ones block every place they pass; ground ones carry
     # their towers, and the ground they pass over is no place for a tower
@@ -846,6 +864,7 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
                     out[k] &= ~swept
                 if area.get("blocks_sight"):
                     out["sight"] |= swept
+                    out["sight_height"][swept] = np.maximum(out["sight_height"][swept], area_height(area))
             else:
                 unsafe |= swept & ~here
                 moving |= here
@@ -911,6 +930,8 @@ def apply(model, geom, aspect=1920 / 1200):
     model.size_limit = grids["size_limit"]
     model.small_only = grids["size_limit"] <= 1
     model.sight = grids["sight"]
+    model.sight_height = grids["sight_height"]
+    model.ground_height = grids["ground"]
     model.geometry_version = geom.get("version", 1)
     forget_pane_refusals(model, geom)
     log.info("%s: geometry applied (%d paths, %d areas)", model.name,

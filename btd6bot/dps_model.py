@@ -1351,24 +1351,40 @@ def station_for(t, placed, track, sight=None):
                    order=order, banked=banked, bank_seconds=bank, bank_start=start, strong=strong)
 
 
-def sight_test(grid, track, samples=12):
+def sight_test(grid, track, samples=12, heights=None):
     """A sight(x, z, pts) function for station_for from a MapModel's bool
     sight grid (True = blocks sight): a track point is visible from a tower
     when no blocking cell lies on the straight line between (sampled
-    `samples` times). None when the map has no sight blockers."""
+    `samples` times). None when the map has no sight blockers.
+
+    heights: (MapModel.sight_height, MapModel.ground_height) when known, so
+    a tower on raised ground sees over blockers no higher than that ground
+    (placement.sight_blockers)."""
     if grid is None or not grid.any():
         return None
     h, w = grid.shape
     t = np.linspace(0.1, 0.9, samples)[:, None]
+    from .mapgeom import HEIGHT_TIE
+    blocker_h, ground_h = heights if heights is not None else (None, None)
+    if blocker_h is None or ground_h is None:
+        blocker_h = None
+
+    def blockers_for(x, z):
+        """The grid of cells that block sight for a tower at world (x, z)."""
+        if blocker_h is None:
+            return grid
+        cx, cy = np.rint(track.proj.to_cells([[x, z, 0.0]])[0][:2]).astype(int)
+        return blocker_h > ground_h[min(max(cy, 0), h - 1), min(max(cx, 0), w - 1)] + HEIGHT_TIE
 
     def sight(x, z, pts):
+        block = blockers_for(x, z)
         px = x + (pts[:, 0][None, :] - x) * t
         pz = z + (pts[:, 1][None, :] - z) * t
         ph = pts[:, 2][None, :] * t
         cells = np.rint(track.proj.to_cells(np.stack([px.ravel(), pz.ravel(), ph.ravel()], axis=1))).astype(int)
         cells[:, 0] = np.clip(cells[:, 0], 0, w - 1)
         cells[:, 1] = np.clip(cells[:, 1], 0, h - 1)
-        return ~grid[cells[:, 1], cells[:, 0]].reshape(samples, -1).any(axis=0)
+        return ~block[cells[:, 1], cells[:, 0]].reshape(samples, -1).any(axis=0)
     return sight
 
 

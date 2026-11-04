@@ -225,7 +225,8 @@ class Match:
         self._in_round = False
         # the damage model's view of each round as it starts (forecast.py)
         self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None),
-                                      getattr(model, "sight", None))
+                                      getattr(model, "sight", None),
+                                      (getattr(model, "sight_height", None), getattr(model, "ground_height", None)))
         self._weak_round = None     # a round whose look-ahead is weak: reinforce (reinforce.py)
         self._t_reinforce = 0.0
         self._saving_until = 0.0    # reinforce saves for a dearer purchase until then

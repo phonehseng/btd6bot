@@ -49,6 +49,7 @@ import numpy as np
 from . import gamemodel
 from . import towers as T
 from .maplearn import GRID
+from .mapgeom import HEIGHT_TIE
 
 DATA = Path(__file__).resolve().parents[1] / "data"
 
@@ -244,9 +245,21 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
     return valid
 
 
+def sight_blockers(model, cx, cy):
+    """Bool grid of the cells that block sight for a tower standing at cell
+    (cx, cy). A blocker hides bloons only from towers below it: a tower on
+    raised ground (Sunken Columns' column tops, Mesa's plateaus) sees over
+    blockers as high as its own ground. Falls back to every blocker when the
+    map's heights are unknown."""
+    heights, ground = getattr(model, "sight_height", None), getattr(model, "ground_height", None)
+    if heights is None or ground is None:
+        return model.sight
+    return heights > ground[cy, cx] + HEIGHT_TIE
+
+
 def visible_cover(model, cx, cy, range_cells, weight):
     """Sum of track weight within range of (cx, cy) that is in line of sight
-    (no sight-blocking cell on the straight line between)."""
+    (no sight-blocking cell, see sight_blockers, on the straight line between)."""
     hh, ww = weight.shape
     r = int(np.ceil(range_cells))
     y0, y1 = max(0, cy - r), min(hh, cy + r + 1)
@@ -257,9 +270,9 @@ def visible_cover(model, cx, cy, range_cells, weight):
     if not inside.any():
         return 0.0
     tx, ty = xx[inside].astype(np.float32), yy[inside].astype(np.float32)
-    sight = model.sight
-    if sight is None or not sight.any():
+    if model.sight is None or not model.sight.any():
         return float(sub[inside].sum())
+    sight = sight_blockers(model, cx, cy)
     # sample points strictly between the tower and each target cell
     t = np.linspace(0.1, 0.9, SIGHT_SAMPLES, dtype=np.float32)[:, None]
     px = np.clip(np.rint(cx + (tx - cx) * t), 0, ww - 1).astype(np.int32)

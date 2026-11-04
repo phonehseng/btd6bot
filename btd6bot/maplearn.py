@@ -52,6 +52,8 @@ class MapModel:
         self.geometry_version = None  # set by mapgeom.apply: heat is the exact track
         self.small_only = None       # bool grid: only small towers fit here
         self.sight = None             # bool grid: line-of-sight blockers
+        self.sight_height = None      # float grid: how high each blocker stands (-inf: none)
+        self.ground_height = None     # float grid: height of the ground a tower stands on
         self.size_limit = None        # uint8 grid: largest tower size class allowed (1-4)
         self.mermonkey_water = None   # bool grid: water only a Mermonkey may use
         self.valid = {}  # tower -> {"x,y": bool} placement validity cache
