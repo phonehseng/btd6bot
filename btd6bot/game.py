@@ -902,6 +902,23 @@ class Game:
             if verdict == "bought" or time.time() >= end:
                 return verdict
 
+    def _next_tier_same_price(self, p, path):
+        """True when the tier being bought and the one after it cost the same
+        (Ninja path 1 on Hard: $380 and $380). The button then shows the same
+        price whether the click bought the tier or not, so it cannot prove
+        "same" and the cash decides. Taken as "same", it made the hotkey buy
+        the second tier too: Ancient Portal ABR (2026-11-04) turned both
+        ninjas 0-0-1 -> 2-0-1 in one "failed" upgrade, set the plan step
+        aside and spent the money meant for it elsewhere."""
+        if p.kind == "hero":
+            return False
+        tier = p.tiers[path - 1] + 1
+        if tier >= 5:
+            return False
+        this = T.upgrade_cost(p.kind, path, tier, self.difficulty)
+        after = T.upgrade_cost(p.kind, path, tier + 1, self.difficulty)
+        return abs(this - after) <= 5           # the game rounds prices to $5
+
     def _upgrade_verdict(self, p, path, shown, before, cost, dx):
         """After an upgrade click: 'bought', 'same' (the button still shows
         the same price: the click did not register), or 'unknown'.
@@ -912,7 +929,7 @@ class Game:
         dropped by about the price (PRICE_BAND), not merely gone down."""
         again = self.path_costs(p)[path - 1]
         if shown[1] is not None and again[0] is not None:
-            if again == shown:
+            if again == shown and not self._next_tier_same_price(p, path):
                 return "same"
             if again[0] == "xp":
                 return "bought"                  # the next tier is XP-locked

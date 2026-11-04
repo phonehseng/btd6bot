@@ -251,6 +251,20 @@ def test_discounted_next_price_proves_the_purchase():
     assert p.tiers == [3, 0, 0] and not g.inp.keys, "no hotkey: one tier bought, one tier counted"
 
 
+def test_equal_tier_prices_are_judged_by_cash():
+    """Ninja path 1 costs $380 for tier 1 and tier 2 on Hard: after a click
+    that bought tier 1 the button still shows $380. Ancient Portal ABR
+    (2026-11-04) took that as "same", the hotkey bought tier 2 as well and
+    the bot believed neither. The cash drop of one price decides instead."""
+    g = upgrade_game([])
+    g.cash_stable = scripted([9000, 8620])
+    g.path_costs = scripted([[("cash", 380), ("cash", 270), ("cash", 485)],
+                             [("cash", 380), ("cash", 270), ("cash", 485)]])
+    p = Placed("n1", "ninja", 0.2, 0.2, tiers=[0, 0, 1])
+    assert g.upgrade(p, 1) is True
+    assert p.tiers == [1, 0, 1] and not g.inp.keys, "no hotkey: one tier bought, one tier counted"
+
+
 def test_price_above_cash_clicks_nothing():
     g = upgrade_game([("cash", 10260), (None, None), (None, None)], cash=5000)
     p = Placed("sp1", "spike", 0.06, 0.63, tiers=[3, 0, 2])
