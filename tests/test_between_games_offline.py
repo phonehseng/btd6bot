@@ -213,7 +213,15 @@ def test_a_map_is_benched_only_after_failing_twice():
 
 def test_the_same_error_in_a_row_waits_instead_of_benching_and_survives_restarts():
     """The 02:04-02:15 burst: one bug, 13 maps benched for 6 h each."""
-    with tempfile.TemporaryDirectory() as d, mock.patch.object(R, "ERROR_FILE", Path(d) / "errors.json"):
+    # _game_done also forgets the game in progress and the HUD focus: both
+    # point at temp files here, or running the tests deletes the live bot's
+    # logs/game_in_progress.json (2026-11-04: a check.py run during Alpine
+    # Run Impoppable did, the bot was restarted on its Victory screen, could
+    # not credit the win and played the map again)
+    import btd6bot.status as status
+    with tempfile.TemporaryDirectory() as d, mock.patch.object(R, "ERROR_FILE", Path(d) / "errors.json"), \
+            mock.patch.object(R, "GAME_FILE", Path(d) / "game_in_progress.json"), \
+            mock.patch.object(status, "FOCUS_FILE", Path(d) / "focus.txt"):
         maps = ["Bloonarius Prime", "Lost Crevasse", "Luminous Cove", "Ancient Portal", "Sulfur Springs"]
         bot = bare_bot()
         bot._errors = R._load_errors()
