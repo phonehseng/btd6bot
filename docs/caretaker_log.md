@@ -253,3 +253,10 @@
 - Loss diagnosed (case 20261104_015822_AncientPortal_abr, handled): the map's restore-a-bought-switch trigger counted as automatic, so the bot thought bloons use the walled left spiral and put both ninjas + the alchemist there; no bloon came. Fixed in a348100 (trigger is player-only, RULES_VERSION 2, map_fit re-measured, map_mechanics.json regenerated, test added).
 - Also fixed (0c99f1a): Ninja path 1 tiers 1 and 2 both cost $380 on Hard, so a successful click looked like no effect and the hotkey bought a second tier; equal-priced tiers are now judged by the cash drop. check.py ALL OK both times.
 - Next run: watch the next Ancient Portal game (after the 12 h bench) for ninjas on the top spiral / right lane.
+
+## 2026-11-04 03:23
+- Bot status: running (task Running, bot.py up since 02:35, recorder up, BTD6 responding); Haunted ABR round 79, 100 lives. No tracebacks, PAUSE or STOP.
+- OWNER: BTD6's Auto Start looks ON again - the bot logged "the Play button was never idle in 39 rounds" at the end of Water Park ABR (03:11). The bot cannot hold a round to buy while it is on; please turn Auto Start off in the game's settings.
+- Since 02:30: 2 wins (Spice Islands, Luminous Cove ABR), 2 losses (Bazaar ABR round 75, Water Park ABR round 61; both benched 12 h). Safe mode on (trips 4), normal medal order.
+- Water Park (handled): reinforce picked an already given-up "another sniper" ~60 times in 3 min (each try skipped at once) while the defence was rated 0.06-0.15, so nothing else was bought. Fixed in 3608ff4: Executor.place_held_back, reinforce skips such placements; tests added; check.py ALL OK.
+- Bazaar (handled, not fixed): no purchase left to offer from round 70 ("0 purchases tried", $3-8.7k idle), with no spot for the board's tower kinds or the plan's village/supers. Backlog 21 for the next run.
