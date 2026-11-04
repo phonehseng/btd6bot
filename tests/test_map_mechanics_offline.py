@@ -275,6 +275,11 @@ def test_moving_ground_only_for_steady_or_global_towers():
     steady = mapgeom.steady_spots(m, 40)
     assert not (ninja & grids["moving"] & ~steady).any()
     assert placement.valid_spots(m, "ninja", moving=True).sum() >= ninja.sum()
+    # Psi hits bloons anywhere on screen, so like the sniper it may ride the
+    # gear (its table range is unknown; read as 0 it had no legal cell at all)
+    assert placement.reach_units("hero", "psi") is None
+    psi = placement.valid_spots(m, "hero", "psi")
+    assert psi.any() and (psi & grids["moving"]).any()
 
 
 def test_suspended_and_hidden_parts():

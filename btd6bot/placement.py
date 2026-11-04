@@ -133,7 +133,15 @@ def has_geometry(model):
 def reach_units(kind, hero=None):
     """A tower's range in world units: None for global range (sniper,
     mortar, heli, ace, dartling, farm); for a hero its range, 0 when not
-    known (it then keeps off moving ground)."""
+    known (it then keeps off moving ground).
+
+    The game model's own global_range flag is asked first, so a map-wide
+    hero counts as global too: Psi's table range is unknown, and reading it
+    as 0 left Psi without a single legal cell on moving ground (Geared,
+    Sanctuary) although Psi hits bloons anywhere on screen."""
+    entry = gamemodel.entity(kind, hero)
+    if entry and entry.get("global_range"):
+        return None
     if kind == "hero":
         return T.HEROES.get(hero, {}).get("range") or 0.0
     return T.TOWERS.get(kind, {}).get("range")
