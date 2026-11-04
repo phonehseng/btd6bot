@@ -12,12 +12,28 @@ import numpy as np
 
 from . import towers as T
 from .hud import Hud, parse_int, rec_text
-from .templates import classify
+from .templates import brightness_ratio, classify
 from .vision import crop
 
 log = logging.getLogger("game")
 
 PLAY_BTN = (0.905, 0.835, 1.0, 0.975)
+PLAY_SHAPE_MIN = 0.75     # template score for "the Play / fast-forward button is there"
+# The Defeat and Victory cards dim everything behind them, the Play button
+# included, but the shape match ignores brightness (0.96 on the dimmed
+# button). Measured on the stills of four losses on 2026-11-04: the lit
+# button is 0.99-1.0 of the template's brightness, under the end card 0.36,
+# while the card fades in 0.18. Below this share the HUD counts as covered.
+PLAY_LIT_MIN = 0.6
+
+
+def hud_visible(frame):
+    """True when the match HUD's Play button is on screen and not dimmed by
+    an overlay (end card, pause menu), i.e. a click would reach the map."""
+    best, scores = classify(frame, ["play_idle", "play_run", "play_fast"], PLAY_BTN)
+    if scores[best] <= PLAY_SHAPE_MIN:
+        return False
+    return brightness_ratio(frame, best, PLAY_BTN) >= PLAY_LIT_MIN
 TARGETS = ["first", "last", "close", "strong"]
 CLOSED_AFTER_MISSES = 3   # blank price reads (separate attempts) before a path its tiers allow counts closed
 REREAD_SETTLE_S = 0.4     # wait after moving the cursor off the panel before reading a blank price again
@@ -112,9 +128,12 @@ class Game:
                         ["play_idle", "play_run", "play_fast"], PLAY_BTN)[0]
 
     def in_game(self, f=None):
-        f = f if f is not None else self.fresh()
-        best, scores = classify(f, ["play_idle", "play_run", "play_fast"], PLAY_BTN)
-        return scores[best] > 0.75
+        """The match HUD is showing and lit (see hud_visible).
+
+        Quad Reverse (2026-11-04): the old shape-only check passed on the
+        Defeat card, so screen_ok() let clicks through and one opened the
+        Restart dialog, next to the Monkey-Money Continue button."""
+        return hud_visible(f if f is not None else self.fresh())
 
     # Pause between the two looks at the Play button before the HUD counts
     # as gone (one look can catch a frame mid-redraw).

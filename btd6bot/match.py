@@ -761,6 +761,11 @@ class Match:
         elif st == "pause":
             self.menus.click_word("continue")
         elif st == "in_game":
+            # identify() only checks the Play button's shape; Game.in_game also
+            # wants it lit. Shape there but dimmed means a popup covers the
+            # match: close it if it has a plain button (never a paid one).
+            if not self.g.in_game():
+                self.menus.dismiss_popup()
             return None
         else:
             if not self.menus.dismiss_popup():
