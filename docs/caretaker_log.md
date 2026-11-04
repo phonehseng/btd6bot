@@ -327,3 +327,8 @@
 - Since 12:25: 2 wins, 0 losses (Hedge Impoppable is now credited; End Of The Road and Frozen Over Impoppable). On Carved the damage model rated rounds 76-78 at 0.45-0.58 while the bot reinforced; check the result next run.
 - Backlog 29 fixed in f7b4a33 (Sunken Columns Primary Only loss): the column tops are sight blockers typed as land, and every blocker was treated as solid. No tower could stand on them, and from the pit the columns hid the track. Raised blocker ground is now placeable, and towers there see over blockers no higher than their ground (placement + damage model, new test). Also affects Mesa, Adora's Temple, Skull Tweak, Lotus Island and Frozen Over: watch for 'invalid for' refusals on those maps' raised ground.
 - OWNER: Auto Start was last logged ON at 11:44 (see the 12:25 entry).
+## 2026-11-04 14:25
+- Bot status: running (task Running, bot.py up since 13:29, recorder and BTD6 up); opening Polyphemus. No tracebacks, loops, PAUSE or STOP; no new loss cases. Safe mode on (trips 4, 10/64 wins to leave); the bot keeps playing.
+- OWNER: BTD6's Auto Start is still ON (logged again at 13:46 on Candy Falls). Please turn it off in the game's settings.
+- Since 13:25: 4 wins, 0 losses (Carved, Winter Park, Candy Falls, Lost Crevasse Impoppable, all with no lives lost).
+- Lost Crevasse round 78 was rated 0.29 for ten rounds but passed easily, and reinforce spent ~$25k on supers that moved it 0.00-0.02. New tools/rate_board.py (24a033b) rebuilds a board from bot.log and rates it; --drop pinned the rating on the 72-camo-ceramic burst (the model leaves out Obyn's brambles and the alchemist's brews). Filed as backlog 31; check.py ALL OK.
