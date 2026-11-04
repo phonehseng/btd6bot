@@ -903,8 +903,11 @@ class Executor:
         self.no_income = bool(self.rules.get("no_income_towers") or c.get("no_income_towers"))
         self.no_answers = bool(c.get("no_answers"))
         self.no_removals = bool(self.rules.get("no_removables") or c.get("no_removables"))
-        self.removed = []           # obstacles bought this game (names, mapgeom.removables)
-        self.removal_fails = {}     # obstacle name -> failed attempts
+        # obstacles bought this game, by their map id (mapgeom.removables):
+        # names repeat - High Finance has eleven obstacles all called
+        # "Removable" - so a name cannot say which one went
+        self.removed = []
+        self.removal_fails = {}     # obstacle id -> failed attempts
         self.allowed = set(c["allowed_towers"]) if c.get("allowed_towers") is not None else None
         self.forbidden = set(c.get("forbidden_towers") or ())
         self.land_only = bool(c.get("land_only"))
@@ -2856,18 +2859,25 @@ class Executor:
     REMOVAL_TRIES = 2           # attempts per obstacle before it is left alone for the game
 
     def _obstacles(self):
-        """This map's obstacles that can be bought now, not yet removed."""
+        """This map's obstacles that can be bought now, not yet removed.
+
+        Obstacles whose area is simply deleted ("uncovered": the ground
+        beneath shows) count too: clear_obstacle measures the room each one
+        frees with valid_spots(removed=...), which models what lies beneath.
+        Leaving them out cost Mushroom Grotto ABR (2026-11-04): its main
+        mushroom ($400) frees ~1,050 ninja cells on a map with 165, and the
+        game was lost at round 63 with $34k in the bank and no spot left."""
         if getattr(self, "_obstacle_list", None) is None:
             from . import mapgeom
             name = getattr(self.m, "name", "") or ""
             name = name[:-len(" reverse")] if name.endswith(" reverse") else name
             try:
                 self._obstacle_list = [r for r in mapgeom.removables(name, self.m.playfield)
-                                       if r["available"] and r.get("frac") and r["after"] != "uncovered"]
+                                       if r["available"] and r.get("frac")]
             except Exception:       # a map-file problem must never cost a game
                 self._obstacle_list = []
         return [r for r in self._obstacle_list
-                if r["name"] not in self.removed and self.removal_fails.get(r["name"], 0) < self.REMOVAL_TRIES]
+                if r["id"] not in self.removed and self.removal_fails.get(r["id"], 0) < self.REMOVAL_TRIES]
 
     def clear_obstacle(self, cash, kind):
         """Surplus spending: when the cash covers an obstacle's price and the
@@ -2887,7 +2897,10 @@ class Executor:
             return False
         best, gain = None, 0
         for r in affordable:
-            after = PL.valid_spots(self.m, kind, None, placed, where=where, removed=tuple(self.removed) + (r["name"],))
+            # by id: on High Finance every "Removable" by name meant the same
+            # one (a $350 strip at the top edge freeing nothing), so no
+            # obstacle was ever bought while the defence had 36 legal cells
+            after = PL.valid_spots(self.m, kind, None, placed, where=where, removed=tuple(self.removed) + (r["id"],))
             g = int((after & ~base).sum()) if after is not None else 0
             if g > gain:
                 best, gain = r, g
@@ -2895,9 +2908,9 @@ class Executor:
             return False
         log.info("clearing obstacle %s ($%s): frees %d legal cells for %s", best["name"], best["cost"], gain, kind)
         if self.g.remove_obstacle(*best["frac"], best["cost"], name=best["name"]):
-            self.removed.append(best["name"])
+            self.removed.append(best["id"])
             return True
-        self.removal_fails[best["name"]] = self.removal_fails.get(best["name"], 0) + 1
+        self.removal_fails[best["id"]] = self.removal_fails.get(best["id"], 0) + 1
         return False
 
     def upgrade_choices(self, first=None, past_plan=False):
