@@ -339,3 +339,9 @@
 - Since 14:25: 1 win, 2 losses (Quarry Impoppable won; Polyphemus and Quiet Street Impoppable lost on round 98, both chimps_ninja_sun). Both cases handled.
 - Polyphemus fixed in 22f21c8: upgrade buttons near a full discount village read 17% under the price table (719 logged reads), and the tier matcher allowed only 15%, so tier drift was never corrected. A misjudged purchase closed Sun Avatar on s1 (2-0-3), and the MIB village stayed 0-0-0 in the bot's count. deepest_discount() now adds the unlisted 2% (test added, check.py ALL OK). It goes live after the current game.
 - Quiet Street was a build ceiling, not drift: round 98 was rated 0.09 from round 88 on a 575-unit track, and reinforce spent on purchases worth +0.01 each. Filed as backlog 31a (Sun Avatar rating in the damage model, more MOAB damage before round 95 on short maps).
+
+## 2026-11-04 16:23
+- Bot status: running (task Running, bot.py up since 15:37, recorder and BTD6 up); Another Brick Impoppable past round 45. No tracebacks, loops, PAUSE or STOP. Safe mode on (trips 4); the bot keeps playing.
+- OWNER: BTD6's Auto Start is still ON (logged again at 15:41 on Spring Spring; rounds 38-40 passed in seconds). Please turn it off in the game's settings.
+- Since 15:35: 3 wins, 1 loss (Adora's Temple, KartsNDarts, Moon Landing Impoppable won with no lives lost; Spring Spring Impoppable lost on round 40, handled).
+- Spring Spring fixed in 598973a: round 40's MOAB was rated 0.5x from round 37, but the plan's next step (ninja 2-0-4, no blimp damage) was not stuck, so it kept its turn and saved $5,672 while the MOAB took the only life. With one life the blimp check now looks 5 rounds ahead and buys blimp damage from two rounds before (test added, check.py ALL OK). Also seen: reinforce paid $3,000 for v1 4-0-2 rated 0.29 -> 0.29 (backlog 31a).
