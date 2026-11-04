@@ -321,3 +321,9 @@
 - Since 11:35: 3 wins, 0 losses (Alpine Run Impoppable 11:44, which replayed the 11:17 win; Off The Coast and Park Path Impoppable).
 - Why the 11:17 Alpine Run win was not credited: test_between_games_offline called bot._game_done() without a temp GAME_FILE, so every check.py run deleted the live logs/game_in_progress.json. The 11:25 check ran mid-game; the restarted bot found no game to credit and replayed the map. Fixed in a3cde7d (the test uses temp files; check.py ALL OK).
 - A developer session was editing runner/status/hud at 12:18 without logs/dev_active.txt (committed 6d9fb4a, the HUD level readout). I only committed the test, and skipped development this run.
+
+## 2026-11-04 13:25
+- Bot status: running (task Running, bot.py up since 12:33, recorder and BTD6 up); Carved Impoppable round 91 with $7,680. No tracebacks, loops, PAUSE or STOP; no new loss cases. Safe mode on (trips 4); the bot keeps playing.
+- Since 12:25: 2 wins, 0 losses (Hedge Impoppable is now credited; End Of The Road and Frozen Over Impoppable). On Carved the damage model rated rounds 76-78 at 0.45-0.58 while the bot reinforced; check the result next run.
+- Backlog 29 fixed in f7b4a33 (Sunken Columns Primary Only loss): the column tops are sight blockers typed as land, and every blocker was treated as solid. No tower could stand on them, and from the pit the columns hid the track. Raised blocker ground is now placeable, and towers there see over blockers no higher than their ground (placement + damage model, new test). Also affects Mesa, Adora's Temple, Skull Tweak, Lotus Island and Frozen Over: watch for 'invalid for' refusals on those maps' raised ground.
+- OWNER: Auto Start was last logged ON at 11:44 (see the 12:25 entry).
