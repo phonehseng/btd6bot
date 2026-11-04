@@ -314,3 +314,10 @@
 - Since 10:25: 5 wins (Sulfur Springs Double HP; X Factor, Castle Revenge Primary Only; #Ouch Deflation; Alpine Run Impoppable at 11:17), 4 losses (Bloody Puddles and Workshop Magic Only; Erosion and Sunken Columns Easy Primary Only). All four cases handled.
 - Erosion fixed in 705cbe1: its six paths take 18 rounds each, but all six were painted as track, so the build stood beside lanes no bloon takes before round 37. The track is now repainted for the round's path phase (test added). Sunken Columns placement (backlog 29) and the Magic Only build's missing MOAB answer (backlog 30) filed.
 - Loop fixed in d4c8af3: after the Alpine Run Impoppable win, the match loop read an INSTA MONKEY! card 400 times without clicking. Restarted bot.py at 11:26, which cleared it. The restart did not credit the win ('Victory screen of an unfinished' never logged, although logs/game_in_progress.json should have held the game), so the bot is replaying Alpine Run Impoppable now. Next run: find out why _credit_unfinished_win missed it.
+
+## 2026-11-04 12:25
+- Bot status: running (task Running, bot.py up since 11:27, recorder and BTD6 up); Hedge Impoppable round 50. No tracebacks, loops, PAUSE or STOP; no new loss cases. Safe mode on (trips 4); the bot keeps playing (last-resort picks).
+- OWNER: BTD6's Auto Start is still ON (logged again at 11:44 on Alpine Run). Please turn it off in the game's settings.
+- Since 11:35: 3 wins, 0 losses (Alpine Run Impoppable 11:44, which replayed the 11:17 win; Off The Coast and Park Path Impoppable).
+- Why the 11:17 Alpine Run win was not credited: test_between_games_offline called bot._game_done() without a temp GAME_FILE, so every check.py run deleted the live logs/game_in_progress.json. The 11:25 check ran mid-game; the restarted bot found no game to credit and replayed the map. Fixed in a3cde7d (the test uses temp files; check.py ALL OK).
+- A developer session was editing runner/status/hud at 12:18 without logs/dev_active.txt (committed 6d9fb4a, the HUD level readout). I only committed the test, and skipped development this run.
