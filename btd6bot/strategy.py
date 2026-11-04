@@ -1374,14 +1374,12 @@ class Executor:
         if "max" in step and sum(p.kind == kind for p in self.g.towers.values()) >= step["max"]:
             return "skip"
         key = self._step_key(step)
-        if key in self.dead_steps or time.time() < self.retry_at.get(key, 0):
-            return "skip"  # no spot was accepted (this game / the hero, for a few seconds)
+        if self.place_held_back(step):
+            return "skip"
         price = self.g.price(kind)
         if cash is None or cash < price:
             self.wait_cost = price
             return "wait"
-        if self.hold_fails.get(kind, 0) >= 6:
-            return "skip"  # cannot pick it up (locked / mode-restricted / unbound)
         if kind in self.BUFFERS and not self._damage_towers():
             return self._defer(step, key, self.BUFFER_RETRY_S)   # nothing to buff yet
         spots = self._spots_widening(kind, step)
@@ -1414,6 +1412,22 @@ class Executor:
         elif reason == "unverified":
             self._avoid_unverified(kind)
         return "wait"
+
+    def place_held_back(self, step):
+        """True when a `place` step would be skipped without a single click:
+        it was given up for this game (no spot accepted), it is pausing
+        before its next try (the hero), or its tower cannot be picked up
+        at all (6 failed pick-ups: locked, mode-restricted or unbound).
+
+        Callers that offer purchases (reinforce.options) ask this first.
+        Water Park ABR (2026-11-04) offered "another sniper" after that
+        step had been given up: every try returned 'skip' at once, the
+        model kept rating it the best purchase, and for three minutes
+        (rounds 35-47, defence rated 0.06-0.15) nothing else was bought."""
+        key = self._step_key(step)
+        if key in self.dead_steps or time.time() < self.retry_at.get(key, 0):
+            return True
+        return self.hold_fails.get(step.get("kind"), 0) >= 6
 
     def _note_refused(self, kind, key, spots, fracs, placed=False):
         """Learn every spot the last Game.place call found refused: never

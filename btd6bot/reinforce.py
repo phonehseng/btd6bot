@@ -86,6 +86,12 @@ def options(ex, cash):
             if cost is None or cost > cash:
                 continue
             step = {"do": "place", "kind": kind, "role": "dps", "segment": [0.2, 1.0]}
+            # a placement the executor has already given up would only come
+            # back 'skip' - and, rated best, crowd out every other purchase
+            # (Water Park ABR, see Executor.place_held_back)
+            held_back = getattr(ex, "place_held_back", None)
+            if held_back is not None and held_back(step):
+                continue
             spots = ex.pick_spots(kind, step, n=1)
             if not spots:
                 continue

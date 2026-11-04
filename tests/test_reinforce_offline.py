@@ -195,6 +195,33 @@ def test_a_big_idle_bank_is_spent_even_when_the_model_sees_no_gain():
     assert R.best(ex, Blind(), 5000, 40, 40, lives=100)[0] == "wait"
 
 
+def test_a_given_up_placement_is_not_offered():
+    # Water Park ABR (2026-11-04): "another sniper" had been given up, so
+    # every try came back 'skip' - yet it stayed the best-rated purchase
+    # and nothing else was bought for three minutes
+    class GivenUp(Ex):
+        def place_held_back(self, step):
+            return step.get("kind") == "sniper"
+    board_ = weak_board()
+    assert any(o.what == "another sniper" for o in R.options(Ex(board_), 5000))
+    offered = [o.what for o in R.options(GivenUp(board_), 5000)]
+    assert offered and "another sniper" not in offered, offered
+
+
+def test_place_held_back_matches_try_place():
+    # the executor's own check: the same step key try_place skips on
+    from btd6bot.strategy import Executor
+    ex = Executor.__new__(Executor)      # only the fields the check reads
+    ex.dead_steps, ex.retry_at, ex.hold_fails = set(), {}, {}
+    step = {"do": "place", "kind": "sniper", "role": "dps", "segment": [0.2, 1.0]}
+    assert not ex.place_held_back(step)
+    ex.dead_steps.add(Executor._step_key(dict(step)))
+    assert ex.place_held_back(step)
+    ex.dead_steps.clear()
+    ex.hold_fails["sniper"] = 6
+    assert ex.place_held_back(step)
+
+
 def test_look_ahead_covers_the_rounds_left():
     assert R.lookahead_rounds(55, 80) == list(range(55, 65))
     assert R.lookahead_rounds(78, 80) == [78, 79, 80]
