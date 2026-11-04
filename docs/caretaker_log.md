@@ -307,3 +307,10 @@
 - OWNER: BTD6's Auto Start is still ON (logged again at 09:50). Please turn it off in the game's settings.
 - Since 09:50: 4 wins (Cornfield, Muddy Puddles, Bloody Puddles Primary Only; Sulfur Springs Magic Only), 0 losses. Safe mode on (trips 4); the bot keeps playing.
 - Backlog 26 (heli-sniper on tight maps), two causes fixed in 1b919af: a stale "spot" reason from a refused heli set the next round-gated step aside, and reinforce bought s1 1-3-0, shutting out its planned 4-2-0 Maim MOAB. Tests added, check.py ALL OK. Still open: the fill's choice once the heli step dies.
+
+## 2026-11-04 11:35
+- Bot status: running (task Running, bot.py restarted 11:26, recorder and BTD6 up); Alpine Run Impoppable round ~45. Safe mode on (trips 4); the bot keeps playing (last-resort picks).
+- OWNER: BTD6's Auto Start is still ON (logged in both Magic Only losses). Please turn it off in the game's settings.
+- Since 10:25: 5 wins (Sulfur Springs Double HP; X Factor, Castle Revenge Primary Only; #Ouch Deflation; Alpine Run Impoppable at 11:17), 4 losses (Bloody Puddles and Workshop Magic Only; Erosion and Sunken Columns Easy Primary Only). All four cases handled.
+- Erosion fixed in 705cbe1: its six paths take 18 rounds each, but all six were painted as track, so the build stood beside lanes no bloon takes before round 37. The track is now repainted for the round's path phase (test added). Sunken Columns placement (backlog 29) and the Magic Only build's missing MOAB answer (backlog 30) filed.
+- Loop fixed in d4c8af3: after the Alpine Run Impoppable win, the match loop read an INSTA MONKEY! card 400 times without clicking. Restarted bot.py at 11:26, which cleared it. The restart did not credit the win ('Victory screen of an unfinished' never logged, although logs/game_in_progress.json should have held the game), so the bot is replaying Alpine Run Impoppable now. Next run: find out why _credit_unfinished_win missed it.
