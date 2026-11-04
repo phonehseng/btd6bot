@@ -1,4 +1,4 @@
-﻿# Backlog
+# Backlog
 
 Items marked **[live]** need the game, so the bot has to be paused for them; only a developer session that stops the supervisor should do those. Items marked **[offline]** can be done safely while the bot runs: edit code, then use `tools/restart_after_game.ps1` to load it between games.
 
