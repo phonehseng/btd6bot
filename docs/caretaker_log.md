@@ -260,3 +260,10 @@
 - Since 02:30: 2 wins (Spice Islands, Luminous Cove ABR), 2 losses (Bazaar ABR round 75, Water Park ABR round 61; both benched 12 h). Safe mode on (trips 4), normal medal order.
 - Water Park (handled): reinforce picked an already given-up "another sniper" ~60 times in 3 min (each try skipped at once) while the defence was rated 0.06-0.15, so nothing else was bought. Fixed in 3608ff4: Executor.place_held_back, reinforce skips such placements; tests added; check.py ALL OK.
 - Bazaar (handled, not fixed): no purchase left to offer from round 70 ("0 purchases tried", $3-8.7k idle), with no spot for the board's tower kinds or the plan's village/supers. Backlog 21 for the next run.
+
+## 2026-11-04 04:26
+- Bot status: running (task Running, bot.py up, recorder up, BTD6 up since 00:38); opening Dark Path. No tracebacks, loops, PAUSE or STOP.
+- OWNER: BTD6's Auto Start still looks ON - logged again at 04:23 ("Play button never idle in 21 rounds"). Please turn it off in the game's settings; the bot cannot hold a round to buy while it is on.
+- Since 03:23: 4 wins (Haunted, Encrypted - 86 lives lost, Chutes - 16 lost, Off The Coast, Another Brick ABR), 2 losses (Firing Range ABR round 25, X Factor ABR round 43). Safe mode on (trips 4), normal medal order.
+- Firing Range (handled): the fast-track opener dart (0-0-0) on the right lane counted as full cover, so the second ninja, alchemist and village all went to the left lane of the split map; the right lane leaked 74 lives. Fixed in aac2c77: cover is weighted by the cash in each tower, and on split-path maps by how well each lane is defended (mapgeom.path_masks, Executor._lane_cover); test added; check.py ALL OK. Backlog 22 (segment with no reachable spot) filed.
+- X Factor ABR (04:23): 100 lives at round 43, defeat 10 s later, rounds 22-43 in under 4 min with Auto Start on; its case folder was not written yet at 04:26 - next run: diagnose it (likely a MOAB-class leak with rounds stacking).
