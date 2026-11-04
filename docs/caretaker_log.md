@@ -298,6 +298,6 @@
 ## 2026-11-04 09:50
 - Bot status: running (task Running, bot.py reloaded with the fixes, recorder up, BTD6 up since 00:38); Cornfield Primary Only round 19, 200 lives. No tracebacks, loops, PAUSE or STOP.
 - OWNER: BTD6's Auto Start is still ON (logged again at 09:01 on Spillway). Please turn it off in the game's settings.
-- Since 08:35: 2 wins (Flooded Valley Medium, Bloody Puddles Medium/Reverse - 3 counting Reverse), 5 losses (Flooded Valley Military r36, Bloody Puddles Military r51, Spillway Medium r40, Geared ABR r27, Workshop Medium r36). Safe mode on (trips 4).
+- Since 08:35: 3 wins (Flooded Valley Medium, Bloody Puddles Medium/Reverse), 5 losses (Flooded Valley Military r36, Bloody Puddles Military r51, Spillway Medium r40, Geared ABR r27, Workshop Medium r36). Safe mode on (trips 4).
 - The bot was IDLE from 09:07 (every game over its bar benched or lost; best p=0.74 vs 0.75). Fixed in 80f33a4: the runner now plays the surest open medal under every bar (tier LAST) rather than idling.
 - Spillway Medium (handled): MOAB leaked with $7,519 banked while the plan kept retrying refused heli spots. Fixed in 77bc3bb (round before blimps: a stuck plan gives way to blimp damage; test added; check.py ALL OK). Flooded Valley grouped into backlog 26; Geared (0 legal cells) filed as backlog 27; Workshop and Bloody Puddles sudden deaths as backlog 28.
