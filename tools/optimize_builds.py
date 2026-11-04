@@ -93,7 +93,8 @@ SAFETY_MARGIN = 2.0
 LOOKAHEAD = 3            # rounds ahead that must be safe before the next round starts
 SURPLUS_WINDOW = 8       # rounds ahead that must be safe before money goes to XP instead
 XP_PREFERENCE = 2.0      # an action on the XP target may be this much less cost-efficient
-SPOTS_PER_KIND = 8       # best spots kept per tower kind (diverse: no two overlapping)
+SPOTS_PER_KIND = 8       # best spots shown per tower kind (diverse: no two overlapping)
+SPOTS_RESERVE = 40       # ... and how far down the ranking free_spot() may look when those are taken
 SPOT_STRIDE = 2          # grid cells between candidate spots (the grid is 160 x 108)
 MAX_PLACE_TIERS = 3      # a new tower may come with up to this many tiers at once
 MAX_UPGRADE_STEP = 5     # an upgrade action buys up to this many tiers of one path at once
@@ -313,6 +314,12 @@ class MapSetup:
     def spots(self, kind):
         """The best SPOTS_PER_KIND spots for a kind, best first, no two of
         them overlapping (so later towers of the kind have room)."""
+        return self.ranked_spots(kind)[:SPOTS_PER_KIND]
+
+    def ranked_spots(self, kind):
+        """Every spot of a kind that reaches the track, best first, no two
+        of them overlapping. spots() shows the best few; free_spot() walks
+        on down this list when those are taken by other kinds."""
         if kind in self._spots:
             return self._spots[kind]
         from btd6bot import placement as P
@@ -342,17 +349,25 @@ class MapSetup:
             for sp in scored:
                 if all((sp.cell[0] - o.cell[0]) ** 2 + (sp.cell[1] - o.cell[1]) ** 2 >= gap * gap for o in out):
                     out.append(sp)
-                if len(out) >= SPOTS_PER_KIND:
+                if len(out) >= SPOTS_RESERVE:
                     break
         self._spots[kind] = out
         return out
 
     def free_spot(self, kind, towers):
-        """The best spot of a kind whose footprint does not overlap a placed tower."""
+        """The best spot of a kind whose footprint does not overlap a placed tower.
+
+        All the kinds' best spots crowd the same stretch of track, so once a
+        dozen towers stand there the first SPOTS_PER_KIND spots of every
+        other kind can be taken. The search goes on down the ranked list
+        then: before 2026-11-03 it stopped, and on Cargo Magic Only no Druid,
+        Alchemist, Wizard or Ninja could be placed after round 13 - the only
+        Lead answer left was a $7,560 Super Monkey, so rounds 28-45 were
+        rated 0.06 and the mode looked unwinnable (backlog 13)."""
         from btd6bot import placement as P
         upc = P.units_per_cell(self.model)
         r = P.footprint_radius(kind) / upc
-        for sp in self.spots(kind):
+        for sp in self.ranked_spots(kind):
             if all((sp.cell[0] - t.spot.cell[0]) ** 2 + (sp.cell[1] - t.spot.cell[1]) ** 2
                    >= (r + P.footprint_radius(t.kind) / upc) ** 2 for t in towers):
                 return sp

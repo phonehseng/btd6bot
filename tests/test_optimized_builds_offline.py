@@ -157,6 +157,20 @@ def test_log_parser():
     assert snap2["t1"][1:3] == (0.4, 0.5)
 
 
+def test_free_spot_looks_past_the_best_few():
+    """When other towers stand on all of a kind's best SPOTS_PER_KIND spots,
+    free_spot() offers the next spot down the ranking instead of None (on
+    Cargo Magic Only that None left no Lead answer but a $7,560 Super)."""
+    setup = O.MapSetup("Monkey Meadow", "magic_only")
+    best = setup.spots("druid")
+    ranked = setup.ranked_spots("druid")
+    assert best and len(ranked) > len(best), "Monkey Meadow should have spare druid spots"
+    # one alchemist on each of the druid's best spots blocks all of them
+    towers = [O.Tower(f"alc{i}", "alchemist", sp, (0, 0, 0), 0.0) for i, sp in enumerate(best)]
+    spot = setup.free_spot("druid", towers)
+    assert spot is not None and spot not in best and spot in ranked
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in tests:
