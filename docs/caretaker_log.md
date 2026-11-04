@@ -239,3 +239,10 @@
 - Since 21:35: no games finished (0 wins, 0 losses). No new loss folders. Safe mode on (trips 4, 17/64 wins to leave), normal medal order.
 - Backlog 19 done (757aa6d): track paths with a CurvedLineNodes child are read as splines (geometry v8) - Spring Spring's island loops, Infernal's figure-eight, and Geared's track now goes round the gear instead of across it. Spots moved for the new lanes; Geared builds use Ezili at the gear hub (no Quincy cell stays in reach as the gear turns); Sanctuary Medium swaps two druids for snipers. check.py ALL OK.
 - New backlog 20: Psi's reach reads as 0.0, not global (no legal cell on moving ground). Next run (once the owner turns the bot back on): watch the first Spring Spring / Infernal / Geared / Sanctuary games on the new tracks for refused or useless placements.
+
+## 2026-11-04 01:47
+- Bot status: running again (owner turned it on ~00:38; task Running, bot.py + recorder up, BTD6 up). From 00:43 to 01:18 the bot sat paused at the main menu because the Claude app window covered the game; the caretaker minimized it and brought BTD6 forward, and play resumed (Rake ABR, round 79 at 01:43, 100 lives). Owner: please leave the Claude window minimized or off the game after turning the bot on. No tracebacks, loops, PAUSE or STOP; no Auto Start warning.
+- Since the 22:32 entry: 1 win (KartsNDarts ABR, 0 lives lost), 0 losses. No new loss folders. Safe mode still on (trips 4), normal medal order.
+- Backlog 20 done (3f7fe0b): Psi's range was read as 0, so on moving ground (Geared, Sanctuary) it had no legal cell; reach_units now asks the game model's global_range flag first. Test added to tests/test_map_mechanics_offline.py.
+- tools/check.py now runs its 65 steps in parallel (half the cores): ALL OK in 2.5 min instead of >10 min, which no longer fits one bounded command.
+- Not committed: ~250 regenerated runtime files (data/map_fit.json + data/maps/*.npz refit to geometry v8, strategies/optimized, data/accounts) - left as the bot wrote them. Next run: watch the first Spring Spring / Infernal / Geared / Sanctuary games on the v8 tracks.
