@@ -301,3 +301,9 @@
 - Since 08:35: 3 wins (Flooded Valley Medium, Bloody Puddles Medium/Reverse), 5 losses (Flooded Valley Military r36, Bloody Puddles Military r51, Spillway Medium r40, Geared ABR r27, Workshop Medium r36). Safe mode on (trips 4).
 - The bot was IDLE from 09:07 (every game over its bar benched or lost; best p=0.74 vs 0.75). Fixed in 80f33a4: the runner now plays the surest open medal under every bar (tier LAST) rather than idling.
 - Spillway Medium (handled): MOAB leaked with $7,519 banked while the plan kept retrying refused heli spots. Fixed in 77bc3bb (round before blimps: a stuck plan gives way to blimp damage; test added; check.py ALL OK). Flooded Valley grouped into backlog 26; Geared (0 legal cells) filed as backlog 27; Workshop and Bloody Puddles sudden deaths as backlog 28.
+
+## 2026-11-04 10:25
+- Bot status: running (task Running, bot.py up since 09:38, recorder up, BTD6 up since 00:38); Sulfur Springs Double HP round 74, 100 lives. No tracebacks, loops, PAUSE or STOP; no new loss cases.
+- OWNER: BTD6's Auto Start is still ON (logged again at 09:50). Please turn it off in the game's settings.
+- Since 09:50: 4 wins (Cornfield, Muddy Puddles, Bloody Puddles Primary Only; Sulfur Springs Magic Only), 0 losses. Safe mode on (trips 4); the bot keeps playing.
+- Backlog 26 (heli-sniper on tight maps), two causes fixed in 1b919af: a stale "spot" reason from a refused heli set the next round-gated step aside, and reinforce bought s1 1-3-0, shutting out its planned 4-2-0 Maim MOAB. Tests added, check.py ALL OK. Still open: the fill's choice once the heli step dies.
