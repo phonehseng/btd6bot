@@ -219,12 +219,36 @@ def test_drifted_tier_count_is_corrected_from_the_panel():
     assert p.tiers == [3, 0, 2] and not path_clicks(g, p)
 
 
-def test_discounted_price_corrects_nothing():
-    """A price that matches no tier (a village discount) leaves the count alone."""
+def test_discounted_price_of_the_believed_tier_corrects_nothing():
+    """A village-discounted price of the tier the bot already expects leaves the count alone."""
     g = upgrade_game([("cash", int(0.9 * 10260)), (None, None), (None, None)], cash=50000)
     p = Placed("sp1", "spike", 0.06, 0.63, tiers=[3, 0, 2])
     g.upgrade(p, 1)
     assert p.tiers == [3, 0, 2] and g.fail_reason != "drift"
+
+
+def test_discounted_price_corrects_a_drifted_count():
+    """Skates ABR (2026-11-03): the opener dart showed $15,390 on path 1 -
+    Ultra-Juggernaut's $16,200 on Hard less a village's 5% - while the bot
+    believed 2-0-0. The discounted price still names tier 5, so it is 4-0-0."""
+    g = upgrade_game([("cash", 15390), (None, None), (None, None)], cash=50000)
+    p = Placed("opener", "dart", 0.2, 0.2, tiers=[2, 0, 0])
+    assert g.upgrade(p, 1) is False and g.fail_reason == "drift"
+    assert p.tiers == [4, 0, 0] and not path_clicks(g, p)
+
+
+def test_discounted_next_price_proves_the_purchase():
+    """After a click the button shows the next tier's price, discounted by a
+    village; that alone proves the purchase, even when round income hides the
+    cash drop. Before, the verdict was "same", the hotkey bought a second tier
+    and the bot believed neither."""
+    g = upgrade_game([])
+    g.cash_stable = scripted([22000, 22900])      # income outran the $1,850 spent
+    g.path_costs = scripted([[("cash", 345), ("cash", 110), ("cash", 95)],
+                             [("cash", 1850), ("cash", 110), ("cash", 95)]])
+    p = Placed("opener", "dart", 0.2, 0.2, tiers=[2, 0, 0])
+    assert g.upgrade(p, 1) is True
+    assert p.tiers == [3, 0, 0] and not g.inp.keys, "no hotkey: one tier bought, one tier counted"
 
 
 def test_price_above_cash_clicks_nothing():

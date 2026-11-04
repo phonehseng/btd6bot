@@ -50,6 +50,7 @@ def reload():
     """Forget the cached files (after a refresh wrote new ones)."""
     _table.cache_clear()
     _bloon_index.cache_clear()
+    deepest_discount.cache_clear()
 
 
 def available():
@@ -242,6 +243,21 @@ def upgrade_price(tower_id, path, tier, difficulty="medium"):
 def hero_price(hero_id, difficulty="medium"):
     h = hero(hero_id)
     return price(h["cost"], difficulty) if h else None
+
+
+@lru_cache(maxsize=None)
+def deepest_discount():
+    """The largest fraction off a price that one tower can give, from the
+    "discount" buffs in attacks.json (Monkey Village: Monkey Business 10%
+    plus Monkey Commerce 5% = 0.15). An upgrade button near a village shows
+    its price that much lower than the price table. 0.0 when the data is
+    missing (then only exact table prices are recognised, as before)."""
+    best = 0.0
+    for t in (_table("attacks").get("towers") or {}).values():
+        for combo in (t.get("crosspaths") or {}).values():
+            off = sum(b.get("value") or 0.0 for b in combo.get("buffs", []) if b.get("kind") == "discount")
+            best = max(best, off)
+    return best
 
 
 # ---------------------------------------------------------------------------

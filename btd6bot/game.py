@@ -705,10 +705,24 @@ class Game:
     def _tier_for_price(self, kind, path, price):
         """The tier of `path` whose price-table cost (this difficulty) is
         `price`, give or take the game's $5 rounding; None unless exactly one
-        tier matches (a discounted price matches none and is left alone)."""
-        tiers = [t for t in range(1, 6)
-                 if abs(T.upgrade_cost(kind, path, t, self.difficulty) - price) <= 5]
-        return tiers[0] if len(tiers) == 1 else None
+        tier matches.
+
+        A tower near a Monkey Village shows its prices discounted (up to
+        gamemodel.deepest_discount(), 15%), so when no tier matches exactly,
+        a price between the discounted and the full cost of exactly one tier
+        names that tier. Without this, Skates ABR (2026-11-03) read the
+        opener dart's $15,390 (tier 5's $16,200 less 5%) as no tier at all:
+        the bought tier was judged by cash, which the round's income hid,
+        the hotkey bought a second tier, and the bot believed the dart was
+        2-0-0 while it was 4-2-0."""
+        from . import gamemodel
+        costs = {t: T.upgrade_cost(kind, path, t, self.difficulty) for t in range(1, 6)}
+        exact = [t for t, c in costs.items() if abs(c - price) <= 5]
+        if exact:
+            return exact[0] if len(exact) == 1 else None
+        floor = 1.0 - gamemodel.deepest_discount()
+        near = [t for t, c in costs.items() if floor * c - 5 <= price <= c + 5]
+        return near[0] if len(near) == 1 else None
 
     def _resync_tiers(self, p, costs):
         """Correct p.tiers from the panel. Each button shows the price of its
