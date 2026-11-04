@@ -358,6 +358,25 @@ def test_round_before_blimps_buys_damage_over_other_plan_steps():
     assert ex._answer_ramp(R, load, ratio, 20000, 39) == "bought", g.bought
 
 
+def test_one_life_buys_blimp_damage_two_rounds_ahead():
+    """Spring Spring Impoppable (2026-11-04): round 40's MOAB was rated 0.5x
+    from round 37, the plan's next step (a ninja 2-0-4) added no blimp damage
+    and was not stuck, so it kept its turn and the MOAB leaked the only life
+    with $5,672 saved for it. With one life the plan's last turn is two rounds
+    before the blimps, stuck or not, and the check looks further ahead."""
+    plan = [{"do": "upgrade", "id": "n1", "to": "2-0-2"}]   # not blimp damage
+    towers = [("s1", "sniper", (2, 2, 0)), ("n1", "ninja", (2, 0, 1))]
+    g, ex = executor({"plan": plan}, towers=towers, cash=20000)
+    ex.rules.update(tough_moabs=False, one_life=True)
+    ex._init_threats()
+    ex.cash_seen = 20000
+    assert ex._ramp_due(35) and ex._ramp_due(35)[0] == 40, "one life: five rounds of warning"
+    R, load, ratio = ex._ramp_due(37)
+    assert R == 40 and ex.RAMP_PANIC < ratio < ex.RAMP_OK, ratio
+    assert ex._answer_ramp(R, load, ratio, 20000, 37) == "plan", "three rounds ahead: the plan goes on"
+    assert ex._answer_ramp(R, load, ratio, 20000, 38) == "bought", g.bought
+
+
 def test_every_strategy_pops_every_bloon_in_time():
     """Each general strategy, in each mode it lists, played with the game's own
     income (no Double Cash, no farms counted): no round may bring a bloon the

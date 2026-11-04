@@ -2492,11 +2492,13 @@ class Executor:
         return cap / max(load["hp"], 1.0)
 
     def _ramp_due(self, rnd):
-        """(round, load, ratio) for the next blimp round within MIN_LEAD rounds,
-        or None. Logs the estimate once per blimp round."""
+        """(round, load, ratio) for the next blimp round within MIN_LEAD rounds
+        (MIN_LEAD_ONE_LIFE with one life), or None. Logs the estimate once per
+        blimp round."""
         if rnd is None or self.no_answers or not TH.available():
             return None
-        for R in range(max(rnd, self.window[0]), min(rnd + self.MIN_LEAD, self.window[1]) + 1):
+        lead = self.MIN_LEAD_ONE_LIFE if self.rules.get("one_life") else self.MIN_LEAD
+        for R in range(max(rnd, self.window[0]), min(rnd + lead, self.window[1]) + 1):
             load = TH.round_blimp_load(self.round_set, R, double_hp=bool(self.rules.get("tough_moabs")))
             if not load:
                 continue
@@ -2556,7 +2558,8 @@ class Executor:
         """More blimp damage for round R. The strategy's own answer for that
         round's biggest blimp class comes first; otherwise the plan carries on
         (it is the strategy's own ramp) - unless it is used up, or the round is
-        next (then, unless the plan's next step is itself blimp damage, the
+        next (two rounds ahead with one life, where it is not waited for even
+        when the plan is not stuck; then, unless the plan's next step is itself blimp damage, the
         most blimp damage per dollar is bought; when the defence is far short,
         RAMP_PANIC, even that step waits). When the plan's next step is itself blimp
         damage that can be paid before round R, "plan_hold": the plan goes on
@@ -2576,13 +2579,23 @@ class Executor:
         # what can be paid before round R: cash now + the rounds in between
         money = self.cash_seen + sum(TH.round_cash(self.round_set, r) * self.income_mult
                                      for r in range(rnd, R))
-        if self.idx < len(self.plan) and not (rnd >= R - 1 and ratio < self.RAMP_PANIC):
+        # The last rounds in which the plan may still take its turn. With one
+        # life (Impoppable, CHIMPS) any blimp that gets through loses the game,
+        # so the plan gets its last turn two rounds before the blimps and is
+        # never trusted to "come good" in the round before. Spring Spring
+        # Impoppable (2026-11-04): round 40's MOAB was rated 0.5x from round
+        # 37; the plan's next step was a ninja 2-0-4 (Bloon Sabotage, no blimp
+        # damage) and it saved $5,672 for it through rounds 38-40 while the
+        # MOAB walked out - the plan was not "stuck", so it kept its turn.
+        one_life = bool(self.rules.get("one_life"))
+        last_call = R - 2 if one_life else R - 1
+        if self.idx < len(self.plan) and not (rnd >= last_call and ratio < self.RAMP_PANIC):
             cost = self._plan_ramp_cost(self.plan[self.idx], load)
             if cost is not None and cost <= money:
                 # the plan's next step is itself blimp damage it can pay for in
                 # time: keep the cash for it (Match's idle spending must not eat it)
                 return "plan_hold"
-            if rnd < R - 1 or not self._plan_stuck(self.plan[self.idx]):
+            if rnd < last_call or not (one_life or self._plan_stuck(self.plan[self.idx])):
                 return "plan"
             # The round before the blimps, still short, and the plan is stuck
             # (steps set aside, or its next placement already refused this
