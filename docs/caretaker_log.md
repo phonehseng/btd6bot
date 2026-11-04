@@ -233,3 +233,9 @@
 - Since 20:50: 4 wins (Spring Spring, Moon Landing, Downstream, Streambed ABR), 0 losses. No new loss folders.
 - Spring Spring was a near-loss: 90 lives lost at round 79. Cause: the map reader turns a path's CurvedLineNodes child into one Bezier arc, so the bot's track crosses the islands instead of looping round them; reinforce bought 7 ninjas and 2 supers by that track and sold five unused ("not a single pop"). Same reader bug moves the track on 24 maps.
 - Fix written and tested (Spring Spring/Infernal/Quad renders now match the game) but NOT applied: it makes hand-picked spots on Infernal, Quad, Sanctuary and Geared illegal (Geared's hero loses every legal cell). Reverted; patch + test saved in ~/.btd6bot_cache/pending/curved_child_paths/, steps in backlog item 19. Next run: finish item 19.
+
+## 2026-11-03 22:32
+- Bot status: OFF by the owner - STOP file present, supervisor's last line is exit code 3 at 21:30 (stopped while opening Rake ABR); task Ready, no bot.py or recorder, BTD6 not running. Left off as the owner set it; not restarted, STOP untouched.
+- Since 21:35: no games finished (0 wins, 0 losses). No new loss folders. Safe mode on (trips 4, 17/64 wins to leave), normal medal order.
+- Backlog 19 done (757aa6d): track paths with a CurvedLineNodes child are read as splines (geometry v8) - Spring Spring's island loops, Infernal's figure-eight, and Geared's track now goes round the gear instead of across it. Spots moved for the new lanes; Geared builds use Ezili at the gear hub (no Quincy cell stays in reach as the gear turns); Sanctuary Medium swaps two druids for snipers. check.py ALL OK.
+- New backlog 20: Psi's reach reads as 0.0, not global (no legal cell on moving ground). Next run (once the owner turns the bot back on): watch the first Spring Spring / Infernal / Geared / Sanctuary games on the new tracks for refused or useless placements.
