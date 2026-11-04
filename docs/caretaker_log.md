@@ -246,3 +246,10 @@
 - Backlog 20 done (3f7fe0b): Psi's range was read as 0, so on moving ground (Geared, Sanctuary) it had no legal cell; reach_units now asks the game model's global_range flag first. Test added to tests/test_map_mechanics_offline.py.
 - tools/check.py now runs its 65 steps in parallel (half the cores): ALL OK in 2.5 min instead of >10 min, which no longer fits one bounded command.
 - Not committed: ~250 regenerated runtime files (data/map_fit.json + data/maps/*.npz refit to geometry v8, strategies/optimized, data/accounts) - left as the bot wrote them. Next run: watch the first Spring Spring / Infernal / Geared / Sanctuary games on the v8 tracks.
+
+## 2026-11-04 02:30
+- Bot status: running (task Running, bot.py + recorder up, BTD6 up; Spice Islands ABR round 45, 100 lives at 02:28). No tracebacks, loops, PAUSE or STOP; no new Auto Start warning (last one 2026-11-03 17:34). The bot reloaded the fixes below at 02:23 between games.
+- Since 01:47: 3 wins (Balance, Sulfur Springs, Cracked ABR, 0 lives lost), 1 loss (Ancient Portal ABR, round 23, 78 lives). Safe mode on (trips 4, streak 1), normal medal order; Ancient Portal ABR benched 12 h by the bot.
+- Loss diagnosed (case 20261104_015822_AncientPortal_abr, handled): the map's restore-a-bought-switch trigger counted as automatic, so the bot thought bloons use the walled left spiral and put both ninjas + the alchemist there; no bloon came. Fixed in a348100 (trigger is player-only, RULES_VERSION 2, map_fit re-measured, map_mechanics.json regenerated, test added).
+- Also fixed (0c99f1a): Ninja path 1 tiers 1 and 2 both cost $380 on Hard, so a successful click looked like no effect and the hotkey bought a second tier; equal-priced tiers are now judged by the cash drop. check.py ALL OK both times.
+- Next run: watch the next Ancient Portal game (after the 12 h bench) for ninjas on the top spiral / right lane.
