@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOG = ROOT / "logs" / "bot.log"
 STATE = ROOT / "logs" / "state.txt"
 FOCUS = ROOT / "logs" / "focus.txt"    # the game's XP focus (btd6bot.status.set_focus)
+LEVEL = ROOT / "logs" / "level.txt"    # player level and XP bar (btd6bot.status.set_level)
 HOLD = ROOT / "HOLD"                # the same file btd6bot.inputs.HOLD_FILE waits on
 GAME_TITLE = "BloonsTD6"            # btd6bot.screen.WINDOW_TITLE
 
@@ -176,8 +177,13 @@ def main():
     # which tower the game is favouring for XP (paragon focus / XP build)
     focus = tk.Label(line1, text="", fg="#FFD54F", bg=BG, font=("Segoe UI", 10, "bold"), anchor="e")
     focus.pack(side="right")
-    bot = tk.Label(root, text="", fg="#E0E0E0", bg=BG, font=("Segoe UI", 9), anchor="w")
-    bot.pack(fill="x", padx=8)
+    line2 = tk.Frame(root, bg=BG)
+    line2.pack(fill="x", padx=8)
+    # player level and XP, as last read from the main menu
+    level = tk.Label(line2, text="", fg="#81D4FA", bg=BG, font=("Segoe UI", 9, "bold"), anchor="e")
+    level.pack(side="right")
+    bot = tk.Label(line2, text="", fg="#E0E0E0", bg=BG, font=("Segoe UI", 9), anchor="w")
+    bot.pack(side="left", fill="x", expand=True)
     # the strip: click-through, never focused
     set_ex_style(root, WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST)
 
@@ -221,7 +227,9 @@ def main():
         if HOLD.exists():
             colour = "#FF6E6E"
         top.config(text=f"BTD6 bot: {st}{flags}   ({q})", fg=colour)
-        bot.config(text=msg[:150])
+        lv = last_line(LEVEL)
+        level.config(text=lv)
+        bot.config(text=msg[:150 - len(lv)])
         xp = ""
         if FOCUS.exists() and (age(FOCUS) or 0) < 3 * 3600:      # a stale note from a crashed game is ignored
             xp = "XP: " + last_line(FOCUS)[:60]

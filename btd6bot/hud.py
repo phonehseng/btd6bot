@@ -38,6 +38,19 @@ def parse_int(text):
     return int(digits) if digits else None
 
 
+def parse_xp_bar(text):
+    """'678,907/2,750,000' (the XP bar beside the level star on the main
+    menu) -> (678907, 2750000): XP earned into the current level and XP that
+    level needs. None unless both numbers read and the first is smaller."""
+    parts = text.replace(" ", "").split("/")
+    if len(parts) != 2:
+        return None
+    have, need = (parse_int(p) for p in parts)
+    if have is None or not need or have >= need:
+        return None
+    return have, need
+
+
 _CASH_FORMAT = re.compile(r"^\d{1,3}([,.]\d{3})*$")
 
 

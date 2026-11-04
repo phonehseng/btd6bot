@@ -475,7 +475,20 @@ class Bot:
             # tower choices are made on screen as they come up; don't queue them
             self.account.pending_tower_choices.clear()
             self.account.save()
+            self._show_level(lvl, f)
         return lvl
+
+    # XP bar text right of the level star: "678,907/2,750,000"
+    XP_BAR_BOX = (0.145, 0.035, 0.295, 0.075)
+
+    def _show_level(self, lvl, frame):
+        """Put the level and the XP bar's numbers on the HUD. The game's own
+        bar is read because account.xp_for_level is far off at high levels
+        (level 142 needs 2,750,000 XP, not ~100k)."""
+        from .hud import parse_xp_bar, rec_text
+        from .status import set_level
+        from .vision import crop
+        set_level(lvl, parse_xp_bar(rec_text(crop(frame, self.XP_BAR_BOX))[0]))
 
     def _note_boosts(self):
         """On map select: read the Double Cash / Fast Track toggles and keep
