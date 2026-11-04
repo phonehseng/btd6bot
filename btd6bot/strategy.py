@@ -1649,6 +1649,12 @@ class Executor:
             log.warning("learned: the game accepts %s at a spot the map file marks blocked (%d,%d)",
                         kind, cx, cy)
 
+    def track_changed(self):
+        """The model's track was repainted mid-game (mapgeom.repaint_track:
+        a new path phase): forget what was worked out from the old one."""
+        self.__dict__.pop("_reach_cache", None)
+        self._mask_cache = None
+
     def _reach(self, kind):
         """Grid: how many track cells a `kind` tower centred on each cell has
         in range (computed once per kind and game)."""

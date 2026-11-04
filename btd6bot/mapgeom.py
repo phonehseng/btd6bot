@@ -274,13 +274,60 @@ def bloon_paths(geom):
     return [p for p in geom.get("paths", []) if p.get("active", True) or p.get("id") in on]
 
 
-def paint_paths(geom, proj, lanes=None):
+# How many rounds before a path phase starts its path is painted as track
+# already, so the defence for it is built while the old path still runs.
+PHASE_LEAD = 5
+
+
+def idle_phase_paths(geom, rnd, lead=PHASE_LEAD):
+    """Path ids that bloons will not use in rounds rnd .. rnd+lead, because an
+    AlternateRoundSplitter with long phases hands each path whole blocks of
+    rounds (Erosion: six paths, 18 rounds each, in order, not looping).
+
+    The game counts phase i as rounds offset + i*N .. offset + (i+1)*N - 1
+    (roundsPerPath N, currentRoundOffset, the last phase lasting for good
+    when doesNotLoop). Splitters that switch every round (roundsPerPath 1:
+    Luminous Cove) use all their paths all the time, so none is idle there.
+    An empty frozenset when the map has no such phases or rnd is unknown."""
+    if rnd is None:
+        return frozenset()
+    idle = set()
+    for s in (geom.get("mechanics") or {}).get("splitters") or []:
+        if not str(s.get("type", "")).startswith("AlternateRound"):
+            continue
+        n, paths = int(s.get("roundsPerPath") or 1), list(s.get("paths") or [])
+        if n < 2 or len(paths) < 2:
+            continue
+        offset = int(s.get("currentRoundOffset") or 0)
+
+        def phase(r):
+            i = max(0, (r - offset) // n)
+            return min(i, len(paths) - 1) if s.get("doesNotLoop") else i % len(paths)
+
+        used = {paths[phase(r)] for r in range(rnd, rnd + lead + 1)}
+        idle |= set(paths) - used
+    if idle:
+        # the boss route lies on top of one phase's path (Erosion's PathBoss
+        # copies Path3) and no boss comes in the bot's games: painting it
+        # would keep that path's track live in every phase
+        for s in (geom.get("mechanics") or {}).get("splitters") or []:
+            if s.get("overrideBossPath") is not None:
+                idle.add(s["overrideBossPath"])
+            for p, tag in zip(s.get("paths") or [], s.get("tagOnlyPath") or []):
+                if tag == "Boss":
+                    idle.add(p)
+    return frozenset(idle)
+
+
+def paint_paths(geom, proj, lanes=None, skip=()):
     """heat, t_sum, t_cnt grids from the map's (visible) bloon paths.
 
     Stretches where bloons cannot be hit (gates, tunnels, holes: the path's
     "invulnerable" ranges) get no heat, so no tower is placed to cover them;
     they still count for the progress scale. `lanes`, a bool grid, receives
-    every lane cell including those stretches (no tower may stand on any)."""
+    every lane cell including those stretches (no tower may stand on any).
+    Paths in `skip` (idle_phase_paths: no bloon on them for now) get lanes
+    but no heat, so no tower is placed to cover them."""
     w, h = GRID
     heat = np.zeros((h, w), np.float32)
     t_sum = np.zeros((h, w), np.float32)
@@ -288,6 +335,7 @@ def paint_paths(geom, proj, lanes=None):
     for path in bloon_paths(geom):
         if path.get("hidden") or len(path["points"]) < 2:
             continue  # hidden = bloons out of sight (tunnels): towers cannot hit them
+        idle = path.get("id") in skip
         cells = proj.to_cells(path["points"])
         seg = np.linalg.norm(np.diff(cells, axis=0), axis=1)
         dist = np.concatenate([[0.0], np.cumsum(seg)])
@@ -302,8 +350,8 @@ def paint_paths(geom, proj, lanes=None):
             on = line > 0
             if lanes is not None:
                 lanes |= on
-            if _in_ranges(i, hidden) or _in_ranges(i + 1, hidden):
-                continue   # bloons here cannot be hit
+            if idle or _in_ranges(i, hidden) or _in_ranges(i + 1, hidden):
+                continue   # bloons here cannot be hit (or none come for now)
             prog = float(np.clip(((dist[i] + dist[i + 1]) / 2 - dist[a]) / span, 0, 1))
             heat[on] = TRACK_HEAT
             t_sum[on] += prog
@@ -311,16 +359,17 @@ def paint_paths(geom, proj, lanes=None):
     return heat, t_sum, t_cnt
 
 
-def path_masks(geom, proj):
+def path_masks(geom, proj, skip=()):
     """One bool grid per bloon path: the cells where bloons on that path can
     be hit (the same cells paint_paths heats). A bloon follows one path from
     start to end, so on maps whose paths split (Firing Range's two lanes)
     the defence must be shared between these masks: a lane with no real
-    tower on it leaks every bloon sent down it."""
+    tower on it leaks every bloon sent down it. Paths in `skip` (idle for
+    now, idle_phase_paths) get no mask."""
     w, h = GRID
     out = []
     for path in bloon_paths(geom):
-        if path.get("hidden") or len(path["points"]) < 2:
+        if path.get("hidden") or len(path["points"]) < 2 or path.get("id") in skip:
             continue
         cells = proj.to_cells(path["points"])
         hidden = path.get("invulnerable", [])
@@ -854,6 +903,7 @@ def apply(model, geom, aspect=1920 / 1200):
     proj = Projection(model.playfield, aspect)
     lanes = np.zeros(GRID[::-1], bool)
     model.heat, model.t_sum, model.t_cnt = paint_paths(geom, proj, lanes)
+    model.track_skip = frozenset()   # every path painted (repaint_track narrows it per round)
     grids = placement_grids(geom, proj, lanes | (model.heat > 0))
     model.scan["land"] = np.where(grids["land"], 1, 2).astype(np.uint8)
     model.scan["water"] = np.where(grids["water"], 1, 2).astype(np.uint8)
@@ -866,6 +916,30 @@ def apply(model, geom, aspect=1920 / 1200):
     log.info("%s: geometry applied (%d paths, %d areas)", model.name,
              len(geom.get("paths", [])), len(geom.get("areas", [])))
     return model
+
+
+def repaint_track(model, geom, rnd, reverse=False, aspect=1920 / 1200):
+    """Repaint a model's track (heat, t_sum, t_cnt) for the path phase of
+    round rnd (idle_phase_paths), leaving the placement grids alone.
+
+    apply() paints every path, which suits maps whose paths all carry
+    bloons; on Erosion that put the whole defence beside lanes no bloon
+    takes before round 37 and lost Easy Primary Only on round 11. The match
+    calls this as rounds pass; it does nothing (returns False) while the set
+    of idle paths stays the same, and on maps without path phases.
+    `reverse` mirrors the progress as runner._use_geometry does."""
+    skip = idle_phase_paths(geom, rnd)
+    if skip == getattr(model, "track_skip", frozenset()):
+        return False
+    proj = Projection(model.playfield, aspect)
+    model.heat, model.t_sum, model.t_cnt = paint_paths(geom, proj, None, skip)
+    if reverse:
+        model.t_sum = np.where(model.t_cnt > 0, model.t_cnt - model.t_sum, 0).astype(np.float32)
+    model.track_skip = skip
+    names = {p["id"]: p["name"] for p in geom.get("paths", []) if "id" in p}
+    live = [names[i] for i in names if i not in skip and i in {p["id"] for p in bloon_paths(geom)}]
+    log.info("%s: round %s path phase - track painted for %s", model.name, rnd, ", ".join(live))
+    return True
 
 
 _GRIDS_CACHE = {}
@@ -898,12 +972,13 @@ def grids_for(model, removed=(), now_round=None, last_round=None):
             _GRIDS_CACHE.clear()
         proj = Projection(model.playfield)
         lanes = np.zeros(GRID[::-1], bool)
-        heat, _, _ = paint_paths(geom, proj, lanes)
+        skip = idle_phase_paths(geom, now_round)
+        heat, _, _ = paint_paths(geom, proj, lanes, skip)
         dyn = dynamics(geom, removed, now_round, last_round)
         grids = placement_grids(geom, proj, lanes | (heat > 0), dyn)
         grids["scan"] = {k: np.where(grids[k], 1, 2).astype(np.uint8) for k in ("land", "water")}
         grids["track"] = heat > 0
-        grids["path_masks"] = path_masks(geom, proj)
+        grids["path_masks"] = path_masks(geom, proj, skip)
         grids["proj"] = proj
         areas_by_id = {a["id"]: a for a in geom.get("areas", []) if "id" in a}
         grids["panes"] = [(c, [_poly_mask(areas_by_id[i]["polygons"], proj) for i in c["areas"]])

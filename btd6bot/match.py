@@ -212,6 +212,9 @@ class Match:
         except Exception:
             log.exception("could not set up towers on rotating ground - their spots stay fixed")
             self._carried = None
+        # Erosion's bloons take a new path every 18 rounds: the track is
+        # repainted for the round's path phase as rounds pass (_follow_track)
+        self._phase_geom, self._reverse = self._path_phases(model)
         self._t_round_change = time.time()   # when the tracked round last changed
         self._last_buy = time.time()
         self._last_wait_log = 0.0
@@ -269,6 +272,7 @@ class Match:
         t = time.time()
         idle = 0
         rnd = self.g.round()
+        self._follow_track(rnd if rnd is not None else 1)   # before the first tower goes down
         late = rnd is not None and rnd >= 10
         if late:
             max_seconds = 150
@@ -412,6 +416,7 @@ class Match:
                     for done in range(last_round, rnd):     # rounds completed: XP paid
                         self.tower_xp.round_end(done, list(self.g.towers.values()))
                     self._follow_ground(last_round, rnd)
+                    self._follow_track(rnd)
                     log.info("round %d  cash %s  lives %s", rnd, cash, lives)
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
@@ -430,6 +435,7 @@ class Match:
                     if self._round_votes.vote(rnd, last_round, now - self._t_round_change):
                         log.info("round tracking reset %s -> %s", last_round, rnd)
                         self._follow_ground(last_round, rnd)
+                        self._follow_track(rnd)
                         last_round = rnd
                         self._t_round_change = now
                         self._forecast_round(rnd)
@@ -597,6 +603,38 @@ class Match:
             self._carried.round_advanced(old_round, new_round, self.g.towers)
         except Exception:
             log.exception("moving towers with the ground failed - carrying on")
+
+    @staticmethod
+    def _path_phases(model):
+        """(geometry, reverse) for a map whose bloons change path by round
+        (mapgeom.idle_phase_paths), else (None, False). Only models filled
+        from the game's own geometry qualify: a learned track is what it is."""
+        name = getattr(model, "name", None) or ""
+        if not getattr(model, "geometry_bundle", None):
+            return None, False
+        try:
+            from . import mapgeom
+            reverse = name.endswith(" reverse")
+            geom = mapgeom.load(name[:-len(" reverse")] if reverse else name)
+            if geom and (mapgeom.idle_phase_paths(geom, 1) or mapgeom.idle_phase_paths(geom, 999)):
+                return geom, reverse
+        except Exception:
+            log.exception("reading the map's path phases failed - every path counts as track")
+        return None, False
+
+    def _follow_track(self, rnd):
+        """Paint only the paths bloons take in this round's phase and the
+        next one (mapgeom.repaint_track), so towers go where bloons come now.
+        Erosion Easy Primary Only was lost on round 11 with every tower
+        beside paths bloons first take in rounds 37-91."""
+        if self._phase_geom is None or rnd is None:
+            return
+        try:
+            from . import mapgeom
+            if mapgeom.repaint_track(self.m, self._phase_geom, rnd, self._reverse):
+                self.ex.track_changed()
+        except Exception:
+            log.exception("repainting the track for round %s failed - carrying on", rnd)
 
     def _forecast_round(self, rnd):
         """Ask the damage model about the round that just started; a round it
