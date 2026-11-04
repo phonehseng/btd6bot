@@ -281,3 +281,10 @@
 - Since 05:27: 2 wins (Cornfield, Underground ABR, 0 lives lost), 5 losses (Mushroom Grotto r63, Erosion r22, Ravine r40 + one abandoned, High Finance r51, Spillway r40 at 06:23 - case folder not written yet). Safe mode on (trips 4), normal medal order.
 - Root cause of the "0 purchases tried with $30k+ idle" losses (High Finance, Mushroom Grotto; handled): obstacles were measured by name - High Finance's eleven "Removable"s all resolved to one strip that frees nothing - and deleted ("uncovered") obstacles were skipped, so neither map ever cleared room (36 / 165 legal ninja cells). Fixed in b1a4bd6 (by id, deleted obstacles count; test added; check.py ALL OK).
 - Sunset Gulch and Ravine handled as backlog 23 (idle cash before a weak round, still open); Erosion filed as backlog 24 (only 608 cells last a long game). Next run: Spillway case, and watch the next High Finance / Mushroom Grotto games for "clearing obstacle" lines.
+
+## 2026-11-04 07:38
+- Bot status: running (task Running, bot.py up since 06:24, recorder up, BTD6 up since 00:38); Ravine Reverse round 50, 150 lives. No tracebacks, loops, PAUSE or STOP.
+- OWNER: BTD6's Auto Start is still ON (logged again at 06:23 and 07:12). Please turn it off in the game's settings.
+- Since 06:25: 7 wins (#Ouch Medium/Military/Reverse, Quad Medium/Military, Ravine Medium/Military), 1 loss (Quad Reverse r56). Safe mode on (trips 4), normal medal order.
+- Spillway ABR (handled): round 40's MOAB was called short 3 rounds ahead, the plan's Maim MOAB was the answer, but idle spending and reinforcing ate its cash. Cash is now kept for a plan blimp step payable in time, and reinforcing respects the hold (7a3f427, test added).
+- Quad Reverse (handled): $18.8k idle waiting on a $20k Apache before weak rounds (backlog 23). Safety: after both defeats the bot kept clicking on the Defeat screen (once it opened Restart, next to the Monkey-Money Continue). Failed selections now make it check the screen (9edd14e); the HUD check still passes on Defeat (backlog 25). check.py ALL OK.
