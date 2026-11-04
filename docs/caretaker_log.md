@@ -345,3 +345,9 @@
 - OWNER: BTD6's Auto Start is still ON (logged again at 15:41 on Spring Spring; rounds 38-40 passed in seconds). Please turn it off in the game's settings.
 - Since 15:35: 3 wins, 1 loss (Adora's Temple, KartsNDarts, Moon Landing Impoppable won with no lives lost; Spring Spring Impoppable lost on round 40, handled).
 - Spring Spring fixed in 598973a: round 40's MOAB was rated 0.5x from round 37, but the plan's next step (ninja 2-0-4, no blimp damage) was not stuck, so it kept its turn and saved $5,672 while the MOAB took the only life. With one life the blimp check now looks 5 rounds ahead and buys blimp damage from two rounds before (test added, check.py ALL OK). Also seen: reinforce paid $3,000 for v1 4-0-2 rated 0.29 -> 0.29 (backlog 31a).
+
+## 2026-11-04 17:30
+- Bot status: running (task Running, bot.py up since 16:29, recorder and BTD6 up); next game starting after Rake. No tracebacks, loops, PAUSE or STOP. Safe mode on (trips 4); the bot keeps playing.
+- OWNER: BTD6's Auto Start is still ON (logged again at 16:13). Please turn it off in the game's settings.
+- Since 16:23: 4 wins, 0 losses (Another Brick, Downstream, Streambed, Rake Impoppable, no lives lost; Rake came through round 100 on 1 life). No new loss cases.
+- Fixed in 32df810: on Rake the upgrade check bought two tiers per click four times (ninjas 0-0-1 -> 2-0-1, ninja1 2-0-1 -> 4-0-1). Ninja path 1 costs the same for tiers 1 and 2, and round income hid the cash drop, so "cash did not drop" was read as a missed click and the hotkey bought the next tier too. That reading now counts as unknown unless the button also kept a price it could have changed; a button showing any later tier proves the purchase (2 tests, check.py ALL OK). Live after the current game.
