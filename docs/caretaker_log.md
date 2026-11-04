@@ -332,3 +332,10 @@
 - OWNER: BTD6's Auto Start is still ON (logged again at 13:46 on Candy Falls). Please turn it off in the game's settings.
 - Since 13:25: 4 wins, 0 losses (Carved, Winter Park, Candy Falls, Lost Crevasse Impoppable, all with no lives lost).
 - Lost Crevasse round 78 was rated 0.29 for ten rounds but passed easily, and reinforce spent ~$25k on supers that moved it 0.00-0.02. New tools/rate_board.py (24a033b) rebuilds a board from bot.log and rates it; --drop pinned the rating on the 72-camo-ceramic burst (the model leaves out Obyn's brambles and the alchemist's brews). Filed as backlog 31; check.py ALL OK.
+
+## 2026-11-04 15:35
+- Bot status: running (task Running, bot.py up since 13:29, recorder and BTD6 up); Adora's Temple Impoppable round 60. No tracebacks, loops, PAUSE or STOP. Safe mode on (trips 4); the bot keeps playing.
+- OWNER: BTD6's Auto Start is still ON (last logged 13:46). Please turn it off in the game's settings.
+- Since 14:25: 1 win, 2 losses (Quarry Impoppable won; Polyphemus and Quiet Street Impoppable lost on round 98, both chimps_ninja_sun). Both cases handled.
+- Polyphemus fixed in 22f21c8: upgrade buttons near a full discount village read 17% under the price table (719 logged reads), and the tier matcher allowed only 15%, so tier drift was never corrected. A misjudged purchase closed Sun Avatar on s1 (2-0-3), and the MIB village stayed 0-0-0 in the bot's count. deepest_discount() now adds the unlisted 2% (test added, check.py ALL OK). It goes live after the current game.
+- Quiet Street was a build ceiling, not drift: round 98 was rated 0.09 from round 88 on a 575-unit track, and reinforce spent on purchases worth +0.01 each. Filed as backlog 31a (Sun Avatar rating in the damage model, more MOAB damage before round 95 on short maps).
