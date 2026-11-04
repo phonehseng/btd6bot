@@ -321,7 +321,7 @@ def paint_paths(geom, proj, lanes=None):
 # set off (buying an obstacle, clicking a statue), which happens only if the
 # bot chooses to.
 
-RULES_VERSION = 1   # bump when the interpretation below changes (re-measures mapfit)
+RULES_VERSION = 2   # bump when the interpretation below changes (re-measures mapfit)
 
 # Triggers that fire without any player action (rounds passing, time, the
 # map loading, bloons spawning or leaking, the bot's own tower placement).
@@ -335,10 +335,14 @@ PLAYER_TRIGGERS = {
     "DarkDungeonsStatueActiveTrigger",     # Dark Dungeons' $30,000 statue
     "EncryptedTrigger",                    # Encrypted's easter egg
     "RoundRemoveableStartedTrigger",       # mining an ore started
+    # Restores a paid switch's state when a saved game is loaded. It only
+    # replays what a player bought, and the bot never buys switches, so it
+    # is a player trigger too. (Counted as "may happen any time" until
+    # 2026-11-04, it switched on Ancient Portal's walled left lane: the bot
+    # put both ninjas on that empty spiral and lost ABR at round 23.)
+    "OnMapLoadedWithActiveRegenRemovableTrigger",
 }
-# Triggers that fire once while the map loads, before round 1. (Not
-# OnMapLoadedWithActiveRegenRemovableTrigger: it restores a paid switch's
-# state when a saved game is loaded, so it counts as "may happen any time".)
+# Triggers that fire once while the map loads, before round 1.
 AT_START_TRIGGERS = {"StartMapTrigger", "OnMapCreatedTrigger"}
 
 # Area changes made by actions: action type -> (field with the area ids, effect)

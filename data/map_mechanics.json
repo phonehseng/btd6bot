@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "about": "Map mechanics read from the game's map scenes (gamefiles.py), interpreted by mapgeom.py; see docs/map_mechanics.md",
  "maps": {
   "-ouch": {
@@ -66,7 +66,7 @@
     },
     {
      "kind": "area_vanishes",
-     "automatic": true,
+     "automatic": false,
      "when": "10.0 s of play (once switched on by another event)",
      "event": "MapEvent - CooldownReadyRight",
      "areas": [
@@ -80,7 +80,7 @@
     },
     {
      "kind": "area_appears",
-     "automatic": true,
+     "automatic": false,
      "when": "10.0 s of play (once switched on by another event)",
      "event": "MapEvent - CooldownReadyRight",
      "areas": [
@@ -124,7 +124,7 @@
     },
     {
      "kind": "path_opens",
-     "automatic": true,
+     "automatic": false,
      "when": "on map loaded with active regen removable / paid switch bought: TriggerArea-MakeLeftActive (once switched on by another event)",
      "event": "MapEvent - MakeLeftActive",
      "paths": ["PathRight"],
@@ -132,7 +132,7 @@
     },
     {
      "kind": "path_opens",
-     "automatic": true,
+     "automatic": false,
      "when": "on map loaded with active regen removable / paid switch bought: TriggerArea-MakeRightActive",
      "event": "MapEvent - MakeRightActive",
      "paths": ["PathLeft"],
@@ -140,7 +140,7 @@
     },
     {
      "kind": "area_vanishes",
-     "automatic": true,
+     "automatic": false,
      "when": "10.0 s of play (once switched on by another event)",
      "event": "MapEvent - CooldownReadyLeft",
      "areas": [
@@ -154,7 +154,7 @@
     },
     {
      "kind": "area_appears",
-     "automatic": true,
+     "automatic": false,
      "when": "10.0 s of play (once switched on by another event)",
      "event": "MapEvent - CooldownReadyLeft",
      "areas": [
@@ -5022,6 +5022,7 @@
      "kind": "towers_suspended",
      "automatic": true,
      "when": "after every 10 rounds from round 6 / on map loaded with active regen removable",
+     "first_round": 7,
      "event": "MapEvent - TriggerEyeClose",
      "areas": [
       {
@@ -5036,6 +5037,7 @@
      "kind": "area_appears",
      "automatic": true,
      "when": "after every 10 rounds from round 6 / on map loaded with active regen removable",
+     "first_round": 7,
      "event": "MapEvent - TriggerEyeClose",
      "areas": [
       {
@@ -5063,7 +5065,7 @@
     },
     {
      "kind": "area_vanishes",
-     "automatic": true,
+     "automatic": false,
      "when": "paid switch bought: EyeClosedCover / on map loaded with active regen removable (once switched on by another event)",
      "event": "MapEvent - TriggerEyeOpen",
      "areas": [

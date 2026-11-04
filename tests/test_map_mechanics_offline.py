@@ -282,6 +282,23 @@ def test_moving_ground_only_for_steady_or_global_towers():
     assert psi.any() and (psi & grids["moving"]).any()
 
 
+def test_paid_lane_switch_stays_off():
+    """Ancient Portal's walled left lane opens only when the player clicks
+    the realign device; the event that restores it in a reloaded save is
+    not automatic. Counted as automatic, it painted heat on the empty
+    left spiral and both ninjas stood there (ABR lost at round 23)."""
+    m, geom = _model("Ancient Portal")
+    if m is None:
+        return
+    assert {p["name"] for p in mapgeom.bloon_paths(geom)} == {"PathTopL", "PathRight"}
+    left = next(p for p in geom["paths"] if p["name"] == "PathLeft")
+    cells = mapgeom.Projection(PF).to_cells(left["points"])
+    h, w = m.heat.shape
+    inside = [(int(c), int(r)) for c, r in cells if 0 <= c < w and 0 <= r < h]
+    # the left spiral's far half shares no track with the live lanes
+    assert all(m.heat[r, c] == 0 for c, r in inside[len(inside) // 2:])
+
+
 def test_suspended_and_hidden_parts():
     m, geom = _model("Polyphemus")
     if m is None:
