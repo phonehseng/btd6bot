@@ -288,3 +288,9 @@
 - Since 06:25: 7 wins (#Ouch Medium/Military/Reverse, Quad Medium/Military, Ravine Medium/Military), 1 loss (Quad Reverse r56). Safe mode on (trips 4), normal medal order.
 - Spillway ABR (handled): round 40's MOAB was called short 3 rounds ahead, the plan's Maim MOAB was the answer, but idle spending and reinforcing ate its cash. Cash is now kept for a plan blimp step payable in time, and reinforcing respects the hold (7a3f427, test added).
 - Quad Reverse (handled): $18.8k idle waiting on a $20k Apache before weak rounds (backlog 23). Safety: after both defeats the bot kept clicking on the Defeat screen (once it opened Restart, next to the Monkey-Money Continue). Failed selections now make it check the screen (9edd14e); the HUD check still passes on Defeat (backlog 25). check.py ALL OK.
+## 2026-11-04 08:35
+- Bot status: running (task Running, bot.py up since 07:39, recorder up, BTD6 up since 00:38); next game being set up (equipping Admiral Brickell). No tracebacks, loops, PAUSE or STOP.
+- OWNER: BTD6's Auto Start is still ON (last logged 07:12). Please turn it off in the game's settings.
+- Since 07:38: 5 wins (Ravine Reverse, Muddy Puddles Medium/Military/Reverse, Dark Dungeons Medium), 1 loss (Dark Dungeons Military Only r55). Safe mode on (trips 4), normal medal order.
+- Fixed backlog 25's last part: the click guard passed on the Defeat card (its dimmed Play button still matched by shape). It now also wants the button lit (0e9736f, test added, check.py ALL OK).
+- Dark Dungeons Military (handled; losses.py had not filed it after 5 min, filed by hand): military_heli_sniper's heli step died after 3 helis and the cash went into 15 bunched sniper 2-2-0s; round 55's ceramics leaked at the bare exit. Same build and rounds as Quad Reverse - filed as backlog 26 for the next run.
