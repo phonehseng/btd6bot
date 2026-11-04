@@ -281,6 +281,33 @@ def test_equal_tier_prices_are_judged_by_cash():
     assert p.tiers == [1, 0, 1] and not g.inp.keys, "no hotkey: one tier bought, one tier counted"
 
 
+def test_equal_tier_prices_with_income_press_no_hotkey():
+    """Rake Impoppable (2026-11-04): ninja path 1 asks $420 for tier 1 and
+    tier 2, so the button cannot move; the round's income lifted the cash
+    past the price. That was taken as "same" and the hotkey bought tier 2
+    too (0-0-1 -> 2-0-1). Now it is "unknown": no hotkey, tried again later."""
+    g = upgrade_game([], difficulty="impoppable")
+    g.cash_stable = scripted([10665, 10900])
+    g.path_costs = scripted([[("cash", 420), ("cash", 300), ("cash", 540)],
+                             [("cash", 420), ("cash", 300), ("cash", 540)]])
+    p = Placed("ninja4", "ninja", 0.63, 0.3, tiers=[0, 0, 1])
+    assert g.upgrade(p, 1) is False and g.fail_reason == "noeffect"
+    assert p.tiers == [0, 0, 1] and not g.inp.keys, "no hotkey, so no second tier"
+
+
+def test_button_showing_a_later_tier_proves_the_purchase():
+    """Rake Impoppable: the bot believed ninja1 1-0-1 (really 2-0-1). The
+    click bought tier 3 and the button jumped to Bloonjitsu's $3,300, two
+    tiers past what the bot expected; income hid the cash drop, the
+    verdict said "same" and the hotkey bought Bloonjitsu as well."""
+    g = upgrade_game([], difficulty="impoppable")
+    g.cash_stable = scripted([20000, 20400])
+    g.path_costs = scripted([[("cash", 420), (None, None), ("cash", 450)],
+                             [("cash", 3300), (None, None), ("cash", 450)]])
+    p = Placed("ninja1", "ninja", 0.67, 0.79, tiers=[1, 0, 1])
+    assert g.upgrade(p, 1) is True and not g.inp.keys
+
+
 def test_price_above_cash_clicks_nothing():
     g = upgrade_game([("cash", 10260), (None, None), (None, None)], cash=5000)
     p = Placed("sp1", "spike", 0.06, 0.63, tiers=[3, 0, 2])

@@ -953,24 +953,37 @@ class Game:
         The button decides when it can be read: another price or the XP lock
         means the tier was bought. A blank button (path now maxed or closed,
         or an unreadable read) falls back to the cash, which must have
-        dropped by about the price (PRICE_BAND), not merely gone down."""
+        dropped by about the price (PRICE_BAND), not merely gone down.
+
+        Cash that did not drop says "same" only when the button agrees: if
+        the button moved, or cannot move because the next tier costs the
+        same, pop income may simply have covered the price. Rake Impoppable
+        (2026-11-04) took such cash as "same" four times; each time the
+        hotkey bought a second tier (ninjas 0-0-1 -> 2-0-1, ninja1 2-0-1 ->
+        4-0-1) and the bot counted one or none. "unknown" retries later,
+        after the panel's prices have corrected the count."""
         again = self.path_costs(p)[path - 1]
+        same_price = self._next_tier_same_price(p, path)
+        moved = shown[1] is not None and again[0] is not None and again != shown
         if shown[1] is not None and again[0] is not None:
-            if again == shown and not self._next_tier_same_price(p, path):
+            if again == shown and not same_price:
                 return "same"
             if again[0] == "xp":
                 return "bought"                  # the next tier is XP-locked
-            # the next tier's price - not just any other number (an OCR slip)
-            if (p.kind != "hero" and again[1] is not None
-                    and self._tier_for_price(p.kind, path, again[1]) == p.tiers[path - 1] + 2):
-                return "bought"
+            # A price of a LATER tier - not just any other number (an OCR
+            # slip). One past the next is the usual case; further on means
+            # the count was already behind, which the next panel read fixes.
+            if p.kind != "hero" and again[1] is not None:
+                named = self._tier_for_price(p.kind, path, again[1])
+                if named is not None and named >= p.tiers[path - 1] + 2:
+                    return "bought"
         after = self.cash_stable(dx=dx)
         if before is not None and after is not None and cost:
             lo, hi = self.PRICE_BAND
             if lo * cost <= before - after <= hi * cost:
                 return "bought"
             if after >= before:
-                return "same"
+                return "unknown" if (moved or same_price) else "same"
         return "unknown"
 
     def target(self, p, mode):
