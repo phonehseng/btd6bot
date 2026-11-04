@@ -60,6 +60,16 @@ def test_no_side_path_before_the_main_path_is_set():
     assert ("o1", (2, 2, 0)) not in offered(ex, past_plan=True)
 
 
+def test_never_a_third_tier_off_the_plans_main_path():
+    # Dark Dungeons Military Only (2026-11-04): s1 at 1-2-0 heading for
+    # 4-2-0; its middle path "led", reinforce bought 1-3-0, and 4-2-0 was
+    # out of reach for the rest of the game
+    ex = executor("4-2-0", [1, 2, 0])
+    got = offered(ex, past_plan=True)
+    assert ("o1", (1, 3, 0)) not in got
+    assert ("o1", (2, 2, 0)) in got          # the plan's own path still grows
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

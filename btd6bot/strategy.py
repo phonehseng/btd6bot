@@ -1372,7 +1372,15 @@ class Executor:
             return True
 
     def try_step(self, step, cash, rnd):
-        """Returns 'done', 'wait', 'skip', 'bought' or 'progress'."""
+        """Returns 'done', 'wait', 'skip', 'bought' or 'progress'.
+
+        g.fail_reason is cleared first: many "wait" answers below (a round
+        gate, too little cash) never call the game, and a reason left over
+        from the step before would be read as this step's. On Dark Dungeons
+        Military Only (2026-11-04) the heli placement failed with "spot", the
+        next step - `s1 -> 2-2-0, round: 18`, only waiting for its round - was
+        set aside as "blocked (spot)", and s1 never became the planned 4-2-0."""
+        self.g.fail_reason = None
         if rnd is not None and step.get("round") and rnd < step["round"]:
             return "wait"
         do = step["do"]
@@ -3003,6 +3011,13 @@ class Executor:
                     continue
                 cap = self._planned_cap(p)
                 leading = p.tiers[path] > 0 and p.tiers[path] == max(p.tiers)
+                if leading and cap is not None and t[path] > 2 and any(
+                        cap[i] > 2 for i in range(3) if i != path):
+                    # the plan's main path is another one: tier 3 here would
+                    # shut it out for good. Dark Dungeons Military (2026-11-04):
+                    # s1 stood at 1-2-0 on its way to 4-2-0, reinforce bought
+                    # 1-3-0, and the planned Maim MOAB could never be bought.
+                    leading = False
                 if (cap is not None and t[path] > cap[path]
                         and not (past_plan and (leading or self._side_path_ok(p, path, cap)))):
                     continue  # past the crosspath the plan wants for this tower

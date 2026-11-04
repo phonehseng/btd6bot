@@ -102,6 +102,23 @@ def test_a_dead_upgrade_is_set_aside_in_every_mode_with_rounds():
             assert "(noeffect)" in ex.waiting, ex.waiting
 
 
+def test_a_round_gated_step_after_a_blocked_place_stays_in_the_plan():
+    # Dark Dungeons Military Only (2026-11-04): the heli place failed with
+    # "spot", and the next step - only waiting for round 18 - was set aside
+    # as "blocked (spot)" on the stale reason
+    plan = {"id": "t", "name": "t", "hero": None,
+            "plan": [{"do": "place", "id": "s1", "kind": "sniper", "role": "dps"},
+                     {"do": "place", "id": "h1", "kind": "heli", "role": "dps"},
+                     {"do": "upgrade", "id": "s1", "to": "1-0-0", "round": 18}]}
+    g = NoSpotFor("heli")
+    ex = S.Executor(g, F.FakeModel(), plan, "medium", F.full_account())
+    for _ in range(6):
+        ex.tick(40000, 10)
+    assert any(st.get("id") == "h1" for st in ex.deferred)
+    assert not any(st.get("id") == "s1" for st in ex.deferred), ex.deferred
+    assert ex.plan[ex.idx].get("round") == 18, (ex.idx, ex.plan)
+
+
 class Unreadable(DeadButton):
     """A game where one tower's upgrade price never reads."""
 
