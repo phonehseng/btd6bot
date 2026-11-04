@@ -1106,15 +1106,74 @@ class Executor:
         return self.m.radius_cells(rng, self.g.s.width)
 
     def _covered(self):
-        """Grid of track already within range of placed damage towers (0/1)."""
+        """Grid of how well placed damage towers already cover each cell
+        (0 = not at all, 1 = by the strongest tower on the board).
+
+        A tower's cover is the cash in it (price + upgrades) against the
+        most-invested damage tower's: a bare 0-0-0 dart beside two 2-0-2
+        ninjas covers its lane barely at all. With plain 0/1 cover, on
+        Firing Range ABR (2026-11-04) the fast-track opener dart made the
+        right lane look defended, so the second ninja, the alchemist and the
+        village all went to the left lane; the right lane leaked 74 lives in
+        rounds 23-24. The hero has no tower price and counts in full.
+
+        On maps whose bloon paths split, a cell also counts as covered as
+        far as its lane is (see _lane_cover): bloons passing it meet every
+        tower along their own lane, so a lane already shot at elsewhere
+        needs the next tower less than a lane nobody guards."""
+        grid = self._tower_cover()
+        lane = self._lane_cover(grid)
+        return grid if lane is None else 1.0 - (1.0 - grid) * (1.0 - lane)
+
+    # How much a lane's defence (relative to the best-defended lane) counts
+    # as cover on its cells: 0.5 makes the best-guarded lane's own track
+    # half as wanted; lanes defended alike all get the same factor, so
+    # balanced lanes keep the plain per-cell ranking.
+    LANE_COVER_WEIGHT = 0.5
+
+    def _lane_cover(self, cover):
+        """Grid: for each track cell, how well its bloon path is defended
+        against the best-defended path (mean tower cover over the path's
+        cells, 0..1, times LANE_COVER_WEIGHT); a cell shared by several
+        paths takes the least-defended one, since a tower there guards that
+        lane too. On Firing Range both paths share the top rows and split
+        into the left and right lanes. None on maps without geometry, with a
+        single path, or with no cover yet (it would change nothing)."""
+        from . import mapgeom
+        try:
+            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed))
+        except Exception:
+            return None
+        masks = (grids or {}).get("path_masks") or []
+        if len(masks) < 2 or any(mask.shape != cover.shape for mask in masks):
+            return None
+        shares = [float(cover[mask].mean()) for mask in masks]
+        best = max(shares)
+        if best <= 0:
+            return None
+        lane = np.full(cover.shape, np.inf, np.float32)
+        for mask, share in zip(masks, shares):
+            lane[mask] = np.minimum(lane[mask], self.LANE_COVER_WEIGHT * share / best)
+        lane[np.isinf(lane)] = 0.0
+        return lane
+
+    def _tower_cover(self):
+        """The cover grid of the towers alone (see _covered)."""
         import cv2
+        from .towerxp import invested
+        family = PRICE_FAMILY.get(self.mode, "hard")
+        poppers = [p for p in self.g.towers.values()
+                   if p.kind not in ("village", "alchemist", "farm")]   # support towers do not pop
+        cash = {p.tid: sum(invested([p], family).values()) for p in poppers}
+        top = max((c for c in cash.values() if c > 0), default=0)
         grid = np.zeros(self.m.heat.shape, np.float32)
-        for p in self.g.towers.values():
-            if p.kind in ("village", "alchemist", "farm"):
-                continue  # support towers do not pop
+        for p in poppers:
+            strength = 1.0 if p.kind == "hero" or top <= 0 else min(1.0, cash[p.tid] / top)
             cx, cy = self.m.frac_to_cell(p.x, p.y)
             r = int(round(min(self._range_cells(p.kind), 60)))
-            cv2.circle(grid, (int(cx), int(cy)), max(1, r), 1.0, -1)
+            disc = np.zeros_like(grid)
+            cv2.circle(disc, (int(cx), int(cy)), max(1, r), strength, -1)
+            np.maximum(grid, disc, out=grid)
         return grid
 
     def _occupied(self):

@@ -311,6 +311,31 @@ def paint_paths(geom, proj, lanes=None):
     return heat, t_sum, t_cnt
 
 
+def path_masks(geom, proj):
+    """One bool grid per bloon path: the cells where bloons on that path can
+    be hit (the same cells paint_paths heats). A bloon follows one path from
+    start to end, so on maps whose paths split (Firing Range's two lanes)
+    the defence must be shared between these masks: a lane with no real
+    tower on it leaks every bloon sent down it."""
+    w, h = GRID
+    out = []
+    for path in bloon_paths(geom):
+        if path.get("hidden") or len(path["points"]) < 2:
+            continue
+        cells = proj.to_cells(path["points"])
+        hidden = path.get("invulnerable", [])
+        mask = np.zeros((h, w), np.uint8)
+        for i in range(len(cells) - 1):
+            if _in_ranges(i, hidden) or _in_ranges(i + 1, hidden):
+                continue
+            p0 = tuple(int(round(v)) for v in cells[i])
+            p1 = tuple(int(round(v)) for v in cells[i + 1])
+            cv2.line(mask, p0, p1, 1, TRACK_THICKNESS)
+        if mask.any():
+            out.append(mask > 0)
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Map mechanics: what changes during a game, and when
 # ---------------------------------------------------------------------------
@@ -878,6 +903,7 @@ def grids_for(model, removed=(), now_round=None, last_round=None):
         grids = placement_grids(geom, proj, lanes | (heat > 0), dyn)
         grids["scan"] = {k: np.where(grids[k], 1, 2).astype(np.uint8) for k in ("land", "water")}
         grids["track"] = heat > 0
+        grids["path_masks"] = path_masks(geom, proj)
         grids["proj"] = proj
         areas_by_id = {a["id"]: a for a in geom.get("areas", []) if "id" in a}
         grids["panes"] = [(c, [_poly_mask(areas_by_id[i]["polygons"], proj) for i in c["areas"]])
