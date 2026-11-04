@@ -7895,11 +7895,11 @@
       {
        "tower": "dart",
        "at": [
-        0.43,
-        0.317
+        0.425,
+        0.325
        ],
        "note": "R6 dart",
-       "where": "small island in the middle of the upper wave"
+       "where": "small island in the middle of the upper wave [moved for the corrected track, 2026-11-03]"
       },
       {
        "tower": "sub",
@@ -8405,20 +8405,20 @@
       {
        "tower": "village",
        "at": [
-        0.398,
+        0.403,
         0.896
        ],
        "note": "Village1 (camo)",
-       "where": "bottom-middle platform centre"
+       "where": "bottom-middle platform centre [moved for the corrected track, 2026-11-03]"
       },
       {
        "tower": "alchemist",
        "at": [
         0.355,
-        0.93
+        0.922
        ],
        "note": "Alch1 for Spike1",
-       "where": "bottom-middle platform edge"
+       "where": "bottom-middle platform edge [moved for the corrected track, 2026-11-03]"
       },
       {
        "tower": "glue",

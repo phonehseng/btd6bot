@@ -43,7 +43,7 @@ plan:
   - {do: place, id: de3, kind: desperado, role: dps, at: [0.398, 0.658]}               # reaches 121 / 121 units of the lanes
   - {do: place, id: de4, kind: desperado, role: dps, at: [0.601, 0.76]}                # reaches 121 / 121 units of the lanes
   - {do: place, id: d2, kind: dart, role: dps, at: [0.462, 0.709]}                     # reaches 63 / 63 units of the lanes
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.537, 0.743]}                     # reaches 42 / 42 units of the lanes
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.537, 0.751]}                     # reaches 42 / 42 units of the lanes
   - {do: upgrade, id: t1, to: 2-2-0}
   - {do: place, id: d3, kind: dart, role: dps, at: [0.387, 0.76]}                      # reaches 62 / 62 units of the lanes
   - {do: place, id: hero, kind: hero, role: dps, at: [0.425, 0.266]}                   # hero (not counted by the damage model)

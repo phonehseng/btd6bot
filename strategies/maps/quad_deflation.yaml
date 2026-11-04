@@ -75,7 +75,7 @@ fill:
   - {do: upgrade, id: s3, to: 1-2-0}
   - {do: place, id: bm8, kind: bomb, role: dps, at: [0.398, 0.76]}               # reaches routes 1, 2, 3
   - {do: upgrade, id: bm8, to: 0-2-2}
-  - {do: place, id: bm9, kind: bomb, role: dps, at: [0.248, 0.589]}              # reaches routes 2, 3
+  - {do: place, id: bm9, kind: bomb, role: dps, at: [0.248, 0.581]}              # reaches routes 2, 3
   - {do: upgrade, id: bm9, to: 0-2-2}
   - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.152, 0.129]}   # map-wide
   - {do: upgrade, id: s4, to: 1-2-0}

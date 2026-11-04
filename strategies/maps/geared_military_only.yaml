@@ -40,7 +40,7 @@
 # low until the record calibrates it.
 id: geared_military_only
 map: Geared
-hero: quincy
+hero: ezili
 modes: [military_only]
 planner:
   towers: {sniper: [3, 3, 4], ace: [2, 3, 0]}
@@ -54,7 +54,7 @@ plan:
   - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.345, 0.215]} # R15: big gear; map-wide (line of sight)
   - {do: upgrade, id: s3, to: 0-2-0}                                          # R15: Shrapnel Shot
   - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.473, 0.215]} # R15: big gear; map-wide (line of sight)
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.457, 0.828]}          # R15: Quincy, big gear (not counted by the model)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.51, 0.845]}           # R15: Ezili, hub of the big gear - the only ground a finite-range hero keeps reaching the lane from (not counted by the model)
   - {do: upgrade, id: s3, to: 0-2-2}                                          # R15: Shrapnel Shot
   - {do: upgrade, id: s4, to: 0-2-0}                                          # R17: Shrapnel Shot
   - {do: place, id: ac1, kind: ace, role: dps, at: [0.612, 0.47]}             # R19: big gear; sees 10% of the lane

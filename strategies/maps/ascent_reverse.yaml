@@ -93,7 +93,7 @@ plan:
   - {do: upgrade, id: sk3, to: 1-0-1}                                         # R40: Aerial Attunement
   - {do: upgrade, id: s1, to: 1-3-0}                                          # R40: Bouncing Bullet
   - {do: upgrade, id: sk7, to: 1-0-1}                                         # R41: Aerial Attunement
-  - {do: place, id: su1, kind: super, role: dps, at: [0.387, 0.589]}          # R42: big central island; sees 13% of lane 1
+  - {do: place, id: su1, kind: super, role: dps, at: [0.382, 0.589]}          # R42: big central island; sees 13% of lane 1
   - {do: upgrade, id: su1, to: 0-2-0}                                         # R42: Epic Range
   - {do: upgrade, id: su1, to: 2-2-0}                                         # R44: Plasma Blasts
   - {do: upgrade, id: s1, to: 2-3-0}                                          # R45: Bouncing Bullet

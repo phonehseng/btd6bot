@@ -93,7 +93,7 @@ plan:
   - {do: upgrade, id: s1, to: 2-3-0}                                          # R40: Bouncing Bullet
   - {do: place, id: su1, kind: super, role: dps, at: [0.313, 0.692]}          # R42: big central island; sees 11% of lane 1
   - {do: upgrade, id: su1, to: 0-1-0}                                         # R42: Super Range
-  - {do: place, id: su2, kind: super, role: dps, at: [0.387, 0.589]}          # R44: big central island; sees 13% of lane 1
+  - {do: place, id: su2, kind: super, role: dps, at: [0.393, 0.564]}          # R44: big central island; sees 13% of lane 1
   - {do: upgrade, id: su1, to: 0-1-2}                                         # R45: Ultravision
   - {do: upgrade, id: su2, to: 0-2-0}                                         # R46: Epic Range
   - {do: upgrade, id: su1, to: 0-2-2}                                         # R47: Epic Range

@@ -1375,8 +1375,8 @@
      "automatic": true,
      "when": "always",
      "path": "PathRight",
-     "ranges": [[68,70]],
-     "share": 0.18,
+     "ranges": [[26,28]],
+     "share": 0.179,
      "bot": "not counted as coverable track"
     },
     {
@@ -1384,8 +1384,8 @@
      "automatic": true,
      "when": "always",
      "path": "PathLeft",
-     "ranges": [[100,102]],
-     "share": 0.164,
+     "ranges": [[29,31]],
+     "share": 0.163,
      "bot": "not counted as coverable track"
     },
     {
@@ -1393,7 +1393,7 @@
      "automatic": true,
      "when": "always",
      "path": "PathMiddleMoab",
-     "ranges": [[100,102]],
+     "ranges": [[43,45]],
      "share": 0.039,
      "bot": "not counted as coverable track"
     },
@@ -1402,8 +1402,8 @@
      "automatic": true,
      "when": "always",
      "path": "PathTopMoab",
-     "ranges": [[84,86]],
-     "share": 0.054,
+     "ranges": [[99,101]],
+     "share": 0.053,
      "bot": "not counted as coverable track"
     },
     {
@@ -1418,7 +1418,7 @@
      "bot": "not used"
     }
    ],
-   "hidden_track_share": 0.097,
+   "hidden_track_share": 0.096,
    "advice": []
   },
   "darkpath": {
@@ -3256,13 +3256,13 @@
      "automatic": true,
      "when": "always",
      "path": "Path",
-     "ranges": [[4,5],[14,15]],
-     "share": 0.244,
+     "ranges": [[65,189],[650,774]],
+     "share": 0.195,
      "bot": "not counted as coverable track"
     }
    ],
-   "hidden_track_share": 0.244,
-   "advice": ["24% of the track cannot be hit (gates, tunnels): cover the open stretches"]
+   "hidden_track_share": 0.195,
+   "advice": ["20% of the track cannot be hit (gates, tunnels): cover the open stretches"]
   },
   "lastresort": {
    "name": "Last Resort",
@@ -5351,8 +5351,8 @@
      "automatic": true,
      "when": "always",
      "path": "TopToBottom",
-     "ranges": [[0,4],[21,24]],
-     "share": 0.615,
+     "ranges": [[0,4],[286,289]],
+     "share": 0.602,
      "bot": "not counted as coverable track"
     },
     {
@@ -5360,8 +5360,8 @@
      "automatic": true,
      "when": "always",
      "path": "RighttoLeft",
-     "ranges": [[0,16],[34,51]],
-     "share": 0.589,
+     "ranges": [[0,178],[468,674]],
+     "share": 0.576,
      "bot": "not counted as coverable track"
     },
     {
@@ -5369,8 +5369,8 @@
      "automatic": true,
      "when": "always",
      "path": "BottomtoTop",
-     "ranges": [[0,4],[21,24]],
-     "share": 0.585,
+     "ranges": [[0,4],[293,296]],
+     "share": 0.572,
      "bot": "not counted as coverable track"
     },
     {
@@ -5378,8 +5378,8 @@
      "automatic": true,
      "when": "always",
      "path": "LefttoRight",
-     "ranges": [[0,16],[34,51]],
-     "share": 0.584,
+     "ranges": [[0,166],[448,623]],
+     "share": 0.571,
      "bot": "not counted as coverable track"
     },
     {
@@ -5387,13 +5387,13 @@
      "automatic": true,
      "when": "always",
      "path": "PathBoss",
-     "ranges": [[0,16],[34,51]],
-     "share": 0.584,
+     "ranges": [[0,166],[448,623]],
+     "share": 0.571,
      "bot": "not counted as coverable track"
     }
    ],
-   "hidden_track_share": 0.592,
-   "advice": ["59% of the track cannot be hit (gates, tunnels): cover the open stretches"]
+   "hidden_track_share": 0.579,
+   "advice": ["58% of the track cannot be hit (gates, tunnels): cover the open stretches"]
   },
   "quarry": {
    "name": "Quarry",

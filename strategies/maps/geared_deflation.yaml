@@ -44,7 +44,7 @@
 # low until the record calibrates it.
 id: geared_deflation
 map: Geared
-hero: quincy
+hero: ezili
 modes: [deflation]
 planner:
   towers: {ace: [2, 3, 0], sniper: [3, 4, 0]}
@@ -72,7 +72,7 @@ plan:
   - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.302, 0.249]} # R31: big gear; map-wide (line of sight)
   - {do: upgrade, id: s2, to: 1-2-0}                                          # R31: Shrapnel Shot
   - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.419, 0.249]} # R31: big gear; map-wide (line of sight)
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.457, 0.828]}          # R31: Quincy, big gear (not counted by the model)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.51, 0.845]}           # R31: Ezili, hub of the big gear - the only ground a finite-range hero keeps reaching the lane from (not counted by the model)
 fill:
   - {do: upgrade, id: s3, to: 1-2-0}                                          # R31: Shrapnel Shot
   - {do: upgrade, id: s1, to: 3-2-0}                                          # R31: Deadly Precision

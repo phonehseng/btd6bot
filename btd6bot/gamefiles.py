@@ -68,7 +68,9 @@ CACHE = Path.home() / ".btd6bot_cache" / "bundles"   # copies of game bundles
 MECHANICS_FILE = ROOT / "data" / "map_mechanics.json"   # summary of every map's mechanics
 # Bump when the extracted format or its reading changes.
 #   7: area ids/state flags, removables, map events, hidden track (PathPointInfo)
-GEOMETRY_VERSION = 7
+#   8: a polyline's child that carries a CurvedLineNodes spline is sampled as
+#      that spline, not as one Bezier curve (Spring Spring's island loops)
+GEOMETRY_VERSION = 8
 
 # The game's AreaType enum (Assets.Scripts.Models.Map.AreaType in GameAssembly)
 AREA_TYPES = {0: "track", 1: "water", 2: "land", 3: "unplaceable", 4: "ice",
@@ -383,8 +385,20 @@ def _read_paths(scene):
             points, flags = [], []
             for cid, own in zip(children, node_flags):
                 kids = [k["m_PathID"] for k in scene.transforms[cid]["m_Children"]]
-                if kids:   # a Curve: its children are the Bezier points
+                child_go = scene.transforms[cid]["m_GameObject"]["m_PathID"]
+                child_kind, child_fields = sources.get(child_go, (None, {}))
+                if kids and child_kind == "CurvedLineNodes":
+                    # a child with a spline of its own: Spring Spring's loops
+                    # around the islands are 21-24 such nodes. Read as one
+                    # Bezier curve (below) they shrank to a single smooth arc
+                    # across the islands, and towers placed beside that arc
+                    # popped nothing (Spring Spring ABR, 2026-11-03: 90 lives
+                    # lost at round 79 after five towers were sold unused).
+                    curve = _curved([np.array(scene.world(k), float) for k in kids],
+                                    child_fields.get("samplesPer100Units", 100))
+                elif kids:   # a Curve: its children are the Bezier points
                     curve = _bezier([scene.world(k) for k in kids])
+                if kids:
                     kid_flags = [either(own, flags_of(k)) for k in kids]
                     points += curve
                     # each sample takes the setting of its nearest control point

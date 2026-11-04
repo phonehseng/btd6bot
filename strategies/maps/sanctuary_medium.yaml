@@ -13,8 +13,11 @@
 #     snipers, Archmage (https://www.youtube.com/watch?v=auCq92xN0nk)
 #   * bloonswiki Sanctuary (https://www.bloonswiki.com/Sanctuary)
 #
-# The build: 3 druids (0-3-1); 8 snipers (0-2-4, 0-2-2, 2-2-0, 1-2-0); 1 wizard (0-1-0);
-# hero quincy.
+# The build: 1 druid (0-3-1); 10 snipers (0-2-4, 0-2-2, 2-2-0, 1-2-0); 1 wizard (0-1-0);
+# hero quincy. (2026-11-03: the track reader was fixed and the lanes moved; two
+# druid spots no longer reached a lane in every platform position, so those two
+# druids became map-wide snipers, and the druid and wizard moved to the bottom
+# platform's hub. The margins below are from the original build.)
 # How it was made: tower kinds from the guides above; spots and buying order chosen
 # on the game's own numbers (btd6bot/dps_model.py, the model behind
 # tools/optimize_builds.py, with candidate spots for every route) and checked round
@@ -40,13 +43,13 @@ planner:
   base_success: {medium: 0.75, reverse: 0.72}
   maps: [Sanctuary]
 plan:
-  - {do: place, id: dr1, kind: druid, role: dps, at: [0.633, 0.777]}             # reaches route 2
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.414, 0.888]}             # bottom platform hub: reaches the lower lanes in every position
   - {do: upgrade, id: dr1, to: 0-3-0}
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.334, 0.198]}   # map-wide
   - {do: upgrade, id: s1, to: 0-1-0}
   - {do: upgrade, id: dr1, to: 0-3-1}
   - {do: upgrade, id: s1, to: 0-2-2}
-  - {do: place, id: w1, kind: wizard, role: dps, at: [0.227, 0.794]}             # reaches routes 3, 4
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.371, 0.888]}             # bottom platform hub: reaches the lower lanes
   - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.377, 0.198]}   # map-wide
   - {do: upgrade, id: s2, to: 1-2-0}
   - {do: upgrade, id: w1, to: 0-1-0}
@@ -54,19 +57,19 @@ plan:
   - {do: upgrade, id: s3, to: 1-2-0}
   - {do: place, id: s4, kind: sniper, role: dps, target: strong, at: [0.409, 0.215]}   # map-wide
   - {do: upgrade, id: s4, to: 1-2-0}
-  - {do: place, id: dr2, kind: druid, role: dps, at: [0.377, 0.879]}             # reaches route 4
-  - {do: upgrade, id: dr2, to: 0-3-0}
+  - {do: place, id: s9, kind: sniper, role: dps, target: strong, at: [0.323, 0.078]}   # map-wide (no druid spot reaches the lane in every platform position)
+  - {do: upgrade, id: s9, to: 1-2-0}
   - {do: place, id: s5, kind: sniper, role: dps, target: strong, at: [0.345, 0.249]}   # map-wide
   - {do: upgrade, id: s5, to: 0-2-0}
-  - {do: upgrade, id: dr2, to: 0-3-1}
-  - {do: place, id: dr3, kind: druid, role: dps, at: [0.419, 0.896]}             # reaches route 4
-  - {do: upgrade, id: dr3, to: 0-3-0}
+  - {do: upgrade, id: s9, to: 2-2-0}
+  - {do: place, id: s10, kind: sniper, role: dps, target: strong, at: [0.409, 0.087]}   # map-wide (no druid spot reaches the lane in every platform position)
+  - {do: upgrade, id: s10, to: 1-2-0}
   - {do: upgrade, id: s5, to: 2-2-0}
   - {do: place, id: s6, kind: sniper, role: dps, target: strong, at: [0.548, 0.436]}   # map-wide
   - {do: upgrade, id: s6, to: 0-2-2}
   - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.558, 0.487]}   # map-wide
   - {do: upgrade, id: s7, to: 0-2-1}
-  - {do: upgrade, id: dr3, to: 0-3-1}
+  - {do: upgrade, id: s10, to: 2-2-0}
   - {do: upgrade, id: s4, to: 2-2-0}
   - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.59, 0.521]}   # map-wide
   - {do: upgrade, id: s8, to: 1-2-0}

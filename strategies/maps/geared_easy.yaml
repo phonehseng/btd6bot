@@ -40,14 +40,14 @@
 # low until the record calibrates it.
 id: geared_easy
 map: Geared
-hero: quincy
+hero: ezili
 modes: [easy]
 planner:
   towers: {ace: [2, 3, 0], sniper: [1, 2, 2]}
   base_success: {easy: 0.85}
   maps: [Geared]
 plan:
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.457, 0.828]}          # R10: Quincy, big gear (not counted by the model)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.51, 0.845]}           # R10: Ezili, hub of the big gear - the only ground a finite-range hero keeps reaching the lane from (not counted by the model)
   - {do: place, id: ac1, kind: ace, role: dps, at: [0.612, 0.47]}             # R10: big gear; sees 10% of the lane
   - {do: upgrade, id: ac1, to: 1-1-0}                                         # R10: Rapid Fire
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.398, 0.198]} # R10: big gear; map-wide (line of sight)

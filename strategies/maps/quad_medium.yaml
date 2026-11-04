@@ -73,7 +73,7 @@ plan:
   - {do: upgrade, id: d10, to: 0-1-2}
   - {do: upgrade, id: bm1, to: 0-0-2}
   - {do: upgrade, id: bm2, to: 0-2-3}
-  - {do: place, id: bm3, kind: bomb, role: dps, at: [0.248, 0.589]}              # reaches routes 2, 3
+  - {do: place, id: bm3, kind: bomb, role: dps, at: [0.248, 0.581]}              # reaches routes 2, 3
   - {do: upgrade, id: bm3, to: 0-0-1}
   - {do: upgrade, id: d5, to: 0-1-3}
   - {do: place, id: r2, kind: boomerang, role: dps, at: [0.184, 0.675]}          # reaches routes 2, 3
