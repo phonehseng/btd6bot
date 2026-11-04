@@ -2543,7 +2543,9 @@ class Executor:
         round's biggest blimp class comes first; otherwise the plan carries on
         (it is the strategy's own ramp) - unless it is used up, or the round is
         next and the defence is far short (RAMP_PANIC): then the most blimp
-        damage per dollar is bought."""
+        damage per dollar is bought. When the plan's next step is itself blimp
+        damage that can be paid before round R, "plan_hold": the plan goes on
+        and its cash is kept for it."""
         cls = max((g["bloon"] for g in TH.round_groups(self.round_set, R)
                    if TH.bloons().get(g["bloon"], {}).get("class") == "blimp"),
                   key=TH.blimp_hp, default=None)
@@ -2556,14 +2558,19 @@ class Executor:
                 return "bought"
             if r == "wait":
                 return "wait"
-        if self.idx < len(self.plan) and not (rnd >= R - 1 and ratio < self.RAMP_PANIC):
-            return "plan"
-        # Only what can be paid before round R (cash now + the rounds in between),
-        # and only buys that matter: the cheapest one closing the whole shortfall,
-        # else the most damage per dollar among those adding at least a tenth of
-        # it. If nothing fits, save for the cheapest that closes it.
+        # what can be paid before round R: cash now + the rounds in between
         money = self.cash_seen + sum(TH.round_cash(self.round_set, r) * self.income_mult
                                      for r in range(rnd, R))
+        if self.idx < len(self.plan) and not (rnd >= R - 1 and ratio < self.RAMP_PANIC):
+            cost = self._plan_ramp_cost(self.plan[self.idx], load)
+            if cost is not None and cost <= money:
+                # the plan's next step is itself blimp damage it can pay for in
+                # time: keep the cash for it (Match's idle spending must not eat it)
+                return "plan_hold"
+            return "plan"
+        # Only buys that matter: the cheapest one closing the whole shortfall,
+        # else the most damage per dollar among those adding at least a tenth of
+        # it. If nothing fits, save for the cheapest that closes it.
         short = (self.RAMP_OK - ratio) * load["hp"]
         opts = self._dps_options(load)
         closing = sorted((o for o in opts if o["gain"] >= short), key=lambda o: o["cost"])
@@ -2578,6 +2585,35 @@ class Executor:
             if r == "wait":
                 return "wait"
         return "none"
+
+    def _plan_ramp_cost(self, st, load):
+        """What plan step st costs when it upgrades a standing tower to more
+        blimp damage (threats.blimp_capacity); None for any other step.
+
+        Spillway ABR (2026-11-04): from round 37 the blimp check called round
+        40's MOAB short (0.3x) and the plan's next steps led to a Maim MOAB
+        sniper (s1 -> 4-2-0, $6,805 on Hard). The ramp was left to the plan,
+        but nothing held the cash for it and nothing checked it could be paid
+        in time: idle spending bought a ninja and two snipers while the plan
+        waited, $3,616 was all there was when round 40 came, and the MOAB
+        leaked. A placement is not counted: where it lands, and so what it
+        reaches, is not known before it is placed."""
+        if st.get("do") != "upgrade" or not st.get("to"):
+            return None
+        p = self.g.towers.get(st.get("id"))
+        if p is None:
+            return None
+        target = [max(a, b) for a, b in zip(p.tiers, parse_cross(st["to"]))]
+        if target == list(p.tiers):
+            return None
+        track, rng, reach = self._track_length(), self._range_units, self._reach_fn()
+        gain = TH.blimp_capacity([(p.tid, p.kind, target)], load, track, rng, reach) - \
+            TH.blimp_capacity([p], load, track, rng, reach)
+        if gain <= 0:
+            return None
+        fam = PRICE_FAMILY.get(self.mode, "hard")
+        return sum(T.upgrade_cost(p.kind, i + 1, k, fam)
+                   for i in range(3) for k in range(p.tiers[i] + 1, target[i] + 1))
 
     def _threat_tick(self, cash, rnd):
         """The threat part of tick(): True (bought), False (holding cash for an
@@ -2610,6 +2646,10 @@ class Executor:
                 self.waiting = f"saving for blimp damage before round {ramp[0]}"
                 self.saving_for_threat = True
                 return False
+            if r == "plan_hold" and self.rules.get("income") is not False:
+                # the plan goes on (its next step is the blimp damage), but the
+                # cash is kept for it: surplus() and reinforcing hold off
+                self.saving_for_threat = True
         return None
 
     # -- between rounds -------------------------------------------------------------

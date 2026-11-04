@@ -464,7 +464,12 @@ class Match:
                     if now - self._last_wait_log > 20:
                         self._last_wait_log = now
                         log.info("idle with $%d: %s", cash, getattr(self.ex, "waiting", "?"))
-                    if weak and now - self._t_reinforce > REINFORCE_EVERY:
+                    # cash the strategy keeps for a threat's answer or its plan's
+                    # blimp damage is not spare - unless lives are falling now
+                    # (Spillway ABR 2026-11-04: a $430 ninja for round 49 left
+                    # round 40's Maim MOAB unaffordable)
+                    held = getattr(self.ex, "saving_for_threat", False) and not dropped
+                    if weak and not held and now - self._t_reinforce > REINFORCE_EVERY:
                         # the coming rounds look weak: the damage model picks
                         # what the spare cash buys (reinforce.py), the plan's
                         # own steps and patience keep their place before it

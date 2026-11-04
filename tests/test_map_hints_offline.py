@@ -264,7 +264,7 @@ def test_map_strategies_pass_the_threat_simulation():
             done, total = (int(x) for x in r["plan_done"].split("/"))
             if S.MODE_FAMILY[mode] == "easy":
                 # Deflation: everything is bought with the starting cash
-                assert done == total or (done == total - 1 and s["plan"][-1]["kind"] == "hero"), \
+                assert done == total or (done == total - 1 and s["plan"][-1].get("kind") == "hero"), \
                     (sid, mode, r["plan_done"])
 
 

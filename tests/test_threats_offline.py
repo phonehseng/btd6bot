@@ -313,6 +313,30 @@ def test_saved_cash_is_not_spent_on_surplus():
     assert ex.saving_for_threat and ex.surplus(300, 26) is False
 
 
+def test_plan_blimp_step_keeps_its_cash():
+    """Spillway ABR (2026-11-04): round 40's MOAB was rated short and the
+    plan's next step (a $6,805 Maim MOAB sniper) was the answer, but idle
+    spending ate the cash for it. Now its cash is held when it can be paid
+    in time; a step too dear to arrive in time holds nothing back."""
+    plan = [{"do": "upgrade", "id": "s1", "to": "4-2-0"}]
+    load = TH.round_blimp_load("standard", 40, double_hp=True)
+    towers = [("s1", "sniper", (3, 2, 0)), ("n1", "ninja", (2, 0, 1))]
+    g, ex = executor({"plan": plan}, towers=towers, cash=5000)
+    ex.rules["tough_moabs"] = True       # Double HP: a MOAB the 3-2-0 cannot stop
+    ex.tick(5000, 38)
+    assert g.towers["s1"].tiers[0] == 3, "not affordable yet - two rounds of income make it"
+    assert ex.saving_for_threat and ex.surplus(5000, 38) is False, ex.waiting
+    # too dear to arrive in time: holding the cash would only strand it
+    g, ex = executor({"plan": plan}, towers=towers, cash=1000)
+    ex.rules["tough_moabs"] = True
+    ex._init_threats()
+    ex.cash_seen = 1000
+    assert ex._answer_ramp(*ex._ramp_due(38), 1000, 38) == "plan"
+    # a plan step that adds no blimp damage is not a ramp step
+    assert ex._plan_ramp_cost({"do": "upgrade", "id": "n1", "to": "2-0-2"}, load) is None
+    assert ex._plan_ramp_cost(plan[0], load) == T.upgrade_cost("sniper", 1, 4, "hard")
+
+
 def test_every_strategy_pops_every_bloon_in_time():
     """Each general strategy, in each mode it lists, played with the game's own
     income (no Double Cash, no farms counted): no round may bring a bloon the
