@@ -237,6 +237,22 @@ def test_discounted_price_corrects_a_drifted_count():
     assert p.tiers == [4, 0, 0] and not path_clicks(g, p)
 
 
+def test_seventeen_percent_off_still_names_the_tier():
+    """Polyphemus Impoppable (2026-11-04): every button near the full
+    discount village was 17% under the table - Sun Avatar's tier at $19,920
+    for $24,000, the MIB at $7,470 for $9,000 - one more than the villages'
+    15%. No tier matched, so the drift check never fired; the bot believed
+    the MIB village v2 was 0-0-0 while the game showed its 0-2-0 panel."""
+    g = upgrade_game([("cash", 400), ("cash", 7470), ("cash", 500)], cash=50000, difficulty="impoppable")
+    p = Placed("v2", "village", 0.75, 0.27, tiers=[0, 0, 0])
+    assert g.upgrade(p, 1) is False and g.fail_reason == "drift"
+    assert p.tiers == [0, 2, 0] and not path_clicks(g, p)
+    g = upgrade_game([("cash", 19920), (None, None), ("cash", 1195)], cash=50000, difficulty="impoppable")
+    p = Placed("s1", "super", 0.69, 0.27, tiers=[2, 0, 1])
+    g.upgrade(p, 1)
+    assert p.tiers == [2, 0, 1] and g.fail_reason != "drift", "the expected tiers, 17% off, change nothing"
+
+
 def test_discounted_next_price_proves_the_purchase():
     """After a click the button shows the next tier's price, discounted by a
     village; that alone proves the purchase, even when round income hides the

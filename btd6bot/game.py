@@ -727,7 +727,7 @@ class Game:
         tier matches.
 
         A tower near a Monkey Village shows its prices discounted (up to
-        gamemodel.deepest_discount(), 15%), so when no tier matches exactly,
+        gamemodel.deepest_discount(), 17%), so when no tier matches exactly,
         a price between the discounted and the full cost of exactly one tier
         names that tier. Without this, Skates ABR (2026-11-03) read the
         opener dart's $15,390 (tier 5's $16,200 less 5%) as no tier at all:

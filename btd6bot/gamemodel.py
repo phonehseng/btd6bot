@@ -245,19 +245,36 @@ def hero_price(hero_id, difficulty="medium"):
     return price(h["cost"], difficulty) if h else None
 
 
+# A discount the game files do not list, seen on every upgrade button: the
+# panel prices the bot logged ("not bought (panel ...)") cluster at 7%, 12%
+# and 17% under the price table - the village discounts (5%, 10%, 15%) plus
+# 2% more (most likely an account-wide bonus). 719 reads sat at 17%, e.g.
+# the Sun Avatar tier at $19,920 for the table's $24,000 on Impoppable.
+UNLISTED_DISCOUNT = 0.02
+
+
 @lru_cache(maxsize=None)
 def deepest_discount():
-    """The largest fraction off a price that one tower can give, from the
+    """The largest fraction off a price that one tower can see, from the
     "discount" buffs in attacks.json (Monkey Village: Monkey Business 10%
-    plus Monkey Commerce 5% = 0.15). An upgrade button near a village shows
-    its price that much lower than the price table. 0.0 when the data is
-    missing (then only exact table prices are recognised, as before)."""
+    plus Monkey Commerce 5% = 0.15) plus UNLISTED_DISCOUNT. An upgrade
+    button near a village shows its price that much lower than the price
+    table. 0.0 when the data is missing (then only exact table prices are
+    recognised, as before).
+
+    Without the unlisted 2%, a button 17% off matched no tier, so the
+    tier-drift check (Game._resync_tiers) never fired near a full discount
+    village. Polyphemus Impoppable (2026-11-04) was lost at round 98 that
+    way: a Sun Avatar tier the bot judged "not bought" had been bought, the
+    retry bought a third tier on the other path and closed Sun Avatar for
+    good, and the MIB village stayed 0-0-0 in the bot's count while the
+    game had it at 0-2-0."""
     best = 0.0
     for t in (_table("attacks").get("towers") or {}).values():
         for combo in (t.get("crosspaths") or {}).values():
             off = sum(b.get("value") or 0.0 for b in combo.get("buffs", []) if b.get("kind") == "discount")
             best = max(best, off)
-    return best
+    return best + UNLISTED_DISCOUNT if best else 0.0
 
 
 # ---------------------------------------------------------------------------
