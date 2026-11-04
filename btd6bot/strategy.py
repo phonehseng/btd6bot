@@ -2542,8 +2542,9 @@ class Executor:
         """More blimp damage for round R. The strategy's own answer for that
         round's biggest blimp class comes first; otherwise the plan carries on
         (it is the strategy's own ramp) - unless it is used up, or the round is
-        next and the defence is far short (RAMP_PANIC): then the most blimp
-        damage per dollar is bought. When the plan's next step is itself blimp
+        next (then, unless the plan's next step is itself blimp damage, the
+        most blimp damage per dollar is bought; when the defence is far short,
+        RAMP_PANIC, even that step waits). When the plan's next step is itself blimp
         damage that can be paid before round R, "plan_hold": the plan goes on
         and its cash is kept for it."""
         cls = max((g["bloon"] for g in TH.round_groups(self.round_set, R)
@@ -2567,7 +2568,15 @@ class Executor:
                 # the plan's next step is itself blimp damage it can pay for in
                 # time: keep the cash for it (Match's idle spending must not eat it)
                 return "plan_hold"
-            return "plan"
+            if rnd < R - 1 or not self._plan_stuck(self.plan[self.idx]):
+                return "plan"
+            # The round before the blimps, still short, and the plan is stuck
+            # (steps set aside, or its next placement already refused this
+            # game): it gets no more turns. Spillway Medium (2026-11-04) was
+            # rated 0.8x for round 40's MOAB from round 37; the plan's next
+            # steps were helis whose spots the game refused 30 times over
+            # rounds 37-39, and the MOAB leaked all 150 lives with $7,519 in
+            # the bank.
         # Only buys that matter: the cheapest one closing the whole shortfall,
         # else the most damage per dollar among those adding at least a tenth of
         # it. If nothing fits, save for the cheapest that closes it.
@@ -2585,6 +2594,14 @@ class Executor:
             if r == "wait":
                 return "wait"
         return "none"
+
+    def _plan_stuck(self, st):
+        """Is the plan unlikely to deliver its next step soon? True when
+        steps were set aside this game (their spot or click failed), or when
+        st places a tower kind whose spots the game already refused."""
+        if self.deferred:
+            return True
+        return st.get("do") == "place" and any(k == st.get("kind") for k, _x, _y in self.failed_spots)
 
     def _plan_ramp_cost(self, st, load):
         """What plan step st costs when it upgrades a standing tower to more
