@@ -216,3 +216,9 @@
 - Backlog 18 (average part): the damage model now counts Glacial Trail's ice - every round there is rated at 80% of the build's strength (`dps_model.TOWER_FREEZE`, commit eda9c75), so the forecast and reinforce see the gap that lost the Medium game at round 25. Per-tower freeze phase still open.
 - A developer session committed unfinished-game settling / blind crisis spending / sell-and-avoid (19e038f) while this run was checking; its test helper in `tests/test_useless_towers_offline.py` lacked the map model and failed - fixed in 913b431 (that commit's message describes the whole feature but it holds only the helper fix). All 64 check steps pass.
 - Owner: please still check BTD6's Auto Start setting (logged ON at 17:34).
+
+## 2026-11-03 19:33
+- Bot status: running (task Running, bot.py up since 18:26, recorder up, BTD6 responding); Candy Falls ABR at round 80, 100 lives. No tracebacks, loops, PAUSE or STOP; no Auto Start warning since 17:34. Safe mode on (trips 4), playing the normal medal order.
+- Since 18:27: 4 wins (Frozen Over, Carved, Winter Park, Skates ABR - and Candy Falls finishing), 0 losses, 0 lives lost. No new loss folders.
+- Fixed (c06d9e9): village-discounted upgrade prices matched no price-table tier, so a bought tier was judged by cash (hidden by ABR income), the hotkey bought a second tier and the bot lost count (Skates: opener dart really 4-2-0, believed 0-0-0/2-0-0; source of most remaining "shows no price" lines and "could not select opener"). Prices now name a tier within the game data's deepest discount (15%). Tests added; all check steps pass.
+- Backlog 18 (Glacial Trail per-tower freeze phase) left open: the freeze offset is not in the game-data copies, and guessing it would be hardcoding. Next run: watch "is really ... corrected" lines on village builds; backlog 8 or 13.
