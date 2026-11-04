@@ -14,9 +14,11 @@ A replay pays only ~20% of the first-time Monkey Money (MM_REPEAT_FRAC) and
 no medal, unlock or black-border progress, so beaten (map, mode) pairs are
 never even candidates (:func:`_candidates` skips them): no tier, fallback or
 achievement bonus can bring a replay back. When no first-time medal is
-winnable, :func:`next_game` returns None and the runner idles with the
-reason "nothing left to play: every unlocked map/mode is beaten or not
-winnable yet" (:data:`NOTHING_LEFT`).
+winnable, :func:`next_game` returns None with the reason "nothing left to
+play: every unlocked map/mode is beaten or not winnable yet"
+(:data:`NOTHING_LEFT`). The runner never idles while medals are open (the
+owner's rule): it asks :func:`rank_games` for the medals under every bar
+too (``below_bar=True``, tier "LAST") and plays the surest of them.
 
 Progression policy (the owner's order: Hard first, levelled up through the
 Hard sub-modes until CHIMPS, Medium and Easy only afterwards). Every
@@ -321,6 +323,9 @@ PHASES = {
     "M": "Medium family medals (Medium, Military Only, Apopalypse, Reverse)",
     "E": "Easy family medals (Easy, Primary Only, Deflation)",
     "NONE": NOTHING_LEFT,   # rank_games found nothing playable: next_game is None
+    # rank_games(below_bar=True) only: nothing clears a bar, the runner plays
+    # the surest open medal rather than idling (owner's rule, 2026-11-03)
+    "LAST": "last resort: no open medal clears its bar - the surest one is played rather than idling",
 }
 
 # ---------------------------------------------------------------------------
@@ -1775,7 +1780,7 @@ def _achievement_values(c: _Cand, goals: Mapping[str, AchievementGoal],
 def rank_games(account: AccountState, available_strategies: Iterable[Any] | None = None, *,
                config: PlannerConfig | None = None, playable_maps: Iterable[str] | None = None,
                achievements: tuple[Sequence[Mapping[str, Any]] | None, Mapping[str, Any] | None]
-               | None = None,
+               | None = None, below_bar: bool = False,
                ) -> tuple[str, list[str], list[_Cand]]:
     """The candidates the bot may play, best first, plus the phase (top tier,
     or "NONE") and reasons for the log.
@@ -1783,6 +1788,11 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
     Only first-time medals are candidates, and only those whose p clears the
     bar of a tier (see :func:`_tier`); with none left the phase is "NONE"
     and the first reason is :data:`NOTHING_LEFT`.
+
+    ``below_bar``: also return the open medals under every bar (tier
+    "LAST", surest first) after the tiered ones, so a caller that must not
+    idle (the runner) still has a game when every tiered one is benched or
+    used up; the phase is then "LAST" instead of "NONE".
 
     ``achievements``: (catalog, live state); default: loaded from the paths
     in the config (data/achievements.json, data/achievements_state.json)."""
@@ -1832,6 +1842,23 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
     cands = [c for c in scored if c.tier is not None and (c.ok or not c.s.achievement)]
     cands.sort(key=_sort_key, reverse=True)
     reasons = _phase_reasons(account, scored, cands, cfg)
+    # Last resort, only when the caller asks (the runner does): the open
+    # medals under every bar, surest first, after all the tiered games. The
+    # owner's rule (2026-11-03) is never to idle while medals are open: at
+    # 09:07 on 2026-11-04 every game over its bar was benched or lost and the
+    # bot slept in 30-minute naps, the closest medal at p=0.74 against a 0.75
+    # bar. CHIMPS and achievement plans are never played this way.
+    rest: list[_Cand] = []
+    if below_bar:
+        rest = [c for c in scored
+                if c.tier is None and c.mode != "chimps" and not c.s.achievement]
+        rest.sort(key=lambda c: (c.p, c.ease, c.score), reverse=True)
+        for c in rest:
+            c.tier = "LAST"
+            c.notes.append("last resort: under every bar, played rather than idling")
+        if rest and not cands:
+            reasons.append(f"{PHASES['LAST']} (best {rest[0].map}/{rest[0].mode} "
+                           f"with {rest[0].s.id} p={rest[0].p:.2f})")
     paragon_line = paragons.reason()
     if paragon_line:
         reasons.append(paragon_line)
@@ -1841,7 +1868,8 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
                        f"{len(steer)} steerable" + (f" ({', '.join(steer[:6])}"
                                                    + (", ..." if len(steer) > 6 else "") + ")"
                                                    if steer else ""))
-    return (cands[0].tier if cands else "NONE"), reasons, cands
+    phase = cands[0].tier if cands else ("LAST" if rest else "NONE")
+    return phase, reasons, cands + rest
 
 
 def next_game(account: AccountState, available_strategies: Iterable[Any] | None = None, *,

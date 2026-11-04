@@ -1504,7 +1504,10 @@ class Bot:
         from . import safety
         from .planner import EASY_FAMILY, MEDIUM_FAMILY
         specs = planner_specs(self.strats, self.account)
-        phase, reasons, cands = rank_games(self.account, specs)
+        # below_bar: after the tiered games come the open medals under every
+        # bar (tier LAST, surest first) - the bot never idles while medals
+        # are open, it plays the surest of them instead
+        phase, reasons, cands = rank_games(self.account, specs, below_bar=True)
         if safety.active():
             # loss circuit breaker (safety.py): Easy-family medals, then
             # Medium-family once those are all earned, else anything left -
@@ -1542,6 +1545,10 @@ class Bot:
         for c in cands:
             if self.benched(c.map, c.mode):
                 continue
+            if getattr(c, "tier", None) == "LAST":   # every tiered game is benched or used up
+                log.warning("last resort: no open medal clears its bar - playing the surest, "
+                            "%s/%s p=%.2f, rather than idling", c.map, c.mode, c.p)
+                phase = "LAST"
             from .planner import next_game  # noqa: F401  (same scoring as next_game)
             mi = MODES[c.mode]
             hero = (c.s.heroes or (None,))[0]

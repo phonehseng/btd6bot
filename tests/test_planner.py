@@ -956,6 +956,14 @@ def test_none_when_nothing_left():
         weak = _spec("weak", modes=("easy", "medium", "hard"), rate=0.6)
         assert P.next_game(acc, [weak]) is None
         assert rec.lines[-1].startswith(P.NOTHING_LEFT) and "closest:" in rec.lines[-1], rec.lines
+        # 3) the runner's view (below_bar): the same open medals come back as
+        # tier LAST, surest first, so the bot plays instead of idling; CHIMPS
+        # never does
+        phase, reasons, cands = P.rank_games(acc, [weak], below_bar=True)
+        assert phase == "LAST" and cands, reasons
+        assert all(c.tier == "LAST" and c.mode != "chimps" for c in cands)
+        assert [c.p for c in cands] == sorted((c.p for c in cands), reverse=True)
+        assert reasons[-1].startswith(P.PHASES["LAST"]), reasons
     finally:
         P.log.removeHandler(rec)
         P.log.setLevel(level)

@@ -27,7 +27,7 @@ def plan_with(cands, safe=True):
     """Runner.next_plan on a stand-in runner whose planner offers `cands`."""
     saved = (runner.planner_specs, planner.rank_games, safety.active, safety.status)
     runner.planner_specs = lambda strats, account: []
-    planner.rank_games = lambda account, specs: ("TEST", ["no candidates"], list(cands))
+    planner.rank_games = lambda account, specs, **kw: ("TEST", ["no candidates"], list(cands))
     safety.active = lambda: safe
     safety.status = lambda: "SAFE MODE (test)"
     try:
