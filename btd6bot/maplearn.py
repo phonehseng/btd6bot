@@ -49,7 +49,8 @@ class MapModel:
         self.sandbox_rounds = 0  # rounds traced in Sandbox (clean: no towers)
         # from the game's own map files (mapgeom.py); None when not available
         self.geometry_bundle = None   # bundle file the geometry came from
-        self.small_only = None        # bool grid: only small towers fit here
+        self.geometry_version = None  # set by mapgeom.apply: heat is the exact track
+        self.small_only = None       # bool grid: only small towers fit here
         self.sight = None             # bool grid: line-of-sight blockers
         self.size_limit = None        # uint8 grid: largest tower size class allowed (1-4)
         self.mermonkey_water = None   # bool grid: water only a Mermonkey may use
@@ -338,8 +339,18 @@ class MapModel:
 
     def track_weight(self):
         """Best estimate of the track: traced motion, plus scan corridors
-        (motion is masked out near our own towers, the scan is not)."""
+        (motion is masked out near our own towers, the scan is not).
+
+        With the game's own map geometry applied (mapgeom.apply) the heat
+        already is the exact track, painted from the map file's bloon paths,
+        so the corridor guess is left out: on such maps "thin blocked ground"
+        is mostly scenery - cliff edges, ridges, walls. On Peninsula the guess
+        put a phantom stretch of track in the middle of the rock, and the
+        whole $9,000 fast-track defence was built around it, out of reach of
+        the real lane (ABR, 2026-11-04: 99 lives lost in round 22)."""
         traced = self.track_mask().astype(np.float32)
+        if getattr(self, "geometry_version", None) is not None and traced.sum() > 0:
+            return traced
         guess = self.track_guess()
         if traced.sum() < 60:
             return guess
