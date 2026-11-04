@@ -821,6 +821,14 @@ class Game:
         if not self.select(p):
             log.warning("could not select %s", p.tid)
             self.fail_reason = "select"
+            # A tower that will not select is the same sign as a placement
+            # that leaves no tower: the click landed on something over the
+            # map. The Defeat screen leaves the fast-forward button in view,
+            # so screen_ok() is fooled by it - Spillway and Quad (2026-11-04)
+            # clicked every tower on it for up to 1 m 47 s, once opening the
+            # Restart dialog, next to Continue (Monkey Money). Counting it
+            # lets the match loop look at the screen after two such clicks.
+            self.unconfirmed_streak = getattr(self, "unconfirmed_streak", 0) + 1
             return False
         try:
             costs = self.path_costs(p)

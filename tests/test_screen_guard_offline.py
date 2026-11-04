@@ -56,6 +56,20 @@ def test_one_bad_look_is_not_enough():
     assert g.screen_ok() and not g.screen_lost
 
 
+def test_towers_that_will_not_select_count_as_misplaced_clicks():
+    """The Defeat screen keeps the fast-forward button in view, so the HUD
+    check passes; Spillway ABR (2026-11-04) then tried to select all 18
+    towers on it. Each failed selection now counts toward the streak that
+    makes the match loop look at the screen."""
+    g = _game([])
+    g.closed, g._retry_at = set(), {}
+    g.select = lambda p: False
+    for tid in ("n1", "n2"):
+        assert not g.upgrade(G.Placed(tid, "ninja", 0.3, 0.6), 1)
+        assert g.fail_reason == "select"
+    assert g.unconfirmed_streak == 2
+
+
 def _words(*texts):
     return [Word(t, 0.5, 0.1 + 0.05 * i, 0.1, 0.03, 0.9) for i, t in enumerate(texts)]
 
