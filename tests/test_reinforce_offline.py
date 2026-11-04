@@ -195,6 +195,53 @@ def test_a_big_idle_bank_is_spent_even_when_the_model_sees_no_gain():
     assert R.best(ex, Blind(), 5000, 40, 40, lives=100)[0] == "wait"
 
 
+def test_a_crisis_with_nothing_to_grow_tries_a_new_tower_kind():
+    # Spice Islands Impoppable (2026-11-04): every standing tower was at its
+    # last tier and no land spot was left, so "0 purchases tried" while
+    # $161,626 piled up. Only water spots remain here: a sub (a kind not on
+    # the board) fits, and the model rates it as lifting the round.
+    class Maxed(ToyEx):
+        def __init__(self):
+            super().__init__()
+            self.g.price = lambda kind: T.tower_cost(kind, "impoppable")
+            self.m = N(cell_to_frac=lambda cx, cy: (0.3, 0.3))
+
+        def upgrade_choices(self, first=None, past_plan=False):
+            return iter(())
+
+        def at_tower_cap(self):
+            return False
+
+        def pick_spots(self, kind, step, n=1):
+            return [(10, 10, 1.0)] if kind == "sub" else []
+
+    class LikesSubs(ToyForecast):
+        def margin(self, towers, rnd):
+            return 0.2 + 0.5 * sum(t.kind == "sub" for t in towers)
+
+        def leaks(self, towers, rounds, scale, per_round=False):
+            lost = {r: 100.0 for r in rounds}
+            return lost if per_round else sum(lost.values())
+    ex = Maxed()
+    assert R.options(ex, 100_000) == []              # the old dead end
+    status, found = R.best(ex, LikesSubs(), 100_000, 90, 100, lives=1)
+    assert status == "buy" and found[0].what.startswith("another sub"), (status, found)
+    assert found[0].step["kind"] == "sub" and found[0].cost == T.tower_cost("sub", "impoppable")
+    # a small bank still waits rather than scattering new kinds
+    assert R.best(ex, LikesSubs(), 5000, 90, 100, lives=1)[0] == "wait"
+
+
+def test_a_new_tower_is_rated_at_what_the_bank_grows_it_into():
+    ex = N(mode="impoppable", account=None)
+    reached = R.grown(ex, "sub", 100_000)
+    assert all(sum(x > 0 for x in t) <= 2 and sum(x > 2 for x in t) <= 1 for t in reached)
+    assert any(5 in t for t in reached), reached        # $100k buys a tier 5
+    assert R.grown(ex, "sub", 0) == {(0, 0, 0)}           # not even the tower itself
+    # tower XP: a path locked past tier 2 stops there
+    locked = N(mode="impoppable", account=N(upgrades=lambda kind: (2, 2, 2)))
+    assert max(max(t) for t in R.grown(locked, "sub", 100_000)) == 2
+
+
 def test_a_given_up_placement_is_not_offered():
     # Water Park ABR (2026-11-04): "another sniper" had been given up, so
     # every try came back 'skip' - yet it stayed the best-rated purchase

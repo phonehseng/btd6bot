@@ -32,6 +32,8 @@ import logging
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
+from . import towers as T
+
 log = logging.getLogger("reinforce")
 
 LOOKAHEAD = 10         # rounds rated: the one being played and the next nine
@@ -63,22 +65,28 @@ def board(ex):
             for p in ex.g.towers.values()]
 
 
-def options(ex, cash):
+def options(ex, cash, kinds=None):
     """Every purchase the cash allows (see the module docstring), cheapest
-    first, at most MAX_OPTIONS."""
+    first, at most MAX_OPTIONS.
+
+    kinds: the tower kinds offered as "another <kind>" - by default the
+    damage kinds standing plus the plan's main kind. With an explicit list
+    only those placements are offered, and no upgrades (new_kind_options)."""
     now = board(ex)
     out = []
-    for p, tiers, cost in ex.upgrade_choices(past_plan=True):
-        if cost > cash:
-            continue
-        after = [SimpleNamespace(**{**vars(t), "tiers": tuple(tiers)}) if t.tid == p.tid else t for t in now]
-        out.append(Option(f"upgrade {p.tid} -> {'-'.join(map(str, tiers))}", cost,
-                          {"do": "upgrade", "id": p.tid, "to": "-".join(map(str, tiers))}, after))
+    if kinds is None:
+        for p, tiers, cost in ex.upgrade_choices(past_plan=True):
+            if cost > cash:
+                continue
+            after = [SimpleNamespace(**{**vars(t), "tiers": tuple(tiers)}) if t.tid == p.tid else t for t in now]
+            out.append(Option(f"upgrade {p.tid} -> {'-'.join(map(str, tiers))}", cost,
+                              {"do": "upgrade", "id": p.tid, "to": "-".join(map(str, tiers))}, after))
     if not ex.at_tower_cap():
-        kinds = {t.kind for t in now if t.kind != "hero" and t.kind not in NOT_DAMAGE}
-        main = ex._main_kind()
-        if main and main not in NOT_DAMAGE:
-            kinds.add(main)
+        if kinds is None:
+            kinds = {t.kind for t in now if t.kind != "hero" and t.kind not in NOT_DAMAGE}
+            main = ex._main_kind()
+            if main and main not in NOT_DAMAGE:
+                kinds.add(main)
         for kind in sorted(kinds):
             if not ex.kind_allowed(kind):
                 continue
@@ -153,6 +161,11 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     if pick is None and crisis:
         pick = strongest(forecast, tried, worst, before)
     if pick is None and crisis and cash >= BLIND_SPEND_CASH:
+        pick = strongest(forecast, new_kind_options(ex, forecast, cash, worst), worst, before)
+        if pick:
+            log.warning("reinforce: nothing standing can grow to help round %d (%.2f) - trying a "
+                        "tower kind not on the board yet, %s", worst, before or 0.0, pick[1].what)
+    if pick is None and crisis and cash >= BLIND_SPEND_CASH:
         pick = dearest_upgrade(tried)
         if pick:
             log.warning("reinforce: the model sees nothing that helps round %d (%.2f) - spending "
@@ -192,6 +205,78 @@ def strongest(forecast, tried, worst, before):
         if m is not None and m > (before or 0.0) + 0.01 and (found is None or m > found[0]):
             found = (m, o)
     return found
+
+
+def new_kind_options(ex, forecast, cash, rnd):
+    """"another <kind>" purchases for every damage kind the game allows that
+    is not standing yet (options() only offers the kinds already on the
+    board): the crisis fallback when nothing standing can grow.
+
+    A bare tower barely scratches a late round (a 0-0-0 sub adds nothing
+    to Spice Islands' round 98 in the model, a 2-0-4 one +0.05), and the
+    upgrades only become purchases once it stands. So each new tower is
+    rated at the best crosspath the bank could grow it into (grown());
+    what is bought is still just the placement, and its upgrades follow
+    through the normal options once it stands.
+
+    Spice Islands Impoppable (2026-11-04): the land near the track ran out
+    by round 47 (ninja, super and spike steps all given up, "none in reach
+    of the track"), every standing tower was at its last tier, and from
+    round 63 to the loss at round 98 reinforce logged "nothing $X buys
+    helps (0 purchases tried)" while the bank grew to $161,626 - on a map
+    that is mostly water, where a sub or a buccaneer would still have fit."""
+    standing = {p.kind for p in ex.g.towers.values()}
+    kinds = [k for k in T.TOWERS if k not in standing and k not in NOT_DAMAGE
+             and k != "hero" and ex.kind_allowed(k)]
+    out = []
+    for o in options(ex, cash, kinds=kinds):
+        *rest, new = o.towers
+        kind = new.kind
+        rated = []
+        for tiers in grown(ex, kind, cash):
+            m = forecast.margin(rest + [SimpleNamespace(**{**vars(new), "tiers": tiers})], rnd)
+            if m is not None:
+                rated.append((m, tiers))
+        if rated:
+            m, tiers = max(rated)
+            new = SimpleNamespace(**{**vars(new), "tiers": tiers})
+            o = Option(f"{o.what} (to grow to {'-'.join(map(str, tiers))})", o.cost, o.step, rest + [new])
+        out.append(o)
+    return out
+
+
+# The crosspaths a new tower is rated at (grown): each path as the main one,
+# with either other path as its side path.
+CROSSPATHS = [(5, 2, 0), (5, 0, 2), (2, 5, 0), (0, 5, 2), (2, 0, 5), (0, 2, 5)]
+
+
+def grown(ex, kind, cash):
+    """The tiers a new tower of `kind` reaches toward each of CROSSPATHS
+    with `cash` (its own price included): the main path to tier 2, the side
+    path to its target, then the main path on - as far as the cash goes and
+    the account's tower XP has unlocked (tiers 1-2 are always open)."""
+    from .strategy import PRICE_FAMILY      # here: strategy imports this module
+    family = PRICE_FAMILY.get(getattr(ex, "mode", None), "hard")
+    account = getattr(ex, "account", None)
+    unlocked = account.upgrades(kind) if account else (5, 5, 5)
+    left = cash - T.tower_cost(kind, family)
+    reached = set()
+    for target in CROSSPATHS:
+        main = target.index(5)
+        side = next(i for i in range(3) if i != main and target[i])
+        order = [main] * 2 + [side] * target[side] + [main] * 3
+        t, budget = [0, 0, 0], left
+        for path in order:
+            tier = t[path] + 1
+            if tier > 2 and tier > unlocked[path]:
+                break
+            cost = T.upgrade_cost(kind, path + 1, tier, family)
+            if cost > budget:
+                break
+            budget -= cost
+            t[path] = tier
+        reached.add(tuple(t))
+    return reached
 
 
 def dearest_upgrade(tried):
