@@ -2259,8 +2259,28 @@ class Executor:
     PLAN_FIRST_SLACK = 300   # ... (or <= $300 more than) the cheapest answer
     HOLD_MAX_S = 30.0        # longest wait between rounds to buy an affordable answer
     RAMP_OK = 1.0            # blimp damage in reach / blimp HP a round brings
+    RAMP_OK_LETHAL = 1.4     # ... when the round's blimps leaking would end the game (ramp_bar)
     RAMP_PANIC = 0.4         # below this, the round before, buy blimp damage even mid-plan
     DEFAULT_TRACK = 600.0    # world units of track when the map geometry is unknown
+
+    def ramp_bar(self, load):
+        """The blimp-check bar for a round: RAMP_OK_LETHAL when the lives its
+        blimps would cost if they got through (load["leak"], from
+        threats.round_blimp_load) are at least the mode's lives (MODE_RULES),
+        else RAMP_OK.
+
+        The blimp check is a rough estimate of damage in reach against HP, and
+        at 1.0x it has no slack. Mushroom Grotto Double HP (2026-11-05) passed
+        round 40's MOAB at 1.1x, so surplus spent the cash the plan's Maim MOAB
+        sniper needed on other tiers, and the MOAB took all 100 lives at once.
+        A MOAB with its children is 616 lives - more than any mode starts
+        with - so for such a round the check wants a margin, and the plan's
+        blimp step keeps its cash (plan_hold) until the margin is there."""
+        lives = (self.rules or {}).get("lives")
+        leak = (load or {}).get("leak")
+        if lives and leak and leak >= lives:
+            return self.RAMP_OK_LETHAL
+        return self.RAMP_OK
 
     def _init_threats(self):
         """Set up the threat checks (on first use, so that every Executor gets
@@ -2805,7 +2825,7 @@ class Executor:
             ramp = self._ramp_due(rnd)
         except Exception:     # the blimp check is optional here
             ramp = None
-        return bool(ramp and ramp[0] <= rnd + 1 and ramp[2] < self.RAMP_OK)
+        return bool(ramp and ramp[0] <= rnd + 1 and ramp[2] < self.ramp_bar(ramp[1]))
 
     # -- blimp damage ramp ---------------------------------------------------------
     def _track_length(self):
@@ -2879,9 +2899,10 @@ class Executor:
             ratio = self.blimp_ratio(load)
             if ("ramp", R) not in self.noted:
                 self.noted.add(("ramp", R))
+                bar = self.ramp_bar(load)
                 log.info("blimp check round %d: %.0f blimp HP, %.0f units of track; the defence "
                          "deals about %.1fx that in reach%s", R, load["hp"], self._track_length(),
-                         ratio, "" if ratio >= self.RAMP_OK else " - short")
+                         ratio, "" if ratio >= bar else f" - short of the {bar:.1f}x wanted")
             return R, load, ratio
         return None
 
@@ -2984,7 +3005,7 @@ class Executor:
         # Only buys that matter: the cheapest one closing the whole shortfall,
         # else the most damage per dollar among those adding at least a tenth of
         # it. If nothing fits, save for the cheapest that closes it.
-        short = (self.RAMP_OK - ratio) * load["hp"]
+        short = (self.ramp_bar(load) - ratio) * load["hp"]
         opts = self._dps_options(load)
         closing = sorted((o for o in opts if o["gain"] >= short), key=lambda o: o["cost"])
         fits = [o for o in closing if o["cost"] <= money] or \
@@ -3071,7 +3092,7 @@ class Executor:
             log.warning("threat %s: nothing applicable to buy - not holding the plan for it", threat)
             self.unanswerable.add(threat)  # nothing applicable; don't block the plan
         ramp = self._ramp_due(rnd)
-        if ramp and ramp[2] < self.RAMP_OK:
+        if ramp and ramp[2] < self.ramp_bar(ramp[1]):
             self.wait_cost = self.wait_total = None
             with self.why("ramp", f"blimp damage short before round {ramp[0]}", ratio=round(ramp[2], 3)):
                 r = self._answer_ramp(*ramp, cash, rnd)

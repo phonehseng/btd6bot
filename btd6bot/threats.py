@@ -599,14 +599,19 @@ def blimp_dps(kind, tiers):
 def round_blimp_load(set_name, rnd, double_hp=False):
     """What blimp damage a round asks for: total MOAB-class HP (children
     blimps included, fortified x2, Double HP MOABs x2, freeplay ramp from
-    data/rounds.json), the number of top-level blimps, the spawn span and the
-    slowest blimp's speed (units/s). None for rounds without blimps."""
+    data/rounds.json), the number of top-level blimps, the spawn span, the
+    slowest blimp's speed (units/s) and `leak`, the lives the round's blimps
+    cost if every one gets through (count x the bloon's rbe from
+    data/bloons.json: a MOAB with its children is 616 - more than any mode's
+    lives, so a blimp round is pass or fail; Executor.ramp_bar reads it).
+    None for rounds without blimps."""
     rd = ((_load("rounds.json") or {}).get(set_name) or {}).get(str(rnd)) or {}
     mult = float(rd.get("blimp_hp_mult") or 1.0) * (2.0 if double_hp else 1.0)
     speed_mult = float(rd.get("speed_mult") or 1.0)
     hp = 0.0
     count = 0
     span = 0.0
+    leak = 0.0
     slowest = None
     for g in round_groups(set_name, rnd):
         facts = bloons().get(g["bloon"], {})
@@ -614,12 +619,13 @@ def round_blimp_load(set_name, rnd, double_hp=False):
             continue
         hp += g["count"] * blimp_hp(g["bloon"], g.get("fortified")) * mult
         count += g["count"]
+        leak += g["count"] * float(facts.get("rbe") or 0.0)
         span = max(span, float(g.get("end_s", 0.0)))
         v = float(facts.get("speed", 1.0)) * RED_SPEED_UNITS_S * speed_mult
         slowest = v if slowest is None else min(slowest, v)
     if not count:
         return None
-    return {"hp": hp, "blimps": count, "span_s": span, "speed": slowest}
+    return {"hp": hp, "blimps": count, "span_s": span, "speed": slowest, "leak": leak}
 
 
 def blimp_capacity(towers, load, track_len, range_of=None, reach_of=None):

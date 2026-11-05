@@ -214,6 +214,25 @@ def test_blimp_load_includes_children_and_ramping():
     r100 = TH.round_blimp_load("standard", 100)
     assert abs(r100["hp"] - 41200 * 1.4) < 1e-6, "BAD + 2 ZOMGs + 3 DDTs, freeplay x1.40"
     assert TH.round_blimp_load("standard", 39) is None
+    # the lives a leak costs: one MOAB with its children (data/bloons.json rbe)
+    assert TH.round_blimp_load("standard", 40)["leak"] == 616
+    assert r100["leak"] > TH.round_blimp_load("standard", 40)["leak"]
+
+
+def test_a_lethal_blimp_round_wants_a_margin():
+    """Mushroom Grotto Double HP (2026-11-05): round 40's MOAB passed the
+    blimp check at 1.1x and took all 100 lives. A round whose blimps would
+    cost the mode's lives is judged against RAMP_OK_LETHAL; a load that
+    would cost fewer lives (or says nothing about it) keeps RAMP_OK."""
+    g, ex = executor({}, towers=[("s1", "sniper", (3, 2, 0))], cash=1000)
+    load = TH.round_blimp_load("standard", 40, double_hp=True)
+    assert ex.rules["lives"] == 100 and load["leak"] >= 100
+    assert ex.ramp_bar(load) == ex.RAMP_OK_LETHAL > ex.RAMP_OK
+    assert ex.ramp_bar({**load, "leak": 50}) == ex.RAMP_OK
+    assert ex.ramp_bar({"hp": 200}) == ex.RAMP_OK and ex.ramp_bar(None) == ex.RAMP_OK
+    # one life: every blimp leak ends the game
+    g, ex = executor({}, mode="impoppable", towers=[("s1", "sniper", (3, 2, 0))], cash=1000)
+    assert ex.ramp_bar({**load, "leak": 1}) == ex.RAMP_OK_LETHAL
 
 
 # -- the Executor -----------------------------------------------------------------------------
