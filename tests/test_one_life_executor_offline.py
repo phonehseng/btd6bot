@@ -167,14 +167,20 @@ def test_the_weak_hold_counts_the_whole_answer():
     assert ex._steps_cost(steps) == want > 0
 
 
-def test_an_unknown_answer_cost_holds_all_the_cash():
-    ex = chutes(0.25)
-
+def test_an_unknown_answer_cost_holds_all_the_cash_only_in_a_safe_round():
+    """Neither the whole answer nor its next tier priced: the cash is held
+    while the round being played is safe, and not at all while it is weak
+    (a hold of unknown size would starve the round at hand)."""
     def answer(threat, cash, rnd):
         return "wait"                 # waited without pricing anything
+    ex = chutes(2.5)
     ex.answer_threat = answer
     assert ex._threat_tick(27_000, 94) is False
     assert ex.saving_for_threat and ex.held_cash == 0.0
+    ex = chutes(0.25)
+    ex.answer_threat = answer
+    assert ex._threat_tick(27_000, 94) is None
+    assert not ex.saving_for_threat and ex.held_cash == 0.0
 
 
 def test_a_safe_round_still_holds_the_cash_for_the_threat():
