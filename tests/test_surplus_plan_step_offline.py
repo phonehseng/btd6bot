@@ -78,6 +78,26 @@ def test_a_step_without_a_round_keeps_its_whole_cost():
     assert hard.surplus(20_000, 70) is True and hard.bought == [("1-0-0", 20_000)]
 
 
+def test_with_lives_to_spare_the_step_claims_the_bank_only_while_the_lookahead_is_weak():
+    """Workshop Medium (2026-11-05): round 25, $1,957 against the $2,000
+    MOAB Press step, round 34 rated 0.08 - reinforce left the cash to the
+    step and surplus bought a 3-0-2 boomerang with it instead."""
+    ex = portal(3.0, cost=2_000)
+    ex.rules = S.rules("medium")
+    ex.forecast = Fixed(3.0, {34: 0.08})
+    assert ex.plan_claim(1_957, 25) is None          # no match loop reinforcing: a guide, as before
+    ex.lookahead_weak = True                          # Match found the look-ahead weak
+    keep, idx, step, cost, crisis = ex.plan_claim(1_957, 25)
+    assert (keep, cost, crisis) == (2_000, 2_000, False)
+    assert ex.surplus(1_957, 25) is False and not ex.bought
+    # a step no income can pay before the weak round holds nothing there either
+    ex = portal(3.0, cost=200_000)
+    ex.rules = S.rules("medium")
+    ex.forecast = Fixed(3.0, {34: 0.08})
+    ex.lookahead_weak = True
+    assert ex.plan_claim(1_957, 25) is None and ex.surplus(1_957, 25) is True
+
+
 def test_a_step_with_a_round_keeps_what_income_does_not_pay():
     ex = portal(3.0, cost=10_000, step_round=74)         # four rounds of income: $6,000
     keep = ex.plan_claim(8_000, 70)[0]

@@ -10,7 +10,7 @@ from . import towers as T
 from .abilities import AbilityPlanner
 from .bloonwatch import BloonWatch
 from . import reinforce as R
-from .forecast import RoundForecast
+from .forecast import CRISIS_MARGIN, RoundForecast
 from .towerxp import TowerXpCounter
 from .carried import CarriedTowers
 
@@ -541,6 +541,9 @@ class Match:
                     # reinforce is saving for a purchase that holds the weakest
                     # round: the usual spending would eat that cash
                     if not bought and not (weak and now < self._saving_until):
+                        # with lives to spare a waiting plan step claims the
+                        # bank only while the look-ahead is weak (plan_claim)
+                        self.ex.lookahead_weak = weak
                         bought = self.ex.surplus(cash, last_round)
                 if bought:
                     self._last_buy = now
@@ -606,8 +609,9 @@ class Match:
             if cash < CRISIS_HOLD_MIN_CASH:
                 return False
             towers = list(self.g.towers.values())
-            margins = [m for m in (self.forecast.margin(towers, r) for r in (rnd, rnd + 1)) if m is not None]
-            if not margins or not self.forecast.is_crisis(min(margins)):
+            rated = [self._crisis_margin(towers, r) for r in (rnd, rnd + 1)]
+            margins = [m for m, _, _ in rated if m is not None]
+            if not margins or not any(crisis for _, crisis, _ in rated):
                 self._crisis_hold[rnd] = False
                 return False
             self._crisis_hold[rnd] = now
@@ -700,19 +704,36 @@ class Match:
         except Exception:
             log.exception("repainting the track for round %s failed - carrying on", rnd)
 
+    def _crisis_margin(self, towers, rnd):
+        """(margin, crisis, leak) for round rnd: the damage model's margin,
+        whether that makes it a crisis round, and the lives the model expects
+        the round to cost when it is rated under 1 (forecast.lethal_leak; a
+        forecast without that method - test fakes - is judged by the margin
+        alone). The lives left weigh in: Pat's Pond ABR (2026-11-05) lost
+        all 74 lives to round 54, rated 0.58, with $15,243 idle."""
+        margin = self.forecast.margin(towers, rnd)
+        lethal = getattr(self.forecast, "lethal_leak", None)
+        if lethal is None:
+            return margin, self.forecast.is_crisis(margin), None
+        leak = lethal(towers, rnd, margin)
+        lives = getattr(getattr(self, "_lives", None), "confirmed", None)
+        return margin, self.forecast.is_crisis(margin, lives, leak), leak
+
     def _forecast_round(self, rnd):
         """Ask the damage model about the round that just started; a round it
         expects to leak becomes a crisis round (see forecast.py), and a
         weak look-ahead (this round and the next three) starts reinforcing."""
         towers = list(self.g.towers.values())
-        margin = self.forecast.margin(towers, rnd)
+        margin, crisis, leak = self._crisis_margin(towers, rnd)
         if margin is None:
             return None
         self._margins[rnd] = margin       # for the journal's round snapshot
-        if self.forecast.is_crisis(margin):
+        if crisis:
             self._crisis_round = rnd
-            log.warning("round %d: the damage model rates the defence %.2f - crisis round: "
-                        "abilities as soon as bloons are out, no saving up", rnd, margin)
+            cost = "" if leak is None or margin < CRISIS_MARGIN else \
+                f" and expected to cost {leak:.0f} of the {self._lives.confirmed} lives left"
+            log.warning("round %d: the damage model rates the defence %.2f%s - crisis round: "
+                        "abilities as soon as bloons are out, no saving up", rnd, margin, cost)
         else:
             log.info("round %d: the damage model rates the defence %.2f", rnd, margin)
         end = self.ex.rules.get("end_round", 80)

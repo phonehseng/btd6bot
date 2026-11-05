@@ -3701,28 +3701,38 @@ class Executor:
           * nothing where no income comes (Deflation): saving cannot make the
             step affordable later, as _threat_tick says of its answers.
 
-        One-life modes only (Impoppable, CHIMPS). There the plan step is the
-        author's answer to the rounds that end the game, and a leak is the
-        game. With lives to spare the plan is a guide: surplus's tiers
-        between its steps are what keeps the Easy and XP builds of the threat
-        simulation (tools/simulate_threats.py) on budget, and the damage
-        model's reinforce already leaves the cash to the step where the
-        look-ahead is weak (094f8de, Haunted Half Cash)."""
-        if self.rules.get("income") is False or not self.rules.get("one_life"):
+        In a one-life mode (Impoppable, CHIMPS) the step always has its
+        claim: it is the author's answer to the rounds that end the game, and
+        a leak is the game. With lives to spare the plan is a guide - surplus's
+        tiers between its steps are what keeps the Easy and XP builds of the
+        threat simulation (tools/simulate_threats.py) on budget - so there the
+        step claims the bank only while Match is reinforcing (`lookahead_weak`,
+        set by the match loop before surplus runs: the damage model rates a
+        look-ahead round under WEAK_MARGIN), the same state in which reinforce
+        leaves the cash to it (094f8de, Haunted Half Cash); the simulation,
+        which has no match loop, never sets it and is unchanged. Reinforce
+        leaving the cash is not enough on its own: Workshop Medium (2026-11-05)
+        said "the cash stays for plan step b1 4-0-2 ($2,000)" from round 16
+        to 39, surplus spent that cash on nine extra 3-0-2 boomerangs ($1,681
+        each) the model rated at nothing, and round 40's MOAB took all 150
+        lives with the MOAB Press never bought."""
+        if self.rules.get("income") is False:
+            return None
+        if not self.rules.get("one_life") and not getattr(self, "lookahead_weak", False):
             return None
         wait = RF.waiting_plan_step(self, cash)
         if wait is None:
             return None
+        rnd = rnd or 0
+        worst = self.lookahead_worst(rnd)
         step, cost = wait
         idx = getattr(self, "idx", None)
         due = step.get("round")
-        rnd = rnd or 0
         crisis = self.weak_now(rnd)
         # the round the step must be paid before to keep anything: the next
         # one in a crisis (the crisis rule pays it by then), else the weakest
         # look-ahead round under WEAK_MARGIN - and never the round being
         # played, which no income reaches
-        worst = self.lookahead_worst(rnd)
         pay_by = None
         if crisis:
             pay_by = rnd + 1
