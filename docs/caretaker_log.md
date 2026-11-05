@@ -389,3 +389,10 @@
 - Fixed in 2edb32e (High Finance): the map's "BUILD FOR $1,500" lot box was not recognised (only "Remove FOR"), was left open, taken for a purchase screen, and the game ran on with $12,120 unspent. It is read now, and any leftover obstacle box is closed with its red X.
 - Fixed in 2edb32e (Sulfur Springs): Fast Track starts Half Cash at round 22 with $4,420; the planner now halves the win chance of half-cash games with Fast Track on. Idea for later: switch Fast Track off on map select for Half Cash (needs a live test of the toggle).
 - Pat's Pond ABR: untested build picked at p=0.71; the blimp ramp's fixed 3-round lead is filed as backlog 31d (c). check.py ALL OK.
+
+## 2026-11-05 00:30
+- Bot status: running (task Running, bot.py up since 23:21, recorder and BTD6 up); now: Cornfield Reverse. No tracebacks, loops, PAUSE or STOP. Safe mode on (trips 4), and the bot keeps playing (one last-resort pick at 23:27 rather than idling).
+- OWNER: BTD6's Auto Start is still ON (auto_start: true in the 23:20 result). Please turn it off in the game's settings.
+- Since 23:25: 5 wins, 2 losses (Flooded Valley Reverse, Dark Dungeons Reverse, Dark Path Deflation, Cornfield Medium and Military Only won; Infernal Reverse r47, Infernal ABR r27 lost). Both handled.
+- Fixed in b0d2964 (Infernal Reverse): solo_dartling's Deflation record (13 of 18) lifted it to p=0.88 in Reverse, a mode it never played; its one income game was lost too. Calibration is now pooled per economy, and a no-income record can only lower an income mode. check.py ALL OK.
+- Infernal ABR: last-resort pick (p=0.60) at a Fast Track round-22 start; dense round 27 leaked 100 lives in seconds. No code change - same Fast Track issue as backlog 31d.
