@@ -45,6 +45,8 @@ NOT_DAMAGE = ("village", "alchemist", "farm")
 SAVE_LEAD = 2          # rounds of income needed before saving for a dearer purchase pays
 SAVE_REACH = 3.0       # ... and it may cost at most this many times the cash in hand
 BLIND_SPEND_CASH = 10_000   # cash idle in a crisis the model sees no use for: spent anyway
+MIN_LIFT = 0.01        # a purchase lifting the weakest round less than this does not
+                       # outbid a plan step that is waiting for cash (waiting_plan_step)
 
 
 @dataclass
@@ -160,6 +162,9 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
             pick = (value, o)
     if pick is None and crisis:
         pick = strongest(forecast, tried, worst, before)
+    # the two fallbacks below spend a big idle bank on purpose, even when
+    # the model sees no gain: the plan-step check further down leaves them be
+    blind = pick is None and crisis and cash >= BLIND_SPEND_CASH
     if pick is None and crisis and cash >= BLIND_SPEND_CASH:
         pick = strongest(forecast, new_kind_options(ex, forecast, cash, worst), worst, before)
         if pick:
@@ -171,6 +176,13 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
             log.warning("reinforce: the model sees nothing that helps round %d (%.2f) - spending "
                         "$%d anyway on the dearest upgrade, %s", worst, before or 0.0, cash, pick[1].what)
     after = forecast.margin(pick[1].towers, worst) if pick else None
+    plan_wait = waiting_plan_step(ex, cash)
+    if pick is not None and not blind and plan_wait is not None \
+            and (after or 0.0) - (before or 0.0) < MIN_LIFT:
+        step, cost = plan_wait
+        log.info("reinforce: %s would move round %d only %.2f -> %.2f - the cash stays for plan "
+                 "step %s ($%d)", pick[1].what, worst, before or 0.0, after or 0.0, step, cost)
+        return "wait", None
     if crisis and (after is None or after < 1.0) and not dies_first(forecast, ex, rnd, worst, lives):
         # Nothing affordable stops the leak: spending now only delays the
         # purchase that would (see save_target).
@@ -188,6 +200,33 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
                  cash, worst, before or 0.0, len(tried))
         return "wait", None
     return "buy", (pick[1], worst, before, after)
+
+
+def waiting_plan_step(ex, cash):
+    """(step, cost) for the strategy's current plan step when it is waiting
+    for cash - it costs more than `cash` - else None.
+
+    Reinforce and the plan draw on the same bank. On Castle Revenge
+    Impoppable and Haunted Half Cash (2026-11-04) the plan's next step was
+    a Sun Avatar (s -> 3-0-2) while reinforce kept buying Super Monkey
+    tiers, spikes and ninja tiers that the model itself rated "0.52 ->
+    0.52": each one saved half a life at half strength in some other round,
+    none lifted the weakest round, and the Sun Avatar never came before the
+    MOAB-class round that ended both games. best() leaves the cash to such
+    a step unless a purchase lifts the weakest round by MIN_LIFT or more."""
+    plan, idx = getattr(ex, "plan", None), getattr(ex, "idx", None)
+    if not plan or idx is None or idx >= len(plan):
+        return None
+    step = plan[idx]
+    if step.get("do") not in ("place", "upgrade"):
+        return None
+    try:
+        cost = ex._first_step_cost(step)
+    except Exception:       # a step the executor cannot price (tower gone): no claim on the cash
+        return None
+    if cost is None or cost == float("inf") or cost <= cash:
+        return None
+    return step, cost
 
 
 def strongest(forecast, tried, worst, before):

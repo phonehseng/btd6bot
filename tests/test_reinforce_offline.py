@@ -195,6 +195,30 @@ def test_a_big_idle_bank_is_spent_even_when_the_model_sees_no_gain():
     assert R.best(ex, Blind(), 5000, 40, 40, lives=100)[0] == "wait"
 
 
+def test_a_waiting_plan_step_keeps_the_cash_from_no_gain_purchases():
+    # Castle Revenge Impoppable and Haunted Half Cash (2026-11-04): the plan
+    # waited for a Sun Avatar while reinforce bought upgrades the model rated
+    # "0.52 -> 0.52" - they saved lives in other rounds, never the weakest.
+    class Stuck(ToyForecast):
+        def margin(self, towers, rnd):
+            if rnd == 45:
+                return 0.5                       # nothing affordable moves it
+            return 1.0 + 0.1 * sum(t.tiers[0] for t in towers)
+    ex = ToyEx()
+    status, found = R.best(ex, Stuck(), 1000, 40, 80)
+    assert status == "buy" and found[0].cost == 300, "without a waiting plan step: bought"
+    ex.plan, ex.idx = [{"do": "upgrade", "id": "s1", "to": "3-0-0"}], 0
+    ex._first_step_cost = lambda step: 20000
+    assert R.waiting_plan_step(ex, 1000) == (ex.plan[0], 20000)
+    assert R.best(ex, Stuck(), 1000, 40, 80) == ("wait", None)
+    # a plan step the cash already covers makes no claim
+    ex._first_step_cost = lambda step: 800
+    assert R.waiting_plan_step(ex, 1000) is None
+    # a purchase that does lift the weakest round still outbids the plan
+    ex._first_step_cost = lambda step: 20000
+    assert R.best(ex, ToyForecast(), 500, 37, 80)[0] == "buy"
+
+
 def test_a_crisis_with_nothing_to_grow_tries_a_new_tower_kind():
     # Spice Islands Impoppable (2026-11-04): every standing tower was at its
     # last tier and no land spot was left, so "0 purchases tried" while
