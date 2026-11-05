@@ -96,6 +96,20 @@ def test_calibration_keeps_the_no_income_cap():
     assert n == 0 and p <= P.NO_INCOME_GENERAL_CAP + 1e-9 < P.CONFIDENT_P, p
 
 
+def test_a_no_income_record_does_not_vouch_for_an_income_mode():
+    # Infernal Reverse (2026-11-04): solo_dartling, 13 of 18 in Deflation and
+    # 0 of 1 in Medium, was rated p=0.88 in Reverse and lost at round 47
+    s = spec("s", {"deflation": 0.6, "medium": 0.85, "reverse": 0.85})
+    acc = account_with([("s", "deflation", 13, 5), ("s", "medium", 0, 1)])
+    cal = P._Calibration(acc, {"s": s})
+    assert cal.get("s", "deflation") > 1.0                     # its own economy: lifted
+    assert cal.get("s", "reverse") < 1.0                       # income: only the Medium loss counts
+    # with no income game at all, the Deflation record cannot lift it either
+    acc = account_with([("s", "deflation", 13, 0)])
+    cal = P._Calibration(acc, {"s": s})
+    assert cal.get("s", "reverse") == 1.0, cal.get("s", "reverse")
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

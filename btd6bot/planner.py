@@ -1065,15 +1065,27 @@ class _Calibration:
                 a[0] += st.get("wins", 0)
                 a[1] += exp
         k = self.SHRINK
+        # The strategy's record is also pooled per economy (income modes vs
+        # no-income modes like Deflation), because winning with the whole
+        # defence bought up front says little about a game that must grow
+        # with its income: solo_dartling won 13 of 18 Deflation games, which
+        # lifted it to p=0.88 in Infernal Reverse - lost at round 47 with the
+        # strategy's only other income game (Workshop Medium) also lost
+        # (case 20261104_232745).
+        self.pooled_econ: dict[tuple[str, bool], float] = {}
         per_strategy: dict[str, list[float]] = {}
-        for (sid, _mode), (w, e) in acc.items():
-            t = per_strategy.setdefault(sid, [0.0, 0.0])
-            t[0] += w
-            t[1] += e
+        per_econ: dict[tuple[str, bool], list[float]] = {}
+        for (sid, mode), (w, e) in acc.items():
+            for t in (per_strategy.setdefault(sid, [0.0, 0.0]),
+                      per_econ.setdefault((sid, _no_income(mode)), [0.0, 0.0])):
+                t[0] += w
+                t[1] += e
         for sid, (w, e) in per_strategy.items():
             self.pooled[sid] = self._clip((w + k) / (e + k))
+        for key, (w, e) in per_econ.items():
+            self.pooled_econ[key] = self._clip((w + k) / (e + k))
         for (sid, mode), (w, e) in acc.items():
-            parent = self._transfer(self.pooled[sid])
+            parent = self._parent(sid, mode)
             self.f[(sid, mode)] = self._clip((w + k * parent) / (e + k))
         for (sid, mode, cat), (w, e) in acc_cat.items():
             self.by_cat[(sid, mode, cat)] = self._clip((w + k * self.f[(sid, mode)]) / (e + k))
@@ -1090,6 +1102,16 @@ class _Calibration:
         than losing them does."""
         return f if f <= 1.0 else f ** 0.5
 
+    def _parent(self, sid: str, mode: str) -> float:
+        """The factor a mode borrows from the strategy's other modes: its
+        record in modes of the same economy (see _transfer), or - with no
+        game in that economy - its record in the other economy, which may
+        only lower it (a Deflation record cannot vouch for an income game)."""
+        same = self.pooled_econ.get((sid, _no_income(mode)))
+        if same is not None:
+            return self._transfer(same)
+        return min(1.0, self.pooled.get(sid, 1.0))
+
     def get(self, sid: str, mode: str, category: str | None = None) -> float:
         """The factor for a strategy in a mode - on maps of `category` when
         given and the strategy has games there, else over all maps."""
@@ -1097,7 +1119,7 @@ class _Calibration:
             return self.by_cat[(sid, mode, category)]
         if (sid, mode) in self.f:
             return self.f[(sid, mode)]
-        return self._transfer(self.pooled.get(sid, 1.0))
+        return self._parent(sid, mode)
 
 
 def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode: str,
