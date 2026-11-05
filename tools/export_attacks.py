@@ -46,8 +46,8 @@ data/game_model/attacks.json:
 
 TOWER = {"range", "global", "attacks": [ATTACK], "subtowers": [...],
          "buffs": [...], "income": {...}, "zones": [...], "air_unit": {...}}
-ATTACK = {"name", "range", "camo", "targets", "targeting", "unbounded",
-          "own_radius", "weapons": [WEAPON]}
+ATTACK = {"name", "range", "camo", "camo_shared", "targets", "targeting",
+          "unbounded", "own_radius", "weapons": [WEAPON]}
 WEAPON = {"name", "rate", "count", "burst", "projectile": PROJECTILE, ...}
 PROJECTILE = {"name", "pierce", "radius", "camo", "hits", "motion", "speed",
               "lifespan", "damage": {"amount", "immune", "type"},
@@ -88,7 +88,7 @@ log = logging.getLogger("export_attacks")
 
 ROOT = TOOLS.parent
 OUT_FILE = dsm.OUT_DIR / "attacks.json"
-EXPORT_VERSION = 1
+EXPORT_VERSION = 2   # 2: "camo_shared" on an attack whose camo filter defers to the shared range
 
 # Bloon properties (BloonProperties flags) that damage types are immune to,
 # in the five names of normal play; "Immune"/"Glass" are event mechanics.
@@ -263,6 +263,12 @@ class AttackExporter:
     def bloon_filter(self, filters):
         """What a list of filters lets through, as a small dict:
         camo: False when camo bloons are filtered out;
+        camo_shared: the camo filter is a FilterInvisibleSubIntelModel (the
+            Monkey Sub's Advanced Intel): its FilterBloon lets every bloon
+            through and only CantTargetCamo() reports the sub's own
+            blindness, so the shared-range target supplier decides - the
+            sub hits camo bloons that stand in a camo-detecting tower's
+            range. "camo" stays False (the sub alone sees none);
         only_tags / excluded_tags: bloon tags required / refused
             (FilterWithTag(s)Model: inclusive False keeps only bloons WITH the
             tag(s), inclusive True removes them - checked against the game's
@@ -287,6 +293,8 @@ class AttackExporter:
                 out["hits_nothing"] = True
             elif t == "FilterAllExceptTargetModel":
                 out["target_only"] = True
+            elif t == "FilterInvisibleSubIntelModel" and f.get("isActive"):
+                out["camo_shared"] = True
         out["only_tags"] = sorted(set(out["only_tags"]))
         out["excluded_tags"] = sorted(set(out["excluded_tags"]))
         return out
@@ -639,6 +647,9 @@ class AttackExporter:
     def attack(self, a, depth=0, tower_global=False, air_tower=False):
         """AttackModel / AttackAirUnitModel.
         camo: may target camo bloons (no active invisibility filter on the attack);
+        camo_shared: may target the camo bloons another tower's camo
+            detection covers (Advanced Intel: the intel filter of
+            bloon_filter on a map-wide tower);
         targets: only_tags / excluded_tags of the attack's own filter;
         targeting: how it picks targets by default (the first match wins) -
             "normal" (it has first/last/close/strong modes, also their
@@ -685,6 +696,11 @@ class AttackExporter:
             "name": short_name(a),
             "range": num(a.get("range")),
             "camo": flt["camo"],
+            # The sub carries the intel filter and the shared-range suppliers at
+            # every tier; only Advanced Intel makes its range map-wide
+            # (isGlobalRange), and only then does it shoot what other towers
+            # see - a bare sub pops no camo next to a ninja.
+            "camo_shared": (flt.get("camo_shared") and tower_global) or None,
             "only_tags": flt["only_tags"],
             "excluded_tags": flt["excluded_tags"],
             "targeting": targeting,

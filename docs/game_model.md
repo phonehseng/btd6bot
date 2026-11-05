@@ -191,6 +191,13 @@ So Easy Wizard Monkey is 212.5 -> **$210** (not 215), Impoppable Sharp Shots is
   Precision, Night Vision Goggles, Cold Snap ("Metal Freeze": "Can freeze and
   pop Lead and Camo Bloons"); Submerge and Support only reveals camo, its
   attack comes with Bloontonium Reactor (4-x-x).
+- Advanced Intel (Sub 2-x-x) is the one camo filter that is not a block:
+  `FilterInvisibleSubIntel.FilterBloon` returns true for every bloon and
+  only `CantTargetCamo()` reports the sub's own blindness, so the
+  shared-range target supplier hands the sub the camo bloons a
+  camo-detecting tower in play sees. `attacks.json` marks such an attack
+  `camo_shared` (export version 2) and `dps_model.station_for` counts it
+  as camo whenever another tower on the board detects camo.
 
 ## After a game update
 

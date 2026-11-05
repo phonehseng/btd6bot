@@ -264,6 +264,10 @@ class Source:
     bank        seconds of production a "track" source can stockpile
     lasts_rounds  its projectiles outlive the round (Long Life Spikes): the
                 stockpile carries over into the next round
+    camo_shared the tower sees no camo itself but shoots the camo bloons
+                another tower's detection covers (a Monkey Sub's Advanced
+                Intel: attacks.json "camo_shared"); station_for turns it
+                into camo when such a tower stands on the board
     """
     name: str
     shots: float
@@ -286,6 +290,7 @@ class Source:
     lasts_rounds: bool = False
     dot_total: float = 0.0     # damage over time a hit applies (total)
     dot_rate: float = 0.0      # ... per second on one bloon
+    camo_shared: bool = False
 
     def can_hit(self, lay):
         """Can this source damage this layer at all?"""
@@ -435,6 +440,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             lasts_rounds=bool(p.get("lasts_rounds")),
             dot_total=dot.get("amount", 0.0) * ticks if dot else 0.0,
             dot_rate=(dot.get("amount", 0.0) / max(dot.get("interval") or 1.0, 1e-3)) if dot else 0.0,
+            camo_shared=bool(attack.get("camo_shared")) and not camo,
         ))
     pierce = max(1.0, p.get("pierce", 1.0))
     contacts = min(pierce, CONTACTS_PER_CARRIER)
@@ -1381,6 +1387,16 @@ MAP_WIDE_NEEDS_SIGHT = ("sniper",)
 
 
 @lru_cache(maxsize=None)
+def detects_camo(kind, tiers):
+    """Does a tower crosspath see camo bloons on its own - some aimed
+    source of its profile targets them (the game's camo detection)? Spikes
+    laid on the track pop camo bloons without seeing them and do not count:
+    an Advanced Intel sub shares what a tower *targets*."""
+    p = profile(kind, tiers)
+    return bool(p) and any(s.camo and s.placement != "track" for s in p.sources)
+
+
+@lru_cache(maxsize=None)
 def tower_set(kind):
     """The game's tower set of a tower kind ("primary", "military", "magic",
     "support"), from data/game_model/towers.json "category"; None if unknown."""
@@ -1431,6 +1447,12 @@ def station_for(t, placed, track, sight=None):
     sources = _buffed_sources(p, buffs_here)
     if not sources:
         return None
+    if any(s.camo_shared and not s.camo for s in sources) and any(
+            o.tid != t.tid and detects_camo(o.kind, o.tiers) for o in placed):
+        # Advanced Intel: the sub shoots the camo bloons another tower's
+        # detection covers. Its reach is already the whole track here (the
+        # shared range), so the detecting tower's range is not cut out.
+        sources = [Source(**{**s.__dict__, "camo": True}) if s.camo_shared else s for s in sources]
     # all of a tower's sources share one station: its time is spent once
     reach_radius = p.range * range_mult
     if p.pattern_radius:
