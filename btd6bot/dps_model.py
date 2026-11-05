@@ -321,8 +321,53 @@ class Profile:
     own_radius: float = 0.0          # circle swept around the tower itself (Glaive Lord's glaives)
 
 
+# The bloon properties a damage type can be unable to pop (Layer.immune).
+IMMUNITIES = ("lead", "black", "white", "purple")
+
+
 def _immune_set(entry):
-    return frozenset(x for x in (entry or {}).get("immune", []) if x in ("lead", "black", "white", "purple"))
+    return frozenset(x for x in (entry or {}).get("immune", []) if x in IMMUNITIES)
+
+
+# An attack that throws a potion at OTHER TOWERS rather than at bloons: the
+# Alchemist's Acidic Mixture Dip and Berserker Brew. The export lists them
+# as attacks whose projectile hits its target only and carries an
+# "Add<Potion>ToProjectileModel" behaviour - the game attaches it to the
+# buffed tower's projectiles. Such an attack is no damage source (it has no
+# damage of its own, so _flatten_projectile already skips it) but a support
+# buff, like a village's.
+POTION_MARK = "ToProjectileModel"
+
+
+def _potion_buffs(entry):
+    """Support buffs derived from a crosspath's potion attacks (POTION_MARK):
+    [{"kind": "damage_type", "props": [...], "bonus": {...}, "radius": r}].
+
+    The dip's projectile names bonus damage per bloon tag ("Lead": +1,
+    "Ceramic": +1, "Moabs": +1); a bonus against a tag that is also an
+    immunity (IMMUNITIES: "Lead") means the buffed tower's projectiles pop
+    that bloon, so the buff lifts that immunity and adds the bonus to every
+    hit on the tag. Without it the model thought a Ninja + Alchemist build
+    popped no lead at all: Dark Dungeons Magic Monkeys Only (2026-11-05,
+    loss case 20261105_070008) rated every lead round at the floor (0.06)
+    from round 23 on although the game held rounds 28 and 30, so reinforce
+    could not tell one purchase from another and nothing was bought for
+    round 37's 15 leads. A brew whose numbers the export does not carry
+    (Berserker Brew: rate, damage, pierce) adds no buff yet."""
+    out = []
+    for a in entry.get("attacks", []):
+        for w in a.get("weapons", []):
+            p = w.get("projectile") or {}
+            marks = [o for o in p.get("other", []) if isinstance(o, str) and o.endswith(POTION_MARK)]
+            if not marks or not p.get("target_only"):
+                continue
+            bonus = p.get("bonus") or {}
+            props = sorted({t.lower() for t in bonus if t.lower() in IMMUNITIES})
+            if not props and not bonus:
+                continue
+            out.append({"kind": "damage_type", "props": props, "bonus": bonus,
+                        "radius": a.get("range") or entry.get("range"), "name": marks[0]})
+    return out
 
 
 def _reach_of(p, placement, attack_range):
@@ -540,7 +585,7 @@ def profile(kind, tiers):
               default=0.0)
     return Profile(kind=kind, tiers=tuple(int(t) for t in tiers_code(tiers)), range=entry.get("range", 0.0),
                    is_global=bool(entry.get("global")), sources=sources, aim_bound=aim_bound and not sources,
-                   buffs=entry.get("buffs", []),
+                   buffs=list(entry.get("buffs", [])) + _potion_buffs(entry),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
                    pattern_radius=pattern, own_radius=own)
 
@@ -1305,10 +1350,14 @@ class Placed:
 
 
 def _buffed_sources(p, buffs_here):
-    """A profile's sources with support buffs applied (rate, pierce, camo)."""
+    """A profile's sources with support buffs applied: rate, pierce, camo,
+    and damage_type - a Monkey Intelligence Bureau village lets its towers
+    pop every bloon, an Alchemist's dip (_potion_buffs) the properties it
+    names ("props") and adds its bonus damage per tag."""
     out = []
     for s in p.sources:
         shots, single, pierce, camo = s.shots, s.shots_single, s.pierce, s.camo
+        immune, bonus = s.immune, dict(s.bonus)
         for b in buffs_here:
             if b["kind"] == "rate" and b.get("value"):
                 shots /= b["value"]
@@ -1317,7 +1366,14 @@ def _buffed_sources(p, buffs_here):
                 pierce += b["value"]
             elif b["kind"] == "camo":
                 camo = True
-        out.append(Source(**{**s.__dict__, "shots": shots, "shots_single": single, "pierce": pierce, "camo": camo}))
+            elif b["kind"] == "damage_type":
+                props = b.get("props")
+                immune = immune - frozenset(props) if props else frozenset()
+                for tag, extra in (b.get("bonus") or {}).items():
+                    cur = bonus.get(tag, {"mult": 1.0, "add": 0.0})
+                    bonus[tag] = {"mult": cur.get("mult", 1.0), "add": cur.get("add", 0.0) + extra.get("add", 0.0)}
+        out.append(Source(**{**s.__dict__, "shots": shots, "shots_single": single, "pierce": pierce, "camo": camo,
+                            "immune": immune, "bonus": bonus}))
     return out
 
 
