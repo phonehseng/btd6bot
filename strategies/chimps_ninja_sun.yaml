@@ -1,16 +1,31 @@
-# Impoppable / CHIMPS on land maps (R6-100, one life, no farms, no selling).
+# Hard / Impoppable / CHIMPS on land maps (R6-100, one life, no farms, no selling).
 # One leak loses the game, so defence is bought ahead of every threat and
-# nothing is spent on income. Spine: Obyn + Ninja/Alchemist core (camo, lead,
-# brew), Flash Bomb by R25, Sticky Bomb by ~R50 (BFB/ZOMG/DDT single target,
-# Ninja sees camo), 2-0-2 Village discount under two 3-0-2 Sun Avatars, a 2-3-0
-# MIB Village (all damage types + camo for everything near it), an exit
-# Spike Factory 2-0-4 for DDT leaks -> 2-0-5 Perma-Spike (tier 5) for the
-# R98 BAD. Super Ceramics after R80 are why two Sun Avatars are mandatory.
+# nothing is spent on income. Timed to the CHIMPS cash curve (no Double Cash,
+# no Fast Track, $650 at R6, Hard prices; tests/test_chimps_builds_offline.py
+# walks the plan against data/rounds.json): with the account's boosts in
+# Impoppable the same plan is simply bought earlier and the fill spends the rest.
+# Spine: Obyn + Ninja/Alchemist core (camo, lead, brew); Sticky Bomb n2 2-0-4
+# by R38 - the real MOAB damage, before the first MOAB at R40; a 2-0-2 Village
+# right after, so its 15% discount covers the tier 1-3 buys that follow; the
+# R63 rush answered by n1 4-0-2 (Bloonjitsu); ONE 3-0-2 Sun Avatar for
+# the R81+ super ceramics; a 2-3-0 MIB Village by ~R70 (camo and every damage
+# type for the towers near it); an exit Spike Factory 2-0-4 (DDT leaks)
+# -> 2-0-5 Perma-Spike by ~R88, so its spikes stockpile for R95-98 and the
+# R100 BAD.
+# Late money goes to blimp damage, not more Sun Avatars: a 3-0-2 Sun Avatar
+# deals ~100 single-target dps with no MOAB bonus (data/game_model/attacks.json),
+# and R98 is 8 ZOMG + 30 fortified BFB (100,640 top-layer HP in 30 s). So: a
+# Bloon Sabotage ninja 0-4-2 and a MOAB Assassin bomb 2-4-0 before the R80
+# ZOMG (abilities saved for blimp rounds), then Perma-Spike, then Maim MOAB
+# snipers 4-0-2.
+# Super Monkey's bottom path stops at tier 3 on this account: no Dark Champion.
 id: chimps_ninja_sun
 hero: obyn
 modes: [hard, impoppable, chimps]
 planner:
-  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 3, 2], super: [3, 0, 2], spike: [2, 0, 5]}
+  towers: {ninja: [4, 4, 4], alchemist: [4, 2, 0], village: [2, 3, 2], super: [3, 0, 2], spike: [2, 0, 5],
+           bomb: [2, 4, 0], sniper: [4, 0, 2]}
+  # chimps stays at 0.4: the re-timed plan has no CHIMPS evidence yet
   base_success: {hard: 0.9, impoppable: 0.5, chimps: 0.4}
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
@@ -21,32 +36,41 @@ plan:
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   - {do: upgrade, id: a1, to: 2-0-0}
-  - {do: upgrade, id: n1, to: 3-0-2}
-  - {do: upgrade, id: n2, to: 2-0-3}
-  - {do: upgrade, id: a1, to: 3-2-0}
+  # MOAB damage first: Sticky Bomb (towers.py "moab dmg") by R38
+  - {do: upgrade, id: n2, to: 2-0-4}
+  # the discount Village early: 15% off every tier 1-3 buy near it from here on
   - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
   - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: n1, to: 4-0-2}
-  - {do: upgrade, id: n2, to: 2-0-4}
-  - {do: upgrade, id: a1, to: 4-2-0}
-  - {do: place, id: n3, kind: ninja, role: support, near: [a1, v1], near_radius: 7}
-  - {do: upgrade, id: n3, to: 4-0-2}
+  # one Sun Avatar for the R81+ super ceramics (bought at the discount)
   - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
   - {do: upgrade, id: s1, to: 3-0-2}
-  - {do: place, id: sp1, kind: spike, role: exit}
-  - {do: upgrade, id: sp1, to: 2-0-4}
+  # MIB: camo and every damage type for the towers near it, by ~R70
   - {do: place, id: v2, kind: village, role: support, near: [s1], near_radius: 7}
   - {do: upgrade, id: v2, to: 2-3-0}
-  - {do: place, id: s2, kind: super, role: support, near: [v1, v2], near_radius: 8}
-  - {do: upgrade, id: s2, to: 3-0-2}
-  - {do: place, id: a2, kind: alchemist, role: support, near: [s1, s2], near_radius: 6}
-  - {do: upgrade, id: a2, to: 4-2-0}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  # blimp abilities: Bloon Sabotage (slows every blimp) and MOAB Assassin
+  - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8}
+  - {do: upgrade, id: n4, to: 0-4-2}
+  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7}
+  - {do: upgrade, id: b1, to: 2-4-0}
+  # Perma-Spike by ~R88: spikes stockpile for R95-98 and the R100 BAD
   - {do: upgrade, id: sp1, to: 2-0-5}
+  # Maim MOAB with what is left (global range; MIB lends it camo for DDTs)
+  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 7}
+  - {do: upgrade, id: sn1, to: 4-0-2}
+  - {do: target, id: sn1, mode: strong}
 fill:
-  - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 6}
-  - {do: upgrade, kind: ninja, to: 4-0-2}
-  - {do: place, kind: super, role: support, near: [v1, v2], near_radius: 9, max: 3}
-  - {do: upgrade, kind: super, to: 3-0-2}
+  # surplus (Impoppable's Double Cash pays for most of it): Stronger
+  # Stimulant for the core, then more blimp damage
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, kind: sniper, role: support, near: [v2], near_radius: 9, max: 4}
+  - {do: upgrade, kind: sniper, to: 4-0-2}
+  - {do: place, kind: bomb, role: support, near: [v2], near_radius: 9, max: 3}
+  - {do: upgrade, kind: bomb, to: 2-4-0}
   - {do: place, kind: spike, role: exit, max: 3}
   - {do: upgrade, kind: spike, to: 2-0-4}
 panic:
@@ -57,7 +81,7 @@ answers:
     - {do: upgrade, id: a1, to: 1-0-0}
     - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
-  moab: [{do: upgrade, id: n2, to: 2-0-3}]
+  moab: [{do: upgrade, id: n2, to: 2-0-4}]
   bfb: [{do: upgrade, id: n2, to: 2-0-4}]
   rush: [{do: upgrade, id: n1, to: 4-0-2}]
   zomg: [{do: upgrade, id: n2, to: 2-0-4}]
