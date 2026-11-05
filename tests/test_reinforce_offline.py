@@ -353,7 +353,12 @@ def test_a_plan_step_keeps_the_cash_only_when_reachable_and_better():
     # Perma-Spike went on a Super Monkey tier worth +0.03; Quad ABR: cash was
     # kept for a Glaive Lord no income could pay before the rush. Here the
     # plan waits for the $2,000 upgrade (+0.8 in ToyForecast) while the $300
-    # one (+0.1) would eat into the saving.
+    # one (+0.1) would eat into the saving. The rounds before 40 hold on
+    # their own (Calm): a round in trouble is the next test's case.
+    class Calm(ToyForecast):
+        def margin(self, towers, rnd):
+            return super().margin(towers, rnd) + (0.0 if rnd == 40 else 1.5)
+
     class Planned(ToyEx):
         income = 500.0                     # per round, counted toward the step
 
@@ -373,21 +378,77 @@ def test_a_plan_step_keeps_the_cash_only_when_reachable_and_better():
     # $600 at round 37, round 40 the weakest: three rounds of income make
     # $2,100 - the step is reachable and lifts more, so the cash stays
     assert R.payable_by(ex, 2000, 600, 40, 37) is True
-    assert R.best(ex, ToyForecast(), 600, 37, 80) == ("wait", None)
+    assert R.crisis_round(Calm(), ex, 37) is None
+    assert R.best(ex, Calm(), 600, 37, 80) == ("wait", None)
     # no income: the step cannot come before round 40 - the $300 is bought
     ex.income = 0.0
     assert R.payable_by(ex, 2000, 600, 40, 37) is False
-    status, found = R.best(ex, ToyForecast(), 600, 37, 80)
+    status, found = R.best(ex, Calm(), 600, 37, 80)
     assert status == "buy" and found[0].cost == 300, (status, found)
     # reachable, but rated below the purchase (a path-3 tier the model gives
     # nothing for): the $300 upgrade comes first
     ex.income = 500.0
     ex.plan[0]["to"] = "0-0-1"
     ex._next_path = lambda p, target: (3, 2000)
-    status, found = R.best(ex, ToyForecast(), 600, 37, 80)
+    status, found = R.best(ex, Calm(), 600, 37, 80)
     assert status == "buy" and found[0].cost == 300, (status, found)
     # an executor without an income figure cannot tell: the step is assumed reachable
     assert R.payable_by(ToyEx(), 2000, 600, 40, 37) is None
+
+
+def test_a_plan_step_out_of_reach_before_the_round_in_trouble_holds_nothing():
+    # Ancient Portal Impoppable (2026-11-05): from round 86 the round being
+    # played was rated 0.41-0.60, Perma-Spike ($36,000) was payable before
+    # the weakest round (96-98) but not before the round at hand, and every
+    # pick was vetoed "the cash stays for plan step" until the loss at 94.
+    class Planned(ToyEx):
+        cost = 2000                       # the waiting step; $500 a round comes in
+
+        def __init__(self):
+            super().__init__()
+            self.plan, self.idx = [{"do": "upgrade", "id": "s1", "to": "0-1-0"}], 0
+
+        def _first_step_cost(self, step):
+            return self.cost
+
+        def _next_path(self, p, target):
+            return (2, self.cost)
+
+        def income_until(self, due_round, rnd):
+            return 500.0 * max(0, due_round - rnd)
+    # round 37 itself is in trouble (ToyForecast: 0.3): the step cannot be
+    # paid before it from $600, although three rounds of income would pay
+    # it before round 40, the weakest - the $300 that lifts round 37 is bought
+    ex = Planned()
+    assert R.crisis_round(ToyForecast(), ex, 37) == 37
+    assert R.payable_by(ex, 2000, 600, 40, 37) is True      # the old rule kept the claim
+    assert R.payable_by(ex, 2000, 600, 37, 37) is False     # ... but round 37 cannot wait
+    status, found = R.best(ex, ToyForecast(), 600, 37, 80)
+    assert status == "buy" and found[0].cost == 300, (status, found)
+
+    # a pick that lifts nothing of the round in trouble (the model rates
+    # every board 0.2 but credits path 1 with a life saved somewhere)
+    class Flat(ToyForecast):
+        def margin(self, towers, rnd):
+            return 0.2
+
+        def leaks(self, towers, rounds, scale, per_round=False):
+            lost = {r: (101.0 if r == 45 else 100.0) - 10 * sum(t.tiers[0] for t in towers) for r in rounds}
+            return lost if per_round else sum(lost.values())
+    # with BLIND_SPEND_CASH idle the blind fallbacks run although a pick
+    # existed: the dearest upgrade is bought
+    ex = Planned()
+    ex.cost = 12_000                   # payable before round 45, not before 40
+    status, found = R.best(ex, Flat(), R.BLIND_SPEND_CASH, 40, 80, lives=100)
+    assert status == "buy" and found[0].cost == 2000, (status, found)
+    # a smaller bank is judged by the weakest round as before: a step income
+    # delivers before it keeps the cash from the no-lift pick (094f8de) ...
+    ex.cost = 7_000
+    assert R.best(ex, Flat(), 5000, 40, 80, lives=100) == ("wait", None)
+    # ... and one it cannot deliver holds nothing (Quad ABR, 7919935)
+    ex.cost = 12_000
+    status, found = R.best(ex, Flat(), 5000, 40, 80, lives=100)
+    assert status == "buy" and found[0].cost == 300, (status, found)
 
 
 def test_look_ahead_covers_the_rounds_left():

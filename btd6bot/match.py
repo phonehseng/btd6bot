@@ -85,14 +85,24 @@ class LivesTracker:
     * A read above `max_lives` (twice the mode's starting lives plus 25, room
       for bonus lives) is never believed, however steady - not even as the
       first read of the game, which would turn every true read into a leak.
+    * In a mode whose lives never change (`fixed`: Impoppable and CHIMPS,
+      one life and no way to gain any) max_lives is the starting count
+      itself. The lives crop starts at the heart's edge and the OCR adds a
+      phantom leading 1 to it: Ancient Portal Impoppable (2026-11-05) read
+      11 in 29 of 65 reads of a 1. The confirmed count survived that game,
+      but a game whose first five reads median to 11 would start there and
+      count the next true reads as a 10-life leak.
     """
     RISE_LIMIT = 50
     RISE_VOTES = 4
 
-    def __init__(self, start_lives=None):
+    def __init__(self, start_lives=None, fixed=False):
         self.confirmed = None
         self.reads = []                       # last 5 accepted reads
-        self.max_lives = 2 * start_lives + 25 if start_lives else None
+        if start_lives and fixed:
+            self.max_lives = start_lives
+        else:
+            self.max_lives = 2 * start_lives + 25 if start_lives else None
         self._cand, self._votes = None, 0     # an upward correction being voted on
 
     def median(self):
@@ -214,7 +224,8 @@ class Match:
         self.on_tower_choice = on_tower_choice
         self.stats = {"start": time.time(), "rounds": 0, "lives_lost": 0, "panic": 0}
         self._prev_lives_read = None
-        self._lives = LivesTracker((getattr(executor, "rules", None) or {}).get("lives"))
+        rules = getattr(executor, "rules", None) or {}
+        self._lives = LivesTracker(rules.get("lives"), fixed=bool(rules.get("one_life")))
         self._round_votes = RoundVotes()
         # Geared's gears turn after each round and carry their towers with
         # them: their remembered click spots are turned too (carried.py)
@@ -520,11 +531,7 @@ class Match:
                     if now - self._last_wait_log > 20:
                         self._last_wait_log = now
                         log.info("idle with $%d: %s", cash, getattr(self.ex, "waiting", "?"))
-                    # cash the strategy keeps for a threat's answer or its plan's
-                    # blimp damage is not spare - unless lives are falling now
-                    # (Spillway ABR 2026-11-04: a $430 ninja for round 49 left
-                    # round 40's Maim MOAB unaffordable)
-                    held = getattr(self.ex, "saving_for_threat", False) and not dropped
+                    held = self._cash_held(dropped, crisis)
                     if weak and not held and now - self._t_reinforce > REINFORCE_EVERY:
                         # the coming rounds look weak: the damage model picks
                         # what the spare cash buys (reinforce.py), the plan's
@@ -781,6 +788,27 @@ class Match:
             journal.current().leak(**fields)
         except Exception:
             log.exception("journal leak failed - carrying on")
+
+    def _cash_held(self, dropped, crisis):
+        """Is the cash the executor is saving (Executor.saving_for_threat: a
+        threat's answer or the plan's blimp damage) off limits to
+        reinforcing? Such cash is not spare - Spillway ABR (2026-11-04): a
+        $430 ninja for round 49 left round 40's Maim MOAB unaffordable -
+        unless lives are falling now, or the round being played is a crisis
+        round (_in_crisis: rated under forecast.CRISIS_MARGIN at its start).
+
+        In a crisis round the hold is for something that cannot help the
+        round at hand: the executor holds for a round at least this one, and
+        what it holds for this very round can no longer be bought before the
+        bloons (Ancient Portal Impoppable 2026-11-05, round 94: "idle with
+        $17562: saving for blimp damage before round 94" while round 94 was
+        being played, rated 0.45, and lost). _hold_for_crisis had held Play
+        for that round promising to spend the cash first; reinforce judges a
+        purchase on the round being played in a crisis (reinforce.lift), so
+        it is the right spender. surplus() still keeps off: the executor
+        checks saving_for_threat itself. Outside a crisis a hold for a round
+        two or three away stays whole (Spillway ABR again)."""
+        return bool(getattr(self.ex, "saving_for_threat", False)) and not dropped and not crisis
 
     def _reinforce(self, cash, rnd):
         """One model-chosen purchase (reinforce.py). True when one was bought;

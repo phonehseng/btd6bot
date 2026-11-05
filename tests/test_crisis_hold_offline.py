@@ -69,6 +69,21 @@ def test_no_hold_when_the_round_holds_or_cash_is_short_or_sends_are_continuous()
     assert not bare_match(0.48, {"continuous": True})._hold_for_crisis(40, 5000)
 
 
+def test_a_crisis_round_lets_reinforce_at_the_cash_the_executor_holds():
+    """Ancient Portal Impoppable (2026-11-05): round 94 was rated 0.45 and
+    the executor held all $17,562 "for blimp damage before round 94" while
+    round 94 was being played; reinforce never ran and the game was lost.
+    Outside a crisis the hold stays whole (Spillway ABR 2026-11-04)."""
+    m = bare_match(0.48)
+    m.ex.saving_for_threat = True
+    assert m._cash_held(dropped=False, crisis=False)
+    assert not m._cash_held(dropped=False, crisis=True)
+    assert not m._cash_held(dropped=True, crisis=False)
+    m.ex.saving_for_threat = False
+    assert not m._cash_held(dropped=False, crisis=False)
+    assert not bare_match(0.48)._cash_held(dropped=False, crisis=False)   # an executor without the flag
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
