@@ -2455,6 +2455,10 @@ class Executor:
     RAMP_OK = 1.0            # blimp damage in reach / blimp HP a round brings
     RAMP_OK_LETHAL = 1.4     # ... when the round's blimps leaking would end the game (ramp_bar)
     RAMP_PANIC = 0.4         # below this, the round before, buy blimp damage even mid-plan
+    # The damage model's margin at which a blimp round counts as held, whatever
+    # the blimp check says: the bar every map build is checked against (the
+    # defence still holds at half strength).
+    RAMP_MODEL_SAFE = 2.0
     DEFAULT_TRACK = 600.0    # world units of track when the map geometry is unknown
 
     def ramp_bar(self, load):
@@ -3118,14 +3122,40 @@ class Executor:
             if not load:
                 continue
             ratio = self.blimp_ratio(load)
+            bar = self.ramp_bar(load)
             if ("ramp", R) not in self.noted:
                 self.noted.add(("ramp", R))
-                bar = self.ramp_bar(load)
                 log.info("blimp check round %d: %.0f blimp HP, %.0f units of track; the defence "
                          "deals about %.1fx that in reach%s", R, load["hp"], self._track_length(),
                          ratio, "" if ratio >= bar else f" - short of the {bar:.1f}x wanted")
+            if ratio < bar and self._model_holds(R, rnd):
+                continue
             return R, load, ratio
         return None
+
+    def _model_holds(self, R, rnd):
+        """True when the damage model rates blimp round R at RAMP_MODEL_SAFE
+        or more on the board as it stands: the blimp check then gives way.
+
+        The blimp check is a rough sum (counters.json blimp_dps) that gives
+        villages and alchemists no credit, rates a 4-2-0 buccaneer like a
+        4-0-0, has no tier-5 entry for it and treats Carrier planes as short
+        range. On the CHIMPS map builds of 2026-11-05 it rated rounds 75-99
+        at 0.17-1.0x of its 1.4x one-life bar where the damage model gave 16,
+        so it bought loose aces, snipers and helis every round and the plan's
+        last big step (a $28k Carrier Flagship, a $21.6k Sun Avatar on End Of
+        The Road, lost at round 76) was never afforded. Where the model is
+        unsure (under RAMP_MODEL_SAFE, or no rating) the blimp check stands:
+        on Cargo Impoppable it rightly called round 94 short while the model
+        gave 0.66."""
+        rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
+        if not rated or rated[0] is None or rated[0] < self.RAMP_MODEL_SAFE:
+            return False
+        if ("ramp_model", R) not in self.noted:
+            self.noted.add(("ramp_model", R))
+            log.info("blimp check round %d: the damage model rates it %.2f - the blimp check gives way",
+                     R, rated[0])
+        return True
 
     def _dps_options(self, load):
         """Blimp damage to buy, most damage per dollar first: a placed tower

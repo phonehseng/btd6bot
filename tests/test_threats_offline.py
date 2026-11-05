@@ -396,6 +396,50 @@ def test_one_life_buys_blimp_damage_two_rounds_ahead():
     assert ex._answer_ramp(R, load, ratio, 20000, 38) == "bought", g.bought
 
 
+class _Forecast:
+    """A damage model that rates every round at one margin."""
+
+    def __init__(self, margin):
+        self.margin = margin
+
+    def worst(self, towers, rounds):
+        return self.margin, rounds[0]
+
+
+def _one_life_at_37(margin):
+    """The one-life board of the test above at round 37, with a damage model
+    rating every round at `margin`."""
+    plan = [{"do": "upgrade", "id": "n1", "to": "2-0-2"}]
+    towers = [("s1", "sniper", (2, 2, 0)), ("n1", "ninja", (2, 0, 1))]
+    g, ex = executor({"plan": plan}, towers=towers, cash=20000)
+    ex.rules.update(tough_moabs=False, one_life=True)
+    ex._init_threats()
+    ex.cash_seen = 20000
+    ex.forecast = _Forecast(margin)
+    return g, ex
+
+
+def test_the_blimp_check_gives_way_when_the_damage_model_holds_the_round():
+    """CHIMPS map builds (2026-11-05): the blimp check called rounds 75-99
+    short where the damage model gave 16, bought loose towers and starved the
+    plan's last big step. When the model rates the blimp round at
+    RAMP_MODEL_SAFE or more, no blimp damage is due for it."""
+    g, ex = _one_life_at_37(S.Executor.RAMP_MODEL_SAFE + 0.5)
+    assert ex.blimp_ratio(TH.round_blimp_load(ex.round_set, 40)) < ex.ramp_bar(
+        TH.round_blimp_load(ex.round_set, 40)), "the rough check alone calls round 40 short"
+    assert ex._ramp_due(37) is None, "the model holds round 40: nothing is due"
+    assert not ex.weak_now(39), "nor is round 40 weak for the cash holds"
+
+
+def test_the_blimp_check_stands_where_the_damage_model_is_unsure():
+    """Cargo Impoppable (2026-11-05): the model gave round 94 0.66 and the
+    blimp check rightly called it short. Under RAMP_MODEL_SAFE it still buys."""
+    g, ex = _one_life_at_37(S.Executor.RAMP_MODEL_SAFE - 0.5)
+    R, load, ratio = ex._ramp_due(37)
+    assert R == 40
+    assert ex._answer_ramp(R, load, ratio, 20000, 38) == "bought", g.bought
+
+
 def test_every_strategy_pops_every_bloon_in_time():
     """Each general strategy, in each mode it lists, played with the game's own
     income (no Double Cash, no farms counted): no round may bring a bloon the
