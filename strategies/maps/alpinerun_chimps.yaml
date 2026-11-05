@@ -82,7 +82,10 @@ planner:
   towers: {tack: [5, 2, 0], spike: [4, 2, 0], druid: [1, 3, 0], sniper: [5, 2, 0], village: [2, 3, 0],
            alchemist: [4, 0, 0], engineer: [1, 1, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes): every replay 2.04+
-  base_success: {chimps: 0.85}
+  # held back 2026-11-05 17:15: Lotus Island CHIMPS was lost at round 95 with
+  # $19.8k at round 90 where the executor-faithful replay had every step
+  # bought - the replay overstates live cash until that gap is fixed
+  base_success: {chimps: 0.5}
   maps: [Alpine Run]
 plan:
   - {do: place, id: t1, kind: tack, role: dps, at: [0.281, 0.589]}   # left zig-zags: R6-8 alone at 0-2-0

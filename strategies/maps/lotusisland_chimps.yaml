@@ -91,7 +91,10 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 2], sniper: [5, 2, 0], village: [2, 3, 0], alchemist: [3, 2, 0], boomerang: [3, 0, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.16+
-  base_success: {chimps: 0.85}
+  # held back 2026-11-05 17:15: Lotus Island CHIMPS was lost at round 95 with
+  # $19.8k at round 90 where the executor-faithful replay had every step
+  # bought - the replay overstates live cash until that gap is fixed
+  base_success: {chimps: 0.5}
   maps: [Lotus Island]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.743]}   # southern bay: 30% of the route
