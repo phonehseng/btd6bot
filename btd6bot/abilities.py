@@ -35,10 +35,12 @@ ability is missing or still cooling down does nothing in BTD6):
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 
+from . import threats as TH
 from . import towers as T
 from .account import round_xp
-from .strategy import THREATS
+from .strategy import MODE_RULES, THREATS
 
 log = logging.getLogger("abilities")
 
@@ -51,8 +53,41 @@ MAX_DT_S = 10.0               # longest real gap counted toward cooldowns betwee
 HERO_XP_OPTIMISM = 1.5        # "maybe unlocked": XP estimate x this
 HERO_XP_PESSIMISM = 0.8       # "certainly unlocked": XP estimate x this
 
-# Rounds with notable MOAB-class content even if the calendar would not say so.
-HEAVY_ROUNDS = {40, 60, 63, 76, 78, 80, 95, 98, 100}
+# Heavy rounds: the rounds whose MOAB-class HP (threats.round_blimp_load:
+# every blimp layer, fortified x2, from data/rounds.json) is at least this
+# share of the heaviest round the mode plays. 0.3 takes, in the standard
+# set to round 100: R92 (50 fortified MOABs + 4 ZOMGs, 0.32 of R98), R94
+# (25 BFBs + 6 ZOMGs, 0.54), R96 (30 BFBs + 40 fortified MOABs + 6 ZOMGs,
+# 0.69; Chutes Impoppable was lost there) and R98 itself; R97 (0.23) and
+# R100 (0.25) fall below it.
+HEAVY_SHARE = 0.3
+# Rounds picked by hand before HEAVY_SHARE, kept as a floor: their content is
+# notable in ways blimp HP alone does not show (R63's ceramic rush, the
+# first MOAB at R40 and BFB at R60, R100's BAD).
+HEAVY_FLOOR = frozenset({40, 60, 63, 76, 78, 80, 95, 98, 100})
+
+
+@lru_cache(maxsize=None)
+def heavy_rounds(set_name="standard", end_round=100):
+    """Heavy rounds of a round set up to end_round: HEAVY_FLOOR plus every
+    round whose blimp HP is at least HEAVY_SHARE of the peak round's
+    (rounds 1..end_round). Falls back to HEAVY_FLOOR without round data."""
+    loads = {r: (TH.round_blimp_load(set_name, r) or {}).get("hp", 0.0) for r in range(1, end_round + 1)}
+    peak = max(loads.values(), default=0.0)
+    heavy = {r for r, hp in loads.items() if peak and hp >= HEAVY_SHARE * peak}
+    return frozenset(heavy | {r for r in HEAVY_FLOOR if r <= end_round})
+
+
+# The full standard set (Impoppable and CHIMPS play to round 100).
+HEAVY_ROUNDS = heavy_rounds("standard", 100)
+
+
+def heavy_rounds_for(rules):
+    """Heavy rounds for a mode's rules (strategy.MODE_RULES entry): the
+    mode's round set (ABR has its own) up to its last round."""
+    mode = next((m for m, r in MODE_RULES.items() if r is rules), None)
+    end = (rules or {}).get("end_round") or 100
+    return heavy_rounds(TH.set_for_mode(mode), end)
 
 # XP needed per level for a 1.0x hero (Quincy): level L needs HERO_LEVEL_XP[L] in total.
 _LEVEL_STEP = [180, 460, 1000, 1860, 3280, 5180, 8320, 9380, 13620, 16380,
@@ -102,7 +137,7 @@ TOWER_ABILITIES = {
     "Tech Terror": (45, "on_cooldown"),
     "The Anti-Bloon": (45, "on_cooldown"),
     "Legend of the Night": (60, "on_cooldown"),
-    "Bloon Sabotage": (60, "on_cooldown"),
+    "Bloon Sabotage": (60, "moab"),               # slows the whole wave: see ROUND_START
     "Grand Saboteur": (60, "moab"),
     "Transforming Tonic": (60, "on_cooldown"),
     "Total Transformation": (60, "on_cooldown"),
@@ -116,6 +151,14 @@ TOWER_ABILITIES = {
     "Overclock": (45, "never"),                     # needs a tower picked
     "Ultraboost": (45, "never"),
 }
+
+# 'moab' abilities that act on every bloon of the wave, including those still
+# to spawn, rather than on a target on screen. They are pressed at the very
+# start of a round, without MOAB_DELAY_S (R98's ZOMGs spawn within its first
+# 5 game seconds), and only in heavy rounds (heavy_rounds_for), so their
+# 60 s cooldown is not spent on a light round right before a heavy one.
+# A crisis or a leak still fires them like any other ability.
+ROUND_START = {"Bloon Sabotage"}
 
 
 def _tower_ability_index():
@@ -192,7 +235,12 @@ def moab_start_round(rules=None):
 
 
 def is_moab_round(rnd, rules=None):
-    return rnd is not None and (rnd in HEAVY_ROUNDS or rnd >= moab_start_round(rules))
+    return rnd is not None and (rnd in heavy_rounds_for(rules) or rnd >= moab_start_round(rules))
+
+
+def is_heavy_round(rnd, rules=None):
+    """A round heavy with blimps for this mode (see heavy_rounds)."""
+    return rnd is not None and rnd in heavy_rounds_for(rules)
 
 
 # -- planner ------------------------------------------------------------------------
@@ -323,6 +371,10 @@ class AbilityPlanner:
                 continue
             elif use == "on_cooldown":
                 reason = "cooldown"
+            elif use == "moab" and name in ROUND_START:
+                if not is_heavy_round(rnd, self.rules) or self.round_start is None:
+                    continue
+                reason = "heavy round"
             elif use == "moab":
                 if not is_moab_round(rnd, self.rules) or self.round_start is None \
                         or now - self.round_start < MOAB_DELAY_S:

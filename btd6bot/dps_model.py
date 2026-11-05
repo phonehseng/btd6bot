@@ -103,13 +103,18 @@ SMALL_LAYER_HP = 4.0        # layers with at most this health (all but ceramics 
 # Each bot mode is a game difficulty plus mode Mods (ModeType.GetModesForDifficulty:
 # Impoppable and CHIMPS are played on Hard). Rules are read from these Mod
 # assets in attacks.json "modes" (speed, health, cash).
+# CHIMPS is Hard plus the "Clicks" Mod alone, as gamemodel.MODE_MODS prices
+# it: Clicks carries its own rounds (6 to 100) and locks the farms, and the
+# Impoppable Mod holds nothing else but those rounds and its 1.12 price
+# multiplier (no speed, health or cash rule; attacks.json "modes"), so
+# listing it here only made CHIMPS towers cost Impoppable prices.
 MODE_MODS = {
     "easy": ["Easy"], "primary_only": ["Easy", "PrimaryOnly"], "deflation": ["Easy", "Deflation"],
     "medium": ["Medium"], "military_only": ["Medium", "MilitaryOnly"], "reverse": ["Medium", "Reverse"],
     "apopalypse": ["Medium", "Apopalypse"],
     "hard": ["Hard"], "magic_only": ["Hard", "MagicOnly"], "double_hp": ["Hard", "DoubleMoabHealth"],
     "half_cash": ["Hard", "HalfCash"], "abr": ["Hard", "AlternateBloonsRounds"],
-    "impoppable": ["Hard", "Impoppable"], "chimps": ["Hard", "Impoppable", "Clicks"],
+    "impoppable": ["Hard", "Impoppable"], "chimps": ["Hard", "Clicks"],
 }
 
 
@@ -313,6 +318,7 @@ class Profile:
     buffs: list = field(default_factory=list)
     income: float = 0.0              # cash per round it makes itself
     pattern_radius: float = 0.0      # a plane's flight circle (Monkey Ace)
+    own_radius: float = 0.0          # circle swept around the tower itself (Glaive Lord's glaives)
 
 
 def _immune_set(entry):
@@ -415,7 +421,8 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
         alive = min(subtower_cap, shots * lifespan) if lifespan else min(subtower_cap, max(1.0, shots * 30.0))
         alive *= t.get("share", 1.0)         # one of several sentry types per spawn
         for a in t.get("attacks", []):
-            _flatten_attack(a, out, multiplier=alive, depth=depth + 1, parent_camo=camo_chain)
+            _flatten_attack(a, out, multiplier=alive, depth=depth + 1, parent_camo=camo_chain,
+                            tower_range=t.get("range"))
 
 
 def _trigger_rates(weapons):
@@ -443,12 +450,29 @@ def _trigger_rates(weapons):
     return rates
 
 
-def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=False):
+def _attack_range(a, tower_range):
+    """The range an attack really works in. An attack without a range check
+    of its own (range >= 1000 in the model) reaches what the export's
+    "unbounded" says: the whole map ("map", kept as it is), the circle its
+    projectiles sweep around the tower ("self": Glaive Lord's orbiting
+    glaives, own_radius), or the tower's range ("tower": Master Bomber's
+    sticky bombs). An export without the field is read as before: map-wide."""
+    unbounded = a.get("unbounded")
+    if unbounded == "self":
+        return a.get("own_radius") or tower_range or a.get("range", 0.0)
+    if unbounded == "tower" and tower_range:
+        return tower_range
+    return a.get("range", 0.0)
+
+
+def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=False, tower_range=None):
     """Add an attack's damage sources (per weapon) to out.
-    follows: the tower is a helicopter that flies to the bloons (global reach)."""
+    follows: the tower is a helicopter that flies to the bloons (global reach).
+    tower_range: the owning tower's range (see _attack_range)."""
     targeting = a.get("targeting", "normal")
     if targeting in ("point", "cursor"):
         return
+    a = dict(a, range=_attack_range(a, tower_range))
     if targeting in ("track", "random"):
         placement = "track"
         camo_chain = True                 # thrown onto the track: sees nothing, hits what passes
@@ -509,14 +533,16 @@ def profile(kind, tiers):
         if a.get("targeting") in ("point", "cursor") and any(
                 (w.get("projectile") or {}) for w in a.get("weapons", [])):
             aim_bound = True
-        _flatten_attack(a, sources, follows=follows)
+        _flatten_attack(a, sources, follows=follows, tower_range=entry.get("range"))
     income = (entry.get("income") or {})
     pattern = max((a.get("pattern_radius") or 0.0 for a in entry.get("attacks", [])), default=0.0)
+    own = max((a.get("own_radius") or 0.0 for a in entry.get("attacks", []) if a.get("unbounded") == "self"),
+              default=0.0)
     return Profile(kind=kind, tiers=tuple(int(t) for t in tiers_code(tiers)), range=entry.get("range", 0.0),
                    is_global=bool(entry.get("global")), sources=sources, aim_bound=aim_bound and not sources,
                    buffs=entry.get("buffs", []),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
-                   pattern_radius=pattern)
+                   pattern_radius=pattern, own_radius=own)
 
 
 # ===========================================================================
@@ -1298,11 +1324,33 @@ def _buffed_sources(p, buffs_here):
 MAP_WIDE_NEEDS_SIGHT = ("sniper",)
 
 
+@lru_cache(maxsize=None)
+def tower_set(kind):
+    """The game's tower set of a tower kind ("primary", "military", "magic",
+    "support"), from data/game_model/towers.json "category"; None if unknown."""
+    return (_json(str(GAME_MODEL / "towers.json")).get(kind) or {}).get("category")
+
+
+def buff_reaches(b, kind):
+    """Does support buff b (an attacks.json "buffs" entry) apply to a tower of
+    this kind? Its "sets" filter (Primary Training / Primary Mentoring:
+    Primary towers only) and "towers" filter (game tower ids) must let the
+    tower through; a buff without filters reaches every tower."""
+    if b.get("sets") and tower_set(kind) not in b["sets"]:
+        return False
+    if b.get("towers"):
+        game_id = ((attacks().get("towers") or {}).get(kind) or {}).get("game_id")
+        if game_id not in b["towers"]:
+            return False
+    return True
+
+
 def station_for(t, placed, track, sight=None):
     """The Station of one Placed tower, or None when it does no damage or
     reaches no track. Support buffs of the other towers in `placed`
     (villages: camo, attack rate, range, pierce) apply when this tower stands
-    inside the supporter's range. sight(x, z, pts) -> visible mask, used for
+    inside the supporter's range and the buff's filters let its kind through
+    (buff_reaches). sight(x, z, pts) -> visible mask, used for
     towers that need line of sight (placement.needs_sight)."""
     from . import gamemodel
     from .placement import needs_sight
@@ -1316,6 +1364,8 @@ def station_for(t, placed, track, sight=None):
         if q is None:
             continue
         for b in q.buffs:
+            if not buff_reaches(b, t.kind):
+                continue
             reach = b.get("radius") or q.range
             if b.get("global") or math.hypot(o.x - t.x, o.z - t.z) <= reach + (gamemodel.footprint_radius(t.kind) or 6.0):
                 if b["kind"] == "range" and b.get("value"):
@@ -1329,6 +1379,8 @@ def station_for(t, placed, track, sight=None):
     reach_radius = p.range * range_mult
     if p.pattern_radius:
         reach_radius = p.pattern_radius + p.range * range_mult
+    # orbiting glaives sweep their own circle, which may reach past the range
+    reach_radius = max(reach_radius, p.own_radius)
     is_global = p.is_global or any(s.placement == "global" for s in sources)
     travel = max((s.travel for s in sources if s.radial), default=0.0)
     # Snipers reach the whole map but still need line of sight; the other

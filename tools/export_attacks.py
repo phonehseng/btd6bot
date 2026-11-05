@@ -46,7 +46,8 @@ data/game_model/attacks.json:
 
 TOWER = {"range", "global", "attacks": [ATTACK], "subtowers": [...],
          "buffs": [...], "income": {...}, "zones": [...], "air_unit": {...}}
-ATTACK = {"name", "range", "camo", "targets", "targeting", "weapons": [WEAPON]}
+ATTACK = {"name", "range", "camo", "targets", "targeting", "unbounded",
+          "own_radius", "weapons": [WEAPON]}
 WEAPON = {"name", "rate", "count", "burst", "projectile": PROJECTILE, ...}
 PROJECTILE = {"name", "pierce", "radius", "camo", "hits", "motion", "speed",
               "lifespan", "damage": {"amount", "immune", "type"},
@@ -109,6 +110,10 @@ QUIET_TYPES = ("DisplayModel", "ProjectileFilterModel", "ScaleProjectileModel",
 
 # Recursion guard: sub-towers spawn projectiles that may spawn towers again.
 MAX_DEPTH = 6
+
+# An attack range at least this long is the model's "no range check"
+# (9,999,999): see AttackExporter.unbounded for what it means per attack.
+UNBOUNDED_RANGE = 1000.0
 
 
 # ===========================================================================
@@ -597,7 +602,41 @@ class AttackExporter:
         out["projectile"] = self.projectile(p, depth) if isinstance(p, dsm.Obj) else None
         return clean(out)
 
-    def attack(self, a, depth=0):
+    def unbounded(self, a, suppliers, targeting, tower_global, air_tower):
+        """What an attack with no range of its own (range >= UNBOUNDED_RANGE)
+        really reaches, or None for an attack with a normal range:
+
+        "map"    the whole map: the tower is map-wide in the game's own
+                 model (TowerModel.isGlobalRange: snipers, Submerge and
+                 Support, Psi), it flies (AirUnitModel: aces, helis; or an
+                 AttackAirUnitModel), it is aimed by hand (Mortar's
+                 TargetSelectedPointModel, Dartling's TargetPointerModel),
+                 or it strikes through walls (attackThroughWalls: Druid of
+                 the Jungle's vines grow at the target, Inferno Ring's
+                 meteors home in on it);
+        "self"   it fires at the tower's own spot without looking for a
+                 target (fireWithoutTarget and no target supplier: Glaive
+                 Lord's orbiting glaives, which sweep a circle of their
+                 projectile's radius around the tower);
+        "tower"  any other: an ordinary ground tower's thrown sub-attack
+                 that leaves the range check to the tower (Master Bomber's
+                 sticky bombs) - the tower's range applies.
+
+        The 9,999,999 range made Glaive Lord and Master Bomber count as
+        covering the whole track: one Glaive Lord lifted Quiet Street
+        Impoppable round 98 from 0.18 to 1.63 in the damage model. Taking
+        the tower's own range for "tower" errs on the safe side for the
+        sticky bombs, whose reach in play is not read from the model."""
+        if num(a.get("range")) < UNBOUNDED_RANGE:
+            return None
+        if tower_global or air_tower or a.type == "AttackAirUnitModel" or targeting in ("point", "cursor") \
+                or a.get("attackThroughWalls"):
+            return "map"
+        if a.get("fireWithoutTarget") and not any(s.startswith("Target") for s in suppliers):
+            return "self"
+        return "tower"
+
+    def attack(self, a, depth=0, tower_global=False, air_tower=False):
         """AttackModel / AttackAirUnitModel.
         camo: may target camo bloons (no active invisibility filter on the attack);
         targets: only_tags / excluded_tags of the attack's own filter;
@@ -609,7 +648,13 @@ class AttackExporter:
             TargetSelectedPointModel: a hand-picked spot - Mortar Monkey),
             "random" (a random spot nearby: banana farms, sentries);
         air: fired from a plane / helicopter that moves (AttackAirUnitModel);
-        pattern_radius: radius of the plane's flight pattern (Monkey Ace)."""
+        pattern_radius: radius of the plane's flight pattern (Monkey Ace);
+        unbounded: for an attack without a range check, what it reaches
+            ("map", "self", "tower": see unbounded());
+        own_radius: for "self", the largest radius of its projectiles - the
+            circle it sweeps around the tower.
+        tower_global / air_tower: the owning tower is map-wide in the model
+        (isGlobalRange) / flies (AirUnitModel)."""
         behaviors = objs(a.get("behaviors"))
         attack_filters = [f for b in behaviors if self.view.is_a(b, "AttackFilterModel")
                           for f in objs(b.get("filters"))]
@@ -632,6 +677,10 @@ class AttackExporter:
         else:
             targeting = "normal"
         patterns = [num(b.get("radius")) for b in behaviors if b.type in ("CirclePatternModel", "FigureEightPatternModel")]
+        weapons = [self.weapon(w, depth) for w in objs(a.get("weapons"))]
+        unbounded = self.unbounded(a, suppliers, targeting, tower_global, air_tower)
+        own_radius = max(((w.get("projectile") or {}).get("radius", 0.0) for w in weapons), default=0.0) \
+            if unbounded == "self" else None
         return clean({
             "name": short_name(a),
             "range": num(a.get("range")),
@@ -642,15 +691,43 @@ class AttackExporter:
             "air": a.type == "AttackAirUnitModel" or None,
             "pattern_radius": min(patterns) if patterns else None,
             "through_walls": bool(a.get("attackThroughWalls")),
-            "weapons": [self.weapon(w, depth) for w in objs(a.get("weapons"))],
+            "unbounded": unbounded,
+            "own_radius": own_radius,
+            "weapons": weapons,
         })
 
     # -- tower-level behaviours ----------------------------------------------------
+    def tower_set_names(self, filters):
+        """The tower sets a support model's FilterInSetModel filters let
+        through, as lower-case names like towers.json "category" ("primary",
+        "military", "magic", "support"); None when nothing filters by set.
+        TowerSet values are bit flags (AllMonkeyTowerSets = 15 is all four),
+        so a combined value is split into its named single bits."""
+        names = []
+        for f in filters:
+            if f.type != "FilterInSetModel":
+                continue
+            values = [v for v in (f.get("towerSets") or []) if isinstance(v, int)] or [f.get("towerSet")]
+            for v in values:
+                if not isinstance(v, int):
+                    continue
+                for bit, name in self.view.tower_sets.items():
+                    if bit and bit & (bit - 1) == 0 and v & bit and name.lower() not in names:
+                        names.append(name.lower())
+        return sorted(names) or None
+
     def buffs(self, behaviors):
         """Support models that change OTHER towers in range (villages,
         temples, ...): rate (multiplier on attack interval), range, pierce,
         damage, camo (VisibilitySupportModel: towers in range see camo),
-        damage_type (DamageTypeSupportModel: MIB), discount (DiscountZoneModel)."""
+        damage_type (DamageTypeSupportModel: MIB), discount (DiscountZoneModel).
+
+        Which towers a buff reaches: "sets" (FilterInSetModel - Primary
+        Training and Primary Mentoring only buff Primary towers) and
+        "towers" (towerBaseIdList or FilterInBaseTowerIdModel: game tower
+        ids). Without these the 3-x-x / 4-x-x village counted for every
+        tower in range: on Castle Revenge Impoppable, a board without one
+        Primary tower, 2-0-0 -> 4-0-0 lifted round 63 from 0.57 to 0.64."""
         out = []
         for b in behaviors:
             t = b.type
@@ -661,6 +738,7 @@ class AttackExporter:
                     "DamageModifierSupportModel": "damage_modifier"}.get(t)
             if kind is None or b.get("onlyAffectParagon"):
                 continue
+            filters = objs(b.get("filters"))
             value = None
             for key in ("multiplier", "pierce", "increase", "discountMultiplier", "percentIncrease"):
                 if isinstance(b.get(key), (int, float)) and not isinstance(b.get(key), bool):
@@ -670,7 +748,10 @@ class AttackExporter:
                 "kind": kind, "value": value, "additive": num(b.get("additive")) or None,
                 "global": bool(b.get("isGlobal") or b.get("isGlobalRange")),
                 "radius": num(b.get("customRadius")) if b.get("isCustomRadius") else None,
-                "towers": list(b.get("towerBaseIdList") or []) or None,
+                "towers": list(dict.fromkeys([*(b.get("towerBaseIdList") or []), *(
+                    i for f in filters if f.type == "FilterInBaseTowerIdModel"
+                    for i in (f.get("baseIds") or []) if isinstance(i, str))])) or None,
+                "sets": self.tower_set_names(filters),
             }))
         return out
 
@@ -712,7 +793,9 @@ class AttackExporter:
         """One TowerModel (a crosspath, a hero level or a sub-tower)."""
         behaviors = [b for b in objs(t.get("behaviors"))
                      if not any(c in b.type for c in dsm.COSMETIC) and not self.view.is_a(b, "AbilityModel")]
-        attacks = [self.attack(b, depth) for b in behaviors if self.view.is_a(b, "AttackModel")]
+        air_tower = any(b.type == "AirUnitModel" for b in behaviors)
+        attacks = [self.attack(b, depth, tower_global=bool(t.get("isGlobalRange")), air_tower=air_tower)
+                   for b in behaviors if self.view.is_a(b, "AttackModel")]
         air = None
         for b in behaviors:
             if b.type == "AirUnitModel":
@@ -721,11 +804,12 @@ class AttackExporter:
                         air = {"movement": "pattern" if m.type == "PathMovementModel" else "follows",
                                "speed": num(m.get("speed") or m.get("maxSpeed"))}
         expire = next((b for b in behaviors if b.type == "TowerExpireModel"), None)
-        ranges = [a["range"] for a in attacks if a.get("range")]
         return clean({
             "name": t.get("_name"),
             "range": num(t.get("range")),
-            "global": bool(t.get("isGlobalRange")) or any(r >= 1000 for r in ranges),
+            # map-wide only when the model says so or an attack really
+            # reaches the whole map (see AttackExporter.unbounded)
+            "global": bool(t.get("isGlobalRange")) or any(a.get("unbounded") == "map" for a in attacks),
             "attacks": attacks,
             "buffs": self.buffs(behaviors),
             "income": self.income(behaviors, attacks),
