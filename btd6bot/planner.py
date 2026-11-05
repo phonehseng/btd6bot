@@ -846,6 +846,15 @@ def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
 # record shows better.
 DOUBLE_CASH_LOSS_FACTOR = 0.6
 
+# Fast Track starts a Hard-family game at round ~22 with the cash of the
+# skipped rounds - halved in a half-cash mode. Sulfur Springs Half Cash
+# (2026-11-04) began round 22 with $4,420 against zebras, purples and camo;
+# the damage model rated the opening 0.06 and the game was lost at round 27
+# with all 100 lives. In Half Cash the early rounds are where the money is
+# built up, and Fast Track skips them, so the win chance there is scaled by
+# this factor (the half-cash record so far: 1 win, 3 losses).
+FAST_TRACK_HALF_CASH_FACTOR = 0.5
+
 
 # Map fit (mapfit.py): the share of the early track that the plan's damage
 # towers can reach from cells where they may stand. At FULL_FIT or more the
@@ -873,10 +882,14 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     then the account's Double Cash (when it pays in this mode), then how well
     the plan's towers can reach this map's track."""
     from .boosts import double_cash_applies
+    from .strategy import MODE_RULES
+    boosts = getattr(account, "boosts", {}) or {}
     p = _prior(s, map_name, account.map_category(map_name), mode)
     p *= strategy_readiness(s, account, mode)
-    if double_cash_applies(getattr(account, "boosts", {}), mode):
+    if double_cash_applies(boosts, mode):
         p = 1.0 - (1.0 - p) * DOUBLE_CASH_LOSS_FACTOR
+    if boosts.get("fast_track") and MODE_RULES.get(mode, {}).get("half_cash"):
+        p *= FAST_TRACK_HALF_CASH_FACTOR
     p *= map_fit_factor(s, map_name, mode)
     # the bot could not build its defence on this map before (any mode, any
     # build): every mode there is doubted like a lost one until a win

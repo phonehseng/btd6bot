@@ -32,6 +32,19 @@ def test_the_removal_box_is_read():
     assert 0.11 < kx < 0.17 and 0.45 < ky < 0.52, box
 
 
+def test_high_finance_build_box_is_read():
+    """High Finance words the same box "BUILD FOR $1,500" (a loss still from
+    2026-11-04, 960x600); read at full size too, where OCR gives "$1.5OO"."""
+    img = cv2.imread(str(FIX / "build_platform_box.png"))
+    for im in (img, cv2.resize(img, (1920, 1200), interpolation=cv2.INTER_CUBIC)):
+        box = find_removal_box(im, words_of(im))
+        assert box is not None and box["price"] == 1500, box
+        cx, cy = box["confirm"]
+        assert 0.20 < cx < 0.26 and 0.32 < cy < 0.40, box
+        kx, ky = box["cancel"]
+        assert 0.08 < kx < 0.14 and 0.32 < ky < 0.40, box
+
+
 def test_no_box_no_purchase():
     img = cv2.imread(str(FIX / "remove_kelp_none.png"))
     assert find_removal_box(img, words_of(img)) is None

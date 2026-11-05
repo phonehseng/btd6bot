@@ -228,6 +228,16 @@ class Menus:
                     self.inp.click(w.x, w.y)
                     time.sleep(0.6)
                     return True
+            # an obstacle's "Remove/Build FOR $N" box (in-game cash) has no
+            # cancel word, only a red X: clicking the X buys nothing. Left
+            # open, it held High Finance Deflation (2026-11-04) until lost.
+            from .game import find_removal_box
+            box = find_removal_box(self.s.grab(), self.words)
+            if box and box["cancel"]:
+                log.warning("obstacle purchase box left open - closing it with its X")
+                self.inp.click(*box["cancel"])
+                time.sleep(0.4)
+                return True
             log.warning("purchase screen with no way out found - not clicking")
             return False
         for b in POPUP_BUTTONS:

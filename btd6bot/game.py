@@ -1077,6 +1077,10 @@ class Game:
 # Clicking a removable obstacle (Peninsula's kelp, Dark Castle's trees...)
 # opens a box "Remove FOR $500" with a red X and a green check under the text;
 # the box pauses the game. Clicking outside it cancels.
+# High Finance's empty lots open the same box worded "BUILD FOR $1,500" (a
+# platform that becomes tower ground). Only "remove" was read, so on High
+# Finance Deflation (2026-11-04) the box was left open, taken for a purchase
+# screen, and the game ran on with $12,120 unspent until it was lost.
 REMOVE_BOX_BELOW = 0.16     # how far below the text (screen height) the buttons sit
 REMOVE_BOX_SIDE = 0.16      # and how far left/right of the text's centre
 
@@ -1102,15 +1106,24 @@ def _colour_blob(img, region, lo, hi):
 
 
 def find_removal_box(img, words):
-    """The "Remove FOR $N" box in a frame: {"price", "confirm", "cancel"}
-    (button centres as screen fractions; a button may be None), or None when
-    no such box is showing."""
+    """The "Remove FOR $N" (or "Build FOR $N") box in a frame:
+    {"price", "confirm", "cancel"} (button centres as screen fractions; a
+    button may be None), or None when no such box is showing.
+
+    "build" alone is a common word, so it counts only followed by "for"."""
     import re
     from .vision import norm
-    text = next((w for w in words if "remove" in norm(w.text)), None)
+
+    def is_box_text(t):
+        t = norm(t)
+        return "remove" in t or ("build" in t and "for" in t)
+    text = next((w for w in words if is_box_text(w.text)), None)
     if text is None:
         return None
-    digits = re.findall(r"\d[\d,]*", text.text.split("$")[-1]) or re.findall(r"\d[\d,]*", text.text)
+    # OCR reads the price's zeros as letter O and its comma as a dot
+    # ("$1.5OO"), so both are mended before the digits are taken
+    tail = text.text.split("$")[-1].replace("O", "0").replace("o", "0").replace(".", ",")
+    digits = re.findall(r"\d[\d,]*", tail) or re.findall(r"\d[\d,]*", text.text)
     price = parse_int(digits[-1]) if digits else None
     below = (text.y, text.y + REMOVE_BOX_BELOW)
     # the green check sits right of the text's centre, the red X left of it

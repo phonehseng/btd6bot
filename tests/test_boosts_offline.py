@@ -52,6 +52,21 @@ def test_double_cash_cuts_the_loss_chance():
     assert abs(boosted - min(0.98, expected)) < 1e-9, (plain, boosted)
 
 
+def test_fast_track_doubts_half_cash():
+    """Fast Track skips the early rounds Half Cash builds its money in
+    (Sulfur Springs Half Cash, 2026-11-04: round 22 with $4,420, lost)."""
+    acc = AccountState()
+    acc.apply_level(60)
+    s = P.EXAMPLE_STRATEGIES[0]
+    acc.boosts = {"double_cash": True}
+    without = P.prior_win_probability(acc, s, "Monkey Meadow", "half_cash")
+    acc.boosts = {"double_cash": True, "fast_track": True}
+    with_ft = P.prior_win_probability(acc, s, "Monkey Meadow", "half_cash")
+    assert with_ft < without, (without, with_ft)
+    # other modes are not touched by this factor
+    assert P.prior_win_probability(acc, s, "Monkey Meadow", "hard") > with_ft
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
