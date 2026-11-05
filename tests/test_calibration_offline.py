@@ -62,6 +62,27 @@ def test_games_in_the_mode_itself_still_decide():
     assert cal.get("s", "hard") < 1.0 < cal.get("s", "medium")
 
 
+def test_a_mode_is_calibrated_per_map_category():
+    # double_hp_sniper_sun in ABR: nearly every beginner map won, every
+    # expert map lost - Muddy Puddles (expert) must not keep the mode's average
+    s = spec("s", {"abr": 0.85})
+    acc = AccountState()
+    beginner = [m for m in MAPS if acc.map_category(m) == "beginner"][:8]
+    expert = [m for m in MAPS if acc.map_category(m) == "expert"][:4]
+    for m in beginner:
+        acc.record_result(m, "abr", "s", True)
+    for m in expert:
+        acc.record_result(m, "abr", "s", False)
+    cal = P._Calibration(acc, {"s": s})
+    mode_f = cal.get("s", "abr")
+    assert cal.get("s", "abr", "expert") < mode_f < cal.get("s", "abr", "beginner"), cal.by_cat
+    assert cal.get("s", "abr", "advanced") == mode_f           # no games there: the mode's factor
+    untried_expert = [m for m in MAPS if acc.map_category(m) == "expert"][4]
+    p, _ = P.win_probability(acc, s, untried_expert, "abr", calib=cal)
+    p_mode = min(0.98, P.prior_win_probability(acc, s, untried_expert, "abr") * mode_f)
+    assert p < p_mode, (p, p_mode)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

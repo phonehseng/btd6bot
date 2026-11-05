@@ -1015,16 +1015,25 @@ class _Calibration:
     def __init__(self, account: AccountState, strategies: Mapping[str, StrategySpec]):
         self.f: dict[tuple[str, str], float] = {}
         self.pooled: dict[str, float] = {}
+        # third level, (strategy, mode, map category), shrunk towards the
+        # mode's factor. One factor per mode hid how differently a mode goes
+        # on easy and hard maps: double_hp_sniper_sun in ABR won 9 of 10 on
+        # beginner maps but 6 of 15 on advanced and 0 of 4 on expert ones,
+        # and Muddy Puddles ABR (expert) was still rated 0.68 - and lost at
+        # the Fast Track start (case 20261104_195247).
+        self.by_cat: dict[tuple[str, str, str], float] = {}
         acc: dict[tuple[str, str], list[float]] = {}
+        acc_cat: dict[tuple[str, str, str], list[float]] = {}
         for m, mode, sid, st in account.iter_strategy_stats():
             s = strategies.get(sid)
             if s is None or m not in MAPS or mode not in MODES:
                 continue
             games = st.get("wins", 0) + st.get("losses", 0)
             exp = prior_win_probability(account, s, m, mode) * games
-            a = acc.setdefault((sid, mode), [0.0, 0.0])
-            a[0] += st.get("wins", 0)
-            a[1] += exp
+            for a in (acc.setdefault((sid, mode), [0.0, 0.0]),
+                      acc_cat.setdefault((sid, mode, account.map_category(m)), [0.0, 0.0])):
+                a[0] += st.get("wins", 0)
+                a[1] += exp
         k = self.SHRINK
         per_strategy: dict[str, list[float]] = {}
         for (sid, _mode), (w, e) in acc.items():
@@ -1036,6 +1045,8 @@ class _Calibration:
         for (sid, mode), (w, e) in acc.items():
             parent = self._transfer(self.pooled[sid])
             self.f[(sid, mode)] = self._clip((w + k * parent) / (e + k))
+        for (sid, mode, cat), (w, e) in acc_cat.items():
+            self.by_cat[(sid, mode, cat)] = self._clip((w + k * self.f[(sid, mode)]) / (e + k))
 
     @staticmethod
     def _clip(f: float) -> float:
@@ -1049,7 +1060,11 @@ class _Calibration:
         than losing them does."""
         return f if f <= 1.0 else f ** 0.5
 
-    def get(self, sid: str, mode: str) -> float:
+    def get(self, sid: str, mode: str, category: str | None = None) -> float:
+        """The factor for a strategy in a mode - on maps of `category` when
+        given and the strategy has games there, else over all maps."""
+        if category is not None and (sid, mode, category) in self.by_cat:
+            return self.by_cat[(sid, mode, category)]
         if (sid, mode) in self.f:
             return self.f[(sid, mode)]
         return self._transfer(self.pooled.get(sid, 1.0))
@@ -1061,7 +1076,7 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
     """Beta posterior mean and number of games for (map, mode, strategy)."""
     prior = prior_win_probability(account, s, map_name, mode)
     if calib is not None:
-        prior = min(0.98, max(0.01, prior * calib.get(s.id, mode)))
+        prior = min(0.98, max(0.01, prior * calib.get(s.id, mode, account.map_category(map_name))))
         # a record from other modes can make a build likely in a Hard-family
         # mode it has never played, never confident (CONFIDENT_P): that takes
         # games in the mode itself
