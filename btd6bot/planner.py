@@ -828,11 +828,21 @@ def _pick_hero(s: StrategySpec, account: AccountState) -> str | None:
     return None
 
 
+def is_own_map_build(s: StrategySpec, map_name: str) -> bool:
+    """True for a build researched for this one map (strategies/maps,
+    strategies/optimized): its allowlist is exactly this map. A general
+    build with a long map allowlist (e.g. a water build for 24 maps) is not,
+    nor is an achievement plan, whose single pinned map is where the
+    achievement is earned rather than where the build was proven."""
+    return (s.maps is not None and len(s.maps) == 1 and map_name in s.maps
+            and not s.achievement)
+
+
 def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
     """Declared success rate scaled by map difficulty (complete build)."""
     base = s.base_success.get(mode, 0.0)
     w = MODE_MAP_WEIGHT.get(mode, MODE_GROUP_MAP_WEIGHT[MODES[mode].group])
-    if s.maps is not None and len(s.maps) == 1 and not s.achievement:
+    if is_own_map_build(s, map_name):
         # a map's own researched build (strategies/maps): its declared rate
         # is already about THIS map, so its difficulty is not counted twice
         w *= OWN_MAP_WEIGHT
@@ -952,6 +962,18 @@ MAP_LOSS_FLOOR = 0.3
 # until the confident ones are played, and match.WeakBuild still checks the
 # finished build before Play.
 NO_INCOME_GENERAL_CAP = 0.76
+
+
+def boost_applies(boosts: Mapping[str, Any], mode: str) -> bool:
+    """Does Double Cash or Fast Track change a game in ``mode`` for an
+    account with these ``boosts``? Double Cash as boosts.double_cash_applies
+    says; Fast Track everywhere the game allows powers (CHIMPS switches both
+    off: MODE_RULES "no_powers")."""
+    from .boosts import double_cash_applies
+    from .strategy import MODE_RULES
+    if double_cash_applies(boosts, mode):
+        return True
+    return bool(boosts.get("fast_track")) and not MODE_RULES.get(mode, {}).get("no_powers")
 
 
 def _no_income(mode: str) -> bool:
@@ -1122,6 +1144,14 @@ class _Calibration:
             self.f[(sid, mode)] = self._clip((w + k * parent) / (e + k))
         for (sid, mode, cat), (w, e) in acc_cat.items():
             self.by_cat[(sid, mode, cat)] = self._clip((w + k * self.f[(sid, mode)]) / (e + k))
+        # Kept for get(): the raw records, the modes each strategy played and
+        # the account's boosts, to tell whether a borrowed factor was earned
+        # with Double Cash / Fast Track in a mode that has neither.
+        self._acc, self._acc_cat = acc, acc_cat
+        self._boosts = getattr(account, "boosts", {}) or {}
+        self._modes_played: dict[str, set[str]] = {}
+        for sid, mode in acc:
+            self._modes_played.setdefault(sid, set()).add(mode)
 
     @staticmethod
     def _clip(f: float) -> float:
@@ -1153,9 +1183,35 @@ class _Calibration:
                 own = min(own, shared)
         return own
 
+    def boosted_elsewhere(self, sid: str, mode: str) -> bool:
+        """True when the strategy's games in other modes were played with a
+        boost (boost_applies) that ``mode`` does not have - CHIMPS, where the
+        game switches Double Cash and Fast Track off."""
+        if boost_applies(self._boosts, mode):
+            return False
+        return any(boost_applies(self._boosts, m)
+                   for m in self._modes_played.get(sid, ()) if m != mode)
+
     def get(self, sid: str, mode: str, category: str | None = None) -> float:
         """The factor for a strategy in a mode - on maps of `category` when
-        given and the strategy has games there, else over all maps."""
+        given and the strategy has games there, else over all maps.
+
+        A record earned with Double Cash or Fast Track may lower a mode that
+        has neither, never lift it: the factor borrowed from the other modes
+        is capped at 1.0 there, and the mode's own record (boost-free, like
+        the mode) is shrunk towards that capped factor. All 31
+        chimps_ninja_sun Impoppable games ran with both boosts; CHIMPS
+        starts at round 6 with $650 and no boost at all."""
+        if self.boosted_elsewhere(sid, mode):
+            k = self.SHRINK
+            f = min(1.0, self._parent(sid, mode))
+            if (sid, mode) in self._acc:
+                w, e = self._acc[(sid, mode)]
+                f = self._clip((w + k * f) / (e + k))
+                if category is not None and (sid, mode, category) in self._acc_cat:
+                    w, e = self._acc_cat[(sid, mode, category)]
+                    f = self._clip((w + k * f) / (e + k))
+            return f
         if category is not None and (sid, mode, category) in self.by_cat:
             return self.by_cat[(sid, mode, category)]
         if (sid, mode) in self.f:
@@ -1174,7 +1230,18 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
         # mode it has never played, never confident (CONFIDENT_P): that takes
         # games in the mode itself
         if MODES[mode].difficulty == "hard" and (s.id, mode) not in calib.f:
-            prior = min(prior, UNTESTED_HARD_P)
+            cap = UNTESTED_HARD_P
+            # CHIMPS (one life, no income towers, no boosts) with no game of
+            # its own: UNTESTED_HARD_P (0.84) sits above the CHIMPS bar
+            # (min_p_chimps 0.80), so a general build would clear it on its
+            # other modes' record alone. Only a build made for this map
+            # (is_own_map_build: strategies/maps, strategies/optimized) may
+            # reach the bar untested; any other build, including a general
+            # one with a multi-map allowlist or an achievement plan pinned to
+            # its map, stays just under it until it has CHIMPS games of its own.
+            if MODES[mode].group == "chimps" and not is_own_map_build(s, map_name):
+                cap = min(cap, p_threshold(mode, cfg) - 0.01)
+            prior = min(prior, cap)
         # calibration must not lift a prior over its map-ceiling cap: Last
         # Resort Primary Only (ceiling 0.33) was capped at 0.5, then x1.38 for
         # how primary_only plays on expert maps, played at p=0.69 and lost at
@@ -1818,7 +1885,7 @@ def _sort_key(c: _Cand) -> tuple:
     confident = 1 if c.p >= CONFIDENT_P else 0
     # a map's own researched build (strategies/maps: one map only) and the
     # owner's preferred plans come first
-    own_map = c.s.maps is not None and len(c.s.maps) == 1 and not c.s.achievement
+    own_map = is_own_map_build(c.s, c.map)
     preferred = 1 if own_map or c.s.id in PREFERRED_STRATEGIES else 0
     learned = 1 if c.tier in ("H", "HS") and c.learned else 0
     within = c.p if c.tier == "HF" else c.score

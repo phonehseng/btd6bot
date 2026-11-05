@@ -1,6 +1,8 @@
 """The NEXT file names the next game (Runner.owners_pick): "Map / mode
 [/ strategy]", played once ahead of the planner. Written so the owner can
 send the bot into a CHIMPS run on a chosen map (2026-11-05) and watch it.
+CHIMPS needs the map's Impoppable medal, and a one-life pick under its bar
+needs "!force" (more in test_chimps_planner_offline.py).
 Offline: a temporary NEXT file and a full account.
 Run: python tests/test_owners_pick_offline.py"""
 import logging
@@ -26,6 +28,7 @@ def pick(line):
             f.write_text(line, encoding="utf-8")
         bot = R.Bot.__new__(R.Bot)
         bot.account = F.full_account()
+        bot.account.medals = {"Alpine Run": {"impoppable": True}}   # unlocks its CHIMPS
         bot.strats = load_all()
         with mock.patch.object(R, "NEXT_FILE", f):
             plan = bot.owners_pick(R.planner_specs(bot.strats, bot.account))
@@ -34,7 +37,7 @@ def pick(line):
 
 
 def test_a_chimps_pick_becomes_a_plan_with_the_best_chimps_strategy():
-    plan, left = pick("Alpine Run / chimps")
+    plan, left = pick("Alpine Run / chimps !force")
     assert plan is not None and not left
     assert (plan.map, plan.mode_key, plan.mode, plan.difficulty) == ("Alpine Run", "chimps", "chimps", "hard")
     assert plan.strategy_id == "chimps_ninja_sun"
@@ -42,7 +45,7 @@ def test_a_chimps_pick_becomes_a_plan_with_the_best_chimps_strategy():
 
 
 def test_a_named_strategy_is_used():
-    plan, _ = pick("alpine run / chimps / chimps_ninja_sun")
+    plan, _ = pick("alpine run / chimps / chimps_ninja_sun !force")
     assert plan.strategy_id == "chimps_ninja_sun"
 
 

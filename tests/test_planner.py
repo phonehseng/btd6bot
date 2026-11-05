@@ -431,6 +431,10 @@ def test_hard_submode_chain_after_hard():
     for mode in ("abr", "impoppable"):
         acc.record_result("Monkey Meadow", mode, "late_game_chimps", True, minutes=20.0)
     assert acc.mode_unlocked("Monkey Meadow", "chimps")
+    # a general build clears the CHIMPS bar only with CHIMPS games of its
+    # own (win_probability): one won elsewhere
+    other = next(m for m in beginner if m != "Monkey Meadow")
+    acc.record_result(other, "chimps", "late_game_chimps", True, minutes=23.0)
     _, _, cands = P.rank_games(acc)
     ch = [c for c in cands if c.map == "Monkey Meadow" and c.mode == "chimps"]
     assert ch and max(c.p for c in ch) >= P.DEFAULT_CONFIG.min_p_chimps
