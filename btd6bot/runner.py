@@ -20,7 +20,7 @@ from .match import NO_DEFENCE_ERROR, Match, WeakBuild
 from .menus import Menus
 from .scanner import scan_placement, scan_water
 from .screen import GameNotFound, Screen
-from .strategy import Executor, coverage, hero_for, invested_cash, load_all, usable
+from .strategy import PRICE_FAMILY, Executor, coverage, hero_for, invested_cash, load_all, usable
 from .vision import norm
 
 log = logging.getLogger("runner")
@@ -49,8 +49,11 @@ PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main m
 # The owner's pick for the next game: a line "Map / mode [/ strategy]", e.g.
 # "Alpine Run / chimps". Played once (the file is removed when the game is
 # chosen) ahead of the planner's order; a beaten or unplayable pick is
-# ignored with a log line and the planner's order is used.
+# ignored with a log line and the planner's order is used. A one-life pick
+# (Impoppable, CHIMPS) under its win-chance bar is refused unless the line
+# ends with "!force", e.g. "Alpine Run / chimps !force".
 NEXT_FILE = ROOT_DIR / "NEXT"
+FORCE_TAG = "!force"
 from .status import STATE_FILE, set_state  # noqa: E402,F401
 
 
@@ -285,6 +288,21 @@ def _code_stamp():
     return max((f.stat().st_mtime for f in files), default=0)
 
 
+def game_difficulty(plan):
+    """The price table the in-game model (Game) uses for `plan`: the mode's
+    price family (strategy.PRICE_FAMILY), not the difficulty button.
+
+    CHIMPS is a Hard mode in the game (prices x1.08, gamemodel.MODE_MODS),
+    not Impoppable (x1.2). Pricing it as Impoppable expected Obyn at $780
+    (he costs $700) and a Super Monkey at $3,000 ($2,700); with a 2-0-2
+    village the panel prices then fell below every discount the tier reader
+    allows (Game._tier_for_price), so a drifted tier could not be put right
+    (the Polyphemus CHIMPS loss). Menus still click plan.difficulty and
+    plan.mode, so CHIMPS is still the mode started."""
+    fallback = plan.difficulty if plan.difficulty in ("easy", "medium", "hard") else "hard"
+    return PRICE_FAMILY.get(plan.mode_key, fallback)
+
+
 def _tested(account, sid, mode):
     """Has this strategy won this mode on this account before?"""
     for key, st in (account.strategy_stats or {}).items():
@@ -390,6 +408,7 @@ class Bot:
         self._hero_failed = set()  # heroes the picker could not equip this session
         self._errors = _load_errors()  # error streak, survives restarts (see _game_error)
         self._medals_due = False   # sweep map medals at the next account check (account switched)
+        self._auto_start_seen = False  # the last game saw BTD6's Auto Start on (_warn_auto_start)
 
     # -- navigation ---------------------------------------------------------------
     def to_main_menu(self, tries=12):
@@ -880,9 +899,7 @@ class Bot:
                          allow_achievement=bool(strat.get("achievement")))
         if not ok:
             raise RuntimeError(f"{plan.strategy_id} not usable for {plan.map} {plan.mode_key}: {why}")
-        diff = {"easy": "easy", "medium": "medium", "hard": "hard"}.get(plan.difficulty, "hard")
-        if plan.mode_key in ("impoppable", "chimps"):
-            diff = "impoppable"
+        diff = game_difficulty(plan)
         # the hero was equipped from the main menu (equip_hero_for); the game
         # reads the equipped hero's name again when it is placed
         hero = self.account_selected_hero()
@@ -942,6 +959,9 @@ class Bot:
         g.on_hero = lambda hid: setattr(self.account, "selected_hero", hid)
         res = Match(g, self.menus, model, ex, self.account,
                     on_tower_choice=tower_chooser(self.account)).play()
+        # Match saw the Play button never idle: BTD6's Auto Start is on
+        # (warned before the next one-life game, see _warn_auto_start)
+        self._auto_start_seen = bool(res.get("auto_start"))
         won = res.get("outcome") == "victory"
         # towers that played earned XP: their "can't afford" notes are stale
         forget_short(self.account, {p.kind for p in g.towers.values()} | strategy_towers(strat))
@@ -1063,6 +1083,7 @@ class Bot:
                     self._idle(1800, "idle: nothing to play", code_stamp)
                     continue
                 log.info("NEXT: %s", plan.reason)
+                self._warn_auto_start(plan)
                 set_state(f"opening {plan.map} {plan.mode_key}", game=f"{plan.map} {plan.mode_key}")
                 self._mm_before = self.read_mm()
                 try:  # spend tower XP on this plan's upgrades before it needs them
@@ -1519,14 +1540,35 @@ class Bot:
 
     def owners_pick(self, specs):
         """The game named in the NEXT file as a GamePlan, or None. The file
-        is consumed either way so a bad line is not retried every game."""
-        from .planner import GamePlan, _normalise_strategies, _strategy_available, _strategy_fits
+        is consumed either way so a bad line is not retried every game.
+
+        The line is "Map / mode [/ strategy]" (NEXT_FILE). Without a named
+        strategy the fitting one with the highest win chance is used. The
+        pick is refused, with a warning, when:
+
+        - the map/mode is already beaten (never replay);
+        - the mode is locked on this account (CHIMPS needs the map's
+          Impoppable medal: AccountState.mode_unlocked);
+        - the mode is one-life (Impoppable, CHIMPS: rules "one_life") and
+          the win chance - planner.win_probability with the calibration
+          rank_games uses - is under the mode's bar (planner.p_threshold),
+          unless the line ends with "!force" (FORCE_TAG). A one-life game
+          has no second chance; "!force" is the owner taking that risk on
+          purpose.
+
+        The plan carries the computed p, which is also logged."""
+        from .planner import (GamePlan, _Calibration, _normalise_strategies, _strategy_available,
+                              _strategy_fits, p_threshold, win_probability)
         from .account import MODES
+        from .strategy import rules
         try:
             line = NEXT_FILE.read_text(encoding="utf-8").strip()
         except OSError:
             return None
         NEXT_FILE.unlink(missing_ok=True)
+        force = line.lower().endswith(FORCE_TAG)
+        if force:
+            line = line[:-len(FORCE_TAG)].rstrip(" /")
         parts = [p.strip() for p in line.split("/")]
         if len(parts) < 2:
             log.warning("NEXT file ignored: expected 'Map / mode [/ strategy]', got %r", line)
@@ -1542,26 +1584,59 @@ class Bot:
         if self.account.has_medal(m, mode):
             log.warning("NEXT file ignored: %s %s is already beaten", m, mode)
             return None
+        if not self.account.mode_unlocked(m, mode):
+            req = MODES[mode].requires
+            log.warning("NEXT file ignored: %s %s is locked on this account%s", m, mode,
+                        f" (it needs the {req} medal there)" if req else "")
+            return None
         strats = _normalise_strategies(specs)
+        calib = _Calibration(self.account, strats)   # as rank_games builds it (planner._candidates)
+
+        def p_of(x):
+            return win_probability(self.account, x, m, mode, calib=calib)[0]
+
         if len(parts) > 2:
             s = strats.get(parts[2])
         else:
-            # the strategy that declares the best odds for this mode, among
-            # those that fit the map and that the account can field
+            # the strategy with the best odds for this mode, among those that
+            # fit the map and that the account can field
             cat = self.account.map_category(m)
             fit = [x for x in strats.values()
                    if _strategy_fits(x, m, cat, mode) and _strategy_available(x, self.account)[0]]
-            s = max(fit, key=lambda x: x.base_success.get(mode, 0.0), default=None)
+            s = max(fit, key=p_of, default=None)
         if s is None:
             log.warning("NEXT file ignored: no strategy for %s %s", m, mode)
             return None
+        p = p_of(s)
+        bar = p_threshold(mode)
+        log.info("NEXT file: %s %s with %s, p=%.2f (bar %.2f)%s", m, mode, s.id, p, bar,
+                 " - forced" if force else "")
+        if rules(mode).get("one_life") and p < bar:
+            if not force:
+                log.warning("NEXT file ignored: %s %s with %s is one-life and p=%.2f is under its "
+                            "bar %.2f - end the line with %r to play it anyway",
+                            m, mode, s.id, p, bar, FORCE_TAG)
+                return None
+            log.warning("NEXT file: %s %s forced at p=%.2f, under its bar %.2f", m, mode, p, bar)
         mi = MODES[mode]
-        reason = f"[OWNER] {m} / {mode} with {s.id}: the NEXT file"
+        reason = (f"[OWNER] {m} / {mode} with {s.id}: the NEXT file, p={p:.2f}"
+                  + (" (forced)" if force else ""))
         return GamePlan(map=m, difficulty=mi.difficulty, mode=mi.ui_mode, mode_key=mode,
                         strategy_id=s.id, hero=(s.heroes or (None,))[0], reason=reason,
-                        reasons=[reason], phase="OWNER", p_win=0.0,
+                        reasons=[reason], phase="OWNER", p_win=round(p, 3),
                         expected_minutes=mi.minutes, expected_xp=0, expected_mm=0,
                         score=0.0, first_time=True)
+
+    def _warn_auto_start(self, plan):
+        """Warn when the last game saw BTD6's Auto Start on and `plan` is a
+        one-life game: with Auto Start each round begins by itself, so the
+        bot cannot hold a round to finish buying. A log line only - game
+        settings are the owner's to change, and play goes on."""
+        from .strategy import rules
+        if getattr(self, "_auto_start_seen", False) and rules(plan.mode_key).get("one_life"):
+            log.warning("Auto Start was ON in the last game and %s %s is a one-life game: please "
+                        "turn Auto Start off in BTD6's settings so the bot can finish buying "
+                        "before each round", plan.map, plan.mode_key)
 
     def next_plan(self):
         """Best plan whose (map, mode) has not failed to start this session."""
