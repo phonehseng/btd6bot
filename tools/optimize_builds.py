@@ -51,6 +51,7 @@ Usage
     python tools/optimize_builds.py                      # the default maps x modes (see DEFAULT_RUNS)
     python tools/optimize_builds.py "Dark Path" hard     # one map / mode
     python tools/optimize_builds.py "Dark Path" hard --target ninja
+    python tools/optimize_builds.py --chimps --maps "Alpine Run" --nice   # CHIMPS (see CHIMPS_RUNS)
     python tools/optimize_builds.py --calibrate          # model vs the bot's logged games
     python tools/optimize_builds.py --check FILE.yaml    # re-evaluate a written plan
 """
@@ -117,6 +118,26 @@ LOST = {
 }
 FAMILY_MODES = ["easy", "primary_only", "deflation", "medium", "military_only", "reverse"]
 DEFAULT_RUNS = [(m, mode) for m, modes in LOST.items() for mode in dict.fromkeys(modes + FAMILY_MODES)]
+
+# --- CHIMPS (--chimps) -----------------------------------------------------------
+# CHIMPS is kept out of DEFAULT_RUNS: 95 rounds from $650 make a run far
+# longer than the other modes'. --chimps runs these maps: the beginner maps
+# where chimps_ninja_sun won Impoppable (logs/results.jsonl, 2026-11), so a
+# map-specific CHIMPS plan gets proven where the hand-written one already holds.
+CHIMPS_MAPS = ["Alpine Run", "Park Path", "Hedge", "End Of The Road", "Winter Park", "Carved",
+               "Candy Falls", "Frozen Over"]
+CHIMPS_RUNS = [(m, "chimps") for m in CHIMPS_MAPS]
+
+# Known damage-model errors (backlog: village Primary buffs, Glaive Lord and
+# Master Bomber counted map-wide; fixed in a parallel change to
+# btd6bot/dps_model.py). Until that lands, CHIMPS plans - one leak loses the
+# game - must not lean on them: model_doubt() rejects these tiers there.
+CHIMPS_MODEL_DOUBTS = {
+    "boomerang": (0, 5),   # Glaive Lord (5-x-x): its orbiting glaives counted map-wide
+    "ninja": (2, 5),       # Master Bomber (x-x-5): its stun bombs counted map-wide
+}
+VILLAGE_PRIMARY_PATH = (0, 3)   # Primary Training+ (3-x-x): its buffs reach non-Primary towers too
+MODEL_DOUBT_MODES = {"chimps"}
 
 
 # ===========================================================================
@@ -211,12 +232,21 @@ def seconds_per_round(mode):
 # ===========================================================================
 
 def load_account():
-    """The current account (data/current_account.txt), or None."""
+    """The current account (data/current_account.txt), or None.
+
+    None too when that account's file is missing (a git worktree has no
+    copy of the live account): AccountState.load would hand back an empty
+    account - no towers unlocked but the Dart Monkey, no upgrades - and every
+    plan would be a row of bare darts."""
     try:
         from btd6bot.account import AccountState
         from btd6bot.identity import account_path
         uid = (ROOT / "data" / "current_account.txt").read_text(encoding="utf-8").strip()
-        return AccountState.load(account_path(uid))
+        path = account_path(uid)
+        if not Path(path).exists():
+            log.warning("account %s: %s not found - planning for a fully unlocked account", uid, path)
+            return None
+        return AccountState.load(path)
     except Exception:
         return None
 
@@ -402,6 +432,34 @@ def legal(tiers):
     return sum(t > 0 for t in tiers) <= 2 and sum(t > 2 for t in tiers) <= 1
 
 
+def no_income_mode(mode):
+    """Does the mode forbid income (CHIMPS: no Banana Farm, no income upgrades)?"""
+    from btd6bot import strategy as S
+    return bool(S.MODE_RULES.get(mode, {}).get("no_income_towers"))
+
+
+def income_tiers(kind, tiers):
+    """Is this crosspath an income upgrade (strategy.INCOME_UPGRADES:
+    Merchantman buccaneers, Bloon Trap engineers)?"""
+    from btd6bot import strategy as S
+    return any(k == kind and tiers[path - 1] >= tier for k, path, tier in S.INCOME_UPGRADES)
+
+
+def model_doubt(kind, tiers, towers=()):
+    """Why the damage model cannot be trusted with this crosspath ('' when
+    it can). towers: (kind, tiers) of the towers in the tower's range - a
+    village's Primary Training buffs only count when a Primary tower stands
+    there. See CHIMPS_MODEL_DOUBTS."""
+    doubt = CHIMPS_MODEL_DOUBTS.get(kind)
+    if doubt and tiers[doubt[0]] >= doubt[1]:
+        return f"{kind} {'-'.join(map(str, tiers))}: tier counted map-wide by the damage model"
+    path, tier = VILLAGE_PRIMARY_PATH
+    if kind == "village" and tiers[path] >= tier and \
+            not any(T.TOWERS.get(k, {}).get("category") == "primary" for k, _ in towers):
+        return f"village {'-'.join(map(str, tiers))}: Primary buffs with no Primary tower in range"
+    return ""
+
+
 def upgrade_cost(kind, tiers_from, tiers_to, family):
     cost = 0.0
     for path in range(3):
@@ -526,9 +584,14 @@ class Optimizer:
         """Tower kinds this mode and account allow and the model can use."""
         from btd6bot import strategy as S
         only = S.MODE_TOWER_FILTER.get(self.mode)
+        no_income = no_income_mode(self.mode)
         out = []
         for kind, info in T.TOWERS.items():
-            if kind in NEVER_KINDS or (kind in INCOME_KINDS and kind != self.target):
+            if kind in NEVER_KINDS:
+                continue
+            # income towers: only as the XP target, and never where the
+            # mode forbids income (CHIMPS locks the Banana Farm), whatever the target
+            if kind in INCOME_KINDS and (kind != self.target or no_income):
                 continue
             if only and info.get("category") != only:
                 continue
@@ -540,6 +603,23 @@ class Optimizer:
         return out
 
     # -- candidate actions -------------------------------------------------------
+    def allowed(self, kind, tiers, spot, towers):
+        """May the plan buy this crosspath at this spot? Not an income
+        upgrade where the mode forbids income, and (MODEL_DOUBT_MODES) not a
+        tier the damage model is known to overrate (model_doubt)."""
+        if no_income_mode(self.mode) and income_tiers(kind, tiers):
+            return False
+        if self.mode in MODEL_DOUBT_MODES:
+            near = []
+            if kind == "village":   # only a village's doubt depends on its neighbours
+                prof = D.profile(kind, tiers)
+                reach = prof.range if prof is not None else 0.0
+                near = [(t.kind, t.tiers) for t in towers if t.kind != "hero" and t.spot is not spot
+                        and (t.spot.x - spot.x) ** 2 + (t.spot.z - spot.z) ** 2 <= reach * reach]
+            if model_doubt(kind, tiers, near):
+                return False
+        return True
+
     def actions(self, towers, cash):
         fam = self.econ.family
         out = []
@@ -553,7 +633,7 @@ class Optimizer:
                 continue
             for tiers in _bundles(cap, MAX_PLACE_TIERS):
                 cost = base + upgrade_cost(kind, (0, 0, 0), tiers, fam)
-                if cost <= cash and D.profile(kind, tiers) is not None:
+                if cost <= cash and D.profile(kind, tiers) is not None and self.allowed(kind, tiers, spot, towers):
                     out.append(Action(kind=kind, tiers=tiers, cost=cost, spot=spot))
         for t in towers:
             if t.kind == "hero":
@@ -569,6 +649,8 @@ class Optimizer:
                     cost = upgrade_cost(t.kind, t.tiers, new, fam)
                     if cost > cash:
                         break
+                    if not self.allowed(t.kind, new, t.spot, towers):
+                        break    # higher tiers of this path stay out too
                     out.append(Action(kind=t.kind, tiers=new, cost=cost, tid=t.tid))
         return out
 
@@ -960,6 +1042,11 @@ def optimize(map_name, mode, target=None, account=None, write=True, candidates=3
     base: plan without the account's boosts (Fast Track, Double Cash)."""
     weights = xp_weights(account)
     boosts = {} if base or account is None else dict(getattr(account, "boosts", {}) or {})
+    if mode == "chimps":
+        # CHIMPS pays no Double Cash and has no Fast Track (economy() ignores
+        # both): the written plan must not claim to need them, or the
+        # planner would hold it back from an account without them (needs_boosts)
+        boosts = {}
     hero = (getattr(account, "selected_hero", None) or "quincy") if account else "quincy"
     if hero not in T.HEROES:
         hero = "quincy"
@@ -1264,6 +1351,7 @@ def main():
     ap.add_argument("--no-account", action="store_true", help="plan for a fully unlocked account without boosts")
     ap.add_argument("--base", action="store_true", help="plan without Fast Track / Double Cash")
     ap.add_argument("--maps", help="only these maps (comma separated) of the default runs")
+    ap.add_argument("--chimps", action="store_true", help="run CHIMPS on CHIMPS_MAPS instead of the default runs")
     ap.add_argument("--nice", action="store_true", help="run at below-normal priority (beside the live bot)")
     ap.add_argument("-v", action="store_true")
     a = ap.parse_args()
@@ -1282,7 +1370,8 @@ def main():
         return
     account = None if a.no_account else load_account()
     only = {m.strip() for m in a.maps.split(",")} if a.maps else None
-    runs = [(a.map, a.mode)] if a.map and a.mode else [(m, mode) for m, mode in DEFAULT_RUNS
+    listed = CHIMPS_RUNS if a.chimps else DEFAULT_RUNS
+    runs = [(a.map, a.mode)] if a.map and a.mode else [(m, mode) for m, mode in listed
                                                       if (not a.map or m == a.map) and (not only or m in only)]
     for map_name, mode in runs:
         try:

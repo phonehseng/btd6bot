@@ -5,12 +5,14 @@
 # Druids here are 2-0-4 Poplust (Heart of Thunder lightning pops lead);
 # the Village goes 2-2-0 (radar: camo for the druids) -> 2-3-0 MIB. Dart
 # 0-0-3 -> 0-2-4 Sharp Shooter adds camo single target. Spike 2-0-4 handles
-# DDT leaks, 2-0-5 Perma-Spike (tier 5) the R98 BAD. No income, no selling.
+# DDT leaks, 2-0-5 Perma-Spike (tier 5) the R100 BAD. A 2-0-3 Recursive
+# Cluster bomb is the R63 rush answer. No income, no selling.
 id: chimps_sub_druid_water
 hero: obyn
 modes: [hard, impoppable, chimps]
 planner:
-  towers: {sub: [2, 0, 4], dart: [0, 2, 4], alchemist: [4, 2, 0], druid: [2, 0, 4], village: [2, 3, 0], spike: [2, 0, 5]}
+  towers: {sub: [2, 0, 4], dart: [0, 2, 4], alchemist: [4, 2, 0], druid: [2, 0, 4], village: [2, 3, 0], spike: [2, 0, 5],
+           bomb: [2, 0, 3]}
   base_success: {hard: 0.9, impoppable: 0.6, chimps: 0.5}
   maps: [Logs, Resort, Lotus Island, Spa Pits, "Pat's Pond", Peninsula, Off The Coast, Cargo,
          Spillway, Sunken Columns, Flooded Valley, Dark Castle, Bloody Puddles, Muddy Puddles,
@@ -41,6 +43,10 @@ plan:
   - {do: upgrade, id: d1, to: 2-0-4}
   - {do: upgrade, id: d2, to: 2-0-4}
   - {do: upgrade, id: d3, to: 2-0-4}
+  # the R63 ceramic + lead rush: Recursive Cluster bombs (Druids and Subs
+  # are not rush answers in strategy.ANSWERS); MIB later lends it camo
+  - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7}
+  - {do: upgrade, id: bm1, to: 2-0-3}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
   - {do: upgrade, id: a1, to: 4-2-0}
@@ -48,9 +54,10 @@ plan:
   - {do: place, id: d5, kind: druid, role: support, near: [d1, d2], near_radius: 7}
   - {do: place, id: d6, kind: druid, role: support, near: [d1, d2], near_radius: 7}
   - {do: upgrade, kind: druid, to: 2-0-4}
+  # MIB before the R81 super ceramics (camo + every damage type near it)
+  - {do: upgrade, id: v1, to: 2-3-0}
   - {do: place, id: a2, kind: alchemist, role: support, near: [d4, d5], near_radius: 6}
   - {do: upgrade, id: a2, to: 4-2-0}
-  - {do: upgrade, id: v1, to: 2-3-0}
   - {do: upgrade, id: sp1, to: 2-0-5}
 fill:
   - {do: place, kind: druid, role: support, near: [v1], near_radius: 8, max: 9}
@@ -67,6 +74,9 @@ answers:
     - {do: upgrade, id: a1, to: 1-0-0}
     - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 7}
   ceramic: [{do: upgrade, id: dr, to: 0-0-3}]
+  rush:
+    - {do: upgrade, id: bm1, to: 2-0-3}
+    - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7}
   moab: [{do: upgrade, id: sb1, to: 2-0-3}]
   bfb: [{do: upgrade, id: dr, to: 0-2-4}]
   zomg:
