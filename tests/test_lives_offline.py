@@ -63,6 +63,21 @@ def test_impossible_first_read_is_ignored():
     assert t.confirmed == 200 and feed(t, [200] * 5) == 0
 
 
+def test_a_fixed_lives_mode_never_believes_a_read_above_its_count():
+    """Ancient Portal Impoppable (2026-11-05): the OCR read 11 for the one
+    life in 29 of 65 reads. With one fixed life a read above 1 is a misread
+    and the last trusted count stands - even when the game opens with it."""
+    t = LivesTracker(1, fixed=True)
+    assert t.max_lives == 1
+    assert feed(t, [11, 11, 11, 11, 11]) == 0 and t.confirmed is None
+    t.update(1)
+    assert t.confirmed == 1
+    assert feed(t, [11, 1, 11, 11, 1, 11, 11, 11]) == 0 and t.confirmed == 1
+    assert t.update(0) == 0 and feed(t, [0, 0]) == 1, "the one life lost is still a leak"
+    # modes that can gain lives keep their room for bonus lives
+    assert LivesTracker(100).max_lives == 225 and LivesTracker(1).max_lives == 27
+
+
 def test_rise_needs_reads_in_a_row():
     t = LivesTracker(150)
     t.update(15)
