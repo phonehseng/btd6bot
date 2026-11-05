@@ -379,7 +379,8 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
     if status != "buy":
         return status
     o, worst, before, after = found
-    r = ex.try_step(dict(o.step), cash, rnd)
+    with ex.why("reinforce", f"round {worst} is the weakest ahead", what=o.what):
+        r = ex.try_step(dict(o.step), cash, rnd)
     if r in ("bought", "progress"):
         log.warning("reinforce: %s ($%d) - round %d, the weakest ahead, goes %.2f -> %.2f in the model",
                     o.what, o.cost, worst, before or 0.0, after or 0.0)

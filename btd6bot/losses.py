@@ -7,6 +7,9 @@ is needed to find out why, in its own folder:
     ~/.btd6bot_cache/losses/<YYYYmmdd_HHMMSS>_<map>_<mode>/
         report.md        the result, what to look at, and "status: new"
         game.log         the bot's log for the game (NEXT ... RESULT)
+        journal.jsonl    the game's journal (journal.py): purchases and sales
+                         with their reasons, round snapshots, leaks, the
+                         cause of death - the same game as data
         last_minutes.mp4 the last LAST_SECONDS before the defeat, with the
                          game's own sound when it was recorded
         frames/          stills: every FINAL_STEP s over the last FINAL_SPAN s,
@@ -26,6 +29,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from . import journal
 from .highlights import LOG_FILE, REC_DIR, SEGMENT_SECONDS, chunks, read_games
 
 log = logging.getLogger("losses")
@@ -137,6 +141,28 @@ def _cut(ffmpeg, folder, game):
     return saved
 
 
+def _copy_journal(folder, game):
+    """Copy the game's journal into its case folder as journal.jsonl; the
+    report.md lines that say what it holds (none without a journal)."""
+    try:
+        src = journal.find_for(game["start"], game["end"])
+        if src is None:
+            return []
+        shutil.copyfile(src, folder / "journal.jsonl")
+        end = next((e for e in reversed(journal.read(src)) if e.get("ev") == "game_end"), None)
+    except Exception:
+        log.exception("copying the journal of %s failed", game.get("map"))
+        return []
+    lines = ["journal.jsonl: the game as data, one JSON event per line - placements, upgrades and "
+             "sales with why, round snapshots with the model's margin, leaks with the round's bloon "
+             "groups and the properties nothing popped, game_end with the cause of death "
+             "(summaries: python tools/journal_report.py)"]
+    cause = (end or {}).get("cause")
+    if cause:
+        lines.append(f"journal's cause of death: {cause.get('category')} - {cause.get('evidence')}")
+    return lines
+
+
 def file_loss(ffmpeg, game):
     """Write the case folder for one lost game; returns its path."""
     folder = LOSS_DIR / _name(game)
@@ -145,6 +171,7 @@ def file_loss(ffmpeg, game):
     with open(folder / "game.log", "w", encoding="utf-8") as f:
         for t, text in game["lines"]:
             f.write(datetime.fromtimestamp(t).strftime("%H:%M:%S ") + text + "\n")
+    kept = _copy_journal(folder, game)
     saved = _cut(ffmpeg, folder, game) if ffmpeg else []
     started = datetime.fromtimestamp(game["start"]).strftime("%Y-%m-%d %H:%M")
     lines = [
@@ -155,7 +182,7 @@ def file_loss(ffmpeg, game):
         f"- played {started}, {round((game['end'] - game['start']) / 60, 1)} min, outcome {game.get('outcome')}",
         f"- strategy: {res.get('strategy', '?')}; lives lost: {res.get('lives_lost', '?')}",
         "- game.log: the bot's log for the game (placements, upgrades, threats, leaks, the model's ratings)",
-        *[f"- {s}" for s in saved],
+        *[f"- {s}" for s in kept + saved],
         *([] if saved else ["- no recording: the game is older than the recorder's buffer"]),
         "",
         "For the caretaker: find the root cause (game.log first, then the stills),",
@@ -163,7 +190,7 @@ def file_loss(ffmpeg, game):
         "(cause, evidence, fix and commit) and change the status above to handled.",
     ]
     (folder / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    log.info("loss filed: %s (%s)", folder.name, "; ".join(saved) or "log only")
+    log.info("loss filed: %s (%s)", folder.name, "; ".join(kept + saved) or "log only")
     return folder
 
 

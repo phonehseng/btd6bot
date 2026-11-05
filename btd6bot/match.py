@@ -2,7 +2,9 @@
 import logging
 import time
 
+from . import journal
 from . import status
+from . import threats as TH
 from .vision import norm
 from . import towers as T
 from .abilities import AbilityPlanner
@@ -184,6 +186,15 @@ class RoundVotes:
         return False
 
 
+def xp_knowledge(account, rules):
+    """The Monkey Knowledge the tower XP count may apply: the account's,
+    except in modes that switch Monkey Knowledge off (CHIMPS), where Monkey
+    Education's bonus is not paid either."""
+    if (rules or {}).get("no_mk") or account is None:
+        return ()
+    return getattr(account, "mk_unlocked", ()) or ()
+
+
 def _hero_id(text):
     n = "".join(c for c in text.lower() if c.isalnum())
     for hid, h in T.HEROES.items():
@@ -239,10 +250,25 @@ class Match:
         # focus works from the account's XP, read from the game once a day
         from .strategy import PRICE_FAMILY
         self.tower_xp = TowerXpCounter(getattr(model, "name", None),
-                                       getattr(account, "mk_unlocked", ()) if account else (),
+                                       xp_knowledge(account, getattr(executor, "rules", None)),
                                        PRICE_FAMILY.get(getattr(executor, "mode", None), "medium"))
         self._t_watch = 0.0
         self.depths = []           # per-round summaries of the watch
+        # the game journal (journal.py): what is bought and why, round
+        # snapshots, leaks and the cause of a defeat, one file per game
+        self._margins = {}         # round -> the damage model's margin as it started
+        self._round_lost = 0       # lives lost in the round being played
+        self._leak_rounds = set()  # rounds with a leak in the journal
+        self._threat_holds = set()  # rounds whose threat hold is in the journal
+        # selling is refused by Game itself in modes that forbid it (CHIMPS)
+        game.no_sell = bool(getattr(executor, "no_sell", False))
+        try:
+            journal.start_game(getattr(model, "name", None), getattr(executor, "mode", None),
+                               (getattr(executor, "strat", None) or {}).get("id"),
+                               getattr(game, "hero", None), getattr(executor, "rules", None),
+                               account, executor)
+        except Exception:          # an observer must never cost a game
+            log.exception("could not start the game journal - playing without it")
 
     def _make_watch(self):
         try:
@@ -334,7 +360,9 @@ class Match:
                 continue
             step = {"do": "place", "id": "starter", "kind": kind, "role": "dps", "segment": [0.05, 0.45]}
             for _ in range(tries):     # each refused spot is blocked; try the next
-                if self.ex.try_step(step, self.g.cash_stable(), rnd) == "done" or self.ex.defended():
+                with self.ex.why("starter", "opener before the plan is affordable"):
+                    done = self.ex.try_step(step, self.g.cash_stable(), rnd) == "done"
+                if done or self.ex.defended():
                     log.info("starter tower placed: %s", kind)
                     return True
                 time.sleep(0.3)
@@ -356,6 +384,8 @@ class Match:
         self._in_round = True
         last_round = self.g.round()
         self._lives.update(self.g.lives())
+        # the defence built before Play, as the first round snapshot
+        self._journal_round(last_round, self.g.cash_stable(), setup=True)
         self.tracer.start_round()
         t_hud = t_ability = 0.0
         cash = None
@@ -414,6 +444,8 @@ class Match:
                     self.stats["lives_lost"] += lost
                     dropped = True
                     log.warning("lost %d lives (now %d)", lost, self._lives.confirmed)
+                    self._round_lost += lost
+                    self._journal_leak(last_round, lost, self._lives.confirmed)
                     # abilities first: a key press takes milliseconds, the panic
                     # purchases below take seconds (Water Park: Rapid Shot came
                     # 4 s after the first leak, behind the buying)
@@ -438,6 +470,7 @@ class Match:
                     last_round = rnd
                     self._t_round_change = now
                     self._forecast_round(rnd)
+                    self._journal_round(rnd, cash, lives)
                     # once a round: a tower whose range barely reaches the
                     # track is sold, its cash goes to towers that pop bloons
                     try:
@@ -455,6 +488,7 @@ class Match:
                         last_round = rnd
                         self._t_round_change = now
                         self._forecast_round(rnd)
+                        self._journal_round(rnd, cash, lives, reset=True)
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
                 if getattr(self.g, "unconfirmed_streak", 0) >= 2 or self.g.screen_lost:
                     # Placements that leave no tower are clicks landing on
@@ -535,7 +569,13 @@ class Match:
         executor bounds the wait, so a failing purchase never stalls a game)."""
         hold = getattr(self.ex, "hold_round", None)
         try:
-            return bool(hold and hold(rnd, cash)) or self._hold_for_crisis(rnd, cash)
+            if hold and hold(rnd, cash):
+                if rnd not in self._threat_holds:      # journaled once a round
+                    self._threat_holds.add(rnd)
+                    journal.current().event("hold", rnd=rnd, why="threat", cash=cash,
+                                            waiting=getattr(self.ex, "waiting", None))
+                return True
+            return self._hold_for_crisis(rnd, cash)
         except Exception as e:   # the check must never stop the game from going on
             log.warning("hold_round failed: %r", e)
             return False
@@ -568,6 +608,7 @@ class Match:
             self._t_reinforce = 0.0
             log.warning("holding Play: the damage model rates the coming round at %.2f - "
                         "spending the $%d first", min(margins), cash)
+            journal.current().event("hold", rnd=rnd, why="crisis", margin=round(min(margins), 3), cash=cash)
             return True
         if since is False:
             return False
@@ -659,7 +700,8 @@ class Match:
         towers = list(self.g.towers.values())
         margin = self.forecast.margin(towers, rnd)
         if margin is None:
-            return
+            return None
+        self._margins[rnd] = margin       # for the journal's round snapshot
         if self.forecast.is_crisis(margin):
             self._crisis_round = rnd
             log.warning("round %d: the damage model rates the defence %.2f - crisis round: "
@@ -673,6 +715,72 @@ class Match:
             self._weak_round = rnd
             log.warning("rounds %d-%d: the damage model rates round %d at %.2f - reinforcing where it "
                         "helps most", rnd, min(rnd + R.LOOKAHEAD - 1, end), ahead[1], ahead[0])
+        return margin
+
+    # -- the game journal (journal.py): observe only ---------------------------------
+    def _round_set(self):
+        return getattr(self.ex, "round_set", None) or TH.set_for_mode(getattr(self.ex, "mode", None))
+
+    def _journal_round(self, rnd, cash, lives=None, reset=False, setup=False):
+        """Snapshot of the round that just started: cash, lives, the lives
+        lost in the round just played, the model's margin, what the plan
+        waits on and every tower with its crosspath and cash spent."""
+        try:
+            last_depth = self.depths[-1] if getattr(self, "depths", None) else None
+            fields = dict(rnd=rnd, cash=cash, lives=self._lives.confirmed if lives is None else lives,
+                          lives_lost_round=self._round_lost, margin=self._margins.get(rnd),
+                          crisis=self._in_crisis(rnd),
+                          depth=last_depth.get("deepest") if last_depth else None,
+                          waiting=getattr(self.ex, "waiting", None),
+                          towers=[[p.tid, p.kind, p.crosspath, p.spent] for p in self.g.towers.values()])
+            if reset:
+                fields["reset"] = True
+            if setup:
+                fields["setup"] = True
+            self._round_lost = 0
+            journal.current().round(**fields)
+        except Exception:
+            log.exception("journal round snapshot failed - carrying on")
+
+    def _journal_leak(self, rnd, lost, lives_after, inferred=False):
+        """A leak, tied to what the round brings: its bloon groups with their
+        share of the round's RBE, the properties nothing on the map pops,
+        and the blimp check of a blimp round. Each piece may fail alone."""
+        fields = {"rnd": rnd, "lost": lost, "lives_after": lives_after,
+                  "margin": self._margins.get(rnd), "inferred": inferred}
+        self._leak_rounds.add(rnd)
+        if rnd is not None:
+            rset = self._round_set()
+            try:
+                groups = []
+                for g in TH.round_groups(rset, rnd):
+                    count = g.get("count", 1)
+                    fortified = bool(g.get("fortified"))
+                    groups.append({"bloon": g["bloon"], "count": count, "camo": bool(g.get("camo")),
+                                   "regrow": bool(g.get("regrow")), "fortified": fortified,
+                                   "rbe": count * TH.rbe(g["bloon"], fortified),
+                                   "blimp_hp": count * TH.blimp_hp(g["bloon"], fortified)})
+                total = sum(g["rbe"] for g in groups) or 1
+                for g in groups:
+                    g["share"] = round(g["rbe"] / total, 3)
+                fields["groups"] = groups
+            except Exception as e:
+                fields["groups_error"] = repr(e)
+            try:
+                fields["uncovered"] = sorted(TH.sig_name(s) for s in TH.round_signatures(rset, rnd)
+                                             if not self.ex._covers(s)[0])
+            except Exception as e:
+                fields["uncovered_error"] = repr(e)
+            try:
+                load = TH.round_blimp_load(rset, rnd, double_hp=bool(self.ex.rules.get("tough_moabs")))
+                if load:
+                    fields["blimp_ratio"] = round(self.ex.blimp_ratio(load), 3)
+            except Exception as e:
+                fields["blimp_error"] = repr(e)
+        try:
+            journal.current().leak(**fields)
+        except Exception:
+            log.exception("journal leak failed - carrying on")
 
     def _reinforce(self, cash, rnd):
         """One model-chosen purchase (reinforce.py). True when one was bought;
@@ -939,5 +1047,30 @@ class Match:
                         "ON, so the bot cannot hold a round to buy - turn it off in the game's settings",
                         self.stats["rounds"])
             self.stats["auto_start"] = True
-        log.info("game over: %s", self.stats)
+        cause = self._journal_end(outcome, rnd)
+        if cause:
+            log.info("game over: %s (cause: %s - %s)", self.stats, cause["category"], cause["evidence"])
+        else:
+            log.info("game over: %s", self.stats)
         return self.stats
+
+    def _journal_end(self, outcome, rnd):
+        """Write game_end; for a game not won, with its cause of death
+        (journal.cause_of_death), returned for the log. A one-life game
+        dies before the lives tracker can confirm the drop (a single read
+        of 0, then the Defeat card), so a defeat without a leak in the
+        journal for its round gets one, inferred, losing the last lives
+        the tracker trusted."""
+        try:
+            if outcome == "defeat" and rnd not in self._leak_rounds:
+                lives = self._lives.confirmed
+                if lives is None:
+                    lives = (getattr(self.ex, "rules", None) or {}).get("lives")
+                self._journal_leak(rnd, lives, 0, inferred=True)
+            jr = journal.current()
+            cause = None if outcome == "victory" else journal.cause_of_death(jr.events, rnd, self.stats)
+            jr.end(outcome=outcome, round=rnd, stats=self.stats, cause=cause)
+            return cause
+        except Exception:
+            log.exception("journal game end failed - carrying on")
+            return None

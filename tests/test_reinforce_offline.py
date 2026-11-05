@@ -12,6 +12,7 @@ from btd6bot import dps_model as D  # noqa: E402
 from btd6bot import reinforce as R  # noqa: E402
 from btd6bot import towers as T  # noqa: E402
 from btd6bot.forecast import RoundForecast  # noqa: E402
+from btd6bot.strategy import Executor  # noqa: E402
 from btd6bot.maplearn import MapModel  # noqa: E402
 
 PF = (0.0, 0.04, 0.855, 0.96)
@@ -51,8 +52,11 @@ class Ex:
         p = next(iter(self.g.towers.values()))
         return [(*self.m.frac_to_cell(p.x + 0.03, p.y), 1.0)]
 
+    why = Executor.why    # the real one: each purchase says why it was made
+
     def try_step(self, step, cash, rnd):
         self.bought.append(step)
+        self.whys = getattr(self, "whys", []) + [self.g.why]
         return "bought"
 
 
@@ -77,6 +81,7 @@ def test_a_weak_look_ahead_buys_what_saves_most():
     assert after >= before, (o.what, before, after)
     # bought through the executor, and logged as a reinforcement
     assert R.buy_best(ex, forecast(ex), 5000, 40, 80) == "bought" and ex.bought
+    assert ex.whys[-1]["source"] == "reinforce" and ex.g.why is None
 
 
 def test_no_cash_means_wait():

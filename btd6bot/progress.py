@@ -15,10 +15,14 @@ Contents:
   recent       the last results, newest last
 """
 import json
+import logging
 import time
 from pathlib import Path
 
+from . import journal
 from .account import EXCLUDED_MAPS, MAPS, MODES
+
+log = logging.getLogger("progress")
 
 ROOT = Path(__file__).resolve().parents[1]
 PROGRESS_FILE = ROOT / "logs" / "progress.json"
@@ -30,12 +34,17 @@ _session = {"started": time.time(), "games": 0, "wins": 0, "losses": 0, "minutes
 
 
 def record_result(plan, res):
-    """Append one finished game to results.jsonl and count it for the session."""
+    """Append one finished game to results.jsonl and count it for the session.
+
+    The game's journal (journal.py) gets the result too and is closed; the
+    row names its file, so a result can be followed to what the game did."""
     won = res.get("outcome") == "victory"
+    jr = journal.current()
     row = {"t": round(time.time()), "map": plan.map, "mode": plan.mode_key,
            "strategy": plan.strategy_id, "outcome": res.get("outcome"),
            "round": res.get("round"), "minutes": round(res.get("minutes") or 0, 1),
-           "lives_lost": res.get("lives_lost"), "mm": res.get("mm")}
+           "lives_lost": res.get("lives_lost"), "mm": res.get("mm"),
+           "journal": jr.path.name if jr.active else None, "auto_start": res.get("auto_start")}
     _session["games"] += 1
     _session["wins" if won else "losses"] += 1
     _session["minutes"] += row["minutes"]
@@ -45,6 +54,12 @@ def record_result(plan, res):
             f.write(json.dumps(row) + "\n")
     except OSError:
         pass
+    jr.event("result", mm=res.get("mm"), outside_cause=res.get("outside_cause"))
+    journal.close()
+    try:
+        journal.prune()
+    except Exception:          # housekeeping must never stop the bot
+        log.exception("pruning old game journals failed")
 
 
 def _recent(n=8):
