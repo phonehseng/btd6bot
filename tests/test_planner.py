@@ -15,6 +15,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from btd6bot import planner as P  # noqa: E402
+
+# The tests below check the tier logic inside a map category; the owner's
+# map order on top of it (BLACK_BORDER_FIRST) has its own test,
+# test_black_borders_beginner_maps_first.
+P.BLACK_BORDER_FIRST = False
 from btd6bot.account import (  # noqa: E402
     EXCLUDED_MAPS, EXCLUDED_MODES, GIFT_BOX_TOWERS, MAPS, MODES, AccountState,
     level_for_xp, rounds_xp, xp_for_level,
@@ -654,6 +659,26 @@ def test_hard_first_by_default():
     assert tiers == sorted(tiers, key=P.TIERS.index), "tiers out of order"
 
 
+def test_black_borders_beginner_maps_first():
+    """The owner's order since 2026-11-05: black borders map tier by tier.
+    With Hard medals reliable on every map, the next game is still on a
+    Beginner map, and among the candidates no harder category comes before
+    an easier one; inside a category the map lacking fewer medals leads."""
+    saved = P.BLACK_BORDER_FIRST
+    P.BLACK_BORDER_FIRST = True
+    try:
+        acc = _hard_ready_account()
+        plan = P.next_game(acc)
+        assert MAPS[plan.map] == "beginner", (plan.reason, plan.reasons)
+        _, _, cands = P.rank_games(acc)
+        eases = [c.ease for c in cands]
+        assert eases == sorted(eases, reverse=True), "an easier map category came later"
+        top = [c for c in cands if c.ease == cands[0].ease and (c.p >= P.CONFIDENT_P) == (cands[0].p >= P.CONFIDENT_P)]
+        assert [c.missing for c in top] == sorted(c.missing for c in top), "a map further from its border came first"
+    finally:
+        P.BLACK_BORDER_FIRST = saved
+
+
 @_warm_up
 def test_fresh_ish_account_warms_up():
     """With the warm-up order the remaining Easy-family medals come first,
@@ -1134,7 +1159,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_a_solo_family_record_in_a_kind_of_game_counts_for_every_member", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_a_solo_family_record_in_a_kind_of_game_counts_for_every_member", "test_hard_first_by_default", "test_black_borders_beginner_maps_first", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",
