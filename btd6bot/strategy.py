@@ -1860,8 +1860,10 @@ class Executor:
     def sell_useless(self, rnd, lives_dropped=False):
         """Sell one placed damage tower whose range reaches almost no track
         (less than SELL_REACH_SHARE of the best legal spot's reach). Not in
-        no-sell modes (CHIMPS), not while lives are falling, never the last
-        real tower. Returns True when one was sold.
+        no-sell modes (CHIMPS) - there only the pop counts are read, so a
+        dead tower's plan upgrades can move (_redirect_dead_upgrade) - not
+        while lives are falling, never the last real tower. Returns True
+        when one was sold.
 
         Nor while the defence is in trouble (_sale_blocked): lives fell in
         one of the last SELL_CALM_ROUNDS rounds, or the damage model rates a
