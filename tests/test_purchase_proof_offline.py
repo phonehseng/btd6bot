@@ -139,9 +139,21 @@ def test_refused_spot_keeps_the_tower_held():
     g = make_game(drops=(600,), bad_spots=(a,), click_refused=(b,))
     p = g.place("n1", "ninja", *a, more_spots=[b, c])
     assert p is not None and (p.x, p.y) == c
-    assert g.holds == ["ninja"], "one pick-up for all three spots"
+    assert g.holds == ["ninja", "ninja"], \
+        "a probe refusal keeps the hold; a refused click picks the tower up again"
     assert g.refused_spots == [a, b]
     assert g.inp.clicks == [b, c], "the probe-refused spot is never clicked"
+
+
+def test_refused_click_then_failed_pick_up_stops():
+    """Encrypted Impoppable: after a refused click the tower is picked up
+    again; if that fails, place() stops instead of clicking a stale preview."""
+    a, b = (0.10, 0.10), (0.20, 0.20)
+    g = make_game(click_refused=(a,))
+    picks = iter([True, False])
+    g.hold = lambda kind, tries=3: next(picks)
+    assert g.place("n1", "ninja", *a, more_spots=[b]) is None
+    assert g.fail_reason == "hold" and g.inp.clicks == [a]
 
 
 def test_every_spot_refused():

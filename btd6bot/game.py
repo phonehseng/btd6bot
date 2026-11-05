@@ -462,10 +462,11 @@ class Game:
     def place(self, tid, kind, fx, fy, check_valid=True, more_spots=()):
         """Place a tower at (fx, fy); returns the Placed tower or None.
 
-        more_spots: further (fx, fy) candidates, best first. When a spot is
-        refused, the tower stays on the cursor and the next spot is probed:
-        a probe takes ~0.1 s, while cancelling and picking the tower up again
-        took ~1.4 s per refused spot. Every refused spot is listed in
+        more_spots: further (fx, fy) candidates, best first. When the probe
+        refuses a spot, the tower stays on the cursor and the next spot is
+        probed (~0.1 s, against ~1.4 s to cancel and pick it up again). When
+        the CLICK is refused, the tower is picked up again before the next
+        spot (its preview may have stuck). Every refused spot is listed in
         self.refused_spots so the caller can learn them.
 
         A tower is registered only on proof that it stands on the map (see
@@ -504,6 +505,17 @@ class Game:
                 log.info("spot %.3f,%.3f refused the click for %s", sx, sy, kind)
                 self.refused_spots.append((sx, sy))
                 self.click_refusals += 1
+                # After a refused click the held tower's preview can stop
+                # following the cursor: it stays on the refused spot, every
+                # later probe sees no red where the cursor is, and every
+                # later click lands on that one bad spot (Encrypted
+                # Impoppable 2026-11-04: the ace preview sat on its first
+                # spot for 20 clicks over two rounds, so no blimp damage was
+                # bought before the round-40 MOAB). Picking the tower up
+                # again makes the preview follow once more (~1.4 s).
+                if not self.hold(kind):
+                    self.fail_reason = "hold"
+                    return None
                 continue
             self.last_spot = (sx, sy)
             return self._confirm(tid, kind, sx, sy, pre if pre is not None else before)
