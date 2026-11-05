@@ -55,6 +55,16 @@
 #   No Candy Falls CHIMPS video, Reddit or Steam guide turned up in the search
 #   (sarahs-btd6-site's Candy Falls CHIMPS section is empty).
 #
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track), rounds 6-100, worst margin: plan replay 2.18 (R95);
+# sight-strict 2.18 (R95); executor-faithful strict, with its extra towers /
+# plan towers only, 2.23 / 2.18 (R95), all 24 steps bought; drift replay
+# (every tower 5 units further from the village) 2.18 (R95). R98 3.15,
+# R99 2.23, R100 5.48. No change was needed. The numbers below are from the
+# model before the correction.
+#
 # Checked offline (docs/map_strategies/beginner.md method) on the CHIMPS
 # economy (optimize_builds.economy("chimps", {}): round 6, $650, base income,
 # Hard prices), rounds 6-100; the hero's damage is not counted (extra safety):
@@ -87,10 +97,8 @@ xp_target: sub
 planner:
   towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], sniper: [0, 1, 0], tack: [0, 0, 0], sub: [2, 0, 4],
            spike: [2, 0, 5], super: [0, 0, 0]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
-  base_success: {chimps: 0.5}
+  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes): every replay 2.18+
+  base_success: {chimps: 0.85}
   maps: [Candy Falls]
 plan:
   - {do: place, id: t1, kind: tack, role: dps, at: [0.687, 0.624]}   # bottom-right loop's S-bend

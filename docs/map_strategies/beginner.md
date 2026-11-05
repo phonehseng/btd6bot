@@ -40,21 +40,36 @@ of its own, so only a build made for the map can be played there untested.
 
 Each file was checked like the builds above, on the CHIMPS economy (round 6
 with $650, no income, no selling, no boosts), rounds 6-100. The gate
-(`base_success.chimps`) is 0.85 only where all four replays stay at 2.0 or
+(`base_success.chimps`) is 0.85 only where every replay stays at 2.0 or
 more; otherwise 0.5, and the planner does not play it.
 
-| Build | Core | Plan | Sight-strict | Executor-faithful (extra / plan only) | Gate |
-|---|---|---|---|---|---|
-| `alpinerun_chimps.yaml` | tack to Inferno Ring, Spiked Mines, Druid of the Jungle, Cripple MOAB, MIB | 2.16 (R9) | 2.16 (R9) | 2.16 / 2.16 (R9) | 0.85, with `no_answers` (see below) |
-| `candyfalls_chimps.yaml` | two buccaneers to Carrier Flagship + Aircraft Carrier, MIB | 2.48 (R34) | 2.48 | 2.48 / 2.48 | 0.85 |
-| `carved_chimps.yaml` | buccaneers in the eyes to Carrier Flagship + two Carriers, MOAB Mauler | 2.16 (R9) | 2.16 | 2.16 / 2.16 | 0.85 |
-| `endoftheroad_chimps.yaml` | pool buccaneers to Destroyers and four Carriers, Deadly Precision sniper | 2.11 (R15) | 2.11 | 2.18 / 2.18 | 0.85 |
-| `frozenover_chimps.yaml` | Ring of Fire tack, Maim MOAB sniper, two Carriers, MIB | 2.51 (R6) | 2.30 (R39) | 2.30 / 2.30 | 0.85 |
-| `hedge_chimps.yaml` | tacks, Apache helis, Phoenix wizard | 0.52 (R95) | 0.52 | 0.22 / 0.19 | 0.5 (fails R90-99) |
-| `lotusisland_chimps.yaml` | three Carriers, Cripple MOAB sniper, MIB | 2.23 (R8) | 2.23 | 2.23 / 2.23 | 0.85 |
-| `parkpath_chimps.yaml` | pond Flagship + stream Carrier, Maim MOAB snipers, Perma-Spike | 2.30 (R47) | 2.30 | 2.28 / 2.28 | 0.85 |
-| `skates_chimps.yaml` | tack to Inferno Ring, two Carriers, subs, dipped ninja | 3.08 (R43) | 2.59 (R49) | 2.59 / 2.59 | 0.85 |
-| `winterpark_chimps.yaml` | three fountain Carriers, MOAB Eliminator, MIB | 2.18 (R36) | 2.18 | 2.18 / 2.18 | 0.85 |
+Re-checked 2026-11-05 after Frozen Over CHIMPS was lost at round 56 (40 camo
+rainbows; the model had rated the round 16), on the corrected damage model:
+a support buff reaches a tower only when its centre is inside the buff
+radius (the tower's footprint was added before: the Radar Scanner stood
+49.3 units from an Aircraft Carrier, radius 48), and Aircraft Carrier /
+Carrier Flagship planes count at a circling plane's share of the track
+instead of full rate on the whole map. A fifth replay was added: **drift**,
+every tower 5 world units further from its villages and alchemists (plan
+replay and sight-strict, the worse taken), so a spot the game shifts a
+little cannot take a buff away. Worst margin over rounds 6-100 (round):
+
+| Build | Core | Plan | Sight-strict | Executor-faithful (extra / plan only) | Drift | Gate |
+|---|---|---|---|---|---|---|
+| `alpinerun_chimps.yaml` | tack to Inferno Ring, Spiked Mines, Druid of the Jungle, Cripple MOAB, MIB | 2.16 (R9) | 2.16 (R9) | 2.16 / 2.16 (R9) | 2.04 (R9) | 0.85, with `no_answers` (see below) |
+| `candyfalls_chimps.yaml` | two buccaneers to Carrier Flagship + Aircraft Carrier, MIB | 2.18 (R95) | 2.18 (R95) | 2.23 / 2.18 (R95) | 2.18 (R95) | 0.85 |
+| `carved_chimps.yaml` | buccaneers in the eyes to Carrier Flagship + two Carriers, MOAB Mauler; repaired: village below the right eye with Bigger Radius, lead-dip alchemist by the left eye | 2.16 (R9) | 2.16 (R9) | 2.16 / 2.16 (R9) | 2.13 (R9) | 0.85 |
+| `endoftheroad_chimps.yaml` | pool buccaneers to Destroyers and Carriers, Deadly Precision sniper; repaired: village 15 units lower, Carrier Flagship and a fifth Carrier | 2.11 (R15) | 2.11 (R15) | 2.18 / 2.18 (R15) | 2.09 (R95) | 0.85 |
+| `frozenover_chimps.yaml` | Ring of Fire tack, Maim MOAB sniper, two Carriers, MIB | 1.01 (R95) | 0.99 (R95) | 1.14 / 1.13 (R95) | 1.00 (R95) | 0.5 (fails R95, R98, R99; no village spot puts b2 or the sub inside the MIB) |
+| `hedge_chimps.yaml` | tacks, Apache helis, Phoenix wizard | 0.52 (R95) | 0.52 | 0.22 / 0.19 | - | 0.5 (fails R90-99; not re-checked) |
+| `lotusisland_chimps.yaml` | three Carriers (one to Flagship), Cripple MOAB sniper, MIB; repaired: west carrier moved inside the MIB and made the Flagship | 2.23 (R8) | 2.23 (R8) | 2.23 / 2.23 (R8) | 2.16 (R95) | 0.85 |
+| `parkpath_chimps.yaml` | pond Flagship + stream Carrier, Maim MOAB snipers, Perma-Spike; repaired: pond boat and alchemist moved inside the buffs, third pond Carrier | 2.07 (R8) | 2.02 (R55) | 2.07 / 2.07 (R8) | 2.04 (R55) | 0.85 |
+| `skates_chimps.yaml` | tack to Inferno Ring, two Carriers, subs, dipped ninja | 1.51 (R94) | 1.41 (R98) | 1.41 / 1.41 (R98) | 0.06 (R95) | 0.5 (fails R94-98; drift R59-100) |
+| `winterpark_chimps.yaml` | three fountain Carriers, MOAB Eliminator, MIB; repaired: early Hot Shot on the third ship | 2.09 (R98) | 2.09 (R98) | 2.20 / 2.20 (R95) | 2.07 (R98) | 0.85 |
+
+Before the correction every build but Hedge had passed at 2.11-3.08; the
+spot and step changes, and why the two held builds could not be repaired
+within their budget, are in each file's header.
 
 Skates (Impoppable) and Lotus Island (Medium sub-modes, Impoppable) still
 lack a medal CHIMPS needs first; the medal sweep had recorded both as earned.

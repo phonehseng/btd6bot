@@ -13,7 +13,7 @@
 #     one stretch: 4 tacks + buccaneer 2-0-0 hold R15 at 2.4, a dart instead
 #     1.3-1.5).
 #   * R24 camo: b2 2-0-2 (Crow's Nest). R28 lead: b1 2-2-0 (Hot Shot).
-#   * R31-40: a third buccaneer early (2-1-0) carries R34 (160 yellows) and
+#   * R31-40: a third buccaneer early (2-1-0, then 2-2-0) carries R34 (160 yellows) and
 #     R36 (pinks); the camo Destroyer b2 3-0-2 before R38; MOAB Mauler (the
 #     model's and strategy.ANSWERS' MOAB answer) before R40.
 #   * Mid game: Destroyer b1 3-2-0, Radar village 2-2-0 (camo for every ship,
@@ -62,6 +62,17 @@
 #   r/btd6, YouTube titles, Steam); Sarah's BTD6 site lists its CHIMPS section
 #   as "coming soon" (https://sarahs-btd6-site.onrender.com/guides/maps/easy-maps/winter-park).
 #
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track), rounds 6-100, worst margin: plan replay 2.09 (R98);
+# sight-strict 2.09 (R98); executor-faithful strict, with its extra towers /
+# plan towers only, 2.20 / 2.20 (R95), all 31 steps bought; drift replay
+# (every tower 5 units further from the village and alchemist) 2.07 (R98).
+# R95 2.18, R98 2.09, R99 2.43, R100 3.96. Repair: b3 takes Hot Shot (2-2-0)
+# right after Grape Shot - with b1 5 units off its spot R36 fell to 1.96.
+# The numbers below are from the model before the correction.
+#
 # Checked offline (no game; docs/map_strategies/beginner.md has the method),
 # CHIMPS economy (R6 $650, game income only, Hard prices, no boosts), R6-100:
 #   * every `at` legal for its tower in plan order on the map geometry and on
@@ -87,10 +98,8 @@ hero: quincy
 modes: [chimps]
 planner:
   towers: {buccaneer: [4, 2, 2], tack: [4, 0, 0], bomb: [2, 5, 0], village: [2, 3, 0], alchemist: [3, 2, 0]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
-  base_success: {chimps: 0.5}
+  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes): every replay 2.07+
+  base_success: {chimps: 0.85}
   maps: [Winter Park]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.452, 0.436]}   # fountain, north-east
@@ -106,6 +115,7 @@ plan:
   - {do: upgrade, id: t1, to: 3-0-0}   # Hot Shots: the ceramic answer (R38)
   - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.457, 0.513]}   # fountain, south-east
   - {do: upgrade, id: b3, to: 2-1-0}   # R34 yellows, R36 pinks
+  - {do: upgrade, id: b3, to: 2-2-0}   # Hot Shot: keeps R34/R36 above 2.0 if b1 stands a little off
   - {do: upgrade, id: b2, to: 3-0-2}   # camo Destroyer before R38
   - {do: place, id: m1, kind: bomb, role: dps, at: [0.334, 0.249]}   # over the top-left loop
   - {do: upgrade, id: m1, to: 0-3-0}   # MOAB Mauler before R40

@@ -1,13 +1,15 @@
 # Carved, CHIMPS: buccaneers in the pumpkin's water eyes growing into a
-# Carrier Flagship and two Aircraft Carriers, an MIB village between the eyes,
-# a MOAB Mauler and a Fighter Plane ace for the first blimps, Brickell in the
-# left eye.
+# Carrier Flagship and two Aircraft Carriers, an MIB village below the right
+# eye, a lead-dip alchemist by the left eye, a MOAB Mauler and a Fighter
+# Plane ace for the first blimps, Brickell in the left eye.
 #
 # Why: one route (1,312 world units) round the jack-o-lantern's outline, into
 # the mouth's zig-zag loop and out at the top. The eyes are the only water big
 # enough for towers: a buccaneer in the right eye reaches more track than any
-# other spot on the map, and the ground between the eyes (0.441, 0.351) is the
-# one village spot whose buffs reach both eyes (46 and 43 units). CHIMPS starts
+# other spot on the map. No village spot reaches both eyes with the centres
+# inside (between them, 46 and 43 units, it did only by the old footprint
+# allowance), so the village serves the right eye (see the re-check below)
+# and the left carrier sees camo itself (Crow's Nest). CHIMPS starts
 # at round 6 with $650 and no income, so the opener is the right-eye buccaneer
 # plus a dart ($645). Grape Shot (2-1-0) comes before the second buccaneer
 # because round 15's pinks are what a lone 2-0-0 ship leaks first in the model.
@@ -16,8 +18,8 @@
 # Fighter Plane ace (3-0-0). The ace is also what keeps the executor's own
 # blimp check (threats.blimp_capacity, 1.4x bar in one-life modes) from buying
 # unplanned blimp towers ahead of the plan in rounds 35-39.
-# Radar Scanner and then MIB (2-3-0) give every ship camo for round 51's camo
-# ceramics, and MIB gives all damage types. MOAB Mauler (bm1 2-4-0, inside the
+# Radar Scanner and then MIB (2-3-0) give the right-eye ships camo for round
+# 51's camo ceramics, and MIB gives them all damage types. MOAB Mauler (bm1 2-4-0, inside the
 # village's reach) answers BFBs, ZOMGs and the round-90 DDTs. A Glaive
 # Ricochet boomerang below the mouth answers the round-63 rush. The 90s' DDTs
 # (rounds 95 and 99 are the model's weakest late rounds) fall to the carriers'
@@ -45,6 +47,24 @@
 #     summary: the thread itself refused the fetch
 #     (https://www.reddit.com/r/btd6/comments/1glzky1/here_is_a_chimps_carved_strategy/)
 #   The search found no video or Steam guide for Carved CHIMPS.
+#
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track). The village between the eyes reached b1 only through the
+# old footprint allowance (46.6 units from a radius-40 Radar Scanner): rounds
+# 47-56 fell to 1.24 and, with b1 5 units off, 59 and 78 to 0.06-0.12.
+# Repairs: the village stands below the right eye (0.484, 0.47), 39 units
+# from b1, 24 from b3 and 19 from bm1, and takes Bigger Radius (1-2-0) right
+# after Radar Scanner (40 -> 48 units); the left eye's carrier b2 (4-0-2:
+# camo of its own, no MIB now) gets lead from an Acidic Mixture Dip
+# alchemist beside it (2-0-0, $1,245, 14 units away), which lifts R95 and R99.
+# Rounds 6-100, worst margin: plan replay 2.16 (R9); sight-strict 2.16 (R9);
+# executor-faithful strict, with its extra towers / plan towers only,
+# 2.16 / 2.16 (R9), all 32 steps bought; drift replay (every tower 5 units
+# further from the village and alchemist) 2.13 (R9). R95 2.28, R98 3.26,
+# R99 2.30, R100 5.24. The numbers below are from the model before the
+# correction (and the old village spot).
 #
 # Checked offline (docs/map_strategies/beginner.md method) on the CHIMPS
 # economy: optimize_builds.economy("chimps", ...), with round 6, $650, base
@@ -75,11 +95,10 @@ map: Carved
 hero: admiral_brickell
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 2], village: [2, 3, 0], ace: [4, 0, 0], bomb: [2, 5, 0], boomerang: [3, 0, 0], dart: [0, 0, 0]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
-  base_success: {chimps: 0.5}
+  towers: {buccaneer: [5, 2, 2], village: [2, 3, 0], ace: [4, 0, 0], bomb: [2, 5, 0], boomerang: [3, 0, 0], dart: [0, 0, 0],
+           alchemist: [2, 0, 0]}
+  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.13+
+  base_success: {chimps: 0.85}
   maps: [Carved]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.569, 0.368]}   # right eye: the best spot on the map
@@ -99,8 +118,9 @@ plan:
   - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
   - {do: upgrade, id: b2, to: 3-0-2}   # Destroyer
   - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.334]}   # Brickell, left eye
-  - {do: place, id: v1, kind: village, role: support, at: [0.441, 0.351], near: [b1, b2]}   # between the eyes: reaches both
-  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo for every ship
+  - {do: place, id: v1, kind: village, role: support, at: [0.484, 0.47], near: [b1, bm1]}   # below the right eye: b1, b3, bm1 well inside
+  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo for the right-eye ships
+  - {do: upgrade, id: v1, to: 1-2-0}   # Bigger Radius (48): b1 stays inside if it stands a little off
   - {do: upgrade, id: bm1, to: 2-4-0}   # MOAB Mauler: BFBs from round 60
   - {do: place, id: bg1, kind: boomerang, role: dps, at: [0.430, 0.658]}   # below the mouth: the wiki's glaive spot
   - {do: upgrade, id: bg1, to: 3-0-0}   # Glaive Ricochet: the round-63 rush
@@ -109,6 +129,8 @@ plan:
   - {do: upgrade, id: b1, to: 5-2-0}   # Carrier Flagship
   - {do: upgrade, id: a1, to: 4-0-0}   # Operation: Dart Storm
   - {do: upgrade, id: b2, to: 4-0-2}   # Aircraft Carrier
+  - {do: place, id: al1, kind: alchemist, role: support, at: [0.313, 0.445], near: [b2]}   # below the left eye
+  - {do: upgrade, id: al1, to: 2-0-0}   # Acidic Mixture Dip: lead for b2's darts (the DDTs of 95-99)
   - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.521, 0.385]}   # right eye, next to the Flagship
   - {do: upgrade, id: b3, to: 4-2-0}   # Aircraft Carrier: the round-95/99 DDTs
 answers:
