@@ -32,7 +32,21 @@ def test_words_are_not_prices():
     print("ok words and blanks are not prices")
 
 
+def test_a_zero_price_is_no_price():
+    # High Finance Magic Monkeys Only (2026-11-05): a wizard's PATH CLOSED
+    # box read as $0 twice ("panel [('cash', 0), ...]"), the closed button
+    # was clicked, and four such clicks capped the path for the game
+    from btd6bot.game import price_row
+    assert price_row("$0") == (None, None) and price_row("0") == (None, None)
+    assert price_row("PATH CLOSED") == (None, None) and price_row("") == (None, None)
+    assert price_row("$2,200") == ("cash", 2200) and price_row("#325") == ("cash", 325)
+    assert price_row("1,500 XP") == ("xp", 1500)
+    assert price_row("$") == ("cash", None), "a sign alone: a price the table fills in"
+    print("ok a $0 read is no price")
+
+
 if __name__ == "__main__":
     test_misread_dollar_signs()
     test_words_are_not_prices()
+    test_a_zero_price_is_no_price()
     print("ALL OK")

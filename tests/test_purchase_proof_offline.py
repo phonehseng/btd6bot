@@ -231,6 +231,29 @@ def test_drifted_tier_count_is_corrected_from_the_panel():
     assert p.tiers == [3, 0, 2] and not path_clicks(g, p)
 
 
+def test_closed_path_reveals_a_tier_the_bot_never_saw():
+    """High Finance Magic Monkeys Only (2026-11-05): wizard2 was counted
+    0-2-0 while its path 1 showed PATH CLOSED - the Intense Magic click had
+    been judged "not bought" (Monkey Sense costs the same $325, so the
+    button could not prove it, and round income hid the cash drop). Two
+    paths in use close the third, so path 3 must hold a tier: once the
+    blank reads make the path closed for good, the count is corrected."""
+    import btd6bot.game as G
+    g = upgrade_game([(None, None), ("cash", T.upgrade_cost("wizard", 2, 3, "hard")),
+                      ("cash", T.upgrade_cost("wizard", 3, 1, "hard"))], difficulty="hard")
+    p = Placed("wizard2", "wizard", 0.44, 0.71, tiers=[0, 2, 0])
+    for _ in range(G.CLOSED_AFTER_MISSES - 1):
+        assert g.upgrade(p, 1) is False and g.fail_reason == "unread" and p.tiers == [0, 2, 0]
+    assert g.upgrade(p, 1) is False and g.fail_reason == "capped"
+    assert ("wizard2", 1) in g.closed and p.tiers == [0, 2, 1], p.tiers
+    assert not path_clicks(g, p) and not g.inp.keys
+    # a path closed with both other paths counted (or none of them) says nothing new
+    q = Placed("w3", "wizard", 0.44, 0.71, tiers=[0, 2, 1])
+    assert not g._closed_path_hides_a_tier(q, 1) and q.tiers == [0, 2, 1]
+    r = Placed("w4", "wizard", 0.44, 0.71, tiers=[0, 0, 0])
+    assert not g._closed_path_hides_a_tier(r, 1) and r.tiers == [0, 0, 0]
+
+
 def test_discounted_price_of_the_believed_tier_corrects_nothing():
     """A village-discounted price of the tier the bot already expects leaves the count alone."""
     g = upgrade_game([("cash", int(0.9 * 10260)), (None, None), (None, None)], cash=50000)

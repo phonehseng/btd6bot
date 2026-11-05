@@ -602,7 +602,7 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family):
     behind = sorted((t for t in rest if t.kind == kind and sum(t.tiers) < want), key=lambda t: -sum(t.tiers))
     for t in behind:
         best = None
-        for target, first in grown_from(ex, kind, tuple(t.tiers), cash).items():
+        for target, first in grown_from(ex, kind, tuple(t.tiers), cash, tower=t).items():
             if first is None:
                 continue
             after = [SimpleNamespace(**{**vars(x), "tiers": target}) if x.tid == t.tid else x for x in rest]
@@ -637,7 +637,7 @@ def grown(ex, kind, cash):
     return set(grown_from(ex, kind, (0, 0, 0), cash - T.tower_cost(kind, _price_family(ex))))
 
 
-def grown_from(ex, kind, start, budget):
+def grown_from(ex, kind, start, budget, tower=None):
     """{crosspath reached: the first upgrade on the way} for a tower of
     `kind` standing at `start`, growing toward each of CROSSPATHS with
     `budget`: the main path to tier 2, the side path to its target, then
@@ -645,10 +645,21 @@ def grown_from(ex, kind, start, budget):
     XP has unlocked (tiers 1-2 are always open). A template the tower's
     tiers have already left (a tier on its third path, more on the side
     path than it wants) is not its way. The first upgrade is None when the
-    budget buys nothing on that way (the tower stays as it is)."""
+    budget buys nothing on that way (the tower stays as it is).
+
+    tower: the standing tower (with its tid) the ladder is for, or None for
+    one not placed yet. A standing tower's way skips a side path the
+    executor would not buy now and ends at such a main path
+    (Executor.path_blocked: capped for the game, price unreadable, tier 5
+    taken, or on the game's retry hold) - a step there comes back "skip"
+    without a click, and offered again and again it shut every other
+    purchase out (High Finance Magic Monkeys Only, 2026-11-05, rounds
+    49-54: wizard2's paths 1 and 3 were capped, and the ladder never got
+    to Dragon's Breath on its open path 2)."""
     family = _price_family(ex)
     account = getattr(ex, "account", None)
     unlocked = account.upgrades(kind) if account else (5, 5, 5)
+    blocked = getattr(ex, "path_blocked", None) if tower is not None else None
     reached = {}
     for target in CROSSPATHS:
         main = target.index(5)
@@ -658,20 +669,25 @@ def grown_from(ex, kind, start, budget):
             continue
         t, left, first = list(start), budget, None
         for path, upto in ((main, 2), (side, target[side]), (main, 5)):
+            ended = False           # locked, unaffordable or blocked: the way ends here
             while t[path] < upto:
                 tier = t[path] + 1
                 if tier > 2 and tier > unlocked[path]:
+                    ended = True
+                    break
+                if blocked is not None and blocked(SimpleNamespace(tid=tower.tid, kind=kind, tiers=tuple(t)), path + 1):
+                    ended = path == main        # a blocked side path is left out, the main path goes on
                     break
                 cost = T.upgrade_cost(kind, path + 1, tier, family)
                 if cost > left:
+                    ended = True
                     break
                 left -= cost
                 t[path] = tier
                 if first is None:
                     first = tuple(t)
-            else:
-                continue        # this phase is complete: on to the next
-            break               # locked or unaffordable: the way ends here
+            if ended:
+                break
         reached.setdefault(tuple(t), first)
     return reached
 

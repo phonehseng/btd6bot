@@ -706,17 +706,7 @@ class Game:
         """Per path: ("cash", n) | ("xp", n) for a locked tier | (None, None)
         when the button shows no price (path closed or maxed, or unreadable)."""
         f = f if f is not None else self.fresh()
-        out = []
-        for reg in self.panel(p)["cost_rows"]:
-            text, conf = rec_text(crop(f, reg))
-            low = text.lower()
-            if "xp" in low:
-                out.append(("xp", parse_int(low.replace("xp", ""))))
-            elif looks_like_price(text):
-                out.append(("cash", parse_int(text)))
-            else:
-                out.append((None, None))
-        return out
+        return [price_row(rec_text(crop(f, reg))[0]) for reg in self.panel(p)["cost_rows"]]
 
     def _path_closed(self, p, path, costs):
         """Does the panel show no price at all on this path? Then it is closed
@@ -752,10 +742,40 @@ class Game:
                          "trying again later (panel %s)", p.tid, path, p.crosspath, costs)
                 self.fail_reason = "unread"
                 return True
+            self._closed_path_hides_a_tier(p, path)   # closed for good: the count was behind
         self.closed.add((p.tid, path))
         log.info("%s path %d is closed or maxed (panel %s) - not buying it this game",
                  p.tid, path, costs)
         self.fail_reason = "capped"
+        return True
+
+    def _closed_path_hides_a_tier(self, p, path):
+        """A path the panel shows closed while p.tiers say it is open means
+        the count is behind on another path: the game closes a path only
+        when the two other paths both hold tiers (or this one stands at 2
+        with another past 2, which the count would show). So when exactly
+        one other path is counted at 0, that path really holds a tier the
+        bot never saw. Corrects p.tiers to the least that explains the
+        panel (that path at 1) and returns True.
+
+        High Finance Magic Monkeys Only (2026-11-05): wizard2's Intense
+        Magic click was judged "not bought" - the next tier, Monkey Sense,
+        costs the same $325, so the button could not prove it, and round
+        income hid the cash drop - and the bot kept the tower at 0-2-0
+        while the panel showed its path 1 as PATH CLOSED. _resync_tiers
+        cannot tell from the $325 whether path 3 stands at 0 or 1; the
+        closed path can."""
+        others = [i for i in range(3) if i != path - 1]
+        zero = [i for i in others if p.tiers[i] == 0]
+        if p.tiers[path - 1] != 0 or len(zero) != 1:
+            return False
+        new = list(p.tiers)
+        new[zero[0]] = 1
+        if not _legal_cross(new):
+            return False
+        log.warning("%s path %d is closed although it is counted at %s: path %d must hold a tier - "
+                    "corrected to %s", p.tid, path, p.crosspath, zero[0] + 1, "-".join(map(str, new)))
+        p.tiers[:] = new
         return True
 
     def _reread_clear(self, p):
@@ -1250,6 +1270,28 @@ def _red_frac(img):
 def _expand(pt, dx, dy):
     x, y = pt
     return (x - dx, y - dy, x + dx, y + dy)
+
+
+def price_row(text):
+    """What one upgrade button's price row says, from its OCR text: ("xp", n)
+    for a tier still locked behind tower XP, ("cash", n) for a price, and
+    (None, None) when there is no price - the path is closed or maxed, or
+    the read is unreadable.
+
+    A price of $0 is no price: no tier costs nothing. High Finance Magic
+    Monkeys Only (2026-11-05) read a wizard's "PATH CLOSED" box as $0
+    twice; each read let Game.upgrade click the closed button, the click
+    counted as a purchase with no effect, four of them capped the path for
+    the game, and reinforce kept asking for it (reinforce.grown_from). Read
+    as no price, the box goes the closed-path way (_path_closed)."""
+    low = text.lower()
+    if "xp" in low:
+        return "xp", parse_int(low.replace("xp", ""))
+    if looks_like_price(text):
+        value = parse_int(text)
+        if value != 0:
+            return "cash", value
+    return None, None
 
 
 def looks_like_price(text):

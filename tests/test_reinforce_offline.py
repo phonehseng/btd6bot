@@ -499,6 +499,47 @@ def test_a_plan_step_out_of_reach_before_the_round_in_danger_holds_nothing():
     assert status == "buy" and found[0].cost == 300, (status, found)
 
 
+def test_a_blocked_path_is_not_grown():
+    # High Finance Magic Monkeys Only (2026-11-05): wizard2's paths 1 and 3
+    # were capped (four clicks without effect each), yet the grown ladder
+    # offered "upgrade wizard2 -> 1-2-0 (to grow to 4-2-0)" thirty times
+    # over rounds 49-54, each try "skip" without a click, while $3k grew to
+    # $24k. A blocked side path is left out and a blocked main path ends
+    # the way, so the ladder's first step is on the open path 2 only.
+    ex = N(mode="hard", account=None, path_blocked=lambda p, path: path in (1, 3))
+    w = N(tid="wizard2", kind="wizard", tiers=(0, 2, 0))
+    ways = R.grown_from(ex, "wizard", (0, 2, 0), 50_000, tower=w)
+    firsts = {first for first in ways.values() if first}
+    assert firsts == {(0, 3, 0)}, ways
+    assert all(t[0] == 0 and t[2] == 0 for t in ways), ways
+    # a tower not placed yet has no blocked paths
+    assert any(f and f[0] > 0 for f in R.grown_from(ex, "wizard", (0, 2, 0), 50_000).values())
+
+
+def test_path_blocked_reads_the_executor_and_the_game():
+    import time
+    from btd6bot.strategy import Executor
+    ex = Executor.__new__(Executor)      # only the fields the gate reads
+    ex.capped, ex.unread_until = set(), {}
+    ex.g = N(towers={}, _retry_at={})
+    p = N(tid="w2", kind="wizard", tiers=(0, 2, 0))
+    assert not any(ex.path_blocked(p, path) for path in (1, 2, 3))
+    ex.capped.add(("w2", 1))
+    assert ex.path_blocked(p, 1) and not ex.path_blocked(p, 3)
+    ex.unread_until[("w2", 3)] = time.time() + 10
+    assert ex.path_blocked(p, 3)
+    ex.g._retry_at[("w2", 2)] = (time.time() + 30, "noeffect", 1)     # Game.upgrade's hold
+    assert ex.path_blocked(p, 2)
+    ex.g._retry_at[("w2", 2)] = (time.time() - 1, "noeffect", 1)      # over: tried again
+    assert not ex.path_blocked(p, 2)
+    # one of each tier 5 on the map: another wizard holds path 3's
+    ex.capped.clear()
+    ex.unread_until.clear()
+    ex.g.towers = {"w1": N(tid="w1", kind="wizard", tiers=(0, 2, 5))}
+    assert ex.path_blocked(N(tid="w2", kind="wizard", tiers=(0, 2, 4)), 3)
+    assert not ex.path_blocked(N(tid="w2", kind="wizard", tiers=(0, 2, 3)), 3)
+
+
 def test_look_ahead_covers_the_rounds_left():
     assert R.lookahead_rounds(55, 80) == list(range(55, 65))
     assert R.lookahead_rounds(78, 80) == [78, 79, 80]

@@ -3949,22 +3949,17 @@ class Executor:
         towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
                         key=lambda p: (p.kind != first, -p.spent))
         family = PRICE_FAMILY.get(self.mode, "hard")
-        unread = getattr(self, "unread_until", {})
         no_pay = self._income_pays_nothing()
         for p in towers:
             if not self._reachable(p):
                 continue          # under a closed pane this round
             for path in sorted(range(3), key=lambda i: -p.tiers[i]):
-                if (p.tid, path + 1) in self.capped or p.tiers[path] >= 5:
+                if p.tiers[path] >= 5 or self.path_blocked(p, path + 1):
                     continue
-                if time.time() < unread.get((p.tid, path + 1), 0):
-                    continue      # its price was just unreadable: tried again later
                 t = list(p.tiers)
                 t[path] += 1
                 if sum(x > 0 for x in t) > 2 or sum(x > 2 for x in t) > 1:
                     continue
-                if t[path] == 5 and self._tier5_taken(p, path + 1):
-                    continue  # one of each tier 5 on the map: another tower holds it
                 cap = self._planned_cap(p)
                 leading = p.tiers[path] > 0 and p.tiers[path] == max(p.tiers)
                 if leading and cap is not None and t[path] > 2 and any(
@@ -3982,6 +3977,33 @@ class Executor:
                 if no_pay and self._is_income(p.kind, t):
                     continue  # an income tier where income pays nothing (INCOME_UPGRADES)
                 yield p, t, T.upgrade_cost(p.kind, path + 1, t[path], family)
+
+    def path_blocked(self, p, path):
+        """Would asking for the next tier of `path` (1-3) on tower p buy
+        nothing right now? Yes when the path is capped for the game (an XP
+        lock, a panel that showed it closed or maxed, four clicks without
+        effect), its price was just unreadable (unread_until), another
+        tower holds its tier 5 (_tier5_taken), or Game.upgrade still holds
+        a retry back for it (Game._retry_at: a click with no effect is tried
+        again after 30 s, then 60, 120 ... and until then the game answers
+        without clicking).
+
+        The one gate for every list of upgrades on offer: upgrade_choices
+        (surplus and reinforce) and the grown ladder reinforce rates a
+        standing tower at (reinforce.grown_from). The ladder used to walk
+        the price table alone, so on High Finance Magic Monkeys Only
+        (2026-11-05) it asked for wizard2's capped paths thirty times over
+        rounds 49-54 - "did not go through (skip)" every two seconds, with
+        no other purchase tried - while $3k grew to $24k and round 58 was
+        rated 0.13."""
+        if (p.tid, path) in self.capped:
+            return True
+        if time.time() < getattr(self, "unread_until", {}).get((p.tid, path), 0):
+            return True
+        if p.tiers[path - 1] + 1 == 5 and self._tier5_taken(p, path):
+            return True
+        held = (getattr(self.g, "_retry_at", None) or {}).get((p.tid, path))
+        return bool(held) and time.time() < held[0]
 
     @staticmethod
     def _side_path_ok(p, path, cap):
