@@ -382,3 +382,10 @@
 - Since 21:45: 3 wins, 3 losses (Lotus Island ABR, Pat's Pond Hard, Pat's Pond Magic Only won; Ravine Deflation r52, Flooded Valley Military Only r30, Party Parade Medium r31 lost). All three are handled.
 - Fixed in e345f74 (Party Parade): the lane-cover grid counted the hero as the strongest tower, so Quincy in the left lane made it look defended and every bomb went right. The hero now counts at its price. Also in e345f74 (Flooded Valley): the only lead and camo popper (a 3-2-0 sniper) was sold for "no pops" one round before the leads. A tower that alone answers a bloon property is now kept.
 - Fixed in c3bd57d (Ravine Deflation): calibration lifted a general build over the 0.76 no-income cap to p=0.93. The cap now holds after calibration. check.py ALL OK; all three fixes go live after the current game.
+
+## 2026-11-04 23:25
+- Bot status: running (task Running, bot.py up since 22:27, recorder and BTD6 up); now: Infernal Reverse - round 32, 150 lives. No tracebacks, loops, PAUSE or STOP; no Auto Start warning this hour. Safe mode on (trips 4), and the bot keeps playing.
+- Since 22:30: 4 wins, 3 losses (Pat's Pond Double HP, High Finance Primary Only, Infernal Medium and Military Only won; Pat's Pond ABR r40, Sulfur Springs Half Cash r27, High Finance Deflation r34 lost). All three are handled.
+- Fixed in 2edb32e (High Finance): the map's "BUILD FOR $1,500" lot box was not recognised (only "Remove FOR"), was left open, taken for a purchase screen, and the game ran on with $12,120 unspent. It is read now, and any leftover obstacle box is closed with its red X.
+- Fixed in 2edb32e (Sulfur Springs): Fast Track starts Half Cash at round 22 with $4,420; the planner now halves the win chance of half-cash games with Fast Track on. Idea for later: switch Fast Track off on map select for Half Cash (needs a live test of the toggle).
+- Pat's Pond ABR: untested build picked at p=0.71; the blimp ramp's fixed 3-round lead is filed as backlog 31d (c). check.py ALL OK.
