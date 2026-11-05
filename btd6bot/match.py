@@ -291,7 +291,7 @@ class Match:
         while time.time() - t < max_seconds and idle < 8:
             cash = self.g.cash_stable()
             bought = self.ex.tick(cash, rnd)
-            if not bought and late and cash is not None and cash > 600:
+            if not bought and late and cash is not None and cash > 600 and self._opening_surplus_ok():
                 bought = self.ex.surplus(cash, rnd)
             if bought:
                 idle = 0
@@ -309,6 +309,21 @@ class Match:
         # at the cash reading rather than at the spots (108 valid offline)
         self._setup_cash = cash
         return self.ex.defended()
+
+    def _opening_surplus_ok(self):
+        """May surplus() spend between plan steps of the opening build?
+
+        With income, yes: a Fast Track start must become a defence before
+        Play, whatever the plan is waiting on. With no income (Deflation)
+        the plan and its fill were designed for the whole bank, so surplus
+        waits until both are exhausted. Quad Deflation (2026-11-05, case
+        20261105_004356): one tick between two plan steps bought nothing,
+        surplus put $21,600 into a Crossbow Master, and the fill's eight
+        bombs, five snipers and three spike factories - the towers the
+        build's round 47-59 margins rested on - were never afforded."""
+        if not self.ex.rules.get("buy_all_upfront"):
+            return True
+        return self.ex.plan_exhausted()
 
     def _place_starter(self, rnd, tries=6):
         """Only the hero is down and the plan's next tower is not affordable

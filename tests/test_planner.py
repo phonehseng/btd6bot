@@ -608,6 +608,37 @@ def test_general_builds_are_not_trusted_beyond_their_record_without_income():
     assert P.prior_win_probability(acc, own, "Logs", "deflation") > P.NO_INCOME_GENERAL_CAP
 
 
+def test_a_solo_family_record_in_a_kind_of_game_counts_for_every_member():
+    """Bazaar Reverse (2026-11-05, case 20261105_010059): solo_bomb had won
+    13 Primary Only games (40 rounds) and never played a Medium-family mode;
+    pooled per economy that record lifted it to p=0.93 in Reverse, while the
+    generated solo builds together had lost all six of their Medium-family
+    income games. The family's record in a kind of game (economy x
+    difficulty family) now stands in for a member that never played it, and
+    may only lower it: where the family does well a member keeps its own
+    number."""
+    acc = _fresh_ish_account()
+    solo_a = _spec(id="solo_a", modes=("primary_only", "reverse"), rate=0.85, xp_target="bomb")
+    solo_b = _spec(id="solo_b", modes=("medium", "reverse"), rate=0.85, xp_target="dartling")
+    alone = _spec(id="alone", modes=("primary_only", "reverse"), rate=0.85)
+    for m in ["Monkey Meadow", "In The Loop", "Tree Stump", "Town Center", "Logs", "Alpine Run",
+              "Cubism", "Candy Falls"]:
+        acc.record_result(m, "primary_only", "solo_a", True, minutes=5.5)
+        acc.record_result(m, "primary_only", "alone", True, minutes=5.5)
+    for m in ["Monkey Meadow", "In The Loop", "Tree Stump", "Town Center"]:
+        acc.record_result(m, "medium", "solo_b", False, round_reached=35)
+    specs = {s.id: s for s in (solo_a, solo_b, alone)}
+    cal = P._Calibration(acc, specs)
+    assert P.build_family(solo_a) == "solo" and P.build_family(alone) is None
+    p_solo, _ = P.win_probability(acc, solo_a, "Rake", "reverse", calib=cal)
+    p_alone, _ = P.win_probability(acc, alone, "Rake", "reverse", calib=cal)
+    assert p_solo < 0.6 < p_alone, (p_solo, p_alone)
+    # in Primary Only the family's record is solo_a's own good one: no change
+    own_solo, _ = P.win_probability(acc, solo_a, "Rake", "primary_only", calib=cal)
+    own_alone, _ = P.win_probability(acc, alone, "Rake", "primary_only", calib=cal)
+    assert abs(own_solo - own_alone) < 1e-9, (own_solo, own_alone)
+
+
 def test_hard_first_by_default():
     """The owner's order (evening of 2026-10-22): Hard medals before the
     Easy and Medium families."""
@@ -1099,7 +1130,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_a_solo_family_record_in_a_kind_of_game_counts_for_every_member", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",

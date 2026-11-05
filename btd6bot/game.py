@@ -1066,7 +1066,25 @@ class Game:
         if paid is not None and paid >= 0.6 * price:
             log.info("removed obstacle %s for $%s", name, price)
             return True
-        log.warning("obstacle %s: cash %s -> %s after confirming $%s - not counted as removed", name, before, after, price)
+        # The cash can rise instead of dropping: with BTD6's Auto Start on
+        # the round keeps paying while the box is confirmed. On Cornfield
+        # Magic Only (2026-11-05) ten obstacles were bought this way and
+        # each "not counted", so the freed ground was never used and the
+        # bot sat on $29k with "0 legal cells". The obstacle itself is the
+        # proof: once it is gone, clicking its spot opens no box.
+        self.inp.click(fx, fy)
+        time.sleep(0.6)
+        f = self.fresh()
+        again = find_removal_box(f, self._vision().read(img=f))
+        if again is None:
+            log.info("removed obstacle %s for $%s (cash %s -> %s: the round's income hid the price)",
+                     name, price, before, after)
+            self.close_panels()      # the click may have selected a tower standing there now
+            return True
+        log.warning("obstacle %s: still there after confirming $%s (cash %s -> %s) - not counted as removed",
+                    name, price, before, after)
+        self.inp.click(*(again["cancel"] or (0.5, 0.012)))
+        time.sleep(0.4)
         return False
 
     def ability(self, n):

@@ -352,6 +352,8 @@ def planner_specs(strats, account):
             "cost_share": invested_cash(s),
             # the towers that do the damage: can they reach this map's track?
             "dps_kinds": damage_kinds(s),
+            # a generated solo XP build: calibrated with the whole family
+            "xp_target": s.get("xp_target"),
         }))
     return specs
 

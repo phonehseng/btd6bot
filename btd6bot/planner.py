@@ -511,6 +511,10 @@ class StrategySpec:
     achievement: str | None = None
     bot_ready: bool | None = None
     wins_needed: int | None = None
+    # Generated solo XP builds (strategies/generated, one per tower) name the
+    # tower they level up. They share one generator and one plan shape, so
+    # the calibration treats them as one family (_Calibration.family).
+    xp_target: str | None = None
 
     @classmethod
     def from_any(cls, obj: Any) -> "StrategySpec":
@@ -550,6 +554,7 @@ class StrategySpec:
             achievement=str(ach) if ach else None,
             bot_ready=None if ready is None else bool(ready),
             wins_needed=int(wins) if wins else None,
+            xp_target=str(get("xp_target")) if get("xp_target") else None,
         )
 
     def share(self) -> dict[str, float]:
@@ -955,6 +960,15 @@ def _no_income(mode: str) -> bool:
     return bool(rules(mode).get("buy_all_upfront"))
 
 
+def build_family(s: StrategySpec) -> str | None:
+    """The family of builds ``s`` belongs to for calibration, or None for a
+    build that stands alone. The generated solo XP builds (one per tower,
+    ``xp_target`` set) come from one generator with one plan shape - a main
+    line of one tower kind plus helpers - so how they do in a kind of game
+    says something about every member."""
+    return "solo" if s.xp_target else None
+
+
 def map_mode_losses(account: AccountState) -> dict[tuple[str, str], int]:
     """{(map, mode): losses by any strategy}, rebuilt when a game was added."""
     key = (id(account), account.games_played, len(account.strategy_stats))
@@ -1084,6 +1098,25 @@ class _Calibration:
             self.pooled[sid] = self._clip((w + k) / (e + k))
         for key, (w, e) in per_econ.items():
             self.pooled_econ[key] = self._clip((w + k) / (e + k))
+        # Fourth: the generated solo XP builds are one family (build_family).
+        # Its record in a kind of game - economy x difficulty family - stands
+        # in for a member that has never played that kind, and may only
+        # lower it. Pooling per economy alone let solo_bomb's 13 Primary Only
+        # wins (40-round games) vouch for Bazaar Reverse (60 rounds) at
+        # p=0.93, while the solo builds together had lost all six of their
+        # Medium-family income games (case 20261105_010059).
+        self.family: dict[tuple[str, bool, str], float] = {}
+        self._family_of = {sid: build_family(s) for sid, s in strategies.items()}
+        per_family: dict[tuple[str, bool, str], list[float]] = {}
+        for (sid, mode), (w, e) in acc.items():
+            fam = self._family_of.get(sid)
+            if fam is None:
+                continue
+            t = per_family.setdefault((fam, _no_income(mode), MODES[mode].difficulty), [0.0, 0.0])
+            t[0] += w
+            t[1] += e
+        for key, (w, e) in per_family.items():
+            self.family[key] = self._clip((w + k) / (e + k))
         for (sid, mode), (w, e) in acc.items():
             parent = self._parent(sid, mode)
             self.f[(sid, mode)] = self._clip((w + k * parent) / (e + k))
@@ -1109,8 +1142,16 @@ class _Calibration:
         only lower it (a Deflation record cannot vouch for an income game)."""
         same = self.pooled_econ.get((sid, _no_income(mode)))
         if same is not None:
-            return self._transfer(same)
-        return min(1.0, self.pooled.get(sid, 1.0))
+            own = self._transfer(same)
+        else:
+            own = min(1.0, self.pooled.get(sid, 1.0))
+        # the build's family in this kind of game may only lower it
+        fam = self._family_of.get(sid)
+        if fam is not None:
+            shared = self.family.get((fam, _no_income(mode), MODES[mode].difficulty))
+            if shared is not None:
+                own = min(own, shared)
+        return own
 
     def get(self, sid: str, mode: str, category: str | None = None) -> float:
         """The factor for a strategy in a mode - on maps of `category` when

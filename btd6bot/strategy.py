@@ -49,6 +49,9 @@ from . import towers as T
 log = logging.getLogger("strategy")
 STRAT_DIR = Path(__file__).resolve().parents[1] / "strategies"
 ACH_DIR = STRAT_DIR / "achievements"
+# Executor.waiting once a tick found nothing left to buy in the plan or fill
+# (Match.setup lets surplus() spend a no-income bank only after this).
+PLAN_EXHAUSTED = "plan and fill exhausted"
 
 MODE_FAMILY = {
     "easy": "easy", "primary_only": "easy", "deflation": "easy",
@@ -2876,8 +2879,12 @@ class Executor:
         for st in self.fill:
             if self.try_step(st, cash, rnd) in ("bought", "progress"):
                 return True
-        self.waiting = "plan and fill exhausted"
+        self.waiting = PLAN_EXHAUSTED
         return False
+
+    def plan_exhausted(self):
+        """True once the last tick found nothing left in the plan or fill."""
+        return getattr(self, "waiting", None) == PLAN_EXHAUSTED
 
     def _set_aside_blocked(self, st):
         """Put plan step st aside (self.deferred, retried every tick) when
