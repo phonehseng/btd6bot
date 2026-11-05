@@ -8,7 +8,8 @@ untested only with a map's own build, and owner picks checked.
   Track; CHIMPS has neither, so such a record may lower a CHIMPS factor but
   never lift it.
 - A build with no CHIMPS game of its own clears the CHIMPS bar only when it
-  was made for the map (strategies/maps, strategies/optimized).
+  was made for that one map (strategies/maps, strategies/optimized): not a
+  general build with a multi-map allowlist, nor an achievement plan.
 - The NEXT file cannot send the bot into a locked mode, nor into a one-life
   game under its bar unless the line ends with "!force".
 Run: python tests/test_chimps_planner_offline.py (no game needed)."""
@@ -117,6 +118,28 @@ def test_a_map_specific_optimized_build_may_reach_the_bar_untested():
     cal = P._Calibration(acc, {s.id: s})
     p, n = P.win_probability(acc, s, MAP, "chimps", calib=cal)
     assert n == 0 and P.DEFAULT_CONFIG.min_p_chimps <= p <= P.UNTESTED_HARD_P, p
+
+
+def test_a_general_multi_map_build_stays_under_the_bar_untested():
+    # an allowlist of several maps (strategies/chimps_sub_druid_water.yaml
+    # lists 24 water maps) marks a general build, not one proven on this map
+    s = spec("water", {"hard": 0.95, "chimps": 0.95}, maps=[MAP, "Logs", "Resort"])
+    acc = account_with([("water", "hard", 20, 0)])
+    cal = P._Calibration(acc, {s.id: s})
+    p, n = P.win_probability(acc, s, MAP, "chimps", calib=cal)
+    assert n == 0 and p < P.DEFAULT_CONFIG.min_p_chimps, p
+
+
+def test_an_achievement_plan_pinned_to_the_map_stays_under_the_bar_untested():
+    d = {"id": "ach_meadow", "towers": {}, "modes": ["hard", "chimps"],
+         "base_success": {"hard": 0.95, "chimps": 0.95}, "map": MAP,
+         "achievement": "Some Achievement"}
+    s = P.StrategySpec.from_any(d)
+    assert s.maps == frozenset({MAP}) and s.achievement
+    acc = account_with([("ach_meadow", "hard", 20, 0)])
+    cal = P._Calibration(acc, {s.id: s})
+    p, n = P.win_probability(acc, s, MAP, "chimps", calib=cal)
+    assert n == 0 and p < P.DEFAULT_CONFIG.min_p_chimps, p
 
 
 def test_other_hard_modes_keep_the_untested_hard_cap():

@@ -828,11 +828,21 @@ def _pick_hero(s: StrategySpec, account: AccountState) -> str | None:
     return None
 
 
+def is_own_map_build(s: StrategySpec, map_name: str) -> bool:
+    """True for a build researched for this one map (strategies/maps,
+    strategies/optimized): its allowlist is exactly this map. A general
+    build with a long map allowlist (e.g. a water build for 24 maps) is not,
+    nor is an achievement plan, whose single pinned map is where the
+    achievement is earned rather than where the build was proven."""
+    return (s.maps is not None and len(s.maps) == 1 and map_name in s.maps
+            and not s.achievement)
+
+
 def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:
     """Declared success rate scaled by map difficulty (complete build)."""
     base = s.base_success.get(mode, 0.0)
     w = MODE_MAP_WEIGHT.get(mode, MODE_GROUP_MAP_WEIGHT[MODES[mode].group])
-    if s.maps is not None and len(s.maps) == 1 and not s.achievement:
+    if is_own_map_build(s, map_name):
         # a map's own researched build (strategies/maps): its declared rate
         # is already about THIS map, so its difficulty is not counted twice
         w *= OWN_MAP_WEIGHT
@@ -1225,10 +1235,11 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
             # its own: UNTESTED_HARD_P (0.84) sits above the CHIMPS bar
             # (min_p_chimps 0.80), so a general build would clear it on its
             # other modes' record alone. Only a build made for this map
-            # (strategies/maps, strategies/optimized: StrategySpec.maps set)
-            # may reach the bar untested; any other build stays just under
-            # it until it has CHIMPS games of its own.
-            if MODES[mode].group == "chimps" and not s.maps:
+            # (is_own_map_build: strategies/maps, strategies/optimized) may
+            # reach the bar untested; any other build, including a general
+            # one with a multi-map allowlist or an achievement plan pinned to
+            # its map, stays just under it until it has CHIMPS games of its own.
+            if MODES[mode].group == "chimps" and not is_own_map_build(s, map_name):
                 cap = min(cap, p_threshold(mode, cfg) - 0.01)
             prior = min(prior, cap)
         # calibration must not lift a prior over its map-ceiling cap: Last
@@ -1874,7 +1885,7 @@ def _sort_key(c: _Cand) -> tuple:
     confident = 1 if c.p >= CONFIDENT_P else 0
     # a map's own researched build (strategies/maps: one map only) and the
     # owner's preferred plans come first
-    own_map = c.s.maps is not None and len(c.s.maps) == 1 and not c.s.achievement
+    own_map = is_own_map_build(c.s, c.map)
     preferred = 1 if own_map or c.s.id in PREFERRED_STRATEGIES else 0
     learned = 1 if c.tier in ("H", "HS") and c.learned else 0
     within = c.p if c.tier == "HF" else c.score
