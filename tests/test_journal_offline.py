@@ -321,7 +321,10 @@ def test_executor_why_nests_and_reaches_the_journal():
             assert ex._sell_and_avoid(ex.g.towers["d1"], 12, "no pops in 4 rounds") is True
             sale = jr.events[-1]
             assert sale["ev"] == "sell"
-            assert sale["why"] == {"source": "sell_useless", "reason": "no pops in 4 rounds"}
+            # the sale also carries the tower and what it had cost
+            assert sale["why"]["source"] == "sell_useless"
+            assert sale["why"]["reason"] == "no pops in 4 rounds"
+            assert sale["why"]["tower"] == "d1"
             assert ex.g.why is None
     finally:
         G.time.sleep = sleep

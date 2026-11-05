@@ -28,6 +28,7 @@ safe or nothing the cash buys helps.
 """
 from __future__ import annotations
 
+import contextlib
 import logging
 from dataclasses import dataclass, field
 from types import SimpleNamespace
@@ -47,6 +48,60 @@ SAVE_REACH = 3.0       # ... and it may cost at most this many times the cash in
 BLIND_SPEND_CASH = 10_000   # cash idle in a crisis the model sees no use for: spent anyway
 MIN_LIFT = 0.01        # a purchase lifting the weakest round less than this does not
                        # outbid a plan step that is waiting for cash (waiting_plan_step)
+
+
+def crisis_now(forecast, ex, rnd, lives_dropped=None):
+    """Is the round being played in trouble? True when the damage model rates
+    round rnd or the next one under WEAK_MARGIN, or lives fell this round
+    (lives_dropped; None: asked of the executor, Executor.lives_fell_lately).
+
+    MIN_LIFT, waiting_plan_step and save_target judge a purchase against the
+    weakest round of the whole look-ahead, never the round being played, so
+    cash stayed put while that round was lost: Bazaar Reverse (2026-11-05)
+    kept $7k-20k "for plan step a1 0-4-2" from round 39 while round 51 was
+    rated 0.44 and lost there; Bloonarius Prime ABR was wiped at round 40
+    with $3,901 unspent. While this is true best() measures a purchase's
+    lift on the round being played too (lift) and lets go of cash held for
+    a later step down to what income rebuilds before that step (release)."""
+    if lives_dropped is None:
+        fell = getattr(ex, "lives_fell_lately", None)
+        lives_dropped = bool(fell(rnd, 1)) if callable(fell) else False
+    if lives_dropped:
+        return True
+    if rnd is None:
+        return False
+    margins = [m for m in (forecast.margin(board(ex), r) for r in (rnd, rnd + 1)) if m is not None]
+    return bool(margins) and min(margins) < WEAK_MARGIN
+
+
+def lift(forecast, before_towers, after_towers, rnd, worst, crisis):
+    """(before, after): the margin a purchase is judged on. Normally round
+    `worst`'s; in a crisis (crisis_now) the lowest of the round being
+    played, the next one and `worst` - so a purchase that lifts the round
+    being played while `worst` does not move still counts, and one that
+    only helps a round already safer than the weakest does not."""
+    rounds = [worst] + ([r for r in (rnd, rnd + 1) if r is not None and r != worst] if crisis else [])
+
+    def low(towers):
+        ms = [m for m in (forecast.margin(towers, r) for r in rounds) if m is not None]
+        return min(ms) if ms else None
+    return low(before_towers), low(after_towers)
+
+
+def release(ex, held, due_round, rnd):
+    """What is left to hold of `held` dollars needed by due_round once the
+    income until then is counted (Executor.income_until): the rest may be
+    spent now. Unknown income: all of it stays held."""
+    income_until = getattr(ex, "income_until", None)
+    income = income_until(due_round, rnd) if callable(income_until) and due_round is not None else 0.0
+    return max(0.0, held - (income or 0.0))
+
+
+def _why(ex, source, reason):
+    """ex.why(source, reason) for the journal, or nothing for an executor
+    without it (test fakes)."""
+    why = getattr(ex, "why", None)
+    return why(source, reason) if callable(why) else contextlib.nullcontext()
 
 
 @dataclass
@@ -132,7 +187,12 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     affordable lifts it over 1, a dearer purchase would (save_target) and
     the rounds before it do not cost the `lives` left (dies_first); else
     ("buy", (Option, its worst round, that round's margin before, after))
-    for the purchase that saves the most lives per dollar."""
+    for the purchase that saves the most lives per dollar.
+
+    While the round being played is in trouble (crisis_now) neither a
+    waiting plan step nor a dearer purchase holds more of the cash than
+    income cannot rebuild before it is needed (release), and a purchase's
+    lift is judged on the round being played too (lift)."""
     rounds = lookahead_rounds(rnd, end_round)
     half = 1.0 / TARGET_MARGIN
     # only the rounds that leak at half strength can gain (and each skipped
@@ -176,17 +236,30 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
             log.warning("reinforce: the model sees nothing that helps round %d (%.2f) - spending "
                         "$%d anyway on the dearest upgrade, %s", worst, before or 0.0, cash, pick[1].what)
     after = forecast.margin(pick[1].towers, worst) if pick else None
+    now = crisis_now(forecast, ex, rnd)
     plan_wait = waiting_plan_step(ex, cash)
-    if pick is not None and not blind and plan_wait is not None \
-            and (after or 0.0) - (before or 0.0) < MIN_LIFT:
+    if pick is not None and not blind and plan_wait is not None:
         step, cost = plan_wait
-        log.info("reinforce: %s would move round %d only %.2f -> %.2f - the cash stays for plan "
-                 "step %s ($%d)", pick[1].what, worst, before or 0.0, after or 0.0, step, cost)
-        return "wait", None
+        judged_before, judged_after = lift(forecast, board(ex), pick[1].towers, rnd, worst, now)
+        moved = (judged_after or 0.0) - (judged_before or 0.0)
+        # in a crisis the plan step keeps only what income cannot rebuild
+        # before its round (its own `round`, else the next one)
+        keep = release(ex, cost, step.get("round") or rnd + 1, rnd) if now else cost
+        if moved < MIN_LIFT and cash - pick[1].cost < keep:
+            log.info("reinforce: %s would move round %d only %.2f -> %.2f - the cash stays for plan "
+                     "step %s ($%d)", pick[1].what, worst, before or 0.0, after or 0.0, step, cost)
+            return "wait", None
     if crisis and (after is None or after < 1.0) and not dies_first(forecast, ex, rnd, worst, lives):
         # Nothing affordable stops the leak: spending now only delays the
         # purchase that would (see save_target).
         target = save_target(forecast, ex, cash, rnd, worst)
+        if (target is not None and now and pick is not None
+                and cash - pick[1].cost >= release(ex, target[0].cost, worst, rnd)):
+            # the round being played is in trouble too, and income rebuilds
+            # what the dearer purchase still needs by round `worst`: buy now
+            log.info("reinforce: round %d is in trouble - buying %s now; income pays for %s ($%d) "
+                     "by round %d", rnd, pick[1].what, target[0].what, target[0].cost, worst)
+            target = None
         if target is not None:
             o, lifted = target
             log.info("reinforce: saving for %s ($%d) - round %d goes %.2f -> %.2f; nothing $%d buys "
@@ -375,11 +448,15 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
     look-ahead holds: stop), 'wait' (nothing affordable helps yet: more cash
     may), 'save' (keep the cash for a dearer purchase that does help) or
     'failed' (the purchase did not go through)."""
+    # part of the cash the executor keeps for a far threat (Executor._hold_for)
+    held = getattr(ex, "held_cash", 0) or 0
+    if held and cash is not None:
+        cash = max(0, cash - held)
     status, found = best(ex, forecast, cash, rnd, end_round, lives)
     if status != "buy":
         return status
     o, worst, before, after = found
-    with ex.why("reinforce", f"round {worst} is the weakest ahead", what=o.what):
+    with _why(ex, "reinforce", f"{o.what}: round {worst} {before or 0.0:.2f}->{after or 0.0:.2f}"):
         r = ex.try_step(dict(o.step), cash, rnd)
     if r in ("bought", "progress"):
         log.warning("reinforce: %s ($%d) - round %d, the weakest ahead, goes %.2f -> %.2f in the model",
