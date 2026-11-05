@@ -368,3 +368,10 @@
 - Since 19:25: 4 wins, 4 losses (Midnight Mansion and Mesa Easy, Sulfur Springs Impoppable, X Factor Deflation won; Chutes Impoppable r96, Midnight Mansion Primary Only r40, Muddy Puddles ABR r23, Workshop Primary Only r40 lost). The first three are handled; Workshop (0 lives counted, lost at r40) is not filed yet - next run.
 - Fixed in 3fb24e6 (Muddy Puddles ABR): the planner calibrated each mode with one factor over all maps, hiding that ABR goes 9/10 on beginner maps but 0/4 on expert ones; it now calibrates per map category, so expert ABR last-resort picks drop from ~0.5-0.73 to 0.27-0.42.
 - Fixed in 762f174 (Midnight Mansion Primary Only): with every cheap camo answer unplaceable, the bot froze $4,248 "saving" for a $27,625 Boomerang tier 5; an answer the income cannot pay by its round no longer holds the cash. Chutes' "saving for bad answer" during crisis rounds 94-95 filed as backlog 31c. check.py ALL OK; both go live after the current game.
+
+## 2026-11-04 21:45
+- Bot status: running (task Running, bot.py up since 20:26, recorder and BTD6 up); now: Ravine easy - round 35, $807, 200 lives. No PAUSE or STOP, no loops. Safe mode on (trips 4); last-resort games keep it playing.
+- OWNER: BTD6's Auto Start is still ON (logged again at 20:32 and 20:42). Please turn it off in the game's settings.
+- Since 20:55: 3 wins, 3 losses (Cornfield Deflation, Ancient Portal Double HP, Bloody Puddles Military Only won; Muddy Puddles Deflation r54, Last Resort Primary Only r20, Bloonarius Prime ABR r40 lost). Mesa Primary Only twice refused to start ("no defence could be placed", cash read 51) and is benched 6 h. All four open cases (with Workshop) are handled.
+- Fixed in d73d866 (Workshop, Muddy Puddles, Last Resort): the map-ceiling cap (p 0.5 where no researched build holds) was applied before the per-category calibration, which lifted these last-resort picks back to p 0.69-0.72. The cap now holds after calibration and scales with the ceiling. The next last-resort pick is Ravine Easy (ceiling 2.99), now live.
+- Bloonarius Prime ABR (round-40 rainbow/ceramic rush rated 1.00, reinforce aimed at round 47) filed as backlog 31d. check.py ALL OK.
