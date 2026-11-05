@@ -1989,7 +1989,10 @@ class Executor:
         kept in self.redirected and tried in its place until a tower stands
         under the id again - then this and every later step for the id lands
         on the new tower. Returns try_step's result for the placement, or
-        None when the step is not one to redirect.
+        None when the step is not one to redirect. While the stand-in is not
+        placed, _first_step_cost and _sim_step price the step as that
+        placement (plus the tiers), so the waiting plan step's claim
+        (plan_claim) and an answer's hold (_steps_cost) count the right sum.
 
         Ancient Portal Impoppable (2026-11-05): n2, a ninja placed at round 6
         on the walled left lane that bloons never use (the saved map model
@@ -2026,24 +2029,32 @@ class Executor:
                         p.kind, new, tid)
         elif tid not in redirected:
             return None
-        with self.why("plan", f"placing {tid} anew for its upgrade", step=dict(redirected[tid])):
+        # the journal keeps the reason of whoever asked for the upgrade (the
+        # plan, an answer, surplus): only a bare call names the plan
+        outer = getattr(self.g, "why", None)
+        with (contextlib.nullcontext() if outer else
+              self.why("plan", f"placing {tid} anew for its upgrade", step=dict(redirected[tid]))):
             r = self._try_place(redirected[tid], cash)
         if tid in self.g.towers:
             redirected.pop(tid, None)
         return r
 
     def _rekey_tower(self, old, new):
-        """Move the per-tower state keyed by a tower's id (closed paths,
-        panel prices, failed clicks) from `old` to `new` when the tower is
-        renamed: the fresh tower that takes the old id starts clean."""
-        for name in ("capped",):
-            keys = getattr(self, name, None) or set()
-            for k in [k for k in keys if k and k[0] == old]:
+        """Move the per-tower state keyed by a tower's id from `old` to `new`
+        when the tower is renamed, so that the fresh tower that takes the old
+        id starts clean: the executor's closed paths (capped), panel prices,
+        failed clicks and unread prices, and the game's own closed paths
+        (Game.closed, never clicked again once seen closed, and the blank
+        reads that lead there, Game._closed_misses) - n2 2-0-4 had its middle
+        path closed; a fresh n2 must not inherit that."""
+        game = getattr(self, "g", None)
+        for keys in (getattr(self, "capped", None), getattr(game, "closed", None)):
+            for k in [k for k in (keys or ()) if k and k[0] == old]:
                 keys.discard(k)
                 keys.add((new,) + tuple(k[1:]))
-        for name in ("panel_price", "upgrade_fails", "unread_until"):
-            d = getattr(self, name, None) or {}
-            for k in [k for k in d if k and k[0] == old]:
+        for d in (getattr(self, "panel_price", None), getattr(self, "upgrade_fails", None),
+                  getattr(self, "unread_until", None), getattr(game, "_closed_misses", None)):
+            for k in [k for k in (d or {}) if k and k[0] == old]:
                 d[(new,) + tuple(k[1:])] = d.pop(k)
 
     # Rounds after a loss of lives in which nothing is sold as useless.
@@ -2714,9 +2725,15 @@ class Executor:
                 want = parse_cross(st["to"])
             except ValueError:
                 return None
+            cost = 0
+            pending = getattr(self, "redirected", {}).get(st.get("id"))
+            if pending and st["id"] not in sim:
+                # a dead tower's upgrade (_redirect_dead_upgrade): the fresh
+                # tower it goes to is paid for first
+                sim[st["id"]] = (pending["kind"], [0, 0, 0])
+                cost += T.tower_cost(pending["kind"], fam)
             ids = [st["id"]] if st.get("id") in sim else \
                 [t for t, (k, _) in sim.items() if k == kind and not st.get("id")]
-            cost = 0
             for tid in ids:
                 k, have = sim[tid]
                 new = [max(h, min(w, c)) for h, w, c in zip(have, want, self._caps(k))]
@@ -3194,12 +3211,15 @@ class Executor:
             if r == "bought":
                 return True
             if r == "wait" and self.rules.get("income") is not False:
-                self.waiting = self.wait_note or f"saving for {threat} answer"
                 # a property gap has no round of its own: its answer is held
                 # for until it stands (_hold_for), a strength threat for its round
                 due = self._threat_round(threat, rnd) if self._strength_threat(threat) else None
                 if self._hold_for(due, self.wait_total, rnd, f"the {threat} answer") is None:
                     continue  # the round being played is weak: only part of the cash is held
+                # (`waiting` is Match's idle line: set only when the cash is
+                # held in full - after a partial hold the plan goes on and says
+                # what it waits for)
+                self.waiting = self.wait_note or f"saving for {threat} answer"
                 return False  # hold cash for the answer
             # (no income, Deflation: saving cannot make the answer affordable
             # later - the money is better spent on the rest of the defence)
@@ -3216,8 +3236,10 @@ class Executor:
             if r == "bought":
                 return True
             if r == "wait" and self.rules.get("income") is not False:
-                self.waiting = f"saving for blimp damage before round {ramp[0]}"
-                return self._hold_for(ramp[0], self.wait_total, rnd, "blimp damage")
+                held = self._hold_for(ramp[0], self.wait_total, rnd, "blimp damage")
+                if held is False:
+                    self.waiting = f"saving for blimp damage before round {ramp[0]}"
+                return held
             if r == "plan_hold" and self.rules.get("income") is not False:
                 # the plan goes on (its next step is the blimp damage), but the
                 # cash is kept for it: surplus() and reinforcing hold off
@@ -3263,24 +3285,30 @@ class Executor:
         hand for a purchase nobody can name.
 
         A hold for a round already being played (due_round <= rnd) holds
-        nothing: the bloons it is for are on the track, no income arrives
-        before them, and whatever the cash buys now is the only thing that
-        fights them. Ancient Portal Impoppable (2026-11-05) held all $17,562
-        "for blimp damage before round 94" while round 94's BFBs and ZOMGs
-        were already walking, and lost there with the cash in the bank.
-        due_round None is an answer with no round of its own (a property
-        gap: the defence cannot pop the bloon at all), held as before."""
+        nothing while that round is weak: no income arrives before its
+        bloons, so an answer the cash is short of now cannot come for them,
+        and whatever the cash buys now is the only thing that fights them.
+        Ancient Portal Impoppable (2026-11-05) held all $17,562 "for blimp
+        damage before round 94", rated 0.45, while round 94's BFBs and ZOMGs
+        were already walking, and lost there with the cash in the bank. In a
+        safe round the hold stands as before: a strength threat is due
+        through the round after its first (due_threats, r + 1), its answer
+        is still wanted for the rounds that follow (round 41's MOABs come
+        after round 40's), and nothing presses for the cash. due_round None
+        is an answer with no round of its own (a property gap: the defence
+        cannot pop the bloon at all), held as before."""
         rnd = rnd or 0
-        if due_round is not None and due_round <= rnd:
+        weak = self.lives_fell_lately(rnd, 1) or self.weak_now(rnd)
+        if due_round is not None and due_round <= rnd and weak:
             note = ("playing-hold", what, rnd)
             if note not in self._notes():
                 self.noted.add(note)
-                log.warning("round %d is being played: the bloons %s is for are already on the "
-                            "track - nothing is held for it, the cash goes to this round", rnd, what)
+                log.warning("round %d is weak and %s %s: no income arrives before this round's "
+                            "bloons - nothing is held for it, the cash goes to this round", rnd, what,
+                            "is for this round's bloons" if due_round == rnd else f"was due by round {due_round}")
             return None
         if cost is None:
             cost = getattr(self, "wait_cost", None)   # the next tier at least
-        weak = self.lives_fell_lately(rnd, 1) or self.weak_now(rnd)
         if cost is None and weak:
             note = ("unpriced-hold", what, rnd)
             if note not in self._notes():
@@ -3334,6 +3362,10 @@ class Executor:
         if step.get("do") == "place":
             return self.g.price(step["kind"])
         p = self.g.towers.get(step.get("id"))
+        if p is None:
+            pending = getattr(self, "redirected", {}).get(step.get("id"))
+            if pending:      # a dead tower's upgrade: a fresh tower is placed for it first
+                return self.g.price(pending["kind"])
         nxt = self._next_path(p, parse_cross(step["to"])) if p is not None else None
         return nxt[1] if nxt else float("inf")
 
@@ -3567,13 +3599,17 @@ class Executor:
             cannot rebuild by the step's round or the next one, as
             reinforce.best keeps - and the rest goes only to a purchase that
             lifts the round being played (_lifts_now);
-          * nothing when a weak round further off than the crisis rule looks
-            (past the next round) cannot be paid for before it comes, from
-            the cash and the income until then (reinforce.payable_by: Quad ABR
-            kept $10-20k for a Glaive Lord no income could pay before the
-            round-63 rush, 7919935). The round being played is never that
-            round: nothing can be paid before it, and the crisis rule above
-            already spends on it;
+          * nothing when it cannot be paid, from the cash and the income until
+            then (reinforce.payable_by), before the round it must stand for:
+            the next round in a crisis of the round being played (what the
+            crisis rule pays it by), else the weakest look-ahead round under
+            WEAK_MARGIN. Quad ABR kept $10-20k for a Glaive Lord no income
+            could pay before the round-63 rush (7919935); and in round 94 of
+            Ancient Portal itself, rated 0.45 with $17,562 against the $36,000
+            step, the crisis rule alone keeps $35,000 - the whole bank - for a
+            step no income can pay before round 95. The round being played is
+            never the round to pay it by: no income arrives before its bloons,
+            and a step short of cash now is for the rounds after it;
           * nothing where no income comes (Deflation): saving cannot make the
             step affordable later, as _threat_tick says of its answers.
 
@@ -3592,19 +3628,28 @@ class Executor:
         step, cost = wait
         idx = getattr(self, "idx", None)
         due = step.get("round")
+        rnd = rnd or 0
+        crisis = self.weak_now(rnd)
+        # the round the step must be paid before to keep anything: the next
+        # one in a crisis (the crisis rule pays it by then), else the weakest
+        # look-ahead round under WEAK_MARGIN - and never the round being
+        # played, which no income reaches
         worst = self.lookahead_worst(rnd)
-        if worst is not None and worst[0] < RF.WEAK_MARGIN and worst[1] > (rnd or 0) + 1 \
-                and RF.payable_by(self, cost, cash, worst[1], rnd) is False:
-            note = ("surplus-unpayable", idx, worst[1])
+        pay_by = None
+        if crisis:
+            pay_by = rnd + 1
+        elif worst is not None and worst[0] < RF.WEAK_MARGIN:
+            pay_by = max(worst[1], rnd + 1)
+        if pay_by is not None and RF.payable_by(self, cost, cash, pay_by, rnd) is False:
+            note = ("surplus-unpayable", idx, pay_by)
             if note not in self._notes():
                 self.noted.add(note)
-                log.info("surplus: plan step %s %s ($%d) cannot be paid before round %d (rated %.2f) "
-                         "from $%d and the income until then - it keeps nothing", idx, step, cost,
-                         worst[1], worst[0], cash)
+                log.info("surplus: plan step %s %s ($%d) cannot be paid before round %d (%s) from $%d "
+                         "and the income until then - it keeps nothing", idx, step, cost, pay_by,
+                         f"round {rnd} is weak" if crisis else f"rated {worst[0]:.2f}", cash)
             return None
-        crisis = self.weak_now(rnd)
         if crisis:
-            keep = RF.release(self, cost, due or (rnd or 0) + 1, rnd)
+            keep = RF.release(self, cost, due or rnd + 1, rnd)
         elif due:
             keep = RF.release(self, cost, due, rnd)
         else:
@@ -3612,7 +3657,7 @@ class Executor:
         note = ("surplus-claim", idx, bool(crisis))
         if note not in self._notes():
             self.noted.add(note)
-            by = due or ((rnd or 0) + 1 if crisis else None)
+            by = due or (rnd + 1 if crisis else None)
             log.info("surplus: $%d kept for plan step %s %s: $%d, %s%s", keep, idx, step, cost,
                      f"income pays ${cost - keep:.0f} by round {by}" if by else "no round: all of it until it is bought",
                      f"; round {rnd} is weak: the rest goes to what lifts it" if crisis else "")

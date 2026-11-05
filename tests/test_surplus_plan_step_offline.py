@@ -7,10 +7,13 @@ for $36,000, had waited since round 63):
   the whole cost when the step has no round, the cost less the income until
   its round when it has one, in a crisis only what income cannot rebuild -
   and then only a purchase that lifts the round being played may spend the
-  rest; a step no income can pay before the weak round holds nothing;
-* _hold_for holds nothing for a round already being played, prices an
-  unpriced answer by its next tier, and holds an answer of unknown cost only
-  while the round being played is safe;
+  rest; a step no income can pay before the weak round - the next round in
+  a crisis of the round being played - holds nothing;
+* _hold_for holds nothing for a round already being played while that round
+  is weak (and all of it in a safe round, as before), prices an unpriced
+  answer by its next tier, and holds an answer of unknown cost only while
+  the round being played is safe; Match's idle line names a hold only when
+  the cash is held in full;
 * _steps_cost prices the steps it can and _wait_total never leaves
   wait_total None after a "wait";
 * a plan upgrade for a tower that has popped nothing (n2 on the walled left
@@ -95,6 +98,29 @@ def test_an_unpayable_step_holds_nothing():
     assert any(n[0] == "surplus-unpayable" for n in ex.noted)
 
 
+def test_a_step_unpayable_before_the_next_round_holds_nothing_in_a_crisis():
+    """The loss round itself: round 94 rated 0.41, $17,562 in hand, the
+    $36,000 step and about $1,000 a round of income. The crisis rule alone
+    would keep cost less one round's income - the whole bank - for a step
+    no income can pay before round 95; it keeps nothing, and surplus spends
+    as before the claim (reinforce's 7919935 rule holds nothing either)."""
+    ex = portal(0.41, cost=36_000, income=1_000)
+    assert R.payable_by(ex, 36_000, 17_562, 94, 94) is False
+    assert ex.plan_claim(17_562, 94) is None
+    assert any(n == ("surplus-unpayable", 0, 95) for n in ex.noted)
+    assert ex.surplus(17_562, 94) is True and ex.bought == [("1-0-0", 17_562)]
+    # the same a round earlier with the weak round next (Quad ABR's shape:
+    # round 62, round 63 rated 0.5, a $35,100 Glaive Lord against $15,000)
+    ex = portal(3.0, cost=35_100)
+    ex.forecast = Fixed(3.0, {63: 0.5})
+    assert ex.plan_claim(15_000, 62) is None
+    assert ex.surplus(15_000, 62) is True and ex.bought == [("1-0-0", 15_000)]
+    # payable by the next round from the cash and one round's income: kept
+    ex = portal(0.41, cost=18_000, income=1_000)
+    keep, _, _, _, crisis = ex.plan_claim(17_562, 94)
+    assert crisis and keep == 17_000, keep
+
+
 def test_in_a_crisis_only_a_lifting_purchase_spends_the_rest():
     # round 70 rated 0.4: the step keeps cost less one round's income
     ex = portal(0.4, cost=10_000)
@@ -145,14 +171,43 @@ def holder(margin):
     return ex
 
 
-def test_nothing_is_held_for_a_round_being_played():
-    for margin in (0.25, 2.5):
-        for due in (94, 93):
-            ex = holder(margin)
-            assert ex._hold_for(due, 40_000, 94, "blimp damage") is None
-            assert not ex.saving_for_threat and ex.held_cash == 0.0
+def test_nothing_is_held_for_a_round_being_played_while_it_is_weak():
+    for due in (94, 93):
+        ex = holder(0.25)
+        assert ex._hold_for(due, 40_000, 94, "blimp damage") is None
+        assert not ex.saving_for_threat and ex.held_cash == 0.0
+        assert ("playing-hold", "blimp damage", 94) in ex.noted
+    # a safe round holds as before: round 40's MOAB answer is still wanted in
+    # round 41 (a strength threat is due through r + 1), and nothing presses
+    for due in (40, 41, 42):
+        ex = holder(2.5)
+        assert ex._hold_for(due, 9_000, 41, "the moab answer") is False and ex.saving_for_threat
     ex = holder(2.5)
     assert ex._hold_for(95, 40_000, 94, "blimp damage") is False and ex.saving_for_threat
+
+
+def test_the_idle_line_names_a_hold_only_when_the_cash_is_held():
+    """The ramp branch of _threat_tick: "saving for blimp damage before
+    round 94" was the idle line the loss was diagnosed from; with nothing
+    held for the round being played the line must not stand."""
+    def ramp_tick(margin):
+        ex = holder(margin)
+        ex.due_threats = lambda rnd: []
+        ex._ramp_due = lambda rnd: (94, {"hp": 124_800}, 0.2)
+        ex.ramp_bar = lambda load: 1.4
+        ex.waiting = None
+
+        def answer_ramp(R, load, ratio, cash, rnd):
+            ex.wait_total = 40_000
+            return "wait"
+        ex._answer_ramp = answer_ramp
+        return ex
+    ex = ramp_tick(0.25)
+    assert ex._threat_tick(17_562, 94) is None and ex.waiting is None and not ex.saving_for_threat
+    ex = ramp_tick(2.5)
+    ex._ramp_due = lambda rnd: (96, {"hp": 124_800}, 0.2)
+    assert ex._threat_tick(17_562, 94) is False and ex.saving_for_threat
+    assert ex.waiting == "saving for blimp damage before round 96"
 
 
 def test_an_unpriced_answer_is_held_by_its_next_tier():
@@ -212,6 +267,8 @@ def dead_board(mode):
     ex = bare_executor(mode, [n1, n2], plan=[place, up], idx=1, counter={}, strat={"plan": [place, up]})
     ex._sole_answer = lambda p: None
     ex.capped, ex.panel_price, ex.upgrade_fails, ex.unread_until = {("n2", 2)}, {("n2", 3, 4): 4320}, {}, {}
+    ex.g.closed, ex.g._closed_misses = {("n2", 2), ("n1", 1)}, {("n2", 1): 2}
+    ex.g.price = lambda kind: 500
     ex.placed = []
 
     def try_place(step, cash):
@@ -234,12 +291,34 @@ def test_a_dead_towers_upgrade_places_a_fresh_tower_under_its_id():
         assert ex.redirected["n2"]["segment"] == [0.2, 0.8] and "at" not in ex.redirected["n2"]
         assert ("ninja", 10, 10) in ex.failed_spots               # its spot is avoided
         assert ex.capped == {("ninja1", 2)} and ("ninja1", 3, 4) in ex.panel_price
+        # the game's closed paths move with the renamed tower too
+        assert ex.g.closed == {("ninja1", 2), ("n1", 1)} and ex.g._closed_misses == {("ninja1", 1): 2}
+        # while the stand-in is not placed the step is priced as its placement
+        assert ex._first_step_cost(up) == 500
+        fam = S.PRICE_FAMILY.get(mode, "hard")
+        ex._caps = lambda kind, p=None: (5, 5, 5)
+        want = S.T.tower_cost("ninja", fam) + sum(S.T.upgrade_cost("ninja", 1, t, fam) for t in (1, 2)) \
+            + sum(S.T.upgrade_cost("ninja", 3, t, fam) for t in (1, 2, 3, 4))
+        assert ex._steps_cost([up], "the moab answer") == want
         # the next tick places it, and the id is live again
         assert ex.try_step(dict(up), 1000, 41) == "bought"
         assert ex.g.towers["n2"].tiers == [0, 0, 0] and not ex.redirected
         assert len(ex.placed) == 2 and all(p["id"] == "n2" for p in ex.placed)
         # the fresh tower is not dead: the step goes to the normal upgrade path
         assert ex._redirect_dead_upgrade(dict(up), 1000, 41) is None
+
+
+def test_the_redirect_keeps_the_callers_journal_reason():
+    ex = dead_board("hard")
+    up = {"do": "upgrade", "id": "n2", "to": "2-0-4"}
+    seen = []
+    ex._try_place = lambda step, cash: seen.append(dict(ex.g.why)) or "wait"
+    with ex.why("answer", "threat moab due"):
+        ex.try_step(dict(up), 300, 41)
+    assert seen[-1]["source"] == "answer"                      # not re-labelled as the plan
+    ex.g.why = None
+    ex.try_step(dict(up), 300, 41)
+    assert seen[-1]["source"] == "plan" and seen[-1]["step"]["id"] == "n2"
 
 
 def test_a_live_tower_and_a_sole_answer_are_not_redirected():
