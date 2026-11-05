@@ -1362,27 +1362,20 @@ class Executor:
                 ys = [self.g.towers[i].y for i in ids]
                 near = self.m.frac_to_cell(sum(xs) / len(xs), sum(ys) / len(ys))
                 near_r = step.get("near_radius", 9)
-        # Where this tower fits, from the game's own map geometry: its
-        # footprint on allowed ground, clear of track, obstacles and the towers
-        # already placed (None on maps without geometry: old grid checks)
+        # Where this tower fits (_legal_cells); a tower that needs no track
+        # in reach also leaves the scarce ground near it to those that do
         from . import placement as PL
         hero = self.g.hero if kind == "hero" else None
-        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
-                  for p in self.g.towers.values()]
-        # the game's last round: ground that only changes later (Erosion's ice
-        # melts after round 54) is usable in a shorter game
-        valid = PL.valid_spots(self.m, kind, hero, placed,
-                               where={"land"} if self.land_only else None,
-                               last_round=self.rules.get("end_round"), now_round=self._pane_round(),
-                               removed=tuple(self.removed))
+        valid = self._legal_cells(kind)
+        block = self._keep_off_scarce(kind, valid, self.blocked)
         covered = None if role == "support" else self._covered()
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
-                                        extra_block=self.blocked, valid=valid)
+                                        extra_block=block, valid=valid)
             cover[cover >= 1] = -1  # still exclude blocked/occupied
         else:
             cover = self.m.score_spots(rc, seg, self._occupied(), near=near, near_radius=near_r,
-                                       placement=placement, extra_block=self.blocked,
+                                       placement=placement, extra_block=block,
                                        covered=covered, valid=valid)
         from .maplearn import spot_factor
         cands = self.m.best_spots(cover, n=30 if valid is not None else 12)
@@ -1929,6 +1922,115 @@ class Executor:
         share = self.MIN_REACH_SHARE if share is None else share
         return share * best if best > 0 else None
 
+    def _legal_cells(self, kind):
+        """Bool grid of the cells where a `kind` tower's centre may go now,
+        from the game's own map geometry: its footprint on allowed ground,
+        clear of track, obstacles and the towers already placed. None on
+        maps without geometry (the old grid checks then apply).
+
+        The game's last round is passed on: ground that only changes later
+        (Erosion's ice melts after round 54) is usable in a shorter game."""
+        from . import placement as PL
+        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
+                  for p in self.g.towers.values()]
+        return PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
+                              where={"land"} if self.land_only else None,
+                              last_round=self.rules.get("end_round"), now_round=self._pane_round(),
+                              removed=tuple(self.removed))
+
+    # Global-range kinds whose attack still stays round the spot they stand
+    # on: the Monkey Ace flies its figure-eight about its own spot, so it is
+    # not sent away from the track by the scarce-ground rule.
+    GLOBAL_BUT_LOCAL = frozenset({"ace"})
+    # Short-range towers the scarce-ground rule keeps room for beyond the
+    # plan's own place steps: threat answers and reinforce placements.
+    SCARCE_ROOM_SPARE = 4
+
+    def _needs_no_reach(self, kind):
+        """True for a tower that pops bloons wherever it stands (global
+        range, GLOBAL_BUT_LOCAL excepted): it can give its spot near the
+        track to a tower that cannot."""
+        return (kind != "hero" and kind in T.TOWERS and T.TOWERS[kind].get("range") is None
+                and kind not in self.GLOBAL_BUT_LOCAL)
+
+    def _short_range_kinds(self):
+        """The kinds of the towers still to come that need the track in
+        reach: one entry per remaining plan place step of a land damage
+        kind with a range (the count is what the ground must hold). With no
+        such step left, every such kind the game allows, once each, so the
+        ground is still kept for answers and reinforce buys."""
+        def ranged(kind):
+            spec = T.TOWERS.get(kind) or {}
+            return (spec.get("range") is not None and kind not in self.BUFFERS
+                    and (spec.get("placement") or "land") != "water" and self.kind_allowed(kind))
+        plan = getattr(self, "plan", None) or []
+        idx = getattr(self, "idx", 0) or 0
+        steps = [st.get("kind") for st in plan[idx:]
+                 if st.get("do") == "place" and st.get("role", "dps") != "support"
+                 and ranged(st.get("kind"))]
+        return steps or [k for k in T.TOWERS if k != "farm" and ranged(k)]
+
+    def _scarce_ground(self):
+        """Bool grid of the cells where the shortest-range tower still to
+        come reaches the track (at least _reach_floor of it), when that
+        ground is scarce; else None.
+
+        Scarce means fewer such towers still fit on it - its legal cells
+        over the cells one tower's footprint takes in a tight (hexagonal)
+        packing - than there are short-range towers still to come
+        (_short_range_kinds), plus SCARCE_ROOM_SPARE.
+
+        Cargo Impoppable (2026-11-05, case 20261105_075327): the main deck
+        lies about 23 units below the rail, so only a walkway and a pier
+        corner reach the track for a short-range tower. The hero, a super,
+        a desperado and a bomb filled the walkway by round 6, and at round
+        56 a sniper - which needs no track in reach - took the pier corner,
+        the last cell a dart could use. From then on every land kind logged
+        "no legal spot reaches the track", and round 94 was lost with $15k
+        idle."""
+        from . import placement as PL
+        kinds = self._short_range_kinds()
+        if not kinds:
+            return None
+        short = min(set(kinds), key=lambda k: T.TOWERS[k]["range"])
+        reach = self._reach(short)
+        valid = self._legal_cells(short)
+        floor = self._reach_floor(short, valid)
+        if reach is None or valid is None or floor is None:
+            return None
+        ground = reach >= floor
+        across = 2 * PL.footprint_radius(short) / PL.units_per_cell(self.m)   # cells between two centres
+        room = int((valid & ground).sum()) / max(1.0, across * across * math.sqrt(3) / 2)
+        if room >= len(kinds) + self.SCARCE_ROOM_SPARE:
+            return None
+        return ground
+
+    def _keep_off_scarce(self, kind, valid, block):
+        """`block` with the scarce ground (_scarce_ground) added for a tower
+        that needs no track in reach, as long as that still leaves the tower
+        a legal cell; `block` itself otherwise."""
+        if valid is None or not self._needs_no_reach(kind):
+            return block
+        scarce = self._scarce_ground()
+        if scarce is None or not (valid & ~scarce & ~block).any():
+            return block
+        logged = self.__dict__.setdefault("_scarce_logged", set())
+        if kind not in logged:
+            logged.add(kind)
+            log.info("%s: needs no track in reach - kept off the %d legal cells near the track that "
+                     "short-range towers still need", kind, int((valid & scarce).sum()))
+        return block | scarce
+
+    def _reaches_nothing(self, kind):
+        """True when no legal cell for a new `kind` tower has the track in
+        range now: an answer is then better bought as a kind that fits (a
+        sub or a buccaneer on water) than as a tower that is never placed.
+        False when it cannot be told (global range, no map geometry)."""
+        if getattr(self, "m", None) is None or getattr(self, "g", None) is None:
+            return False
+        best = self._best_legal_reach(kind, self._legal_cells(kind))
+        return best is not None and best < 1.0
+
     def _sole_answer(self, p):
         """The name of a bloon property (lead, camo, purple ...) that only
         tower p pops on this board, or None. Such a tower is never sold for
@@ -2297,13 +2399,7 @@ class Executor:
         """For a tower with global range (range None: sniper, mortar, heli,
         ace, dartling), any legal cell will do. [] for other towers, and logs
         how much legal ground there was (the diagnosis of a dead end)."""
-        from . import placement as PL
-        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
-                  for p in self.g.towers.values()]
-        valid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
-                               where={"land"} if self.land_only else None,
-                               last_round=self.rules.get("end_round"), now_round=self._pane_round(),
-                               removed=tuple(self.removed))
+        valid = self._legal_cells(kind)
         if valid is None:
             return []
         legal = int(valid.sum())
@@ -2317,10 +2413,13 @@ class Executor:
                      "refused, avoided and reserved cells - %d avoided for this kind)",
                      kind, legal, sum(1 for k in self.failed_spots if k[0] == kind))
             return []
+        # cells are walked top row first, so without this a sniper takes the
+        # scarce ground near the top of the map (Cargo's pier corner)
+        block = self._keep_off_scarce(kind, valid, self.blocked)
         ys, xs = np.nonzero(valid)
         out = []
         for cx, cy in zip(xs.tolist(), ys.tolist()):
-            if (kind, cx, cy) in self.failed_spots or self.blocked[cy, cx]:
+            if (kind, cx, cy) in self.failed_spots or block[cy, cx]:
                 continue
             if any((cx - ox) ** 2 + (cy - oy) ** 2 < 9 for ox, oy, _ in out):
                 continue
@@ -2737,6 +2836,8 @@ class Executor:
             return False          # Mortar/Dartling must be aimed; the bot does not aim
         if (T.TOWERS[kind].get("placement") or "land") == "water" and not self._map_has_water():
             return False
+        if self._reaches_nothing(kind):
+            return False          # no legal cell in reach of the track: a kind that fits answers instead
         return True
 
     def _new_tower_option(self, need, kind, cost, tiers):
