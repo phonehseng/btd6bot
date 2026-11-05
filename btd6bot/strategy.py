@@ -1275,6 +1275,22 @@ class Executor:
             out.append(exact)       # the build's researched spot comes first
         if role in ("dps", "exit"):
             floor = self._reach_floor(kind, valid)
+            best = self._best_legal_reach(kind, valid)
+            if best is not None and best < 1.0 and exact is None:
+                # No legal cell reaches the track at all: offering the best-
+                # scored cell anyway puts a tower where it never pops a bloon.
+                # Glacial Trail Medium (2026-11-05, loss case
+                # 20261105_021907): the map's learned refusals had eaten the
+                # few land cells near the track, so every ninja and the
+                # alchemist went to a ledge 35-47 cells from it, and round 15
+                # leaked 100 lives. Without a spot the step is set aside and
+                # the cash can go to global-range towers (_any_legal_spot
+                # logs the dead end). A blocked cell worth probing is still
+                # tried: the game may accept it.
+                probe = self._probe_spot(kind, valid)
+                log.info("%s: no legal spot reaches the track (%d legal cells) - none offered%s",
+                         kind, int(valid.sum()), " beyond one probe" if probe else "")
+                return [probe] if probe is not None else []
         elif role == "support" and kind not in self.BUFFERS and kind not in ("farm", "spike"):
             # a damage tower placed beside the towers it supports must still
             # reach the track sell_useless asks of it: on Cargo Double HP a
@@ -1690,16 +1706,24 @@ class Executor:
                 cache[kind] = cv2.filter2D(track, -1, disc, borderType=cv2.BORDER_CONSTANT)
         return cache[kind]
 
-    def _reach_floor(self, kind, valid, share=None):
-        """The least track a `kind` tower must reach here (`share` of the best
-        legal spot's reach, MIN_REACH_SHARE by default), or None when it does
-        not apply (global range, no track or no legal ground known)."""
+    def _best_legal_reach(self, kind, valid):
+        """Track cells the best legal cell for a `kind` tower reaches, or
+        None when the question does not apply (global range, no track or no
+        legal ground known)."""
         if kind == "hero" or T.TOWERS.get(kind, {}).get("range") is None:
             return None
         reach = self._reach(kind)
         if reach is None or valid is None or not valid.any():
             return None
-        best = float(reach[valid].max())
+        return float(reach[valid].max())
+
+    def _reach_floor(self, kind, valid, share=None):
+        """The least track a `kind` tower must reach here (`share` of the best
+        legal spot's reach, MIN_REACH_SHARE by default), or None when it does
+        not apply (global range, no track or no legal ground known)."""
+        best = self._best_legal_reach(kind, valid)
+        if best is None:
+            return None
         share = self.MIN_REACH_SHARE if share is None else share
         return share * best if best > 0 else None
 
