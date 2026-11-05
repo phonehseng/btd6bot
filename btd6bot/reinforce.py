@@ -537,7 +537,17 @@ def grow(ex, forecast, opts, cash, rnd):
     saves are judged per dollar against single upgrades), and among
     crosspaths the model rates alike the cheapest is kept. What is bought is
     still just the placement, and its upgrades follow through the normal
-    options once it stands."""
+    options once it stands.
+
+    A placement is offered only once every standing tower of its kind has
+    the tiers the new one is rated at; until then the option is the next
+    upgrade of the standing one closest to them, rated at the same target
+    (grow_standing). Spillway Medium (2026-11-05, case 20261105_093123):
+    eleven bare snipers and seven bare subs were bought one after another,
+    each as "another sniper (to grow to 1-2-0)", and none was ever grown -
+    the standing ones' single tiers were rated one tier at a time against
+    a placement rated at its whole future - and round 40's MOAB took the
+    125 lives left."""
     family = _price_family(ex)
     out = []
     for o in opts:
@@ -552,12 +562,51 @@ def grow(ex, forecast, opts, cash, rnd):
                 rated.append((m, -T.total_cost(new.kind, tiers, family), tiers))
         if rated:
             m, neg_cost, tiers = max(rated)
-            new = SimpleNamespace(**{**vars(new), "tiers": tiers})
             if any(tiers):
+                standing = grow_standing(ex, forecast, rest, new.kind, tiers, m, cash, rnd, family)
+                if standing is not None:
+                    out.append(standing)
+                    continue
+                new = SimpleNamespace(**{**vars(new), "tiers": tiers})
                 o = Option(f"{o.what} (to grow to {'-'.join(map(str, tiers))})", -neg_cost,
                            o.step, rest + [new])
         out.append(o)
     return out
+
+
+def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family):
+    """The next upgrade of a standing tower of `kind` that is behind the
+    tiers a new one would be rated at (`tiers`), rated at the crosspath the
+    cash grows it into - or None when every standing tower of the kind has
+    those tiers, or none of them grows (with the cash, along its own paths)
+    to a board the model rates at least as well as the new tower's
+    (`margin`: a badly placed tower is not grown for its own sake).
+
+    The standing tower closest to the target comes first; among its
+    reachable crosspaths the model's best, then the cheapest, is kept, and
+    the option costs what is left to pay to it - judged per dollar like
+    the placement it replaces. What is bought is the next tier on the way;
+    the rest follow the same way once it stands."""
+    want = sum(tiers)
+    behind = sorted((t for t in rest if t.kind == kind and sum(t.tiers) < want), key=lambda t: -sum(t.tiers))
+    for t in behind:
+        best = None
+        for target, first in grown_from(ex, kind, tuple(t.tiers), cash).items():
+            if first is None:
+                continue
+            after = [SimpleNamespace(**{**vars(x), "tiers": target}) if x.tid == t.tid else x for x in rest]
+            m = forecast.margin(after, rnd)
+            if m is None or m < margin:
+                continue
+            cost = T.total_cost(kind, target, family) - T.total_cost(kind, tuple(t.tiers), family)
+            if best is None or (m, -cost) > best[:2]:
+                best = (m, -cost, target, first, after)
+        if best is not None:
+            m, neg_cost, target, first, after = best
+            code = "-".join(map(str, first))
+            return Option(f"upgrade {t.tid} -> {code} (to grow to {'-'.join(map(str, target))})", -neg_cost,
+                          {"do": "upgrade", "id": t.tid, "to": code}, after)
+    return None
 
 
 def _price_family(ex):
@@ -573,29 +622,46 @@ CROSSPATHS = [(5, 2, 0), (5, 0, 2), (2, 5, 0), (0, 5, 2), (2, 0, 5), (0, 2, 5)]
 
 def grown(ex, kind, cash):
     """The tiers a new tower of `kind` reaches toward each of CROSSPATHS
-    with `cash` (its own price included): the main path to tier 2, the side
-    path to its target, then the main path on - as far as the cash goes and
-    the account's tower XP has unlocked (tiers 1-2 are always open)."""
+    with `cash` (its own price included): grown_from a bare tower."""
+    return set(grown_from(ex, kind, (0, 0, 0), cash - T.tower_cost(kind, _price_family(ex))))
+
+
+def grown_from(ex, kind, start, budget):
+    """{crosspath reached: the first upgrade on the way} for a tower of
+    `kind` standing at `start`, growing toward each of CROSSPATHS with
+    `budget`: the main path to tier 2, the side path to its target, then
+    the main path on - as far as the budget goes and the account's tower
+    XP has unlocked (tiers 1-2 are always open). A template the tower's
+    tiers have already left (a tier on its third path, more on the side
+    path than it wants) is not its way. The first upgrade is None when the
+    budget buys nothing on that way (the tower stays as it is)."""
     family = _price_family(ex)
     account = getattr(ex, "account", None)
     unlocked = account.upgrades(kind) if account else (5, 5, 5)
-    left = cash - T.tower_cost(kind, family)
-    reached = set()
+    reached = {}
     for target in CROSSPATHS:
         main = target.index(5)
         side = next(i for i in range(3) if i != main and target[i])
-        order = [main] * 2 + [side] * target[side] + [main] * 3
-        t, budget = [0, 0, 0], left
-        for path in order:
-            tier = t[path] + 1
-            if tier > 2 and tier > unlocked[path]:
-                break
-            cost = T.upgrade_cost(kind, path + 1, tier, family)
-            if cost > budget:
-                break
-            budget -= cost
-            t[path] = tier
-        reached.add(tuple(t))
+        other = 3 - main - side
+        if start[other] or start[side] > target[side]:
+            continue
+        t, left, first = list(start), budget, None
+        for path, upto in ((main, 2), (side, target[side]), (main, 5)):
+            while t[path] < upto:
+                tier = t[path] + 1
+                if tier > 2 and tier > unlocked[path]:
+                    break
+                cost = T.upgrade_cost(kind, path + 1, tier, family)
+                if cost > left:
+                    break
+                left -= cost
+                t[path] = tier
+                if first is None:
+                    first = tuple(t)
+            else:
+                continue        # this phase is complete: on to the next
+            break               # locked or unaffordable: the way ends here
+        reached.setdefault(tuple(t), first)
     return reached
 
 

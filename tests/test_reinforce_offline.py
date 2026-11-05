@@ -307,12 +307,24 @@ def test_another_standing_kind_is_rated_grown_too():
     ex = Growable()
     bare = [o for o in R.options(ex, 6000) if o.what == "another ninja"]
     assert bare and bare[0].cost == T.tower_cost("ninja", "hard")
+    # n1 stands bare, so the growth goes into it before another ninja is
+    # bought: Spillway Medium (2026-11-05) bought eleven bare snipers, each
+    # rated as the 1-2-0 it would grow into, and grew none of them
+    grown = [o for o in R.grow(ex, PerTier(), R.options(ex, 6000), 6000, 45) if "to grow to" in o.what]
+    assert grown and grown[0].what.startswith("upgrade n1 ->"), grown
+    assert grown[0].step["do"] == "upgrade" and grown[0].step["id"] == "n1"
+    assert sum(int(c) for c in grown[0].step["to"].split("-")) == 1, grown[0].step   # one tier at a time
+    assert sum(grown[0].towers[0].tiers) > 1 and 0 < grown[0].cost <= 6000, grown    # rated at the target
+    assert not [o for o in R.grow(ex, PerTier(), R.options(ex, 6000), 6000, 45) if o.what.startswith("another")]
+    status, found = R.best(ex, PerTier(), 6000, 40, 80, lives=100)
+    assert status == "buy" and found[0].what.startswith("upgrade n1 ->") and "to grow to" in found[0].what, (status, found)
+    # once n1 has what a new ninja is rated at, another one is offered - at its grown price
+    ex.g.towers["n1"].tiers = [5, 2, 0]
     grown = [o for o in R.grow(ex, PerTier(), R.options(ex, 6000), 6000, 45) if o.what.startswith("another ninja")]
     assert grown and "to grow to" in grown[0].what, grown
     assert any(grown[0].towers[-1].tiers) and T.tower_cost("ninja", "hard") < grown[0].cost <= 6000, grown
-    status, found = R.best(ex, PerTier(), 6000, 40, 80, lives=100)
-    assert status == "buy" and found[0].what.startswith("another ninja (to grow to"), (status, found)
-    assert found[0].step["do"] == "place" and found[0].step["kind"] == "ninja"
+    assert grown[0].step["do"] == "place" and grown[0].step["kind"] == "ninja"
+    ex.g.towers["n1"].tiers = [0, 0, 0]
     # when growing adds nothing in the model the bare placement keeps its price
     class Flat(PerTier):
         def margin(self, towers, rnd):
