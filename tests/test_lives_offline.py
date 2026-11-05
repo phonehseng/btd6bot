@@ -85,6 +85,18 @@ def test_rise_needs_reads_in_a_row():
     assert t.confirmed == 15
 
 
+def test_round_line_names_a_misread_beside_the_confirmed_count():
+    """Party Parade Hard (2026-11-05) logged "lives 1001" for twelve rounds
+    while the tracker held 100: the round line now shows the confirmed count
+    and keeps the raw read only as a note."""
+    from btd6bot.match import _misread_note
+    t = LivesTracker(100)
+    feed(t, [100, 1001, 1001])
+    assert t.confirmed == 100
+    assert _misread_note(1001, t.confirmed) == " (read 1001)"
+    assert _misread_note(100, 100) == "" and _misread_note(None, 100) == ""
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

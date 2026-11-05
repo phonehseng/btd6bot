@@ -68,6 +68,16 @@ def too_weak_to_start(ahead, rules):
     return bool(rules.get("buy_all_upfront")) and ahead is not None and ahead[0] < NO_INCOME_MIN_MARGIN
 
 
+def _misread_note(read, confirmed):
+    """A log suffix naming the raw HUD read when it differs from the
+    confirmed lives count ("" when they agree or either is unknown), so the
+    round line shows the game's state and still keeps the evidence of a
+    misread."""
+    if read is None or confirmed is None or read == confirmed:
+        return ""
+    return f" (read {read})"
+
+
 class LivesTracker:
     """The confirmed lives count, from noisy OCR reads of the HUD.
 
@@ -476,7 +486,12 @@ class Match:
                         self.tower_xp.round_end(done, list(self.g.towers.values()))
                     self._follow_ground(last_round, rnd)
                     self._follow_track(rnd)
-                    log.info("round %d  cash %s  lives %s", rnd, cash, lives)
+                    # the confirmed count, not the raw read: Party Parade Hard
+                    # (2026-11-05) logged "lives 1001" for twelve rounds while
+                    # LivesTracker rightly held 100 - a misleading line for
+                    # anyone reading game.log after a loss
+                    log.info("round %d  cash %s  lives %s%s", rnd, cash, self._lives.confirmed,
+                             _misread_note(lives, self._lives.confirmed))
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
                     last_round = rnd
                     self._t_round_change = now
@@ -755,12 +770,19 @@ class Match:
         waits on and every tower with its crosspath and cash spent."""
         try:
             last_depth = self.depths[-1] if getattr(self, "depths", None) else None
-            fields = dict(rnd=rnd, cash=cash, lives=self._lives.confirmed if lives is None else lives,
+            # `lives` is the tracker's confirmed count; a raw HUD read that
+            # disagrees with it (an OCR misread such as 1001 for 100) is kept
+            # beside it as `lives_read`, so the journal never shows a misread
+            # as the game's state
+            confirmed = self._lives.confirmed
+            fields = dict(rnd=rnd, cash=cash, lives=lives if confirmed is None else confirmed,
                           lives_lost_round=self._round_lost, margin=self._margins.get(rnd),
                           crisis=self._in_crisis(rnd),
                           depth=last_depth.get("deepest") if last_depth else None,
                           waiting=getattr(self.ex, "waiting", None),
                           towers=[[p.tid, p.kind, p.crosspath, p.spent] for p in self.g.towers.values()])
+            if lives is not None and confirmed is not None and lives != confirmed:
+                fields["lives_read"] = lives
             if reset:
                 fields["reset"] = True
             if setup:
