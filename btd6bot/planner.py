@@ -310,6 +310,16 @@ HARD_TIERS = ("H", "HS", "HF")
 TIERS_WARM_UP = ("E", "M", "H", "HS", "HF", "B")
 TIERS = TIERS_HARD_FIRST
 HARD_MAPS_FIRST = True
+# The owner's order since 2026-11-05 13:20 ("the bot seems to be stuck in
+# some kind of limbo the last few days with little improvement"): black
+# borders map tier by tier - every Beginner map first (all fourteen medals,
+# CHIMPS included), then every Intermediate map, then Advanced, then Expert.
+# With BLACK_BORDER_FIRST the map's category is the first sort key (the
+# easiest category first), then confident games (CONFIDENT_P), then the
+# maps that lack the fewest medals (closest to their black border); TIERS
+# and HARD_MAPS_FIRST order the games within that. Every bar still applies:
+# a medal only becomes a candidate when its p clears it.
+BLACK_BORDER_FIRST = True
 # Map categories by ease: 3 beginner .. 0 expert.
 CATEGORY_EASE = {"beginner": 3, "intermediate": 2, "advanced": 1, "expert": 0}
 PHASES = {
@@ -1784,6 +1794,7 @@ class _Cand:
     fail_minutes: float = 0.0   # expected minutes of a lost game
     ok: bool = True             # p clears its threshold (p_threshold)
     learned: bool = False       # map track already learned (no placement scan)
+    missing: int = 0            # medals the map still lacks for its black border
     tier: str | None = None     # progression tier (TIERS); None = not winnable yet
     build: float = 0.0          # share of the game's tower XP that feeds the Hard build
     paragon: float = 0.0        # closeness-weighted share feeding unfinished paragons
@@ -1857,7 +1868,8 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 out.append(_Cand(m, mode, s, p, n, t_full, xp_win, mm, True,
                                  value_win=0.0, value_fail=xp_fail, score=0.0, notes=notes,
                                  fail_minutes=t_fail, learned=learned,
-                                 ok=p >= p_threshold(mode, cfg), ease=CATEGORY_EASE.get(cat, 0)))
+                                 ok=p >= p_threshold(mode, cfg), ease=CATEGORY_EASE.get(cat, 0),
+                                 missing=sum(not account.has_medal(m, x) for x in MODES)))
     # XP + MM value. Tower XP counts extra where it unblocks the Hard roster
     # and, in games the planner is quite sure of (paragon_min_p), where it
     # brings a paragon closer (it must never make a riskier game look better).
@@ -1914,7 +1926,9 @@ PREFERRED_STRATEGIES = ("hard_sniper_elite",)
 
 
 def _sort_key(c: _Cand) -> tuple:
-    """Best first with reverse=True: tier (the Hard family as one group,
+    """Best first with reverse=True. With BLACK_BORDER_FIRST: the map's
+    category (Beginner first), confident games, then the map lacking the
+    fewest medals; then, as before: tier (the Hard family as one group,
     worked through HARD_MEDAL_ORDER one medal at a time), then confident
     games (p >= CONFIDENT_P), then the owner's preferred plans (PREFERRED_STRATEGIES),
     then (H/HS) learned tracks, then score - or p in HF, the
@@ -1935,8 +1949,14 @@ def _sort_key(c: _Cand) -> tuple:
     if HARD_MAPS_FIRST:
         # safer first among confident games: a map's own build, a learned
         # track - then the hardest map
-        return (rank, confident, stage, sure, preferred, learned, maps, within)
-    return (rank, confident, stage, sure, maps, preferred, learned, within)
+        key = (rank, confident, stage, sure, preferred, learned, maps, within)
+    else:
+        key = (rank, confident, stage, sure, maps, preferred, learned, within)
+    if BLACK_BORDER_FIRST:
+        # the easiest map category first, confident games first in it, then
+        # the map closest to its black border
+        return (c.ease, confident, -c.missing) + key
+    return key
 
 
 def _open_unearned(account: AccountState, modes: Iterable[str]) -> bool:
