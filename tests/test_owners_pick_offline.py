@@ -40,7 +40,8 @@ def test_a_chimps_pick_becomes_a_plan_with_the_best_chimps_strategy():
     plan, left = pick("Alpine Run / chimps !force")
     assert plan is not None and not left
     assert (plan.map, plan.mode_key, plan.mode, plan.difficulty) == ("Alpine Run", "chimps", "chimps", "hard")
-    assert plan.strategy_id == "chimps_ninja_sun"
+    # the map's own CHIMPS build (strategies/maps, 2026-11-05) beats the general one
+    assert plan.strategy_id == "alpinerun_chimps", plan.strategy_id
     assert plan.phase == "OWNER"
 
 
