@@ -38,6 +38,7 @@ event-only tower sets, plans that leak lives) makes the strategy bot_ready False
 import logging
 import math
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -1405,6 +1406,26 @@ class Executor:
         except Exception:
             return True
 
+    @contextmanager
+    def why(self, source, reason=None, **detail):
+        """Say why the purchases and sales made inside this block are made.
+
+        Game.place, Game.upgrade and Game.sell write g.why to the game journal
+        with each event (journal.py), so a lost game shows which part of the
+        bot spent the money - the plan, a threat's answer, panic buying,
+        reinforcing - and for what. Blocks nest: the innermost reason is the
+        one written, and the outer one comes back when the block ends.
+
+            with self.why("answer", "threat camo due"):
+                self.try_step(step, cash, rnd)
+        """
+        before = getattr(self.g, "why", None)
+        self.g.why = {"source": source, "reason": reason, **detail}
+        try:
+            yield
+        finally:
+            self.g.why = before
+
     def try_step(self, step, cash, rnd):
         """Returns 'done', 'wait', 'skip', 'bought' or 'progress'.
 
@@ -1785,7 +1806,7 @@ class Executor:
                     continue
                 log.warning("selling %s (%s): not a single pop in %d rounds", p.tid, p.kind,
                             rnd - p.placed_round)
-                return self._sell_and_avoid(p, rnd)
+                return self._sell_and_avoid(p, rnd, f"no pops in {rnd - p.placed_round} rounds")
         # 2. a buffer with no damage tower in its radius;
         # 3. a damage tower whose range barely reaches the track
         for p in towers:
@@ -1793,7 +1814,7 @@ class Executor:
                 cx, cy = self.m.frac_to_cell(p.x, p.y)
                 if len(self._damage_towers()) >= 2 and self._buffed(p.kind, cx, cy) == 0:
                     log.warning("selling %s (%s): no tower in its radius to buff", p.tid, p.kind)
-                    return self._sell_and_avoid(p, rnd)
+                    return self._sell_and_avoid(p, rnd, "no tower in its radius to buff")
                 continue
             if p.kind in ("farm", "spike") or T.TOWERS.get(p.kind, {}).get("range") is None:
                 continue   # income, exit and global-range towers stay
@@ -1806,15 +1827,17 @@ class Executor:
             if best > 0 and reach[cy, cx] < self.SELL_REACH_SHARE * best:
                 log.warning("selling %s (%s): its range reaches %.0f track cells, the best spot "
                             "reaches %.0f", p.tid, p.kind, reach[cy, cx], best)
-                return self._sell_and_avoid(p, rnd)
+                return self._sell_and_avoid(p, rnd, f"range reaches {reach[cy, cx]:.0f} track cells, "
+                                                    f"the best spot {best:.0f}")
         return False
 
     # Cells around a sold tower's spot that its kind may not use again this game.
     SOLD_SPOT_CELLS = 3
 
-    def _sell_and_avoid(self, p, rnd):
-        """Sell p, and keep its kind off that spot (and the cells around it)
-        for the rest of the game. Every way of choosing a spot skips
+    def _sell_and_avoid(self, p, rnd, reason=None):
+        """Sell p (journaled as a sell_useless sale for `reason`), and keep
+        its kind off that spot (and the cells around it) for the rest of the
+        game. Every way of choosing a spot skips
         failed_spots, so a tower sold as useless is never bought again in
         the same place: on Cargo Double HP a Super Monkey was sold and
         placed back every round from 69 to 75, on Glacial Trail Medium a
@@ -1826,7 +1849,8 @@ class Executor:
             for dx in range(-r, r + 1):
                 if dx * dx + dy * dy <= r * r:
                     self.failed_spots.add((p.kind, cx + dx, cy + dy))
-        return bool(self.g.sell(p))
+        with self.why("sell_useless", reason):
+            return bool(self.g.sell(p))
 
     def _exact_spot(self, step, valid):
         """The cell of a step's exact spot (`at: [fx, fy]`, from a map's own
@@ -2759,7 +2783,8 @@ class Executor:
         # an answer due now beats every plan step
         for threat in self.due_threats(rnd):
             self.wait_note = None
-            r = self.answer_threat(threat, cash, rnd)
+            with self.why("answer", f"threat {threat} due"):
+                r = self.answer_threat(threat, cash, rnd)
             if r == "bought":
                 return True
             if r == "wait" and self.rules.get("income") is not False:
@@ -2775,7 +2800,8 @@ class Executor:
             self.unanswerable.add(threat)  # nothing applicable; don't block the plan
         ramp = self._ramp_due(rnd)
         if ramp and ramp[2] < self.RAMP_OK:
-            r = self._answer_ramp(*ramp, cash, rnd)
+            with self.why("ramp", f"blimp damage short before round {ramp[0]}", ratio=round(ramp[2], 3)):
+                r = self._answer_ramp(*ramp, cash, rnd)
             if r == "bought":
                 return True
             if r == "wait" and self.rules.get("income") is not False:
@@ -2869,7 +2895,8 @@ class Executor:
             self.panic_pending = 2
         if self.panic_pending:
             for st in self.panic_steps:
-                r = self.try_step(dict(st), cash, rnd)
+                with self.why("panic", "lives dropped", step=st.get("kind") or st.get("id")):
+                    r = self.try_step(dict(st), cash, rnd)
                 if r in ("bought", "progress"):
                     self.panic_pending -= 1
                     return True
@@ -2883,14 +2910,16 @@ class Executor:
             return r
         # plan steps put aside after refused spots (the hero), once their pause is over
         for st in list(self.deferred):
-            r = self.try_step(st, cash, rnd)
+            with self.why("plan", "plan step set aside earlier", role=st.get("role")):
+                r = self.try_step(st, cash, rnd)
             if r in ("bought", "done"):
                 self.deferred.remove(st)
             if r == "bought":
                 return True
         while self.idx < len(self.plan):
             st = self.plan[self.idx]
-            r = self.try_step(st, cash, rnd)
+            with self.why("plan", f"plan step {self.idx}", role=st.get("role")):
+                r = self.try_step(st, cash, rnd)
             if r in ("done", "skip", "bought"):
                 self.idx += 1
                 if r == "bought":
@@ -2901,7 +2930,9 @@ class Executor:
             self.waiting = f"plan step {self.idx} {st} -> {r} ({self.g.fail_reason})"
             return r == "progress"  # waiting for cash / round, or mid-upgrade
         for st in self.fill:
-            if self.try_step(st, cash, rnd) in ("bought", "progress"):
+            with self.why("fill", "plan finished", role=st.get("role")):
+                r = self.try_step(st, cash, rnd)
+            if r in ("bought", "progress"):
                 return True
         self.waiting = PLAN_EXHAUSTED
         return False
@@ -2982,7 +3013,8 @@ class Executor:
         for p, t, cost in self.upgrade_choices(first=target, past_plan=bool(self.rules.get("buy_all_upfront"))):
             if cost > cash:
                 continue
-            r = self.try_step({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, t))}, cash, rnd)
+            with self.why("surplus", "cash piling up while the plan waits"):
+                r = self.try_step({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, t))}, cash, rnd)
             if r in ("bought", "progress"):
                 log.info("surplus: upgraded %s -> %s", p.tid, p.crosspath)
                 return True
@@ -2990,7 +3022,8 @@ class Executor:
         if main and self.clear_obstacle(cash, main):
             return True
         if main and cash >= self.g.price(main):
-            r = self.try_step({"do": "place", "kind": main, "role": "dps", "segment": [0.2, 1.0]}, cash, rnd)
+            with self.why("surplus", "cash piling up while the plan waits"):
+                r = self.try_step({"do": "place", "kind": main, "role": "dps", "segment": [0.2, 1.0]}, cash, rnd)
             if r == "bought":
                 log.info("surplus: placed another %s", main)
                 return True

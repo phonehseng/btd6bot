@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 import cv2
 import numpy as np
 
+from . import journal
 from . import towers as T
 from .hud import Hud, parse_int, rec_text
 from .templates import brightness_ratio, classify
@@ -85,6 +86,13 @@ class Game:
         # action then refuses until the match loop has looked at the screen
         # and cleared it (Match.play).
         self.screen_lost = False
+        # Why the purchase or sale being made now is made: {'source': ...,
+        # 'reason': ..., ...}, set around each one by Executor.why and
+        # written to the game journal with it (None: not known).
+        self.why = None
+        # Modes that forbid selling (CHIMPS): sell() refuses before any click,
+        # whatever asks for it (set by Match from Executor.no_sell).
+        self.no_sell = False
 
     # -- observation --------------------------------------------------------
     def frame(self, max_age=0.05):
@@ -521,7 +529,14 @@ class Game:
             return self._confirm(tid, kind, sx, sy, pre if pre is not None else before)
         self.cancel_hold()
         self.fail_reason = "spot"
+        self._journal_place_failed(tid, kind)
         return None
+
+    def _journal_place_failed(self, tid, kind):
+        """Note in the game journal that the game took no tower at any spot
+        tried (journal.cause_of_death counts these as placement trouble)."""
+        journal.current().event("place_failed", tid=tid, kind=kind, reason=self.fail_reason,
+                                refused=len(self.refused_spots), why=getattr(self, "why", None))
 
     def _confirm(self, tid, kind, fx, fy, before):
         """The hold was released at (fx, fy). Register the tower only on proof:
@@ -552,10 +567,13 @@ class Game:
                         "to select there) - not recorded", kind, fx, fy, before, self._seen_cash)
             self.fail_reason = "unverified"
             self.unconfirmed_streak = getattr(self, "unconfirmed_streak", 0) + 1
+            self._journal_place_failed(tid, kind)
             return None
         self.unconfirmed_streak = 0
         self.towers[tid] = p
-        log.info("placed %s (%s) at %.3f,%.3f", tid, kind, fx, fy)
+        log.info("placed %s (%s) at %.3f,%.3f for $%s", tid, kind, fx, fy, p.spent)
+        journal.current().event("place", tid=tid, kind=kind, x=round(fx, 4), y=round(fy, 4),
+                                cost=p.spent, why=getattr(self, "why", None))
         return p
 
     # Seconds the cash is watched for a purchase's drop after the click.
@@ -913,9 +931,13 @@ class Game:
                 self.inp.press(T.UPGRADE_HOTKEYS[path - 1])
                 verdict = self._await_verdict(p, path, shown, before, cost, dx)
             if verdict == "bought":
+                cross_before = p.crosspath
                 p.tiers[path - 1] += 1
                 p.spent += cost or 0
-                log.info("upgraded %s -> %s", p.tid, p.crosspath)
+                log.info("upgraded %s -> %s for $%s", p.tid, p.crosspath, cost)
+                journal.current().event("upgrade", tid=p.tid, kind=p.kind, path=path,
+                                        cross_before=cross_before, cross_after=p.crosspath,
+                                        cost=cost, why=getattr(self, "why", None))
                 return True
             log.info("upgrade %s path %d not bought (panel %s, cash %s)", p.tid, path, costs, before)
             self.fail_reason = "noeffect"
@@ -1025,11 +1047,21 @@ class Game:
             self.deselect(p)
 
     def sell(self, p):
+        """Sell tower p; True once its Sell button was clicked. Refused, with
+        no click at all, in a mode that forbids selling (CHIMPS): the game
+        would take the sale and the run would no longer count."""
+        why = getattr(self, "why", None)
+        if getattr(self, "no_sell", False):
+            log.error("refusing to sell %s: this mode forbids selling", p.tid)
+            return False
         if not self.select(p):
             return False
         self.inp.click(*self.panel(p)["sell"])
         time.sleep(0.3)
         self.towers.pop(p.tid, None)
+        log.info("sold %s (%s %s) - %s", p.tid, p.kind, p.crosspath,
+                 (why or {}).get("reason") or (why or {}).get("source") or "no reason given")
+        journal.current().event("sell", tid=p.tid, kind=p.kind, cross=p.crosspath, spent=p.spent, why=why)
         return True
 
     def remove_obstacle(self, fx, fy, cost, name=""):
