@@ -351,6 +351,10 @@ class Match:
                         getattr(self.ex, "waiting", "nothing more could be bought"))
         if not self.ex.defended():
             self._place_starter(rnd)
+        elif self._lone_opener():
+            # one life and one tower: a second, cheap one from the change
+            log.info("one-life opening with a single tower - adding a cheap opener beside it")
+            self._place_starter(rnd, need_placed=True)
         # kept for the error play() raises when nothing went down: Tricky
         # Tracks Easy failed twice with no placement line at all, which points
         # at the cash reading rather than at the spots (108 valid offline)
@@ -372,10 +376,25 @@ class Match:
             return True
         return self.ex.plan_exhausted()
 
-    def _place_starter(self, rnd, tries=6):
+    def _lone_opener(self):
+        """True when a one-life game (CHIMPS) is about to start with a single
+        non-hero tower. Winter Park CHIMPS (2026-11-05, case
+        20261105_161336): the plan's $430 buccaneer left $220, its next step
+        was a $280 tack, and round 6 began with the buccaneer alone. The
+        damage model rated that round 2.8, yet one red slipped past the lone
+        tower's single darts and the game was lost 12 seconds in. A second
+        tower costs the change in hand and covers the misses of the first."""
+        if not self.ex.rules.get("one_life"):
+            return False
+        return sum(1 for p in self.g.towers.values() if p.kind != "hero") == 1
+
+    def _place_starter(self, rnd, tries=6, need_placed=False):
         """Only the hero is down and the plan's next tower is not affordable
         yet (Easy: hero $460 of $650, tack $260): buy the cheapest opener
-        tower near the entrance so no round starts with the hero alone."""
+        tower near the entrance so no round starts with the hero alone.
+        need_placed: the defence counts as defended already (a one-life
+        game's single tower, _lone_opener), so only an actual placement
+        ends the search."""
         for kind in self.ex.CHEAP_OPENERS:
             if not self.ex.kind_allowed(kind):
                 continue
@@ -383,7 +402,7 @@ class Match:
             for _ in range(tries):     # each refused spot is blocked; try the next
                 with self.ex.why("starter", "opener before the plan is affordable"):
                     done = self.ex.try_step(step, self.g.cash_stable(), rnd) == "done"
-                if done or self.ex.defended():
+                if done or (self.ex.defended() and not need_placed):
                     log.info("starter tower placed: %s", kind)
                     return True
                 time.sleep(0.3)

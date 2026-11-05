@@ -987,6 +987,62 @@ def fast_track_opening_factor(account: AccountState, mode: str) -> float:
     return (games - lost + k) / (games + k)
 
 
+# A build's first game in a one-life mode (CHIMPS) is its riskiest: its
+# declared rate comes from offline replays of the damage model, and one
+# leaked bloon ends the game. Up to 2026-11-05 the account's CHIMPS builds
+# won 1 of their 5 first games (Alpine Run, Frozen Over, Carved and Winter
+# Park lost, Park Path won), each priced at p 0.82-0.85 untested - the model
+# rated Winter Park's opening round 2.8 with a lone buccaneer, and a red got
+# through. So an untested build in such a mode has its prior scaled by how
+# the account's builds did in their first game there, shrunk towards 1 by
+# FIRST_GAME_PRIOR_GAMES won pseudo-games. A build with a game of its own in
+# the mode is judged by its record and the calibration instead (factor 1),
+# and the factor rises by itself as first games are won.
+FIRST_GAME_PRIOR_GAMES = 4.0
+
+# {id(account): ((history length, last entry's time),
+#                ({mode: (first games, first-game wins)}, {(strategy, mode) played}))}
+_FIRST_GAME_MEMO: dict[int, tuple[tuple[int, Any], tuple[dict[str, tuple[int, int]], set]]] = {}
+
+
+def _first_game_record(account: AccountState) -> tuple[dict[str, tuple[int, int]], set]:
+    """({mode: (first games, of them won)}, {(strategy, mode) with a game})
+    from the account's game history, oldest game first. Computed once per
+    history state, like _fast_track_opening_record."""
+    hist = getattr(account, "history", None) or []
+    stamp = (len(hist), hist[-1].get("t") if hist else None)
+    memo = _FIRST_GAME_MEMO.get(id(account))
+    if memo is not None and memo[0] == stamp:
+        return memo[1]
+    played: set = set()
+    table: dict[str, tuple[int, int]] = {}
+    for h in hist:
+        key = (h.get("strategy"), h.get("mode"))
+        if None in key or key in played:
+            continue                      # only each build's first game in a mode counts
+        played.add(key)
+        games, won = table.get(key[1], (0, 0))
+        table[key[1]] = (games + 1, won + int(bool(h.get("won"))))
+    _FIRST_GAME_MEMO[id(account)] = (stamp, (table, played))
+    return table, played
+
+
+def first_game_factor(account: AccountState, s: StrategySpec, mode: str) -> float:
+    """How far to trust an untested build in a one-life mode: the share of
+    the account's first games won in ``mode``, shrunk towards 1 by
+    FIRST_GAME_PRIOR_GAMES; 1.0 for modes with lives to spare and for builds
+    that have played the mode already."""
+    from .strategy import MODE_RULES
+    if not MODE_RULES.get(mode, {}).get("one_life"):
+        return 1.0
+    table, played = _first_game_record(account)
+    if (s.id, mode) in played:
+        return 1.0
+    games, won = table.get(mode, (0, 0))
+    k = FIRST_GAME_PRIOR_GAMES
+    return (won + k) / (games + k)
+
+
 # Map fit (mapfit.py): the share of the early track that the plan's damage
 # towers can reach from cells where they may stand. At FULL_FIT or more the
 # plan fits; below it the win chance shrinks in proportion, down to
@@ -1024,6 +1080,8 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
         # whichever doubts the Fast Track start more
         hand = FAST_TRACK_HALF_CASH_FACTOR if MODE_RULES.get(mode, {}).get("half_cash") else 1.0
         p *= min(hand, fast_track_opening_factor(account, mode))
+    # an untested build in a one-life mode, by how first games went there
+    p *= first_game_factor(account, s, mode)
     p *= map_fit_factor(s, map_name, mode)
     # the bot could not build its defence on this map before (any mode, any
     # build): every mode there is doubted like a lost one until a win

@@ -1,0 +1,83 @@
+"""Offline: one-life games (CHIMPS) and their first rounds.
+
+* A one-life game never starts with a single non-hero tower
+  (match.Match._lone_opener): Winter Park CHIMPS (2026-11-05) began round 6
+  with one $430 buccaneer, the plan's $280 tack unaffordable, and a red got
+  through 12 seconds in.
+* An untested build in a one-life mode is priced by how the account's
+  builds did in their first game there (planner.first_game_factor): CHIMPS
+  builds won 1 of their first 5, each priced 0.82-0.85 untested.
+
+Run: python tests/test_one_life_opening_offline.py"""
+import sys
+from pathlib import Path
+from types import SimpleNamespace as N
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from btd6bot import match as M  # noqa: E402
+from btd6bot import planner as P  # noqa: E402
+from btd6bot.account import AccountState  # noqa: E402
+from btd6bot.strategy import rules  # noqa: E402
+
+
+def _match(mode, kinds):
+    """A Match with only the pieces _lone_opener reads: the mode's rules and
+    the towers placed so far."""
+    m = M.Match.__new__(M.Match)
+    m.ex = N(rules=rules(mode))
+    m.g = N(towers={f"t{i}": N(kind=k) for i, k in enumerate(kinds)})
+    return m
+
+
+def test_chimps_with_one_tower_wants_a_second():
+    assert rules("chimps").get("one_life")
+    assert _match("chimps", ["buccaneer"])._lone_opener()
+    assert _match("chimps", ["hero", "buccaneer"])._lone_opener()      # the hero does not count
+
+
+def test_two_towers_or_lives_to_spare_are_left_alone():
+    assert not _match("chimps", ["buccaneer", "tack"])._lone_opener()
+    assert not _match("chimps", [])._lone_opener()      # nothing down: _place_starter's own case
+    assert not _match("hard", ["buccaneer"])._lone_opener()
+
+
+def _spec(mode):
+    return next(x for x in P.EXAMPLE_STRATEGIES if mode in x.modes)
+
+
+def test_first_games_lost_doubt_untested_builds_in_one_life_modes():
+    acc = AccountState()
+    acc.apply_level(60)
+    s = _spec("chimps")
+    assert P.first_game_factor(acc, s, "chimps") == 1.0          # no record: 4/4
+    clean = P.prior_win_probability(acc, s, "Monkey Meadow", "chimps")
+    # four other builds lost their first CHIMPS game, one won
+    for i in range(4):
+        acc.record_result("Logs", "chimps", f"build_{i}", False, round_reached=40)
+    acc.record_result("Logs", "chimps", "build_ok", True, round_reached=100)
+    # second games of the same build do not count again
+    acc.record_result("Logs", "chimps", "build_0", True, round_reached=100)
+    k = P.FIRST_GAME_PRIOR_GAMES
+    f = P.first_game_factor(acc, s, "chimps")
+    assert abs(f - (1 + k) / (5 + k)) < 1e-9, f
+    doubted = P.prior_win_probability(acc, s, "Monkey Meadow", "chimps")
+    assert abs(doubted - min(0.98, max(0.01, clean * f))) < 1e-9, (clean, f, doubted)
+
+
+def test_played_builds_and_modes_with_lives_keep_their_prior():
+    acc = AccountState()
+    acc.apply_level(60)
+    for i in range(4):
+        acc.record_result("Logs", "chimps", f"build_{i}", False, round_reached=40)
+        acc.record_result("Logs", "hard", f"build_{i}", False, round_reached=40)
+    s = _spec("chimps")
+    acc.record_result("Logs", "chimps", s.id, False, round_reached=50)
+    assert P.first_game_factor(acc, s, "chimps") == 1.0     # its own record decides now
+    assert P.first_game_factor(acc, _spec("hard"), "hard") == 1.0
+
+
+if __name__ == "__main__":
+    for name, fn in list(globals().items()):
+        if name.startswith("test_"):
+            fn()
+            print("ok", name)
