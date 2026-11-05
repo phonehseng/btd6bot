@@ -1418,11 +1418,28 @@ class Executor:
             if time.time() < getattr(self, "unread_until", {}).get((p.tid, i + 1), 0):
                 continue      # its price was just unreadable (Game._path_closed): later
             tier = p.tiers[i] + 1
+            if tier == 5 and self._tier5_taken(p, i + 1):
+                continue      # another tower of this kind holds that tier 5
             cost = (T.upgrade_cost(p.kind, i + 1, tier, PRICE_FAMILY.get(self.mode, "hard"))
                     if p.kind != "hero" else 0)
             if best is None or cost < best[1]:
                 best = (i + 1, cost)
         return best
+
+    def _tier5_taken(self, p, path):
+        """Does another tower of p's kind already hold tier 5 of `path`
+        (1-3)? The game allows one of each tier-5 upgrade on the map at a
+        time: the button then shows "MAX UPGRADES" instead of a price, which
+        reads as a blank panel, and a click there buys nothing.
+
+        Spice Islands Impoppable (2026-11-05): sb1 bought Pre-emptive Strike
+        (2-0-5) at round 88, and from then to round 98 the plan's sb2 and
+        reinforce's sub2 asked for the same tier - every try a blank panel
+        and a "noeffect" back-off - while $37k-119k sat idle on a one-life
+        game. A step that asks for a taken tier 5 cannot complete: _next_path
+        and upgrade_choices leave that path out."""
+        return any(q.kind == p.kind and q.tid != p.tid and q.tiers[path - 1] >= 5
+                   for q in self.g.towers.values())
 
     # -- step execution ---------------------------------------------------------
     def _resolve_targets(self, step):
@@ -3568,6 +3585,8 @@ class Executor:
                 t[path] += 1
                 if sum(x > 0 for x in t) > 2 or sum(x > 2 for x in t) > 1:
                     continue
+                if t[path] == 5 and self._tier5_taken(p, path + 1):
+                    continue  # one of each tier 5 on the map: another tower holds it
                 cap = self._planned_cap(p)
                 leading = p.tiers[path] > 0 and p.tiers[path] == max(p.tiers)
                 if leading and cap is not None and t[path] > 2 and any(
