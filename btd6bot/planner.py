@@ -888,12 +888,19 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
         # untested there because only its own record counted
         lost = map_mode_losses(account).get((canonical_map(map_name), mode), 0)
         p *= max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR ** lost)
-        if _no_income(mode):
-            # nothing can be fixed after Play: a general build is only as
-            # sure as its record in such modes, not as the map's best build
-            p = min(p, NO_INCOME_GENERAL_CAP)
+    p = no_income_cap(p, s, mode)
     p = ceiling_cap(p, map_name, mode)
     return min(0.98, max(0.01, p))
+
+
+def no_income_cap(p: float, s: StrategySpec, mode: str) -> float:
+    """Cap a general build's ``p`` at NO_INCOME_GENERAL_CAP in modes with no
+    income: nothing can be fixed after Play, so a general build is only as
+    sure as its record in such modes, not as the map's best build.
+    Map-specific builds (``s.maps`` set) keep their own number."""
+    if s.maps is None and _no_income(mode):
+        return min(p, NO_INCOME_GENERAL_CAP)
+    return p
 
 
 def ceiling_cap(p: float, map_name: str, mode: str) -> float:
@@ -1097,6 +1104,12 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
         # how primary_only plays on expert maps, played at p=0.69 and lost at
         # round 20 (2026-11-04)
         prior = max(0.01, ceiling_cap(prior, map_name, mode))
+        # nor over the no-income cap: Ravine Deflation (solo_dartling, never
+        # played there) was capped at 0.76, lifted by how the build does in
+        # Deflation on beginner maps to p=0.93, played as a "confident" game
+        # and lost at round 52 with the damage model rating round 60 at 0.29
+        # (2026-11-04)
+        prior = no_income_cap(prior, s, mode)
     st = account.strategy_record(map_name, mode, s.id)
     w, l = st.get("wins", 0), st.get("losses", 0)
     k = cfg.prior_strength

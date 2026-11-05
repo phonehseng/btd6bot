@@ -83,6 +83,19 @@ def test_a_mode_is_calibrated_per_map_category():
     assert p < p_mode, (p, p_mode)
 
 
+def test_calibration_keeps_the_no_income_cap():
+    # Ravine Deflation (2026-11-04): solo_dartling, capped at 0.76 as a
+    # general build in a no-income mode, was lifted by its Deflation record
+    # elsewhere to p=0.93, played as confident and lost at round 52
+    s = spec("s", {"deflation": 0.92})
+    acc = account_with([("s", "deflation", 12, 0)])
+    cal = P._Calibration(acc, {"s": s})
+    untried = [m for m in MAPS if acc.strategy_record(m, "deflation", "s").get("wins", 0) == 0][0]
+    assert cal.get("s", "deflation", acc.map_category(untried)) > 1.0   # the record lifts it
+    p, n = P.win_probability(acc, s, untried, "deflation", calib=cal)
+    assert n == 0 and p <= P.NO_INCOME_GENERAL_CAP + 1e-9 < P.CONFIDENT_P, p
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
