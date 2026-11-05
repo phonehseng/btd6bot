@@ -797,17 +797,25 @@ class Match:
         unless lives are falling now, or the round being played is a crisis
         round (_in_crisis: rated under forecast.CRISIS_MARGIN at its start).
 
-        In a crisis round the hold is for something that cannot help the
-        round at hand: the executor holds for a round at least this one, and
-        what it holds for this very round can no longer be bought before the
-        bloons (Ancient Portal Impoppable 2026-11-05, round 94: "idle with
+        In a crisis round the game is at stake before the held answer is
+        needed. The executor holds for a round at least this one, and what
+        it holds for this very round can no longer be bought before the
+        bloons: Ancient Portal Impoppable (2026-11-05), round 94, "idle with
         $17562: saving for blimp damage before round 94" while round 94 was
-        being played, rated 0.45, and lost). _hold_for_crisis had held Play
-        for that round promising to spend the cash first; reinforce judges a
-        purchase on the round being played in a crisis (reinforce.lift), so
-        it is the right spender. surplus() still keeps off: the executor
-        checks saving_for_threat itself. Outside a crisis a hold for a round
-        two or three away stays whole (Spillway ABR again)."""
+        being played, rated 0.45, and lost. _hold_for_crisis had held Play
+        for that round promising to spend the cash first, so reinforce is
+        let at the cash. The trade this accepts: the executor does not say
+        which round it holds for, so a hold for the next round's answer
+        (held whole by Executor._hold_for when due within FAR_ROUNDS) is
+        let go too, and a purchase for this round can eat it. It is bounded
+        because reinforce judges a purchase in a crisis on the lowest of
+        this round, the next one and the weakest ahead (reinforce.lift), so
+        the next round's blimps weigh in the choice, and buys one purchase
+        per look. Spillway's $430 ninja for round 49 was bought in a round
+        that held, which this still forbids. surplus() keeps off either way:
+        the executor checks saving_for_threat itself. Outside a crisis a
+        hold for a round two or three away stays whole (Spillway ABR
+        again)."""
         return bool(getattr(self.ex, "saving_for_threat", False)) and not dropped and not crisis
 
     def _reinforce(self, cash, rnd):

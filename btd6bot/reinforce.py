@@ -35,6 +35,7 @@ from dataclasses import dataclass, field
 from types import SimpleNamespace
 
 from . import towers as T
+from .forecast import CRISIS_MARGIN
 
 log = logging.getLogger("reinforce")
 
@@ -63,27 +64,56 @@ def crisis_now(forecast, ex, rnd, lives_dropped=None):
     rated 0.44 and lost there; Bloonarius Prime ABR was wiped at round 40
     with $3,901 unspent. While this is true best() measures a purchase's
     lift on the round being played too (lift) and lets go of cash held for
-    a later step down to what income rebuilds before that step (release)."""
-    return crisis_round(forecast, ex, rnd, lives_dropped) is not None
-
-
-def crisis_round(forecast, ex, rnd, lives_dropped=None):
-    """The round in trouble that makes crisis_now true: rnd when lives fell
-    this round, else the first of rnd and rnd + 1 the damage model rates
-    under WEAK_MARGIN; None when neither is. best() measures a waiting plan
-    step's reach against this round (plan_claim_in_crisis)."""
+    a later step down to what income rebuilds before that step (release).
+    A round in real danger, rated under forecast.CRISIS_MARGIN, is
+    danger_round's narrower question."""
     if lives_dropped is None:
-        fell = getattr(ex, "lives_fell_lately", None)
-        lives_dropped = bool(fell(rnd, 1)) if callable(fell) else False
+        lives_dropped = _lives_fell(ex, rnd)
+    if lives_dropped:
+        return True
+    if rnd is None:
+        return False
+    margins = [m for m in (forecast.margin(board(ex), r) for r in (rnd, rnd + 1)) if m is not None]
+    return bool(margins) and min(margins) < WEAK_MARGIN
+
+
+def danger_round(forecast, ex, rnd, lives_dropped=None):
+    """The round the game is at stake in right now, or None: rnd when lives
+    fell this round, else the first of rnd and rnd + 1 the damage model
+    rates under forecast.CRISIS_MARGIN - the band Match calls a crisis
+    round (Match._in_crisis, _hold_for_crisis), where rounds lost lives
+    11.8% of the time against 2.8% up to a margin of 1 (forecast.py).
+    best() measures a waiting plan step's reach against this round
+    (plan_claim_in_crisis): a step that cannot be paid before it holds
+    nothing against a purchase that lifts it.
+
+    Narrower than crisis_now on purpose. The first version of that rule
+    used crisis_now's WEAK_MARGIN (1.5), and a step short of cash can never
+    be paid before the round being played, so the step lost its whole
+    claim in every weak-but-holding round: on Ancient Portal Impoppable
+    (2026-11-05) rounds 85-93 were rated 0.58-0.96 at their start and all
+    held, while the Perma-Spike was still payable before the weakest round
+    - exactly the saving 094f8de and 7919935 protect. Under CRISIS_MARGIN
+    only round 94 (0.45, the round lost) counts."""
+    if lives_dropped is None:
+        lives_dropped = _lives_fell(ex, rnd)
     if lives_dropped:
         return rnd
     if rnd is None:
         return None
     for r in (rnd, rnd + 1):
         m = forecast.margin(board(ex), r)
-        if m is not None and m < WEAK_MARGIN:
+        if m is not None and m < CRISIS_MARGIN:
             return r
     return None
+
+
+def _lives_fell(ex, rnd):
+    """Did lives fall in round rnd? Asked of the executor
+    (Executor.lives_fell_lately); False for one without the record (test
+    fakes)."""
+    fell = getattr(ex, "lives_fell_lately", None)
+    return bool(fell(rnd, 1)) if callable(fell) else False
 
 
 def lift(forecast, before_towers, after_towers, rnd, worst, crisis):
@@ -205,8 +235,9 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     waiting plan step nor a dearer purchase holds more of the cash than
     income cannot rebuild before it is needed (release), and a purchase's
     lift is judged on the round being played too (lift). A plan step that
-    cannot be paid before the round in trouble at all holds nothing for
-    that round (plan_claim_in_crisis)."""
+    cannot be paid before a round the game is at stake in (danger_round)
+    holds nothing against a purchase that lifts that round
+    (plan_claim_in_crisis)."""
     rounds = lookahead_rounds(rnd, end_round)
     half = 1.0 / TARGET_MARGIN
     # only the rounds that leak at half strength can gain (and each skipped
@@ -236,23 +267,21 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
             pick = (value, o)
     if pick is None and crisis:
         pick = strongest(forecast, tried, worst, before)
-    trouble = crisis_round(forecast, ex, rnd)
-    now = trouble is not None
+    now = crisis_now(forecast, ex, rnd)
     plan_wait = waiting_plan_step(ex, cash)
     if pick is not None and plan_wait is not None:
         step, cost = plan_wait
-        out_of_reach = now and payable_by(ex, cost, cash, trouble, rnd) is False
-        lifts = plan_claim_in_crisis(forecast, ex, tried, pick, trouble) if out_of_reach else None
-        if out_of_reach and (lifts is not None or cash >= BLIND_SPEND_CASH):
-            # the step cannot come before the round in trouble, so it holds
-            # nothing for it: the purchase lifting that round is bought, or
-            # a big idle bank goes to the blind fallbacks below
-            verdict = (f"{lifts[1].what} lifts round {trouble} {lifts[2]:.2f} -> {lifts[3]:.2f}" if lifts
-                       else f"nothing ${cash:.0f} buys lifts that round")
+        danger = danger_round(forecast, ex, rnd)
+        lifts = None
+        if danger is not None and payable_by(ex, cost, cash, danger, rnd) is False:
+            lifts = plan_claim_in_crisis(forecast, ex, tried, pick, danger)
+        if lifts is not None:
+            # the step cannot come before the round the game is at stake in,
+            # so it holds nothing against the purchase that lifts that round
             log.info("reinforce: plan step %s ($%d) cannot be paid before round %d, the round in "
-                     "trouble, from $%d and the income until then - it holds no cash now; %s",
-                     step, cost, trouble, cash, verdict)
-            pick = lifts[:2] if lifts else None
+                     "danger, from $%d and the income until then - %s lifts that round %.2f -> %.2f "
+                     "and comes first", step, cost, danger, cash, lifts[1].what, lifts[2], lifts[3])
+            pick = lifts[:2]
         else:
             after = forecast.margin(pick[1].towers, worst)
             judged_before, judged_after = lift(forecast, board(ex), pick[1].towers, rnd, worst, now)
@@ -266,10 +295,10 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
                          "step %s ($%d)", pick[1].what, worst, before or 0.0, after or 0.0, step, cost)
                 return "wait", None
     # The two fallbacks below spend a big idle bank on purpose, even when the
-    # model sees no gain. A waiting plan step never stops them: its check
-    # runs first and only ever gives the pick up, never the cash - on Ancient
-    # Portal (2026-11-05) they were skipped for eight rounds because a pick
-    # existed, although the step had vetoed it.
+    # model sees no gain - but only when no purchase saved a life anywhere.
+    # A pick the waiting plan step has just vetoed does not turn into a
+    # blind spend of the step's saving (094f8de kept them for the no-pick
+    # case; the step's check runs first here so that it never flags them).
     if pick is None and crisis and cash >= BLIND_SPEND_CASH:
         pick = strongest(forecast, new_kind_options(ex, forecast, cash, worst), worst, before)
         if pick:
@@ -379,37 +408,36 @@ def plan_keeps_claim(forecast, ex, step, cost, cash, rnd, worst, crisis, pick, m
     return True
 
 
-def plan_claim_in_crisis(forecast, ex, tried, pick, trouble):
-    """The purchase to make while round `trouble` (crisis_round) is in danger
-    and the waiting plan step cannot be paid before it from the cash and
-    the income until then (payable_by False): (value, Option, margin before,
-    margin after) for `pick` when it lifts that round by MIN_LIFT or more,
-    else for the purchase among `tried` that lifts it most (strongest), else
-    None. best() then lets the blind fallbacks run on a bank of
-    BLIND_SPEND_CASH or more as if no pick had existed, and judges a smaller
-    bank by the weakest look-ahead round as before (plan_keeps_claim): a
-    pick that lifts neither round still does not outbid a step income can
-    deliver before the weakest one.
+def plan_claim_in_crisis(forecast, ex, tried, pick, danger):
+    """The purchase to make while round `danger` (danger_round: rated under
+    forecast.CRISIS_MARGIN, or lives fell) is at hand and the waiting plan
+    step cannot be paid before it from the cash and the income until then
+    (payable_by False): (value, Option, margin before, margin after) for
+    `pick` when it lifts that round by MIN_LIFT or more, else for the
+    purchase among `tried` that lifts it most (strongest), else None. With
+    None best() judges the pick by the weakest look-ahead round as before
+    (plan_keeps_claim): a pick that lifts neither round still does not
+    outbid a step income can deliver before the weakest one, and a big
+    idle bank is not spent blind on the step's saving either (094f8de).
 
     plan_keeps_claim drops a step that income cannot deliver before the
     weakest look-ahead round. Ancient Portal Impoppable (2026-11-05, lost at
-    round 94 with $17,562 in hand) showed the gap before that round: from
-    round 86 the round being played was rated 0.41-0.60 while the step
-    (Perma-Spike, $36,000) was still payable before the weakest round, 96
-    or 98, so the claim held, every pick was vetoed with "another super
-    would move round 98 only 0.27 -> 0.27 - the cash stays for plan step",
-    and the blind fallbacks never ran because a pick existed. A step that
-    cannot come before the round in trouble is no defence for that round;
-    the step keeps its claim outside a crisis and while income can still
+    round 94 with $17,562 in hand) showed the gap in the round itself: 94
+    was rated 0.45 at its start, the step (Perma-Spike, $36,000) was still
+    payable before the weakest round, 98 or 99, so the claim held and the
+    pick was vetoed with "another super would move round 98 only 0.27 ->
+    0.27 - the cash stays for plan step". A step that cannot come before
+    the round the game is at stake in is no defence for that round; the
+    step keeps its claim outside such a round, and while income can still
     deliver it in time (094f8de, 7919935)."""
-    before = forecast.margin(board(ex), trouble)
-    after = forecast.margin(pick[1].towers, trouble)
+    before = forecast.margin(board(ex), danger)
+    after = forecast.margin(pick[1].towers, danger)
     found = pick if after is not None and after - (before or 0.0) >= MIN_LIFT else None
     if found is None:
-        found = strongest(forecast, tried, trouble, before)
+        found = strongest(forecast, tried, danger, before)
     if found is None:
         return None
-    return found[0], found[1], before or 0.0, forecast.margin(found[1].towers, trouble) or 0.0
+    return found[0], found[1], before or 0.0, forecast.margin(found[1].towers, danger) or 0.0
 
 
 def payable_by(ex, cost, cash, due_round, rnd):
