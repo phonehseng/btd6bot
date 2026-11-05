@@ -818,7 +818,32 @@ def _strategy_fits(s: StrategySpec, map_name: str, category: str, mode: str) -> 
     restr = MODES[mode].restriction
     if restr and any(TOWER_TO_CATEGORY.get(t) != restr for t in s.towers):
         return False
+    if _water_towers_have_no_spot(s, map_name):
+        return False
     return True
+
+
+def _water_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
+    """True when one of the build's water-only towers (sub, buccaneer) has
+    nowhere to stand on this map: the map-fit table (mapfit.py, from the
+    game's own geometry) gives it 0.0 from both ends of the track, so not
+    one legal cell reaches the bloons. Such a build is not merely a poor fit
+    (map_fit_factor would only scale its chance down) - it cannot be built.
+    Sanctuary Medium (2026-11-05, loss case 20261105_031041) played the
+    four-sub military_sub_sniper_water at p=0.49: the fountain basin is too
+    small for a sub's footprint, all ten sub steps were given up at once and
+    the snipers alone lost round 53 with $11-33k idle. Maps the table does
+    not know keep the benefit of the doubt."""
+    from .mapfit import load
+    from .towers import TOWERS
+    fits = (load().get(map_name) or {}).get("towers") or {}
+    for kind in s.towers:
+        if TOWERS.get(kind, {}).get("placement") != "water":
+            continue
+        fit = fits.get(kind)
+        if fit and not fit.get("early", 1.0) and not fit.get("late", 1.0):
+            return True
+    return False
 
 
 def _pick_hero(s: StrategySpec, account: AccountState) -> str | None:
