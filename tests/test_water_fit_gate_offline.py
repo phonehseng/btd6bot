@@ -24,6 +24,9 @@ TABLE = {
         "sniper": {"early": 1.0, "late": 1.0}}},
     "One End Map": {"stamp": "x", "towers": {
         "sub": {"early": 0.0, "late": 0.3}}},      # reachable from the far end only
+    "Moat Map": {"stamp": "x", "towers": {         # Castle Revenge: water for one sub
+        "sub": {"early": 0.03, "late": 0.23, "room": 1},
+        "sniper": {"early": 1.0, "late": 1.0}}},
 }
 
 
@@ -36,9 +39,34 @@ def _with_table(fn):
         mapfit.load = saved
 
 
-def _spec(**towers):
+def _spec(placed=None, **towers):
     return P.StrategySpec(id="t", towers=towers, modes=("medium",),
-                          base_success={"medium": 0.8}, dps_kinds=tuple(towers))
+                          base_success={"medium": 0.8}, dps_kinds=tuple(towers), placed=placed or {})
+
+
+def test_water_build_is_gated_where_fewer_subs_fit_than_it_places():
+    """Castle Revenge Impoppable (2026-11-05, loss case 20261105_063635): a
+    two-sub build on a moat with room for one sub gave up its second sub
+    and lost round 33 - the plan's sub count is checked against "room"."""
+    def check():
+        two_subs = _spec(placed={"sub": 2, "druid": 6}, sub=(2, 0, 4), druid=(2, 0, 4))
+        one_sub = _spec(placed={"sub": 1, "sniper": 4}, sub=(2, 0, 4), sniper=(4, 2, 0))
+        assert not P._strategy_fits(two_subs, "Moat Map", "intermediate", "medium")
+        assert P._strategy_fits(one_sub, "Moat Map", "intermediate", "medium")
+        # a table measured before "room" was recorded keeps the benefit of the doubt
+        assert P._strategy_fits(two_subs, "Lake Map", "intermediate", "medium")
+        # a spec without placed counts (an older caller) is not gated by room
+        assert P._strategy_fits(_spec(sub=(2, 0, 4)), "Moat Map", "intermediate", "medium")
+    _with_table(check)
+
+
+def test_placed_counts_count_the_plan_only():
+    from btd6bot.runner import placed_counts
+    strat = {"plan": [{"do": "place", "id": "sb1", "kind": "sub"}, {"do": "place", "id": "hero", "kind": "hero"},
+                      {"do": "upgrade", "id": "sb1", "to": "2-0-2"}, {"do": "place", "id": "sb2", "kind": "sub"},
+                      {"do": "place", "id": "d1", "kind": "druid"}],
+             "fill": [{"do": "place", "kind": "sub"}]}
+    assert placed_counts(strat) == {"sub": 2, "druid": 1}
 
 
 def test_water_build_is_gated_where_no_sub_fits():

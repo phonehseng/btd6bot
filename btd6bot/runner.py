@@ -324,6 +324,18 @@ def damage_kinds(strat):
     return kinds
 
 
+def placed_counts(strat):
+    """{kind: how many towers of it the `plan` places} (heroes left out).
+    The planner checks a water build's subs against the room the map's
+    water has for them (mapfit "room", planner._water_towers_have_no_spot)."""
+    counts = {}
+    for st in strat.get("plan", []):
+        kind = st.get("kind")
+        if st.get("do") == "place" and kind and kind != "hero":
+            counts[kind] = counts.get(kind, 0) + 1
+    return counts
+
+
 def planner_specs(strats, account):
     from .planner import StrategySpec
     from .strategy import achievement_strategies
@@ -370,6 +382,8 @@ def planner_specs(strats, account):
             "cost_share": invested_cash(s),
             # the towers that do the damage: can they reach this map's track?
             "dps_kinds": damage_kinds(s),
+            # how many of each tower the plan places: is there water for them?
+            "placed": placed_counts(s),
             # a generated solo XP build: calibrated with the whole family
             "xp_target": s.get("xp_target"),
         }))

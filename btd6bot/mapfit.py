@@ -60,7 +60,13 @@ def _model_for(map_name):
 
 # Version of the measurement itself (kind_coverage); part of the stamp, so
 # bumping it re-measures every map. 2: global-range towers need room to stand.
-FIT_VERSION = 2
+# 3: water towers also record how many of them the map's water holds ("room").
+FIT_VERSION = 3
+
+# A water tower's entry also counts the towers of its kind that fit on the
+# map's water at once (room_for), up to this many: a plan placing more subs
+# than that cannot be built there (planner._water_towers_have_no_spot).
+WATER_ROOM_MAX = 8
 
 # A global-range tower reaches the whole track from any cell it may stand on,
 # but only if there is such a cell. Its coverage is the number of them that
@@ -95,12 +101,26 @@ def room_for(model, kind, ok, limit=GLOBAL_ROOM_FULL):
 def kind_coverage(model, kind, last_round=None):
     """{"early": share of the early track in reach, "late": the same for the
     last EARLY_SPAN (what Reverse meets first)} for one tower kind, for a
-    game ending at `last_round` (None: the longest game)."""
+    game ending at `last_round` (None: the longest game). A water tower's
+    entry also carries "room": how many of its kind the water holds at once
+    (up to WATER_ROOM_MAX). Castle Revenge's moat holds one sub: the two-sub
+    chimps_sub_druid_water gave up its second sub there and lost Impoppable
+    at round 33 (2026-11-05, loss case 20261105_063635)."""
     from .placement import units_per_cell, valid_spots
     rng = T.TOWERS[kind].get("range")
     ok = valid_spots(model, kind, last_round=last_round)
     if ok is None:
         return None
+    cover = _coverage(model, kind, ok, rng)
+    if cover is not None and T.TOWERS[kind].get("placement") == "water":
+        cover["room"] = room_for(model, kind, ok, limit=WATER_ROOM_MAX)
+    return cover
+
+
+def _coverage(model, kind, ok, rng):
+    """kind_coverage's track shares for the legal cells `ok` of a tower with
+    range rng (None: global)."""
+    from .placement import units_per_cell
     if rng is None:
         # global range reaches the whole map - from wherever it can stand.
         # Before, this was 1.0 without looking: High Finance has no cell big

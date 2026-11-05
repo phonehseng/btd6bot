@@ -503,6 +503,9 @@ class StrategySpec:
     # they can reach a map's track decides how well the plan fits the map
     # (mapfit). Empty: not known, no map-fit adjustment.
     dps_kinds: tuple[str, ...] = ()
+    # How many towers of each kind the plan places (runner.placed_counts):
+    # a water build needs that much room on the map's water (mapfit "room").
+    placed: dict[str, int] = field(default_factory=dict)
     minutes: dict[str, float] = field(default_factory=dict)  # per-mode runtime override
     notes: str = ""
     # Achievement strategies (strategies/achievements/*.yaml): the achievement
@@ -549,6 +552,7 @@ class StrategySpec:
             categories=frozenset(cats) if cats else None,
             cost_share=dict(get("cost_share")) if get("cost_share") else None,
             dps_kinds=tuple(canon_tower(k) for k in (get("dps_kinds") or ())),
+            placed={canon_tower(k): int(v) for k, v in dict(get("placed") or {}).items()},
             minutes=dict(get("minutes") or {}),
             notes=str(get("notes") or ""),
             achievement=str(ach) if ach else None,
@@ -832,8 +836,16 @@ def _water_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
     Sanctuary Medium (2026-11-05, loss case 20261105_031041) played the
     four-sub military_sub_sniper_water at p=0.49: the fountain basin is too
     small for a sub's footprint, all ten sub steps were given up at once and
-    the snipers alone lost round 53 with $11-33k idle. Maps the table does
-    not know keep the benefit of the doubt."""
+    the snipers alone lost round 53 with $11-33k idle.
+
+    Also true when the water holds fewer towers of the kind than the plan
+    places (the table's "room" against StrategySpec.placed): Castle Revenge
+    Impoppable (2026-11-05, loss case 20261105_063635) played the two-sub
+    chimps_sub_druid_water on a moat with room for one sub - the second sub
+    and its upgrades were given up, the plan went on with one 2-0-4 sub and
+    lost round 33 two minutes into the game. Maps the table does not know,
+    and tables measured before "room" was recorded, keep the benefit of
+    the doubt."""
     from .mapfit import load
     from .towers import TOWERS
     fits = (load().get(map_name) or {}).get("towers") or {}
@@ -841,7 +853,12 @@ def _water_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
         if TOWERS.get(kind, {}).get("placement") != "water":
             continue
         fit = fits.get(kind)
-        if fit and not fit.get("early", 1.0) and not fit.get("late", 1.0):
+        if not fit:
+            continue
+        if not fit.get("early", 1.0) and not fit.get("late", 1.0):
+            return True
+        room = fit.get("room")
+        if room is not None and s.placed.get(kind, 0) > room:
             return True
     return False
 

@@ -13,7 +13,9 @@ planner:
   maps: [Logs, Resort, Lotus Island, Spa Pits, "Pat's Pond", Peninsula, Off The Coast, Cargo,
          Spillway, Sunken Columns, Flooded Valley, Dark Castle, Bloody Puddles, Muddy Puddles,
          Water Park, Downstream, Streambed, Spice Islands, Ravine, Sanctuary, Ship Capture,
-         Castle Revenge, Erosion, Luminous Cove]
+         Erosion, Luminous Cove]
+  # not Castle Revenge: its moat holds one sub, not four (the two-sub
+  # chimps_sub_druid_water lost Impoppable there 2026-11-05, case 20261105_063635)
 plan:
   - {do: place, id: sb1, kind: sub, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}

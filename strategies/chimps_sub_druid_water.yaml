@@ -17,7 +17,10 @@ planner:
   maps: [Logs, Resort, Lotus Island, Spa Pits, "Pat's Pond", Peninsula, Off The Coast, Cargo,
          Spillway, Sunken Columns, Flooded Valley, Dark Castle, Bloody Puddles, Muddy Puddles,
          Water Park, Downstream, Streambed, Spice Islands, Ravine, Sanctuary, Ship Capture,
-         Castle Revenge, Erosion, Luminous Cove]
+         Erosion, Luminous Cove]
+  # not Castle Revenge: its moat holds the first sub only, sb2 (segment
+  # 0.3-1.0) finds no water and Impoppable was lost at round 33 (2026-11-05,
+  # loss case 20261105_063635)
 plan:
   - {do: place, id: sb1, kind: sub, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.5]}
