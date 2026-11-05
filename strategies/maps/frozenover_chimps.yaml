@@ -82,7 +82,10 @@ modes: [chimps]
 planner:
   towers: {tack: [4, 0, 3], sniper: [5, 2, 0], buccaneer: [4, 2, 0], sub: [2, 0, 4], village: [2, 3, 0],
            alchemist: [3, 2, 0]}
-  base_success: {chimps: 0.85}
+  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
+  # the damage model rated 16 - the model that checked these builds is not
+  # trusted for CHIMPS until that is explained (0.85 when it passed)
+  base_success: {chimps: 0.5}
   maps: [Frozen Over]
 plan:
   - {do: place, id: t1, kind: tack, role: dps, at: [0.345, 0.504]}   # top of the left loop, inside the crossings

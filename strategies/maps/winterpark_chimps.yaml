@@ -87,7 +87,10 @@ hero: quincy
 modes: [chimps]
 planner:
   towers: {buccaneer: [4, 2, 2], tack: [4, 0, 0], bomb: [2, 5, 0], village: [2, 3, 0], alchemist: [3, 2, 0]}
-  base_success: {chimps: 0.85}
+  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
+  # the damage model rated 16 - the model that checked these builds is not
+  # trusted for CHIMPS until that is explained (0.85 when it passed)
+  base_success: {chimps: 0.5}
   maps: [Winter Park]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.452, 0.436]}   # fountain, north-east

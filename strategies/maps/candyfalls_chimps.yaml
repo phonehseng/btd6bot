@@ -87,7 +87,10 @@ xp_target: sub
 planner:
   towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], sniper: [0, 1, 0], tack: [0, 0, 0], sub: [2, 0, 4],
            spike: [2, 0, 5], super: [0, 0, 0]}
-  base_success: {chimps: 0.85}
+  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
+  # the damage model rated 16 - the model that checked these builds is not
+  # trusted for CHIMPS until that is explained (0.85 when it passed)
+  base_success: {chimps: 0.5}
   maps: [Candy Falls]
 plan:
   - {do: place, id: t1, kind: tack, role: dps, at: [0.687, 0.624]}   # bottom-right loop's S-bend
