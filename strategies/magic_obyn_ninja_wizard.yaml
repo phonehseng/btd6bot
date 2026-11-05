@@ -8,6 +8,11 @@
 id: magic_obyn_ninja_wizard
 hero: obyn
 modes: [medium, hard, magic_only]
+# Water Park: lost twice here (2026-10-23 r76, 2026-11-05 r63). The map file's
+# track does not match where the bloons go (backlog 47): ranged towers placed
+# by it read no pops and the damage model sits at its floor all game. Only
+# global-range builds have won there; back on when the track is verified.
+excluded_maps: [Water Park]
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], wizard: [0, 2, 5], super: [3, 0, 2]}
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}

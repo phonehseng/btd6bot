@@ -1208,19 +1208,25 @@ class Executor:
             return {"do": "upgrade", "id": p.tid, "to": "-".join(map(str, to))}
         return step
 
+    def _build_ids(self):
+        """The ids the build's own steps name (plan, fill and answers): the
+        ids a later step can wait for. Computed once per game."""
+        if not hasattr(self, "_reserved_ids"):
+            steps = list(self.plan) + list(self.strat.get("fill") or []) \
+                + [a for v in (self.strat.get("answers") or {}).values() for a in v]
+            self._reserved_ids = {st["id"] for st in steps if st.get("id")}
+        return self._reserved_ids
+
     def _new_tid(self, kind):
         """An id for a tower placed without one (surplus, fills, answers):
         never one the board or the build already uses - a surplus "sub1"
         made the plan's own sub1 look placed, so it was never built and its
         upgrades went to the other tower."""
-        if not hasattr(self, "_reserved_ids"):
-            steps = list(self.plan) + list(self.strat.get("fill") or []) \
-                + [a for v in (self.strat.get("answers") or {}).values() for a in v]
-            self._reserved_ids = {st["id"] for st in steps if st.get("id")}
+        reserved = self._build_ids()
         while True:
             self.counter[kind] = self.counter.get(kind, 0) + 1
             tid = f"{kind}{self.counter[kind]}"
-            if tid not in self._reserved_ids and tid not in self.g.towers:
+            if tid not in reserved and tid not in self.g.towers:
                 return tid
 
     def _range_cells(self, kind):
@@ -2100,9 +2106,24 @@ class Executor:
         if p is not None:
             if not self._dead(p):
                 return None
+            if getattr(p, "renamed_dead", False) or tid not in self._build_ids():
+                # No build step waits for this id, so there is nothing to
+                # place anew - and a tower that pops nothing gets no upgrade.
+                # The fill expands "upgrade every wizard" to one step per
+                # standing wizard, named by its current id, and that id is
+                # either a surplus/fill tower's own or the fresh name a dead
+                # tower was given here. Water Park Magic Monkeys Only
+                # (2026-11-05, lost round 63): each pass over the fill renamed
+                # the same dead wizards and ninjas once more (wizard68 ->
+                # wizard72 -> ... -> wizard103, 130 renames), stamped another
+                # avoided disc around them and tried a placement that found no
+                # spot - 111 steps "given up", and the game ended as a
+                # placement defeat.
+                return "skip"
             new = self._new_tid(p.kind)
             self.g.towers[new] = self.g.towers.pop(tid)
             p.tid = new
+            p.renamed_dead = True       # renamed once: never again under its new name
             self._rekey_tower(tid, new)
             self._avoid_spot(p)
             place = next((dict(st) for st in self.plan if st.get("do") == "place" and st.get("id") == tid),
@@ -2287,7 +2308,14 @@ class Executor:
             return []
         legal = int(valid.sum())
         if kind == "hero" or T.TOWERS.get(kind, {}).get("range", 0) is not None:
-            log.info("%s: no spot found (%d legal cells, none in reach of the track)", kind, legal)
+            # pick_spots ranks the best-covering legal cells and then drops the
+            # ones in failed_spots (refused, or around a sold or dead tower),
+            # under the reach floor (MIN_REACH_SHARE of the best legal reach)
+            # or reserved for a later step: on a crowded board those filters,
+            # not the track's distance, are usually what is left
+            log.info("%s: no spot found (%d legal cells; none reaches enough track outside the "
+                     "refused, avoided and reserved cells - %d avoided for this kind)",
+                     kind, legal, sum(1 for k in self.failed_spots if k[0] == kind))
             return []
         ys, xs = np.nonzero(valid)
         out = []

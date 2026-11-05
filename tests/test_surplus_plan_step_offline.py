@@ -353,6 +353,32 @@ def test_a_live_tower_and_a_sole_answer_are_not_redirected():
     assert ex._redirect_dead_upgrade({"do": "upgrade", "kind": "ninja", "to": "2-0-4"}, 1000, 41) is None
 
 
+def test_a_dead_tower_is_renamed_once_and_a_fill_tower_never():
+    """Water Park Magic Monkeys Only (2026-11-05, lost round 63): the fill's
+    per-tower upgrade steps name each standing tower by its current id, so
+    the same dead wizards were renamed again on every pass (130 renames,
+    111 placements given up, a "placement" defeat). A tower renamed out of
+    its plan id is skipped under its new name, and a dead surplus or fill
+    tower - an id no build step waits for - is skipped without a rename or
+    a placement."""
+    ex = dead_board("hard")
+    up = ex.plan[1]
+    assert ex.try_step(dict(up), 300, 41) == "wait"           # n2 renamed to ninja1, its stand-in pending
+    renamed = ex.g.towers["ninja1"]
+    assert renamed.renamed_dead and ex.redirected["n2"]
+    # the fill names the dead tower by its new id: skipped, not renamed again
+    assert ex.try_step({"do": "upgrade", "id": "ninja1", "to": "2-0-4"}, 5000, 42) == "skip"
+    assert ex.g.towers["ninja1"] is renamed and renamed.tid == "ninja1"
+    assert set(ex.redirected) == {"n2"} and len(ex.placed) == 1
+    # a dead surplus tower (its id is in no build step): skipped outright
+    w3 = tower("wizard3", "wizard", [0, 2, 2], spent=1500, placed_round=20, pops=0, pops_round=40, zero_reads=2)
+    ex.g.towers["wizard3"] = w3
+    assert ex.try_step({"do": "upgrade", "id": "wizard3", "to": "0-2-4"}, 5000, 42) == "skip"
+    assert ex.g.towers["wizard3"] is w3 and "wizard3" not in ex.redirected and len(ex.placed) == 1
+    # a plan id whose tower pops is still upgraded the normal way
+    assert ex._redirect_dead_upgrade({"do": "upgrade", "id": "n1", "to": "4-0-2"}, 5000, 42) is None
+
+
 def test_chimps_reads_pop_counts_but_sells_nothing():
     d1 = tower("d1", "dart", [2, 0, 0], spent=600, placed_round=30, pops=0)
     t1 = tower("t1", "tack", [2, 0, 0], spent=500, placed_round=30, pops=900)
