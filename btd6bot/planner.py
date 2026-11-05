@@ -892,12 +892,22 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
             # nothing can be fixed after Play: a general build is only as
             # sure as its record in such modes, not as the map's best build
             p = min(p, NO_INCOME_GENERAL_CAP)
-    ceiling = model_ceiling(map_name, mode)
-    if ceiling is not None and ceiling < CEILING_PLAYABLE:
-        # no build the map research found holds there: not trusted until a
-        # win on record raises the posterior (win_probability)
-        p = min(p, CEILING_P_CAP)
+    p = ceiling_cap(p, map_name, mode)
     return min(0.98, max(0.01, p))
+
+
+def ceiling_cap(p: float, map_name: str, mode: str) -> float:
+    """Cap ``p`` for a map/mode where no build the map research found holds.
+
+    The cap is CEILING_P_CAP scaled by how far the ceiling falls short of
+    CEILING_PLAYABLE, so among such games (played only as a last resort) the
+    nearly-holding ones come first: Mesa Primary Only (ceiling 0.8) before
+    Last Resort Primary Only (0.33) before Muddy Puddles Deflation (0.06).
+    Only a win on record raises the posterior above it (win_probability)."""
+    ceiling = model_ceiling(map_name, mode)
+    if ceiling is None or ceiling >= CEILING_PLAYABLE:
+        return p
+    return min(p, CEILING_P_CAP * max(0.0, ceiling) / CEILING_PLAYABLE)
 
 
 # Every loss on a (map, mode), by any strategy, scales the prior of the
@@ -1082,6 +1092,11 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
         # games in the mode itself
         if MODES[mode].difficulty == "hard" and (s.id, mode) not in calib.f:
             prior = min(prior, UNTESTED_HARD_P)
+        # calibration must not lift a prior over its map-ceiling cap: Last
+        # Resort Primary Only (ceiling 0.33) was capped at 0.5, then x1.38 for
+        # how primary_only plays on expert maps, played at p=0.69 and lost at
+        # round 20 (2026-11-04)
+        prior = max(0.01, ceiling_cap(prior, map_name, mode))
     st = account.strategy_record(map_name, mode, s.id)
     w, l = st.get("wins", 0), st.get("losses", 0)
     k = cfg.prior_strength

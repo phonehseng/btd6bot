@@ -525,6 +525,29 @@ def test_map_modes_no_build_holds_are_not_trusted():
     assert P.prior_win_probability(acc, s, "Logs", "hard") > P.CEILING_P_CAP
 
 
+def test_calibration_cannot_lift_a_game_over_its_ceiling_cap():
+    """Last Resort Primary Only (2026-11-04): the ceiling 0.33 capped the
+    prior at 0.5, the mode's calibration (x1.38 on expert maps) lifted it to
+    0.69 and the game was lost at round 20. The cap now holds after
+    calibration too, and scales with the ceiling so a nearly-holding map
+    ranks above a hopeless one among last-resort games."""
+    class _Lift:
+        f = {}
+        def get(self, *_a):
+            return 1.4
+    saved = P._CEILINGS
+    P._CEILINGS = {"Last Resort|primary_only": 0.33, "Mesa|primary_only": 0.8}
+    try:
+        acc = _fresh_ish_account()
+        s = _spec(modes=("primary_only",), rate=0.95)
+        lr, _ = P.win_probability(acc, s, "Last Resort", "primary_only", calib=_Lift())
+        mesa, _ = P.win_probability(acc, s, "Mesa", "primary_only", calib=_Lift())
+        assert lr <= P.CEILING_P_CAP * 0.33 / P.CEILING_PLAYABLE + 1e-9
+        assert lr < mesa <= P.CEILING_P_CAP
+    finally:
+        P._CEILINGS = saved
+
+
 def test_optimized_builds_set_the_ceiling():
     """Dark Dungeons Primary Only (2026-10-27): the optimizer's best build
     rated 0.68 and solo_bomb, rated without that number, lost at round 25.
@@ -1076,7 +1099,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_hard_first_by_default", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",
