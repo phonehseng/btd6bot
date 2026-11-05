@@ -305,17 +305,12 @@ class Game:
     # build went without its core tower. Its green OK sits in this region
     # (screen fractions), the same one runner._close_mode_intro reads.
     INTRO_OK_REGION = (0.35, 0.6, 0.65, 0.8)
-    INTRO_OK_WORDS = ("ok", "0k")    # the button's text, as OCR reads it
 
     def close_intro_box(self, f=None):
-        """Click the OK of a mode's intro box if one covers the match. The
-        button must read "OK" and be green, so a tower or bloon in that part
-        of the map is never clicked. True when it was clicked."""
+        """Click the OK of a mode's intro box if one covers the match
+        (find_intro_box_ok). True when it was clicked."""
         f = f if f is not None else self.fresh()
-        text, _ = rec_text(crop(f, self.INTRO_OK_REGION))
-        if not any(w in self.INTRO_OK_WORDS for w in text.lower().split()):
-            return False
-        spot = _colour_blob(f, self.INTRO_OK_REGION, (40, 120, 120), (85, 255, 255))
+        spot = find_intro_box_ok(f)
         if spot is None:
             return False
         log.info("mode intro box over the match: clicking its OK at %.3f,%.3f", *spot)
@@ -1181,6 +1176,36 @@ def _colour_blob(img, region, lo, hi):
         return None
     cx, cy = cents[best]
     return (x0 + cx) / w, (y0 + cy) / h
+
+
+# A mode's intro box is a flat blue panel (HSV about 107, 150, 212 on Cargo
+# and Luminous Cove, 2026-11-05) with a green OK low in its middle. The HUD's
+# digit reader cannot read the word "OK" (it gave "1" and "K"), so the box is
+# known by its panel: these strips left of, right of and above the button
+# (screen fractions) must be all panel. On a match without the box they hold
+# map, water, track and bloons, and read 0.0-0.001 of panel.
+INTRO_PANEL_HSV = ((100, 60, 120), (125, 200, 255))
+INTRO_PANEL_STRIPS = ((0.36, 0.66, 0.42, 0.75), (0.58, 0.66, 0.64, 0.75), (0.40, 0.62, 0.60, 0.66))
+INTRO_PANEL_MIN = 0.9        # share of a strip that must be panel
+INTRO_OK_HSV = ((40, 120, 120), (85, 255, 255))     # the green OK button
+
+
+def _panel_share(img, region, lo, hi):
+    """Share of the pixels in region (screen fractions) within HSV [lo, hi]."""
+    h, w = img.shape[:2]
+    c = img[int(region[1] * h):int(region[3] * h), int(region[0] * w):int(region[2] * w)]
+    if c.size == 0:
+        return 0.0
+    return float(cv2.inRange(cv2.cvtColor(c, cv2.COLOR_BGR2HSV), *INTRO_PANEL_HSV).mean()) / 255.0
+
+
+def find_intro_box_ok(img):
+    """Centre (screen fractions) of the OK button of a mode's intro box over
+    the match, or None when no box is showing: the panel strips around the
+    button must be panel-blue and a green button must sit between them."""
+    if any(_panel_share(img, s, *INTRO_PANEL_HSV) < INTRO_PANEL_MIN for s in INTRO_PANEL_STRIPS):
+        return None
+    return _colour_blob(img, Game.INTRO_OK_REGION, *INTRO_OK_HSV)
 
 
 def find_removal_box(img, words):
