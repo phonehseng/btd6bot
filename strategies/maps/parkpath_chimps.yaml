@@ -1,0 +1,121 @@
+# Park Path, CHIMPS: a Destroyer in the central pond that becomes the
+# Carrier Flagship, a second Destroyer -> Aircraft Carrier up the stream with
+# Crow's Nest, two Maim MOAB snipers, an Armor Piercing sub, a MIB village, a
+# Bionic Boomer, a Stronger Stimulant alchemist and an exit Perma-Spike.
+#
+# Why: the route coils round the central pond, so a buccaneer there fires
+# both broadsides nearly all the time; alone it holds rounds 6-15 on the $650
+# start (damage model: a lone 0-0-0 boat there 2.9 at round 6 against 0.7-1.0
+# for a sub, ninja or tack at their best spots), and the Destroyer (3-2-0,
+# Hot Shot for lead) carries the mid-game while cash is saved. The stream
+# boat goes 2-0-2 first (Crow's Nest: the round-24 camo), then 3-0-2 and
+# 4-0-2. The MIB village (2-3-0, by ~R56) lends camo and every damage type
+# to both boats for the camo rainbows/ceramics of R78 and the DDTs of 90-99;
+# snipers on the lower-right lawn see the whole route (Night Vision camo,
+# Full Metal Jacket lead). Alchemist 4-2-0 brews both boats for R95; the
+# Flagship (~R82) and the Perma-Spike (~R96) are the late game and the R100
+# BAD. A 3-2-0 boomerang (~R57) is there because strategy.coverage counts no
+# buccaneer as a rush answer (R63), and runner drops a mode coverage fails. CHIMPS: no selling, no income tiers (no Merchantman x-x-3, Supply
+# Drop x-4-x or Monkey Town x-x-3), no aimed towers, no abilities needed.
+# The blimp `answers` all point at the plan's own blimp steps in plan order:
+# without them the executor's rough blimp check bought an ace, a heli and a
+# sniper at R63-R89 and the $28k Flagship came only at R96, the Perma-Spike
+# never (the End Of The Road CHIMPS failure); with them every step is bought.
+# `fill` caps the surplus buccaneer copies at Destroyer (3-2-0).
+#
+# Sources:
+#   * bloonswiki Park_Path_(BTD6): the central water spot suits buccaneers,
+#     "constant activation of Destroyer's guns on both sides"; 3-2-0 with
+#     Berserker Brew and camo, saving up for Carrier Flagship
+#     (https://www.bloonswiki.com/Park_Path_(BTD6))
+#   * bloonswiki Strategy:CHIMPS: Destroyer as a mid-game save-up tower;
+#     Carrier Flagship and Perma-Spike as win conditions; the hard rounds
+#     (40, 63, 75, 78, 90, 95, 98, 99, 100)
+#     (https://www.bloonswiki.com/Strategy:CHIMPS)
+#   * bloonswiki Destroyer_(BTD6) (https://www.bloonswiki.com/Destroyer_(BTD6))
+#   * TheGamer, easiest maps for CHIMPS: Park Path among the easier CHIMPS
+#     maps (https://www.thegamer.com/bloons-tower-defence-6-easiest-maps-chimps/)
+#   No Reddit/Steam/video run of Park Path CHIMPS with a build list was
+#   found (Sarah's BTD6 site's Park Path CHIMPS section is "coming soon").
+#
+# Checked offline on the CHIMPS economy (optimize_builds.economy("chimps"):
+# R6-100, $650, no Fast Track / Double Cash; Hard prices), method of
+# docs/map_strategies/beginner.md; worst margin over rounds 6-100:
+#   * plan replay (each step as soon as cash allows): 2.30 (R47);
+#     R6-15 2.71-12.6; R24 camo 16, R28 lead 8.4, R33 2.95; blimp rounds
+#     R40 7.8, R60 4.7, R63 16, R76 14.8, R78 9.4, R81 8.9, R90 16,
+#     R94 6.0, R95 2.57, R96 5.5, R97 11.1, R98 3.71, R99 3.55, R100 7.0
+#   * sight-strict (snipers by line of sight, subs to their own range):
+#     2.30 (R47); R55 2.40, R95 2.54, R98 3.71, R99 3.51, R100 6.95
+#   * executor-faithful strict (tools/simulate_threats' loop on the real
+#     map, surplus spending included), with its extra towers / plan towers
+#     only: 2.28 (R47) / 2.28 (R47); R95 2.59 with extras; plan 29/29
+#     bought (Flagship R86, Perma-Spike R96), no threat gaps; only after
+#     the plan (R96+) does the blimp check add an ace and a sniper
+#   * every `at` legal in plan order on the geometry and on the live map
+#     model (data/maps/parkpath.npz); the medium build's Quincy spot
+#     (0.526, 0.658) is refused there now, so Quincy stands west at
+#     (0.313, 0.47);
+#   * strategy.load_all(): bot_ready, validate() empty; usable and
+#     coverage complete on the main account, unusable on other maps.
+id: parkpath_chimps
+map: Park Path
+hero: quincy
+modes: [chimps]
+planner:
+  towers: {buccaneer: [5, 2, 0], sniper: [4, 2, 0], sub: [2, 0, 4], village: [2, 3, 0], alchemist: [4, 2, 0],
+           spike: [2, 0, 5], boomerang: [3, 2, 0]}
+  base_success: {chimps: 0.85}
+  maps: [Park Path]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.419, 0.504]}   # central pond: holds R6-15 alone
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead (R28)
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.59, 0.402]}   # stream just above the pond
+  - {do: upgrade, id: b2, to: 2-0-2}   # Crow's Nest: camo (R24)
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.313, 0.47]}   # west, between the spiral rings
+  - {do: upgrade, id: b2, to: 3-0-2}   # second Destroyer
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}   # lower-right lawn: sees the whole route
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.697, 0.317]}   # stream by the entrance
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: place, id: v1, kind: village, role: support, at: [0.521, 0.351]}   # reaches both boats
+  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo + every damage type for the boats
+  - {do: place, id: bo1, kind: boomerang, role: dps, at: [0.366, 0.351]}   # north-west, between the rings
+  - {do: upgrade, id: bo1, to: 3-2-0}   # Bionic Boomer: the R63 rush answer strategy.coverage asks for
+  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+  - {do: upgrade, id: s2, to: 4-2-0}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.548, 0.589]}   # brews both boats
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: upgrade, id: a1, to: 4-2-0}   # Stronger Stimulant
+  - {do: upgrade, id: b1, to: 5-2-0}   # Carrier Flagship
+  - {do: upgrade, id: b2, to: 4-0-2}   # Aircraft Carrier
+  - {do: place, id: sp1, kind: spike, role: exit, at: [0.831, 0.589]}   # by the exit
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: upgrade, id: sp1, to: 2-0-5}   # Perma-Spike: DDT leaks, R100 BAD
+fill:
+  - {do: upgrade, kind: buccaneer, to: 3-2-0}   # surplus boats stop at Destroyer
+answers:
+  camo: [{do: upgrade, id: b2, to: 2-0-2}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  rush:
+    - {do: upgrade, id: bo1, to: 3-2-0}
+    - {do: place, id: bo1, kind: boomerang, role: dps, at: [0.366, 0.351]}
+  # every blimp class: the plan's own blimp steps, in plan order
+  moab: &blimps
+    - {do: upgrade, id: s1, to: 4-2-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}
+    - {do: upgrade, id: s2, to: 4-2-0}
+    - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+    - {do: upgrade, id: b1, to: 5-2-0}
+    - {do: upgrade, id: b2, to: 4-0-2}
+    - {do: upgrade, id: sp1, to: 2-0-5}
+    - {do: place, id: sp1, kind: spike, role: exit, at: [0.831, 0.589]}
+  bfb: *blimps
+  zomg: *blimps
+  ddt: *blimps
+  bad: *blimps

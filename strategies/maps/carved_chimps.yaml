@@ -1,0 +1,120 @@
+# Carved, CHIMPS: buccaneers in the pumpkin's water eyes growing into a
+# Carrier Flagship and two Aircraft Carriers, an MIB village between the eyes,
+# a MOAB Mauler and a Fighter Plane ace for the first blimps, Brickell in the
+# left eye.
+#
+# Why: one route (1,312 world units) round the jack-o-lantern's outline, into
+# the mouth's zig-zag loop and out at the top. The eyes are the only water big
+# enough for towers: a buccaneer in the right eye reaches more track than any
+# other spot on the map, and the ground between the eyes (0.441, 0.351) is the
+# one village spot whose buffs reach both eyes (46 and 43 units). CHIMPS starts
+# at round 6 with $650 and no income, so the opener is the right-eye buccaneer
+# plus a dart ($645). Grape Shot (2-1-0) comes before the second buccaneer
+# because round 15's pinks are what a lone 2-0-0 ship leaks first in the model.
+# Camo from round 24: Crow's Nest on b2. Lead from round 28: Hot Shot on b1.
+# Ceramics (38): Heavy Bombs on bm1. The round-40 MOAB: Destroyer b1 and a
+# Fighter Plane ace (3-0-0). The ace is also what keeps the executor's own
+# blimp check (threats.blimp_capacity, 1.4x bar in one-life modes) from buying
+# unplanned blimp towers ahead of the plan in rounds 35-39.
+# Radar Scanner and then MIB (2-3-0) give every ship camo for round 51's camo
+# ceramics, and MIB gives all damage types. MOAB Mauler (bm1 2-4-0, inside the
+# village's reach) answers BFBs, ZOMGs and the round-90 DDTs. A Glaive
+# Ricochet boomerang below the mouth answers the round-63 rush. The 90s' DDTs
+# (rounds 95 and 99 are the model's weakest late rounds) fall to the carriers'
+# planes, which get camo from MIB.
+#
+# Each plan step is timed to be bought by about round 80. From round 81 every
+# round brings blimps that the executor's rough blimp check rates short
+# (0.2-1.0x against its 1.4x bar, whatever the defence), so from then on it
+# also spends cash on its own blimp towers. Those come on top of the plan,
+# but they slow down any plan step still waiting (End Of The Road CHIMPS was
+# lost at round 76 to a step that was never bought). No sell steps, no
+# Merchantman (x-x-3 buccaneer), no Monkey Knowledge, no powers.
+#
+# Sources:
+#   * bloonswiki Carved: "on the easier side of Beginner maps"; best spots in the
+#     right water patch and below the mouth; two trees by the entrance and exit
+#     block line of sight (no sniper in this build) (https://www.bloonswiki.com/Carved)
+#   * bloonswiki Strategy:CHIMPS: Carrier Flagship "wipes the floor with the
+#     entire mid-game and early late-game", paired with Admiral Brickell;
+#     Merchantman paths are income (out); camo / MIB needed for rounds 78 and 90;
+#     rounds 40, 63, 75, 78, 90, 95 named as the hardest
+#     (https://www.bloonswiki.com/Strategy:CHIMPS)
+#   * r/btd6 "Here is a C.H.I.M.P.S carved strategy": a 2-3-0 MIB village in a
+#     Sauda / Apache Prime / Perma-Spike build. Read only as a search-result
+#     summary: the thread itself refused the fetch
+#     (https://www.reddit.com/r/btd6/comments/1glzky1/here_is_a_chimps_carved_strategy/)
+#   The search found no video or Steam guide for Carved CHIMPS.
+#
+# Checked offline (docs/map_strategies/beginner.md method) on the CHIMPS
+# economy: optimize_builds.economy("chimps", ...), with round 6, $650, base
+# income and Hard prices (the account's Double Cash and Fast Track do not apply
+# in CHIMPS), rounds 6-100. The hero's damage is not counted (extra safety):
+#   * every `at` is legal for its tower in plan order, both on the map geometry
+#     and on the live map model (data/maps/carved.npz);
+#   * plan replay (each step as soon as the cash allows): worst margin 2.16
+#     (round 9; round 34 2.25, everything else 2.3 or more). Blimp rounds: 40
+#     6.24; 60/63/76/78/81/90 16.0; 94 8.72; 95 3.15; 96 6.95; 97 12.88; 98
+#     4.60; 99 3.08; 100 8.35. Plan bought in full by round 82;
+#   * sight-strict (subs and aces limited to their own range or flight circle;
+#     Carved's map file has no sight blockers): worst 2.16 (round 9); 95 3.15,
+#     98 4.51, 99 3.08;
+#   * executor-faithful (tools/simulate_threats' loop with the match loop's
+#     surplus spending, the real account and the live map model), strict.
+#     Worst with its extra towers / plan towers only: 2.16 / 2.16 (round 9).
+#     Round 95: 4.18 / 3.22; round 99: 4.18 / 3.08.
+#     Every plan step is bought (29/29). The Carrier Flagship (b1 5-2-0)
+#     stands from round 77, b2 4-0-2 from 80 and b3 4-2-0 from 85; in the
+#     plan replay those are rounds 74, 79 and 82. The executor adds a
+#     blimp-answer ace at round 63 and its own blimp towers from round 81;
+#     MOAB Eliminator (the `bad` answer) is bought at round 98;
+#   * tools/simulate_threats (open field and the real map) finds no gaps;
+#     strategy.coverage has nothing missing.
+id: carved_chimps
+map: Carved
+hero: admiral_brickell
+modes: [chimps]
+planner:
+  towers: {buccaneer: [5, 2, 2], village: [2, 3, 0], ace: [4, 0, 0], bomb: [2, 5, 0], boomerang: [3, 0, 0], dart: [0, 0, 0]}
+  base_success: {chimps: 0.85}
+  maps: [Carved]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.569, 0.368]}   # right eye: the best spot on the map
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.655, 0.419]}   # R6 opener with b1 ($645 of $650)
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-1-0}   # Grape Shot: the round-15 pinks
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.323, 0.385]}   # left eye
+  - {do: upgrade, id: b2, to: 0-0-2}   # Crow's Nest: camo from round 24
+  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead from round 28
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.526, 0.521]}   # above the mouth, inside the village's reach
+  - {do: upgrade, id: bm1, to: 0-2-0}   # Heavy Bombs: ceramics from round 38
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.484, 0.845]}   # below the mouth
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: a1, to: 3-0-0}   # Fighter Plane: the round-40 MOAB
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
+  - {do: upgrade, id: b2, to: 3-0-2}   # Destroyer
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.334]}   # Brickell, left eye
+  - {do: place, id: v1, kind: village, role: support, at: [0.441, 0.351], near: [b1, b2]}   # between the eyes: reaches both
+  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo for every ship
+  - {do: upgrade, id: bm1, to: 2-4-0}   # MOAB Mauler: BFBs from round 60
+  - {do: place, id: bg1, kind: boomerang, role: dps, at: [0.430, 0.658]}   # below the mouth: the wiki's glaive spot
+  - {do: upgrade, id: bg1, to: 3-0-0}   # Glaive Ricochet: the round-63 rush
+  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
+  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: all damage types, camo
+  - {do: upgrade, id: b1, to: 5-2-0}   # Carrier Flagship
+  - {do: upgrade, id: a1, to: 4-0-0}   # Operation: Dart Storm
+  - {do: upgrade, id: b2, to: 4-0-2}   # Aircraft Carrier
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.521, 0.385]}   # right eye, next to the Flagship
+  - {do: upgrade, id: b3, to: 4-2-0}   # Aircraft Carrier: the round-95/99 DDTs
+answers:
+  camo: [{do: upgrade, id: b2, to: 0-0-2}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: bm1, to: 0-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: bm1, to: 2-4-0}]
+  rush: [{do: upgrade, id: bg1, to: 3-0-0}]
+  zomg: [{do: upgrade, id: bm1, to: 2-4-0}]
+  ddt: [{do: upgrade, id: bm1, to: 2-4-0}]
+  bad: [{do: upgrade, id: bm1, to: 2-5-0}]   # MOAB Eliminator, bought from the late surplus

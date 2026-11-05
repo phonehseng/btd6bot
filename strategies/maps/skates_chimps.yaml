@@ -1,0 +1,145 @@
+# Skates, CHIMPS: a tack in the first loop's corner (Ring of Fire, then
+# Inferno Ring), subs and two Aircraft Carriers in the big ice crack, a
+# 2-0-4 ninja with an acid-dip Alchemist by the last loop, and a Radar Scanner
+# village that lends the tack camo.
+#
+# Why: a long route (1,172 world units hittable) that makes three loops. The
+# first loop's top-left corner (0.163, 0.266) is where a tack reaches the most
+# track (10% of the route in 23 units of range); from $650 a 0-2-0 tack there
+# holds rounds 6-10 at 2.6 in the damage model; every other $650 opener
+# tried (one or two towers of 14 kinds at their two best spots) 1.7 or less. The
+# central crack (water) takes the subs and buccaneers: a buccaneer there
+# reaches 22% of the route, and the Aircraft Carriers' planes the whole map.
+# The ninja and the Alchemist stand where the second and third loops meet
+# (the second-best ninja spot, 15%; the best is the tack's corner), the Alchemist's
+# Acidic Mixture Dip making the ninja's shurikens pop lead (round 59's 50 camo
+# leads, round 90's and 95's fortified camo leads). The village at
+# (0.248, 0.351) is the nearest legal spot to the tack (37 units, inside the
+# village's 40): Radar Scanner gives the tack camo, so Ring of Fire and
+# Inferno Ring hit the camo ceramics of 78 and the camo DDTs of 90-99. Inferno
+# Ring (t1 5-2-0, $49,140) is the late-game answer: with it rounds 90-100
+# rate 3.0-16; without it round 95 rates 0.8 and round 99 1.0 (Carrier
+# Flagship plus Sub Commander for about the same money: 1.0 / 1.2). A MOAB
+# Eliminator bomb (0-5-2) ends the plan: round 100 already rates 7.9 without
+# it, but strategy.coverage only counts the towers listed in
+# strategy.ANSWERS["bad"] (no tack), and runner.planner_specs drops a mode
+# whose coverage misses a threat - without it the planner would never pick
+# this build.
+# The houses ($500, free a small crack) are not removed: the bot never buys
+# removables and the build does not need them. Admiral Brickell sits in the
+# crack (not counted by the damage model: extra safety only).
+#
+# CHIMPS: no selling, no income (no Banana Farm, no Merchantman: the
+# buccaneers stop at x-x-2), no Monkey Knowledge, no powers, $650 at round 6.
+#
+# Sources:
+#   * bloonswiki Skates: global-range towers stand out on this spread-out map;
+#     limited-range towers best left of the middle loop; Carrier Flagship and
+#     Destroyers in the central crack (https://www.bloonswiki.com/Skates)
+#   * bloonswiki Strategy:CHIMPS: the hard rounds (40, 63, 75, 78, 90, 95,
+#     98, 99, 100); Destroyer / Aircraft Carrier as mid-game save-up towers;
+#     Stronger Stimulant / Permanent Brew alchemists with many-projectile
+#     towers; camo and lead needed together for 90-100's DDTs
+#     (https://www.bloonswiki.com/Strategy:CHIMPS)
+#   * bloon.games Spa Pits CHIMPS guide (a water map): buccaneer 2-2-0 ->
+#     Aircraft Carrier 4-2-0 before round 40, a sub in the centre, then late
+#     tier 5s (https://bloon.games/how-to-beat-chimps-on-spa-pits/)
+#   * bloon.games Skates CHIMPS guide (Druid / Sniper / Village / Spike, no
+#     placements or rounds given; its towers rated lower here in the damage
+#     model) (https://bloon.games/how-to-beat-chimps-on-skates)
+#   No Skates-specific CHIMPS run with placements was found on Reddit, Steam
+#   or YouTube (web searches 2026-11-05); the build itself comes from the
+#   damage model on the map geometry (docs/map_strategies/beginner.md).
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method),
+# on the CHIMPS economy (optimize_builds.economy("chimps", boosts): round 6,
+# $650, base income - CHIMPS pays no Double Cash and has no Fast Track),
+# rounds 6-100:
+#   * every `at` is legal for its tower in plan + answer order, on the map
+#     geometry (as tests/test_map_hints_offline.py checks) and on the live map
+#     model (data/maps/skates.npz), outside the top HUD band;
+#   * strategy.validate and readiness: nothing; strategy.load_all: loads,
+#     bot_ready;
+#   * the plan replayed the executor's way (in order, each step as soon as the
+#     cash allows) keeps every round at a damage-model margin of 2.0 or more.
+#     Worst margin: 3.08 (round 43). Bought: tack 4-2-0 R38, Destroyer R40,
+#     village 0-2-0 R44, Aircraft Carrier R52, ninja 2-0-4 R57, Alchemist
+#     3-2-0 R59, second Aircraft Carrier R68, Inferno Ring R85, MOAB
+#     Eliminator R95;
+#   * sight-strict (subs only count their own range, aces their flight
+#     circle): 2.59 (round 49);
+#   * executor-faithful replay (tools/simulate_threats' loop with the match
+#     loop's surplus spending and threat answers), strict, with its extra
+#     towers / plan towers only: 2.59 / 2.59 (round 49). The whole plan is
+#     bought (30/30): Inferno Ring at round 88 (plan replay 85; rounds 85-88
+#     rate 8.7 or more meanwhile), MOAB Eliminator at round 98 (plan 95).
+#     Blimp rounds (faithful, plan towers only): 40 3.83, 60 16, 63 7.18,
+#     76 16, 78 4.65, 81 13.2, 90 16, 94 7.74, 95 4.04, 96 9.41, 97 11.7,
+#     98 5.54, 99 3.02, 100 7.91; camo/lead rounds 24 16, 28 8.0, 59 16;
+#   * tools/simulate_threats.simulate (open field and real map): no gaps,
+#     plan 30/30; strategy.coverage (full and real account): nothing
+#     missing; strategy.usable on the real account: ok.
+#   * The blimp answers below point at the plan's own blimp steps, in plan
+#     order: without them the executor's rough blimp check (threats.
+#     blimp_capacity) bought a sniper at round 40 and an ace at round 63, then
+#     at rounds 81-88 called each round weak, released the cash held for the
+#     Inferno Ring and spent it on sniper and sub tiers - the Inferno Ring was
+#     never bought and rounds 95/99 fell to 0.8 / 1.0 (the End Of The Road
+#     CHIMPS failure).
+# Gate: every check above holds at 2.0 or more, so base_success chimps is
+# 0.85 (a map's own build may clear the planner's 0.80 CHIMPS bar untested).
+id: skates_chimps
+map: Skates
+hero: admiral_brickell
+modes: [chimps]
+planner:
+  towers: {tack: [5, 2, 0], sub: [2, 0, 4], ninja: [2, 0, 4], buccaneer: [4, 2, 2], village: [0, 2, 0],
+           alchemist: [3, 2, 0], bomb: [0, 5, 2]}
+  base_success: {chimps: 0.85}
+  maps: [Skates]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.163, 0.266]}   # first loop's corner: 10% of the route
+  - {do: upgrade, id: t1, to: 0-2-0}   # $635 with the tack: holds rounds 6-10 at 2.6+
+  - {do: upgrade, id: t1, to: 1-2-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.398, 0.606]}   # central crack, south-west: 12.5%
+  - {do: upgrade, id: t1, to: 2-2-0}
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.569, 0.709]}   # camo for round 24 (and the subs' Advanced Intel)
+  - {do: upgrade, id: t1, to: 3-2-0}   # Hot Shots: lead (round 28)
+  - {do: upgrade, id: sb1, to: 0-0-1}
+  - {do: upgrade, id: sb1, to: 2-0-1}
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.441, 0.351]}   # Brickell, north end of the crack
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.441, 0.572]}   # central crack, south: 22%
+  - {do: upgrade, id: b1, to: 2-0-2}   # Crow's Nest: camo
+  - {do: upgrade, id: sb1, to: 2-0-3}
+  - {do: upgrade, id: t1, to: 4-2-0}   # Ring of Fire
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer: round 40's MOAB
+  - {do: place, id: v1, kind: village, role: support, at: [0.248, 0.351]}   # 37 units from the tack
+  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: the tack sees camo
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: place, id: sb2, kind: sub, role: dps, at: [0.462, 0.266]}   # central crack, north
+  - {do: upgrade, id: sb2, to: 2-0-4}
+  - {do: upgrade, id: b1, to: 4-0-2}   # Aircraft Carrier: planes over the whole map
+  - {do: upgrade, id: n1, to: 2-0-4}   # Sticky Bomb; Flash Bomb pops lead and camo
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.537, 0.726]}   # next to the ninja
+  - {do: upgrade, id: a1, to: 3-2-0}   # Acidic Mixture Dip (lead, +damage) + Berserker Brew
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.366, 0.555]}   # central crack, west: 21%
+  - {do: upgrade, id: b2, to: 4-2-0}   # second Aircraft Carrier (Hot Shot: lead)
+  - {do: upgrade, id: t1, to: 5-2-0}   # Inferno Ring: rounds 90-100
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.377, 0.675]}   # between the first and second loops: 14%
+  - {do: upgrade, id: bm1, to: 0-5-2}   # MOAB Eliminator: the listed BAD answer (strategy.ANSWERS) for round 100
+answers:
+  lead: [{do: upgrade, id: t1, to: 3-2-0}]
+  ceramic: [{do: upgrade, id: t1, to: 3-2-0}]
+  rush: [{do: upgrade, id: t1, to: 4-2-0}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 0-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 0-2-0}]
+  # blimp rounds: the plan's own blimp steps, in plan order (see the header)
+  moab: [{do: upgrade, id: t1, to: 4-2-0}, {do: upgrade, id: b1, to: 3-0-2}, {do: upgrade, id: sb1, to: 2-0-4},
+         {do: upgrade, id: n1, to: 2-0-4}, {do: upgrade, id: b2, to: 4-2-0}, {do: upgrade, id: t1, to: 5-2-0},
+         {do: upgrade, id: bm1, to: 0-5-2}]
+  bfb: [{do: upgrade, id: b1, to: 4-0-2}, {do: upgrade, id: n1, to: 2-0-4}, {do: upgrade, id: b2, to: 4-2-0},
+        {do: upgrade, id: t1, to: 5-2-0}, {do: upgrade, id: bm1, to: 0-5-2}]
+  zomg: [{do: upgrade, id: b2, to: 4-2-0}, {do: upgrade, id: t1, to: 5-2-0}, {do: upgrade, id: bm1, to: 0-5-2}]
+  ddt: [{do: upgrade, id: n1, to: 2-0-4}, {do: upgrade, id: t1, to: 5-2-0}, {do: upgrade, id: bm1, to: 0-5-2}]
+  bad: [{do: upgrade, id: t1, to: 5-2-0}, {do: upgrade, id: bm1, to: 0-5-2}]

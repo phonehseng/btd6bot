@@ -1,0 +1,133 @@
+# Lotus Island, CHIMPS: Destroyers grown into Aircraft Carriers in the
+# southern bay, a Monkey Intelligence Bureau village that gives them camo and
+# every damage type, an Alchemist's brew, and a Maim/Cripple MOAB sniper.
+#
+# Why: a short, spread-out route (1,107 world units) round an island in open
+# water (38% of the map). The bay inside the bottom loop is the best water (a
+# buccaneer there reaches 30% of the route) and takes three boats; the lotus
+# plants and the stone podium block sight, so the sniper stands on the south
+# shore at (0.548, 0.777), the legal spot that sees most of the route (71%).
+# In the damage model Aircraft Carriers (4-x-x) answer every round from 46 to
+# 100 except the camo-lead and DDT rounds (78, 90, 93, 95, 99, 100): a 2-x-0
+# carrier cannot see camo, a x-x-2 one cannot pop lead. The MIB village
+# (2-3-0) next to the bay fixes both - with it two carriers and the village
+# ($71k) already rate about 2 on round 95, without it nothing short of $150k
+# does. The village is therefore the build's keystone: if its spot is
+# refused live, rounds 78+ fall to the extra carriers surplus buys.
+#
+# $650 at round 6 holds rounds 6-15 alone: a buccaneer (430) and a dart (215)
+# rate 3.3 at round 6; the second buccaneer before round 8 and Double Shot by
+# round 11 keep every early round at 2.2 or more.
+#
+# Sources:
+#   * bloonswiki Lotus_Island: 2nd hardest beginner map (short, spread out,
+#     sight blockers); "water-based strategies stand out"; Carrier Flagship
+#     recommended (https://www.bloonswiki.com/Lotus_Island)
+#   * bloonswiki Strategy:CHIMPS: Destroyer and Aircraft Carrier as save-up
+#     towers, many Destroyers with brew as a win condition, MIB for camo and
+#     DDT rounds, Flagship with Admiral Brickell, hardest rounds 40, 63, 75,
+#     78, 90, 95, 98, 99, 100 (https://www.bloonswiki.com/Strategy:CHIMPS)
+#   * r/btd6 CHIMPS difficulty chart (Feb 2025): Lotus Island moved to level 4
+#     (r/btd6 thread 1i8z6zi, read through a mirror:
+#     https://pol1.lr.ggtyler.dev/r/btd6/comments/1i8z6zi/btd6_chimps_difficulty_chart_update_feb_2025)
+#   * no Lotus Island CHIMPS guide was found (Reddit, Steam, community sites;
+#     sarahs-btd6-site's map page has none yet:
+#     https://sarahs-btd6-site.onrender.com/guides/maps/easy-maps/lotus-island)
+#
+# The wiki's Flagship (5-x-x, $28,080) is left out: the executor-faithful
+# replay never bought it (see below), and the model rates four carriers above
+# one Flagship and one carrier for the same money. Cripple MOAB (s1 5-2-0) is
+# there as the BAD answer strategy.coverage needs (every BAD answer in
+# strategy.ANSWERS is a tier 5); the model kills the BAD without it (round 100
+# at 5.2 with s1 at 4-2-0).
+#
+# `answers`: strategy.ANSWERS lists no buccaneer for ceramic, BFB, ZOMG, DDT,
+# BAD or rush, and only Monkey Pirates (x-4-x) for MOAB, so without answers of
+# its own the executor turned b1 onto 2-4-0 at round 34 and the carrier path
+# was lost. Every strength answer is the rest of the plan in plan order: a due
+# threat or a short blimp check buys the plan's next step, never another tower.
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method),
+# CHIMPS economy (start round 6 with $650, no boosts, Hard prices; rounds
+# 6-100):
+#   * every `at` is legal for its tower in plan + fill order, on the map
+#     geometry and on the live map model (data/maps/lotusisland.npz);
+#   * plan replay (tools/optimize_builds.replay_plan): worst margin 2.23 (R8);
+#     R40 3.91, R51 2.51, R60/63/76/78/81/90 16, R94 5.19, R95 2.71, R96 4.18,
+#     R97 10.5, R98 2.92, R99 3.55, R100 5.24;
+#   * sight-strict (subs/aces held to their own circle; none here, the sniper
+#     already sees only its 71%): the same, worst 2.23 (R8);
+#   * executor-faithful, strict (tools/simulate_threats' loop on the real map
+#     with the match loop's surplus spending; damage model on the towers the
+#     executor really holds): worst 2.23 (R8) with its extra towers, 2.23 (R8)
+#     plan towers only (R95 2.65, R98 2.80). All 25 plan steps are bought:
+#     the carriers by R44 (b1), R63 (b2), R74 (b3), the MIB at R57, Cripple
+#     MOAB only at R98 - the blimp check (threats.blimp_capacity) rates the
+#     carriers low, calls rounds 71-93 weak, and surplus spends the cash on
+#     four extra carriers instead (harmless here: the plan towers alone hold);
+#   * tools/simulate_threats (open field and real map): no gaps, plan 25/25;
+#     strategy.coverage and usable on a full and on the real account: ok.
+id: lotusisland_chimps
+map: Lotus Island
+hero: admiral_brickell
+modes: [chimps]
+planner:
+  towers: {buccaneer: [4, 2, 2], sniper: [5, 2, 0], village: [2, 3, 0], alchemist: [3, 2, 0], boomerang: [3, 0, 0]}
+  base_success: {chimps: 0.85}
+  maps: [Lotus Island]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.743]}   # southern bay: 30% of the route
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.676, 0.794]}   # entrance stretch; with b1 the whole $650
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.409, 0.675]}   # north edge of the bay
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b2, to: 2-0-2}   # Crow's Nest: camo (round 24)
+  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead (round 28)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.366, 0.726]}
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer: ceramics and the round-40 MOAB
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.548, 0.777]}   # south shore: sees 71% of the route
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB + Night Vision: BFB/ZOMG/DDT answer, 2nd strong-camo tower
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.249]}
+  - {do: upgrade, id: r1, to: 3-0-0}   # Glaive Ricochet: the round-63 rush answer
+  - {do: place, id: v1, kind: village, role: support, at: [0.505, 0.811]}
+  - {do: upgrade, id: v1, to: 2-2-0}   # Radar Scanner
+  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo + every damage type for the carriers (rounds 78-100)
+  - {do: upgrade, id: b2, to: 4-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.452, 0.845]}
+  - {do: upgrade, id: a1, to: 3-2-0}   # brew for the bay
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.355, 0.811]}   # west end of the bay
+  - {do: upgrade, id: b3, to: 4-2-0}
+  - {do: upgrade, id: s1, to: 5-2-0}   # Cripple MOAB: the BAD answer
+fill:
+  - {do: upgrade, kind: dart, to: 0-0-2}   # caps the opener dart: surplus once took it to 4-2-0
+answers:
+  camo: [{do: upgrade, id: b2, to: 2-0-2}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: &plan_rest
+    - {do: upgrade, id: b1, to: 3-2-0}
+    - {do: upgrade, id: b2, to: 3-0-2}
+    - {do: upgrade, id: b1, to: 4-2-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.548, 0.777]}
+    - {do: upgrade, id: s1, to: 4-2-0}
+    - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.249]}
+    - {do: upgrade, id: r1, to: 3-0-0}
+    - {do: place, id: v1, kind: village, role: support, at: [0.505, 0.811]}
+    - {do: upgrade, id: v1, to: 2-2-0}
+    - {do: upgrade, id: v1, to: 2-3-0}
+    - {do: upgrade, id: b2, to: 4-0-2}
+    - {do: place, id: a1, kind: alchemist, role: support, at: [0.452, 0.845]}
+    - {do: upgrade, id: a1, to: 3-2-0}
+    - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.355, 0.811]}
+    - {do: upgrade, id: b3, to: 4-2-0}
+    - {do: upgrade, id: s1, to: 5-2-0}
+  moab: *plan_rest
+  camo_ceramic: *plan_rest
+  camo_lead: *plan_rest
+  bfb: *plan_rest
+  rush: *plan_rest
+  zomg: *plan_rest
+  ddt: *plan_rest
+  bad: *plan_rest

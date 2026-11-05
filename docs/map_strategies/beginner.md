@@ -30,6 +30,52 @@ track, so their numbers are equal.
 | `skates_medium.yaml` | Medium, Military Only, Reverse | 3.40 (Medium and Military Only); 3.36 (Reverse) | 2.77 (Medium and Military Only); 2.71 (Reverse) | 3.12 / 1.81 (Medium and Military Only); 2.92 / 1.85 (Reverse) | - |
 | `winterpark_medium.yaml` | Medium, Military Only, Reverse | 2.95 | 2.71 (Medium and Military Only); 2.92 (Reverse) | 3.71 / 2.46 (Medium and Military Only); 3.79 / 2.54 (Reverse) | - |
 
+## CHIMPS builds (2026-11-05)
+
+Written for the owner's order of 2026-11-05: black borders map tier by tier,
+Beginner maps first. Sixteen of the 26 Beginner maps had their black border
+(checked on the game's map pages); the ten below lacked CHIMPS. A general
+build stays under the planner's CHIMPS bar (0.80) until it has CHIMPS games
+of its own, so only a build made for the map can be played there untested.
+
+Each file was checked like the builds above, on the CHIMPS economy (round 6
+with $650, no income, no selling, no boosts), rounds 6-100. The gate
+(`base_success.chimps`) is 0.85 only where all four replays stay at 2.0 or
+more; otherwise 0.5, and the planner does not play it.
+
+| Build | Core | Plan | Sight-strict | Executor-faithful (extra / plan only) | Gate |
+|---|---|---|---|---|---|
+| `alpinerun_chimps.yaml` | tack to Inferno Ring, Spiked Mines, Druid of the Jungle, Cripple MOAB, MIB | 2.16 (R9) | 2.16 (R9) | 2.16 / 2.16 (R9) | 0.85, with `no_answers` (see below) |
+| `candyfalls_chimps.yaml` | two buccaneers to Carrier Flagship + Aircraft Carrier, MIB | 2.48 (R34) | 2.48 | 2.48 / 2.48 | 0.85 |
+| `carved_chimps.yaml` | buccaneers in the eyes to Carrier Flagship + two Carriers, MOAB Mauler | 2.16 (R9) | 2.16 | 2.16 / 2.16 | 0.85 |
+| `endoftheroad_chimps.yaml` | pool buccaneers to Destroyers and four Carriers, Deadly Precision sniper | 2.11 (R15) | 2.11 | 2.18 / 2.18 | 0.85 |
+| `frozenover_chimps.yaml` | Ring of Fire tack, Maim MOAB sniper, two Carriers, MIB | 2.51 (R6) | 2.30 (R39) | 2.30 / 2.30 | 0.85 |
+| `hedge_chimps.yaml` | tacks, Apache helis, Phoenix wizard | 0.52 (R95) | 0.52 | 0.22 / 0.19 | 0.5 (fails R90-99) |
+| `lotusisland_chimps.yaml` | three Carriers, Cripple MOAB sniper, MIB | 2.23 (R8) | 2.23 | 2.23 / 2.23 | 0.85 |
+| `parkpath_chimps.yaml` | pond Flagship + stream Carrier, Maim MOAB snipers, Perma-Spike | 2.30 (R47) | 2.30 | 2.28 / 2.28 | 0.85 |
+| `skates_chimps.yaml` | tack to Inferno Ring, two Carriers, subs, dipped ninja | 3.08 (R43) | 2.59 (R49) | 2.59 / 2.59 | 0.85 |
+| `winterpark_chimps.yaml` | three fountain Carriers, MOAB Eliminator, MIB | 2.18 (R36) | 2.18 | 2.18 / 2.18 | 0.85 |
+
+Skates (Impoppable) and Lotus Island (Medium sub-modes, Impoppable) still
+lack a medal CHIMPS needs first; the medal sweep had recorded both as earned.
+
+What every build had to work around:
+
+* **The blimp check starved the plan.** `counters.json` `blimp_dps` gives
+  villages and alchemists no credit, rates a 4-2-0 buccaneer like 4-0-0 and
+  counts Carrier planes as short range, so the executor's ramp check called
+  rounds 75-99 short where the damage model gave 16 and bought loose towers
+  until the plan's last big step was never afforded. The builds point their
+  `answers` for the blimp classes at their own plan steps, and since
+  2026-11-05 the check gives way where the damage model rates the round at
+  2.0 or more (`Executor._model_holds`). Alpine Run was validated with the
+  answers off (`no_answers`), before that change.
+* **`strategy.ANSWERS` lists no buccaneer** for ceramic, BFB, ZOMG, DDT, BAD
+  or rush (MOAB only as Monkey Pirates 2-4-0). Without `answers` of its own
+  the executor forced 2-4-0 on a planned 3-2-0 boat, and `coverage()`
+  (`runner.py` drops a mode that fails it) needs a listed rush and BAD tower.
+* **Round 9 caps the early margin near 2.2** on $650 + income.
+
 ## How the builds were made and checked
 
 1. **Map analysis from the game's own data.** Routes, scenarios and

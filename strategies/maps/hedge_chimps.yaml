@@ -1,0 +1,121 @@
+# Hedge, CHIMPS: a tack opener (0-2-0) in the gaps between the lanes,
+# a Full Metal Jacket sniper for camo and lead, then Heli Pilots (Pursuit,
+# IFR camo) carried to Apache Dartship, a Dragon's Breath/Phoenix wizard and
+# a Perma-Spike.
+#
+# NOT PLAYABLE YET: base_success chimps is 0.5, so the planner will not pick it.
+# No validation replay reaches the 2.0 bar (numbers below). It fails in two places:
+#   * rounds 90-99, worst R95 (30 DDTs + 50 fortified MOABs) and R99 (9 fortified
+#     DDTs): 0.52 / 0.66 sight-strict, 0.23 / 0.22 in the executor-faithful replay.
+#     DDTs are camo + lead + black. An Apache's darts cannot pop lead and its
+#     missiles cannot pop black. A Monkey Intelligence Bureau village would fix
+#     that only while the heli flies in its range, and a Pursuit heli flies away
+#     (the strict replay does not count a village's buffs on helis). On this map
+#     no board the CHIMPS cash buys by R95 ($149.8k in all) reaches 2.0 on
+#     R95/R98/R99: two Apache Primes with MIB ($165k) rate 1.76-1.87 even with
+#     the village counted, a Flying Fortress ($128k) 0.92 on R98;
+#   * rounds below 2.0 in mid-game: R15 1.92, R27 1.83, R31 1.92, R34 1.72,
+#     R50 1.78, R54 1.48, R55 1.40, R83 1.53 (sight-strict).
+#   The executor never buys the $32,400 Perma-Spike step (sp1 2-0-5): its
+#   blimp-ramp answers (an ace, a sniper, a super and a bomb at R81-95) spend
+#   the cash first, and it ends the game with about $10k it cannot use.
+#
+# Why this shape: one long route (1,538 world units, 1,196 hittable) that
+# meanders up and down between three hedges. The hedges block line of sight
+# on 21% of the map: a range tower in the gaps between the lanes sees 5-25%
+# of the route, and snipers see at most 58% (bottom strip, live model). The
+# live map model also refuses most of the left gap (0.09-0.23, 0.42-0.72).
+# Map-wide damage that ignores the hedges comes from helis in Pursuit, which
+# chase the bloons along the whole route, so they carry the build (wiki: Heli
+# Pilots "shine" on Hedge). The early game ($650 at R6) is tacks: they are the
+# best damage per dollar in the gaps (strict replay R6 2.2 with two tacks).
+# Not used: Inferno Ring (tack 5-x-x) and Druid of the Jungle (druid x-3-x)
+# look map-wide in dps_model because one source of theirs is placed "global"
+# (meteors, vines), but they act only in range; the strict replay rates them
+# in range and both fall away. Glaive Lord is excluded in CHIMPS
+# (optimize_builds.CHIMPS_MODEL_DOUBTS).
+#
+# Sources:
+#   * bloonswiki Hedge: hedges are line-of-sight blockers, "among the most
+#     challenging Beginner maps"; long length lets Heli Pilots shine; Comanche
+#     Commander, Prince of Darkness, Archmage, Ultra-Juggernaut recommended
+#     (https://www.bloonswiki.com/Hedge)
+#   * bloonswiki Strategy:CHIMPS: the hardest rounds (40, 63, 75, 78, 90, 95, 98,
+#     99, 100); Perma-Spike as a win condition; Dragon's Breath as a mid-game
+#     save-up tower; Comanche vs Apache Prime against DDTs
+#     (https://www.bloonswiki.com/Strategy:CHIMPS)
+#   * No Hedge-specific CHIMPS guide was found (web search of r/btd6, Steam and
+#     YouTube titles on 2026-11-05 turned up none).
+#
+# Checked offline (no game; method of docs/map_strategies/beginner.md, on the
+# CHIMPS economy: R6 $650, base income, Hard prices, rounds 6-100):
+#   * every `at` is legal for its tower in plan order on the map geometry and
+#     on the live map model (data/maps/hedge.npz);
+#   * plan replay (each step as soon as the cash allows): worst 0.52 at R95;
+#   * sight-strict (snipers see what they see, aces fly their circle, every
+#     other kind only its own range, helis without village buffs and in range
+#     until Pursuit): worst 0.52 at R95. Blimp rounds 40 5.48, 60 8.45,
+#     63 3.29, 76 5.42, 78 3.02, 81 2.83, 90 1.24, 94 1.01, 95 0.52, 96 1.10,
+#     97 2.54, 98 0.67, 99 0.66, 100 2.46;
+#   * executor-faithful replay (tools/simulate_threats' loop with the real
+#     Executor, account SFYOSHHYV), strict, with its extra towers / plan
+#     towers only: 0.22 at R99 / 0.19 at R95. Big steps bought: h1 4-2-0 R57,
+#     h2 4-2-0 R70, h3 4-2-0 R86, h4 4-2-0 R100; sp1 2-0-5 never;
+#   * strategy.load_all() loads it with validate() empty.
+id: hedge_chimps
+map: Hedge
+hero: quincy
+modes: [chimps]
+planner:
+  towers: {tack: [0, 2, 0], sniper: [1, 2, 0], heli: [4, 2, 0], wizard: [0, 4, 2], spike: [2, 0, 5]}
+  # 0.5: below the CHIMPS bar - the validation replays fail R90-99 (see above)
+  base_success: {chimps: 0.5}
+  maps: [Hedge]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.697, 0.555]}   # right gap between the lanes: 8% of the route
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.163, 0.445]}   # left gap (the legal cell the live model leaves)
+  - {do: place, id: t3, kind: tack, role: dps, at: [0.697, 0.479]}
+  - {do: upgrade, id: t1, to: 0-2-0}   # Even More Tacks
+  - {do: upgrade, id: t2, to: 0-2-0}
+  - {do: upgrade, id: t3, to: 0-2-0}
+  - {do: place, id: t4, kind: tack, role: dps, at: [0.639, 0.692]}
+  - {do: upgrade, id: t4, to: 0-2-0}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.913]}   # bottom strip: sees 58% of the route
+  - {do: upgrade, id: s1, to: 0-1-0}   # Night Vision: camo from R24
+  - {do: upgrade, id: s1, to: 1-2-0}   # Full Metal Jacket: lead from R28, Shrapnel
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.650, 0.860]}   # bottom-right corner (helis chase the bloons in Pursuit)
+  - {do: upgrade, id: h1, to: 2-2-0}   # Pursuit + IFR (camo)
+  - {do: upgrade, id: h1, to: 3-2-0}   # Razor Rotors: lead, the first MOAB answer
+  - {do: place, id: t5, kind: tack, role: dps, at: [0.505, 0.785]}
+  - {do: upgrade, id: t5, to: 0-2-0}
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.200, 0.860]}   # bottom-left corner
+  - {do: upgrade, id: h2, to: 3-2-0}
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.697, 0.400]}   # top of the right gap: 23% of the route
+  - {do: upgrade, id: w1, to: 0-3-2}   # Dragon's Breath with camo: the R63 rush
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.580, 0.900]}
+  - {do: upgrade, id: h1, to: 4-2-0}   # Apache Dartship ($21,600)
+  - {do: upgrade, id: h2, to: 4-2-0}
+  - {do: upgrade, id: w1, to: 0-4-2}   # Summon Phoenix
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.703, 0.300]}   # by the exit lanes
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: place, id: h3, kind: heli, role: dps, at: [0.120, 0.300]}   # top-left corner
+  - {do: upgrade, id: h3, to: 3-2-0}
+  - {do: upgrade, id: h3, to: 4-2-0}
+  - {do: place, id: h4, kind: heli, role: dps, at: [0.200, 0.170]}
+  - {do: upgrade, id: h4, to: 3-2-0}
+  - {do: upgrade, id: sp1, to: 2-0-5}   # Perma-Spike: DDT and BAD stock (never afforded by the executor, see above)
+  - {do: upgrade, id: h4, to: 4-2-0}
+# surplus cash goes into more helis, capped at 3-2-0 (cheap, map-wide, camo)
+xp_target: heli
+fill:
+  - {do: upgrade, kind: heli, to: 3-2-0}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: h1, to: 2-2-0}]
+  moab: [{do: upgrade, id: h1, to: 3-2-0}]
+  rush: [{do: upgrade, id: w1, to: 0-3-2}]
+  bfb: [{do: upgrade, id: h1, to: 4-2-0}]
+  zomg: [{do: upgrade, id: h1, to: 4-2-0}]
+  ddt: [{do: upgrade, id: h1, to: 4-2-0}]
+  bad: [{do: upgrade, id: sp1, to: 2-0-5}]
