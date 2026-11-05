@@ -398,14 +398,9 @@ def _looks_like_map_name(text):
     return len(re.sub(r"[^A-Za-z]", "", t)) >= 4 and re.fullmatch(r"[A-Za-z0-9 '#&.!-]+", t) is not None
 
 
-# The map category whose CHIMPS games go ahead of safe mode's confident games
-# (see chimps_before_safe_mode).
-CHIMPS_FIRST_CATEGORY = "beginner"
-
-
 def chimps_before_safe_mode(cands, benched):
     """The CHIMPS games safe mode lets through ahead of its confident games:
-    on a CHIMPS_FIRST_CATEGORY map, with a build made for that map
+    on a planner.CHIMPS_FIRST_CATEGORY map, with a build made for that map
     (planner.is_own_map_build), clearing the CHIMPS bar, not benched
     (`benched(map, mode)`) - in the planner's order.
 
@@ -414,7 +409,7 @@ def chimps_before_safe_mode(cands, benched):
     build is capped just under it, so the Beginner CHIMPS builds - the black
     borders they want first - would have waited behind every confident game
     on every map. Everything else in safe mode is unchanged."""
-    from .planner import CATEGORY_EASE, is_own_map_build
+    from .planner import CATEGORY_EASE, CHIMPS_FIRST_CATEGORY, is_own_map_build
     ease = CATEGORY_EASE[CHIMPS_FIRST_CATEGORY]
     return [c for c in cands
             if c.mode == "chimps" and c.ease == ease and getattr(c, "ok", False)
