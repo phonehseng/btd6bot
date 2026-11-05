@@ -2660,11 +2660,18 @@ class Executor:
 
         '__new__' is a tower not bought yet: a new village is placed next to
         the biggest towers (_near_ids); a new damage tower is placed by track
-        coverage, so it is not assumed to stand in any village's range."""
+        coverage, so it is not assumed to stand in any village's range.
+
+        A tower is in range when its centre is inside the support tower's
+        buff radius at its current crosspath, the damage model's rule
+        (dps_model.buff_covers). This used to add about a footprint (two
+        cells) to the base range: on Frozen Over CHIMPS (2026-11-05, lost at
+        round 56) a Radar Scanner 49.3 units from an Aircraft Carrier
+        (radius 48) counted as giving it camo, and it did not."""
         towers = self._towers()
         near = set(self._near_ids())
         pos = {p.tid: self.m.frac_to_cell(p.x, p.y) for p in towers}
-        reach = {p.tid: self._range_cells(p.kind) + 2 for p in towers}   # + about a footprint
+        reach = {p.tid: self._buff_cells(p) for p in towers}
 
         def in_range(aura_tid, tid):
             if aura_tid == "__new__":
@@ -2674,6 +2681,18 @@ class Executor:
             (ax, ay), (bx, by) = pos[aura_tid], pos[tid]
             return (ax - bx) ** 2 + (ay - by) ** 2 <= reach[aura_tid] ** 2
         return in_range
+
+    def _buff_cells(self, p):
+        """Grid cells a placed tower's support buffs reach: the largest buff
+        radius of its crosspath in the damage model (a buff without a radius
+        of its own reaches the tower's range, as dps_model.station_for reads
+        it), or its base range when the model has no buffs for it."""
+        from . import dps_model as D
+        prof = D.profile(p.kind, tuple(p.tiers)) if p.kind != "hero" else None
+        radii = [b.get("radius") or prof.range for b in prof.buffs if not b.get("global")] if prof else []
+        if not radii:
+            return self._range_cells(p.kind)
+        return self.m.radius_cells(max(radii), self.g.s.width)
 
     def _in_range(self, aura_tid, tid):
         """See _range_fn (one-off question)."""
