@@ -874,8 +874,10 @@ class Bot:
     # cash, but you can't earn any more. OK") sits over a game that already
     # reads as in_game (the HUD shows around it), and until its OK is clicked
     # no tower can be picked up: Alpine Run Deflation tried 14 pick-ups and
-    # gave the game up. Its OK button sits in this region.
-    MODE_INTRO_OK = (0.35, 0.6, 0.65, 0.8)
+    # gave the game up. Its OK button sits in this region. A box that comes
+    # up later than this check (Cargo Impoppable, 2026-11-05) is closed by
+    # Game.hold when a pick-up fails (Game.close_intro_box).
+    MODE_INTRO_OK = Game.INTRO_OK_REGION
 
     # The green Play arrow of a mode intro box without text on its button
     # (Apopalypse) sits low in the middle of the box.

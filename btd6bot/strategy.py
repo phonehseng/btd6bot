@@ -997,7 +997,8 @@ class Executor:
         self.failed_spots = set()
         self.panic_pending = 0
         self.unanswerable = set()
-        self.hold_fails = {}       # kind -> times the hotkey would not pick it up
+        self.hold_fails = {}       # kind -> times the hotkey would not pick it up while others did
+        self.blind_hold_fails = 0  # pick-ups that failed before any tower stood (_note_hold_failure)
         # Refused spots are counted per step under a key that survives copying
         # (_step_key): panic and answer steps run from fresh dict copies, so a
         # count keyed by id(step) never added up and they retried forever.
@@ -1635,7 +1636,7 @@ class Executor:
             return "bought"
         reason = self.g.fail_reason
         if reason == "hold":
-            self.hold_fails[kind] = self.hold_fails.get(kind, 0) + 1
+            self._note_hold_failure(kind)
         elif reason in ("spot", "click") and self.step_spot_fails.get(key, 0) >= self.SPOT_LIMIT:
             return self._out_of_spots(step, key)
         elif reason == "unverified":
@@ -1656,7 +1657,32 @@ class Executor:
         key = self._step_key(step)
         if key in self.dead_steps or time.time() < self.retry_at.get(key, 0):
             return True
-        return self.hold_fails.get(step.get("kind"), 0) >= 6
+        return self.hold_fails.get(step.get("kind"), 0) >= self.HOLD_BAN
+
+    # Failed pick-ups of a kind after which it is not asked for again this
+    # game: its hotkey does not pick it up (the mode or the save restricts it).
+    HOLD_BAN = 6
+
+    def _note_hold_failure(self, kind):
+        """A pick-up of `kind` failed (Game.hold). It counts against the kind
+        only once some tower has been placed this game, when the hotkeys are
+        known to work; before that the failures are the game's, not the
+        kind's. Cargo Impoppable (2026-11-05): the mode's intro box
+        ("Impoppable will test your Bloon popping skills ... OK") covered the
+        match for 45 s, the ninja failed six pick-ups behind it and was
+        banned for the game - the build's core, its alchemist and its village
+        (placed "near" it) were never bought, and round 94 was lost with
+        $15,655 idle."""
+        if self.purchased:
+            self.hold_fails[kind] = self.hold_fails.get(kind, 0) + 1
+            if self.hold_fails[kind] == self.HOLD_BAN:
+                log.warning("%s: its hotkey would not pick it up %d times while other towers "
+                            "were placed - not asked for again this game", kind, self.HOLD_BAN)
+            return
+        self.blind_hold_fails += 1
+        if self.blind_hold_fails == self.HOLD_BAN:
+            log.warning("%d pick-ups failed before any tower stood - the hotkeys are not "
+                        "answering (a box over the match?); no kind is blamed", self.HOLD_BAN)
 
     def _note_refused(self, kind, key, spots, fracs, placed=False):
         """Learn every spot the last Game.place call found refused: never
@@ -2633,7 +2659,7 @@ class Executor:
             return False
         if self.account is not None and kind not in self.account.unlocked_towers:
             return False
-        if self.hold_fails.get(kind, 0) >= 6:
+        if self.hold_fails.get(kind, 0) >= self.HOLD_BAN:
             return False          # the hotkey would not pick it up this game
         if TH.tower_facts(kind).get("needs_aim"):
             return False          # Mortar/Dartling must be aimed; the bot does not aim

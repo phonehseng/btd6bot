@@ -271,9 +271,11 @@ class Game:
         self._held_kind = kind
         for attempt in range(tries):
             if attempt:
-                # an open upgrade panel or the cursor over the side panel can
-                # swallow the hotkey: clear both and retry
+                # an open upgrade panel, a mode's intro box over the match or
+                # the cursor over the side panel can swallow the hotkey: clear
+                # them and retry
                 self.close_panels()
+                self.close_intro_box()
                 self.inp.move(0.42, 0.5, fast=True)
             self.inp.press(key)
             for _ in range(16):  # the X can fade in late when the game is busy
@@ -294,6 +296,32 @@ class Game:
             except Exception:
                 pass
         return False
+
+    # A mode's intro box ("IMPOPPABLE - Impoppable will test your Bloon popping
+    # skills to the max ... OK") can come up after the match already reads as
+    # in_game, so the runner's check right after loading misses it, and while
+    # it is up no hotkey picks a tower up. Cargo Impoppable (2026-11-05): the
+    # box stayed 45 s, the ninja's pick-up failed six times behind it, and the
+    # build went without its core tower. Its green OK sits in this region
+    # (screen fractions), the same one runner._close_mode_intro reads.
+    INTRO_OK_REGION = (0.35, 0.6, 0.65, 0.8)
+    INTRO_OK_WORDS = ("ok", "0k")    # the button's text, as OCR reads it
+
+    def close_intro_box(self, f=None):
+        """Click the OK of a mode's intro box if one covers the match. The
+        button must read "OK" and be green, so a tower or bloon in that part
+        of the map is never clicked. True when it was clicked."""
+        f = f if f is not None else self.fresh()
+        text, _ = rec_text(crop(f, self.INTRO_OK_REGION))
+        if not any(w in self.INTRO_OK_WORDS for w in text.lower().split()):
+            return False
+        spot = _colour_blob(f, self.INTRO_OK_REGION, (40, 120, 120), (85, 255, 255))
+        if spot is None:
+            return False
+        log.info("mode intro box over the match: clicking its OK at %.3f,%.3f", *spot)
+        self.inp.click(*spot)
+        time.sleep(0.6)
+        return True
 
     # Failed pick-ups in a row after which probe_roster() stops: the hotkeys
     # are not working (a popup has focus, or the mode restricts towers).
