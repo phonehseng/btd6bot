@@ -271,6 +271,56 @@ def test_a_new_tower_is_rated_at_what_the_bank_grows_it_into():
     assert max(max(t) for t in R.grown(locked, "sub", 100_000)) == 2
 
 
+def test_another_standing_kind_is_rated_grown_too():
+    # Bazaar ABR (2026-11-05): "another ninja would move round 63 only 0.12
+    # -> 0.12" - rated as a bare $430 tower - while $5,800 bought a 4-0-2
+    # Bloonjitsu. Here a bare tower adds nothing and every tier adds 0.8:
+    # with $6,000 the grown ninja beats the standing one's $2,000 tier.
+    class Growable(ToyEx):
+        def __init__(self):
+            super().__init__()
+            self.g.towers = {"n1": N(tid="n1", kind="ninja", tiers=[0, 0, 0], x=0.5, y=0.5)}
+            self.g.price = lambda kind: T.tower_cost(kind, "hard")
+            self.m = N(cell_to_frac=lambda cx, cy: (0.3, 0.3))
+
+        def upgrade_choices(self, first=None, past_plan=False):
+            p = self.g.towers["n1"]
+            yield p, [1, 0, 0], 300
+            yield p, [0, 1, 0], 2000
+
+        def at_tower_cap(self):
+            return False
+
+        def _main_kind(self):
+            return "ninja"
+
+        def pick_spots(self, kind, step, n=1):
+            return [(10, 10, 1.0)]
+
+    class PerTier(ToyForecast):
+        def margin(self, towers, rnd):
+            return 0.2 + 0.8 * sum(sum(t.tiers) for t in towers)
+
+        def leaks(self, towers, rounds, scale, per_round=False):
+            lost = {r: max(0.0, 10 * (1 - self.margin(towers, r) * scale)) for r in rounds}
+            return lost if per_round else sum(lost.values())
+    ex = Growable()
+    bare = [o for o in R.options(ex, 6000) if o.what == "another ninja"]
+    assert bare and bare[0].cost == T.tower_cost("ninja", "hard")
+    grown = [o for o in R.grow(ex, PerTier(), R.options(ex, 6000), 6000, 45) if o.what.startswith("another ninja")]
+    assert grown and "to grow to" in grown[0].what, grown
+    assert any(grown[0].towers[-1].tiers) and T.tower_cost("ninja", "hard") < grown[0].cost <= 6000, grown
+    status, found = R.best(ex, PerTier(), 6000, 40, 80, lives=100)
+    assert status == "buy" and found[0].what.startswith("another ninja (to grow to"), (status, found)
+    assert found[0].step["do"] == "place" and found[0].step["kind"] == "ninja"
+    # when growing adds nothing in the model the bare placement keeps its price
+    class Flat(PerTier):
+        def margin(self, towers, rnd):
+            return 0.2 + 0.5 * len(towers)
+    flat = [o for o in R.grow(ex, Flat(), R.options(ex, 6000), 6000, 45) if o.what.startswith("another ninja")]
+    assert flat[0].what == "another ninja" and flat[0].cost == T.tower_cost("ninja", "hard"), flat
+
+
 def test_a_given_up_placement_is_not_offered():
     # Water Park ABR (2026-11-04): "another sniper" had been given up, so
     # every try came back 'skip' - yet it stayed the best-rated purchase

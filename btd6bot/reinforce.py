@@ -14,7 +14,8 @@ legal purchase the cash allows is tried in the model:
     same crosspath and XP-lock rules as surplus; a tower's leading path may
     go past the plan's crosspath);
   * another tower of each damage kind on the map, at the executor's best
-    spot for it.
+    spot for it - rated at the crosspath the cash can grow it into (grow),
+    since a bare tower adds nothing to a late round in the model.
 
 Each is rated by the lives the look-ahead's rounds would cost with every
 tower at half strength (1 / TARGET_MARGIN: a defence with margin 2 loses
@@ -209,7 +210,7 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     # per dollar (which kept buying the cheapest small step, see trim()).
     crisis = before is not None and before < 1.0
     pick = None
-    tried = options(ex, cash)
+    tried = grow(ex, forecast, options(ex, cash), cash, worst)
     for o in tried:
         leak = forecast.leaks(o.towers, rounds_rated, half)
         if leak is None:
@@ -416,13 +417,6 @@ def new_kind_options(ex, forecast, cash, rnd):
     is not standing yet (options() only offers the kinds already on the
     board): the crisis fallback when nothing standing can grow.
 
-    A bare tower barely scratches a late round (a 0-0-0 sub adds nothing
-    to Spice Islands' round 98 in the model, a 2-0-4 one +0.05), and the
-    upgrades only become purchases once it stands. So each new tower is
-    rated at the best crosspath the bank could grow it into (grown());
-    what is bought is still just the placement, and its upgrades follow
-    through the normal options once it stands.
-
     Spice Islands Impoppable (2026-11-04): the land near the track ran out
     by round 47 (ninja, super and spike steps all given up, "none in reach
     of the track"), every standing tower was at its last tier, and from
@@ -432,21 +426,53 @@ def new_kind_options(ex, forecast, cash, rnd):
     standing = {p.kind for p in ex.g.towers.values()}
     kinds = [k for k in T.TOWERS if k not in standing and k not in NOT_DAMAGE
              and k != "hero" and ex.kind_allowed(k)]
+    return grow(ex, forecast, options(ex, cash, kinds=kinds), cash, rnd)
+
+
+def grow(ex, forecast, opts, cash, rnd):
+    """The options with every "another <kind>" placement rated at the best
+    crosspath the bank could grow it into (grown()) for round `rnd`;
+    upgrades pass through unchanged.
+
+    A bare tower barely scratches a late round (a 0-0-0 sub adds nothing
+    to Spice Islands' round 98 in the model, a 2-0-4 one +0.05), and the
+    upgrades only become purchases once it stands - so rated bare, a
+    placement never looks like the answer. Bazaar ABR (2026-11-05) rated
+    round 63 at 0.12 from round 54 with $11-21k idle and logged "another
+    ninja would move round 63 only 0.12 -> 0.12" while $5,800 bought a
+    4-0-2 Bloonjitsu ninja; the game ended at round 63.
+
+    The grown option costs what the grown tower costs in all (the lives it
+    saves are judged per dollar against single upgrades), and among
+    crosspaths the model rates alike the cheapest is kept. What is bought is
+    still just the placement, and its upgrades follow through the normal
+    options once it stands."""
+    family = _price_family(ex)
     out = []
-    for o in options(ex, cash, kinds=kinds):
+    for o in opts:
+        if o.step.get("do") != "place":
+            out.append(o)
+            continue
         *rest, new = o.towers
-        kind = new.kind
         rated = []
-        for tiers in grown(ex, kind, cash):
+        for tiers in grown(ex, new.kind, cash) | {(0, 0, 0)}:     # bare: when growing adds nothing
             m = forecast.margin(rest + [SimpleNamespace(**{**vars(new), "tiers": tiers})], rnd)
             if m is not None:
-                rated.append((m, tiers))
+                rated.append((m, -T.total_cost(new.kind, tiers, family), tiers))
         if rated:
-            m, tiers = max(rated)
+            m, neg_cost, tiers = max(rated)
             new = SimpleNamespace(**{**vars(new), "tiers": tiers})
-            o = Option(f"{o.what} (to grow to {'-'.join(map(str, tiers))})", o.cost, o.step, rest + [new])
+            if any(tiers):
+                o = Option(f"{o.what} (to grow to {'-'.join(map(str, tiers))})", -neg_cost,
+                           o.step, rest + [new])
         out.append(o)
     return out
+
+
+def _price_family(ex):
+    """The price family (hard, impoppable, ...) of the executor's mode."""
+    from .strategy import PRICE_FAMILY      # here: strategy imports this module
+    return PRICE_FAMILY.get(getattr(ex, "mode", None), "hard")
 
 
 # The crosspaths a new tower is rated at (grown): each path as the main one,
@@ -459,8 +485,7 @@ def grown(ex, kind, cash):
     with `cash` (its own price included): the main path to tier 2, the side
     path to its target, then the main path on - as far as the cash goes and
     the account's tower XP has unlocked (tiers 1-2 are always open)."""
-    from .strategy import PRICE_FAMILY      # here: strategy imports this module
-    family = PRICE_FAMILY.get(getattr(ex, "mode", None), "hard")
+    family = _price_family(ex)
     account = getattr(ex, "account", None)
     unlocked = account.upgrades(kind) if account else (5, 5, 5)
     left = cash - T.tower_cost(kind, family)
