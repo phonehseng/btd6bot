@@ -1027,6 +1027,24 @@ def _first_game_record(account: AccountState) -> tuple[dict[str, tuple[int, int]
     return table, played
 
 
+# The map category whose CHIMPS games with the map's own build the owner puts
+# first (2026-11-05 15:30, "CHIMPS first"): ahead of safe mode's confident
+# games (runner.chimps_before_safe_mode) and not scaled by first_game_factor.
+CHIMPS_FIRST_CATEGORY = "beginner"
+
+
+def owner_first_chimps(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> bool:
+    """True for a CHIMPS game on a CHIMPS_FIRST_CATEGORY map with a build made
+    for that map: the owner chose to play these first, knowing their first
+    games are a gamble (2 of 5 won on 2026-11-05: Park Path and Candy Falls
+    won, Frozen Over, Carved and Winter Park lost). A loss benches the map for
+    a while and costs no Monkey Money; a win is a black border, the owner's
+    first goal. Their own gate (base_success, checked offline) still has to
+    clear the CHIMPS bar."""
+    return (mode == "chimps" and account.map_category(map_name) == CHIMPS_FIRST_CATEGORY
+            and is_own_map_build(s, map_name))
+
+
 def first_game_factor(account: AccountState, s: StrategySpec, mode: str) -> float:
     """How far to trust an untested build in a one-life mode: the share of
     the account's first games won in ``mode``, shrunk towards 1 by
@@ -1080,8 +1098,10 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
         # whichever doubts the Fast Track start more
         hand = FAST_TRACK_HALF_CASH_FACTOR if MODE_RULES.get(mode, {}).get("half_cash") else 1.0
         p *= min(hand, fast_track_opening_factor(account, mode))
-    # an untested build in a one-life mode, by how first games went there
-    p *= first_game_factor(account, s, mode)
+    # an untested build in a one-life mode, by how first games went there -
+    # except the Beginner CHIMPS map builds the owner put first
+    if not owner_first_chimps(account, s, map_name, mode):
+        p *= first_game_factor(account, s, mode)
     p *= map_fit_factor(s, map_name, mode)
     # the bot could not build its defence on this map before (any mode, any
     # build): every mode there is doubted like a lost one until a win

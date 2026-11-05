@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import test_achievement_strats_offline as F   # noqa: E402  (the fakes)
 from btd6bot import runner as R               # noqa: E402
+from btd6bot import planner as P               # noqa: E402
 from btd6bot.planner import CATEGORY_EASE     # noqa: E402
 from btd6bot.strategy import load_all         # noqa: E402
 
@@ -50,6 +51,22 @@ def test_a_benched_map_is_not_let_through():
     own = specs()["endoftheroad_chimps"]
     assert first([cand(own, "End Of The Road")], benched={("End Of The Road", "chimps")}) == []
 
+
+
+def test_beginner_chimps_map_builds_are_not_scaled_by_first_games():
+    """The caretaker's first-game factor (2 of 5 CHIMPS first games won)
+    scales every untested one-life build; the owner's Beginner CHIMPS map
+    builds keep their own gate, every other build is still scaled."""
+    acc = F.full_account()
+    acc.history = [{"strategy": f"b{i}", "mode": "chimps", "won": i < 1, "t": f"2026-11-05T1{i}"}
+                   for i in range(5)]
+    sp = specs()
+    own, general = sp["endoftheroad_chimps"], sp["chimps_ninja_sun"]
+    assert P.owner_first_chimps(acc, own, "End Of The Road", "chimps")
+    assert not P.owner_first_chimps(acc, general, "End Of The Road", "chimps")
+    assert not P.owner_first_chimps(acc, own, "End Of The Road", "impoppable")
+    assert P.first_game_factor(acc, general, "chimps") < 1.0, "the general build is still doubted"
+    assert P.win_probability(acc, own, "End Of The Road", "chimps")[0] >= P.p_threshold("chimps")
 
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
