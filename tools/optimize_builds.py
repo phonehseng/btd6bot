@@ -232,12 +232,21 @@ def seconds_per_round(mode):
 # ===========================================================================
 
 def load_account():
-    """The current account (data/current_account.txt), or None."""
+    """The current account (data/current_account.txt), or None.
+
+    None too when that account's file is missing (a git worktree has no
+    copy of the live account): AccountState.load would hand back an empty
+    account - no towers unlocked but the Dart Monkey, no upgrades - and every
+    plan would be a row of bare darts."""
     try:
         from btd6bot.account import AccountState
         from btd6bot.identity import account_path
         uid = (ROOT / "data" / "current_account.txt").read_text(encoding="utf-8").strip()
-        return AccountState.load(account_path(uid))
+        path = account_path(uid)
+        if not Path(path).exists():
+            log.warning("account %s: %s not found - planning for a fully unlocked account", uid, path)
+            return None
+        return AccountState.load(path)
     except Exception:
         return None
 
@@ -1038,7 +1047,7 @@ def optimize(map_name, mode, target=None, account=None, write=True, candidates=3
         # both): the written plan must not claim to need them, or the
         # planner would hold it back from an account without them (needs_boosts)
         boosts = {}
-    hero =(getattr(account, "selected_hero", None) or "quincy") if account else "quincy"
+    hero = (getattr(account, "selected_hero", None) or "quincy") if account else "quincy"
     if hero not in T.HEROES:
         hero = "quincy"
     targets = [target] if target else target_candidates(map_name, mode, weights, account, candidates) or [None]

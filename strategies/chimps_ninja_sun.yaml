@@ -4,9 +4,12 @@
 # no Fast Track, $650 at R6, Hard prices; tests/test_chimps_builds_offline.py
 # walks the plan against data/rounds.json): with the account's boosts in
 # Impoppable the same plan is simply bought earlier and the fill spends the rest.
-# Spine: Obyn + Ninja/Alchemist core (camo, lead, brew); Sticky Bomb n2 2-0-4
-# by R38 - the real MOAB damage, before the first MOAB at R40; a 2-0-2 Village
-# right after, so its 15% discount covers the tier 1-3 buys that follow; the
+# Spine: Obyn + Ninja/Alchemist core (camo, lead, brew); the R28-39 board is
+# n1 3-0-2 Double Shot (the R38 ceramic answer, ~R29) and n2 2-0-3 Flash Bomb
+# (the first MOAB answer, ~R34), so no answer is ever forced in ahead of the
+# plan; Sticky Bomb n2 2-0-4 (~R39) - the real MOAB damage, standing for the
+# first MOAB at R40; Berserker Brew, then a 2-0-2 Village whose 15% discount
+# covers the tier 1-3 buys that follow; the
 # R63 rush answered by n1 4-0-2 (Bloonjitsu); ONE 3-0-2 Sun Avatar for
 # the R81+ super ceramics; a 2-3-0 MIB Village by ~R70 (camo and every damage
 # type for the towers near it); an exit Spike Factory 2-0-4 (DDT leaks)
@@ -36,13 +39,18 @@ plan:
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   - {do: upgrade, id: a1, to: 2-0-0}
-  # MOAB damage first: Sticky Bomb (towers.py "moab dmg") by R38
+  # the R28-39 defence before any saving: Double Shot (the R38 ceramic
+  # answer, so the executor never has to force it in ahead of the plan) and
+  # Flash Bomb (stuns, the first MOAB answer) - the board that holds R29-40
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  # the real MOAB damage: Sticky Bomb (towers.py "moab dmg") before the
+  # first MOAB of round 40, then Berserker Brew on the core
   - {do: upgrade, id: n2, to: 2-0-4}
-  # the discount Village early: 15% off every tier 1-3 buy near it from here on
+  - {do: upgrade, id: a1, to: 3-2-0}
+  # the discount Village: 15% off every tier 1-3 buy near it from here on
   - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
   - {do: upgrade, id: v1, to: 2-0-2}
-  - {do: upgrade, id: n1, to: 3-0-2}
-  - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: n1, to: 4-0-2}
   # one Sun Avatar for the R81+ super ceramics (bought at the discount)
   - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
@@ -81,7 +89,7 @@ answers:
     - {do: upgrade, id: a1, to: 1-0-0}
     - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
-  moab: [{do: upgrade, id: n2, to: 2-0-4}]
+  moab: [{do: upgrade, id: n2, to: 2-0-3}]
   bfb: [{do: upgrade, id: n2, to: 2-0-4}]
   rush: [{do: upgrade, id: n1, to: 4-0-2}]
   zomg: [{do: upgrade, id: n2, to: 2-0-4}]

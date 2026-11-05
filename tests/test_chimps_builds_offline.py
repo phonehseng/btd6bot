@@ -11,11 +11,17 @@ there. These checks walk a plan in order, at the prices CHIMPS charges, and
 find the round each step becomes affordable.
 
 Offline checks:
-  * the CHIMPS plans buy their real MOAB damage (the Sticky Bomb ninja
-    2-0-4) by round 38, the MIB village (2-3-0: camo + every damage type for
-    the super ceramics) by round 76, and never need more than 90% of the cash
-    earned by round 95 (the rest is the margin for the executor's answers,
-    misread prices and the R95-100 blimp rounds);
+  * the CHIMPS plans buy their MOAB answer before the executor would start
+    forcing it (round 40 minus the one-life lookahead), chimps_ninja_sun its
+    Sticky Bomb ninja 2-0-4 so it stands for the first MOAB (round 40), the
+    MIB village (2-3-0: camo + every damage type for the super ceramics) by
+    round 76, and never need more than 90% of the cash earned by round 95
+    (the rest is the margin for reinforce buys, misread prices and the
+    R95-100 blimp rounds);
+  * no strength threat is answered late: each one's answer (strategy.ANSWERS)
+    stands from the plan's own steps by the round Strategy.due_threats starts
+    forcing it in one-life modes, so the executor never buys an answer ahead
+    of the plan and the cash curve above is the one it really follows;
   * chimps_ninja_sun loads bot-ready, covers every threat of Hard,
     Impoppable and CHIMPS with one plan, and keeps the late rework: no extra
     Sun Avatar, Perma-Spike, MOAB damage; in Impoppable (Double Cash, Fast
@@ -39,12 +45,18 @@ sys.path.insert(0, str(ROOT / "tools"))
 import optimize_builds as O  # noqa: E402
 from btd6bot import gamemodel  # noqa: E402
 from btd6bot import strategy as S  # noqa: E402
+from btd6bot import threats as TH  # noqa: E402
 from btd6bot import towers as T  # noqa: E402
 
 STRATS = S.load_all()
 
 # Rounds the CHIMPS plans must have bought a step by (see the module docstring).
-MOAB_DAMAGE_BY = 38        # Sticky Bomb before the first MOAB (round 40) and its ceramic escort
+FIRST_MOAB = {t: r for r, t in S.THREATS}["moab"]   # round 40, from data/rounds.json
+# Strategy.due_threats raises its lookahead to this in one-life modes (one
+# leak = defeat): a threat's answer is forced in from this many rounds ahead
+ONE_LIFE_LOOKAHEAD = 6
+MOAB_ANSWER_BY = FIRST_MOAB - ONE_LIFE_LOOKAHEAD   # the MOAB answer is the plan's step, not a forced one
+STICKY_BY = FIRST_MOAB - 1  # Sticky Bomb affordable after round 39: it stands for the round-40 MOAB
 MIB_BY = 76                # MIB village before the super ceramics of round 81
 BANK_SHARE_R95 = 0.90      # the whole plan within 90% of the cash earned by round 95
 
@@ -173,12 +185,14 @@ def test_chimps_plans_fit_the_chimps_cash_curve():
         tl = plan_timeline(strat, "chimps")
         total = tl[-1][1]
         assert total <= BANK_SHARE_R95 * earned_by("chimps", 95), (sid, total, earned_by("chimps", 95))
-        # the strategy's own MOAB answer is a plan step, bought in time
+        # the strategy's own MOAB answer is a plan step, bought before it is due
         moab = strat["answers"]["moab"][0]
-        assert first_round(tl, moab["id"], moab["to"]) <= MOAB_DAMAGE_BY, (sid, moab)
+        assert first_round(tl, moab["id"], moab["to"]) <= MOAB_ANSWER_BY, (sid, moab)
         assert mib_round(strat, tl) <= MIB_BY, (sid, mib_round(strat, tl))
     # Perma-Spike in time to stockpile spikes for rounds 95-98 and the round-100 BAD
     tl = plan_timeline(STRATS["chimps_ninja_sun"], "chimps")
+    # the real MOAB damage stands for the first MOAB
+    assert first_round(tl, "n2", "2-0-4") <= STICKY_BY, first_round(tl, "n2", "2-0-4")
     assert first_round(tl, "sp1", "2-0-5") <= 90, first_round(tl, "sp1", "2-0-5")
 
 
@@ -213,10 +227,57 @@ def test_late_game_is_moab_damage_not_extra_sun_avatars():
     for need in (("spike", (2, 0, 5)), ("ninja", (0, 4, 2)), ("bomb", (2, 4, 0)),
                  ("sniper", (4, 0, 2)), ("ninja", (2, 0, 4)), ("village", (2, 3, 0))):
         assert need in builds, need
-    assert strat["answers"]["moab"] == [{"do": "upgrade", "id": "n2", "to": "2-0-4"}]
+    # Flash Bomb answers the first MOABs (affordable by R34), Sticky Bomb follows
+    assert strat["answers"]["moab"] == [{"do": "upgrade", "id": "n2", "to": "2-0-3"}]
+    assert strat["answers"]["bfb"] == [{"do": "upgrade", "id": "n2", "to": "2-0-4"}]
     # the surplus buys no Super Monkeys and no more 4-0-2 ninjas (no blimp damage)
     for st in strat.get("fill") or ():
         assert st.get("kind") not in ("super", "ninja"), st
+
+
+def answered(threat, board):
+    """Does a board {id: (kind, tiers)} answer this strength threat by the
+    tables Strategy.has_answer uses for it?"""
+    if threat in S.STRONG_CAMO:
+        return S.strong_camo(board.values())
+    return any(k == kind and (path == 0 or tiers[path - 1] >= tier)
+               for kind, tiers in board.values() for k, path, tier in S.ANSWERS.get(threat, []))
+
+
+def answer_rounds(strat, mode):
+    """{threat: round its answer is affordable from the plan's own steps}
+    for the strength threats (the ones without a bloon signature: ceramic,
+    moab, bfb, rush, zomg, bad, camo ceramic), walking plan_timeline."""
+    threats = [t for _, t in S.THREATS
+               if t in S.STRONG_CAMO or (t != "ddt" and TH.sig_from_name(t) is None)]
+    board, out = {}, {}
+    for st, _, rnd in plan_timeline(strat, mode):
+        if st["do"] == "place" and st.get("id") and st["kind"] != "hero":
+            board[st["id"]] = (st["kind"], (0, 0, 0))
+        elif st["do"] == "upgrade" and st.get("id") in board:
+            kind, old = board[st["id"]]
+            board[st["id"]] = (kind, tuple(max(a, b) for a, b in zip(old, S.parse_cross(st["to"]))))
+        for t in threats:
+            if t not in out and answered(t, board):
+                out[t] = rnd
+    return {t: out.get(t) for t in threats}
+
+
+def test_no_answer_is_forced_ahead_of_the_chimps_plan():
+    """Strategy.due_threats forces a threat's answer from ONE_LIFE_LOOKAHEAD
+    rounds before it in CHIMPS, ahead of the plan. When the plan's own steps
+    are not there by then, the executor buys the answer first and every later
+    step slips (the ceramic answer n1 3-0-2 once sat behind the $7.8k Sticky
+    Bomb and pushed it past the first MOAB). Every strength threat must be
+    answered by chimps_ninja_sun's plan itself in time.
+    (chimps_sub_druid_water is not held to this yet: its Radar village, the
+    camo ceramic answer of round 51, is affordable at R48, three rounds after
+    the executor starts forcing one - docs/backlog.md.)"""
+    first = {t: r for r, t in S.THREATS}
+    start = S.MODE_RULES["chimps"]["start_round"]
+    for threat, rnd in answer_rounds(STRATS["chimps_ninja_sun"], "chimps").items():
+        due = max(first[threat], start)
+        assert rnd is not None and rnd <= due - ONE_LIFE_LOOKAHEAD, (threat, rnd, due)
 
 
 def test_impoppable_plan_fits_the_boosted_bank():
@@ -240,6 +301,11 @@ def _optimized_chimps():
 
 
 def test_optimized_chimps_builds_are_safe_and_follow_the_rules():
+    """The gate for the optimizer's CHIMPS output, ahead of its first file:
+    no strategies/optimized/*chimps*.yaml is committed yet (a CHIMPS run
+    takes over half an hour per XP target, docs/backlog.md item 35), so the
+    loop below checks nothing until one is. The rules it enforces are
+    checked on their own in test_model_doubts_and_income_rules."""
     for path in _optimized_chimps():
         d = yaml.safe_load(path.read_text(encoding="utf-8"))
         strat = STRATS[d["id"]]
