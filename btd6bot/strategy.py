@@ -3573,8 +3573,16 @@ class Executor:
             round: nothing can be paid before it, and the crisis rule above
             already spends on it;
           * nothing where no income comes (Deflation): saving cannot make the
-            step affordable later, as _threat_tick says of its answers."""
-        if self.rules.get("income") is False:
+            step affordable later, as _threat_tick says of its answers.
+
+        One-life modes only (Impoppable, CHIMPS). There the plan step is the
+        author's answer to the rounds that end the game, and a leak is the
+        game. With lives to spare the plan is a guide: surplus's tiers
+        between its steps are what keeps the Easy and XP builds of the threat
+        simulation (tools/simulate_threats.py) on budget, and the damage
+        model's reinforce already leaves the cash to the step where the
+        look-ahead is weak (094f8de, Haunted Half Cash)."""
+        if self.rules.get("income") is False or not self.rules.get("one_life"):
             return None
         wait = RF.waiting_plan_step(self, cash)
         if wait is None:

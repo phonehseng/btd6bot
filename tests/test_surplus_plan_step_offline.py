@@ -2,7 +2,8 @@
 lost at round 94 with $17,562 in the bank while plan step 25, Perma-Spike
 for $36,000, had waited since round 63):
 
-* surplus() leaves a waiting plan step its claim on the bank (plan_claim):
+* in a one-life mode surplus() leaves a waiting plan step its claim on
+  the bank (plan_claim):
   the whole cost when the step has no round, the cost less the income until
   its round when it has one, in a crisis only what income cannot rebuild -
   and then only a purchase that lifts the round being played may spend the
@@ -67,6 +68,11 @@ def test_a_step_without_a_round_keeps_its_whole_cost():
     ex._first_step_cost = lambda st: 15_000
     assert ex.plan_claim(20_000, 70) is None
     assert ex.surplus(20_000, 70) is True and ex.bought == [("1-0-0", 20_000)]
+    # with lives to spare the plan is a guide: no claim on Hard, nor with no income
+    hard = portal(3.0)
+    hard.rules = S.rules("hard")
+    assert hard.plan_claim(20_000, 70) is None
+    assert hard.surplus(20_000, 70) is True and hard.bought == [("1-0-0", 20_000)]
 
 
 def test_a_step_with_a_round_keeps_what_income_does_not_pay():
