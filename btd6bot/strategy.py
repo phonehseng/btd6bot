@@ -2357,7 +2357,9 @@ class Executor:
     def answer_threat(self, threat, cash, rnd):
         """Buy toward the answer of one due threat. Returns 'bought', 'wait'
         (saving for it), 'plan' (the plan's own next steps cover it in time:
-        carry on with the plan) or 'none' (nothing applicable).
+        carry on with the plan), 'defer' (the only answer left cannot be paid
+        by the threat's round: carry on, try again next tick) or 'none'
+        (nothing applicable).
 
         A property gap (nothing on the map can pop it) goes to _answer_gap.
         A strength threat runs the strategy's own `answers:` for it, or
@@ -2429,9 +2431,30 @@ class Executor:
                             opt["desc"], opt["cost"])
                 return "bought"
             if r == "wait":
+                if opt["cost"] > self._cash_by(max(due_round, rnd + self.MIN_LEAD), rnd):
+                    # Midnight Mansion Primary Only (case 20261104_195037):
+                    # the cheap camo answers had no legal spot, so the next
+                    # option was a $27,625 Boomerang tier 5 and the bot held
+                    # $4,248 for it from round 24 while camo leaked. An answer
+                    # the income cannot pay by its round (or within MIN_LEAD
+                    # rounds when it is due already) does not hold the cash;
+                    # it is tried again on the next tick.
+                    if ("defer", threat) not in self.noted:
+                        self.noted.add(("defer", threat))
+                        log.warning("threat %s (round %d): the only answer left, %s ($%d), cannot "
+                                    "be paid by then - not holding cash for it", threat, due_round,
+                                    opt["desc"], opt["cost"])
+                    return "defer"
                 self.wait_note = f"saving ${opt['cost']} for the {threat} answer ({opt['desc']})"
                 return "wait"
         return "none"
+
+    def _cash_by(self, due_round, rnd):
+        """Cash expected in hand at the start of due_round: the cash seen now
+        plus the income of the rounds in between, of which only 1/LEAD_MARGIN
+        is counted (as in _lead_rounds)."""
+        income = sum(TH.round_cash(self.round_set, r) * self.income_mult for r in range(rnd, due_round))
+        return self.cash_seen + income / self.LEAD_MARGIN
 
     # -- blimp damage ramp ---------------------------------------------------------
     def _track_length(self):
@@ -2677,8 +2700,9 @@ class Executor:
                 return False  # hold cash for the answer
             # (no income, Deflation: saving cannot make the answer affordable
             # later - the money is better spent on the rest of the defence)
-            if r == "plan":
-                continue      # the plan's own next steps cover it in time
+            if r in ("plan", "defer"):
+                continue      # the plan's own next steps cover it in time, or
+                              # the only answer left is out of reach for now
             log.warning("threat %s: nothing applicable to buy - not holding the plan for it", threat)
             self.unanswerable.add(threat)  # nothing applicable; don't block the plan
         ramp = self._ramp_due(rnd)
