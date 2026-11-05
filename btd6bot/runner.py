@@ -46,6 +46,11 @@ ROOT_DIR = __import__("pathlib").Path(__file__).resolve().parents[1]
 ID_CHECK_EVERY = 10                   # games between account (User ID) checks
 ACH_EVERY = 24 * 3600                  # seconds between full achievement scans (badge claims in between)
 PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main menu
+# The owner's pick for the next game: a line "Map / mode [/ strategy]", e.g.
+# "Alpine Run / chimps". Played once (the file is removed when the game is
+# chosen) ahead of the planner's order; a beaten or unplayable pick is
+# ignored with a log line and the planner's order is used.
+NEXT_FILE = ROOT_DIR / "NEXT"
 from .status import STATE_FILE, set_state  # noqa: E402,F401
 
 
@@ -1510,6 +1515,52 @@ class Bot:
                 time.sleep(5)
         log.info("BTD6 is open again (%dx%d) - resuming", self.s.width, self.s.height)
 
+    def owners_pick(self, specs):
+        """The game named in the NEXT file as a GamePlan, or None. The file
+        is consumed either way so a bad line is not retried every game."""
+        from .planner import GamePlan, _normalise_strategies, _strategy_available, _strategy_fits
+        from .account import MODES
+        try:
+            line = NEXT_FILE.read_text(encoding="utf-8").strip()
+        except OSError:
+            return None
+        NEXT_FILE.unlink(missing_ok=True)
+        parts = [p.strip() for p in line.split("/")]
+        if len(parts) < 2:
+            log.warning("NEXT file ignored: expected 'Map / mode [/ strategy]', got %r", line)
+            return None
+        mode = parts[1].lower()
+        try:
+            m = canonical_map(parts[0])
+        except KeyError:
+            m = None
+        if m is None or mode not in MODES:
+            log.warning("NEXT file ignored: unknown map or mode in %r", line)
+            return None
+        if self.account.has_medal(m, mode):
+            log.warning("NEXT file ignored: %s %s is already beaten", m, mode)
+            return None
+        strats = _normalise_strategies(specs)
+        if len(parts) > 2:
+            s = strats.get(parts[2])
+        else:
+            # the strategy that declares the best odds for this mode, among
+            # those that fit the map and that the account can field
+            cat = self.account.map_category(m)
+            fit = [x for x in strats.values()
+                   if _strategy_fits(x, m, cat, mode) and _strategy_available(x, self.account)[0]]
+            s = max(fit, key=lambda x: x.base_success.get(mode, 0.0), default=None)
+        if s is None:
+            log.warning("NEXT file ignored: no strategy for %s %s", m, mode)
+            return None
+        mi = MODES[mode]
+        reason = f"[OWNER] {m} / {mode} with {s.id}: the NEXT file"
+        return GamePlan(map=m, difficulty=mi.difficulty, mode=mi.ui_mode, mode_key=mode,
+                        strategy_id=s.id, hero=(s.heroes or (None,))[0], reason=reason,
+                        reasons=[reason], phase="OWNER", p_win=0.0,
+                        expected_minutes=mi.minutes, expected_xp=0, expected_mm=0,
+                        score=0.0, first_time=True)
+
     def next_plan(self):
         """Best plan whose (map, mode) has not failed to start this session."""
         from .planner import GamePlan, rank_games
@@ -1517,6 +1568,9 @@ class Bot:
         from . import safety
         from .planner import EASY_FAMILY, MEDIUM_FAMILY
         specs = planner_specs(self.strats, self.account)
+        pick = self.owners_pick(specs)
+        if pick is not None:
+            return pick
         # below_bar: after the tiered games come the open medals under every
         # bar (tier LAST, surest first) - the bot never idles while medals
         # are open, it plays the surest of them instead
