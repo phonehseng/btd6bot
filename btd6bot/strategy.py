@@ -3471,6 +3471,8 @@ class Executor:
         for threat in self.due_threats(rnd):
             self.wait_note = None
             self.wait_cost = self.wait_total = None
+            if self._defer_far_answer(threat, rnd):
+                continue      # a nearer weak round comes first: the cash goes there
             with self.why("answer", f"threat {threat} due"):
                 r = self.answer_threat(threat, cash, rnd)
             if r == "bought":
@@ -3511,6 +3513,58 @@ class Executor:
                 cost = self._plan_ramp_cost(self.plan[self.idx], ramp[1]) if self.idx < len(self.plan) else None
                 self._hold_for(ramp[0], cost, rnd, f"plan step {self.idx}")
         return None
+
+    def _defer_far_answer(self, threat, rnd):
+        """Should the answer to a strength threat more than FAR_ROUNDS away
+        wait, because a nearer round is in danger? True when the round being
+        played is weak (weak_now, or lives fell this round) or the damage
+        model's weakest round ahead comes before the threat and is rated
+        under reinforce.WEAK_MARGIN. The answer is then not bought this tick;
+        only the part of its cost that income cannot rebuild before the
+        threat's round is kept back (self.held_cash), and the rest goes to the
+        nearer round through the plan, the blimp check and reinforcing. Once
+        the threat is FAR_ROUNDS away or nearer, it is answered as before.
+
+        Lotus Island CHIMPS (2026-11-05): from round 86 the model rated round
+        95 at 0.38, and at round 93 reinforcing found that the Aircraft Carrier
+        path of a buccaneer ($13,555) would lift it to 0.99. It bought the
+        first tier; then, at round 94, the round-100 BAD answer (s1 -> 5-2-0,
+        $34,560) took the whole bank, round 95 started with $492, and its
+        bloons leaked through with the game's one life. The hold rule
+        (_hold_for) had already said only $6,368 needed keeping for the BAD -
+        it limited what was held, not what was bought."""
+        if not self._strength_threat(threat):
+            return False          # a property gap: nothing on the map pops it yet
+        due = self._threat_round(threat, rnd)
+        if rnd is None or due - rnd <= self.FAR_ROUNDS:
+            return False
+        reason = None
+        if self.lives_fell_lately(rnd, 1) or self.weak_now(rnd):
+            reason = f"round {rnd} is weak"
+        else:
+            worst = self.lookahead_worst(rnd)
+            if worst is not None and worst[1] is not None and worst[1] < due \
+                    and worst[0] < RF.WEAK_MARGIN:
+                reason = f"round {worst[1]} is rated {worst[0]:.2f}"
+        if reason is None:
+            return False
+        steps = (self.strat.get("answers") or {}).get(threat)
+        if steps is None:
+            steps = self._generic_answer(threat)
+        steps = [st for st in steps or () if self._step_allowed(st)]
+        cost = self._steps_cost(steps, f"the {threat} answer") if steps else None
+        if cost is None:
+            # an answer of unknown cost: how much to keep back cannot be
+            # said, so it goes the usual way (answer_threat, then _hold_for)
+            return False
+        keep = max(0.0, cost - self.income_until(due, rnd))
+        self.held_cash = getattr(self, "held_cash", 0.0) + keep
+        note = ("defer-far", threat, rnd)
+        if note not in self._notes():
+            self.noted.add(note)
+            log.warning("threat %s (round %d) waits: %s first - holding only $%d of its $%.0f, "
+                        "the rest goes to the nearer round", threat, due, reason, keep, cost)
+        return True
 
     def _strength_threat(self, threat):
         """True for a strength threat (a tier must stand: ceramics, MOAB
