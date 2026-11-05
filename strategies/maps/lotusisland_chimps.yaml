@@ -1,6 +1,7 @@
 # Lotus Island, CHIMPS: Destroyers grown into Aircraft Carriers in the
-# southern bay, a Monkey Intelligence Bureau village that gives them camo and
-# every damage type, an Alchemist's brew, and a Maim/Cripple MOAB sniper.
+# southern bay (one becomes the Carrier Flagship), a Monkey Intelligence
+# Bureau village that gives them camo and every damage type, an Alchemist's
+# brew, and a Maim/Cripple MOAB sniper.
 #
 # Why: a short, spread-out route (1,107 world units) round an island in open
 # water (38% of the map). The bay inside the bottom loop is the best water (a
@@ -34,9 +35,9 @@
 #     sarahs-btd6-site's map page has none yet:
 #     https://sarahs-btd6-site.onrender.com/guides/maps/easy-maps/lotus-island)
 #
-# The wiki's Flagship (5-x-x, $28,080) is left out: the executor-faithful
-# replay never bought it (see below), and the model rates four carriers above
-# one Flagship and one carrier for the same money. Cripple MOAB (s1 5-2-0) is
+# The wiki's Flagship (5-x-x, $28,080) was left out at first (the old model
+# rated four carriers above it and the old executor never bought it); on the
+# corrected model it is b3's last step (see the re-check below). Cripple MOAB (s1 5-2-0) is
 # there as the BAD answer strategy.coverage needs (every BAD answer in
 # strategy.ANSWERS is a tier 5); the model kills the BAD without it (round 100
 # at 5.2 with s1 at 4-2-0).
@@ -46,6 +47,22 @@
 # its own the executor turned b1 onto 2-4-0 at round 34 and the carrier path
 # was lost. Every strength answer is the rest of the plan in plan order: a due
 # threat or a short blimp check buys the plan's next step, never another tower.
+#
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track). b3 at the bay's west end stood 54 units from the MIB (no
+# camo, no lead) and the carriers' planes no longer cover the whole track at
+# full rate: R95 fell to 0.99. Repairs: b3 moves 15 units east to (0.393,
+# 0.785), 41 units from the MIB and 25 from the alchemist, and becomes the
+# Carrier Flagship (5-2-0) before the Cripple MOAB - the wiki's
+# recommendation that the old model had rated below a fourth carrier.
+# Rounds 6-100, worst margin: plan replay 2.23 (R8); sight-strict 2.23 (R8);
+# executor-faithful strict, with its extra towers / plan towers only,
+# 2.23 / 2.23 (R8), all 26 steps bought; drift replay (every tower 5 units
+# further from the village and alchemist) 2.16 (R95). R95 2.51, R98 3.02,
+# R99 2.80, R100 7.18. The numbers below are from the model before the
+# correction.
 #
 # Checked offline (no game; docs/map_strategies/beginner.md has the method),
 # CHIMPS economy (start round 6 with $650, no boosts, Hard prices; rounds
@@ -72,11 +89,9 @@ map: Lotus Island
 hero: admiral_brickell
 modes: [chimps]
 planner:
-  towers: {buccaneer: [4, 2, 2], sniper: [5, 2, 0], village: [2, 3, 0], alchemist: [3, 2, 0], boomerang: [3, 0, 0]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
-  base_success: {chimps: 0.5}
+  towers: {buccaneer: [5, 2, 2], sniper: [5, 2, 0], village: [2, 3, 0], alchemist: [3, 2, 0], boomerang: [3, 0, 0]}
+  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.16+
+  base_success: {chimps: 0.85}
   maps: [Lotus Island]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.743]}   # southern bay: 30% of the route
@@ -101,8 +116,9 @@ plan:
   - {do: upgrade, id: b2, to: 4-0-2}
   - {do: place, id: a1, kind: alchemist, role: support, at: [0.452, 0.845]}
   - {do: upgrade, id: a1, to: 3-2-0}   # brew for the bay
-  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.355, 0.811]}   # west end of the bay
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.393, 0.785]}   # west of the bay, inside the MIB and the brew
   - {do: upgrade, id: b3, to: 4-2-0}
+  - {do: upgrade, id: b3, to: 5-2-0}   # Carrier Flagship: R95 0.99 -> 2.51
   - {do: upgrade, id: s1, to: 5-2-0}   # Cripple MOAB: the BAD answer
 fill:
   - {do: upgrade, kind: dart, to: 0-0-2}   # caps the opener dart: surplus once took it to 4-2-0
@@ -123,8 +139,9 @@ answers:
     - {do: upgrade, id: b2, to: 4-0-2}
     - {do: place, id: a1, kind: alchemist, role: support, at: [0.452, 0.845]}
     - {do: upgrade, id: a1, to: 3-2-0}
-    - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.355, 0.811]}
+    - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.393, 0.785]}
     - {do: upgrade, id: b3, to: 4-2-0}
+    - {do: upgrade, id: b3, to: 5-2-0}
     - {do: upgrade, id: s1, to: 5-2-0}
   moab: *plan_rest
   camo_ceramic: *plan_rest

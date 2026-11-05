@@ -94,9 +94,14 @@ def test_village_primary_buffs_skip_a_board_without_primary_towers():
     before = _margin(fc, _board(CASTLE_REVENGE, {"v1": (2, 0, 2)}), 63)
     after = _margin(fc, _board(CASTLE_REVENGE, {"v1": (3, 0, 2)}), 63)
     assert abs(after - before) < 1e-9, (before, after)
-    # the 4-0-0 the bot bought there was rated 0.57 -> 0.64 before the fix
-    four = _margin(fc, _board(CASTLE_REVENGE), 63)
-    two = _margin(fc, _board(CASTLE_REVENGE, {"v1": (2, 0, 0)}), 63)
+    # the 4-0-0 the bot bought there was rated 0.57 -> 0.64 before the fix.
+    # Primary Mentoring also widens the village itself (48 -> 55 units), and
+    # since buffs reach only towers whose centre is inside the radius
+    # (dps_model.buff_covers, Frozen Over 2026-11-05) the super s1, 50 units
+    # away, gets Jungle Drums from the 4-0-0 alone: it is left out here.
+    board = [row for row in CASTLE_REVENGE if row[0] != "s1"]
+    four = _margin(fc, _board(board), 63)
+    two = _margin(fc, _board(board, {"v1": (2, 0, 0)}), 63)
     assert abs(four - two) < 1e-9, (two, four)
 
 

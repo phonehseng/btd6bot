@@ -472,8 +472,27 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
         alive = min(subtower_cap, shots * lifespan) if lifespan else min(subtower_cap, max(1.0, shots * 30.0))
         alive *= t.get("share", 1.0)         # one of several sentry types per spawn
         for a in t.get("attacks", []):
-            _flatten_attack(a, out, multiplier=alive, depth=depth + 1, parent_camo=camo_chain,
-                            tower_range=t.get("range"))
+            _flatten_attack(a, out, multiplier=alive * _plane_share(t, a), depth=depth + 1,
+                            parent_camo=camo_chain, tower_range=t.get("range"))
+
+
+def _plane_share(subtower, attack):
+    """Share of a sub-tower attack's shots the model counts.
+
+    A map-wide sub-tower is a plane its tower launches (the Aircraft Carrier's
+    and Carrier Flagship's BuccaneerPlane): it circles the way a Monkey Ace's
+    plane does, so its attacks get the same share of the track
+    (AIR_PATTERN_EFFICIENCY). Its attacks have no range of their own (the
+    export gives them the whole map and no flight pattern), and the model
+    used to count them at full rate on the whole track; on Frozen Over CHIMPS
+    (2026-11-05, lost at round 56) that made two carriers look several times
+    stronger than they were. MOAB-only missiles seek their target wherever it
+    is and keep their full rate, as the Ace's own Anti-MoabMissile does."""
+    if not subtower.get("global"):
+        return 1.0                       # sentries and the like stand still in their own range
+    if set(attack.get("only_tags") or ()) == {"Moabs"}:
+        return 1.0
+    return AIR_PATTERN_EFFICIENCY
 
 
 def _trigger_rates(weapons):
@@ -1417,14 +1436,30 @@ def buff_reaches(b, kind):
     return True
 
 
+def buff_covers(supporter, t, radius):
+    """Does a support buff of this radius, from a tower standing at
+    `supporter`, reach tower t? Only when t's centre lies inside the radius.
+
+    The game's exact rule (centre, or any part of the footprint) is not
+    confirmed, and with one life the strict reading is the safe one: it can
+    only make the bot buy more defence. The model used to add the buffed
+    tower's footprint radius (8 for a buccaneer) to the buff radius. On
+    Frozen Over CHIMPS (2026-11-05 14:34) the village's planned spot was
+    refused, the Radar Scanner (radius 48) stood 49.3 units from an Aircraft
+    Carrier, the model still gave the carrier camo and rated round 56 at 16;
+    in the recording the carrier did not shoot the camo pinks beside it and
+    the 40 camo rainbows of round 56 ended the game."""
+    return math.hypot(supporter.x - t.x, supporter.z - t.z) <= radius
+
+
 def station_for(t, placed, track, sight=None):
     """The Station of one Placed tower, or None when it does no damage or
     reaches no track. Support buffs of the other towers in `placed`
-    (villages: camo, attack rate, range, pierce) apply when this tower stands
-    inside the supporter's range and the buff's filters let its kind through
-    (buff_reaches). sight(x, z, pts) -> visible mask, used for
-    towers that need line of sight (placement.needs_sight)."""
-    from . import gamemodel
+    (villages: camo, attack rate, range, pierce) apply when this tower's
+    centre stands inside the supporter's buff radius (buff_covers) and the
+    buff's filters let its kind through (buff_reaches). sight(x, z, pts) ->
+    visible mask, used for towers that need line of sight
+    (placement.needs_sight)."""
     from .placement import needs_sight
     p = profile(t.kind, t.tiers)
     if p is None:
@@ -1438,8 +1473,7 @@ def station_for(t, placed, track, sight=None):
         for b in q.buffs:
             if not buff_reaches(b, t.kind):
                 continue
-            reach = b.get("radius") or q.range
-            if b.get("global") or math.hypot(o.x - t.x, o.z - t.z) <= reach + (gamemodel.footprint_radius(t.kind) or 6.0):
+            if b.get("global") or buff_covers(o, t, b.get("radius") or q.range):
                 if b["kind"] == "range" and b.get("value"):
                     range_mult = max(range_mult, 1.0 + b["value"])
                 else:

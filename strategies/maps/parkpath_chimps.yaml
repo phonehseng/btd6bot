@@ -1,6 +1,7 @@
 # Park Path, CHIMPS: a Destroyer in the central pond that becomes the
 # Carrier Flagship, a second Destroyer -> Aircraft Carrier up the stream with
-# Crow's Nest, two Maim MOAB snipers, an Armor Piercing sub, a MIB village, a
+# Crow's Nest, a third pond Carrier, two Maim MOAB snipers, an Armor
+# Piercing sub, a MIB village, a
 # Bionic Boomer, a Stronger Stimulant alchemist and an exit Perma-Spike.
 #
 # Why: the route coils round the central pond, so a buccaneer there fires
@@ -38,6 +39,23 @@
 #   No Reddit/Steam/video run of Park Path CHIMPS with a build list was
 #   found (Sarah's BTD6 site's Park Path CHIMPS section is "coming soon").
 #
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track). The pond boat stood 50.6 units from the radius-48 MIB and
+# 50.3 from the radius-45 alchemist, so it had camo, every damage type and
+# the brew only through the old footprint allowance: R78 fell to 0.43, R95
+# to 0.45. Repairs: b1 moves to the pond's north-east edge (0.484, 0.479),
+# 30 units from the MIB; the alchemist moves 4 units to (0.564, 0.581) so it
+# reaches both boats (41 and 42 units); a third buccaneer b3 (4-2-0) in the
+# pond's north-west (0.43, 0.47), 43 units from the MIB, comes before the
+# Flagship. Rounds 6-100, worst margin: plan replay 2.07 (R8); sight-strict
+# 2.02 (R55); executor-faithful strict, with its extra towers / plan towers
+# only, 2.07 / 2.07 (R8), all 31 steps bought; drift replay (every tower
+# 5 units further from the village and alchemist) 2.04 (R55). R78 5.48,
+# R95 2.65, R98 3.47, R99 3.36, R100 5.91. The numbers below are from the
+# model before the correction.
+#
 # Checked offline on the CHIMPS economy (optimize_builds.economy("chimps"):
 # R6-100, $650, no Fast Track / Double Cash; Hard prices), method of
 # docs/map_strategies/beginner.md; worst margin over rounds 6-100:
@@ -65,13 +83,11 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], sniper: [4, 2, 0], sub: [2, 0, 4], village: [2, 3, 0], alchemist: [4, 2, 0],
            spike: [2, 0, 5], boomerang: [3, 2, 0]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
-  base_success: {chimps: 0.5}
+  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.02+
+  base_success: {chimps: 0.85}
   maps: [Park Path]
 plan:
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.419, 0.504]}   # central pond: holds R6-15 alone
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.484, 0.479]}   # central pond, north-east: holds R6-15 alone, inside the MIB
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}
   - {do: upgrade, id: b1, to: 2-1-0}
@@ -92,9 +108,11 @@ plan:
   - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
   - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
   - {do: upgrade, id: s2, to: 4-2-0}
-  - {do: place, id: a1, kind: alchemist, role: support, at: [0.548, 0.589]}   # brews both boats
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.564, 0.581]}   # brews both boats (centres inside)
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: a1, to: 4-2-0}   # Stronger Stimulant
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.43, 0.47]}   # pond, north-west: inside the MIB
+  - {do: upgrade, id: b3, to: 4-2-0}   # third Aircraft Carrier: R95 1.94 -> 2.65
   - {do: upgrade, id: b1, to: 5-2-0}   # Carrier Flagship
   - {do: upgrade, id: b2, to: 4-0-2}   # Aircraft Carrier
   - {do: place, id: sp1, kind: spike, role: exit, at: [0.831, 0.589]}   # by the exit
@@ -114,6 +132,8 @@ answers:
     - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}
     - {do: upgrade, id: s2, to: 4-2-0}
     - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+    - {do: upgrade, id: b3, to: 4-2-0}
+    - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.43, 0.47]}
     - {do: upgrade, id: b1, to: 5-2-0}
     - {do: upgrade, id: b2, to: 4-0-2}
     - {do: upgrade, id: sp1, to: 2-0-5}

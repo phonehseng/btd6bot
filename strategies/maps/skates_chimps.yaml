@@ -51,6 +51,22 @@
 #   or YouTube (web searches 2026-11-05); the build itself comes from the
 #   damage model on the map geometry (docs/map_strategies/beginner.md).
 #
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track), rounds 6-100: FAILS. Worst margin: plan replay 1.51 (R94;
+# R95 1.79, R98 1.59); sight-strict 1.41 (R98; R78 1.87, R94 1.54, R95 1.76);
+# executor-faithful strict, with its extra towers / plan towers only,
+# 1.41 / 1.41 (R98); drift replay 0.06 (R95; R59 0.68, R90 0.13, R93-100
+# 0.06-0.08): the tack's camo comes from a radius-40 Radar Scanner 36.5
+# units away, and the alchemist was 49 units from b1. Bigger Radius on the
+# village, the alchemist at (0.516, 0.692) and the bomb at (0.371, 0.666)
+# (its planned spot is refused on the live map) fix the drift, but R94-98
+# stay at 1.5-1.8: the cash is spent by R95, and no single addition found
+# (Flagship on either carrier, a second alchemist's dip) lifts R94, R95 and
+# R98 together past 2.0. The plan is left as it was and the build stays
+# held. The numbers below are from the model before the correction.
+#
 # Checked offline (no game; docs/map_strategies/beginner.md has the method),
 # on the CHIMPS economy (optimize_builds.economy("chimps", boosts): round 6,
 # $650, base income - CHIMPS pays no Double Cash and has no Fast Track),
@@ -86,8 +102,9 @@
 #     Inferno Ring and spent it on sniper and sub tiers - the Inferno Ring was
 #     never bought and rounds 95/99 fell to 0.8 / 1.0 (the End Of The Road
 #     CHIMPS failure).
-# Gate: every check above holds at 2.0 or more, so base_success chimps is
-# 0.85 (a map's own build may clear the planner's 0.80 CHIMPS bar untested).
+# Gate: every check above held at 2.0 or more on the old model, so
+# base_success chimps was 0.85; on the corrected model it fails (see the
+# re-check above), so it is 0.5 and the planner does not play it.
 id: skates_chimps
 map: Skates
 hero: admiral_brickell
@@ -95,9 +112,9 @@ modes: [chimps]
 planner:
   towers: {tack: [5, 2, 0], sub: [2, 0, 4], ninja: [2, 0, 4], buccaneer: [4, 2, 2], village: [0, 2, 0],
            alchemist: [3, 2, 0], bomb: [0, 5, 2]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
+  # held back: Frozen Over CHIMPS was lost at round 56 (2026-11-05 14:34); re-checked
+  # on the corrected model (strict buff reach, carrier planes) it fails R94 (1.51),
+  # R95, R98 (1.41 sight-strict) and, 5 units off, R59-R100 (down to 0.06) - see the header
   base_success: {chimps: 0.5}
   maps: [Skates]
 plan:

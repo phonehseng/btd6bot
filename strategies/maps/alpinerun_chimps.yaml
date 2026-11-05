@@ -47,6 +47,16 @@
 #     border rules only), sarahs-btd6-site Alpine Run page (CHIMPS section
 #     "coming soon"; https://sarahs-btd6-site.onrender.com/guides/maps/easy-maps/alpine-run)
 #
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track), rounds 6-100, worst margin: plan replay 2.16 (R9);
+# sight-strict 2.16 (R9); executor-faithful strict, with its extra towers /
+# plan towers only, 2.16 / 2.16 (R9), all 57 steps bought; drift replay
+# (every tower 5 units further from the village and alchemist) 2.04 (R9).
+# R95 4.71, R98 6.17, R99 4.60. No change was needed. The numbers below are
+# from the model before the correction.
+#
 # Checked offline (no game; docs/map_strategies/beginner.md has the method),
 # CHIMPS economy (R6 $650, base income, Hard prices, no boosts), R6-100:
 #   * every `at` is legal for its tower in plan order on the map geometry and
@@ -71,10 +81,8 @@ constraints:
 planner:
   towers: {tack: [5, 2, 0], spike: [4, 2, 0], druid: [1, 3, 0], sniper: [5, 2, 0], village: [2, 3, 0],
            alchemist: [4, 0, 0], engineer: [1, 1, 0]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
-  base_success: {chimps: 0.5}
+  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes): every replay 2.04+
+  base_success: {chimps: 0.85}
   maps: [Alpine Run]
 plan:
   - {do: place, id: t1, kind: tack, role: dps, at: [0.281, 0.589]}   # left zig-zags: R6-8 alone at 0-2-0

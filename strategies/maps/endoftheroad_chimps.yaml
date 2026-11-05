@@ -1,7 +1,8 @@
 # End Of The Road, CHIMPS: Destroyers in the pool from round 6 (the first
 # buccaneer IS the opener), a Maim MOAB sniper, a Recursive Cluster bomb for
 # the round-63 rush, then a Stronger Stimulant alchemist and an MIB village
-# beside the pool and four Aircraft Carriers. Admiral Brickell in the pool.
+# beside the pool, four Aircraft Carriers, a Carrier Flagship and a fifth
+# Carrier. Admiral Brickell in the pool.
 #
 # Why: the shortest beginner map (994 world units, 818 hittable). Bloons run
 # out along the top lane, loop round the pool at the right and come back
@@ -49,6 +50,23 @@
 # step; the executor's blimp ramp may answer round 100 with its own tier-5
 # blimp tower first (it bought a MOAB Eliminator at round 96 in the replay).
 #
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track). Carrier planes no longer cover the whole track at full
+# rate, and b3 was 48.4 units from the radius-48 MIB: R95 fell to 1.40, R98
+# to 1.41. Repairs: the village moves 15 units down to (0.521, 0.411) (b1
+# 41, b2 28, b3 44 units: all inside); after the four Carriers, b2 becomes
+# the Carrier Flagship (5-2-0, $28,080 - the one step above $12.6k; the
+# wiki's own pool answer) and a fifth buccaneer b5 (4-2-0) goes in the pool's
+# top-left corner (0.59, 0.428), 26 units from the MIB and 31 from the
+# alchemist. Rounds 6-100, worst margin: plan replay 2.11 (R15);
+# sight-strict 2.11 (R15); executor-faithful strict, with its extra towers /
+# plan towers only, 2.18 / 2.18 (R15), all 31 steps bought; drift replay
+# (every tower 5 units further from the village and alchemist) 2.09 (R95).
+# R95 2.20, R98 2.57, R99 3.08, R100 5.72. The numbers below are from the
+# model before the correction.
+#
 # Checked offline (no game; docs/map_strategies/beginner.md has the method),
 # CHIMPS economy (optimize_builds.economy("chimps"): round 6, $650, Hard
 # prices, no Double Cash, no Fast Track), rounds 6-100:
@@ -77,11 +95,9 @@ map: End Of The Road
 hero: admiral_brickell
 modes: [chimps]
 planner:
-  towers: {buccaneer: [4, 2, 2], sniper: [5, 2, 0], bomb: [2, 0, 3], alchemist: [4, 2, 0], village: [2, 3, 0]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
-  base_success: {chimps: 0.5}
+  towers: {buccaneer: [5, 2, 2], sniper: [5, 2, 0], bomb: [2, 0, 3], alchemist: [4, 2, 0], village: [2, 3, 0]}
+  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.09+
+  base_success: {chimps: 0.85}
   maps: [End Of The Road]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.623, 0.487]}   # pool, top right: 37% of the route; the $650 opener
@@ -106,12 +122,15 @@ plan:
   - {do: place, id: a1, kind: alchemist, role: support, at: [0.676, 0.428]}   # right of the pool: reaches b1-b4
   - {do: upgrade, id: a1, to: 4-2-0}   # Stronger Stimulant
   - {do: upgrade, id: b1, to: 4-0-2}   # Aircraft Carrier
-  - {do: place, id: v1, kind: village, role: support, at: [0.548, 0.359]}   # above the pool: reaches b1-b3
+  - {do: place, id: v1, kind: village, role: support, at: [0.521, 0.411]}   # above the pool: b1-b3 centres inside
   - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo and every damage type for b2 (DDTs, rounds 90-99)
   - {do: upgrade, id: b2, to: 4-2-0}
   - {do: upgrade, id: b3, to: 4-0-2}
   - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.633, 0.606]}   # pool, bottom right
   - {do: upgrade, id: b4, to: 4-0-2}
+  - {do: upgrade, id: b2, to: 5-2-0}   # Carrier Flagship: the DDTs of 95 and 98
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.59, 0.428]}   # pool, top left: inside the MIB and the brew
+  - {do: upgrade, id: b5, to: 4-2-0}   # fifth Aircraft Carrier
 fill:
   - {do: upgrade, id: s1, to: 5-2-0}   # Cripple MOAB: the BAD answer when cash is left over
 answers:

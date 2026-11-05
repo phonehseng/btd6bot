@@ -115,13 +115,20 @@ and put MOAB-class jobs first. A job's work is
   bloon several times.
 - *damage*: with the game's tag bonuses; zero if the damage type cannot pop
   the layer, if the layer is camo and the tower cannot see camo (or a
-  village radar in range lends it), or if a MOAB filter excludes it.
+  village radar in range lends it), or if a MOAB filter excludes it. A
+  support buff (village, alchemist) reaches a tower only when the tower's
+  centre is inside the buff radius (`dps_model.buff_covers`; until
+  2026-11-05 the tower's footprint radius was added, and a carrier 49.3
+  units from a radius-48 Radar Scanner counted as seeing camo on Frozen
+  Over CHIMPS, lost at round 56).
 - *overflow*: the game passes a hit's excess damage on to the children
   (`distributeToChildren`), so a 3-damage tack pops a lead and two more
   layers in one hit; the model carries the mean overflow into the children.
 - tacks and planes fire all around: only the share of directions that cross
   the track counts (computed from the spot); a circling plane's darts count
-  40%.
+  40%, and so do the attacks of the planes an Aircraft Carrier or Carrier
+  Flagship launches (map-wide sub-towers, `dps_model._plane_share`; their
+  MOAB-only missiles keep full rate).
 - spike piles are never idle: between bloons they stock up (up to the
   spikes' lifespan of production), and spikes that outlive the round start
   the next one with 30 s of production on the track.

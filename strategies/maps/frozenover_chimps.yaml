@@ -50,6 +50,22 @@
 #   Frozen Over CHIMPS was found by web search; the build is the wiki's
 #   general CHIMPS advice fitted to this map with the damage model.
 #
+# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
+# damage model (support buffs reach a tower only when its centre is inside
+# the buff radius; Aircraft Carrier planes count at a circling plane's share
+# of the track), rounds 6-100: FAILS. Worst margin: plan replay 1.01 (R95;
+# R98 1.74, R99 1.23); sight-strict 0.99 (R95); executor-faithful strict,
+# with its extra towers / plan towers only, 1.14 / 1.13 (R95); drift replay
+# 0.99-1.00 (R95). The pond is ringed by track: no legal village cell has b2
+# or the sub inside the MIB (55 and 52 units), so only b1 pops DDTs, and
+# b1's planned spot (0.473, 0.436) is refused on the live map (the bot stood
+# it at (0.484, 0.470), 49.3 units from the village it actually got). The
+# best repair found - b1 at (0.484, 0.453), b2 on the 4-0-2 path (Crow's Nest
+# camo, lead from the alchemist's dip), Carrier Flagship and Cripple MOAB -
+# reaches 2.00 on the plan replay but 1.96 sight-strict and on the drift
+# replay (R95), so the plan is left as it was and the build stays held.
+# The numbers below are from the model before the correction.
+#
 # Checked offline (no game; docs/map_strategies/beginner.md has the method),
 # on the CHIMPS economy (round 6, $650, base income, no boosts), rounds
 # 6-100, worst damage-model margin:
@@ -82,9 +98,9 @@ modes: [chimps]
 planner:
   towers: {tack: [4, 0, 3], sniper: [5, 2, 0], buccaneer: [4, 2, 0], sub: [2, 0, 4], village: [2, 3, 0],
            alchemist: [3, 2, 0]}
-  # held back 2026-11-05 14:34: Frozen Over CHIMPS was lost at round 56, which
-  # the damage model rated 16 - the model that checked these builds is not
-  # trusted for CHIMPS until that is explained (0.85 when it passed)
+  # held back: Frozen Over CHIMPS was lost at round 56 (2026-11-05 14:34); re-checked
+  # on the corrected model (strict buff reach, carrier planes) it fails R95 (0.99),
+  # R98 (1.72) and R99 (1.11) on every replay - see the header
   base_success: {chimps: 0.5}
   maps: [Frozen Over]
 plan:
