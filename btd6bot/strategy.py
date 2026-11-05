@@ -224,31 +224,46 @@ INCOME_TOWERS = {"farm"}  # banana farms
 
 
 def _income_upgrades():
-    """{(tower, path, tier)}: the lowest tier of each upgrade path that pays
-    cash, read from the upgrade notes in towers.py (a note naming "income"
-    or "cash"; a note ending in "?" is unconfirmed and left out).
-    Executor._is_income counts every later tier of the path too.
+    """{(tower, path, tier)}: every upgrade tier whose own note in towers.py
+    is about cash (it names "income" or "cash"; a note ending in "?" is
+    unconfirmed and left out). Executor._is_income asks whether a target's
+    top tier on a path is one of them.
+
+    A tier-5 capstone whose note leads with another effect is not income:
+    Spirit of the Forest ("vines, income") is bought for its vines, and its
+    cash is only a side effect. Tiers above an income tier are judged by
+    their own notes too: Elite Sniper, Special Poperations, Bloon Master
+    Alchemist and Monkeyopolis do damage or other work in CHIMPS, where the
+    income tiers below them pay nothing (the path is bought through them).
 
     It used to be only Merchantman and Bloon Trap, so CHIMPS (no income) and
     Deflation (no cash at all) could still buy Supply Drop snipers, Support
     Chinooks, Lead to Gold alchemists, Jungle's Bounty druids and Monkey
     Town villages - tiers that pay nothing there - with cash the defence
-    needed."""
+    needed. Then, for a while, every tier from the first income tier up
+    counted, and CHIMPS refused Elite Sniper, Special Poperations, Bloon
+    Master Alchemist and Spirit of the Forest (the druid's MOAB answer in
+    ANSWERS is "path 2 tier 4 or more"; a 0-4-x druid stays income, its
+    tier-5 is bought through it)."""
     word = re.compile(r"\b(income|cash)\b", re.IGNORECASE)
-    found = {}
+    found = set()
     for kind, facts in T.TOWERS.items():
         for path, ups in enumerate(facts["upgrades"], start=1):
             for up in ups:
                 note = (up.get("notes") or "").strip()
                 if note.endswith("?") or not word.search(note):
                     continue
-                found[(kind, path)] = min(found.get((kind, path), 6), up["tier"])
-    return {(kind, path, tier) for (kind, path), tier in found.items()}
+                lead = note.split(",")[0]
+                if up["tier"] == 5 and not word.search(lead):
+                    continue  # a capstone bought for its first effect
+                found.add((kind, path, up["tier"]))
+    return found
 
 
-# income upgrades (tower, path, lowest tier): Merchantman buccaneers, Bloon
-# Trap engineers, Supply Drop snipers, Support Chinooks, Lead to Gold
-# alchemists, Jungle's Bounty druids, Monkey Town villages, farm upgrades
+# income tiers (tower, path, tier): Merchantman to Trade Empire buccaneers,
+# Bloon Trap engineers, Supply Drop snipers, Support Chinooks, Lead/Rubber
+# to Gold alchemists, Jungle's Bounty druids, Monkey Town/City villages,
+# farm upgrades
 INCOME_UPGRADES = _income_upgrades()
 
 
@@ -1052,9 +1067,12 @@ class Executor:
         return True
 
     def _is_income(self, kind, target):
+        """True when target (tiers per path) ends on an income tier on some
+        path (INCOME_UPGRADES), or the kind is an income tower. A target past
+        the income tiers (an 0-0-5 alchemist) is judged by its own tier."""
         if kind in INCOME_TOWERS:
             return True
-        return any(k == kind and target[path - 1] >= tier for k, path, tier in INCOME_UPGRADES)
+        return any((kind, path, target[path - 1]) in INCOME_UPGRADES for path in (1, 2, 3))
 
     def _income_pays_nothing(self):
         """True where an income tier earns nothing: CHIMPS and `no_income_towers`
@@ -2520,39 +2538,57 @@ class Executor:
         None if that is more than `budget` or comes after a `round:` gate at or
         past due_round. Towers the steps place are taken to stand where the
         steps put them (villages near what they serve)."""
-        fam = PRICE_FAMILY.get(self.mode, "hard")
         sim = {p.tid: (p.kind, list(p.tiers)) for p in self._towers()}
-        cost, n = 0, 0
-        for st in (self.plan[self.idx:] if steps is None else steps):
+        cost = 0
+        for n, st in enumerate(self.plan[self.idx:] if steps is None else steps):
             if st.get("round") and st["round"] >= due_round:
                 break                       # the plan waits past the threat
-            do, kind = st.get("do"), st.get("kind")
-            if do == "place" and kind not in (None, "hero") and self.kind_allowed(kind):
-                tid = st.get("id") or f"__plan{n}"
-                n += 1
-                if tid not in sim:
-                    sim[tid] = (kind, [0, 0, 0])
-                    cost += T.tower_cost(kind, fam)
-            elif do == "upgrade" and st.get("to"):
-                try:
-                    want = parse_cross(st["to"])
-                except ValueError:
-                    continue
-                ids = [st["id"]] if st.get("id") in sim else \
-                    [t for t, (k, _) in sim.items() if k == kind and not st.get("id")]
-                for tid in ids:
-                    k, have = sim[tid]
-                    new = [max(h, min(w, c)) for h, w, c in zip(have, want, self._caps(k))]
-                    cost += sum(T.upgrade_cost(k, i + 1, t, fam)
-                                for i in range(3) for t in range(have[i] + 1, new[i] + 1))
-                    sim[tid] = (k, new)
-            else:
+            add = self._sim_step(st, sim, n)
+            if add is None:
                 continue
+            cost += add
             if cost > budget:
                 return None
             if TH.covers([(t, k, tuple(v)) for t, (k, v) in sim.items()], sig)[0]:
                 return cost
         return None
+
+    def _sim_step(self, st, sim, n):
+        """What step st costs on the simulated board sim ({tid: (kind,
+        tiers)}), which it updates; None for a step that buys nothing (a
+        sale, a hero, a kind the mode forbids, a malformed target). n numbers
+        placements without an id."""
+        fam = PRICE_FAMILY.get(self.mode, "hard")
+        do, kind = st.get("do"), st.get("kind")
+        if do == "place" and kind not in (None, "hero") and self.kind_allowed(kind):
+            tid = st.get("id") or f"__plan{n}"
+            if tid in sim:
+                return 0
+            sim[tid] = (kind, [0, 0, 0])
+            return T.tower_cost(kind, fam)
+        if do == "upgrade" and st.get("to"):
+            try:
+                want = parse_cross(st["to"])
+            except ValueError:
+                return None
+            ids = [st["id"]] if st.get("id") in sim else \
+                [t for t, (k, _) in sim.items() if k == kind and not st.get("id")]
+            cost = 0
+            for tid in ids:
+                k, have = sim[tid]
+                new = [max(h, min(w, c)) for h, w, c in zip(have, want, self._caps(k))]
+                cost += sum(T.upgrade_cost(k, i + 1, t, fam)
+                            for i in range(3) for t in range(have[i] + 1, new[i] + 1))
+                sim[tid] = (k, new)
+            return cost
+        return None
+
+    def _steps_cost(self, steps):
+        """What the answer steps cost in all, from the board as it stands
+        (the whole answer, not only its next tier: _hold_for keeps the part
+        of it income cannot rebuild in time)."""
+        sim = {p.tid: (p.kind, list(p.tiers)) for p in self._towers()}
+        return sum(self._sim_step(st, sim, n) or 0 for n, st in enumerate(steps))
 
     def answer_threat(self, threat, cash, rnd):
         """Buy toward the answer of one due threat. Returns 'bought', 'wait'
@@ -2575,16 +2611,17 @@ class Executor:
         return self._run_answer(threat, steps, cash, rnd)
 
     def _run_answer(self, threat, steps, cash, rnd):
-        """Try answer steps in order: 'bought', 'wait' or 'none'."""
-        for st in steps or ():
-            if not self._step_allowed(st):
-                continue
+        """Try answer steps in order: 'bought', 'wait' or 'none'. On 'wait',
+        self.wait_total is what this step and the ones after it cost."""
+        steps = [st for st in steps or () if self._step_allowed(st)]
+        for i, st in enumerate(steps):
             with self.why("threat", f"answer {threat}", step=dict(st)):
                 r = self.try_step(dict(st), cash, rnd)
             if r in ("bought", "progress"):
                 log.warning("threat %s: bought toward answer %s", threat, st)
                 return "bought"
             if r == "wait":
+                self.wait_total = self._steps_cost(steps[i:])
                 return "wait"
         return "none"
 
@@ -2648,6 +2685,7 @@ class Executor:
                                     opt["desc"], opt["cost"])
                     return "defer"
                 self.wait_note = f"saving ${opt['cost']} for the {threat} answer ({opt['desc']})"
+                self.wait_total = opt["cost"]
                 return "wait"
         return "none"
 
@@ -2877,15 +2915,15 @@ class Executor:
                    if TH.bloons().get(g["bloon"], {}).get("class") == "blimp"),
                   key=TH.blimp_hp, default=None)
         why = f"blimp ramp round {R} ratio {ratio:.1f}"
-        for st in (self.strat.get("answers") or {}).get(cls) or ():
-            if not self._step_allowed(st):
-                continue
+        own = [st for st in (self.strat.get("answers") or {}).get(cls) or () if self._step_allowed(st)]
+        for i, st in enumerate(own):
             with self.why("ramp", why, step=dict(st)):
                 r = self.try_step(dict(st), cash, rnd)
             if r in ("bought", "progress"):
                 log.warning("blimp ramp round %d: bought toward answer %s", R, st)
                 return "bought"
             if r == "wait":
+                self.wait_total = self._steps_cost(own[i:])
                 return "wait"
         # what can be paid before round R: cash now + the rounds in between
         money = self.cash_seen + sum(TH.round_cash(self.round_set, r) * self.income_mult
@@ -2932,6 +2970,7 @@ class Executor:
                             opt["desc"], opt["cost"])
                 return "bought"
             if r == "wait":
+                self.wait_total = opt["cost"]
                 return "wait"
         return "none"
 
@@ -2986,14 +3025,14 @@ class Executor:
         # an answer due now beats every plan step
         for threat in self.due_threats(rnd):
             self.wait_note = None
-            self.wait_cost = None
+            self.wait_cost = self.wait_total = None
             r = self.answer_threat(threat, cash, rnd)
             if r == "bought":
                 return True
             if r == "wait" and self.rules.get("income") is not False:
                 self.waiting = self.wait_note or f"saving for {threat} answer"
                 due = self._threat_round(threat, rnd) if self._strength_threat(threat) else rnd
-                if self._hold_for(due, self.wait_cost, rnd, f"the {threat} answer") is None:
+                if self._hold_for(due, self.wait_total, rnd, f"the {threat} answer") is None:
                     continue  # the round being played is weak: only part of the cash is held
                 return False  # hold cash for the answer
             # (no income, Deflation: saving cannot make the answer affordable
@@ -3005,13 +3044,13 @@ class Executor:
             self.unanswerable.add(threat)  # nothing applicable; don't block the plan
         ramp = self._ramp_due(rnd)
         if ramp and ramp[2] < self.RAMP_OK:
-            self.wait_cost = None
+            self.wait_cost = self.wait_total = None
             r = self._answer_ramp(*ramp, cash, rnd)
             if r == "bought":
                 return True
             if r == "wait" and self.rules.get("income") is not False:
                 self.waiting = f"saving for blimp damage before round {ramp[0]}"
-                return self._hold_for(ramp[0], self.wait_cost, rnd, "blimp damage")
+                return self._hold_for(ramp[0], self.wait_total, rnd, "blimp damage")
             if r == "plan_hold" and self.rules.get("income") is not False:
                 # the plan goes on (its next step is the blimp damage), but the
                 # cash is kept for it: surplus() and reinforcing hold off
@@ -3046,16 +3085,21 @@ class Executor:
         rest on the round at hand. Chutes Impoppable (2026-11-04) idled with
         $16,972 "saving for bad answer" from round 94 - the BAD of round 100
         is due six rounds ahead with one life - while rounds 94-96 were
-        rated 0.21-0.33, and lost round 96 with the cash in the bank."""
-        if due_round - rnd > self.FAR_ROUNDS and (self.lives_fell_lately(rnd, 1) or self.weak_now(rnd)):
-            keep = max(0.0, (cost or 0.0) - self.income_until(due_round, rnd))
+        rated 0.21-0.33, and lost round 96 with the cash in the bank.
+
+        cost is the whole answer (self.wait_total), not only its next tier
+        (self.wait_cost): a $40,000 BAD answer whose next tier is $3,000
+        would otherwise hold about nothing. When it is not known (None) all
+        the cash is held, as before weak rounds were told apart."""
+        if cost is not None and due_round - rnd > self.FAR_ROUNDS and (self.lives_fell_lately(rnd, 1) or self.weak_now(rnd)):
+            keep = max(0.0, cost - self.income_until(due_round, rnd))
             self.held_cash = getattr(self, "held_cash", 0.0) + keep
             note = ("weak-hold", what, rnd)
             if note not in self.noted:
                 self.noted.add(note)
                 log.warning("round %d is weak: holding only $%d for %s (round %d, $%s) - income "
                             "rebuilds the rest by then; the rest of the cash goes to this round",
-                            rnd, keep, what, due_round, "?" if cost is None else f"{cost:.0f}")
+                            rnd, keep, what, due_round, f"{cost:.0f}")
             return None
         self.saving_for_threat = True
         return False
@@ -3135,7 +3179,7 @@ class Executor:
         self.now_round = rnd
         if cash is None:
             return False  # never act on an unreadable cash value
-        self.wait_cost = None
+        self.wait_cost = self.wait_total = None
         self.tick_no = getattr(self, "tick_no", 0) + 1     # _set_aside_blocked counts ticks
         self._recheck_doubtful()
         if lives_dropped:

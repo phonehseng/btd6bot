@@ -96,6 +96,21 @@ def test_income_tiers_come_from_the_tower_table():
     assert not any(k == "dartling" for k, _, _ in S.INCOME_UPGRADES)
 
 
+def test_tiers_above_income_tiers_are_judged_by_their_own_notes():
+    ex = bare_executor("chimps")
+    # damage capstones above an income tier stay open in CHIMPS
+    for kind, target in [("sniper", [0, 5, 0]), ("heli", [0, 5, 0]), ("alchemist", [0, 0, 5]),
+                         ("druid", [0, 5, 0]), ("village", [0, 0, 5])]:
+        assert not ex._is_income(kind, target), (kind, target)
+        step = {"do": "upgrade", "kind": kind, "to": "-".join(map(str, target))}
+        ex._id_kind = {}
+        assert ex._step_allowed(step), step
+    # the income tiers themselves, crosspathed or not, stay out
+    for kind, target in [("sniper", [0, 4, 2]), ("druid", [0, 4, 0]), ("alchemist", [2, 0, 4]),
+                         ("village", [0, 0, 3]), ("buccaneer", [0, 0, 5])]:
+        assert ex._is_income(kind, target), (kind, target)
+
+
 def test_chimps_upgrade_choices_never_offer_income_tiers():
     board = [tower("v1", "village", [0, 0, 2]), tower("s1", "sniper", [0, 3, 0]),
              tower("a1", "alchemist", [0, 0, 2]), tower("b1", "buccaneer", [0, 0, 2])]
@@ -117,7 +132,8 @@ def chutes(margin):
     ex._ramp_due = lambda rnd: None
 
     def answer(threat, cash, rnd):
-        ex.wait_cost = 40_000
+        ex.wait_cost = 3_000          # only the next tier of the answer
+        ex.wait_total = 40_000        # the whole answer
         return "wait"
     ex.answer_threat = answer
     ex.saving_for_threat, ex.held_cash = False, 0.0
@@ -138,6 +154,27 @@ def test_a_weak_round_does_not_hold_all_the_cash_for_a_far_threat():
     toy.held_cash = ex.held_cash
     status = R.buy_best(toy, toy_forecast(0.25), 27_000, 94, 100)
     assert status == "bought" and toy.bought, status
+
+
+def test_the_weak_hold_counts_the_whole_answer():
+    """The answer's steps are priced in full (_steps_cost), not by their
+    next tier: a super monkey 2-0-3 -> 2-0-5 answer costs both tiers."""
+    ex = bare_executor("impoppable", [tower("s1", "super", [2, 0, 3])])
+    ex._caps = lambda kind, p=None: (5, 5, 5)
+    steps = [{"do": "upgrade", "id": "s1", "to": "2-0-5"}]
+    fam = S.PRICE_FAMILY.get("impoppable", "hard")
+    want = sum(S.T.upgrade_cost("super", 3, t, fam) for t in (4, 5))
+    assert ex._steps_cost(steps) == want > 0
+
+
+def test_an_unknown_answer_cost_holds_all_the_cash():
+    ex = chutes(0.25)
+
+    def answer(threat, cash, rnd):
+        return "wait"                 # waited without pricing anything
+    ex.answer_threat = answer
+    assert ex._threat_tick(27_000, 94) is False
+    assert ex.saving_for_threat and ex.held_cash == 0.0
 
 
 def test_a_safe_round_still_holds_the_cash_for_the_threat():
