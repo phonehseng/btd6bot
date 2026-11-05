@@ -922,6 +922,70 @@ DOUBLE_CASH_LOSS_FACTOR = 0.6
 # this factor (the half-cash record so far: 1 win, 3 losses).
 FAST_TRACK_HALF_CASH_FACTOR = 0.5
 
+# Fast Track also hands the executor every skipped round at once: a plan
+# written for a round-1 start is bought in one go at round 22 and the first
+# rounds come dense and mixed - in ABR densest of all. Up to 2026-11-05, 11 of
+# ABR's 26 losses fell in rounds 22-30 (Hard 4 of 13, every other Hard-family
+# mode 0 or 1): Dark Dungeons, Bloody Puddles, Infernal, Muddy Puddles, each
+# rated 0.06 before Play was pressed (backlog 42). How often a mode's Fast
+# Track opening is survived is read from the account's game history and scales
+# the prior of every build in that mode - above all the untested ones a
+# last-resort pick reaches for; a build with games of its own in the mode is
+# corrected back by the calibration (_Calibration measures against this
+# prior). The factor fades by itself as the openings go better.
+FAST_TRACK_OPENING_ROUNDS = 9          # rounds from the start that count as the opening
+FAST_TRACK_OPENING_PRIOR_GAMES = 6.0   # pseudo-games survived: a thin record moves p little
+
+# {id(account): ((history length, last entry's time), {mode: (games, opening losses)})}
+_OPENING_RECORD_MEMO: dict[int, tuple[tuple[int, Any], dict[str, tuple[int, int]]]] = {}
+
+
+def _fast_track_opening_record(account: AccountState) -> dict[str, tuple[int, int]]:
+    """{mode: (games played, games lost inside the Fast Track opening)} from
+    the account's game history (AccountState.history keeps the round each
+    game ended at). Computed once per history state: rank_games asks for
+    every candidate, and prior_win_probability is also behind the calibration.
+    The history does not say whether a game ran with Fast Track on; the
+    boost has been on for every game of the main account."""
+    from .boosts import fast_track_start
+    hist = getattr(account, "history", None) or []
+    stamp = (len(hist), hist[-1].get("t") if hist else None)
+    memo = _OPENING_RECORD_MEMO.get(id(account))
+    if memo is not None and memo[0] == stamp:
+        return memo[1]
+    starts: dict[str, int | None] = {}
+    table: dict[str, tuple[int, int]] = {}
+    for h in hist:
+        mode = h.get("mode")
+        if mode not in MODES:
+            continue
+        if mode not in starts:
+            starts[mode] = fast_track_start(mode)
+        start = starts[mode]
+        if start is None:
+            continue
+        rnd = h.get("round")
+        lost_early = (not h.get("won") and rnd is not None
+                      and int(rnd) < start + FAST_TRACK_OPENING_ROUNDS)
+        games, lost = table.get(mode, (0, 0))
+        table[mode] = (games + 1, lost + int(lost_early))
+    _OPENING_RECORD_MEMO[id(account)] = (stamp, table)
+    return table
+
+
+def fast_track_opening_factor(account: AccountState, mode: str) -> float:
+    """The share of the account's games in ``mode`` that got past the Fast
+    Track opening (FAST_TRACK_OPENING_ROUNDS rounds from the Fast Track start),
+    shrunk towards 1 by FAST_TRACK_OPENING_PRIOR_GAMES survived pseudo-games;
+    1.0 when the account has no Fast Track or the mode has no such opening."""
+    from .boosts import fast_track_start
+    boosts = getattr(account, "boosts", {}) or {}
+    if not boosts.get("fast_track") or fast_track_start(mode) is None:
+        return 1.0
+    games, lost = _fast_track_opening_record(account).get(mode, (0, 0))
+    k = FAST_TRACK_OPENING_PRIOR_GAMES
+    return (games - lost + k) / (games + k)
+
 
 # Map fit (mapfit.py): the share of the early track that the plan's damage
 # towers can reach from cells where they may stand. At FULL_FIT or more the
@@ -955,8 +1019,11 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     p *= strategy_readiness(s, account, mode)
     if double_cash_applies(boosts, mode):
         p = 1.0 - (1.0 - p) * DOUBLE_CASH_LOSS_FACTOR
-    if boosts.get("fast_track") and MODE_RULES.get(mode, {}).get("half_cash"):
-        p *= FAST_TRACK_HALF_CASH_FACTOR
+    if boosts.get("fast_track"):
+        # the hand-set Half Cash doubt or the mode's own opening record,
+        # whichever doubts the Fast Track start more
+        hand = FAST_TRACK_HALF_CASH_FACTOR if MODE_RULES.get(mode, {}).get("half_cash") else 1.0
+        p *= min(hand, fast_track_opening_factor(account, mode))
     p *= map_fit_factor(s, map_name, mode)
     # the bot could not build its defence on this map before (any mode, any
     # build): every mode there is doubted like a lost one until a win

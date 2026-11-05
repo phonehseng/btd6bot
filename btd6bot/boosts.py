@@ -42,3 +42,26 @@ def double_cash_applies(boosts, mode):
     from .strategy import MODE_RULES     # imported here: strategy imports a lot
     rules = MODE_RULES.get(mode, {})
     return bool(boosts.get("double_cash")) and rules.get("income", True) and not rules.get("no_powers")
+
+
+# The first round of a Fast Track game, by the mode's reward tier
+# (account.ModeInfo.reward_tier), as the bot's own games report it ("match:
+# game starts at round N (Fast Track?)" in logs/bot.log, 2026-11-05): Easy 10,
+# Medium 15, the Hard family 22, Impoppable 29. The skipped rounds' cash comes
+# with it. Deflation keeps its round 31 (no income, nothing to skip) and CHIMPS
+# allows no boost at all.
+FAST_TRACK_START = {"easy": 10, "medium": 15, "hard": 22, "impoppable": 29}
+
+
+def fast_track_start(mode):
+    """The round a game in `mode` begins at with Fast Track on, or None when
+    Fast Track changes nothing there (the game forbids powers, the mode buys
+    everything up front, or the tier has no rounds to skip)."""
+    from .account import MODES
+    from .strategy import MODE_RULES
+    rules = MODE_RULES.get(mode, {})
+    info = MODES.get(mode)
+    if info is None or rules.get("no_powers") or rules.get("buy_all_upfront"):
+        return None
+    start = FAST_TRACK_START.get(info.reward_tier)
+    return start if start is not None and start > info.start_round else None

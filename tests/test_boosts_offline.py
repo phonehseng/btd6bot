@@ -67,6 +67,51 @@ def test_fast_track_doubts_half_cash():
     assert P.prior_win_probability(acc, s, "Monkey Meadow", "hard") > with_ft
 
 
+def test_where_fast_track_games_begin():
+    """The Fast Track start round per mode, as the bot's games report it."""
+    assert B.fast_track_start("easy") == 10 and B.fast_track_start("primary_only") == 10
+    assert B.fast_track_start("medium") == 15 and B.fast_track_start("reverse") == 15
+    assert B.fast_track_start("hard") == 22 and B.fast_track_start("abr") == 22
+    assert B.fast_track_start("impoppable") == 29
+    assert B.fast_track_start("chimps") is None       # the game allows no boost there
+    assert B.fast_track_start("deflation") is None    # everything is bought before round 31
+    assert B.fast_track_start("no_such_mode") is None
+
+
+def test_fast_track_opening_losses_doubt_the_mode():
+    """Losses inside a mode's Fast Track opening (ABR: rounds 22-30, with a
+    build bought in one go for a round-1 plan) lower the prior of every build
+    in that mode; losses deep in the game are the build's own business."""
+    acc = AccountState()
+    acc.apply_level(60)
+    acc.boosts = {"double_cash": True, "fast_track": True}
+    s = next(x for x in P.EXAMPLE_STRATEGIES if "abr" in x.modes)
+    clean = P.prior_win_probability(acc, s, "Monkey Meadow", "abr")
+    assert P.fast_track_opening_factor(acc, "abr") == 1.0
+    # four losses at round 60 on another map: the opening was survived
+    for _ in range(4):
+        acc.record_result("Logs", "abr", "some_build", False, round_reached=60)
+    assert P.fast_track_opening_factor(acc, "abr") == 1.0
+    assert abs(P.prior_win_probability(acc, s, "Monkey Meadow", "abr") - clean) < 1e-9
+    # four more lost at round 25: 4 of 8 openings lost, shrunk by the pseudo-games
+    for _ in range(4):
+        acc.record_result("Logs", "abr", "some_build", False, round_reached=25)
+    k = P.FAST_TRACK_OPENING_PRIOR_GAMES
+    f = P.fast_track_opening_factor(acc, "abr")
+    assert abs(f - (8 - 4 + k) / (8 + k)) < 1e-9, f
+    doubted = P.prior_win_probability(acc, s, "Monkey Meadow", "abr")
+    assert abs(doubted - min(0.98, max(0.01, clean * f))) < 1e-9, (clean, f, doubted)
+    # a win at round 80 is another survived opening
+    acc.record_result("Logs", "abr", "some_build", True, round_reached=80)
+    assert abs(P.fast_track_opening_factor(acc, "abr") - (9 - 4 + k) / (9 + k)) < 1e-9
+    # other modes keep their own record; without the boost nothing is doubted
+    assert P.fast_track_opening_factor(acc, "hard") == 1.0
+    assert P.fast_track_opening_factor(acc, "chimps") == 1.0
+    acc.boosts = {"double_cash": True}
+    assert P.fast_track_opening_factor(acc, "abr") == 1.0
+    assert abs(P.prior_win_probability(acc, s, "Monkey Meadow", "abr") - clean) < 1e-9
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
