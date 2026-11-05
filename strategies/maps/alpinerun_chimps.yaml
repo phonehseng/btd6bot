@@ -1,0 +1,135 @@
+# Alpine Run, CHIMPS: a Hot Shots tack that grows into an Inferno Ring,
+# Druid of the Jungle and Spiked Mines spike factories, all lifted by an MIB
+# village and a Stronger Stimulant alchemist; Obyn.
+#
+# Why: one long single lane (1,389 world units, 933 on screen) in zig-zags,
+# no water, no sight blockers, no removables. Range towers reach little of it
+# (best tack circle 67 units), so the build leans on what covers the whole
+# lane: the Druid of the Jungle's vines and the Inferno Ring's meteor (both
+# map-wide in the game model; the wiki confirms the meteor's infinite range),
+# plus spikes laid along three separate stretches. Every early buy stays on
+# its tower's final path (tack 0-2-0 -> 5-2-0, spike base -> 4-2-0, sniper
+# 0-1-0 -> 4-2-0), so little of the $650 start is wasted.
+#   * R6-21: tack 0-2-0 at the left zig-zags holds R6-8 alone; an engineer at
+#     R9 (the hardest early round: $1,195 is all there is) and Hot Shots by
+#     R13 (lead R28). Spike factory by R19: camo from R24 with no detection.
+#   * R25-45: Druid of the Jungle (single lane: the wiki's pick), a Night
+#     Vision sniper for the camo rounds 33/36/42, Ring of Fire, Spiked Mines.
+#   * R48-66: MIB village (camo and every damage type near it), second
+#     Spiked Mines, Berserker Brew. R84: Inferno Ring ($49,140 in one tier),
+#     then Stronger Stimulant, a Maim MOAB sniper, a third Spiked Mines and
+#     (R99) Cripple MOAB for the R100 BAD.
+#
+# constraints.no_answers: the executor's blimp ramp check (threats.
+# blimp_capacity on counters.json) rates this defence short of its 1.4x bar
+# on nearly every blimp round from R64 on - by R94 it would want about 25
+# Cripple MOAB snipers - so with answers on it calls those rounds "weak",
+# keeps no cash for the plan and sprays it on new aces, snipers, bombs and
+# helis: offline, the Inferno Ring was never bought and R98 fell to 0.44
+# (plan towers) / 0.66 (with extras). The plan itself answers every threat
+# in time (no gaps in tools/simulate_threats), so the answers are switched
+# off and the executor follows the plan; reinforce/surplus still run.
+#
+# Sources:
+#   * bloonswiki Alpine_Run (MediaWiki API): "above-average in terms of
+#     difficulty" for a Beginner map due to the dispersed track; no
+#     line-of-sight blockers; towers usually go around the middle lane
+#     (https://www.bloonswiki.com/Alpine_Run)
+#   * bloonswiki Strategy:CHIMPS: the hardest rounds (40, 63, 75, 78, 90, 95,
+#     98, 99, 100); Druid of the Jungle "arguably the best option on
+#     single-lane-per-round maps"; a Spike Factory fends off early camos;
+#     Spiked Mines with Berserker Brew "carry power well into the late-game";
+#     Obyn as a simple, versatile CHIMPS hero; focus on a few strong towers
+#     with support (https://www.bloonswiki.com/Strategy:CHIMPS)
+#   * bloonswiki Inferno_Ring_(BTD6): the meteor seeks targets anywhere on
+#     screen, 700 damage (https://www.bloonswiki.com/Inferno_Ring_(BTD6))
+#   * searched, nothing Alpine-specific found: r/btd6 and Steam threads (black
+#     border rules only), sarahs-btd6-site Alpine Run page (CHIMPS section
+#     "coming soon"; https://sarahs-btd6-site.onrender.com/guides/maps/easy-maps/alpine-run)
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method),
+# CHIMPS economy (R6 $650, base income, Hard prices, no boosts), R6-100:
+#   * every `at` is legal for its tower in plan order on the map geometry and
+#     on the live map model (data/maps/alpinerun.npz), outside the HUD band;
+#   * plan replay (optimize_builds.replay_plan's way): worst margin 2.16 (R9);
+#     blimp rounds R40 4.09, R60 16, R63 15.8, R76 9.83, R78 12.3, R81 2.89,
+#     R90 16, R94 12.1, R95 4.71, R96 11.2, R97 16, R98 6.17, R99 4.60,
+#     R100 16; camo rounds 24/33/36/42 12.1/5.30/6.10/4.86;
+#   * sight-strict: the same numbers (no sight blockers, no aces or subs);
+#   * executor-faithful replay (tools/simulate_threats' loop, real geometry,
+#     the account, surplus spending), strict, with its extra towers / plan
+#     towers only: 2.16 (R9) / 2.16 (R9); every plan step bought, each one
+#     round earlier than the plan replay (Inferno Ring R83, Cripple MOAB
+#     R99; the plan keeps its cash, so surplus buys nothing extra);
+#   * tools/simulate_threats: no gaps; strategy.coverage nothing missing.
+id: alpinerun_chimps
+map: Alpine Run
+hero: obyn
+modes: [chimps]
+constraints:
+  no_answers: true
+planner:
+  towers: {tack: [5, 2, 0], spike: [4, 2, 0], druid: [1, 3, 0], sniper: [5, 2, 0], village: [2, 3, 0],
+           alchemist: [4, 0, 0], engineer: [1, 1, 0]}
+  base_success: {chimps: 0.85}
+  maps: [Alpine Run]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.281, 0.589]}   # left zig-zags: R6-8 alone at 0-2-0
+  - {do: upgrade, id: t1, to: 0-1-0}
+  - {do: upgrade, id: t1, to: 0-2-0}
+  - {do: upgrade, id: t1, to: 1-2-0}
+  - {do: place, id: e1, kind: engineer, role: dps, at: [0.377, 0.760]}   # R9: the one buy that holds it
+  - {do: upgrade, id: t1, to: 2-2-0}
+  - {do: upgrade, id: t1, to: 3-2-0}   # Hot Shots: lead (R28)
+  - {do: upgrade, id: e1, to: 1-0-0}
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.281, 0.760]}   # camo from R24 (spikes need no detection)
+  - {do: upgrade, id: e1, to: 1-1-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.334, 0.768]}   # not counted by the damage model
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.216, 0.368]}
+  - {do: upgrade, id: d1, to: 1-0-0}
+  - {do: upgrade, id: d1, to: 1-1-0}
+  - {do: upgrade, id: d1, to: 1-2-0}
+  - {do: upgrade, id: d1, to: 1-3-0}   # Druid of the Jungle: vines over the whole lane
+  - {do: place, id: sn1, kind: sniper, role: dps, target: strong, at: [0.147, 0.913]}   # sees the whole route
+  - {do: upgrade, id: sn1, to: 0-1-0}   # Night Vision: camo rounds 33/36/42
+  - {do: upgrade, id: sn1, to: 0-2-0}
+  - {do: upgrade, id: sn1, to: 1-2-0}
+  - {do: upgrade, id: t1, to: 4-2-0}   # Ring of Fire
+  - {do: upgrade, id: sp1, to: 0-1-0}
+  - {do: upgrade, id: sp1, to: 0-2-0}
+  - {do: upgrade, id: sp1, to: 1-2-0}
+  - {do: upgrade, id: sp1, to: 2-2-0}
+  - {do: upgrade, id: sp1, to: 3-2-0}
+  - {do: upgrade, id: sp1, to: 4-2-0}   # Spiked Mines (~R49)
+  - {do: place, id: v1, kind: village, role: support, at: [0.377, 0.675]}   # reaches t1, sp1, a1, the hero
+  - {do: upgrade, id: v1, to: 0-1-0}
+  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo ceramics R51, camo leads R59
+  - {do: place, id: sp2, kind: spike, role: dps, at: [0.601, 0.641]}   # right half of the lane
+  - {do: upgrade, id: sp2, to: 0-1-0}
+  - {do: upgrade, id: sp2, to: 0-2-0}
+  - {do: upgrade, id: sp2, to: 1-2-0}
+  - {do: upgrade, id: sp2, to: 2-2-0}
+  - {do: upgrade, id: sp2, to: 3-2-0}
+  - {do: upgrade, id: sp2, to: 4-2-0}
+  - {do: upgrade, id: v1, to: 0-3-0}   # MIB: camo and every damage type near it
+  - {do: upgrade, id: v1, to: 1-3-0}
+  - {do: upgrade, id: v1, to: 2-3-0}   # Jungle Drums
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.318, 0.709]}   # brews t1 and sp1
+  - {do: upgrade, id: a1, to: 1-0-0}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: a1, to: 3-0-0}   # Berserker Brew
+  - {do: upgrade, id: t1, to: 5-2-0}   # Inferno Ring: map-wide meteors (~R84)
+  - {do: upgrade, id: a1, to: 4-0-0}   # Stronger Stimulant
+  - {do: upgrade, id: sn1, to: 2-2-0}
+  - {do: upgrade, id: sn1, to: 3-2-0}
+  - {do: upgrade, id: sn1, to: 4-2-0}   # Maim MOAB
+  - {do: place, id: sp3, kind: spike, role: dps, at: [0.484, 0.572]}   # middle of the lane
+  - {do: upgrade, id: sp3, to: 0-1-0}
+  - {do: upgrade, id: sp3, to: 0-2-0}
+  - {do: upgrade, id: sp3, to: 1-2-0}
+  - {do: upgrade, id: sp3, to: 2-2-0}
+  - {do: upgrade, id: sp3, to: 3-2-0}
+  - {do: upgrade, id: sp3, to: 4-2-0}   # third Spiked Mines (~R94)
+  - {do: upgrade, id: sn1, to: 5-2-0}   # Cripple MOAB: the R100 BAD answer
+fill:
+  - {do: upgrade, kind: spike, to: 4-2-0}   # surplus spikes stop at Spiked Mines

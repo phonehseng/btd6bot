@@ -1,0 +1,128 @@
+# Candy Falls, CHIMPS: two buccaneers in the chocolate river's lower bend
+# growing into a Carrier Flagship and an Aircraft Carrier, an MIB village on
+# the bank between them, two opening tacks, a camo sniper, Brickell in the
+# river's upper bend and a 2-0-4 spike factory at the end.
+#
+# Why: one very long route (1,406 world units, the 5th longest map) that
+# snakes across a vertical chocolate river (water, x 0.33-0.52) with loops at
+# the top left and bottom right. A buccaneer at the river's lower bend
+# reaches 27% of the route at base range, and the carriers' planes reach all
+# of it (1,290 hittable units), so where the boats sit matters only for the
+# village: the left bank at (0.313, 0.624) is the one legal village spot on
+# the live map model whose reach (40 + the boat's footprint 8) takes in both
+# boats (b1 27 units, b2 43 units away); no legal village spot reaches the
+# upper bend. MIB (2-3-0) gives both carriers camo and every damage type,
+# which is what the late rounds' camo DDTs (90, 95, 99) and camo ceramics
+# (78) need: without the second, buffed carrier rounds 95 and 99 fall to
+# 1.96 / 1.87 in the model.
+# The opening: CHIMPS starts at round 6 with $650 and no income. Two base
+# tacks on the loops ($560) hold rounds 6-9 (3.08 at round 6), the first
+# buccaneer follows at round 7-8 and Grape Shot / Hot Shot (0-2-0: lead from
+# round 28) by round 13-14; a lone buccaneer would hold round 9 only at 1.30.
+# Camo from round 24: Night Vision sniper (0-1-0), bought before round 19 so
+# the executor's camo check does not buy a ninja of its own; the radar
+# village (0-2-0) before round 33's camo bloons. Hard prices; no sell step,
+# no Merchantman (x-x-3 buccaneer), no Monkey Knowledge or powers.
+# The answers point at plan steps: without them the executor's generic MOAB
+# answer (buccaneer path 2 tier 4, strategy.ANSWERS) turned b1 into a 2-4-0
+# Monkey Pirates at round 35 and the Flagship could never be bought.
+# strategy.coverage() (runner.py drops a mode it fails) wants a rush answer
+# and a BAD answer from its ANSWERS table, which lists no buccaneer for
+# either: a base Super Monkey (su1, $2,700, round 57-58) is the rush answer,
+# and the Perma-Spike (sp1 2-0-5) is the BAD answer only - the executor
+# buys it from the BAD threat check at round 99. As a plan step (bought
+# right after the Flagship) the executor-faithful replay never afforded its
+# $32,400 (the executor's own blimp answers took the cash), so the plan
+# stops the spike at 2-0-4; the model rates round 100 at 9.1 without it.
+# Surplus cash goes into Armor Piercing subs (`xp_target: sub`, capped at
+# 2-0-4 by the fill step).
+#
+# Sources:
+#   * bloonswiki Candy_Falls: "one of the easiest maps"; Destroyer
+#     recommended - both broadsides fire when bloons are above and below it;
+#     Carrier Flagship with Admiral Brickell (https://www.bloonswiki.com/Candy_Falls)
+#   * bloonswiki Strategy:CHIMPS: Carrier Flagship as a win condition ("wipes
+#     the floor with the entire mid-game and early late-game"), 5-2-0 where
+#     the Destroyer attack is used, with Brickell; Destroyer as a save-up
+#     tower; Merchantman useless; rounds 40, 63, 75, 78, 90, 95, 98, 99, 100
+#     the hardest (78/90 need camo) (https://www.bloonswiki.com/Strategy:CHIMPS)
+#   * bloon.games Flooded Valley CHIMPS guide: buccaneer 2-2-0 -> Destroyer
+#     -> Aircraft Carrier -> Carrier Flagship with a Monkey Village, a beaten
+#     CHIMPS line on another water map (https://bloon.games/how-to-beat-chimps-on-flooded-valley)
+#   * TheGamer, easiest CHIMPS maps: Candy Falls 4th, its loops give "ample
+#     opportunities for excellent coverage"
+#     (https://www.thegamer.com/bloons-tower-defence-6-easiest-maps-chimps/)
+#   No Candy Falls CHIMPS video, Reddit or Steam guide turned up in the search
+#   (sarahs-btd6-site's Candy Falls CHIMPS section is empty).
+#
+# Checked offline (docs/map_strategies/beginner.md method) on the CHIMPS
+# economy (optimize_builds.economy("chimps", {}): round 6, $650, base income,
+# Hard prices), rounds 6-100; the hero's damage is not counted (extra safety):
+#   * every `at` legal for its tower in plan + fill order on the map geometry
+#     and on the live map model (data/maps/candyfalls.npz);
+#   * plan replay (each step as soon as the cash allows): every step bought
+#     (Flagship round 75), worst margin 2.48 (round 34); blimp rounds 40 3.15,
+#     60/63/76/78/81/90 16.0 (the model's cap), 94 8.82, 95 2.86, 96 7.10,
+#     97 13.45, 98 4.56, 99 2.86, 100 9.11; camo/lead/purple rounds 24 16.0,
+#     25 2.86, 28 6.95, 33 8.26, 36 2.62, 45 6.24;
+#   * sight-strict (snipers only on the track they see, subs their own range,
+#     aces their flight circle): 2.48 (round 34), same numbers;
+#   * executor-faithful (tools/simulate_threats' loop with the match loop's
+#     surplus spending, real account), strict, with its extra towers / plan
+#     towers only: 2.48 / 2.48 (round 34); round 40 3.87 / 3.63, round 95
+#     2.89 / 2.86, round 98 4.65 / 4.60, round 99 2.89 / 2.86, round 100
+#     9.72 / 9.62. All 24 plan steps bought: MIB at round 50, b2 4-2-0 at 55,
+#     super at 57, Flagship b1 5-2-0 at 78, spike 2-0-4 at 79 (Perma-Spike
+#     answer at 99); no threat gaps. The executor's blimp check still buys a
+#     few unplanned blimp towers (ace at 63, sniper at 75, heli/bomb later);
+#   * strategy.load_all(): bot_ready, validate() empty; strategy.coverage
+#     and usable() for chimps on the real account: ok, nothing missing.
+# Risk the model cannot see: rounds 95 and 99 rest on the MIB reaching b2
+# (43 units from the village centre, inside 40 + its footprint 8).
+id: candyfalls_chimps
+map: Candy Falls
+hero: admiral_brickell
+modes: [chimps]
+xp_target: sub
+planner:
+  towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], sniper: [0, 1, 0], tack: [0, 0, 0], sub: [2, 0, 4],
+           spike: [2, 0, 5], super: [0, 0, 0]}
+  base_success: {chimps: 0.85}
+  maps: [Candy Falls]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.687, 0.624]}   # bottom-right loop's S-bend
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.184, 0.351]}   # top-left loop
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.387, 0.606]}   # river, lower bend: the Flagship
+  - {do: upgrade, id: b1, to: 0-1-0}   # Grape Shot
+  - {do: upgrade, id: b1, to: 0-2-0}   # Hot Shot: lead from round 28
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.804, 0.896]}   # right-hand lawn: sees the whole route
+  - {do: upgrade, id: s1, to: 0-1-0}   # Night Vision: camo from round 24
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.430, 0.641]}   # lower bend, inside the village's reach
+  - {do: upgrade, id: b2, to: 0-2-0}
+  - {do: place, id: v1, kind: village, role: support, at: [0.313, 0.624]}   # left bank: reaches b1 and b2
+  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo for both boats (round 33)
+  - {do: upgrade, id: b1, to: 2-2-0}
+  - {do: upgrade, id: b2, to: 2-2-0}
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer before the round-40 MOAB
+  - {do: upgrade, id: b2, to: 3-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.441, 0.402]}   # Brickell, river's upper bend
+  - {do: upgrade, id: v1, to: 2-2-0}   # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier: planes reach the whole route
+  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo + every damage type (DDTs)
+  - {do: upgrade, id: b2, to: 4-2-0}
+  - {do: place, id: su1, kind: super, role: dps, at: [0.633, 0.777]}   # base Super Monkey: the round-63 rush answer
+  - {do: upgrade, id: b1, to: 5-2-0}   # Carrier Flagship
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.174, 0.521]}   # top-left loop: the end-of-round leaks
+  - {do: upgrade, id: sp1, to: 2-0-4}
+fill:
+  - {do: upgrade, kind: sub, to: 2-0-4}   # surplus subs (xp_target) stop at Armor Piercing Darts
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 0-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 2-2-0}, {do: upgrade, id: b2, to: 2-2-0}]
+  rush: [{do: place, id: su1, kind: super, role: dps, at: [0.633, 0.777]}]
+  moab: [{do: upgrade, id: b2, to: 2-2-0}, {do: upgrade, id: b1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}]
+  zomg: [{do: upgrade, id: b2, to: 4-2-0}]
+  ddt: [{do: upgrade, id: v1, to: 2-3-0}, {do: upgrade, id: sp1, to: 2-0-4}]
+  bad: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: sp1, to: 2-0-5}]

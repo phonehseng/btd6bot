@@ -1,0 +1,126 @@
+# End Of The Road, CHIMPS: Destroyers in the pool from round 6 (the first
+# buccaneer IS the opener), a Maim MOAB sniper, a Recursive Cluster bomb for
+# the round-63 rush, then a Stronger Stimulant alchemist and an MIB village
+# beside the pool and four Aircraft Carriers. Admiral Brickell in the pool.
+#
+# Why: the shortest beginner map (994 world units, 818 hittable). Bloons run
+# out along the top lane, loop round the pool at the right and come back
+# along the bottom lane, so a boat in the pool shoots both lanes: a
+# buccaneer there reaches 37% of the route (best spot (0.623, 0.487)), more
+# than any land tower. The damage model rates a lone buccaneer in the pool
+# 2.95 on round 6 against 1.6 for the best land tower (engineer) and 0.4-1.2
+# for dart, ninja, sub, wizard, boomerang; Double Shot (2-x-x) doubles it.
+# So $650 at round 6 buys the buccaneer, and every early dollar goes into
+# it and a second one: rounds 6-15 hold on two boats alone (worst 2.11,
+# round 15).
+#
+# Lessons from the CHIMPS loss of 2026-11-05 (chimps_ninja_sun on this map,
+# journal 20261105_075616_EndOfTheRoad_chimps): its board rated 0.6-1.3 on
+# rounds 7-21, bloons reached 96% of the track from round 32, the MOAB answer
+# was forced in ahead of the plan, and round 76 leaked with $5.2k idle while
+# a $21.6k Sun Avatar step waited and surplus bought loose ninjas and aces.
+# Here every step costs at most $12.6k (the MIB tier), the moab/ceramic/
+# lead/camo answers stand from the plan's own steps before the executor
+# would force them (6 rounds ahead with one life), and the blimp answers
+# (`answers` bfb/zomg/ddt) name the plan's own carrier and Maim MOAB steps,
+# so the executor's blimp ramp buys those first instead of loose towers.
+#
+# Sources:
+#   * bloonswiki End_Of_The_Road: "the pool on this map is surrounded by track
+#     on the left and right", Destroyers 3-(1 or 2)-0 (or a Carrier Flagship)
+#     with Admiral Brickell and camo detection beat the mid-game
+#     (https://www.bloonswiki.com/End_Of_The_Road)
+#   * bloonswiki Strategy:CHIMPS: Carrier Flagship / Aircraft Carrier with
+#     Brickell on water maps; Dart + Sub style cheap openers; round 40 MOAB,
+#     63 rush and the 90s DDT/ZOMG rounds as the roadblocks
+#     (https://www.bloonswiki.com/Strategy:CHIMPS)
+#   * bloonswiki Strategy:Military_Only: Destroyer 3-2-0 crosspath, Maim MOAB
+#     snipers on Strong for BFBs (https://www.bloonswiki.com/Strategy:Military_Only)
+#   * community CHIMPS runs on this map (r/btd6 and YouTube titles listed by
+#     web search) were only titles without build orders, so the build is the
+#     wiki's pool plan checked on the damage model.
+#
+# Rules kept: no selling, no farms, no income upgrades (buccaneer bottom path
+# stops at Crow's Nest x-x-2: Merchantman is income), no MK, no powers, no
+# aimed towers (mortar, dartling). Every tower and tier is unlocked on the
+# main account (buccaneer 5-5-5, sniper 5-5-5, bomb, alchemist, village 4-5-5).
+#
+# Surplus: the Cripple MOAB (s1 5-2-0, the plan's own BAD answer) is a fill
+# step; the executor's blimp ramp may answer round 100 with its own tier-5
+# blimp tower first (it bought a MOAB Eliminator at round 96 in the replay).
+#
+# Checked offline (no game; docs/map_strategies/beginner.md has the method),
+# CHIMPS economy (optimize_builds.economy("chimps"): round 6, $650, Hard
+# prices, no Double Cash, no Fast Track), rounds 6-100:
+#   * every `at` is legal for its tower in plan order on the map geometry (as
+#     tests/test_map_hints_offline.py checks) and on the live map model
+#     (data/maps/endoftheroad.npz), outside the top HUD band;
+#   * plan replay (tools/optimize_builds.replay_plan): worst margin 2.11
+#     (round 15); blimp rounds 40: 3.91, 60: 8.72, 63: 4.09, 76: 14.36,
+#     78: 10.26, 81: 13.90, 90: 16.0, 94: 3.87, 95: 2.23, 96: 3.36, 97: 6.10,
+#     98: 2.20, 99: 2.80, 100: 4.13;
+#   * sight-strict (snipers only see what the cacti leave, subs their own
+#     range, aces their flight circle): worst 2.11 (round 15), the same per
+#     round (no sub or ace here; the sniper spot sees all 818 units);
+#   * executor-faithful replay (tools/simulate_threats' loop with the real
+#     Executor on the map geometry and the account's unlocks), strict, with
+#     the extra towers its blimp ramp buys / plan towers only: worst 2.18
+#     (round 15) / 2.18 (round 15); round 95: 3.26 / 2.23, round 98: 3.22 /
+#     2.20. The whole plan is bought, the last step (b4 4-0-2) at round 81;
+#     key rounds in that replay: Double Shot R8, camo (b1 2-0-2) R16, lead
+#     (b2 2-2-0) R20, Deadly Precision R34, Destroyer R38, Recursive Cluster
+#     R47, Maim MOAB R49, Stronger Stimulant R52, MIB R67. No threat gaps;
+#   * strategy.load_all(): bot-ready, validate() empty; coverage(chimps) and
+#     usable() on the main account: nothing missing.
+id: endoftheroad_chimps
+map: End Of The Road
+hero: admiral_brickell
+modes: [chimps]
+planner:
+  towers: {buccaneer: [4, 2, 2], sniper: [5, 2, 0], bomb: [2, 0, 3], alchemist: [4, 2, 0], village: [2, 3, 0]}
+  base_success: {chimps: 0.85}
+  maps: [End Of The Road]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.623, 0.487]}   # pool, top right: 37% of the route; the $650 opener
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}   # Double Shot: rounds 6-15
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.569, 0.504]}   # pool, left
+  - {do: upgrade, id: b2, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-0-2}   # Crow's Nest: camo (round 24)
+  - {do: upgrade, id: b2, to: 2-2-0}   # Hot Shot: lead (round 28)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.450, 0.850]}   # open ground below the road, sees the whole route
+  - {do: upgrade, id: s1, to: 2-2-0}   # Full Metal Jacket, Large Calibre (ceramic), Night Vision, Shrapnel
+  - {do: upgrade, id: s1, to: 3-2-0}   # Deadly Precision: the round-40 MOAB answer
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.580, 0.624]}   # Brickell, bottom of the pool
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.601, 0.555]}   # pool, middle
+  - {do: upgrade, id: b3, to: 2-0-2}   # camo: round 56's camo rainbows
+  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer
+  - {do: upgrade, id: b3, to: 3-0-2}   # Destroyer
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.238, 0.419]}   # inside the left S-bend: both lanes
+  - {do: upgrade, id: bm1, to: 2-0-3}   # Recursive Cluster: the round-63 rush answer
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: BFB, ZOMG, DDT answer
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.676, 0.428]}   # right of the pool: reaches b1-b4
+  - {do: upgrade, id: a1, to: 4-2-0}   # Stronger Stimulant
+  - {do: upgrade, id: b1, to: 4-0-2}   # Aircraft Carrier
+  - {do: place, id: v1, kind: village, role: support, at: [0.548, 0.359]}   # above the pool: reaches b1-b3
+  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo and every damage type for b2 (DDTs, rounds 90-99)
+  - {do: upgrade, id: b2, to: 4-2-0}
+  - {do: upgrade, id: b3, to: 4-0-2}
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.633, 0.606]}   # pool, bottom right
+  - {do: upgrade, id: b4, to: 4-0-2}
+fill:
+  - {do: upgrade, id: s1, to: 5-2-0}   # Cripple MOAB: the BAD answer when cash is left over
+answers:
+  camo: [{do: upgrade, id: b1, to: 2-0-2}]
+  lead: [{do: upgrade, id: b2, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  rush:
+    - {do: place, id: bm1, kind: bomb, role: dps, at: [0.238, 0.419]}
+    - {do: upgrade, id: bm1, to: 2-0-3}
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}, {do: upgrade, id: b1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-2-0}, {do: upgrade, id: b1, to: 4-0-2}, {do: upgrade, id: b2, to: 4-2-0},
+         {do: upgrade, id: b3, to: 4-0-2}]
+  ddt: [{do: upgrade, id: s1, to: 4-2-0}, {do: upgrade, id: b3, to: 4-0-2}]
+  bad: [{do: upgrade, id: s1, to: 5-2-0}]
