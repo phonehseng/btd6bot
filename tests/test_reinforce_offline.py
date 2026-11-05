@@ -298,6 +298,48 @@ def test_place_held_back_matches_try_place():
     assert ex.place_held_back(step)
 
 
+def test_a_plan_step_keeps_the_cash_only_when_reachable_and_better():
+    # Ancient Portal Impoppable (2026-11-05): the $27,284 saved toward
+    # Perma-Spike went on a Super Monkey tier worth +0.03; Quad ABR: cash was
+    # kept for a Glaive Lord no income could pay before the rush. Here the
+    # plan waits for the $2,000 upgrade (+0.8 in ToyForecast) while the $300
+    # one (+0.1) would eat into the saving.
+    class Planned(ToyEx):
+        income = 500.0                     # per round, counted toward the step
+
+        def __init__(self):
+            super().__init__()
+            self.plan, self.idx = [{"do": "upgrade", "id": "s1", "to": "0-1-0"}], 0
+
+        def _first_step_cost(self, step):
+            return 2000
+
+        def _next_path(self, p, target):
+            return (2, 2000)
+
+        def income_until(self, due_round, rnd):
+            return self.income * max(0, due_round - rnd)
+    ex = Planned()
+    # $600 at round 37, round 40 the weakest: three rounds of income make
+    # $2,100 - the step is reachable and lifts more, so the cash stays
+    assert R.payable_by(ex, 2000, 600, 40, 37) is True
+    assert R.best(ex, ToyForecast(), 600, 37, 80) == ("wait", None)
+    # no income: the step cannot come before round 40 - the $300 is bought
+    ex.income = 0.0
+    assert R.payable_by(ex, 2000, 600, 40, 37) is False
+    status, found = R.best(ex, ToyForecast(), 600, 37, 80)
+    assert status == "buy" and found[0].cost == 300, (status, found)
+    # reachable, but rated below the purchase (a path-3 tier the model gives
+    # nothing for): the $300 upgrade comes first
+    ex.income = 500.0
+    ex.plan[0]["to"] = "0-0-1"
+    ex._next_path = lambda p, target: (3, 2000)
+    status, found = R.best(ex, ToyForecast(), 600, 37, 80)
+    assert status == "buy" and found[0].cost == 300, (status, found)
+    # an executor without an income figure cannot tell: the step is assumed reachable
+    assert R.payable_by(ToyEx(), 2000, 600, 40, 37) is None
+
+
 def test_look_ahead_covers_the_rounds_left():
     assert R.lookahead_rounds(55, 80) == list(range(55, 65))
     assert R.lookahead_rounds(78, 80) == [78, 79, 80]

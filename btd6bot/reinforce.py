@@ -245,7 +245,8 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
         # in a crisis the plan step keeps only what income cannot rebuild
         # before its round (its own `round`, else the next one)
         keep = release(ex, cost, step.get("round") or rnd + 1, rnd) if now else cost
-        if moved < MIN_LIFT and cash - pick[1].cost < keep:
+        if (cash - pick[1].cost < keep
+                and plan_keeps_claim(forecast, ex, step, cost, cash, rnd, worst, now, pick[1], moved)):
             log.info("reinforce: %s would move round %d only %.2f -> %.2f - the cash stays for plan "
                      "step %s ($%d)", pick[1].what, worst, before or 0.0, after or 0.0, step, cost)
             return "wait", None
@@ -300,6 +301,97 @@ def waiting_plan_step(ex, cash):
     if cost is None or cost == float("inf") or cost <= cash:
         return None
     return step, cost
+
+
+def plan_keeps_claim(forecast, ex, step, cost, cash, rnd, worst, crisis, pick, moved):
+    """Does the plan step waiting for cash keep its claim on the bank against
+    `pick`, the reinforcement that would eat into it (and moves the judged
+    round by `moved`)?
+
+    The first rule - any purchase lifting the weakest round by MIN_LIFT or
+    more outbids the step - judged the purchase alone, never the step. Two
+    games were lost that way on 2026-11-05:
+
+      * Ancient Portal Impoppable saved toward Perma-Spike (sp1 2-0-5,
+        $36,000, the plan's answer to rounds 95-100) from round 70 on, and
+        at round 88 reinforce spent the $27,284 in the bank on a Super
+        Monkey tier that moved round 96 from 0.39 to 0.42. Round 94 was lost
+        with $17,562 in hand and the spike factory still 2-0-4.
+      * Quad ABR kept $10,000-20,500 "for plan step b1 -> 5-0-2" (Glaive
+        Lord, $35,100) from round 54 while the ceramic rush of round 63 was
+        rated 0.34-0.47; no income could pay the step before that round,
+        and the game was lost there with the cash in the bank.
+
+    So the step keeps its claim only when both hold:
+      1. it can be paid before round `worst` from the cash in hand and the
+         income until then (payable_by; unknown income: assumed payable);
+      2. rated in the damage model like any other purchase (plan_option), it
+         lifts the judged rounds at least as much as the pick does - a pick
+         under MIN_LIFT never outbids it, and a step the model cannot rate
+         (tower gone, no spot) keeps the old MIN_LIFT bar."""
+    if payable_by(ex, cost, cash, worst, rnd) is False:
+        log.info("reinforce: plan step %s ($%d) cannot be paid before round %d from $%d and the income "
+                 "until then - it holds no cash", step, cost, worst, cash)
+        return False
+    if moved < MIN_LIFT:
+        return True
+    option = plan_option(ex, step, cost)
+    if option is None:
+        return False
+    step_before, step_after = lift(forecast, board(ex), option.towers, rnd, worst, crisis)
+    step_moved = (step_after or 0.0) - (step_before or 0.0)
+    if step_moved < moved:
+        log.info("reinforce: %s ($%d) would move round %d only %.2f -> %.2f, less than %s does "
+                 "(%.2f) - the purchase comes first", option.what, cost, worst, step_before or 0.0,
+                 step_after or 0.0, pick.what, moved)
+        return False
+    return True
+
+
+def payable_by(ex, cost, cash, due_round, rnd):
+    """Can `cost` be paid before due_round from `cash` and the income until
+    then (Executor.income_until)? None when the executor has no income figure
+    (test fakes) or the rounds are unknown: the caller assumes it can."""
+    income_until = getattr(ex, "income_until", None)
+    if not callable(income_until) or rnd is None or due_round is None:
+        return None
+    income = income_until(due_round, rnd) if due_round > rnd else 0.0
+    return cash + (income or 0.0) >= cost
+
+
+def plan_option(ex, step, cost):
+    """The waiting plan step as an Option the damage model can rate: the
+    board after the one tier (Executor._next_path: the tier its cost buys)
+    or placement it is saving for. None when it cannot be simulated: the
+    tower is gone, the placement has no spot, or the executor cannot say
+    which tier comes next (test fakes)."""
+    now = board(ex)
+    if step.get("do") == "upgrade":
+        p = ex.g.towers.get(step.get("id"))
+        next_path = getattr(ex, "_next_path", None)
+        if p is None or not callable(next_path):
+            return None
+        try:
+            nxt = next_path(p, [int(c) for c in str(step["to"]).split("-")])
+        except Exception:
+            return None
+        if not nxt:
+            return None
+        tiers = list(p.tiers)
+        tiers[nxt[0] - 1] += 1
+        after = [SimpleNamespace(**{**vars(t), "tiers": tuple(tiers)}) if t.tid == p.tid else t for t in now]
+        return Option(f"plan step upgrade {p.tid} -> {'-'.join(map(str, tiers))}", cost, step, after)
+    if step.get("do") == "place":
+        kind = step.get("kind")
+        if kind is None or ex.at_tower_cap():
+            return None
+        spots = ex.pick_spots(kind, step, n=1)
+        if not spots:
+            return None
+        fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
+        new = SimpleNamespace(tid=step.get("id") or f"_plan_{kind}", kind=kind, tiers=(0, 0, 0), x=fx, y=fy)
+        return Option(f"plan step place {kind}", cost, step, now + [new])
+    return None
 
 
 def strongest(forecast, tried, worst, before):
