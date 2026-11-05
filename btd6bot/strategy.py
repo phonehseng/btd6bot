@@ -1164,6 +1164,50 @@ class Executor:
             return "dart"  # always unlocked
         return None
 
+    PANIC_TARGET = (2, 0, 0)   # a panic tower grows to here when the build says nothing
+
+    def _panic_target(self, kind):
+        """Crosspath a panic tower of `kind` grows toward: the build's planner
+        tiers for the kind (`planner.towers`), else the first fill upgrade of
+        the kind, else PANIC_TARGET (two tiers on the main path)."""
+        tiers = ((self.strat.get("planner") or {}).get("towers") or {}).get(kind)
+        if not tiers:
+            for st in self.strat.get("fill") or []:
+                if st.get("do") == "upgrade" and st.get("kind") == kind and st.get("to"):
+                    tiers = parse_cross(st["to"])
+                    break
+        return tuple(int(t) for t in tiers) if tiers else self.PANIC_TARGET
+
+    def _panic_grow(self, step):
+        """A panic `place` step while a tower of its kind stands below the
+        panic target becomes that tower's next upgrade; otherwise the step
+        is returned as it is.
+
+        Every leak used to buy another bare tower: Dark Dungeons Military
+        Only (2026-11-05, lost round 50) placed nine 0-0-0 snipers at $330
+        this way, each worth 2 damage every 1.6 s against a ceramic rush,
+        while the plan's snipers stood at 1-2-0 - and $8-12k sat idle. The
+        same cash grows the newest standing tower of the kind along the
+        build's own crosspath (reinforce.grow_standing's rule for bought
+        towers, applied to panic buying): a 1-2-0 sniper becomes the
+        2-2-0 Large Calibre the build wants before any new one is placed.
+        The newest tower comes first because it is the one the last leak
+        put near the exit."""
+        kind = step.get("kind")
+        if step.get("do") != "place" or not kind or kind == "hero":
+            return step
+        target = self._panic_target(kind)
+        for p in reversed(list(self.g.towers.values())):
+            if p.kind != kind:
+                continue
+            nxt = self._next_path(p, target)
+            if nxt is None:
+                continue      # at the target, or grown another way
+            to = list(p.tiers)
+            to[nxt[0] - 1] += 1
+            return {"do": "upgrade", "id": p.tid, "to": "-".join(map(str, to))}
+        return step
+
     def _new_tid(self, kind):
         """An id for a tower placed without one (surplus, fills, answers):
         never one the board or the build already uses - a surplus "sub1"
@@ -3460,7 +3504,8 @@ class Executor:
         if self.panic_pending:
             for st in self.panic_steps:
                 with self.why("panic", "lives dropped"):
-                    r = self.try_step(dict(st), cash, rnd)
+                    # a standing tower of the kind grows before another is bought
+                    r = self.try_step(self._panic_grow(dict(st)), cash, rnd)
                 if r in ("bought", "progress"):
                     self.panic_pending -= 1
                     return True
