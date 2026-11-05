@@ -17,7 +17,7 @@ class FakeGame:
     """Towers by id; select() 'reads' the pop count given in `pops`."""
 
     def __init__(self, pops):
-        self.towers = {tid: SimpleNamespace(tid=tid, kind="sniper", x=0.5, y=0.5)
+        self.towers = {tid: SimpleNamespace(tid=tid, kind="sniper", x=0.5, y=0.5, tiers=[0, 0, 0])
                        for tid in pops}
         self.pops = pops
         self.sold = []

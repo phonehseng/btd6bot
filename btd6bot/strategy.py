@@ -1118,7 +1118,8 @@ class Executor:
         Firing Range ABR (2026-11-04) the fast-track opener dart made the
         right lane look defended, so the second ninja, the alchemist and the
         village all went to the left lane; the right lane leaked 74 lives in
-        rounds 23-24. The hero has no tower price and counts in full.
+        rounds 23-24. The hero counts by its own price the same way (see
+        _tower_cover).
 
         On maps whose bloon paths split, a cell also counts as covered as
         far as its lane is (see _lane_cover): bloons passing it meet every
@@ -1161,17 +1162,31 @@ class Executor:
         return lane
 
     def _tower_cover(self):
-        """The cover grid of the towers alone (see _covered)."""
+        """The cover grid of the towers alone (see _covered).
+
+        The hero is valued at its placement price (towers.HEROES 'cost'),
+        like a tower with no upgrades. It used to count in full, as if it
+        were the strongest tower on the board: on Party Parade Medium
+        (2026-11-04, fast track from round 15) Quincy stood in the left
+        lane, so that lane looked as defended as the right one with its
+        0-2-2 bomb, and a2, b1 and the village all went right. Bloons split
+        between the two lanes, and the left one leaked 90 lives by round 31.
+        A hero with no known price still counts in full."""
         import cv2
         from .towerxp import invested
         family = PRICE_FAMILY.get(self.mode, "hard")
         poppers = [p for p in self.g.towers.values()
                    if p.kind not in ("village", "alchemist", "farm")]   # support towers do not pop
         cash = {p.tid: sum(invested([p], family).values()) for p in poppers}
+        hero_price = T.HEROES.get(self.g.hero, {}).get("cost") if self.g.hero else None
+        for p in poppers:
+            if p.kind == "hero" and hero_price:
+                cash[p.tid] = hero_price
         top = max((c for c in cash.values() if c > 0), default=0)
         grid = np.zeros(self.m.heat.shape, np.float32)
         for p in poppers:
-            strength = 1.0 if p.kind == "hero" or top <= 0 else min(1.0, cash[p.tid] / top)
+            unpriced_hero = p.kind == "hero" and not cash[p.tid]
+            strength = 1.0 if unpriced_hero or top <= 0 else min(1.0, cash[p.tid] / top)
             cx, cy = self.m.frac_to_cell(p.x, p.y)
             r = int(round(min(self._range_cells(p.kind), 60)))
             disc = np.zeros_like(grid)
@@ -1685,6 +1700,27 @@ class Executor:
         share = self.MIN_REACH_SHARE if share is None else share
         return share * best if best > 0 else None
 
+    def _sole_answer(self, p):
+        """The name of a bloon property (lead, camo, purple ...) that only
+        tower p pops on this board, or None. Such a tower is never sold for
+        reading no pops: on Flooded Valley Military Only (2026-11-04) the
+        3-2-0 sniper - the only lead popper - read 0 pops twice and was sold
+        one round before the round-28 leads, which then cost 113 lives. The
+        threat check bought a bare 1-0-0 sniper back too late to stop them."""
+        if not TH.available():
+            return None
+        # support auras count as reaching every tower here (in_range None):
+        # the question is only who can pop the property at all
+        towers = self._towers()
+        others = {q.tid for q in towers if q.tid != p.tid}
+        for name in dict.fromkeys(t for _, t in THREATS):
+            sig = TH.sig_from_name(name)
+            if sig is None:
+                continue          # a strength threat, not a property one
+            if TH.covers(towers, sig)[0] and not TH.covers(towers, sig, poppers=others)[0]:
+                return name
+        return None
+
     def sell_useless(self, rnd, lives_dropped=False):
         """Sell one placed damage tower whose range reaches almost no track
         (less than SELL_REACH_SHARE of the best legal spot's reach). Not in
@@ -1715,6 +1751,11 @@ class Executor:
                     p.zero_reads = getattr(p, "zero_reads", 0) + 1 if getattr(p, "pops", None) == 0 else 0
                 break                       # one panel read per round at most
             if getattr(p, "zero_reads", 0) >= 2:
+                needed = self._sole_answer(p)
+                if needed:
+                    log.info("keeping %s (%s) with no pops read: the only tower that pops %s",
+                             p.tid, p.kind, needed)
+                    continue
                 log.warning("selling %s (%s): not a single pop in %d rounds", p.tid, p.kind,
                             rnd - p.placed_round)
                 return self._sell_and_avoid(p, rnd)
