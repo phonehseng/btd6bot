@@ -375,3 +375,10 @@
 - Since 20:55: 3 wins, 3 losses (Cornfield Deflation, Ancient Portal Double HP, Bloody Puddles Military Only won; Muddy Puddles Deflation r54, Last Resort Primary Only r20, Bloonarius Prime ABR r40 lost). Mesa Primary Only twice refused to start ("no defence could be placed", cash read 51) and is benched 6 h. All four open cases (with Workshop) are handled.
 - Fixed in d73d866 (Workshop, Muddy Puddles, Last Resort): the map-ceiling cap (p 0.5 where no researched build holds) was applied before the per-category calibration, which lifted these last-resort picks back to p 0.69-0.72. The cap now holds after calibration and scales with the ceiling. The next last-resort pick is Ravine Easy (ceiling 2.99), now live.
 - Bloonarius Prime ABR (round-40 rainbow/ceramic rush rated 1.00, reinforce aimed at round 47) filed as backlog 31d. check.py ALL OK.
+
+## 2026-11-04 22:30
+- Bot status: running (task Running, bot.py up since 21:23, recorder and BTD6 up); now reading upgrade trees between games after Pat's Pond Magic Only. No tracebacks, loops, PAUSE or STOP. Safe mode on (trips 4), and the bot keeps playing.
+- OWNER: BTD6's Auto Start is still ON (logged again at 22:02 Party Parade). Please turn it off in the game's settings.
+- Since 21:45: 3 wins, 3 losses (Lotus Island ABR, Pat's Pond Hard, Pat's Pond Magic Only won; Ravine Deflation r52, Flooded Valley Military Only r30, Party Parade Medium r31 lost). All three are handled.
+- Fixed in e345f74 (Party Parade): the lane-cover grid counted the hero as the strongest tower, so Quincy in the left lane made it look defended and every bomb went right. The hero now counts at its price. Also in e345f74 (Flooded Valley): the only lead and camo popper (a 3-2-0 sniper) was sold for "no pops" one round before the leads. A tower that alone answers a bloon property is now kept.
+- Fixed in c3bd57d (Ravine Deflation): calibration lifted a general build over the 0.76 no-income cap to p=0.93. The cap now holds after calibration. check.py ALL OK; all three fixes go live after the current game.
