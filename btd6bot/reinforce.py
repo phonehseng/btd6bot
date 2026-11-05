@@ -77,12 +77,15 @@ def crisis_now(forecast, ex, rnd, lives_dropped=None):
     return bool(margins) and min(margins) < WEAK_MARGIN
 
 
-def danger_round(forecast, ex, rnd, lives_dropped=None):
+def danger_round(forecast, ex, rnd, lives_dropped=None, lives=None):
     """The round the game is at stake in right now, or None: rnd when lives
     fell this round, else the first of rnd and rnd + 1 the damage model
     rates under forecast.CRISIS_MARGIN - the band Match calls a crisis
     round (Match._in_crisis, _hold_for_crisis), where rounds lost lives
-    11.8% of the time against 2.8% up to a margin of 1 (forecast.py).
+    11.8% of the time against 2.8% up to a margin of 1 (forecast.py) - or
+    rates under 1 while the leak it expects would cost half the `lives`
+    left (forecast.lethal_leak; Pat's Pond ABR 2026-11-05: round 54 rated
+    0.58 took all 74 lives with $15,243 kept for a $21,600 plan step).
     best() measures a waiting plan step's reach against this round
     (plan_claim_in_crisis): a step that cannot be paid before it holds
     nothing against a purchase that lifts it.
@@ -101,9 +104,17 @@ def danger_round(forecast, ex, rnd, lives_dropped=None):
         return rnd
     if rnd is None:
         return None
+    lethal = getattr(forecast, "lethal_leak", None)    # test fakes without it: the margin alone
+    towers = board(ex)
     for r in (rnd, rnd + 1):
-        m = forecast.margin(board(ex), r)
-        if m is not None and m < CRISIS_MARGIN:
+        m = forecast.margin(towers, r)
+        if m is None:
+            continue
+        if lethal is None:
+            crisis = m < CRISIS_MARGIN
+        else:
+            crisis = forecast.is_crisis(m, lives, lethal(towers, r, m))
+        if crisis:
             return r
     return None
 
@@ -271,7 +282,7 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     plan_wait = waiting_plan_step(ex, cash)
     if pick is not None and plan_wait is not None:
         step, cost = plan_wait
-        danger = danger_round(forecast, ex, rnd)
+        danger = danger_round(forecast, ex, rnd, lives=lives)
         lifts = None
         if danger is not None and payable_by(ex, cost, cash, danger, rnd) is False:
             lifts = plan_claim_in_crisis(forecast, ex, tried, pick, danger)

@@ -72,6 +72,44 @@ def test_crisis_threshold():
     assert not RoundForecast.is_crisis(None)
 
 
+class Leaky(RoundForecast):
+    """A forecast that rates every round `margin` and whose simulation says
+    each costs `lost` lives (no map model is loaded)."""
+
+    def __init__(self, lost, margin=0.58):
+        super().__init__("Water Park", "hard")
+        self.lost, self.m = lost, margin
+
+    def margin(self, towers, rnd):
+        return self.m
+
+    def leaks(self, towers, rounds, strength, per_round=False):
+        return {r: self.lost for r in rounds} if per_round else self.lost * len(rounds)
+
+
+def test_a_round_that_would_cost_half_the_lives_is_a_crisis():
+    """Pat's Pond ABR: round 54 rated 0.58 with 74 lives left took them all."""
+    assert RoundForecast.is_crisis(0.58, lives=74, leak=40)
+    assert not RoundForecast.is_crisis(0.58, lives=150, leak=40)      # a dent, not the game
+    assert not RoundForecast.is_crisis(1.2, lives=10, leak=100)       # rated to hold: the margin rules
+    assert not RoundForecast.is_crisis(0.58, lives=None, leak=40)     # lives unknown: the margin alone
+    assert not RoundForecast.is_crisis(0.58, lives=74, leak=None)
+    # the leak is only simulated for a round the model expects to leak
+    f = Leaky(40)
+    assert f.lethal_leak([], 54, 0.58) == 40
+    assert f.lethal_leak([], 54, 1.0) is None and f.lethal_leak([], 54, None) is None
+
+
+def test_danger_round_counts_a_lethal_leak():
+    from btd6bot import reinforce as R
+    ex = N(g=N(towers={}))
+    assert R.danger_round(Leaky(40), ex, 54, lives_dropped=False, lives=74) == 54
+    assert R.danger_round(Leaky(40), ex, 54, lives_dropped=False, lives=150) is None
+    # a fake forecast without lethal_leak is judged by the margin alone
+    fake = N(margin=lambda towers, r: 0.58)
+    assert R.danger_round(fake, ex, 54, lives_dropped=False, lives=74) is None
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
