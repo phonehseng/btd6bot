@@ -1828,7 +1828,7 @@ class Bot:
                 log.info("safe mode: %d open Beginner medal(s) go first "
                          "(the owner's order, 2026-11-05)", len(first))
                 cands = first
-                phase = "CHIMPS"
+                phase = "BEGINNER"
             elif len(sure) < len(cands):
                 log.info("safe mode: %d games under p=%.2f are not played", len(cands) - len(sure), CONFIDENT_P)
             if first:
