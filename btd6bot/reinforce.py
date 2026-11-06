@@ -151,12 +151,30 @@ def lift(forecast, before_towers, after_towers, rnd, worst, crisis):
     played, the next one and `worst` - so a purchase that lifts the round
     being played while `worst` does not move still counts, and one that
     only helps a round already safer than the weakest does not."""
-    rounds = [worst] + ([r for r in (rnd, rnd + 1) if r is not None and r != worst] if crisis else [])
+    rounds = judged_rounds(rnd, worst, crisis)
 
     def low(towers):
         ms = [m for m in (forecast.margin(towers, r) for r in rounds) if m is not None]
         return min(ms) if ms else None
     return low(before_towers), low(after_towers)
+
+
+def judged_rounds(rnd, worst, crisis):
+    """The rounds a purchase is judged on (lift, saved_lives): `worst`, plus
+    in a crisis the round being played and the next one."""
+    return [worst] + ([r for r in (rnd, rnd + 1) if r is not None and r != worst] if crisis else [])
+
+
+def saved_lives(forecast, before_towers, after_towers, rounds):
+    """Lives a purchase saves over `rounds` at full strength: the model's
+    leak with `before_towers` minus the leak with `after_towers`. None when
+    either board cannot be rated. Unlike a margin, the leak moves with every
+    purchase, also for a round far below the margin floor (dps_model.at_floor)."""
+    before = forecast.leaks(before_towers, rounds, 1.0)
+    after = forecast.leaks(after_towers, rounds, 1.0)
+    if before is None or after is None:
+        return None
+    return before - after
 
 
 def release(ex, held, due_round, rnd):
@@ -435,13 +453,15 @@ def plan_keeps_claim(forecast, ex, step, cost, cash, rnd, worst, crisis, pick, m
       2. rated in the damage model like any other purchase (plan_option), it
          lifts the judged rounds at least as much as the pick does - a pick
          under MIN_LIFT never outbids it, and a step the model cannot rate
-         (tower gone, no spot) keeps the old MIN_LIFT bar."""
+         (tower gone, no spot) keeps the old MIN_LIFT bar.
+    A judged round at the margin floor moves no margin whatever is bought,
+    so there the lives saved decide instead (floor_pick_outsaves)."""
     if payable_by(ex, cost, cash, worst, rnd) is False:
         log.info("reinforce: plan step %s ($%d) cannot be paid before round %d from $%d and the income "
                  "until then - it holds no cash", step, cost, worst, cash)
         return False
     if moved < MIN_LIFT:
-        return True
+        return not floor_pick_outsaves(forecast, ex, step, cost, rnd, worst, crisis, pick)
     option = plan_option(ex, step, cost)
     if option is None:
         return False
@@ -452,6 +472,40 @@ def plan_keeps_claim(forecast, ex, step, cost, cash, rnd, worst, crisis, pick, m
                  "(%.2f) - the purchase comes first", option.what, cost, worst, step_before or 0.0,
                  step_after or 0.0, pick.what, moved)
         return False
+    return True
+
+
+def floor_pick_outsaves(forecast, ex, step, cost, rnd, worst, crisis, pick):
+    """Does `pick` beat the waiting plan step on lives saved, the judged
+    rounds being at the margin floor (dps_model.at_floor)?
+
+    The margin search floors at 1/16, and MIN_LIFT compares margins: once
+    the weakest round sits there every purchase reads "0.06 -> 0.06", so
+    plan_keeps_claim kept the cash for the step whatever the purchase would
+    save. Dark Dungeons Magic Monkeys Only (2026-11-05, case
+    20261105_070008) held cash that way 14 times while the round was lost
+    (backlog 39b). The leak moves with every purchase, so at the floor the
+    pick outbids the step when it saves MIN_SAVED lives or more and more
+    than the step itself would. False when the rounds are not at the floor,
+    the pick saves too little, or the step cannot be rated (it keeps its
+    claim, as under the MIN_LIFT rule)."""
+    from .dps_model import at_floor     # lazy, like forecast.py: the model loads on first use
+    rounds = judged_rounds(rnd, worst, crisis)
+    here = board(ex)
+    margins = [m for m in (forecast.margin(here, r) for r in rounds) if m is not None]
+    if not margins or not at_floor(min(margins)):
+        return False
+    pick_saved = saved_lives(forecast, here, pick.towers, rounds)
+    if pick_saved is None or pick_saved < MIN_SAVED:
+        return False
+    option = plan_option(ex, step, cost)
+    if option is None:
+        return False
+    step_saved = saved_lives(forecast, here, option.towers, rounds)
+    if step_saved is None or step_saved >= pick_saved:
+        return False
+    log.info("reinforce: round %d is at the margin floor - %s saves %.0f lives there, plan step %s ($%d) "
+             "%.0f; the purchase comes first", worst, pick.what, pick_saved, step, cost, step_saved)
     return True
 
 

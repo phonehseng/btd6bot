@@ -1347,7 +1347,23 @@ def _play(stations, track, lots, strength):
     return RoundResult(leaked=leaked, lives_lost=lives, leaked_rbe=leak_rbe, end_time=end_time)
 
 
-def round_margin(stations, mode, rnd, track, lo=1 / 16, hi=16.0, iterations=9):
+# The margin search looks between these strengths. A round that leaks even
+# with every tower MARGIN_HI times stronger is reported at MARGIN_FLOOR: at
+# the floor every board reads the same, whatever it is bought (reinforce.py
+# then judges purchases by the lives they save instead, see at_floor).
+MARGIN_LO = 1 / 16
+MARGIN_HI = 16.0
+MARGIN_FLOOR = 1.0 / MARGIN_HI
+
+
+def at_floor(margin):
+    """Is `margin` the margin search's floor (MARGIN_FLOOR) - a round so far
+    out of reach that the margin cannot tell two boards apart? False for
+    None (not rated)."""
+    return margin is not None and margin <= MARGIN_FLOOR * 1.001
+
+
+def round_margin(stations, mode, rnd, track, lo=MARGIN_LO, hi=MARGIN_HI, iterations=9):
     """The safety margin of round rnd: the factor by which every tower could
     be weaker and the round still pop without a leak (2.0 = holds at half
     strength; below 1.0 = leaks at full strength). Bisection on strength,
@@ -1356,7 +1372,7 @@ def round_margin(stations, mode, rnd, track, lo=1 / 16, hi=16.0, iterations=9):
                        lo, hi, iterations)
 
 
-def lots_margin(stations, track, lots_by_scenario, lo=1 / 16, hi=16.0, iterations=9):
+def lots_margin(stations, track, lots_by_scenario, lo=MARGIN_LO, hi=MARGIN_HI, iterations=9):
     """round_margin for lots built by the caller (groups_lots), one list per
     scenario of the track: the worst margin over them."""
     worst = 1.0 / lo
