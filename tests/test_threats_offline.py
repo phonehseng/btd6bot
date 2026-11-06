@@ -396,6 +396,30 @@ def test_one_life_buys_blimp_damage_two_rounds_ahead():
     assert ex._answer_ramp(R, load, ratio, 20000, 38) == "bought", g.bought
 
 
+def test_half_cash_blimp_check_looks_twice_as_far():
+    """Another Brick / X Factor / Pat's Pond Half Cash (2026-11-06): round
+    40's MOAB was first checked from round 37, and three rounds of half
+    income could not pay for the MOAB answer. With half the income the check
+    looks twice as far ahead (MIN_LEAD 3 -> 6), never past MAX_LEAD."""
+    towers = [("s1", "sniper", (2, 2, 0)), ("n1", "ninja", (2, 0, 1))]
+    g, ex = executor({}, towers=towers, cash=500)
+    # a copy: the fixture's rules dict is shared, and earlier tests leave
+    # one_life set in it
+    ex.rules = dict(ex.rules, tough_moabs=False, one_life=False, half_cash=False)
+    ex._init_threats()
+    ex.cash_seen = 500
+    assert ex._ramp_lead() == ex.MIN_LEAD
+    assert ex._ramp_due(34) is None, "full income: round 40 is six rounds away, not yet checked"
+    ex.rules["half_cash"] = True
+    ex._init_threats()
+    ex.cash_seen = 500
+    assert ex._ramp_lead() == 2 * ex.MIN_LEAD
+    due = ex._ramp_due(34)
+    assert due and due[0] == 40, "half income: round 40 is checked from round 34"
+    ex.rules["one_life"] = True
+    assert ex._ramp_lead() == ex.MAX_LEAD, "one life and half cash: capped at MAX_LEAD"
+
+
 class _Forecast:
     """A damage model that rates every round at one margin."""
 

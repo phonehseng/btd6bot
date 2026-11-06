@@ -3330,13 +3330,31 @@ class Executor:
                                 self._track_length(), self._range_units, self._reach_fn())
         return cap / max(load["hp"], 1.0)
 
+    def _ramp_lead(self):
+        """How many rounds ahead the blimp check looks: MIN_LEAD
+        (MIN_LEAD_ONE_LIFE with one life), stretched by how much slower the
+        mode's income saves up for blimp damage (income_mult: Half Cash pays
+        half, so twice the rounds), never past MAX_LEAD.
+
+        Another Brick, X Factor and Pat's Pond Half Cash (2026-11-06, all
+        Fast Track starts at round 22) were each lost to round 40's first
+        MOAB. The check first looked at round 40 from round 37, read the
+        defence at 0.1-0.3x of the 1.4x wanted, and three rounds of half
+        income could not pay for the strategy's MOAB answer ($2,430) on
+        top of the rounds in between; the cash had gone to nearer rounds the
+        damage model called weak, which all passed without a leak."""
+        lead = self.MIN_LEAD_ONE_LIFE if self.rules.get("one_life") else self.MIN_LEAD
+        mult = getattr(self, "income_mult", 1.0)
+        if 0.0 < mult < 1.0:
+            lead = math.ceil(lead / mult)
+        return min(self.MAX_LEAD, lead)
+
     def _ramp_due(self, rnd):
-        """(round, load, ratio) for the next blimp round within MIN_LEAD rounds
-        (MIN_LEAD_ONE_LIFE with one life), or None. Logs the estimate once per
-        blimp round."""
+        """(round, load, ratio) for the next blimp round within _ramp_lead()
+        rounds, or None. Logs the estimate once per blimp round."""
         if rnd is None or self.no_answers or not TH.available():
             return None
-        lead = self.MIN_LEAD_ONE_LIFE if self.rules.get("one_life") else self.MIN_LEAD
+        lead = self._ramp_lead()
         for R in range(max(rnd, self.window[0]), min(rnd + lead, self.window[1]) + 1):
             load = TH.round_blimp_load(self.round_set, R, double_hp=bool(self.rules.get("tough_moabs")))
             if not load:
