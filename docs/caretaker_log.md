@@ -84,7 +84,7 @@
 ## 2026-11-02 22:40
 - Bot status: running again (BTD6Bot task Running, bot.py run since 20:29, reloaded 22:28; playing Pat's Pond Military Only, round 45, no lives lost). From 21:44 to 22:28 it was stuck: five games in a row refused with "no defence could be placed", the last three waiting 10 min each for a code fix. Safe mode ON (tripped again by the loss; 0/64 wins to leave, trips 4).
 - Since the 21:54 entry: 3 wins (Sunken Columns Easy, Dark Path Primary Only, Cargo Primary Only), 1 loss (Dark Path Deflation, round 35, solo_dartling).
-- Stuck cause, fixed in af14398: seasonal scenery next to the cash counter. Tricky Tracks' Halloween graffiti read as '$3.700-00å…ƒ', and Encrypted's falling leaves added a phantom digit. Every read was rejected and the bot never buys on unknown cash. The cash parser now cuts trailing junk, accepts a padded read only when it repeats a clean one, and cash_stable no longer ends on a bad frame; all 52 recorded frames read correctly.
+- Stuck cause, fixed in af14398: seasonal scenery next to the cash counter. Tricky Tracks' Halloween graffiti read as '$3.700-00Ã¥â€¦Æ’', and Encrypted's falling leaves added a phantom digit. Every read was rejected and the bot never buys on unknown cash. The cash parser now cuts trailing junk, accepts a padded read only when it repeats a clean one, and cash_stable no longer ends on a bad frame; all 52 recorded frames read correctly.
 - Loss diagnosed (diagnosis.md, handled): general Deflation build too weak (rated 0.48 for round 40 once fully bought, $115 left), while the planner trusted the optimized build's 2.04 ceiling. Code fix not done yet: backlog item 14 (rate the build before Play in no-income modes and leave the game instead of losing; planner uses the optimized build or the build's own rating). Next run: do item 14. The 28 old folders still say "status: new".
 
 ## 2026-11-02 23:52
@@ -112,7 +112,7 @@
 ## 2026-11-03 02:59
 - Bot status: running (BTD6Bot task Running, bot.py run since 01:41 with reloads, recorder up, BTD6 responding); playing Dark Castle Military Only, round 56, no lives lost. Safe mode ON (streak 1, trips 4).
 - Since the 01:47 entry: 6 wins (Enchanted Glade Military Only/Reverse, Cargo Medium/Military Only/Reverse, Dark Castle Medium), 4 losses (Spillway, High Finance, Cornfield, Sanctuary Medium) - all diagnosed and handled.
-- Spillway (01bc6af): OCR reads "$500" as "å­¦500" at full resolution; str.isalnum() accepts the glyph, so the price looked blank and sub paths closed. Second root cause of backlog item 10 (~80 blank reads/hour after the '#' fix).
+- Spillway (01bc6af): OCR reads "$500" as "Ã¥Â­Â¦500" at full resolution; str.isalnum() accepts the glyph, so the price looked blank and sub paths closed. Second root cause of backlog item 10 (~80 blank reads/hour after the '#' fix).
 - High Finance / Cornfield (2aed24b): mapfit gave global-range towers full coverage without checking room; now counts towers that fit (High Finance heli/ace/mortar 0, Cornfield ace 1/3). All 88 maps re-measured.
 - ddc7271: safe mode now plays only p >= 0.85 games and idles otherwise (the three p 0.78-0.84 safe-mode games all lost). Sanctuary: platforms carry towers (backlog 16). 28 old (Oct 22-24) loss folders triaged: 7 superseded by later wins, 21 grouped by cause.
 - Next run: if the bot idles ("safe mode plays only games with p >= 0.85"), raise confidence with better builds rather than lowering the bar; check the "shows no price" hourly count fell; backlog 11 (reinforce while saving) and 16.
@@ -637,6 +637,6 @@
 
 ## 2026-11-06 17:45
 - Bot status: task Running, bot.py up since 16:23, recorder and BTD6 up; now opening Spring Spring. No STOP, PAUSE or dev_active. Safe mode on (trips 4, streak 4). No Auto Start reading, no tracebacks or loops.
-- Since 16:45: 7 wins, all Apopalypse (Adora's Temple, KartsNDarts, Moon Landing, Downstream, Streambed, Rake, Spice Islands, Balance - Balance lost 2 lives), 1 loss: Cracked Apopalypse at round 46.
+- Since 16:45: 8 wins, all Apopalypse (Adora's Temple, KartsNDarts, Moon Landing, Downstream, Streambed, Rake, Spice Islands, Balance - Balance lost 2 lives), 1 loss: Cracked Apopalypse at round 46.
 - Cracked (case 20261106_171204): the held-tower check only looked for red where the cancel button sits, and Cracked's orange-red ground there passed it with nothing held. Every working placement was logged as "refused", so the bot kept re-placing towers: dozens of unrecorded snipers/darts/ninjas/aces, 9 plan steps given up, no MOAB answer. Fixed in b2d9aa2: a held tower also needs the button's white X; test on two frames of that game's recording. check.py ALL OK. Case diagnosed and marked handled.
 - Cleared data/maps/cracked.npz's refused land layer (5,711 cells, ~33% of the map, all learned from the false reads; other maps are at most ~10%). Left uncommitted like the other data/maps files and btd6bot/runner.py, which are not the caretaker's.
