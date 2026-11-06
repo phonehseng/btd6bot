@@ -28,6 +28,19 @@ def test_real_money_is_forbidden():
         assert not M.forbidden(text), text
 
 
+def test_overwrite_save_is_not_a_purchase():
+    # Alpine Run CHIMPS, 2026-11-06 03:26: the box sits over the mode
+    # rewards ("$40", "$300") and its OK was refused eighteen times
+    box = _words("OVERWRITE SAVE?", "Playing a new game will replace your existing save",
+                 "game. Are you sure you want to continue?", "CANCEL", "OK",
+                 "HALF CASH", "REWARDS:", "$40", "CHIMPS", "$300")
+    assert _screen(*[w.text for w in box]) == "overwrite"
+    assert not M.page_forbidden(box)
+    # real spending wording on the same page still forbids confirming
+    assert M.page_forbidden(box + _words("Buy for 3,000 Monkey Money"))
+    assert M.page_forbidden(_words("Are you sure?", "$1,500", "OK"))
+
+
 def test_defeat_needs_its_buttons():
     # Legends: "work with a cast of Monkey characters to defeat the Bloons"
     assert _screen("Frontier Legends", "to defeat the Bloons", "TRY") != "defeat"

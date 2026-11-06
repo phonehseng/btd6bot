@@ -94,13 +94,24 @@ def forbidden(text):
 CONFIRM_WORDS = ("yes", "ok", "confirm", "continue", "buy", "purchase", "unlock")
 SPEND_WORDS = ("areyousure", "purchase", "buy", "spend", "cost", "for$")
 PRICE_WORDS = ("monkeymoney", "$")
+# The "OVERWRITE SAVE? ... Are you sure you want to continue?" box opens over
+# the mode-select screen, whose reward labels ("$40", "$300") show around it.
+# "Are you sure" next to those dollar signs read as a purchase, so the bot
+# refused its OK eighteen times and benched Alpine Run CHIMPS (2026-11-06
+# 03:26) and Luminous Cove Impoppable (2026-11-05 20:22). The box only
+# replaces a saved game and buys nothing, so its "are you sure" is not
+# spending wording - real spending wording (buy, purchase, ...) still is.
+SAFE_CONFIRM_DIALOGS = ("overwritesave", "existingsave")
 
 
 def page_forbidden(words):
     """A purchase confirmation: spending wording next to a price. On such a page
     no confirming button may be clicked (Monkey Money or real money)."""
     joined = " ".join(norm(w.text) for w in words)
-    return any(sw in joined for sw in SPEND_WORDS) and any(pw in joined for pw in PRICE_WORDS)
+    spend = [sw for sw in SPEND_WORDS if sw in joined]
+    if spend == ["areyousure"] and any(d in joined for d in SAFE_CONFIRM_DIALOGS):
+        return False          # the overwrite-save box: its question buys nothing
+    return bool(spend) and any(pw in joined for pw in PRICE_WORDS)
 
 
 class Menus:
