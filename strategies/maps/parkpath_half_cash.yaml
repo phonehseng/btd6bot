@@ -1,0 +1,147 @@
+# Park Path, Half Cash: the Park Path CHIMPS core (pond Destroyer -> Aircraft
+# Carrier, stream Destroyer with Crow's Nest, Maim MOAB snipers on the lawn,
+# Armor Piercing sub, MIB, Bionic Boomer, Stronger Stimulant alchemist)
+# reordered for the Fast Track start, with a Radar Scanner village early.
+#
+# Why: the route coils round the central pond, so a buccaneer there fires
+# both broadsides nearly all the time; two boats to 2-2-0 / 2-0-2 and Quincy
+# hold rounds 22-33 on the setup alone. The hard rounds before 80 are R47 (70
+# camo pinks: the damage model gave 1.19 without camo on the pond Destroyer;
+# a Radar Scanner, $3k, gives 3.1 where the CHIMPS order's Maim MOAB, $11.7k,
+# was needed), R63 (the Aircraft Carrier, 9.4) and R78 (MIB). The CHIMPS
+# steps for rounds 81-100 (Flagship, third Carrier, Perma-Spike) are left out.
+#
+# Half Cash on the main account: Hard prices, rounds to 80, 100 lives, every
+# income halved. Double Cash pays here (boosts.double_cash_applies), so the
+# income is the Hard income again; Fast Track starts the game at round 22
+# with $4,465 (optimize_builds.economy("half_cash", boosts), 10% under the
+# skipped rounds' cash). That is the cash CHIMPS has saved by round 22, so
+# the build starts from the CHIMPS map build, bought at once before round 22.
+# Changes for the executor in Half Cash (found in the offline replays):
+#   * the hero goes first: a plan opening with a buccaneer gets a $200 dart
+#     in front of it (Executor._with_opener: start_round 3 <= 5);
+#   * camo (Crow's Nest) and lead (Hot Shot) are bought in the R22 setup and
+#     the camo/lead/ceramic/MOAB `answers` point at plan steps: the threat
+#     calendar plans with half income (no Double Cash), judged the plan's
+#     camo step too far and bought a ninja at R22 and a bomb at R25;
+#   * with lives to spare a waiting plan step claims no cash in the
+#     simulation (Executor.plan_claim; live only while the look-ahead is
+#     weak), so surplus() spends everything over $800. `xp_target:
+#     buccaneer` with `fill` 0-0-0 makes its extra towers bare boats in the
+#     free water ($430 each, a few until the water is full) instead of
+#     2-0-0 boats, sub tiers or snipers, which starved the Destroyers.
+#   * every tower is upgraded by a plan step, so surplus can only buy tiers
+#     the plan buys anyway.
+#
+# Sources:
+#   * bloonswiki Strategy:Half_Cash: Destroyer 3-2-0 where track runs on
+#     both sides, cheap support (Berserker Brew, Stronger Stimulant), Quincy
+#     viable, Brickell on water maps; hard rounds 40, 63, 75, 78
+#     (https://www.bloonswiki.com/Strategy:Half_Cash)
+#   * bloonswiki Park_Path_(BTD6): the central water suits buccaneers,
+#     Destroyer's guns fire on both sides
+#     (https://www.bloonswiki.com/Park_Path_(BTD6))
+#   * web search (Reddit, guides) found no Half Cash build for this map; the
+#     map pages and guides defer to the general Half Cash advice.
+#
+# Checked offline 2026-11-06 (method of docs/map_strategies/beginner.md, on
+# the damage model with strict buff reach and circling carrier planes),
+# rounds 22-80, worst margin (round):
+#   * plan replay (each step as soon as the cash allows): 2.65 (R37);
+#     R40 4.6, R47 16, R63 9.4, R75 10.4, R76 7.7, R78 5.5, R80 5.0
+#   * sight-strict (subs to their own range, aces to their circle): 2.65 (R37)
+#   * drift (every tower 5 units further from the village and alchemist,
+#     plan and strict, the worse): 2.57 (R37)
+#   * executor-faithful (simulate_threats' loop on the learned live map,
+#     surplus spending, the real account), strict, with its extra towers /
+#     plan towers only: 2.46 / 2.11 (R36); all 26 steps bought by R74, three
+#     surplus 0-0-0 boats at R30-32, no threat answers; with the match
+#     loop's weak-look-ahead claim added: 2.35 (R35)
+#   * every step from R24 on bought 2+ rounds before the first round the
+#     build fails without it (Destroyer R39 for R42, radar R45 for R47,
+#     Carrier R49 for R62); the R22 setup holds alone to R33
+#   * every `at` legal in plan order on the geometry and on the live map
+#     model (data/maps/parkpath.npz): the CHIMPS stream spots of b2 and sb1
+#     are refused there now, so they stand 2 cells east/south
+#   * strategy.load_all(): bot_ready, validate() empty; coverage complete and
+#     usable on the main account, unusable on other maps; simulate_threats
+#     (account and base economy): no gaps
+id: parkpath_half_cash
+map: Park Path
+hero: quincy
+modes: [half_cash]
+planner:
+  towers: {buccaneer: [4, 2, 2], sniper: [4, 2, 0], sub: [2, 0, 4], village: [2, 3, 0], alchemist: [4, 2, 0], boomerang: [3, 2, 0]}
+  # checked 2026-11-06 on the Half Cash economy with Fast Track + Double Cash: every replay 2.0+, every step 2+ rounds early
+  base_success: {half_cash: 0.85}
+  maps: [Park Path]
+# surplus cash: the executor's extra copies are buccaneers, kept at 0-0-0 (fill)
+xp_target: buccaneer
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.313, 0.47]}   # Quincy first: no $200 opener dart (Executor._with_opener)
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.484, 0.479]}   # central pond, north-east: both broadsides fire
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.601, 0.402]}   # stream just above the pond
+  - {do: upgrade, id: b2, to: 0-0-2}   # Crow's Nest: camo (R24), bought in the R22 setup
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead (R28)
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}   # lower-right lawn: sees the whole route; cheap, takes spare cash on its own tiers
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
+  - {do: upgrade, id: b2, to: 3-0-2}   # camo Destroyer
+  - {do: place, id: v1, kind: village, role: support, at: [0.521, 0.351]}   # reaches both boats
+  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo for b1 (R47's 70 camo pinks)
+  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier: R63
+  - {do: place, id: bo1, kind: boomerang, role: dps, at: [0.366, 0.351]}   # north-west, between the rings
+  - {do: upgrade, id: bo1, to: 3-2-0}   # Bionic Boomer: the rush answer strategy.coverage asks for
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.708, 0.325]}   # stream by the entrance
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: R78 camo ceramics
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+  - {do: upgrade, id: s2, to: 4-2-0}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.564, 0.581]}   # brews both boats
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: upgrade, id: a1, to: 4-2-0}   # Stronger Stimulant
+fill:
+  - {do: upgrade, kind: buccaneer, to: 0-0-0}
+answers:
+  camo:
+    - {do: upgrade, id: b2, to: 0-0-2}
+    - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.601, 0.402]}
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  rush:
+    - {do: upgrade, id: bo1, to: 3-2-0}
+    - {do: place, id: bo1, kind: boomerang, role: dps, at: [0.366, 0.351]}
+  moab:
+    - {do: upgrade, id: s1, to: 4-2-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}
+    - {do: upgrade, id: b1, to: 4-2-0}
+    - {do: upgrade, id: s2, to: 4-2-0}
+    - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+  bfb:
+    - {do: upgrade, id: s1, to: 4-2-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}
+    - {do: upgrade, id: b1, to: 4-2-0}
+    - {do: upgrade, id: s2, to: 4-2-0}
+    - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+  zomg:
+    - {do: upgrade, id: s1, to: 4-2-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}
+    - {do: upgrade, id: b1, to: 4-2-0}
+    - {do: upgrade, id: s2, to: 4-2-0}
+    - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+  ddt:
+    - {do: upgrade, id: s1, to: 4-2-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}
+    - {do: upgrade, id: b1, to: 4-2-0}
+    - {do: upgrade, id: s2, to: 4-2-0}
+    - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+  bad:
+    - {do: upgrade, id: s1, to: 4-2-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.69]}
+    - {do: upgrade, id: b1, to: 4-2-0}
+    - {do: upgrade, id: s2, to: 4-2-0}
+    - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.76]}
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
