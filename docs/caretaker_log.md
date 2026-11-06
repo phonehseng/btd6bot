@@ -601,3 +601,10 @@
 - Since 10:42: 3 wins (Carved Apopalypse and Half Cash, Luminous Cove Double HP, all 0 lives lost), 1 loss: Dark Dungeons Military Only r27 (solo_sniper, a p=0.40 last resort).
 - Fixed (ea7b238, backlog 39b): at the damage model's 1/16 margin floor every purchase read "0.06 -> 0.06", so a waiting plan step kept the bank whatever a purchase would save. There the purchase now comes first when it saves more modelled lives than the step (reinforce.floor_pick_outsaves); fired live at 11:31 (druid 2-0-2 saves 136 lives vs the sub step's 0). Test added, check.py ALL OK.
 - Dark Dungeons (case 20261106_112933, handled): Fast Track start at 15 with six tier-1-2 snipers, rated at the floor from round 16; no play fault. The map is 3-8 overall (Military Only 0-3). Last-resort picks rated at the floor before their first round remain the open question (backlog 53b/54).
+
+## 2026-11-06 12:45
+- Bot status: task Running, bot.py up since 11:23, recorder and BTD6 up; now Bloonarius Prime Double HP, round 48, 100 lives. No STOP, PAUSE or dev_active. Safe mode on (trips 4), last resort picking. No Auto Start reading, no tracebacks or loops.
+- Since 11:40: 2 wins (Ship Capture ABR with 82 lives lost, Bloonarius Prime Magic Monkeys Only), 2 losses: Luminous Cove Impoppable r99 and Ship Capture Impoppable r40 (both last-resort picks, p=0.38/0.42).
+- Luminous Cove (case 20261106_115240, handled): BTD6 lights Play as soon as a round's last bloon is sent; the bot pressed it with round 98's MOABs half way along the route, and round 99's 60 MOABs joined them. Every round was being sent early. Fixed in 98e54ee: in one-life games Play waits until the bloon watch sees the track clear (4 empty looks, at most 25 s). Test added, check.py ALL OK. The $25-45k left idle from round 94 is backlog 55.
+- Ship Capture (case 20261106_121728, handled): Fast Track start at 29, rated 0.26 from the start, round 40's first MOAB leaked; round 39 was cleared before Play, so not the early send. Added to backlog 54.
+- Note: btd6bot/runner.py has an uncommitted change that is not the caretaker's; left as it is.
