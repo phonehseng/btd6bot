@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
@@ -57,6 +58,16 @@ SAVE_REACH = 3.0       # ... and it may cost at most this many times the cash in
 BLIND_SPEND_CASH = 10_000   # cash idle in a crisis the model sees no use for: spent anyway
 MIN_LIFT = 0.01        # a purchase lifting the weakest round less than this does not
                        # outbid a plan step that is waiting for cash (waiting_plan_step)
+# Seconds one look (best) may spend rating purchases before it goes with the
+# best found so far. Late rounds make every model margin dear (~0.2 s for
+# round 98), and grow() rates each crosspath of each placement and of each
+# standing tower behind it: on Polyphemus Impoppable (2026-11-05, loss case
+# 20261105_192111) one look took 28 s, so the 20 s hold before round 98 ran
+# out with a single $9,000 purchase made, and the next look, started with
+# $13,990 as round 98 began, finished 30 s later - after the defeat. The
+# match loop is blocked while a look runs: no other purchase, no ability,
+# no Play. Looks earlier in a game take 1-3 s and never reach this.
+LOOK_BUDGET_S = 6.0
 
 
 def crisis_now(forecast, ex, rnd, lives_dropped=None):
@@ -176,6 +187,12 @@ class Option:
     goal: dict | None = None
 
 
+def _past(deadline):
+    """True once a look's time budget (LOOK_BUDGET_S, a time.monotonic()
+    deadline) has run out; never for deadline None (no budget)."""
+    return deadline is not None and time.monotonic() > deadline
+
+
 def lookahead_rounds(rnd, end_round, k=LOOKAHEAD):
     return [r for r in range(rnd, rnd + k) if r <= end_round] if rnd is not None else []
 
@@ -276,7 +293,11 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     # per dollar (which kept buying the cheapest small step, see trim()).
     crisis = before is not None and before < 1.0
     pick = None
-    tried = grow(ex, forecast, options(ex, cash), cash, worst)
+    deadline = time.monotonic() + LOOK_BUDGET_S
+    tried = grow(ex, forecast, options(ex, cash), cash, worst, deadline=deadline)
+    if _past(deadline):
+        log.info("reinforce: the %.0f s look budget ran out while rating growth paths - "
+                 "going with what was rated", LOOK_BUDGET_S)
     unfinished = goal_option(ex, cash, rnd)
     if unfinished is not None:
         tried = [unfinished] + tried       # judged like any other purchase, by the whole path
@@ -325,7 +346,8 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     # blind spend of the step's saving (094f8de kept them for the no-pick
     # case; the step's check runs first here so that it never flags them).
     if pick is None and crisis and cash >= BLIND_SPEND_CASH:
-        pick = strongest(forecast, new_kind_options(ex, forecast, cash, worst), worst, before)
+        pick = strongest(forecast, new_kind_options(ex, forecast, cash, worst, deadline=deadline),
+                         worst, before)
         if pick:
             log.warning("reinforce: nothing standing can grow to help round %d (%.2f) - trying a "
                         "tower kind not on the board yet, %s", worst, before or 0.0, pick[1].what)
@@ -528,7 +550,7 @@ def strongest(forecast, tried, worst, before):
     return found
 
 
-def new_kind_options(ex, forecast, cash, rnd):
+def new_kind_options(ex, forecast, cash, rnd, deadline=None):
     """"another <kind>" purchases for every damage kind the game allows that
     is not standing yet (options() only offers the kinds already on the
     board): the crisis fallback when nothing standing can grow.
@@ -542,10 +564,10 @@ def new_kind_options(ex, forecast, cash, rnd):
     standing = {p.kind for p in ex.g.towers.values()}
     kinds = [k for k in T.TOWERS if k not in standing and k not in NOT_DAMAGE
              and k != "hero" and ex.kind_allowed(k)]
-    return grow(ex, forecast, options(ex, cash, kinds=kinds), cash, rnd)
+    return grow(ex, forecast, options(ex, cash, kinds=kinds), cash, rnd, deadline=deadline)
 
 
-def grow(ex, forecast, opts, cash, rnd):
+def grow(ex, forecast, opts, cash, rnd, deadline=None):
     """The options with every "another <kind>" placement rated at the best
     crosspath the bank could grow it into (grown()) for round `rnd`;
     upgrades pass through unchanged.
@@ -576,7 +598,9 @@ def grow(ex, forecast, opts, cash, rnd):
     family = _price_family(ex)
     out = []
     for o in opts:
-        if o.step.get("do") != "place":
+        if o.step.get("do") != "place" or _past(deadline):
+            # past the look's time budget a placement stays rated bare: the
+            # look goes on with what it has rather than block the game
             out.append(o)
             continue
         *rest, new = o.towers
@@ -588,7 +612,8 @@ def grow(ex, forecast, opts, cash, rnd):
         if rated:
             m, neg_cost, tiers = max(rated)
             if any(tiers):
-                standing = grow_standing(ex, forecast, rest, new.kind, tiers, m, cash, rnd, family)
+                standing = grow_standing(ex, forecast, rest, new.kind, tiers, m, cash, rnd, family,
+                                         deadline=deadline)
                 if standing is not None:
                     out.append(standing)
                     continue
@@ -599,7 +624,7 @@ def grow(ex, forecast, opts, cash, rnd):
     return out
 
 
-def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family):
+def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family, deadline=None):
     """The next upgrade of a standing tower of `kind` that is behind the
     tiers a new one would be rated at (`tiers`), rated at the crosspath the
     cash grows it into - or None when every standing tower of the kind has
@@ -611,12 +636,17 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family):
     reachable crosspaths the model's best, then the cheapest, is kept, and
     the option costs what is left to pay to it - judged per dollar like
     the placement it replaces. What is bought is the next tier on the way;
-    the rest follow the same way once it stands."""
+    the rest follow the same way once it stands.
+
+    Past the look's `deadline` (LOOK_BUDGET_S) the crosspaths still unrated
+    are skipped once one has been found."""
     want = sum(tiers)
     behind = sorted((t for t in rest if t.kind == kind and sum(t.tiers) < want), key=lambda t: -sum(t.tiers))
     for t in behind:
         best = None
         for target, first in grown_from(ex, kind, tuple(t.tiers), cash, tower=t).items():
+            if best is not None and _past(deadline):
+                break
             if first is None:
                 continue
             after = [SimpleNamespace(**{**vars(x), "tiers": target}) if x.tid == t.tid else x for x in rest]

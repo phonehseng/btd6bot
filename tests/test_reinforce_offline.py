@@ -331,6 +331,28 @@ def test_another_standing_kind_is_rated_grown_too():
             return 0.2 + 0.5 * len(towers)
     flat = [o for o in R.grow(ex, Flat(), R.options(ex, 6000), 6000, 45) if o.what.startswith("another ninja")]
     assert flat[0].what == "another ninja" and flat[0].cost == T.tower_cost("ninja", "hard"), flat
+    # Past the look's time budget a placement stays bare and the model is
+    # not asked to rate its growth: on Polyphemus Impoppable (2026-11-05)
+    # one look took 28 s and the bot sat on $13,990 through round 98.
+    import time
+
+    class Counting(PerTier):
+        calls = 0
+
+        def margin(self, towers, rnd):
+            Counting.calls += 1
+            return super().margin(towers, rnd)
+    late = R.grow(ex, Counting(), R.options(ex, 6000), 6000, 45, deadline=time.monotonic() - 1)
+    assert Counting.calls == 0, Counting.calls
+    assert [o.what for o in late if o.what.startswith("another")] == ["another ninja"], late
+    # ... and the look still buys from what it could rate
+    saved = R.LOOK_BUDGET_S
+    R.LOOK_BUDGET_S = -1.0
+    try:
+        status, found = R.best(ex, PerTier(), 6000, 40, 80, lives=100)
+    finally:
+        R.LOOK_BUDGET_S = saved
+    assert status == "buy" and found[0].cost <= 6000, (status, found)
 
 
 def test_a_given_up_placement_is_not_offered():

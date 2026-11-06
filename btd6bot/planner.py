@@ -834,7 +834,62 @@ def _strategy_fits(s: StrategySpec, map_name: str, category: str, mode: str) -> 
         return False
     if _water_towers_have_no_spot(s, map_name):
         return False
+    if _land_towers_have_no_spot(s, map_name):
+        return False
     return True
+
+
+# A build whose towers stand nowhere on a map for at least this share of its
+# cost (StrategySpec.share) cannot be built there: the given-up steps take
+# most of the defence with them, and what is left was never meant to hold
+# alone (snipers without the village that gives them camo, say).
+NO_SPOT_SHARE_MAX = 0.25
+# Map mechanics (mapgeom, data/map_fit.json "mechanics") whose ground
+# carries towers around: Geared's gears, Sanctuary's platforms.
+MOVING_GROUND = frozenset({"rotating_area", "moving_platform"})
+
+
+def _land_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
+    """True when the build's towers that reach no track at all on this map
+    (map-fit 0.0 from both ends, so not one legal cell reaches the bloons)
+    carry NO_SPOT_SHARE_MAX or more of its cost.
+
+    map_fit_factor only weighs the damage towers and only scales p down, so
+    a mixed build looked half-buildable on Geared: hard_ninja_alch_sniper
+    (fit 0.47 from its snipers) was the last-resort pick for Medium at
+    p=0.37 (2026-11-05, loss case 20261105_192400). Every tower that is not
+    global range keeps off Geared's turning gears, so the dart opener, all
+    four ninjas, the alchemist and the hero were given up within a second
+    and one sniper lost round 18 with 104 lives. double_hp_sniper_sun had
+    lost Geared ABR the same way (round 27). Global-range builds
+    (military_heli_sniper, geared_medium) still fit, so Geared stays open.
+
+    Buffers (village, alchemist) are left out: their value is the towers
+    around them, not the track, and a fit of 0.0 does not tell whether they
+    have ground to stand on (Flooded Valley has 2,816 legal village cells,
+    none in a village's range of the track). Water towers have their own
+    gate (_water_towers_have_no_spot).
+
+    Only maps with moving ground (MOVING_GROUND) are gated. There the bot's
+    own placement rule keeps every short-range tower off the moving parts,
+    so reinforce buys cannot make up for the lost towers with other land
+    kinds either. Elsewhere they can: High Finance Double HP was won at
+    12:40 the same day with both of double_hp_sniper_sun's supers given up."""
+    from .mapfit import load
+    from .strategy import Executor
+    from .towers import TOWERS
+    entry = load().get(map_name) or {}
+    if not set(entry.get("mechanics") or ()) & MOVING_GROUND:
+        return False
+    fits = entry.get("towers") or {}
+    lost = 0.0
+    for kind, share in s.share().items():
+        if kind in Executor.BUFFERS or TOWERS.get(kind, {}).get("placement") == "water":
+            continue
+        fit = fits.get(kind)
+        if fit and not fit.get("early", 1.0) and not fit.get("late", 1.0):
+            lost += share
+    return lost >= NO_SPOT_SHARE_MAX
 
 
 def _water_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
