@@ -39,6 +39,13 @@ def test_overwrite_save_is_not_a_purchase():
     # real spending wording on the same page still forbids confirming
     assert M.page_forbidden(box + _words("Buy for 3,000 Monkey Money"))
     assert M.page_forbidden(_words("Are you sure?", "$1,500", "OK"))
+    # End Of The Road Apopalypse, 2026-11-06 08:17: the Medium description
+    # behind the box ("Monkeys cost normal") is not spending wording either
+    medium = _words("On Medium Monkeys cost normal, the Bloons move normal and you have 15o lives.Beating",
+                    "OVeRWRITeSAVe?", "Playing a new game will replace your existing save",
+                    "game.Are you sure you want to continue?", "CAnceL", "OK", "REWARDS:", "$25")
+    assert not M.page_forbidden(medium)
+    assert M.page_forbidden(_words("This upgrade will cost 3,000 Monkey Money", "OK"))
 
 
 def test_defeat_needs_its_buttons():

@@ -102,6 +102,12 @@ PRICE_WORDS = ("monkeymoney", "$")
 # replaces a saved game and buys nothing, so its "are you sure" is not
 # spending wording - real spending wording (buy, purchase, ...) still is.
 SAFE_CONFIRM_DIALOGS = ("overwritesave", "existingsave")
+# Wording that the overwrite-save box and the screen behind it show without
+# any purchase: its own "are you sure", and the difficulty description
+# ("On Medium Monkeys cost normal ...") that stays readable around the box.
+# That "cost" still made End Of The Road Apopalypse look like a purchase
+# (2026-11-06 08:17, 30 refused OKs and a benched game) after the first fix.
+SAFE_DIALOG_WORDING = ("areyousure", "cost")
 
 
 def page_forbidden(words):
@@ -109,8 +115,10 @@ def page_forbidden(words):
     no confirming button may be clicked (Monkey Money or real money)."""
     joined = " ".join(norm(w.text) for w in words)
     spend = [sw for sw in SPEND_WORDS if sw in joined]
-    if spend == ["areyousure"] and any(d in joined for d in SAFE_CONFIRM_DIALOGS):
-        return False          # the overwrite-save box: its question buys nothing
+    if any(d in joined for d in SAFE_CONFIRM_DIALOGS):
+        # the overwrite-save box buys nothing: only real spending wording
+        # (buy, purchase, spend, "for $") still forbids confirming it
+        spend = [sw for sw in spend if sw not in SAFE_DIALOG_WORDING]
     return bool(spend) and any(pw in joined for pw in PRICE_WORDS)
 
 
