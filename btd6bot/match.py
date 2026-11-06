@@ -343,7 +343,10 @@ class Match:
         cash = None
         while time.time() - t < max_seconds and idle < 8:
             cash = self.g.cash_stable()
-            bought = self.ex.tick(cash, rnd)
+            # one life and one tower so far: the plan may not spend the
+            # money a second tower needs (_opener_reserve)
+            plan_cash = cash if cash is None else max(0, cash - self._opener_reserve())
+            bought = self.ex.tick(plan_cash, rnd)
             if not bought and late and cash is not None and cash > 600 and self._opening_surplus_ok():
                 bought = self.ex.surplus(cash, rnd)
             if bought:
@@ -393,6 +396,25 @@ class Match:
         if not self.ex.rules.get("one_life"):
             return False
         return sum(1 for p in self.g.towers.values() if p.kind != "hero") == 1
+
+    def _opener_reserve(self):
+        """Cash the plan must leave untouched before the first Play of a
+        one-life game while a single non-hero tower stands: the price of the
+        cheapest opener this game allows, so _place_starter can still add a
+        second tower beside the first (_lone_opener).
+
+        Alpine Run CHIMPS (2026-11-06, journal 20261106_101656): the plan put
+        $635 of the $650 start into one tack (place, 0-1-0, 0-2-0). The
+        second-tower check came after that and found $15, so round 6 started
+        with the tack alone and a bloon slipped between its eight tack lines
+        30 seconds in. With this reserve the tack stops at 0-1-0 and a dart
+        goes down next to it; the plan's 0-2-0 follows from round 6's pops.
+        0 when the game has lives to spare or the tower count is not one."""
+        if not self._lone_opener():
+            return 0
+        prices = [self.g.price(k) for k in self.ex.CHEAP_OPENERS if self.ex.kind_allowed(k)]
+        prices = [p for p in prices if p is not None and p != float("inf")]
+        return min(prices) if prices else 0
 
     def _place_starter(self, rnd, tries=6, need_placed=False):
         """Only the hero is down and the plan's next tower is not affordable

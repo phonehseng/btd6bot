@@ -41,6 +41,38 @@ def test_two_towers_or_lives_to_spare_are_left_alone():
     assert not _match("hard", ["buccaneer"])._lone_opener()
 
 
+def _priced_match(mode, kinds, forbidden=()):
+    """_match plus what _opener_reserve reads: the opener kinds, which of
+    them the game allows, and the Hard price table (CHIMPS is priced as Hard)."""
+    from btd6bot import towers as T
+    from btd6bot.strategy import Executor
+    m = _match(mode, kinds)
+    m.ex.CHEAP_OPENERS = Executor.CHEAP_OPENERS
+    m.ex.kind_allowed = lambda k: k not in forbidden
+    m.g.price = lambda k: T.price(T.TOWERS[k]["cost"], "hard")
+    return m
+
+
+def test_one_life_plan_keeps_back_a_second_towers_price():
+    """Alpine Run CHIMPS (2026-11-06): the plan took the $650 start to $15
+    with one tack, and the lone tack leaked in round 6. While one tower
+    stands, the cheapest opener's price is kept back from the plan."""
+    from btd6bot import towers as T
+    m = _priced_match("chimps", ["tack"])
+    dart = T.price(T.TOWERS["dart"]["cost"], "hard")
+    assert m._opener_reserve() == dart
+    # the cheapest kind the game still allows sets the reserve
+    m = _priced_match("chimps", ["tack"], forbidden=("dart",))
+    allowed = [T.price(T.TOWERS[k]["cost"], "hard") for k in m.ex.CHEAP_OPENERS if k != "dart"]
+    assert m._opener_reserve() == min(allowed)
+
+
+def test_no_reserve_with_lives_to_spare_or_two_towers():
+    assert _priced_match("hard", ["tack"])._opener_reserve() == 0
+    assert _priced_match("chimps", ["tack", "dart"])._opener_reserve() == 0
+    assert _priced_match("chimps", ["hero"])._opener_reserve() == 0   # the first tower is not held back
+
+
 def _spec(mode):
     return next(x for x in P.EXAMPLE_STRATEGIES if mode in x.modes)
 
