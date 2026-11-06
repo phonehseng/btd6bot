@@ -62,6 +62,11 @@ ACH_STAMP = ROOT_DIR / "logs" / "achievements_scanned_at.txt"
 # badge is then ignored until the next full scan (see _achievements_if_due)
 ACH_MUTE = ROOT_DIR / "logs" / "achievements_badge_muted.txt"
 MEDAL_SWEEP_EVERY = 24 * 3600          # seconds between map-select medal sweeps per account
+# An audit asked for between the daily sweeps (a map our notes call
+# black-bordered is picked, or a card disagrees with our notes) waits at least
+# this long after the last sweep, so a disagreement the sweep cannot settle
+# (a card it cannot read clearly) does not page through the maps every game.
+MEDAL_AUDIT_GAP = 3600
 # Waiting (nothing to play, an error loop, PAUSE): the supervisor's watchdog
 # (run_forever.ps1) kills a bot whose logs/bot.log and logs/state.txt have not
 # changed for 10 minutes, so long waits refresh the status this often.
@@ -104,6 +109,48 @@ def _medal_sweep_file(uid):
 def _medal_sweep_due(uid, now=None):
     """Has this account's map-select medal sweep not run for a day?"""
     return (now or time.time()) - _read_stamp(_medal_sweep_file(uid)) > MEDAL_SWEEP_EVERY
+
+
+def apply_card_audit(account, found, now=None):
+    """Make the account's medals match the map cards read by a medal scan.
+
+    found: {map name: [(medals, frame_kind), ...]} - the card's first read
+    and, for cards medals.wants_second_look picked, a second one. Each card
+    goes through medals.audit_card: unclear cards change nothing, medals a
+    card clearly shows are added, medals it clearly does not show are removed
+    once a second read agrees, except ones the bot won in the last
+    medals.RECENT_WIN_GUARD. Every change is logged per map and mode.
+    Returns {"added": n, "removed": n}."""
+    from .medals import audit_card, recent_wins
+    now = time.time() if now is None else now
+    just_won = recent_wins(account.history, now)
+    added = removed = 0
+    unsure, kept = [], []
+    for name, reads in found.items():
+        m = canonical_map(name)
+        rec = account.medals.setdefault(m, {})
+        res = audit_card(rec, reads, protected={mode for mp, mode in just_won if mp == m})
+        if res["unsure"]:
+            unsure.append(name)
+            continue
+        for mode in res["add"]:
+            rec[mode] = True
+            added += 1
+        for mode in res["remove"]:
+            rec.pop(mode, None)
+            removed += 1
+            log.warning("medal scan: %s %s removed - the card does not show it", m, mode)
+        for mode in res["guarded"]:
+            log.info("medal scan: %s %s not on the card yet, kept - the bot won it moments ago", m, mode)
+        kept += [f"{m} {mode}" for mode in res["kept"]]
+        if res["add"]:
+            log.info("medal scan: %s adopted from the card: %s", m, ", ".join(res["add"]))
+    if unsure:
+        log.info("medal scan: cards not read clearly, left as they are: %s", ", ".join(unsure))
+    if kept:
+        log.info("medal scan: medals on record the cards did not show, kept until a "
+                 "second read agrees: %s", ", ".join(kept))
+    return {"added": added, "removed": removed}
 
 
 def _load_errors():
@@ -441,6 +488,7 @@ class Bot:
         self._hero_failed = set()  # heroes the picker could not equip this session
         self._errors = _load_errors()  # error streak, survives restarts (see _game_error)
         self._medals_due = False   # sweep map medals at the next account check (account switched)
+        self._medal_audit_why = None   # why the cards should be re-read before the next game
         self._auto_start_seen = False  # the last game saw BTD6's Auto Start on (_warn_auto_start)
 
     # -- navigation ---------------------------------------------------------------
@@ -679,14 +727,16 @@ class Bot:
 
     def scan_all_medals(self, max_pages=30):
         """Read every map card on the map-select pages (~30 s for ~90 maps):
-          * adopt each mode's medal shown on the card (a save made elsewhere
-            has medals our notes never saw), and
+          * make the account's medals match the cards that read clearly
+            (apply_card_audit): add medals a save made elsewhere has, and
+            remove ones the card does not show - after a second look at that
+            card, never one the bot itself just won - and
           * register maps the code does not know yet (new game updates), under
             the category tab they are listed in.
         Returns the number of maps read."""
         from . import mapgeom
         from .account import MAPS, _norm, canonical_map, register_map
-        from .medals import read_grid_card
+        from .medals import grid_card_frame, read_grid_detail, wants_second_look
         set_state("reading map medals from the map select pages")
         self.inp.click(0.5, 0.88)  # PLAY
         if self.menus.wait_for("map_select", timeout=6) != "map_select":
@@ -704,7 +754,7 @@ class Bot:
         # tab match second (page_category); until either says, no category is
         # recorded at all.
         category = None
-        seen_pages, found, new_medals, new_maps = [], {}, 0, []
+        seen_pages, found, new_maps = [], {}, []
         for _ in range(max_pages):
             time.sleep(0.5)
             frame = self.s.grab()
@@ -724,36 +774,64 @@ class Bot:
                 if category and not self.account.note_map_category(name, category):
                     log.warning("medal scan: %s read on a %s page, but the game data lists it as %s",
                                 name, category, self.account.map_category(name))
-                found[name] = read_grid_card(frame, *cell)
+                found[name] = [(read_grid_detail(frame, *cell), grid_card_frame(frame, *cell))]
+            # A card that would take a medal away (or a map our notes call
+            # black-bordered under a gold frame) is read once more, a moment
+            # later, before anything is removed: a page still sliding in or
+            # a popup edge must not cost a real medal.
+            second = [name for name in page
+                      if wants_second_look(self.account.medals.get(canonical_map(name), {}), *found[name][0])]
+            if second:
+                time.sleep(0.4)
+                again = self.s.grab()
+                for text, cell, name in labels:
+                    if name in second and len(found[name]) == 1:
+                        found[name].append((read_grid_detail(again, *cell), grid_card_frame(again, *cell)))
             if not page or page in seen_pages:
                 break  # wrapped around to a page we already read
             seen_pages.append(page)
             self.inp.click(*self.NEXT_PAGE)
-        # The cards ADD medals (earned elsewhere, or before the bot), never
-        # take one away: a medal cannot be lost in the game, and reading a
-        # card wrong is far likelier. Removing them made a loop - the bot won
-        # Park Path Easy and Logs Easy, the next scan "removed" them, and the
-        # planner played them again (2026-10-22: 02:33, 15:30, 20:39).
-        unseen = []
-        for name, medals in found.items():
-            rec = self.account.medals.setdefault(canonical_map(name), {})
-            for mode, earned in medals.items():
-                if earned and not rec.get(mode):
-                    new_medals += 1
-                    rec[mode] = True
-                elif rec.get(mode) and not earned:
-                    unseen.append(f"{name} {mode}")
-        if unseen:
-            log.info("medal scan: medals on record the cards did not show (kept): %s", ", ".join(unseen))
+        changed = apply_card_audit(self.account, found)
         odd = self.account.out_of_chain_medals()
         if odd:   # kept: earned in someone else's co-op lobby (see AccountState.out_of_chain_medals)
             log.info("%d medals earned outside the unlock chain (co-op): %s", len(odd), odd[:8])
         self.account.save()
-        log.info("medal scan: %d maps read on %d pages, %d medals adopted", len(found), len(seen_pages), new_medals)
+        log.info("medal scan: %d maps read on %d pages, %d medals adopted, %d removed", len(found),
+                 len(seen_pages), changed["added"], changed["removed"])
         if new_maps:
             log.warning("new maps found and added: %s", ", ".join(new_maps))
         self.to_main_menu()
         return len(found)
+
+    def _audit_black_bordered_pick(self, plan):
+        """The planner picked a map whose every medal is in our notes: the
+        notes may be wrong (the misread medals of 2026-11-06 hid Apopalypse
+        and Half Cash), so the cards are read before playing it. Returns True
+        when the scan ran."""
+        if not self.account.black_bordered(plan.map):
+            return False
+        self._medal_audit_why = f"the planner picked {plan.map}, which our notes call black-bordered"
+        return self._audit_medals_if_asked()
+
+    def _audit_medals_if_asked(self):
+        """Run the medal scan when something asked for it (_medal_audit_why),
+        at most once per MEDAL_AUDIT_GAP after the last scan of this account.
+        Returns True when the scan ran."""
+        why, self._medal_audit_why = self._medal_audit_why, None
+        if not why:
+            return False
+        stamp = _medal_sweep_file(self.uid or current_path().stem)
+        ago = time.time() - _read_stamp(stamp)
+        if ago < MEDAL_AUDIT_GAP:
+            log.info("medal scan wanted (%s) but the cards were read %d min ago - not again yet",
+                     why, ago // 60)
+            return False
+        log.warning("medal scan: checking every map card - %s", why)
+        read = self.scan_all_medals()
+        if read:
+            _write_stamp(stamp, time.time())
+        self.to_main_menu()
+        return bool(read)
 
     def _refresh_map_geometry(self):
         """Read maps that are new or changed in the game files (a game update
@@ -813,14 +891,24 @@ class Bot:
     def sync_medals(self, map_name, label):
         """Adopt the medals the save file shows on this map's card."""
         from .account import canonical_map
-        from .medals import read_card
-        seen = read_card(self.s.grab(), label.x, label.y)
+        from .medals import card_frame, read_card
+        shot = self.s.grab()
+        seen = read_card(shot, label.x, label.y)
         # The search card's slots are unreliable (they invented a Hard medal on
         # Luminous Cove and Impoppable ones): log only. The map-select sweep
         # (scan_all_medals, daily per account) sets medals from the cards.
         if any(seen.values()):
             log.info("search card for %s suggests %s (not adopted)", map_name,
                      [d for d, e in seen.items() if e])
+        # Its frame is trusted further: a gold frame on a map our notes call
+        # black-bordered, or a black one on a map they do not, means our
+        # notes and the save disagree - the cards are read before the next game.
+        border = card_frame(shot, label.x, label.y)
+        ours = self.account.black_bordered(map_name)
+        if border is not None and (border == "black") != ours:
+            log.warning("%s card shows a %s frame but our notes %s every medal", map_name, border,
+                        "have" if ours else "lack")
+            self._medal_audit_why = f"the {map_name} card's frame disagrees with our notes"
         seen = {}
         rec = self.account.medals.setdefault(canonical_map(map_name), {})
         new = [d for d, earned in seen.items() if earned and not rec.get(d)]
@@ -1082,6 +1170,8 @@ class Bot:
                     settled = True
                     self._settle_unfinished_game()
                 self._check_account()
+                if self._audit_medals_if_asked():
+                    continue    # medals changed: plan again from the corrected notes
                 self.read_level()
                 # which heroes the account owns, from the HEROES screen (weekly)
                 try:
@@ -1117,6 +1207,8 @@ class Bot:
                     log.error("planner has nothing to play - waiting 30 min (benches expire, XP grows)")
                     self._idle(1800, "idle: nothing to play", code_stamp)
                     continue
+                if self._audit_black_bordered_pick(plan):
+                    continue    # medals changed: plan again from the corrected notes
                 log.info("NEXT: %s", plan.reason)
                 self._warn_auto_start(plan)
                 set_state(f"opening {plan.map} {plan.mode_key}", game=f"{plan.map} {plan.mode_key}")
