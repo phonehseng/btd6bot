@@ -1,0 +1,129 @@
+# Frozen Over, Half Cash: a Tack Sprayer and a second tack at the left
+# crossings, a sniper in the bottom-right corner (Deadly Precision, then Maim
+# MOAB), two buccaneers and an Advanced Intel sub in the central pond, a
+# Radar Scanner village with Bigger Radius above the pond, a Druid of the
+# Jungle, Destroyers into Aircraft Carriers, a Berserker Brew alchemist, Ring
+# of Fire, MIB. Admiral Brickell in the big left pond.
+#
+# Why: one long route (1,503 world units, 1,087 hittable) that crosses itself
+# in figure-eights round a small central pond; a buccaneer there reaches
+# about half the route. The snipers' corner sees the whole route. The CHIMPS
+# build for this map (frozenover_chimps.yaml) is the model - Half Cash with the
+# account's Double Cash pays what CHIMPS pays per round, on Hard prices, from
+# a round-22 Fast Track start with about $4,465 - but its pond spots are
+# refused now:
+#   * the live map model (main checkout's data/maps/frozenover.npz, 2026-11-06)
+#     refuses the CHIMPS build's cells for b1 (0.473, 0.436), the sub, b2 and
+#     Brickell; b1 moved to (0.462, 0.453), the sub to (0.446, 0.521), b2 to
+#     (0.484, 0.555), Brickell to (0.243, 0.325) - the best legal cells left;
+#   * at its new cell b1 stood 41 units from the Radar Scanner (radius 40) and
+#     lost camo: rounds 45-59 rated 0.8-1.7. The village moved to
+#     (0.532, 0.325), 38 units from b1, and buys Bigger Radius with the radar
+#     (1-2-0, radius 48), so b1 keeps camo with 10 units to spare (drift);
+#   * with lives to spare surplus() places copies of the main tower while the
+#     plan waits. Copies of the tack ate the radar's money in the
+#     executor-faithful replay (round 45: 1.2). xp_target buccaneer with a
+#     2-0-2 cap sends the copies into the side ponds instead, and b2 is placed
+#     bare early so no copy takes its pond cell;
+#   * the executor-faithful replay reached the Aircraft Carrier (b1 4-2-0) only
+#     at round 69, and round 63 (the rush) rated 1.8 without it. A Druid of the
+#     Jungle ($2,595; damage model R63 2.1 -> 5.5 on that board) and Brickell go
+#     in before the carrier;
+#   * the run ends at round 80: no Cripple MOAB.
+#
+# Sources:
+#   * bloonswiki Half_Cash and Strategy:Half_Cash: every income halved (Double
+#     Cash cancels it except tower income); 3-2-0 Destroyer with both
+#     broadsides, Druid of the Jungle, Aircraft Carrier, Berserker Brew named
+#     for rounds 21-70; Brickell with Destroyer and Airburst sub on water maps
+#     (https://www.bloonswiki.com/Half_Cash, https://www.bloonswiki.com/Strategy:Half_Cash)
+#   * bloonswiki Frozen_Over: one of the easiest maps, many loops, much water
+#     (https://www.bloonswiki.com/Frozen_Over)
+#   * bloonswiki Fast_Track_Mode: Hard starts at round 22 with the skipped
+#     rounds' cash (https://www.bloonswiki.com/Fast_Track_Mode)
+#   * no Half Cash guide for this map was found on Reddit, YouTube or Steam
+#     (web search, 2026-11-06).
+#
+# Every tower and tier is unlocked on the main account (sub top path to 3:
+# the sub stops at 2-0-4). No income towers.
+#
+# Checked offline 2026-11-06 (docs/map_strategies/beginner.md has the method),
+# Half Cash economy with the account's boosts (optimize_builds.economy(
+# "half_cash", {"fast_track": True, "double_cash": True}): round 22, $4,465,
+# income x1.0, Hard prices), rounds 22-80, current damage model (strict buff
+# reach, circling carrier planes):
+#   * every `at` legal in plan order on the map geometry and on the live map
+#     model, outside the HUD band;
+#   * plan replay: worst margin 2.09 (round 39); sight-strict 2.09 (round 39);
+#     drift (every tower 5 units further from the village and alchemist, stock
+#     and strict) 2.09 (round 39); round 40: 11.4, 63: 16, 76: 16, 78: 9.0.
+#     All 35 steps bought, the last (MIB) at round 75;
+#   * executor-faithful (simulate_threats' loop, real Executor, the map's
+#     learned refused spots, strict), with its extra towers / plan towers
+#     only: 2.59 / 2.59 (round 36); 35/35 steps; the carrier at round 69;
+#   * lead: every step bought after the round-22 setup stands at least two
+#     rounds before the first round the build without it falls under 2.0
+#     (plan replay, stock and strict); the setup purchases cannot be earlier;
+#   * strategy.load_all(): bot-ready, validate() empty; coverage(half_cash)
+#     and usable() on the main account: nothing missing.
+id: frozenover_half_cash
+map: Frozen Over
+hero: admiral_brickell
+modes: [half_cash]
+xp_target: buccaneer
+planner:
+  towers: {tack: [4, 0, 3], sniper: [4, 2, 0], buccaneer: [4, 2, 0], sub: [2, 0, 4], village: [2, 3, 0],
+           alchemist: [3, 2, 0], druid: [1, 3, 0]}
+  # every replay at 2.09 or more, every step two rounds ahead of its need (2026-11-06)
+  base_success: {half_cash: 0.85}
+  maps: [Frozen Over]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.345, 0.504]}   # top of the left loop, inside the crossings
+  - {do: upgrade, id: t1, to: 1-0-0}
+  - {do: upgrade, id: t1, to: 1-0-1}
+  - {do: upgrade, id: t1, to: 2-0-1}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.446, 0.521]}   # central pond, left
+  - {do: upgrade, id: t1, to: 2-0-2}
+  - {do: upgrade, id: t1, to: 2-0-3}   # Tack Sprayer
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.302, 0.624]}   # lower left loop
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.799, 0.879]}   # bottom-right corner: sees the whole route
+  - {do: upgrade, id: s1, to: 0-1-0}   # Night Vision: camo
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.462, 0.453]}   # central pond, top (best legal cell)
+  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead
+  - {do: upgrade, id: s1, to: 2-2-0}   # ceramics
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.484, 0.555]}   # central pond, bottom: taken before surplus copies can take it
+  - {do: upgrade, id: t2, to: 0-0-2}
+  - {do: upgrade, id: sb1, to: 2-0-0}   # Advanced Intel: shares the sniper's camo
+  - {do: upgrade, id: s1, to: 3-2-0}   # Deadly Precision: the round-40 MOAB
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
+  - {do: place, id: v1, kind: village, role: support, at: [0.532, 0.325]}   # 38 units from b1
+  - {do: upgrade, id: v1, to: 1-2-0}   # Bigger Radius + Radar Scanner: camo for b1 with room to spare
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: upgrade, id: b2, to: 2-2-0}
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.601, 0.376]}   # right of the pond
+  - {do: upgrade, id: d1, to: 1-3-0}   # Druid of the Jungle: the round-63 rush before the carrier
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.243, 0.325]}   # Brickell in the big left pond
+  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
+  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB
+  - {do: upgrade, id: b2, to: 4-2-0}   # Aircraft Carrier
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: place, id: al1, kind: alchemist, role: support, at: [0.516, 0.606]}   # brews b2 and the sub
+  - {do: upgrade, id: al1, to: 3-2-0}   # Berserker Brew
+  - {do: upgrade, id: t2, to: 4-0-2}   # Ring of Fire
+  - {do: upgrade, id: v1, to: 2-2-0}   # Jungle Drums
+  - {do: upgrade, id: v1, to: 2-3-0}   # MIB
+fill:
+  - {do: upgrade, kind: buccaneer, to: 2-0-2}   # surplus buccaneer copies (xp_target) stop at Crow's Nest
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 1-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  rush:
+    - {do: place, id: d1, kind: druid, role: dps, at: [0.601, 0.376]}
+    - {do: upgrade, id: d1, to: 1-3-0}
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
+  zomg: [{do: upgrade, id: s1, to: 4-2-0}]
+  ddt: [{do: upgrade, id: s1, to: 4-2-0}]

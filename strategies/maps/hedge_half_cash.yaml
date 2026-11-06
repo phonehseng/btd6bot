@@ -1,0 +1,132 @@
+# Hedge, Half Cash: three Druids of the Jungle between the lanes, four tacks
+# in the hedge gaps, a camo/lead sniper on the bottom strip, five Razor Rotors
+# Heli Pilots (Pursuit), a Dragon's Breath wizard (later Summon Phoenix), a
+# Radar Scanner village that gives the right-hand druids and the wizard camo,
+# and a Long Life Spikes factory. Quincy.
+#
+# Why: one route (1,538 world units, 1,196 hittable) that meanders between
+# three hedges; the hedges block line of sight on 21% of the map (no sniper
+# sees more than 64% of the route). Helis fly to the bloons in Pursuit and do
+# not need sight; druids, tacks and the wizard stand in the gaps where they
+# see the lanes beside them (sight counted in the damage model for every
+# finite-range tower). The CHIMPS build for this map (hedge_chimps.yaml:
+# tacks, helis, Apache Dartships, Phoenix wizard) was the start. Half Cash
+# with the account's Double Cash pays what CHIMPS pays per round, on Hard
+# prices, from a round-22 Fast Track start with about $4,465. Changes:
+#   * a Druid of the Jungle ($1,785 at 0-3-0) in the round-22 setup instead of
+#     a fourth tack: the damage model rates round 27 at 1.9 without it and
+#     16 with it;
+#   * no Apache Dartship. Each one costs $21,600 for a single tier, and with
+#     lives to spare the executor's surplus() places another heli whenever the
+#     plan waits. In the executor-faithful replay the first Apache was bought
+#     only at round 80, and round 78 (camo ceramics) rated 0.7 on the plan's
+#     towers. A Radar Scanner village by the right-hand druid (camo for the
+#     druids and the wizard) and a third druid cost $6,750 and rate round 78
+#     at 3.8; surplus helis are capped at 3-2-0 (xp_target heli);
+#   * the sniper's camo and lead (0-1-0, 1-2-0) and the first heli's IFR camo
+#     (2-2-0) come two rounds before the rounds that need them (24, 28, 36).
+#
+# Model caveat: the damage model rates a Druid of the Jungle nearly the same
+# wherever it stands on this map (its vines are counted on most of the
+# track). The druids still stand on the cells that reach the most track
+# within their range, so a shorter real reach costs the least.
+#
+# Sources:
+#   * bloonswiki Half_Cash and Strategy:Half_Cash: every income halved (Double
+#     Cash cancels it except tower income); Druid of the Jungle and Dragon's
+#     Breath named for rounds 31-70; round 78 (camo ceramics) among the
+#     hardest; Quincy among the recommended heroes
+#     (https://www.bloonswiki.com/Half_Cash, https://www.bloonswiki.com/Strategy:Half_Cash)
+#   * bloonswiki Hedge: the hedges are line-of-sight blockers; among the
+#     hardest beginner maps; Comanche Commander, Prince of Darkness and
+#     Archmage recommended (https://www.bloonswiki.com/Hedge)
+#   * bloonswiki Fast_Track_Mode: Hard starts at round 22 with the skipped
+#     rounds' cash (https://www.bloonswiki.com/Fast_Track_Mode)
+#   * no Half Cash guide for this map was found on Reddit, YouTube or Steam
+#     (web search, 2026-11-06).
+#
+# Every tower and tier is unlocked on the main account. No income towers.
+# Helis: the executor sets Lock in Place, then Pursuit from 2-x-x (_aim).
+#
+# Checked offline 2026-11-06 (docs/map_strategies/beginner.md has the method),
+# Half Cash economy with the account's boosts (optimize_builds.economy(
+# "half_cash", {"fast_track": True, "double_cash": True}): round 22, $4,465,
+# income x1.0, Hard prices), rounds 22-80, current damage model (strict buff
+# reach, circling carrier planes):
+#   * every `at` legal in plan order on the map geometry and on the live map
+#     model (main checkout's data/maps/hedge.npz), outside the HUD band;
+#   * plan replay: worst margin 2.25 (round 79); sight-strict 2.25 (round 79;
+#     snipers only see what the hedges leave - the model already does that -
+#     subs their range, aces their circle: none here); drift (every tower 5
+#     units further from the village, stock and strict) 2.40 (round 79);
+#     round 28: 3.05, 40: 5.5, 63: 5.1, 76: 7.0, 78: 3.75, 80: 3.96. All 38
+#     steps bought, the last (Summon Phoenix) at round 70;
+#   * executor-faithful (simulate_threats' loop, real Executor, the map's
+#     learned refused spots, strict), with its extra towers / plan towers
+#     only: 3.02 (round 64) / 2.25 (round 79); 38/38 steps; four surplus
+#     helis (3-2-0);
+#   * lead: every step bought after the round-22 setup stands at least two
+#     rounds before the first round the build without it falls under 2.0
+#     (plan replay, stock and strict); the setup purchases cannot be earlier;
+#   * strategy.load_all(): bot-ready, validate() empty; coverage(half_cash)
+#     and usable() on the main account: nothing missing.
+id: hedge_half_cash
+map: Hedge
+hero: quincy
+modes: [half_cash]
+xp_target: heli
+planner:
+  towers: {tack: [0, 2, 0], sniper: [1, 2, 0], druid: [1, 3, 0], heli: [3, 2, 0], wizard: [0, 4, 2],
+           village: [2, 2, 0], spike: [2, 0, 4]}
+  # every replay at 2.25 or more, every step two rounds ahead of its need (2026-11-06)
+  base_success: {half_cash: 0.85}
+  maps: [Hedge]
+plan:
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.697, 0.555]}   # right gap between the lanes
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.163, 0.445]}   # left gap
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.913]}   # bottom strip: sees 58% of the route
+  - {do: upgrade, id: s1, to: 0-1-0}   # Night Vision: camo
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.735, 0.419]}   # right gap: the druid cell reaching the most track
+  - {do: upgrade, id: d1, to: 0-3-0}   # Druid of the Jungle
+  - {do: upgrade, id: t1, to: 0-2-0}
+  - {do: upgrade, id: s1, to: 1-2-0}   # Full Metal Jacket: lead; Shrapnel
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.650, 0.860]}   # bottom-right corner (Pursuit from 2-x-x)
+  - {do: upgrade, id: h1, to: 2-2-0}   # Pursuit + IFR (camo)
+  - {do: upgrade, id: t2, to: 0-2-0}
+  - {do: place, id: t3, kind: tack, role: dps, at: [0.697, 0.479]}
+  - {do: upgrade, id: t3, to: 0-2-0}
+  - {do: upgrade, id: d1, to: 1-3-0}   # Hard Thorns
+  - {do: upgrade, id: h1, to: 3-2-0}   # Razor Rotors: lead, the first MOAB answer
+  - {do: place, id: t5, kind: tack, role: dps, at: [0.505, 0.785]}
+  - {do: upgrade, id: t5, to: 0-2-0}
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.200, 0.860]}   # bottom-left corner
+  - {do: upgrade, id: h2, to: 3-2-0}
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.697, 0.400]}   # top of the right gap
+  - {do: upgrade, id: w1, to: 0-3-2}   # Dragon's Breath with camo: the round-63 rush
+  - {do: place, id: d2, kind: druid, role: dps, at: [0.211, 0.700]}   # bottom-left gap
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.580, 0.900]}   # Quincy, bottom strip
+  - {do: place, id: h3, kind: heli, role: dps, at: [0.120, 0.300]}   # top-left corner
+  - {do: upgrade, id: h3, to: 3-2-0}
+  - {do: upgrade, id: d2, to: 1-3-0}
+  - {do: place, id: h4, kind: heli, role: dps, at: [0.200, 0.170]}
+  - {do: upgrade, id: h4, to: 3-2-0}
+  - {do: place, id: v1, kind: village, role: support, at: [0.729, 0.334]}   # 19 units from d1 and w1, 20 from d3
+  - {do: upgrade, id: v1, to: 1-2-0}   # Bigger Radius + Radar Scanner: camo for the druids and the wizard (round 78)
+  - {do: place, id: d3, kind: druid, role: dps, at: [0.772, 0.394]}   # right edge, inside the radar
+  - {do: upgrade, id: d3, to: 1-3-0}
+  - {do: place, id: h5, kind: heli, role: dps, at: [0.334, 0.836]}
+  - {do: upgrade, id: h5, to: 3-2-0}
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.639, 0.700]}   # right of the bottom lanes
+  - {do: upgrade, id: sp1, to: 2-0-4}   # Long Life Spikes on the track: they hit camo too
+  - {do: upgrade, id: v1, to: 2-2-0}   # Jungle Drums
+  - {do: upgrade, id: w1, to: 0-4-2}   # Summon Phoenix
+fill:
+  - {do: upgrade, kind: heli, to: 3-2-0}   # surplus helis (xp_target) stop at Razor Rotors
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: h1, to: 2-2-0}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 1-2-0}]
+  moab: [{do: upgrade, id: h1, to: 3-2-0}]
+  rush: [{do: upgrade, id: w1, to: 0-3-2}]
+  bfb: [{do: upgrade, id: h2, to: 3-2-0}, {do: upgrade, id: h3, to: 3-2-0}]
