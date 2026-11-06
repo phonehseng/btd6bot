@@ -1,0 +1,137 @@
+# Winter Park, Half Cash: the Winter Park CHIMPS core (three fountain boats,
+# Radar Scanner village, Berserker Brew alchemist, MOAB Assassin, Ring of
+# Fire tack, Quincy) reordered for the Fast Track start.
+#
+# Why: the fountain fits exactly three buccaneers, each reaching a third of
+# the route over four loop sides (so the executor's surplus finds no water
+# and buys no extra towers). The CHIMPS opening's three extra 0-0-0 tacks
+# were left out: the damage model rated each at +0.06 on R34-36. The camo
+# Destroyer and the Radar Scanner come before the bomb: R47 (70 camo pinks)
+# rated 1.1 without the radar. The CHIMPS steps for rounds 81-100 (two more
+# Carriers, MIB, MOAB Eliminator) are left out.
+#
+# Half Cash on the main account: Hard prices, rounds to 80, 100 lives, every
+# income halved. Double Cash pays here (boosts.double_cash_applies), so the
+# income is the Hard income again; Fast Track starts the game at round 22
+# with $4,465 (optimize_builds.economy("half_cash", boosts), 10% under the
+# skipped rounds' cash). That is the cash CHIMPS has saved by round 22, so
+# the build starts from the CHIMPS map build, bought at once before round 22.
+# Changes for the executor in Half Cash (found in the offline replays):
+#   * the hero goes first: a plan opening with a buccaneer gets a $200 dart
+#     in front of it (Executor._with_opener: start_round 3 <= 5);
+#   * camo (Crow's Nest) and lead (Hot Shot) are bought in the R22 setup and
+#     the camo/lead/ceramic/MOAB `answers` point at plan steps: the threat
+#     calendar plans with half income (no Double Cash), judged the plan's
+#     camo step too far and bought a ninja at R22 and a bomb at R25;
+#   * with lives to spare a waiting plan step claims no cash in the
+#     simulation (Executor.plan_claim; live only while the look-ahead is
+#     weak), so surplus() spends everything over $800. `xp_target:
+#     buccaneer` with `fill` 0-0-0 makes its extra towers bare boats in the
+#     free water ($430 each, a few until the water is full) instead of
+#     2-0-0 boats, sub tiers or snipers, which starved the Destroyers.
+#   * every tower is upgraded by a plan step, so surplus can only buy tiers
+#     the plan buys anyway.
+#
+# Sources:
+#   * bloonswiki Strategy:Half_Cash: Destroyer 3-2-0 where track runs on
+#     both sides, cheap support (Berserker Brew, Stronger Stimulant), Quincy
+#     viable, Brickell on water maps; hard rounds 40, 63, 75, 78
+#     (https://www.bloonswiki.com/Strategy:Half_Cash)
+#   * bloonswiki Winter_Park: buccaneers at the fountain's leftmost or
+#     rightmost point cover four sections
+#     (https://www.bloonswiki.com/Winter_Park)
+#   * web search (Reddit, guides) found no Half Cash build for this map; the
+#     map pages and guides defer to the general Half Cash advice.
+#
+# Checked offline 2026-11-06 (method of docs/map_strategies/beginner.md, on
+# the damage model with strict buff reach and circling carrier planes),
+# rounds 22-80, worst margin (round):
+#   * plan replay (each step as soon as the cash allows): 2.59 (R34);
+#     R40 3.8, R47 4.0, R63 10.3, R75 10.8, R76 8.2, R78 5.7, R80 5.3
+#   * sight-strict (subs to their own range, aces to their circle): 2.59 (R34)
+#   * drift (every tower 5 units further from the village and alchemist,
+#     plan and strict, the worse): 2.07 (R34)
+#   * executor-faithful (simulate_threats' loop on the learned live map,
+#     surplus spending, the real account), strict: 2.33 (R36); all 26 steps
+#     bought by R55, no extra towers (the fountain is full), no threat
+#     answers; with the match loop's weak-look-ahead claim added: 2.59 (R34)
+#   * every step from R24 on bought 2+ rounds before the first round the
+#     build fails without it (radar, Destroyer, MOAB Mauler R45 for R47);
+#     the R22 setup holds alone to R33
+#   * every `at` legal in plan order on the geometry and on the live map
+#     model (data/maps/winterpark.npz)
+#   * strategy.load_all(): bot_ready, validate() empty; coverage complete and
+#     usable on the main account, unusable on other maps; simulate_threats
+#     (account and base economy): no gaps
+id: winterpark_half_cash
+map: Winter Park
+hero: quincy
+modes: [half_cash]
+planner:
+  towers: {buccaneer: [4, 2, 2], tack: [4, 0, 0], bomb: [2, 5, 0], village: [2, 3, 0], alchemist: [3, 2, 0]}
+  # checked 2026-11-06 on the Half Cash economy with Fast Track + Double Cash: every replay 2.0+, every step 2+ rounds early
+  base_success: {half_cash: 0.85}
+  maps: [Winter Park]
+# surplus cash: the executor's extra copies are buccaneers, kept at 0-0-0 (fill)
+xp_target: buccaneer
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.548, 0.249]}   # Quincy first: no $200 opener dart (Executor._with_opener)
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.452, 0.436]}   # fountain, north-east
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.403, 0.47]}   # fountain, west edge
+  - {do: upgrade, id: b2, to: 0-0-2}   # Crow's Nest: camo (R24), bought in the R22 setup
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead (R28)
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.457, 0.513]}   # fountain, south-east: the third and last water spot
+  - {do: upgrade, id: b3, to: 2-1-0}
+  - {do: upgrade, id: b3, to: 2-2-0}   # R34 yellows, R36 pinks
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.195, 0.777]}   # bottom-left loop corner
+  - {do: upgrade, id: b2, to: 3-0-2}   # camo Destroyer
+  - {do: place, id: v1, kind: village, role: support, at: [0.526, 0.436]}   # reaches all three ships
+  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo for every ship (R47 camo pinks)
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
+  - {do: place, id: m1, kind: bomb, role: dps, at: [0.334, 0.249]}   # over the top-left loop
+  - {do: upgrade, id: m1, to: 0-3-0}   # MOAB Mauler
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: upgrade, id: t1, to: 3-0-0}   # Hot Shots
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.489, 0.385]}   # brews all three ships
+  - {do: upgrade, id: a1, to: 3-2-0}   # Berserker Brew
+  - {do: upgrade, id: m1, to: 2-4-0}   # MOAB Assassin: BFBs (R60), ZOMG (R80)
+  - {do: upgrade, id: t1, to: 4-0-0}   # Ring of Fire: the R63 rush answer
+  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
+fill:
+  - {do: upgrade, kind: buccaneer, to: 0-0-0}
+answers:
+  camo:
+    - {do: upgrade, id: b2, to: 2-0-2}
+    - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.403, 0.47]}
+  lead:
+    - {do: upgrade, id: b1, to: 2-2-0}
+    - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.452, 0.436]}
+  ceramic:
+    - {do: upgrade, id: b2, to: 3-0-2}
+    - {do: upgrade, id: b1, to: 3-2-0}
+    - {do: upgrade, id: t1, to: 3-0-0}
+    - {do: place, id: t1, kind: tack, role: dps, at: [0.195, 0.777]}
+  moab:
+    - {do: upgrade, id: b2, to: 3-0-2}
+    - {do: upgrade, id: b1, to: 3-2-0}
+    - {do: upgrade, id: m1, to: 0-3-0}
+    - {do: place, id: m1, kind: bomb, role: dps, at: [0.334, 0.249]}
+  bfb:
+    - {do: upgrade, id: m1, to: 2-4-0}
+    - {do: place, id: m1, kind: bomb, role: dps, at: [0.334, 0.249]}
+  rush:
+    - {do: upgrade, id: t1, to: 4-0-0}
+    - {do: place, id: t1, kind: tack, role: dps, at: [0.195, 0.777]}
+  zomg:
+    - {do: upgrade, id: m1, to: 2-4-0}
+    - {do: place, id: m1, kind: bomb, role: dps, at: [0.334, 0.249]}
+  ddt:
+    - {do: upgrade, id: v1, to: 2-3-0}
+    - {do: place, id: v1, kind: village, role: support, at: [0.526, 0.436]}
+  bad:
+    - {do: upgrade, id: m1, to: 2-5-0}
+    - {do: place, id: m1, kind: bomb, role: dps, at: [0.334, 0.249]}
