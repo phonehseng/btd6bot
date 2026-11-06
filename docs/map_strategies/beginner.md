@@ -57,13 +57,13 @@ little cannot take a buff away. Worst margin over rounds 6-100 (round):
 
 | Build | Core | Plan | Sight-strict | Executor-faithful (extra / plan only) | Drift | Gate |
 |---|---|---|---|---|---|---|
-| `alpinerun_chimps.yaml` | tack to Inferno Ring, Spiked Mines, Druid of the Jungle, Cripple MOAB, MIB | 2.16 (R9) | 2.16 (R9) | 2.16 / 2.16 (R9) | 2.04 (R9) | 0.5 (engineer and Hot Shots bought one round before the rounds that need them) |
+| `alpinerun_chimps.yaml` | tack to Inferno Ring, Spiked Mines, Druid of the Jungle, Cripple MOAB, MIB | 2.16 (R9) | 2.16 (R9) | 2.16 / 2.16 (R9) | 2.04 (R9) | 0.85 (opening steps just in time; no lead asked before round 16) |
 | `candyfalls_chimps.yaml` | two buccaneers to Carrier Flagship + Aircraft Carrier, MIB | 2.18 (R95) | 2.18 (R95) | 2.23 / 2.18 (R95) | 2.18 (R95) | 0.85 |
 | `carved_chimps.yaml` | buccaneers in the eyes to Carrier Flagship + two Carriers, MOAB Mauler; repaired: village below the right eye with Bigger Radius, lead-dip alchemist by the left eye; ace moved off a refused spot, Destroyer before the ace | 2.16 (R9) | 2.16 (R9) | 2.16 / 2.16 (R9) | 2.07 (R34) | 0.85 |
 | `endoftheroad_chimps.yaml` | pool buccaneers to Destroyers and Carriers, Deadly Precision sniper; repaired: village 15 units lower, Carrier Flagship and a fifth Carrier | 2.11 (R15) | 2.11 (R15) | 2.18 / 2.18 (R15) | 2.09 (R95) | 0.5 (Double Shot, Destroyer and b3 bought one round before the rounds that need them) |
 | `frozenover_chimps.yaml` | Ring of Fire tack, Maim MOAB sniper, two Carriers, MIB | 1.01 (R95) | 0.99 (R95) | 1.14 / 1.13 (R95) | 1.00 (R95) | 0.5 (fails R95, R98, R99; no village spot puts b2 or the sub inside the MIB) |
 | `hedge_chimps.yaml` | tacks, Apache helis, Phoenix wizard | 0.52 (R95) | 0.52 | 0.22 / 0.19 | - | 0.5 (fails R90-99; not re-checked) |
-| `lotusisland_chimps.yaml` | three Carriers (one to Flagship), Cripple MOAB sniper, MIB; repaired: west carrier moved inside the MIB and made the Flagship; MIB, b1 and alchemist moved off refused spots | 2.09 (R8) | 2.09 (R8) | 2.09 / 2.09 (R8) | 2.04 (R8) | 0.5 (b2 and Grape Shot bought one round before the rounds that need them) |
+| `lotusisland_chimps.yaml` | three Carriers (one to Flagship), Cripple MOAB sniper, MIB; repaired: west carrier moved inside the MIB and made the Flagship; MIB, b1 and alchemist moved off refused spots | 2.09 (R8) | 2.09 (R8) | 2.09 / 2.09 (R8) | 2.04 (R8) | 0.85 (opening steps just in time; no lead asked before round 16) |
 | `parkpath_chimps.yaml` | pond Flagship + stream Carrier, Maim MOAB snipers, Perma-Spike; repaired: pond boat and alchemist moved inside the buffs, third pond Carrier | 2.07 (R8) | 2.02 (R55) | 2.07 / 2.07 (R8) | 2.04 (R55) | 0.85 |
 | `skates_chimps.yaml` | tack to Inferno Ring, two Carriers, subs, dipped ninja | 1.51 (R94) | 1.41 (R98) | 1.41 / 1.41 (R98) | 0.06 (R95) | 0.5 (fails R94-98; drift R59-100) |
 | `winterpark_chimps.yaml` | three fountain Carriers, MOAB Eliminator, MIB; repaired: early Hot Shot on the third ship | 2.09 (R98) | 2.09 (R98) | 2.20 / 2.20 (R95) | 2.07 (R98) | 0.85 |
@@ -78,9 +78,11 @@ learned refusals (`simulate_threats.map_model(learned=True)`; CashGame refuses
 the same clicks) and rates the towers where they really stand, and the
 executor tries the cells round a refused `at` before any spot chosen by role
 (`Executor._at_spots`). A build gets 0.85 only where every replay is at 2.0 or
-more AND every plan step stands at least two rounds before the first round
-the build without it fails; the three held builds miss only that lead in the
-cash-bound opening (rounds 8-15) or at round 38.
+more AND, from round 16 on, every plan step stands at least two rounds before
+the first round the build without it fails. The $650 opening (rounds 6-15)
+leaves no spare round for anyone, so there the margins alone decide. Alpine
+Run and Lotus Island miss the lead only in the opening and are gated 0.85;
+End Of The Road also misses it at round 38 and stays at 0.5.
 
 Before the correction every build but Hedge had passed at 2.11-3.08; the
 spot and step changes, and why the two held builds could not be repaired

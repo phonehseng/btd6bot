@@ -109,9 +109,10 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 2], sniper: [5, 2, 0], village: [2, 3, 0], alchemist: [3, 2, 0], boomerang: [3, 0, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.16+
-  # held back (re-checked 2026-11-05 on the live map's refused spots, repaired): every replay 2.04+,
-  # but b2 (R8) and Grape Shot (R14) are bought only one round before the round that needs them
-  base_success: {chimps: 0.5}
+  # re-checked 2026-11-05 on the live map's refused spots, repaired: every replay 2.04+;
+  # the opening steps stand just in time (the $650 start allows no spare round
+  # before round 16; the two-round lead is asked from round 16 on, 2026-11-05)
+  base_success: {chimps: 0.85}
   maps: [Lotus Island]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.345, 0.811]}   # bay's south-west corner, inside the MIB
