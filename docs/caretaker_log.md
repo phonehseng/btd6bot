@@ -578,3 +578,8 @@
 - Since 06:42: 5 wins, 0 losses (Half Cash on Park Path, Candy Falls and Hedge; Apopalypse on Park Path and Hedge, all 0 lives lost). Every loss case is handled.
 - Backlog 53 (a): 66 maps have no Hard-family ceiling at all (no Hard, Double HP, Impoppable or CHIMPS number), so ceiling_cap and the Hard inheritance never apply there. Tried `tools/optimize_builds.py "#Ouch" hard --nice --candidates 2` beside the live bot: no result after 12 minutes, stopped. One map/mode does not fit an hourly run; a developer session should run the Hard ceilings in batches (or do part b). Noted in the backlog.
 - git status shows 130 data/maps/*.npz rewritten by the bot and about 150 untracked strategies/optimized/*.yaml and data/accounts files from other sessions; left as they are, only this log and the backlog were committed.
+
+## 2026-11-06 08:40
+- Bot status: task Running, bot.py up since 07:12, recorder and BTD6 up; now Encrypted Double HP, round 65, 100 lives. No STOP, PAUSE or dev_active. Safe mode on (trips 4, streak 12). No Auto Start reading, no tracebacks, no new loss cases.
+- Since 07:30: 5 wins, 0 losses (Candy Falls Apopalypse, Winter Park Half Cash, Skates Half Cash and Apopalypse, Lotus Island Apopalypse; all 0 lives lost).
+- Stall fixed (c53e2c8): at 08:17 End Of The Road Apopalypse was benched after 30 refused OKs on the overwrite-save box. The 03:42 exemption only held when "are you sure" was the sole spending word, but the Medium description behind the box ("Monkeys cost normal") added "cost". The box now ignores both; buy/purchase/spend/"for $" still forbid. Verified on OCR of the recorded frame; check.py ALL OK.
