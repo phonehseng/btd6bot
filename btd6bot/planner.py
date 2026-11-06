@@ -1084,7 +1084,7 @@ def _first_game_record(account: AccountState) -> tuple[dict[str, tuple[int, int]
 
 # The map category whose CHIMPS games with the map's own build the owner puts
 # first (2026-11-05 15:30, "CHIMPS first"): ahead of safe mode's confident
-# games (runner.chimps_before_safe_mode) and not scaled by first_game_factor.
+# games (runner.beginner_before_safe_mode) and not scaled by first_game_factor.
 CHIMPS_FIRST_CATEGORY = "beginner"
 
 

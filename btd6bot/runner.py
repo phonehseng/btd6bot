@@ -447,23 +447,28 @@ def _looks_like_map_name(text):
     return len(re.sub(r"[^A-Za-z]", "", t)) >= 4 and re.fullmatch(r"[A-Za-z0-9 '#&.!-]+", t) is not None
 
 
-def chimps_before_safe_mode(cands, benched):
-    """The CHIMPS games safe mode lets through ahead of its confident games:
-    on a planner.CHIMPS_FIRST_CATEGORY map, with a build made for that map
-    (planner.is_own_map_build), clearing the CHIMPS bar, not benched
-    (`benched(map, mode)`) - in the planner's order.
+def beginner_before_safe_mode(cands, benched):
+    """The games safe mode lets through ahead of its confident games: open
+    medals on a planner.CHIMPS_FIRST_CATEGORY (Beginner) map that clear their
+    own bar and are not benched (`benched(map, mode)`) - in the planner's
+    order. A CHIMPS game also needs a build made for its map
+    (planner.is_own_map_build).
 
-    The owner (2026-11-05 15:30) chose this when told that safe mode (64 wins
-    to leave) plays only games at p >= CONFIDENT_P while an untested map
-    build is capped just under it, so the Beginner CHIMPS builds - the black
-    borders they want first - would have waited behind every confident game
-    on every map. Everything else in safe mode is unchanged."""
+    The owner (2026-11-05 15:30) chose this for the Beginner CHIMPS builds
+    when told that safe mode (64 wins to leave) plays only games at
+    p >= CONFIDENT_P while an untested map build is capped just under it.
+    On 2026-11-06 the map cards showed that the Beginner maps without a
+    black border also lack Apopalypse and Half Cash (a misread medal sweep
+    had recorded them as earned); their black borders are the owner's first
+    goal too, so every open Beginner medal goes first. Everything else in
+    safe mode is unchanged."""
     from .planner import CATEGORY_EASE, CHIMPS_FIRST_CATEGORY, is_own_map_build
     ease = CATEGORY_EASE[CHIMPS_FIRST_CATEGORY]
     return [c for c in cands
-            if c.mode == "chimps" and c.ease == ease and getattr(c, "ok", False)
+            if c.ease == ease and getattr(c, "ok", False)
             and getattr(c, "tier", None) not in (None, "LAST")
-            and is_own_map_build(c.s, c.map) and not benched(c.map, c.mode)]
+            and (c.mode != "chimps" or is_own_map_build(c.s, c.map))
+            and not benched(c.map, c.mode)]
 
 
 RUNNER_UPS = 4    # runner-up games the big HUD lists under the planner's pick
@@ -1817,10 +1822,10 @@ class Bot:
             # rule is to keep playing Hard-family medals in medal order even
             # at p 0.71-0.84.
             from .planner import CONFIDENT_P
-            first = chimps_before_safe_mode(cands, self.benched)
+            first = beginner_before_safe_mode(cands, self.benched)
             sure = [c for c in cands if c.p >= CONFIDENT_P and not self.benched(c.map, c.mode)]
             if first:
-                log.info("safe mode: %d Beginner CHIMPS game(s) with the map's own build go first "
+                log.info("safe mode: %d open Beginner medal(s) go first "
                          "(the owner's order, 2026-11-05)", len(first))
                 cands = first
                 phase = "CHIMPS"

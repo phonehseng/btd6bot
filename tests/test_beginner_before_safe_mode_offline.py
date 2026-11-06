@@ -1,4 +1,4 @@
-"""Safe mode lets Beginner CHIMPS games with the map's own build go first.
+"""Safe mode lets open Beginner medals go first (CHIMPS with the map's own build).
 
 The owner's order since 2026-11-05: black borders map tier by tier, Beginner
 maps first. Safe mode (the loss circuit breaker) plays only games at
@@ -6,7 +6,7 @@ p >= CONFIDENT_P, while an untested map build is capped just under it, so the
 Beginner CHIMPS builds would have waited behind every confident game on
 every map. The owner chose (2026-11-05 15:30) to let them go first; nothing
 else in safe mode changes.
-Run: python tests/test_chimps_before_safe_mode_offline.py"""
+Run: python tests/test_beginner_before_safe_mode_offline.py"""
 import sys
 from pathlib import Path
 from types import SimpleNamespace as NS
@@ -24,7 +24,7 @@ BEGINNER, ADVANCED = CATEGORY_EASE["beginner"], CATEGORY_EASE["advanced"]
 
 
 def first(cands, benched=()):
-    return R.chimps_before_safe_mode(cands, lambda m, mode: (m, mode) in benched)
+    return R.beginner_before_safe_mode(cands, lambda m, mode: (m, mode) in benched)
 
 
 def specs():
@@ -35,13 +35,23 @@ def cand(s, map_name, mode="chimps", ease=BEGINNER, ok=True, tier="HS", p=0.84):
     return NS(s=s, map=map_name, mode=mode, ease=ease, ok=ok, tier=tier, p=p)
 
 
+def test_an_open_beginner_medal_clearing_its_bar_goes_first():
+    """2026-11-06: the Beginner maps without a black border lack Apopalypse
+    too. A general build clearing its own bar goes first; one under it, or a
+    harder map's medal, does not."""
+    apop = specs()["apopalypse_ninja_sniper"]
+    cands = [cand(apop, "Park Path", mode="apopalypse", p=0.80),
+             cand(apop, "Park Path", mode="apopalypse", ok=False, tier=None, p=0.5),
+             cand(apop, "Cargo", mode="apopalypse", ease=ADVANCED, p=0.80)]
+    assert first(cands) == [cands[0]]
+
+
 def test_only_beginner_chimps_with_the_maps_own_build_go_first():
     sp = specs()
     own, general = sp["endoftheroad_chimps"], sp["chimps_ninja_sun"]
     cands = [cand(own, "End Of The Road"),
              cand(general, "End Of The Road"),                   # not made for the map
              cand(own, "End Of The Road", ok=False, tier=None),  # under its bar
-             cand(own, "End Of The Road", mode="hard"),         # not CHIMPS
              cand(own, "End Of The Road", ease=ADVANCED)]       # not a Beginner map
     picked = first(cands)
     assert picked == [cands[0]], picked
