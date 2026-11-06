@@ -176,14 +176,29 @@ class RoundVotes:
     between them allows (the game only moves forward, at most one round per
     MIN_ROUND_SECONDS, plus MAX_STEP), and a forward jump that the elapsed time allows
     (at most one round per MIN_ROUND_SECONDS) needs only PLAUSIBLE_VOTES.
+
+    Under continuous sends (Apopalypse: the next round starts while the
+    last one is still on the track) rounds are much shorter: bot.log of
+    2026-11-06 shows a median of 2.5-3 s per round from round 45 on, often
+    less. With the 3 s floor the catch-up readings looked implausible, and
+    nearly every Apopalypse game lost track late ("round tracking reset
+    49 -> 59"). Party Parade Apopalypse was lost at round 58 while the bot
+    still believed round 49: no crisis rounds or abilities for the real
+    rounds. Those games use CONTINUOUS_MIN_ROUND_SECONDS instead.
     """
     MAX_STEP = 2               # rounds the game may move on between two readings
     MIN_ROUND_SECONDS = 3.0    # no round is over faster than this, even on fast forward
+    CONTINUOUS_MIN_ROUND_SECONDS = 1.0   # the same under continuous sends (Apopalypse)
     PLAUSIBLE_VOTES = 3        # forward jumps the elapsed time explains
     SMALL_VOTES = 4            # other changes of up to 3 rounds
     BIG_VOTES = 15             # anything else (a misread like '11' -> '711')
 
-    def __init__(self):
+    def __init__(self, continuous=False):
+        """continuous: the mode sends rounds without breaks (strategy rules
+        'continuous'), so rounds can pass faster than MIN_ROUND_SECONDS."""
+        if continuous:
+            # an instance attribute shadows the class floor for this game only
+            self.MIN_ROUND_SECONDS = self.CONTINUOUS_MIN_ROUND_SECONDS
         self.cand, self.votes = None, 0
         self.t_prev = None      # `since_change` of the previous reading
 
@@ -243,7 +258,7 @@ class Match:
         self._prev_lives_read = None
         rules = getattr(executor, "rules", None) or {}
         self._lives = LivesTracker(rules.get("lives"), fixed=bool(rules.get("one_life")))
-        self._round_votes = RoundVotes()
+        self._round_votes = RoundVotes(continuous=bool(rules.get("continuous")))
         # Geared's gears turn after each round and carry their towers with
         # them: their remembered click spots are turned too (carried.py)
         try:
