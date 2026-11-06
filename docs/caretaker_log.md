@@ -608,3 +608,10 @@
 - Luminous Cove (case 20261106_115240, handled): BTD6 lights Play as soon as a round's last bloon is sent; the bot pressed it with round 98's MOABs half way along the route, and round 99's 60 MOABs joined them. Every round was being sent early. Fixed in 98e54ee: in one-life games Play waits until the bloon watch sees the track clear (4 empty looks, at most 25 s). Test added, check.py ALL OK. The $25-45k left idle from round 94 is backlog 55.
 - Ship Capture (case 20261106_121728, handled): Fast Track start at 29, rated 0.26 from the start, round 40's first MOAB leaked; round 39 was cleared before Play, so not the early send. Added to backlog 54.
 - Note: btd6bot/runner.py has an uncommitted change that is not the caretaker's; left as it is.
+
+## 2026-11-06 13:45
+- Bot status: task Running, bot.py up since 12:36, recorder and BTD6 up; now opening Another Brick. No STOP, PAUSE or dev_active. Safe mode on (trips 4). No Auto Start reading, no tracebacks or loops.
+- Since 12:45: 4 wins (Bloonarius Prime Double HP, Erosion Medium with 126 lives lost, Erosion Military Only, Off The Coast Half Cash), 2 losses: Erosion Magic Monkeys Only r22 and Erosion Reverse r38.
+- Erosion Magic Monkeys Only (case 20261106_130851, handled): placement asked for ice lasting to round 80, and only the far corner lasts that long, out of reach of the live Path2. Every ninja and wizard step was given up. Fixed in 25bb2f5: new towers need ground only until the current path phase ends, and towers on melted ice are forgotten and rebuilt (test added, check.py ALL OK). Legal ninja cells beside Path2 at round 22 went from 0 to 444.
+- Erosion Reverse (case 20261106_132333, handled; played before the fix): no legal heli cell at all (backlog 57), and four surplus snipers were "placed" under the round counter and never existed (backlog 56).
+- Note: btd6bot/runner.py still has an uncommitted change that is not the caretaker's; left as it is.
