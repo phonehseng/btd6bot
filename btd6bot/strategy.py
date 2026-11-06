@@ -3298,14 +3298,33 @@ class Executor:
                 log.info("blimp check round %d: %.0f blimp HP, %.0f units of track; the defence "
                          "deals about %.1fx that in reach%s", R, load["hp"], self._track_length(),
                          ratio, "" if ratio >= bar else f" - short of the {bar:.1f}x wanted")
-            if ratio < bar and self._model_holds(R, rnd):
+            if ratio < bar and self._model_holds(R, rnd, ratio, bar):
                 continue
             return R, load, ratio
         return None
 
-    def _model_holds(self, R, rnd):
-        """True when the damage model rates blimp round R at RAMP_MODEL_SAFE
-        or more on the board as it stands: the blimp check then gives way.
+    def model_bar(self, ratio, bar):
+        """The damage-model rating needed to overrule a blimp check that reads
+        `ratio` against its bar `bar`.
+
+        RAMP_MODEL_SAFE when the check is only just short, growing with the
+        square root of how far short it is (bar / ratio). The model and the
+        check fail in different ways, so the further they disagree the more
+        sure the model must be. Calibrated on the cases the two were seen to
+        disagree:
+          - CHIMPS map builds (2026-11-05): check 0.17x of 1.4x, model 16 -
+            the model was right; sqrt(8.2) * 2.0 = 5.7, so it still gives way.
+          - Dark Castle Impoppable (2026-11-06): check 0.2x of 1.4x, model
+            2.18 - the MOAB leaked; the bar is 5.3, so the check now stands.
+          - Mushroom Grotto Reverse (2026-11-06): check 0.6x, model 2.28 -
+            the MOAB leaked; the bar is about 3.1, so the check stands."""
+        shortfall = bar / max(ratio, 0.01)
+        return self.RAMP_MODEL_SAFE * max(1.0, shortfall) ** 0.5
+
+    def _model_holds(self, R, rnd, ratio=None, bar=None):
+        """True when the damage model rates blimp round R at model_bar(ratio,
+        bar) or more (RAMP_MODEL_SAFE when no reading is given) on the board
+        as it stands: the blimp check then gives way.
 
         The blimp check is a rough sum (counters.json blimp_dps) that gives
         villages and alchemists no credit, rates a 4-2-0 buccaneer like a
@@ -3319,7 +3338,14 @@ class Executor:
         on Cargo Impoppable it rightly called round 94 short while the model
         gave 0.66."""
         rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
-        if not rated or rated[0] is None or rated[0] < self.RAMP_MODEL_SAFE:
+        need = self.RAMP_MODEL_SAFE if ratio is None or bar is None else self.model_bar(ratio, bar)
+        if not rated or rated[0] is None or rated[0] < need:
+            if rated and rated[0] is not None and rated[0] >= self.RAMP_MODEL_SAFE \
+                    and ("ramp_stands", R) not in self.noted:
+                self.noted.add(("ramp_stands", R))
+                log.info("blimp check round %d: the damage model rates it %.2f, under the %.1f "
+                         "needed to overrule a %.1fx reading - the blimp check stands",
+                         R, rated[0], need, ratio)
             return False
         if ("ramp_model", R) not in self.noted:
             self.noted.add(("ramp_model", R))

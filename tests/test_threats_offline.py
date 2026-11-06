@@ -423,12 +423,27 @@ def test_the_blimp_check_gives_way_when_the_damage_model_holds_the_round():
     """CHIMPS map builds (2026-11-05): the blimp check called rounds 75-99
     short where the damage model gave 16, bought loose towers and starved the
     plan's last big step. When the model rates the blimp round at
-    RAMP_MODEL_SAFE or more, no blimp damage is due for it."""
-    g, ex = _one_life_at_37(S.Executor.RAMP_MODEL_SAFE + 0.5)
-    assert ex.blimp_ratio(TH.round_blimp_load(ex.round_set, 40)) < ex.ramp_bar(
-        TH.round_blimp_load(ex.round_set, 40)), "the rough check alone calls round 40 short"
+    model_bar or more (as sure as it was there: 16), no blimp damage is due."""
+    g, ex = _one_life_at_37(16.0)
+    load = TH.round_blimp_load(ex.round_set, 40)
+    assert ex.blimp_ratio(load) < ex.ramp_bar(load), "the rough check alone calls round 40 short"
     assert ex._ramp_due(37) is None, "the model holds round 40: nothing is due"
     assert not ex.weak_now(39), "nor is round 40 weak for the cash holds"
+
+
+def test_a_lukewarm_model_does_not_overrule_a_far_short_blimp_check():
+    """Dark Castle Impoppable and Mushroom Grotto Reverse (2026-11-06): the
+    blimp check read 0.2x and 0.6x, the damage model 2.18 and 2.28 - just over
+    RAMP_MODEL_SAFE - and the check gave way; both round-40 MOABs leaked. The
+    further short the check reads, the surer the model must be."""
+    ex = _one_life_at_37(2.18)[1]
+    assert ex.model_bar(0.2, 1.4) > 2.28 and ex.model_bar(0.6, 1.4) > 2.28
+    assert ex.model_bar(0.17, 1.4) < 16, "the CHIMPS case (model 16) still overrules"
+    assert ex.model_bar(1.4, 1.4) == ex.RAMP_MODEL_SAFE, "at the bar: the plain threshold"
+    load = TH.round_blimp_load(ex.round_set, 40)
+    ratio, bar = ex.blimp_ratio(load), ex.ramp_bar(load)
+    if ex.model_bar(ratio, bar) > 2.18:
+        assert ex._ramp_due(37) is not None, "the check stands: blimp damage is due for round 40"
 
 
 def test_the_blimp_check_stands_where_the_damage_model_is_unsure():
