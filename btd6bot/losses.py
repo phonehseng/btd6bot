@@ -51,12 +51,10 @@ def _name(game):
 
 
 def _games():
-    """Finished games from the current log and the previous one."""
-    out = []
-    for path in (LOG_FILE.with_name(LOG_FILE.name + ".1"), LOG_FILE):
-        if path.exists():
-            out += read_games(path)
-    return out
+    """Finished games from the previous log and the current one, read as one
+    stream so a game the rotation cut in two is found (read_games)."""
+    paths = [p for p in (LOG_FILE.with_name(LOG_FILE.name + ".1"), LOG_FILE) if p.exists()]
+    return read_games(paths)
 
 
 def _result_for(game):

@@ -41,6 +41,26 @@ def test_only_finished_losses_are_filed():
         assert [g["outcome"] for g in filed] == ["defeat"]
 
 
+def test_a_game_cut_by_the_log_rotation_is_still_found():
+    """X Factor Impoppable (2026-11-05): bot.log rotated at 20:14:57 in the
+    middle of the game, which was lost at 20:20 and never filed - the old
+    log held its start, the new one its end."""
+    from btd6bot.highlights import read_games
+    old = ("2026-11-05 20:12:06,100 I runner: NEXT: [LAST] X Factor / impoppable with chimps_ninja_sun: p=0.70\n"
+           "2026-11-05 20:14:50,000 I match: round 40  cash 900  lives 1\n")
+    new = ("2026-11-05 20:20:37,493 I match: game over: {'outcome': 'defeat'}\n"
+           "2026-11-05 20:20:53,240 I runner: RESULT {'outcome': 'defeat', 'round': 54}\n")
+    with tempfile.TemporaryDirectory() as tmp:
+        a, b = Path(tmp, "bot.log.1"), Path(tmp, "bot.log")
+        a.write_text(old, encoding="utf-8")
+        b.write_text(new, encoding="utf-8")
+        assert read_games(a) == [] and read_games(b) == []     # each file alone misses it
+        games = read_games([a, b])
+        assert [(g["map"], g["mode"], g["outcome"], g["round"]) for g in games] == \
+            [("X Factor", "impoppable", "defeat", 54)], games
+        assert any("game over" in text for _, text in games[0]["lines"])
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

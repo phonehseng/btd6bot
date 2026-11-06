@@ -67,28 +67,41 @@ def _time(line):
     return datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S").timestamp() + int(m.group(2)) / 1000
 
 
+def _log_lines(paths):
+    """Every line of the logs `paths`, one file after the other."""
+    for p in paths:
+        with open(p, encoding="utf-8", errors="ignore") as f:
+            yield from f
+
+
 def read_games(path=LOG_FILE):
-    """Finished games: {start, end, map, mode, outcome, round, lines[(t, text)]}."""
+    """Finished games: {start, end, map, mode, outcome, round, lines[(t, text)]}.
+
+    `path` may also be a list of logs, oldest first, read as one stream: a
+    game the log rotation cut in two (started in bot.log.1, ended in bot.log)
+    is then still found. Read one file at a time, such a game had a start
+    without an end in the old log and an end without a start in the new one,
+    and was never filed as a loss (X Factor Impoppable, 2026-11-05 20:20)."""
     games, cur = [], None
-    with open(path, encoding="utf-8", errors="ignore") as f:
-        for line in f:
-            t = _time(line)
-            if t is None:
-                continue
-            nxt = re.search(r"NEXT: \[\w+\] (.+?) / (\w+) with", line)
-            if nxt:
-                cur = {"start": t, "map": nxt.group(1), "mode": nxt.group(2), "lines": []}
-                continue
-            if cur is None:
-                continue
-            if "RESULT {" in line:
-                out = re.search(r"'outcome': '(\w+)'", line)
-                rnd = re.search(r"'round': (\d+)", line)
-                cur.update(end=t, outcome=out.group(1) if out else "?", round=int(rnd.group(1)) if rnd else None)
-                games.append(cur)
-                cur = None
-            else:
-                cur["lines"].append((t, line[24:].strip()))
+    paths = path if isinstance(path, (list, tuple)) else [path]
+    for line in _log_lines(paths):
+        t = _time(line)
+        if t is None:
+            continue
+        nxt = re.search(r"NEXT: \[\w+\] (.+?) / (\w+) with", line)
+        if nxt:
+            cur = {"start": t, "map": nxt.group(1), "mode": nxt.group(2), "lines": []}
+            continue
+        if cur is None:
+            continue
+        if "RESULT {" in line:
+            out = re.search(r"'outcome': '(\w+)'", line)
+            rnd = re.search(r"'round': (\d+)", line)
+            cur.update(end=t, outcome=out.group(1) if out else "?", round=int(rnd.group(1)) if rnd else None)
+            games.append(cur)
+            cur = None
+        else:
+            cur["lines"].append((t, line[24:].strip()))
     return games
 
 
