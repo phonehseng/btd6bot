@@ -76,11 +76,30 @@ def test_beginner_chimps_map_builds_are_not_scaled_by_first_games():
                    for i in range(5)]
     sp = specs()
     own, general = sp["parkpath_chimps"], sp["chimps_ninja_sun"]
-    assert P.owner_first_chimps(acc, own, "Park Path", "chimps")
-    assert not P.owner_first_chimps(acc, general, "Park Path", "chimps")
-    assert not P.owner_first_chimps(acc, own, "Park Path", "impoppable")
+    assert P.owner_first_build(acc, own, "Park Path")
+    assert not P.owner_first_build(acc, general, "Park Path")
+    assert not P.owner_first_build(acc, own, "Cargo"), "a harder map is not put first"
     assert P.first_game_factor(acc, general, "chimps") < 1.0, "the general build is still doubted"
     assert P.win_probability(acc, own, "Park Path", "chimps")[0] >= P.p_threshold("chimps")
+
+
+def test_beginner_map_builds_are_not_halved_by_the_fast_track_doubt():
+    """2026-11-06: the Beginner Half Cash map builds passed every replay on
+    the account's Fast Track opening and were halved to 0.45 by the general
+    Fast Track doubt. A Beginner map build keeps its own gate; a general
+    build in the same game is still doubted."""
+    import dataclasses
+    acc = F.full_account()
+    acc.boosts = dict(getattr(acc, "boosts", None) or {}, fast_track=True)
+    sp = specs()
+    own = dataclasses.replace(sp["parkpath_chimps"], id="parkpath_half_cash_test",
+                              modes=frozenset({"half_cash"}), base_success={"half_cash": 0.85})
+    general = sp["hard_sniper_elite"]
+    p_own = P.win_probability(acc, own, "Park Path", "half_cash")[0]
+    p_general = P.win_probability(acc, general, "Park Path", "half_cash")[0]
+    assert p_own >= P.p_threshold("half_cash"), p_own
+    assert P.owner_first_build(acc, own, "Park Path") and not P.owner_first_build(acc, general, "Park Path")
+    assert p_general < P.p_threshold("half_cash"), p_general
 
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
