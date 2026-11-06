@@ -90,6 +90,20 @@
 #     MOAB Eliminator (the `bad` answer) is bought at round 98;
 #   * tools/simulate_threats (open field and the real map) finds no gaps;
 #     strategy.coverage has nothing missing.
+#
+# Re-checked 2026-11-05 after Lotus Island CHIMPS was lost at round 95: not
+# the cash (live income matched the replay's) but the spots - the game
+# refused four of that build's, and the replay put every tower on its
+# spot anyway. The executor-faithful replay now plays on the map's learned
+# refusals (simulate_threats.map_model(learned=True), main checkout's
+# data/maps as of 17:12) and rates the towers where they really stand.
+# Carved: the ace's spot below the mouth (0.484, 0.845) is refused, and the
+# ace then took the ground the village needed (village 18 cells off). The
+# ace moves to (0.409, 0.47), left of the village, and the Destroyer (b1
+# 3-2-0, needed by R38) comes before the ace. Worst margin: plan
+# 2.16 (R9), sight-strict 2.16 (R9), drift 2.07 (R34), executor-faithful
+# 2.16 / 2.16 (R9), 32/32 steps by R81, nothing moved; every step stands at
+# least two rounds before the first round the build without it fails.
 id: carved_chimps
 map: Carved
 hero: admiral_brickell
@@ -98,10 +112,8 @@ planner:
   towers: {buccaneer: [5, 2, 2], village: [2, 3, 0], ace: [4, 0, 0], bomb: [2, 5, 0], boomerang: [3, 0, 0], dart: [0, 0, 0],
            alchemist: [2, 0, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.13+
-  # held back 2026-11-05 17:15: Lotus Island CHIMPS was lost at round 95 with
-  # $19.8k at round 90 where the executor-faithful replay had every step
-  # bought - the replay overstates live cash until that gap is fixed
-  base_success: {chimps: 0.5}
+  # re-checked 2026-11-05 on the live map's refused spots (ace moved, Destroyer earlier): every replay 2.07+, every step 2+ rounds early
+  base_success: {chimps: 0.85}
   maps: [Carved]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.569, 0.368]}   # right eye: the best spot on the map
@@ -115,10 +127,10 @@ plan:
   - {do: upgrade, id: b2, to: 2-0-2}
   - {do: place, id: bm1, kind: bomb, role: dps, at: [0.526, 0.521]}   # above the mouth, inside the village's reach
   - {do: upgrade, id: bm1, to: 0-2-0}   # Heavy Bombs: ceramics from round 38
-  - {do: place, id: a1, kind: ace, role: dps, at: [0.484, 0.845]}   # below the mouth
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.409, 0.47]}   # left of the village: the spot below the mouth is refused
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: a1, to: 3-0-0}   # Fighter Plane: the round-40 MOAB
-  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
   - {do: upgrade, id: b2, to: 3-0-2}   # Destroyer
   - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.334]}   # Brickell, left eye
   - {do: place, id: v1, kind: village, role: support, at: [0.484, 0.47], near: [b1, bm1]}   # below the right eye: b1, b3, bm1 well inside

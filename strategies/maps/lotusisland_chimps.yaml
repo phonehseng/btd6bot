@@ -84,6 +84,24 @@
 #     four extra carriers instead (harmless here: the plan towers alone hold);
 #   * tools/simulate_threats (open field and real map): no gaps, plan 25/25;
 #     strategy.coverage and usable on a full and on the real account: ok.
+#
+# Re-checked 2026-11-05 after Lotus Island CHIMPS was lost at round 95: not
+# the cash (live income matched the replay's) but the spots - the game
+# refused four of that build's, and the replay put every tower on its
+# spot anyway. The executor-faithful replay now plays on the map's learned
+# refusals (simulate_threats.map_model(learned=True), main checkout's
+# data/maps as of 17:12) and rates the towers where they really stand.
+# Lotus Island itself: no legal land within 18 cells of the MIB's spot by the
+# bay (the live village went to the north shore, 62 cells away, and b3 after
+# it: round 95 rated 0.36). Repairs: the village moves to the west shore
+# (0.27, 0.726), the best legal MIB spot (R95 1.46 alone); b1 moves from the
+# refused bay spot to the bay's south-west corner (0.345, 0.811), inside it
+# (R95 2.35); the alchemist to the nearest legal cell (0.462, 0.845). Worst
+# margin, rounds 6-100: plan 2.09 (R8), sight-strict 2.09 (R8), drift 2.04
+# (R8), executor-faithful 2.09 / 2.09 (R8), 26/26 steps, nothing moved,
+# Carrier Flagship at R82 (needed by R95), Cripple MOAB at R92. Held back:
+# b2 (bought R8) and Grape Shot (R14) stand only one round before the
+# rounds that need them (R9, R15) - the $650 start leaves no slack there.
 id: lotusisland_chimps
 map: Lotus Island
 hero: admiral_brickell
@@ -91,13 +109,12 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 2], sniper: [5, 2, 0], village: [2, 3, 0], alchemist: [3, 2, 0], boomerang: [3, 0, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.16+
-  # held back 2026-11-05 17:15: Lotus Island CHIMPS was lost at round 95 with
-  # $19.8k at round 90 where the executor-faithful replay had every step
-  # bought - the replay overstates live cash until that gap is fixed
+  # held back (re-checked 2026-11-05 on the live map's refused spots, repaired): every replay 2.04+,
+  # but b2 (R8) and Grape Shot (R14) are bought only one round before the round that needs them
   base_success: {chimps: 0.5}
   maps: [Lotus Island]
 plan:
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.743]}   # southern bay: 30% of the route
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.345, 0.811]}   # bay's south-west corner, inside the MIB
   - {do: place, id: d1, kind: dart, role: dps, at: [0.676, 0.794]}   # entrance stretch; with b1 the whole $650
   - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.409, 0.675]}   # north edge of the bay
   - {do: upgrade, id: b1, to: 1-0-0}
@@ -113,11 +130,11 @@ plan:
   - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB + Night Vision: BFB/ZOMG/DDT answer, 2nd strong-camo tower
   - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.249]}
   - {do: upgrade, id: r1, to: 3-0-0}   # Glaive Ricochet: the round-63 rush answer
-  - {do: place, id: v1, kind: village, role: support, at: [0.505, 0.811]}
+  - {do: place, id: v1, kind: village, role: support, at: [0.27, 0.726]}
   - {do: upgrade, id: v1, to: 2-2-0}   # Radar Scanner
   - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo + every damage type for the carriers (rounds 78-100)
   - {do: upgrade, id: b2, to: 4-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, at: [0.452, 0.845]}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.462, 0.845]}
   - {do: upgrade, id: a1, to: 3-2-0}   # brew for the bay
   - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.393, 0.785]}   # west of the bay, inside the MIB and the brew
   - {do: upgrade, id: b3, to: 4-2-0}
@@ -136,11 +153,11 @@ answers:
     - {do: upgrade, id: s1, to: 4-2-0}
     - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.249]}
     - {do: upgrade, id: r1, to: 3-0-0}
-    - {do: place, id: v1, kind: village, role: support, at: [0.505, 0.811]}
+    - {do: place, id: v1, kind: village, role: support, at: [0.27, 0.726]}
     - {do: upgrade, id: v1, to: 2-2-0}
     - {do: upgrade, id: v1, to: 2-3-0}
     - {do: upgrade, id: b2, to: 4-0-2}
-    - {do: place, id: a1, kind: alchemist, role: support, at: [0.452, 0.845]}
+    - {do: place, id: a1, kind: alchemist, role: support, at: [0.462, 0.845]}
     - {do: upgrade, id: a1, to: 3-2-0}
     - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.393, 0.785]}
     - {do: upgrade, id: b3, to: 4-2-0}

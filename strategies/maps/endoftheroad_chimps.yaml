@@ -90,6 +90,18 @@
 #     R47, Maim MOAB R49, Stronger Stimulant R52, MIB R67. No threat gaps;
 #   * strategy.load_all(): bot-ready, validate() empty; coverage(chimps) and
 #     usable() on the main account: nothing missing.
+#
+# Re-checked 2026-11-05 after Lotus Island CHIMPS was lost at round 95: not
+# the cash (live income matched the replay's) but the spots - the game
+# refused four of that build's, and the replay put every tower on its
+# spot anyway. The executor-faithful replay now plays on the map's learned
+# refusals (simulate_threats.map_model(learned=True), main checkout's
+# data/maps as of 17:12) and rates the towers where they really stand.
+# End Of The Road: every spot legal; worst margin plan 2.11 (R15),
+# sight-strict 2.11, drift 2.09 (R95), executor-faithful 2.18 / 2.18 (R15),
+# 31/31 steps by R91. Held back: b1's Double Shot (R8), its Destroyer and b3
+# (R38) stand only one round before the rounds that need them; moving the
+# Destroyer earlier fixes R38 but not R8.
 id: endoftheroad_chimps
 map: End Of The Road
 hero: admiral_brickell
@@ -97,9 +109,8 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 2], sniper: [5, 2, 0], bomb: [2, 0, 3], alchemist: [4, 2, 0], village: [2, 3, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.09+
-  # held back 2026-11-05 17:15: Lotus Island CHIMPS was lost at round 95 with
-  # $19.8k at round 90 where the executor-faithful replay had every step
-  # bought - the replay overstates live cash until that gap is fixed
+  # held back (re-checked 2026-11-05 on the live map's refused spots): every replay 2.09+, but b1's
+  # Double Shot (R8), its Destroyer and b3 (R38) are bought only one round before the round that needs them
   base_success: {chimps: 0.5}
   maps: [End Of The Road]
 plan:
