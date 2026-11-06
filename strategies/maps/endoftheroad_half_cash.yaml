@@ -1,0 +1,114 @@
+# End Of The Road, Half Cash: four buccaneers in the pool (two Double Shot,
+# one Crow's Nest, one Hot Shot) from the Fast Track start, a Deadly
+# Precision then Maim MOAB sniper, Destroyers, a Recursive Cluster bomb for
+# the round-63 rush, a Stronger Stimulant alchemist and an MIB village by the
+# pool, then four Aircraft Carriers. Admiral Brickell in the pool.
+#
+# Why: the shortest beginner map (994 world units, 818 hittable). Bloons go
+# out along the top lane, loop round the pool and come back along the bottom
+# lane, so a boat in the pool shoots both lanes (37% of the route from the
+# best cell). The CHIMPS build for this map (endoftheroad_chimps.yaml) is the
+# model: Half Cash with the main account's Double Cash pays the same per round
+# as CHIMPS (half, doubled), on Hard prices, and Fast Track starts it at
+# round 22 with about $4,465 - about what the CHIMPS build has by then.
+# Changes for Half Cash:
+#   * the sniper is placed first: a buccaneer first lets Executor._with_opener
+#     (Half Cash starts at round 3 in MODE_RULES) put a $200 dart in, which
+#     the offline replay upgraded to 4-2-0 with surplus cash;
+#   * b3 and b4 are placed bare right after the opening: with lives to spare
+#     surplus() places copies of the main tower (buccaneer) whenever the plan
+#     waits, and in the executor-faithful replay a copy took b3's cell and the
+#     executor gave b3 up for the game. With all four pool cells taken first,
+#     copies go elsewhere; the fill step caps them at Crow's Nest 2-0-2;
+#   * Brickell comes after b1's Destroyer; the run ends at round 80, so the
+#     Carrier Flagship and the fifth carrier of the CHIMPS build are left out.
+#
+# Sources:
+#   * bloonswiki Half_Cash and Strategy:Half_Cash: every income halved
+#     (start, pops, end of round); Double Cash cancels that except tower
+#     income; Grape Shot into Destroyer, 3-2-0 Destroyer with both broadsides,
+#     Recursive Cluster, Aircraft Carrier, Stronger Stimulant named for rounds
+#     21-70; Brickell with Destroyers on water maps
+#     (https://www.bloonswiki.com/Half_Cash, https://www.bloonswiki.com/Strategy:Half_Cash)
+#   * bloonswiki End_Of_The_Road: the pool between both lanes, Destroyers
+#     3-(1 or 2)-0 or a Carrier Flagship with Brickell and camo support
+#     (https://www.bloonswiki.com/End_Of_The_Road)
+#   * bloonswiki Fast_Track_Mode: Hard starts at round 22 with the skipped
+#     rounds' cash (https://www.bloonswiki.com/Fast_Track_Mode)
+#   * no Half Cash guide for this map was found on Reddit, YouTube or Steam
+#     (web search, 2026-11-06).
+#
+# Every tower and tier is unlocked on the main account. No income towers.
+#
+# Checked offline 2026-11-06 (no game; docs/map_strategies/beginner.md has the
+# method), Half Cash economy with the account's boosts
+# (optimize_builds.economy("half_cash", {"fast_track": True, "double_cash":
+# True}): round 22, $4,465, income x1.0, Hard prices), rounds 22-80, on the
+# current damage model (strict buff reach, circling carrier planes):
+#   * every `at` legal in plan order on the map geometry and on the live map
+#     model (main checkout's data/maps/endoftheroad.npz), outside the HUD band;
+#   * plan replay: worst margin 2.13 (round 38); sight-strict 2.13 (round 38);
+#     drift (every tower 5 units further from the village and alchemist,
+#     stock and strict) 2.23 (round 38); round 40: 3.96, 63: 3.12, 76: 8.45,
+#     78: 5.42, 80: 11.81. All 28 steps bought, the last (b4 4-0-2) at round 80;
+#   * executor-faithful (tools/simulate_threats' loop with the real Executor on
+#     the map's learned refused spots, map_model(learned=True), strict), with
+#     its extra towers / plan towers only: 2.54 / 2.46 (round 39); 28/28
+#     steps; one surplus buccaneer (2-0-2);
+#   * lead: every step bought after the round-22 setup stands at least two
+#     rounds before the first round the build without it falls under 2.0
+#     (plan replay, stock and strict). The setup purchases cannot be earlier;
+#   * strategy.load_all(): bot-ready, validate() empty; coverage(half_cash)
+#     and usable() on the main account: nothing missing.
+id: endoftheroad_half_cash
+map: End Of The Road
+hero: admiral_brickell
+modes: [half_cash]
+planner:
+  towers: {buccaneer: [4, 2, 2], sniper: [4, 2, 0], bomb: [2, 0, 3], alchemist: [4, 2, 0], village: [2, 3, 0]}
+  # every replay at 2.13 or more, every step two rounds ahead of its need (2026-11-06)
+  base_success: {half_cash: 0.85}
+  maps: [End Of The Road]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.450, 0.850]}   # open ground below the road, sees the whole route; a cheap first tower (no dart opener)
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.623, 0.487]}   # pool, top right: 37% of the route
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}   # Double Shot
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.569, 0.504]}   # pool, left
+  - {do: upgrade, id: b2, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-0-2}   # Crow's Nest: camo
+  - {do: upgrade, id: b2, to: 2-2-0}   # Hot Shot: lead
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.601, 0.555]}   # pool, middle: taken before surplus copies can take it
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.633, 0.606]}   # pool, bottom right
+  - {do: upgrade, id: s1, to: 2-2-0}   # Full Metal Jacket, Large Calibre, Night Vision, Shrapnel
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.580, 0.624]}   # Brickell, bottom of the pool
+  - {do: upgrade, id: s1, to: 3-2-0}   # Deadly Precision: the round-40 MOAB
+  - {do: upgrade, id: b3, to: 2-0-2}
+  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer
+  - {do: upgrade, id: b3, to: 3-0-2}   # Destroyer
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.238, 0.419]}   # inside the left S-bend: both lanes
+  - {do: upgrade, id: bm1, to: 2-0-3}   # Recursive Cluster: the round-63 rush
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: BFB answer
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.676, 0.428]}   # right of the pool: reaches b1-b4
+  - {do: upgrade, id: a1, to: 4-2-0}   # Stronger Stimulant
+  - {do: upgrade, id: b1, to: 4-0-2}   # Aircraft Carrier
+  - {do: place, id: v1, kind: village, role: support, at: [0.521, 0.411]}   # above the pool
+  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo and every damage type for the boats
+  - {do: upgrade, id: b2, to: 4-2-0}
+  - {do: upgrade, id: b3, to: 4-0-2}
+  - {do: upgrade, id: b4, to: 4-0-2}
+fill:
+  - {do: upgrade, kind: buccaneer, to: 2-0-2}   # surplus buccaneer copies stop at Crow's Nest
+answers:
+  camo: [{do: upgrade, id: b1, to: 2-0-2}]
+  lead: [{do: upgrade, id: b2, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  rush:
+    - {do: place, id: bm1, kind: bomb, role: dps, at: [0.238, 0.419]}
+    - {do: upgrade, id: bm1, to: 2-0-3}
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}, {do: upgrade, id: b1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-2-0}, {do: upgrade, id: b1, to: 4-0-2}, {do: upgrade, id: b2, to: 4-2-0},
+         {do: upgrade, id: b3, to: 4-0-2}]
+  ddt: [{do: upgrade, id: s1, to: 4-2-0}, {do: upgrade, id: b3, to: 4-0-2}]
