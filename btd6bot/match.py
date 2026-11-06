@@ -534,6 +534,7 @@ class Match:
                         self._t_round_change = now
                         self._forecast_round(rnd)
                         self._journal_round(rnd, cash, lives, reset=True)
+                self.ex.reinforce_hold = self._reinforce_hold(last_round, dropped)
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
                 if getattr(self.g, "unconfirmed_streak", 0) >= 2 or self.g.screen_lost:
                     # Placements that leave no tower are clicks landing on
@@ -879,6 +880,25 @@ class Match:
         hold for a round two or three away stays whole (Spillway ABR
         again)."""
         return bool(getattr(self.ex, "saving_for_threat", False)) and not dropped and not crisis
+
+    def _reinforce_hold(self, rnd, dropped):
+        """The cash the plan's own steps must leave alone this tick: the cost
+        of the purchase reinforce is saving for (Executor.save_goal, set by
+        reinforce.buy_best on 'save'), else 0.
+
+        The hold lasts until reinforce's next look answers something else
+        (each look rewrites save_goal), so the gap between two looks is
+        covered too. It ends early when the look-ahead is no longer weak,
+        when the saved-for round has come (saving for it is over), when lives
+        are falling, or when the round being played is itself a crisis round
+        (_in_crisis) - then the plan may spend as before."""
+        goal = getattr(self.ex, "save_goal", None)
+        if not goal or rnd is None or dropped or self._in_crisis(rnd):
+            return 0
+        cost, worst = goal
+        if self._weak_round != rnd or rnd >= worst:
+            return 0
+        return cost
 
     def _reinforce(self, cash, rnd):
         """One model-chosen purchase (reinforce.py). True when one was bought;

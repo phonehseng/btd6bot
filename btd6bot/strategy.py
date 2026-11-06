@@ -3753,6 +3753,16 @@ class Executor:
         if self.held_cash:
             # what the plan may spend: the cash less what a far threat keeps
             cash = max(0, cash - self.held_cash)
+        hold = getattr(self, "reinforce_hold", 0) or 0
+        if hold and not lives_dropped:
+            # Reinforce is saving for the one purchase the model says holds
+            # the weakest round ahead (Match._reinforce_hold). Ancient Portal
+            # Impoppable (2026-11-05): four seconds after "saving for upgrade
+            # ace2 -> 2-4-0 ($19200) - round 98 goes 0.84 -> 1.01" the plan
+            # spent $10,760 taking sniper3 to 4-0-2, which moved round 98 by
+            # 0.05; round 98 started with $16,190, rated 0.90, and was lost.
+            # The plan's steps get only what the saving does not need.
+            cash = max(0, cash - hold)
         # plan steps put aside after refused spots (the hero), once their pause is over
         for st in list(self.deferred):
             with self.why("deferred", "a plan step set aside earlier", step=dict(st)):

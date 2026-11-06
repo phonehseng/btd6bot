@@ -862,12 +862,17 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
     """Buy the best purchase (see best()). Returns 'bought', 'safe' (the
     look-ahead holds: stop), 'wait' (nothing affordable helps yet: more cash
     may), 'save' (keep the cash for a dearer purchase that does help) or
-    'failed' (the purchase did not go through)."""
+    'failed' (the purchase did not go through).
+
+    After a 'save', ex.save_goal is (cost, round) of the purchase being
+    saved for - the match keeps the plan's own steps off that cash
+    (Executor.tick, reinforce_hold) - and None after any other answer."""
     # part of the cash the executor keeps for a far threat (Executor._hold_for)
     held = getattr(ex, "held_cash", 0) or 0
     if held and cash is not None:
         cash = max(0, cash - held)
     status, found = best(ex, forecast, cash, rnd, end_round, lives)
+    ex.save_goal = (found[0].cost, found[1]) if status == "save" else None
     if status != "buy":
         return status
     o, worst, before, after = found
