@@ -1387,10 +1387,9 @@ class Executor:
         ranked = sorted(((cx, cy, sc * spot_factor(self.m, kind, cx, cy)
                           * (self.EDGE_PENALTY if edge is not None and edge[cy, cx] else 1.0))
                          for cx, cy, sc in cands), key=lambda t: -t[2])
-        out = []
-        exact = self._exact_spot(step, valid)
-        if exact is not None:
-            out.append(exact)       # the build's researched spot comes first
+        # the build's researched spot comes first, then its neighbours
+        out = self._at_spots(step, valid, n)
+        exact = out[0] if out else None
         if role in ("dps", "exit"):
             floor = self._reach_floor(kind, valid)
             best = self._best_legal_reach(kind, valid)
@@ -1417,6 +1416,8 @@ class Executor:
             floor = self._reach_floor(kind, valid, self.SELL_REACH_SHARE)
         else:
             floor = None
+        if len(out) >= n:
+            return out      # the researched spot's neighbourhood fills the pick-up
         probe = self._probe_spot(kind, valid) if role in ("dps", "exit") else None
         if probe is not None:
             out.append(probe)       # tried first; a refusal costs ~0.1 s and is learned
@@ -1754,6 +1755,10 @@ class Executor:
     NEAR_WIDENING = (1.5, 2.2)
 
     AT_SEARCH_CELLS = 6   # an `at` spot taken (or refused) moves to the nearest legal cell this close
+    # Cells between the spots offered round an `at` in one pick-up: the
+    # neighbours of a refused cell are usually refused too (pick_spots keeps
+    # its own candidates this far apart for the same reason).
+    AT_SPOT_GAP_CELLS = 3
 
     # A damage tower must reach at least this share of the track that the
     # best legal spot for it on this map reaches - its range (the grey circle
@@ -1798,10 +1803,11 @@ class Executor:
                                now_round=self._pane_round(), removed=tuple(self.removed))
         if valid is None:
             return []
-        out = []
-        exact = self._exact_spot(step, valid) if step else None
-        if exact is not None and self._buffed(kind, exact[0], exact[1]) >= 1:
-            out.append(exact)
+        # the researched spot and its neighbours first, where they buff something
+        out = [c for c in (self._at_spots(step, valid, self.SPOTS_PER_HOLD) if step else [])
+               if self._buffed(kind, c[0], c[1]) >= 1]
+        if len(out) >= self.SPOTS_PER_HOLD:
+            return out
         ys, xs = np.nonzero(valid & ~self.blocked)
         scored = sorted(((self._buffed(kind, x, y), x, y) for x, y in zip(xs.tolist(), ys.tolist())
                          if (kind, x, y) not in self.failed_spots), reverse=True)
@@ -2302,18 +2308,28 @@ class Executor:
             return f"the damage model rates round {worst[1]} at {worst[0]:.2f}"
         return None
 
-    def _exact_spot(self, step, valid):
-        """The cell of a step's exact spot (`at: [fx, fy]`, from a map's own
-        build), or the nearest legal cell within AT_SEARCH_CELLS when it is
-        taken or was refused; None when there is no `at` or nothing close."""
+    def _at_spots(self, step, valid, n):
+        """Up to n cells round a step's exact spot (`at`), nearest first and
+        at least AT_SPOT_GAP_CELLS apart, all within AT_SEARCH_CELLS of it;
+        [] when the step has no `at` or nothing close is legal. Each scores
+        1e9 so a ranking keeps them ahead of spots chosen by role.
+
+        The cells after the first are what Game.place tries next while it
+        still holds the tower. Lotus Island CHIMPS (2026-11-05, loss case
+        20261105_171203): the game refused the click on b3's spot by the
+        bay, the next spot offered was the best by role alone, and the
+        carrier was built at the far north end of the map, outside the MIB
+        village and the brew; round 95 (camo lead DDTs) was lost. A refused
+        researched spot now moves a few cells, not across the map."""
         at = step.get("at")
         if not at or len(at) != 2:
-            return None
+            return []
         cx, cy = (int(round(v)) for v in self.m.frac_to_cell(float(at[0]), float(at[1])))
         h, w = self.blocked.shape
-        best = None
-        for dy in range(-self.AT_SEARCH_CELLS, self.AT_SEARCH_CELLS + 1):
-            for dx in range(-self.AT_SEARCH_CELLS, self.AT_SEARCH_CELLS + 1):
+        r = self.AT_SEARCH_CELLS
+        near = []
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
                 x, y = cx + dx, cy + dy
                 if not (0 <= x < w and 0 <= y < h) or self.blocked[y, x]:
                     continue
@@ -2321,10 +2337,16 @@ class Executor:
                     continue
                 if (step.get("kind"), x, y) in self.failed_spots:
                     continue
-                d = dx * dx + dy * dy
-                if best is None or d < best[0]:
-                    best = (d, x, y)
-        return None if best is None else (best[1], best[2], 1e9)
+                near.append((dx * dx + dy * dy, x, y))
+        out = []
+        gap = self.AT_SPOT_GAP_CELLS ** 2
+        for _, x, y in sorted(near):
+            if any((x - ox) ** 2 + (y - oy) ** 2 < gap for ox, oy, _ in out):
+                continue
+            out.append((x, y, 1e9))
+            if len(out) >= n:
+                break
+        return out
 
     def _edge_band(self):
         """Cells within EDGE_CELLS of the bloon path's line (computed once per

@@ -227,7 +227,12 @@ def next_round(set_name, need, rnd, end):
 def round_cash(set_name, rnd):
     """Cash a round pays at base difficulty (pops + end-of-round bonus), from
     data/rounds.json; 0 when unknown. Double Cash and farms are left out on
-    purpose: the threat calendar plans with the money it can count on."""
+    purpose: the threat calendar plans with the money it can count on.
+
+    CHIMPS pays the end-of-round bonus too (its Mod, "Clicks", has no
+    BonusCashPerRound change; only income towers are off): Lotus Island
+    CHIMPS (2026-11-05) was paid $141,018 over rounds 7-93 by its journal,
+    against $141,322 here and $128,272 for pops alone."""
     rd = ((_load("rounds.json") or {}).get(set_name) or {}).get(str(rnd)) or {}
     return float(rd.get("cash") or 0.0)
 

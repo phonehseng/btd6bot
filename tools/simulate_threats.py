@@ -4,7 +4,8 @@ No game is involved: a fake game charges the real prices of the mode's
 difficulty (btd6bot/towers.py), income is the game's own per-round cash
 (data/rounds.json: pops + end-of-round bonus, at base rates - Double Cash,
 farms and hero/MK discounts are left out, so the result is pessimistic), and
-every spot is accepted. Between rounds the strategy.Executor ticks as it does
+every spot is accepted (on a real map with learned=True: every spot the live
+game has not refused). Between rounds the strategy.Executor ticks as it does
 live; at the start of each round the simulator records whether the defence
 can pop every bloon signature the round brings (threats.py) and, on blimp
 rounds, the rough blimp damage ratio.
@@ -43,16 +44,20 @@ SETUP_TICKS = 80     # plan steps the setup may buy before the first round
 
 
 class CashGame:
-    """A game that accepts every spot and charges the mode's real prices."""
+    """A game that charges the mode's real prices and accepts every spot -
+    except, given a map model that learned them (map_model(learned=True)),
+    the spots the live game refused (see place)."""
 
-    def __init__(self, family, hero="quincy"):
+    def __init__(self, family, hero="quincy", model=None):
         self.family = family
         self.hero = hero
+        self.model = model
         self.cash = 0.0
         self.towers = {}
         self.fail_reason = None
         self.locked_seen = None
         self.refused_spots = []
+        self.click_refusals = 0
         self.bought = []          # (round, text)
         self.round = None
         self.s = type("Screen", (), {"width": 1920})()
@@ -61,15 +66,53 @@ class CashGame:
         return T.hero_cost(self.hero, self.family) if kind == "hero" else T.tower_cost(kind, self.family)
 
     def place(self, tid, kind, fx, fy, check_valid=True, more_spots=()):
+        """Place at the first of (fx, fy) and more_spots that the map does not
+        refuse, as Game.place goes through them while holding the tower; the
+        refused ones are listed in refused_spots for the executor to learn.
+
+        Lotus Island CHIMPS (2026-11-05, loss case 20261105_171203): the
+        game refused the build's spots for b1, the MIB village, the
+        alchemist and b3; the village went to the north end of the map and
+        b3 after it, and round 95 was lost at a rated 0.4 while the replay,
+        which put every tower on its planned spot, rated it 2.5."""
+        self.refused_spots = []
+        self.click_refusals = 0
         cost = self.price(kind)
         if cost > self.cash:
             self.fail_reason = "cash"
             return None
+        for sx, sy in [(fx, fy), *more_spots]:
+            if not self._refused(kind, sx, sy):
+                break
+            self.refused_spots.append((sx, sy))
+        else:
+            self.click_refusals = len(self.refused_spots)
+            self.fail_reason = "spot"
+            return None
+        self.click_refusals = len(self.refused_spots)
+        fx, fy = sx, sy
         self.cash -= cost
         p = Placed(tid, kind, fx, fy, spent=cost)
         self.towers[tid] = p
         self.bought.append((self.round, f"place {tid} ({kind})"))
         return p
+
+    def _refused(self, kind, fx, fy):
+        """Did the live game refuse a `kind` tower centred here (the model's
+        learned refused layer, MapModel.refused)? An amphibious tower is
+        refused where both surfaces are, as Executor._learn_blocked records
+        its refusals."""
+        if self.model is None or not getattr(self.model, "refused", None):
+            return False
+        if kind == "hero":
+            cls = T.HEROES.get(self.hero, {}).get("placement") or "land"
+        else:
+            cls = T.TOWERS.get(kind, {}).get("placement") or "land"
+        cx, cy = (int(round(v)) for v in self.model.frac_to_cell(fx, fy))
+        surfaces = ("land", "water") if cls == "land_or_water" else (cls,)
+        masks = [self.model.refused_mask(sf) for sf in surfaces]
+        h, w = masks[0].shape
+        return 0 <= cx < w and 0 <= cy < h and all(m[cy, cx] for m in masks)
 
     def upgrade(self, p, path, max_wait=0.0, allow_xp_unlock=True):
         if p.kind == "hero":
@@ -146,25 +189,33 @@ class OpenModel:
 _MAP_MODELS = {}
 
 
-def map_model(map_name):
+def map_model(map_name, learned=False):
     """A MapModel filled from the map's own game geometry (data/map_geometry,
     as mapfit does live), or None when the map has none.
+
+    learned: start from the map's learned file (data/maps, maplearn.DATA)
+    so the spots the live game refused (MapModel.refused) are refused here
+    too - the executor then picks the spots it picks live, and a CashGame
+    given this model refuses the same clicks.
 
     With it the executor chooses spots on the real ground, and the blimp check
     measures each tower's reach as the track cells inside its range
     (strategy.Executor._reach_fn) instead of OpenModel's 2.5 x range, so the
     simulated ratio sees short tracks, long tracks and towers that only cover
     one lane. Built once per map: applying the geometry takes ~0.1 s."""
-    if map_name not in _MAP_MODELS:
+    key = (map_name, learned)
+    if key not in _MAP_MODELS:
         from btd6bot import mapgeom
         from btd6bot.layout import LAYOUTS
         from btd6bot.maplearn import MapModel
         geom = mapgeom.load(map_name)
         model = None
         if geom is not None:
-            model = mapgeom.apply(MapModel(map_name, LAYOUTS["16:10"]["playfield"]), geom)
-        _MAP_MODELS[map_name] = model
-    return _MAP_MODELS[map_name]
+            playfield = LAYOUTS["16:10"]["playfield"]
+            base = MapModel.load(map_name, playfield) if learned else MapModel(map_name, playfield)
+            model = mapgeom.apply(base, geom)
+        _MAP_MODELS[key] = model
+    return _MAP_MODELS[key]
 
 
 def full_account():
@@ -177,25 +228,29 @@ def full_account():
 
 
 def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, account=None, scenario=None,
-             real_map=False):
+             real_map=False, learned=False):
     """Run one game offline. scenario: {"start_round", "start_cash",
     "income_multiplier"} to play an optimized build as it was planned (Fast
     Track start, Double Cash income: its `optimizer.scenario`); default the
     mode's own start and income. real_map: place on the map's own geometry
-    (map_model) rather than the open field, where the map has geometry.
+    (map_model) rather than the open field, where the map has geometry;
+    learned (with real_map): with the spots the live game refused on it
+    refused here too (map_model(learned=True)).
     Returns a dict:
     gaps      [(round, need, what is missing)] signatures the defence could not
               pop at the start of a round that brings them
     ramp      [(round, ratio)] blimp damage ratio at the start of blimp rounds
     answers   [(round, text)] purchases of towers the plan does not list
     build     {tid: crosspath} at the end
+    placed    {tid: (kind, tiers, fx, fy)} at the end: where each tower stands
     spent     total cash spent"""
     rules = S.rules(mode)
     fam = S.PRICE_FAMILY.get(mode, "hard")
     hero = strat.get("hero") or "quincy"
-    g = CashGame(fam, hero)
+    real = map_model(map_name, learned) if real_map else None
+    g = CashGame(fam, hero, real)
     g.cash = START_CASH.get(mode, DEFAULT_START_CASH)
-    model = (map_model(map_name) if real_map else None) or OpenModel(map_name, water)
+    model = real or OpenModel(map_name, water)
     ex = S.Executor(g, model, strat, mode, account or full_account())
     set_name = TH.set_for_mode(mode)
     mult = 0.0 if rules.get("income") is False else (0.5 if rules.get("half_cash") else 1.0)
@@ -236,6 +291,7 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
     out["surplus"] = [(r, t) for r, t in g.bought
                       if t.split()[1] not in plan_ids and not t.split()[1].startswith(("ans_", "hero"))]
     out["build"] = {p.tid: "-".join(map(str, p.tiers)) for p in g.towers.values()}
+    out["placed"] = {p.tid: (p.kind, tuple(p.tiers), p.x, p.y) for p in g.towers.values()}
     out["spent"] = total_in - g.cash
     out["plan_done"] = f"{ex.idx}/{len(ex.plan)}"
     return out

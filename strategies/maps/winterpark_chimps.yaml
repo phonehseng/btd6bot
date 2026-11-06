@@ -92,6 +92,16 @@
 #     game data's map-wide range): worst 2.00 (R98);
 #   * strategy.coverage on the real account: nothing missing; simulate_threats
 #     (Monkey Meadow and Winter Park): no gaps, whole plan bought.
+#
+# Re-checked 2026-11-05 after Lotus Island CHIMPS was lost at round 95: not
+# the cash (live income matched the replay's) but the spots - the game
+# refused four of that build's, and the replay put every tower on its
+# spot anyway. The executor-faithful replay now plays on the map's learned
+# refusals (simulate_threats.map_model(learned=True), main checkout's
+# data/maps as of 17:12) and rates the towers where they really stand.
+# Winter Park: every spot is legal on the learned map; worst margin plan
+# 2.09 (R98), sight-strict 2.09, drift 2.07 (R98), executor-faithful 2.20 /
+# 2.20 (R95), 31/31 steps by R81, each two or more rounds before it is needed.
 id: winterpark_chimps
 map: Winter Park
 hero: quincy
@@ -99,10 +109,8 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [4, 2, 2], tack: [4, 0, 0], bomb: [2, 5, 0], village: [2, 3, 0], alchemist: [3, 2, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes): every replay 2.07+
-  # held back 2026-11-05 17:15: Lotus Island CHIMPS was lost at round 95 with
-  # $19.8k at round 90 where the executor-faithful replay had every step
-  # bought - the replay overstates live cash until that gap is fixed
-  base_success: {chimps: 0.5}
+  # re-checked 2026-11-05 on the live map's refused spots: every replay 2.07+, every step 2+ rounds early
+  base_success: {chimps: 0.85}
   maps: [Winter Park]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.452, 0.436]}   # fountain, north-east
