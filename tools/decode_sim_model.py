@@ -75,8 +75,9 @@ OBJECT_DECL = DECL_ROOT / "mscorlib" / "System" / "Object.cs"
 GAME_ASSEMBLY = CACHE / "il2cpp" / "in" / "GameAssembly.dll"
 
 # Bump when the JSON written by this tool changes shape, so the next refresh
-# re-extracts even though the game itself has not updated.
-EXTRACT_VERSION = 1
+# re-extracts even though the game itself has not updated (version 2 added
+# freeplay_groups.json).
+EXTRACT_VERSION = 2
 
 
 # ===========================================================================
@@ -1220,6 +1221,35 @@ def export_bloons(view):
     return out
 
 
+# --- Random rounds (Apopalypse and freeplay past round 140) ----------------
+#
+# GameModel.freeplayGroups: the 529 bloon groups FreeplayRoundManager draws
+# Apopalypse's rounds from (and freeplay's from round 141). Each is one
+# BloonGroupModel (bloon id, count, start/end in frames at 60 per second),
+# the rounds it may appear on (Bounds: lowerBounds..upperBounds, inclusive)
+# and a stored score (0 = the game computes it, FreeplayBloonGroupModel.
+# CalculateScore; btd6bot/apopalypse.py has both and the budget).
+
+FRAMES_PER_SECOND = 60.0
+
+
+def export_freeplay(view):
+    """freeplay_groups.json content: every random-round group in the game's order."""
+    out = []
+    for g in view.root.get("freeplayGroups") or []:
+        grp = g.get("group") or {}
+        out.append({
+            "name": (g.get("_name") or "").replace("FreeplayBloonGroupModel_", ""),
+            "bloon": grp.get("bloon"),
+            "count": int(grp.get("count") or 0),
+            "start_s": round(float(grp.get("start") or 0.0) / FRAMES_PER_SECOND, 4),
+            "end_s": round(float(grp.get("end") or 0.0) / FRAMES_PER_SECOND, 4),
+            "score": float(g.get("score") or 0.0),
+            "bounds": [[int(lo), int(hi)] for lo, hi in (g.get("bounds") or [])],
+        })
+    return out
+
+
 # --- Difficulty prices (from the game_data bundle, not sim_model) ----------
 #
 # Each difficulty and mode is a "Mod" asset in the game_data bundle listing
@@ -1361,6 +1391,7 @@ def extract(bundles, sim_model=None):
         "upgrades.json": upgrades,
         "heroes.json": export_heroes(view, bot_heroes),
         "bloons.json": export_bloons(view),
+        "freeplay_groups.json": export_freeplay(view),
     }
     if data_bundle is not None and bundles.get("mono") is not None:
         files["difficulties.json"] = read_difficulty_mods(data_bundle, bundles["mono"])

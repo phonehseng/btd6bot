@@ -965,10 +965,19 @@ def _round_extra(set_name, rnd):
 def round_lots(mode, rnd, track, scenario=0):
     """The lots of round `rnd` in `mode`, on the routes of one scenario of
     the track: each group is shared evenly by the routes its class takes."""
-    rules = mode_rules(mode)
     set_name = "abr" if mode == "abr" else "standard"
-    groups = _round_groups(set_name, rnd)
     speed_ramp, hp_ramp = _round_extra(set_name, rnd)
+    return groups_lots(mode, _round_groups(set_name, rnd), track, scenario, rnd=rnd,
+                       speed_ramp=speed_ramp, hp_ramp=hp_ramp)
+
+
+def groups_lots(mode, groups, track, scenario=0, rnd=None, speed_ramp=1.0, hp_ramp=1.0):
+    """The lots of any list of spawn groups ({"id" or "bloon", "count",
+    "start_s", "end_s"}, the shape of data/game_data/round_sets.json) in
+    `mode`: round_lots for a standard round, btd6bot/apopalypse.py for the
+    random rounds of Apopalypse. rnd: the round, for one-round health
+    changes (Easy's round-40 MOAB); speed_ramp / hp_ramp: freeplay ramps."""
+    rules = mode_rules(mode)
     duration = max((g.get("end_s", 0.0) for g in groups), default=0.0)
     lots = []
     for g in groups:
@@ -1336,9 +1345,15 @@ def round_margin(stations, mode, rnd, track, lo=1 / 16, hi=16.0, iterations=9):
     be weaker and the round still pop without a leak (2.0 = holds at half
     strength; below 1.0 = leaks at full strength). Bisection on strength,
     worst over the track's scenarios."""
+    return lots_margin(stations, track, [_lots(mode, rnd, track, sc) for sc in range(len(track.scenarios))],
+                       lo, hi, iterations)
+
+
+def lots_margin(stations, track, lots_by_scenario, lo=1 / 16, hi=16.0, iterations=9):
+    """round_margin for lots built by the caller (groups_lots), one list per
+    scenario of the track: the worst margin over them."""
     worst = 1.0 / lo
-    for sc in range(len(track.scenarios)):
-        lots = _lots(mode, rnd, track, sc)
+    for lots in lots_by_scenario:
         if not lots:
             continue
 
@@ -1404,6 +1419,15 @@ def _buffed_sources(p, buffs_here):
 
 MAP_WIDE_NEEDS_SIGHT = ("sniper",)
 
+# The strict reading (station_for strict=True) of towers the model lets work
+# map-wide although they fight in a circle of their own: an Advanced Intel
+# sub (2-x-x) shoots what other towers see but stands in one place, and an
+# ace's pineapples and Bomber Ace bombs fall along its flight circle. The
+# Beginner map builds were checked this way (docs/map_strategies/beginner.md,
+# "sight-strict" and gap 3); strict limits them to their own range and flight
+# circle (range + pattern radius).
+STRICT_OWN_REACH = ("sub", "ace")
+
 
 @lru_cache(maxsize=None)
 def detects_camo(kind, tiers):
@@ -1452,9 +1476,10 @@ def buff_covers(supporter, t, radius):
     return math.hypot(supporter.x - t.x, supporter.z - t.z) <= radius
 
 
-def station_for(t, placed, track, sight=None):
+def station_for(t, placed, track, sight=None, strict=False):
     """The Station of one Placed tower, or None when it does no damage or
-    reaches no track. Support buffs of the other towers in `placed`
+    reaches no track. strict: STRICT_OWN_REACH towers reach only their own
+    circle, not the whole map. Support buffs of the other towers in `placed`
     (villages: camo, attack rate, range, pierce) apply when this tower's
     centre stands inside the supporter's buff radius (buff_covers) and the
     buff's filters let its kind through (buff_reaches). sight(x, z, pts) ->
@@ -1494,6 +1519,8 @@ def station_for(t, placed, track, sight=None):
     # orbiting glaives sweep their own circle, which may reach past the range
     reach_radius = max(reach_radius, p.own_radius)
     is_global = p.is_global or any(s.placement == "global" for s in sources)
+    if strict and t.kind in STRICT_OWN_REACH:
+        is_global = False
     travel = max((s.travel for s in sources if s.radial), default=0.0)
     # Snipers reach the whole map but still need line of sight; the other
     # map-wide towers (planes, helis, mortars, Advanced Intel subs) do not.
@@ -1552,9 +1579,9 @@ def sight_test(grid, track, samples=12, heights=None):
     return sight
 
 
-def stations_for(placed, track, sight=None):
+def stations_for(placed, track, sight=None, strict=False):
     """Stations for a list of Placed towers on a Track (see station_for)."""
-    return [st for st in (station_for(t, placed, track, sight) for t in placed) if st is not None]
+    return [st for st in (station_for(t, placed, track, sight, strict) for t in placed) if st is not None]
 
 
 def evaluate(placed, mode, rounds, track, sight=None, margins=False):

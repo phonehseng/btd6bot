@@ -1,0 +1,87 @@
+# Park Path, Apopalypse: a Destroyer in the central pond with an alchemist and
+# a Druid of the Jungle beside it, an Airburst sub up the stream, two Bomber
+# Aces, Maim MOAB snipers on the lower-right lawn.
+#
+# Why: Apopalypse is Medium with random rounds sent without a pause
+# (btd6bot/apopalypse.py): camo from round 19, lead from 20, ceramics from 33,
+# fortified leads and ceramics in the late 30s and MOABs from 41 - earlier than
+# Medium's - and a poor game pays $39,300 over rounds 1-60 against Medium's
+# $54,500 (before Double Cash). The Medium build's water template, rebuilt for
+# that: the first Destroyer (3-0-2, $5,000) is bought with the Fast Track cash
+# at round 15 - a single $3,350 tier is not bought later, the executor's
+# surplus spending takes the cash first (docs/map_strategies/beginner.md, gap
+# 1) - an alchemist's Acidic Mixture Dip beside it gives it lead and more
+# ceramic damage (instead of a second boat's Hot Shot), a Druid of the Jungle
+# (1-3-0, $2,400 in cheap tiers) holds the ceramic rounds 33-35, then Airburst
+# subs and Bomber Aces; the second Destroyer comes last. The Medium build as it
+# was rated 1.37 at round 17 (40 tight pinks against its round-15 board). Water
+# is scarce here, so the surplus goes into snipers, capped at 2-2-0 by the fill
+# step so the plan's own Maim MOAB tiers are still bought.
+#
+# Sources:
+#   * bloonswiki Strategy:Apopalypse_(BTD6): a 3-2-0 Destroyer with camo
+#     support wipes out Apopalypse on most maps; Airburst, Triple Guns and
+#     Armor Piercing subs; Acidic Mixture Dip for lead; 1-3-0 Druid of the
+#     Jungle covers every bloon but camo
+#     (https://www.bloonswiki.com/Strategy:Apopalypse_(BTD6))
+#   * bloonswiki Apopalypse_(BTD6) and the game's own FreeplayRoundManager: the
+#     round pool, budget and scores in btd6bot/apopalypse.py
+#     (https://www.bloonswiki.com/Apopalypse_(BTD6))
+#   * bloonswiki Park_Path_(BTD6): the central water spot suits buccaneers,
+#     Destroyer's guns fire on both sides
+#     (https://www.bloonswiki.com/Park_Path_(BTD6))
+#
+# Checked offline 2026-11-06 with tools/apopalypse_check.py (the method is in
+# its docstring; docs/map_strategies/beginner.md has the Medium checks it
+# builds on):
+#   * executor-faithful replay (tools/simulate_threats' loop with the match
+#     loop's surplus spending) on the live map model's refused spots, Fast
+#     Track round 15 with $6,057 and Double Cash, each round paid what a poor
+#     game pays: the whole plan (22 steps) bought by round 60, every plan tower
+#     on its `at`;
+#   * every round 15-60 rated, strict model, against the worst windows the game
+#     can send there (two rounds end to end, the largest budget, the hardest
+#     groups first) and 24 random windows: worst margin 2.71 (round 60); with
+#     every tower 5 units further from its supporters (drift) 2.77 (round 60);
+#   * every `at` legal on the map geometry in plan order and on the live map
+#     model; strategy.coverage and tools/simulate_threats (standard rounds):
+#     nothing missing, no gaps.
+id: parkpath_apopalypse
+map: Park Path
+hero: quincy
+modes: [apopalypse]
+planner:
+  towers: {buccaneer: [3, 0, 2], sniper: [4, 2, 0], alchemist: [2, 0, 0], druid: [1, 3, 0], sub: [2, 0, 4], ace: [2, 3, 0]}
+  base_success: {apopalypse: 0.85}
+  maps: [Park Path]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.690]}   # lower-right lawn: sees the whole route
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.484, 0.470]}   # central pond: 78% of the route
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer with Crow's Nest (camo), bought with the Fast Track cash
+  - {do: upgrade, id: s1, to: 1-2-0}   # lead (Full Metal Jacket) + camo (Night Vision) + shrapnel
+  - {do: place, id: al1, kind: alchemist, role: support, at: [0.521, 0.368]}   # its dip reaches the towers within 45 units, 5 to spare (drift)
+  - {do: upgrade, id: al1, to: 2-0-0}   # Acidic Mixture Dip: the towers within 45 units pop lead and hit ceramics harder
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.366, 0.351]}   # the damage model's best Druid spot for the ceramic rounds 33-35
+  - {do: upgrade, id: d1, to: 1-3-0}   # Druid of the Jungle: vines (no camo)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.542, 0.632]}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.580, 0.402]}
+  - {do: upgrade, id: sb1, to: 2-0-2}   # Airburst Darts + Advanced Intel (camo from the towers that see it)
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.633, 0.606]}   # a cell off the Medium build's spot, which the live game refuses
+  - {do: upgrade, id: a1, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.548, 0.300]}   # near the alchemist: its bombs get the dip
+  - {do: upgrade, id: a2, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.703, 0.334]}
+  - {do: upgrade, id: b2, to: 3-0-2}   # Destroyer with Crow's Nest (camo)
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.794, 0.760]}   # beside s1
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+  - {do: upgrade, id: s2, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+fill:
+  - {do: upgrade, kind: sniper, to: 2-2-0}   # surplus snipers stop at 2-2-0: cash is left for the plan's Maim MOAB tiers
+answers:
+  camo: [{do: upgrade, id: s1, to: 1-2-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]

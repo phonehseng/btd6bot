@@ -45,7 +45,7 @@
       "sniper",
       "ninja"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "sub",
@@ -457,7 +457,7 @@
       "boomerang",
       "village"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "hero",
@@ -712,7 +712,7 @@
       "ace",
       "sniper"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -1025,7 +1025,7 @@
       "ace",
       "village"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -1719,7 +1719,7 @@
       "alchemist",
       "super"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -1973,7 +1973,7 @@
       "glue",
       "village"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "hero",
@@ -2246,7 +2246,7 @@
       "tack",
       "sniper"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -2490,7 +2490,7 @@
       "village",
       "glue"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -2707,7 +2707,7 @@
       "village",
       "sniper"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "hero",
@@ -2985,7 +2985,7 @@
       "buccaneer",
       "alchemist"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -3172,7 +3172,7 @@
       "super",
       "sniper"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -3460,7 +3460,7 @@
       "alchemist",
       "village"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -3728,7 +3728,7 @@
       "bomb",
       "village"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "hero",
@@ -3955,7 +3955,7 @@
       "village",
       "alchemist"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "sniper",
@@ -4130,7 +4130,7 @@
       "sniper",
       "heli"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "sniper",
@@ -4345,7 +4345,7 @@
       "bomb",
       "village"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -4585,7 +4585,7 @@
       "bomb",
       "sniper"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "dart",
@@ -4931,7 +4931,7 @@
       "alchemist",
       "ice"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "hero",
@@ -5341,7 +5341,7 @@
       "alchemist",
       "ace"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "village",
@@ -5810,7 +5810,7 @@
       "alchemist",
       "glue"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "wizard",
@@ -6261,7 +6261,7 @@
       "alchemist",
       "village"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "dart",
@@ -6684,7 +6684,7 @@
       "village",
       "sniper"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -7030,7 +7030,7 @@
       "wizard",
       "bomb"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "dart",
@@ -7336,7 +7336,7 @@
       "sniper",
       "boomerang"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "ninja",
@@ -7572,7 +7572,7 @@
       "alchemist",
       "village"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "sub",
@@ -7784,7 +7784,7 @@
       "village",
       "buccaneer"
      ],
-     "last_round": 100,
+     "last_round": 80,
      "spots": [
       {
        "tower": "hero",

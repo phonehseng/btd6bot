@@ -1,0 +1,7676 @@
+[
+ {
+  "name": "Red x15 [1-13]",
+  "bloon": "Red",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    13
+   ]
+  ]
+ },
+ {
+  "name": "Red x10 [1-10]",
+  "bloon": "Red",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 2.8,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Red x20 [1-10]",
+  "bloon": "Red",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 17.5125,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Red x25 [1-15]",
+  "bloon": "Red",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    15
+   ]
+  ]
+ },
+ {
+  "name": "Red x20 [1-10]",
+  "bloon": "Red",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 10.84,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Red x18 [1-15]",
+  "bloon": "Red",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 9.707,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    15
+   ]
+  ]
+ },
+ {
+  "name": "Red x5 [1-5]",
+  "bloon": "Red",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 2.284,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    5
+   ]
+  ]
+ },
+ {
+  "name": "Red x10 [1-10]",
+  "bloon": "Red",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 4.57,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Red x10 [1-10]",
+  "bloon": "Red",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.1,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Red x31 [1-21]",
+  "bloon": "Red",
+  "count": 31,
+  "start_s": 0.0,
+  "end_s": 17.13,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    21
+   ]
+  ]
+ },
+ {
+  "name": "Red x20 [1-18]",
+  "bloon": "Red",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 1.345,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    18
+   ]
+  ]
+ },
+ {
+  "name": "Red x35 [1-25]",
+  "bloon": "Red",
+  "count": 35,
+  "start_s": 0.0,
+  "end_s": 19.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    25
+   ]
+  ]
+ },
+ {
+  "name": "Red x15 [1-14]",
+  "bloon": "Red",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    14
+   ]
+  ]
+ },
+ {
+  "name": "Red x100 [1-30]",
+  "bloon": "Red",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "Red x20 [1-10]",
+  "bloon": "Red",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 25.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Red x10 [1-15]",
+  "bloon": "Red",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.97,
+  "score": 0.0,
+  "bounds": [
+   [
+    1,
+    15
+   ]
+  ]
+ },
+ {
+  "name": "Blue x10 [2-11]",
+  "bloon": "Blue",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 3.991,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    11
+   ]
+  ]
+ },
+ {
+  "name": "Blue x10 [2-11]",
+  "bloon": "Blue",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.38,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    11
+   ]
+  ]
+ },
+ {
+  "name": "Blue x18 [2-19]",
+  "bloon": "Blue",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    19
+   ]
+  ]
+ },
+ {
+  "name": "Blue x60 [2-30]",
+  "bloon": "Blue",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 35.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "Blue x22 [2-22]",
+  "bloon": "Blue",
+  "count": 22,
+  "start_s": 0.0,
+  "end_s": 3.987,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    22
+   ]
+  ]
+ },
+ {
+  "name": "Blue x15 [2-16]",
+  "bloon": "Blue",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 6.07,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    16
+   ]
+  ]
+ },
+ {
+  "name": "Blue x5 [2-6]",
+  "bloon": "Blue",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 2.248,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    6
+   ]
+  ]
+ },
+ {
+  "name": "Blue x12 [2-13]",
+  "bloon": "Blue",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 5.139,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    13
+   ]
+  ]
+ },
+ {
+  "name": "Blue x5 [2-6]",
+  "bloon": "Blue",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 1.1167,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    6
+   ]
+  ]
+ },
+ {
+  "name": "Blue x20 [2-21]",
+  "bloon": "Blue",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 9.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    21
+   ]
+  ]
+ },
+ {
+  "name": "Blue x10 [2-11]",
+  "bloon": "Blue",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.139,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    11
+   ]
+  ]
+ },
+ {
+  "name": "Blue x50 [2-26]",
+  "bloon": "Blue",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 30.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    26
+   ]
+  ]
+ },
+ {
+  "name": "Blue x10 [2-11]",
+  "bloon": "Blue",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 3.8,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    11
+   ]
+  ]
+ },
+ {
+  "name": "Blue x15 [2-16]",
+  "bloon": "Blue",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 7.9,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    16
+   ]
+  ]
+ },
+ {
+  "name": "Blue x20 [2-21]",
+  "bloon": "Blue",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 10.84,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    21
+   ]
+  ]
+ },
+ {
+  "name": "Blue x15 Long [2-16]",
+  "bloon": "Blue",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 14.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    16
+   ]
+  ]
+ },
+ {
+  "name": "Blue x15 [2-16]",
+  "bloon": "Blue",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 7.9,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    16
+   ]
+  ]
+ },
+ {
+  "name": "Blue x60 [2-30]",
+  "bloon": "Blue",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 8.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    2,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "Green x20 [5-20]",
+  "bloon": "Green",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 10.849,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    20
+   ]
+  ]
+ },
+ {
+  "name": "Green x2 [5-7]",
+  "bloon": "Green",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 0.57,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    7
+   ]
+  ]
+ },
+ {
+  "name": "Green x12 [5-17]",
+  "bloon": "Green",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 6.281,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    17
+   ]
+  ]
+ },
+ {
+  "name": "Green x24 [5-17]",
+  "bloon": "Green",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 15.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    17
+   ]
+  ]
+ },
+ {
+  "name": "Green x12 [5-17]",
+  "bloon": "Green",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 10.6,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    17
+   ]
+  ]
+ },
+ {
+  "name": "Green x20 [5-20]",
+  "bloon": "Green",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 1.8167,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    20
+   ]
+  ]
+ },
+ {
+  "name": "Green x10 [5-15]",
+  "bloon": "Green",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 2.8875,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    15
+   ]
+  ]
+ },
+ {
+  "name": "Green x5 [5-10]",
+  "bloon": "Green",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 1.3874,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Green x5 [5-10]",
+  "bloon": "Green",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 4.95,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Green x30 [5-25]",
+  "bloon": "Green",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 18.95,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    25
+   ]
+  ]
+ },
+ {
+  "name": "Green x10 [5-15]",
+  "bloon": "Green",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.13,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    15
+   ]
+  ]
+ },
+ {
+  "name": "Green x60 [5-32]",
+  "bloon": "Green",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 25.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    32
+   ]
+  ]
+ },
+ {
+  "name": "Green x4 [5-9]",
+  "bloon": "Green",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 1.71,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    9
+   ]
+  ]
+ },
+ {
+  "name": "Green x45 [5-28]",
+  "bloon": "Green",
+  "count": 45,
+  "start_s": 0.0,
+  "end_s": 7.3458,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    28
+   ]
+  ]
+ },
+ {
+  "name": "Green x5 [5-10]",
+  "bloon": "Green",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 1.116,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Green x343 [5-40]",
+  "bloon": "Green",
+  "count": 343,
+  "start_s": 0.0,
+  "end_s": 50.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    40
+   ]
+  ]
+ },
+ {
+  "name": "Green x23 [5-23]",
+  "bloon": "Green",
+  "count": 23,
+  "start_s": 0.0,
+  "end_s": 30.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    23
+   ]
+  ]
+ },
+ {
+  "name": "Green x20 [5-20]",
+  "bloon": "Green",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 10.849,
+  "score": 0.0,
+  "bounds": [
+   [
+    5,
+    20
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x5 [7-13]",
+  "bloon": "Yellow",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 1.554,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    13
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x10 [7-17]",
+  "bloon": "Yellow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    17
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x5 [7-13]",
+  "bloon": "Yellow",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 3.1166,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    13
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x3 [7-10]",
+  "bloon": "Yellow",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    10
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x4 [7-11]",
+  "bloon": "Yellow",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 0.95,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    11
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x45 [7-28]",
+  "bloon": "Yellow",
+  "count": 45,
+  "start_s": 0.0,
+  "end_s": 7.725,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    28
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x50 [7-32]",
+  "bloon": "Yellow",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 11.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    32
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x8 [7-15]",
+  "bloon": "Yellow",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 1.4333,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    15
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x160 [7-39]",
+  "bloon": "Yellow",
+  "count": 160,
+  "start_s": 0.0,
+  "end_s": 36.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    39
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x40 [7-22]",
+  "bloon": "Yellow",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    22
+   ]
+  ]
+ },
+ {
+  "name": "Yellow x4 [7-11]",
+  "bloon": "Yellow",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 2.284,
+  "score": 0.0,
+  "bounds": [
+   [
+    7,
+    11
+   ]
+  ]
+ },
+ {
+  "name": "Pink x15 [10-20]",
+  "bloon": "Pink",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 7.6167,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    20
+   ]
+  ]
+ },
+ {
+  "name": "Pink x4 [10-14]",
+  "bloon": "Pink",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 1.4375,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    14
+   ]
+  ]
+ },
+ {
+  "name": "Pink x42 [10-33]",
+  "bloon": "Pink",
+  "count": 42,
+  "start_s": 0.0,
+  "end_s": 23.411,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    33
+   ]
+  ]
+ },
+ {
+  "name": "Pink x180 [10-40]",
+  "bloon": "Pink",
+  "count": 180,
+  "start_s": 0.0,
+  "end_s": 35.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    40
+   ]
+  ]
+ },
+ {
+  "name": "Pink x40 [10-30]",
+  "bloon": "Pink",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 1.5125,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "Pink x40 [10-30]",
+  "bloon": "Pink",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 1.3458,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "Pink x10 [10-18]",
+  "bloon": "Pink",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.139,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    18
+   ]
+  ]
+ },
+ {
+  "name": "Pink x35 [10-27]",
+  "bloon": "Pink",
+  "count": 35,
+  "start_s": 0.0,
+  "end_s": 6.9958,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    27
+   ]
+  ]
+ },
+ {
+  "name": "Pink x60 [10-35]",
+  "bloon": "Pink",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "Pink x5 [10-15]",
+  "bloon": "Pink",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    10,
+    15
+   ]
+  ]
+ },
+ {
+  "name": "Black x8 [12-20]",
+  "bloon": "Black",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 5.0853,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    20
+   ]
+  ]
+ },
+ {
+  "name": "Black x6 [12-18]",
+  "bloon": "Black",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 5.2458,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    18
+   ]
+  ]
+ },
+ {
+  "name": "YellowRegrow x25 [12-33]",
+  "bloon": "YellowRegrow",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 14.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    33
+   ]
+  ]
+ },
+ {
+  "name": "YellowRegrow x5 [12-19]",
+  "bloon": "YellowRegrow",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 2.3333,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    19
+   ]
+  ]
+ },
+ {
+  "name": "Black x25 [12-37]",
+  "bloon": "Black",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 10.849,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    37
+   ]
+  ]
+ },
+ {
+  "name": "Black x7 [12-19]",
+  "bloon": "Black",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    19
+   ]
+  ]
+ },
+ {
+  "name": "Black x10 [12-22]",
+  "bloon": "Black",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.139,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    22
+   ]
+  ]
+ },
+ {
+  "name": "YellowRegrow x15 [12-29]",
+  "bloon": "YellowRegrow",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    29
+   ]
+  ]
+ },
+ {
+  "name": "YellowRegrow x12 [12-26]",
+  "bloon": "YellowRegrow",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    12,
+    26
+   ]
+  ]
+ },
+ {
+  "name": "PurpleRegrow x80 [14-35]",
+  "bloon": "PurpleRegrow",
+  "count": 80,
+  "start_s": 0.0,
+  "end_s": 15.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    14,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "Purple x250 [14-35]",
+  "bloon": "Purple",
+  "count": 250,
+  "start_s": 0.0,
+  "end_s": 40.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    14,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "Purple x1 [14-20]",
+  "bloon": "Purple",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 0.1,
+  "score": 0.0,
+  "bounds": [
+   [
+    14,
+    20
+   ]
+  ]
+ },
+ {
+  "name": "PurpleRegrow x10 [14-30]",
+  "bloon": "PurpleRegrow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    14,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "Purple x10 [14-30]",
+  "bloon": "Purple",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    14,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "PinkRegrow x40 [15-40]",
+  "bloon": "PinkRegrow",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 15.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    15,
+    40
+   ]
+  ]
+ },
+ {
+  "name": "PinkRegrow x23 [15-43]",
+  "bloon": "PinkRegrow",
+  "count": 23,
+  "start_s": 0.0,
+  "end_s": 8.7,
+  "score": 0.0,
+  "bounds": [
+   [
+    15,
+    43
+   ]
+  ]
+ },
+ {
+  "name": "White x7 [16-23]",
+  "bloon": "White",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    16,
+    23
+   ]
+  ]
+ },
+ {
+  "name": "WhiteRegrow x17 [16-30]",
+  "bloon": "WhiteRegrow",
+  "count": 17,
+  "start_s": 0.0,
+  "end_s": 3.5958,
+  "score": 0.0,
+  "bounds": [
+   [
+    16,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "White x25 [16-35]",
+  "bloon": "White",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 10.0333,
+  "score": 0.0,
+  "bounds": [
+   [
+    16,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "WhiteRegrow x25 [16-35]",
+  "bloon": "WhiteRegrow",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 10.849,
+  "score": 0.0,
+  "bounds": [
+   [
+    16,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "White x20 [16-32]",
+  "bloon": "White",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 11.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    16,
+    32
+   ]
+  ]
+ },
+ {
+  "name": "White x16 [16-29]",
+  "bloon": "White",
+  "count": 16,
+  "start_s": 0.0,
+  "end_s": 8.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    16,
+    29
+   ]
+  ]
+ },
+ {
+  "name": "White x8 [16-24]",
+  "bloon": "White",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 5.0853,
+  "score": 0.0,
+  "bounds": [
+   [
+    16,
+    24
+   ]
+  ]
+ },
+ {
+  "name": "White x10 [16-26]",
+  "bloon": "White",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.139,
+  "score": 0.0,
+  "bounds": [
+   [
+    16,
+    26
+   ]
+  ]
+ },
+ {
+  "name": "BlackRegrow x40 [18-45]",
+  "bloon": "BlackRegrow",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    18,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "GreenCamo x1 [19-25]",
+  "bloon": "GreenCamo",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    19,
+    25
+   ]
+  ]
+ },
+ {
+  "name": "Lead x6 [20-26]",
+  "bloon": "Lead",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    20,
+    26
+   ]
+  ]
+ },
+ {
+  "name": "Lead x14 [20-34]",
+  "bloon": "Lead",
+  "count": 14,
+  "start_s": 0.0,
+  "end_s": 7.423,
+  "score": 0.0,
+  "bounds": [
+   [
+    20,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "RedCamo x20 [20-30]",
+  "bloon": "RedCamo",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    20,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "Lead x15 [20-35]",
+  "bloon": "Lead",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 7.994,
+  "score": 0.0,
+  "bounds": [
+   [
+    20,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrow x14 [20-34]",
+  "bloon": "LeadRegrow",
+  "count": 14,
+  "start_s": 0.0,
+  "end_s": 8.565,
+  "score": 0.0,
+  "bounds": [
+   [
+    20,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrow x9 [20-29]",
+  "bloon": "LeadRegrow",
+  "count": 9,
+  "start_s": 0.0,
+  "end_s": 13.0701,
+  "score": 0.0,
+  "bounds": [
+   [
+    20,
+    29
+   ]
+  ]
+ },
+ {
+  "name": "Black x30 [22-42]",
+  "bloon": "Black",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 6.9958,
+  "score": 0.0,
+  "bounds": [
+   [
+    22,
+    42
+   ]
+  ]
+ },
+ {
+  "name": "Black x60 [22-45]",
+  "bloon": "Black",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 18.7708,
+  "score": 0.0,
+  "bounds": [
+   [
+    22,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "BlackRegrow x15 [22-27]",
+  "bloon": "BlackRegrow",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 9.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    22,
+    27
+   ]
+  ]
+ },
+ {
+  "name": "GreenRegrowCamo x10 [24-35]",
+  "bloon": "GreenRegrowCamo",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.3458,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x4 [24-28]",
+  "bloon": "Zebra",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 3.426,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    28
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x10 [24-34]",
+  "bloon": "Zebra",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x100 [24-45]",
+  "bloon": "Zebra",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 32.3583,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x6 [24-30]",
+  "bloon": "Zebra",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 18.0833,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    30
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x10 [24-34]",
+  "bloon": "Zebra",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.139,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x10 [24-34]",
+  "bloon": "Zebra",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 6.281,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "GreenRegrowCamo x10 [24-35]",
+  "bloon": "GreenRegrowCamo",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.3458,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "ZebraRegrow x10 [24-34]",
+  "bloon": "ZebraRegrow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "ZebraRegrow x10 [24-34]",
+  "bloon": "ZebraRegrow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x20 [24-35]",
+  "bloon": "Zebra",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 3.5125,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "ZebraRegrow x20 [24-35]",
+  "bloon": "ZebraRegrow",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 10.849,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x10 [24-34]",
+  "bloon": "Zebra",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x8 [24-32]",
+  "bloon": "Zebra",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 5.0853,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    32
+   ]
+  ]
+ },
+ {
+  "name": "ZebraRegrow x10 [24-34]",
+  "bloon": "ZebraRegrow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "ZebraRegrow x2 [24-38]",
+  "bloon": "ZebraRegrow",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.713,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    38
+   ]
+  ]
+ },
+ {
+  "name": "Zebra x60 [24-38]",
+  "bloon": "Zebra",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 27.3583,
+  "score": 0.0,
+  "bounds": [
+   [
+    24,
+    38
+   ]
+  ]
+ },
+ {
+  "name": "YellowCamo x13 [25-38]",
+  "bloon": "YellowCamo",
+  "count": 13,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    25,
+    38
+   ]
+  ]
+ },
+ {
+  "name": "LeadFortified x40 [25-65]",
+  "bloon": "LeadFortified",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 16.559,
+  "score": 0.0,
+  "bounds": [
+   [
+    25,
+    65
+   ]
+  ]
+ },
+ {
+  "name": "LeadFortified x8 [25-33]",
+  "bloon": "LeadFortified",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 3.997,
+  "score": 0.0,
+  "bounds": [
+   [
+    25,
+    33
+   ]
+  ]
+ },
+ {
+  "name": "LeadFortified x4 [25-29]",
+  "bloon": "LeadFortified",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    25,
+    29
+   ]
+  ]
+ },
+ {
+  "name": "LeadFortified x14 [25-39]",
+  "bloon": "LeadFortified",
+  "count": 14,
+  "start_s": 0.0,
+  "end_s": 7.423,
+  "score": 0.0,
+  "bounds": [
+   [
+    25,
+    39
+   ]
+  ]
+ },
+ {
+  "name": "PurpleCamo x10 [25-35]",
+  "bloon": "PurpleCamo",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    25,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x10 [29-37]",
+  "bloon": "Rainbow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.1389,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    37
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x200 [29-70]",
+  "bloon": "Rainbow",
+  "count": 200,
+  "start_s": 0.0,
+  "end_s": 40.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    70
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x18 [29-38]",
+  "bloon": "Rainbow",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 9.707,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    38
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x40 [29-43]",
+  "bloon": "Rainbow",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 25.2583,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    43
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x70 [29-49]",
+  "bloon": "Rainbow",
+  "count": 70,
+  "start_s": 0.0,
+  "end_s": 14.308,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    49
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x10 [29-37]",
+  "bloon": "Rainbow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.1389,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    37
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x150 [29-55]",
+  "bloon": "Rainbow",
+  "count": 150,
+  "start_s": 0.0,
+  "end_s": 90.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    55
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x5 [29-34]",
+  "bloon": "Rainbow",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 2.284,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    34
+   ]
+  ]
+ },
+ {
+  "name": "RainbowRegrow x2 [29-38]",
+  "bloon": "RainbowRegrow",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    38
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x10 [29-37]",
+  "bloon": "Rainbow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.139,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    37
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x25 [29-39]",
+  "bloon": "Rainbow",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 13.704,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    39
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x25 [29-39]",
+  "bloon": "Rainbow",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 13.704,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    39
+   ]
+  ]
+ },
+ {
+  "name": "Rainbow x40 [29-43]",
+  "bloon": "Rainbow",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    29,
+    43
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrow x75 [30-60]",
+  "bloon": "LeadRegrow",
+  "count": 75,
+  "start_s": 0.0,
+  "end_s": 42.254,
+  "score": 0.0,
+  "bounds": [
+   [
+    30,
+    60
+   ]
+  ]
+ },
+ {
+  "name": "PinkCamo x70 [30-40]",
+  "bloon": "PinkCamo",
+  "count": 70,
+  "start_s": 0.0,
+  "end_s": 18.1458,
+  "score": 0.0,
+  "bounds": [
+   [
+    30,
+    40
+   ]
+  ]
+ },
+ {
+  "name": "PurpleRegrowCamo x30 [30-45]",
+  "bloon": "PurpleRegrowCamo",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 15.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    30,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "WhiteRegrowCamo x120 [30-45]",
+  "bloon": "WhiteRegrowCamo",
+  "count": 120,
+  "start_s": 0.0,
+  "end_s": 38.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    30,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "RainbowCamo x5 [30-40]",
+  "bloon": "RainbowCamo",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    30,
+    40
+   ]
+  ]
+ },
+ {
+  "name": "CeramicCamo x10 [33-43]",
+  "bloon": "CeramicCamo",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.4708,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    43
+   ]
+  ]
+ },
+ {
+  "name": "CeramicCamo x40 [33-50]",
+  "bloon": "CeramicCamo",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 25.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    50
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrow x5 [33-38]",
+  "bloon": "CeramicRegrow",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 2.2839,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    38
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x10 [33-43]",
+  "bloon": "Ceramic",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.1638,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    43
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x18 [33-45]",
+  "bloon": "Ceramic",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 6.537,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x5 [33-38]",
+  "bloon": "Ceramic",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 2.2844,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    38
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x2 [33-35]",
+  "bloon": "Ceramic",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    35
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x50 [33-55]",
+  "bloon": "Ceramic",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    55
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrow x50 [33-55]",
+  "bloon": "CeramicRegrow",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 10.849,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    55
+   ]
+  ]
+ },
+ {
+  "name": "CeramicCamo x50 [33-55]",
+  "bloon": "CeramicCamo",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 25.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    55
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x75 [33-99]",
+  "bloon": "Ceramic",
+  "count": 75,
+  "start_s": 0.0,
+  "end_s": 1.1666,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x15 [33-45]",
+  "bloon": "Ceramic",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 11.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "WhiteCamo x7 [33-45]",
+  "bloon": "WhiteCamo",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 1.5917,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x30 [33-51]",
+  "bloon": "Ceramic",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 16.55,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    51
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x20 [33-46]",
+  "bloon": "Ceramic",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 10.849,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    46
+   ]
+  ]
+ },
+ {
+  "name": "CeramicCamo x20 [33-46]",
+  "bloon": "CeramicCamo",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    46
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrow x10 [33-43]",
+  "bloon": "CeramicRegrow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.4708,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    43
+   ]
+  ]
+ },
+ {
+  "name": "RainbowRegrow x6 [33-40]",
+  "bloon": "RainbowRegrow",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    40
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x7 [33-40]",
+  "bloon": "Ceramic",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 5.71,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    40
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x15 [33-48]",
+  "bloon": "Ceramic",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 0.9083,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    48
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x35 [33-51]",
+  "bloon": "Ceramic",
+  "count": 35,
+  "start_s": 0.0,
+  "end_s": 19.414,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    51
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x12 [33-45]",
+  "bloon": "Ceramic",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 6.281,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x40 [33-99]",
+  "bloon": "Ceramic",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 0.2,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Ceramic x42 [33-99]",
+  "bloon": "Ceramic",
+  "count": 42,
+  "start_s": 0.0,
+  "end_s": 0.2,
+  "score": 0.0,
+  "bounds": [
+   [
+    33,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "LeadCamo x5 [35-45]",
+  "bloon": "LeadCamo",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 7.451,
+  "score": 0.0,
+  "bounds": [
+   [
+    35,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "PinkCamo x80 [35-40]",
+  "bloon": "PinkCamo",
+  "count": 80,
+  "start_s": 0.0,
+  "end_s": 35.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    35,
+    40
+   ]
+  ]
+ },
+ {
+  "name": "RainbowCamo x40 [35-50]",
+  "bloon": "RainbowCamo",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    35,
+    50
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortified x100 [38-80]",
+  "bloon": "CeramicFortified",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 30.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    38,
+    80
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortified x6 [38-44]",
+  "bloon": "CeramicFortified",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    38,
+    44
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortified x10 [38-48]",
+  "bloon": "CeramicFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    38,
+    48
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortified x3 [38-41]",
+  "bloon": "CeramicFortified",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    38,
+    41
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortified x40 [38-45]",
+  "bloon": "CeramicFortified",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 30.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    38,
+    45
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortified x60 [38-51]",
+  "bloon": "CeramicFortified",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 27.525,
+  "score": 0.0,
+  "bounds": [
+   [
+    38,
+    51
+   ]
+  ]
+ },
+ {
+  "name": "RainbowRegrow x10 [40-50]",
+  "bloon": "RainbowRegrow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.1389,
+  "score": 0.0,
+  "bounds": [
+   [
+    40,
+    50
+   ]
+  ]
+ },
+ {
+  "name": "PurpleRegrowCamo x500 [40-55]",
+  "bloon": "PurpleRegrowCamo",
+  "count": 500,
+  "start_s": 0.0,
+  "end_s": 30.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    40,
+    55
+   ]
+  ]
+ },
+ {
+  "name": "LeadCamo x50 [40-60]",
+  "bloon": "LeadCamo",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 7.451,
+  "score": 0.0,
+  "bounds": [
+   [
+    40,
+    60
+   ]
+  ]
+ },
+ {
+  "name": "RainbowRegrow x10 [40-50]",
+  "bloon": "RainbowRegrow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.139,
+  "score": 0.0,
+  "bounds": [
+   [
+    40,
+    50
+   ]
+  ]
+ },
+ {
+  "name": "RainbowRegrowCamo x15 [40-55]",
+  "bloon": "RainbowRegrowCamo",
+  "count": 15,
+  "start_s": 0.0,
+  "end_s": 7.994,
+  "score": 0.0,
+  "bounds": [
+   [
+    40,
+    55
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [41-51]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    41,
+    51
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [41-61]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    41,
+    61
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [41-51]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    41,
+    51
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [41-61]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    41,
+    61
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [41-61]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    41,
+    61
+   ]
+  ]
+ },
+ {
+  "name": "Moab x2 [43-99]",
+  "bloon": "Moab",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    43,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x2 [43-71]",
+  "bloon": "Moab",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    43,
+    71
+   ]
+  ]
+ },
+ {
+  "name": "Moab x2 [43-61]",
+  "bloon": "Moab",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    43,
+    61
+   ]
+  ]
+ },
+ {
+  "name": "Moab x2 [43-51]",
+  "bloon": "Moab",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    43,
+    51
+   ]
+  ]
+ },
+ {
+  "name": "Moab x3 [44-74]",
+  "bloon": "Moab",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    44,
+    74
+   ]
+  ]
+ },
+ {
+  "name": "Moab x4 [45-65]",
+  "bloon": "Moab",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    45,
+    65
+   ]
+  ]
+ },
+ {
+  "name": "Moab x4 [45-99]",
+  "bloon": "Moab",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    45,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrow x38 [45-55]",
+  "bloon": "CeramicRegrow",
+  "count": 38,
+  "start_s": 0.0,
+  "end_s": 21.698,
+  "score": 0.0,
+  "bounds": [
+   [
+    45,
+    55
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrow x10 [45-65]",
+  "bloon": "CeramicRegrow",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 8.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    45,
+    65
+   ]
+  ]
+ },
+ {
+  "name": "Moab x4 [45-75]",
+  "bloon": "Moab",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    45,
+    75
+   ]
+  ]
+ },
+ {
+  "name": "Moab x4 [45-85]",
+  "bloon": "Moab",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    45,
+    85
+   ]
+  ]
+ },
+ {
+  "name": "Moab x4 [45-95]",
+  "bloon": "Moab",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 2.2839,
+  "score": 0.0,
+  "bounds": [
+   [
+    45,
+    95
+   ]
+  ]
+ },
+ {
+  "name": "CeramicCamo x28 [45-65]",
+  "bloon": "CeramicCamo",
+  "count": 28,
+  "start_s": 0.0,
+  "end_s": 15.4169,
+  "score": 0.0,
+  "bounds": [
+   [
+    45,
+    65
+   ]
+  ]
+ },
+ {
+  "name": "Moab x5 [46-56]",
+  "bloon": "Moab",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 14.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    46,
+    56
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x1 [46-99]",
+  "bloon": "MoabFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    46,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x6 [47-99]",
+  "bloon": "Moab",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    47,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "ZebraRegrow x150 [48-65]",
+  "bloon": "ZebraRegrow",
+  "count": 150,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    48,
+    65
+   ]
+  ]
+ },
+ {
+  "name": "Moab x7 [48-99]",
+  "bloon": "Moab",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    48,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x2 [48-68]",
+  "bloon": "MoabFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    48,
+    68
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrowFortifiedCamo x50 [49-75]",
+  "bloon": "LeadRegrowFortifiedCamo",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    49,
+    75
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortifiedCamo x25 [50-60]",
+  "bloon": "CeramicRegrowFortifiedCamo",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    50,
+    60
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrow x40 [50-55]",
+  "bloon": "CeramicRegrow",
+  "count": 40,
+  "start_s": 0.0,
+  "end_s": 30.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    50,
+    55
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortifiedCamo x13 [50-65]",
+  "bloon": "CeramicRegrowFortifiedCamo",
+  "count": 13,
+  "start_s": 0.0,
+  "end_s": 7.994,
+  "score": 0.0,
+  "bounds": [
+   [
+    50,
+    65
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrow x60 [50-99]",
+  "bloon": "CeramicRegrow",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 1.777,
+  "score": 0.0,
+  "bounds": [
+   [
+    50,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [51-71]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    71
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x1 [51-61]",
+  "bloon": "Bfb",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    61
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [51-99]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [51-81]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [51-81]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "Moab x10 [51-70]",
+  "bloon": "Moab",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    70
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x1 [51-99]",
+  "bloon": "Bfb",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [51-71]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    71
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [51-81]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "Moab x1 [51-71]",
+  "bloon": "Moab",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    51,
+    71
+   ]
+  ]
+ },
+ {
+  "name": "Moab x11 [52-70]",
+  "bloon": "Moab",
+  "count": 11,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    52,
+    70
+   ]
+  ]
+ },
+ {
+  "name": "CeramicCamo x72 [55-99]",
+  "bloon": "CeramicCamo",
+  "count": 72,
+  "start_s": 0.0,
+  "end_s": 1.2042,
+  "score": 0.0,
+  "bounds": [
+   [
+    55,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x5 [56-66]",
+  "bloon": "Moab",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    56,
+    66
+   ]
+  ]
+ },
+ {
+  "name": "Moab x5 [56-76]",
+  "bloon": "Moab",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    56,
+    76
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x2 [56-66]",
+  "bloon": "BfbFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    56,
+    66
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x2 [58-78]",
+  "bloon": "MoabFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    58,
+    78
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x3 [59-89]",
+  "bloon": "MoabFortified",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    59,
+    89
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x3 [59-79]",
+  "bloon": "MoabFortified",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    59,
+    79
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrowFortifiedCamo x250 [59-99]",
+  "bloon": "LeadRegrowFortifiedCamo",
+  "count": 250,
+  "start_s": 0.0,
+  "end_s": 30.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    59,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x18 [59-99]",
+  "bloon": "Moab",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    59,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x1 [61-71]",
+  "bloon": "Bfb",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    61,
+    71
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x1 [61-81]",
+  "bloon": "Bfb",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    61,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x5 [61-86]",
+  "bloon": "BfbFortified",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 11.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    61,
+    86
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x1 [61-81]",
+  "bloon": "Zomg",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    61,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x2 [63-71]",
+  "bloon": "Bfb",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    63,
+    71
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x4 [65-76]",
+  "bloon": "Bfb",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    65,
+    76
+   ]
+  ]
+ },
+ {
+  "name": "RainbowRegrow x500 [65-80]",
+  "bloon": "RainbowRegrow",
+  "count": 500,
+  "start_s": 0.0,
+  "end_s": 60.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    65,
+    80
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x20 [66-81]",
+  "bloon": "MoabFortified",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    66,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x2 [68-81]",
+  "bloon": "Zomg",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    68,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x20 [69-99]",
+  "bloon": "MoabFortified",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 8.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    69,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x10 [69-99]",
+  "bloon": "Bfb",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    69,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x2 [70-99]",
+  "bloon": "Zomg",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    70,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrowFortifiedCamo x50 [70-99]",
+  "bloon": "LeadRegrowFortifiedCamo",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 2807.9988,
+  "bounds": [
+   [
+    70,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x1 [71-81]",
+  "bloon": "Bfb",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    71,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x1 [71-91]",
+  "bloon": "Bfb",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    71,
+    91
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x9 [73-81]",
+  "bloon": "Bfb",
+  "count": 9,
+  "start_s": 0.0,
+  "end_s": 15.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    73,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x2 [74-89]",
+  "bloon": "Bfb",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    74,
+    89
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x5 [74-99]",
+  "bloon": "Bfb",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    74,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x4 [75-81]",
+  "bloon": "Zomg",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    75,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x8 [76-89]",
+  "bloon": "Bfb",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    76,
+    89
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x20 [76-91]",
+  "bloon": "MoabFortified",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    76,
+    91
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x3 [77-99]",
+  "bloon": "Bfb",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    77,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x10 [79-99]",
+  "bloon": "Bfb",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    79,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x5 [80-99]",
+  "bloon": "BfbFortified",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 9.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    80,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x4 [80-99]",
+  "bloon": "Zomg",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    80,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x6 [80-81]",
+  "bloon": "Zomg",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    80,
+    81
+   ]
+  ]
+ },
+ {
+  "name": "RainbowRegrowCamo x50 [80-99]",
+  "bloon": "RainbowRegrowCamo",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 5075.9985,
+  "bounds": [
+   [
+    80,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x10 [81-91]",
+  "bloon": "Bfb",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    81,
+    91
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x2 [81-99]",
+  "bloon": "DdtCamo",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    81,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x1 [81-91]",
+  "bloon": "Bfb",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    81,
+    91
+   ]
+  ]
+ },
+ {
+  "name": "Moab x30 [81-99]",
+  "bloon": "Moab",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    81,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x3 [83-93]",
+  "bloon": "DdtCamo",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    83,
+    93
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x8 [83-99]",
+  "bloon": "BfbFortified",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    83,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x8 [84-99]",
+  "bloon": "Bfb",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    84,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x6 [85-99]",
+  "bloon": "Zomg",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 13.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    85,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x2 [85-99]",
+  "bloon": "ZomgFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    85,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x10 [85-99]",
+  "bloon": "BfbFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 18.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    85,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x20 [86-99]",
+  "bloon": "Bfb",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    86,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x50 [86-99]",
+  "bloon": "Moab",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    86,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x2 [86-96]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    86,
+    96
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x50 [86-99]",
+  "bloon": "MoabFortified",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 25.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    86,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x25 [88-99]",
+  "bloon": "Bfb",
+  "count": 25,
+  "start_s": 0.0,
+  "end_s": 17.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    88,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x9 [88-99]",
+  "bloon": "DdtCamo",
+  "count": 9,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    88,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x50 [89-99]",
+  "bloon": "MoabFortified",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    89,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x4 [89-96]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 7.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    89,
+    96
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x8 [90-99]",
+  "bloon": "Zomg",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    90,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortifiedCamo x50 [90-99]",
+  "bloon": "CeramicRegrowFortifiedCamo",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 12311.994,
+  "bounds": [
+   [
+    90,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "PurpleRegrowCamo x50 [90-99]",
+  "bloon": "PurpleRegrowCamo",
+  "count": 50,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 1188.0005,
+  "bounds": [
+   [
+    90,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x10 [91-99]",
+  "bloon": "Bfb",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 15.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    91,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Moab x60 [91-99]",
+  "bloon": "Moab",
+  "count": 60,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    91,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x30 [91-99]",
+  "bloon": "BfbFortified",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 30.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    91,
+    99
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 [100-100]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    100,
+    100
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x8 (R120) [101-120]",
+  "bloon": "BfbFortified",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x10 (R120) [101-120]",
+  "bloon": "Bfb",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x8 (R120) [101-120]",
+  "bloon": "DdtCamo",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x24 (R120) [101-120]",
+  "bloon": "MoabFortified",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Purple x1110 (R120) [101-120]",
+  "bloon": "Purple",
+  "count": 1110,
+  "start_s": 0.0,
+  "end_s": 0.2,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "PurpleCamo x555 (R120) [101-120]",
+  "bloon": "PurpleCamo",
+  "count": 555,
+  "start_s": 0.0,
+  "end_s": 0.1,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "PurpleFortified x555 (R120) [101-120]",
+  "bloon": "PurpleCamo",
+  "count": 555,
+  "start_s": 0.0,
+  "end_s": 0.1,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x10 (R120) [101-120]",
+  "bloon": "MoabFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x24 (R120) [101-120]",
+  "bloon": "Bfb",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x6 (R120) [101-120]",
+  "bloon": "ZomgFortified",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 15.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x2 (R120) [101-120]",
+  "bloon": "DdtCamo",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x12 (R120) [101-120]",
+  "bloon": "BfbFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortifiedCamo x104 (R110) [101-110]",
+  "bloon": "CeramicFortifiedCamo",
+  "count": 104,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    110
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x16 (R120) [101-120]",
+  "bloon": "Zomg",
+  "count": 16,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x20 (R120) [101-120]",
+  "bloon": "MoabFortified",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x3 (R110) [101-110]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    110
+   ]
+  ]
+ },
+ {
+  "name": "Moab x20 (R120) [101-120]",
+  "bloon": "Moab",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortified x52 (R110) [101-110]",
+  "bloon": "CeramicRegrowFortified",
+  "count": 52,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    110
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x10 (R120) [101-120]",
+  "bloon": "ZomgFortified",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 27.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x6 (R120) [101-120]",
+  "bloon": "Zomg",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x12 (R120) [101-120]",
+  "bloon": "Zomg",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x5 (R120) [101-120]",
+  "bloon": "Bfb",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x8 (R120) [101-120]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "Moab x48 (R120) [101-120]",
+  "bloon": "Moab",
+  "count": 48,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    101,
+    120
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortifiedCamo x52 (R110) [101-110]",
+  "bloon": "CeramicRegrowFortifiedCamo",
+  "count": 52,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 9959.035,
+  "bounds": [
+   [
+    101,
+    110
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R9999) [111-162]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    111,
+    162
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortified x104 (R120) [111-120], [163-163]",
+  "bloon": "CeramicRegrowFortified",
+  "count": 104,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    111,
+    120
+   ],
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortifiedCamo x104 (R120) [111-120], [163-163]",
+  "bloon": "CeramicRegrowFortifiedCamo",
+  "count": 104,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    111,
+    120
+   ],
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortifiedCamo x208 (R120) [111-120], [163-163]",
+  "bloon": "CeramicFortifiedCamo",
+  "count": 208,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    111,
+    120
+   ],
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x12 [121-130]",
+  "bloon": "BfbFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 4.375,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x12 [121-130]",
+  "bloon": "Zomg",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 18.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x5 [121-130]",
+  "bloon": "Bfb",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 5.25,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x24 [121-130]",
+  "bloon": "MoabFortified",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 3.75,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x18 [121-130]",
+  "bloon": "DdtCamo",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 4.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x10 [121-130]",
+  "bloon": "Bfb",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x10 [121-130]",
+  "bloon": "ZomgFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 24.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x10 [121-130]",
+  "bloon": "MoabFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x2 [121-130]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 [121-162]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    162
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x6 [121-130]",
+  "bloon": "DdtCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Moab x48 [121-130]",
+  "bloon": "Moab",
+  "count": 48,
+  "start_s": 0.0,
+  "end_s": 7.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x4 [121-130]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Moab x20 [121-130]",
+  "bloon": "Moab",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x24 [121-130]",
+  "bloon": "Bfb",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 8.75,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x6 [121-130]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x16 [121-130]",
+  "bloon": "Zomg",
+  "count": 16,
+  "start_s": 0.0,
+  "end_s": 18.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x8 [121-130]",
+  "bloon": "BfbFortified",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x6 [121-130]",
+  "bloon": "Zomg",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 8.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x20 [121-130]",
+  "bloon": "MoabFortified",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x6 [121-130]",
+  "bloon": "ZomgFortified",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 13.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    121,
+    130
+   ]
+  ]
+ },
+ {
+  "name": "Moab x48 [131-140]",
+  "bloon": "Moab",
+  "count": 48,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x10 [131-140]",
+  "bloon": "MoabFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x10 [131-140]",
+  "bloon": "ZomgFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 21.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x10 [131-140]",
+  "bloon": "Bfb",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x6 [131-140]",
+  "bloon": "DdtCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x12 [131-140]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x6 [131-140]",
+  "bloon": "ZomgFortified",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x6 [131-140]",
+  "bloon": "Zomg",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x16 [131-140]",
+  "bloon": "Zomg",
+  "count": 16,
+  "start_s": 0.0,
+  "end_s": 16.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Moab x20 [131-140]",
+  "bloon": "Moab",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x8 [131-140]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x20 [131-140]",
+  "bloon": "MoabFortified",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x12 [131-140]",
+  "bloon": "Zomg",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 16.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x12 [131-140]",
+  "bloon": "BfbFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 3.75,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x8 [131-140]",
+  "bloon": "BfbFortified",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x24 [131-140]",
+  "bloon": "Bfb",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 7.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 [131-162], [164-199], [201-262]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    162
+   ],
+   [
+    164,
+    199
+   ],
+   [
+    201,
+    262
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x4 [131-140]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x18 [131-140]",
+  "bloon": "DdtCamo",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 4.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x5 [131-140]",
+  "bloon": "Bfb",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 4.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x24 [131-140]",
+  "bloon": "MoabFortified",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    131,
+    140
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x7 [141-150]",
+  "bloon": "ZomgFortified",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 12.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 [141-162], [164-199], [201-262]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    162
+   ],
+   [
+    164,
+    199
+   ],
+   [
+    201,
+    262
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x11 [141-150]",
+  "bloon": "MoabFortified",
+  "count": 11,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x22 [141-150]",
+  "bloon": "MoabFortified",
+  "count": 22,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x8 [141-150]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x13 [141-150]",
+  "bloon": "Zomg",
+  "count": 13,
+  "start_s": 0.0,
+  "end_s": 16.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x11 [141-150]",
+  "bloon": "Bfb",
+  "count": 11,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x6 [141-150]",
+  "bloon": "DdtCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x18 [141-150]",
+  "bloon": "Zomg",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 16.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x9 [141-150]",
+  "bloon": "BfbFortified",
+  "count": 9,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x18 [141-150]",
+  "bloon": "DdtCamo",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Moab x20 [141-150]",
+  "bloon": "Moab",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x6 [141-150]",
+  "bloon": "Bfb",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 4.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x26 [141-150]",
+  "bloon": "MoabFortified",
+  "count": 26,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x13 [141-150]",
+  "bloon": "BfbFortified",
+  "count": 13,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x27 [141-150]",
+  "bloon": "Bfb",
+  "count": 27,
+  "start_s": 0.0,
+  "end_s": 7.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x12 [141-150]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x11 [141-150]",
+  "bloon": "ZomgFortified",
+  "count": 11,
+  "start_s": 0.0,
+  "end_s": 21.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x7 [141-150]",
+  "bloon": "Zomg",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Moab x48 [141-150]",
+  "bloon": "Moab",
+  "count": 48,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x4 [141-150]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 4,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    141,
+    150
+   ]
+  ]
+ },
+ {
+  "name": "Moab x48 [151-160]",
+  "bloon": "Moab",
+  "count": 48,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x29 [151-160]",
+  "bloon": "Bfb",
+  "count": 29,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x7 [151-160]",
+  "bloon": "ZomgFortified",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 10.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x28 [151-160]",
+  "bloon": "MoabFortified",
+  "count": 28,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x10 [151-160]",
+  "bloon": "BfbFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x7 [151-160]",
+  "bloon": "Zomg",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x6 [151-160]",
+  "bloon": "DdtCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x20 [151-160]",
+  "bloon": "Zomg",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 16.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 [151-162], [164-199], [201-262]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    162
+   ],
+   [
+    164,
+    199
+   ],
+   [
+    201,
+    262
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x12 [151-160]",
+  "bloon": "ZomgFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 21.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x14 [151-160]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 14,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x14 [151-160]",
+  "bloon": "BfbFortified",
+  "count": 14,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x12 [151-160]",
+  "bloon": "Bfb",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x6 [151-160]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x8 [151-160]",
+  "bloon": "Bfb",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 4.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x13 [151-160]",
+  "bloon": "Zomg",
+  "count": 13,
+  "start_s": 0.0,
+  "end_s": 14.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x24 [151-160]",
+  "bloon": "MoabFortified",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x18 [151-160]",
+  "bloon": "DdtCamo",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x12 [151-160]",
+  "bloon": "MoabFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x10 [151-160]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Moab x24 [151-160]",
+  "bloon": "Moab",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    151,
+    160
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x6 [161-162], [164-199]",
+  "bloon": "DdtCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x28 [161-162], [164-199]",
+  "bloon": "MoabFortified",
+  "count": 28,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x13 [161-162], [164-199]",
+  "bloon": "Zomg",
+  "count": 13,
+  "start_s": 0.0,
+  "end_s": 14.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x7 [161-162], [164-199]",
+  "bloon": "Zomg",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 6.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x8 [161-162], [164-199]",
+  "bloon": "Bfb",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 4.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x6 [161-162], [164-199]",
+  "bloon": "DdtCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Moab x24 [161-162], [164-199]",
+  "bloon": "Moab",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x6 [161-162], [164-199]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 6,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x10 [161-162], [164-199]",
+  "bloon": "BfbFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x20 [161-162], [164-199]",
+  "bloon": "Zomg",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 16.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x24 [161-162], [164-199]",
+  "bloon": "MoabFortified",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x29 [161-162], [164-199]",
+  "bloon": "Bfb",
+  "count": 29,
+  "start_s": 0.0,
+  "end_s": 7.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x7 [161-162], [164-199]",
+  "bloon": "ZomgFortified",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 10.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Moab x48 [161-162], [164-199]",
+  "bloon": "Moab",
+  "count": 48,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x12 [161-162], [164-199]",
+  "bloon": "MoabFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x12 [161-162], [164-199]",
+  "bloon": "Bfb",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x14 [161-162], [164-199]",
+  "bloon": "BfbFortified",
+  "count": 14,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x10 [161-162], [164-199]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x14 [161-162], [164-199]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 14,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x18 [161-162], [164-199]",
+  "bloon": "DdtCamo",
+  "count": 18,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x12 [161-162], [164-199]",
+  "bloon": "ZomgFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 21.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x10 [161-162], [164-199]",
+  "bloon": "BfbFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x7 [161-162], [164-199]",
+  "bloon": "ZomgFortified",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "Moab x24 [161-162], [164-199]",
+  "bloon": "Moab",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    161,
+    162
+   ],
+   [
+    164,
+    199
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrowFortifiedCamo x100 (R163) [163-163]",
+  "bloon": "LeadRegrowFortifiedCamo",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrowCamo x100 (R163) [163-163]",
+  "bloon": "LeadRegrowCamo",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortifiedCamo x333 (R163) [163-163]",
+  "bloon": "CeramicFortifiedCamo",
+  "count": 333,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortifiedCamo x450 (R163) [163-163]",
+  "bloon": "CeramicRegrowFortifiedCamo",
+  "count": 450,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "LeadFortifiedCamo x100 (R163) [163-163]",
+  "bloon": "LeadFortifiedCamo",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrowFortifiedCamo x100 (R163) [163-163]",
+  "bloon": "LeadRegrowFortifiedCamo",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortified x333 (R163) [163-163]",
+  "bloon": "CeramicFortified",
+  "count": 333,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowCamo x1000 (R163) [163-163]",
+  "bloon": "CeramicRegrowCamo",
+  "count": 1000,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortifiedCamo x700 (R163) [163-163]",
+  "bloon": "CeramicRegrowFortifiedCamo",
+  "count": 700,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "CeramicRegrowFortified x333 (R163) [163-163]",
+  "bloon": "CeramicRegrowFortified",
+  "count": 333,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "LeadRegrowFortified x100 (R163) [163-163]",
+  "bloon": "LeadRegrowFortified",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    163,
+    163
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (r9999) [164-199], [201-262], [264-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    164,
+    199
+   ],
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x2 (R164+) [164-199], [201-262]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    164,
+    199
+   ],
+   [
+    201,
+    262
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R171+) [171-199], [201-262], [264-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 25000.0,
+  "bounds": [
+   [
+    171,
+    199
+   ],
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x2 (R181+) [181-199], [201-262]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    181,
+    199
+   ],
+   [
+    201,
+    262
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R191+) [191-199], [201-262], [264-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 25000.0,
+  "bounds": [
+   [
+    191,
+    199
+   ],
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x3 (R200 Custom) [200-200]",
+  "bloon": "BadFortified",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 20.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    200,
+    200
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x24 [201-263]",
+  "bloon": "MoabFortified",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x28 [201-263]",
+  "bloon": "MoabFortified",
+  "count": 28,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x12 [201-263]",
+  "bloon": "MoabFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "Moab x24 [201-263]",
+  "bloon": "Moab",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "Moab x24 [201-263]",
+  "bloon": "Moab",
+  "count": 24,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "Moab x48 [201-263]",
+  "bloon": "Moab",
+  "count": 48,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x10 [201-262], [264-9999]",
+  "bloon": "BfbFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x8 [201-262], [264-9999]",
+  "bloon": "Bfb",
+  "count": 8,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x7 [201-262], [264-9999]",
+  "bloon": "ZomgFortified",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x13 [201-262], [264-9999]",
+  "bloon": "Zomg",
+  "count": 13,
+  "start_s": 0.0,
+  "end_s": 3.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x7 [201-262], [264-9999]",
+  "bloon": "Zomg",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x14 [201-262], [264-9999]",
+  "bloon": "BfbFortified",
+  "count": 14,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x32 [201-262], [264-9999]",
+  "bloon": "DdtCamo",
+  "count": 32,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x29 [201-262], [264-9999]",
+  "bloon": "Bfb",
+  "count": 29,
+  "start_s": 0.0,
+  "end_s": 2.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x7 [201-262], [264-9999]",
+  "bloon": "ZomgFortified",
+  "count": 7,
+  "start_s": 0.0,
+  "end_s": 3.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x12 [201-262], [264-9999]",
+  "bloon": "DdtCamo",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x12 [201-262], [264-9999]",
+  "bloon": "DdtCamo",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x20 [201-262], [264-9999]",
+  "bloon": "Zomg",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 4.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R201+) [201-262], [264-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x12 [201-262], [264-9999]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x20 [201-262], [264-9999]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 20,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x28 [201-262], [264-9999]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 28,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BfbFortified x10 [201-262], [264-9999]",
+  "bloon": "BfbFortified",
+  "count": 10,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "ZomgFortified x12 [201-262], [264-9999]",
+  "bloon": "ZomgFortified",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R211+) [211-262], [264-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    211,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x12 [201-262], [264-9999]",
+  "bloon": "Bfb",
+  "count": 12,
+  "start_s": 0.0,
+  "end_s": 1.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    201,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R221+) [221-262], [264-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    221,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x1 (R231+) [231-262], [264-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    231,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R241+) [241-262], [264-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    241,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x1 (R251+) [251-262], [264-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    251,
+    262
+   ],
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x30 (R263) [263-263]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "Moab x36 (R263+) [263-9999]",
+  "bloon": "Moab",
+  "count": 36,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Moab x36 (R263+) [263-9999]",
+  "bloon": "Moab",
+  "count": 36,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x30 (R263) [263-263]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x100 (R263) [263-263]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "DdtFortified x100 (R263) [263-263]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x36 (R263+) [263-9999]",
+  "bloon": "MoabFortified",
+  "count": 36,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x44 (R263+) [263-9999]",
+  "bloon": "MoabFortified",
+  "count": 44,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "MoabFortified x72 (R263+) [263-9999]",
+  "bloon": "MoabFortified",
+  "count": 72,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Moab x144 (R263+) [263-9999]",
+  "bloon": "Moab",
+  "count": 144,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x30 (R263) [263-263]",
+  "bloon": "DdtFortifiedCamo",
+  "count": 30,
+  "start_s": 0.0,
+  "end_s": 5.0,
+  "score": 0.0,
+  "bounds": [
+   [
+    263,
+    263
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (264+) [264-9999]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R264+) [264-9999]",
+  "bloon": "Bad",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 2.0,
+  "score": 75000.0,
+  "bounds": [
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R264+) [264-9999]",
+  "bloon": "BadFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 100000.0,
+  "bounds": [
+   [
+    264,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R271+) [271-9999]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    271,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R281+) [281-9999]",
+  "bloon": "BadFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 100000.0,
+  "bounds": [
+   [
+    281,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R291+) [291-9999]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    291,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R301+) [301-9999]",
+  "bloon": "BadFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 100000.0,
+  "bounds": [
+   [
+    301,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x1 (R311+) [311-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    311,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x1 (R321+) [321-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    321,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R331+) [331-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 25000.0,
+  "bounds": [
+   [
+    331,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R341+) [341-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    341,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R351+) [351-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 25000.0,
+  "bounds": [
+   [
+    351,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R361+) [361-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    361,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R371+) [371-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 25000.0,
+  "bounds": [
+   [
+    371,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R381+) [381-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    381,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x1 (R391+) [391-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    391,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x1 (R401+) [401-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    401,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x1 (R9999) [411-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 50000.0,
+  "bounds": [
+   [
+    411,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x1 (R411+) [411-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    411,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Bad x1 (R9999) [421-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 25000.0,
+  "bounds": [
+   [
+    421,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x1 (R9999) [421-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    421,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x1 (R9999) [431-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    431,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x1 (R9999) [431-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    431,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x1 (R9999) [441-9999]",
+  "bloon": "Bad",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    441,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x1 (R9999) [441-9999]",
+  "bloon": "BadFortified",
+  "count": 1,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    441,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x2 (R9999) [451-9999]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    451,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x2 (R9999) [451-9999]",
+  "bloon": "BadFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    451,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x2 (R9999) [461-9999]",
+  "bloon": "BadFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    461,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x2 (R9999) [461-9999]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    461,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x2 (R9999) [471-9999]",
+  "bloon": "BadFortified",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    471,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x2 (R9999) [471-9999]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    471,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x3 (R9999) [481-9999]",
+  "bloon": "BadFortified",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    481,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x3 (R9999) [481-9999]",
+  "bloon": "Bad",
+  "count": 2,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    481,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x3 (R9999) [491-9999]",
+  "bloon": "BadFortified",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    491,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x3 (R9999) [491-9999]",
+  "bloon": "Bad",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    491,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x3 (R9999) [501-9999]",
+  "bloon": "BadFortified",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    501,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x3 (R9999) [501-9999]",
+  "bloon": "Bad",
+  "count": 3,
+  "start_s": 0.0,
+  "end_s": 0.5,
+  "score": 2.0,
+  "bounds": [
+   [
+    501,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed BadFortified x5 (R1000) [511-9999]",
+  "bloon": "BadFortified",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    511,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "Guaranteed Bad x5 (R1000) [511-9999]",
+  "bloon": "Bad",
+  "count": 5,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 2.0,
+  "bounds": [
+   [
+    511,
+    9999
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x100 (The End/Failsafe) [10000-10000], [10006-10133701]",
+  "bloon": "BadFortified",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 0.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    1987,
+    10000
+   ],
+   [
+    10006,
+    10133701
+   ]
+  ]
+ },
+ {
+  "name": "BadFortified x100 (The agAind) [10000-10000], [10006-10133701]",
+  "bloon": "BadFortified",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 15.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    10000,
+    10000
+   ],
+   [
+    10006,
+    10133701
+   ]
+  ]
+ },
+ {
+  "name": "CeramicFortified (Test) [10001-10001]",
+  "bloon": "CeramicFortified",
+  "count": 9999,
+  "start_s": 0.0,
+  "end_s": 10.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    10001,
+    10001
+   ]
+  ]
+ },
+ {
+  "name": "Moab x100 (Test) [10002-10002]",
+  "bloon": "Moab",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    10002,
+    10002
+   ]
+  ]
+ },
+ {
+  "name": "Bfb x100 (Test) [10003-10003]",
+  "bloon": "Bfb",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    10003,
+    10003
+   ]
+  ]
+ },
+ {
+  "name": "Zomg x100 (Test) [10004-10004]",
+  "bloon": "Zomg",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    10004,
+    10004
+   ]
+  ]
+ },
+ {
+  "name": "Ddt x100 (Test) [10005-10005]",
+  "bloon": "DdtCamo",
+  "count": 100,
+  "start_s": 0.0,
+  "end_s": 1.0,
+  "score": 1.0,
+  "bounds": [
+   [
+    10005,
+    10005
+   ]
+  ]
+ }
+]
