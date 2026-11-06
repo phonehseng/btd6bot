@@ -26,6 +26,13 @@ $15,000). The purchase that saves the most of those lives per dollar is
 bought - or, when the worst round would leak even at full strength
 (margin under 1), the one that saves the most lives. One purchase per call; Match calls again until the look-ahead is
 safe or nothing the cash buys helps.
+
+A purchase rated by the crosspath a standing tower grows into ("upgrade b1
+-> 1-1-0 (to grow to 4-2-0)", grow_standing) is a goal, not one tier: its
+rating is the whole path's, so buy_best buys the path's tiers one after
+another while the cash it was rated on lasts, and an unfinished goal stays
+on offer at the next looks (goal_option) until it stands, is overtaken, or
+cannot come before its round any more.
 """
 from __future__ import annotations
 
@@ -163,6 +170,10 @@ class Option:
     cost: float
     step: dict                     # the executor step that buys it
     towers: list = field(default_factory=list)   # the board after it (for the model)
+    # for a tower rated at the crosspath it grows into: the upgrade step to
+    # that whole crosspath ({"do": "upgrade", "id": ..., "to": "4-2-0"}),
+    # which buy_best follows on after the first tier (follow_goal)
+    goal: dict | None = None
 
 
 def lookahead_rounds(rnd, end_round, k=LOOKAHEAD):
@@ -266,6 +277,9 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     crisis = before is not None and before < 1.0
     pick = None
     tried = grow(ex, forecast, options(ex, cash), cash, worst)
+    unfinished = goal_option(ex, cash, rnd)
+    if unfinished is not None:
+        tried = [unfinished] + tried       # judged like any other purchase, by the whole path
     for o in tried:
         leak = forecast.leaks(o.towers, rounds_rated, half)
         if leak is None:
@@ -614,10 +628,110 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family):
                 best = (m, -cost, target, first, after)
         if best is not None:
             m, neg_cost, target, first, after = best
-            code = "-".join(map(str, first))
-            return Option(f"upgrade {t.tid} -> {code} (to grow to {'-'.join(map(str, target))})", -neg_cost,
-                          {"do": "upgrade", "id": t.tid, "to": code}, after)
+            code, whole = "-".join(map(str, first)), "-".join(map(str, target))
+            return Option(f"upgrade {t.tid} -> {code} (to grow to {whole})", -neg_cost,
+                          {"do": "upgrade", "id": t.tid, "to": code}, after,
+                          goal={"do": "upgrade", "id": t.tid, "to": whole})
     return None
+
+
+def _tiers(code):
+    """"4-2-0" -> (4, 2, 0)."""
+    return tuple(int(c) for c in str(code).split("-"))
+
+
+def _next_tier_cost(kind, tiers, target, family):
+    """The price of the cheapest single tier that moves `tiers` toward
+    `target` (the order Executor._next_path buys in), or None when the tower
+    is at the target or has gone another way."""
+    if any(c > t for c, t in zip(tiers, target)):
+        return None
+    costs = [T.upgrade_cost(kind, i + 1, tiers[i] + 1, family) for i in range(3) if tiers[i] < target[i]]
+    return min(costs) if costs else None
+
+
+def goal_option(ex, cash, rnd):
+    """The unfinished reinforce goal (ex.reinforce_goal, left by follow_goal)
+    as an Option for best(): the next tier toward the goal's crosspath,
+    costed at what the rest of the path costs and rated at the finished
+    crosspath, as grow_standing rated it when it was chosen - or None.
+
+    Lotus Island CHIMPS (2026-11-05, case 20261105_171203) picked "buccaneer1
+    -> 1-1-0 (to grow to 4-2-0) ($13555)", rated by the Aircraft Carrier it
+    grows into (round 95: 0.38 -> 0.99), bought the $295 tier and never came
+    back to the rest: at the next look the path was one option among twenty,
+    each rated by a single tier, and the cash went elsewhere. The buccaneer
+    stood at 1-1-0 when round 95 came.
+
+    The goal is dropped (and None returned) once the tower is gone, has gone
+    another way, stands at the goal, the goal's round has passed, or the
+    rest of the path cannot be paid before that round from the cash and the
+    income until then (payable_by): then it holds no claim. It is also None,
+    but kept, while the cash does not cover the next tier yet."""
+    goal = getattr(ex, "reinforce_goal", None)
+    if not goal:
+        return None
+    step, due = goal["step"], goal["round"]
+    p = ex.g.towers.get(step["id"])
+    target = _tiers(step["to"])
+    family = _price_family(ex)
+    why = None
+    if p is None:
+        why = "the tower is gone"
+    elif rnd is not None and rnd > due:
+        why = f"its round {due} has passed"
+    elif all(c >= t for c, t in zip(p.tiers, target)):
+        why = "it stands"
+    elif any(c > t for c, t in zip(p.tiers, target)):
+        why = "the tower went another way"
+    if why is None:
+        left = T.total_cost(p.kind, target, family) - T.total_cost(p.kind, tuple(p.tiers), family)
+        if payable_by(ex, left, cash, due, rnd) is False:
+            why = f"the rest (${left:.0f}) cannot be paid before round {due}"
+    if why is not None:
+        log.info("reinforce: goal %s -> %s dropped: %s", step["id"], step["to"], why)
+        ex.reinforce_goal = None
+        return None
+    nxt = _next_tier_cost(p.kind, tuple(p.tiers), target, family)
+    if nxt is None or nxt > cash:
+        return None
+    now = board(ex)
+    after = [SimpleNamespace(**{**vars(t), "tiers": target}) if t.tid == p.tid else t for t in now]
+    return Option(f"upgrade {p.tid} toward {step['to']} (the goal for round {due})", left,
+                  dict(step), after, goal=dict(step))
+
+
+def follow_goal(ex, goal, cash, due, rnd, start):
+    """After the first tier of a goal (Option.goal) went through, buy the
+    path's next tiers too while `cash` (what the goal was rated on, less
+    what has been spent since `start`, the tower's tiers before the first
+    one) covers them - the path was chosen as a whole. Whatever is left
+    (cash ran short, a click failed) becomes ex.reinforce_goal, offered
+    again at the next looks (goal_option) until round `due`."""
+    p = ex.g.towers.get(goal["id"])
+    if p is None or start is None:
+        return
+    family = _price_family(ex)
+    target = _tiers(goal["to"])
+    for _ in range(15):           # at most the tiers of one crosspath
+        if all(c >= t for c, t in zip(p.tiers, target)):
+            ex.reinforce_goal = None
+            return
+        left = cash - (T.total_cost(p.kind, tuple(p.tiers), family) - T.total_cost(p.kind, start, family))
+        nxt = _next_tier_cost(p.kind, tuple(p.tiers), target, family)
+        if nxt is None or nxt > left:
+            break
+        before = tuple(p.tiers)
+        with _why(ex, "reinforce", f"goal {p.tid} -> {goal['to']} for round {due}"):
+            r = ex.try_step(dict(goal), left, rnd)
+        if r not in ("bought", "progress") or tuple(p.tiers) == before:
+            break
+        log.info("reinforce: %s -> %s on the way to %s (the goal for round %d)",
+                 p.tid, "-".join(map(str, p.tiers)), goal["to"], due)
+    if any(c > t for c, t in zip(p.tiers, target)):
+        ex.reinforce_goal = None
+    else:
+        ex.reinforce_goal = {"step": dict(goal), "round": due}
 
 
 def _price_family(ex):
@@ -757,11 +871,16 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
     if status != "buy":
         return status
     o, worst, before, after = found
+    tower = ex.g.towers.get(o.goal["id"]) if o.goal else None
+    start = tuple(tower.tiers) if tower is not None else None
     with _why(ex, "reinforce", f"{o.what}: round {worst} {before or 0.0:.2f}->{after or 0.0:.2f}"):
         r = ex.try_step(dict(o.step), cash, rnd)
     if r in ("bought", "progress"):
         log.warning("reinforce: %s ($%d) - round %d, the weakest ahead, goes %.2f -> %.2f in the model",
                     o.what, o.cost, worst, before or 0.0, after or 0.0)
+        if o.goal:
+            # the path was rated whole: the rest of its tiers follow
+            follow_goal(ex, o.goal, cash, worst, rnd, start)
         return "bought"
     log.info("reinforce: %s ($%d) did not go through (%s)", o.what, o.cost, r)
     return "failed"
