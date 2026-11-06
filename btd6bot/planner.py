@@ -1307,14 +1307,53 @@ def _load_ceilings(root=None) -> dict[str, float]:
     return out
 
 
+# Game modifiers (the game's Mods, as dps_model.MODE_MODS lists them per
+# mode) that only take something away from the player: fewer towers to
+# choose from, tougher MOABs, less cash, fewer lives or dearer towers. A
+# mode made of another mode's Mods plus only these can never be held better
+# than that mode, so a ceiling measured for the easier mode bounds it too
+# (see _inherited_ceiling). Reverse and Alternate Bloons Rounds are not
+# here: they change the track direction or the rounds, which can go either
+# way.
+HANDICAP_MODS = frozenset({"MagicOnly", "MilitaryOnly", "PrimaryOnly", "DoubleMoabHealth",
+                           "HalfCash", "Deflation", "Impoppable", "Clicks"})
+
+
+def _inherited_ceiling(ceilings: Mapping[str, float], map_name: str, mode: str) -> float | None:
+    """The lowest ceiling measured for an easier version of ``mode`` on
+    ``map_name``: a mode whose Mods are a subset of this mode's, the extra
+    ones all HANDICAP_MODS. None when no such mode was measured.
+
+    Why: Party Parade Hard was measured at 1.33 (no researched build holds
+    it), but Party Parade Double HP MOABs had no number of its own, so
+    hard_ninja_alch_sun was rated p=0.98 there on one Double HP win on
+    another map - and lost the round-40 MOAB with 100 lives (case
+    20261106_051629). The same MOAB with twice the health cannot be held
+    better than in Hard."""
+    from .dps_model import MODE_MODS
+    mine = set(MODE_MODS.get(mode, ()))
+    best = None
+    for base, mods in MODE_MODS.items():
+        extra = mine - set(mods)
+        if base == mode or not mine.issuperset(mods) or not extra or not extra <= HANDICAP_MODS:
+            continue
+        c = ceilings.get(f"{map_name}|{base}")
+        if c is not None:
+            best = c if best is None else min(best, c)
+    return best
+
+
 def model_ceiling(map_name: str, mode: str) -> float | None:
     """The best margin any measured build reached for (map, mode), or None
-    when it was not measured (see :func:`_load_ceilings`)."""
+    when it was not measured (see :func:`_load_ceilings`). A (map, mode)
+    with no number of its own takes the ceiling of an easier version of the
+    mode on the same map (:func:`_inherited_ceiling`)."""
     global _CEILINGS
     if _CEILINGS is None:
         _CEILINGS = _load_ceilings()
     m = canonical_map(map_name)
-    return _CEILINGS.get(f"{m}|{mode}", _CEILINGS.get(f"{m}|*"))
+    own = _CEILINGS.get(f"{m}|{mode}", _CEILINGS.get(f"{m}|*"))
+    return own if own is not None else _inherited_ceiling(_CEILINGS, m, mode)
 
 
 class _Calibration:

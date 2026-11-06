@@ -534,6 +534,32 @@ def test_map_modes_no_build_holds_are_not_trusted():
     assert P.prior_win_probability(acc, s, "Logs", "hard") > P.CEILING_P_CAP
 
 
+def test_harder_versions_of_a_mode_inherit_its_ceiling():
+    """Party Parade Double HP MOABs (case 20261106_051629): no ceiling of its
+    own, so it was rated p=0.98 although Party Parade Hard - the same game
+    with half the MOAB health - rates 1.33 at best; it was lost at round 40.
+    Pure handicaps (Double HP, Magic Only, Impoppable, CHIMPS ...) now take
+    the easier mode's ceiling; ABR (other rounds) does not, and a mode's own
+    measured number still comes first."""
+    saved = P._CEILINGS
+    P._CEILINGS = {"Party Parade|hard": 1.33, "Party Parade|medium": 1.43,
+                   "Party Parade|reverse": 1.6, "Logs|chimps": 2.2, "Logs|hard": 1.1}
+    try:
+        for mode in ("double_hp", "magic_only", "half_cash", "impoppable", "chimps"):
+            assert P.model_ceiling("Party Parade", mode) == 1.33, mode
+        assert P.model_ceiling("Party Parade", "abr") is None
+        assert P.model_ceiling("Party Parade", "military_only") == 1.43
+        assert P.model_ceiling("Party Parade", "reverse") == 1.6     # its own number
+        assert P.model_ceiling("Logs", "chimps") == 2.2               # its own number
+        assert P.model_ceiling("Logs", "double_hp") == 1.1
+        assert P.model_ceiling("Monkey Meadow", "double_hp") is None
+        acc = _fresh_ish_account()
+        s = _spec(modes=("double_hp",), rate=0.95)
+        assert P.prior_win_probability(acc, s, "Party Parade", "double_hp") <= P.CEILING_P_CAP
+    finally:
+        P._CEILINGS = saved
+
+
 def test_calibration_cannot_lift_a_game_over_its_ceiling_cap():
     """Last Resort Primary Only (2026-11-04): the ceiling 0.33 capped the
     prior at 0.5, the mode's calibration (x1.38 on expert maps) lifted it to
@@ -1159,7 +1185,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_a_solo_family_record_in_a_kind_of_game_counts_for_every_member", "test_hard_first_by_default", "test_black_borders_beginner_maps_first", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_harder_versions_of_a_mode_inherit_its_ceiling", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_a_solo_family_record_in_a_kind_of_game_counts_for_every_member", "test_hard_first_by_default", "test_black_borders_beginner_maps_first", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",
