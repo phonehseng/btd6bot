@@ -1082,21 +1082,29 @@ def _first_game_record(account: AccountState) -> tuple[dict[str, tuple[int, int]
     return table, played
 
 
-# The map category whose CHIMPS games with the map's own build the owner puts
-# first (2026-11-05 15:30, "CHIMPS first"): ahead of safe mode's confident
-# games (runner.beginner_before_safe_mode) and not scaled by first_game_factor.
+# The map category whose games with the map's own build the owner puts first
+# (2026-11-05 15:30, "CHIMPS first"; every open medal there since 2026-11-06):
+# ahead of safe mode's confident games (runner.beginner_before_safe_mode),
+# and not scaled by first_game_factor or the Fast Track doubt.
 CHIMPS_FIRST_CATEGORY = "beginner"
 
 
-def owner_first_chimps(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> bool:
-    """True for a CHIMPS game on a CHIMPS_FIRST_CATEGORY map with a build made
-    for that map: the owner chose to play these first, knowing their first
-    games are a gamble (2 of 5 won on 2026-11-05: Park Path and Candy Falls
-    won, Frozen Over, Carved and Winter Park lost). A loss benches the map for
-    a while and costs no Monkey Money; a win is a black border, the owner's
-    first goal. Their own gate (base_success, checked offline) still has to
-    clear the CHIMPS bar."""
-    return (mode == "chimps" and account.map_category(map_name) == CHIMPS_FIRST_CATEGORY
+def owner_first_build(account: AccountState, s: StrategySpec, map_name: str) -> bool:
+    """True for a game on a CHIMPS_FIRST_CATEGORY map with a build made for
+    that map (strategies/maps): its gate (base_success) comes from offline
+    replays on the account's own opening - Fast Track's start included - with
+    the map's refused spots and drifted spots, so the planner's general doubts
+    about untested one-life builds (first_game_factor) and Fast Track
+    openings (FAST_TRACK_HALF_CASH_FACTOR, fast_track_opening_factor), which
+    were measured on general builds, are not applied to it again.
+
+    The owner chose to play these first, knowing a first game is a gamble
+    (CHIMPS 2026-11-05: 2 of 5 won). A loss benches the map for a while and
+    costs no Monkey Money; a win moves a Beginner black border, the owner's
+    first goal. Their own gate still has to clear the mode's bar: on
+    2026-11-06 the Beginner Half Cash map builds passed every replay at 0.85
+    and were halved to 0.45 by the Fast Track doubt alone."""
+    return (account.map_category(map_name) == CHIMPS_FIRST_CATEGORY
             and is_own_map_build(s, map_name))
 
 
@@ -1148,14 +1156,15 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     p *= strategy_readiness(s, account, mode)
     if double_cash_applies(boosts, mode):
         p = 1.0 - (1.0 - p) * DOUBLE_CASH_LOSS_FACTOR
-    if boosts.get("fast_track"):
+    owner_first = owner_first_build(account, s, map_name)
+    if boosts.get("fast_track") and not owner_first:
         # the hand-set Half Cash doubt or the mode's own opening record,
         # whichever doubts the Fast Track start more
         hand = FAST_TRACK_HALF_CASH_FACTOR if MODE_RULES.get(mode, {}).get("half_cash") else 1.0
         p *= min(hand, fast_track_opening_factor(account, mode))
     # an untested build in a one-life mode, by how first games went there -
-    # except the Beginner CHIMPS map builds the owner put first
-    if not owner_first_chimps(account, s, map_name, mode):
+    # except the Beginner map builds the owner put first
+    if not owner_first:
         p *= first_game_factor(account, s, mode)
     p *= map_fit_factor(s, map_name, mode)
     # the bot could not build its defence on this map before (any mode, any
