@@ -1,0 +1,176 @@
+# Skates, Half Cash: four buccaneers in the big ice crack - a Hot Shot Aircraft
+# Carrier, two Carriers with Crow's Nest and a Hot Shot + Crow's Nest boat -
+# two Night Vision snipers on the left edge, an Armor Piercing sub, two tacks
+# by the first loop (one becomes a Ring of Fire), a MOAB Assassin and Brickell
+# at the north end of the crack.
+#
+# Why: one route (1,247 world units, 1,172 hittable) with three loops; the
+# middle loop runs round the central ice crack (water), where a buccaneer
+# reaches a third of the route as a Destroyer and the Aircraft Carriers' planes
+# all of it. The houses on the right and the snowy trees block sight, but
+# snipers on the left edge see 94% of the route. The houses ($500 removable
+# over a second crack) are not needed.
+#
+# Half Cash halves every income and charges Hard prices; the main account's
+# Double Cash pays twice and cancels the halving, and Fast Track starts the
+# game at round 22 with about $4,465: the opening (to b2 0-0-2) is bought
+# before the first round. 100 lives: a leak costs lives, not the game. Camo and
+# lead are split across the boats: b1 takes Hot Shot (0-2-0, lead from round
+# 28), b2 and b3 take Crow's Nest (0-0-2, camo); the snipers' Full Metal Jacket
+# + Night Vision + Shrapnel (2-2-0) pop camo leads.
+#
+# What the executor does to a Half Cash plan, and how this one is shaped for it
+# (Half Cash is not a one-life mode, so offline nothing keeps surplus spending
+# off the cash a waiting plan step needs - Executor.plan_claim):
+#   * `answers` for every threat but camo and lead point at the rest of the
+#     plan, in order: the executor saves for its own next step instead of
+#     buying a generic answer (a Candy Falls draft without them had t1 made a
+#     4-0-0 at round 37 and a village placed at 47 from strategy.ANSWERS);
+#   * no `xp_target`: with `xp_target: sub` the surplus subs never let the
+#     $8,640 Aircraft Carrier tier be afforded (draft: b1 at 3-2-0 to round 80
+#     with $19,664 in hand);
+#   * the fill steps keep the copies surplus places (base buccaneers - the main
+#     kind, so copies go on the water) and t2 at 0-0-0; b3 is placed early so
+#     no copy takes its spot (a draft lost b3's spot to one);
+#   * the sniper opens the plan: camo by round 24 on the base economy too
+#     (tools/simulate_threats without boosts: start round 3, $325);
+#   * a second camo-lead popper for round 59 (50 camo leads): the damage model
+#     rates the round 1.4-3.8 for one set of towers depending only on the order
+#     of the towers list (map-wide towers share one `order` and dps_model._play
+#     takes them in list order); with it the round holds at 2.0+ in every order
+#     tried;
+#   * strategy.coverage() (runner.py drops a mode that fails it) wants towers
+#     from its ANSWERS table for the BFB, ZOMG and the round-63 rush, which
+#     list no buccaneer: hence the Ring of Fire tack (4-0-0, rush and BFB) and
+#     a MOAB Assassin bomb (0-4-0, ZOMG and BFB); the model needs neither
+#     before round 80. The snipers stay at 2-2-0: the model rates a 3-2-0
+#     sniper below a 2-2-0 one on round 59 (s1 alone: 1.26 against 2.16), and a
+#     draft whose Maim MOAB sniper sat at 3-2-0 over round 59 rated it
+#     1.26-1.92.
+#
+# The sub's Airburst Darts (2-0-2) come before the Destroyers, for rounds
+# 34-37. b4 (0-2-2) is the second camo-lead popper: round 59 held at 2.86 as
+# placed, but 1.40 in the worst towers order without it.
+#
+# Sources:
+#   * bloonswiki Strategy:Half_Cash and Half_Cash: rounds 21-30 want cheap
+#     towers that grow into strong ones (Grape Shot on water, later a
+#     Destroyer); Full Metal Jacket for the lead rounds 28/30; Destroyer 3-2-0
+#     where the track runs both sides of it; Airburst subs on water maps;
+#     Aircraft Carrier for rounds 51-60; Brickell the hero for water maps;
+#     hardest rounds 40, 63, 75 and 78 (dense camo ceramics); a tower's own
+#     income stays halved even with Double Cash, so no farms
+#     (https://www.bloonswiki.com/Strategy:Half_Cash,
+#     https://www.bloonswiki.com/Half_Cash)
+#   * bloonswiki Skates: global-range towers stand out on this spread-out map;
+#     limited-range towers left of the middle loop; the central ice crack for
+#     water towers; Carrier Flagship (https://www.bloonswiki.com/Skates)
+#   No Half Cash guide for this map turned up (web search: no Reddit, Steam or
+#   video guide; only general Half Cash pages).
+#
+# Checked offline 2026-11-06 (docs/map_strategies/beginner.md method) on the
+# account's Half Cash economy (optimize_builds.economy("half_cash", boosts):
+# Fast Track round 22 with $4,465, Double Cash x half cash = base income, Hard
+# prices), rounds 22-80, current damage model (strict buff reach, circling
+# carrier planes); the hero's damage is not counted:
+#   * every `at` legal for its tower in plan + fill order on the map geometry
+#     and on the live map model (data/maps/skates.npz);
+#   * plan replay (each step as soon as the cash allows): all 29 steps bought
+#     (last at round 71), worst margin 2.65 (round 37);
+#   * sight-strict (subs their own range, aces their circle): 2.18 (round 37);
+#   * drift replay: no village or alchemist to drift from, so the same as the
+#     plan/strict replays, 2.18 (round 37);
+#   * executor-faithful (tools/simulate_threats' loop with the match loop's
+#     surplus spending, the real account, on the map's learned refused spots,
+#     map_model(learned=True)), strict, with its extra towers / plan towers
+#     only: 2.51 / 2.51 (round 34); all 29 plan steps bought (last at round
+#     72), no tower moved off its `at`; surplus adds 15 base buccaneers from
+#     round 65. The same snapshots with the towers list shuffled (24 orders per
+#     round): worst 2.13 (round 59);
+#   * every plan step after the opening is bought 9-26 rounds before the first
+#     round the build fails without it (six late steps are never needed before
+#     round 80); the opening (the first eight steps) is bought before round 22
+#     and needed at once, so there the margins alone decide;
+#   * strategy.load_all(): bot_ready, validate() empty; coverage() and usable()
+#     for half_cash on the real account: nothing missing; simulate_threats on
+#     the base economy (round 3, $325, half income), open field and the learned
+#     map: no gaps.
+id: skates_half_cash
+map: Skates
+hero: admiral_brickell
+modes: [half_cash]
+planner:
+  towers: {buccaneer: [4, 2, 2], sniper: [2, 2, 0], bomb: [0, 4, 0], tack: [4, 0, 0], sub: [2, 0, 4]}
+  # every replay 2.18+ on rounds 22-80, every step bought in time (2026-11-06)
+  base_success: {half_cash: 0.85}
+  maps: [Skates]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.051, 0.428]}   # left edge: sees 94% of the route
+  - {do: upgrade, id: s1, to: 0-1-0}   # Night Vision: camo from round 24 (first, so the base economy has it too)
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.163, 0.266]}   # first loop, the best legal tack spot
+  - {do: place, id: t2, kind: tack, role: dps, at: [0.099, 0.198]}   # top left, by the first loop
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.366, 0.555]}   # central ice crack, west
+  - {do: upgrade, id: b1, to: 0-2-0}   # Hot Shot: lead from round 28
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.494, 0.334]}   # central crack, north
+  - {do: upgrade, id: b2, to: 0-0-2}   # Crow's Nest: camo
+  - &rest {do: upgrade, id: b1, to: 2-2-0}
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.409, 0.521]}   # central crack, middle: placed early so no surplus copy takes the spot
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.516, 0.436]}   # central crack, east
+  - {do: upgrade, id: sb1, to: 2-0-2}   # Advanced Intel + Airburst Darts: rounds 33-37
+  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
+  - {do: upgrade, id: b2, to: 3-0-2}   # Destroyer with camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.441, 0.3]}   # Brickell, north end of the crack
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: upgrade, id: s1, to: 2-2-0}   # Full Metal Jacket + Shrapnel: camo leads
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.035, 0.33]}   # left edge, above s1
+  - {do: upgrade, id: s2, to: 2-2-0}   # second camo-lead popper (round 59: 50 camo leads)
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.398, 0.606]}   # central crack, south-west
+  - {do: upgrade, id: b4, to: 0-2-2}   # Hot Shot + Crow's Nest: a boat that pops camo leads
+  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier: planes over the whole route
+  - {do: upgrade, id: b2, to: 4-0-2}   # Aircraft Carrier with camo
+  - {do: upgrade, id: b3, to: 3-0-2}   # Destroyer with camo
+  - {do: upgrade, id: b3, to: 4-0-2}   # third Carrier: round 78's camo ceramics
+  - {do: upgrade, id: t1, to: 4-0-0}   # Ring of Fire: the rush answer coverage() asks for
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.569, 0.572]}   # right of the central crack (where it stands barely matters to the model)
+  - {do: upgrade, id: bm1, to: 0-4-0}   # MOAB Assassin: the ZOMG answer coverage() asks for
+fill:
+  - {do: upgrade, kind: tack, to: 0-0-0}   # caps t2 and any tack copy at a base tack
+  - {do: upgrade, kind: buccaneer, to: 0-0-0}   # surplus buccaneer copies (the main kind) stay base
+  - {do: upgrade, kind: sub, to: 2-0-4}
+  - {do: upgrade, kind: sniper, to: 0-0-0}
+  - {do: upgrade, kind: bomb, to: 0-0-0}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 0-2-0}]
+  # every other threat: the rest of the plan, in order (the executor saves for its own next step)
+  purple: &plan_rest
+    - *rest
+    - {do: upgrade, id: b2, to: 2-0-2}
+    - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.409, 0.521]}
+    - {do: place, id: sb1, kind: sub, role: dps, at: [0.516, 0.436]}
+    - {do: upgrade, id: sb1, to: 2-0-2}
+    - {do: upgrade, id: b1, to: 3-2-0}
+    - {do: upgrade, id: b2, to: 3-0-2}
+    - {do: upgrade, id: sb1, to: 2-0-4}
+    - {do: upgrade, id: s1, to: 2-2-0}
+    - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.035, 0.33]}
+    - {do: upgrade, id: s2, to: 2-2-0}
+    - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.398, 0.606]}
+    - {do: upgrade, id: b4, to: 0-2-2}
+    - {do: upgrade, id: b1, to: 4-2-0}
+    - {do: upgrade, id: b2, to: 4-0-2}
+    - {do: upgrade, id: b3, to: 3-0-2}
+    - {do: upgrade, id: b3, to: 4-0-2}
+    - {do: upgrade, id: t1, to: 4-0-0}
+    - {do: place, id: bm1, kind: bomb, role: dps, at: [0.569, 0.572]}
+    - {do: upgrade, id: bm1, to: 0-4-0}
+  ceramic: *plan_rest
+  moab: *plan_rest
+  camo_ceramic: *plan_rest
+  camo_lead: *plan_rest
+  bfb: *plan_rest
+  rush: *plan_rest
+  zomg: *plan_rest
+  ddt: *plan_rest
+  bad: *plan_rest
