@@ -25,6 +25,12 @@ EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
 CRISIS_HOLD_S = 20.0       # longest wait per round
 CRISIS_HOLD_IDLE_S = 4.0   # ... ended early once this long passes without a purchase
 CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
+# The game lights the Play button again as soon as a round's last bloon has
+# been sent, while its bloons are still on the track; pressing it sends the
+# next round on top of them. With one life, Play waits until the bloon watch
+# sees the track empty (Match._hold_for_clear).
+CLEAR_LOOKS = 4            # looks in a row with no bloon on the route = clear
+CLEAR_HOLD_MAX_S = 25.0    # longest wait per round (a watch that never clears)
 # Rounds played without ever seeing the Play button idle before the bot
 # concludes the game's own Auto Start is on (it then cannot hold a round).
 AUTO_START_ROUNDS = 8
@@ -265,6 +271,7 @@ class Match:
         self._saving_until = 0.0    # reinforce saves for a dearer purchase until then
         self._crisis_round = None
         self._crisis_hold = {}      # round -> time Play started waiting, or False (no hold)
+        self._clear_hold = {}       # round -> [time Play started waiting, empty looks], or False
         self._idle_seen = False     # the Play button was seen idle between rounds
         # how far along the route the bloons really get (bloonwatch.py; observe only)
         self.watch = self._make_watch()
@@ -628,7 +635,8 @@ class Match:
                     self._idle_seen = self._idle_seen or st == "play_idle"
                 if st == "play_run":
                     self.g.go_fast(allow_start=False)
-                elif st == "play_idle" and self.ex.defended() and not self._hold_round(last_round, cash):
+                elif st == "play_idle" and self.ex.defended() and not self._hold_round(last_round, cash) \
+                        and not self._hold_for_clear(last_round, f, now):
                     self.g.go_fast(allow_start=True)
                     self._in_round = True
             if self.g.towers and now - t_ability > 1.0:
@@ -692,6 +700,63 @@ class Match:
             self._crisis_hold[rnd] = False
             return False
         return True
+
+    def _hold_for_clear(self, rnd, f, now):
+        """Keep Play waiting, in a one-life game, while bloons of the round
+        just sent are still on the track. True while waiting.
+
+        The game lights the Play button again the moment a round's last
+        bloon has been sent, not when the round is cleared, and the bot read
+        that as "between rounds". Luminous Cove Impoppable (2026-11-06):
+        round 98's MOABs were held at half the route when Play sent round
+        99's 60 MOABs and 9 DDTs on top of them; the one life went 5 s later
+        with $45,718 in the bank. Every round of that game had been sent
+        early like this.
+
+        The bloon watch (bloonwatch.py) decides: CLEAR_LOOKS looks in a row
+        with no bloon on the route end the wait. A watch that is off or not
+        ready never holds, and CLEAR_HOLD_MAX_S bounds the wait, so a
+        misreading watch costs seconds, never the game's progress. Other
+        modes keep the early send: with lives to spare it saves minutes."""
+        rules = self.ex.rules
+        if rnd is None or not rules.get("one_life") or rules.get("continuous"):
+            return False
+        watch = getattr(self, "watch", None)
+        if watch is None or not watch.ready():
+            return False
+        holds = self._clear_hold
+        state = holds.get(rnd)
+        if state is False:
+            return False
+        if state is None:
+            state = holds[rnd] = [now, 0]
+        if now - state[0] > CLEAR_HOLD_MAX_S:
+            log.info("round %d: bloons still seen after %.0f s - Play goes on", rnd, now - state[0])
+            holds[rnd] = False
+            return False
+        try:
+            depth = watch.look(f, now, list(self.g.towers.values()))
+        except Exception:
+            log.exception("bloon watch failed while holding Play - watch off")
+            self.watch = None
+            holds[rnd] = False
+            return False
+        if depth is None:          # a panel covers the field: this look does not count
+            return True
+        if depth > 0.0:
+            if getattr(self, "_clear_noted", None) != rnd:      # said once a round
+                self._clear_noted = rnd
+                log.info("round %d: Play is lit but bloons are %.0f%% along the route - "
+                         "waiting for the track to clear", rnd, 100 * depth)
+            state[1] = 0
+            return True
+        state[1] += 1
+        if state[1] < CLEAR_LOOKS:
+            return True
+        if getattr(self, "_clear_noted", None) == rnd:
+            log.info("round %d: track clear after %.1f s - Play", rnd, now - state[0])
+        holds[rnd] = False
+        return False
 
     def _frozen(self, f, now):
         """True if the play field has not changed for ~2 s (game paused by a popup)."""
