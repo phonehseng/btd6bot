@@ -94,6 +94,8 @@ def main():
     if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
         logging.getLogger("bot").warning("another bot instance is running - exiting")
         sys.exit(5)
+    from btd6bot import hudstate
+    hudstate.enable()          # this is the bot: its state goes to the big HUD (logs/hud.json)
     from btd6bot.inputs import Aborted
     from btd6bot.runner import Bot
     try:

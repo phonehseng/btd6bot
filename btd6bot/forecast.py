@@ -35,6 +35,11 @@ LETHAL_SHARE = 0.5            # a round expected to cost this share of the lives
 REVERSE_SUFFIX = " reverse"   # map models of Reverse games are keyed "<map> reverse"
 
 
+def lowest(margins):
+    """(lowest margin, its round) of a {round: margin} mapping, or None."""
+    return min((m, r) for r, m in margins.items()) if margins else None
+
+
 class RoundForecast:
     def __init__(self, map_key, mode, sight_grid=None, sight_heights=None):
         """sight_grid: the MapModel's line-of-sight blockers (MapModel.sight),
@@ -78,8 +83,8 @@ class RoundForecast:
             placed.append(D.Placed(p.tid, p.kind, tuple(p.tiers), x, z))
         return D.stations_for(placed, self.track, self.sight) if placed else None
 
-    def worst(self, towers, rounds, iterations=9):
-        """(lowest margin, its round) over `rounds` for `towers`, or None.
+    def margins(self, towers, rounds, iterations=9):
+        """{round: margin} over `rounds` for `towers`, or None.
         The defence is built once and rated round by round (~70 ms each;
         fewer `iterations` of the margin search are quicker and coarser)."""
         if not rounds:
@@ -91,11 +96,15 @@ class RoundForecast:
             st = self.stations(towers)
             if not st:
                 return None
-            return min((D.round_margin(st, self.mode, r, self.track, iterations=iterations), r) for r in rounds)
+            return {r: D.round_margin(st, self.mode, r, self.track, iterations=iterations) for r in rounds}
         except Exception:   # a forecast must never cost a game
             log.exception("round forecast failed - off for the rest of this game")
             self.off = True
             return None
+
+    def worst(self, towers, rounds, iterations=9):
+        """(lowest margin, its round) over `rounds` for `towers`, or None."""
+        return lowest(self.margins(towers, rounds, iterations))
 
     def leaks(self, towers, rounds, strength, per_round=False):
         """Lives the model's defence would lose over `rounds` with every

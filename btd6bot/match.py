@@ -2,6 +2,7 @@
 import logging
 import time
 
+from . import hudstate
 from . import journal
 from . import status
 from . import threats as TH
@@ -10,7 +11,7 @@ from . import towers as T
 from .abilities import AbilityPlanner
 from .bloonwatch import BloonWatch
 from . import reinforce as R
-from .forecast import CRISIS_MARGIN, RoundForecast
+from .forecast import CRISIS_MARGIN, RoundForecast, lowest
 from .towerxp import TowerXpCounter
 from .carried import CarriedTowers
 
@@ -281,6 +282,7 @@ class Match:
         self._round_lost = 0       # lives lost in the round being played
         self._leak_rounds = set()  # rounds with a leak in the journal
         self._threat_holds = set()  # rounds whose threat hold is in the journal
+        self._hud_sizes = {}        # kind -> ghost sizes for the big HUD (hudstate.tower_sizes)
         # selling is refused by Game itself in modes that forbid it (CHIMPS)
         game.no_sell = bool(getattr(executor, "no_sell", False))
         try:
@@ -290,6 +292,10 @@ class Match:
                                account, executor)
         except Exception:          # an observer must never cost a game
             log.exception("could not start the game journal - playing without it")
+        # the big HUD's view of the match (hudstate.py; observe only)
+        hudstate.start_game(map=getattr(model, "name", None), mode=getattr(executor, "mode", None),
+                            strategy=(getattr(executor, "strat", None) or {}).get("id"),
+                            hero=getattr(game, "hero", None), end_round=rules.get("end_round"))
 
     def _make_watch(self):
         try:
@@ -593,6 +599,7 @@ class Match:
                     got = self.g.collect_bananas()
                     if got:
                         self.stats["banana_moves"] = self.stats.get("banana_moves", 0) + got
+                self._hud_update(cash, last_round)
                 st = self.g.button_state()
                 if st in ("play_idle", "play_run", "play_fast"):
                     self._in_round = st != "play_idle"
@@ -772,13 +779,50 @@ class Match:
         else:
             log.info("round %d: the damage model rates the defence %.2f", rnd, margin)
         end = self.ex.rules.get("end_round", 80)
-        ahead = self.forecast.worst(towers, R.lookahead_rounds(rnd, end))
+        ahead = self._rate_ahead(towers, R.lookahead_rounds(rnd, end))
         self._weak_round = None
         if ahead is not None and ahead[0] < R.WEAK_MARGIN:
             self._weak_round = rnd
             log.warning("rounds %d-%d: the damage model rates round %d at %.2f - reinforcing where it "
                         "helps most", rnd, min(rnd + R.LOOKAHEAD - 1, end), ahead[1], ahead[0])
         return margin
+
+    def _rate_ahead(self, towers, rounds):
+        """(lowest margin, its round) over the look-ahead `rounds`, as
+        forecast.worst. The model rates every one of them on the way to the
+        lowest, so each round's margin goes to the big HUD at no extra cost
+        (hudstate.py). A forecast without per-round margins (test fakes) is
+        asked for the worst alone."""
+        rate_each = getattr(self.forecast, "margins", None)
+        if rate_each is None:
+            return self.forecast.worst(towers, rounds)
+        rated = rate_each(towers, rounds)
+        if rated:
+            hudstate.update(force=True, margins=[[r, round(m, 3)] for r, m in sorted(rated.items())],
+                            weak=R.WEAK_MARGIN, crisis=CRISIS_MARGIN)
+        return lowest(rated)
+
+    def _hud_update(self, cash, rnd):
+        """The match as the big HUD shows it (hudstate.py): built only when a
+        write is due, at most once a second. Observe only."""
+        if not hudstate.due():
+            return
+        try:
+            towers = list(self.g.towers.values())
+            plan = hudstate.plan_ahead(getattr(self.ex, "plan", None) or [], getattr(self.ex, "idx", 0))
+            kinds = {p.kind for p in towers} | {s["kind"] for s in plan if s.get("kind")}
+            new = kinds - set(self._hud_sizes)
+            if new:      # looked up once per kind; None for a kind the game data lacks
+                found = hudstate.tower_sizes(new)
+                self._hud_sizes.update({k: found.get(k) for k in new})
+            goal = getattr(self.ex, "save_goal", None)
+            hudstate.update(round=rnd, cash=cash, lives=self._lives.confirmed,
+                            waiting=getattr(self.ex, "waiting", None),
+                            save_goal=list(goal) if goal else None, plan=plan,
+                            towers=[[p.tid, p.kind, p.crosspath, round(p.x, 4), round(p.y, 4)] for p in towers],
+                            sizes=self._hud_sizes)
+        except Exception:
+            log.exception("HUD state update failed - carrying on")
 
     # -- the game journal (journal.py): observe only ---------------------------------
     def _round_set(self):
@@ -1166,6 +1210,7 @@ class Match:
                         self.stats["rounds"])
             self.stats["auto_start"] = True
         cause = self._journal_end(outcome, rnd)
+        hudstate.end_game()
         if cause:
             log.info("game over: %s (cause: %s - %s)", self.stats, cause["category"], cause["evidence"])
         else:
