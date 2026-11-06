@@ -1035,6 +1035,10 @@ class Station:
     bank_start: float = 0.0      # stock carried over from the last round (seconds of production)
     strong: bool = False
     strength: float = 1.0
+    # paths where this tower's shared camo sight (Advanced Intel, see
+    # Source.camo_shared) holds: those some camo-detecting tower reaches.
+    # None = no limit (the tower shares no camo).
+    camo_paths: frozenset = None
 
     def covers(self, path):
         return path < len(self.zones) and self.zones[path] is not None and self.zones[path].length > 0
@@ -1090,9 +1094,12 @@ class _Rates:
         zone = self.station.zones[path]
         lay = layer(bloon_id, moab_hp)
         hp_rate = overflow = 0.0
+        camo_paths = self.station.camo_paths
         for src in self.station.sources:
             if not src.can_hit(lay):
                 continue
+            if lay.camo and src.camo_shared and camo_paths is not None and path not in camo_paths:
+                continue     # Advanced Intel sees camo only where a detector reaches
             hits = _hit_rate(src, lay, rho, zone)
             d = src.damage_vs(lay)
             rate = hits * min(d, lay.hp)
@@ -1506,11 +1513,18 @@ def station_for(t, placed, track, sight=None, strict=False):
     sources = _buffed_sources(p, buffs_here)
     if not sources:
         return None
-    if any(s.camo_shared and not s.camo for s in sources) and any(
-            o.tid != t.tid and detects_camo(o.kind, o.tiers) for o in placed):
+    camo_paths = None
+    detectors = [o for o in placed if o.tid != t.tid and detects_camo(o.kind, o.tiers)]
+    if any(s.camo_shared and not s.camo for s in sources) and detectors:
         # Advanced Intel: the sub shoots the camo bloons another tower's
-        # detection covers. Its reach is already the whole track here (the
-        # shared range), so the detecting tower's range is not cut out.
+        # detection covers - but only there. The model used to give it camo
+        # on the whole map: Muddy Puddles Impoppable (2026-11-06 08:46) had
+        # one camo dart in a corner reaching two of the four lanes, two
+        # Advanced Intel subs, round 33 rated 16.0, and the camo yellows of
+        # the other lanes ended the game. Limited per path (a detector's
+        # reach on a path counts for all of that path - coarse, but it
+        # catches separate lanes).
+        camo_paths = frozenset().union(*(_reach_paths(o, track, sight) for o in detectors))
         sources = [Source(**{**s.__dict__, "camo": True}) if s.camo_shared else s for s in sources]
     # all of a tower's sources share one station: its time is spent once
     reach_radius = p.range * range_mult
@@ -1539,7 +1553,24 @@ def station_for(t, placed, track, sight=None, strict=False):
     # the plans: they shoot MOAB-class bloons first
     strong = any(s.reach == 0.0 for s in sources)
     return Station(tid=t.tid, kind=t.kind, tiers=tuple(t.tiers), zones=zones, sources=sources,
-                   order=order, banked=banked, bank_seconds=bank, bank_start=start, strong=strong)
+                   order=order, banked=banked, bank_seconds=bank, bank_start=start, strong=strong,
+                   camo_paths=camo_paths)
+
+
+def _reach_paths(t, track, sight=None):
+    """The path indexes a tower's own attacks reach (its range, flight
+    pattern or the whole map), without range buffs from other towers -
+    the cautious reading, used for where it lends camo sight."""
+    from .placement import needs_sight
+    p = profile(t.kind, t.tiers)
+    if p is None:
+        return frozenset()
+    radius = max((p.pattern_radius or 0.0) + p.range, p.own_radius)
+    is_global = p.is_global or any(s.placement == "global" for s in p.sources)
+    sees = needs_sight(t.kind) and (not is_global or t.kind in MAP_WIDE_NEEDS_SIGHT)
+    zones = track.zones(t.x, t.z, None if is_global else radius,
+                        sight=sight if (sight is not None and sees) else None)
+    return frozenset(i for i, z in enumerate(zones) if z is not None and z.length > 0)
 
 
 def sight_test(grid, track, samples=12, heights=None):
