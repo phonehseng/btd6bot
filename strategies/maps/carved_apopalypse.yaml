@@ -1,0 +1,85 @@
+# Carved, Apopalypse: a Destroyer in the right eye with an alchemist and a
+# Druid of the Jungle by it, Airburst subs, two Bomber Aces above the mouth,
+# Maim MOAB snipers.
+#
+# Why: Apopalypse is Medium with random rounds sent without a pause
+# (btd6bot/apopalypse.py): camo from round 19, lead from 20, ceramics from 33,
+# fortified leads and ceramics in the late 30s and MOABs from 41 - earlier than
+# Medium's - and a poor game pays $39,300 over rounds 1-60 against Medium's
+# $54,500 (before Double Cash). The Medium build's water template, rebuilt for
+# that: the first Destroyer (3-0-2, $5,000) is bought with the Fast Track cash
+# at round 15 - a single $3,350 tier is not bought later, the executor's
+# surplus spending takes the cash first (docs/map_strategies/beginner.md, gap
+# 1) - an alchemist's Acidic Mixture Dip beside it gives it lead and more
+# ceramic damage (instead of a second boat's Hot Shot), a Druid of the Jungle
+# (1-3-0, $2,400 in cheap tiers) holds the ceramic rounds 33-35, then Airburst
+# subs and Bomber Aces; the second Destroyer comes last. The Medium build as it
+# was rated 1.33 at round 39 (fortified leads).
+#
+# Sources:
+#   * bloonswiki Strategy:Apopalypse_(BTD6): a 3-2-0 Destroyer with camo
+#     support wipes out Apopalypse on most maps; Airburst, Triple Guns and
+#     Armor Piercing subs; Acidic Mixture Dip for lead; 1-3-0 Druid of the
+#     Jungle covers every bloon but camo
+#     (https://www.bloonswiki.com/Strategy:Apopalypse_(BTD6))
+#   * bloonswiki Apopalypse_(BTD6) and the game's own FreeplayRoundManager: the
+#     round pool, budget and scores in btd6bot/apopalypse.py
+#     (https://www.bloonswiki.com/Apopalypse_(BTD6))
+#   * bloonswiki Carved: the best spots are the right water patch and the
+#     ground below it (https://www.bloonswiki.com/Carved)
+#
+# Checked offline 2026-11-06 with tools/apopalypse_check.py (the method is in
+# its docstring; docs/map_strategies/beginner.md has the Medium checks it
+# builds on):
+#   * executor-faithful replay (tools/simulate_threats' loop with the match
+#     loop's surplus spending) on the live map model's refused spots, Fast
+#     Track round 15 with $6,057 and Double Cash, each round paid what a poor
+#     game pays: the whole plan (22 steps) bought by round 60, every plan tower
+#     on its `at`;
+#   * every round 15-60 rated, strict model, against the worst windows the game
+#     can send there (two rounds end to end, the largest budget, the hardest
+#     groups first) and 24 random windows: worst margin 2.80 (round 53); with
+#     every tower 5 units further from its supporters (drift) 2.62 (round 56);
+#   * every `at` legal on the map geometry in plan order and on the live map
+#     model; strategy.coverage and tools/simulate_threats (standard rounds):
+#     nothing missing, no gaps.
+id: carved_apopalypse
+map: Carved
+hero: admiral_brickell
+modes: [apopalypse]
+xp_target: sub
+planner:
+  towers: {buccaneer: [3, 0, 2], sniper: [4, 2, 0], alchemist: [2, 0, 0], druid: [1, 3, 0], sub: [2, 0, 4], ace: [2, 3, 0]}
+  base_success: {apopalypse: 0.85}
+  maps: [Carved]
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.060, 0.900]}   # bottom-left corner, clear of both trees
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.526, 0.385]}   # right eye: 31% of the route
+  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer with Crow's Nest (camo), bought with the Fast Track cash
+  - {do: upgrade, id: s1, to: 1-2-0}   # lead (Full Metal Jacket) + camo (Night Vision) + shrapnel
+  - {do: place, id: al1, kind: alchemist, role: support, at: [0.558, 0.445]}   # its dip reaches the towers within 45 units, 5 to spare (drift)
+  - {do: upgrade, id: al1, to: 2-0-0}   # Acidic Mixture Dip: the towers within 45 units pop lead and hit ceramics harder
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.430, 0.658]}   # the damage model's best Druid spot for the ceramic rounds 33-35
+  - {do: upgrade, id: d1, to: 1-3-0}   # Druid of the Jungle: vines (no camo)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.334]}   # Brickell in the left eye
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.580, 0.368]}   # right eye
+  - {do: upgrade, id: sb1, to: 2-0-2}   # Airburst Darts + Advanced Intel (camo from the towers that see it)
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.516, 0.487]}   # above the mouth, right: the mouth and its loop
+  - {do: upgrade, id: a1, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: place, id: a2, kind: ace, role: dps, at: [0.639, 0.394]}   # near the alchemist: its bombs get the dip
+  - {do: upgrade, id: a2, to: 2-3-0}   # Bomber Ace: camo + lead bombs
+  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.120, 0.900]}   # beside s1
+  - {do: upgrade, id: s2, to: 2-2-0}
+  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+  - {do: upgrade, id: s2, to: 4-2-0}   # Maim MOAB: the MOAB and BFB answer
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.323, 0.385]}   # left eye: 27% of the route
+  - {do: upgrade, id: b2, to: 3-0-2}   # Destroyer with Crow's Nest (camo)
+fill:
+  - {do: upgrade, kind: sub, to: 2-0-4}   # surplus subs (xp_target) stop at Armor Piercing Darts
+answers:
+  camo: [{do: upgrade, id: s1, to: 1-2-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
+  moab: [{do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
