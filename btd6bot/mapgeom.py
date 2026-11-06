@@ -327,6 +327,56 @@ def idle_phase_paths(geom, rnd, lead=PHASE_LEAD):
     return frozenset(idle)
 
 
+def phase_end(geom, rnd):
+    """The last round of the path phase that round `rnd` belongs to, or None
+    when it does not apply: no long path phases (see idle_phase_paths), rnd
+    unknown, or the final phase of a splitter that does not loop (it lasts
+    for good).
+
+    Erosion: Path2 carries rounds 19-36, so phase_end(geom, 22) is 36. Its
+    ice melts at the same phase ends, and every phase's own track is in
+    reach only from ice that melts when the phase is over: ground that has
+    to last the whole game reaches none of it (Erosion Magic Monkeys Only,
+    case 20261106_130851, placed every tower in the far corner and lost on
+    round 22). The executor therefore asks for ground that lasts until the
+    phase ends (Executor.ground_horizon)."""
+    if rnd is None:
+        return None
+    ends = []
+    for s in (geom.get("mechanics") or {}).get("splitters") or []:
+        if not str(s.get("type", "")).startswith("AlternateRound"):
+            continue
+        n, paths = int(s.get("roundsPerPath") or 1), list(s.get("paths") or [])
+        if n < 2 or len(paths) < 2:
+            continue
+        offset = int(s.get("currentRoundOffset") or 0)
+        i = max(0, (rnd - offset) // n)           # same count as idle_phase_paths
+        if s.get("doesNotLoop") and i >= len(paths) - 1:
+            continue
+        ends.append(offset + (i + 1) * n - 1)
+    return min(ends) if ends else None
+
+
+def lost_ground(model, geom, old_round, new_round, aspect=1920 / 1200):
+    """Bool grid of the cells on areas the map destroys by itself between
+    two rounds: changes whose first affected round lies in (old_round,
+    new_round]. The game removes every tower that stood there (DestroyArea
+    re-checks each one, docs/map_mechanics.md), so the bot has to forget
+    them. None when nothing is destroyed in between."""
+    if old_round is None or new_round is None or new_round <= old_round:
+        return None
+    by_id = {a["id"]: a for a in geom.get("areas", []) if "id" in a}
+    gone = [aid for aid, first in dynamics(geom).vanish.items()
+            if first is not None and old_round < first <= new_round and aid in by_id]
+    if not gone:
+        return None
+    proj = Projection(model.playfield, aspect)
+    mask = np.zeros(GRID[::-1], bool)
+    for aid in gone:
+        mask |= _poly_mask(by_id[aid]["polygons"], proj)
+    return mask
+
+
 def paint_paths(geom, proj, lanes=None, skip=()):
     """heat, t_sum, t_cnt grids from the map's (visible) bloon paths.
 

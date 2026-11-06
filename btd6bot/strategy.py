@@ -996,6 +996,10 @@ class Executor:
             if k:
                 self.panic_steps = [{"do": "place", "kind": k, "role": "exit" if k in EXIT_KINDS else "dps"}]
         self.idx = 0
+        # last round the ground under a new tower must last, besides the
+        # game's end; set by the match on maps with path phases (Erosion:
+        # the end of the current phase, mapgeom.phase_end). None: whole game.
+        self.ground_horizon = None
         self.counter = {}
         self.capped = set()          # (tid, path) that turned out locked
         self.unread_until = {}       # (tid, path) -> time: its price was not read, try later
@@ -1940,13 +1944,21 @@ class Executor:
         maps without geometry (the old grid checks then apply).
 
         The game's last round is passed on: ground that only changes later
-        (Erosion's ice melts after round 54) is usable in a shorter game."""
+        (Erosion's ice melts after round 54) is usable in a shorter game.
+        On maps with path phases the ground only has to last until the
+        current phase ends (ground_horizon): each phase's track is in reach
+        only from ice that melts with it, and the towers lost then are put
+        back beside the next path (ground_lost). The hero still asks for
+        ground that lasts the whole game: it is placed once."""
         from . import placement as PL
         placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
                   for p in self.g.towers.values()]
+        last = self.rules.get("end_round")
+        if self.ground_horizon is not None and kind != "hero":
+            last = self.ground_horizon if last is None else min(last, self.ground_horizon)
         return PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                               where={"land"} if self.land_only else None,
-                              last_round=self.rules.get("end_round"), now_round=self._pane_round(),
+                              last_round=last, now_round=self._pane_round(),
                               removed=tuple(self.removed))
 
     # Global-range kinds whose attack still stays round the spot they stand
@@ -2569,6 +2581,39 @@ class Executor:
         if step is not None:
             self.plan.insert(self.idx, dict(step))   # placed again before its upgrades
         return True
+
+    def ground_lost(self, lost):
+        """The map destroyed the ground under some towers (Erosion's ice
+        melts after rounds 18, 36, 54 and 72, and the game removes every tower
+        that stood on it). Forget those towers and queue their plan steps
+        again - the place step and the upgrades already made - so the same
+        build goes back up beside the new path, on ground that lasts until
+        the new phase ends (ground_horizon). Towers the plan did not name
+        (threat answers, reinforcements) are just forgotten: the damage
+        model asks for them again if the defence needs them.
+
+        `lost`: bool grid of the destroyed cells (mapgeom.lost_ground).
+        Returns the ids of the forgotten towers."""
+        if lost is None:
+            return []
+        h, w = lost.shape
+        gone = []
+        for tid, p in list(self.g.towers.items()):
+            if p.kind == "hero":
+                continue   # placed on whole-game ground (_legal_cells)
+            cx, cy = self.m.frac_to_cell(p.x, p.y)
+            if 0 <= cy < h and 0 <= cx < w and lost[cy, cx]:
+                self.g.towers.pop(tid, None)
+                gone.append(tid)
+        if not gone:
+            return gone
+        redo = [dict(s) for s in self.plan[:self.idx]
+                if s.get("id") in gone and s.get("do") in ("place", "upgrade")]
+        self.plan[self.idx:self.idx] = redo
+        log.warning("the map destroyed the ground under %s - forgotten; %d plan steps queued "
+                    "again to rebuild them", ", ".join(gone), len(redo))
+        self.track_changed()
+        return gone
 
     def _recheck_doubtful(self):
         """When no verified tower is left (defended() False) but one of them is

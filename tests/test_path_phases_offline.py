@@ -68,8 +68,92 @@ def test_repaint_moves_the_track():
     assert not ((m.heat > 0) & first).sum() > first.sum() / 2
 
 
+def test_phase_end():
+    geom = _erosion()
+    if geom is None:
+        return
+    assert mapgeom.phase_end(geom, 1) == 18
+    assert mapgeom.phase_end(geom, 22) == 36
+    assert mapgeom.phase_end(geom, 36) == 36
+    assert mapgeom.phase_end(geom, 37) == 54
+    assert mapgeom.phase_end(geom, 95) is None      # Path6 lasts for good
+    assert mapgeom.phase_end(geom, None) is None
+    logs = mapgeom.load("Logs")
+    if logs is not None:
+        assert mapgeom.phase_end(logs, 22) is None
+
+
+def _near(mask, cells=8):
+    """mask grown by `cells` in the four directions (no scipy here)."""
+    out = mask.copy()
+    for _ in range(cells):
+        n = out.copy()
+        n[1:] |= out[:-1]
+        n[:-1] |= out[1:]
+        n[:, 1:] |= out[:, :-1]
+        n[:, :-1] |= out[:, 1:]
+        out = n
+    return out
+
+
+def test_phase_ground_reaches_the_live_path():
+    """Case 20261106_130851 (Erosion Magic Monkeys Only, Fast Track start
+    at round 22): ground lasting the whole game reaches none of Path2, so
+    every ninja and wizard step was given up. Ground lasting until the
+    phase ends (round 36) does reach it."""
+    geom = _erosion()
+    if geom is None:
+        return
+    from btd6bot import placement as PL
+    m = mapgeom.apply(MapModel("Erosion", PF), geom)
+    mapgeom.repaint_track(m, geom, 22)
+    near = _near(m.heat > 0)
+    whole = PL.valid_spots(m, "ninja", None, [], last_round=80, now_round=22)
+    phase = PL.valid_spots(m, "ninja", None, [], last_round=mapgeom.phase_end(geom, 22), now_round=22)
+    assert not (whole & near).any()
+    assert (phase & near).sum() > 100
+
+
+def test_towers_on_melted_ice_are_rebuilt():
+    """After round 36 the ice beside Path2 melts with the towers on it:
+    they are forgotten and their plan steps queued again."""
+    geom = _erosion()
+    if geom is None:
+        return
+    from types import SimpleNamespace
+    from btd6bot import placement as PL
+    from btd6bot.strategy import Executor
+    m = mapgeom.apply(MapModel("Erosion", PF), geom)
+    assert mapgeom.lost_ground(m, geom, 22, 30) is None    # nothing melts mid-phase
+    lost = mapgeom.lost_ground(m, geom, 36, 37)
+    assert lost is not None and lost.any()
+    mapgeom.repaint_track(m, geom, 22)
+    phase = PL.valid_spots(m, "ninja", None, [], last_round=36, now_round=22)
+    rows, cols = (phase & lost & _near(m.heat > 0)).nonzero()
+    assert len(rows)
+    x0, y0, x1, y1 = m.playfield
+    gw, gh = lost.shape[1], lost.shape[0]
+
+    def frac(c, r):
+        return x0 + (c + 0.5) / gw * (x1 - x0), y0 + (r + 0.5) / gh * (y1 - y0)
+
+    melt = SimpleNamespace(tid="n1", kind="ninja", x=frac(cols[0], rows[0])[0], y=frac(cols[0], rows[0])[1])
+    hero = SimpleNamespace(tid="hero", kind="hero", x=melt.x, y=melt.y)
+    plan = [{"do": "place", "id": "n1", "kind": "ninja"}, {"do": "place", "id": "hero", "kind": "hero"},
+            {"do": "upgrade", "id": "n1", "to": "2-0-1"}, {"do": "upgrade", "id": "w1", "to": "0-2-2"}]
+    ex = SimpleNamespace(g=SimpleNamespace(towers={"n1": melt, "hero": hero}), m=m, plan=plan, idx=3,
+                         track_changed=lambda: None)
+    assert Executor.ground_lost(ex, lost) == ["n1"]
+    assert set(ex.g.towers) == {"hero"}
+    assert [s.get("to", s["do"]) for s in ex.plan[3:5]] == ["place", "2-0-1"]
+    assert ex.plan[5]["id"] == "w1"
+
+
 if __name__ == "__main__":
     test_erosion_phases()
     test_maps_without_phases_keep_every_path()
     test_repaint_moves_the_track()
+    test_phase_end()
+    test_phase_ground_reaches_the_live_path()
+    test_towers_on_melted_ice_are_rebuilt()
     print("ok")

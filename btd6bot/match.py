@@ -830,6 +830,18 @@ class Match:
             from . import mapgeom
             if mapgeom.repaint_track(self.m, self._phase_geom, rnd, self._reverse):
                 self.ex.track_changed()
+            # Ground for new towers only has to last until this phase ends
+            # (mapgeom.phase_end); towers on ground the map destroyed since
+            # the last round seen are forgotten and their plan steps redone.
+            horizon = mapgeom.phase_end(self._phase_geom, rnd)
+            if horizon != getattr(self.ex, "ground_horizon", None):
+                self.ex.ground_horizon = horizon
+                self.ex.track_changed()
+            seen = getattr(self, "_ground_round", None)
+            lost = mapgeom.lost_ground(self.m, self._phase_geom, seen, rnd)
+            if lost is not None and hasattr(self.ex, "ground_lost"):
+                self.ex.ground_lost(lost)
+            self._ground_round = rnd
         except Exception:
             log.exception("repainting the track for round %s failed - carrying on", rnd)
 
