@@ -1,9 +1,11 @@
 """Top level: pick the next game, navigate to it, play it, record it, repeat."""
 import logging
 import time
+from itertools import islice
 
 import numpy as np
 
+from . import hudstate
 from . import layout as L
 from . import progress
 from . import towers as T
@@ -415,6 +417,23 @@ def chimps_before_safe_mode(cands, benched):
             if c.mode == "chimps" and c.ease == ease and getattr(c, "ok", False)
             and getattr(c, "tier", None) not in (None, "LAST")
             and is_own_map_build(c.s, c.map) and not benched(c.map, c.mode)]
+
+
+RUNNER_UPS = 4    # runner-up games the big HUD lists under the planner's pick
+
+
+def _show_choice(pick, phase, others):
+    """The planner's pick and its runner-ups for the big HUD (hudstate.py);
+    `others` yields the remaining candidates, best first (only the first
+    RUNNER_UPS are taken from it). Observe only."""
+    def brief(c):
+        return {"map": c.map, "mode": c.mode, "strategy": c.s.id, "p": round(c.p, 3),
+                "score": round(c.score, 1), "minutes": round(c.minutes, 1), "tier": getattr(c, "tier", None)}
+    try:
+        hudstate.update(force=True, planner={"phase": phase, "pick": dict(brief(pick), notes=list(pick.notes)),
+                                             "runner_ups": [brief(c) for c in islice(others, RUNNER_UPS)]})
+    except Exception:
+        log.exception("HUD planner note failed - carrying on")
 
 
 class Bot:
@@ -1737,6 +1756,7 @@ class Bot:
                             "%s/%s p=%.2f, rather than idling", c.map, c.mode, c.p)
                 phase = "LAST"
             from .planner import next_game  # noqa: F401  (same scoring as next_game)
+            _show_choice(c, phase, (o for o in cands if o is not c and not self.benched(o.map, o.mode)))
             mi = MODES[c.mode]
             hero = (c.s.heroes or (None,))[0]
             return GamePlan(
