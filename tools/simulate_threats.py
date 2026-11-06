@@ -228,7 +228,7 @@ def full_account():
 
 
 def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, account=None, scenario=None,
-             real_map=False, learned=False):
+             real_map=False, learned=False, income=None, boards=None):
     """Run one game offline. scenario: {"start_round", "start_cash",
     "income_multiplier"} to play an optimized build as it was planned (Fast
     Track start, Double Cash income: its `optimizer.scenario`); default the
@@ -236,6 +236,10 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
     (map_model) rather than the open field, where the map has geometry;
     learned (with real_map): with the spots the live game refused on it
     refused here too (map_model(learned=True)).
+    income: rnd -> cash the round pays at base rates, instead of the round
+    calendar's (Apopalypse's random rounds: tools/apopalypse_check.py);
+    boards: a dict filled with {round: {tid: (kind, tiers, fx, fy)}}, the
+    towers standing when each round starts.
     Returns a dict:
     gaps      [(round, need, what is missing)] signatures the defence could not
               pop at the start of a round that brings them
@@ -247,6 +251,7 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
     rules = S.rules(mode)
     fam = S.PRICE_FAMILY.get(mode, "hard")
     hero = strat.get("hero") or "quincy"
+    income_fn = income
     real = map_model(map_name, learned) if real_map else None
     g = CashGame(fam, hero, real)
     g.cash = START_CASH.get(mode, DEFAULT_START_CASH)
@@ -274,6 +279,8 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
         for _ in range(2):
             if g.cash <= 800 or not ex.surplus(g.cash, rnd):
                 break
+        if boards is not None:
+            boards[rnd] = {p.tid: (p.kind, tuple(p.tiers), p.x, p.y) for p in g.towers.values()}
         for sig in TH.round_signatures(set_name, rnd):
             ok, how = ex._covers(sig)
             if not ok:
@@ -281,7 +288,7 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
         load = TH.round_blimp_load(set_name, rnd, double_hp=bool(rules.get("tough_moabs")))
         if load:
             out["ramp"].append((rnd, round(ex.blimp_ratio(load), 2)))
-        income = TH.round_cash(set_name, rnd) * mult
+        income = (TH.round_cash(set_name, rnd) if income_fn is None else income_fn(rnd)) * mult
         g.cash += income                  # the round is played and paid
         total_in += income
         for _ in range(ticks // 2):       # buying during the round
@@ -317,7 +324,7 @@ def main():
             if a.mode and mode != a.mode:
                 continue
             if mode == "apopalypse":
-                continue    # random rounds: no calendar to check against
+                continue    # random rounds: no calendar here (tools/apopalypse_check.py rates them)
             todo.append((sid, s, mode))
     for sid, s, mode in todo:
         r = simulate(s, mode, a.map, a.water)

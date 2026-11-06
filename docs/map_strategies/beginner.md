@@ -4,7 +4,8 @@ Maps: Alpine Run, Candy Falls, Carved, End Of The Road, Frozen Over, Hedge,
 Lotus Island, Park Path, Skates, Winter Park. Written October 2026 for the
 medals the main account still lacked (Easy, Primary Only and Deflation on
 Candy Falls; Primary Only and Deflation on Frozen Over; Medium, Military Only
-and Reverse on all ten; Apopalypse skipped, see below).
+and Reverse on all ten; Apopalypse on all ten since 2026-11-06, see
+"Apopalypse builds").
 
 ## The builds
 
@@ -108,6 +109,100 @@ What every build had to work around:
   (`runner.py` drops a mode that fails it) needs a listed rush and BAD tower.
 * **Round 9 caps the early margin near 2.2** on $650 + income.
 
+## Apopalypse builds (2026-11-06)
+
+Written for the owner's first goal, a black border on every Beginner map: on
+2026-11-06 the map cards showed the ten Beginner maps without one all lack
+Apopalypse (the earlier "Apopalypse medals" were misreads). The bot had never
+won the mode: the general `apopalypse_ninja_sniper` lost Polyphemus
+(2026-10-27, round 52) and Infernal (2026-11-05, round 45).
+
+**How the mode works** (sources: the game's own data and code, read through
+the cached Cpp2IL dump; bloonswiki Apopalypse_(BTD6) and
+Strategy:Apopalypse_(BTD6); bloons.fandom.com Apopalypse_(BTD6)):
+
+* Medium difficulty (150 lives, Medium prices), won by popping everything of
+  rounds 1-60 (the Apopalypse Mod's EndRound; round 100 is the Survivor
+  achievement, in freeplay). With Fast Track the account's games start at
+  round 15, as Medium's (the bot's logs).
+* No pause between rounds, Auto Start or not: the next round starts spawning
+  the moment the last one has spawned its last bloon. Each round pays its pops
+  (Medium cash per pop: 1.0 to round 50, 0.5 to 60) and, since v41, the
+  end-of-round bonus once it is fully popped.
+* Rounds are random (FreeplayRoundManager, the same generator freeplay uses
+  from round 141): each round shuffles the 529 freeplay groups (each a bloon,
+  a count, a spawn time and the rounds it may appear on), draws a budget -
+  a formula of the round times 0.5-1.5 - and takes every group in turn that
+  is allowed on the round and whose score (lives it costs, +10% camo, +10%
+  regrow, a factor for how tightly it is packed) still fits; the groups run
+  end to end. `btd6bot/apopalypse.py` rebuilds it; the pool is exported from
+  the game's sim_model (`data/game_model/freeplay_groups.json`). Checked
+  against the wiki pages: the 15 tight ceramics only fit round 48 (0.079% of
+  games, the fandom page says 0.076%), a game averages 41.5 MOABs (41.5), and
+  rounds 1-60 pay $35,200-49,500 over 1,500 drawn games (the page: $36,859 to
+  $46,919 at the extremes).
+* What that means against Medium's rounds: camo from round 19, lead 20,
+  ceramics 33 (groups of 7-20, some camo or regrow), 40 fortified leads and
+  fortified ceramics from the late 30s, MOABs from 41 (groups of 5-7),
+  fortified MOABs 46, a BFB from 54 - and much less cash: a poor game (the
+  poorest 10%) pays $39,300 over rounds 1-60, the median $41,800, Medium
+  $54,500.
+
+**The check** (`tools/apopalypse_check.py`, test
+`tests/test_apopalypse_offline.py`): the build is played the executor's way
+on the live map model's refused spots (Fast Track round 15 with $6,057, Double
+Cash, a poor game's income each round) and the towers standing at each round
+are rated, strict model, against windows of two rounds laid end to end (the
+continuous spawn: round r + 1 arrives on round r's leftovers): the worst ones
+the game can send - the largest budget, the hardest groups first, for two
+meanings of hardest (the group this board does worst against alone; the most
+load per point of budget) - and 24 random ones. Every round 15-60 must rate
+2.0 or more, and again with every tower 5 units further from its supporters
+(drift). Before this the Medium builds rated (same check, 8 random windows):
+Frozen Over 2.16, Alpine Run 1.92, Hedge 1.59, Winter Park 1.53, Park Path
+1.37, Carved 1.33, Lotus Island 0.69, Skates 0.71, Candy Falls 0.63, End Of
+The Road 0.55 - the openings against 40 tight pinks, the ceramic groups of
+rounds 33-36 and the fortified leads of 38-43.
+
+**What the builds changed** (each file's header has its reasons):
+
+* the first Destroyer (3-0-2, $5,000) is bought with the Fast Track cash. A
+  single tier of $2,500 or more is hardly ever bought later in the replay:
+  the surplus spending takes the cash above $800 every round (gap 1 below),
+  and Apopalypse pays too little to outrun it;
+* an alchemist's Acidic Mixture Dip (2-0-0) by the main towers gives them
+  lead and more ceramic and MOAB damage, instead of a second boat's Hot Shot
+  (the wiki has Airburst Darts cover lead with it); Berserker Brew is left
+  out (the model does not count it, and the replay would spend $1,400 on it);
+* a Druid of the Jungle (1-3-0, $2,400 in cheap tiers) on Carved, End Of The
+  Road, Frozen Over, Hedge, Lotus Island and Park Path - the cheapest lift for
+  the ceramic rounds the model found (Hedge 1.87 -> 4.27 at round 35);
+* Bomber Aces (all tiers under $1,000) instead of Neva-Miss and of steps the
+  surplus spending starves; a Really Big Bombs shooter on Lotus Island for
+  the round-60 MOABs.
+
+| Build | Core | Worst (round) | Drift (round) | Plan bought | Gate |
+|---|---|---|---|---|---|
+| `alpinerun_apopalypse.yaml` | Bomber Aces over the zig-zags with an Acidic Mixture Dip alchemist among them, Maim MOAB snipers in the bottom-left corner | 2.30 (R35) | 2.30 (R35) | 22/22 | 0.85 |
+| `candyfalls_apopalypse.yaml` | a Destroyer at the river's upper bend with an alchemist beside it, Airburst subs, Bomber Aces, Maim MOAB snipers on the right-hand lawn | 2.68 (R35) | 2.68 (R35) | 18/20 | 0.85 |
+| `carved_apopalypse.yaml` | a Destroyer in the right eye with an alchemist and a Druid of the Jungle by it, Airburst subs, two Bomber Aces above the mouth, Maim MOAB snipers | 2.80 (R53) | 2.62 (R56) | 22/22 | 0.85 |
+| `endoftheroad_apopalypse.yaml` | a Destroyer in the pool with an alchemist and a Druid of the Jungle by the road, Airburst subs, two Bomber Aces, Maim MOAB snipers | 2.28 (R60) | 2.09 (R60) | 22/22 | 0.85 |
+| `frozenover_apopalypse.yaml` | the Medium build's two Destroyers in the central pond, Armor Piercing sub and Maim MOAB snipers, with a Druid of the Jungle at the start | 2.57 (R35) | 2.43 (R60) | 22/22 | 0.85 |
+| `hedge_apopalypse.yaml` | six Bomber Aces over the hedges with an Acidic Mixture Dip alchemist among three of them, a Druid of the Jungle on the right, Maim MOAB snipers on the bottom strip | 2.18 (R15) | 2.18 (R15) | 23/23 | 0.85 |
+| `lotusisland_apopalypse.yaml` | a Destroyer in the southern bay with an alchemist and a Druid of the Jungle on the shore, Airburst subs, two Bomber Aces, a Really Big Bombs shooter, a second Destroyer at the entrance, a Maim MOAB sniper | 2.43 (R35) | 2.40 (R35) | 21/21 | 0.85 |
+| `parkpath_apopalypse.yaml` | a Destroyer in the central pond with an alchemist and a Druid of the Jungle beside it, an Airburst sub up the stream, two Bomber Aces, Maim MOAB snipers on the lower-right lawn | 2.71 (R60) | 2.77 (R60) | 22/22 | 0.85 |
+| `skates_apopalypse.yaml` | a Destroyer in the central crack with an alchemist beside it, Airburst subs, Bomber Aces, Maim MOAB snipers on the left edge | 2.51 (R47) | 2.51 (R47) | 18/20 | 0.85 |
+| `winterpark_apopalypse.yaml` | two Destroyers at the fountain with an alchemist between them, two Bomber Aces, Maim MOAB snipers on the left edge | 2.46 (R33) | 2.40 (R33) | 17/17 | 0.85 |
+
+The gate (`base_success.apopalypse`) is 0.85 where every round passes both
+replays, else 0.5. **Planner calibration:** `planner._Calibration` is per
+build: the general build's two losses give it a factor of 0.44 on Beginner
+maps (p 0.35), but a map build has no games and keeps 1.0 - unless it sets
+`xp_target`, which `build_family` counts as one of the generated "solo"
+builds, whose Medium-family record (0.87) then caps it. So a map build gated
+0.85 plans at p 0.91-0.92 (no `xp_target`) or 0.79 (`xp_target: sub`), both over
+the 0.75 bar; no planner change was needed.
+
 ## How the builds were made and checked
 
 1. **Map analysis from the game's own data.** Routes, scenarios and
@@ -188,12 +283,6 @@ What every build had to work around:
    Piercing Darts. On the Easy-family builds the target is the Desperado
    (weight 1.0, the account's most wanted tower XP). On land maps the extra
    copies are aces, capped at Bomber Ace (2-3-0).
-
-Apopalypse was not built for any map: its rounds are random and come
-without a break, so the damage model (one standard round at a time) and
-`tools/simulate_threats.py` (which skips it) cannot validate a build for it.
-The Medium builds are the natural starting point once a random-round check
-exists.
 
 ## The maps
 
