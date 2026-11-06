@@ -3654,6 +3654,8 @@ class Executor:
         due = self._threat_round(threat, rnd)
         if rnd is None or due - rnd <= self.FAR_ROUNDS:
             return False
+        if self._firm_blimp_hold(due, rnd):
+            return False          # a game-ending blimp round: answered and held as usual
         reason = None
         if self.lives_fell_lately(rnd, 1) or self.weak_now(rnd):
             reason = f"round {rnd} is weak"
@@ -3681,6 +3683,42 @@ class Executor:
             log.warning("threat %s (round %d) waits: %s first - holding only $%d of its $%.0f, "
                         "the rest goes to the nearer round", threat, due, reason, keep, cost)
         return True
+
+    def _firm_blimp_hold(self, due_round, rnd):
+        """Should a hold for due_round stay whole although the round being
+        played is rated weak? True when all of these are so:
+
+        - due_round is still ahead and is the blimp round the blimp check
+          looks at (_ramp_due), rated under RAMP_PANIC: its blimps would
+          end the game, and nothing nearer can make up for missing them;
+        - no lives have fallen this game (drop_rounds is empty), so the
+          weak rating of the nearer rounds is the damage model's alone;
+        - the mode has lives to spare and pays income (not one-life
+          CHIMPS/Impoppable, where a weak round is lost with its one life,
+          and not Deflation, where holding cannot grow the bank).
+
+        Bloonarius Prime Half Cash (2026-11-06, case 20261106_144410) saw
+        round 40's MOAB at 0.1x from round 34, yet every round 34-37 said
+        "round N is weak: holding only $0-680 ... income rebuilds the rest"
+        and reinforcing spent the rest on dart and ninja tiers for those
+        rounds. The same promise was made each round, so the income meant to
+        rebuild the answer was spent too. Rounds 34-38, rated 0.3-0.8, passed
+        with no life lost; round 40 started with $270 and the MOAB took all
+        100 lives. A weak round costs a few lives at worst - lives fall, the
+        hold turns partial again at the next look - while a missed MOAB is
+        616 lives."""
+        if due_round is None or rnd is None or due_round <= rnd:
+            return False
+        rules = getattr(self, "rules", None) or {}
+        if rules.get("one_life") or rules.get("income") is False:
+            return False
+        if getattr(self, "drop_rounds", None):
+            return False
+        try:
+            ramp = self._ramp_due(rnd)
+        except Exception:     # the blimp check is optional here
+            return False
+        return bool(ramp and ramp[0] == due_round and ramp[2] < self.RAMP_PANIC)
 
     def _strength_threat(self, threat):
         """True for a strength threat (a tier must stand: ceramics, MOAB
@@ -3751,6 +3789,16 @@ class Executor:
                 log.warning("round %d is weak and the cost of %s is not known: nothing is held "
                             "for it, the cash goes to this round", rnd, what)
             return None
+        if weak and self._firm_blimp_hold(due_round, rnd):
+            note = ("firm-hold", what, rnd)
+            if note not in self._notes():
+                self.noted.add(note)
+                log.warning("round %d is weak in the damage model only (no lives lost this game), but "
+                            "round %d's blimps would end the game: all the cash is held for %s", rnd,
+                            due_round, what)
+            self.firm_hold = True        # Match keeps reinforcing off it, even in a crisis round
+            self.saving_for_threat = True
+            return False
         if cost is not None and due_round is not None and due_round - rnd > self.FAR_ROUNDS and weak:
             keep = max(0.0, cost - self.income_until(due_round, rnd))
             self.held_cash = getattr(self, "held_cash", 0.0) + keep
@@ -3858,6 +3906,7 @@ class Executor:
                     self.panic_pending -= 1
                     return True
         self.saving_for_threat = False   # surplus() may spend unless set again below
+        self.firm_hold = False           # set by _hold_for for a game-ending blimp round
         self.held_cash = 0.0             # part of the cash kept for a far threat (_hold_for)
         try:
             r = self._threat_tick(cash, rnd)

@@ -1021,8 +1021,17 @@ class Match:
         that held, which this still forbids. surplus() keeps off either way:
         the executor checks saving_for_threat itself. Outside a crisis a
         hold for a round two or three away stays whole (Spillway ABR
-        again)."""
-        return bool(getattr(self.ex, "saving_for_threat", False)) and not dropped and not crisis
+        again).
+
+        A firm hold (Executor.firm_hold: a game-ending blimp round ahead
+        while the weak rating of this one is the damage model's alone)
+        stays whole in a crisis round too: Bloonarius Prime Half Cash
+        (2026-11-06) let reinforce spend round 40's MOAB money in four
+        "crisis" rounds that all passed with no life lost."""
+        saving = bool(getattr(self.ex, "saving_for_threat", False))
+        if saving and getattr(self.ex, "firm_hold", False):
+            return not dropped
+        return saving and not dropped and not crisis
 
     def _reinforce_hold(self, rnd, dropped):
         """The cash the plan's own steps must leave alone this tick: the cost
