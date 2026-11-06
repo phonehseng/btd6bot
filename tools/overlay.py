@@ -1,46 +1,48 @@
-"""Status overlay: a thin always-on-top strip at the top of the screen showing
-what the bot is doing (latest log line) and how long ago it last did anything,
-with STOP and GO buttons beside it.
+"""The bot's on-screen HUD, started by run_forever.ps1; single instance.
 
-The strip never takes focus and lets every click pass through to the game,
-and the bot captures the game with PrintWindow, so the overlay never shows up
-in its OCR. The buttons sit in a small window of their own, right of the strip
-(off the game's play field), which takes clicks but never focus:
+By default this is the big HUD (tools/big_hud.py): a full-screen,
+click-through overlay showing what the bot is thinking - its decisions and
+why, the damage model's margins for the rounds ahead, ghost towers where
+the build still wants towers, and between games the planner's pick and a
+black-border board of every map.
 
-  STOP  writes the HOLD file: the bot sends no more input and waits where it
-        is (btd6bot/inputs.py). It stops the bot, not the game - a round in
-        progress keeps running.
-  GO    resumes, whatever stopped the bot: removes HOLD, PAUSE and STOP,
-        brings BTD6 to the front (or starts BloonsTD6.exe when it is
-        closed) and starts the supervisor when no bot is running. (The bot
-        itself never takes focus or opens the game; GO is the owner's click.)
-  OFF   turns the bot off completely (tools/bot_off.ps1): bot, supervisor,
-        this HUD and the recorder close; BTD6 stays open. The STOP file it
-        leaves keeps everything off until tools/bot_on.ps1 (BTD6 Bot ON).
+The thin strip it replaced is still here: a strip at the top of the screen
+with what the bot is doing (latest log line) and how long ago it last did
+anything. It is used when
 
-Started by run_forever.ps1; single instance. Close it with the STOP file or by
-ending the process.
+  * a HUD_STRIP file exists in the repo root, or
+  * the environment variable BTD6BOT_HUD is "strip", or
+  * the big HUD fails to start (the error goes to logs/hud_error.txt).
+
+Both keep the STOP / GO / OFF buttons at the top of the screen, right of
+the status strip (tools/hud_controls.py says what they do), never take
+focus and let every click pass through to the game; the bot captures the
+game with PrintWindow, so neither shows up in its OCR.
+
+Close it with the STOP file or by ending the process.
 """
 import ctypes
+import os
 import sys
 import time
 import tkinter as tk
+import traceback
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from hud_controls import (CLICK_THROUGH, HOLD, ROOT, ButtonPanel, exclude_from_capture,  # noqa: E402
+                          hand_focus_back, set_ex_style, take_single_instance, user32)
+
 LOG = ROOT / "logs" / "bot.log"
 STATE = ROOT / "logs" / "state.txt"
 FOCUS = ROOT / "logs" / "focus.txt"    # the game's XP focus (btd6bot.status.set_focus)
 LEVEL = ROOT / "logs" / "level.txt"    # player level and XP bar (btd6bot.status.set_level)
-HOLD = ROOT / "HOLD"                # the same file btd6bot.inputs.HOLD_FILE waits on
-GAME_TITLE = "BloonsTD6"            # btd6bot.screen.WINDOW_TITLE
-
-GWL_EXSTYLE = -20
-WS_EX_LAYERED, WS_EX_TRANSPARENT = 0x80000, 0x20
-WS_EX_TOOLWINDOW, WS_EX_NOACTIVATE, WS_EX_TOPMOST = 0x80, 0x8000000, 0x8
+STRIP_SWITCH = ROOT / "HUD_STRIP"      # this file: the thin strip instead of the big HUD
+HUD_ENV = "BTD6BOT_HUD"                # ... or this variable set to "strip"
+ERROR_FILE = ROOT / "logs" / "hud_error.txt"
 
 BG = "#101010"
-user32 = ctypes.windll.user32
 
 
 def last_line(path, max_bytes=4096):
@@ -74,92 +76,24 @@ def describe():
     return st, msg, quiet
 
 
-def bring_game_forward():
-    """Put BTD6 in front (restoring it if minimised). Windows only lets the
-    foreground app hand focus over, so this joins the foreground window's
-    input queue for the moment of the switch."""
-    hwnd = user32.FindWindowW(None, GAME_TITLE)
-    if not hwnd:
-        return False
-    if user32.IsIconic(hwnd):
-        user32.ShowWindow(hwnd, 9)                 # SW_RESTORE
-    fg = user32.GetForegroundWindow()
-    me = ctypes.windll.kernel32.GetCurrentThreadId()
-    other = user32.GetWindowThreadProcessId(fg, None) if fg else 0
-    attached = bool(other and other != me and user32.AttachThreadInput(me, other, True))
+def strip_wanted():
+    """The owner's switch back to the thin strip (HUD_STRIP file or BTD6BOT_HUD=strip)."""
+    return STRIP_SWITCH.exists() or os.environ.get(HUD_ENV, "").strip().lower() == "strip"
+
+
+def note_error(what):
+    """Keep the latest HUD error where the owner (or the caretaker) can read it."""
     try:
-        user32.BringWindowToTop(hwnd)
-        user32.SetForegroundWindow(hwnd)
-    finally:
-        if attached:
-            user32.AttachThreadInput(me, other, False)
-    return user32.GetForegroundWindow() == hwnd
+        ERROR_FILE.parent.mkdir(exist_ok=True)
+        ERROR_FILE.write_text(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {what}\n{traceback.format_exc()}",
+                              encoding="utf-8")
+    except OSError:
+        pass
 
 
-# the game's own executable (started directly, not through Steam's URL)
-GAME_EXE = Path(r"C:\Program Files (x86)\Steam\steamapps\common\BloonsTD6\BloonsTD6.exe")
-NO_WINDOW = 0x08000000                        # subprocess.CREATE_NO_WINDOW
-
-
-def bot_running():
-    """Is a bot (bot.py run) or its supervisor (run_forever.ps1) running?"""
-    import subprocess
-    ps = ("Get-CimInstance Win32_Process | ? { $_.CommandLine -match 'bot.py run|run_forever.ps1' "
-          "-and $_.Name -ne 'bash.exe' } | Measure-Object | % Count")
-    try:
-        out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True,
-                             timeout=20, creationflags=NO_WINDOW).stdout.strip()
-        return int(out or 0) > 0
-    except (OSError, ValueError, subprocess.TimeoutExpired):
-        return True      # unknown: never start a second supervisor on a guess
-
-
-def go():
-    """The GO button: undo whatever stopped the bot, whatever it was.
-
-      * the HUD's STOP (HOLD), the PAUSE and STOP files are removed;
-      * BTD6 is brought to the front - or started from its .exe when it is
-        not running (the owner's click; the bot itself never does either);
-      * the supervisor is started when no bot is running (it starts the bot).
-    """
-    import subprocess
-    for name in ("HOLD", "PAUSE", "STOP"):
-        (ROOT / name).unlink(missing_ok=True)
-    if user32.FindWindowW(None, GAME_TITLE):
-        bring_game_forward()
-    elif GAME_EXE.exists():
-        subprocess.Popen([str(GAME_EXE)], cwd=str(GAME_EXE.parent))
-    if not bot_running():
-        subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
-                          "-File", str(ROOT / "run_forever.ps1")], cwd=str(ROOT), creationflags=NO_WINDOW)
-
-
-def turn_off():
-    """The OFF button: run tools/bot_off.ps1, which writes the STOP file
-    (every part of the bot, this HUD included, exits on it) and ends anything
-    still running after 45 s."""
-    import subprocess
-    subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
-                      "-File", str(ROOT / "tools" / "bot_off.ps1")], cwd=str(ROOT), creationflags=NO_WINDOW)
-
-
-def set_ex_style(win, extra):
-    """Add extended window styles to a Tk window (its real top-level hwnd)."""
-    win.update_idletasks()
-    hwnd = user32.GetParent(win.winfo_id()) or win.winfo_id()
-    user32.SetWindowLongW(hwnd, GWL_EXSTYLE, user32.GetWindowLongW(hwnd, GWL_EXSTYLE) | extra)
-
-
-def main():
-    ctypes.windll.kernel32.CreateMutexW(None, False, "Local\\BTD6BotOverlay")
-    if ctypes.windll.kernel32.GetLastError() == 183:  # already running
-        return
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    # Tk activates its first window when it appears, before the no-activate
-    # style is set: remember who was in front and give focus straight back
-    # (otherwise starting the overlay would pause the bot)
+def run_strip():
+    """The thin status strip with the buttons beside it."""
     was_in_front = user32.GetForegroundWindow()
-
     root = tk.Tk()
     root.overrideredirect(True)
     root.attributes("-topmost", True)
@@ -184,37 +118,11 @@ def main():
     level.pack(side="right")
     bot = tk.Label(line2, text="", fg="#E0E0E0", bg=BG, font=("Segoe UI", 9), anchor="w")
     bot.pack(side="left", fill="x", expand=True)
-    # the strip: click-through, never focused
-    set_ex_style(root, WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST)
-
-    # the buttons: clickable, but never take focus away from the game
-    panel = tk.Toplevel(root)
-    panel.overrideredirect(True)
-    panel.attributes("-topmost", True)
-    panel.configure(bg=BG)
-    pw = 270
-    panel.geometry(f"{pw}x{h}+{x0 + w + 6}+0")
-
-    def press_stop():
-        HOLD.write_text(time.strftime("%Y-%m-%d %H:%M:%S stopped from the HUD\n"), encoding="utf-8")
-
-    def press_go():
-        go()
-
-    def press_off():
-        turn_off()
-
-    style = dict(font=("Segoe UI", 11, "bold"), bd=0, relief="flat", width=7, cursor="hand2")
-    stop_btn = tk.Button(panel, text="■ STOP", bg="#7a1e1e", fg="white", activebackground="#a32929",
-                         activeforeground="white", command=press_stop, **style)
-    go_btn = tk.Button(panel, text="▶ GO", bg="#1e6b34", fg="white", activebackground="#27914a",
-                       activeforeground="white", command=press_go, **style)
-    off_btn = tk.Button(panel, text="⏻ OFF", bg="#333333", fg="white", activebackground="#555555",
-                        activeforeground="white", command=press_off, **style)
-    stop_btn.pack(side="left", fill="y", padx=(4, 2), pady=4)
-    go_btn.pack(side="left", fill="y", padx=2, pady=4)
-    off_btn.pack(side="left", fill="y", padx=(2, 4), pady=4)
-    set_ex_style(panel, WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST)
+    # the strip: click-through, never focused, left out of captures
+    set_ex_style(root, CLICK_THROUGH)
+    exclude_from_capture(root)
+    buttons = ButtonPanel(root, x0 + w + 6, h)
+    exclude_from_capture(buttons.win)
 
     def tick():
         if (ROOT / "STOP").exists():
@@ -234,20 +142,27 @@ def main():
         if FOCUS.exists() and (age(FOCUS) or 0) < 3 * 3600:      # a stale note from a crashed game is ignored
             xp = "XP: " + last_line(FOCUS)[:60]
         focus.config(text=xp)
-        # the pressed state shows on the buttons too
-        stop_btn.config(bg="#c62828" if HOLD.exists() else "#7a1e1e")
-        go_btn.config(bg="#1e6b34" if HOLD.exists() else "#2e7d32")
+        buttons.refresh()            # the pressed state shows on the buttons too
         root.attributes("-topmost", True)
-        panel.attributes("-topmost", True)
+        buttons.win.attributes("-topmost", True)
         root.after(700, tick)
 
-    def give_focus_back():
-        if was_in_front and user32.IsWindow(was_in_front):
-            user32.SetForegroundWindow(was_in_front)   # we are in front now, so Windows allows it
-
-    root.after(300, give_focus_back)
+    hand_focus_back(root, was_in_front)
     tick()
     root.mainloop()
+
+
+def main():
+    if not take_single_instance():
+        return
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    if not strip_wanted():
+        try:
+            import big_hud
+            return big_hud.run()
+        except Exception:
+            note_error("the big HUD failed to start - showing the thin strip")
+    run_strip()
 
 
 if __name__ == "__main__":

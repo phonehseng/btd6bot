@@ -24,6 +24,21 @@ schtasks /end /tn BTD6Bot                                         # stop the sup
 - The game must run fullscreen at 1920×1200. This is the calibrated layout; other 16:10 resolutions scale.
 - **Ctrl+Alt+F8** (or a `STOP` file) stops the bot immediately; a `PAUSE` file parks it at the main menu between games.
 
+## The HUD
+
+`run_forever.ps1` starts the HUD (`tools/overlay.py`): a full-screen,
+see-through overlay of what the bot is thinking. In a game: its latest
+decision and why, the damage model's margin for each round ahead, what
+reinforce saves for, and ghost towers where the build still wants towers;
+between games: the planner's pick with its runner-ups and a black-border
+board of every map. It never takes focus, every click passes through to the
+game, and screenshots and recordings leave it out. The STOP / GO / OFF
+buttons sit at the top of the screen, right of the status line.
+
+- A file named `HUD_STRIP` in the project folder (or `BTD6BOT_HUD=strip`)
+  brings back the old thin status strip; it takes effect when the HUD starts.
+- `python tools/hud_preview.py out.png` draws the HUD into an image offline.
+
 ## Offline play
 
 The bot plays only while the game itself is offline (a dummy account on a game
