@@ -209,7 +209,12 @@ MODE_RULES = {
                       "buy_all_upfront": True},
     "medium":        {"start_round": 1, "end_round": 60, "lives": 150},
     "military_only": {"start_round": 1, "end_round": 60, "lives": 150},
-    "apopalypse":    {"start_round": 1, "end_round": 100, "lives": 150, "continuous": True},
+    # Apopalypse is won at round 60 (the Apopalypse Mod's EndRound,
+    # data/game_model/difficulties.json; btd6bot/apopalypse.py), not 100 -
+    # that is the Survivor achievement, in freeplay. With 100 here a Fast
+    # Track game was planned from round 25 (optimize_builds.fast_track_start:
+    # a quarter of the rounds); the game starts it at round 15.
+    "apopalypse":    {"start_round": 1, "end_round": 60, "lives": 150, "continuous": True},
     "reverse":       {"start_round": 1, "end_round": 60, "lives": 150, "reversed": True},
     "hard":          {"start_round": 3, "end_round": 80, "lives": 100},
     "magic_only":    {"start_round": 3, "end_round": 80, "lives": 100},
