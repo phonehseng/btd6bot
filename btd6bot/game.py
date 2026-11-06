@@ -250,15 +250,33 @@ class Game:
                 if lo <= stats[i, cv2.CC_STAT_AREA] <= hi]
 
     # -- holding / probing ----------------------------------------------------
+    # Share of the cancel-button region that must be red, and share that must
+    # be the button's white X, for a tower to count as held. Measured on
+    # Cracked (2026-11-06, 1280x800 recording): the held button reads ~0.47
+    # red and 0.20-0.48 white (0.14 while fading in); the bare ground there
+    # reads 0.38-0.50 red but at most 0.015 white.
+    HOLD_RED_MIN = 0.3
+    HOLD_WHITE_MIN = 0.1
+
     def is_holding(self, f=None):
+        """True while a tower is on the cursor: the red cancel button with its
+        white X is drawn at layout 'cancel_place' (over the map's right edge).
+
+        Red alone is not enough. Cracked's orange-red ground lies under that
+        spot and passed the red test with no tower held, so every successful
+        placement click read as 'refused': the bot picked the tower up again
+        and placed it elsewhere, bought ~30 towers it never recorded (no
+        upgrades, no answers) and lost Apopalypse at round 46 (case
+        20261106_171204). The white X is what the ground does not have."""
         f = f if f is not None else self.fresh()
         x, y = self.lay["cancel_place"]
         reg = (x - 0.012, y - 0.02, x + 0.012, y + 0.02)
         c = crop(f, reg)
         hsv = cv2.cvtColor(c, cv2.COLOR_BGR2HSV)
-        # the cancel button is orange-red with a white X
         red = cv2.inRange(hsv, (0, 130, 150), (15, 255, 255)) | cv2.inRange(hsv, (172, 130, 150), (180, 255, 255))
-        return np.count_nonzero(red) / red.size > 0.3
+        white = cv2.inRange(hsv, (0, 0, 200), (180, 60, 255))
+        return (np.count_nonzero(red) / red.size > self.HOLD_RED_MIN
+                and np.count_nonzero(white) / white.size > self.HOLD_WHITE_MIN)
 
     def hold(self, kind, tries=3):
         """Pick up a tower (or the hero) with its hotkey. True when it is on
