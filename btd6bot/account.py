@@ -527,6 +527,11 @@ class AccountState:
     def has_medal(self, map_name: str, mode: str) -> bool:
         return bool(self.medals.get(canonical_map(map_name), {}).get(mode))
 
+    def black_bordered(self, map_name: str) -> bool:
+        """Do our notes give this map every mode's medal - the black border
+        the game draws around its card?"""
+        return all(self.has_medal(map_name, mode) for mode in MODES)
+
     def out_of_chain_medals(self) -> list[tuple[str, str]]:
         """Medals whose prerequisite mode is not earned on the same map
         (MODES.requires). They are real, not misreads, and are kept: the
