@@ -89,6 +89,7 @@ class BigHud:
         self.game_rect = None
         self._t_poll = self._t_rect = self._t_top = self._t_error = -1e9
         self.buttons = None
+        self.capture_excluded = False   # set by make_windowed: Windows accepted WDA_EXCLUDEFROMCAPTURE
 
     def make_windowed(self):
         """The Windows side: click-through, no focus, out of captures, and
