@@ -125,8 +125,8 @@ no recording shows yet to `logs/achievement_captures/`.
 |---|---|---|---|
 | `powers.py` | You've Got the Power, Power User, Empowered, Insta Century, Instant Gratification | Before round 1 of an Easy/Medium/Reverse (Powers also Primary/Military Only) game with p >= 0.85, never an `ach_*` build, never CHIMPS: Powers button -> up to 2 owned Powers (track ones dropped late on the track) and up to 2 Instas (lowest tier; one tier 5 while Instant Gratification is wanted) | Button position and lit/crossed-out look: recordings. The panel itself: NOT seen - read by OCR |
 | `powershop.py` | Power User, Empowered | Main menu -> INSTAS + POWERS -> a cheap Power -> its MM price (10-500, no cents) -> one confirmation; only when the last game found no owned Power; real MM difference checked | Button position: recording. Shop screens: NOT seen |
-| `heroskin.py` | Lookin fab | HEROES -> Obyn (then Quincy) -> first skin icon with no price under it -> SELECT. Once per account; skin left on | Recordings (Obyn owns 3 skins, Quincy's 2 cost 2,500 MM: never clicked) |
-| `quests.py` | First Steps | Look only: clicks the scroll-holding monkey, logs and saves what shows, back arrow | Position: recordings; Quests screen NOT seen |
+| `heroskin.py` | Lookin fab | HEROES -> Obyn, then Quincy -> each skin icon with no price under it opens the skin's own page; its bottom button decides: UNLOCK FOR / a price = not owned (back arrow), SELECT / EQUIP / USE = clicked until SELECTED. A capture at every step; heroes found with no owned skin are not opened again | Live run 2026-11-07 18:06: Quincy's 2 skins priced; Obyn's 3 "New" skins also cost 2,500 MM each (the ribbon hides the price). So neither hero has an owned skin: Lookin fab needs a skin bought - an owner decision, the code never buys one |
+| `quests.py` | First Steps | Look only: quest giver -> TUTORIALS tab -> logs every quest card (title, progress, GO button) and whether First Time Tutorial is listed; GO! never clicked | Live run 18:07 (capture `quests_20261107_180710.png`): the scroll monkey opens QUESTS with tabs ALL / TALES / CHALLENGES / TUTORIALS / EXPERIMENTS |
 
 **To check live** (the first runs are the calibration; look at
 `logs/achievement_captures/` and the `achievement:` lines):
@@ -139,8 +139,9 @@ no recording shows yet to `logs/achievement_captures/`.
    one click; the Insta tab's word and its "a-b-c" tier labels.
 4. That clicking the Powers button again closes the panel.
 5. The INSTAS + POWERS screen: tab and price layout, confirmation wording.
-6. Clicking an owned skin shows SELECT; selecting it keeps the hero.
-7. Whether the scroll monkey opens the Quests menu.
+6. The button an owned skin's page shows (no owned skin seen yet on
+   Obyn or Quincy).
+7. What the Quests menu's TUTORIALS tab lists.
 
 **First Steps needs more than a look:** the First Time Tutorial is a
 guided game that waits for the clicks it asks for (place a Dart Monkey
