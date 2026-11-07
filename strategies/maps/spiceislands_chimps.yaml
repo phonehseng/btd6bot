@@ -34,8 +34,10 @@
 #     of every Flagship-recipe win;
 #   * a Night Vision sniper (0-1-0) for round 24's camo, as on Cracked and
 #     Lotus Island: neither the buccaneer's early tiers nor Quincy at that
-#     level see camo, and the guide's village (Radar Scanner) only comes
-#     after the Aircraft Carrier (about round 42);
+#     level see camo;
+#   * the village with Radar Scanner comes right after the Destroyer and
+#     before the Aircraft Carrier (it stands from round 36, the Carrier from
+#     round 43), not after the Carrier: see the 2026-11-07 15:00 note;
 #   * the boomerang stands on the west island inside the village's reach:
 #     the bot does not place towers on a deck;
 #   * no Ray of Doom: 5-0-2 costs $100,600 at Hard (btd6bot/towers.py), more
@@ -73,18 +75,51 @@
 #   neighbours on the west island).
 #
 # Cash (CHIMPS: $650 at round 6, the game's own income, Hard prices;
-# tests/test_chimps_builds_offline.plan_timeline): Hot Shot round 13,
-# Night Vision 15, Destroyer 29, Aircraft Carrier 39, village 2-2-0 44,
-# Flagship 58, Primary Mentoring 59, Glaive Lord 79, Cripple MOAB 92.
+# tests/test_chimps_builds_offline.plan_timeline; a step affordable by
+# the end of round R stands from round R + 1): Hot Shot round 13, Night
+# Vision 15, Destroyer 29, village 32, Radar Scanner 35, Aircraft Carrier
+# 42, village 2-2-0 44, Flagship 58, Primary Mentoring 59, Glaive Lord 79,
+# Cripple MOAB 92.
 #
 # Offline replay (tools/simulate_threats on the learned map, the live
 # account's unlocks, base income): every spot accepted, plan 20/20, no
 # threat gaps; blimp ratios (damage model, no hero or abilities) close to
 # the Lotus Island build's (which won): R40 1.56 (Lotus 0.80), R63-78
 # 0.37-2.43, R90-100 0.16-0.88; the executor's blimp answers only start at
-# round 92.
+# round 92. (Since 15:00 the Carrier stands from round 43, so round 40's
+# single MOAB meets the Destroyer: blimp ratio 0.58, round margin 1.72;
+# the rest unchanged.)
 #
 # Status 2026-11-07 12:00: written, not played live yet.
+#
+# 2026-11-07 15:00: lost live at round 42 (forced CHIMPS learning game,
+# logs/bot.log 14:43-14:52, journal 20261107_144416_SpiceIslands_chimps).
+# What leaked: round 42 is 6 regrow rainbows then 5 CAMO rainbows; the
+# desktop recording (rec_20261107_145100.mkv, 14:51:50) shows camo yellows
+# (children of the camo rainbows) running the east lane to the exit at the
+# bottom edge, -4 lives. Only the Night Vision sniper saw camo: the
+# Carrier (bought at round 39 for $8,640) could not, and the village was
+# placed at round 41 with $1,572 left, short of Radar Scanner ($2,160).
+# The damage model had called it from round 27 on (rounds 36, 37 and 42
+# rated 0.08, 0.26 and 0.22 with that board); the threat check counts camo
+# "covered" by any tower that detects it (the sniper), however small its
+# damage. Fix: the village and its Radar Scanner moved ahead of the
+# Carrier. Replayed (tools/simulate_threats on the learned map, the live
+# account): rounds 36-60 all rate 1.7 or more (36: 4.00, 37: 5.08, 40:
+# 1.72, 42: 4.76, 43-48: 16), where the old order rated 36/37/42 at
+# 0.08/0.26/0.22. Round 33 (camo yellows) still rates 0.51 with the same
+# board the live game had there - and that game held it (bloons got 31%
+# along the route). Moving the village before the Destroyer instead (radar
+# from round 31) lifts round 33 but drops rounds 34-35 to 1.06-1.45 and
+# delays the Destroyer to round 36; not taken.
+# Route check: the map is one path (data/map_geometry/spiceislands.json,
+# path 1369), and the bot's route model lies on the dark lane in the
+# recording from the left edge to the bottom-edge exit; no lane is
+# missing. The bloon watch's "61%" is because only progress 0.14-0.83 of
+# that path is on screen (the rest is off the left and bottom edges), and
+# the leaking camo yellows covered ~0.12 of the route between two looks
+# (13 looks in about 7 s), more than the watch's confirm step
+# (bloonwatch.CONFIRM_DROP 0.1), so their last stretch was never confirmed.
 id: spiceislands_chimps
 map: Spice Islands
 hero: quincy
@@ -96,7 +131,7 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spice Islands]
-  revised: "2026-11-07T12:00"
+  revised: "2026-11-07T15:00"
 plan:
   - {do: place, id: hero, kind: hero, role: dps, at: [0.323, 0.487]}      # Quincy holds the opening, middle island
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.152, 0.581]}   # south of the west island
@@ -107,9 +142,9 @@ plan:
   - {do: upgrade, id: b1, to: 1-2-0}
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Double Shot
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.179, 0.428]}   # west island, before the Carrier
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat by round 36 (round 42's camo rainbows)
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
-  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.179, 0.428]}   # west island
-  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring, before round 80
