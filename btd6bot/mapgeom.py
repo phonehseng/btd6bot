@@ -76,8 +76,22 @@ def unknown_map_id(card_label):
     return candidates[close[0]] if close else None
 
 
+# Map models of Reverse games are keyed "<map> reverse" (runner, forecast,
+# towerxp). Reverse runs the same map backwards, so it has the same geometry.
+REVERSE_SUFFIX = " reverse"
+
+
 def map_id_for(display_name):
-    """Geometry file id for a map's display name, or None if not extracted."""
+    """Geometry file id for a map's display name, or None if not extracted.
+
+    A Reverse game's model key ("Erosion reverse") names the map it is
+    played on: without the suffix stripped here, placement_grids() found no
+    geometry for the reverse model and placement fell back to the bare
+    placement scan, without the per-round ground lifetimes. On Erosion that
+    left 4 ace cells instead of 2,600, and every ace step of solo_ace was
+    given up on round 1 (loss case 20261107_043112, round 18, 133 lives)."""
+    if display_name.endswith(REVERSE_SUFFIX):
+        display_name = display_name[:-len(REVERSE_SUFFIX)]
     ids = [f.stem for f in GEOMETRY_DIR.glob("*.json")]
     for map_id, name in ID_ALIASES.items():
         if _norm(name) == _norm(display_name) and map_id in ids:
