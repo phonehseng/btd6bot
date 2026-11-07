@@ -141,6 +141,31 @@ def test_at_neighbours_are_nearest_first_and_spaced():
     assert all((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 >= gap for i, a in enumerate(spots) for b in spots[:i])
 
 
+def test_buffer_goes_where_it_buffs_most_before_widening_near():
+    # Alpine Run CHIMPS (2026-11-07): the widened `near` circle round the
+    # average of r1-r3 (r3 pushed across the map) put the village between
+    # the groups, buffing nothing; the most-buffing spot comes first now
+    ex = _executor(lambda st: st.get("near_radius", 0) > 10)
+    ex.buff_ok = True
+    step = {"do": "place", "kind": "village", "role": "support", "near": ["s1"], "near_radius": 8}
+    assert ex._spots_widening("village", step) == [(5, 5, 2.0)]
+    assert len(ex.seen) == 1      # only the build's own search, no widened circle
+
+
+def test_refused_at_neighbourhood_widens_before_spots_by_role():
+    # Alpine Run CHIMPS (2026-11-07): r3's spot and its one legal neighbour
+    # were refused, and the next spot was the best by role, across the map
+    import numpy as np
+    ex = _buff_executor([])
+    valid = np.zeros((40, 40), bool)
+    valid[20, 30] = True                       # the only legal cell nearby, 10 cells off
+    valid[2, 2] = True                         # and one far away
+    step = {"do": "place", "kind": "boomerang", "at": [20 / 40, 20 / 40]}
+    assert ex._at_spots(step, valid, 4) == []  # nothing within AT_SEARCH_CELLS
+    wide = ex._at_spots(step, valid, 4, radius=Executor.AT_WIDE_CELLS)
+    assert [c[:2] for c in wide] == [(30, 20)], "the wider ring finds the near cell, not the far one"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
