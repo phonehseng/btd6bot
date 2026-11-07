@@ -254,8 +254,10 @@ def _hero_id(text):
 
 
 class Match:
-    def __init__(self, game, menus, model, executor, account=None, on_tower_choice=None):
+    def __init__(self, game, menus, model, executor, account=None, on_tower_choice=None, extras=None):
         self.g = game
+        # powers.InGameExtras (Powers / Instas for achievements) or None
+        self.extras = extras
         self.menus = menus
         self.m = model
         self.ex = executor
@@ -478,6 +480,7 @@ class Match:
                                f"plan: {getattr(self.ex, 'waiting', None) or 'nothing tried'})")
         self._check_no_income_build()
         self._learn_empty_map()
+        self._achievement_extras()
         self.g.go_fast(allow_start=True)
         self._in_round = True
         last_round = self.g.round()
@@ -671,6 +674,24 @@ class Match:
                 self._abilities(last_round)
             time.sleep(0.02)
         return self._finish("timeout", last_round)
+
+    def _achievement_extras(self):
+        """Before the first Play: use Powers / place Instas for their
+        achievements (powers.InGameExtras; the runner only passes one for a
+        sure Easy/Medium game while a card wants it). The round has not
+        started, so nothing leaks meanwhile; any failure is logged and the
+        game goes on as usual."""
+        if self.extras is None:
+            return
+        try:
+            res = self.extras.run(self.g, self.menus, self.m, self._exclude())
+            self.stats["achievement_extras"] = res
+        except Exception:
+            log.exception("achievement: powers/instas failed - carrying on")
+            try:
+                self.g.close_panels()
+            except Exception:
+                pass
 
     def _hold_round(self, rnd, cash):
         """Keep the next round from starting while it brings a bloon the defence

@@ -110,11 +110,49 @@ Be Back (Monkey Money continues: forbidden). Co-op, races, bosses,
 odysseys, daily challenges, contested territory, social and Legends DLC
 entries are out (single-player rule / real money).
 
-### What Powers and Instas would need (not built; nothing was clicked)
+### Powers, Instas, hero skin, First Steps: built 2026-11-07, not yet run live
 
-The bot has no code for either, and `menus.FORBIDDEN` blocks any click on
-text containing "powers", "insta", "buy" or "store" - deliberately. A
-Powers routine needs a narrow exception for its own buttons only:
+`menus.FORBIDDEN` is unchanged. Each routine clicks only words of its own
+allow-list (`achtasks.allowed_word`: whole-word match, never real money)
+and runs only while its card is wanted in the account's scan (read
+"progress" or "unknown"). Daily caps per account in
+`logs/achievement_tasks.json` (`achtasks`: 3,000 MM, 10 purchases, 400
+clicks, 40 power uses, 30 insta uses, 4 failures per flow). Every routine
+logs `achievement: ...` lines and saves a few screenshots a day of screens
+no recording shows yet to `logs/achievement_captures/`.
+
+| Module | Achievement | What it does | Calibrated from |
+|---|---|---|---|
+| `powers.py` | You've Got the Power, Power User, Empowered, Insta Century, Instant Gratification | Before round 1 of an Easy/Medium/Reverse (Powers also Primary/Military Only) game with p >= 0.85, never an `ach_*` build, never CHIMPS: Powers button -> up to 2 owned Powers (track ones dropped late on the track) and up to 2 Instas (lowest tier; one tier 5 while Instant Gratification is wanted) | Button position and lit/crossed-out look: recordings. The panel itself: NOT seen - read by OCR |
+| `powershop.py` | Power User, Empowered | Main menu -> INSTAS + POWERS -> a cheap Power -> its MM price (10-500, no cents) -> one confirmation; only when the last game found no owned Power; real MM difference checked | Button position: recording. Shop screens: NOT seen |
+| `heroskin.py` | Lookin fab | HEROES -> Obyn (then Quincy) -> first skin icon with no price under it -> SELECT. Once per account; skin left on | Recordings (Obyn owns 3 skins, Quincy's 2 cost 2,500 MM: never clicked) |
+| `quests.py` | First Steps | Look only: clicks the scroll-holding monkey, logs and saves what shows, back arrow | Position: recordings; Quests screen NOT seen |
+
+**To check live** (the first runs are the calibration; look at
+`logs/achievement_captures/` and the `achievement:` lines):
+1. What the Powers button opens: are Power names written on the tiles,
+   and is the owned count shown as "x3"/"3" next to them? If not,
+   `powers.owned_powers` finds nothing and nothing is clicked.
+2. Does clicking an unowned Power in a game ask before spending? (The code
+   answers any question with Cancel/No.)
+3. Track Powers held like towers (red cancel X), instant ones working on
+   one click; the Insta tab's word and its "a-b-c" tier labels.
+4. That clicking the Powers button again closes the panel.
+5. The INSTAS + POWERS screen: tab and price layout, confirmation wording.
+6. Clicking an owned skin shows SELECT; selecting it keeps the hero.
+7. Whether the scroll monkey opens the Quests menu.
+
+**First Steps needs more than a look:** the First Time Tutorial is a
+guided game that waits for the clicks it asks for (place a Dart Monkey
+here, upgrade, press Play). The match code places towers by its own plan
+with hotkeys and cannot read tutorial instructions, so a playing routine
+would need: the quest's start button, an OCR reader for the tutorial
+prompts with their target positions, and a click-what-it-says loop. A
+5-minute job by hand.
+
+### The original plan (kept for reference)
+
+A Powers routine needs a narrow exception for its own buttons only:
 
 1. **Buying** (main menu): the "INSTAS + POWERS" button (bottom row, about
    (.75, .93) per `docs/research_ui.md`) -> Powers tab -> a cheap Power

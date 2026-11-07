@@ -1123,8 +1123,16 @@ class Bot:
             model.save()
         ex = Executor(g, model, strat, plan.mode_key, self.account)
         g.on_hero = lambda hid: setattr(self.account, "selected_hero", hid)
+        # Powers / Instas for their achievements, once before round 1 of a
+        # sure Easy/Medium game while a card wants them (powers.plan_extras)
+        try:
+            from . import powers
+            extras = powers.plan_extras(plan, strat, self.uid or current_path().stem)
+        except Exception:
+            log.exception("achievement: could not plan powers/instas - playing without")
+            extras = None
         res = Match(g, self.menus, model, ex, self.account,
-                    on_tower_choice=tower_chooser(self.account)).play()
+                    on_tower_choice=tower_chooser(self.account), extras=extras).play()
         # Match saw the Play button never idle: BTD6's Auto Start is on
         # (warned before the next one-life game, see _warn_auto_start)
         self._auto_start_seen = bool(res.get("auto_start"))
@@ -1274,6 +1282,9 @@ class Bot:
                 self._achievements_if_due()
                 # Daily Reward chest: a few tries a day at most (dailychest.py)
                 self._daily_chest_if_due()
+                # small achievement routines (hero skin, quests look, power
+                # shop): each only while its card is wanted, capped per day
+                self._achievement_tasks_if_due()
                 plan = self.next_plan()
                 if plan is None:
                     log.error("planner has nothing to play - waiting 30 min (benches expire, XP grows)")
@@ -1620,6 +1631,40 @@ class Bot:
         except Exception:
             log.exception("daily chest failed")
         self.to_main_menu()
+
+    def _achievement_tasks_if_due(self):
+        """Main-menu achievement routines, each a no-op unless its card is
+        wanted in the current scan (achtasks.wanted) and today's caps allow
+        it (logs/achievement_tasks.json, per User ID):
+          * heroskin  - Lookin fab: equip an owned hero skin (once);
+          * quests    - First Steps: look at the Quests menu (look only);
+          * powershop - Power User / Empowered: buy one cheap Power with
+                        Monkey Money when the last game found none owned.
+        Each logs "achievement: ..." lines. A failure never ends the bot;
+        the bot is back on the main menu afterwards."""
+        from . import achtasks, heroskin, powershop, quests
+        key = self.uid or current_path().stem
+        try:
+            statuses = achtasks.card_statuses()
+        except Exception:
+            log.exception("achievement: could not read the achievement scan")
+            return
+        tasks = (
+            ("hero skin", lambda b: heroskin.run_if_due(self.s, self.inp, self.menus, self.account, key,
+                                                        statuses, budget=b)),
+            ("quests look", lambda b: quests.run_if_due(self.s, self.inp, self.menus, key, statuses, budget=b)),
+            ("power shop", lambda b: powershop.run_if_needed(self.s, self.inp, self.menus, key, self.read_mm,
+                                                             statuses, budget=b)),
+        )
+        for name, task in tasks:
+            try:
+                if task(achtasks.Budget(key)) is None:
+                    continue          # not due: nothing was clicked
+            except (FocusLost, Aborted):
+                raise
+            except Exception:
+                log.exception("achievement: %s failed", name)
+            self.to_main_menu()
 
     def _game_error(self, e, plan, code_stamp=None):
         """After a game-loop error: bench the map only when the same map and
