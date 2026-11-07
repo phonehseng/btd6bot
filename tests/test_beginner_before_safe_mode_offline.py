@@ -120,6 +120,23 @@ def test_games_before_a_builds_revision_do_not_count():
                         "t": "2026-11-06T20:00:00"})
     assert P.build_record(acc, new, "Carved", "chimps") == (0, 1), "a loss after the repair counts"
 
+
+def test_the_calibration_ignores_games_before_a_revision_too():
+    """The planner scores candidates with the calibration, which read the
+    aggregate record: the repaired Carved CHIMPS build rated 0.29 there and
+    0.85 on its own record, so it was still never played."""
+    import dataclasses
+    acc = F.full_account()
+    own = specs()["carved_chimps"]
+    acc.history = [{"map": "Carved", "mode": "chimps", "strategy": own.id, "won": False,
+                    "t": "2026-11-05T16:12:20"}]
+    acc.strategy_stats = {"Carved|chimps|" + own.id: {"wins": 0, "losses": 1, "games": 1}}
+    old = dataclasses.replace(own, revised=None)
+    new = dataclasses.replace(own, revised="2026-11-05T19:02")
+    p_old = P.win_probability(acc, old, "Carved", "chimps", calib=P._Calibration(acc, {old.id: old}))[0]
+    p_new = P.win_probability(acc, new, "Carved", "chimps", calib=P._Calibration(acc, {new.id: new}))[0]
+    assert p_new >= P.p_threshold("chimps") > p_old, (p_old, p_new)
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

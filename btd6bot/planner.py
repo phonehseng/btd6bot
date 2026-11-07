@@ -1398,11 +1398,16 @@ class _Calibration:
             s = strategies.get(sid)
             if s is None or m not in MAPS or mode not in MODES:
                 continue
-            games = st.get("wins", 0) + st.get("losses", 0)
+            # a repaired build counts only its games since the repair, as in
+            # win_probability: the old version's losses held the repaired
+            # Carved CHIMPS build at p 0.29 here while its own record read 0.85
+            wins, losses = (build_record(account, s, m, mode) if s.revised
+                            else (st.get("wins", 0), st.get("losses", 0)))
+            games = wins + losses
             exp = prior_win_probability(account, s, m, mode) * games
             for a in (acc.setdefault((sid, mode), [0.0, 0.0]),
                       acc_cat.setdefault((sid, mode, account.map_category(m)), [0.0, 0.0])):
-                a[0] += st.get("wins", 0)
+                a[0] += wins
                 a[1] += exp
         k = self.SHRINK
         # The strategy's record is also pooled per economy (income modes vs
