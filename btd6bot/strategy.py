@@ -2570,8 +2570,23 @@ class Executor:
         phantom ninja failed 8 selections of ~3 s each). Forget it, so that
         defended() stops counting it and a plan tower gets placed again.
         `purchased` keeps counting it: if it does exist after all, a tower
-        cap must still include it. Returns True when it was forgotten."""
+        cap must still include it. Returns True when it was forgotten.
+
+        Not on maps that freeze towers (dps_model.TOWER_FREEZE): there a
+        tower encased in ice cannot be selected for two rounds, and failed
+        selections say nothing about whether it exists. Glacial Trail Medium
+        (loss case 20261107_011729): every tower went up in the Fast Track
+        round 15, so all of them froze together in round 25; the dart opener
+        failed two selections, was forgotten as "not on the map", and its
+        place step was queued again with no spot left - while it stood there
+        frozen. It thaws on its own and is selected again then."""
         if p.kind == "hero" or getattr(p, "select_fails", 0) < self.MAX_SELECT_FAILS:
+            return False
+        from . import dps_model as D   # imported here, like the other model uses in this file
+        if D.tower_uptime(getattr(self.m, "name", "")) < 1.0:
+            if p.select_fails == self.MAX_SELECT_FAILS:   # say it once per streak
+                log.info("%s (%s) could not be selected %d times in a row - this map freezes "
+                         "towers, so it is kept until it thaws", p.tid, p.kind, p.select_fails)
             return False
         self.g.towers.pop(p.tid, None)
         log.warning("%s (%s) could not be selected %d times in a row - not on the map; forgotten",

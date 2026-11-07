@@ -207,6 +207,27 @@ def test_phantom_tower_is_forgotten_and_placed_again():
     assert g.towers["d1"].tiers == [1, 0, 0], "placed again, then upgraded"
 
 
+def test_frozen_tower_is_not_forgotten_on_a_freezing_map():
+    """Glacial Trail Medium (case 20261107_011729): the whole defence froze
+    in round 25 and the dart opener, unselectable in its ice, was forgotten
+    as "not on the map" and queued to be placed again. On a map that freezes
+    towers a failed selection must not forget the tower."""
+    g = SpotGame(refuses=lambda kind: False)
+    ex = executor(g, {"plan": [{"do": "place", "id": "d1", "kind": "dart", "role": "dps"},
+                               {"do": "upgrade", "id": "d1", "to": "1-0-0"}]})
+    ex.m.name = "Glacial Trail"
+    ex.tick(10000, 1)                         # places d1
+    frozen = g.towers["d1"]
+    g.select_ok = False                       # encased in ice
+    for _ in range(4):
+        ex.tick(10000, 1)
+    assert g.towers["d1"] is frozen and g.holds == ["dart"], "kept, not placed again"
+    g.select_ok = True                        # it thaws
+    for _ in range(3):
+        ex.tick(10000, 1)
+    assert g.towers["d1"].tiers == [1, 0, 0], "upgraded once it thaws"
+
+
 def test_doubtful_tower_is_rechecked_before_rounds():
     g = SpotGame(refuses=lambda kind: False)
     ex = executor(g, {"plan": []})
