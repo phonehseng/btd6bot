@@ -113,6 +113,7 @@ tests and as a fallback; the real roster should come from the strategy layer.
 from __future__ import annotations
 
 import difflib
+import functools
 import json
 import logging
 import math
@@ -1138,9 +1139,30 @@ FULL_FIT = 0.6
 MIN_FIT_FACTOR = 0.3
 
 
+@functools.lru_cache(maxsize=None)
+def has_cycling_panes(map_name: str) -> bool:
+    """Does the map have ground that opens one round in turn (Covered
+    Garden's glass panes, mapgeom.dynamics().panes)?"""
+    from . import mapgeom
+    try:
+        geom = mapgeom.load(map_name)
+        return bool(geom and mapgeom.dynamics(geom).panes)
+    except Exception:   # a map-file problem must never stop planning
+        return False
+
+
 def map_fit_factor(s: StrategySpec, map_name: str, mode: str) -> float:
     """1.0 when the plan's damage towers reach enough of the track (or when
-    that is not measured), less when they do not."""
+    that is not measured), less when they do not.
+
+    The fit table (mapfit) measures ground open all game. On a map with
+    cycling panes a map's own build stands on garden ground in its pane's
+    round (Executor._pane_shut; its spots are checked for that round and its
+    damage is replayed with the pane timing), so the table says nothing about
+    it: coveredgarden_medium's mermonkeys and skywardens under the panes
+    measured 0.35 there."""
+    if is_own_map_build(s, map_name) and has_cycling_panes(map_name):
+        return 1.0
     from .mapfit import strategy_fit
     fit = strategy_fit(map_name, s.dps_kinds, reverse=(mode == "reverse"), weights=s.cost_share,
                        last_round=MODES[mode].end_round)
@@ -1173,8 +1195,9 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     p *= map_fit_factor(s, map_name, mode)
     # the bot could not build its defence on this map before (any mode, any
     # build): every mode there is doubted like a lost one until a win
-    trouble = getattr(account, "placement_trouble", {}).get(canonical_map(map_name), 0)
-    p *= max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR ** trouble)
+    if trouble_applies(s, map_name):
+        trouble = getattr(account, "placement_trouble", {}).get(canonical_map(map_name), 0)
+        p *= max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR ** trouble)
     if s.maps is None:
         # a general build answers for the map's record too: Last Resort Hard
         # was lost by three general builds in turn, each of them rated 0.8-0.9
@@ -1184,6 +1207,29 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     p = no_income_cap(p, s, mode)
     p = ceiling_cap(p, map_name, mode)
     return min(0.98, max(0.01, p))
+
+
+def trouble_applies(s: StrategySpec, map_name: str) -> bool:
+    """Does the map's placement trouble (AccountState.placement_trouble)
+    doubt build ``s`` there?
+
+    Not for the map's own build (is_own_map_build) on ground that holds
+    still: its spots are exact and checked offline against the map's
+    geometry and the refusals the live game taught the bot
+    (tests/test_map_hints_offline.py), and its own losses already count
+    through its record and the calibration. The trouble was mostly earned
+    by general builds picking spots by role: Peninsula Deflation's own build
+    (prior 0.81) sat at p=0.40 behind two such counts, one from an
+    Apopalypse ninja that found no spot at all (2026-11-06).
+
+    On moving ground (Geared's gears, Sanctuary's platforms) the learned
+    refusals mean little - a cell refused in one round is ground in
+    another - so there it doubts every build."""
+    if not is_own_map_build(s, map_name):
+        return True
+    from .mapfit import load
+    mechanics = set((load().get(canonical_map(map_name)) or {}).get("mechanics") or ())
+    return bool(mechanics & MOVING_GROUND)
 
 
 def no_income_cap(p: float, s: StrategySpec, mode: str) -> float:

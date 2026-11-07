@@ -218,6 +218,13 @@ Reverse, Hard.*
 * **Sources.** bloonswiki and fandom Covered Garden, Touch Tap Play guide.
 * **Builds.** `coveredgarden_easy.yaml` (Easy): snipers on the strips;
   worst margin easy 2.02 with the fill (plan alone 0.87).
+  `coveredgarden_medium.yaml` (Medium, Hard; 2026-11-07): skywardens and
+  mermonkeys in the garden quarters, each placed and upgraded in its pane's
+  round (the executor sets such steps aside until then), a Full Metal
+  Jacket sniper on the left strip to open; replayed with the pane timing,
+  worst margin medium 1.48 (round 15, the opening) / 1.98 (round 28), hard
+  1.92. It replaces `coveredgarden_hard.yaml`, whose only heli cell the live
+  game refused. From the strips alone the best Medium plan rates 0.73.
 * **Skipped.** Primary Only (best 1.07: primary towers on the strips reach
   only the entrance), Deflation (best 1.04 with the full $40,400), Military
   Only and Reverse (best ~1.8 with snipers + the one heli, the Apache bought

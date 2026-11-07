@@ -74,6 +74,15 @@ def model(map_name):
     return _MODELS[map_name]
 
 
+def _pane_round(m, fx, fy):
+    """The first round whose open pane covers (fx, fy), or None when no pane
+    does (ground open all game, and every map without panes)."""
+    pane, _ = G.pane_at(m, fx, fy, None)
+    if pane is None:
+        return None
+    return next(r for r in range(1, 9) if G.pane_at(m, fx, fy, r)[1])
+
+
 def illegal_spots(map_name, spots, last_round):
     """Spots [(kind, hero, (fx, fy))] that are not legal, placed in order. An
     entry ("clear", obstacle name, None) - a build's `do: clear` step -
@@ -85,7 +94,11 @@ def illegal_spots(map_name, spots, last_round):
             removed += [r["id"] for r in G.removables(map_name, PLAYFIELD) if hero in (r["name"], r["id"])]
             continue
         fx, fy = at
-        ok = PL.valid_spots(m, kind, hero, placed, last_round=last_round, removed=tuple(removed))
+        # a spot under a cycling pane (Covered Garden) is built in that
+        # pane's round (Executor._pane_shut): check it for that round
+        pane_round = _pane_round(m, fx, fy)
+        ok = PL.valid_spots(m, kind, hero, placed, last_round=last_round, removed=tuple(removed),
+                            now_round=pane_round)
         cx, cy = m.frac_to_cell(fx, fy)
         inside = 0 <= cy < ok.shape[0] and 0 <= cx < ok.shape[1]
         if not (inside and ok[cy, cx]):
