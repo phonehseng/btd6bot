@@ -1,5 +1,5 @@
-# Rake, CHIMPS: three darts open on both lanes (one at the top lane's
-# entrance, one at the left lane's, one where the lanes cross); one
+# Rake, CHIMPS: three darts open, each on a cell that sees both lanes
+# (right of the pool, the bottom U, the centre); one
 # buccaneer in the pool grows to a Carrier Flagship with a village in the
 # centre box, Quincy joins in the bottom U, a Glaive Lord boomerang and a
 # Cripple MOAB sniper finish.
@@ -86,7 +86,10 @@
 # placement order; "cells" are track cells of both lanes in range and in
 # line of sight, of 3,169 on screen; towers at least 0.08 screen-height
 # apart, every new spot with all 8 neighbour cells legal):
-#   * darts: d1 (0.441, 0.164) where the top lane comes on screen, d2
+#   * darts (moved 2026-11-07 17:45, see "Status"): d1 (0.633, 0.411)
+#     right of the pool, d2 (0.542, 0.871) below the bottom U, d3 (0.446,
+#     0.581) in the centre - every one sees both lanes. The first darts,
+#     d1 (0.441, 0.164) where the top lane comes on screen, d2
 #     (0.174, 0.589) where the left lane comes on screen, d3 (0.452, 0.555)
 #     in the centre where both lanes pass (0.10 screen-height from the
 #     village's spot); d3 takes Long Range Darts (0-0-1) at round 7, which
@@ -118,8 +121,24 @@
 # screen. If it loses mid-game, a second buccaneer in the pool
 # (bloons.fandom's "line of buccaneers") is the first thing to try.
 #
-# Status 2026-11-07 15:30: opening reworked after the 14:54 round-7 loss;
-# not played live with the darts yet.
+# Status 2026-11-07 15:30: opening reworked after the 14:54 round-7 loss.
+# Status 2026-11-07 17:45: the entrance darts lost round 6 live (16:13, a
+# bloon leaked about 9 s after Play with all three darts 0-0-0 and $5 left).
+# Measured on the map's own bloon paths (data/map_geometry/rake.json, base
+# dart range 32 units; each lane is ~800 units long, ~460 on screen): the
+# entrance darts each saw ONE lane - d1 85 units of the top lane, d2 88 of
+# the left lane, d3 42 + 47 - so whichever lane a bloon took had about 1.5
+# darts on it, and the model's 1.30 margin for round 6 (it pools the darts
+# over both lanes) was far too kind. Searching every legal dart cell (the
+# learned refusals included) at least 0.085 screen-height from the later
+# towers' spots (boat, Quincy, village, boomerang, sniper - darts cannot be
+# sold in CHIMPS) for the best three by the weaker lane: right of the pool
+# 53 / 61, below the bottom U 54 / 48, the centre 51 / 47 - lane totals
+# 158 / 155 against 127 / 135, and every dart now shoots at both lanes, so
+# an uneven split of the round's bloons no longer leaves one lane with a
+# single dart. Doubt: still unupgraded darts on ~30% of each on-screen
+# lane; if this loses round 6-8 too, the next thing to try is fewer,
+# stronger towers on these cells (a 0-0-1 dart pair, or the boat first).
 id: rake_chimps
 map: Rake
 hero: quincy
@@ -132,9 +151,9 @@ planner:
   maps: [Rake]
   revised: "2026-11-07T15:30"
 plan:
-  - {do: place, id: d1, kind: dart, role: dps, at: [0.441, 0.164]}       # top lane's entrance
-  - {do: place, id: d2, kind: dart, role: dps, at: [0.174, 0.589]}       # left lane's entrance
-  - {do: place, id: d3, kind: dart, role: dps, at: [0.452, 0.555]}       # where both lanes pass
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.633, 0.411]}       # right of the pool: both lanes
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.542, 0.871]}       # below the bottom U: both lanes
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.446, 0.581]}       # the centre: both lanes
   - {do: upgrade, id: d3, to: 0-0-1}                                      # Long Range Darts
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.478, 0.394]}   # the pool's bottom edge
   - {do: upgrade, id: b1, to: 1-0-0}
