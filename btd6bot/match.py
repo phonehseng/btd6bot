@@ -625,6 +625,10 @@ class Match:
                         self._last_wait_log = now
                         log.info("idle with $%d: %s", cash, getattr(self.ex, "waiting", "?"))
                     held = self._cash_held(dropped, crisis)
+                    # a plan_first build's plan owns the cash (Executor.plan_first)
+                    plan_first = getattr(self.ex, "plan_first", None)
+                    if plan_first is not None and plan_first():
+                        weak = False
                     if weak and not held and now - self._t_reinforce > REINFORCE_EVERY:
                         # the coming rounds look weak: the damage model picks
                         # what the spare cash buys (reinforce.py), the plan's

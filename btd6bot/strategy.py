@@ -3558,6 +3558,8 @@ class Executor:
             # steps were helis whose spots the game refused 30 times over
             # rounds 37-39, and the MOAB leaked all 150 lives with $7,519 in
             # the bank.
+        if self.plan_first():
+            return "plan"     # the build's plan is its blimp ramp (plan_first)
         # Only buys that matter: the cheapest one closing the whole shortfall,
         # else the most damage per dollar among those adding at least a tenth of
         # it. If nothing fits, save for the cheapest that closes it.
@@ -4230,6 +4232,26 @@ class Executor:
         before, after = RF.lift(fc, RF.board(self), option.towers, rnd, worst[1] if worst else rnd, True)
         return (after or 0.0) - (before or 0.0) >= RF.MIN_LIFT
 
+    def plan_first(self):
+        """True while a `plan_first: true` build still has plan steps left:
+        then the plan owns the bank, and nothing off the plan - reinforce,
+        the blimp check's own buys, surplus() - spends it. Threat answers
+        (the build's `answers`) still may.
+
+        The damage model picks those off-plan buys, and in CHIMPS it has been
+        wrong about which round is weak. Cracked CHIMPS (2026-11-07), built
+        from a community guide, lost round 95 that way: at round 69 reinforce
+        spent $16k on an Elite Defender the plan never asked for, which put
+        the Carrier Flagship off from round 72 to 82, and then about $30k
+        went to ten tier-1/2 snipers and three aces while the plan's Glaive
+        Lord was never bought. A hand-written build from a proven strategy
+        says so with this flag; once its plan is done the usual spending
+        comes back."""
+        strat = getattr(self, "strat", None)
+        if not (isinstance(strat, dict) and strat.get("plan_first")):
+            return False
+        return getattr(self, "idx", 0) < len(getattr(self, "plan", None) or [])
+
     def surplus(self, cash, rnd):
         """Cash is piling up while the plan waits: buy damage anyway.
 
@@ -4243,7 +4265,7 @@ class Executor:
         above its claim is spare, and in a crisis of the round being played
         only a purchase that lifts that round may have it."""
         self.now_round = rnd
-        if cash is None or getattr(self, "saving_for_threat", False):
+        if cash is None or getattr(self, "saving_for_threat", False) or self.plan_first():
             return False
         if getattr(self, "held_cash", 0):
             # part of the cash kept for a far threat while this round is weak (_hold_for)

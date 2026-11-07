@@ -83,6 +83,21 @@ def test_a_hero_opening_counts_as_defence_only_when_the_build_says_so():
     ex.strat = dict(ex.strat, hero_opens=True)
     assert ex.defended()
 
+
+def test_a_plan_first_build_keeps_its_cash_for_the_plan():
+    """`plan_first: true` (Cracked CHIMPS lost round 95 after reinforce and
+    surplus spent the Glaive Lord money off the plan): while plan steps are
+    left, surplus() buys nothing; once the plan is done it spends again."""
+    ex = executor()
+    assert not ex.plan_first()
+    ex.strat = dict(ex.strat, plan_first=True)
+    ex.plan = [{"do": "place", "id": "x1", "kind": "dart"}]
+    ex.idx = 0
+    assert ex.plan_first()
+    assert ex.surplus(50000, 40) is False
+    ex.idx = 1
+    assert not ex.plan_first()
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
