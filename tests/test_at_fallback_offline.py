@@ -45,7 +45,8 @@ def test_refused_at_falls_back_near_its_spot_not_across_the_map():
     ex.failed_spots |= {("boomerang", cx + dx, cy + dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1)}
     spots = ex.pick_spots("boomerang", step, n=ex.SPOTS_PER_HOLD)
     assert spots, "a legal cell close to the spot is still offered"
-    far = [(x, y) for x, y, _ in spots if (x - cx) ** 2 + (y - cy) ** 2 > ex.AT_FALLBACK_CELLS ** 2]
+    limit = max(ex.AT_FALLBACK_CELLS, ex.AT_WIDE_CELLS)
+    far = [(x, y) for x, y, _ in spots if (x - cx) ** 2 + (y - cy) ** 2 > limit ** 2]
     assert not far, f"spots offered across the map: {far}"
 
 
@@ -60,7 +61,9 @@ def test_at_is_dropped_only_when_nothing_near_it_is_left():
     step = {"do": "place", "id": "r3", "kind": "boomerang", "role": "dps", "at": [0.8, 0.8]}
     g, ex = executor([step])
     cx, cy = ex.m.frac_to_cell(0.8, 0.8)
-    r = ex.AT_FALLBACK_CELLS + 1
+    # past both the fallback limit and the wider ring (AT_WIDE_CELLS) that
+    # pick_spots tries before giving up on the spot's neighbourhood
+    r = max(ex.AT_FALLBACK_CELLS, ex.AT_WIDE_CELLS) + 1
     ex.failed_spots |= {("boomerang", cx + dx, cy + dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1)}
     assert ex.pick_spots("boomerang", step, n=4) == []
     spots = ex._spots_widening("boomerang", step)
