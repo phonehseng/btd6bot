@@ -1,7 +1,7 @@
-# Quarry, CHIMPS: a boomerang opens (the match adds its starter dart), a
-# second follows, then Quincy, a Night Vision Shrapnel sniper and a third
-# boomerang round a Primary Mentoring village; Glaive Lord and MOAB
-# Domination carry the late game, a Cripple MOAB sniper finishes.
+# Quarry, CHIMPS: three darts open along the central diagonal and the left
+# bend, two boomerangs follow, then Quincy, a Night Vision Shrapnel sniper
+# and a third boomerang round a Primary Mentoring village; Glaive Lord and
+# MOAB Domination carry the late game, a Cripple MOAB sniper finishes.
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -35,19 +35,10 @@
 #     east lane holds the whole boomerang cluster.
 #
 # Changes from the guide, and why:
-#   * a boomerang opens and a second follows before Quincy: Quincy alone
-#     held round 6 live only from spots seeing about 23% of the track or
-#     more, and here his best cell sees 20% (Lotus Island and Hedge were lost
-#     at round 6 from 18-19%). Of the land openers tried in their best cells
-#     with the match's starter dart (damage model, rounds 6-8: boomerang
-#     1.13 / 0.97 / 0.78, ninja 1.18 / 1.16 / 1.03, druid 1.09 / 1.16 /
-#     1.01, wizard 1.04 / 0.94 / 0.74, tack 0.78 / 0.84 / 0.56) the
-#     boomerang is the guide's own tower, and with r2 bought next the
-#     opening rates 1.13 / 0.97 / 1.26 / 1.14 / 1.07 for rounds 6-10;
-#     Quincy then stands from round 9-10, the sniper from 10-11;
+#   * three darts open, then both boomerangs, then Quincy (see "Opening");
 #   * as on Alpine Run: the Radar village comes right after Glaive Ricochet
 #     (r1 3-0-2), before MOAR Glaives, so that the boomerangs see camo from
-#     about round 33 (the sniper is the only camo tower before that); the
+#     about round 35 (the sniper is the only camo tower before that); the
 #     sniper takes Large Calibre and Deadly Precision (3-2-0) right after
 #     MOAR Glaives as round 40's MOAB answer; it goes on to Maim MOAB after
 #     Glaive Lord and to Cripple MOAB (5-2-0) last, in place of the third
@@ -57,44 +48,76 @@
 #   * the account has the village's top path to tier 4 only - the guide's
 #     village is 4-2-0 (Primary Mentoring) anyway.
 #
+# Opening (reworked 2026-11-07 15:30; the build has not been played live).
+# Calibration from that day's live CHIMPS openings (damage model,
+# optimize_builds.Evaluator + dps_model.round_margin, rounds 6-10; M = the
+# board's margin, B = its margin with its strongest tower removed; heroes
+# are not counted): M alone did not separate holds from losses - boat +
+# starter dart lost Lost Crevasse at M 1.41 (R8) and 0.95 (R9) and Spring
+# Spring at 1.35 (R9) while boomerang + dart held Hedge at 0.91 (R8). B did:
+# in each loss the starter dart did next to nothing (B 0.06-0.13), in each
+# hold the second tower carried a share (B 0.35-0.65: Frozen Over, Lotus
+# Island, Downstream, Hedge, Skates). Quincy alone held from cells seeing
+# 22-37% of the track and lost from 18% (Lotus Island, Hedge) and 27% (Rake);
+# his best cell here sees 19%. Bar used: M >= 0.9 and B >= 0.35 in every
+# round 6-10, from towers the plan places itself. Why darts: with one
+# non-hero tower down, Match keeps $215 back for its starter dart
+# (Match._opener_reserve) and puts that dart where the executor chooses -
+# the old opening (boomerang r1, $340) got it that way - so a $650 opening
+# with any tower over $220 gets an unplanned second tower; three darts
+# ($645) are the only opening whose every tower is the plan's.
+# Rounds 6-10, the boomerangs from rounds 8 and 10: M 1.24 / 1.26 / 1.43 /
+# 1.03 / 1.43, B 0.81 / 0.83 / 1.03 / 0.75 / 1.06 (the old opening with its
+# starter where the replay puts it: M 1.08 / 0.97 / 1.07 / 0.89 / 0.99, B
+# 0.47-0.73). Rounds 13-19, before Glaives: 0.62-0.94 (old 0.47-0.73), with
+# Quincy standing from round 13.
+#
 # Spots (map geometry with the main checkout's learned refusals,
-# data/maps/quarry.npz copied 2026-11-07 12:58, checked in plan order;
-# "cells" are track cells in range and in sight, of 4,140): most of Quarry
-# is rock; the boomerangs stand on the strip along the central diagonal
-# lane and in the east field: r1 (0.574, 0.487) reaches 600 (14%; the best
+# data/maps/quarry.npz copied 2026-11-07, checked in plan order; "cells" are
+# track cells in range and in sight, of 4,140): the track comes on screen
+# along the top edge, where no tower but a sniper reaches it; the darts
+# stand where it first can be hit: d1 (0.542, 0.411) at the top of the
+# central diagonal, d2 (0.393, 0.487) on its middle, d3 (0.158, 0.428) at
+# the left bend (7, 7 and 8 of 8 neighbours legal; 0.087 screen-height from
+# the village and r2, 0.092 from r1, 0.095 from Quincy). Most of Quarry is
+# rock; the boomerangs stand on the strip along the central diagonal lane
+# and in the east field: r1 (0.574, 0.487) reaches 600 (14%; the best
 # boomerang cell, 602, has 4 legal neighbours), r2 (0.516, 0.487) 567, r3
 # (0.660, 0.460) 340; Quincy at (0.452, 0.496), 780 (19%); the sniper at
 # (0.740, 0.462) sees 3,183 (77%). Village cells are rare in the cluster:
 # the village at (0.596, 0.402) has r1 at 20.8 units, r2 at 34.9 and r3 at
 # 26.9 (radius 40 under the strict buff rule: 5.1 units of slack at the
-# least), 6 of its 8 neighbours legal. Every tower is at least 0.09 screen
+# least), 6 of its 8 neighbours legal. Every tower is at least 0.08 screen
 # heights from the next and has 5+ of 8 legal neighbours.
 #
 # Offline replay (tools/simulate_threats.simulate on the learned map, live
-# account unlocks, base income): r1 R6, r2 R7, Quincy R10, sniper R11 (Night
-# Vision R13, Shrapnel R16), r3 R17, Glaive Ricochet R23, village R28
-# (Radar R33), MOAR Glaives R36, Deadly Precision R39, MOAB Press R43,
-# Primary Mentoring R47, Turbo Charge R50, Glaive Lord R70, Maim MOAB R74,
-# MOAB Domination R89, Cripple MOAB R98 (Alpine Run: Glaive Lord 70, MOAB
-# Domination 89, Cripple 97). No threat gaps; the blimp check's own buys
-# only from R98. Damage model (no hero; the replay has no starter dart):
-# R40 1.65, R51 2.43, R60 0.80, R63 0.58, R70-76 16, R78 8.92, R90 6.30,
-# R95 1.16, R98 1.58, R100 3.55.
+# account unlocks, base income, Match's opener reserve emulated): darts R6,
+# r1 R8, r2 R10, Quincy R13, sniper R14 (Night Vision R15, Shrapnel R19), r3
+# R20, Glaive Ricochet R26, village R29 (Radar R35), MOAR Glaives R37, Deadly
+# Precision R40, MOAB Press R44, Primary Mentoring R48, Turbo Charge R50,
+# Glaive Lord R70, Maim MOAB R74, MOAB Domination R89, Cripple MOAB R98 (the
+# boomerang opening: village R28, MOAR Glaives R36, the rest the same). Plan
+# 32/32, no threat gaps, every tower on its spot. Damage model (no hero):
+# R40 3.64 blimp ratio, R60 2.58, R75 0.97, R90 0.98, R95 0.24, R98 0.21,
+# R100 0.79; the blimp check's own buys only from R98.
 #
-# Status: written 2026-11-07, not played yet.
+# Status: written 2026-11-07, opening reworked 15:30; not played yet.
 id: quarry_chimps
 map: Quarry
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {boomerang: [5, 4, 5], village: [4, 2, 0], sniper: [5, 2, 0]}
+  towers: {dart: [0, 0, 0], boomerang: [5, 4, 5], village: [4, 2, 0], sniper: [5, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Quarry]
-  revised: "2026-11-07T12:00"
+  revised: "2026-11-07T15:30"
 plan:
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.574, 0.487]}   # opens (the match adds a dart); becomes Glaive Lord
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.542, 0.411]}       # top of the central diagonal
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.393, 0.487]}       # middle of the diagonal
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.158, 0.428]}       # the left bend
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.574, 0.487]}   # becomes Glaive Lord
   - {do: place, id: r2, kind: boomerang, role: dps, at: [0.516, 0.487]}   # becomes MOAB Domination
   - {do: place, id: hero, kind: hero, role: dps, at: [0.452, 0.496]}      # Quincy once the cash allows
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.740, 0.462]}
