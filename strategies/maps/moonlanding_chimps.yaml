@@ -1,0 +1,136 @@
+# Moon Landing, CHIMPS: a sniper on the high ground above the middle crater
+# and a wizard in the gap between the craters open together; Quincy follows;
+# a druid, a Jungle Drums village and a second sniper join them round the
+# middle; the first sniper grows to Elite Defender, the wizard to Archmage
+# and the druid to Spirit of the Forest; the second sniper (camo leads, then
+# Cripple MOAB) and a Glaive Ricochet boomerang cover what the bot's checks
+# ask for. This is the Hedge CHIMPS build (won 2026-11-07) on this map's
+# ground.
+#
+# Why: the owner's goal is CHIMPS black borders. On 2026-11-07 the bot beat
+# CHIMPS on nine maps with builds that follow a published community strategy
+# step by step and let the plan own the cash (`plan_first`). Moon Landing has
+# no water, so the Carrier Flagship recipe is out; its crater walls block
+# line of sight like Hedge's hedges, so this build uses the land recipe that
+# won Hedge. It is played live to learn, not gated on the damage model
+# (which does not count heroes).
+#
+# Sources:
+#   * bloon.games, "How to Beat CHIMPS on Moon Landing?"
+#     (https://bloon.games/how-to-beat-chimps-on-moon-landing/): the page
+#     holds only a video (https://www.youtube.com/watch?v=UzSEPIkB1Pg, BTD6
+#     Master); its description has no steps, so the map's own guide could not
+#     be followed step by step.
+#   * The plan is therefore the bloon.games Tree Stump CHIMPS guide as the
+#     Hedge build plays it (hedge_chimps.yaml): a no-power, no-Monkey-Knowledge
+#     text guide for a land map, https://bloon.games/how-to-beat-chimps-on-tree-stump/
+#     - Quincy; next to him a Sniper, a Mermonkey, a Druid and a Wizard; the
+#     druid to Druid of the Jungle (1-3-0); a village 2-0-2, then the sniper
+#     to Full Auto Rifle (0-2-4) and Elite Defender (0-2-5); the wizard to
+#     Archmage (5-0-2); the Mermonkey to Lord of the Abyss (5-0-2); the druid
+#     to Spirit of the Forest (2-5-0). No rounds are given.
+#   * bloonswiki Moon_Landing (https://www.bloonswiki.com/Moon_Landing_(BTD6)):
+#     one long lane loops out of three walled craters; the walls block line
+#     of sight for most land towers; snipers do well. The Medium build's
+#     sources (moonlanding_military.yaml) say the same: BeatbloonsBob's Moon
+#     Landing CHIMPS video puts a sniper "as high as you can" and takes it to
+#     Elite Defender (0-2-4 -> 0-2-5).
+#
+# Changes from the guide, and why (the Hedge build's, see hedge_chimps.yaml,
+# plus this map's opening):
+#   * no Mermonkey: the account's Mermonkey top path stops short of Lord of
+#     the Abyss (5-x-x);
+#   * the druid goes to 1-3-0 and later to 2-5-0 in one step (2-4-0, Jungle's
+#     Bounty, is an income tier the bot never targets in CHIMPS);
+#   * a second sniper: Full Metal Jacket + Night Vision (1-1-0) for the camo
+#     leads, Deadly Precision (3-1-0) for the camo ceramics
+#     (strategy.strong_camo), then Maim / Cripple MOAB (5-1-0), the listed DDT
+#     and BAD answers (in the guide the Lord of the Abyss carries those);
+#   * a Glaive Ricochet boomerang (3-0-2), the listed rush answer; it is not
+#     the opener here (see "Opening") and comes when the plan reaches it;
+#   * the first sniper stands on the high ground at the top (it sees 41% of
+#     the track past the crater walls, the most of any cell) rather than by
+#     the village: the walls leave the cells near the middle 23-37%, and
+#     on its own at the opening the top cell rates best (1.06 against 0.96
+#     at round 6 with the wizard).
+#
+# Spots (map geometry with the main checkout's learned refusals,
+# data/maps/moonlanding.npz, checked in placement order; "cells" are track
+# cells in range and in line of sight, placement.visible_cover, of 2,410;
+# every spot has at least 7 of its 8 neighbour cells legal and stands at
+# least 0.08 screen heights from the others): sniper s1 at (0.446, 0.198)
+# sees 41% (best cell 43%, 4 legal neighbours); the wizard at (0.542, 0.496)
+# in the gap between the craters 8% (the best wizard cell, 8%, has 5 legal
+# neighbours); Quincy at (0.500, 0.198) 8% (no hero cell sees more than
+# 11%); the druid at (0.436, 0.359) 6% (best on the map 7%, in the gap the
+# wizard takes); the village at (0.489, 0.428) is 24.8 units from the druid
+# and the wizard; the second sniper at (0.398, 0.419) 33.0 from it (Jungle
+# Drums radius 48), seeing 23%; the boomerang at (0.120, 0.572) by the
+# entrance lane, 7%. Every short-range tower here sees little: the wizard's
+# Guided Magic (1-x-x, on the way to Archmage) sees over walls in the game,
+# which the bot's sight check does not count.
+#
+# Opening: CHIMPS starts with $650 at Hard prices. No hero cell sees more
+# than 11% of the track (Quincy alone lost round 6 from 18-19% cells on
+# Lotus Island and Hedge), and every lone tower rates below 1 at round 6 in
+# the damage model (sniper 0.42, boomerang 0.59, wizard 0.54), so two towers
+# open: the sniper and the wizard, $380 + $270 = $650, which leaves no
+# starter dart (that only comes beside a lone opener). Damage model, rounds
+# 6-12: 1.06, 1.02, 0.82, 0.47, 0.68, 0.81, 0.66 (no Quincy, no buys after
+# the opening; Quincy is the next step). Of the other pairs tried, boomerang
+# + wizard rates 0.79, 0.65, 0.58 and sniper + starter dart 0.47, 0.56, 0.42.
+#
+# Cash (CHIMPS curve, Hard prices, tests/test_chimps_builds_offline.
+# plan_timeline): sniper and wizard R5, Quincy R9, druid R10, Druid of the
+# Jungle R19, Night Vision R20, village 2-0-2 R32, Full Auto Rifle and the
+# second sniper R41, Glaive Ricochet R45, Elite Defender R52, Archmage R78,
+# Spirit of the Forest R91, Cripple MOAB R98 - Hedge's timings.
+# tools/simulate_threats on the learned map: no threat gaps, 20/20 steps.
+#
+# Status: new 2026-11-07, not played yet. The weakest of the four builds
+# written that day: rounds 8-12 rate under 1 in the model before Quincy and
+# the druid stand.
+id: moonlanding_chimps
+map: Moon Landing
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {sniper: [5, 2, 5], druid: [2, 5, 0], wizard: [5, 0, 2], village: [2, 0, 2], boomerang: [3, 0, 2]}
+  # not gated on the damage model: played live to learn (see above)
+  base_success: {chimps: 0.5}
+  maps: [Moon Landing]
+  revised: "2026-11-07T12:00"
+plan:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.446, 0.198]}   # high ground at the top: opens
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.542, 0.496]}      # gap between the craters: opens with the sniper
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.500, 0.198]}      # Quincy, beside the sniper
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.436, 0.359]}
+  - {do: upgrade, id: d1, to: 1-0-0}                                      # Hard Thorns: round 28's lead
+  - {do: upgrade, id: d1, to: 1-3-0}                                      # Druid of the Jungle
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: place, id: v1, kind: village, role: support, near: [d1, w1], at: [0.489, 0.428]}
+  - {do: upgrade, id: v1, to: 2-0-2}                                      # Jungle Drums, Monkey Commerce
+  - {do: upgrade, id: s1, to: 0-2-4}                                      # Full Auto Rifle
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.398, 0.419]}
+  - {do: upgrade, id: s2, to: 1-1-0}                                      # Full Metal Jacket + Night Vision: camo leads
+  - {do: upgrade, id: s2, to: 3-1-0}                                      # Deadly Precision: camo ceramics
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.120, 0.572]}   # by the entrance lane
+  - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the round-63 rush
+  - {do: upgrade, id: s1, to: 0-2-5}                                      # Elite Defender
+  - {do: upgrade, id: w1, to: 5-0-2}                                      # Archmage (Monkey Sense: camo)
+  - {do: upgrade, id: d1, to: 2-5-0}                                      # Spirit of the Forest
+  - {do: upgrade, id: s2, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s2, to: 5-1-0}                                      # Cripple MOAB: round 100's BAD
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: d1, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: d1, to: 1-3-0}]
+  camo_lead: [{do: upgrade, id: s2, to: 1-1-0}]
+  camo_ceramic: [{do: upgrade, id: s2, to: 3-1-0}]
+  moab: [{do: upgrade, id: s2, to: 3-1-0}, {do: upgrade, id: s1, to: 0-2-5}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  bfb: [{do: upgrade, id: s1, to: 0-2-5}, {do: upgrade, id: w1, to: 5-0-2}]
+  zomg: [{do: upgrade, id: w1, to: 5-0-2}, {do: upgrade, id: d1, to: 2-5-0}]
+  ddt: [{do: upgrade, id: d1, to: 2-5-0}, {do: upgrade, id: s2, to: 4-1-0}]
+  bad: [{do: upgrade, id: s2, to: 5-1-0}]
