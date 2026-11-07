@@ -356,6 +356,28 @@ def test_plan_blimp_step_keeps_its_cash():
     assert ex._plan_ramp_cost(plan[0], load) == T.upgrade_cost("sniper", 1, 4, "hard")
 
 
+def test_far_short_blimp_round_does_not_wait_on_a_weak_plan_step():
+    """#Ouch Double HP (2026-11-07): round 40's MOAB was rated 0.2x from
+    round 37, and the plan's next step - a Bloonjitsu ninja (n1 -> 4-0-2),
+    which adds only a little MOAB damage - counted as the blimp step, so
+    all the cash was held for it until round 39. Far short of the bar, a
+    step that closes less than half of the shortfall loses its turn and
+    blimp damage is bought (or saved for) at once."""
+    plan = [{"do": "upgrade", "id": "n1", "to": "4-0-2"}]
+    towers = [("n1", "ninja", (3, 0, 2)), ("n2", "ninja", (3, 0, 2))]
+    g, ex = executor({"plan": plan}, towers=towers, cash=3000)
+    ex.rules["tough_moabs"] = True       # Double HP MOABs
+    ex._init_threats()
+    ex.cash_seen = 3000
+    R, load, ratio = ex._ramp_due(37)
+    assert R == 40 and ratio < ex.RAMP_PANIC, ratio
+    short = (ex.ramp_bar(load) - ratio) * load["hp"]
+    assert ex._plan_step_too_weak(plan[0], load, ratio, short), ex._plan_ramp_gain(plan[0], load)
+    assert ex._answer_ramp(R, load, ratio, 3000, 37) in ("bought", "wait"), g.bought
+    # not far short: the plan keeps its turn as before
+    assert not ex._plan_step_too_weak(plan[0], load, ex.RAMP_PANIC, short)
+
+
 def test_round_before_blimps_buys_damage_over_other_plan_steps():
     """Spillway Medium (2026-11-04): round 40's MOAB was rated 0.8x from
     round 37, the plan's next step was a heli the game kept refusing, and

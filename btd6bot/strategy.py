@@ -3579,7 +3579,11 @@ class Executor:
         # "stuck", so it kept its turn.
         one_life = bool(self.rules.get("one_life"))
         last_call = R - 2 if one_life else R - 1
-        if self.idx < len(self.plan) and not (rnd >= last_call and ratio < self.RAMP_PANIC):
+        # What is missing to reach the bar, in blimp HP the defence should
+        # be able to deal in reach (also used to pick a purchase below).
+        short = (self.ramp_bar(load) - ratio) * load["hp"]
+        if self.idx < len(self.plan) and not (rnd >= last_call and ratio < self.RAMP_PANIC) \
+                and not self._plan_step_too_weak(self.plan[self.idx], load, ratio, short):
             cost = self._plan_ramp_cost(self.plan[self.idx], load)
             if cost is not None and cost <= money:
                 # the plan's next step is itself blimp damage it can pay for in
@@ -3599,7 +3603,6 @@ class Executor:
         # Only buys that matter: the cheapest one closing the whole shortfall,
         # else the most damage per dollar among those adding at least a tenth of
         # it. If nothing fits, save for the cheapest that closes it.
-        short = (self.ramp_bar(load) - ratio) * load["hp"]
         opts = self._dps_options(load)
         closing = sorted((o for o in opts if o["gain"] >= short), key=lambda o: o["cost"])
         fits = [o for o in closing if o["cost"] <= money] or \
@@ -3623,6 +3626,50 @@ class Executor:
             return True
         return st.get("do") == "place" and any(k == st.get("kind") for k, _x, _y in self.failed_spots)
 
+    # A plan step must close at least this share of the blimp shortfall to
+    # keep its turn while the defence is far short (under RAMP_PANIC).
+    RAMP_PLAN_SHARE = 0.5
+
+    def _plan_step_too_weak(self, st, load, ratio, short):
+        """Should the plan lose its turn to the blimp check? True when the
+        defence is far short of the blimp round (ratio under RAMP_PANIC)
+        and the plan's next step st would close less than RAMP_PLAN_SHARE of
+        the shortfall `short` (blimp HP) - including a step that adds no
+        blimp damage at all. The most blimp damage per dollar is then bought
+        (or saved for) at once, instead of waiting on the plan.
+
+        #Ouch Double HP (2026-11-07, case 20261107_015342): from round 37 the
+        blimp check rated round 40's 400-HP MOAB at 0.2x of the 1.4x wanted.
+        The plan's next step, n1 -> 4-0-2 (Bloonjitsu, $2,970), adds a little
+        MOAB damage, so it counted as "the plan's blimp step" and the firm
+        blimp hold kept all the cash for it through rounds 37-38; then the
+        next step (a ninja 2-0-4) was held for the same way. The real answer
+        (a sniper and an ace) only started at round 39 and the MOAB took all
+        100 lives at round 40. Cargo and Pat's Pond Half Cash (2026-11-06)
+        lost round 40 the same way at 0.1x. A step that adds a fraction of
+        what is missing is not the answer, however long it is waited for."""
+        if ratio >= self.RAMP_PANIC or short <= 0:
+            return False
+        gain = self._plan_ramp_gain(st, load)
+        return gain < self.RAMP_PLAN_SHARE * short
+
+    def _plan_ramp_gain(self, st, load):
+        """The blimp damage in reach (threats.blimp_capacity, in blimp HP)
+        that plan step st adds: 0 for anything but an upgrade of a standing
+        tower that raises it (a placement is not counted - where it lands is
+        not known before it is placed)."""
+        if st.get("do") != "upgrade" or not st.get("to"):
+            return 0.0
+        p = self.g.towers.get(st.get("id"))
+        if p is None:
+            return 0.0
+        target = [max(a, b) for a, b in zip(p.tiers, parse_cross(st["to"]))]
+        if target == list(p.tiers):
+            return 0.0
+        track, rng, reach = self._track_length(), self._range_units, self._reach_fn()
+        return max(0.0, TH.blimp_capacity([(p.tid, p.kind, target)], load, track, rng, reach) -
+                   TH.blimp_capacity([p], load, track, rng, reach))
+
     def _plan_ramp_cost(self, st, load):
         """What plan step st costs when it upgrades a standing tower to more
         blimp damage (threats.blimp_capacity); None for any other step.
@@ -3635,19 +3682,10 @@ class Executor:
         waited, $3,616 was all there was when round 40 came, and the MOAB
         leaked. A placement is not counted: where it lands, and so what it
         reaches, is not known before it is placed."""
-        if st.get("do") != "upgrade" or not st.get("to"):
+        if self._plan_ramp_gain(st, load) <= 0:
             return None
-        p = self.g.towers.get(st.get("id"))
-        if p is None:
-            return None
+        p = self.g.towers[st["id"]]       # _plan_ramp_gain found it standing
         target = [max(a, b) for a, b in zip(p.tiers, parse_cross(st["to"]))]
-        if target == list(p.tiers):
-            return None
-        track, rng, reach = self._track_length(), self._range_units, self._reach_fn()
-        gain = TH.blimp_capacity([(p.tid, p.kind, target)], load, track, rng, reach) - \
-            TH.blimp_capacity([p], load, track, rng, reach)
-        if gain <= 0:
-            return None
         fam = PRICE_FAMILY.get(self.mode, "hard")
         return sum(T.upgrade_cost(p.kind, i + 1, k, fam)
                    for i in range(3) for k in range(p.tiers[i] + 1, target[i] + 1))
