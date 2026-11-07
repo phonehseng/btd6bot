@@ -1,165 +1,108 @@
-# Skates, CHIMPS: a tack in the first loop's corner (Ring of Fire, then
-# Inferno Ring), subs and two Aircraft Carriers in the big ice crack, a
-# 2-0-4 ninja with an acid-dip Alchemist by the last loop, and a Radar Scanner
-# village that lends the tack camo.
+# Skates, CHIMPS: a druid opens in the first loop's corner, a sniper and
+# Obyn join it, a Jungle Drums village buffs them, the sniper grows to Elite
+# Defender, a Carpet of Spikes factory and the druid's Spirit of the Forest
+# carry the late game, and a second sniper with Cripple MOAB finishes.
 #
-# Why: a long route (1,172 world units hittable) that makes three loops. The
-# first loop's top-left corner (0.163, 0.266) is where a tack reaches the most
-# track (10% of the route in 23 units of range); from $650 a 0-2-0 tack there
-# holds rounds 6-10 at 2.6 in the damage model; every other $650 opener
-# tried (one or two towers of 14 kinds at their two best spots) 1.7 or less. The
-# central crack (water) takes the subs and buccaneers: a buccaneer there
-# reaches 22% of the route, and the Aircraft Carriers' planes the whole map.
-# The ninja and the Alchemist stand where the second and third loops meet
-# (the second-best ninja spot, 15%; the best is the tack's corner), the Alchemist's
-# Acidic Mixture Dip making the ninja's shurikens pop lead (round 59's 50 camo
-# leads, round 90's and 95's fortified camo leads). The village at
-# (0.248, 0.351) is the nearest legal spot to the tack (37 units, inside the
-# village's 40): Radar Scanner gives the tack camo, so Ring of Fire and
-# Inferno Ring hit the camo ceramics of 78 and the camo DDTs of 90-99. Inferno
-# Ring (t1 5-2-0, $49,140) is the late-game answer: with it rounds 90-100
-# rate 3.0-16; without it round 95 rates 0.8 and round 99 1.0 (Carrier
-# Flagship plus Sub Commander for about the same money: 1.0 / 1.2). A MOAB
-# Eliminator bomb (0-5-2) ends the plan: round 100 already rates 7.9 without
-# it, but strategy.coverage only counts the towers listed in
-# strategy.ANSWERS["bad"] (no tack), and runner.planner_specs drops a mode
-# whose coverage misses a threat - without it the planner would never pick
-# this build.
-# The houses ($500, free a small crack) are not removed: the bot never buys
-# removables and the build does not need them. Admiral Brickell sits in the
-# crack (not counted by the damage model: extra safety only).
+# Why: the owner's goal is CHIMPS black borders. The earlier Skates CHIMPS
+# build (tack, subs, two carriers, ninja, alchemist, bomb; designed on the
+# damage model) was never played live, and two other Beginner model-built
+# builds lost at round 6. Cracked CHIMPS was won on 2026-11-07 by a build
+# that follows a published community strategy step by step with
+# `plan_first`; this build does the same here. It is played live to learn,
+# not gated on the damage model.
 #
-# CHIMPS: no selling, no income (no Banana Farm, no Merchantman: the
-# buccaneers stop at x-x-2), no Monkey Knowledge, no powers, $650 at round 6.
+# Source: bloon.games, "BTD6 Skates CHIMPS Guide (No Micro, No Abilities) -
+# Easy Peasy CHIMPS Squeezy!" (https://bloon.games/how-to-beat-chimps-on-skates,
+# video 7U0EOowAl64): no powers, no Monkey Knowledge. In order: place a
+# Druid; a Sniper Monkey; Obyn Greenfoot; the sniper to 0-2-2; a Monkey
+# Village 2-0-2 (attack speed, discounts); the sniper to Semi-Automatic and
+# Full Auto Rifle; the druid to 2-4-0; the sniper to Elite Defender; save
+# up; a Spike Factory to Carpet of Spikes (2-5-0); the druid to Spirit of the
+# Forest. The guide names no spots and no rounds.
 #
-# Sources:
-#   * bloonswiki Skates: global-range towers stand out on this spread-out map;
-#     limited-range towers best left of the middle loop; Carrier Flagship and
-#     Destroyers in the central crack (https://www.bloonswiki.com/Skates)
-#   * bloonswiki Strategy:CHIMPS: the hard rounds (40, 63, 75, 78, 90, 95,
-#     98, 99, 100); Destroyer / Aircraft Carrier as mid-game save-up towers;
-#     Stronger Stimulant / Permanent Brew alchemists with many-projectile
-#     towers; camo and lead needed together for 90-100's DDTs
-#     (https://www.bloonswiki.com/Strategy:CHIMPS)
-#   * bloon.games Spa Pits CHIMPS guide (a water map): buccaneer 2-2-0 ->
-#     Aircraft Carrier 4-2-0 before round 40, a sub in the centre, then late
-#     tier 5s (https://bloon.games/how-to-beat-chimps-on-spa-pits/)
-#   * bloon.games Skates CHIMPS guide (Druid / Sniper / Village / Spike, no
-#     placements or rounds given; its towers rated lower here in the damage
-#     model) (https://bloon.games/how-to-beat-chimps-on-skates)
-#   No Skates-specific CHIMPS run with placements was found on Reddit, Steam
-#   or YouTube (web searches 2026-11-05); the build itself comes from the
-#   damage model on the map geometry (docs/map_strategies/beginner.md).
+# Changes from the guide, and why:
+#   * the druid's Hard Thorns (1-0-0) is bought before round 28's leads: no
+#     tower of the guide pops lead before the druid's top path, and the
+#     guide only says "2-4-0" after the Full Auto Rifle;
+#   * the druid goes to 2-3-0 there and to 2-5-0 in one later step: 2-4-0
+#     (Jungle's Bounty) is an income tier the bot never targets in CHIMPS
+#     (strategy.INCOME_UPGRADES); it is bought on the way to Spirit of the
+#     Forest, as the guide does;
+#   * a second sniper: Full Metal Jacket + Night Vision (1-1-0) for the camo
+#     leads (no tower of the guide pops camo and lead at once before the
+#     spike factory), Deadly Precision (3-1-0) so that two camo towers at
+#     tier 3 count as strong camo for the camo ceramics (strategy.strong_camo;
+#     without it the executor answered with a Primary Expertise village), and
+#     finally Maim / Cripple MOAB (5-1-0): the bot's coverage check wants a
+#     listed DDT and BAD answer (strategy.ANSWERS: snipers count on the top
+#     path only), and without one the planner would never pick this build;
+#   * a Glaive Ricochet boomerang (3-0-2) before round 63: the coverage check
+#     lists no tower of the guide as a rush answer;
+#   * the guide spends spare cash freely; these are where it goes first.
 #
-# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
-# damage model (support buffs reach a tower only when its centre is inside
-# the buff radius; Aircraft Carrier planes count at a circling plane's share
-# of the track), rounds 6-100: FAILS. Worst margin: plan replay 1.51 (R94;
-# R95 1.79, R98 1.59); sight-strict 1.41 (R98; R78 1.87, R94 1.54, R95 1.76);
-# executor-faithful strict, with its extra towers / plan towers only,
-# 1.41 / 1.41 (R98); drift replay 0.06 (R95; R59 0.68, R90 0.13, R93-100
-# 0.06-0.08): the tack's camo comes from a radius-40 Radar Scanner 36.5
-# units away, and the alchemist was 49 units from b1. Bigger Radius on the
-# village, the alchemist at (0.516, 0.692) and the bomb at (0.371, 0.666)
-# (its planned spot is refused on the live map) fix the drift, but R94-98
-# stay at 1.5-1.8: the cash is spent by R95, and no single addition found
-# (Flagship on either carrier, a second alchemist's dip) lifts R94, R95 and
-# R98 together past 2.0. The plan is left as it was and the build stays
-# held. The numbers below are from the model before the correction.
+# Spots (map geometry, the worktree's learned map and the main checkout's
+# learned refusals, data/maps/skates.npz, checked in placement order): the
+# first loop's top-left corner (0.152, 0.283) is the best cell on the map for
+# a druid (15% of the track), a spike factory and Obyn, and holds one tower:
+# the druid. Obyn (0.152, 0.402) stands below it (27 units); the village
+# (0.200, 0.428) in the loop below, 37 units from the druid (Jungle Drums
+# radius 40, 48 with Bigger Radius), 18-31 units from Obyn, the snipers, the
+# boomerang and the spike factory (0.248, 0.317, the next-best spike cell).
 #
-# Checked offline (no game; docs/map_strategies/beginner.md has the method),
-# on the CHIMPS economy (optimize_builds.economy("chimps", boosts): round 6,
-# $650, base income - CHIMPS pays no Double Cash and has no Fast Track),
-# rounds 6-100:
-#   * every `at` is legal for its tower in plan + answer order, on the map
-#     geometry (as tests/test_map_hints_offline.py checks) and on the live map
-#     model (data/maps/skates.npz), outside the top HUD band;
-#   * strategy.validate and readiness: nothing; strategy.load_all: loads,
-#     bot_ready;
-#   * the plan replayed the executor's way (in order, each step as soon as the
-#     cash allows) keeps every round at a damage-model margin of 2.0 or more.
-#     Worst margin: 3.08 (round 43). Bought: tack 4-2-0 R38, Destroyer R40,
-#     village 0-2-0 R44, Aircraft Carrier R52, ninja 2-0-4 R57, Alchemist
-#     3-2-0 R59, second Aircraft Carrier R68, Inferno Ring R85, MOAB
-#     Eliminator R95;
-#   * sight-strict (subs only count their own range, aces their flight
-#     circle): 2.59 (round 49);
-#   * executor-faithful replay (tools/simulate_threats' loop with the match
-#     loop's surplus spending and threat answers), strict, with its extra
-#     towers / plan towers only: 2.59 / 2.59 (round 49). The whole plan is
-#     bought (30/30): Inferno Ring at round 88 (plan replay 85; rounds 85-88
-#     rate 8.7 or more meanwhile), MOAB Eliminator at round 98 (plan 95).
-#     Blimp rounds (faithful, plan towers only): 40 3.83, 60 16, 63 7.18,
-#     76 16, 78 4.65, 81 13.2, 90 16, 94 7.74, 95 4.04, 96 9.41, 97 11.7,
-#     98 5.54, 99 3.02, 100 7.91; camo/lead rounds 24 16, 28 8.0, 59 16;
-#   * tools/simulate_threats.simulate (open field and real map): no gaps,
-#     plan 30/30; strategy.coverage (full and real account): nothing
-#     missing; strategy.usable on the real account: ok.
-#   * The blimp answers below point at the plan's own blimp steps, in plan
-#     order: without them the executor's rough blimp check (threats.
-#     blimp_capacity) bought a sniper at round 40 and an ace at round 63, then
-#     at rounds 81-88 called each round weak, released the cash held for the
-#     Inferno Ring and spent it on sniper and sub tiers - the Inferno Ring was
-#     never bought and rounds 95/99 fell to 0.8 / 1.0 (the End Of The Road
-#     CHIMPS failure).
-# Gate: every check above held at 2.0 or more on the old model, so
-# base_success chimps was 0.85; on the corrected model it fails (see the
-# re-check above), so it is 0.5 and the planner does not play it.
+# Offline replay (tools/simulate_threats on the map geometry with the learned
+# refusals, live account unlocks): druid R6, sniper R7, Obyn R11, Night
+# Vision R12, sniper 0-2-2 R18, Hard Thorns R19, village 2-0-2 R32, Full
+# Auto Rifle R40, Druid of the Jungle and the second sniper R42 (3-1-0 R46),
+# Glaive Ricochet R47, Elite Defender R54, Carpet of Spikes R82, Spirit of
+# the Forest R95, Maim MOAB R95; the Cripple MOAB is not reached by R100 in
+# the replay (the round-100 BAD answer then tries it). No threat gaps. The
+# damage model (no hero) rates rounds 9-13 at 0.9-1.2, the lead rounds 28
+# and 30 at about 0.7 and rounds 91-99 at 0.1-0.3 (it does not know Spirit
+# of the Forest's vines or Carpet of Spikes well); not gated on it.
 id: skates_chimps
 map: Skates
-hero: admiral_brickell
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {tack: [5, 2, 0], sub: [2, 0, 4], ninja: [2, 0, 4], buccaneer: [4, 2, 2], village: [0, 2, 0],
-           alchemist: [3, 2, 0], bomb: [0, 5, 2]}
-  # held back: Frozen Over CHIMPS was lost at round 56 (2026-11-05 14:34); re-checked
-  # on the corrected model (strict buff reach, carrier planes) it fails R94 (1.51),
-  # R95, R98 (1.41 sight-strict) and, 5 units off, R59-R100 (down to 0.06) - see the header
+  towers: {druid: [2, 5, 0], sniper: [5, 2, 5], village: [2, 0, 2], spike: [2, 5, 0], boomerang: [3, 0, 2]}
+  # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Skates]
+  revised: "2026-11-07T04:00"
 plan:
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.163, 0.266]}   # first loop's corner: 10% of the route
-  - {do: upgrade, id: t1, to: 0-2-0}   # $635 with the tack: holds rounds 6-10 at 2.6+
-  - {do: upgrade, id: t1, to: 1-2-0}
-  - {do: place, id: sb1, kind: sub, role: dps, at: [0.398, 0.606]}   # central crack, south-west: 12.5%
-  - {do: upgrade, id: t1, to: 2-2-0}
-  - {do: place, id: n1, kind: ninja, role: dps, at: [0.569, 0.709]}   # camo for round 24 (and the subs' Advanced Intel)
-  - {do: upgrade, id: t1, to: 3-2-0}   # Hot Shots: lead (round 28)
-  - {do: upgrade, id: sb1, to: 0-0-1}
-  - {do: upgrade, id: sb1, to: 2-0-1}
-  - {do: upgrade, id: sb1, to: 2-0-2}
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.441, 0.351]}   # Brickell, north end of the crack
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.441, 0.572]}   # central crack, south: 22%
-  - {do: upgrade, id: b1, to: 2-0-2}   # Crow's Nest: camo
-  - {do: upgrade, id: sb1, to: 2-0-3}
-  - {do: upgrade, id: t1, to: 4-2-0}   # Ring of Fire
-  - {do: upgrade, id: b1, to: 3-0-2}   # Destroyer: round 40's MOAB
-  - {do: place, id: v1, kind: village, role: support, at: [0.248, 0.351]}   # 37 units from the tack
-  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: the tack sees camo
-  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
-  - {do: place, id: sb2, kind: sub, role: dps, at: [0.462, 0.266]}   # central crack, north
-  - {do: upgrade, id: sb2, to: 2-0-4}
-  - {do: upgrade, id: b1, to: 4-0-2}   # Aircraft Carrier: planes over the whole map
-  - {do: upgrade, id: n1, to: 2-0-4}   # Sticky Bomb; Flash Bomb pops lead and camo
-  - {do: place, id: a1, kind: alchemist, role: support, at: [0.537, 0.726]}   # next to the ninja
-  - {do: upgrade, id: a1, to: 3-2-0}   # Acidic Mixture Dip (lead, +damage) + Berserker Brew
-  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.366, 0.555]}   # central crack, west: 21%
-  - {do: upgrade, id: b2, to: 4-2-0}   # second Aircraft Carrier (Hot Shot: lead)
-  - {do: upgrade, id: t1, to: 5-2-0}   # Inferno Ring: rounds 90-100
-  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.377, 0.675]}   # between the first and second loops: 14%
-  - {do: upgrade, id: bm1, to: 0-5-2}   # MOAB Eliminator: the listed BAD answer (strategy.ANSWERS) for round 100
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.152, 0.283]}      # first loop's corner: the opener
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.200, 0.530]}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.152, 0.402]}      # Obyn, below the druid
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: s1, to: 0-2-0}                                      # Shrapnel
+  - {do: upgrade, id: s1, to: 0-2-2}
+  - {do: upgrade, id: d1, to: 1-0-0}                                      # Hard Thorns: round 28's lead
+  - {do: place, id: v1, kind: village, role: support, near: [d1, s1], at: [0.200, 0.428]}
+  - {do: upgrade, id: v1, to: 2-0-2}                                      # Jungle Drums, Monkey Commerce
+  - {do: upgrade, id: s1, to: 0-2-3}                                      # Semi-Automatic
+  - {do: upgrade, id: s1, to: 0-2-4}                                      # Full Auto Rifle
+  - {do: upgrade, id: d1, to: 2-3-0}                                      # Druid of the Jungle (2-4-0 is income, see above)
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.174, 0.496]}
+  - {do: upgrade, id: s2, to: 1-1-0}                                      # Full Metal Jacket + Night Vision: camo leads
+  - {do: upgrade, id: s2, to: 3-1-0}                                      # Deadly Precision: camo ceramics
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.232, 0.496]}
+  - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the round-63 rush
+  - {do: upgrade, id: s1, to: 0-2-5}                                      # Elite Defender
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.248, 0.317]}
+  - {do: upgrade, id: sp1, to: 2-5-0}                                     # Carpet of Spikes
+  - {do: upgrade, id: d1, to: 2-5-0}                                      # Spirit of the Forest
+  - {do: upgrade, id: s2, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s2, to: 5-1-0}                                      # Cripple MOAB: round 100's BAD
 answers:
-  lead: [{do: upgrade, id: t1, to: 3-2-0}]
-  ceramic: [{do: upgrade, id: t1, to: 3-2-0}]
-  rush: [{do: upgrade, id: t1, to: 4-2-0}]
-  camo_ceramic: [{do: upgrade, id: v1, to: 0-2-0}]
-  camo_lead: [{do: upgrade, id: v1, to: 0-2-0}]
-  # blimp rounds: the plan's own blimp steps, in plan order (see the header)
-  moab: [{do: upgrade, id: t1, to: 4-2-0}, {do: upgrade, id: b1, to: 3-0-2}, {do: upgrade, id: sb1, to: 2-0-4},
-         {do: upgrade, id: n1, to: 2-0-4}, {do: upgrade, id: b2, to: 4-2-0}, {do: upgrade, id: t1, to: 5-2-0},
-         {do: upgrade, id: bm1, to: 0-5-2}]
-  bfb: [{do: upgrade, id: b1, to: 4-0-2}, {do: upgrade, id: n1, to: 2-0-4}, {do: upgrade, id: b2, to: 4-2-0},
-        {do: upgrade, id: t1, to: 5-2-0}, {do: upgrade, id: bm1, to: 0-5-2}]
-  zomg: [{do: upgrade, id: b2, to: 4-2-0}, {do: upgrade, id: t1, to: 5-2-0}, {do: upgrade, id: bm1, to: 0-5-2}]
-  ddt: [{do: upgrade, id: n1, to: 2-0-4}, {do: upgrade, id: t1, to: 5-2-0}, {do: upgrade, id: bm1, to: 0-5-2}]
-  bad: [{do: upgrade, id: t1, to: 5-2-0}, {do: upgrade, id: bm1, to: 0-5-2}]
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: d1, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: s1, to: 0-2-4}]
+  moab: [{do: upgrade, id: s1, to: 0-2-4}, {do: upgrade, id: s1, to: 0-2-5}]
+  camo_lead: [{do: upgrade, id: s2, to: 1-1-0}]
+  camo_ceramic: [{do: upgrade, id: s2, to: 3-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  bfb: [{do: upgrade, id: s1, to: 0-2-5}, {do: upgrade, id: sp1, to: 2-5-0}]
+  zomg: [{do: upgrade, id: sp1, to: 2-5-0}, {do: upgrade, id: d1, to: 2-5-0}]
+  ddt: [{do: upgrade, id: d1, to: 2-5-0}, {do: upgrade, id: s2, to: 4-1-0}]
+  bad: [{do: upgrade, id: s2, to: 5-1-0}]

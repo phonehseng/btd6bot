@@ -1,149 +1,102 @@
-# Frozen Over, CHIMPS: a tack opener, two Aircraft Carriers in the central
-# pond under a Monkey Intelligence Bureau with Berserker Brew, a Maim MOAB
-# sniper in the bottom-right corner and an Armor Piercing sub.
+# Frozen Over, CHIMPS: one buccaneer in the central pond opens and grows to
+# a Carrier Flagship beside a Radar Scanner / Jungle Drums village, Etienne
+# comes in after it, a Glaive Lord boomerang stands left of the pond and a
+# Cripple MOAB sniper finishes.
 #
-# Why: a long route (1,503 world units; the first 15% runs off screen) that
-# crosses itself in figure-eights. The small central pond sits inside the
-# crossings: a buccaneer there reaches 52% of the route (map geometry) - the
-# best spot on the map by far; it holds two buccaneers and one sub. The
-# cliff at the top blocks sight but the bottom-right corner sees the whole
-# route. CHIMPS starts at round 6 with $650 and pays about $177,000 in all up
-# to round 100, with no income, no selling, no powers and no Monkey
-# Knowledge; one leak loses.
-#   * Rounds 6-15: one tack at the top of the left loop (the best tack spot
-#     on the live map, inside the crossings) to Tack Sprayer 2-0-3, a second
-#     tack lower down. The damage model rated this opener 2.5 at round 6
-#     against 1.2 for Sub + Dart and 1.5 for three Darts.
-#   * Camo (round 24): Night Vision on the sniper; lead (round 28): Hot Shot
-#     on the first buccaneer; ceramics and the round-40 MOAB: the sniper's
-#     Large Calibre and Deadly Precision.
-#   * Rounds 41-72: Radar Scanner village by the pond (camo for the
-#     Destroyers), the second buccaneer, Maim MOAB, both buccaneers to
-#     Aircraft Carrier 4-2-0, Armor Piercing sub, a 3-2-0 Berserker Brew
-#     alchemist, Ring of Fire on the second tack (the round-63 rush), then
-#     Jungle Drums and the Monkey Intelligence Bureau (2-3-0): it lets the
-#     carriers pop the DDTs of rounds 90-99 (camo, lead and black). Without
-#     MIB the model rated round 95 at 0.35 and round 99 at 0.30.
-#   * No step costs more than $8,640 and the plan is complete by round 73 in
-#     every replay. The round-100 BAD answer (Cripple MOAB, $34,560) is not a
-#     plan step: the executor buys it as the `bad` answer below. Carrier
-#     Flagship and Cripple MOAB were tried as plan steps; the executor's blimp
-#     check spends the cash on its own blimp answers from round 75 and never
-#     bought either (see the end of this header).
-#   * Brickell (big pond) is not counted by the damage model; she is bought
-#     where the plan has slack (round ~47).
+# Why: the owner's goal is CHIMPS black borders. The earlier Frozen Over
+# CHIMPS build (tacks, two carriers, a sub, an alchemist and an MIB village,
+# designed on the damage model) lost live at round 56 on 2026-11-05.
+# Cracked CHIMPS was won on 2026-11-07 by a build that follows a published
+# community strategy step by step with `plan_first`; this build does the
+# same here. It is played live to learn, not gated on the damage model.
 #
-# Sources:
-#   * bloonswiki Frozen_Over: one of the easiest maps, long track, many
-#     loops; Overdrive at the top of a loop and Glaive Lord recommended
-#     (https://www.bloonswiki.com/Frozen_Over)
-#   * bloonswiki Strategy:CHIMPS: hardest rounds 40, 63, 75, 78, 90, 95,
-#     98-100; support (Berserker Brew, MIB) for the main damage; Destroyer
-#     and Aircraft Carrier as mid-game save-up towers; Carrier Flagship with
-#     Brickell as a win condition; every beginner map supports a hero start
-#     (https://www.bloonswiki.com/Strategy:CHIMPS)
-#   * bloonswiki Strategy:Military_Only: Destroyer "best with the 3-2-0
-#     crosspath", Maim MOAB snipers on Strong
-#     (https://www.bloonswiki.com/Strategy:Military_Only)
-#   Glaive Lord was left out: optimize_builds.CHIMPS_MODEL_DOUBTS (the model
-#   counts its glaives map-wide). No community video or forum guide for
-#   Frozen Over CHIMPS was found by web search; the build is the wiki's
-#   general CHIMPS advice fitted to this map with the damage model.
+# Source:
+#   * bloon.games has a Frozen Over CHIMPS page
+#     (https://bloon.games/how-to-beat-chimps-on-frozen-over/), but it is a
+#     video only (YouTube NXJcifluJt0, no description, no captions the bot
+#     can read), so its build order is not known here.
+#   * The build therefore follows the bloon.games Logs CHIMPS guide, the
+#     text guide for the map most like this one (a central pond with track
+#     around it): https://bloon.games/how-to-beat-chimps-on-logs/ - a
+#     buccaneer on the left-middle of the central water, Etienne right after
+#     it, the buccaneer's middle path first to 2-2-0, then Destroyer, Aircraft
+#     Carrier, Carrier Flagship (5-2-0); a village early, later on its top path
+#     to Primary Expertise; a Glaive Lord boomerang on the Flagship's deck.
+#   * bloonswiki Frozen_Over (wikitext read through the wiki's API): Glaive
+#     Lord is recommended here, "to the left of the central water spot" it
+#     hits most of the map.
 #
-# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
-# damage model (support buffs reach a tower only when its centre is inside
-# the buff radius; Aircraft Carrier planes count at a circling plane's share
-# of the track), rounds 6-100: FAILS. Worst margin: plan replay 1.01 (R95;
-# R98 1.74, R99 1.23); sight-strict 0.99 (R95); executor-faithful strict,
-# with its extra towers / plan towers only, 1.14 / 1.13 (R95); drift replay
-# 0.99-1.00 (R95). The pond is ringed by track: no legal village cell has b2
-# or the sub inside the MIB (55 and 52 units), so only b1 pops DDTs, and
-# b1's planned spot (0.473, 0.436) is refused on the live map (the bot stood
-# it at (0.484, 0.470), 49.3 units from the village it actually got). The
-# best repair found - b1 at (0.484, 0.453), b2 on the 4-0-2 path (Crow's Nest
-# camo, lead from the alchemist's dip), Carrier Flagship and Cripple MOAB -
-# reaches 2.00 on the plan replay but 1.96 sight-strict and on the drift
-# replay (R95), so the plan is left as it was and the build stays held.
-# The numbers below are from the model before the correction.
+# Changes from the guide, and why:
+#   * the guide's village is Monkey Commerce (0-0-2) for discounts; here it
+#     is Radar Scanner and Jungle Drums (2-2-0) like the Cracked build, since
+#     no tower of the guide sees camo otherwise (the bot cannot count on
+#     Etienne's camo) - the Flagship gets camo from the village;
+#   * the village comes after the Aircraft Carrier, not early: with no
+#     discount path its cost would push the Carrier past round 40 (the
+#     Spa Pits guide's timing for it);
+#   * a Night Vision sniper (0-1-0) by round 22 for round 24's camo, as on
+#     Cracked: the village's Radar Scanner only comes later;
+#   * the account has the village's top path to tier 4 only, so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise;
+#   * the bot does not place towers on a deck, so the Glaive Lord stands at
+#     the top of the left loop just left of the pond (the wiki's spot);
+#   * a Cripple MOAB on the sniper (5-1-0) ends the plan: the round-100 BAD
+#     answer the bot's coverage check asks for (strategy.ANSWERS["bad"]).
 #
-# Checked offline (no game; docs/map_strategies/beginner.md has the method),
-# on the CHIMPS economy (round 6, $650, base income, no boosts), rounds
-# 6-100, worst damage-model margin:
-#   * every `at` is legal for its tower in plan order, on the map geometry (as
-#     tests/test_map_hints_offline.py checks) and on the live map model;
-#   * plan replay (each step as soon as the cash allows): 2.51 (round 6);
-#   * sight-strict (snipers only the track they see, subs their own range,
-#     aces their flight circle): 2.30 (round 39);
-#   * executor-faithful replay (tools/simulate_threats' loop with the match
-#     loop's surplus spending, on the geometry map model), strict, with its
-#     extra towers / plan towers only: 2.30 / 2.30 (round 39); every plan
-#     step bought (last: v1 2-3-0 at round 72); no threat gaps; same result
-#     with the main account's unlocks.
-#   Blimp rounds, strict / executor plan-only: 40 5.97 / 5.97, 60 16 / 16,
-#   63 16 / 16, 76 16 / 16, 78 16 / 16, 81 16 / 16, 90 16 / 16, 94 5.02 /
-#   5.02, 95 2.83 / 2.83, 96 4.13 / 4.13, 97 11.3 / 11.3, 98 2.89 / 2.89,
-#   99 3.12 / 3.19, 100 5.78 / 8.09. Camo / lead / purple rounds 24-30 and
-#   45-51: 4.18 or more.
+# Spots (map geometry, the worktree's learned map and the main checkout's
+# learned refusals, data/maps/frozenover.npz, checked in placement order):
+# the buccaneer at (0.484, 0.453), the top of the pond, reaches 38% of the
+# track (the pond's best cell, 41%, is 50 units from the nearest legal
+# village cell); the village at (0.532, 0.325) is the nearest legal village
+# cell, 33.9 units from the boat (radius 40, 48 with Bigger Radius); the old
+# boat spot (0.473, 0.436) is refused live. Etienne at (0.297, 0.649) reaches
+# 34%; the boomerang at (0.350, 0.504) (the old opening tack's spot) 20%; the
+# sniper in the bottom-right corner sees the whole track.
 #
-# Executor note: the blimp check (Executor.blimp_ratio, counters.json
-# blimp_dps) gives no credit for the village and the alchemist and rates a
-# 4-2-0 buccaneer like a 4-0-0, so it calls rounds 75-99 short and buys its
-# own blimp answers (aces, snipers, bombs, extra 4-2-0 tacks) with the cash
-# left after the plan. Those extras are counted in the "with extra towers"
-# replay above; they raise no round.
+# Offline replay (tools/simulate_threats on the map geometry with the learned
+# refusals, live account unlocks): the buccaneer alone R6-8 (damage model
+# 2.99 at R6, 2.02 at R8, without Etienne), Etienne R9, 2-2-0 R17, Night
+# Vision R19, Destroyer R31, Aircraft Carrier R40, Radar by R44, Flagship R59,
+# Glaive Lord R82, Cripple MOAB R93; no threat gaps.
 id: frozenover_chimps
 map: Frozen Over
-hero: admiral_brickell
+hero: etienne
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {tack: [4, 0, 3], sniper: [5, 2, 0], buccaneer: [4, 2, 0], sub: [2, 0, 4], village: [2, 3, 0],
-           alchemist: [3, 2, 0]}
-  # held back: Frozen Over CHIMPS was lost at round 56 (2026-11-05 14:34); re-checked
-  # on the corrected model (strict buff reach, carrier planes) it fails R95 (0.99),
-  # R98 (1.72) and R99 (1.11) on every replay - see the header
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Frozen Over]
+  revised: "2026-11-07T04:00"
 plan:
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.345, 0.504]}   # top of the left loop, inside the crossings
-  - {do: upgrade, id: t1, to: 1-0-0}
-  - {do: upgrade, id: t1, to: 1-0-1}
-  - {do: upgrade, id: t1, to: 2-0-1}
-  - {do: upgrade, id: t1, to: 2-0-2}
-  - {do: upgrade, id: t1, to: 2-0-3}   # Tack Sprayer
-  - {do: place, id: t2, kind: tack, role: dps, at: [0.302, 0.624]}   # lower left loop
-  - {do: upgrade, id: t2, to: 0-0-2}
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.799, 0.879]}   # bottom-right corner: sees the whole route
-  - {do: upgrade, id: s1, to: 0-1-0}   # Night Vision: camo from round 24
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.473, 0.436]}   # central pond, top: 52% of the route
-  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead from round 28
-  - {do: place, id: sb1, kind: sub, role: dps, at: [0.441, 0.487]}   # central pond, left
-  - {do: upgrade, id: sb1, to: 2-0-2}   # Advanced Intel
-  - {do: upgrade, id: s1, to: 2-2-0}   # ceramics
-  - {do: upgrade, id: s1, to: 3-2-0}   # Deadly Precision: the round-40 MOAB
-  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
-  - {do: place, id: v1, kind: village, role: support, at: [0.537, 0.317]}   # nearest village cell to the pond
-  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo for the buccaneers
-  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.473, 0.538]}   # central pond, bottom: 48% of the route
-  - {do: upgrade, id: b2, to: 2-2-0}
-  - {do: upgrade, id: b2, to: 3-2-0}   # Destroyer
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.227, 0.385]}   # Brickell in the big left pond
-  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB
-  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
-  - {do: upgrade, id: b2, to: 4-2-0}   # Aircraft Carrier
-  - {do: upgrade, id: sb1, to: 2-0-4}   # Armor Piercing Darts
-  - {do: place, id: al1, kind: alchemist, role: support, at: [0.516, 0.606]}   # brews the bottom buccaneer and the sub
-  - {do: upgrade, id: al1, to: 3-2-0}   # Berserker Brew
-  - {do: upgrade, id: t2, to: 4-0-2}   # Ring of Fire: the round-63 rush
-  - {do: upgrade, id: v1, to: 2-2-0}   # Jungle Drums
-  - {do: upgrade, id: v1, to: 2-3-0}   # Monkey Intelligence Bureau: the DDT rounds 90-99
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.484, 0.453]}   # top of the central pond: the opener
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.297, 0.649]}      # Etienne, right after the buccaneer
+  - {do: upgrade, id: b1, to: 0-1-0}                                      # middle path first (the guide)
+  - {do: upgrade, id: b1, to: 0-2-0}                                      # Hot Shot: lead
+  - {do: upgrade, id: b1, to: 1-2-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Double Shot
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.799, 0.879]}   # sees the whole track
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier, before round 40
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.532, 0.325]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums (Bigger Radius on the way)
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.350, 0.504]}   # left of the central pond (wiki)
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring (tier 5 is locked)
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB: round 100's BAD
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
-  lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
-  camo_ceramic: [{do: upgrade, id: v1, to: 0-2-0}]
-  moab: [{do: upgrade, id: s1, to: 3-2-0}]
-  rush: [{do: upgrade, id: t2, to: 4-0-2}]
-  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
-  zomg: [{do: upgrade, id: s1, to: 4-2-0}]
-  ddt: [{do: upgrade, id: s1, to: 4-2-0}]
-  bad: [{do: upgrade, id: s1, to: 5-2-0}]   # Cripple MOAB for the round-100 BAD
+  lead: [{do: upgrade, id: b1, to: 0-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
