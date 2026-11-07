@@ -107,6 +107,8 @@ map: Winter Park
 hero: quincy
 modes: [chimps]
 planner:
+  # repaired and re-checked then: games before it were on the old version
+  revised: "2026-11-05T19:02"
   towers: {buccaneer: [4, 2, 2], tack: [4, 0, 0], bomb: [2, 5, 0], village: [2, 3, 0], alchemist: [3, 2, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes): every replay 2.07+
   # re-checked 2026-11-05 on the live map's refused spots: every replay 2.07+, every step 2+ rounds early

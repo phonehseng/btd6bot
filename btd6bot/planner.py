@@ -528,6 +528,9 @@ class StrategySpec:
     # tower they level up. They share one generator and one plan shape, so
     # the calibration treats them as one family (_Calibration.family).
     xp_target: str | None = None
+    # When the build was last repaired (ISO time, `planner: revised:` in its
+    # file): only games played after it count as its record (build_record).
+    revised: str | None = None
 
     @classmethod
     def from_any(cls, obj: Any) -> "StrategySpec":
@@ -569,6 +572,7 @@ class StrategySpec:
             bot_ready=None if ready is None else bool(ready),
             wins_needed=int(wins) if wins else None,
             xp_target=str(get("xp_target")) if get("xp_target") else None,
+            revised=str(get("revised")) if get("revised") else None,
         )
 
     def share(self) -> dict[str, float]:
@@ -1553,10 +1557,31 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
         # and lost at round 52 with the damage model rating round 60 at 0.29
         # (2026-11-04)
         prior = no_income_cap(prior, s, mode)
-    st = account.strategy_record(map_name, mode, s.id)
-    w, l = st.get("wins", 0), st.get("losses", 0)
+    w, l = build_record(account, s, map_name, mode)
     k = cfg.prior_strength
     return (prior * k + w) / (k + w + l), w + l
+
+
+def build_record(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> tuple[int, int]:
+    """(wins, losses) of build ``s`` on this map and mode. For a build with a
+    ``revised`` time only the games played after it count, from the game
+    history: a game lost on the version before the repair says nothing about
+    the repaired one.
+
+    2026-11-06: Carved, Winter Park and Lotus Island CHIMPS each lost once
+    on 2026-11-05 (a village buff the model counted out of reach, a lone
+    opening tower, refused spots), were repaired and re-checked that
+    evening, and the one old loss still held each at p 0.63-0.64 under the
+    0.80 CHIMPS bar, so the repaired builds were never played again."""
+    if not s.revised:
+        st = account.strategy_record(map_name, mode, s.id)
+        return st.get("wins", 0), st.get("losses", 0)
+    m = canonical_map(map_name)
+    games = [h for h in getattr(account, "history", None) or []
+             if isinstance(h, Mapping) and h.get("strategy") == s.id and h.get("mode") == mode
+             and canonical_map(h.get("map") or "") == m and str(h.get("t") or "") >= s.revised]
+    wins = sum(1 for h in games if h.get("won"))
+    return wins, len(games) - wins
 
 
 def p_threshold(mode: str, cfg: PlannerConfig = DEFAULT_CONFIG) -> float:

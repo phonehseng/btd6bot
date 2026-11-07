@@ -435,6 +435,8 @@ def planner_specs(strats, account):
             "placed": placed_counts(s),
             # a generated solo XP build: calibrated with the whole family
             "xp_target": s.get("xp_target"),
+            # games before the build's last repair do not count (build_record)
+            "revised": p.get("revised"),
         }))
     return specs
 

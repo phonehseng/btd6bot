@@ -101,6 +101,25 @@ def test_beginner_map_builds_are_not_halved_by_the_fast_track_doubt():
     assert P.owner_first_build(acc, own, "Park Path") and not P.owner_first_build(acc, general, "Park Path")
     assert p_general < P.p_threshold("half_cash"), p_general
 
+
+def test_games_before_a_builds_revision_do_not_count():
+    """2026-11-06: Carved, Winter Park and Lotus Island CHIMPS each lost once
+    on a version since repaired; that loss held them under the bar. With
+    `planner: revised:` only the games after the repair count."""
+    import dataclasses
+    acc = F.full_account()
+    own = specs()["carved_chimps"]
+    acc.history = [{"map": "Carved", "mode": "chimps", "strategy": own.id, "won": False,
+                    "t": "2026-11-05T16:12:20"}]
+    acc.strategy_stats = {"Carved|chimps|" + own.id: {"wins": 0, "losses": 1, "games": 1}}
+    old = dataclasses.replace(own, revised=None)
+    new = dataclasses.replace(own, revised="2026-11-05T19:02")
+    assert P.build_record(acc, old, "Carved", "chimps") == (0, 1)
+    assert P.build_record(acc, new, "Carved", "chimps") == (0, 0)
+    acc.history.append({"map": "Carved", "mode": "chimps", "strategy": own.id, "won": False,
+                        "t": "2026-11-06T20:00:00"})
+    assert P.build_record(acc, new, "Carved", "chimps") == (0, 1), "a loss after the repair counts"
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
