@@ -159,6 +159,24 @@ def test_no_saving_when_the_round_is_too_close_or_too_dear():
     assert status == "buy" and found[0].cost == 300, (status, found)
 
 
+def test_continuous_sends_save_only_for_what_two_rounds_of_income_pay():
+    # Castle Revenge Apopalypse (2026-11-06): saving for a $20,000 step from
+    # $7,006 left the board still while blimps piled up. With $1,000 and
+    # $300 a round, the $2,000 upgrade is out of reach in two rounds under
+    # continuous sends, so the $300 one is bought now; with $600 a round it
+    # is in reach and the saving stands. Standard modes are unchanged.
+    ex = ToyEx()
+    ex.rules = {"continuous": True}
+    ex.income_until = lambda due, rnd: 300.0 * (due - rnd)
+    status, found = R.best(ex, ToyForecast(), 1000, 37, 80)
+    assert status == "buy" and found[0].cost == 300, (status, found)
+    assert R.save_target(ToyForecast(), ex, 1000, 37, 40) is None
+    ex.income_until = lambda due, rnd: 600.0 * (due - rnd)
+    assert R.save_target(ToyForecast(), ex, 1000, 37, 40)[0].cost == 2000
+    # a standard mode keeps the long saving (test_a_leaking_round_saves...)
+    assert R.save_target(ToyForecast(), ToyEx(), 1000, 37, 40) is not None
+
+
 def test_no_saving_when_the_rounds_before_cost_the_lives_left():
     # Cargo Double HP (2026-11-03): saving for round 79 lost round 75.
     # Rounds 37-39 each cost 7 lives at full strength (ToyForecast): with

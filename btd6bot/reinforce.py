@@ -55,6 +55,7 @@ MAX_OPTIONS = 20       # purchases tried per call
 NOT_DAMAGE = ("village", "alchemist", "farm")
 SAVE_LEAD = 2          # rounds of income needed before saving for a dearer purchase pays
 SAVE_REACH = 3.0       # ... and it may cost at most this many times the cash in hand
+CONTINUOUS_SAVE_ROUNDS = 2   # under continuous sends: payable from the income of this many rounds
 BLIND_SPEND_CASH = 10_000   # cash idle in a crisis the model sees no use for: spent anyway
 MIN_LIFT = 0.01        # a purchase lifting the weakest round less than this does not
                        # outbid a plan step that is waiting for cash (waiting_plan_step)
@@ -930,12 +931,25 @@ def save_target(forecast, ex, cash, rnd, worst):
     upgrade that would have held it never piled up. Saving makes sense only
     while the round is SAVE_LEAD or more rounds away (income needs rounds to
     arrive) and the target costs at most SAVE_REACH times the cash in hand
-    (further than that it would not come in time)."""
+    (further than that it would not come in time).
+
+    Under continuous sends (Apopalypse, rules `continuous`) a saving must
+    also be paid within CONTINUOUS_SAVE_ROUNDS rounds of income. There the
+    rounds come every 2-3 seconds and the blimps of several rounds share
+    the track, so a board left as it is while the bank grows meets more
+    than the one round the model rates. Castle Revenge Apopalypse
+    (2026-11-06, case 20261106_183541) said "saving for upgrade su1 ->
+    3-0-2 ($20000)" at round 49 with $7,006, bought nothing more, and lost
+    all 142 lives in round 55 with $17,084 banked; Ancient Portal (r52,
+    $18,040) and Spring Spring (r60, $21,494) died the same way."""
     if rnd is None or worst - rnd < SAVE_LEAD or cash <= 0:
         return None
+    continuous = bool((getattr(ex, "rules", None) or {}).get("continuous"))
     for o in options(ex, cash * SAVE_REACH):       # cheapest first
         if o.cost <= cash:
             continue
+        if continuous and payable_by(ex, o.cost, cash, rnd + CONTINUOUS_SAVE_ROUNDS, rnd) is False:
+            continue        # too far off: the board would stand still for too many rounds
         m = forecast.margin(o.towers, worst)
         if m is not None and m >= 1.0:
             return o, m
