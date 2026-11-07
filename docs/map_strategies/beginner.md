@@ -69,6 +69,20 @@ little cannot take a buff away. Worst margin over rounds 6-100 (round):
 | `skates_chimps.yaml` | tack to Inferno Ring, two Carriers, subs, dipped ninja | 1.51 (R94) | 1.41 (R98) | 1.41 / 1.41 (R98) | 0.06 (R95) | 0.5 (fails R94-98; drift R59-100) |
 | `winterpark_chimps.yaml` | three fountain Carriers, MOAB Eliminator, MIB; repaired: early Hot Shot on the third ship | 2.09 (R98) | 2.09 (R98) | 2.20 / 2.20 (R95) | 2.07 (R98) | 0.85 |
 
+**Rewritten 2026-11-07** (the table above is history for four of them):
+Carved, Winter Park, Alpine Run and Lotus Island CHIMPS passed these checks
+and still lost live (Winter Park and Alpine Run at round 6, Carved at round 33
+twice, Lotus Island at round 95), while Cracked CHIMPS was won with a build
+that follows a published guide and sets `plan_first`. The four now follow
+bloon.games' written guides the same way (their own map pages hold only a
+video, so Carved, Winter Park and Lotus Island use the Cracked/Spa Pits
+Flagship recipe and Alpine Run the Monkey Meadow boomerang recipe; each
+file's header has the sources and every change), open with Quincy alone
+(`hero_opens`), and are gated at 0.5 to be played live, not on the model.
+Executor-faithful replay on the learned map, final plan towers, rounds 95 /
+99: Carved 2.51 / 1.96, Winter Park 2.00 / 1.59, Alpine Run 1.83 / 1.70,
+Lotus Island 1.23 / 1.35 - against Cracked's winning board at 1.87 / 1.27.
+
 Re-checked again 2026-11-05 after Lotus Island CHIMPS was lost at round 95
 (table above: the newer numbers). The live cash was not short - the journal's
 income over rounds 7-93 was $141,018 against the replay's $141,322 (pops plus

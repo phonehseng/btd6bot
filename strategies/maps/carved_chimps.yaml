@@ -1,162 +1,101 @@
-# Carved, CHIMPS: buccaneers in the pumpkin's water eyes growing into a
-# Carrier Flagship and two Aircraft Carriers, an MIB village below the right
-# eye, a lead-dip alchemist by the left eye, a MOAB Mauler and a Fighter
-# Plane ace for the first blimps, Brickell in the left eye.
+# Carved, CHIMPS: Quincy opens, one buccaneer in the right eye grows to a
+# Carrier Flagship with a village beside it, a Glaive Lord boomerang and a
+# Cripple MOAB sniper finish.
 #
-# Why: one route (1,312 world units) round the jack-o-lantern's outline, into
-# the mouth's zig-zag loop and out at the top. The eyes are the only water big
-# enough for towers: a buccaneer in the right eye reaches more track than any
-# other spot on the map. No village spot reaches both eyes with the centres
-# inside (between them, 46 and 43 units, it did only by the old footprint
-# allowance), so the village serves the right eye (see the re-check below)
-# and the left carrier sees camo itself (Crow's Nest). CHIMPS starts
-# at round 6 with $650 and no income, so the opener is the right-eye buccaneer
-# plus a dart ($645). Grape Shot (2-1-0) comes before the second buccaneer
-# because round 15's pinks are what a lone 2-0-0 ship leaks first in the model.
-# Camo from round 24: Crow's Nest on b2. Lead from round 28: Hot Shot on b1.
-# Ceramics (38): Heavy Bombs on bm1. The round-40 MOAB: Destroyer b1 and a
-# Fighter Plane ace (3-0-0). The ace is also what keeps the executor's own
-# blimp check (threats.blimp_capacity, 1.4x bar in one-life modes) from buying
-# unplanned blimp towers ahead of the plan in rounds 35-39.
-# Radar Scanner and then MIB (2-3-0) give the right-eye ships camo for round
-# 51's camo ceramics, and MIB gives them all damage types. MOAB Mauler (bm1 2-4-0, inside the
-# village's reach) answers BFBs, ZOMGs and the round-90 DDTs. A Glaive
-# Ricochet boomerang below the mouth answers the round-63 rush. The 90s' DDTs
-# (rounds 95 and 99 are the model's weakest late rounds) fall to the carriers'
-# planes, which get camo from MIB.
-#
-# Each plan step is timed to be bought by about round 80. From round 81 every
-# round brings blimps that the executor's rough blimp check rates short
-# (0.2-1.0x against its 1.4x bar, whatever the defence), so from then on it
-# also spends cash on its own blimp towers. Those come on top of the plan,
-# but they slow down any plan step still waiting (End Of The Road CHIMPS was
-# lost at round 76 to a step that was never bought). No sell steps, no
-# Merchantman (x-x-3 buccaneer), no Monkey Knowledge, no powers.
+# Why: the earlier Carved CHIMPS build was designed against the bot's damage
+# model (four buccaneers, a bomb, an ace, an alchemist; Brickell) and lost
+# live at round 33 twice: camo yellows slipped past its one Crow's Nest
+# ship while the model rated the round 2.95. Cracked CHIMPS, an Advanced
+# map, was then beaten (2026-11-07) with a build that follows a published
+# strategy step by step and lets the plan own the cash (`plan_first`). This
+# build does the same here.
 #
 # Sources:
-#   * bloonswiki Carved: "on the easier side of Beginner maps"; best spots in the
-#     right water patch and below the mouth; two trees by the entrance and exit
-#     block line of sight (no sniper in this build) (https://www.bloonswiki.com/Carved)
-#   * bloonswiki Strategy:CHIMPS: Carrier Flagship "wipes the floor with the
-#     entire mid-game and early late-game", paired with Admiral Brickell;
-#     Merchantman paths are income (out); camo / MIB needed for rounds 78 and 90;
-#     rounds 40, 63, 75, 78, 90, 95 named as the hardest
-#     (https://www.bloonswiki.com/Strategy:CHIMPS)
-#   * r/btd6 "Here is a C.H.I.M.P.S carved strategy": a 2-3-0 MIB village in a
-#     Sauda / Apache Prime / Perma-Spike build. Read only as a search-result
-#     summary: the thread itself refused the fetch
-#     (https://www.reddit.com/r/btd6/comments/1glzky1/here_is_a_chimps_carved_strategy/)
-#   The search found no video or Steam guide for Carved CHIMPS.
+#   * bloon.games, "How to Beat CHIMPS on Carved?"
+#     (https://bloon.games/how-to-beat-chimps-on-carved): the page holds only
+#     a video (https://www.youtube.com/watch?v=As-UJZ4LOyM, BTD6 Master); its
+#     description has no steps and its captions could not be fetched, so the
+#     map's own guide could not be followed step by step.
+#   * The plan is therefore bloon.games' written Flagship recipe, the one the
+#     bot won Cracked CHIMPS with: "#BTD6 | Cracked | Hard - CHIMPS Quicky
+#     Strategy Guide" (https://bloon.games/how-to-beat-chimps-on-cracked) -
+#     Quincy; a buccaneer 2-2-0, Destroyer, a village 2-2-0 before round 40,
+#     Aircraft Carrier, Carrier Flagship before round 60, a Glaive Lord
+#     boomerang before round 80, the village to Primary Expertise before round
+#     90, a Cripple MOAB sniper before round 100. The same core (Quincy,
+#     buccaneer 2-2-0 -> Aircraft Carrier -> Flagship, Glaive Lord, Cripple
+#     MOAB) is bloon.games' Spa Pits CHIMPS guide
+#     (https://bloon.games/how-to-beat-chimps-on-spa-pits).
+#   * bloonswiki Carved (https://www.bloonswiki.com/Carved): "on the easier
+#     side of Beginner maps"; the best spots are in the right water patch and
+#     below it; the eyes are the only water.
 #
-# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
-# damage model (support buffs reach a tower only when its centre is inside
-# the buff radius; Aircraft Carrier planes count at a circling plane's share
-# of the track). The village between the eyes reached b1 only through the
-# old footprint allowance (46.6 units from a radius-40 Radar Scanner): rounds
-# 47-56 fell to 1.24 and, with b1 5 units off, 59 and 78 to 0.06-0.12.
-# Repairs: the village stands below the right eye (0.484, 0.47), 39 units
-# from b1, 24 from b3 and 19 from bm1, and takes Bigger Radius (1-2-0) right
-# after Radar Scanner (40 -> 48 units); the left eye's carrier b2 (4-0-2:
-# camo of its own, no MIB now) gets lead from an Acidic Mixture Dip
-# alchemist beside it (2-0-0, $1,245, 14 units away), which lifts R95 and R99.
-# Rounds 6-100, worst margin: plan replay 2.16 (R9); sight-strict 2.16 (R9);
-# executor-faithful strict, with its extra towers / plan towers only,
-# 2.16 / 2.16 (R9), all 32 steps bought; drift replay (every tower 5 units
-# further from the village and alchemist) 2.13 (R9). R95 2.28, R98 3.26,
-# R99 2.30, R100 5.24. The numbers below are from the model before the
-# correction (and the old village spot).
+# Changes from the guide, and why (the same as on Cracked):
+#   * the guide puts the boomerang and the sniper on the Flagship's deck; the
+#     bot does not place towers on a deck, so the boomerang stands below the
+#     village, inside its reach (18.4 units: Radar camo, Jungle Drums, Primary
+#     Mentoring), and the sniper left of it;
+#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo: neither a
+#     2-2-0 buccaneer nor Quincy at that level sees camo, and the village
+#     (Radar Scanner, 0-2-0) only comes at about round 35;
+#   * the account has the village's top path to tier 4 only, so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise;
+#   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
 #
-# Checked offline (docs/map_strategies/beginner.md method) on the CHIMPS
-# economy: optimize_builds.economy("chimps", ...), with round 6, $650, base
-# income and Hard prices (the account's Double Cash and Fast Track do not apply
-# in CHIMPS), rounds 6-100. The hero's damage is not counted (extra safety):
-#   * every `at` is legal for its tower in plan order, both on the map geometry
-#     and on the live map model (data/maps/carved.npz);
-#   * plan replay (each step as soon as the cash allows): worst margin 2.16
-#     (round 9; round 34 2.25, everything else 2.3 or more). Blimp rounds: 40
-#     6.24; 60/63/76/78/81/90 16.0; 94 8.72; 95 3.15; 96 6.95; 97 12.88; 98
-#     4.60; 99 3.08; 100 8.35. Plan bought in full by round 82;
-#   * sight-strict (subs and aces limited to their own range or flight circle;
-#     Carved's map file has no sight blockers): worst 2.16 (round 9); 95 3.15,
-#     98 4.51, 99 3.08;
-#   * executor-faithful (tools/simulate_threats' loop with the match loop's
-#     surplus spending, the real account and the live map model), strict.
-#     Worst with its extra towers / plan towers only: 2.16 / 2.16 (round 9).
-#     Round 95: 4.18 / 3.22; round 99: 4.18 / 3.08.
-#     Every plan step is bought (29/29). The Carrier Flagship (b1 5-2-0)
-#     stands from round 77, b2 4-0-2 from 80 and b3 4-2-0 from 85; in the
-#     plan replay those are rounds 74, 79 and 82. The executor adds a
-#     blimp-answer ace at round 63 and its own blimp towers from round 81;
-#     MOAB Eliminator (the `bad` answer) is bought at round 98;
-#   * tools/simulate_threats (open field and the real map) finds no gaps;
-#     strategy.coverage has nothing missing.
+# Cash (CHIMPS curve: $650 before round 6, the game's own income, Hard
+# prices; tests/test_chimps_builds_offline.plan_timeline): Quincy alone holds
+# rounds 6-8 (he takes $585 of the $650), the buccaneer stands from round 9,
+# Destroyer by 30, Aircraft Carrier by 45, Carrier Flagship by 59, Glaive
+# Lord by 79, Cripple MOAB by 93 - the same timings that won Cracked.
 #
-# Re-checked 2026-11-05 after Lotus Island CHIMPS was lost at round 95: not
-# the cash (live income matched the replay's) but the spots - the game
-# refused four of that build's, and the replay put every tower on its
-# spot anyway. The executor-faithful replay now plays on the map's learned
-# refusals (simulate_threats.map_model(learned=True), main checkout's
-# data/maps as of 17:12) and rates the towers where they really stand.
-# Carved: the ace's spot below the mouth (0.484, 0.845) is refused, and the
-# ace then took the ground the village needed (village 18 cells off). The
-# ace moves to (0.409, 0.47), left of the village, and the Destroyer (b1
-# 3-2-0, needed by R38) comes before the ace. Worst margin: plan
-# 2.16 (R9), sight-strict 2.16 (R9), drift 2.07 (R34), executor-faithful
-# 2.16 / 2.16 (R9), 32/32 steps by R81, nothing moved; every step stands at
-# least two rounds before the first round the build without it fails.
+# Spots (map geometry, the worktree's and the main checkout's learned maps,
+# data/maps/carved.npz, checked in plan order): the boat at (0.569, 0.368) in
+# the right eye reaches 599 track cells (the best water cell 611); the
+# village at (0.548, 0.462) is 22.7 units from it (radius 40: 17 units of
+# slack under the strict buff rule) and 18.4 from the boomerang; Quincy at
+# (0.387, 0.802), below the mouth, reaches 705 track cells, the most of any
+# legal hero cell. Carved's map file has no sight blockers, so the sniper
+# sees the whole track from (0.452, 0.436).
 id: carved_chimps
 map: Carved
-hero: admiral_brickell
+hero: quincy
+hero_opens: true      # Quincy alone holds the opening (Executor.defended)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  # repaired and re-checked then: games before it were on the old version
-  revised: "2026-11-05T19:02"
-  towers: {buccaneer: [5, 2, 2], village: [2, 3, 0], ace: [4, 0, 0], bomb: [2, 5, 0], boomerang: [3, 0, 0], dart: [0, 0, 0],
-           alchemist: [2, 0, 0]}
-  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.13+
-  # re-checked 2026-11-05 on the live map's refused spots (ace moved, Destroyer earlier): every replay 2.07+, every step 2+ rounds early
-  base_success: {chimps: 0.85}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
+  base_success: {chimps: 0.5}
   maps: [Carved]
+  revised: "2026-11-07T04:00"
 plan:
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.569, 0.368]}   # right eye: the best spot on the map
-  - {do: place, id: d1, kind: dart, role: dps, at: [0.655, 0.419]}   # R6 opener with b1 ($645 of $650)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.387, 0.802]}      # Quincy holds the opening
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.569, 0.368]}   # right eye
   - {do: upgrade, id: b1, to: 1-0-0}
-  - {do: upgrade, id: b1, to: 2-0-0}
-  - {do: upgrade, id: b1, to: 2-1-0}   # Grape Shot: the round-15 pinks
-  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.323, 0.385]}   # left eye
-  - {do: upgrade, id: b2, to: 0-0-2}   # Crow's Nest: camo from round 24
-  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead from round 28
-  - {do: upgrade, id: b2, to: 2-0-2}
-  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.526, 0.521]}   # above the mouth, inside the village's reach
-  - {do: upgrade, id: bm1, to: 0-2-0}   # Heavy Bombs: ceramics from round 38
-  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
-  - {do: place, id: a1, kind: ace, role: dps, at: [0.409, 0.47]}   # left of the village: the spot below the mouth is refused
-  - {do: upgrade, id: a1, to: 2-0-0}
-  - {do: upgrade, id: a1, to: 3-0-0}   # Fighter Plane: the round-40 MOAB
-  - {do: upgrade, id: b2, to: 3-0-2}   # Destroyer
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.334]}   # Brickell, left eye
-  - {do: place, id: v1, kind: village, role: support, at: [0.484, 0.47], near: [b1, bm1]}   # below the right eye: b1, b3, bm1 well inside
-  - {do: upgrade, id: v1, to: 0-2-0}   # Radar Scanner: camo for the right-eye ships
-  - {do: upgrade, id: v1, to: 1-2-0}   # Bigger Radius (48): b1 stays inside if it stands a little off
-  - {do: upgrade, id: bm1, to: 2-4-0}   # MOAB Mauler: BFBs from round 60
-  - {do: place, id: bg1, kind: boomerang, role: dps, at: [0.430, 0.658]}   # below the mouth: the wiki's glaive spot
-  - {do: upgrade, id: bg1, to: 3-0-0}   # Glaive Ricochet: the round-63 rush
-  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
-  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: all damage types, camo
-  - {do: upgrade, id: b1, to: 5-2-0}   # Carrier Flagship
-  - {do: upgrade, id: a1, to: 4-0-0}   # Operation: Dart Storm
-  - {do: upgrade, id: b2, to: 4-0-2}   # Aircraft Carrier
-  - {do: place, id: al1, kind: alchemist, role: support, at: [0.313, 0.445], near: [b2]}   # below the left eye
-  - {do: upgrade, id: al1, to: 2-0-0}   # Acidic Mixture Dip: lead for b2's darts (the DDTs of 95-99)
-  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.521, 0.385]}   # right eye, next to the Flagship
-  - {do: upgrade, id: b3, to: 4-2-0}   # Aircraft Carrier: the round-95/99 DDTs
+  - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.436]}
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.548, 0.462]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.532, 0.538]}   # below the village
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
 answers:
-  camo: [{do: upgrade, id: b2, to: 0-0-2}]
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: [{do: upgrade, id: bm1, to: 0-2-0}]
-  moab: [{do: upgrade, id: b1, to: 3-2-0}]
-  bfb: [{do: upgrade, id: bm1, to: 2-4-0}]
-  rush: [{do: upgrade, id: bg1, to: 3-0-0}]
-  zomg: [{do: upgrade, id: bm1, to: 2-4-0}]
-  ddt: [{do: upgrade, id: bm1, to: 2-4-0}]
-  bad: [{do: upgrade, id: bm1, to: 2-5-0}]   # MOAB Eliminator, bought from the late surplus
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]

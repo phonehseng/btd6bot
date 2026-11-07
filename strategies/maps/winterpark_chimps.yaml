@@ -1,160 +1,100 @@
-# Winter Park, CHIMPS: three buccaneers in the fountain (Destroyers, then
-# Aircraft Carriers), four Tack Shooters on the loop corners for the opening,
-# a MOAB Mauler bomb that grows into a MOAB Eliminator, a Radar/MIB village and
-# a Berserker Brew alchemist beside the fountain. Quincy.
+# Winter Park, CHIMPS: Quincy opens, one buccaneer at the east point of the
+# fountain grows to a Carrier Flagship with a village beside it, a Glaive Lord
+# boomerang and a Cripple MOAB sniper finish.
 #
-# Why: one route (1,228 world units, single lane) with one square loop in each
-# quarter round a small central fountain that is surrounded by track. The
-# fountain holds exactly three buccaneers on the live map model (west edge,
-# north-east and south-east: each reaches 18-20% of the route); land near it
-# takes the village and the alchemist, whose ranges cover all three ships.
-#   * R6-15 on $650 + income: the first buccaneer, then $280 tacks on the four
-#     loop corners (R15's pinks and yellows outrun anything that covers only
-#     one stretch: 4 tacks + buccaneer 2-0-0 hold R15 at 2.4, a dart instead
-#     1.3-1.5).
-#   * R24 camo: b2 2-0-2 (Crow's Nest). R28 lead: b1 2-2-0 (Hot Shot).
-#   * R31-40: a third buccaneer early (2-1-0, then 2-2-0) carries R34 (160 yellows) and
-#     R36 (pinks); the camo Destroyer b2 3-0-2 before R38; MOAB Mauler (the
-#     model's and strategy.ANSWERS' MOAB answer) before R40.
-#   * Mid game: Destroyer b1 3-2-0, Radar village 2-2-0 (camo for every ship,
-#     the strong-camo answer for R51/R59), Berserker Brew, MOAB Assassin (BFB,
-#     ZOMG), Ring of Fire tack (R63 rush answer), then Aircraft Carriers
-#     b1 4-2-0 and b2 4-0-2 by ~R60, MIB village 2-3-0 (DDT answer: camo +
-#     black + lead for everything near it) by ~R66, a third Carrier b3 4-2-0
-#     by ~R74, and MOAB Eliminator m1 2-5-0 (the BAD answer).
-#   * No step costs more than $8,640 except the last (MOAB Eliminator,
-#     $28,080), which the plan and the executor-faithful replay both buy
-#     before R100 (R82 / R96); the rounds before hold without it.
-#   * A Carrier Flagship (5-2-0, $28,080) was tried first, as the wiki
-#     suggests: the executor-faithful replay never bought it (the executor's
-#     blimp-check and answer buys took the cash; 25 of 27 plan steps by
-#     R100). A third 4-2-0 Carrier, bought in steps, rates higher anyway
-#     (R95 3.40 against 2.62, R98 3.63 against 3.51).
-#   * Every strength threat has an answer from strategy.ANSWERS in the plan
-#     itself (tack 3-0-0 ceramic, bomb 0-3-0 MOAB, 2-4-0 BFB/ZOMG, tack 4-0-0
-#     rush, MIB for DDT, bomb 2-5-0 BAD), so the executor never forces a
-#     default answer on the buccaneers (with none, it bought b1 2-4-0 Monkey
-#     Pirates for the MOAB and the Carrier path was lost).
-#   * No income: no Merchantman (buccaneer x-x-3), no farm, no selling.
+# Why: the earlier Winter Park CHIMPS build was designed against the bot's
+# damage model (three buccaneers, four tacks, a bomb, a village, an
+# alchemist) and lost live at round 6: it opened with one bare $430
+# buccaneer, the plan's tack was not affordable, and a red slipped through.
+# Cracked CHIMPS, an Advanced map, was then beaten (2026-11-07) with a build
+# that follows a published strategy step by step and lets the plan own the
+# cash (`plan_first`). This build does the same here.
 #
 # Sources:
-#   * bloonswiki Winter_Park: buccaneers at the leftmost or rightmost point of
-#     the fountain cover four sections; Destroyer 3-2-0 with Berserker Brew and
-#     camo detection "sweeps the mid-game"; single route, one entrance/exit
-#     (https://www.bloonswiki.com/Winter_Park)
-#   * bloonswiki Strategy:CHIMPS: hero start on Beginner maps; R31-40 Destroyer
-#     3-1+-0 with Berserker Brew; Destroyer and Aircraft Carrier as mid-game
-#     save-up towers; R40, 63, 75, 78, 90, 95, 98-100 as the hard rounds
-#     (https://www.bloonswiki.com/Strategy:CHIMPS)
-#   * bloonswiki Destroyer_(BTD6): one Destroyer 3-2-0, others grape
-#     crosspath, pair with 3-2-0 Berserker Brew
-#     (https://www.bloonswiki.com/Destroyer_(BTD6))
-#   * bloonswiki Aircraft_Carrier_(BTD6): best on one-lane maps; 4-2-0 where
-#     the Destroyer attack is used, 4-0-2 for innate camo
-#     (https://www.bloonswiki.com/Aircraft_Carrier_(BTD6))
-#   * TheGamer, easiest CHIMPS maps: Winter Park "pretty easy" on CHIMPS,
-#     water towers in the fountain, short overlaps and limited water
-#     (https://www.thegamer.com/bloons-tower-defence-6-easiest-maps-chimps/)
-#   * bloon.games Three Mines 'Round CHIMPS guide: buccaneer 0-2-0 to
-#     Destroyer to Aircraft Carrier as a CHIMPS carry
-#     (https://bloon.games/how-to-beat-chimps-on-three-mines-round)
-#   No Winter Park CHIMPS video or Reddit guide could be found (searched
-#   r/btd6, YouTube titles, Steam); Sarah's BTD6 site lists its CHIMPS section
-#   as "coming soon" (https://sarahs-btd6-site.onrender.com/guides/maps/easy-maps/winter-park).
+#   * bloon.games, "How to Beat CHIMPS on Winter Park?"
+#     (https://bloon.games/how-to-beat-chimps-on-winter-park): the page holds
+#     only a video (https://www.youtube.com/watch?v=STj9WW1OrgY, BTD6
+#     Master); its description has no steps and its captions could not be
+#     fetched, so the map's own guide could not be followed step by step.
+#   * The plan is therefore bloon.games' written Flagship recipe, the one the
+#     bot won Cracked CHIMPS with: "#BTD6 | Cracked | Hard - CHIMPS Quicky
+#     Strategy Guide" (https://bloon.games/how-to-beat-chimps-on-cracked) -
+#     Quincy; a buccaneer 2-2-0, Destroyer, a village 2-2-0 before round 40,
+#     Aircraft Carrier, Carrier Flagship before round 60, a Glaive Lord
+#     boomerang before round 80, the village to Primary Expertise before round
+#     90, a Cripple MOAB sniper before round 100. The same core is bloon.games'
+#     Spa Pits CHIMPS guide (https://bloon.games/how-to-beat-chimps-on-spa-pits).
+#   * bloonswiki Winter Park (https://www.bloonswiki.com/Winter_Park): a
+#     buccaneer at the leftmost or rightmost point of the fountain covers four
+#     sections of the track; a Destroyer with camo "sweeps the mid-game" and
+#     saves up for its own tier 5, the Carrier Flagship.
 #
-# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
-# damage model (support buffs reach a tower only when its centre is inside
-# the buff radius; Aircraft Carrier planes count at a circling plane's share
-# of the track), rounds 6-100, worst margin: plan replay 2.09 (R98);
-# sight-strict 2.09 (R98); executor-faithful strict, with its extra towers /
-# plan towers only, 2.20 / 2.20 (R95), all 31 steps bought; drift replay
-# (every tower 5 units further from the village and alchemist) 2.07 (R98).
-# R95 2.18, R98 2.09, R99 2.43, R100 3.96. Repair: b3 takes Hot Shot (2-2-0)
-# right after Grape Shot - with b1 5 units off its spot R36 fell to 1.96.
-# The numbers below are from the model before the correction.
+# Changes from the guide, and why (the same as on Cracked):
+#   * the guide puts the boomerang and the sniper on the Flagship's deck; the
+#     bot does not place towers on a deck, so the boomerang stands north-east
+#     of the village, inside its reach (18.3 units: Radar camo, Jungle Drums,
+#     Primary Mentoring), and the sniper south of the fountain;
+#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo: neither a
+#     2-2-0 buccaneer nor Quincy at that level sees camo, and the village
+#     (Radar Scanner, 0-2-0) only comes at about round 35;
+#   * the account has the village's top path to tier 4 only, so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise;
+#   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
 #
-# Checked offline (no game; docs/map_strategies/beginner.md has the method),
-# CHIMPS economy (R6 $650, game income only, Hard prices, no boosts), R6-100:
-#   * every `at` legal for its tower in plan order on the map geometry and on
-#     the live map model (data/maps/winterpark.npz);
-#   * plan replay (in order, each step as soon as the cash allows): worst
-#     margin 2.18 (R36); R15 2.40, R34 2.43; blimp rounds R40 3.05,
-#     R60-90 at the model's cap (16), R94 6.24, R95 3.40, R96 5.13,
-#     R98 3.63, R99 3.87, R100 6.44;
-#   * sight-strict (aces: flight circle, subs: own range, snipers: sight):
-#     the same, 2.18 (R36) - the build has no ace, sub or sniper;
-#   * executor-faithful replay (tools/simulate_threats' loop on the live map
-#     model and the account, surplus and answer buys included), strict, with
-#     its extra towers / plan towers only: 2.18 (R36) / 2.18 (R36); blimp
-#     rounds at least 3.26 / 3.05 (R40); all 30 plan steps bought (Carriers
-#     R55, R60, R74; MIB R66; MOAB Eliminator R96);
-#   * with the Carrier planes held to 90 units round the ship (instead of the
-#     game data's map-wide range): worst 2.00 (R98);
-#   * strategy.coverage on the real account: nothing missing; simulate_threats
-#     (Monkey Meadow and Winter Park): no gaps, whole plan bought.
+# Cash (CHIMPS curve: $650 before round 6, the game's own income, Hard
+# prices; tests/test_chimps_builds_offline.plan_timeline): Quincy alone holds
+# rounds 6-8 (he takes $585 of the $650), the buccaneer stands from round 9,
+# Destroyer by 30, Aircraft Carrier by 45, Carrier Flagship by 59, Glaive
+# Lord by 79, Cripple MOAB by 93 - the same timings that won Cracked.
 #
-# Re-checked 2026-11-05 after Lotus Island CHIMPS was lost at round 95: not
-# the cash (live income matched the replay's) but the spots - the game
-# refused four of that build's, and the replay put every tower on its
-# spot anyway. The executor-faithful replay now plays on the map's learned
-# refusals (simulate_threats.map_model(learned=True), main checkout's
-# data/maps as of 17:12) and rates the towers where they really stand.
-# Winter Park: every spot is legal on the learned map; worst margin plan
-# 2.09 (R98), sight-strict 2.09, drift 2.07 (R98), executor-faithful 2.20 /
-# 2.20 (R95), 31/31 steps by R81, each two or more rounds before it is needed.
+# Spots (map geometry, the worktree's and the main checkout's learned maps,
+# data/maps/winterpark.npz, checked in plan order): the boat at (0.462,
+# 0.470), the fountain's east point, reaches 605 track cells, the most of any
+# water cell; the village at (0.526, 0.419) is 26.0 units from it (radius 40:
+# 14 units of slack under the strict buff rule) and 18.3 from the boomerang;
+# Quincy at (0.516, 0.240), above the top-right loop, reaches 601 track
+# cells (the best hero cell); the sniper at (0.548, 0.572) sees the whole
+# track and stands inside the village's reach.
 id: winterpark_chimps
 map: Winter Park
 hero: quincy
+hero_opens: true      # Quincy alone holds the opening (Executor.defended)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  # repaired and re-checked then: games before it were on the old version
-  revised: "2026-11-05T19:02"
-  towers: {buccaneer: [4, 2, 2], tack: [4, 0, 0], bomb: [2, 5, 0], village: [2, 3, 0], alchemist: [3, 2, 0]}
-  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes): every replay 2.07+
-  # re-checked 2026-11-05 on the live map's refused spots: every replay 2.07+, every step 2+ rounds early
-  # held back 2026-11-06 22:20: Carved CHIMPS lost twice at round 33 (camo
-  # yellows) with the model rating it 2.95 - until the model fix is in
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Winter Park]
+  revised: "2026-11-07T04:00"
 plan:
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.452, 0.436]}   # fountain, north-east
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.195, 0.777]}   # bottom-left loop corner
-  - {do: place, id: t2, kind: tack, role: dps, at: [0.655, 0.777]}   # bottom-right loop corner
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.516, 0.240]}      # Quincy holds the opening
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.462, 0.470]}   # fountain, east point
   - {do: upgrade, id: b1, to: 1-0-0}
-  - {do: place, id: t3, kind: tack, role: dps, at: [0.655, 0.232]}   # top-right loop corner
-  - {do: upgrade, id: b1, to: 2-0-0}
-  - {do: place, id: t4, kind: tack, role: dps, at: [0.206, 0.232]}   # top-left loop corner
-  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.403, 0.470]}   # fountain, west edge
-  - {do: upgrade, id: b2, to: 2-0-2}   # Crow's Nest: camo (R24)
-  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead (R28)
-  - {do: upgrade, id: t1, to: 3-0-0}   # Hot Shots: the ceramic answer (R38)
-  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.457, 0.513]}   # fountain, south-east
-  - {do: upgrade, id: b3, to: 2-1-0}   # R34 yellows, R36 pinks
-  - {do: upgrade, id: b3, to: 2-2-0}   # Hot Shot: keeps R34/R36 above 2.0 if b1 stands a little off
-  - {do: upgrade, id: b2, to: 3-0-2}   # camo Destroyer before R38
-  - {do: place, id: m1, kind: bomb, role: dps, at: [0.334, 0.249]}   # over the top-left loop
-  - {do: upgrade, id: m1, to: 0-3-0}   # MOAB Mauler before R40
-  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.548, 0.249]}
-  - {do: place, id: v1, kind: village, role: support, at: [0.526, 0.436]}   # reaches all three ships
-  - {do: upgrade, id: v1, to: 2-2-0}   # Radar Scanner: camo for every ship (R51, R59)
-  - {do: place, id: a1, kind: alchemist, role: support, at: [0.489, 0.385]}   # brews all three ships
-  - {do: upgrade, id: a1, to: 3-2-0}   # Berserker Brew
-  - {do: upgrade, id: m1, to: 2-4-0}   # MOAB Assassin: BFB (R60), ZOMG (R80)
-  - {do: upgrade, id: t1, to: 4-0-0}   # Ring of Fire: the R63 rush answer
-  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
-  - {do: upgrade, id: b2, to: 4-0-2}   # Aircraft Carrier (camo planes)
-  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo, black, lead for the DDTs (R90+)
-  - {do: upgrade, id: b3, to: 3-2-0}
-  - {do: upgrade, id: b3, to: 4-2-0}   # third Aircraft Carrier
-  - {do: upgrade, id: m1, to: 2-5-0}   # MOAB Eliminator: the R100 BAD
+  - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.548, 0.572]}
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.526, 0.419]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.569, 0.376]}   # north-east of the village
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
 answers:
-  camo: [{do: upgrade, id: b2, to: 2-0-2}]
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: [{do: upgrade, id: t1, to: 3-0-0}]
-  moab: [{do: upgrade, id: m1, to: 0-3-0}]
-  bfb: [{do: upgrade, id: m1, to: 2-4-0}]
-  rush: [{do: upgrade, id: t1, to: 4-0-0}]
-  zomg: [{do: upgrade, id: m1, to: 2-4-0}]
-  ddt: [{do: upgrade, id: v1, to: 2-3-0}]
-  bad: [{do: upgrade, id: m1, to: 2-5-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
