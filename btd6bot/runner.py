@@ -1272,6 +1272,8 @@ class Bot:
                 # Achievements: claim when the ribbon shows its "!" badge; the
                 # full progress scan the planner uses runs at most daily
                 self._achievements_if_due()
+                # Daily Reward chest: a few tries a day at most (dailychest.py)
+                self._daily_chest_if_due()
                 plan = self.next_plan()
                 if plan is None:
                     log.error("planner has nothing to play - waiting 30 min (benches expire, XP grows)")
@@ -1598,6 +1600,25 @@ class Bot:
             raise
         except Exception:
             log.exception("achievements failed")
+        self.to_main_menu()
+
+    def _daily_chest_if_due(self):
+        """Open the main menu's Daily Reward chest when it is due. The chest
+        belongs to the signed-in account, so its record in
+        logs/daily_chest.json is kept per User ID. dailychest.run_if_due
+        decides (at most MAX_TRIES_PER_DAY clicks a day) and logs
+        "daily chest: ..." lines; this only makes sure the bot is back on
+        the main menu afterwards. It costs nothing when not due (one frame
+        grab, no OCR); DailyChest.claim checks for the main menu itself."""
+        from . import dailychest
+        key = self.uid or current_path().stem
+        try:
+            if dailychest.run_if_due(self.s, self.inp, self.menus, key) is None:
+                return            # not due: nothing was clicked
+        except (FocusLost, Aborted):
+            raise
+        except Exception:
+            log.exception("daily chest failed")
         self.to_main_menu()
 
     def _game_error(self, e, plan, code_stamp=None):
