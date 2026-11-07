@@ -413,7 +413,7 @@
     }
    },
    "strategies": [
-    "coveredgarden_hard"
+    "coveredgarden_medium"
    ],
    "sources": [
     "https://www.bloonswiki.com/Covered_Garden",
@@ -5203,8 +5203,7 @@
       "sniper",
       "village",
       "alchemist",
-      "spike",
-      "glue"
+      "spike"
      ],
      "last_round": 100,
      "spots": [
