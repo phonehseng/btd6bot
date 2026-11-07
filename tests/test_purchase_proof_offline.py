@@ -123,6 +123,7 @@ def test_purchase_proven_by_cash_drop():
 
 def test_purchase_proven_by_selection_when_cash_is_unreadable():
     g = make_game(cash=(1000,), drops=(None,), selectable=True)
+    g.path_costs = lambda p, f=None: [("cash", T.upgrade_cost("dart", i, 1, "medium")) for i in (1, 2, 3)]
     p = g.place("d1", "dart", 0.3, 0.3)
     assert p is not None and p.verified and g.selects == 1
     assert p.spent == g.price("dart")
@@ -351,6 +352,104 @@ def test_price_above_cash_clicks_nothing():
 
 
 # -- roster probe ------------------------------------------------------------------------
+# -- whose panel is it? (Alpine Run CHIMPS, 2026-11-07) ---------------------------------
+def alpine_game(panel, cash=(456,), drops=(None,)):
+    """Alpine Run CHIMPS: r1 (boomerang 3-0-2, the panel in
+    logs/closed_misread.png) stands at 0.505,0.700; every click near it
+    opens `panel`."""
+    g = make_game(difficulty="hard", cash=cash, drops=drops, selectable=True)
+    g.path_costs = scripted(panel) if isinstance(panel[0], list) else (lambda p, f=None: list(panel))
+    g._reread_clear = lambda p: g.path_costs(p)
+    g.towers["r1"] = Placed("r1", "boomerang", 0.505, 0.700, tiers=[3, 0, 2])
+    return g
+
+
+R1_PANEL = [("cash", T.upgrade_cost("boomerang", 1, 4, "hard")), (None, None), (None, None)]
+
+
+def test_placement_is_not_confirmed_by_a_neighbours_panel():
+    """08:42:48: r2's cash proof failed ("cash 456 -> 1") and the click at
+    its spot opened r1's 3-0-2 panel ($2,160 M.O.A.R. Glaives); r2 was
+    recorded although r3's $340 came out of the same $456."""
+    assert R1_PANEL[0] == ("cash", 2160)
+    g = alpine_game(R1_PANEL)
+    assert g.place("r2", "boomerang", 0.473, 0.760) is None
+    assert g.fail_reason == "unverified" and "r2" not in g.towers
+
+
+def test_placement_is_not_confirmed_by_an_upgraded_strangers_panel():
+    """A panel asking for a tier past 1 is no new tower's, known neighbour or not."""
+    g = alpine_game(R1_PANEL)
+    del g.towers["r1"]
+    assert g.place("r2", "boomerang", 0.473, 0.760) is None and g.fail_reason == "unverified"
+
+
+def test_placement_is_not_confirmed_by_a_heros_panel():
+    """08:58:54: boomerang1 at 0.350,0.794 was "confirmed" by a panel with no
+    price on any path (Quincy's, 0.06 above); its first upgrade then read
+    [blank, blank, blank]. A blank panel that does not name the kind is no proof."""
+    g = alpine_game([(None, None)] * 3)
+    g._panel_names = lambda p: False
+    assert g.place("boomerang1", "boomerang", 0.350, 0.794) is None
+    assert g.fail_reason == "unverified"
+    g = alpine_game([(None, None)] * 3)
+    g._panel_names = lambda p: True     # its own title, prices unreadable (free tiers?)
+    assert g.place("boomerang1", "boomerang", 0.350, 0.794) is not None
+
+
+def test_placement_confirmed_by_a_new_towers_panel():
+    fresh = [("cash", T.upgrade_cost("boomerang", i, 1, "hard")) for i in (1, 2, 3)]
+    g = alpine_game(fresh)
+    p = g.place("r2", "boomerang", 0.473, 0.760)
+    assert p is not None and g.towers["r2"] is p and p.tiers == [0, 0, 0]
+
+
+def test_neighbours_panel_does_not_correct_the_tower():
+    """08:46:04 "r2 is really 3-0-0, not 0-0-0" and 08:50:07 "r2 is really
+    4-0-0" were r1's panel. Now r2 keeps its tiers, nothing is clicked, and
+    two such panels in a row count as two failed selections - the executor
+    then forgets r2 and places it again (Executor._forget_if_missing)."""
+    g = alpine_game(R1_PANEL, cash=(5000,))
+    r2 = Placed("r2", "boomerang", 0.473, 0.760)
+    g.towers["r2"] = r2
+    for n in (1, 2):
+        assert g.upgrade(r2, 3) is False and g.fail_reason == "select"
+        assert r2.tiers == [0, 0, 0] and not path_clicks(g, r2) and not g.inp.keys
+        assert ("r2", 3) not in g.closed and r2.select_fails == n and not r2.verified
+    assert g.towers["r1"].tiers == [3, 0, 2]
+
+
+def test_neighbours_panel_far_away_is_not_blamed():
+    """Only a tower within reach of the click can own the panel: a drifted
+    count is still corrected when the tower that fits stands across the map."""
+    g = alpine_game(R1_PANEL, cash=(5000,))
+    g.towers["r1"].x, g.towers["r1"].y = 0.10, 0.10
+    r2 = Placed("r2", "boomerang", 0.473, 0.760)
+    g.upgrade(r2, 1)
+    assert g.fail_reason == "drift" and r2.tiers == [3, 0, 0]
+
+
+def test_one_missed_tier_stays_the_towers_own():
+    """r2 counted 3-0-2 showing $2,160 (tier 4) while r1 3-0-2 sits beside it:
+    one missed purchase on r2 explains it as well, so r2's own count wins."""
+    g = alpine_game(R1_PANEL, cash=(500,))
+    r2 = Placed("r2", "boomerang", 0.473, 0.760, tiers=[2, 0, 2])
+    g.upgrade(r2, 1)
+    assert g.fail_reason == "drift" and r2.tiers == [3, 0, 2]
+
+
+def test_blank_other_path_does_not_explain_a_closed_path():
+    """08:49:07: r3, counted 0-0-2, read [blank, blank, $1,405]; three blank
+    reads of path 2 made it "1-0-2". Path 1 at 1 would be open and show a
+    price - it was blank too, so the tiers stay."""
+    import btd6bot.game as G
+    g = upgrade_game([(None, None), (None, None), ("cash", T.upgrade_cost("boomerang", 3, 3, "hard"))])
+    p = Placed("r3", "boomerang", 0.542, 0.811, tiers=[0, 0, 2])
+    for _ in range(G.CLOSED_AFTER_MISSES):
+        g.upgrade(p, 2)
+    assert p.tiers == [0, 0, 2], p.tiers
+
+
 def test_roster_probe_only_probes_the_towers_asked_for():
     g = make_game(cash=(100000,))
     out = g.probe_roster(["dart", "ninja"])
