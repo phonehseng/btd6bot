@@ -586,7 +586,10 @@ class Game:
         Root cause of phantom towers: a released hold used to count as a
         purchase even when the cash went UP (Ancient Portal, "cash 374 -> 407"
         for a $400 ninja). Each phantom then failed 8 selections of ~3 s, and
-        a phantom as the only tower would let a round start undefended."""
+        a phantom as the only tower would let a round start undefended.
+
+        A selection proves the tower only when the panel that opened can be
+        a NEW tower's (_not_a_new_tower): the click may open a neighbour's."""
         p = Placed(tid, kind, fx, fy, spent=self.price(kind), verified=True)
         drop = self._cash_drop(before, kind)
         if drop is None:
@@ -599,17 +602,23 @@ class Game:
             p.spent = drop
             if kind != "hero":
                 self.learn_price(kind, 0, 0, drop)
-        elif self.select(p):
-            self.deselect(p)
-            log.info("placement of %s confirmed by selecting it (cash %s -> %s)",
-                     kind, before, self._seen_cash)
         else:
-            log.warning("placement of %s at %.3f,%.3f NOT confirmed (cash %s -> %s, nothing "
-                        "to select there) - not recorded", kind, fx, fy, before, self._seen_cash)
-            self.fail_reason = "unverified"
-            self.unconfirmed_streak = getattr(self, "unconfirmed_streak", 0) + 1
-            self._journal_place_failed(tid, kind)
-            return None
+            found = self.select(p)
+            foreign = self._not_a_new_tower(p) if found else None
+            if found:
+                self.deselect(p)
+            if found and not foreign:
+                log.info("placement of %s confirmed by selecting it (cash %s -> %s)",
+                         kind, before, self._seen_cash)
+            else:
+                why = (f"the click there opened {foreign}" if foreign
+                       else "nothing to select there")
+                log.warning("placement of %s at %.3f,%.3f NOT confirmed (cash %s -> %s, %s) - "
+                            "not recorded", kind, fx, fy, before, self._seen_cash, why)
+                self.fail_reason = "unverified"
+                self.unconfirmed_streak = getattr(self, "unconfirmed_streak", 0) + 1
+                self._journal_place_failed(tid, kind)
+                return None
         self.unconfirmed_streak = 0
         self.towers[tid] = p
         log.info("placed %s (%s) at %.3f,%.3f for $%s", tid, kind, fx, fy, p.spent)
@@ -760,14 +769,14 @@ class Game:
                          "trying again later (panel %s)", p.tid, path, p.crosspath, costs)
                 self.fail_reason = "unread"
                 return True
-            self._closed_path_hides_a_tier(p, path)   # closed for good: the count was behind
+            self._closed_path_hides_a_tier(p, path, costs)   # closed for good: the count was behind
         self.closed.add((p.tid, path))
         log.info("%s path %d is closed or maxed (panel %s) - not buying it this game",
                  p.tid, path, costs)
         self.fail_reason = "capped"
         return True
 
-    def _closed_path_hides_a_tier(self, p, path):
+    def _closed_path_hides_a_tier(self, p, path, costs=None):
         """A path the panel shows closed while p.tiers say it is open means
         the count is behind on another path: the game closes a path only
         when the two other paths both hold tiers (or this one stands at 2
@@ -782,10 +791,19 @@ class Game:
         income hid the cash drop - and the bot kept the tower at 0-2-0
         while the panel showed its path 1 as PATH CLOSED. _resync_tiers
         cannot tell from the $325 whether path 3 stands at 0 or 1; the
-        closed path can."""
+        closed path can.
+
+        The path said to hold a tier must then be open, so its button must
+        show something (`costs`, the panel read): when it is blank too, the
+        panel is not explained by the corrected tiers and nothing changes.
+        Alpine Run CHIMPS (2026-11-07 08:49): r3, counted 0-0-2, read
+        [blank, blank, $1,405]; path 2 "closed" made it 1-0-2 although path 1
+        was just as blank, and a plan step was set aside for it."""
         others = [i for i in range(3) if i != path - 1]
         zero = [i for i in others if p.tiers[i] == 0]
         if p.tiers[path - 1] != 0 or len(zero) != 1:
+            return False
+        if costs is not None and costs[zero[0]] == (None, None):
             return False
         new = list(p.tiers)
         new[zero[0]] = 1
@@ -853,6 +871,135 @@ class Game:
                     p.tid, "-".join(map(str, new)), p.crosspath, costs)
         p.tiers[:] = new
         return True
+
+    # -- whose panel is it? ----------------------------------------------------
+    # A click on a tower opens the upgrade panel of whatever tower the game
+    # finds under the cursor, and a neighbour's footprint can reach over the
+    # spot. Alpine Run CHIMPS (2026-11-07 08:42-09:00): r2 at 0.473,0.760
+    # was never bought (r3's $340 came out of the same $456), but the click
+    # meant to confirm it opened r1's panel (r1 at 0.505,0.700, 0.08 away;
+    # logs/closed_misread.png shows r1's 3-0-2 Boomerang with its 671 pops),
+    # so r2 was recorded. Every later read of "r2" was r1's panel: r2 was
+    # "corrected" 0-0-0 -> 3-0-0 ($2,160 = r1's M.O.A.R. Glaives) -> 4-0-0
+    # ($35,100 = r1's Glaive Lord), its paths were closed one by one, and the
+    # damage model counted a 4-1-0 boomerang that did not exist. Had a plan
+    # step asked for r2's path 1, the click would have bought r1's Glaive
+    # Lord under r2's name. Likewise boomerang1 at 0.350,0.794 (08:58) was
+    # "confirmed" by a panel with no price on any path - Quincy's, 0.06 above.
+    NEIGHBOUR_RADIUS = 0.12   # screen heights: how far a misdirected click can reach
+    SCREEN_ASPECT = 1.6       # width / height of the capture (1920x1200), for distances
+
+    def _screen_dist(self, a, b):
+        """Distance between two towers in screen heights."""
+        return float(np.hypot((a.x - b.x) * self.SCREEN_ASPECT, a.y - b.y))
+
+    def _panel_fits(self, kind, tiers, costs):
+        """Could this panel (path_costs) be the panel of a `kind` tower at
+        `tiers`? Every price must name exactly the next tier of its path,
+        every blank path must be one the tiers close or max, and at least
+        one price must be readable (an all-blank panel fits anything)."""
+        priced = 0
+        for i, (k, v) in enumerate(costs):
+            if k == "cash" and v:
+                if self._tier_for_price(kind, i + 1, v) != tiers[i] + 1:
+                    return False
+                priced += 1
+            elif k is None and _path_open_by_tiers(tiers, i + 1):
+                return False
+        return priced > 0
+
+    def _panel_owner(self, p, costs):
+        """Another known tower whose tiers explain this panel, when p's own
+        count does not: the click on p opened that neighbour's panel. Only
+        towers within NEIGHBOUR_RADIUS of p count - a click cannot reach
+        farther, and a same-kind tower across the map with the tiers a
+        drifted count really has must not block the correction. None when
+        the panel may be p's own (then _resync_tiers may correct p).
+
+        p's own history wins a tie: a panel that one missed purchase on p
+        explains (the usual drift, see _resync_tiers) stays p's even when a
+        neighbour fits it too. r2's first read asked for r1's tier 4 while
+        r2 was counted 0-0-0 - three tiers nobody bought."""
+        if p.kind == "hero" or self._panel_fits(p.kind, p.tiers, costs):
+            return None
+        if self._one_missed_tier(p, costs):
+            return None
+        for q in self.towers.values():
+            if q is p or q.tid == p.tid or q.kind == "hero":
+                continue
+            if self._screen_dist(p, q) <= self.NEIGHBOUR_RADIUS and self._panel_fits(q.kind, q.tiers, costs):
+                return q
+        return None
+
+    def _one_missed_tier(self, p, costs):
+        """Do the panel's prices put p at most one tier past its count, and
+        no path below it? (A purchase the bot did not see; tiers are never
+        lost, so a path below the count cannot be p's.)"""
+        implied = list(p.tiers)
+        for i, (k, v) in enumerate(costs):
+            if k == "cash" and v:
+                t = self._tier_for_price(p.kind, i + 1, v)
+                if t is not None:
+                    implied[i] = t - 1
+        if any(a < b for a, b in zip(implied, p.tiers)):
+            return False
+        return sum(implied) - sum(p.tiers) <= 1
+
+    def _not_a_new_tower(self, p):
+        """p was just placed (0-0-0) and its spot selects; is the panel that
+        opened someone else's? Returns what it is instead (for the log), or
+        None when it may be p's own.
+
+        A new tower's panel shows tier 1 on every path. Signs of another
+        tower: a known neighbour's tiers explain it (_panel_owner); a price
+        names a tier past 1 (an upgraded tower); or no path shows a price
+        even when read again (a hero's panel has no paths) and the panel's
+        name does not name p's kind either. Alpine Run CHIMPS 2026-11-07:
+        r2 was "confirmed" by r1's 3-0-2 panel, boomerang1 by Quincy's."""
+        if p.kind == "hero":
+            return None
+        costs = self.path_costs(p)
+        owner = self._panel_owner(p, costs)
+        if owner is not None:
+            return f"{owner.tid}'s panel ({owner.kind} {owner.crosspath}; prices {costs})"
+        for i, (k, v) in enumerate(costs):
+            tier = self._tier_for_price(p.kind, i + 1, v) if k == "cash" and v else None
+            if tier is not None and tier > 1:
+                return f"an upgraded tower's panel (path {i + 1} asks for tier {tier}; prices {costs})"
+        if all(c == (None, None) for c in costs):
+            costs = self._reread_clear(p)
+            if all(c == (None, None) for c in costs) and not self._panel_names(p):
+                return f"a panel with no price on any path that does not name a {p.kind} (a hero's?)"
+        return None
+
+    def _panel_names(self, p):
+        """Does the open panel's title name p's kind ("Boomerang Monkey")?
+        Only asked when no price can be read, so an unreadable title just
+        leaves the placement unproven."""
+        try:
+            text, _ = rec_text(crop(self.fresh(), self.panel(p)["name"]))
+        except Exception:
+            return False
+        words = [w.lower() for w in T.TOWERS.get(p.kind, {}).get("name", p.kind).split()
+                 if w.lower() != "monkey"]
+        return bool(words) and all(w in text.lower() for w in words)
+
+    def _wrong_panel(self, p, owner, costs):
+        """The click on p opened `owner`'s panel. p's tiers are NOT touched
+        and nothing is clicked; it counts as a failed selection, so two in a
+        row make Executor._forget_if_missing drop p (and queue its place
+        step again) instead of the bot rewriting p's tiers from a panel that
+        is not p's. select() resets select_fails on every panel it opens, so
+        the streak of wrong panels is kept apart in p.wrong_panels."""
+        p.wrong_panels = getattr(p, "wrong_panels", 0) + 1
+        p.verified = False
+        p.select_fails = p.wrong_panels
+        self.fail_reason = "select"
+        log.warning("%s at %.3f,%.3f cannot be selected: the click opens %s's panel (%s %s, panel "
+                    "prices %s) - %s stays %s, nothing clicked (%d in a row)", p.tid, p.x, p.y,
+                    owner.tid, owner.kind, owner.crosspath, costs, p.tid, p.crosspath, p.wrong_panels)
+        journal.current().event("wrong_panel", tid=p.tid, kind=p.kind, owner=owner.tid,
+                                tiers=p.crosspath, owner_tiers=owner.crosspath)
 
     # upgrade tree (opened by clicking a locked upgrade, or the UPGRADES button)
     TREE_ICON_X = (0.306, 0.424, 0.541, 0.659, 0.777)
@@ -943,6 +1090,11 @@ class Game:
         try:
             costs = self.path_costs(p)
             if p.kind != "hero":         # hero panels have no upgrade paths
+                owner = self._panel_owner(p, costs)
+                if owner is not None:    # a neighbour's panel: never "correct" p from it
+                    self._wrong_panel(p, owner, costs)
+                    return False
+                p.wrong_panels = 0
                 drifted = self._resync_tiers(p, costs)
                 if self._path_closed(p, path, costs):
                     return False

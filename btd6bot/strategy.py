@@ -4468,15 +4468,14 @@ class Executor:
         says so with this flag; once its plan is done the usual spending
         comes back.
 
-        One exception, in Match: in a crisis of the round being played
-        (lives falling, or the round itself rated a crisis) reinforce may
-        still spend. Skates CHIMPS (2026-11-07) lost round 75 holding $26k
-        for Carpet of Spikes ($40k+), the round rated 0.88 and the bloons
-        94% along the route the round before, while nothing else was
-        allowed to buy. Cracked's waste was for rounds ten ahead, which
-        this still forbids. The second Skates loss (08:20) showed the
-        exception was not enough on its own: a far threat's hold took the
-        whole bank first (_far_keep says why, and now lets it go)."""
+        There is no crisis exception. One was tried (Match let reinforce
+        spend in a crisis of the round being played, after Skates CHIMPS
+        lost round 75 twice) and taken out the same morning: on Alpine Run
+        CHIMPS (2026-11-07 08:38) the damage model called round after round
+        a crisis, reinforce spent the plan's cash on snipers each time, and
+        the Glaive Lord ($35,100) was never bought. Skates' real cause was
+        a far threat's hold taking the whole bank (_far_keep says why, and
+        now lets it go)."""
         strat = getattr(self, "strat", None)
         if not (isinstance(strat, dict) and strat.get("plan_first")):
             return False
