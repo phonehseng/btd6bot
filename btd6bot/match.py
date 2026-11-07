@@ -634,11 +634,6 @@ class Match:
                         self._last_wait_log = now
                         log.info("idle with $%d: %s", cash, getattr(self.ex, "waiting", "?"))
                     held = self._cash_held(dropped, crisis)
-<<<<<<< HEAD
-                    # a plan_first build's plan owns the cash (Executor.plan_first)
-                    plan_first = getattr(self.ex, "plan_first", None)
-                    if plan_first is not None and plan_first():
-=======
                     # a plan_first build's plan owns the cash (Executor.plan_first),
                     # except in a crisis the bloon watch has seen (_crisis_seen):
                     # then reinforce may buy for this round, with the far hold
@@ -646,7 +641,6 @@ class Match:
                     seen = self._crisis_seen(dropped, crisis)
                     plan_first = getattr(self.ex, "plan_first", None)
                     if plan_first is not None and plan_first() and not seen:
->>>>>>> 902f1dc (A plan_first build gives up its cash only in a crisis seen on the track, and that crisis frees the far hold)
                         weak = False
                     if weak and not held and now - self._t_reinforce > REINFORCE_EVERY:
                         # the coming rounds look weak: the damage model picks
