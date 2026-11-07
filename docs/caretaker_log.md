@@ -671,3 +671,9 @@
 - Since 21:45: 0 wins, 0 losses; Balance Impoppable ended as a "timeout" at round 86 after 71.5 min, which the fix/game-clock merge (cb8f795, 22:08) addresses: a game whose rounds keep coming is no longer quit for time.
 - All loss cases were already handled; no new folders. Other developer sessions were editing CHIMPS strategies in worktrees (chimps-fs, chimps-opening, chimps-he) at 22:17-22:18, so this run made no code changes.
 - For the next run: check how Carved CHIMPS ended (it was close at rounds 25-26); if it lost, compare with the End Of The Road loss of 2026-11-05 (a one-life pick right at the bar).
+
+## 2026-11-06 23:25
+- Bot status: task Running; bot.py and recorder up since 22:21, BTD6 up since 03:25. Playing Encrypted Impoppable, round 98 of 100 on its one life, rated 0.59-0.77 for rounds 98-99 (crisis mode, abilities, reinforcing; plan and fill exhausted with $9k). No STOP, PAUSE or dev_active.txt; no tracebacks, loops or Auto Start warning. Safe mode on (trips 4, streak 1).
+- Since 22:20: 1 win, 1 loss: Spring Spring Impoppable won (r100, 29 min); Carved CHIMPS lost round 33 (20 camo reds, 13 camo yellows) on its one life, rated 2.95.
+- Carved CHIMPS diagnosed and marked handled: the lone Crow's Nest buccaneer's straight darts trail fast camo yellows, which the model counted as hits, so no second camo answer was bought while $3,077 sat waiting on the Destroyer step. The fix is already on the developer branch fix/chimps-opening (19f8cc0 "a lone fast bloon takes only the shots that reach it", round 33 now rates 0.53; carved_chimps held at 0.5), not merged yet; meanwhile Carved CHIMPS is benched 12 h and its record since the revision is 0-1.
+- Three developer sessions were committing CHIMPS model and build work in worktrees until 23:18, so this run made no code changes. For the next run: check how Encrypted Impoppable ended and whether fix/chimps-opening has been merged.
