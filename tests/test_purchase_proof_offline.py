@@ -468,6 +468,35 @@ def test_roster_probe_stops_after_three_failures():
     assert len(g.holds) == Game.PROBE_MAX_FAILS == 3 and not any(out.values())
 
 
+
+def _pops_read(panel, tiers, kind="boomerang", text="0"):
+    """Game._read_pops on a scripted panel: (pops after the read)."""
+    g = upgrade_game(panel)
+    saved_crop, saved_rec = G.crop, G.rec_text
+    G.crop = lambda f, reg: None
+    G.rec_text = lambda img: (text, 0.9)
+    Game._pops_crop_saved = True
+    try:
+        p = Placed("r1", kind, 0.5, 0.7)
+        p.tiers = list(tiers)
+        g._read_pops(p)
+        return getattr(p, "pops", None)
+    finally:
+        G.crop, G.rec_text = saved_crop, saved_rec
+
+
+def test_a_zero_pop_count_counts_only_from_the_towers_own_panel():
+    """Spring Spring CHIMPS (2026-11-07): r1, a 4-0-2 boomerang, read 0 pops
+    from a panel that was not its own and lost its Glaive Lord step."""
+    glaive_lord = T.upgrade_cost("boomerang", 1, 5, "hard")
+    own = [("cash", glaive_lord), (None, None), (None, None)]
+    assert _pops_read(own, [4, 0, 2]) == 0, "its own panel: the 0 stands"
+    foreign = [("cash", 99999), ("cash", 12345), (None, None)]
+    assert _pops_read(foreign, [4, 0, 2]) is None, "a panel that is not its own: count unknown"
+    blank = [(None, None)] * 3
+    assert _pops_read(blank, [4, 0, 2]) is None, "an unreadable panel proves nothing"
+    assert _pops_read(foreign, [4, 0, 2], text="671") == 671, "a count above 0 is read as before"
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
