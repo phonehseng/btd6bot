@@ -1,0 +1,136 @@
+# Rake, CHIMPS: Quincy opens in the bottom U where both lanes pass, one
+# buccaneer in the pool grows to a Carrier Flagship with a village in the
+# centre box, a Glaive Lord boomerang and a Cripple MOAB sniper finish.
+#
+# Why: the owner's goal is CHIMPS black borders (all Beginner maps, then
+# Intermediate). On 2026-11-07 the bot beat CHIMPS on 9 maps with builds that
+# follow a published community strategy step by step and let the plan own
+# the cash (`plan_first`); the Carrier Flagship water recipe below won 6 of
+# them (Cracked, End of the Road, Lotus Island among them). Rake has a pool
+# whose bottom edge sees the top stretches of both lanes, so the water
+# recipe is the default here. Played live to learn, not gated on the damage
+# model (which does not count heroes, and the opening is Quincy alone).
+#
+# Sources:
+#   * bloon.games, "How to Beat CHIMPS on Rake?"
+#     (https://bloon.games/how-to-beat-chimps-on-rake/): the page holds only
+#     a video (YouTube Zaq2Dhws5Ko, BTD6 Master); its description has no
+#     steps and its auto captions could not be fetched (the timedtext
+#     request returns an empty body), so the map's own guide could not be
+#     followed step by step.
+#   * The plan is therefore bloon.games' written Flagship recipe, the one the
+#     bot won Cracked CHIMPS with: "#BTD6 | Cracked | Hard - CHIMPS Quicky
+#     Strategy Guide" (https://bloon.games/how-to-beat-chimps-on-cracked) -
+#     Quincy; a buccaneer 2-2-0, Destroyer, a village 2-2-0 before round 40,
+#     Aircraft Carrier, Carrier Flagship before round 60, a Glaive Lord
+#     boomerang before round 80, the village to Primary Expertise before
+#     round 90, a Cripple MOAB sniper before round 100. bloon.games' written
+#     Spice Islands CHIMPS guide (another Intermediate water map,
+#     https://bloon.games/how-to-beat-chimps-on-spice-islands) has the same
+#     core.
+#   * bloons.fandom Rake (https://bloons.fandom.com/wiki/Rake): two lanes at
+#     once that cross in the middle; a line of buccaneers and a Carrier
+#     Flagship mid-game. bloonswiki Rake (https://www.bloonswiki.com/Rake):
+#     the best spots are in and just below the centre, the pool on the upper
+#     left holds the water towers.
+#
+# Changes from the guide, and why (the first three as on Cracked and Lotus):
+#   * the guide puts the boomerang and the sniper on the Flagship's deck; the
+#     bot does not place towers on a deck, so the boomerang stands on the
+#     land between the pool and the lane that comes down from the top,
+#     inside the village's reach, and the sniper on the left field;
+#   * a Night Vision sniper (0-1-0) for round 24's camo: neither a 2-2-0
+#     buccaneer nor Quincy at that level sees camo, and the village (Radar
+#     Scanner) only comes at about round 35;
+#   * the account has the village's top path to tier 4 only
+#     (data/accounts/SFYOSHHYV.json: village [4, 5, 5]), so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise; the sniper keeps its
+#     Night Vision on the way to Cripple MOAB (5-1-0);
+#   * the village takes Bigger Radius (1-0-0) before Radar Scanner (1-2-0):
+#     no legal village cell lies within 40 units of the pool (the strip
+#     between the pool and the lower lane is too narrow for a village), so
+#     it stands across that lane, 41.0 units from the boat; Bigger Radius
+#     makes its reach 48 (7 units of slack) before any buff is needed (a village 49.3 units from
+#     its carrier lost Frozen Over at round 56: the strict buff rule).
+#
+# Spots (map geometry with the main checkout's learned refusals,
+# data/maps/rake.npz copied into the worktree for the check, legal in
+# placement order; "cells" are track cells of both lanes in range and in
+# line of sight, of 3,169 on screen; towers at least 0.10 screen-height
+# apart):
+#   * Quincy (0.532, 0.785), the bottom U: 885 cells (28%; the best hero
+#     cell), all 8 neighbours legal, 6 cells from a refused one. He sees the
+#     U of the lane that comes down from the top and the last vertical
+#     stretch of the lane that comes in from the left, so both lanes; 28% is above the ~23% Quincy alone held round 6 from (Cracked
+#     26%, Winter Park 23%; lost at 18-19% on Lotus and Hedge);
+#   * buccaneer (0.478, 0.394), the pool's bottom edge: 1,010 cells (32%; the
+#     best water cell 1,016), the top stretches of both lanes; 5 of its 8
+#     neighbours legal (the pool's edge);
+#   * village (0.516, 0.564), the centre box: 4 cells from a refused one (the
+#     box's cells nearer the pool touch refusals), 41.0 units from the boat
+#     (see above);
+#   * boomerang (0.542, 0.411), between the pool and the lane that comes
+#     down from the top: 645 cells (20%), all 8 neighbours legal, 23.6 units
+#     (0.104 screen-height) from the boat, 36.2 from the village;
+#   * sniper (0.083, 0.521), the left field: sees 95% of the track.
+#
+# Cash (CHIMPS: $650 at round 6, the game's own income, Hard prices): the
+# same plan and order as the Cracked/Lotus wins plus a $540 Bigger Radius
+# (tests/test_chimps_builds_offline.plan_timeline): buccaneer round 8, Hot
+# Shot 16, Night Vision 18, Destroyer 29, Radar Scanner 36, Jungle Drums 37,
+# Aircraft Carrier 44, Flagship 58, Glaive Lord 78, Cripple MOAB 92.
+#
+# Offline replay (tools/simulate_threats on the learned map, the live
+# account's unlocks, base income): every spot accepted, plan 21/21, no
+# threat gaps. Doubt: the blimp ratios (damage model, no hero or abilities)
+# are about 0.55-0.65x the Lotus Island build's (which won): R40 0.42 (Lotus
+# 0.80), R60 0.64, R75 0.34, R90-100 0.13-0.61 - two short lanes, more than
+# half of each off screen. Played live to learn; if it loses mid-game, a
+# second buccaneer in the pool (bloons.fandom's "line of buccaneers") is the
+# first thing to try.
+#
+# Status 2026-11-07 12:00: written, not played live yet.
+id: rake_chimps
+map: Rake
+hero: quincy
+hero_opens: true      # Quincy alone holds the opening (Executor.defended)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
+  base_success: {chimps: 0.5}
+  maps: [Rake]
+  revised: "2026-11-07T12:00"
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.532, 0.785]}      # Quincy holds the opening: both lanes
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.478, 0.394]}   # the pool's bottom edge
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.083, 0.521]}   # left field
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.516, 0.564]}   # centre box
+  - {do: upgrade, id: v1, to: 1-0-0}                                      # Bigger Radius: reaches the boat (see above)
+  - {do: upgrade, id: v1, to: 1-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.542, 0.411]}   # between the pool and the lane bend
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
