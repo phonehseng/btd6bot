@@ -3817,7 +3817,8 @@ class Executor:
         if self._firm_blimp_hold(due, rnd):
             return False          # a game-ending blimp round: answered and held as usual
         reason = None
-        if self.lives_fell_lately(rnd, 1) or self.weak_now(rnd):
+        weak_now = self.lives_fell_lately(rnd, 1) or self.weak_now(rnd)
+        if weak_now:
             reason = f"round {rnd} is weak"
         else:
             worst = self.lookahead_worst(rnd)
@@ -3835,7 +3836,7 @@ class Executor:
             # an answer of unknown cost: how much to keep back cannot be
             # said, so it goes the usual way (answer_threat, then _hold_for)
             return False
-        keep = max(0.0, cost - self.income_until(due, rnd))
+        keep = self._far_keep(cost, due, rnd, weak_now, f"the {threat} answer")
         self.held_cash = getattr(self, "held_cash", 0.0) + keep
         note = ("defer-far", threat, rnd)
         if note not in self._notes():
@@ -3843,6 +3844,41 @@ class Executor:
             log.warning("threat %s (round %d) waits: %s first - holding only $%d of its $%.0f, "
                         "the rest goes to the nearer round", threat, due, reason, keep, cost)
         return True
+
+    def _far_keep(self, cost, due_round, rnd, weak_now, what):
+        """What a hold for `what` (costing `cost`, needed by due_round, more
+        than FAR_ROUNDS away) keeps back: the part of its cost the income
+        until due_round cannot rebuild (income_until).
+
+        While the round being played is weak (`weak_now`: the damage model
+        rates it or the next one weak, or lives fell), it keeps nothing when
+        even all the cash in hand (cash_seen) and that income cannot pay it
+        before due_round (reinforce.payable_by): holding cannot bring it in
+        time, and every dollar held is one the round at hand cannot use.
+        Skates CHIMPS (2026-11-07) lost round 75 twice that way: the zomg
+        answer of round 80 (Carpet of Spikes + Spirit of the Forest,
+        $87,370) waited for round 75, rated a crisis, "holding only $72,894"
+        - more than the $21,595-26,196 in the bank - so reinforce, let in by
+        the plan_first crisis exception (Executor.plan_first), was handed $0
+        and said "nothing $0 buys helps round 75". The plan step's own claim
+        was not the block: reinforce.best already lets go of a step that
+        cannot be paid before the round in danger (plan_claim_in_crisis).
+        An answer income can still deliver in time keeps its part as before
+        (Lotus Island's round-100 BAD answer, $6,368 of $34,560), and so does
+        any hold while the round being played is not weak; with plan_first
+        the released cash still goes only to the plan, its answers and a
+        crisis purchase for the round at hand - Cracked's off-plan buys for
+        rounds far ahead stay forbidden. Unknown cash: kept as before."""
+        keep = max(0.0, cost - self.income_until(due_round, rnd))
+        cash = getattr(self, "cash_seen", None)
+        if weak_now and keep and cash is not None and RF.payable_by(self, cost, cash, due_round, rnd) is False:
+            note = ("far-unpayable", what, rnd)
+            if note not in self._notes():
+                self.noted.add(note)
+                log.warning("round %d is weak and %s ($%.0f) cannot be paid before round %d from $%d and "
+                            "the income until then - nothing is held for it", rnd, what, cost, due_round, cash)
+            return 0.0
+        return keep
 
     def _firm_blimp_hold(self, due_round, rnd):
         """Should a hold for due_round stay whole although the round being
@@ -3960,7 +3996,7 @@ class Executor:
             self.saving_for_threat = True
             return False
         if cost is not None and due_round is not None and due_round - rnd > self.FAR_ROUNDS and weak:
-            keep = max(0.0, cost - self.income_until(due_round, rnd))
+            keep = self._far_keep(cost, due_round, rnd, True, what)
             self.held_cash = getattr(self, "held_cash", 0.0) + keep
             note = ("weak-hold", what, rnd)
             if note not in self._notes():
@@ -4397,7 +4433,9 @@ class Executor:
         for Carpet of Spikes ($40k+), the round rated 0.88 and the bloons
         94% along the route the round before, while nothing else was
         allowed to buy. Cracked's waste was for rounds ten ahead, which
-        this still forbids."""
+        this still forbids. The second Skates loss (08:20) showed the
+        exception was not enough on its own: a far threat's hold took the
+        whole bank first (_far_keep says why, and now lets it go)."""
         strat = getattr(self, "strat", None)
         if not (isinstance(strat, dict) and strat.get("plan_first")):
             return False
