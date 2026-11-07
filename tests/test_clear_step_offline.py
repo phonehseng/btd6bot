@@ -98,6 +98,23 @@ def test_a_plan_first_build_keeps_its_cash_for_the_plan():
     ex.idx = 1
     assert not ex.plan_first()
 
+
+def test_an_upgrade_whose_only_path_is_in_a_read_pause_waits_not_skips():
+    """Alpine Run CHIMPS (2026-11-07): r1 -> 5-0-2 came back "skip" while
+    its path's price was in a short read pause, and the plan moved past the
+    Glaive Lord for good. The step waits instead; a capped path still skips."""
+    import time
+    from btd6bot.game import Placed
+    ex = executor(steps=())
+    r1 = Placed("r1", "boomerang", 0.5, 0.7)
+    r1.tiers = [4, 0, 2]
+    ex.g.towers["r1"] = r1
+    step = {"do": "upgrade", "id": "r1", "to": "5-0-2"}
+    ex.unread_until = {("r1", 1): time.time() + 30}
+    assert ex.try_step(dict(step), 50000, 62) == "wait"
+    ex.capped.add(("r1", 1))
+    assert ex.try_step(dict(step), 50000, 62) == "skip"
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
