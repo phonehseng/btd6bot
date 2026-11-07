@@ -31,6 +31,14 @@ CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
 # sees the track empty (Match._hold_for_clear).
 CLEAR_LOOKS = 4            # looks in a row with no bloon on the route = clear
 CLEAR_HOLD_MAX_S = 25.0    # longest wait per round (a watch that never clears)
+# Rounds in a row whose wait ran to CLEAR_HOLD_MAX_S before the watch is taken
+# to misread this map and the waits stop for the rest of the game.
+CLEAR_CAPPED_ROUNDS = 2
+# A game past its time limit is still played on while rounds keep coming: it
+# ends as a timeout only when no new round has started for this long, or at
+# GAME_HARD_LIMIT_FACTOR times the limit.
+ROUND_STALL_S = 600.0
+GAME_HARD_LIMIT_FACTOR = 3.0
 # Rounds played without ever seeing the Play button idle before the bot
 # concludes the game's own Auto Start is on (it then cannot hold a round).
 AUTO_START_ROUNDS = 8
@@ -479,7 +487,7 @@ class Match:
         self.tracer.start_round()
         t_hud = t_ability = 0.0
         cash = None
-        while time.time() - self.stats["start"] < max_minutes * 60:
+        while not self._out_of_time(max_minutes):
             f = self.g.fresh()
             if not self.g.in_game(f):
                 outcome = self._off_screen()
@@ -736,6 +744,8 @@ class Match:
         rules = self.ex.rules
         if rnd is None or not rules.get("one_life") or rules.get("continuous"):
             return False
+        if getattr(self, "_clear_off", False):
+            return False
         watch = getattr(self, "watch", None)
         if watch is None or not watch.ready():
             return False
@@ -748,6 +758,15 @@ class Match:
         if now - state[0] > CLEAR_HOLD_MAX_S:
             log.info("round %d: bloons still seen after %.0f s - Play goes on", rnd, now - state[0])
             holds[rnd] = False
+            self._clear_capped = getattr(self, "_clear_capped", 0) + 1
+            if self._clear_capped >= CLEAR_CAPPED_ROUNDS:
+                # Balance Impoppable (2026-11-06): the watch read bloons at
+                # 30-33% of the route on a clear track every round, each wait
+                # ran to the cap, and the game was quit as a timeout at
+                # round 86 with the one life and $14,146 in hand
+                log.warning("the bloon watch never clears on this map (%d rounds) - Play no longer "
+                            "waits for it this game", self._clear_capped)
+                self._clear_off = True
             return False
         try:
             depth = watch.look(f, now, list(self.g.towers.values()))
@@ -771,7 +790,26 @@ class Match:
         if getattr(self, "_clear_noted", None) == rnd:
             log.info("round %d: track clear after %.1f s - Play", rnd, now - state[0])
         holds[rnd] = False
+        self._clear_capped = 0
         return False
+
+    def _out_of_time(self, max_minutes):
+        """True when the game should end as a timeout: past its time limit
+        (`max_minutes`) with no new round for ROUND_STALL_S, or past
+        GAME_HARD_LIMIT_FACTOR times the limit whatever happens.
+
+        A game whose rounds keep coming is never quit for the clock alone:
+        Balance Impoppable (2026-11-06) was quit at round 86 after 71
+        minutes, alive and with $14,146, because the one-life wait for a
+        clear track (_hold_for_clear) had added up to 25 s to each round. A
+        CHIMPS game (95 rounds) at that pace needs about two hours."""
+        now = time.time()
+        elapsed = now - self.stats["start"]
+        if elapsed < max_minutes * 60:
+            return False
+        if elapsed > GAME_HARD_LIMIT_FACTOR * max_minutes * 60:
+            return True
+        return now - getattr(self, "_t_round_change", self.stats["start"]) > ROUND_STALL_S
 
     def _frozen(self, f, now):
         """True if the play field has not changed for ~2 s (game paused by a popup)."""

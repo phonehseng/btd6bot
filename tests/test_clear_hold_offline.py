@@ -89,6 +89,49 @@ def test_no_wait_with_lives_to_spare_continuous_sends_or_no_watch():
     assert not m._hold_for_clear(40, None, now)
 
 
+
+def test_a_watch_that_never_clears_stops_the_waits_for_the_game():
+    """Balance Impoppable (2026-11-06): the watch read bloons on a clear track
+    every round and every wait ran to the cap. After CLEAR_CAPPED_ROUNDS
+    such rounds Play no longer waits that game."""
+    m = bare_match([0.33] * 1000)
+    now = time.time()
+    for k in range(M.CLEAR_CAPPED_ROUNDS):
+        rnd = 70 + k
+        assert m._hold_for_clear(rnd, None, now)                          # waits ...
+        assert not m._hold_for_clear(rnd, None, now + M.CLEAR_HOLD_MAX_S + 1)   # ... to the cap
+        now += 60
+    assert not m._hold_for_clear(80, None, now), "the waits are off for the rest of the game"
+
+
+def test_a_round_that_clears_resets_the_capped_count():
+    m = bare_match([0.33, 0.0, 0.0, 0.0, 0.0] + [0.33] * 100)
+    now = time.time()
+    m._clear_capped = M.CLEAR_CAPPED_ROUNDS - 1
+    assert m._hold_for_clear(70, None, now)
+    for k in range(M.CLEAR_LOOKS):
+        m._hold_for_clear(70, None, now + 1 + k)
+    assert m._clear_capped == 0
+    assert m._hold_for_clear(71, None, now + 60), "the next round still waits"
+
+
+def test_a_game_with_rounds_coming_is_not_quit_for_time():
+    """Balance Impoppable was quit at round 86 after its 71-minute limit
+    while rounds kept coming; only a stalled game, or one far past its
+    limit, ends as a timeout."""
+    m = M.Match.__new__(M.Match)
+    start = time.time() - 72 * 60                      # past a 71-minute limit
+    m.stats = {"start": start}
+    m._t_round_change = time.time() - 30               # a new round 30 s ago
+    assert not m._out_of_time(71)
+    m._t_round_change = time.time() - M.ROUND_STALL_S - 1
+    assert m._out_of_time(71), "no new round for ROUND_STALL_S: a stalled game ends"
+    m.stats = {"start": time.time() - (M.GAME_HARD_LIMIT_FACTOR * 71 + 1) * 60}
+    m._t_round_change = time.time()
+    assert m._out_of_time(71), "past the hard limit the game ends whatever happens"
+    m.stats = {"start": time.time() - 10 * 60}
+    assert not m._out_of_time(71)
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
