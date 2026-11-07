@@ -1959,6 +1959,14 @@ def _fmt_xp(xp: float) -> str:
     return f"{xp / 1e6:.2f}M" if xp >= 1e6 else f"{xp / 1e3:.0f}k"
 
 
+# Towers the owner wants levelled up whatever their paragon (2026-11-07:
+# "mermonkey and sky warden need more xp"). Neither has a paragon in
+# data/tower_xp.json, so paragon_status never focused them; while either
+# still has locked upgrades it counts as a focus tower at full closeness,
+# like a tower one game from its paragon.
+OWNER_XP_TOWERS = ("mermonkey", "skywarden")
+
+
 def paragon_status(account: AccountState, cfg: PlannerConfig = DEFAULT_CONFIG) -> ParagonStatus:
     """Which owned towers still need XP for their paragon, and how much.
 
@@ -1996,6 +2004,17 @@ def paragon_status(account: AccountState, cfg: PlannerConfig = DEFAULT_CONFIG) -
         else:
             closeness = min(1.0, cfg.paragon_reach_xp / needed)
             status.focus.append(ParagonGoal(tower, prices.paragon, needed, closeness))
+    prices_all = load_tower_xp_prices(cfg.tower_xp_path)
+    for tower in OWNER_XP_TOWERS:
+        prices = prices_all.get(tower)
+        if prices is None or prices.paragon is not None or tower not in account.unlocked_towers:
+            continue          # a paragon tower is focused above already
+        have = account.upgrades(tower)
+        locked_xp = sum(xp for path, tiers in enumerate(prices.upgrade_xp)
+                        for tier, xp in enumerate(tiers, start=1) if tier > have[path])
+        needed = max(0.0, locked_xp - float(account.tower_xp.get(tower) or 0.0))
+        if needed > 0:
+            status.focus.append(ParagonGoal(tower, "every upgrade (owner)", needed, 1.0))
     status.focus.sort(key=lambda g: g.remaining_xp)
     return status
 

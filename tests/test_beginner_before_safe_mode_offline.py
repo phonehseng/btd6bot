@@ -137,6 +137,20 @@ def test_the_calibration_ignores_games_before_a_revision_too():
     p_new = P.win_probability(acc, new, "Carved", "chimps", calib=P._Calibration(acc, {new.id: new}))[0]
     assert p_new >= P.p_threshold("chimps") > p_old, (p_old, p_new)
 
+
+def test_the_owners_xp_towers_are_focused_without_a_paragon():
+    """2026-11-07, the owner: "mermonkey and sky warden need more xp". Neither
+    has a paragon, so the paragon focus never steered XP to them; while they
+    have locked upgrades they are focus towers at full closeness."""
+    acc = F.full_account()
+    for t in P.OWNER_XP_TOWERS:
+        acc.unlocked_upgrades[t] = [2, 2, 0]
+        acc.tower_xp[t] = 0
+    focus = {g.tower: g for g in P.paragon_status(acc).focus}
+    for t in P.OWNER_XP_TOWERS:
+        if t in acc.unlocked_towers:
+            assert t in focus and focus[t].closeness == 1.0, (t, list(focus))
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
