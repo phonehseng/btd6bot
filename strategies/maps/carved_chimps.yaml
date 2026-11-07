@@ -109,6 +109,8 @@ map: Carved
 hero: admiral_brickell
 modes: [chimps]
 planner:
+  # repaired and re-checked then: games before it were on the old version
+  revised: "2026-11-05T19:02"
   towers: {buccaneer: [5, 2, 2], village: [2, 3, 0], ace: [4, 0, 0], bomb: [2, 5, 0], boomerang: [3, 0, 0], dart: [0, 0, 0],
            alchemist: [2, 0, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.13+
