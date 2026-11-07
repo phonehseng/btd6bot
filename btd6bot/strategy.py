@@ -4565,6 +4565,13 @@ class Executor:
 
         Only verified towers count (Placed.verified: placed with proof, and
         not doubtful after a failed selection): a tower the game never placed
-        must not let a round start."""
-        return any(p.kind != "hero" and getattr(p, "verified", True)
+        must not let a round start.
+
+        A build whose opening is its hero (`hero_opens: true` in the file)
+        counts the placed hero: the Cracked CHIMPS strategy opens with Quincy
+        alone on $650 (2026-11-07), and the bot refused round 6 with the hero
+        standing as the plan wanted."""
+        strat = getattr(self, "strat", None)
+        hero_opens = isinstance(strat, dict) and bool(strat.get("hero_opens"))
+        return any((p.kind != "hero" or hero_opens) and getattr(p, "verified", True)
                    for p in self.g.towers.values())
