@@ -450,6 +450,31 @@ def test_blank_other_path_does_not_explain_a_closed_path():
     assert p.tiers == [0, 0, 2], p.tiers
 
 
+def test_blank_path_after_its_last_tier_credits_that_tier():
+    """Lost Crevasse CHIMPS (2026-11-07 18:19): x1, counted 1-0-4, bought
+    Razor Sharp Shots ($215) but the click was judged "not bought" (the
+    button went blank: 2-0-4 closes path 1; pop income hid the cash drop).
+    The panel then read [blank, blank, $23,220] - exactly what 2-0-4 shows -
+    and three blank reads closed path 1 with the count left at 1-0-4, so the
+    plan's 2-0-4 step was set aside as blocked although it stood."""
+    import btd6bot.game as G
+    g = upgrade_game([(None, None), (None, None), ("cash", 23220)], cash=364)
+    p = Placed("x1", "dart", 0.537, 0.453, tiers=[1, 0, 4])
+    for _ in range(G.CLOSED_AFTER_MISSES - 1):
+        assert g.upgrade(p, 1) is False and g.fail_reason == "unread" and p.tiers == [1, 0, 4]
+    assert g.upgrade(p, 1) is False and g.fail_reason == "capped"
+    assert ("x1", 1) in g.closed and p.tiers == [2, 0, 4], p.tiers
+    assert not path_clicks(g, p) and not g.inp.keys
+    # one more tier that would leave the path open explains nothing (a misread)
+    q = Placed("x2", "dart", 0.5, 0.5, tiers=[0, 0, 4])
+    assert not g._closed_path_took_its_last_tier(q, 1, [(None, None), (None, None), ("cash", 23220)])
+    assert q.tiers == [0, 0, 4]
+    # nor does it when another button disagrees: path 3 blank although 2-0-4 leaves it open
+    r = Placed("x3", "dart", 0.5, 0.5, tiers=[1, 0, 4])
+    assert not g._closed_path_took_its_last_tier(r, 1, [(None, None), (None, None), (None, None)])
+    assert r.tiers == [1, 0, 4]
+
+
 def test_roster_probe_only_probes_the_towers_asked_for():
     g = make_game(cash=(100000,))
     out = g.probe_roster(["dart", "ninja"])
