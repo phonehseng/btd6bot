@@ -1,6 +1,8 @@
-# Rake, CHIMPS: Quincy opens in the bottom U where both lanes pass, one
+# Rake, CHIMPS: three darts open on both lanes (one at the top lane's
+# entrance, one at the left lane's, one where the lanes cross); one
 # buccaneer in the pool grows to a Carrier Flagship with a village in the
-# centre box, a Glaive Lord boomerang and a Cripple MOAB sniper finish.
+# centre box, Quincy joins in the bottom U, a Glaive Lord boomerang and a
+# Cripple MOAB sniper finish.
 #
 # Why: the owner's goal is CHIMPS black borders (all Beginner maps, then
 # Intermediate). On 2026-11-07 the bot beat CHIMPS on 9 maps with builds that
@@ -9,7 +11,7 @@
 # them (Cracked, End of the Road, Lotus Island among them). Rake has a pool
 # whose bottom edge sees the top stretches of both lanes, so the water
 # recipe is the default here. Played live to learn, not gated on the damage
-# model (which does not count heroes, and the opening is Quincy alone).
+# model (which does not count heroes).
 #
 # Sources:
 #   * bloon.games, "How to Beat CHIMPS on Rake?"
@@ -51,21 +53,49 @@
 #     between the pool and the lower lane is too narrow for a village), so
 #     it stands across that lane, 41.0 units from the boat; Bigger Radius
 #     makes its reach 48 (7 units of slack) before any buff is needed (a village 49.3 units from
-#     its carrier lost Frozen Over at round 56: the strict buff rule).
+#     its carrier lost Frozen Over at round 56: the strict buff rule);
+#   * three darts open instead of Quincy, and Quincy comes after the boat's
+#     Hot Shot (see "Opening").
+#
+# Opening (reworked 2026-11-07 15:30). Live, 14:54: Quincy alone opened from
+# the bottom U (his cell (0.532, 0.785) was refused, he stood at (0.516,
+# 0.785), 27% of both lanes) and round 7 was lost with bloons 77% of the way
+# along. Calibration from that day's live CHIMPS openings (damage model,
+# optimize_builds.Evaluator + dps_model.round_margin, rounds 6-10; M = the
+# board's margin, B = its margin with its strongest tower removed; heroes
+# are not counted): M alone did not separate holds from losses - boat +
+# starter dart lost Lost Crevasse at M 1.41 (R8) and 0.95 (R9) and Spring
+# Spring at 1.35 (R9) while boomerang + dart held Hedge at 0.91 (R8). B did:
+# in each loss the starter dart did next to nothing (B 0.06-0.13), in each
+# hold the second tower carried a share (B 0.35-0.65: Frozen Over, Lotus
+# Island, Downstream, Hedge, Skates). Quincy alone held from cells seeing
+# 22-37% of the track and lost from 18%, and from 27% here (two lanes at
+# once). Bar used: M >= 0.9 and B >= 0.35 in every round 6-10, from towers
+# the plan places itself. Why darts: with one non-hero tower down, Match
+# keeps $215 back for its starter dart (Match._opener_reserve) and puts that
+# dart where the executor chooses, so a $650 opening with any tower over
+# $220 gets an unplanned second tower; three darts ($645) are the only
+# opening whose every tower is the plan's.
+# The darts, rounds 6-10 with the boat from round 9: M 1.30 / 1.26 / 1.14 /
+# 1.31 / 1.51, B 0.67 / 0.74 / 0.58 / 0.56 / 0.62 (each lane has two darts:
+# its entrance dart and the crossing dart). The old opening rated 0 (Quincy
+# alone) until the boat at round 9.
 #
 # Spots (map geometry with the main checkout's learned refusals,
 # data/maps/rake.npz copied into the worktree for the check, legal in
 # placement order; "cells" are track cells of both lanes in range and in
-# line of sight, of 3,169 on screen; towers at least 0.10 screen-height
-# apart):
-#   * Quincy (0.532, 0.785), the bottom U: 885 cells (28%; the best hero
-#     cell), all 8 neighbours legal, 6 cells from a refused one. He sees the
-#     U of the lane that comes down from the top and the last vertical
-#     stretch of the lane that comes in from the left, so both lanes; 28% is above the ~23% Quincy alone held round 6 from (Cracked
-#     26%, Winter Park 23%; lost at 18-19% on Lotus and Hedge);
+# line of sight, of 3,169 on screen; towers at least 0.08 screen-height
+# apart, every new spot with all 8 neighbour cells legal):
+#   * darts: d1 (0.441, 0.164) where the top lane comes on screen, d2
+#     (0.174, 0.589) where the left lane comes on screen, d3 (0.452, 0.555)
+#     in the centre where both lanes pass (0.10 screen-height from the
+#     village's spot); d3 takes Long Range Darts (0-0-1) at round 7, which
+#     still leaves the boat affordable at round 9;
 #   * buccaneer (0.478, 0.394), the pool's bottom edge: 1,010 cells (32%; the
 #     best water cell 1,016), the top stretches of both lanes; 5 of its 8
 #     neighbours legal (the pool's edge);
+#   * Quincy (0.516, 0.785), the bottom U: the cell the game accepted live
+#     (the build's old (0.532, 0.785) was refused), both lanes;
 #   * village (0.516, 0.564), the centre box: 4 cells from a refused one (the
 #     box's cells nearer the pool touch refusals), 41.0 units from the boat
 #     (see above);
@@ -74,42 +104,45 @@
 #     (0.104 screen-height) from the boat, 36.2 from the village;
 #   * sniper (0.083, 0.521), the left field: sees 95% of the track.
 #
-# Cash (CHIMPS: $650 at round 6, the game's own income, Hard prices): the
-# same plan and order as the Cracked/Lotus wins plus a $540 Bigger Radius
-# (tests/test_chimps_builds_offline.plan_timeline): buccaneer round 8, Hot
-# Shot 16, Night Vision 18, Destroyer 29, Radar Scanner 36, Jungle Drums 37,
-# Aircraft Carrier 44, Flagship 58, Glaive Lord 78, Cripple MOAB 92.
+# Offline replay (tools/simulate_threats.simulate on the learned map, the
+# live account's unlocks, base income, Match's opener reserve emulated):
+# darts R6, Long Range R7, buccaneer R9, Double Shot R13, Hot Shot R17,
+# sniper R19, Quincy R21, Night Vision R22, Destroyer R32, village R35,
+# Radar R38, Jungle Drums R40, Aircraft Carrier R46, Flagship R59, Glaive
+# Lord R82, Cripple MOAB R93 (the old Quincy opening: Destroyer R30, village
+# R33, Carrier R45, Flagship R59, Glaive Lord R82, Cripple R93). Plan 25/25,
+# no threat gaps, every tower on its spot. Rounds 11-20 rate 1.22-3.75.
+# Doubt: the blimp ratios (damage model, no hero or abilities) are about
+# 0.55-0.65x the Lotus Island build's (which won): R40 0.45, R60 0.65, R75
+# 0.35, R90-100 0.15-0.62 - two short lanes, more than half of each off
+# screen. If it loses mid-game, a second buccaneer in the pool
+# (bloons.fandom's "line of buccaneers") is the first thing to try.
 #
-# Offline replay (tools/simulate_threats on the learned map, the live
-# account's unlocks, base income): every spot accepted, plan 21/21, no
-# threat gaps. Doubt: the blimp ratios (damage model, no hero or abilities)
-# are about 0.55-0.65x the Lotus Island build's (which won): R40 0.42 (Lotus
-# 0.80), R60 0.64, R75 0.34, R90-100 0.13-0.61 - two short lanes, more than
-# half of each off screen. Played live to learn; if it loses mid-game, a
-# second buccaneer in the pool (bloons.fandom's "line of buccaneers") is the
-# first thing to try.
-#
-# Status 2026-11-07 12:00: written, not played live yet.
+# Status 2026-11-07 15:30: opening reworked after the 14:54 round-7 loss;
+# not played live with the darts yet.
 id: rake_chimps
 map: Rake
 hero: quincy
-hero_opens: true      # Quincy alone holds the opening (Executor.defended)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  towers: {dart: [0, 0, 1], buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Rake]
-  revised: "2026-11-07T12:00"
+  revised: "2026-11-07T15:30"
 plan:
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.532, 0.785]}      # Quincy holds the opening: both lanes
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.441, 0.164]}       # top lane's entrance
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.174, 0.589]}       # left lane's entrance
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.452, 0.555]}       # where both lanes pass
+  - {do: upgrade, id: d3, to: 0-0-1}                                      # Long Range Darts
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.478, 0.394]}   # the pool's bottom edge
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
   - {do: upgrade, id: b1, to: 2-1-0}
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.083, 0.521]}   # left field
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.516, 0.785]}      # Quincy, the bottom U: both lanes
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.516, 0.564]}   # centre box
