@@ -1540,6 +1540,25 @@ class Executor:
                 best = (i + 1, cost)
         return best
 
+    def _unread_pause(self, p, target):
+        """Is a path p still needs for `target` held back only for now
+        (unread_until: its price was just unreadable, Game._path_closed)?
+
+        _next_path leaves such a path out for a few seconds, and when it was
+        the only path left the upgrade step came back "skip" - the plan
+        moved past it for good. Alpine Run CHIMPS (2026-11-07 10:30-10:33):
+        r1 -> 5-0-2 (Glaive Lord, $35,100), r2 -> 0-2-5 and s1 -> 5-2-0 were
+        each passed over that way at the start of a round, the plan then
+        counted as done, plan_first let go, and reinforce spent $37k on
+        snipers with the Glaive Lord nearly paid for. Such a step waits."""
+        if any(c > t for c, t in zip(p.tiers, target)):
+            return False
+        now = time.time()
+        pauses = getattr(self, "unread_until", {})
+        return any(p.tiers[i] < target[i] and (p.tid, i + 1) not in self.capped
+                   and now < pauses.get((p.tid, i + 1), 0)
+                   for i in range(3))
+
     def _tier5_taken(self, p, path):
         """Does another tower of p's kind already hold tier 5 of `path`
         (1-3)? The game allows one of each tier-5 upgrade on the map at a
@@ -1685,7 +1704,11 @@ class Executor:
                 self._upgrade_failed(p, path, cash)
                 return "wait"
             reached = [p for p in targets if all(c >= t for c, t in zip(p.tiers, target))]
-            return "done" if reached else "skip"
+            if reached:
+                return "done"
+            if any(self._unread_pause(p, target) for p in targets):
+                return "wait"     # only a short read pause stands in the way: not given up
+            return "skip"
         if do == "target":
             for p in self._resolve_targets(step):
                 self.g.target(p, step["mode"])
