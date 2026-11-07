@@ -614,6 +614,18 @@ def validate(strat):
             probs.append(f"planner: unknown tower {kind}")
         elif len(list(tiers)) != 3 or not all(0 <= x <= 5 for x in tiers):
             probs.append(f"planner: bad tiers {kind} {tiers}")
+    # `starter: {kind, at}`: the tower Match adds beside a lone opener in a
+    # one-life game (match.Match._starter_spec)
+    starter = strat.get("starter")
+    if starter is not None:
+        if not isinstance(starter, dict) or set(starter) - {"kind", "at"}:
+            probs.append("starter: must be {kind: <tower>, at: [fx, fy]}")
+        elif starter.get("kind") not in T.TOWERS:
+            probs.append(f"starter: unknown tower {starter.get('kind')}")
+        elif starter.get("at") is not None and not (
+                isinstance(starter["at"], (list, tuple)) and len(starter["at"]) == 2
+                and all(isinstance(v, (int, float)) and 0 <= v <= 1 for v in starter["at"])):
+            probs.append(f"starter: bad spot {starter['at']!r} (two screen fractions)")
     placed = {}
     for where, st in _all_steps(strat):
         if st.get("do") == "place" and st.get("id"):

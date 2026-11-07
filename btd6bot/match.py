@@ -444,9 +444,54 @@ class Match:
         0 when the game has lives to spare or the tower count is not one."""
         if not self._lone_opener():
             return 0
+        spec = self._starter_spec()
+        if spec is not None:
+            # the build names its starter: keep back that tower's price
+            price = self.g.price(spec["kind"])
+            if price is not None and price != float("inf"):
+                return price
         prices = [self.g.price(k) for k in self.ex.CHEAP_OPENERS if self.ex.kind_allowed(k)]
         prices = [p for p in prices if p is not None and p != float("inf")]
         return min(prices) if prices else 0
+
+    def _starter_spec(self):
+        """The build's own starter tower, `starter: {kind: dart, at: [fx, fy]}`
+        at the top of a strategy file, or None (then the cheapest allowed
+        opener goes on the entrance part of the track, as before).
+
+        Sulfur Springs CHIMPS (2026-11-07 18:43): the same build that held
+        rounds 6-39 at 16:01 lost round 9 because the starter dart, refused
+        at (0.526, 0.181), went to (0.473, 0.871), where it popped almost
+        nothing; every lost boat opening had such a starter. A build can now
+        put it where it covers what the opener cannot. A kind the game does
+        not allow is ignored."""
+        strat = getattr(self.ex, "strat", None)
+        spec = strat.get("starter") if isinstance(strat, dict) else None
+        if not isinstance(spec, dict) or spec.get("kind") not in T.TOWERS:
+            return None
+        if not self.ex.kind_allowed(spec["kind"]):
+            return None
+        return spec
+
+    def _starter_steps(self):
+        """The place steps _place_starter tries, in order: the build's own
+        starter at its spot (a refused spot moves a few cells, then anywhere:
+        Executor's `at` fallback), then the cheapest allowed openers on the
+        entrance part of the track."""
+        steps = []
+        spec = self._starter_spec()
+        if spec is not None:
+            step = {"do": "place", "id": "starter", "kind": spec["kind"], "role": "dps"}
+            if spec.get("at"):
+                step["at"] = [float(v) for v in spec["at"]]
+            else:
+                step["segment"] = [0.05, 0.45]
+            steps.append(step)
+        for kind in self.ex.CHEAP_OPENERS:
+            if self.ex.kind_allowed(kind) and not (spec is not None and kind == spec["kind"]):
+                steps.append({"do": "place", "id": "starter", "kind": kind, "role": "dps",
+                              "segment": [0.05, 0.45]})
+        return steps
 
     def _place_starter(self, rnd, tries=6, need_placed=False):
         """Only the hero is down and the plan's next tower is not affordable
@@ -455,10 +500,8 @@ class Match:
         need_placed: the defence counts as defended already (a one-life
         game's single tower, _lone_opener), so only an actual placement
         ends the search."""
-        for kind in self.ex.CHEAP_OPENERS:
-            if not self.ex.kind_allowed(kind):
-                continue
-            step = {"do": "place", "id": "starter", "kind": kind, "role": "dps", "segment": [0.05, 0.45]}
+        for step in self._starter_steps():
+            kind = step["kind"]
             for _ in range(tries):     # each refused spot is blocked; try the next
                 with self.ex.why("starter", "opener before the plan is affordable"):
                     done = self.ex.try_step(step, self.g.cash_stable(), rnd) == "done"

@@ -73,6 +73,45 @@ def test_no_reserve_with_lives_to_spare_or_two_towers():
     assert _priced_match("chimps", ["hero"])._opener_reserve() == 0   # the first tower is not held back
 
 
+def test_build_without_starter_keeps_the_entrance_openers():
+    m = _priced_match("chimps", ["buccaneer"])
+    m.ex.strat = {"id": "x"}
+    steps = m._starter_steps()
+    assert [s["kind"] for s in steps] == list(m.ex.CHEAP_OPENERS)
+    assert all(s["segment"] == [0.05, 0.45] and "at" not in s for s in steps)
+
+
+def test_build_names_its_starter_spot_and_kind():
+    """Sulfur Springs CHIMPS (2026-11-07 18:43): the starter dart, refused at
+    its entrance spot, went to (0.473, 0.871) and the game was lost in round
+    9. A build's `starter: {kind, at}` is tried first at its spot (Executor's
+    `at` fallback moves it a few cells when refused); the entrance openers
+    stay behind it."""
+    from btd6bot import towers as T
+    m = _priced_match("chimps", ["buccaneer"])
+    m.ex.strat = {"starter": {"kind": "tack", "at": [0.3, 0.13]}}
+    steps = m._starter_steps()
+    assert steps[0] == {"do": "place", "id": "starter", "kind": "tack", "role": "dps", "at": [0.3, 0.13]}
+    assert [s["kind"] for s in steps[1:]] == [k for k in m.ex.CHEAP_OPENERS if k != "tack"]
+    # the plan keeps back the named starter's price, not the cheapest opener's
+    assert m._opener_reserve() == T.price(T.TOWERS["tack"]["cost"], "hard")
+    # a kind the game forbids is ignored: back to the entrance openers
+    m = _priced_match("chimps", ["buccaneer"], forbidden=("tack",))
+    m.ex.strat = {"starter": {"kind": "tack", "at": [0.3, 0.13]}}
+    assert "tack" not in [s["kind"] for s in m._starter_steps()]
+    assert m._opener_reserve() == T.price(T.TOWERS["dart"]["cost"], "hard")
+
+
+def test_validate_checks_the_starter_field():
+    from btd6bot.strategy import validate
+    base = {"id": "x", "modes": ["chimps"], "plan": [{"do": "place", "id": "b1", "kind": "buccaneer"}]}
+    assert validate(dict(base, starter={"kind": "dart", "at": [0.2, 0.4]})) == []
+    assert validate(dict(base, starter={"kind": "dart"})) == []
+    assert validate(dict(base, starter={"kind": "laser", "at": [0.2, 0.4]}))
+    assert validate(dict(base, starter={"kind": "dart", "at": [0.2]}))
+    assert validate(dict(base, starter={"kind": "dart", "at": [0.2, 0.4], "x": 1}))
+
+
 def _spec(mode):
     return next(x for x in P.EXAMPLE_STRATEGIES if mode in x.modes)
 
