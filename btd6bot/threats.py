@@ -633,6 +633,55 @@ def round_blimp_load(set_name, rnd, double_hp=False):
     return {"hp": hp, "blimps": count, "span_s": span, "speed": slowest, "leak": leak}
 
 
+# Under continuous sends (Apopalypse) the next round starts before the last
+# one's bloons have left: late rounds were seen to pass every 2-2.5 s
+# (round tracking, 2026-11-06 16:45), while a MOAB needs 20-40 s to cross a
+# track. 2.5 s is the slow end of what was seen, so the overlap it gives
+# is the smallest one the game really plays.
+CONTINUOUS_ROUND_S = 2.5
+
+
+def continuous_blimp_load(set_name, rnd, track_len, end_round=None, double_hp=False,
+                          round_s=CONTINUOUS_ROUND_S):
+    """round_blimp_load for a mode that sends rounds without breaks.
+
+    The blimps of every round that starts while round `rnd`'s first blimp is
+    still on the track (start offset k * round_s < one crossing, track_len /
+    the slowest blimp's speed) share the track with it, so the defence has to
+    pop all of them in the same stretch of time. The loads are summed: hp,
+    blimps and leak add up, speed is the slowest, and each round's spawning
+    is squeezed into its own round_s slot, so the span is the last slot's
+    end. `rounds` lists the rounds that were summed.
+
+    Why: #Ouch and Firing Range Apopalypse (2026-11-06 19:44 and 19:31) both
+    died at rounds 47-50 with 121-150 lives in under 10 s, four MOABs on
+    screen at once, while the per-round blimp check read rounds 50's two
+    MOABs at 6.4x and 8.7x the damage needed. None for a round without
+    blimps (that round does not start a blimp wave of its own)."""
+    first = round_blimp_load(set_name, rnd, double_hp=double_hp)
+    if not first:
+        return None
+    cross_t = track_len / max(first["speed"], 1e-6)
+    hp = leak = 0.0
+    blimps = 0
+    speed = first["speed"]
+    span = 0.0
+    rounds = []
+    k = 0
+    while k * round_s < cross_t and (end_round is None or rnd + k <= end_round):
+        load = round_blimp_load(set_name, rnd + k, double_hp=double_hp)
+        if load:
+            hp += load["hp"]
+            blimps += load["blimps"]
+            leak += load["leak"]
+            speed = min(speed, load["speed"])
+            span = max(span, k * round_s + min(load["span_s"], round_s))
+            rounds.append(rnd + k)
+        k += 1
+    return {"hp": hp, "blimps": blimps, "span_s": span, "speed": speed, "leak": leak,
+            "rounds": rounds}
+
+
 def blimp_capacity(towers, load, track_len, range_of=None, reach_of=None):
     """Damage the defence can deal to that round's blimps (very rough).
 

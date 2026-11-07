@@ -420,6 +420,36 @@ def test_half_cash_blimp_check_looks_twice_as_far():
     assert ex._ramp_lead() == ex.MAX_LEAD, "one life and half cash: capped at MAX_LEAD"
 
 
+def test_continuous_blimp_load_sums_overlapping_rounds():
+    """#Ouch and Firing Range Apopalypse (2026-11-06): four MOABs were on
+    screen at once at round 47 and 121-150 lives went in under 10 s, while
+    the blimp check rated round 50's two MOABs alone at 6.4x and 8.7x.
+    Under continuous sends rounds pass every ~2.5 s, so round 50's MOABs
+    share an 886-unit track (Firing Range) with those of rounds 52-55."""
+    single = TH.round_blimp_load("standard", 50)
+    both = TH.continuous_blimp_load("standard", 50, 886.0, end_round=60)
+    assert both["rounds"][0] == 50 and {52, 53, 54, 55} <= set(both["rounds"]), both
+    assert both["hp"] == sum(TH.round_blimp_load("standard", r)["hp"] for r in both["rounds"])
+    assert both["hp"] >= 4 * single["hp"]
+    assert TH.continuous_blimp_load("standard", 49, 886.0) is None, "no blimps of its own"
+    # a short track: one crossing (100 / 25 = 4 s) covers rounds 50 and 51 only
+    assert TH.continuous_blimp_load("standard", 50, 100.0)["rounds"] == [50]
+    last = max(r for r in range(50, 61) if TH.round_blimp_load("standard", r))
+    assert TH.continuous_blimp_load("standard", last, 886.0, end_round=60)["rounds"][-1] <= 60, \
+        "never past the mode's last round"
+
+    towers = [("s1", "sniper", (4, 2, 0)), ("n1", "ninja", (4, 0, 2))]
+    g, ex = executor({}, mode="apopalypse", towers=towers, cash=500)
+    ex._init_threats()
+    ex.track_len = 886.0
+    apop = ex.blimp_ratio(ex.blimp_load(50))
+    alone = ex.blimp_ratio(TH.round_blimp_load(ex.round_set, 50))
+    assert apop < alone / 2, (apop, alone)
+    _, hard = executor({}, mode="hard", towers=towers, cash=500)
+    hard._init_threats()
+    assert hard.blimp_load(50) == TH.round_blimp_load(hard.round_set, 50), "standard modes: one round"
+
+
 class _Forecast:
     """A damage model that rates every round at one margin."""
 

@@ -3349,6 +3349,17 @@ class Executor:
             lead = math.ceil(lead / mult)
         return min(self.MAX_LEAD, lead)
 
+    def blimp_load(self, R):
+        """The blimp load round R asks the defence to pop: the round's own
+        (threats.round_blimp_load), or under continuous sends (Apopalypse)
+        the summed load of the rounds whose blimps share the track with
+        R's (threats.continuous_blimp_load). None when R has no blimps."""
+        double_hp = bool(self.rules.get("tough_moabs"))
+        if self.rules.get("continuous"):
+            return TH.continuous_blimp_load(self.round_set, R, self._track_length(),
+                                            end_round=self.window[1], double_hp=double_hp)
+        return TH.round_blimp_load(self.round_set, R, double_hp=double_hp)
+
     def _ramp_due(self, rnd):
         """(round, load, ratio) for the next blimp round within _ramp_lead()
         rounds, or None. Logs the estimate once per blimp round."""
@@ -3356,16 +3367,20 @@ class Executor:
             return None
         lead = self._ramp_lead()
         for R in range(max(rnd, self.window[0]), min(rnd + lead, self.window[1]) + 1):
-            load = TH.round_blimp_load(self.round_set, R, double_hp=bool(self.rules.get("tough_moabs")))
+            load = self.blimp_load(R)
             if not load:
                 continue
             ratio = self.blimp_ratio(load)
             bar = self.ramp_bar(load)
             if ("ramp", R) not in self.noted:
                 self.noted.add(("ramp", R))
-                log.info("blimp check round %d: %.0f blimp HP, %.0f units of track; the defence "
-                         "deals about %.1fx that in reach%s", R, load["hp"], self._track_length(),
-                         ratio, "" if ratio >= bar else f" - short of the {bar:.1f}x wanted")
+                shared = load.get("rounds") or [R]
+                with_others = (f" (with the blimps of rounds {shared[1]}-{shared[-1]} on the track"
+                               " at the same time)" if len(shared) > 1 else "")
+                log.info("blimp check round %d: %.0f blimp HP%s, %.0f units of track; the defence "
+                         "deals about %.1fx that in reach%s", R, load["hp"], with_others,
+                         self._track_length(), ratio,
+                         "" if ratio >= bar else f" - short of the {bar:.1f}x wanted")
             if ratio < bar and self._model_holds(R, rnd, ratio, bar):
                 continue
             return R, load, ratio

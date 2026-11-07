@@ -1000,7 +1000,7 @@ class Match:
             except Exception as e:
                 fields["uncovered_error"] = repr(e)
             try:
-                load = TH.round_blimp_load(rset, rnd, double_hp=bool(self.ex.rules.get("tough_moabs")))
+                load = self.ex.blimp_load(rnd)
                 if load:
                     fields["blimp_ratio"] = round(self.ex.blimp_ratio(load), 3)
             except Exception as e:
