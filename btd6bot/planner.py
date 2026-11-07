@@ -2374,11 +2374,23 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
     # 09:07 on 2026-11-04 every game over its bar was benched or lost and the
     # bot slept in 30-minute naps, the closest medal at p=0.74 against a 0.75
     # bar. CHIMPS and achievement plans are never played this way.
+    #
+    # Open medals with lives to spare come before one-life ones (Impoppable),
+    # whatever their p: under the bar, a leak in a multi-life mode costs lives
+    # while in a one-life mode it ends the game. The record up to 2026-11-07
+    # says so plainly - last-resort multi-life games won 88 of 144 (61%), the
+    # one-life ones 5 of 28 (18%) although their p was as high or higher
+    # (Dark Castle, X Factor and Dark Path Impoppable lost at p=0.64-0.70;
+    # Encrypted and Chutes Impoppable at round 96-98 with p=0.35). One-life
+    # games are still played once no multi-life medal is left or all are
+    # benched, so the bot never idles while medals are open.
     rest: list[_Cand] = []
     if below_bar:
+        from .strategy import MODE_RULES
         rest = [c for c in scored
                 if c.tier is None and c.mode != "chimps" and not c.s.achievement]
-        rest.sort(key=lambda c: (c.p, c.ease, c.score), reverse=True)
+        rest.sort(key=lambda c: (not MODE_RULES.get(c.mode, {}).get("one_life"),
+                                 c.p, c.ease, c.score), reverse=True)
         for c in rest:
             c.tier = "LAST"
             c.notes.append("last resort: under every bar, played rather than idling")
