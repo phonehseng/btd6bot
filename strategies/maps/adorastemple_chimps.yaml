@@ -1,7 +1,9 @@
 # Adora's Temple, CHIMPS: one buccaneer in the north-east pond opens alone
-# and grows to a Carrier Flagship beside a Radar Scanner / Jungle Drums
-# village; Quincy follows, a Glaive Lord boomerang in the village's reach
-# and a Cripple MOAB sniper finish.
+# (the match adds its starter dart); two wizards in the temple's north
+# triangles hold rounds 8-10, the boat grows to a Carrier Flagship beside a
+# Radar Scanner / Jungle Drums village, a second boat in the south-west pond
+# holds rounds 19-30, Quincy follows, a Glaive Lord boomerang in the
+# village's reach and a Cripple MOAB sniper finish.
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -44,59 +46,92 @@
 #
 # Changes from the guide, and why (as on Lotus Island):
 #   * the buccaneer opens alone (the match adds its $215 starter dart) and
-#     Quincy follows when the cash allows (see above);
+#     the towers the damage model rates come before Quincy (see above and
+#     "Opening" below);
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
 #     bot does not place towers on a deck, so the boomerang stands on the
 #     east land, inside the village's reach (Radar camo, Jungle Drums,
 #     Primary Mentoring), where it sees the most track of those cells;
-#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo; the
+#   * a Night Vision sniper (0-1-0) by round 23 for round 24's camo; the
 #     sniper stands in the temple's lower court, where its sight past the
 #     walls covers 70% of the track (the peaks see it all, see above);
 #   * the account has the village's top path to tier 4 only, so it ends at
 #     Primary Mentoring (4-2-0), not Primary Expertise;
 #   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
 #
-# Spots (map geometry with the main checkout's learned refusals,
-# data/maps/adorastemple.npz copied 2026-11-07 12:58, checked in plan order;
-# "cells" are track cells in range and in sight, of 3,327): the boat at
-# (0.633, 0.240) reaches 377 (11%; the best water cell 381), all 8
-# neighbours legal; the village at (0.687, 0.317) is
-# 26.0 units from it (radius 40: 14.0 of slack) and 33.0 from the boomerang
-# at (0.745, 0.428), 397 cells (12%); Quincy at (0.382, 0.232), the left
-# triangle, 611 (18%); the sniper at (0.361, 0.564) sees 2,328 (70%). Every
-# tower is at least 0.11 screen heights from the next and has 5+ of 8
-# legal neighbours.
+# Spots (data/maps/adorastemple.npz from the main checkout, 2026-11-07
+# 14:30, checked in plan order; "cells" are track cells in range and in
+# sight, of 3,327; every spot legal with 5+ of 8 neighbour cells legal (the
+# sniper 5, the rest 7-8) and at least 0.11 screen heights from the next):
+# the boat at (0.633, 0.240) reaches 377 (11%; the best water cell 381);
+# the wizards at (0.484, 0.198) and (0.537, 0.300) 331 and 258 (10% and
+# 8%); the second boat at (0.248, 0.811) 292 (9%); the village at (0.687,
+# 0.317) is 26.0 units from the boat (radius 40: 14.0 of slack) and 33.0
+# from the boomerang at (0.745, 0.428), 397 cells (12%); Quincy at (0.382,
+# 0.232), the left triangle, 611 (18%); the sniper at (0.361, 0.564) sees
+# 2,328 (70%).
 #
-# Offline replay (tools/simulate_threats.simulate on the learned map, live
-# account unlocks, base income): buccaneer R6, Quincy R9, 2-2-0 R17, Night
-# Vision R19, Destroyer R30, village R33 (Radar R36, Jungle Drums R40),
-# Aircraft Carrier R45, Flagship R59, Glaive Lord R82, Cripple MOAB R93. No
-# threat gaps; the blimp check's own buys only from R92. Damage model (no
-# hero): R6 1.56, R40 0.89, R63 10.2, R75 10.5, R78 5.60, R90 4.51, R95
-# 0.77, R98 1.38, R100 3.83 (Lotus Island's winning board rated R95 1.23).
+# Opening (2026-11-07 14:30). Every route of Adora's Temple crosses the
+# whole diamond and one of four entrances is used at a time, so a tower
+# helps every round but sees only 8-12% of a route. Spring Spring and Lost
+# Crevasse, opened with the same lone boat, lost rounds 8-9 rated 1.35-1.8;
+# this build's boat line alone rated R8 1.72, R9 1.11, R27 0.99. No $650
+# board reaches 3 for rounds 6-8 here (the best pair of any towers in their
+# best cells: 2.04 / 1.74 / 1.48), and none of the boards searched (every
+# cheap kind in its best legal cells, extra boats, wizard upgrades) got
+# rounds 9-15 above ~1.7 on the cash those rounds have. The two wizards
+# ($270 each, rounds 8 and 9) rated best for rounds 8-9; Double Shot and
+# Grape Shot (round 15's pinks) follow; a second boat ($430) before Quincy
+# lifts rounds 19-30.
+#
+# Replayed executor-faithfully (tools/simulate_threats.simulate on the
+# learned map, the starter dart where the executor puts it, (0.126, 0.445),
+# and its $215 taken from the start; damage model, board at each round's
+# start, no hero), new / old:
+#   R6 1.96 / 1.96, R7 1.58 / 1.58, R8 1.78 / 1.72, R9 1.45 / 1.11,
+#   R10 1.66 / 1.31, R11 2.00 / 2.62, R12 1.37 / 1.83, R13 1.70 / 1.41,
+#   R14 1.92 / 1.68, R15 1.31 / 1.20, R16 1.61 / 1.43, R19 2.16 / 1.81,
+#   R21 2.02 / 1.58, R25 1.87 / 1.59, R26 1.98 / 1.48, R27 1.31 / 0.99,
+#   R29 1.83 / 1.38, R40 1.08 / 0.91; lowest over rounds 6-30 1.31 against
+#   0.99. Later: R45 1.38 / 16.0 (Aircraft Carrier one round later), rounds
+#   50-100 within 0.25 of the old build (R95 0.76 / 0.77, R100 3.59 / 3.83).
+# This is the weakest of the three openings: rounds 9, 12, 15 and 27 rate
+# 1.3-1.45, about where Downstream (won, with Quincy at round 8) stood.
+#
+# Cash (tests/test_chimps_builds_offline.plan_timeline, no starter dart):
+# boat R5, wizards R6-R7, Double Shot R11, Hot Shot R15, second boat R17,
+# Quincy R19, Night Vision R22, Destroyer R32, Radar R36, Jungle Drums R38,
+# Aircraft Carrier R45, Flagship R58, Glaive Lord R79, Cripple MOAB R92. The
+# replay (starter paid): Destroyer stands from R33, Flagship R59, Glaive Lord
+# R82; plan 23/23, no threat gaps.
 #
 # Status: written 2026-11-07, not played yet.
 # 2026-11-07 14:10: the boat's Faster Shooting and Double Shot now come
 # before Quincy - Lost Crevasse, opened the same way, lost round 8 with
 # $350 waiting for Quincy ($585).
+# 2026-11-07 14:30: opening reworked before the first game: two wizards for
+# rounds 8-9, Grape and Hot Shot before Quincy, a second boat before him.
 id: adorastemple_chimps
 map: Adora's Temple
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], wizard: [0, 0, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Adora's Temple]
-  revised: "2026-11-07T14:10"
+  revised: "2026-11-07T14:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.633, 0.240]}   # north-east pond: opens alone (the match adds a dart)
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.484, 0.198]}      # north triangle: round 8
+  - {do: place, id: w2, kind: wizard, role: dps, at: [0.537, 0.300]}      # north-east triangle: round 9's greens
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.232]}      # Quincy once the cash allows
-  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-1-0}                                      # Grape Shot: round 15's pinks
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.248, 0.811]}   # south-west pond: rounds 19-30
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.232]}      # Quincy once the cash allows
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.361, 0.564]}
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
