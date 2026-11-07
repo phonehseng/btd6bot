@@ -525,9 +525,16 @@ def test_a_plan_step_out_of_reach_before_the_round_in_danger_holds_nothing():
     ex.cost = 12_000                   # payable before round 45, not before 40
     assert R.danger_round(Flat(), ex, 40) == 40
     assert R.payable_by(ex, 12_000, R.BLIND_SPEND_CASH, 45, 40) is True
-    assert R.best(ex, Flat(), R.BLIND_SPEND_CASH, 40, 80, lives=100) == ("wait", None)
+    # (250 lives: rounds 40 and 41 together cost 200, so neither ends the game)
+    assert R.best(ex, Flat(), R.BLIND_SPEND_CASH, 40, 80, lives=250) == ("wait", None)
     ex.cost = 7_000
-    assert R.best(ex, Flat(), 5000, 40, 80, lives=100) == ("wait", None)
+    assert R.best(ex, Flat(), 5000, 40, 80, lives=250) == ("wait", None)
+    # with 100 lives round 40 alone ends the game (deciding_round): the step
+    # cannot be paid before it, so it holds nothing and the pick, which saves
+    # 10 of those lives, is bought (Quiet Street Impoppable, 2026-11-06)
+    ex.cost = 12_000
+    status, found = R.best(ex, Flat(), R.BLIND_SPEND_CASH, 40, 80, lives=100)
+    assert status == "buy" and found[1] == 40 and found[0].cost == 300, (status, found)
     # a step income cannot deliver before the weakest round either holds
     # nothing (Quad ABR, 7919935): the pick is bought, the blind fallbacks
     # still do not run on a vetoed pick
@@ -584,6 +591,51 @@ def test_look_ahead_covers_the_rounds_left():
     assert R.lookahead_rounds(55, 80) == list(range(55, 65))
     assert R.lookahead_rounds(78, 80) == [78, 79, 80]
     assert R.lookahead_rounds(None, 80) == []
+
+
+class TwoWeakRounds(ToyForecast):
+    """Round 40 rated 0.75 (path-1 tiers lift it 0.4 each) and round 48 rated
+    0.5 (path-2 tiers lift it 0.5 each); every other round holds. A round
+    loses 100 lives per missing unit of margin."""
+
+    def margin(self, towers, rnd):
+        t = towers[0].tiers
+        if rnd == 40:
+            return 0.75 + 0.4 * t[0]
+        if rnd == 48:
+            return 0.5 + 0.5 * t[1]
+        return 3.0
+
+    def leaks(self, towers, rounds, scale, per_round=False):
+        lost = {r: max(0.0, 100 * (1 - self.margin(towers, r) * scale)) for r in rounds}
+        return lost if per_round else sum(lost.values())
+
+
+class TwoCheapPaths(ToyEx):
+    """The toy tower with two upgrades at the same price."""
+
+    def upgrade_choices(self, first=None, past_plan=False):
+        p = self.g.towers["s1"]
+        yield p, [1, 0, 0], 300
+        yield p, [0, 1, 0], 300
+
+
+def test_purchases_are_judged_on_the_round_that_ends_the_game():
+    # Quiet Street Impoppable (2026-11-06): at round 39 purchases were judged
+    # on round 48, which lost the most lives at half strength, while round
+    # 40 alone would end the one-life game. Without a lives count the round
+    # losing most still decides (path 2, for round 48) ...
+    ex = TwoCheapPaths()
+    status, found = R.best(ex, TwoWeakRounds(), 300, 39, 80)
+    assert status == "buy" and found[1] == 48, (status, found)
+    assert R.deciding_round(TwoWeakRounds(), ex, [40, 48], None) is None
+    # ... with one life, round 40 ends the game first: path 1 is bought for it
+    assert R.deciding_round(TwoWeakRounds(), ex, [40, 48], 1) == 40
+    status, found = R.best(ex, TwoWeakRounds(), 300, 39, 80, lives=1)
+    assert status == "buy" and found[1] == 40, (status, found)
+    assert found[3] > found[2], found       # round 40 really moves
+    # with lives to spare for both leaks, nothing changes
+    assert R.deciding_round(TwoWeakRounds(), ex, [40, 48], 500) is None
 
 
 if __name__ == "__main__":

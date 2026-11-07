@@ -306,6 +306,18 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     if not base:
         return "safe", None
     worst = max(rounds_rated, key=by_round.get)    # the round losing most
+    # only the round being played and the next one: income still comes in
+    # before a later round, the saving rules (save_target, dies_first) weigh
+    # those, and danger_round looks at the same two rounds
+    ending = deciding_round(forecast, ex, [r for r in rounds_rated if r <= rnd + 1], lives)
+    if ending is not None and ending != worst:
+        # the game would end at `ending`: rounds after it never come, so the
+        # purchase is judged on that round and the ones before it only
+        log.info("reinforce: round %d would end the game at full strength (%s lives left) - judging "
+                 "purchases on it, not on round %d", ending, lives, worst)
+        worst = ending
+        rounds_rated = [r for r in rounds_rated if r <= ending]
+        base = sum(by_round[r] for r in rounds_rated)
     before = forecast.margin(board(ex), worst)
     # Under margin 1 the worst round leaks even at full strength: the game
     # is at stake, so the purchase saving the most lives wins, not the most
@@ -400,6 +412,34 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
                  cash, worst, before or 0.0, len(tried))
         return "wait", None
     return "buy", (pick[1], worst, before, after)
+
+
+def deciding_round(forecast, ex, rounds, lives):
+    """The first of `rounds` by which the board, at full strength, would have
+    lost every one of the `lives` left - the round the game ends in if
+    nothing is bought - or None (no lives count, or the board survives the
+    look-ahead in the model).
+
+    best() otherwise judges a purchase on the round losing the most lives at
+    half strength, and that can lie past the round that ends the game. Quiet
+    Street Impoppable (2026-11-06, case 20261106_205252, one life): at round
+    39 every purchase was judged on round 48 (0.73) while round 40 was rated
+    0.75 with 108 lives expected to leak. Both margins sat near each other,
+    so a $240 ace tier that would lift round 40 to 0.98 read "0.73 -> 0.73",
+    the plan's $6,000 step took the cash, and round 40's MOAB ended the game.
+    Lives lost in a round after the game is over count for nothing.
+    best() asks this only of the round being played and the next one."""
+    if lives is None or lives <= 0 or not rounds:
+        return None
+    by_round = forecast.leaks(board(ex), sorted(rounds), 1.0, per_round=True)
+    if not by_round:
+        return None
+    lost = 0.0
+    for r in sorted(by_round):
+        lost += by_round[r]
+        if lost >= lives:
+            return r
+    return None
 
 
 def waiting_plan_step(ex, cash):
