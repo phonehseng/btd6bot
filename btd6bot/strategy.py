@@ -1430,6 +1430,19 @@ class Executor:
             floor = self._reach_floor(kind, valid, self.SELL_REACH_SHARE)
         else:
             floor = None
+        if step.get("at") and len(out) < n:
+            # the close neighbourhood is nearly used up: the next ring out
+            # keeps the tower with its group (see AT_WIDE_CELLS)
+            reach = self._reach(kind) if floor is not None else None
+            gap = self.AT_SPOT_GAP_CELLS ** 2
+            for x, y, sc in self._at_spots(step, valid, n * 3, radius=self.AT_WIDE_CELLS):
+                if len(out) >= n:
+                    break
+                if any((x - ox) ** 2 + (y - oy) ** 2 < gap for ox, oy, _ in out):
+                    continue
+                if reach is not None and reach[y, x] < floor:
+                    continue    # it would only graze the track
+                out.append((x, y, sc))
         if len(out) >= n:
             return out      # the researched spot's neighbourhood fills the pick-up
         probe = self._probe_spot(kind, valid) if role in ("dps", "exit") else None
@@ -1811,6 +1824,14 @@ class Executor:
     # neighbours of a refused cell are usually refused too (pick_spots keeps
     # its own candidates this far apart for the same reason).
     AT_SPOT_GAP_CELLS = 3
+    # When the cells within AT_SEARCH_CELLS of an `at` spot are all refused
+    # or taken, the next ring out (this far) is offered before any spot
+    # chosen by role alone, as long as it still reaches the track: a build's
+    # towers are laid out as a group (a village's reach, a shared lane), and
+    # the best spot by role is often across the map. Alpine Run CHIMPS
+    # (2026-11-07): r3's spot and its one legal neighbour were refused and r3
+    # was built at the far side of the map, away from the village it needed.
+    AT_WIDE_CELLS = 18
 
     # A damage tower must reach at least this share of the track that the
     # best legal spot for it on this map reaches - its range (the grey circle
@@ -2368,7 +2389,7 @@ class Executor:
             return f"the damage model rates round {worst[1]} at {worst[0]:.2f}"
         return None
 
-    def _at_spots(self, step, valid, n):
+    def _at_spots(self, step, valid, n, radius=None):
         """Up to n cells round a step's exact spot (`at`), nearest first and
         at least AT_SPOT_GAP_CELLS apart, all within AT_SEARCH_CELLS of it;
         [] when the step has no `at` or nothing close is legal. Each scores
@@ -2380,17 +2401,22 @@ class Executor:
         bay, the next spot offered was the best by role alone, and the
         carrier was built at the far north end of the map, outside the MIB
         village and the brew; round 95 (camo lead DDTs) was lost. A refused
-        researched spot now moves a few cells, not across the map."""
+        researched spot now moves a few cells, not across the map.
+
+        `radius` (cells) widens the search; pick_spots uses AT_WIDE_CELLS
+        when the close neighbourhood is used up."""
         at = step.get("at")
         if not at or len(at) != 2:
             return []
         cx, cy = (int(round(v)) for v in self.m.frac_to_cell(float(at[0]), float(at[1])))
         h, w = self.blocked.shape
-        r = self.AT_SEARCH_CELLS
+        r = radius or self.AT_SEARCH_CELLS
         near = []
         for dy in range(-r, r + 1):
             for dx in range(-r, r + 1):
                 x, y = cx + dx, cy + dy
+                if dx * dx + dy * dy > r * r:
+                    continue    # a circle, not the square's corners
                 if not (0 <= x < w and 0 <= y < h) or self.blocked[y, x]:
                     continue
                 if valid is not None and not valid[y, x]:
@@ -2443,6 +2469,21 @@ class Executor:
         if spots:
             return spots
         label = step.get("id", kind)
+        if kind in self.BUFFERS:
+            # A buffer whose own spot failed goes where it buffs the most
+            # damage towers, before its `near` circle is widened: that circle
+            # is centred on the average position of the towers it names, and
+            # when one of them was pushed elsewhere the average lies between
+            # the groups. Alpine Run CHIMPS (2026-11-07, loss case
+            # 20261107_075148): r3 was refused by the village's spot and stood
+            # across the map, the widened circle put the village midway, it
+            # buffed no boomerang, and $5k of its upgrades bought nothing
+            # before round 40's MOAB leaked.
+            spots = self._buff_spots(kind, step)
+            if spots:
+                log.info("%s: no spot near %s - placed where it buffs the most towers",
+                         label, step.get("near") or "its towers")
+                return spots
         tries = []
         if step.get("near"):
             radius = step.get("near_radius", 9)   # pick_spots' default
