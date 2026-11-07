@@ -489,6 +489,16 @@ map is moving platforms (only map-wide towers or steady spots there); no sight b
 
 - apopalypse: not written: random continuous rounds; no round data to check a build against (see gaps).
 
+**In play (2026-11-07 review).** Both Medium games were lost to the moving
+platforms, not to the bloons: on 2026-11-03 `sanctuary_medium`'s map-wide
+snipers were refused 22 and 26 times at round 15 (the Fast Track start finds
+the platforms where round 15 puts them, not where the scene has them) and
+given up; on 2026-11-05 a sniper placed at round 28 could not be selected at
+round 33 (its platform had moved), was "forgotten" and bought again. No
+further Sanctuary build is worth writing until the bot places in the
+platforms' pose for the round and follows its towers; see
+docs/map_mechanics.md, "Sanctuary: what the bot still needs".
+
 ## Tricky Tracks
 
 **Mechanics (map data).** Six short lanes run at once on three diagonal tracks. The strips between the tracks reach two lanes (one track) or more; no water. The train ($2,500, rising) is never used by the bot.

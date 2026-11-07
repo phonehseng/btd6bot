@@ -282,6 +282,27 @@ def test_moving_ground_only_for_steady_or_global_towers():
     assert psi.any() and (psi & grids["moving"]).any()
 
 
+def test_platform_poses_are_measured_from_the_scene():
+    """Sanctuary's platforms sit in the scene where their clip is at time 0
+    (an absolute curve's time-0 value is the area's own origin), so every
+    state - the starting one included - is a shift from there.
+    PlatformCentreTop starts in state 1 (x = 0) and visits states 0, 1, 2
+    (x = -26.56, 0, 27.0); its scene polygon is centred at x = -26.3."""
+    geom = mapgeom.load("Sanctuary")
+    if geom is None or "mechanics" not in geom:
+        return
+    areas = {a["id"]: a for a in geom["areas"]}
+    action = next(a for e in geom["mechanics"]["events"] if e["name"] == "PlatformCentreTop"
+                  for a in e["actions"])
+    top = areas[action["areasToMove"][0]]
+    assert abs(mapgeom._curve(action["xPosCurve"], 0.0) - top["origin"][0]) < 1.0   # scene = time 0
+    shifts = sorted(round(p[0], 1) for p in mapgeom._mover_poses(action, areas))
+    assert shifts == [26.6, 53.6], shifts      # states 1 and 2; state 0 is the scene itself
+    bottom = next(a for e in geom["mechanics"]["events"] if e["name"] == "PlatformCentreBottom"
+                  for a in e["actions"])
+    assert [round(p[0], 1) for p in mapgeom._mover_poses(bottom, areas)] == [29.6]
+
+
 def test_paid_lane_switch_stays_off():
     """Ancient Portal's walled left lane opens only when the player clicks
     the realign device; the event that restores it in a reloaded save is
