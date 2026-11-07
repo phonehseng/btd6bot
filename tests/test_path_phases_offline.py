@@ -149,7 +149,27 @@ def test_towers_on_melted_ice_are_rebuilt():
     assert ex.plan[5]["id"] == "w1"
 
 
+def test_reverse_model_uses_the_map_geometry():
+    """Case 20261107_043112 (Erosion Reverse, solo_ace): the Reverse game's
+    map model is keyed "Erosion reverse", and mapgeom found no geometry
+    under that name, so placement lost the ground lifetimes and left the
+    ace 4 legal cells - every ace step was given up on round 1. The reverse
+    model must get the same legal ground as the forward one."""
+    geom = _erosion()
+    if geom is None:
+        return
+    from btd6bot import placement as PL
+    assert mapgeom.map_id_for("Erosion reverse") == mapgeom.map_id_for("Erosion")
+    counts = []
+    for name, reverse in (("Erosion", False), ("Erosion reverse", True)):
+        m = mapgeom.apply(MapModel(name, PF), geom)
+        mapgeom.repaint_track(m, geom, 1, reverse=reverse)
+        counts.append(int(PL.valid_spots(m, "ace", None, [], last_round=18, now_round=1).sum()))
+    assert counts[0] > 1000 and counts[1] == counts[0]
+
+
 if __name__ == "__main__":
+    test_reverse_model_uses_the_map_geometry()
     test_erosion_phases()
     test_maps_without_phases_keep_every_path()
     test_repaint_moves_the_track()
