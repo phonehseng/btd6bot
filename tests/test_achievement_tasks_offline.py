@@ -539,13 +539,17 @@ def test_heroes_without_owned_skins_are_not_opened_again():
                 return "none_owned"
         eq = Eq(None, Inp(), None, acct, b, sleep=lambda s: None, picker=FakePicker())
         st = {"Lookin fab": "unknown"}
-        res = H.run_if_due(None, None, None, acct, "ACC", st, budget=b, equipper=eq)
-        assert res.startswith("no owned skin") and tried == ["obyn", "quincy"]
-        assert set(b.flag("skins_checked")) == {"obyn", "quincy"}
-        # another day: nothing left to check, nothing opened
-        b2 = A.Budget("ACC", path=b.path, clock=lambda: NOW + 86400)
-        assert H.run_if_due(None, None, None, acct, "ACC", st, budget=b2, equipper=eq) is None
-        assert tried == ["obyn", "quincy"]
+        H.BUY_ONE_SKIN = False
+        try:
+            res = H.run_if_due(None, None, None, acct, "ACC", st, budget=b, equipper=eq)
+            assert res.startswith("no owned skin") and tried == ["obyn", "quincy"]
+            assert set(b.flag("skins_checked")) == {"obyn", "quincy"}
+            # another day: nothing left to check, nothing opened
+            b2 = A.Budget("ACC", path=b.path, clock=lambda: NOW + 86400)
+            assert H.run_if_due(None, None, None, acct, "ACC", st, budget=b2, equipper=eq) is None
+            assert tried == ["obyn", "quincy"]
+        finally:
+            H.BUY_ONE_SKIN = True
 
 
 def test_skin_run_once_and_only_while_wanted():
@@ -559,6 +563,110 @@ def test_skin_run_once_and_only_while_wanted():
         assert calls == [1]
         assert H.run_if_due(None, None, None, None, "ACC", {"Lookin fab": "complete"},
                             budget=_budget(tmp + "x"), equipper=eq) is None
+
+
+# -- hero skin: buying one (owner's permission 2026-11-07) ------------------------------
+def test_mm_amounts_as_ocr_reads_them():
+    assert H.parse_mm("2,500") == 2500 and H.parse_mm("@2.500") == 2500
+    assert H.parse_mm("$213.833") == 213833 and H.parse_mm("150") == 150
+    assert H.parse_mm("$2.99") is None and H.parse_mm("4,99") is None and H.parse_mm("LVL3") is None
+
+
+def test_live_skin_page_price_and_total():
+    page = _ocr("skin_page_unowned")
+    unlock, price = H.button_price(page)
+    assert unlock.text == "UNLOCKFOR:" and price == 2500
+    assert H.mm_total(page) == 213833
+    assert H.button_price([_w("UNLOCK FOR:", 0.5, 0.85), _w("$24.99", 0.5, 0.89)]) == (None, None)
+    assert H.button_price([_w("SELECT", 0.5, 0.87)]) == (None, None)
+
+
+def _page(total, *button):
+    return ([_w("MOUNTAIN GUARDIAN SKIN", 0.5, 0.055), _w(total, 0.907, 0.056)]
+            + [_w(t, 0.5, 0.85 + 0.04 * i) for i, t in enumerate(button)])
+
+
+def _buyer(tmp, reads, used_mm=0):
+    q = _frame("skins_quincy.jpg", SKIN_CROP)
+    eq, b = _equipper(tmp, q, reads, hero="quincy")
+    if used_mm:
+        b.add("mm", used_mm)
+    return eq, b
+
+
+def test_buy_one_skin_then_select_it():
+    with tempfile.TemporaryDirectory() as tmp:
+        question = _page("$213.833", "@2.500") + [_w("Unlock this skin?", 0.5, 0.4),
+                                                  _w("YES", 0.6, 0.62), _w("NO", 0.4, 0.62)]
+        reads = [_ocr("skin_page_unowned"), question,
+                 _page("$211.333", "SELECT"), _page("$211.333", "SELECT"), _page("$211.333", "SELECTED")]
+        eq, b = _buyer(tmp, reads)
+        assert eq.buy_for("quincy") == "equipped"
+        clicks = eq.inp._inp.clicks
+        assert clicks == [(H.SKIN_X, round(H.SKIN_Y0, 3)), (0.5, 0.851), (0.6, 0.62), (0.5, 0.85),
+                          H.BACK_ARROW], clicks
+        assert (0.4, 0.62) not in clicks
+        flag = b.flag("skin_bought")
+        assert flag["state"] == "bought" and flag["price"] == 2500 and flag["mm_after"] == 211333
+        assert b.used("mm") == 2500 and b.used("purchases") == 1
+
+
+def test_buy_settles_on_the_real_monkey_money_drop():
+    with tempfile.TemporaryDirectory() as tmp:
+        reads = [_ocr("skin_page_unowned"), _page("$213.833", "UNLOCK FOR:", "@2.500")]
+        eq, b = _buyer(tmp, reads)
+        assert eq.buy_for("quincy") == "bailed: not_bought"
+        assert b.flag("skin_bought")["state"] == "not_bought" and b.used("mm") == 0
+        assert (0.5, 0.85) not in eq.inp._inp.clicks[2:]          # no SELECT click
+    with tempfile.TemporaryDirectory() as tmp:
+        reads = [_ocr("skin_page_unowned"), _page("$203.833", "SELECT")]
+        eq, b = _buyer(tmp, reads)
+        assert eq.buy_for("quincy") == "bailed: unexpected"
+        assert b.flag("skin_bought")["state"] == "unexpected" and b.used("mm") == 10000
+
+
+def test_buy_refused_over_the_cap_or_for_real_money():
+    with tempfile.TemporaryDirectory() as tmp:
+        eq, b = _buyer(tmp, [_ocr("skin_page_unowned")], used_mm=A.MM_PER_DAY - 2000)
+        assert eq.buy_for("quincy").startswith("bailed: 2500 MM is over the cap")
+        assert (0.5, 0.851) not in eq.inp._inp.clicks and b.flag("skin_bought") is None
+    with tempfile.TemporaryDirectory() as tmp:
+        eq, b = _buyer(tmp, [_page("$213.833", "UNLOCK FOR:", "$24.99")])
+        assert eq.buy_for("quincy").startswith("bailed")
+        assert eq.inp._inp.clicks == [(H.SKIN_X, round(H.SKIN_Y0, 3)), H.BACK_ARROW]
+        assert b.flag("skin_bought") is None
+    with tempfile.TemporaryDirectory() as tmp:
+        bundle = _ocr("skin_page_unowned") + [_w("SKIN BUNDLE", 0.5, 0.5)]
+        eq, b = _buyer(tmp, [bundle])
+        assert eq.buy_for("quincy").startswith("bailed: shop")
+
+
+def test_buy_only_once_ever_and_only_when_nothing_is_owned():
+    with tempfile.TemporaryDirectory() as tmp:
+        b = _budget(tmp)
+        acct = SimpleNamespace(unlocked_heroes={"obyn", "quincy"}, selected_hero="obyn")
+        bought = []
+
+        class Eq(H.SkinEquipper):
+            def try_hero(self, hero):
+                return "none_owned"
+
+            def _buy(self):
+                bought.append(1)
+                self.budget.set_flag("skin_bought", {"state": "not_bought"})
+                return "buy quincy: bailed: not_bought"
+        eq = Eq(None, Inp(), None, acct, b, sleep=lambda s: None, picker=FakePicker())
+        st = {"Lookin fab": "unknown"}
+        res = H.run_if_due(None, None, None, acct, "ACC", st, budget=b, equipper=eq)
+        assert res.endswith("bailed: not_bought") and bought == [1], res
+        later = A.Budget("ACC", path=b.path, clock=lambda: NOW + 86400)
+        assert H.run_if_due(None, None, None, acct, "ACC", st, budget=later, equipper=eq) is None
+        assert bought == [1]
+
+
+def test_quincy_is_the_hero_skins_are_bought_for():
+    acct = SimpleNamespace(unlocked_heroes={"obyn", "quincy"}, selected_hero=None)
+    assert H.heroes_to_try(acct)[0] == "quincy"
 
 
 # -- quests -----------------------------------------------------------------------------
