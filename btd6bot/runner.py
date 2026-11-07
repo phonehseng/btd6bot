@@ -329,11 +329,28 @@ def _code_stamp():
     strategies/optimized and strategies/maps are left out: a batch of
     tools/optimize_builds.py, or research agents writing map builds, add a
     file every minute or two, and each one made the bot exit and reload
-    between games (2026-10-22). Their builds load at the next restart."""
+    between games (2026-10-22). Their builds are re-read in-process between
+    games instead (see _batch_stamp and BotRunner._reload_batch_builds)."""
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
     files = list((root / "btd6bot").glob("*.py")) + [
         f for f in (root / "strategies").rglob("*.yaml") if f.parent.name not in BATCH_STRATEGY_DIRS]
+    return max((f.stat().st_mtime for f in files), default=0)
+
+
+def _batch_stamp():
+    """Latest modification time of the batch-written builds
+    (strategies/optimized and strategies/maps), which _code_stamp leaves out.
+
+    Why it exists: on 2026-11-07 a new Frozen Over CHIMPS build was merged
+    into strategies/maps at 04:37 and a NEXT file asked for that game at
+    04:43, but the bot had loaded its strategies at 03:27 and never re-read
+    them - it played the OLD build (the one that had already lost at round
+    56) and lost at round 95. A change here does not need a restart, only a
+    fresh load_all(), so the runner re-reads the builds between games."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1] / "strategies"
+    files = [f for d in BATCH_STRATEGY_DIRS for f in (root / d).rglob("*.yaml")]
     return max((f.stat().st_mtime for f in files), default=0)
 
 
@@ -1162,9 +1179,35 @@ class Bot:
             return reads[0]
         return None
 
+    def _reload_batch_builds(self):
+        """Re-read every strategy when strategies/maps or strategies/optimized
+        changed since the last load (between games only).
+
+        Those folders are written in batches, so they do not make the bot
+        exit and restart (_code_stamp); but a game must never be played from
+        a stale copy of its build. A load that fails (a half-written file)
+        keeps the builds already in memory and is retried next time, because
+        the stamp is only moved on after a good load."""
+        stamp = _batch_stamp()
+        if stamp == getattr(self, "_batch_stamp", stamp):
+            return False
+        try:
+            fresh = load_all()
+        except Exception as e:     # half-written YAML: keep playing the loaded builds
+            log.error("map/optimized builds changed but do not load (%s) - keeping the loaded ones", e)
+            return False
+        changed = sorted(k for k in set(fresh) | set(self.strats)
+                         if fresh.get(k) != self.strats.get(k))
+        self.strats = fresh
+        self._batch_stamp = stamp
+        log.info("map/optimized builds changed - re-read %d strategies (%d differ: %s)",
+                 len(fresh), len(changed), ", ".join(changed[:8]) + (" ..." if len(changed) > 8 else ""))
+        return True
+
     def run(self, hours=8.0):
         end = time.time() + hours * 3600
         code_stamp = _code_stamp()
+        self._batch_stamp = _batch_stamp()
         self._refresh_map_geometry()
         progress.write(self.account, "starting")
         settled = False     # the last bot's unfinished game (see _settle_unfinished_game)
@@ -1181,6 +1224,7 @@ class Bot:
                     raise SystemExit(4)
                 log.error("changed code does not import - staying on the running version")
                 code_stamp = _code_stamp()
+            self._reload_batch_builds()
             if not self.wait_until_offline():
                 continue
             if self.failures >= 8:
