@@ -4326,7 +4326,15 @@ class Executor:
         went to ten tier-1/2 snipers and three aces while the plan's Glaive
         Lord was never bought. A hand-written build from a proven strategy
         says so with this flag; once its plan is done the usual spending
-        comes back."""
+        comes back.
+
+        One exception, in Match: in a crisis of the round being played
+        (lives falling, or the round itself rated a crisis) reinforce may
+        still spend. Skates CHIMPS (2026-11-07) lost round 75 holding $26k
+        for Carpet of Spikes ($40k+), the round rated 0.88 and the bloons
+        94% along the route the round before, while nothing else was
+        allowed to buy. Cracked's waste was for rounds ten ahead, which
+        this still forbids."""
         strat = getattr(self, "strat", None)
         if not (isinstance(strat, dict) and strat.get("plan_first")):
             return False
