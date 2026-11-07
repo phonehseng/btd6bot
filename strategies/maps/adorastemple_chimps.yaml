@@ -142,17 +142,55 @@
 # / 10.15, R90 4.65 / 4.51, R95 0.74 / 0.76, R100 3.96 / 3.02. The cost:
 # the Flagship stands from R63 in the replay (was R59), Glaive Lord R83
 # (R82); round 37 (0.89: camo, black, white, lead) stays the weak one.
+# 2026-11-07 18:00: lost live at ROUND 31 (17:25-17:33, journal
+# 20261107_172658_AdorasTemple_chimps): the board of rounds 23-31 was the boat
+# 2-2-0, the second boat, both wizards, the starter dart, Night Vision
+# sniper and Quincy; the forecast rated R24-31 1.23-2.77, bloons got ~70%
+# along the route in most rounds, and round 31 (8 black, 8 white, 10 zebra
+# in 16 s) leaked with $2,498 saved for the Destroyer. Every tower reaches
+# track (damage model with heights and sight / learned cells of 3,327 in
+# range and sight): boat 109 units per route / 377, second boat 115 / 292,
+# wizards 75-142 / 331 and 95-83 / 258, starter dart 153-85 / 443, sniper
+# 718-554 / 2,328, dart x1 162-176 / 511, Glaive Lord 163-93 / 483, village
+# 61 / 246 - the board was simply thin (8-14% of a route each). Rounds
+# 25-39 bring regrow yellows and purples (R25), the 250-bloon rush (R27),
+# leads (R28, R30), black/white/zebra (R31-32), camo reds and yellows (R33),
+# camo regrow greens (R36) and camo whites with leads (R37). Change: a
+# Druid of the Jungle (dr1, 1-3-0, $2,595) right after Night Vision - its
+# vines reach the whole map and pop every type here; its own thorns reach
+# 55-69 units per route from (0.355, 0.692), 227 learned cells, 7 of 8
+# neighbour cells legal, 0.128 from the sniper. Of every single buy up to
+# $4,000 on the round-24 board (each kind in its best legal cells, every
+# standing tower's upgrades) it rated rounds 25-34 highest: lowest 4.09
+# against 1.56 for the Destroyer ($3,620) and under 1 for the rest. Then
+# Quincy, the sniper's Shrapnel Shot (round 33's camo: 0.62 -> 2.77), the
+# round-40 dart, Full Metal Jacket, and the Destroyer after them.
+# Replay (starter counted), R18-45 new / before:
+#   R18 2.83 / 2.83, R19 2.16 / 2.16, R20 4.51 / 4.46, R21 2.11 / 2.02,
+#   R22 2.71 / 2.71, R23 2.62 / 2.62, R24 7.42 / 7.42, R25 1.92 / 1.87,
+#   R26 2.09 / 1.98, R27 1.33 / 1.31, R28 2.40 / 2.35, R29 7.26 / 1.83,
+#   R30 16.0 / 2.77, R31 16.0 / 1.78, R32 15.3 / 1.35, R33 2.77 / 0.44,
+#   R34 4.91 / 1.58, R35 8.18 / 2.23, R36 3.15 / 2.23, R37 7.42 / 2.68,
+#   R38 8.45 / 2.54, R39 16.0 / 3.33, R40 5.02 / 3.59, R41 11.6 / 2.57,
+#   R42 3.05 / 6.04, R43 5.78 / 1.98, R44 16.0 / 3.55, R45 6.17 / 2.04.
+# Rounds 25-27 stay as before: the druid ($2,595) is not affordable before
+# round 29 behind the second boat and the sniper, and no cheaper buy lifted
+# round 27 above ~1.8 (it held live at a rated 1.23). Stands from (replay):
+# druid 1-3-0 R29, Quincy R31 (was R21), Sharp Shooter R37, Destroyer R40
+# (was R33), Flagship R64 (was R62), Glaive Lord R84 (was R83), Cripple
+# MOAB R97 (was R95); later margins R63 7.26 / 10.3, R85 7.91 / 6.30, R90
+# 4.65 / 4.65, R95 0.74 / 0.89, R100 3.91 / 4.00. Plan 34/34, no gaps.
 id: adorastemple_chimps
 map: Adora's Temple
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], wizard: [0, 0, 0], dart: [2, 0, 4]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], wizard: [0, 0, 0], dart: [2, 0, 4], druid: [1, 3, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Adora's Temple]
-  revised: "2026-11-07T16:30"
+  revised: "2026-11-07T18:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.633, 0.240]}   # north-east pond: opens alone (the match adds a dart)
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.484, 0.198]}      # north triangle: round 8
@@ -162,16 +200,21 @@ plan:
   - {do: upgrade, id: b1, to: 2-1-0}                                      # Grape Shot: round 15's pinks
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
   - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.248, 0.811]}   # south-west pond: rounds 19-30
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.232]}      # Quincy once the cash allows
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.361, 0.564]}
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
-  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.355, 0.692]}      # south-west court: Druid of the Jungle's vines reach the whole map
+  - {do: upgrade, id: dr1, to: 1-0-0}                                     # Hard Thorns
+  - {do: upgrade, id: dr1, to: 1-1-0}
+  - {do: upgrade, id: dr1, to: 1-2-0}
+  - {do: upgrade, id: dr1, to: 1-3-0}                                     # Druid of the Jungle: rounds 29-40
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.232]}      # Quincy once the cash allows
+  - {do: upgrade, id: s1, to: 0-2-0}                                      # Shrapnel Shot: the MOAB's ceramics and rainbows
   - {do: place, id: x1, kind: dart, role: dps, at: [0.329, 0.274]}        # left triangle: round 40's MOAB (see 16:30)
   - {do: upgrade, id: x1, to: 0-0-3}
   - {do: upgrade, id: x1, to: 0-0-4}                                      # Sharp Shooter
   - {do: upgrade, id: x1, to: 2-0-4}                                      # Razor Sharp Shots
-  - {do: upgrade, id: s1, to: 0-2-0}                                      # Shrapnel Shot: the MOAB's ceramics and rainbows
   - {do: upgrade, id: s1, to: 1-2-0}                                      # Full Metal Jacket, by round 39
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.687, 0.317]}
   - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
@@ -186,10 +229,10 @@ plan:
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  ceramic: [{do: upgrade, id: dr1, to: 1-3-0}, {do: upgrade, id: b1, to: 3-2-0}]
   moab: [{do: upgrade, id: x1, to: 0-0-4}, {do: upgrade, id: x1, to: 2-0-4}, {do: upgrade, id: s1, to: 1-2-0}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-2-0}]
   ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   bad: [{do: upgrade, id: s1, to: 5-2-0}]
-  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  rush: [{do: upgrade, id: dr1, to: 1-3-0}, {do: upgrade, id: r1, to: 3-0-2}]
