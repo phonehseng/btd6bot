@@ -89,11 +89,12 @@
 # account unlocks, base income; it does not place the match's starter dart,
 # so live each opening buy comes about a round later): Desperado R7,
 # Skywarden R8, Double Shot R12, Hot Shot R16, Night Vision R19, Quincy R21,
-# Destroyer R32, village R35 (Radar R37, Jungle Drums R40), Aircraft Carrier
-# R45, Flagship R59, Glaive Lord R82, Cripple MOAB R93. No threat gaps; the
-# blimp check's own buys only from R92. Damage model (no hero): R40 0.83,
-# R63 5.48, R75 5.48, R78 2.83, R90 1.85, R95 0.38, R98 0.61, R100 2.25
-# (Lotus Island's winning board rated R95 1.23).
+# Destroyer R32, Sharp Shooter dart 2-0-4 R37 (since 15:30, see Status),
+# village R38 (Radar R40, Jungle Drums R42), Aircraft Carrier R48, Flagship
+# R61, Glaive Lord R83, Cripple MOAB R95. No threat gaps; the blimp check's
+# own buys only from R94. Damage model (no hero): R40 2.86, R63 5.48, R75
+# 5.60, R78 2.86, R90 1.85, R95 0.38, R98 0.61, R100 2.48 (Lotus Island's
+# winning board rated R95 1.23).
 #
 # Status: written 2026-11-07, not played yet.
 # 2026-11-07 14:06: lost round 8 - the lone boat and the match's starter dart
@@ -127,17 +128,42 @@
 #   lone boat 2-0-0). Land-first openings (skywarden / dart pairs, the
 #   reserve's only legal ones) rated 1.6-2.0 at round 6 and 1.1-1.3 at 8.
 #   Flagship (R59) and Glaive Lord (R82) keep their rounds in the replay.
+# 2026-11-07 15:30: the 14:30 opening held rounds 6-39 live (14:57-15:05,
+# journal 20261107_145811) and lost round 40, the first MOAB, at 87% of the
+# route. The board was the Destroyer, the village 0-2-0 and the opening
+# towers (model 0.71); the plan's MOAB answer was the Aircraft Carrier
+# ($8,640), which the cash could not reach before round 40, so the bot held
+# $1.5-4.6k "saving for moab answer" in rounds 37-40 and had no other MOAB
+# damage. Change: right after the Destroyer a dart at (0.537, 0.453), the
+# middle field (24% of each lane: the west from 62%, the east from 34%; all
+# 8 neighbours legal, 0.107 screen heights from Quincy), goes to Sharp
+# Shooter with Razor Sharp Shots (2-0-4, $3,725) before the village, and is
+# the `moab` answer instead of the Carrier. Chosen by the damage model from
+# the live round-39 board over every single buy up to $4,500 (upgrades of
+# the standing towers, and bomb, sniper, boomerang, ninja, buccaneer, mortar
+# and dart in their best free cells): it rated round 40 at 2.59-2.74 (two
+# cells), the next best 1.89 (bomb 3-0-2) and the existing sniper's path to
+# Maim MOAB 1.35 at 3-1-0 ($4,160). Its 0-0-4 alone rates 1.45, 0-0-3 0.68:
+# all of 2-0-4 must stand. Live, after the Destroyer at round 31 the game
+# had about $6,500 by round 39 ($8,300 by 40), so the dart (R37 in the replay, about R38
+# live with the starter dart's $215) has a round or two to spare.
+# Replay rounds 30-46 (model, starter dart counted): 2.30 1.22 4.00 0.57
+# 1.40 3.33 2.83 3.36 2.23 2.51 2.86 2.09 4.86 1.63 3.36 1.56 2.16 (the
+# plan before: R36 0.19, R37 3.44, R40 0.83, R43 1.20, R45 9.01; R33 0.46
+# and R36 0.19 were survived live). The cost: the village moves three
+# rounds and the Carrier three later, Flagship R61 (was R59) and Glaive
+# Lord R83 (R82) in the replay, about a round later live.
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lost Crevasse]
-  revised: "2026-11-07T14:30"
+  revised: "2026-11-07T15:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
   - {do: place, id: d1, kind: desperado, role: dps, at: [0.206, 0.641]}   # R8: lower-left field, the east lane's last third
@@ -150,6 +176,10 @@ plan:
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
   - {do: place, id: hero, kind: hero, role: dps, at: [0.596, 0.402]}      # Quincy once the cash allows
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.537, 0.453]}        # middle field: both lanes; round 40's MOAB
+  - {do: upgrade, id: x1, to: 0-0-3}
+  - {do: upgrade, id: x1, to: 0-0-4}                                      # Sharp Shooter
+  - {do: upgrade, id: x1, to: 2-0-4}                                      # Razor Sharp Shots, by round 38
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.729, 0.649]}
   - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
@@ -165,7 +195,7 @@ answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
   ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
-  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  moab: [{do: upgrade, id: x1, to: 0-0-4}, {do: upgrade, id: x1, to: 2-0-4}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
   ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
