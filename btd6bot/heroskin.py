@@ -9,34 +9,48 @@ rec_20261107_150700.mkv 0:36 and 0:39)
     BUNDLE") - a real-money offer, inside BANNER: never clicked;
   * under it, a column of round skin icons at x = SKIN_X, the first at
     SKIN_Y0 and then every SKIN_STEP;
-  * a skin the account does not own has a Monkey Money price under its
-    icon ("2,500" for both Quincy skins); an owned skin has none (Obyn's
-    three skins show a "New" ribbon and a "!" badge instead);
+  * a Monkey Money price under an icon ("2,500") means not owned. A "New"
+    ribbon can hide that price: Obyn's three skins showed "New" and no
+    price, yet all three cost 2,500 (first live run, 2026-11-07 18:06).
   * the "+" next to the Monkey Money total (top right) opens the real-money
     shop: never clicked.
 
-The flow (one try a day at most, while the Lookin fab card is wanted)
-  1. heroes.HeroPicker shows the hero (HERO_ORDER: the hero the bot has
-     equipped, then the bot's usual heroes) and equips it;
-  2. for each skin slot with an icon: read under it; a price (digits) means
-     not owned - skipped without a click;
-  3. click an owned skin's icon, read the SELECT button (HeroPicker.button);
-     "select" -> click it and wait for "selected"; "selected" already ->
-     done; anything else (a price, nothing) -> next slot;
-  4. a shop-like screen at any point: back arrow, log, stop.
-  Success is kept in logs/achievement_tasks.json (flag "skin_equipped"),
-  so it is done once per account.
+What clicking a skin icon opens (live run 2026-11-07 18:06,
+rec_20261107_180600.mkv 0:52, 1280x800)
+  A page of its own: the skin's name as the title ("MOUNTAIN GUARDIAN
+  SKIN"), the skin at hero levels 3/10/20, a back arrow at the top left,
+  and one big button at the bottom centre (SKIN_BUTTON). For a skin not
+  owned that button reads "UNLOCK FOR: 2,500" (Monkey Money): never
+  clicked. For an owned skin it is expected to read SELECT / SELECTED /
+  EQUIP / USE - not seen yet, so those words are accepted only inside
+  SKIN_BUTTON and anything else is logged.
+  The first live run missed this page: it read the hero screen's button
+  region (nothing there), then clicked the next "skin slots", which on this
+  page are empty background.
 
-UNCERTAIN - to check live: that clicking an owned skin shows SELECT under
-the picture (as for heroes), and that selecting it keeps the hero selected.
+The flow (one try a day, while the Lookin fab card is wanted)
+  1. heroes.HeroPicker shows the hero (Obyn, then Quincy: the heroes the bot
+     plays) and equips it; a capture is saved;
+  2. each skin slot with an icon and no price under it is clicked; a
+     capture is saved and the whole skin page is read;
+  3. "UNLOCK FOR" or a price on the button: not owned - back arrow, and the
+     hero screen must show the same hero again before the next slot;
+     SELECT/EQUIP/USE: clicked, then SELECTED must be read; SELECTED:
+     already worn; a shop-like page or an unknown one: back arrow, stop;
+  4. every hero checked is remembered (flag "skins_checked"), so a hero
+     whose skins are all priced is not opened again; when the bot's heroes
+     have no owned skin the routine stops for good and says so: getting
+     Lookin fab then needs a skin bought (2,500 MM each, an owner decision).
+  Success is kept in logs/achievement_tasks.json (flag "skin_equipped").
 """
 import logging
+import re
 import time
 
 import cv2
 
 from . import achtasks as A
-from .vision import norm
+from .vision import norm, save
 
 log = logging.getLogger("heroskin")
 
@@ -48,8 +62,17 @@ SKIN_HALF = (0.035, 0.05)            # half size of an icon
 PRICE_BELOW = (0.02, 0.085)          # rows under an icon centre where a price sits
 BANNER = (0.80, 0.0, 1.0, 0.20)      # bundle offer + Monkey Money "+": never clicked
 ICON_MIN_SAT = 0.25                  # share of saturated pixels in an icon box (empty: dark teal)
-HERO_ORDER = ("obyn", "quincy", "gwendolin", "striker_jones", "benjamin", "ezili", "adora")
+BACK_ARROW = (0.044, 0.055)          # top-left back arrow (hero screen and skin page)
+# the skin page's big button ("UNLOCK FOR: 2,500" at 0.50, 0.875 on 1280x800)
+SKIN_BUTTON = (0.36, 0.78, 0.64, 0.97)
+SKIN_TITLE = (0.20, 0.0, 0.80, 0.11)
+SELECT_WORDS = ("select", "selegt", "equip", "use", "wear")
+SELECTED_WORDS = ("selected", "selegted", "equipped", "inuse", "wearing")
+UNOWNED_WORDS = ("unlockfor", "unlock", "buy", "purchase")
+# the heroes the bot plays (its strategies' heroes): a skin elsewhere earns nothing
+HERO_ORDER = ("obyn", "quincy")
 FLOW = "heroskin"
+_DIGITS = re.compile(r"\d")
 
 
 def slot_centres(n=SKIN_SLOTS):
@@ -83,29 +106,67 @@ def in_banner(pt):
     return BANNER[0] <= pt[0] <= BANNER[2] and BANNER[1] <= pt[1] <= BANNER[3]
 
 
-def heroes_to_try(account):
-    """Owned heroes in the order tried: the equipped one, then HERO_ORDER."""
-    owned = set(getattr(account, "unlocked_heroes", ()) or ())
-    first = getattr(account, "selected_hero", None)
-    order = ([first] if first else []) + [h for h in HERO_ORDER if h != first]
-    return [h for h in order if h in owned or h == "quincy"]
+def _inside(w, region):
+    return region[0] <= w.x <= region[2] and region[1] <= w.y <= region[3]
+
+
+def skin_page(words):
+    """Read a skin's own page. Returns (state, button word or None):
+      "unowned"   the button says UNLOCK FOR / a price: never clicked
+      "select"    SELECT / EQUIP / USE in the button region
+      "selected"  SELECTED / EQUIPPED in the button region
+      "shop"      real-money wording anywhere outside the banner
+      "unknown"   none of these (logged with the words)"""
+    if any(A.real_money(w.text) and not in_banner((w.x, w.y)) for w in words):
+        return "shop", None
+    button = [w for w in words if _inside(w, SKIN_BUTTON)]
+    joined = "".join(norm(w.text) for w in button)
+    if any(u in joined for u in UNOWNED_WORDS) or any(_DIGITS.search(w.text) for w in button):
+        return "unowned", None
+    for w in button:
+        if norm(w.text) in SELECTED_WORDS:
+            return "selected", w
+    for w in button:
+        if norm(w.text) in SELECT_WORDS:
+            return "select", w
+    return "unknown", None
 
 
 class SkinEquipper:
-    def __init__(self, screen, inp, menus, account, budget, sleep=time.sleep, picker=None):
+    def __init__(self, screen, inp, menus, account, budget, sleep=time.sleep, picker=None,
+                 capture_dir=None):
         from .heroes import HeroPicker
         self.s, self.menus, self.account, self.budget = screen, menus, account, budget
         self.inp = A.CountingInput(inp, budget)
         self.sleep = sleep
         self.picker = picker or HeroPicker(screen, self.inp, menus, account)
+        self.capture_dir = capture_dir
 
-    def _shop(self, words):
-        return any(A.real_money(w.text) for w in words) and not all(
-            in_banner((w.x, w.y)) for w in words if A.real_money(w.text))
+    def _capture(self, what):
+        """Evidence for the next look at this flow (a few a day)."""
+        if self.budget.used("looks_skin") >= 12:
+            return
+        self.budget.add("looks_skin")
+        try:
+            folder = self.capture_dir or A.CAPTURE_DIR
+            save(self.s.grab(), folder / f"skin_{what}_{time.strftime('%Y%m%d_%H%M%S')}.png")
+        except Exception:
+            pass
+
+    def _back_to_hero(self, hero):
+        """Leave a skin page with its back arrow; True once the hero screen
+        shows `hero` again (else the next slot click could land anywhere)."""
+        for _ in range(2):
+            self.inp.click(*BACK_ARROW)
+            self.sleep(1.2)
+            if self.picker.shown_hero() == hero:
+                return True
+        return False
 
     def try_hero(self, hero):
         """On the HEROES screen with `hero` shown: equip an owned skin.
         Returns "equipped", "none_owned" or "bailed: ..."."""
+        self._capture(f"{hero}_hero")
         frame = self.s.grab()
         for k, centre in enumerate(slot_centres()):
             if in_banner(centre) or not has_icon(frame, centre):
@@ -116,26 +177,43 @@ class SkinEquipper:
                          hero, k + 1, A.screen_text(below))
                 continue
             self.inp.click(*centre)
-            self.sleep(1.0)
-            words = self.menus.v.read((0.3, 0.0, 1.0, 1.0))
-            if self._shop(words):
-                return f"bailed: a shop-like screen after skin {k + 1}: {A.screen_text(words)}"
-            state = self.picker.button()
+            self.sleep(1.5)
+            self._capture(f"{hero}_skin{k + 1}")
+            words = self.menus.v.read((0.0, 0.0, 1.0, 1.0))
+            title = " ".join(w.text for w in words if _inside(w, SKIN_TITLE))
+            state, button = skin_page(words)
+            log.info("achievement: Lookin fab - %s skin %d page %r: %s; button area read: %s", hero, k + 1,
+                     title, state, A.screen_text([w for w in words if _inside(w, SKIN_BUTTON)]) or "nothing")
             if state == "select":
-                self.inp.click(*self.picker._select_position())
-                end = time.time() + 2.0
-                while time.time() < end and self.picker.button() != "selected":
-                    self.sleep(0.15)
-                state = self.picker.button()
+                self.inp.click(button.x, button.y)
+                self.sleep(1.5)
+                self._capture(f"{hero}_skin{k + 1}_after_select")
+                words = self.menus.v.read((0.0, 0.0, 1.0, 1.0))
+                state, _ = skin_page(words)
+                log.info("achievement: Lookin fab - after %r the button reads: %s", button.text,
+                         A.screen_text([w for w in words if _inside(w, SKIN_BUTTON)]) or "nothing")
             if state == "selected":
-                log.info("achievement: Lookin fab - %s now wears owned skin %d", hero, k + 1)
+                log.info("achievement: Lookin fab - %s now wears skin %d (%s)", hero, k + 1, title)
+                self._back_to_hero(hero)
                 return "equipped"
-            log.info("achievement: Lookin fab - %s skin %d shows %r, not SELECT - next", hero, k + 1, state)
+            if state in ("shop", "unknown"):
+                log.warning("achievement: Lookin fab - %s skin %d: %s page, stopping; screen read: %s",
+                            hero, k + 1, state, A.screen_text(words, 40))
+                self._back_to_hero(hero)
+                return f"bailed: {state} page after skin {k + 1}"
+            # unowned, or SELECT that did not take: back to the hero for the next one
+            if not self._back_to_hero(hero):
+                return f"bailed: the {hero} screen did not come back after skin {k + 1}"
+            frame = self.s.grab()
         return "none_owned"
 
     def run(self):
+        checked = dict(self.budget.flag("skins_checked") or {})
+        todo = [h for h in heroes_to_try(self.account) if h not in checked]
+        if not todo:
+            return "no owned skin on " + ", ".join(sorted(checked))
         tried = []
-        for hero in heroes_to_try(self.account)[:2]:
+        for hero in todo[:2]:
             ok, origin = self.picker.meta._open_hero_picker()
             if not ok:
                 return f"bailed: HEROES did not open (from {origin})"
@@ -150,18 +228,33 @@ class SkinEquipper:
                 self.budget.set_flag("skin_equipped", {"hero": hero, "at": time.time()})
                 return "equipped " + hero
             tried.append(f"{hero}: {res}")
-            if res.startswith("bailed"):
+            if res == "none_owned":
+                checked[hero] = time.time()
+                self.budget.set_flag("skins_checked", checked)
+            else:
                 break
         return "no owned skin: " + "; ".join(tried)
 
 
+def heroes_to_try(account):
+    """The bot's heroes the account owns, the equipped one first."""
+    owned = set(getattr(account, "unlocked_heroes", ()) or ()) | {"quincy"}
+    first = getattr(account, "selected_hero", None)
+    order = ([first] if first in HERO_ORDER else []) + [h for h in HERO_ORDER if h != first]
+    return [h for h in order if h in owned]
+
+
 def run_if_due(screen, inp, menus, account, account_key, statuses=None, budget=None, equipper=None):
     """The runner's entry point on the main menu: one try a day while Lookin
-    fab is wanted and no skin was equipped yet. Returns the result or None."""
+    fab is wanted, no skin is equipped yet and a hero is left to check.
+    Returns the result or None."""
     budget = budget or A.Budget(account_key)
     statuses = A.card_statuses() if statuses is None else statuses
     if not A.wanted((A.SKIN_CARD,), statuses) or budget.flag("skin_equipped"):
         return None
+    checked = budget.flag("skins_checked") or {}
+    if account is not None and not [h for h in heroes_to_try(account) if h not in checked]:
+        return None                       # said once: the bot's heroes have no owned skin
     if budget.used(FLOW + "_tries") >= 1:
         return None
     budget.add(FLOW + "_tries")
@@ -171,4 +264,8 @@ def run_if_due(screen, inp, menus, account, account_key, statuses=None, budget=N
     except A.CapReached as e:
         res = f"cap: {e}"
     log.info("achievement: Lookin fab - %s", res)
+    if res.startswith("no owned skin") and account is not None and \
+            not [h for h in heroes_to_try(account) if h not in (budget.flag("skins_checked") or {})]:
+        log.warning("achievement: Lookin fab - none of the bot's heroes (%s) has an owned skin; "
+                    "it needs a skin bought (2,500 MM each) - left to the owner", ", ".join(HERO_ORDER))
     return res

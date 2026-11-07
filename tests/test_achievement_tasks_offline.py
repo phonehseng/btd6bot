@@ -10,12 +10,15 @@ Fixtures are crops of the bot's own recordings (1280x800):
                           (rec_20261107_173100.mkv 0:10)
   skins_quincy.jpg        HEROES screen, Quincy: two skins priced 2,500 MM
                           (rec_20261107_150700.mkv 0:36)
-  skins_obyn.jpg          HEROES screen, Obyn: three owned skins (0:39)
-No recording shows the powers panel, the power shop or the Quests menu:
-those flows are driven with scripted OCR words.
+  skins_obyn.jpg          HEROES screen, Obyn: three skins with a "New" ribbon
+                          hiding their price (0:39)
+  achtasks_ocr_words.json OCR of two real screens (see OCR below)
+No recording shows the powers panel or the power shop: those flows are
+driven with scripted OCR words.
 
 Run: python tests/test_achievement_tasks_offline.py
 """
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -426,46 +429,123 @@ def test_priced_skin_words():
     assert not H.priced([])
 
 
+
+# Words OCR read from real screens (bot's Vision on the full frame):
+#   quests_all         logs/achievement_captures/quests_20261107_180710.png
+#                      (first live run: the Quests menu, ALL tab)
+#   skin_page_unowned  rec_20261107_180600.mkv 0:52 - the page an Obyn skin
+#                      icon opens: "MOUNTAIN GUARDIAN SKIN ... UNLOCK FOR: 2,500"
+OCR = json.loads((FIX / "achtasks_ocr_words.json").read_text(encoding="utf-8"))
+
+
+def _ocr(key):
+    return [Word(t, x, y, 0.1, 0.03, c) for t, x, y, c in OCR[key]]
+
+
+def test_skin_page_unowned_from_the_live_run():
+    """The first live run read the hero screen's button region on this page
+    and saw nothing; the page itself says UNLOCK FOR: 2,500."""
+    assert H.skin_page(_ocr("skin_page_unowned")) == ("unowned", None)
+
+
+def test_skin_page_button_words():
+    def page(*button):
+        return [_w("SOME SKIN", 0.5, 0.05), _w("$213.833", 0.9, 0.05)] + [_w(t, 0.5, 0.87) for t in button]
+    assert H.skin_page(page("SELECT"))[0] == "select"
+    assert H.skin_page(page("SELECTED"))[0] == "selected"
+    assert H.skin_page(page("EQUIP"))[0] == "select"
+    assert H.skin_page(page("USE"))[0] == "select"
+    assert H.skin_page(page("UNLOCK FOR:", "2,500"))[0] == "unowned"
+    assert H.skin_page(page())[0] == "unknown"
+    # the word must be in the button region, not anywhere on the page
+    assert H.skin_page([_w("SELECT", 0.5, 0.4)])[0] == "unknown"
+    assert H.skin_page(page("SELECT") + [_w("SKIN BUNDLE $9.99", 0.5, 0.5)])[0] == "shop"
+
+
 class FakePicker:
-    def __init__(self, states):
-        self.states = list(states)
+    def __init__(self, hero="obyn"):
+        self.hero = hero
         self.meta = SimpleNamespace(_open_hero_picker=lambda: (True, "main_menu"),
                                     to_main_menu=lambda: True)
 
-    def button(self):
-        return self.states.pop(0) if len(self.states) > 1 else self.states[0]
-
-    def _select_position(self):
-        return (0.59, 0.57)
+    def shown_hero(self):
+        return self.hero
 
     def _find_and_equip(self, hero):
+        self.hero = hero
         return True
 
 
-def _equipper(tmp, frame, prices, states):
+def _equipper(tmp, frame, reads, hero="obyn"):
+    """reads: OCR answers in order (price under an icon, then whole pages)."""
     b = _budget(tmp)
-    menus = SimpleNamespace(v=SimpleNamespace(read=lambda region: prices.pop(0) if prices else []))
+    reads = list(reads)
+    menus = SimpleNamespace(v=SimpleNamespace(read=lambda region: reads.pop(0) if reads else []))
     eq = H.SkinEquipper(SimpleNamespace(grab=lambda: frame), Inp(), menus,
                         SimpleNamespace(unlocked_heroes={"obyn", "quincy"}, selected_hero="obyn"),
-                        b, sleep=lambda s: None, picker=FakePicker(states))
+                        b, sleep=lambda s: None, picker=FakePicker(hero), capture_dir=Path(tmp) / "cap")
     return eq, b
 
 
 def test_priced_skins_are_never_clicked():
     with tempfile.TemporaryDirectory() as tmp:
         q = _frame("skins_quincy.jpg", SKIN_CROP)
-        eq, _ = _equipper(tmp, q, [[_w("2,500")], [_w("2,500")]], ["selected"])
+        eq, _ = _equipper(tmp, q, [[_w("2,500")], [_w("2,500")]], hero="quincy")
         assert eq.try_hero("quincy") == "none_owned"
         assert eq.inp._inp.clicks == []
 
 
-def test_owned_skin_is_selected():
+def test_unowned_skin_pages_are_left_by_the_back_arrow():
+    """The live run's case: three "New" skins, each opening an UNLOCK FOR page."""
     with tempfile.TemporaryDirectory() as tmp:
         o = _frame("skins_obyn.jpg", SKIN_CROP)
-        eq, _ = _equipper(tmp, o, [[_w("New")], [_w("OBYN")]], ["select", "selected", "selected"])
+        page = _ocr("skin_page_unowned")
+        eq, b = _equipper(tmp, o, [[_w("New")], page, [_w("New")], page, [_w("New")], page])
+        assert eq.try_hero("obyn") == "none_owned"
+        clicks = eq.inp._inp.clicks
+        slots = [(H.SKIN_X, round(y, 3)) for _, y in H.slot_centres(3)]
+        assert clicks == [slots[0], H.BACK_ARROW, slots[1], H.BACK_ARROW, slots[2], H.BACK_ARROW], clicks
+        assert (0.5, 0.851) not in clicks and (0.504, 0.891) not in clicks   # never UNLOCK FOR
+        assert len(list((Path(tmp) / "cap").glob("skin_obyn_skin*.png"))) == 3
+
+
+def test_owned_skin_is_selected_on_its_page():
+    with tempfile.TemporaryDirectory() as tmp:
+        o = _frame("skins_obyn.jpg", SKIN_CROP)
+        page = [_w("MOUNTAIN GUARDIAN SKIN", 0.5, 0.05), _w("SELECT", 0.5, 0.87)]
+        done = [_w("MOUNTAIN GUARDIAN SKIN", 0.5, 0.05), _w("SELECTED", 0.5, 0.87)]
+        eq, _ = _equipper(tmp, o, [[_w("New")], page, done])
         assert eq.try_hero("obyn") == "equipped"
-        assert eq.inp._inp.clicks[0] == (H.SKIN_X, round(H.SKIN_Y0, 3))
-        assert (0.59, 0.57) in eq.inp._inp.clicks
+        assert eq.inp._inp.clicks == [(H.SKIN_X, round(H.SKIN_Y0, 3)), (0.5, 0.87), H.BACK_ARROW]
+
+
+def test_unknown_skin_page_stops_with_evidence():
+    with tempfile.TemporaryDirectory() as tmp:
+        o = _frame("skins_obyn.jpg", SKIN_CROP)
+        eq, _ = _equipper(tmp, o, [[_w("New")], [_w("SOMETHING ELSE", 0.5, 0.5)]])
+        assert eq.try_hero("obyn").startswith("bailed: unknown")
+        assert eq.inp._inp.clicks[-1] == H.BACK_ARROW
+
+
+def test_heroes_without_owned_skins_are_not_opened_again():
+    with tempfile.TemporaryDirectory() as tmp:
+        b = _budget(tmp)
+        acct = SimpleNamespace(unlocked_heroes={"obyn", "quincy"}, selected_hero="obyn")
+        tried = []
+
+        class Eq(H.SkinEquipper):
+            def try_hero(self, hero):
+                tried.append(hero)
+                return "none_owned"
+        eq = Eq(None, Inp(), None, acct, b, sleep=lambda s: None, picker=FakePicker())
+        st = {"Lookin fab": "unknown"}
+        res = H.run_if_due(None, None, None, acct, "ACC", st, budget=b, equipper=eq)
+        assert res.startswith("no owned skin") and tried == ["obyn", "quincy"]
+        assert set(b.flag("skins_checked")) == {"obyn", "quincy"}
+        # another day: nothing left to check, nothing opened
+        b2 = A.Budget("ACC", path=b.path, clock=lambda: NOW + 86400)
+        assert H.run_if_due(None, None, None, acct, "ACC", st, budget=b2, equipper=eq) is None
+        assert tried == ["obyn", "quincy"]
 
 
 def test_skin_run_once_and_only_while_wanted():
@@ -484,24 +564,60 @@ def test_skin_run_once_and_only_while_wanted():
 # -- quests -----------------------------------------------------------------------------
 def test_quests_describe():
     assert Q.describe([_w("QUESTS"), _w("First Time"), _w("Tutorial!")]) == ("quests", True)
-    assert Q.describe([_w("Quests"), _w("Daily")]) == ("quests", False)
+    assert Q.describe(_ocr("quests_all")) == ("quests", False)
     assert Q.describe([_w("$4.99")])[0] == "shop"
     assert Q.describe([_w("???")])[0] == "unknown"
 
 
-def test_quests_look_clicks_only_the_giver_and_back():
+def test_quest_cards_from_the_live_capture():
+    found = Q.cards(_ocr("quests_all"))
+    assert [c["title"] for c in found] == ["BYTHePOWeROFBATTLeCAT!", "He-MANHASTHePOWeR!", "OHNO!SKeLeTOR!",
+                                           "ROGueLeGenDSPReVIeW"], found
+    assert [c["progress"] for c in found] == ["0/1", "0/3", "0/3", "0/1"]
+    assert all(c["go"] for c in found)
+    assert found[1]["desc"].startswith("HeLP He-MAn")
+    assert Q.tutorial_card(found) is None
+
+
+def test_tutorials_tab_found_in_the_live_capture():
+    tab = A.find_allowed(_ocr("quests_all"), Q.TUTORIALS_TAB, region=Q.TAB_ROW)
+    assert tab is not None and abs(tab.x - 0.642) < 0.01
+
+
+def _tutorials_page():
+    words = [w for w in _ocr("quests_all") if w.y < 0.22]
+    return words + [_w("New", 0.146, 0.239), _w("FIRST TIME TUTORIAL!", 0.33, 0.242),
+                    _w("Learn the basics of Bloons TD 6", 0.35, 0.283), _w("GO!", 0.805, 0.30),
+                    _w("x100", 0.262, 0.36), _w("0/1", 0.806, 0.361)]
+
+
+def test_quests_look_opens_tutorials_and_never_go():
     with tempfile.TemporaryDirectory() as tmp:
         b = _budget(tmp)
-        screens = [MAIN, ("unknown", [_w("QUESTS"), _w("First Time Tutorial!")]),
+        screens = [MAIN, ("unknown", _ocr("quests_all")), ("unknown", _tutorials_page()),
                    ("unknown", []), MAIN]
         menus = ShopMenus(screens)
         inp = Inp()
         res = Q.run_if_due(SimpleNamespace(grab=lambda: np.zeros((8, 8, 3), np.uint8)), inp, menus,
                            "ACC", {"First Steps": "progress"}, budget=b)
         assert res == "quests, tutorial listed", res
-        assert set(inp.clicks) <= {Q.QUEST_GIVER, Q.BACK_ARROW}
-        assert b.flag("quests_seen")["tutorial_listed"]
+        assert inp.clicks[:2] == [Q.QUEST_GIVER, (0.642, 0.169)], inp.clicks
+        assert set(inp.clicks[2:]) <= {Q.BACK_ARROW}
+        assert not any(abs(x - 0.805) < 0.01 for x, _ in inp.clicks)       # GO! never clicked
+        seen = b.flag(Q.SEEN_FLAG)
+        assert seen["tutorial_listed"] and seen["card"]["progress"] == "0/1"
         assert Q.run_if_due(None, inp, menus, "ACC", {"First Steps": "progress"}, budget=b) is None
+
+
+def test_old_quests_flag_does_not_stop_the_tutorials_look():
+    with tempfile.TemporaryDirectory() as tmp:
+        b = _budget(tmp)
+        b.set_flag("quests_seen", {"at": NOW, "tutorial_listed": False})
+        b.add("quests_look")
+        menus = ShopMenus([MAIN, ("unknown", _ocr("quests_all")), ("unknown", _ocr("quests_all")), MAIN])
+        res = Q.run_if_due(SimpleNamespace(grab=lambda: np.zeros((8, 8, 3), np.uint8)), Inp(), menus,
+                           "ACC", {"First Steps": "progress"}, budget=b)
+        assert res == "quests, tutorial not read"
 
 
 # -- runner hook ------------------------------------------------------------------------
