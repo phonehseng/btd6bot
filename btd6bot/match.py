@@ -25,6 +25,15 @@ EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
 CRISIS_HOLD_S = 20.0       # longest wait per round
 CRISIS_HOLD_IDLE_S = 4.0   # ... ended early once this long passes without a purchase
 CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
+# A plan_first build's plan owns the cash (Executor.plan_first); reinforce may
+# buy off the plan only in a crisis the bloon watch has SEEN, not one the
+# damage model merely predicts (Match._crisis_seen): a round among the last
+# SEEN_CRISIS_ROUNDS whose bloons got at least SEEN_CRISIS_DEPTH of the way
+# along the route. Skates CHIMPS (2026-11-07), lost twice at round 75, had
+# rounds at 90-96%; Alpine Run CHIMPS, lost at round 93 after the model's
+# "crisis" ratings spent the Glaive Lord money on snipers, never passed 79%.
+SEEN_CRISIS_DEPTH = 0.85
+SEEN_CRISIS_ROUNDS = 3
 # The game lights the Play button again as soon as a round's last bloon has
 # been sent, while its bloons are still on the track; pressing it sends the
 # next round on top of them. With one life, Play waits until the bloon watch
@@ -625,16 +634,26 @@ class Match:
                         self._last_wait_log = now
                         log.info("idle with $%d: %s", cash, getattr(self.ex, "waiting", "?"))
                     held = self._cash_held(dropped, crisis)
+<<<<<<< HEAD
                     # a plan_first build's plan owns the cash (Executor.plan_first)
                     plan_first = getattr(self.ex, "plan_first", None)
                     if plan_first is not None and plan_first():
+=======
+                    # a plan_first build's plan owns the cash (Executor.plan_first),
+                    # except in a crisis the bloon watch has seen (_crisis_seen):
+                    # then reinforce may buy for this round, with the far hold
+                    # released too (Skates CHIMPS, 2026-11-07)
+                    seen = self._crisis_seen(dropped, crisis)
+                    plan_first = getattr(self.ex, "plan_first", None)
+                    if plan_first is not None and plan_first() and not seen:
+>>>>>>> 902f1dc (A plan_first build gives up its cash only in a crisis seen on the track, and that crisis frees the far hold)
                         weak = False
                     if weak and not held and now - self._t_reinforce > REINFORCE_EVERY:
                         # the coming rounds look weak: the damage model picks
                         # what the spare cash buys (reinforce.py), the plan's
                         # own steps and patience keep their place before it
                         self._t_reinforce = now
-                        bought = self._reinforce(cash, last_round)
+                        bought = self._reinforce(cash, last_round, release_held=seen)
                     # reinforce is saving for a purchase that holds the weakest
                     # round: the usual spending would eat that cash
                     if not bought and not (weak and now < self._saving_until):
@@ -1109,12 +1128,42 @@ class Match:
             return 0
         return cost
 
-    def _reinforce(self, cash, rnd):
+    def _crisis_seen(self, dropped, crisis):
+        """Is the round being played a crisis the game itself has shown, not
+        only one the damage model predicts? True when lives are falling, or
+        when it is a crisis round (`crisis`) AND one of the last
+        SEEN_CRISIS_ROUNDS rounds the bloon watch summed up had bloons at
+        least SEEN_CRISIS_DEPTH along the route.
+
+        Why both: the model mis-rates CHIMPS rounds. On Alpine Run CHIMPS
+        (2026-11-07) it called rounds 8-13, 34, 49, 78-93 crises; each let
+        reinforce past a plan_first build's plan and bought ten off-plan
+        snipers ($120k of sniper XP), so the plan's Glaive Lord ($35,100,
+        the guide's round 65) never came and round 93 was lost - the same
+        drain plan_first was made to stop on Cracked. The bloons there never
+        got past 79% of the route. Skates CHIMPS lost round 75 twice after
+        rounds whose bloons reached 90-96%: that crisis was real.
+
+        Without the watch (off, or no round summed up yet) nothing is seen
+        and the plan keeps the cash, as on the Cracked win."""
+        if dropped:
+            return True
+        if not crisis:
+            return False
+        recent = self.depths[-SEEN_CRISIS_ROUNDS:]
+        return any(s.get("deepest", 0.0) >= SEEN_CRISIS_DEPTH for s in recent)
+
+    def _reinforce(self, cash, rnd, release_held=False):
         """One model-chosen purchase (reinforce.py). True when one was bought;
-        the weak state ends when nothing affordable helps any more."""
+        the weak state ends when nothing affordable helps any more.
+
+        `release_held`: a crisis seen on the track (_crisis_seen) - the cash
+        the executor holds for a far threat is spendable too. Skates CHIMPS
+        (2026-11-07) held $72,894 for round 80's ZOMG while round 75 leaked,
+        and reinforce logged "nothing $0 buys helps round 75"."""
         try:
             r = R.buy_best(self.ex, self.forecast, cash, rnd, self.ex.rules.get("end_round", 80),
-                           lives=self._lives.confirmed)
+                           lives=self._lives.confirmed, release_held=release_held)
         except Exception:
             log.exception("reinforcing failed - back to the usual spending")
             self._weak_round = None

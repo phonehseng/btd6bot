@@ -996,7 +996,7 @@ def save_target(forecast, ex, cash, rnd, worst):
     return None
 
 
-def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
+def buy_best(ex, forecast, cash, rnd, end_round, lives=None, release_held=False):
     """Buy the best purchase (see best()). Returns 'bought', 'safe' (the
     look-ahead holds: stop), 'wait' (nothing affordable helps yet: more cash
     may), 'save' (keep the cash for a dearer purchase that does help) or
@@ -1004,9 +1004,13 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
 
     After a 'save', ex.save_goal is (cost, round) of the purchase being
     saved for - the match keeps the plan's own steps off that cash
-    (Executor.tick, reinforce_hold) - and None after any other answer."""
+    (Executor.tick, reinforce_hold) - and None after any other answer.
+
+    `release_held`: the match has SEEN the round being played go wrong
+    (Match._crisis_seen), so the far-threat hold is spendable as well - a
+    later round's answer is no use if this round ends the game."""
     # part of the cash the executor keeps for a far threat (Executor._hold_for)
-    held = getattr(ex, "held_cash", 0) or 0
+    held = 0 if release_held else (getattr(ex, "held_cash", 0) or 0)
     if held and cash is not None:
         cash = max(0, cash - held)
     status, found = best(ex, forecast, cash, rnd, end_round, lives)
