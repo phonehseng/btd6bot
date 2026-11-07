@@ -71,6 +71,18 @@ def test_a_clear_step_is_priced_like_its_obstacle():
     assert ex._first_step_cost(CLEAR) == 0
 
 
+
+def test_a_hero_opening_counts_as_defence_only_when_the_build_says_so():
+    """A lone hero is no defence (Logs leaked 20 lives that way), unless the
+    build opens with its hero on purpose (`hero_opens: true`): Cracked
+    CHIMPS opens with Quincy alone, and round 6 was refused."""
+    from btd6bot.game import Placed
+    ex = executor()
+    ex.g.towers["hero"] = Placed("hero", "hero", 0.3, 0.4)
+    assert not ex.defended()
+    ex.strat = dict(ex.strat, hero_opens=True)
+    assert ex.defended()
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

@@ -46,6 +46,7 @@
 id: cracked_chimps
 map: Cracked
 hero: quincy
+hero_opens: true      # Quincy alone holds the opening (Executor.defended)
 modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
