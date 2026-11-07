@@ -1,0 +1,130 @@
+# Spice Islands, CHIMPS: Quincy opens on the middle island, one buccaneer by
+# the west island grows to an Aircraft Carrier, a village on the west island
+# buffs it, then Carrier Flagship, Primary Mentoring, a Glaive Lord boomerang
+# and a Cripple MOAB sniper (bloon.games' written Spice Islands guide, with
+# the changes below).
+#
+# Why: the owner's goal is CHIMPS black borders (all Beginner maps, then
+# Intermediate). On 2026-11-07 the bot beat CHIMPS on 9 maps with builds that
+# follow a published community strategy step by step and let the plan own
+# the cash (`plan_first`); the Carrier Flagship water recipe won 6 of them
+# (Cracked, End of the Road, Lotus Island among them). Spice Islands is
+# nearly all water, and its own written guide is that same recipe. Played
+# live to learn, not gated on the damage model (which does not count heroes,
+# and the opening is Quincy alone).
+#
+# Source: bloon.games, "How to Beat CHIMPS on Spice Islands?"
+# (https://bloon.games/how-to-beat-chimps-on-spice-islands), a written
+# no-power, no-Monkey-Knowledge guide: Sauda in the centre for the early
+# rounds; a Monkey Buccaneer to Aircraft Carrier (4-2-0), middle path first,
+# then top; a Monkey Village 2-2-0 by it (attack speed, camo); the buccaneer
+# to Carrier Flagship (5-2-0); before round 80 the village to 4-2-0 and a
+# Boomerang Monkey on the Flagship's deck to Glaive Lord (5-0-2); before
+# round 90 a Dartling Gunner to Ray of Doom (5-0-2); last the village to
+# Primary Expertise. bloonswiki Spice Islands
+# (https://www.bloonswiki.com/Spice_Islands): the palm trees block line of
+# sight; Destroyers and the Carrier Flagship are the map's usual answer.
+#
+# Changes from the guide, and why:
+#   * Quincy, not Sauda: Sauda's reach is 25 units, and from every legal land
+#     cell she sees at most 11% of the track - the three best cells are
+#     isolated single cells (0-1 legal neighbours) of the kind the game has
+#     refused live. Quincy on the middle island sees 28% (above the ~23% he
+#     held round 6 alone from on Cracked and Winter Park), and he is the hero
+#     of every Flagship-recipe win;
+#   * a Night Vision sniper (0-1-0) for round 24's camo, as on Cracked and
+#     Lotus Island: neither the buccaneer's early tiers nor Quincy at that
+#     level see camo, and the guide's village (Radar Scanner) only comes
+#     after the Aircraft Carrier (about round 42);
+#   * the boomerang stands on the west island inside the village's reach:
+#     the bot does not place towers on a deck;
+#   * no Ray of Doom: 5-0-2 costs $100,600 at Hard (btd6bot/towers.py), more
+#     than the game pays between the Glaive Lord (about round 79) and round
+#     100. The sniper already standing for camo grows to Cripple MOAB (5-1-0,
+#     about round 92) instead, the step that closed every Flagship-recipe
+#     win (BAD stun, Night Vision for the camo DDTs);
+#   * the account has the village's top path to tier 4 only
+#     (data/accounts/SFYOSHHYV.json: village [4, 5, 5]), so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise;
+#   * one of each tier 5 per map (Executor._tier5_taken; the Impoppable loss
+#     here): Carrier Flagship, Glaive Lord and Cripple MOAB are three
+#     different tier 5s.
+#
+# Spots (map geometry with the main checkout's learned refusals,
+# data/maps/spiceislands.npz copied into the worktree for the check, legal in
+# placement order; "cells" are track cells in range and in line of sight past
+# the palms, of 2,271 on screen). The islands are small and the game has
+# refused much of them live; the spots below are at least 2 cells from a
+# refused cell (the boomerang 1-2) and keep 5-8 of their 8 neighbours legal:
+#   * Quincy (0.323, 0.487), the middle island: 647 cells (28%; the best hero
+#     cell 657 has 4 legal neighbours, this one 8);
+#   * buccaneer (0.152, 0.581), south of the west island: 620 cells (27%).
+#     The water cells south of the middle island see more (806, 35%), but the
+#     only village ground within reach of them is the middle island, which
+#     then leaves no boomerang cell inside the village's reach but an
+#     isolated one; the west island holds the village and the boomerang;
+#   * sniper (0.671, 0.334), the north-east island: sees 98% of the track;
+#   * village (0.179, 0.428), the west island: all 8 neighbours legal;
+#   * boomerang (0.190, 0.513), the west island below the village: 504 cells
+#     (22%).
+#   Distances (units; village radius 40, 48 with Bigger Radius from 2-2-0):
+#   village-boat 36.2, village-boomerang 19.7, boat-boomerang 20.6; the
+#   closest pairs are 0.087-0.091 screen-height apart (the boomerang and its
+#   neighbours on the west island).
+#
+# Cash (CHIMPS: $650 at round 6, the game's own income, Hard prices;
+# tests/test_chimps_builds_offline.plan_timeline): Hot Shot round 13,
+# Night Vision 15, Destroyer 29, Aircraft Carrier 39, village 2-2-0 44,
+# Flagship 58, Primary Mentoring 59, Glaive Lord 79, Cripple MOAB 92.
+#
+# Offline replay (tools/simulate_threats on the learned map, the live
+# account's unlocks, base income): every spot accepted, plan 20/20, no
+# threat gaps; blimp ratios (damage model, no hero or abilities) close to
+# the Lotus Island build's (which won): R40 1.56 (Lotus 0.80), R63-78
+# 0.37-2.43, R90-100 0.16-0.88; the executor's blimp answers only start at
+# round 92.
+#
+# Status 2026-11-07 12:00: written, not played live yet.
+id: spiceislands_chimps
+map: Spice Islands
+hero: quincy
+hero_opens: true      # Quincy alone holds the opening (Executor.defended)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
+  base_success: {chimps: 0.5}
+  maps: [Spice Islands]
+  revised: "2026-11-07T12:00"
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.323, 0.487]}      # Quincy holds the opening, middle island
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.152, 0.581]}   # south of the west island
+  - {do: upgrade, id: b1, to: 0-1-0}                                      # Grape Shot: the guide's middle path first
+  - {do: upgrade, id: b1, to: 0-2-0}                                      # Hot Shot: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.671, 0.334]}   # north-east island
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 1-2-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Double Shot
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.179, 0.428]}   # west island
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring, before round 80
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.190, 0.513]}   # west island, below the village
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB (in place of Ray of Doom)
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 0-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
