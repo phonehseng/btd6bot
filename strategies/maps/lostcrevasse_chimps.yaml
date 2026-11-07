@@ -1,6 +1,8 @@
-# Lost Crevasse, CHIMPS: one buccaneer in the lake opens alone and grows to a
-# Carrier Flagship beside a Radar Scanner / Jungle Drums village; Quincy
-# follows, a Glaive Lord boomerang and a Cripple MOAB sniper finish.
+# Lost Crevasse, CHIMPS: a buccaneer in the lake opens (with the match's
+# starter dart), a Desperado and a Skywarden on land cover the lane ends the
+# boat cannot see, and the boat grows to a Carrier Flagship beside a Radar
+# Scanner / Jungle Drums village; Quincy follows, a Glaive Lord boomerang and
+# a Cripple MOAB sniper finish.
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -45,15 +47,20 @@
 #
 # Changes from the guide, and why (as on Lotus Island):
 #   * the buccaneer opens alone (the match adds its $215 starter dart beside
-#     it) and Quincy follows when the cash allows: Quincy alone held round 6
-#     live only from spots seeing about 23% of the track or more, and the
-#     lone buccaneer won Frozen Over and Lotus Island;
+#     it), then a Desperado and a Skywarden (2026-11-07 14:30, see Status)
+#     and the boat's 2-2-0 and Night Vision sniper; Quincy comes after them:
+#     Quincy alone held round 6 live only from spots seeing about 23% of the
+#     track or more (the best hero cell here sees 22%), and the damage model,
+#     which does not count heroes, rates rounds 15-19 0.1-0.4 higher with the
+#     boat's Grape Shot / Hot Shot first;
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
 #     bot does not place towers on a deck. No legal boomerang cell with track
 #     in reach is within the village's buff radius here (the land beside the
 #     lake sees none of the lanes), so the boomerang stands on its own in the
 #     lower-left field, where it sees the most track of the cells left;
-#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo;
+#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo (before
+#     Quincy: later, the executor forces the cheapest camo answer, a
+#     Desperado 0-1-0, ahead of the plan);
 #   * the account has the village's top path to tier 4 only, so it ends at
 #     Primary Mentoring (4-2-0), not Primary Expertise;
 #   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
@@ -70,40 +77,78 @@
 # sees 82%; the boomerang at (0.243, 0.709), 527 (19%). Every tower is at
 # least 0.11 screen heights from the next, legal with the starter dart
 # standing, and has 5+ of 8 legal neighbours.
+# The opening's land towers (2026-11-07 14:30; same npz, copied 14:11): the
+# Desperado at (0.206, 0.641) sees 32% of the east lane from 67% (its exit,
+# which no other opening tower reaches) and 18% of the west lane from 35%;
+# the Skywarden at (0.227, 0.334) 36% of the west lane from 22% and 12% of
+# the east lane from 60%. Both cells have all 8 neighbours legal; they stand 0.09
+# (Desperado - boomerang spot) and 0.11 (Skywarden - starter dart) screen
+# heights from the nearest other tower.
 #
 # Offline replay (tools/simulate_threats.simulate on the learned map, live
-# account unlocks, base income): buccaneer R6, Quincy R9, 2-2-0 R17, Night
-# Vision R19, Destroyer R30, village R33 (Radar R36, Jungle Drums R40),
-# Aircraft Carrier R45, Flagship R59, Glaive Lord R82, Cripple MOAB R93 -
-# the timings that won Cracked and Lotus Island. No threat gaps; the blimp
-# check's own buys only from R92. Damage model (no hero): R6 1.85, R40 0.81,
-# R63 5.48, R75 5.48, R78 2.83, R90 1.85, R95 0.37, R98 0.61, R100 2.46
+# account unlocks, base income; it does not place the match's starter dart,
+# so live each opening buy comes about a round later): Desperado R7,
+# Skywarden R8, Double Shot R12, Hot Shot R16, Night Vision R19, Quincy R21,
+# Destroyer R32, village R35 (Radar R37, Jungle Drums R40), Aircraft Carrier
+# R45, Flagship R59, Glaive Lord R82, Cripple MOAB R93. No threat gaps; the
+# blimp check's own buys only from R92. Damage model (no hero): R40 0.83,
+# R63 5.48, R75 5.48, R78 2.83, R90 1.85, R95 0.38, R98 0.61, R100 2.25
 # (Lotus Island's winning board rated R95 1.23).
 #
 # Status: written 2026-11-07, not played yet.
 # 2026-11-07 14:06: lost round 8 - the lone boat and the match's starter dart
 # leaked while $350 waited for Quincy ($585). The boat's Faster Shooting and
 # Double Shot now come before Quincy, so the early cash buys damage at once.
+# 2026-11-07 14:30: lost twice in the opening (logs/bot.log, journals
+# 20261107_140553 and 20261107_140933):
+#   - 14:05: the boat 0-0-0 at (0.665, 0.709) and the starter dart at
+#     (0.190, 0.428); bloons reached 72/60/77% of the route in rounds 6-8
+#     and round 8 was lost (model 2.25 / 2.02 / 1.41) while $350 waited for
+#     Quincy;
+#   - 14:09 (after the 14:06 change): the same with the boat 1-0-0 from round
+#     7; 70/71/54/79% in rounds 6-9, round 9 lost to its 30 greens (model
+#     2.25 / 2.02 / 1.74 / 0.96; Double Shot was $205 away).
+#   Why: the boat sees 13% of the east lane (33-46%) and the starter dart 2%
+#   of it, so the east lane's bloons crossed the last half of their route
+#   untouched; the west lane meets the dart at 30-51% and nothing else before
+#   the boat at 76%. Change: a Desperado (lower-left field, the east lane's
+#   last third) and a Skywarden (left pocket, the west lane from 22%) follow
+#   the boat at once, before its upgrades: both lanes now meet three towers
+#   in rounds 8-10, one of them near each exit. Damage model with the starter
+#   dart, buys at round start only (live buys mid-round come sooner), rounds
+#   6-20: 2.25 2.02 2.00 1.78 1.92 2.48 2.20 1.94 2.65 1.43 2.02 2.57 2.33
+#   2.02 3.83 (the plan before: 2.25 2.02 1.74 0.96 1.09 2.80 2.35 1.35 2.02
+#   1.14 ...). Not the >= 3 asked for rounds 6-12: rounds 6-7 are the boat and
+#   the starter dart whatever the plan (the match's opener reserve lets a
+#   plan place only $435 of towers before the first round unless the boat
+#   goes first, and nothing else is affordable before round 8), and no board
+#   costing at most $1,195 (all the cash by round 9) rated above 2.02 for
+#   round 9 in a search over 14 tower kinds and the map's best cells (best: a
+#   lone boat 2-0-0). Land-first openings (skywarden / dart pairs, the
+#   reserve's only legal ones) rated 1.6-2.0 at round 6 and 1.1-1.3 at 8.
+#   Flagship (R59) and Glaive Lord (R82) keep their rounds in the replay.
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lost Crevasse]
-  revised: "2026-11-07T14:10"
+  revised: "2026-11-07T14:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
+  - {do: place, id: d1, kind: desperado, role: dps, at: [0.206, 0.641]}   # R8: lower-left field, the east lane's last third
+  - {do: place, id: k1, kind: skywarden, role: dps, at: [0.227, 0.334]}   # R9: left pocket, the west lane from 22%
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.596, 0.402]}      # Quincy once the cash allows
   - {do: upgrade, id: b1, to: 2-1-0}
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.350, 0.181]}
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.596, 0.402]}      # Quincy once the cash allows
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.729, 0.649]}
   - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
