@@ -1,0 +1,125 @@
+# Lost Crevasse, CHIMPS: one buccaneer in the lake opens alone and grows to a
+# Carrier Flagship beside a Radar Scanner / Jungle Drums village; Quincy
+# follows, a Glaive Lord boomerang and a Cripple MOAB sniper finish.
+#
+# Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
+# then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
+# builds that follow a published community strategy step by step and let the
+# plan own the cash (`plan_first`); the Carrier Flagship recipe below won six
+# of them (Cracked, Lotus Island and four more). Lost Crevasse had no CHIMPS
+# build. This one is played live to learn; it is not gated on the damage
+# model (which does not count heroes).
+#
+# Sources:
+#   * bloon.games, "How to Beat CHIMPS on Lost Crevasse?"
+#     (https://bloon.games/how-to-beat-chimps-on-lost-crevasse/, video
+#     0NCRHYPxqo0, BTD6 Master) is the one page of the four Intermediate maps
+#     done today with written steps: Sauda; a sniper to Elite Defender
+#     (0-2-5); a second sniper on Strong with Full Metal Jacket, later Maim
+#     MOAB (4-2-0); a village 2-0-2; a wizard to Prince of Darkness (2-0-5);
+#     a druid to Spirit of the Forest (2-5-0); three Stronger Stimulant
+#     alchemists (4-2-0) and two Arcane Spike wizards (4-0-2). It is NOT
+#     followed here, for two reasons checked offline on this map:
+#       - the cash: at Hard prices the guide's towers cost about $208,000
+#         (with the Cripple MOAB the bot's coverage check needs for round
+#         100's BAD, see below); the CHIMPS game pays $153,520 by round 95
+#         and $178,909 by round 100 (data/rounds.json). Cut to two alchemists
+#         and no Arcane Spikes it is still $173,240: Prince of Darkness would
+#         stand from round 78, Spirit of the Forest from 92 and Cripple MOAB
+#         from 98 (tests/test_chimps_builds_offline.plan_timeline);
+#       - the opening: Sauda ($650 at Hard, the whole start) reaches 9% of
+#         the track from the best hero cell, and the land openers tried (the
+#         guide's wizard and druid, and a boomerang) rated 0.52-0.87 for rounds 6-8 in the damage model with the
+#         match's starter dart (wizard, druid, boomerang in the best cells),
+#         against 2.51 / 2.09 / 1.48 for a lone buccaneer in the lake.
+#   * The plan is therefore the Carrier Flagship recipe of the winning Cracked
+#     and Lotus Island builds, bloon.games' "#BTD6 | Cracked | Hard - CHIMPS
+#     Quicky Strategy Guide" (https://bloon.games/how-to-beat-chimps-on-cracked):
+#     Quincy; a buccaneer 2-2-0, Destroyer, a village 2-2-0 before round 40,
+#     Aircraft Carrier, Carrier Flagship before round 60, a Glaive Lord
+#     boomerang before round 80, the village to Primary Expertise before
+#     round 90, a Cripple MOAB sniper before round 100.
+#   * bloonswiki Lost_Crevasse (https://www.bloonswiki.com/Lost_Crevasse):
+#     two entrances, both paths run at once; the lake on the lower right
+#     touches both lanes after they split - the water this build uses.
+#
+# Changes from the guide, and why (as on Lotus Island):
+#   * the buccaneer opens alone (the match adds its $215 starter dart beside
+#     it) and Quincy follows when the cash allows: Quincy alone held round 6
+#     live only from spots seeing about 23% of the track or more, and the
+#     lone buccaneer won Frozen Over and Lotus Island;
+#   * the guide puts the boomerang and the sniper on the Flagship's deck; the
+#     bot does not place towers on a deck. No legal boomerang cell with track
+#     in reach is within the village's buff radius here (the land beside the
+#     lake sees none of the lanes), so the boomerang stands on its own in the
+#     lower-left field, where it sees the most track of the cells left;
+#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo;
+#   * the account has the village's top path to tier 4 only, so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise;
+#   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
+#
+# Spots (map geometry with the main checkout's learned refusals,
+# data/maps/lostcrevasse.npz copied 2026-11-07 12:58, checked in plan order;
+# "cells" are track cells in range and in sight, of 2,774): the boat at
+# (0.665, 0.709) reaches 652 (24%; the best water cell 675, but no legal
+# village cell is within 37 units of it), all 8 neighbours legal; the
+# village at (0.729, 0.649), the lake's east shore, is 26.9 units from the
+# boat (radius 40: 13.1 of slack); Quincy at (0.596, 0.402), the middle
+# field, 608 (22%; the left pocket's 25-23% cells are where the match's
+# starter dart goes, about (0.200, 0.436)); the sniper at (0.350, 0.181)
+# sees 82%; the boomerang at (0.243, 0.709), 527 (19%). Every tower is at
+# least 0.11 screen heights from the next, legal with the starter dart
+# standing, and has 5+ of 8 legal neighbours.
+#
+# Offline replay (tools/simulate_threats.simulate on the learned map, live
+# account unlocks, base income): buccaneer R6, Quincy R9, 2-2-0 R17, Night
+# Vision R19, Destroyer R30, village R33 (Radar R36, Jungle Drums R40),
+# Aircraft Carrier R45, Flagship R59, Glaive Lord R82, Cripple MOAB R93 -
+# the timings that won Cracked and Lotus Island. No threat gaps; the blimp
+# check's own buys only from R92. Damage model (no hero): R6 1.85, R40 0.81,
+# R63 5.48, R75 5.48, R78 2.83, R90 1.85, R95 0.37, R98 0.61, R100 2.46
+# (Lotus Island's winning board rated R95 1.23).
+#
+# Status: written 2026-11-07, not played yet.
+id: lostcrevasse_chimps
+map: Lost Crevasse
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
+  base_success: {chimps: 0.5}
+  maps: [Lost Crevasse]
+  revised: "2026-11-07T12:00"
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.596, 0.402]}      # Quincy once the cash allows
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.350, 0.181]}
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.729, 0.649]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.243, 0.709]}   # lower-left field
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]

@@ -1,0 +1,135 @@
+# Quarry, CHIMPS: a boomerang opens (the match adds its starter dart), a
+# second follows, then Quincy, a Night Vision Shrapnel sniper and a third
+# boomerang round a Primary Mentoring village; Glaive Lord and MOAB
+# Domination carry the late game, a Cripple MOAB sniper finishes.
+#
+# Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
+# then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
+# builds that follow a published community strategy step by step and let the
+# plan own the cash (`plan_first`); this land recipe is the one Alpine Run
+# CHIMPS was won with. Quarry had no CHIMPS build. This one is played live
+# to learn; it is not gated on the damage model (which does not count
+# heroes).
+#
+# Sources:
+#   * bloon.games, "How to Beat CHIMPS on Quarry?"
+#     (https://bloon.games/how-to-beat-chimps-on-quarry/): the page holds
+#     only a video (https://www.youtube.com/watch?v=Nj8j_QFkhX4, BTD6
+#     Master); its description has no steps and its captions could not be
+#     fetched (the timedtext request answers 404), so the map's own guide
+#     could not be followed step by step.
+#   * The plan is therefore the written land recipe of the winning Alpine Run
+#     build, bloon.games' "How to Beat CHIMPS on Monkey Meadow"
+#     (https://bloon.games/how-to-beat-chimps-on-monkey-meadow) - Quincy; a
+#     sniper 1-2-0; three boomerangs; one to 4-0-2, one to 0-2-4; a village
+#     0-2-0 then 4-2-0; the third boomerang to 0-4-2; Glaive Lord (5-0-2) on
+#     round 65, MOAB Domination (0-2-5) on round 85, Perma Charge (0-5-2) on
+#     round 96 - with the Cripple MOAB finish of bloon.games' Cracked and Spa
+#     Pits CHIMPS guides.
+#   * Why land: Quarry's water is a one-cell-high strip along the bottom edge
+#     (90 legal buccaneer cells; the best with 6+ legal neighbours reaches 9%
+#     of the track) and no legal village cell is within 37 units of any of
+#     it, so the Carrier Flagship recipe's village could not buff the boat.
+#     Quarry's track is the longest of today's Intermediate maps (4,140
+#     cells) and the large field between the central diagonal and the
+#     east lane holds the whole boomerang cluster.
+#
+# Changes from the guide, and why:
+#   * a boomerang opens and a second follows before Quincy: Quincy alone
+#     held round 6 live only from spots seeing about 23% of the track or
+#     more, and here his best cell sees 20% (Lotus Island and Hedge were lost
+#     at round 6 from 18-19%). Of the land openers tried in their best cells
+#     with the match's starter dart (damage model, rounds 6-8: boomerang
+#     1.13 / 0.97 / 0.78, ninja 1.18 / 1.16 / 1.03, druid 1.09 / 1.16 /
+#     1.01, wizard 1.04 / 0.94 / 0.74, tack 0.78 / 0.84 / 0.56) the
+#     boomerang is the guide's own tower, and with r2 bought next the
+#     opening rates 1.13 / 0.97 / 1.26 / 1.14 / 1.07 for rounds 6-10;
+#     Quincy then stands from round 9-10, the sniper from 10-11;
+#   * as on Alpine Run: the Radar village comes right after Glaive Ricochet
+#     (r1 3-0-2), before MOAR Glaives, so that the boomerangs see camo from
+#     about round 33 (the sniper is the only camo tower before that); the
+#     sniper takes Large Calibre and Deadly Precision (3-2-0) right after
+#     MOAR Glaives as round 40's MOAB answer; it goes on to Maim MOAB after
+#     Glaive Lord and to Cripple MOAB (5-2-0) last, in place of the third
+#     boomerang's Perma Charge (it stays at Turbo Charge, 0-4-2):
+#     strategy.ANSWERS lists no boomerang as a BAD answer, and the planner
+#     never picks a CHIMPS build without one;
+#   * the account has the village's top path to tier 4 only - the guide's
+#     village is 4-2-0 (Primary Mentoring) anyway.
+#
+# Spots (map geometry with the main checkout's learned refusals,
+# data/maps/quarry.npz copied 2026-11-07 12:58, checked in plan order;
+# "cells" are track cells in range and in sight, of 4,140): most of Quarry
+# is rock; the boomerangs stand on the strip along the central diagonal
+# lane and in the east field: r1 (0.574, 0.487) reaches 600 (14%; the best
+# boomerang cell, 602, has 4 legal neighbours), r2 (0.516, 0.487) 567, r3
+# (0.660, 0.460) 340; Quincy at (0.452, 0.496), 780 (19%); the sniper at
+# (0.740, 0.462) sees 3,183 (77%). Village cells are rare in the cluster:
+# the village at (0.596, 0.402) has r1 at 20.8 units, r2 at 34.9 and r3 at
+# 26.9 (radius 40 under the strict buff rule: 5.1 units of slack at the
+# least), 6 of its 8 neighbours legal. Every tower is at least 0.09 screen
+# heights from the next and has 5+ of 8 legal neighbours.
+#
+# Offline replay (tools/simulate_threats.simulate on the learned map, live
+# account unlocks, base income): r1 R6, r2 R7, Quincy R10, sniper R11 (Night
+# Vision R13, Shrapnel R16), r3 R17, Glaive Ricochet R23, village R28
+# (Radar R33), MOAR Glaives R36, Deadly Precision R39, MOAB Press R43,
+# Primary Mentoring R47, Turbo Charge R50, Glaive Lord R70, Maim MOAB R74,
+# MOAB Domination R89, Cripple MOAB R98 (Alpine Run: Glaive Lord 70, MOAB
+# Domination 89, Cripple 97). No threat gaps; the blimp check's own buys
+# only from R98. Damage model (no hero; the replay has no starter dart):
+# R40 1.65, R51 2.43, R60 0.80, R63 0.58, R70-76 16, R78 8.92, R90 6.30,
+# R95 1.16, R98 1.58, R100 3.55.
+#
+# Status: written 2026-11-07, not played yet.
+id: quarry_chimps
+map: Quarry
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {boomerang: [5, 4, 5], village: [4, 2, 0], sniper: [5, 2, 0]}
+  # not gated on the damage model: played live to learn (see above)
+  base_success: {chimps: 0.5}
+  maps: [Quarry]
+  revised: "2026-11-07T12:00"
+plan:
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.574, 0.487]}   # opens (the match adds a dart); becomes Glaive Lord
+  - {do: place, id: r2, kind: boomerang, role: dps, at: [0.516, 0.487]}   # becomes MOAB Domination
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.452, 0.496]}      # Quincy once the cash allows
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.740, 0.462]}
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: s1, to: 1-1-0}                                      # Full Metal Jacket: lead
+  - {do: upgrade, id: s1, to: 1-2-0}                                      # Shrapnel Shot
+  - {do: place, id: r3, kind: boomerang, role: dps, at: [0.660, 0.460]}   # becomes Turbo Charge
+  - {do: upgrade, id: r1, to: 1-0-0}
+  - {do: upgrade, id: r1, to: 2-0-0}                                      # Glaives
+  - {do: upgrade, id: r1, to: 2-0-1}
+  - {do: upgrade, id: r1, to: 2-0-2}                                      # Red Hot Rangs: lead
+  - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet
+  - {do: place, id: v1, kind: village, role: support, near: [r1, r2, r3], at: [0.596, 0.402]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boomerangs
+  - {do: upgrade, id: r1, to: 4-0-2}                                      # MOAR Glaives: the first MOABs
+  - {do: upgrade, id: s1, to: 2-2-0}                                      # Large Calibre
+  - {do: upgrade, id: s1, to: 3-2-0}                                      # Deadly Precision: round 40's MOAB anywhere on the track
+  - {do: upgrade, id: r2, to: 0-0-2}
+  - {do: upgrade, id: r2, to: 0-2-2}
+  - {do: upgrade, id: r2, to: 0-2-3}                                      # Kylie Boomerang
+  - {do: upgrade, id: r2, to: 0-2-4}                                      # MOAB Press
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: upgrade, id: r3, to: 0-2-2}
+  - {do: upgrade, id: r3, to: 0-4-2}                                      # Turbo Charge
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord
+  - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
+  - {do: upgrade, id: r2, to: 0-2-5}                                      # MOAB Domination
+  - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB, before round 100
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: r1, to: 2-0-2}]
+  ceramic: [{do: upgrade, id: r1, to: 3-0-2}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  moab: [{do: upgrade, id: r1, to: 4-0-2}, {do: upgrade, id: s1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: r1, to: 4-0-2}, {do: upgrade, id: r2, to: 0-2-4}]
+  zomg: [{do: upgrade, id: r1, to: 5-0-2}, {do: upgrade, id: s1, to: 4-2-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: r1, to: 4-0-2}]
+  bad: [{do: upgrade, id: s1, to: 5-2-0}]

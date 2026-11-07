@@ -1,0 +1,120 @@
+# Adora's Temple, CHIMPS: one buccaneer in the north-east pond opens alone
+# and grows to a Carrier Flagship beside a Radar Scanner / Jungle Drums
+# village; Quincy follows, a Glaive Lord boomerang in the village's reach
+# and a Cripple MOAB sniper finish.
+#
+# Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
+# then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
+# builds that follow a published community strategy step by step and let the
+# plan own the cash (`plan_first`); the Carrier Flagship recipe below won six
+# of them (Cracked, Lotus Island and four more). Adora's Temple had no
+# CHIMPS build. This one is played live to learn; it is not gated on the
+# damage model (which does not count heroes).
+#
+# Sources:
+#   * bloon.games, "How to Beat CHIMPS on Adora's Temple?"
+#     (https://bloon.games/how-to-beat-chimps-on-adoras-temple/): the page
+#     holds only a video (https://www.youtube.com/watch?v=K4o1pPiwHKs, BTD6
+#     Master); its description has no steps and its captions could not be
+#     fetched (the timedtext request answers 404), so the map's own guide
+#     could not be followed step by step.
+#   * The plan is therefore bloon.games' written Flagship recipe, the one the
+#     bot won Cracked and Lotus Island CHIMPS with: "#BTD6 | Cracked | Hard -
+#     CHIMPS Quicky Strategy Guide" (https://bloon.games/how-to-beat-chimps-on-cracked)
+#     - Quincy; a buccaneer 2-2-0, Destroyer, a village 2-2-0 before round
+#     40, Aircraft Carrier, Carrier Flagship before round 60, a Glaive Lord
+#     boomerang before round 80, the village to Primary Expertise before
+#     round 90, a Cripple MOAB sniper before round 100.
+#   * bloonswiki Adora's Temple (https://www.bloonswiki.com/Adora%27s_Temple):
+#     the temple blocks sight; win-condition towers (Glaive Lord, MOAB
+#     Domination) do best on the two peak spots, which see over it.
+#   * Why water and not the wiki's peaks: on the learned map the peaks are
+#     single raised cells at the base of the two triangles inside the temple
+#     ((0.387, 0.291) and (0.484, 0.308), 3 of 8 neighbours legal); a tower
+#     there reaches 21-27% of the track, every other cell of the triangles
+#     11-18%. Quincy alone has lost round 6 live from spots under ~23%, and
+#     single legal cells have been refused live (Hedge, Alpine Run), so a
+#     Quincy opening would rest on one cell. The lone buccaneer (11% of the
+#     track) rated 1.96 / 1.58 / 1.37 for rounds 6-8 in the damage model with
+#     the match's starter dart, against 0.56-0.89 for every land opener tried
+#     on a peak (boomerang, wizard, druid, ninja). Replayed with the Glaive
+#     Lord on the right peak instead of by the village, the board rated the
+#     same to within 0.1 up to round 80 (R85 8.3 / 6.2, R100 4.9 / 3.8), not
+#     worth an isolated cell.
+#
+# Changes from the guide, and why (as on Lotus Island):
+#   * the buccaneer opens alone (the match adds its $215 starter dart) and
+#     Quincy follows when the cash allows (see above);
+#   * the guide puts the boomerang and the sniper on the Flagship's deck; the
+#     bot does not place towers on a deck, so the boomerang stands on the
+#     east land, inside the village's reach (Radar camo, Jungle Drums,
+#     Primary Mentoring), where it sees the most track of those cells;
+#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo; the
+#     sniper stands in the temple's lower court, where its sight past the
+#     walls covers 70% of the track (the peaks see it all, see above);
+#   * the account has the village's top path to tier 4 only, so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise;
+#   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
+#
+# Spots (map geometry with the main checkout's learned refusals,
+# data/maps/adorastemple.npz copied 2026-11-07 12:58, checked in plan order;
+# "cells" are track cells in range and in sight, of 3,327): the boat at
+# (0.633, 0.240) reaches 377 (11%; the best water cell 381), all 8
+# neighbours legal; the village at (0.687, 0.317) is
+# 26.0 units from it (radius 40: 14.0 of slack) and 33.0 from the boomerang
+# at (0.745, 0.428), 397 cells (12%); Quincy at (0.382, 0.232), the left
+# triangle, 611 (18%); the sniper at (0.361, 0.564) sees 2,328 (70%). Every
+# tower is at least 0.11 screen heights from the next and has 5+ of 8
+# legal neighbours.
+#
+# Offline replay (tools/simulate_threats.simulate on the learned map, live
+# account unlocks, base income): buccaneer R6, Quincy R9, 2-2-0 R17, Night
+# Vision R19, Destroyer R30, village R33 (Radar R36, Jungle Drums R40),
+# Aircraft Carrier R45, Flagship R59, Glaive Lord R82, Cripple MOAB R93. No
+# threat gaps; the blimp check's own buys only from R92. Damage model (no
+# hero): R6 1.56, R40 0.89, R63 10.2, R75 10.5, R78 5.60, R90 4.51, R95
+# 0.77, R98 1.38, R100 3.83 (Lotus Island's winning board rated R95 1.23).
+#
+# Status: written 2026-11-07, not played yet.
+id: adorastemple_chimps
+map: Adora's Temple
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
+  base_success: {chimps: 0.5}
+  maps: [Adora's Temple]
+  revised: "2026-11-07T12:00"
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.633, 0.240]}   # north-east pond: opens alone (the match adds a dart)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.232]}      # Quincy once the cash allows
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.361, 0.564]}
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.687, 0.317]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.745, 0.428]}   # east land, in the village's reach
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
