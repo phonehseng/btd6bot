@@ -1,178 +1,107 @@
-# Lotus Island, CHIMPS: Destroyers grown into Aircraft Carriers in the
-# southern bay (one becomes the Carrier Flagship), a Monkey Intelligence
-# Bureau village that gives them camo and every damage type, an Alchemist's
-# brew, and a Maim/Cripple MOAB sniper.
+# Lotus Island, CHIMPS: Quincy opens, one buccaneer in the southern bay grows
+# to a Carrier Flagship with a village beside it, a Glaive Lord
+# boomerang and a Cripple MOAB sniper finish.
 #
-# Why: a short, spread-out route (1,107 world units) round an island in open
-# water (38% of the map). The bay inside the bottom loop is the best water (a
-# buccaneer there reaches 30% of the route) and takes three boats; the lotus
-# plants and the stone podium block sight, so the sniper stands on the south
-# shore at (0.548, 0.777), the legal spot that sees most of the route (71%).
-# In the damage model Aircraft Carriers (4-x-x) answer every round from 46 to
-# 100 except the camo-lead and DDT rounds (78, 90, 93, 95, 99, 100): a 2-x-0
-# carrier cannot see camo, a x-x-2 one cannot pop lead. The MIB village
-# (2-3-0) next to the bay fixes both - with it two carriers and the village
-# ($71k) already rate about 2 on round 95, without it nothing short of $150k
-# does. The village is therefore the build's keystone: if its spot is
-# refused live, rounds 78+ fall to the extra carriers surplus buys.
-#
-# $650 at round 6 holds rounds 6-15 alone: a buccaneer (430) and a dart (215)
-# rate 3.3 at round 6; the second buccaneer before round 8 and Double Shot by
-# round 11 keep every early round at 2.2 or more.
+# Why: the earlier Lotus Island CHIMPS build was designed against the bot's
+# damage model (three buccaneers, a dart, a sniper, a boomerang, an MIB
+# village, an alchemist; Brickell) and lost live at round 95. Cracked CHIMPS,
+# an Advanced map, was then beaten (2026-11-07) with a build that follows a
+# published strategy step by step and lets the plan own the cash
+# (`plan_first`). This build does the same here.
 #
 # Sources:
-#   * bloonswiki Lotus_Island: 2nd hardest beginner map (short, spread out,
-#     sight blockers); "water-based strategies stand out"; Carrier Flagship
-#     recommended (https://www.bloonswiki.com/Lotus_Island)
-#   * bloonswiki Strategy:CHIMPS: Destroyer and Aircraft Carrier as save-up
-#     towers, many Destroyers with brew as a win condition, MIB for camo and
-#     DDT rounds, Flagship with Admiral Brickell, hardest rounds 40, 63, 75,
-#     78, 90, 95, 98, 99, 100 (https://www.bloonswiki.com/Strategy:CHIMPS)
-#   * r/btd6 CHIMPS difficulty chart (Feb 2025): Lotus Island moved to level 4
-#     (r/btd6 thread 1i8z6zi, read through a mirror:
-#     https://pol1.lr.ggtyler.dev/r/btd6/comments/1i8z6zi/btd6_chimps_difficulty_chart_update_feb_2025)
-#   * no Lotus Island CHIMPS guide was found (Reddit, Steam, community sites;
-#     sarahs-btd6-site's map page has none yet:
-#     https://sarahs-btd6-site.onrender.com/guides/maps/easy-maps/lotus-island)
+#   * bloon.games, "How to Beat CHIMPS on Lotus Island?"
+#     (https://bloon.games/how-to-beat-chimps-on-lotus-island): the page
+#     holds only a video (https://www.youtube.com/watch?v=tCshwZu38Xo, BTD6
+#     Master); its description has no steps and its captions could not be
+#     fetched, so the map's own guide could not be followed step by step.
+#   * The plan is therefore bloon.games' written Flagship recipe, the one the
+#     bot won Cracked CHIMPS with: "#BTD6 | Cracked | Hard - CHIMPS Quicky
+#     Strategy Guide" (https://bloon.games/how-to-beat-chimps-on-cracked) -
+#     Quincy; a buccaneer 2-2-0, Destroyer, a village 2-2-0 before round 40,
+#     Aircraft Carrier, Carrier Flagship before round 60, a Glaive Lord
+#     boomerang before round 80, the village to Primary Expertise before round
+#     90, a Cripple MOAB sniper before round 100. The same core is bloon.games'
+#     Spa Pits CHIMPS guide (https://bloon.games/how-to-beat-chimps-on-spa-pits).
+#   * bloonswiki Lotus Island (https://www.bloonswiki.com/Lotus_Island): the
+#     2nd hardest Beginner map (short, spread out, sight blockers); the best
+#     land spot is right of the lower-middle loop, with water towers to its
+#     left and right; the Carrier Flagship is its recommended tower.
 #
-# The wiki's Flagship (5-x-x, $28,080) was left out at first (the old model
-# rated four carriers above it and the old executor never bought it); on the
-# corrected model it is b3's last step (see the re-check below). Cripple MOAB (s1 5-2-0) is
-# there as the BAD answer strategy.coverage needs (every BAD answer in
-# strategy.ANSWERS is a tier 5); the model kills the BAD without it (round 100
-# at 5.2 with s1 at 4-2-0).
+# Changes from the guide, and why (the same as on Cracked):
+#   * the guide puts the boomerang and the sniper on the Flagship's deck; the
+#     bot does not place towers on a deck, so the boomerang stands south of
+#     the village, inside its reach (18.3 units: Radar camo, Jungle Drums,
+#     Primary Mentoring), and the sniper on the north shore, a legal spot
+#     whose sight no lotus or podium blocks;
+#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo: neither a
+#     2-2-0 buccaneer nor Quincy at that level sees camo, and the village
+#     (Radar Scanner, 0-2-0) only comes at about round 35;
+#   * the account has the village's top path to tier 4 only, so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise;
+#   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
 #
-# `answers`: strategy.ANSWERS lists no buccaneer for ceramic, BFB, ZOMG, DDT,
-# BAD or rush, and only Monkey Pirates (x-4-x) for MOAB, so without answers of
-# its own the executor turned b1 onto 2-4-0 at round 34 and the carrier path
-# was lost. Every strength answer is the rest of the plan in plan order: a due
-# threat or a short blimp check buys the plan's next step, never another tower.
+# Cash (CHIMPS curve: $650 before round 6, the game's own income, Hard
+# prices; tests/test_chimps_builds_offline.plan_timeline): Quincy alone holds
+# rounds 6-8 (he takes $585 of the $650), the buccaneer stands from round 9,
+# Destroyer by 30, Aircraft Carrier by 45, Carrier Flagship by 59, Glaive
+# Lord by 79, Cripple MOAB by 93 - the same timings that won Cracked.
 #
-# Re-checked 2026-11-05 after the Frozen Over round-56 loss, on the corrected
-# damage model (support buffs reach a tower only when its centre is inside
-# the buff radius; Aircraft Carrier planes count at a circling plane's share
-# of the track). b3 at the bay's west end stood 54 units from the MIB (no
-# camo, no lead) and the carriers' planes no longer cover the whole track at
-# full rate: R95 fell to 0.99. Repairs: b3 moves 15 units east to (0.393,
-# 0.785), 41 units from the MIB and 25 from the alchemist, and becomes the
-# Carrier Flagship (5-2-0) before the Cripple MOAB - the wiki's
-# recommendation that the old model had rated below a fourth carrier.
-# Rounds 6-100, worst margin: plan replay 2.23 (R8); sight-strict 2.23 (R8);
-# executor-faithful strict, with its extra towers / plan towers only,
-# 2.23 / 2.23 (R8), all 26 steps bought; drift replay (every tower 5 units
-# further from the village and alchemist) 2.16 (R95). R95 2.51, R98 3.02,
-# R99 2.80, R100 7.18. The numbers below are from the model before the
-# correction.
-#
-# Checked offline (no game; docs/map_strategies/beginner.md has the method),
-# CHIMPS economy (start round 6 with $650, no boosts, Hard prices; rounds
-# 6-100):
-#   * every `at` is legal for its tower in plan + fill order, on the map
-#     geometry and on the live map model (data/maps/lotusisland.npz);
-#   * plan replay (tools/optimize_builds.replay_plan): worst margin 2.23 (R8);
-#     R40 3.91, R51 2.51, R60/63/76/78/81/90 16, R94 5.19, R95 2.71, R96 4.18,
-#     R97 10.5, R98 2.92, R99 3.55, R100 5.24;
-#   * sight-strict (subs/aces held to their own circle; none here, the sniper
-#     already sees only its 71%): the same, worst 2.23 (R8);
-#   * executor-faithful, strict (tools/simulate_threats' loop on the real map
-#     with the match loop's surplus spending; damage model on the towers the
-#     executor really holds): worst 2.23 (R8) with its extra towers, 2.23 (R8)
-#     plan towers only (R95 2.65, R98 2.80). All 25 plan steps are bought:
-#     the carriers by R44 (b1), R63 (b2), R74 (b3), the MIB at R57, Cripple
-#     MOAB only at R98 - the blimp check (threats.blimp_capacity) rates the
-#     carriers low, calls rounds 71-93 weak, and surplus spends the cash on
-#     four extra carriers instead (harmless here: the plan towers alone hold);
-#   * tools/simulate_threats (open field and real map): no gaps, plan 25/25;
-#     strategy.coverage and usable on a full and on the real account: ok.
-#
-# Re-checked 2026-11-05 after Lotus Island CHIMPS was lost at round 95: not
-# the cash (live income matched the replay's) but the spots - the game
-# refused four of that build's, and the replay put every tower on its
-# spot anyway. The executor-faithful replay now plays on the map's learned
-# refusals (simulate_threats.map_model(learned=True), main checkout's
-# data/maps as of 17:12) and rates the towers where they really stand.
-# Lotus Island itself: no legal land within 18 cells of the MIB's spot by the
-# bay (the live village went to the north shore, 62 cells away, and b3 after
-# it: round 95 rated 0.36). Repairs: the village moves to the west shore
-# (0.27, 0.726), the best legal MIB spot (R95 1.46 alone); b1 moves from the
-# refused bay spot to the bay's south-west corner (0.345, 0.811), inside it
-# (R95 2.35); the alchemist to the nearest legal cell (0.462, 0.845). Worst
-# margin, rounds 6-100: plan 2.09 (R8), sight-strict 2.09 (R8), drift 2.04
-# (R8), executor-faithful 2.09 / 2.09 (R8), 26/26 steps, nothing moved,
-# Carrier Flagship at R82 (needed by R95), Cripple MOAB at R92. Held back:
-# b2 (bought R8) and Grape Shot (R14) stand only one round before the
-# rounds that need them (R9, R15) - the $650 start leaves no slack there.
+# Spots (map geometry, the worktree's and the main checkout's learned maps,
+# data/maps/lotusisland.npz, checked in plan order): the boat at (0.436,
+# 0.717), the bay's north-east corner, reaches 647 track cells (the best
+# water cell 648); the village at (0.510, 0.751) on the land right of the
+# lower-middle loop (the wiki's land spot) is 28.2 units from it (radius 40:
+# 11.8 units of slack under the strict buff rule) and 18.3 from the
+# boomerang at (0.484, 0.819). That land is small: with Quincy on its best
+# cell (0.526, 0.794: 530 cells) no village fits within the boat's reach,
+# and the boat then had to go to the bay's west side with the village and
+# boomerang on the west shore (boomerang 294 cells) - the damage model rated
+# that board's round 95 at 1.00 and round 99 at 1.02, this one 1.23 and 1.35
+# (plan towers only; Cracked's winning board rates 1.87 and 1.27). So
+# Quincy opens from the north-east land at (0.644, 0.257), the best hero
+# cell left (438 cells). The sniper at (0.452, 0.359) sees the whole route
+# past the lotus plants.
 id: lotusisland_chimps
 map: Lotus Island
-hero: admiral_brickell
+hero: quincy
+hero_opens: true      # Quincy alone holds the opening (Executor.defended)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  # repaired and re-checked then: games before it were on the old version
-  revised: "2026-11-05T19:10"
-  towers: {buccaneer: [5, 2, 2], sniper: [5, 2, 0], village: [2, 3, 0], alchemist: [3, 2, 0], boomerang: [3, 0, 0]}
-  # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes), repaired: every replay 2.16+
-  # re-checked 2026-11-05 on the live map's refused spots, repaired: every replay 2.04+;
-  # the opening steps stand just in time (the $650 start allows no spare round
-  # before round 16; the two-round lead is asked from round 16 on, 2026-11-05)
-  # held back 2026-11-06 22:20: Carved CHIMPS lost twice at round 33 (camo
-  # yellows) with the model rating it 2.95 - until the model fix is in
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lotus Island]
+  revised: "2026-11-07T04:00"
 plan:
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.345, 0.811]}   # bay's south-west corner, inside the MIB
-  - {do: place, id: d1, kind: dart, role: dps, at: [0.676, 0.794]}   # entrance stretch; with b1 the whole $650
-  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.409, 0.675]}   # north edge of the bay
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.644, 0.257]}      # Quincy holds the opening
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.436, 0.717]}   # the bay, north-east corner
   - {do: upgrade, id: b1, to: 1-0-0}
-  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
   - {do: upgrade, id: b1, to: 2-1-0}
-  - {do: upgrade, id: b2, to: 2-0-2}   # Crow's Nest: camo (round 24)
-  - {do: upgrade, id: b1, to: 2-2-0}   # Hot Shot: lead (round 28)
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.366, 0.726]}
-  - {do: upgrade, id: b1, to: 3-2-0}   # Destroyer: ceramics and the round-40 MOAB
-  - {do: upgrade, id: b2, to: 3-0-2}
-  - {do: upgrade, id: b1, to: 4-2-0}   # Aircraft Carrier
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.548, 0.777]}   # south shore: sees 71% of the route
-  - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB + Night Vision: BFB/ZOMG/DDT answer, 2nd strong-camo tower
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.249]}
-  - {do: upgrade, id: r1, to: 3-0-0}   # Glaive Ricochet: the round-63 rush answer
-  - {do: place, id: v1, kind: village, role: support, at: [0.27, 0.726]}
-  - {do: upgrade, id: v1, to: 2-2-0}   # Radar Scanner
-  - {do: upgrade, id: v1, to: 2-3-0}   # MIB: camo + every damage type for the carriers (rounds 78-100)
-  - {do: upgrade, id: b2, to: 4-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, at: [0.462, 0.845]}
-  - {do: upgrade, id: a1, to: 3-2-0}   # brew for the bay
-  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.393, 0.785]}   # west of the bay, inside the MIB and the brew
-  - {do: upgrade, id: b3, to: 4-2-0}
-  - {do: upgrade, id: b3, to: 5-2-0}   # Carrier Flagship: R95 0.99 -> 2.51
-  - {do: upgrade, id: s1, to: 5-2-0}   # Cripple MOAB: the BAD answer
-fill:
-  - {do: upgrade, kind: dart, to: 0-0-2}   # caps the opener dart: surplus once took it to 4-2-0
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.359]}
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.510, 0.751]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.484, 0.819]}   # south of the village
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
 answers:
-  camo: [{do: upgrade, id: b2, to: 2-0-2}]
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: &plan_rest
-    - {do: upgrade, id: b1, to: 3-2-0}
-    - {do: upgrade, id: b2, to: 3-0-2}
-    - {do: upgrade, id: b1, to: 4-2-0}
-    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.548, 0.777]}
-    - {do: upgrade, id: s1, to: 4-2-0}
-    - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.249]}
-    - {do: upgrade, id: r1, to: 3-0-0}
-    - {do: place, id: v1, kind: village, role: support, at: [0.27, 0.726]}
-    - {do: upgrade, id: v1, to: 2-2-0}
-    - {do: upgrade, id: v1, to: 2-3-0}
-    - {do: upgrade, id: b2, to: 4-0-2}
-    - {do: place, id: a1, kind: alchemist, role: support, at: [0.462, 0.845]}
-    - {do: upgrade, id: a1, to: 3-2-0}
-    - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.393, 0.785]}
-    - {do: upgrade, id: b3, to: 4-2-0}
-    - {do: upgrade, id: b3, to: 5-2-0}
-    - {do: upgrade, id: s1, to: 5-2-0}
-  moab: *plan_rest
-  camo_ceramic: *plan_rest
-  camo_lead: *plan_rest
-  bfb: *plan_rest
-  rush: *plan_rest
-  zomg: *plan_rest
-  ddt: *plan_rest
-  bad: *plan_rest
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]

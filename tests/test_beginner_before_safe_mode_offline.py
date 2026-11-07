@@ -127,7 +127,10 @@ def test_the_calibration_ignores_games_before_a_revision_too():
     0.85 on its own record, so it was still never played."""
     import dataclasses
     acc = F.full_account()
-    own = specs()["carved_chimps"]
+    # the build as it was then, with its 0.85 prior: the 2026-11-07 rewrite
+    # (a guide-following build) starts at 0.5, under the bar on any record,
+    # which would hide what this test checks - that old games are ignored
+    own = dataclasses.replace(specs()["carved_chimps"], base_success={"chimps": 0.85})
     acc.history = [{"map": "Carved", "mode": "chimps", "strategy": own.id, "won": False,
                     "t": "2026-11-05T16:12:20"}]
     acc.strategy_stats = {"Carved|chimps|" + own.id: {"wins": 0, "losses": 1, "games": 1}}
