@@ -76,6 +76,9 @@
 # 0.77, R98 1.38, R100 3.83 (Lotus Island's winning board rated R95 1.23).
 #
 # Status: written 2026-11-07, not played yet.
+# 2026-11-07 14:10: the boat's Faster Shooting and Double Shot now come
+# before Quincy - Lost Crevasse, opened the same way, lost round 8 with
+# $350 waiting for Quincy ($585).
 id: adorastemple_chimps
 map: Adora's Temple
 hero: quincy
@@ -86,12 +89,12 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Adora's Temple]
-  revised: "2026-11-07T12:00"
+  revised: "2026-11-07T14:10"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.633, 0.240]}   # north-east pond: opens alone (the match adds a dart)
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.232]}      # Quincy once the cash allows
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.232]}      # Quincy once the cash allows
   - {do: upgrade, id: b1, to: 2-1-0}
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.361, 0.564]}
