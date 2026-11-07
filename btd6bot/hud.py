@@ -172,8 +172,30 @@ class Hud:
             value = next((v for v in cash_prefixes(text) if v in self._cash_reads), None)
         if value is None:
             return None   # unreadable or malformed this frame: the next one will do
+        value = self._dollar_read_as_four(value)
         self._cash_reads = (self._cash_reads + [value])[-3:]
         return sorted(self._cash_reads)[(len(self._cash_reads) - 1) // 2]  # lower median
+
+    def _dollar_read_as_four(self, value):
+        """The cash with a '$' that OCR read as a leading '4' taken off.
+
+        '$31,477' came back '431,477' - well formed, so parse_cash takes it.
+        Alpine Run CHIMPS (2026-11-07, 10:30 and 11:02): during crisis holds
+        the bot believed $431,477 and $434,225, tried the plan's Glaive Lord
+        ($35,100) on that cash, the click bought nothing, and the step was
+        given up for the game. Real cash never jumps tenfold between two
+        reads, so a read starting with 4 is cut to the rest of its digits
+        when that rest lies near the recent reads and the whole does not.
+        Without recent reads it is kept as read."""
+        text = str(value)
+        if not self._cash_reads or len(text) < 4 or text[0] != "4":
+            return value
+        ref = sorted(self._cash_reads)[(len(self._cash_reads) - 1) // 2]
+        rest = int(text[1:])
+        near = max(5000, ref // 2)
+        if abs(rest - ref) <= near and abs(value - ref) > near:
+            return rest
+        return value
 
     def round(self, frame, shifted=None):
         regions = [self.layout["round"], self.layout["round_shifted"]]

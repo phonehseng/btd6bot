@@ -79,6 +79,18 @@ def test_padded_read_is_believed_only_when_it_repeats_a_clean_read():
     assert hud.cash() == 6215 and hud.cash() == 6215
 
 
+def test_a_dollar_read_as_four_is_taken_off_against_recent_reads():
+    """Alpine Run CHIMPS (2026-11-07): '$31,477' read as '431,477'."""
+    hud = _ScriptedHud(["$31,277", "$31,400", "431,477", "434,225", "$34,225", "$41,500"])
+    assert hud.cash() == 31277 and hud.cash() == 31277
+    assert hud.cash() == 31400            # 431,477 -> 31,477, the median stays sane
+    assert hud.cash() == 31477            # 434,225 -> 34,225
+    assert hud.cash() == 34225
+    assert hud.cash() == 34225            # a real $41,500 is kept as read (median)
+    fresh = _ScriptedHud(["431,477"])
+    assert fresh.cash() == 431477, "no recent reads: nothing to compare with"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
