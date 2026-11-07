@@ -57,7 +57,9 @@
 #     walls covers 70% of the track (the peaks see it all, see above);
 #   * the account has the village's top path to tier 4 only, so it ends at
 #     Primary Mentoring (4-2-0), not Primary Expertise;
-#   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
+#   * the sniper takes Shrapnel Shot and Full Metal Jacket (1-2-0) for round
+#     40 and keeps both on the way to Cripple MOAB (5-2-0); a Sharp Shooter
+#     dart comes right after the Destroyer (since 16:30, see Status).
 #
 # Spots (data/maps/adorastemple.npz from the main checkout, 2026-11-07
 # 14:30, checked in plan order; "cells" are track cells in range and in
@@ -100,10 +102,12 @@
 #
 # Cash (tests/test_chimps_builds_offline.plan_timeline, no starter dart):
 # boat R5, wizards R6-R7, Double Shot R11, Hot Shot R15, second boat R17,
-# Quincy R19, Night Vision R22, Destroyer R32, Radar R36, Jungle Drums R38,
-# Aircraft Carrier R45, Flagship R58, Glaive Lord R79, Cripple MOAB R92. The
-# replay (starter paid): Destroyer stands from R33, Flagship R59, Glaive Lord
-# R82; plan 23/23, no threat gaps.
+# Quincy R19, Night Vision R22, Destroyer R32, Sharp Shooter dart 2-0-4 R36,
+# sniper 1-2-0 R37 (both since 16:30, see Status), Radar R40, Jungle Drums
+# R41, Aircraft Carrier R48, Flagship R61, Glaive Lord R79, Cripple MOAB
+# R94. The replay (starter paid): Destroyer stands from R33, the dart 2-0-4
+# R38, the sniper 1-2-0 R39, Flagship R63, Glaive Lord R83, Cripple MOAB
+# R97; plan 30/30, no threat gaps.
 #
 # Status: written 2026-11-07, not played yet.
 # 2026-11-07 14:10: the boat's Faster Shooting and Double Shot now come
@@ -111,17 +115,44 @@
 # $350 waiting for Quincy ($585).
 # 2026-11-07 14:30: opening reworked before the first game: two wizards for
 # rounds 8-9, Grape and Hot Shot before Quincy, a second boat before him.
+# 2026-11-07 16:30: not played since; Sulfur Springs (16:11) and Lost
+# Crevasse (15:05), the same recipe, lost round 40, the first MOAB, while
+# the bot saved for the plan's MOAB answer, the Aircraft Carrier ($8,640),
+# which the cash cannot reach before round 40. This build had the same
+# shape and the weakest round 40 of the three (1.09 in the replay; Sulfur
+# Springs' lost board rated 1.81). Change: right after the Destroyer a dart
+# at (0.329, 0.274), the left triangle under Quincy (676 units of track in
+# reach, all 8 neighbour cells legal, 0.095 screen heights from Quincy),
+# goes to Sharp Shooter with Razor Sharp Shots (2-0-4, $3,725), then the
+# sniper takes Shrapnel Shot and Full Metal Jacket (1-2-0, $865), both
+# before the village; they are the `moab` answer instead of the Carrier,
+# and the sniper ends at Cripple MOAB 5-2-0. Chosen by the damage model
+# (heights in the line of sight, as the forecast) from the board standing
+# once the Destroyer is up (R33 in the replay, R40 0.90 on it): over every
+# single buy up to $4,500 (upgrades of the standing towers, every kind in
+# its best legal cells, darts, bombs and druids over every legal cell) none
+# reached 2.5 - the 2-0-4 dart 2.20-2.28 (two cells), a druid 2-3-0 2.04, a
+# glue 3-2-0 1.92, the second boat 0-3-0 1.59. On top of the dart the
+# cheapest buys: the sniper 1-2-0 ($865) 3.44, its 0-2-0 ($485) 2.80, the
+# second boat 0-3-1 ($2,320) 3.67.
+# Replay rounds 36-46 (model, starter dart counted), new / before: 2.33 /
+# 0.19, 0.89 / 0.33, 2.28 / 2.40, 3.08 / 2.00, 3.59 / 1.09 (R40), 2.57 /
+# 1.81, 5.60 / 3.87, 2.00 / 1.20, 3.55 / 2.51, 2.04 / 1.38, 2.92 / 15.83
+# (R46: the Carrier three rounds later). Later: R60 7.18 / 16.0, R63 10.26
+# / 10.15, R90 4.65 / 4.51, R95 0.74 / 0.76, R100 3.96 / 3.02. The cost:
+# the Flagship stands from R63 in the replay (was R59), Glaive Lord R83
+# (R82); round 37 (0.89: camo, black, white, lead) stays the weak one.
 id: adorastemple_chimps
 map: Adora's Temple
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], wizard: [0, 0, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], wizard: [0, 0, 0], dart: [2, 0, 4]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Adora's Temple]
-  revised: "2026-11-07T14:30"
+  revised: "2026-11-07T16:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.633, 0.240]}   # north-east pond: opens alone (the match adds a dart)
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.484, 0.198]}      # north triangle: round 8
@@ -135,6 +166,12 @@ plan:
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.361, 0.564]}
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.329, 0.274]}        # left triangle: round 40's MOAB (see 16:30)
+  - {do: upgrade, id: x1, to: 0-0-3}
+  - {do: upgrade, id: x1, to: 0-0-4}                                      # Sharp Shooter
+  - {do: upgrade, id: x1, to: 2-0-4}                                      # Razor Sharp Shots
+  - {do: upgrade, id: s1, to: 0-2-0}                                      # Shrapnel Shot: the MOAB's ceramics and rainbows
+  - {do: upgrade, id: s1, to: 1-2-0}                                      # Full Metal Jacket, by round 39
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.687, 0.317]}
   - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
@@ -144,15 +181,15 @@ plan:
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
-  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
-  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+  - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB, before round 100
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
   ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
-  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  moab: [{do: upgrade, id: x1, to: 0-0-4}, {do: upgrade, id: x1, to: 2-0-4}, {do: upgrade, id: s1, to: 1-2-0}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-2-0}]
   ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  bad: [{do: upgrade, id: s1, to: 5-2-0}]
   rush: [{do: upgrade, id: r1, to: 3-0-2}]

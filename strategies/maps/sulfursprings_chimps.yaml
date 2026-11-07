@@ -43,14 +43,16 @@
 #   * the boat's Double Shot, Grape Shot (round 15's pinks) and Hot Shot come
 #     before anything else, then a 0-2-3 Crossbow dart (Enhanced Eyesight sees
 #     round 24's camo, the Crossbow holds round 27's rush and the camo of
-#     rounds 33-37, as on Streambed); the Night Vision sniper moves after the
-#     Radar village, where it is only needed for Cripple MOAB and late camo;
+#     rounds 33-37, as on Streambed); the Night Vision sniper comes right
+#     after the Destroyer with Shrapnel Shot, and the dart goes on to Sharp
+#     Shooter (0-2-4): round 40's MOAB, before the village (since 16:30);
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
 #     bot does not place towers on a deck, so the boomerang stands below the
 #     village, in its reach (Jungle Drums, Radar, Primary Mentoring);
 #   * the account has the village's top path to tier 4 only, so it ends at
 #     Primary Mentoring (4-2-0), not Primary Expertise;
-#   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
+#   * the sniper keeps its Night Vision and Shrapnel Shot on the way to
+#     Cripple MOAB (5-2-0).
 #
 # Spots (data/maps/sulfursprings.npz from the main checkout, 2026-11-07
 # 14:30, every spot legal with 6+ of 8 neighbour cells legal, at least 0.11
@@ -87,9 +89,11 @@
 #
 # Cash (tests/test_chimps_builds_offline.plan_timeline, no starter dart):
 # boat R5, Double Shot R8, Hot Shot R13, Crossbow R19, Quincy R21, Destroyer
-# R31, Radar R37, Jungle Drums R38, Aircraft Carrier R45, Flagship R58,
-# Glaive Lord R79, Cripple MOAB R92. The replay (starter paid): Destroyer
-# stands from R33, Flagship R60, Glaive Lord R82, plan 27/27, no threat gaps.
+# R31, Shrapnel sniper R34, Sharp Shooter R36 (since 16:30, see Status),
+# Radar R39, Jungle Drums R41, Aircraft Carrier R47, Flagship R60, Glaive
+# Lord R79, Cripple MOAB R93. The replay (starter paid): Destroyer stands
+# from R33, sniper 0-2-0 R35, Sharp Shooter R37, Flagship R61, Glaive Lord
+# R83, Cripple MOAB R95, plan 30/30, no threat gaps.
 #
 # Status: written 2026-11-07, not played yet.
 # 2026-11-07 14:10: the boat's Faster Shooting and Double Shot now come
@@ -99,17 +103,50 @@
 # Lost Crevasse, opened with the same lone boat, lost rounds 8-9 rated
 # 1.35-1.8): boat to the west pool, Grape and Hot Shot before Quincy, a
 # Crossbow dart, the sniper after the village, the Glaive Lord by the village.
+# 2026-11-07 16:30: the 14:30 opening held rounds 6-39 live (16:02-16:11,
+# journal 20261107_160218) and lost round 40, the first MOAB, at 91% of the
+# route. The board was the Destroyer, the Crossbow dart, the starter dart,
+# Quincy, the village 1-2-0 (2-2-0 bought as round 40 began) and a 0-1-0
+# sniper; the damage model (heights in the line of sight, as the forecast)
+# rates it 1.81 for round 40. The plan's MOAB answer was the Aircraft
+# Carrier ($8,640): "round 36 is weak and the moab answer ($8640) cannot be
+# paid before round 40 from $784", so the bot held "saving for moab
+# answer" in rounds 38-40 and began round 40 with $3,245 unspent. What
+# leaks in the model is the MOAB's ceramics and rainbows near the exit.
+# Change, as on Lost Crevasse (15:30): right after the Destroyer the sniper
+# (same spot) is placed with Night Vision and Shrapnel Shot (0-2-0, $1,135)
+# and the Crossbow dart goes to Sharp Shooter (0-2-4, $2,215), both before
+# the village; they are the `moab` answer instead of the Carrier, and the
+# sniper ends at Cripple MOAB 5-2-0 (Shrapnel kept). Chosen by the damage
+# model from the board standing once the Destroyer is up (R33 in the
+# replay, R40 1.43 on it) over every single buy up to $4,500 (upgrades of
+# the standing towers; every kind in its best legal cells, darts, bombs and
+# druids over every legal cell): a sniper 0-2-0 rated round 40 at 2.40 for
+# $1,135, the dart's 0-2-4 1.98 for $2,215 (it sees little of the track
+# from the north rim), a new 2-0-4 dart ($3,725) 2.16 in its best legal
+# cell (0.168, 0.206), a bomb 3-0-2 1.98; the sniper 0-2-0 and
+# the dart 0-2-4 together 2.95, 3.40 with the village 2-2-0. Live, after
+# the Destroyer (about round 33) the game paid about $8,000 by round 40,
+# so the $3,350 has rounds to spare.
+# Replay rounds 36-46 (model, starter dart counted), new / before: 2.57 /
+# 1.56, 5.08 / 1.02, 3.87 / 3.33, 4.09 / 2.71, 3.19 / 2.04 (R40), 4.32 /
+# 3.75, 7.91 / 5.36, 2.65 / 1.81, 4.18 / 3.67, 3.44 / 2.74, 3.67 / 16.0
+# (R46: the Carrier two rounds later). Later: R60 7.66 / 16.0, R63 11.07
+# both, R90 5.13 / 4.71, R95 0.93 / 0.82, R100 2.43 / 2.40.
+# Also seen: (0.195, 0.436) is refused on the learned map; the replay puts
+# the boat at (0.195, 0.419), live it stood at (0.195, 0.411), 42.3 units
+# from the village (Bigger Radius 48).
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 3]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Sulfur Springs]
-  revised: "2026-11-07T14:30"
+  revised: "2026-11-07T16:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.436]}   # west pool: opens alone (the match adds a dart)
   - {do: upgrade, id: b1, to: 1-0-0}
@@ -124,11 +161,13 @@ plan:
   - {do: upgrade, id: d1, to: 0-2-3}                                      # Crossbow: round 27's rush, camo of rounds 33-37
   - {do: place, id: hero, kind: hero, role: dps, at: [0.617, 0.581]}      # Quincy once the cash allows
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.799, 0.428]}   # round 40's MOAB (see 16:30)
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: camo DDTs late
+  - {do: upgrade, id: s1, to: 0-2-0}                                      # Shrapnel Shot: the MOAB's ceramics and rainbows
+  - {do: upgrade, id: d1, to: 0-2-4}                                      # Sharp Shooter: round 40's MOAB, by round 38
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.115, 0.547]}
   - {do: upgrade, id: v1, to: 1-0-0}                                      # Bigger Radius: 38.4 units to the boat, slack 9.6
   - {do: upgrade, id: v1, to: 1-2-0}                                      # Radar Scanner: camo for the boat
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.799, 0.428]}
-  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: camo DDTs late
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
@@ -136,15 +175,15 @@ plan:
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
-  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
-  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+  - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB, before round 100
 answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
   ceramic: [{do: upgrade, id: d1, to: 0-2-3}, {do: upgrade, id: b1, to: 3-2-0}]
-  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  moab: [{do: upgrade, id: s1, to: 0-2-0}, {do: upgrade, id: d1, to: 0-2-4}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-2-0}]
   ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  bad: [{do: upgrade, id: s1, to: 5-2-0}]
   rush: [{do: upgrade, id: r1, to: 3-0-2}]
