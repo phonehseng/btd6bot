@@ -1391,14 +1391,14 @@ class Executor:
             cover = self.m.score_spots(rc, seg, self._occupied(), near=near, near_radius=near_r,
                                        placement=placement, extra_block=block,
                                        covered=covered, valid=valid)
-        from .maplearn import spot_factor
         cands = self.m.best_spots(cover, n=30 if valid is not None else 12)
         if valid is not None and role not in ("support", "far") and PL.needs_sight(kind, hero):
             # count only the track this spot can actually see past walls/blockers
             weight = self.m.spot_weight(seg, covered)
             cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight)) for cx, cy, _ in cands]
         edge = self._edge_band()
-        ranked = sorted(((cx, cy, sc * spot_factor(self.m, kind, cx, cy)
+        lane = None if covered is None else self._lane_cover(self._tower_cover())
+        ranked = sorted(((cx, cy, sc * self._experience_factor(kind, cx, cy, rc, lane)
                           * (self.EDGE_PENALTY if edge is not None and edge[cy, cx] else 1.0))
                          for cx, cy, sc in cands), key=lambda t: -t[2])
         # the build's researched spot comes first, then its neighbours
@@ -1449,6 +1449,42 @@ class Executor:
             if len(out) >= n:
                 break
         return out
+
+    def _experience_factor(self, kind, cx, cy, rc, lane):
+        """The learned score multiplier of a spot (maplearn.spot_factor),
+        with its bonus shrunk as far as the spot's lane is already guarded.
+
+        A spot earns its bonus (x1.25) by popping well above the median in
+        past games - which a spot in the only defended lane always does,
+        since every bloon passes it. On Firing Range ABR that bonus on the
+        left lane (where n1 and the hero stand) outweighed the lane rule:
+        the two lanes scored 207 and 211 before it, 263 and 215 after, and
+        n2 went left again while the right lane had only a bare dart - the
+        board that leaked 74 lives on 2026-11-04 (tests/test_lane_cover_
+        offline.py). So the bonus counts in full on a lane nobody guards
+        and not at all on the best-guarded lane (lane cover LANE_COVER_
+        WEIGHT). A penalty (a spot where this tower barely pops) always
+        counts in full: that is about the spot, not the lane."""
+        from . import mapgeom
+        from .maplearn import spot_factor
+        f = spot_factor(self.m, kind, cx, cy)
+        if f <= 1.0 or lane is None:
+            return f
+        # the spot's lane: mean lane cover over the bloon-path cells in its
+        # range (the path masks _lane_cover used; the learned track heat is
+        # wider and would count lane-less cells as unguarded)
+        masks = mapgeom.grids_for(self.m, removed=tuple(self.removed))["path_masks"]
+        on_path = np.logical_or.reduce(masks)
+        H, W = lane.shape
+        y0, y1 = max(0, int(cy - rc)), min(H, int(cy + rc) + 1)
+        x0, x1 = max(0, int(cx - rc)), min(W, int(cx + rc) + 1)
+        yy, xx = np.mgrid[y0:y1, x0:x1]
+        near = (xx - cx) ** 2 + (yy - cy) ** 2 <= rc * rc
+        cells = lane[y0:y1, x0:x1][near & on_path[y0:y1, x0:x1]]
+        if not cells.size:
+            return f
+        guarded = min(1.0, float(cells.mean()) / self.LANE_COVER_WEIGHT)
+        return 1.0 + (f - 1.0) * (1.0 - guarded)
 
     def _reserved_cells(self, step):
         """Cells of the exact spots (`at`) the build's later place steps
