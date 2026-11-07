@@ -62,10 +62,14 @@
 # Quincy opens from the north-east land at (0.644, 0.257), the best hero
 # cell left (438 cells). The sniper at (0.452, 0.359) sees the whole route
 # past the lotus plants.
+#
+# Opening changed 2026-11-07 07:15: Quincy alone from (0.644, 0.257) lost
+# round 6 live (bloons 93% along the route). The buccaneer now opens alone
+# from the bay (647 track cells, $430), as the Frozen Over build's did when
+# it won, and Quincy follows once the cash allows.
 id: lotusisland_chimps
 map: Lotus Island
 hero: quincy
-hero_opens: true      # Quincy alone holds the opening (Executor.defended)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
@@ -73,10 +77,10 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lotus Island]
-  revised: "2026-11-07T04:00"
+  revised: "2026-11-07T07:15"
 plan:
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.644, 0.257]}      # Quincy holds the opening
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.436, 0.717]}   # the bay, north-east corner
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.436, 0.717]}   # the bay, north-east corner: opens alone
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.644, 0.257]}      # Quincy once the cash allows
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
   - {do: upgrade, id: b1, to: 2-1-0}
