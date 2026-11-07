@@ -1,7 +1,8 @@
-# Sulfur Springs, CHIMPS: one buccaneer in the north-east pool opens alone
-# and grows to a Carrier Flagship beside a Radar Scanner / Jungle Drums
-# village; Quincy follows, a Glaive Lord boomerang and a Cripple MOAB sniper
-# finish.
+# Sulfur Springs, CHIMPS: one buccaneer in the west pool opens alone (the
+# match adds its starter dart) and grows to a Carrier Flagship beside a
+# Bigger Radius / Radar Scanner / Jungle Drums village; a Crossbow dart holds
+# rounds 16-37 on the north side, Quincy follows, a Glaive Lord boomerang by
+# the village and a Cripple MOAB sniper finish.
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -35,87 +36,115 @@
 #
 # Changes from the guide, and why (as on Lotus Island):
 #   * the buccaneer opens alone (the match adds its $215 starter dart beside
-#     it) and Quincy follows when the cash allows: Quincy alone held round 6
-#     live only from spots seeing about 23% of the track or more (here 14%
-#     at best), and the lone buccaneer won Frozen Over and Lotus Island;
-#   * the boat is not in the best water cell: the west pool's (0.206, 0.428)
-#     reaches 276 track cells, but no legal village cell is within 37 units
-#     of it. The north-east pool's (0.692, 0.138) reaches 214, with the
-#     village 22 units away. Replayed both ways on the learned map, the
-#     buffed boat rated far better from round 45 on (R45 15.2 against 0.37,
-#     R51 11.1 / 0.06, R70 10.7 / 0.27, R78 4.65 / 0.07, R90 4.09 / 0.63):
-#     Radar Scanner gives the boat its camo;
+#     it, Match._lone_opener) and Quincy follows once the boat has Hot Shot
+#     and the dart its Crossbow: Quincy alone held round 6 live only from
+#     spots seeing about 23% of the track or more (here 13% at best), and the
+#     damage model does not count him, so the towers it rates come first;
+#   * the boat's Double Shot, Grape Shot (round 15's pinks) and Hot Shot come
+#     before anything else, then a 0-2-3 Crossbow dart (Enhanced Eyesight sees
+#     round 24's camo, the Crossbow holds round 27's rush and the camo of
+#     rounds 33-37, as on Streambed); the Night Vision sniper moves after the
+#     Radar village, where it is only needed for Cripple MOAB and late camo;
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
-#     bot does not place towers on a deck, and no cell near the village sees
-#     the track (the pool's shore is far from the loop), so the boomerang
-#     stands on its own at the loop's south-east side;
-#   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo;
+#     bot does not place towers on a deck, so the boomerang stands below the
+#     village, in its reach (Jungle Drums, Radar, Primary Mentoring);
 #   * the account has the village's top path to tier 4 only, so it ends at
 #     Primary Mentoring (4-2-0), not Primary Expertise;
 #   * the sniper keeps its Night Vision on the way to Cripple MOAB (5-1-0).
 #
-# Spots (map geometry with the main checkout's learned refusals,
-# data/maps/sulfursprings.npz copied 2026-11-07 12:58, checked in plan
-# order; "cells" are track cells in range and in sight, of 2,005): the boat
-# at (0.692, 0.138) reaches 214 (11%), all 8 neighbours legal; the village
-# at (0.729, 0.215) is 22.1 units from it (radius 40: 17.9 of slack);
-# Quincy at (0.617, 0.581), east of the loop, 256 (13%; the best hero cell
-# 280); the sniper at (0.799, 0.428) sees the whole track; the boomerang at
-# (0.526, 0.802), 202 (10%; the best 216). Every tower is at least 0.09
-# screen heights from the next and has 6+ of 8 legal neighbours.
+# Spots (data/maps/sulfursprings.npz from the main checkout, 2026-11-07
+# 14:30, every spot legal with 6+ of 8 neighbour cells legal, at least 0.11
+# screen heights from the next). Sulfur Springs' land and pools stand 51
+# units above the track (data/map_geometry), so a tower is drawn 28 units
+# higher on screen than where it stands (mapgeom.HEIGHT_FACTOR): the damage
+# model, which projects heights, and placement.visible_cover, which does
+# not, disagree here; the spots follow the model, as the live forecast does.
+#   * boat (0.195, 0.436), west pool: 198 units of track in reach (the old
+#     north-east pool spot (0.692, 0.138) 114);
+#   * village (0.115, 0.547): 38.4 units from the boat, inside the base
+#     radius (40) by 1.6 only, so Bigger Radius (48, 1-0-0) comes first;
+#   * dart (0.302, 0.129), on the north rim above the loop's west side: 89
+#     units (the best dart cells 94-99 are 0.02-0.03 from it);
+#   * boomerang (0.120, 0.658), 25.2 units below the village: 62 units with
+#     Glaive Lord's reach; the old spot (0.526, 0.802) reached 41 and stood
+#     outside every village's reach;
+#   * Quincy (0.617, 0.581) and the sniper (0.799, 0.428) as before.
 #
-# Offline replay (tools/simulate_threats.simulate on the learned map, live
-# account unlocks, base income): buccaneer R6, Quincy R9, 2-2-0 R17, Night
-# Vision R19, Destroyer R30, village R33 (Radar R36, Jungle Drums R40),
-# Aircraft Carrier R45, Flagship R59, Glaive Lord R82, Cripple MOAB R93. No
-# threat gaps; the blimp check's own buys only from R92. Damage model (no
-# hero): opening with the starter dart R6 2.83, R7 2.46, R8 2.07; then R40
-# 0.83, R63 8.45, R75 8.54, R78 4.65, R90 4.09, R95 0.71, R98 1.18, R100
-# 1.92 (Lotus Island's winning board rated R95 1.23).
+# Opening (2026-11-07 14:30), replayed executor-faithfully
+# (tools/simulate_threats.simulate on the learned map, the starter dart at
+# (0.526, 0.172) where the executor puts it and its $215 taken from the
+# start; damage model margins of the board at each round's start, no hero):
+#   R6 2.74, R7 2.43, R8 2.46, R9 2.09, R10 2.11, R11 4.09, R12 2.65,
+#   R13 3.29, R14 3.15, R15 2.35, R16 4.09, R17 4.56, R18 3.79, R19 3.08,
+#   R20 5.30, R25 2.46, R27 2.16, R33 1.03, R36 1.56, R37 1.02, R40 2.13.
+# The old build (north-east pool, Quincy before Grape Shot): R6 2.83, R7
+# 2.46, R8 2.54, R9 1.48, R10 1.68, R15 1.04, R21-29 1.19-1.53, R36 0.79.
+# Rounds 6-8 cannot reach 3 on $650 here: the best pair of any towers in
+# their best cells rates 2.7 / 2.3 / 2.0. Later rounds, new / old: R45
+# 2.86 / 15.2 (Aircraft Carrier one round later), R63 11.1 / 8.45, R78
+# 6.04 / 4.65, R85 5.6 / 4.0, R90 4.71 / 4.09, R95 0.84 / 0.71, R98 1.45 /
+# 1.18, R100 2.74 / 1.92.
+#
+# Cash (tests/test_chimps_builds_offline.plan_timeline, no starter dart):
+# boat R5, Double Shot R8, Hot Shot R13, Crossbow R19, Quincy R21, Destroyer
+# R31, Radar R37, Jungle Drums R38, Aircraft Carrier R45, Flagship R58,
+# Glaive Lord R79, Cripple MOAB R92. The replay (starter paid): Destroyer
+# stands from R33, Flagship R60, Glaive Lord R82, plan 27/27, no threat gaps.
 #
 # Status: written 2026-11-07, not played yet.
 # 2026-11-07 14:10: the boat's Faster Shooting and Double Shot now come
 # before Quincy - Lost Crevasse, opened the same way, lost round 8 with
 # $350 waiting for Quincy ($585).
+# 2026-11-07 14:30: opening reworked before the first game (Spring Spring and
+# Lost Crevasse, opened with the same lone boat, lost rounds 8-9 rated
+# 1.35-1.8): boat to the west pool, Grape and Hot Shot before Quincy, a
+# Crossbow dart, the sniper after the village, the Glaive Lord by the village.
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 3]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Sulfur Springs]
-  revised: "2026-11-07T14:10"
+  revised: "2026-11-07T14:30"
 plan:
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.692, 0.138]}   # north-east pool: opens alone (the match adds a dart)
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.436]}   # west pool: opens alone (the match adds a dart)
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.617, 0.581]}      # Quincy once the cash allows
-  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-1-0}                                      # Grape Shot: round 15's pinks
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.799, 0.428]}
-  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.302, 0.129]}        # north-west, the lanes the boat cannot reach
+  - {do: upgrade, id: d1, to: 0-1-0}
+  - {do: upgrade, id: d1, to: 0-2-0}                                      # Very Quick Shots
+  - {do: upgrade, id: d1, to: 0-2-1}
+  - {do: upgrade, id: d1, to: 0-2-2}                                      # Enhanced Eyesight: round 24's camo
+  - {do: upgrade, id: d1, to: 0-2-3}                                      # Crossbow: round 27's rush, camo of rounds 33-37
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.617, 0.581]}      # Quincy once the cash allows
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
-  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.729, 0.215]}
-  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.115, 0.547]}
+  - {do: upgrade, id: v1, to: 1-0-0}                                      # Bigger Radius: 38.4 units to the boat, slack 9.6
+  - {do: upgrade, id: v1, to: 1-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.799, 0.428]}
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: camo DDTs late
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.526, 0.802]}   # south-east of the loop
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.120, 0.658]}   # below the village, in its reach
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
   - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
   - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
 answers:
-  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  ceramic: [{do: upgrade, id: d1, to: 0-2-3}, {do: upgrade, id: b1, to: 3-2-0}]
   moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
-  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   bad: [{do: upgrade, id: s1, to: 5-1-0}]
   rush: [{do: upgrade, id: r1, to: 3-0-2}]

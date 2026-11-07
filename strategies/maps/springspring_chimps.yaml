@@ -1,9 +1,10 @@
 # Spring Spring, CHIMPS: one buccaneer in the water at the exit, where both
 # lanes meet, opens alone (the match adds its starter dart) and grows to a
-# Carrier Flagship; Quincy follows on the island's right end; a village
-# behind the exit (Bigger Radius first, so it reaches the boat) gives the boat
-# camo and Jungle Drums; a Glaive Lord boomerang beside the village and a
-# Cripple MOAB sniper finish.
+# Carrier Flagship; a tack on the bottom lane and a Crossbow dart on the top
+# lane hold the lanes the boat cannot reach, Quincy follows at the lanes'
+# junction; a village behind the exit (Bigger Radius first, so it reaches
+# the boat) gives the boat camo and Jungle Drums; a Glaive Lord boomerang
+# beside the village and a Cripple MOAB sniper finish.
 #
 # Why: the owner's goal is CHIMPS black borders. On 2026-11-07 the bot beat
 # CHIMPS on nine maps with builds that follow a published community strategy
@@ -36,75 +37,117 @@
 # Changes from the guide, and why (as on Cracked and Lotus Island):
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
 #     bot does not place towers on a deck, so the boomerang stands south-west
-#     of the village (20.6 units from it) and the sniper on the island;
-#   * a Night Vision sniper (0-1-0) for round 24's camo: neither a 2-2-0
-#     buccaneer nor Quincy at that level sees camo, and the village (Radar
-#     Scanner) only comes at about round 35;
+#     of the village and the sniper on the island;
+#   * the opening is the buccaneer, not Quincy, and the towers the damage
+#     model rates come before him: see "Opening" below;
+#   * round 24's camo: neither a 2-2-0 buccaneer nor Quincy at that level
+#     sees camo and the Radar village only comes at about round 37, so the
+#     top lane's dart goes to 0-2-2 (Enhanced Eyesight) by round 19 and to
+#     0-2-3 (Crossbow) for the camo of rounds 33-37, as on Streambed; the
+#     Night Vision sniper moves after the village (late camo, Cripple MOAB);
 #   * the village takes Bigger Radius (1-0-0) before Radar Scanner: the only
-#     legal village cell within reach of the exit water is 37.2 units from the
-#     boat, inside the 40-unit base radius by 2.8 units only; with Bigger
-#     Radius (48) the slack is 10.8 units under the strict buff rule
+#     legal village cells near the exit water are in the pocket south-west
+#     of it, 41.0 units from the boat - outside the base radius (40); with
+#     Bigger Radius (48) the slack is 7.0 units under the strict buff rule
 #     (dps_model.buff_covers: the boat's centre must be inside the radius);
 #   * the account has the village's top path to tier 4 only, so it ends at
-#     Primary Mentoring (4-2-0), not Primary Expertise;
-#   * the opening is the buccaneer, not Quincy: see "Opening" below.
+#     Primary Mentoring (4-2-0), not Primary Expertise.
 #
-# Spots (map geometry with the main checkout's learned refusals,
-# data/maps/springspring.npz, checked in placement order; "cells" are track
-# cells in range and in line of sight, placement.visible_cover, of 2,711;
-# every spot has at least 7 of its 8 neighbour cells legal and stands at
-# least 0.08 screen heights from the others): the boat at (0.735, 0.598) in
-# the exit water reaches 646 cells (24%; the water's best cell 656, an edge
-# cell); Quincy at (0.676, 0.385), the island's right end, 630 (23%; the
-# best hero cell 643 has only 5 legal neighbours); the village at (0.671,
-# 0.726) in the pocket between the two lanes south-west of the exit (the
-# only legal village cells near the exit water); the boomerang at (0.633,
-# 0.794) below it, 497 cells (18%); the sniper on the island at (0.452,
-# 0.368) sees the whole on-screen track.
+# Spots (data/maps/springspring.npz from the main checkout, 2026-11-07
+# 14:30, which holds the refusal of (0.735, 0.598); "cells" are track cells
+# in range and sight, placement.visible_cover, of 3,440; every spot legal
+# with 7+ of its 8 neighbour cells legal and at least 0.09 screen heights
+# from the others):
+#   * boat (0.751, 0.598), the cell the game took live on 2026-11-07 14:13
+#     after refusing (0.735, 0.598): 816 cells (24%), both lanes;
+#   * tack (0.302, 0.828), the bottom lane's first bend: 95 units of the
+#     bottom lane in reach, none of the top;
+#   * dart (0.655, 0.334), the island's right end: 230 units of the top lane;
+#   * Quincy (0.633, 0.538), the island's tip at the junction: 161 / 163
+#     units of the two lanes (19% of the track). The old spot (0.676, 0.385)
+#     sees 24%, but 287 units of the top lane against 57 of the bottom, and
+#     it is 0.06 from the dart;
+#   * village (0.671, 0.726), boomerang (0.633, 0.794), sniper (0.452,
+#     0.368) as before.
 #
-# Opening: CHIMPS starts with $650 at Hard prices. Quincy alone held round 6
-# only from spots seeing at least ~23% of the track (lost on Lotus Island and
-# Hedge at 18-19%); here his best cell sees 24%, the boat's 24%. As on Lotus
-# Island and Frozen Over (both won), the boat opens alone ($430); the match
-# adds its $215 starter dart beside a lone non-hero opener (Match._lone_opener)
-# and Quincy follows when the cash allows. Damage model, boat alone (no dart,
-# no Quincy): rounds 6-10 rate 1.43, 1.14, 1.07, 0.84, 1.10.
+# Opening. CHIMPS starts with $650 at Hard prices; the boat ($430) opens
+# alone and the match adds its $215 starter dart (Match._lone_opener), which
+# went to (0.222, 0.172) live, on the top lane. Lost 2026-11-07 14:14 at
+# ROUND 9 (logs/journal/20261107_141301_SpringSpring_chimps.jsonl): boat
+# at (0.751, 0.598) + starter dart, Faster Shooting during round 7; bloons
+# got 83/80/81% along the route in
+# rounds 6-8 and the game was lost in round 9. The executor-faithful replay
+# of that build (below) rates rounds 7-9 at 1.66 / 1.83 / 1.41, the live
+# forecast said 1.59 / 1.79 / 1.35: the two agree, and ~1.4-1.8 does not
+# hold here. Two lanes split the bloons and the exit is the only place a
+# tower reaches both, so a second tower per lane is what the opening lacked:
+# among the legal cells of every cheap kind (dart, tack, boomerang, ninja,
+# wizard, sub, druid, engineer, a second boat) the tack on the bottom lane
+# and the dart on the top lane gave the most for rounds 8-10, and the
+# boat's Double Shot and Grape Shot (round 15's pinks) the most after.
+# No $650 board reaches 3 for rounds 6-8 on this map in the model: the best
+# pair of towers in their best cells rates 2.18 / 1.78 / 1.51.
 #
-# Cash (CHIMPS curve, Hard prices, tests/test_chimps_builds_offline.
-# plan_timeline; the starter dart's $215 puts each step up to a round later):
-# boat R5, Quincy R8, 2-2-0 R16, Night Vision R18, Destroyer R29, Radar R36,
-# Jungle Drums R37, Aircraft Carrier R44, Carrier Flagship R58, Glaive Lord
-# R78, Primary Mentoring R79, Cripple MOAB R92 - Lotus Island's timings.
-# tools/simulate_threats on the learned map: no threat gaps, 21/21 steps.
+# Replayed executor-faithfully (tools/simulate_threats.simulate on the
+# learned map, the starter dart where the executor puts it, (0.248, 0.189),
+# and its $215 taken from the start; damage model, board at each round's
+# start, no hero), new / old:
+#   R6 1.96 / 2.00, R7 1.61 / 1.66, R8 2.16 / 1.83, R9 1.83 / 1.41,
+#   R10 2.20 / 1.85, R11 2.46 / 2.99, R12 2.77 / 2.11, R13 2.51 / 1.98,
+#   R14 2.40 / 1.94, R15 1.85 / 1.63, R16 1.96 / 1.72, R19 2.18 / 2.02,
+#   R25 2.13 / 1.65, R27 1.81 / 1.30, R33 0.46 / 0.52, R36 1.03 / 0.08,
+#   R37 0.88 / 3.63, R40 2.46 / 2.07; lowest over rounds 6-30 1.61 (R7)
+#   against 1.30. Later: R45 2.00 / 11.6 (Aircraft Carrier one round
+#   later), rounds 50-100 within 0.2 of the old build (R95 0.38 both).
 #
-# Status: new 2026-11-07, not played yet.
+# Cash (tests/test_chimps_builds_offline.plan_timeline, no starter dart):
+# boat R5, tack R6, dart R7, Double Shot R10, Hot Shot R15, Crossbow R20,
+# Quincy R22, Even More Tacks R23, Destroyer R32, Radar R37, Jungle Drums
+# R39, Aircraft Carrier R45, Flagship R59, Glaive Lord R79, Cripple MOAB
+# R92. The replay (starter paid): Destroyer stands from R34, Flagship R60,
+# Glaive Lord R82; plan 30/30, no threat gaps.
+#
+# Status: new 2026-11-07, lost its first game at round 9 (above).
 # 2026-11-07 14:10: the boat's Faster Shooting and Double Shot now come
 # before Quincy - Lost Crevasse, opened the same way, lost round 8 with
 # $350 waiting for Quincy ($585).
+# 2026-11-07 14:30: opening reworked after the round-9 loss: boat on the
+# cell the game took, a tack and a dart for the two lanes, Grape and Hot
+# Shot before Quincy, Quincy at the junction, the dart to Crossbow before the
+# Destroyer, the sniper after the village.
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 3], tack: [0, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-07T14:10"
+  revised: "2026-11-07T14:30"
 plan:
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.735, 0.598]}   # exit water, both lanes: opens alone
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.655, 0.334]}        # top lane, island's right end: round 9
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.676, 0.385]}      # Quincy, island's right end
-  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-1-0}                                      # Grape Shot: round 15's pinks
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.368]}   # on the island
-  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: d1, to: 0-1-0}
+  - {do: upgrade, id: d1, to: 0-2-0}                                      # Very Quick Shots
+  - {do: upgrade, id: d1, to: 0-2-1}
+  - {do: upgrade, id: d1, to: 0-2-2}                                      # Enhanced Eyesight: round 24's camo
+  - {do: upgrade, id: d1, to: 0-2-3}                                      # Crossbow: camo of rounds 33-37
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.633, 0.538]}      # Quincy at the lanes' junction
+  - {do: upgrade, id: t1, to: 0-1-0}
+  - {do: upgrade, id: t1, to: 0-2-0}                                      # Even More Tacks: round 27's rush
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.671, 0.726]}
-  - {do: upgrade, id: v1, to: 1-0-0}                                      # Bigger Radius: reaches the boat (37.2 units)
+  - {do: upgrade, id: v1, to: 1-0-0}                                      # Bigger Radius: reaches the boat (41.0 units)
   - {do: upgrade, id: v1, to: 1-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.368]}   # on the island
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: camo DDTs late
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
@@ -115,12 +158,12 @@ plan:
   - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
   - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
 answers:
-  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  ceramic: [{do: upgrade, id: d1, to: 0-2-3}, {do: upgrade, id: b1, to: 3-2-0}]
   moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
   ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   bad: [{do: upgrade, id: s1, to: 5-1-0}]
-  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  rush: [{do: upgrade, id: t1, to: 0-2-0}, {do: upgrade, id: r1, to: 3-0-2}]
