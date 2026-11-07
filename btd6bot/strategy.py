@@ -332,7 +332,8 @@ SAFETY_ACHIEVEMENTS = {
 }
 STEP_KEYS = {"do", "id", "kind", "role", "segment", "near", "near_radius", "round", "max",
              "target", "to", "mode",
-             "at"}   # exact spot [fx, fy] (screen fractions) from a map's own build
+             "at",         # exact spot [fx, fy] (screen fractions) from a map's own build
+             "obstacle"}   # do: clear - the removable obstacle's name in the map file
 UNSUPPORTED_STEP_KEYS = {
     "avoid": "spot avoidance (`avoid`) is not implemented by pick_spot",
     "avoid_radius": "spot avoidance (`avoid`) is not implemented by pick_spot",
@@ -619,8 +620,12 @@ def validate(strat):
     forbidden = set(c.get("forbidden_towers") or ())
     for where, st in _all_steps(strat):
         do = st.get("do")
-        if do not in ("place", "upgrade", "target", "sell"):
+        if do not in ("place", "upgrade", "target", "sell", "clear"):
             probs.append(f"{where}: unknown step {do!r}")
+            continue
+        if do == "clear":
+            if not st.get("obstacle"):
+                probs.append(f"{where}: clear without obstacle")
             continue
         kind = st.get("kind")
         if kind is not None and kind != "hero" and kind not in T.TOWERS:
@@ -1595,6 +1600,8 @@ class Executor:
         do = step["do"]
         if do == "place":
             return self._try_place(step, cash)
+        if do == "clear":
+            return self._try_clear(step, cash)
         if do == "upgrade":
             r = self._redirect_dead_upgrade(step, cash, rnd)
             if r is not None:
@@ -3040,6 +3047,11 @@ class Executor:
         placements without an id."""
         fam = PRICE_FAMILY.get(self.mode, "hard")
         do, kind = st.get("do"), st.get("kind")
+        if do == "clear":
+            r = self._named_obstacle(st.get("obstacle"))
+            if r is None:
+                return None
+            return 0 if r["id"] in self.removed else r["cost"]
         if do == "place" and kind not in (None, "hero") and self.kind_allowed(kind):
             tid = st.get("id") or f"__plan{n}"
             if tid in sim:
@@ -3874,6 +3886,9 @@ class Executor:
         """Cash the first step of an answer needs (inf if it cannot be bought)."""
         if step.get("do") == "place":
             return self.g.price(step["kind"])
+        if step.get("do") == "clear":
+            r = self._named_obstacle(step.get("obstacle"))
+            return float("inf") if r is None else (0 if r["id"] in self.removed else r["cost"])
         p = self.g.towers.get(step.get("id"))
         if p is None:
             pending = getattr(self, "redirected", {}).get(step.get("id"))
@@ -4332,6 +4347,44 @@ class Executor:
                 self._obstacle_list = []
         return [r for r in self._obstacle_list
                 if r["id"] not in self.removed and self.removal_fails.get(r["id"], 0) < self.REMOVAL_TRIES]
+
+    def _named_obstacle(self, name):
+        """The removable obstacle a `do: clear` step names (by the map file's
+        name or id), removed or not; None when the map has no such one."""
+        if not name:
+            return None
+        self._obstacles()          # loads the map's list once
+        return next((r for r in getattr(self, "_obstacle_list", None) or []
+                     if name in (r.get("name"), r.get("id"))), None)
+
+    def _try_clear(self, step, cash):
+        """A build's `do: clear, obstacle: <name>` step: pay to remove that
+        obstacle as soon as the cash covers its price - 'done' once it is
+        gone, 'wait' while the cash is short, 'bought' when it was just
+        removed, 'skip' when the map has no such obstacle or the removal
+        failed REMOVAL_TRIES times.
+
+        Removal used to be surplus spending only (clear_obstacle), when a
+        tower kind had run out of ground. A build that stands on what lies
+        beneath an obstacle needs it at a set point of its plan: the
+        Cracked CHIMPS strategy (bloon.games, 2026-11-07) clears the central
+        rock for the pond under it before its first buccaneer."""
+        r = self._named_obstacle(step.get("obstacle"))
+        if r is None or not r.get("frac"):
+            log.warning("clear step %s: no such removable obstacle on this map - skipped", step)
+            return "skip"
+        if r["id"] in self.removed:
+            return "done"
+        if self.removal_fails.get(r["id"], 0) >= self.REMOVAL_TRIES:
+            return "skip"
+        if cash is None or cash < r["cost"]:
+            return "wait"
+        log.info("clearing obstacle %s ($%s) for the plan", r["name"], r["cost"])
+        if self.g.remove_obstacle(*r["frac"], r["cost"], name=r["name"]):
+            self.removed.append(r["id"])
+            return "bought"
+        self.removal_fails[r["id"]] = self.removal_fails.get(r["id"], 0) + 1
+        return "wait"
 
     def clear_obstacle(self, cash, kind):
         """Surplus spending: when the cash covers an obstacle's price and the

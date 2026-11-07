@@ -75,11 +75,17 @@ def model(map_name):
 
 
 def illegal_spots(map_name, spots, last_round):
-    """Spots [(kind, hero, (fx, fy))] that are not legal, placed in order."""
+    """Spots [(kind, hero, (fx, fy))] that are not legal, placed in order. An
+    entry ("clear", obstacle name, None) - a build's `do: clear` step -
+    removes that obstacle for the spots after it."""
     m = model(map_name)
-    placed, bad = [], []
-    for kind, hero, (fx, fy) in spots:
-        ok = PL.valid_spots(m, kind, hero, placed, last_round=last_round)
+    placed, bad, removed = [], [], []
+    for kind, hero, at in spots:
+        if kind == "clear":
+            removed += [r["id"] for r in G.removables(map_name, PLAYFIELD) if hero in (r["name"], r["id"])]
+            continue
+        fx, fy = at
+        ok = PL.valid_spots(m, kind, hero, placed, last_round=last_round, removed=tuple(removed))
         cx, cy = m.frac_to_cell(fx, fy)
         inside = 0 <= cy < ok.shape[0] and 0 <= cx < ok.shape[1]
         if not (inside and ok[cy, cx]):
@@ -235,6 +241,8 @@ def test_map_strategy_spots_are_legal():
         hero = s.get("hero")
         spots, where = [], {}
         for st in (s.get("plan") or []) + (s.get("fill") or []):
+            if st.get("do") == "clear":
+                spots.append(("clear", st.get("obstacle"), None))
             if st.get("do") == "place" and st.get("at"):
                 kind = st["kind"]
                 spots.append((kind, hero if kind == "hero" else None, tuple(st["at"])))
