@@ -102,10 +102,11 @@
 #
 # Cash (tests/test_chimps_builds_offline.plan_timeline, no starter dart):
 # boat R5, tack R6, dart R7, Double Shot R10, Hot Shot R15, Crossbow R20,
-# Quincy R22, Even More Tacks R23, Destroyer R32, Radar R37, Jungle Drums
-# R39, Aircraft Carrier R45, Flagship R59, Glaive Lord R79, Cripple MOAB
-# R92. The replay (starter paid): Destroyer stands from R34, Flagship R60,
-# Glaive Lord R82; plan 30/30, no threat gaps.
+# Quincy R22, Even More Tacks R23, Destroyer R32, Sharp Shooter R35 (since
+# 16:30, see Status), Radar R39, Jungle Drums R41, Aircraft Carrier R47,
+# Flagship R60, Glaive Lord R79, Cripple MOAB R94. The replay (starter
+# paid): Destroyer stands from R34, Sharp Shooter R37, Flagship R61, Glaive
+# Lord R83, Cripple MOAB R95; plan 32/32, no threat gaps.
 #
 # Status: new 2026-11-07, lost its first game at round 9 (above).
 # 2026-11-07 14:10: the boat's Faster Shooting and Double Shot now come
@@ -115,17 +116,38 @@
 # cell the game took, a tack and a dart for the two lanes, Grape and Hot
 # Shot before Quincy, Quincy at the junction, the dart to Crossbow before the
 # Destroyer, the sniper after the village.
+# 2026-11-07 16:30: not played since; Sulfur Springs (16:11) and Lost
+# Crevasse (15:05), the same recipe, lost round 40, the first MOAB, while
+# the bot saved for the plan's MOAB answer, the Aircraft Carrier ($8,640),
+# which the cash cannot reach before round 40. This build had the same
+# shape (Carrier R46 in the replay; R40 rated 2.46, Sulfur Springs' lost
+# board 1.81 and Lost Crevasse's 0.71-0.83). Change: right after the
+# Destroyer the Crossbow dart goes on to Sharp Shooter (0-2-4, $2,215), and
+# it is the `moab` answer instead of the Carrier. Chosen by the damage
+# model (heights in the line of sight, as the forecast) from the board
+# standing once the Destroyer is up (R34 in the replay, R40 1.94 on it)
+# over every single buy up to $4,500 (upgrades of the standing towers,
+# every kind in its best legal cells): the dart's 0-2-4 rated round 40 at
+# 3.40 for $2,215, the cheapest of those over 3; a sub 2-0-3 ($3,785) 4.27,
+# a bomb 0-3-2 ($2,725) 3.40, a new 2-0-4 dart ($3,725) 2.92, a sniper
+# 0-2-0 ($1,135) 2.35.
+# Replay rounds 36-46 (model, starter dart counted), new / before: 1.03 /
+# 1.03, 4.41 / 0.88, 3.67 / 2.77, 3.26 / 2.23, 3.67 / 2.46 (R40), 3.51 /
+# 3.12, 5.97 / 4.18, 2.16 / 1.49, 3.55 / 3.19, 2.51 / 2.00, 2.92 / 10.15
+# (R46: the Carrier two rounds later). Later: R60 10.83 / 16.0, R63 9.21 /
+# 9.41, R90 2.59 / 2.07, R95 0.39 / 0.38, R100 1.85 / 1.83. Round 36
+# (1.03) comes before the dart and is unchanged.
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 3], tack: [0, 2, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 4], tack: [0, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-07T14:30"
+  revised: "2026-11-07T16:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
@@ -143,6 +165,7 @@ plan:
   - {do: upgrade, id: t1, to: 0-1-0}
   - {do: upgrade, id: t1, to: 0-2-0}                                      # Even More Tacks: round 27's rush
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: upgrade, id: d1, to: 0-2-4}                                      # Sharp Shooter: round 40's MOAB (see 16:30)
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.671, 0.726]}
   - {do: upgrade, id: v1, to: 1-0-0}                                      # Bigger Radius: reaches the boat (41.0 units)
   - {do: upgrade, id: v1, to: 1-2-0}                                      # Radar Scanner: camo for the boat
@@ -161,7 +184,7 @@ answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
   ceramic: [{do: upgrade, id: d1, to: 0-2-3}, {do: upgrade, id: b1, to: 3-2-0}]
-  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  moab: [{do: upgrade, id: d1, to: 0-2-4}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
   ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
