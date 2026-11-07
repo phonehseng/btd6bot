@@ -36,8 +36,9 @@
 #
 # Changes from the guide, and why (as on Cracked and Lotus Island):
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
-#     bot does not place towers on a deck, so the boomerang stands south-west
-#     of the village and the sniper on the island;
+#     bot does not place towers on a deck, so the boomerang stands west of
+#     the village, between the lanes (see 17:30 below), and the sniper on
+#     the island;
 #   * the opening is the buccaneer, not Quincy, and the towers the damage
 #     model rates come before him: see "Opening" below;
 #   * round 24's camo: neither a 2-2-0 buccaneer nor Quincy at that level
@@ -67,8 +68,8 @@
 #     units of the two lanes (19% of the track). The old spot (0.676, 0.385)
 #     sees 24%, but 287 units of the top lane against 57 of the bottom, and
 #     it is 0.06 from the dart;
-#   * village (0.671, 0.726), boomerang (0.633, 0.794), sniper (0.452,
-#     0.368) as before.
+#   * village (0.671, 0.726) and sniper (0.452, 0.368) as before; the
+#     boomerang at (0.580, 0.624) since 17:30 (below).
 #
 # Opening. CHIMPS starts with $650 at Hard prices; the boat ($430) opens
 # alone and the match adds its $215 starter dart (Match._lone_opener), which
@@ -137,6 +138,31 @@
 # (R46: the Carrier two rounds later). Later: R60 10.83 / 16.0, R63 9.21 /
 # 9.41, R90 2.59 / 2.07, R95 0.39 / 0.38, R100 1.85 / 1.83. Round 36
 # (1.03) comes before the dart and is unchanged.
+# 2026-11-07 17:30: lost live at ROUND 95 (16:51-17:21, journal
+# 20261107_165242_SpringSpring_chimps): every plan step up to Cripple MOAB
+# stood by R94 except the Glaive Lord. r1 at (0.633, 0.794) reached 4-0-2
+# by R78, then the dead-tower rule read 0 pops for 9 rounds (17:12:31) and
+# re-placed it at (0.286, 0.181); the Glaive Lord was never bought. The 0
+# was partly a misread (main e6965f3: a neighbour's panel), but the spot is
+# weak anyway: Glaive Lord's reach (57.2 units) there covers 295 units of
+# the bottom lane and none of the top lane, which carries half the bloons.
+# r1 now stands at (0.580, 0.624), west of the village between the lanes:
+# 105 units of the top lane and 215 of the bottom (damage model, sight
+# counted), 674 learned track cells of 3,440 in range and sight, 8 of 8
+# neighbour cells legal on the learned map (main's data/maps/springspring
+# .npz, 17:30), 40.3 units from the village (Bigger Radius 48: inside the
+# strict buff rule by 7.7), at least 0.12 screen heights from every tower.
+# Of the cells in the village's reach it has the most track on both lanes
+# but one ((0.590, 0.589), 137 / 203, only 6 neighbours legal, rated the
+# same). Replay (starter counted), new / before: R85 8.54 / 4.04, R88 6.44
+# / 3.26, R90 3.59 / 2.59, R92 2.51 / 1.48, R94 2.13 / 1.18, R95 0.82 /
+# 0.39, R96 1.76 / 1.15, R98 1.09 / 0.64, R99 0.68 / 0.44, R100 4.04 / 1.85;
+# rounds 60-81 within 0.15. Rounds 95 and 99 stay under 1.
+# The other late towers, checked the same way: the sniper (global, 712 /
+# 714 units of the two lanes, 3,436 learned cells), the village (buffs the
+# boat at 41.0 and r1 at 40.3), the boat (816 cells, both lanes), Quincy
+# (161 / 163), the tack (bottom lane, 95) and the dart (top lane, 230):
+# each reaches track on the learned map.
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
@@ -147,7 +173,7 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-07T16:30"
+  revised: "2026-11-07T17:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
@@ -174,7 +200,7 @@ plan:
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.633, 0.794]}   # below the village
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.580, 0.624]}   # between the lanes, in the village's reach
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
