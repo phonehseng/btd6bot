@@ -485,7 +485,7 @@ def beginner_before_safe_mode(cands, benched):
     ease = CATEGORY_EASE[CHIMPS_FIRST_CATEGORY]
     return [c for c in cands
             if c.ease == ease and getattr(c, "ok", False)
-            and getattr(c, "tier", None) not in (None, "LAST")
+            and getattr(c, "tier", None) not in (None, "LAST", "ACH")   # ACH: a replay, no medal
             and (c.mode != "chimps" or is_own_map_build(c.s, c.map))
             and not benched(c.map, c.mode)]
 
@@ -1898,6 +1898,10 @@ class Bot:
                 log.warning("last resort: no open medal clears its bar - playing the surest, "
                             "%s/%s p=%.2f, rather than idling", c.map, c.mode, c.p)
                 phase = "LAST"
+            elif getattr(c, "tier", None) == "ACH":   # an achievement plan replaying its map/mode
+                log.info("achievement replay: %s/%s with %s for %s (p=%.2f)", c.map, c.mode, c.s.id,
+                         c.s.achievement, c.p)
+                phase = "ACH"
             from .planner import next_game  # noqa: F401  (same scoring as next_game)
             _show_choice(c, phase, (o for o in cands if o is not c and not self.benched(o.map, o.mode)))
             mi = MODES[c.mode]

@@ -127,7 +127,7 @@ its commit.
 ## Rules it follows
 
 - Never lose: overbuild rather than risk it, and never start a round with no towers.
-- Never replay a map/mode that is already beaten: a replay pays about a fifth of the first-time Monkey Money and gives no medal or unlock. When every unlocked map/mode is beaten or not winnable yet, the bot waits.
+- Never replay a map/mode that is already beaten: a replay pays about a fifth of the first-time Monkey Money and gives no medal or unlock. When every unlocked map/mode is beaten or not winnable yet, the bot waits. The one exception: an achievement build (`strategies/achievements`) may replay its own map/mode while the achievement scan shows that achievement in progress, after every first-time medal that clears its bar and before the last-resort games (planner tier "ACH", `docs/achievements.md`).
 - Never spend Monkey Money on continues. Never click real-money or store buttons.
 - Single-player only.
 

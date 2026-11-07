@@ -12,8 +12,16 @@ Public API (every function also returns human readable reasons for logs):
 The owner's hard rule: NEVER play a map/mode whose medal is already earned.
 A replay pays only ~20% of the first-time Monkey Money (MM_REPEAT_FRAC) and
 no medal, unlock or black-border progress, so beaten (map, mode) pairs are
-never even candidates (:func:`_candidates` skips them): no tier, fallback or
-achievement bonus can bring a replay back. When no first-time medal is
+never candidates for normal strategies (:func:`_candidates` skips them): no
+tier, fallback or achievement bonus can bring such a replay back.
+
+The one exception (owner, 2026-11-07: "work on achievements"): an
+achievement plan (strategies/achievements, ``StrategySpec.achievement``)
+pinned to a beaten map/mode may replay it while the achievement scan shows
+that achievement in progress and the plan's wins since that scan have not
+finished it yet (:func:`_replay_allowed`). Such a game is tier "ACH": after
+every first-time medal that clears its bar, before the last-resort "LAST"
+games, and only when its own p clears the mode's bar. When no first-time medal is
 winnable, :func:`next_game` returns None with the reason "nothing left to
 play: every unlocked map/mode is beaten or not winnable yet"
 (:data:`NOTHING_LEFT`). The runner never idles while medals are open (the
@@ -138,6 +146,27 @@ TOWER_XP_FILE = PROJECT_ROOT / "data" / "tower_xp.json"
 # The one line logged when there is no first-time medal the bot may play.
 NOTHING_LEFT = "nothing left to play: every unlocked map/mode is beaten or not winnable yet"
 
+# PlannerConfig.achievements_state_path value meaning "the scan of the
+# account the bot last signed in with" (see account_scan_path).
+ACCOUNT_SCAN = "<account>"
+# The pre-2026-10-22 single-account scan, used only while no account is known.
+LEGACY_SCAN = PROJECT_ROOT / "data" / "achievements_state.json"
+
+
+def account_scan_path() -> str:
+    """The achievement scan of the current account.
+
+    identity.load_for (the runner, at sign-in) writes the account's ID to
+    data/current_account.txt and points achievements.STATE - where
+    Achievements.scan() saves - at data/accounts/<id>.achievements.json.
+    The planner follows the same ID, so it reads the scan the bot keeps
+    up to date (not imported from achievements.py: that pulls in cv2).
+    Falls back to the legacy data/achievements_state.json."""
+    from .identity import current_path
+    acct = current_path()
+    scan = acct.with_name(acct.stem + ".achievements.json")
+    return str(scan if scan.exists() else LEGACY_SCAN)
+
 
 def map_slug(name: str) -> str:
     """Same slug as maplearn.slug (not imported: maplearn pulls in cv2)."""
@@ -186,7 +215,12 @@ class PlannerConfig:
     # A win that advances an incomplete achievement is worth
     # achievement_value / wins_needed extra (moderate: medals still lead).
     achievements_path: str | None = str(PROJECT_ROOT / "data" / "achievements.json")
-    achievements_state_path: str | None = str(PROJECT_ROOT / "data" / "achievements_state.json")
+    # ACCOUNT_SCAN: the signed-in account's own scan (account_scan_path).
+    # It used to be data/achievements_state.json, a scan from 2026-10-21 that
+    # the bot no longer writes (identity.load_for points achievements.STATE
+    # at data/accounts/<id>.achievements.json): the planner credited wins to
+    # achievements finished weeks ago (Thrifty) and never saw the new scans.
+    achievements_state_path: str | None = ACCOUNT_SCAN
     achievement_value: float = 30_000
     # Observed durations: Beta-like shrinkage of observed (EW) averages toward
     # the default estimate with this many pseudo-games, observations clipped
@@ -336,6 +370,10 @@ PHASES = {
     # rank_games(below_bar=True) only: nothing clears a bar, the runner plays
     # the surest open medal rather than idling (owner's rule, 2026-11-03)
     "LAST": "last resort: no open medal clears its bar - the surest one is played rather than idling",
+    # rank_games only: an achievement plan replaying a beaten map/mode (see
+    # the module docstring); after the tiers above, before LAST
+    "ACH": "achievement replay: no first-time medal clears its bar - an achievement plan "
+           "on its beaten map/mode while the achievement is still in progress",
 }
 
 # ---------------------------------------------------------------------------
@@ -1752,7 +1790,10 @@ def load_achievements(cfg: PlannerConfig | None = None) -> tuple[list[dict] | No
     cat = _load_json_cached(cfg.achievements_path)
     if isinstance(cat, Mapping):
         cat = cat.get("achievements")
-    return (cat if isinstance(cat, list) else None), _load_json_cached(cfg.achievements_state_path)
+    state_path = cfg.achievements_state_path
+    if state_path == ACCOUNT_SCAN:
+        state_path = account_scan_path()
+    return (cat if isinstance(cat, list) else None), _load_json_cached(state_path)
 
 
 def _card_rank(card: Mapping[str, Any]) -> tuple[int, float]:
@@ -1870,6 +1911,32 @@ def _strategy_achievement_ok(s: StrategySpec, goals: Mapping[str, AchievementGoa
     if not s.achievement:
         return True
     return s.bot_ready is True and s.achievement in goals
+
+
+def _wins_since(account: AccountState, strategy_id: str, since: str | None) -> int:
+    """Wins of ``strategy_id`` in the account's history after ``since`` (the
+    scan's "YYYY-MM-DD HH:MM:SS"; history uses "YYYY-MM-DDTHH:MM:SS", so
+    both are compared with the T replaced by a space)."""
+    stamp = (since or "").replace("T", " ")
+    return sum(1 for h in account.history
+               if h.get("won") and h.get("strategy") == strategy_id
+               and str(h.get("t") or "").replace("T", " ") > stamp)
+
+
+def _replay_allowed(s: StrategySpec, goals: Mapping[str, AchievementGoal],
+                    account: AccountState, scanned_at: str | None) -> bool:
+    """May achievement plan ``s`` replay a beaten map/mode?
+
+    Only while the scan read its achievement's card as in progress (a card
+    the scan did not read stays "unknown": most of those are finished cards
+    the scan stopped before, and replaying for them could go on forever),
+    and only until the plan's wins since that scan cover what was left:
+    ceil(wins_needed * (100 - progress) / 100). The next scan settles it."""
+    g = goals.get(s.achievement) if s.achievement else None
+    if g is None or g.status != "progress":
+        return False
+    left = math.ceil(g.wins_needed * max(0.0, 100.0 - g.progress) / 100.0 - 1e-9)
+    return _wins_since(account, s.id, scanned_at) < max(1, left)
 
 
 # ---------------------------------------------------------------------------
@@ -2073,8 +2140,9 @@ def black_border_value(account: AccountState, map_name: str, mode: str,
 
 @dataclass
 class _Cand:
-    """One (map, mode, strategy) the bot could play next - always a medal the
-    account does not have yet (beaten map/modes never become candidates)."""
+    """One (map, mode, strategy) the bot could play next - a medal the
+    account does not have yet, or (``first`` False, tier "ACH") an
+    achievement plan replaying its beaten map/mode (_replay_allowed)."""
     map: str
     mode: str
     s: StrategySpec
@@ -2083,7 +2151,7 @@ class _Cand:
     minutes: float
     xp_win: float
     mm: float
-    first: bool                 # always True; kept for GamePlan.first_time (runner)
+    first: bool                 # False only for an achievement replay (tier "ACH"); GamePlan.first_time
     value_win: float
     value_fail: float
     score: float
@@ -2120,13 +2188,16 @@ def _missing_towers(s: StrategySpec, account: AccountState) -> set[str]:
 
 def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 cfg: PlannerConfig, playable_maps: set[str] | None,
-                paragons: ParagonStatus) -> list[_Cand]:
+                paragons: ParagonStatus, replays: Iterable[str] = ()) -> list[_Cand]:
     """Every (open map, unearned mode, fitting strategy) with its win chance,
     duration, XP and Monkey Money value. Beaten (map, mode) pairs are skipped
-    right here, so nothing downstream can ever pick a replay."""
+    right here, so nothing downstream can ever pick a replay - except for
+    the achievement plans named in ``replays`` (:func:`_replay_allowed`),
+    whose beaten pairs come back with ``first`` False."""
     calib = _Calibration(account, strategies)
     durations = _Durations(account, cfg)
     usable = {sid: s for sid, s in strategies.items() if _strategy_available(s, account)[0]}
+    replays = {sid for sid in replays if sid in usable and usable[sid].achievement}
     out: list[_Cand] = []
     # Hard-build towers: missing upgrades of a strategy that, with its full
     # build, would clear the Hard fallback bar on some open Hard-family medal.
@@ -2142,15 +2213,18 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
         for mode in MODES:
             if mode in EXCLUDED_MODES or not account.mode_unlocked(m, mode):
                 continue
-            if account.has_medal(m, mode):
+            beaten = account.has_medal(m, mode)
+            if beaten and not replays:
                 continue  # the owner's rule: never replay a beaten map/mode
             mm, _first, mm_src = estimate_mm(account, m, mode)
             for s in usable.values():
+                if beaten and s.id not in replays:
+                    continue  # ... unless an achievement plan needs it (docstring)
                 if not _strategy_fits(s, m, cat, mode):
                     continue
                 p, n = win_probability(account, s, m, mode, cfg, calib)
                 r = strategy_readiness(s, account, mode)
-                if (mode in HARD_FAMILY and mode != "chimps" and r < 1.0
+                if (not beaten and mode in HARD_FAMILY and mode != "chimps" and r < 1.0
                         and p / r >= cfg.hard_fallback_p):
                     hard_build |= _missing_towers(s, account)
                 game_min, _src = durations.game_minutes(s, m, mode)
@@ -2161,8 +2235,8 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                 xp_fail = game_xp(mode, cat, fail_frac=cfg.fail_round_frac)
                 notes = [f"p={p:.2f} (n={n})", f"{t_full:.1f} min"
                          + (f" incl. {scan:g} scan" if scan else ""),
-                         f"mm {mm:.0f} ({mm_src}, first)"]
-                out.append(_Cand(m, mode, s, p, n, t_full, xp_win, mm, True,
+                         f"mm {mm:.0f} ({mm_src}, {'replay' if beaten else 'first'})"]
+                out.append(_Cand(m, mode, s, p, n, t_full, xp_win, mm, not beaten,
                                  value_win=0.0, value_fail=xp_fail, score=0.0, notes=notes,
                                  fail_minutes=t_fail, learned=learned,
                                  ok=p >= p_threshold(mode, cfg), ease=CATEGORY_EASE.get(cat, 0),
@@ -2349,9 +2423,29 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
     strategies = {sid: s for sid, s in strategies.items() if _strategy_achievement_ok(s, goals)}
     pm = {canonical_map(m) for m in playable_maps} if playable_maps is not None else None
     paragons = paragon_status(account, cfg)
-    scored = _candidates(account, strategies, cfg, pm, paragons)
+    scanned_at = (ach_state or {}).get("scanned_at") if isinstance(ach_state, Mapping) else None
+    replays = [sid for sid, s in strategies.items() if _replay_allowed(s, goals, account, scanned_at)]
+    scored = _candidates(account, strategies, cfg, pm, paragons, replays=replays)
+    # achievement replays (first False) are ranked on their own below
+    replayed = [c for c in scored if not c.first]
+    scored = [c for c in scored if c.first]
     uniq = account.unique_map_wins()
     thresholds = sorted(v for v in CATEGORY_UNLOCK_WINS.values() if v > 0)
+
+    for c in replayed:
+        # a replay earns XP, a fifth of the Monkey Money and the achievement
+        # step - no medal, black border or unlock
+        _achievement_values(c, goals, cfg)
+        minutes = c.p * c.minutes + (1 - c.p) * (c.fail_minutes or c.minutes * cfg.fail_time_frac)
+        c.score = (c.p * (c.value_win + c.ach) + (1 - c.p) * (c.value_fail - cfg.loss_penalty)) / minutes
+        c.per_hour = c.score * 60.0
+        c.tier = "ACH" if c.ok else None
+        c.notes.append(f"{c.per_hour:,.0f} pts/h")
+        c.notes.append("achievement replay of a beaten map/mode" if c.ok
+                       else f"below p threshold {p_threshold(c.mode, cfg)}: not replayed")
+    # never under the bar (losses are unacceptable); surest first
+    ach_replays = sorted((c for c in replayed if c.tier == "ACH"),
+                         key=lambda c: (c.p >= CONFIDENT_P, c.p, c.score), reverse=True)
 
     for c in scored:
         # what a first win adds on top of XP and MM (all candidates are first-time)
@@ -2413,7 +2507,7 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
         for c in rest:
             c.tier = "LAST"
             c.notes.append("last resort: under every bar, played rather than idling")
-        if rest and not cands:
+        if rest and not cands and not ach_replays:
             reasons.append(f"{PHASES['LAST']} (best {rest[0].map}/{rest[0].mode} "
                            f"with {rest[0].s.id} p={rest[0].p:.2f})")
     paragon_line = paragons.reason()
@@ -2425,8 +2519,13 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
                        f"{len(steer)} steerable" + (f" ({', '.join(steer[:6])}"
                                                    + (", ..." if len(steer) > 6 else "") + ")"
                                                    if steer else ""))
-    phase = cands[0].tier if cands else ("LAST" if rest else "NONE")
-    return phase, reasons, cands + rest
+    if ach_replays:
+        b = ach_replays[0]
+        reasons.append(f"achievement replays: {len(ach_replays)} (best {b.map}/{b.mode} with "
+                       f"{b.s.id} p={b.p:.2f}, for {', '.join(b.achievements) or b.s.achievement}) - "
+                       f"after the first-time medals, before the last-resort games")
+    phase = cands[0].tier if cands else ("ACH" if ach_replays else "LAST" if rest else "NONE")
+    return phase, reasons, cands + ach_replays + rest
 
 
 def next_game(account: AccountState, available_strategies: Iterable[Any] | None = None, *,
