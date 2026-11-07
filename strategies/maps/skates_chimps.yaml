@@ -1,7 +1,9 @@
 # Skates, CHIMPS: a druid opens in the first loop's corner, a sniper and
-# Obyn join it, a Jungle Drums village buffs them, the sniper grows to Elite
-# Defender, a Carpet of Spikes factory and the druid's Spirit of the Forest
-# carry the late game, and a second sniper with Cripple MOAB finishes.
+# Obyn join it, a Jungle Drums village buffs them and the sniper grows to
+# Elite Defender (the guide below); then three M.O.A.R Glaives boomerangs and
+# a Maim MOAB sniper hold rounds 63-80, the druid's Spirit of the Forest
+# carries the late game, an MIB village opens the DDTs to every tower, and
+# Cripple MOAB finishes; Carpet of Spikes comes last, if the cash comes.
 #
 # Why: the owner's goal is CHIMPS black borders. The earlier Skates CHIMPS
 # build (tack, subs, two carriers, ninja, alchemist, bomb; designed on the
@@ -18,7 +20,39 @@
 # Village 2-0-2 (attack speed, discounts); the sniper to Semi-Automatic and
 # Full Auto Rifle; the druid to 2-4-0; the sniper to Elite Defender; save
 # up; a Spike Factory to Carpet of Spikes (2-5-0); the druid to Spirit of the
-# Forest. The guide names no spots and no rounds.
+# Forest. The guide names no spots and no rounds, and says nothing about
+# rounds 70-100 beyond saving for the two big upgrades.
+#
+# Status, 2026-11-07 - lost at round 75 twice (07:51-08:08 and 08:20-08:37,
+# forced from the NEXT file; logs/bot.log):
+#   * both games bought the plan on the cash curve the offline replay shows
+#     (Elite Defender at round 52-54 for $16,090), then placed the spike
+#     factory and took it to Spike Storm (2-4-0, $13.5k with the factory) by
+#     round 59-62, and from there saved for Carpet of Spikes ($44,280):
+#     $11.5-15.3k at round 70, $1.5-2k a round, $21.6-26.2k when round 75
+#     started. Standing for rounds 70-75: druid 2-3-0, Elite Defender 0-2-5,
+#     Deadly Precision sniper 3-1-0, village 2-0-2, Glaive Ricochet 3-0-2,
+#     Spike Storm 2-4-0, Obyn (and a $215 dart the one-life opener adds);
+#   * the blimp rounds were already close: rounds 62-73 put bloons 94-96%
+#     along the route (63: 122 ceramics + 75 leads; 65, 68, 71, 73: MOABs
+#     and BFBs), the blimp check said "short of the 1.4x wanted" at 64, 66
+#     and 71, and the damage model rated round 75 at 0.88-0.99 (on this
+#     board: 75 0.92, 77 0.81, 80 0.62, 81 0.34);
+#   * round 75 is seven BFBs (1, then 3 at 9.7 s, then 3 at 22.5 s), three
+#     fortified MOABs and 28 leads (data/game_data/round_sets.json): about
+#     11,700 blimp HP on a 1,171-unit track, against Elite Defender's
+#     2-damage shots, one 20-damage Deadly Precision and a Glaive Ricochet.
+#     Both games ended about 10 seconds into the round;
+#   * the cash could not help: the build's zomg answer was Carpet + Spirit
+#     ($87,370) for round 80, which held $72,894 "for the nearer round" while
+#     round 75 was a crisis - more than the bank - so reinforce got $0
+#     ("nothing $0 buys helps round 75"). Fixed in the executor
+#     (Executor._far_keep: an answer no income can pay in time holds nothing
+#     while the round being played is weak), and the answers below now name
+#     cheap tiers that stand by then.
+#   Rework (planner.revised 2026-11-07T09:00): everything after Elite
+#   Defender is replaced with steps the bot's real cash pays for before the
+#   BFB rounds (75, 77, 79, 81-82, 84), see "Rounds 55-100" below.
 #
 # Changes from the guide, and why:
 #   * the druid's Hard Thorns (1-0-0) is bought before round 28's leads: no
@@ -32,44 +66,83 @@
 #     leads (no tower of the guide pops camo and lead at once before the
 #     spike factory), Deadly Precision (3-1-0) so that two camo towers at
 #     tier 3 count as strong camo for the camo ceramics (strategy.strong_camo;
-#     without it the executor answered with a Primary Expertise village), and
-#     finally Maim / Cripple MOAB (5-1-0): the bot's coverage check wants a
-#     listed DDT and BAD answer (strategy.ANSWERS: snipers count on the top
-#     path only), and without one the planner would never pick this build;
+#     without it the executor answered with a Primary Expertise village);
 #   * a Glaive Ricochet boomerang (3-0-2) before round 63: the coverage check
 #     lists no tower of the guide as a rush answer;
-#   * the guide spends spare cash freely; these are where it goes first.
+#   * Rounds 55-100 (the rework): the guide's two big steps cost $44,280
+#     (Carpet, plus $13.5k for the factory to 2-4-0) and $43,090 (Jungle's
+#     Bounty + Spirit) at Hard. The game pays about $37k from round 54 to 75
+#     and $135k to round 100 (rounds.json, matching both live games), so the
+#     guide's order leaves rounds 63-85 to the round-54 board. Cheaper strong
+#     steps go first, chosen with the damage model on this map (it counts no
+#     hero, ability, stun or slow, so Maim's stuns and Obyn come on top)
+#     among the tiers this account has unlocked:
+#       - M.O.A.R Glaives (r1 4-0-2, $2,160; strategy.ANSWERS lists it for
+#         MOAB, BFB and DDT): four times the glaive pierce. Round 75 0.92 ->
+#         1.19, round 81 0.34 -> 0.81: the most per dollar of every tier
+#         tried;
+#       - two more M.O.A.R Glaives boomerangs (~$3.5k each with Monkey
+#         Commerce) in Jungle Drums range: round 75 2.95, 77 1.48, 81 2.00;
+#         a fourth adds little. Tried and rated lower per dollar: a second
+#         spike factory 2-3-0 or 2-4-0, MOAB Assassin bombs, an Embrittlement
+#         ice, a third sniper to Maim MOAB, Carpet of Spikes itself (75 1.24,
+#         81 0.74 on the same board). Spiked Mines and Comanche Defense rate
+#         high but no guide backs them here, and the model is known to count
+#         some area tiers map-wide (optimize_builds.CHIMPS_MODEL_DOUBTS);
+#       - Maim MOAB (s2 4-1-0, $6,805): the guide-era build's own later step,
+#         moved ahead: stuns BFBs and ZOMGs (not counted by the model), the
+#         listed ZOMG and DDT answer (the sniper top path) with camo from its
+#         Night Vision;
+#       - Spirit of the Forest before Carpet of Spikes: cheaper, much stronger
+#         in the model on this board (round 77 1.48 -> 2.95, 84 0.77 -> 1.09;
+#         Carpet alone barely moves them), and the druid already stands
+#         buffed in the best cell;
+#       - a Monkey Intelligence Bureau village (v2 0-3-0, ~$11.8k) by the
+#         snipers and boomerangs before round 90: the camo DDTs of rounds 90,
+#         93, 95 and 99 are immune to the Elite Defender's sharp shots and
+#         only the Maim sniper sees camo; with MIB round 90 goes 0.08 -> 3.22
+#         and 93 0.06 -> 1.00 in the model;
+#       - Cripple MOAB (s2 5-1-0, round 100's BAD) next, then the spike
+#         factory to Spike Storm and Carpet of Spikes if the cash comes.
 #
 # Spots (map geometry, the worktree's learned map and the main checkout's
 # learned refusals, data/maps/skates.npz, checked in placement order): the
 # first loop's top-left corner (0.152, 0.283) is the best cell on the map for
 # a druid (15% of the track), a spike factory and Obyn, and holds one tower:
-# the druid. Obyn (0.152, 0.402) stands below it (27 units); the village
-# (0.200, 0.428) in the loop below, 37 units from the druid (Jungle Drums
-# radius 40, 48 with Bigger Radius), 18-31 units from Obyn, the snipers, the
-# boomerang and the spike factory (0.248, 0.317, the next-best spike cell).
+# the druid. Obyn (0.152, 0.402) stands below it. The village stands at
+# (0.200, 0.445), where both live games put it after the game refused
+# (0.200, 0.428), and the second sniper (0.168, 0.504) and first boomerang
+# (0.238, 0.504) where the live games put them beside it. From the village
+# (Jungle Drums radius 40, 48 with Bigger Radius): druid 40.6 units, Obyn
+# 19.9, snipers 19.2 and 17.7, boomerangs 19.2, 37.5 (r2 at 0.259, 0.581,
+# the best-rated legal cell south-east) and 18.4 (r3 at 0.227, 0.376, by the
+# druid), spike factory 33.8 (0.248, 0.317). The MIB village (0.200, 0.606)
+# is 17-27 units from s1, s2, r1 and r2; no legal village cell reaches the
+# druid's corner as well.
 #
-# Offline replay (tools/simulate_threats on the map geometry with the learned
-# refusals, live account unlocks): druid R6, sniper R7, Obyn R11, Night
-# Vision R12, sniper 0-2-2 R18, Hard Thorns R19, village 2-0-2 R32, Full
-# Auto Rifle R40, Druid of the Jungle and the second sniper R42 (3-1-0 R46),
-# Glaive Ricochet R47, Elite Defender R54, Carpet of Spikes R82, Spirit of
-# the Forest R95, Maim MOAB R95; the Cripple MOAB is not reached by R100 in
-# the replay (the round-100 BAD answer then tries it). No threat gaps. The
-# damage model (no hero) rates rounds 9-13 at 0.9-1.2, the lead rounds 28
-# and 30 at about 0.7 and rounds 91-99 at 0.1-0.3 (it does not know Spirit
-# of the Forest's vines or Carpet of Spikes well); not gated on it.
+# Offline replay (tools/simulate_threats on the learned map, live account
+# unlocks, base income): druid R6, sniper R7, Obyn R11, Night Vision R12,
+# sniper 0-2-2 R18, Hard Thorns R19, village 2-0-2 R32, Full Auto Rifle R40,
+# Druid of the Jungle and the second sniper R42 (3-1-0 R46), Glaive Ricochet
+# R47, Elite Defender R54 (live: R52-54), M.O.A.R Glaives R55, r2 R58, r3
+# R59, Maim MOAB R64, Spirit of the Forest R82, MIB R85, Cripple MOAB and
+# Spike Storm R97; Carpet of Spikes is not reached by R100. No threat gaps,
+# no answer or surplus buys off the plan. Damage model on the board that
+# stands from round 64 (no hero, no abilities): 63 4.4, 71 3.2, 75 2.95,
+# 77 1.48, 79 2.83, 80 1.14, 81 2.00, 82 1.68, 84 0.77; with Spirit and MIB:
+# 84 1.09, 85 1.41, 89 1.54, 90 3.22, 91 0.84, 93 1.00, 94-99 0.31-0.71,
+# 100 0.50 (the guide's full board rates 0.2-0.6 there as well).
 id: skates_chimps
 map: Skates
 hero: obyn
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {druid: [2, 5, 0], sniper: [5, 2, 5], village: [2, 0, 2], spike: [2, 5, 0], boomerang: [3, 0, 2]}
+  towers: {druid: [2, 5, 0], sniper: [5, 2, 5], village: [2, 3, 2], spike: [2, 5, 0], boomerang: [4, 0, 2]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Skates]
-  revised: "2026-11-07T04:00"
+  revised: "2026-11-07T09:00"
 plan:
   - {do: place, id: d1, kind: druid, role: dps, at: [0.152, 0.283]}      # first loop's corner: the opener
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.200, 0.530]}
@@ -78,22 +151,31 @@ plan:
   - {do: upgrade, id: s1, to: 0-2-0}                                      # Shrapnel
   - {do: upgrade, id: s1, to: 0-2-2}
   - {do: upgrade, id: d1, to: 1-0-0}                                      # Hard Thorns: round 28's lead
-  - {do: place, id: v1, kind: village, role: support, near: [d1, s1], at: [0.200, 0.428]}
+  - {do: place, id: v1, kind: village, role: support, near: [d1, s1], at: [0.200, 0.445]}
   - {do: upgrade, id: v1, to: 2-0-2}                                      # Jungle Drums, Monkey Commerce
   - {do: upgrade, id: s1, to: 0-2-3}                                      # Semi-Automatic
   - {do: upgrade, id: s1, to: 0-2-4}                                      # Full Auto Rifle
   - {do: upgrade, id: d1, to: 2-3-0}                                      # Druid of the Jungle (2-4-0 is income, see above)
-  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.174, 0.496]}
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.168, 0.504]}
   - {do: upgrade, id: s2, to: 1-1-0}                                      # Full Metal Jacket + Night Vision: camo leads
   - {do: upgrade, id: s2, to: 3-1-0}                                      # Deadly Precision: camo ceramics
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.232, 0.496]}
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.238, 0.504]}
   - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the round-63 rush
   - {do: upgrade, id: s1, to: 0-2-5}                                      # Elite Defender
-  - {do: place, id: sp1, kind: spike, role: dps, at: [0.248, 0.317]}
-  - {do: upgrade, id: sp1, to: 2-5-0}                                     # Carpet of Spikes
-  - {do: upgrade, id: d1, to: 2-5-0}                                      # Spirit of the Forest
-  - {do: upgrade, id: s2, to: 4-1-0}                                      # Maim MOAB
+  # from here on: rounds 70-100 at the cash the game really pays (see above)
+  - {do: upgrade, id: r1, to: 4-0-2}                                      # M.O.A.R Glaives ($2,160)
+  - {do: place, id: r2, kind: boomerang, role: dps, near: [v1], at: [0.259, 0.581]}
+  - {do: upgrade, id: r2, to: 4-0-2}                                      # a second M.O.A.R Glaives
+  - {do: place, id: r3, kind: boomerang, role: dps, near: [v1], at: [0.227, 0.376]}
+  - {do: upgrade, id: r3, to: 4-0-2}                                      # a third, by the druid
+  - {do: upgrade, id: s2, to: 4-1-0}                                      # Maim MOAB: BFB/ZOMG stuns, before round 75
+  - {do: upgrade, id: d1, to: 2-5-0}                                      # Spirit of the Forest (the guide's, moved ahead of the carpet)
+  - {do: place, id: v2, kind: village, role: support, near: [s1, r1, r2], at: [0.200, 0.606]}
+  - {do: upgrade, id: v2, to: 0-3-0}                                      # Radar + MIB: camo and every damage type for the DDTs from round 90
   - {do: upgrade, id: s2, to: 5-1-0}                                      # Cripple MOAB: round 100's BAD
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.248, 0.317]}
+  - {do: upgrade, id: sp1, to: 2-4-0}                                     # Spike Storm
+  - {do: upgrade, id: sp1, to: 2-5-0}                                     # Carpet of Spikes, if the cash comes
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: d1, to: 1-0-0}]
@@ -102,7 +184,7 @@ answers:
   camo_lead: [{do: upgrade, id: s2, to: 1-1-0}]
   camo_ceramic: [{do: upgrade, id: s2, to: 3-1-0}]
   rush: [{do: upgrade, id: r1, to: 3-0-2}]
-  bfb: [{do: upgrade, id: s1, to: 0-2-5}, {do: upgrade, id: sp1, to: 2-5-0}]
-  zomg: [{do: upgrade, id: sp1, to: 2-5-0}, {do: upgrade, id: d1, to: 2-5-0}]
-  ddt: [{do: upgrade, id: d1, to: 2-5-0}, {do: upgrade, id: s2, to: 4-1-0}]
+  bfb: [{do: upgrade, id: r1, to: 4-0-2}, {do: upgrade, id: s2, to: 4-1-0}]
+  zomg: [{do: upgrade, id: s2, to: 4-1-0}, {do: upgrade, id: d1, to: 2-5-0}]
+  ddt: [{do: upgrade, id: s2, to: 4-1-0}, {do: upgrade, id: v2, to: 0-3-0}]
   bad: [{do: upgrade, id: s2, to: 5-1-0}]

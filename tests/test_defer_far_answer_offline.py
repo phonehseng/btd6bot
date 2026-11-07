@@ -19,7 +19,8 @@ def bare(weak_now=False, worst=(3.0, 99), due=100, strength=True, cost=34560.0, 
     ahead (margin, round), the threat's round, the answer's whole cost and
     the income counted on before the threat."""
     ex = S.Executor.__new__(S.Executor)
-    ex.strat = {"answers": {"bad": [{"do": "upgrade", "id": "s1", "to": "5-2-0"}]}}
+    ex.strat = {"answers": {"bad": [{"do": "upgrade", "id": "s1", "to": "5-2-0"}],
+                            "zomg": [{"do": "upgrade", "id": "sp1", "to": "2-5-0"}]}}
     ex.noted, ex.held_cash = set(), 0.0
     ex._notes = lambda: ex.noted
     ex._strength_threat = lambda threat: strength
@@ -49,6 +50,30 @@ def test_answered_as_before_when_nothing_nearer_is_weak():
     assert not bare(worst=(0.5, 100))._defer_far_answer("bad", 90)   # the weak round is the threat's own
     assert not bare(worst=None)._defer_far_answer("bad", 90)
     assert not bare(weak_now=True, cost=None)._defer_far_answer("bad", 94)   # unpriced: the usual hold
+
+
+def test_an_answer_no_income_can_pay_in_time_holds_nothing_while_this_round_is_weak():
+    """Skates CHIMPS (2026-11-07): round 75 (a crisis) held $72,894 of the
+    round-80 zomg answer ($87,370) with $21,595 in the bank, so reinforce got
+    $0. The answer cannot be paid before round 80 even with all of it."""
+    ex = bare(weak_now=True, due=80, cost=87370.0, income=14476.0)
+    ex.cash_seen = 21595.0
+    assert ex._defer_far_answer("zomg", 75)       # still waits for the nearer round
+    assert ex.held_cash == 0.0                    # but holds none of the bank
+
+
+def test_a_payable_answer_or_a_weak_round_ahead_keeps_its_part():
+    # Lotus Island: payable from the bank and income - its part stays held
+    ex = bare(weak_now=True)
+    ex.cash_seen = 17562.0
+    assert ex._defer_far_answer("bad", 94) and round(ex.held_cash) == 34560 - 28192
+    # the round being played holds: a weak round further ahead keeps the hold
+    ex = bare(worst=(0.38, 78), due=80, cost=87370.0, income=14476.0)
+    ex.cash_seen = 21595.0
+    assert ex._defer_far_answer("zomg", 75) and round(ex.held_cash) == 87370 - 14476
+    # cash unknown: as before
+    ex = bare(weak_now=True, due=80, cost=87370.0, income=14476.0)
+    assert ex._defer_far_answer("zomg", 75) and round(ex.held_cash) == 87370 - 14476
 
 
 def test_answered_as_before_once_the_threat_is_near_or_a_gap():
