@@ -3633,10 +3633,16 @@ class Executor:
     def _plan_step_too_weak(self, st, load, ratio, short):
         """Should the plan lose its turn to the blimp check? True when the
         defence is far short of the blimp round (ratio under RAMP_PANIC)
-        and the plan's next step st would close less than RAMP_PLAN_SHARE of
-        the shortfall `short` (blimp HP) - including a step that adds no
-        blimp damage at all. The most blimp damage per dollar is then bought
-        (or saved for) at once, instead of waiting on the plan.
+        and the plan's next step st adds some blimp damage, but less than
+        RAMP_PLAN_SHARE of the shortfall `short` (blimp HP). The most blimp
+        damage per dollar is then bought (or saved for) at once, instead of
+        holding the cash for that step.
+
+        A step that adds no blimp damage at all is left to the rules before
+        (it gets no plan_hold, and the plan loses its turn the round before
+        if it is stuck): taking every such turn away under RAMP_PANIC made
+        the Ascent Easy build end its game two plan steps short in the
+        threat simulation (tests/test_map_hints_offline.py).
 
         #Ouch Double HP (2026-11-07, case 20261107_015342): from round 37 the
         blimp check rated round 40's 400-HP MOAB at 0.2x of the 1.4x wanted.
@@ -3651,7 +3657,7 @@ class Executor:
         if ratio >= self.RAMP_PANIC or short <= 0:
             return False
         gain = self._plan_ramp_gain(st, load)
-        return gain < self.RAMP_PLAN_SHARE * short
+        return 0 < gain < self.RAMP_PLAN_SHARE * short
 
     def _plan_ramp_gain(self, st, load):
         """The blimp damage in reach (threats.blimp_capacity, in blimp HP)
