@@ -1382,6 +1382,11 @@ class Executor:
         hero = self.g.hero if kind == "hero" else None
         valid = self._legal_cells(kind)
         block = self._keep_off_scarce(kind, valid, self.blocked)
+        far = self._far_from_at(step, block.shape)
+        if far is not None:
+            # a step with a researched spot falls back to cells round that
+            # spot, never to the best spot by role anywhere on the map
+            block = block | far
         covered = None if role == "support" else self._covered()
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
@@ -1432,7 +1437,8 @@ class Executor:
             floor = None
         if len(out) >= n:
             return out      # the researched spot's neighbourhood fills the pick-up
-        probe = self._probe_spot(kind, valid) if role in ("dps", "exit") else None
+        # (a probe goes wherever the most track is: not for a step with a researched spot)
+        probe = self._probe_spot(kind, valid) if role in ("dps", "exit") and far is None else None
         if probe is not None:
             out.append(probe)       # tried first; a refusal costs ~0.1 s and is learned
         reserved = self._reserved_cells(step)
@@ -1807,6 +1813,10 @@ class Executor:
     NEAR_WIDENING = (1.5, 2.2)
 
     AT_SEARCH_CELLS = 6   # an `at` spot taken (or refused) moves to the nearest legal cell this close
+    # Past AT_SEARCH_CELLS a step with an `at` is still placed by role, but
+    # only within this many cells of its spot (_far_from_at); only when
+    # nothing that close is legal does _spots_widening drop the spot.
+    AT_FALLBACK_CELLS = 15
     # Cells between the spots offered round an `at` in one pick-up: the
     # neighbours of a refused cell are usually refused too (pick_spots keeps
     # its own candidates this far apart for the same reason).
@@ -2408,6 +2418,25 @@ class Executor:
                 break
         return out
 
+    def _far_from_at(self, step, shape):
+        """bool grid of the cells farther than AT_FALLBACK_CELLS from the
+        step's researched spot (`at`), for pick_spots to block; None when
+        the step has no `at`.
+
+        Alpine Run CHIMPS (2026-11-07 07:46): r3's spot (0.302, 0.785) and
+        the one neighbour _at_spots found legal were both refused, and the
+        third spot of the same pick-up was the best by role on the whole map:
+        the boomerang stood at (0.639, 0.351), across the map from the
+        cluster round the village. The village, placed near r1-r3, then
+        followed it to (0.505, 0.521) and buffed nothing well; round 40's
+        first MOAB leaked. The role ranking now only looks round the spot."""
+        at = step.get("at") if step else None
+        if not at or len(at) != 2:
+            return None
+        cx, cy = self.m.frac_to_cell(float(at[0]), float(at[1]))
+        yy, xx = np.ogrid[0:shape[0], 0:shape[1]]
+        return (xx - cx) ** 2 + (yy - cy) ** 2 > self.AT_FALLBACK_CELLS ** 2
+
     def _edge_band(self):
         """Cells within EDGE_CELLS of the bloon path's line (computed once per
         game), or None when the track is not known."""
@@ -2430,7 +2459,9 @@ class Executor:
           1. a `near` search widens (x1.5, x2.2), then drops `near`;
           2. the progress `segment` is dropped (any part of the track);
           3. a support/far step is tried as a damage tower would be;
-          4. a global-range tower (sniper, mortar, ...) takes any legal spot.
+          4. a researched spot (`at`) is dropped: until then the search stays
+             within AT_FALLBACK_CELLS of it (_far_from_at);
+          5. a global-range tower (sniper, mortar, ...) takes any legal spot.
         A buffer (village, alchemist) never relaxes into a spot chosen by
         role alone: it goes next to the most damage towers (_buff_spots).
         Each relaxation that finds spots is logged; a real dead end logs how
@@ -2459,6 +2490,11 @@ class Executor:
         if step.get("role") in ("support", "far") and kind != "hero" and not buffer:
             step = dict(step, role="dps")
             tries.append((step, "no support spot - placing it where it covers track"))
+        if step.get("at") and not buffer:
+            at = step["at"]
+            step = {k: v for k, v in step.items() if k != "at"}
+            tries.append((step, f"nothing legal within {self.AT_FALLBACK_CELLS} cells of its spot "
+                                f"{list(at)} - placing it by role anywhere"))
         for relaxed, why in tries:
             spots = self.pick_spots(kind, relaxed, n=self.SPOTS_PER_HOLD)
             if spots:
@@ -4056,15 +4092,26 @@ class Executor:
             # The plan's steps get only what the saving does not need.
             cash = max(0, cash - hold)
         # plan steps put aside after refused spots (the hero), once their pause is over
+        waiting_ids = set()     # towers whose earlier set-aside step is not done yet
         for st in list(self.deferred):
+            tid = st.get("id")
+            if tid and tid in waiting_ids:
+                continue        # a tower's set-aside steps go in plan order (_set_aside_blocked)
             with self.why("deferred", "a plan step set aside earlier", step=dict(st)):
                 r = self.try_step(st, cash, rnd)
             if r in ("bought", "done"):
                 self.deferred.remove(st)
+            elif tid:
+                waiting_ids.add(tid)
             if r == "bought":
                 return True
         while self.idx < len(self.plan):
             st = self.plan[self.idx]
+            if self._waits_for_set_aside_place(st):
+                # its tower's placement was set aside: it waits with it
+                self.deferred.append(st)
+                self.idx += 1
+                continue
             with self.why("plan", f"plan step {self.idx}", step_idx=self.idx, step=dict(st)):
                 r = self.try_step(st, cash, rnd)
             if r in ("done", "skip", "bought"):
@@ -4117,9 +4164,20 @@ class Executor:
         everywhere except no-income modes, which buy everything before round
         one and only need the "spot" case.
 
-        A set-aside placement takes the plan's later steps for the same tower
-        with it, in order, so that once it is placed its upgrades follow; left
-        in the plan they would be skipped for good (no such tower yet)."""
+        A set-aside placement's later steps for the same tower stay in the
+        plan, at their own places: when the plan reaches one while the tower
+        is still not placed, it is set aside too (_waits_for_set_aside_place)
+        rather than skipped for good (no such tower yet), and tick() tries a
+        tower's set-aside steps one at a time, in plan order.
+
+        They used to be taken out of the plan at once and tried every tick
+        side by side. Alpine Run CHIMPS (2026-11-07 07:48): v1's spot was
+        refused, "v1 -> 0-2-0" and "v1 -> 4-2-0" (plan step 20) went aside
+        with it, and once v1 stood the 4-2-0 step bought Bigger Radius,
+        Jungle Drums and Primary Training ($2,915) while 0-2-0 waited for
+        Radar Scanner - all ahead of plan step 15, r1's MOAR Glaives, which
+        was bought only by the blimp check in round 36; round 40's MOAB
+        leaked."""
         reason = self.g.fail_reason
         if self.rules.get("buy_all_upfront"):
             blocking = ("spot",)
@@ -4132,14 +4190,19 @@ class Executor:
         log.info("plan step %d %s is blocked (%s) - set aside, the plan goes on", self.idx, st, reason)
         self.deferred.append(st)
         self.idx += 1
-        tid = st.get("id")
-        if st.get("do") == "place" and tid:
-            later = [s for s in self.plan[self.idx:] if s.get("id") == tid]
-            if later:
-                log.info("  with its %d later step(s) for %s", len(later), tid)
-                self.deferred.extend(later)
-                self.plan[self.idx:] = [s for s in self.plan[self.idx:] if s.get("id") != tid]
         return True
+
+    def _waits_for_set_aside_place(self, st):
+        """True when plan step st works on a tower (its `id`) that does not
+        stand yet because its placement is in self.deferred: st then waits
+        behind that placement instead of being skipped (see
+        _set_aside_blocked)."""
+        tid = st.get("id")
+        if not tid or st.get("do") == "place":
+            return False
+        if not any(d.get("do") == "place" and d.get("id") == tid for d in self.deferred):
+            return False
+        return tid not in self.g.towers
 
     # One-life games give a standing plan tower's upgrade this many clicks that
     # did nothing, on separate ticks, before it is set aside.
