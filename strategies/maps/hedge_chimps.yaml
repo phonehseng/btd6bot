@@ -1,8 +1,10 @@
-# Hedge, CHIMPS: Quincy opens between the right lanes; a sniper, a druid and
-# a wizard join him, a Jungle Drums village buffs them, the sniper grows to
-# Elite Defender, the wizard to Archmage and the druid to Spirit of the
-# Forest; a second sniper (camo leads, then Cripple MOAB) and a Glaive
-# Ricochet boomerang cover what the bot's checks ask for.
+# Hedge, CHIMPS: a boomerang opens in the left field (the match adds its
+# one-life starter dart beside it), Quincy follows in the right field; a
+# sniper, a druid and a wizard join them, a Jungle Drums village buffs them,
+# the sniper grows to Elite Defender, the wizard to Archmage and the druid to
+# Spirit of the Forest; a second sniper (camo leads, then Cripple MOAB) and
+# the opening boomerang, grown to Glaive Ricochet, cover what the bot's
+# checks ask for.
 #
 # Why: the owner's goal is CHIMPS black borders. The earlier Hedge CHIMPS
 # build (tacks, helis, a wizard and a Perma-Spike, designed on the damage
@@ -10,7 +12,7 @@
 # CHIMPS was won on 2026-11-07 by a build that follows a published community
 # strategy step by step with `plan_first`; this build does the same here.
 # It is played live to learn, not gated on the damage model (which does not
-# count heroes, and the opening here is Quincy alone).
+# count heroes).
 #
 # Source:
 #   * bloon.games has a Hedge CHIMPS page
@@ -47,31 +49,58 @@
 #     Maim / Cripple MOAB (5-1-0): the bot's coverage check wants a listed
 #     DDT and BAD answer (strategy.ANSWERS: snipers count on the top path
 #     only); in the guide the Lord of the Abyss carries those rounds;
-#   * a Glaive Ricochet boomerang (3-0-2) before round 63: the coverage check
+#   * a Glaive Ricochet boomerang (3-0-2) by round 46: the coverage check
 #     lists no tower of the guide as a rush answer (Archmage is on the
 #     wizard's top path; ANSWERS["rush"] has the middle path's Dragon's
-#     Breath), and without one the planner would never pick this build.
+#     Breath), and without one the planner would never pick this build;
+#   * the opening is that boomerang, not Quincy alone (see the note on the
+#     2026-11-07 loss below).
 #
-# Spots (map geometry, the worktree's learned map and the main checkout's
-# learned refusals, data/maps/hedge.npz, checked in placement order): Quincy
-# at (0.697, 0.572) in the gap between the right lanes reaches 21% of the
-# track (the best hero cell; the hedges hide the rest); the druid, wizard
-# and boomerang stand on the top edge of the bottom-right field (the best
-# cells there for each), the village behind them, the snipers on the bottom
-# strip (47% and 53% of the track in sight).
+# Spots (map geometry with the main checkout's learned refusals,
+# data/maps/hedge.npz, checked in placement order; "cells" are track cells in
+# range AND in line of sight past the hedges, placement.visible_cover, of
+# 4,194 track cells): the boomerang at (0.158, 0.419) in the left field sees
+# 594 (14%; the field's corner cell 637, but it is an edge cell - this one
+# has 7 of its 8 neighbours legal); Quincy at (0.708, 0.411) in the right
+# field sees 751 (18%; the best hero cell on the map sees only 799), next to
+# (0.703, 0.419) where the game accepted him live, with 6 of 8 neighbours
+# legal; the druid (362) and wizard (408) on the top edge of the
+# bottom-right field, the village behind them, the snipers on the bottom
+# strip (1,965 and 2,192 cells: 47% and 52%).
 #
-# Offline replay (tools/simulate_threats on the map geometry with the learned
-# refusals, live account unlocks): Quincy alone R6-7, sniper R8, druid R11,
-# Druid of the Jungle R19, wizard R20, Night Vision R21, village 2-0-2 R33,
-# Full Auto Rifle R42, second sniper 3-1-0 R45, Glaive Ricochet R46, Elite
+# Offline replay (tools/simulate_threats on the map geometry, with and
+# without the learned refusals, full unlocks): boomerang R6, Quincy R8,
+# sniper R10, druid R12, Druid of the Jungle and wizard R22, village 2-0-2
+# R34, Full Auto Rifle and second sniper R42, Glaive Ricochet R46, Elite
 # Defender R53, Archmage R79, Spirit of the Forest R92, Cripple MOAB R99; no
-# threat gaps. The damage model (no hero, sight-limited) rates rounds 8-18 at
-# only 0.3-0.8 and R36/R59 at about 0.2 - this opening is the guide's and is
-# what the live games are to test.
+# threat gaps (blimp-ratio answer buys only at R99-100, as before). The
+# starter dart ($215) the match adds is not in that replay: it puts each
+# purchase up to a round later.
+#
+# Opening changed 2026-11-07 08:30. Quincy alone lost round 6 live at 08:19
+# (bloons 87% along the route): the build's spot (0.697, 0.572) was a single
+# isolated legal cell the game refused, and he went down at (0.703, 0.419)
+# instead - 787 track cells, 98% of the best hero cell's 799, so a better
+# Quincy spot would not have saved it. Where Quincy alone held the opening
+# he saw 23-38% of the track (Cracked 854 cells 26%, End of the Road 957 38%,
+# Carved 927 26%, Winter Park 832 23%, Alpine Run 813 27%); where he lost it
+# 18-19% (Lotus Island 567, Hedge 787) - Hedge's walls cap every hero cell
+# at 19%. So, as on Lotus Island (fixed 07:15) and Frozen Over (won), a tower
+# opens and Quincy follows when the cash allows. A lone non-hero opener in a
+# one-life game gets the match's starter dart from the change
+# (Match._lone_opener / _opener_reserve), so the opening is the plan's tower
+# + a $215 dart: the tower must cost $435 or less. Of the build's towers (damage
+# model with Hedge's sight blockers, the executor's own spots, the starter
+# dart at (0.542, 0.624); margins R6/R7/R8): boomerang left 1.43/1.22/1.14,
+# wizard left 1.33/1.18/1.11, sniper on the bottom strip 0.81/0.90/0.71
+# (it sees the most track, 1,965-2,480 cells, but one bloon per shot), druid
+# left 1.15/1.08 (and $90 dearer). The boomerang's corner field also is Quincy's other best area
+# (796-799 cells), so he takes the right field. Quincy stands from round 9
+# with the dart; rounds 9-10 rate 0.85/0.69 without him (the model leaves
+# heroes out), and the sniper follows by round 11.
 id: hedge_chimps
 map: Hedge
 hero: quincy
-hero_opens: true      # Quincy alone holds the opening (Executor.defended)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
@@ -79,9 +108,10 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Hedge]
-  revised: "2026-11-07T04:00"
+  revised: "2026-11-07T08:30"
 plan:
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.697, 0.572]}      # Quincy holds the opening
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.158, 0.419]}   # left field, wall corner: opens (the match adds a dart)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.708, 0.411]}      # Quincy, right field, once the cash allows
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.596, 0.905]}   # bottom strip
   - {do: place, id: d1, kind: druid, role: dps, at: [0.633, 0.700]}
   - {do: upgrade, id: d1, to: 1-0-0}                                      # Hard Thorns: round 28's lead
@@ -94,7 +124,6 @@ plan:
   - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.564, 0.922]}
   - {do: upgrade, id: s2, to: 1-1-0}                                      # Full Metal Jacket + Night Vision: camo leads
   - {do: upgrade, id: s2, to: 3-1-0}                                      # Deadly Precision: camo ceramics
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.719, 0.700]}
   - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the round-63 rush
   - {do: upgrade, id: s1, to: 0-2-5}                                      # Elite Defender
   - {do: upgrade, id: w1, to: 5-0-2}                                      # Archmage (Monkey Sense: camo)
