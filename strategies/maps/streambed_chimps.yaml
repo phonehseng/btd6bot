@@ -1,6 +1,7 @@
 # Streambed, CHIMPS: Quincy opens inside the top loop, one buccaneer in the
 # pond grows to a Carrier Flagship with a village beside it, a Glaive Lord
-# boomerang and a Cripple MOAB sniper finish.
+# boomerang and a Cripple MOAB sniper finish. Two Crossbow darts and a tack
+# hold rounds 19-37 on the lanes the boat cannot reach (since 2026-11-07 14:00).
 #
 # Why: the owner's goal is CHIMPS black borders (all Beginner maps, then
 # Intermediate). On 2026-11-07 the bot beat CHIMPS on 9 maps with builds that
@@ -37,9 +38,12 @@
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
 #     bot does not place towers on a deck, so the boomerang stands on land
 #     inside the village's reach and the sniper in the bottom-left corner;
-#   * a Night Vision sniper (0-1-0) for round 24's camo: neither a 2-2-0
-#     buccaneer nor Quincy at that level sees camo, and the village (Radar
-#     Scanner, 0-2-0) only comes at about round 35;
+#   * round 24's camo: neither a 2-2-0 buccaneer nor Quincy at that level
+#     sees camo, and the village (Radar Scanner, 0-2-0) only comes at about
+#     round 38; the first version used a Night Vision sniper (0-1-0), since
+#     2026-11-07 14:00 the d1 dart's Enhanced Eyesight (0-2-2) sees it;
+#   * two darts and a tack before the Destroyer (2026-11-07 14:00, after
+#     the round-27 loss below): Streambed's boat sees ~25% of the track;
 #   * the account has the village's top path to tier 4 only
 #     (data/accounts/SFYOSHHYV.json: village [4, 5, 5]), so it ends at
 #     Primary Mentoring (4-2-0), not Primary Expertise;
@@ -64,14 +68,24 @@
 #     from the boat (radius 40, 48 with Bigger Radius);
 #   * boomerang (0.644, 0.496), inside the east loop: 432 cells (16%), 38.3
 #     units from the village - the best boomerang cell inside its reach;
-#   * sniper (0.174, 0.922), bottom-left corner: sees 93% of the track past
-#     the rocks.
+#   * sniper (0.190, 0.922), bottom-left corner: sees 93% of the track past
+#     the rocks. Written as (0.174, 0.922) at first; the game refused that
+#     cell twice live and took this one (2026-11-07 13:33), so the plan names
+#     it now (4 of its 8 neighbour cells legal on the learned map);
+#   * darts d1 (0.323, 0.385) west of the top loop and d2 (0.526, 0.385)
+#     north-east, tack t1 (0.313, 0.215) at the north bend (added 2026-11-07
+#     14:00, see below): chosen by the damage model's margins over rounds
+#     20-37 among the legal spots of every cheap kind; 7-8 of 8 neighbour
+#     cells legal, 4-14 cells from a learned refusal, at least 0.11
+#     screen-height from every other tower (d1 to Quincy; the rest 0.17+).
 #
-# Cash (CHIMPS: $650 at round 6, the game's own income, Hard prices): the
-# same plan and order as the Cracked/Lotus wins
-# (tests/test_chimps_builds_offline.plan_timeline): buccaneer round 8, Hot
-# Shot 16, Night Vision 18, Destroyer 29, Radar Scanner 35, Jungle Drums 37,
-# Aircraft Carrier 44, Flagship 58, Glaive Lord 78, Cripple MOAB 92.
+# Cash (CHIMPS: $650 at round 6, the game's own income, Hard prices;
+# tests/test_chimps_builds_offline.plan_timeline): buccaneer round 8, Hot
+# Shot 16, Crossbow d1 21, tack 23, Crossbow d2 27, Destroyer 34 (the MOAB
+# answer's deadline, 40 - 6), Radar Scanner 38, Night Vision 38, Jungle Drums
+# 39, Aircraft Carrier 46, Flagship 59, Glaive Lord 79, Cripple MOAB 93.
+# (The first version bought Night Vision 18, Destroyer 29, Flagship 58,
+# Glaive Lord 78.)
 #
 # Offline replay (tools/simulate_threats on the learned map, the live
 # account's unlocks, base income): every spot accepted, plan 20/20, no
@@ -81,6 +95,31 @@
 # executor's blimp answers only start at round 92, after the plan is done.
 #
 # Status 2026-11-07 12:00: written, not played live yet.
+#
+# 2026-11-07 13:35, lost live at ROUND 27 (logs/bot.log; journal
+# 20261107_133107_Streambed_chimps.jsonl): Quincy opened, b1 2-2-0 by round
+# 16, s1 0-1-0 at (0.190, 0.922) by round 18, then the plan saved for the
+# $3,620 Destroyer (cash 1,227 at round 23, 2,339 at round 27). Rounds 21-22
+# got 71-73% along the route, round 27 (100 red, 60 blue, 45 green, 45
+# yellow in 34 s) leaked at 81%. The boat sees only ~25% of Streambed's
+# track, so a 2-2-0 boat, Quincy and one Night Vision sniper cannot hold
+# rounds 21-28 here as they did on Cracked. The damage model rated round 27
+# at 1.76 for that board (no hero), so on this map it is optimistic: a
+# rating under ~2 is not safe here.
+#
+# Change 2026-11-07 14:00: before the Destroyer, a 0-2-3 dart (Very Quick
+# Shots, Enhanced Eyesight for round 24's camo, Crossbow), a 0-2-0 tack for
+# the rush rounds and a 0-0-3 Crossbow dart for the camo of rounds 33-37 on
+# the lanes the boat cannot reach; the sniper (only needed late, for Cripple
+# MOAB and the DDTs' camo) moves after the Radar village. Damage model on the
+# executor-faithful replay (simulate_threats real_map, learned map; board at
+# each round's start, no hero), before -> after:
+#   R21 3.55 -> 3.67, R22 3.59 -> 4.32, R25 2.59 -> 3.71, R27 1.76 -> 3.08,
+#   R31 7.26 -> 3.71, R32 6.04 -> 3.19, R33 0.55 -> 2.00, R34 4.04 -> 1.65,
+#   R36 4.32 -> 2.99, R37 5.72 -> 1.83, R39 2.92 -> 3.22, R40 2.18 -> 2.74;
+#   R43 1.94 -> 2.30, R45-46 16 -> 3.2-3.4 (Aircraft Carrier two rounds
+#   later); lowest over rounds 10-46 0.55 (R33) -> 1.65 (R34); rounds
+#   47-100 within 0.2 of before (R99 1.20 both). Plan 33/33, no threat gaps.
 id: streambed_chimps
 map: Streambed
 hero: quincy
@@ -88,11 +127,11 @@ hero_opens: true      # Quincy alone holds the opening (Executor.defended)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 3], tack: [0, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Streambed]
-  revised: "2026-11-07T12:00"
+  revised: "2026-11-07T14:00"
 plan:
   - {do: place, id: hero, kind: hero, role: dps, at: [0.393, 0.359]}      # Quincy holds the opening
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.489, 0.692]}   # the pond, north-west part
@@ -100,11 +139,24 @@ plan:
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
   - {do: upgrade, id: b1, to: 2-1-0}
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.174, 0.922]}   # bottom-left corner
-  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.323, 0.385]}        # west of the top loop: the lanes the boat can't see
+  - {do: upgrade, id: d1, to: 0-1-0}
+  - {do: upgrade, id: d1, to: 0-2-0}                                      # Very Quick Shots
+  - {do: upgrade, id: d1, to: 0-2-1}
+  - {do: upgrade, id: d1, to: 0-2-2}                                      # Enhanced Eyesight: round 24's camo
+  - {do: upgrade, id: d1, to: 0-2-3}                                      # Crossbow: rounds 25-37
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.313, 0.215]}        # north bend: round 27's 250-bloon rush
+  - {do: upgrade, id: t1, to: 0-1-0}
+  - {do: upgrade, id: t1, to: 0-2-0}                                      # Even More Tacks
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.526, 0.385]}        # north-east lanes
+  - {do: upgrade, id: d2, to: 0-0-1}
+  - {do: upgrade, id: d2, to: 0-0-2}                                      # Enhanced Eyesight: camo of rounds 33, 36, 37
+  - {do: upgrade, id: d2, to: 0-0-3}                                      # Crossbow
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.569, 0.615]}
   - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.190, 0.922]}   # bottom-left corner, the cell the game took
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: camo DDTs late
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
@@ -115,9 +167,9 @@ plan:
   - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
   - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
 answers:
-  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  ceramic: [{do: upgrade, id: d1, to: 0-2-3}, {do: upgrade, id: b1, to: 3-2-0}]
   moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
