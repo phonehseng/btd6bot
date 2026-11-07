@@ -78,6 +78,9 @@
 # tools/simulate_threats on the learned map: no threat gaps, 21/21 steps.
 #
 # Status: new 2026-11-07, not played yet.
+# 2026-11-07 14:10: the boat's Faster Shooting and Double Shot now come
+# before Quincy - Lost Crevasse, opened the same way, lost round 8 with
+# $350 waiting for Quincy ($585).
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
@@ -88,12 +91,12 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-07T12:00"
+  revised: "2026-11-07T14:10"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.735, 0.598]}   # exit water, both lanes: opens alone
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.676, 0.385]}      # Quincy, island's right end
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.676, 0.385]}      # Quincy, island's right end
   - {do: upgrade, id: b1, to: 2-1-0}
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.368]}   # on the island
