@@ -138,6 +138,38 @@ def test_stops_once_the_wins_since_the_scan_cover_the_rest():
     assert not [c for c in cands if c.tier == "ACH"]
 
 
+def test_a_builds_own_wins_needed_wins():
+    """A counter achievement (Freaky Friday: 100 ability uses) states how many
+    of its games finish it from 0 %: 4 games, so at 52 % two replays."""
+    acc = account()
+    cat = [{"name": "Freaky Friday", "description": "Use the Alchemist's Transforming Tonic abilities 100 times",
+            "category": "single_player", "kind": "cumulative", "passive": False}]
+    state = {"scanned_at": "2000-01-01 00:00:00",
+             "cards": {"Freaky Friday": {"status": "progress", "progress": 52}}}
+    g = {x.name: x for x in P.wanted_achievements(acc, state, cat)}
+    spec = unsung(id="ach_freaky_friday", achievement="Freaky Friday", wins_needed=4)
+    for _ in range(2):
+        assert P._replay_allowed(spec, g, acc, state["scanned_at"])
+        acc.record_result("Logs", "easy", "ach_freaky_friday", True, minutes=9.0)
+    assert not P._replay_allowed(spec, g, acc, state["scanned_at"])
+
+
+def test_freaky_friday_build():
+    """The new build is bot-ready, Logs Medium only, and buys Transforming
+    Tonic alchemists, whose ability the AbilityPlanner fires on cooldown."""
+    from btd6bot import abilities
+    f = S.load_all()["ach_freaky_friday"]
+    acct = F.full_account()
+    assert f["bot_ready"] and S.validate(f) == [], f.get("bot_ready_reasons")
+    assert S.usable(f, "medium", acct, map_name="Logs", allow_achievement=True)[0]
+    assert not S.usable(f, "medium", acct, map_name="Resort", allow_achievement=True)[0]
+    assert S.coverage(f, "medium", acct)[0]
+    tonics = [st for st in f["plan"] if st.get("do") == "upgrade" and st["id"] in ("t1", "t2")]
+    assert any(abilities.tower_abilities("alchemist", S.parse_cross(st["to"])) == ["Transforming Tonic"]
+               for st in tonics)
+    assert abilities.TOWER_ABILITIES["Transforming Tonic"][1] == "on_cooldown"
+
+
 def test_planner_reads_the_current_accounts_scan():
     """The default config follows data/current_account.txt to
     data/accounts/<id>.achievements.json (what Achievements.scan writes)."""

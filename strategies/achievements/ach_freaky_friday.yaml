@@ -1,0 +1,72 @@
+# Achievement 'Freaky Friday': use the Alchemist's Transforming Tonic ability
+# (0-4-0) or Total Transformation (0-5-0) 100 times, across games. The main
+# account's scan of 2026-11-06 read it at 52 %.
+#
+# How: the proven hard_ninja_alch_sun Medium build (0.93 prior; ninjas carry,
+# so the game never depends on the transformed alchemists) with two extra
+# 2-4-0 Transforming Tonic alchemists bought early (~R20-30 on Medium). The
+# AbilityPlanner (abilities.TOWER_ABILITIES: "Transforming Tonic",
+# on_cooldown) presses the ability's hotkey every cooldown on its own - no
+# new code. Medium (to R60) gives ~30+ rounds of tonic use per game; the bot
+# assumes a 60 s cooldown (at 2x speed: one press every ~30 real seconds),
+# so about 20-25 uses a game: 4 games from 0 %, 2 from 52 %.
+#
+# Logs Medium is already beaten on the main account, so this plays as an
+# achievement replay (planner tier "ACH": after every first-time medal that
+# clears its bar, before the last-resort games) while the scan shows the card
+# in progress, at most ceil(wins_needed x the share left) games per scan.
+# Top path 2 (Acidic Mixture Dip) is a buff the extra alchemists also give.
+id: ach_freaky_friday
+achievement: Freaky Friday
+map: Logs
+modes: [medium]
+hero: obyn
+constraints:
+  wins_needed: 4
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [4, 4, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
+  base_success: {medium: 0.9}
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 0.9]}
+  - {do: upgrade, id: n2, to: 1-0-1}
+  - {do: upgrade, id: n1, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: place, id: t1, kind: alchemist, role: dps, segment: [0.1, 0.7]}
+  - {do: upgrade, id: t1, to: 0-4-0}      # Transforming Tonic: the achievement's ability
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: place, id: t2, kind: alchemist, role: dps, segment: [0.3, 0.9]}
+  - {do: upgrade, id: t2, to: 0-4-0}      # a second Tonic: a press while the first cools down
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: upgrade, id: t1, to: 2-4-0}
+  - {do: upgrade, id: t2, to: 2-4-0}
+  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
+  - {do: upgrade, id: s1, to: 3-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+fill:
+  - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 5}
+  - {do: upgrade, kind: ninja, to: 4-0-2}
+  - {do: place, kind: spike, role: exit, max: 2}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: n2, to: 2-0-3}]
+  bfb: [{do: upgrade, id: n2, to: 2-0-4}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: n2, to: 2-0-4}]

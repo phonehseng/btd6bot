@@ -1931,11 +1931,16 @@ def _replay_allowed(s: StrategySpec, goals: Mapping[str, AchievementGoal],
     the scan did not read stays "unknown": most of those are finished cards
     the scan stopped before, and replaying for them could go on forever),
     and only until the plan's wins since that scan cover what was left:
-    ceil(wins_needed * (100 - progress) / 100). The next scan settles it."""
+    ceil(wins_needed * (100 - progress) / 100), where wins_needed is the
+    plan's own (``constraints.wins_needed``: games of this plan that finish
+    the achievement from 0 %, e.g. 4 for a 100-ability-use counter) or else
+    the catalog's. The next scan (daily, or the reward claim that marks the
+    card complete) settles it."""
     g = goals.get(s.achievement) if s.achievement else None
     if g is None or g.status != "progress":
         return False
-    left = math.ceil(g.wins_needed * max(0.0, 100.0 - g.progress) / 100.0 - 1e-9)
+    need = s.wins_needed or g.wins_needed
+    left = math.ceil(need * max(0.0, 100.0 - g.progress) / 100.0 - 1e-9)
     return _wins_since(account, s.id, scanned_at) < max(1, left)
 
 
