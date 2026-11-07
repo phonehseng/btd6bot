@@ -1078,6 +1078,33 @@ def test_none_when_nothing_left():
         P.log.setLevel(level)
 
 
+def test_last_resort_plays_multi_life_medals_before_one_life():
+    """Under every bar, an open medal with lives to spare (Hard) is played
+    before a one-life one (Impoppable) even when the one-life game's p is
+    higher: last-resort Impoppable games won 5 of 28 up to 2026-11-07, the
+    multi-life ones 88 of 144. The one-life games still follow, so the bot
+    has something to play once the multi-life ones run out."""
+    from btd6bot.strategy import MODE_RULES
+    acc = AccountState()
+    # Impoppable needs the map's ABR medal (and that one Hard): beat the Hard
+    # family on every other map, so some maps offer Impoppable and the rest
+    # still offer Hard
+    for i, m in enumerate(sorted(MAPS)):
+        if i % 2:
+            acc.medals[m] = {k: True for k in MODES if k not in ("impoppable", "chimps")}
+    # Impoppable rated well above Hard, both under their bars
+    s = P.StrategySpec(id="mixed", towers={"dart": (0, 0, 0)},
+                       modes=frozenset({"hard", "impoppable"}),
+                       base_success={"hard": 0.30, "impoppable": 0.60})
+    phase, _reasons, cands = P.rank_games(acc, [s], below_bar=True)
+    last = [c for c in cands if c.tier == "LAST"]
+    assert phase == "LAST" and last
+    one_life = [bool(MODE_RULES.get(c.mode, {}).get("one_life")) for c in last]
+    assert any(one_life) and not all(one_life), {c.mode for c in last}
+    # every multi-life game comes before the first one-life game
+    assert one_life == sorted(one_life), [(c.map, c.mode, round(c.p, 2)) for c in last[:5]]
+
+
 # ------------------------------------------------------- paragon focus
 
 def _paragon_account() -> tuple[AccountState, dict]:
@@ -1195,6 +1222,7 @@ if __name__ == "__main__":
              "test_within_tier_prefers_completing_a_map", "test_objective_is_points_per_hour",
              "test_mm_estimates_and_observed_override", "test_xp_favours_expert_and_long_modes",
              "test_replays_never_chosen", "test_none_when_nothing_left",
+             "test_last_resort_plays_multi_life_medals_before_one_life",
              "test_paragon_status_from_account_data", "test_paragon_focus_prefers_closest_tower",
              "test_invested_cash_follows_the_plan", "test_long_run_reaches_everything"]
     missing = {t.__name__ for t in tests} - set(order)   # a new test must not be skipped
