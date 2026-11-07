@@ -1391,14 +1391,14 @@ class Executor:
             cover = self.m.score_spots(rc, seg, self._occupied(), near=near, near_radius=near_r,
                                        placement=placement, extra_block=block,
                                        covered=covered, valid=valid)
-        from .maplearn import spot_factor
         cands = self.m.best_spots(cover, n=30 if valid is not None else 12)
         if valid is not None and role not in ("support", "far") and PL.needs_sight(kind, hero):
             # count only the track this spot can actually see past walls/blockers
             weight = self.m.spot_weight(seg, covered)
             cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight)) for cx, cy, _ in cands]
         edge = self._edge_band()
-        ranked = sorted(((cx, cy, sc * spot_factor(self.m, kind, cx, cy)
+        lane = None if covered is None else self._lane_cover(self._tower_cover())
+        ranked = sorted(((cx, cy, sc * self._experience_factor(kind, cx, cy, rc, lane)
                           * (self.EDGE_PENALTY if edge is not None and edge[cy, cx] else 1.0))
                          for cx, cy, sc in cands), key=lambda t: -t[2])
         # the build's researched spot comes first, then its neighbours
@@ -1449,6 +1449,42 @@ class Executor:
             if len(out) >= n:
                 break
         return out
+
+    def _experience_factor(self, kind, cx, cy, rc, lane):
+        """The learned score multiplier of a spot (maplearn.spot_factor),
+        with its bonus shrunk as far as the spot's lane is already guarded.
+
+        A spot earns its bonus (x1.25) by popping well above the median in
+        past games - which a spot in the only defended lane always does,
+        since every bloon passes it. On Firing Range ABR that bonus on the
+        left lane (where n1 and the hero stand) outweighed the lane rule:
+        the two lanes scored 207 and 211 before it, 263 and 215 after, and
+        n2 went left again while the right lane had only a bare dart - the
+        board that leaked 74 lives on 2026-11-04 (tests/test_lane_cover_
+        offline.py). So the bonus counts in full on a lane nobody guards
+        and not at all on the best-guarded lane (lane cover LANE_COVER_
+        WEIGHT). A penalty (a spot where this tower barely pops) always
+        counts in full: that is about the spot, not the lane."""
+        from . import mapgeom
+        from .maplearn import spot_factor
+        f = spot_factor(self.m, kind, cx, cy)
+        if f <= 1.0 or lane is None:
+            return f
+        # the spot's lane: mean lane cover over the bloon-path cells in its
+        # range (the path masks _lane_cover used; the learned track heat is
+        # wider and would count lane-less cells as unguarded)
+        masks = mapgeom.grids_for(self.m, removed=tuple(self.removed))["path_masks"]
+        on_path = np.logical_or.reduce(masks)
+        H, W = lane.shape
+        y0, y1 = max(0, int(cy - rc)), min(H, int(cy + rc) + 1)
+        x0, x1 = max(0, int(cx - rc)), min(W, int(cx + rc) + 1)
+        yy, xx = np.mgrid[y0:y1, x0:x1]
+        near = (xx - cx) ** 2 + (yy - cy) ** 2 <= rc * rc
+        cells = lane[y0:y1, x0:x1][near & on_path[y0:y1, x0:x1]]
+        if not cells.size:
+            return f
+        guarded = min(1.0, float(cells.mean()) / self.LANE_COVER_WEIGHT)
+        return 1.0 + (f - 1.0) * (1.0 - guarded)
 
     def _reserved_cells(self, step):
         """Cells of the exact spots (`at`) the build's later place steps
@@ -3543,7 +3579,11 @@ class Executor:
         # "stuck", so it kept its turn.
         one_life = bool(self.rules.get("one_life"))
         last_call = R - 2 if one_life else R - 1
-        if self.idx < len(self.plan) and not (rnd >= last_call and ratio < self.RAMP_PANIC):
+        # What is missing to reach the bar, in blimp HP the defence should
+        # be able to deal in reach (also used to pick a purchase below).
+        short = (self.ramp_bar(load) - ratio) * load["hp"]
+        if self.idx < len(self.plan) and not (rnd >= last_call and ratio < self.RAMP_PANIC) \
+                and not self._plan_step_too_weak(self.plan[self.idx], load, ratio, short):
             cost = self._plan_ramp_cost(self.plan[self.idx], load)
             if cost is not None and cost <= money:
                 # the plan's next step is itself blimp damage it can pay for in
@@ -3563,7 +3603,6 @@ class Executor:
         # Only buys that matter: the cheapest one closing the whole shortfall,
         # else the most damage per dollar among those adding at least a tenth of
         # it. If nothing fits, save for the cheapest that closes it.
-        short = (self.ramp_bar(load) - ratio) * load["hp"]
         opts = self._dps_options(load)
         closing = sorted((o for o in opts if o["gain"] >= short), key=lambda o: o["cost"])
         fits = [o for o in closing if o["cost"] <= money] or \
@@ -3587,6 +3626,56 @@ class Executor:
             return True
         return st.get("do") == "place" and any(k == st.get("kind") for k, _x, _y in self.failed_spots)
 
+    # A plan step must close at least this share of the blimp shortfall to
+    # keep its turn while the defence is far short (under RAMP_PANIC).
+    RAMP_PLAN_SHARE = 0.5
+
+    def _plan_step_too_weak(self, st, load, ratio, short):
+        """Should the plan lose its turn to the blimp check? True when the
+        defence is far short of the blimp round (ratio under RAMP_PANIC)
+        and the plan's next step st adds some blimp damage, but less than
+        RAMP_PLAN_SHARE of the shortfall `short` (blimp HP). The most blimp
+        damage per dollar is then bought (or saved for) at once, instead of
+        holding the cash for that step.
+
+        A step that adds no blimp damage at all is left to the rules before
+        (it gets no plan_hold, and the plan loses its turn the round before
+        if it is stuck): taking every such turn away under RAMP_PANIC made
+        the Ascent Easy build end its game two plan steps short in the
+        threat simulation (tests/test_map_hints_offline.py).
+
+        #Ouch Double HP (2026-11-07, case 20261107_015342): from round 37 the
+        blimp check rated round 40's 400-HP MOAB at 0.2x of the 1.4x wanted.
+        The plan's next step, n1 -> 4-0-2 (Bloonjitsu, $2,970), adds a little
+        MOAB damage, so it counted as "the plan's blimp step" and the firm
+        blimp hold kept all the cash for it through rounds 37-38; then the
+        next step (a ninja 2-0-4) was held for the same way. The real answer
+        (a sniper and an ace) only started at round 39 and the MOAB took all
+        100 lives at round 40. Cargo and Pat's Pond Half Cash (2026-11-06)
+        lost round 40 the same way at 0.1x. A step that adds a fraction of
+        what is missing is not the answer, however long it is waited for."""
+        if ratio >= self.RAMP_PANIC or short <= 0:
+            return False
+        gain = self._plan_ramp_gain(st, load)
+        return 0 < gain < self.RAMP_PLAN_SHARE * short
+
+    def _plan_ramp_gain(self, st, load):
+        """The blimp damage in reach (threats.blimp_capacity, in blimp HP)
+        that plan step st adds: 0 for anything but an upgrade of a standing
+        tower that raises it (a placement is not counted - where it lands is
+        not known before it is placed)."""
+        if st.get("do") != "upgrade" or not st.get("to"):
+            return 0.0
+        p = self.g.towers.get(st.get("id"))
+        if p is None:
+            return 0.0
+        target = [max(a, b) for a, b in zip(p.tiers, parse_cross(st["to"]))]
+        if target == list(p.tiers):
+            return 0.0
+        track, rng, reach = self._track_length(), self._range_units, self._reach_fn()
+        return max(0.0, TH.blimp_capacity([(p.tid, p.kind, target)], load, track, rng, reach) -
+                   TH.blimp_capacity([p], load, track, rng, reach))
+
     def _plan_ramp_cost(self, st, load):
         """What plan step st costs when it upgrades a standing tower to more
         blimp damage (threats.blimp_capacity); None for any other step.
@@ -3599,19 +3688,10 @@ class Executor:
         waited, $3,616 was all there was when round 40 came, and the MOAB
         leaked. A placement is not counted: where it lands, and so what it
         reaches, is not known before it is placed."""
-        if st.get("do") != "upgrade" or not st.get("to"):
+        if self._plan_ramp_gain(st, load) <= 0:
             return None
-        p = self.g.towers.get(st.get("id"))
-        if p is None:
-            return None
+        p = self.g.towers[st["id"]]       # _plan_ramp_gain found it standing
         target = [max(a, b) for a, b in zip(p.tiers, parse_cross(st["to"]))]
-        if target == list(p.tiers):
-            return None
-        track, rng, reach = self._track_length(), self._range_units, self._reach_fn()
-        gain = TH.blimp_capacity([(p.tid, p.kind, target)], load, track, rng, reach) - \
-            TH.blimp_capacity([p], load, track, rng, reach)
-        if gain <= 0:
-            return None
         fam = PRICE_FAMILY.get(self.mode, "hard")
         return sum(T.upgrade_cost(p.kind, i + 1, k, fam)
                    for i in range(3) for k in range(p.tiers[i] + 1, target[i] + 1))
