@@ -699,15 +699,41 @@ class Game:
         return False
 
     def _read_pops(self, p):
-        """Pop counter shown under the tower's name (used to learn good spots)."""
+        """Pop counter shown under the tower's name (used to learn good spots).
+
+        A count of 0 is believed only from a panel that is p's own - its
+        prices fit p's kind and tiers (_panel_fits, or one purchase the bot
+        did not see). A click can open a neighbour's panel, and a village's
+        or a hero's shows 0 pops or none. Spring Spring CHIMPS (2026-11-07
+        17:12): r1, a M.O.A.R. Glaives boomerang (4-0-2, $4,100) beside the
+        village, read 0 pops three times over nine rounds while the
+        boomerangs earned 161,756 XP that game; Executor._dead called it a
+        tower that pops nothing, its Glaive Lord step went to a fresh 0-0-0
+        boomerang, and round 95 was lost without the Glaive Lord. An
+        unproven 0 now leaves the count unknown (None) instead."""
         try:
-            img = crop(self.fresh(), self.panel(p)["pops"])
+            f = self.fresh()
+            img = crop(f, self.panel(p)["pops"])
             if not getattr(Game, "_pops_crop_saved", False):
                 Game._pops_crop_saved = True  # one crop per session, for calibration
                 from .vision import save
                 save(img, "logs/pops_crop.png")
             v = parse_int(rec_text(img)[0])
-            if v is not None and v >= getattr(p, "pops", 0):
+            if v is None:
+                return
+            if v == 0 and p.kind != "hero":
+                costs = self.path_costs(p, f)
+                kind_prices = all(self._tier_for_price(p.kind, i + 1, v) is not None
+                                  for i, (k, v) in enumerate(costs) if k == "cash" and v)
+                priced = any(k == "cash" and v for k, v in costs)
+                own = priced and kind_prices and (self._panel_fits(p.kind, p.tiers, costs)
+                                                  or self._one_missed_tier(p, costs))
+                if not own:
+                    log.info("%s: a pop count of 0 from a panel that is not provably its own "
+                             "(prices %s) - not counted", p.tid, costs)
+                    p.pops = None
+                    return
+            if v >= (getattr(p, "pops", 0) or 0):
                 p.pops = v
         except Exception:
             pass

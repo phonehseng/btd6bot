@@ -2207,7 +2207,7 @@ class Executor:
         for p in towers:
             if p.kind in self.BUFFERS or p.kind in ("farm", "spike"):
                 continue
-            if rnd - p.placed_round < self.POP_GRACE_ROUNDS or getattr(p, "pops", 0) > 0:
+            if rnd - p.placed_round < self.POP_GRACE_ROUNDS or (getattr(p, "pops", 0) or 0) > 0:
                 continue                    # too new to judge, or proven to pop: no more clicks
             if getattr(p, "pops_round", -1) < rnd - 2:
                 if self.g.select(p):        # its panel shows the pop count (Game._read_pops)
