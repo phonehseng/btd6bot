@@ -180,11 +180,17 @@ def test_continuous_sends_save_only_for_what_two_rounds_of_income_pay():
 def test_no_saving_when_the_rounds_before_cost_the_lives_left():
     # Cargo Double HP (2026-11-03): saving for round 79 lost round 75.
     # Rounds 37-39 each cost 7 lives at full strength (ToyForecast): with
-    # 15 lives left the game would end before the $2,000 upgrade arrives,
-    # so the affordable $300 one is bought now.
+    # 13 lives left round 38 ends the game, before the $2,000 upgrade can
+    # be saved for, so the affordable $300 one is bought now.
     ex = ToyEx()
-    status, found = R.best(ex, ToyForecast(), 1000, 37, 80, lives=15)
+    status, found = R.best(ex, ToyForecast(), 1000, 37, 80, lives=13)
     assert status == "buy" and found[0].cost == 300, (status, found)
+    # with 15 lives the game ends at round 39 (deciding_round looks
+    # ENDING_LOOKAHEAD rounds ahead): rounds 37-38 cost only 14, two rounds
+    # of income come first, and the $2,000 upgrade that holds round 39 is
+    # saved for - the $300 one would still lose 18 lives by then
+    status, found = R.best(ex, ToyForecast(), 1000, 37, 80, lives=15)
+    assert status == "save" and found[0].cost == 2000 and found[1] == 39, (status, found)
     # with plenty of lives the saving rule is unchanged
     assert R.best(ex, ToyForecast(), 1000, 37, 80, lives=100)[0] == "save"
 
@@ -525,10 +531,12 @@ def test_a_plan_step_out_of_reach_before_the_round_in_danger_holds_nothing():
     ex.cost = 12_000                   # payable before round 45, not before 40
     assert R.danger_round(Flat(), ex, 40) == 40
     assert R.payable_by(ex, 12_000, R.BLIND_SPEND_CASH, 45, 40) is True
-    # (250 lives: rounds 40 and 41 together cost 200, so neither ends the game)
-    assert R.best(ex, Flat(), R.BLIND_SPEND_CASH, 40, 80, lives=250) == ("wait", None)
+    # (enough lives that no round deciding_round looks at ends the game: the
+    # round being played and the next ENDING_LOOKAHEAD cost 100 each)
+    spare = 100 * (R.ENDING_LOOKAHEAD + 1) + 50
+    assert R.best(ex, Flat(), R.BLIND_SPEND_CASH, 40, 80, lives=spare) == ("wait", None)
     ex.cost = 7_000
-    assert R.best(ex, Flat(), 5000, 40, 80, lives=250) == ("wait", None)
+    assert R.best(ex, Flat(), 5000, 40, 80, lives=spare) == ("wait", None)
     # with 100 lives round 40 alone ends the game (deciding_round): the step
     # cannot be paid before it, so it holds nothing and the pick, which saves
     # 10 of those lives, is bought (Quiet Street Impoppable, 2026-11-06)
@@ -636,6 +644,17 @@ def test_purchases_are_judged_on_the_round_that_ends_the_game():
     assert found[3] > found[2], found       # round 40 really moves
     # with lives to spare for both leaks, nothing changes
     assert R.deciding_round(TwoWeakRounds(), ex, [40, 48], 500) is None
+
+
+def test_a_game_ending_round_is_seen_a_few_rounds_ahead():
+    # Pat's Pond ABR (2026-11-07): round 57 would end the game, but it was
+    # only judged on once it was next, too late to buy and grow its answer.
+    # ENDING_LOOKAHEAD rounds ahead (round 37 for round 40) it already
+    # decides, although round 48 loses more lives at half strength
+    ex = TwoCheapPaths()
+    status, found = R.best(ex, TwoWeakRounds(), 300, 40 - R.ENDING_LOOKAHEAD, 80, lives=1)
+    assert status == "buy" and found[1] == 40, (status, found)
+    assert found[3] > found[2], found       # the purchase lifts round 40 itself
 
 
 if __name__ == "__main__":

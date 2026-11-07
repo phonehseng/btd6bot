@@ -57,6 +57,7 @@ SAVE_LEAD = 2          # rounds of income needed before saving for a dearer purc
 SAVE_REACH = 3.0       # ... and it may cost at most this many times the cash in hand
 CONTINUOUS_SAVE_ROUNDS = 2   # under continuous sends: payable from the income of this many rounds
 BLIND_SPEND_CASH = 10_000   # cash idle in a crisis the model sees no use for: spent anyway
+ENDING_LOOKAHEAD = 3   # rounds after the one being played searched for a game-ending round
 MIN_LIFT = 0.01        # a purchase lifting the weakest round less than this does not
                        # outbid a plan step that is waiting for cash (waiting_plan_step)
 # Seconds one look (best) may spend rating purchases before it goes with the
@@ -306,10 +307,15 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     if not base:
         return "safe", None
     worst = max(rounds_rated, key=by_round.get)    # the round losing most
-    # only the round being played and the next one: income still comes in
-    # before a later round, the saving rules (save_target, dies_first) weigh
-    # those, and danger_round looks at the same two rounds
-    ending = deciding_round(forecast, ex, [r for r in rounds_rated if r <= rnd + 1], lives)
+    # the round being played and the next ENDING_LOOKAHEAD: a game-ending
+    # round has to be seen while a purchase for it can still be paid and
+    # grown. Only the next round used to count, so on Pat's Pond ABR
+    # (2026-11-07, case 20261107_044339) round 57 - rated 0.83, "145 of the
+    # 100 lives" - was judged on only once it was next; rounds 54-56 judged
+    # purchases on round 63 (0.28), nothing lifted that enough, and $13.9k
+    # sat unspent until round 57 ended the game. Rounds further off are left
+    # to the saving rules (save_target, dies_first): income comes in first.
+    ending = deciding_round(forecast, ex, [r for r in rounds_rated if r <= rnd + ENDING_LOOKAHEAD], lives)
     if ending is not None and ending != worst:
         # the game would end at `ending`: rounds after it never come, so the
         # purchase is judged on that round and the ones before it only
