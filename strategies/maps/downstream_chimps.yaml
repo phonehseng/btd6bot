@@ -1,0 +1,120 @@
+# Downstream, CHIMPS: one buccaneer in the pond right of the entrance lane
+# opens alone (the match adds its starter dart) and grows to a Carrier
+# Flagship; Quincy follows between the loops; a Radar Scanner / Jungle Drums
+# village above the pond, a Glaive Lord boomerang beside it and a Cripple
+# MOAB sniper finish.
+#
+# Why: the owner's goal is CHIMPS black borders. On 2026-11-07 the bot beat
+# CHIMPS on nine maps with builds that follow a published community strategy
+# step by step and let the plan own the cash (`plan_first`); the Carrier
+# Flagship recipe below (lotusisland_chimps.yaml) won six of them, Cracked
+# first. Downstream has water beside its entrance lane, so this build uses
+# that recipe. It is played live to learn, not gated on the damage model
+# (which does not count heroes).
+#
+# Sources:
+#   * bloon.games has no Downstream CHIMPS page
+#     (https://bloon.games/how-to-beat-chimps-on-downstream/ answers 404, and
+#     the site's map index lists none); no written Downstream CHIMPS guide
+#     was found.
+#   * The plan is therefore bloon.games' written Carrier Flagship recipe, the
+#     one the bot won Cracked CHIMPS with: "#BTD6 | Cracked | Hard - CHIMPS
+#     Quicky Strategy Guide" (https://bloon.games/how-to-beat-chimps-on-cracked)
+#     - Quincy; a buccaneer 2-2-0, Destroyer, a village 2-2-0 before round 40,
+#     Aircraft Carrier, Carrier Flagship before round 60, a Glaive Lord
+#     boomerang before round 80, the village to Primary Expertise before
+#     round 90, a Cripple MOAB sniper before round 100.
+#   * bloonswiki Downstream (https://www.bloonswiki.com/Downstream_(BTD6)):
+#     one long lane, in at the top, a loop bottom-left and a loop top-right,
+#     out at the bottom right; no line-of-sight blockers; the water right of
+#     the start lets a Destroyer hit with both sides of its attack.
+#
+# Changes from the guide, and why (as on Cracked and Lotus Island):
+#   * the guide puts the boomerang and the sniper on the Flagship's deck; the
+#     bot does not place towers on a deck, so the boomerang stands east of
+#     the village (28.6 units from it) and the sniper at the top;
+#   * a Night Vision sniper (0-1-0) for round 24's camo: neither a 2-2-0
+#     buccaneer nor Quincy at that level sees camo, and the village (Radar
+#     Scanner) only comes at about round 35;
+#   * the account has the village's top path to tier 4 only, so it ends at
+#     Primary Mentoring (4-2-0), not Primary Expertise;
+#   * the two $350 rocks inside the loops are not bought: with both cleared
+#     Quincy's best cell sees 31% instead of 25% and a boomerang's 27%
+#     instead of 21%, but those cells are 60 and 114 units from the boat's
+#     village (radius 40-55) and 91 from the boat, and $350 is over half the
+#     opening cash;
+#   * the opening is the buccaneer, not Quincy: see "Opening" below.
+#
+# Spots (map geometry with the main checkout's learned refusals,
+# data/maps/downstream.npz, checked in placement order; "cells" are track
+# cells in range and in line of sight, placement.visible_cover, of 1,969;
+# every spot has at least 7 of its 8 neighbour cells legal and stands at
+# least 0.08 screen heights from the others): the boat at (0.355, 0.351) in
+# the pond right of the entrance lane reaches 496 cells (25%; the pond's best
+# cell 513 has 6 legal neighbours); Quincy at (0.644, 0.470), between the
+# loops, 483 (25%, as good as the best hero cell); the village at (0.441,
+# 0.317), 31.9 units from the boat (radius 40: 8.1 units of slack under the
+# strict buff rule, 16.1 once Jungle Drums' Bigger Radius stands); the
+# boomerang at (0.510, 0.376), 353 cells (18%; the best boomerang cells, 21%,
+# are Quincy's); the sniper at (0.414, 0.112) on the open top edge sees the
+# whole track (the Medium build's (0.452, 0.138) is refused in the learned
+# data).
+#
+# Opening: CHIMPS starts with $650 at Hard prices. Quincy alone held round 6
+# only from spots seeing at least ~23% of the track; here the boat's cell
+# sees a little more than his (25.2% against 24.5%), so as on Lotus Island and
+# Frozen Over (both won) the boat opens alone ($430); the match adds its $215
+# starter dart beside a lone non-hero opener (Match._lone_opener) and Quincy
+# follows when the cash allows. Damage model, boat alone (no dart, no
+# Quincy): rounds 6-10 rate 2.51, 2.07, 1.59, 1.23, 1.41.
+#
+# Cash (CHIMPS curve, Hard prices, tests/test_chimps_builds_offline.
+# plan_timeline; the starter dart's $215 puts each step up to a round later):
+# boat R5, Quincy R8, 2-2-0 R16, Night Vision R18, Destroyer R29, Radar R35,
+# Jungle Drums R37, Aircraft Carrier R44, Carrier Flagship R58, Glaive Lord
+# R78, Primary Mentoring R79, Cripple MOAB R92 - Lotus Island's timings.
+# tools/simulate_threats on the learned map: no threat gaps, 20/20 steps.
+#
+# Status: new 2026-11-07, not played yet.
+id: downstream_chimps
+map: Downstream
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  # not gated on the damage model: played live to learn (see above)
+  base_success: {chimps: 0.5}
+  maps: [Downstream]
+  revised: "2026-11-07T12:00"
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.355, 0.351]}   # pond right of the entrance lane: opens alone
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.644, 0.470]}      # Quincy, between the loops
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: upgrade, id: b1, to: 2-1-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.414, 0.112]}   # top edge: sees the whole track
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.441, 0.317]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.510, 0.376]}   # east of the village
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
