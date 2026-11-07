@@ -585,7 +585,7 @@ def _curve(keys, t):
 
 def _mover_poses(action, areas_by_id):
     """[(dx, dz, degrees, cx, cz), ...]: every position a moving area takes,
-    other than the one it starts in, as a rotation by `degrees` about (cx, cz)
+    other than the one the scene holds it in, as a rotation by `degrees` about (cx, cz)
     followed by a shift (dx, dz). Rotations are as in Unity: positive turns
     clockwise seen from above."""
     kind = action["type"]
@@ -606,16 +606,27 @@ def _mover_poses(action, areas_by_id):
         times = action.get("stateTimes") or []
         if not moved or not times:
             return []
+        # The scene holds each platform where its animation clip is at time 0,
+        # not in its starting state: where a curve is absolute, its time-0
+        # value is the area's own origin (Sanctuary: PlatformCentreTop x
+        # -26.56 vs origin -26.3, PlatformLH2 (-68.8, -74.9) vs (-70.06,
+        # -73.15), PlatformCentreBottom x -14.8 vs -14.76), while the starting
+        # state is elsewhere (CentreTop starts in state 1, x = 0). So every
+        # state the platform takes - the starting one included - is a shift
+        # from time 0. (Measured from the starting state instead, CentreTop's
+        # swept ground lay 26.5 units too far left.)
         start = int(action.get("startingState", 0))
         states = {start} | set(action.get("triggerNumToStateNum") or [])
-        t0 = times[min(start, len(times) - 1)]
+        t0 = 0.0
         cx, cz = (moved[0].get("origin") or [0.0, 0.0])[:2]
         xs, zs, rs = (action.get(k) or [] for k in ("xPosCurve", "zPosCurve", "yRotCurve"))
         poses = []
-        for s in sorted(states - {start}):
+        for s in sorted(states):
             t = times[min(s, len(times) - 1)]
-            poses.append((_curve(xs, t) - _curve(xs, t0), _curve(zs, t) - _curve(zs, t0),
-                          _curve(rs, t) - _curve(rs, t0), cx, cz))
+            pose = (_curve(xs, t) - _curve(xs, t0), _curve(zs, t) - _curve(zs, t0),
+                    _curve(rs, t) - _curve(rs, t0), cx, cz)
+            if any(abs(v) > 1e-6 for v in pose[:3]):
+                poses.append(pose)   # the scene's own pose needs no entry
         return poses
     return []
 
@@ -917,6 +928,12 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
     wx, wz = proj.cell_world()
     world = np.stack([wx, wz], axis=-1)
     for mover in dyn.movers:
+        # areas one action moves keep their places on each other (Sanctuary's
+        # top platform carries two pools): a pool sweeping over its own
+        # platform's ground never reaches the towers riding there
+        together = np.zeros(shape, bool)
+        for aid in mover["areas"]:
+            together |= _poly_mask(areas_by_id[aid]["polygons"], proj)
         for aid in mover["areas"]:
             area = areas_by_id[aid]
             here = _poly_mask(area["polygons"], proj)
@@ -930,7 +947,7 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
                     out["sight"] |= swept
                     out["sight_height"][swept] = np.maximum(out["sight_height"][swept], area_height(area))
             else:
-                unsafe |= swept & ~here
+                unsafe |= swept & ~together
                 moving |= here
                 carriers.append((here, mover["poses"]))
                 far = np.zeros(shape, np.float32)

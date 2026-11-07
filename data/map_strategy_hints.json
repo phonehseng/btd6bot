@@ -413,7 +413,7 @@
     }
    },
    "strategies": [
-    "coveredgarden_hard"
+    "coveredgarden_medium"
    ],
    "sources": [
     "https://www.bloonswiki.com/Covered_Garden",
@@ -5133,11 +5133,11 @@
       {
        "tower": "sniper",
        "at": [
-        0.735,
-        0.08
+        0.63,
+        0.19
        ],
        "note": "'bottom' sniper R9 -> 1-0-1 R16 (Strong) -> 1-0-2 R18 -> 2-0-2 R38 -> 3-0-2 R49 -> 4-0-2 R55 (Supply Drop abilities)",
-       "where": "glacier top band (global range; any spot that survives to R80)"
+       "where": "glacier top band (global range; any spot that survives to R80) [moved 2026-11-07: the old spot was under the round counter, where a click never selects the tower]"
       },
       {
        "tower": "heli",
@@ -5160,11 +5160,11 @@
       {
        "tower": "sniper",
        "at": [
-        0.772,
-        0.07
+        0.617,
+        0.138
        ],
        "note": "'top' sniper R45 1-3-0 -> 2-4-0 R49 -> 2-5-0 Elite Sniper R59 (set back to First)",
-       "where": "glacier top band"
+       "where": "glacier top band [moved 2026-11-07: the old spot was under the round counter, where a click never selects the tower]"
       },
       {
        "tower": "village",
@@ -5203,8 +5203,7 @@
       "sniper",
       "village",
       "alchemist",
-      "spike",
-      "glue"
+      "spike"
      ],
      "last_round": 100,
      "spots": [
@@ -5230,11 +5229,11 @@
       {
        "tower": "sniper",
        "at": [
-        0.735,
-        0.08
+        0.82,
+        0.24
        ],
        "note": "R20 sniper; 0-2-0 R30, 0-2-2 R32, 0-2-3 R36, 0-2-4 R40, 0-2-5 R53",
-       "where": "glacier top band"
+       "where": "glacier top band [moved 2026-11-07: the old spot was under the round counter, where a click never selects the tower]"
       },
       {
        "tower": "village",
@@ -5260,17 +5259,8 @@
         0.83,
         0.3
        ],
-       "note": "R92-99 2-0-5 Perma-Spike on Smart",
+       "note": "R92-99 2-0-5 Perma-Spike on Smart (the source also adds a 0-2-4 glue at R92: dropped 2026-11-07, its spot was under the round counter and no ground that lasts to R100 is left for it)",
        "where": "bottom of the glacier strip by the final exits"
-      },
-      {
-       "tower": "glue",
-       "at": [
-        0.772,
-        0.07
-       ],
-       "note": "R92 0-2-4 on Strong",
-       "where": "glacier top band"
       }
      ],
      "version": "v53 (Update 53)"

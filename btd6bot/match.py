@@ -1383,9 +1383,11 @@ class Match:
         if outcome == "victory":
             self.tower_xp.round_end(rnd, list(self.g.towers.values()))   # the last round paid too
         self.stats["tower_xp"] = self.tower_xp.rounded()
-        # plan steps given up because the game refused every spot tried: the
-        # runner notes a lost game with any as placement trouble on the map
+        # plan steps given up for this game (journal), and those among them the
+        # game refused spots for: the runner notes a lost game with any of
+        # the latter as placement trouble on the map
         self.stats["steps_given_up"] = len(getattr(self.ex, "dead_steps", ()))
+        self.stats["steps_refused"] = len(getattr(self.ex, "refused_dead_steps", ()))
         if self.depths:
             # the deepest point bloons reached in any round (bloonwatch.py)
             self.stats["bloon_depth"] = max(s["deepest"] for s in self.depths)

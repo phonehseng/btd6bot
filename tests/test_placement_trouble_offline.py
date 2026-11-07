@@ -7,11 +7,16 @@ was refused, a sniper step was given up, and the game was lost at round 27.
 Every other mode on the map still looked just as safe.
 
 Covers:
-  * note_placement_trouble lowers the prior of every mode on the map (and
-    of map-specific builds too) under the safe-mode bar; other maps keep theirs;
+  * note_placement_trouble lowers the prior of every mode on the map (for
+    general builds and builds allowed on several maps) under the safe-mode
+    bar; other maps keep theirs;
   * the record survives a save/load and a win on the map clears it;
-  * the runner notes "no defence" errors and lost games with a given-up step,
-    not wins-with-refusals or losses with an outside cause.
+  * the runner notes "no defence" errors and lost games with a step given
+    up after refused spots, not wins-with-refusals, losses with an outside
+    cause, or steps given up after 0 refused spots (no legal spot in reach
+    on the bot's own map data: the build, not the ground);
+  * the map's own build (strategies/maps) is not doubted for it, except on
+    moving ground (Geared, Sanctuary).
 Run: python tests/test_placement_trouble_offline.py"""
 import sys
 import tempfile
@@ -77,14 +82,33 @@ def test_runner_rules():
     assert acct.placement_trouble == {}
     note({"outcome": "defeat", "steps_given_up": 1, "outside_cause": "game crash"})
     assert acct.placement_trouble == {}
+    note({"outcome": "defeat", "steps_given_up": 2, "steps_refused": 0})   # no spot in reach: the build
+    assert acct.placement_trouble == {}
     note({"outcome": "no defence"})
-    note({"outcome": "defeat", "steps_given_up": 1})
+    note({"outcome": "defeat", "steps_given_up": 1, "steps_refused": 1})
     assert acct.placement_trouble == {MAP: 2}
     note({"outcome": "victory"})
     assert acct.placement_trouble == {} and len(saved) == 3   # the first win saved nothing
 
 
+def test_own_map_build_keeps_its_prior():
+    """Peninsula's own Deflation build is not doubted for the trouble
+    general builds ran into there; Geared's own build still is (its gears
+    turn, so the refusals learned there say little about any spot)."""
+    for map_name, doubted in (("Peninsula", False), ("Geared", True)):
+        own = planner.StrategySpec(id="t_own", towers={"dart": (0, 0, 0)}, modes=frozenset(MODES),
+                                   base_success={m: 0.9 for m in MODES}, maps=frozenset({map_name}))
+        a = AccountState()
+        before = planner.prior_win_probability(a, own, map_name, "medium")
+        a.note_placement_trouble(map_name)
+        a.note_placement_trouble(map_name)
+        after = planner.prior_win_probability(a, own, map_name, "medium")
+        assert (after < before) == doubted, (map_name, before, after)
+        assert planner.trouble_applies(SPECS[0], map_name)   # a general build always is
+
+
 if __name__ == "__main__":
+    test_own_map_build_keeps_its_prior()
     test_prior_drops_on_every_mode()
     test_persist_and_clear()
     test_runner_rules()

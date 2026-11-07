@@ -131,6 +131,46 @@ def has_geometry(model):
     return getattr(model, "sight", None) is not None and "land" in model.scan
 
 
+def hud_zones():
+    """Screen rectangles (x0, y0, x1, y1, as fractions) where the in-game HUD
+    sits over the map and takes the clicks: the round counter with the
+    settings gear top right, from the counter's left edge to the play
+    field's right edge. Taken from the calibrated layout (layout.LAYOUTS),
+    so it moves with it.
+
+    A tower can be dropped there, but a click on its centre lands on the HUD
+    and never opens its upgrade panel. Erosion Reverse (2026-11-06 13:20):
+    four surplus snipers bought at y=0.070 under the round counter
+    (x 0.724-0.836) were each "not on the map; forgotten" after two failed
+    selections and bought again - $1,264 for towers the bot could not use.
+
+    The lives and cash bar top left is left out on purpose: towers there
+    were selected and upgraded without trouble (an alchemist at 0.142,0.095
+    on 2026-10-24), and several Deflation builds use that strip."""
+    from .layout import LAYOUTS
+    lay = LAYOUTS["16:10"]
+    rnd, gear, playfield = lay["round"], lay["gear"], lay["playfield"]
+    top = playfield[1]
+    # the gear icon is as far below its centre as above it
+    bottom = max(rnd[3], gear[1] + (gear[1] - top))
+    return [(rnd[0], top, playfield[2], bottom)]
+
+
+def hud_cells(model):
+    """Bool grid of the play-field cells whose centre lies under the HUD
+    (hud_zones): no tower should stand there."""
+    w, h = GRID
+    x0, y0, x1, y1 = model.playfield
+    fx = x0 + (np.arange(w) + 0.5) / w * (x1 - x0)
+    fy = y0 + (np.arange(h) + 0.5) / h * (y1 - y0)
+    out = np.zeros((h, w), bool)
+    for zx0, zy0, zx1, zy1 in hud_zones():
+        cols = (fx >= zx0) & (fx <= zx1)
+        rows = (fy >= zy0) & (fy <= zy1)
+        out |= rows[:, None] & cols[None, :]
+    return out
+
+
 def reach_units(kind, hero=None):
     """A tower's range in world units: None for global range (sniper,
     mortar, heli, ace, dartling, farm); for a hero its range, 0 when not
@@ -236,6 +276,9 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
     # close to a forbidden one" - no legal spot at all, and an Easy game
     # was lost with one sniper.)
     valid = (dist >= radius) & free
+    # a tower under the HUD could be bought but never selected again
+    if valid.shape == (GRID[1], GRID[0]):
+        valid &= ~hud_cells(model)
     if towers:
         hh, ww = valid.shape
         yy, xx = np.mgrid[0:hh, 0:ww]

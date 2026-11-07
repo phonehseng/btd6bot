@@ -306,6 +306,15 @@ class Spot:
     score: float         # covered route length (world units, all routes summed)
 
 
+# --learned: plan on the map's learned file (data/maps/<map>.npz), so the
+# spots the live game refused are left out as the bot itself leaves them out.
+# Off by default: a worktree's copy of that file may be stale.
+USE_LEARNED = False
+# --panes: also plan on ground under cycling panes (Covered Garden), open
+# one round in four (see MapSetup.pane_spots). Off by default.
+USE_PANES = False
+
+
 class MapSetup:
     """Geometry of one map for one mode: the evaluator's Track, the bot's
     MapModel grids (placement, line of sight) and candidate spots per kind."""
@@ -316,7 +325,8 @@ class MapSetup:
         from btd6bot.maplearn import MapModel
         self.map_name = map_name
         self.track = D.Track(map_name, reverse=(mode == "reverse"))
-        self.model = MapModel(map_name, L.LAYOUTS["16:10"]["playfield"])
+        playfield = L.LAYOUTS["16:10"]["playfield"]
+        self.model = MapModel.load(map_name, playfield) if USE_LEARNED else MapModel(map_name, playfield)
         G.apply(self.model, self.track.geom)
         self._spots = {}
 
@@ -341,6 +351,25 @@ class MapSetup:
         x, z, h = self.track.frac_to_world(fx, fy)
         return Spot(cell=tuple(cell), x=x, z=z, h=h, fx=fx, fy=fy, score=0.0)
 
+    def pane_spots(self, kind):
+        """Cells open to `kind` only while their pane is open (Covered
+        Garden's glass, mapgeom.pane_open): the union over one cycle of the
+        rounds. The executor places and upgrades a tower there only in its
+        pane's rounds (Executor._pane_shut, _reachable), so a plan using them
+        must be re-checked with that timing; the optimizer itself buys as
+        soon as the cash allows."""
+        from btd6bot import mapgeom as G
+        from btd6bot import placement as P
+        grids = G.grids_for(self.model)
+        if not grids or not grids.get("panes"):
+            return np.zeros(self.model.heat.shape, bool)
+        base = P.valid_spots(self.model, kind)
+        n = max(len(masks) for _, masks in grids["panes"])
+        out = np.zeros(base.shape, bool)
+        for rnd in range(1, n + 1):
+            out |= P.valid_spots(self.model, kind, now_round=rnd)
+        return out & ~base
+
     def spots(self, kind):
         """The best SPOTS_PER_KIND spots for a kind, best first, no two of
         them overlapping (so later towers of the kind have room)."""
@@ -354,6 +383,8 @@ class MapSetup:
             return self._spots[kind]
         from btd6bot import placement as P
         ok = P.valid_spots(self.model, kind)
+        if USE_PANES and ok is not None:
+            ok = ok | self.pane_spots(kind)
         out = []
         if ok is not None and ok.any():
             rows, cols = np.nonzero(ok)
@@ -1353,8 +1384,15 @@ def main():
     ap.add_argument("--maps", help="only these maps (comma separated) of the default runs")
     ap.add_argument("--chimps", action="store_true", help="run CHIMPS on CHIMPS_MAPS instead of the default runs")
     ap.add_argument("--nice", action="store_true", help="run at below-normal priority (beside the live bot)")
+    ap.add_argument("--panes", action="store_true",
+                    help="also use ground under cycling panes (Covered Garden); re-check the pane timing")
+    ap.add_argument("--learned", action="store_true",
+                    help="leave out the spots the live game refused (data/maps/<map>.npz)")
     ap.add_argument("-v", action="store_true")
     a = ap.parse_args()
+    global USE_LEARNED, USE_PANES
+    USE_LEARNED = USE_LEARNED or a.learned
+    USE_PANES = USE_PANES or a.panes
     if a.nice:
         lower_priority()
     logging.basicConfig(level=logging.INFO if a.v else logging.WARNING, format="%(name)s: %(message)s")

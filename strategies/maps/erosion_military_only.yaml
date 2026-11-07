@@ -1,4 +1,4 @@
-# Erosion, Medium Military Monkeys Only: Snipers, Subs and Aces.
+# Erosion, Medium Military Monkeys Only and Reverse: Snipers, Subs and Aces.
 #
 # Map: Six lanes, one active at a time; the active lane moves across the
 # map, and after rounds 17, 35, 53, 71 and 89 the ice melts and towers
@@ -22,6 +22,12 @@
 # round_margin; purchases replayed in order as cash allows, account boosts):
 # the plan alone has a worst round margin of 2.86 (round 55); every round at
 # 2.0 or more. Threat simulation (tools/simulate_threats.py): no gaps.
+# Reverse (added 2026-11-07; every tower is a Military tower, and Reverse
+# only runs the lanes backwards): the same replay on the reversed lanes has a
+# worst margin of 2.54 (round 54), next lowest R58 2.65, R55 2.77. Reverse
+# had been lost twice with general builds (military_heli_sniper: surplus
+# snipers under the round counter, re-bought four times; solo_ace: no ace
+# spot on lasting ground).
 #
 # Sources:
 #   * bloonswiki: lane changes and melting ice; Ice Monkeys turn into water
@@ -45,10 +51,10 @@
 id: erosion_military_only
 map: Erosion
 hero: psi
-modes: [military_only]
+modes: [military_only, reverse]
 planner:
   towers: {sub: [4, 3, 4], sniper: [3, 3, 0], ace: [2, 3, 1], buccaneer: [4, 0, 2]}
-  base_success: {military_only: 0.8}
+  base_success: {military_only: 0.8, reverse: 0.8}
   maps: [Erosion]
 plan:
   - {do: place, id: sb1, kind: sub, role: dps, at: [0.142, 0.93]}             # R15: bottom-left water; sees 65% of lane 1
@@ -107,7 +113,7 @@ plan:
   - {do: place, id: s7, kind: sniper, role: dps, target: strong, at: [0.831, 0.223]} # R46: permanent glacier (top-right); map-wide (line of sight)
   - {do: upgrade, id: s7, to: 1-2-0}                                          # R46: Shrapnel Shot
   - {do: upgrade, id: ac2, to: 2-3-0}                                         # R46: Bomber Ace
-  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.82, 0.274]} # R46: permanent glacier (top-right); map-wide (line of sight)
+  - {do: place, id: s8, kind: sniper, role: dps, target: strong, at: [0.831, 0.283]} # R46: permanent glacier (top-right); map-wide (line of sight)
   - {do: upgrade, id: s8, to: 1-2-0}                                          # R46: Shrapnel Shot
   - {do: upgrade, id: s4, to: 2-3-0}                                          # R47: Bouncing Bullet
   - {do: upgrade, id: s5, to: 1-3-0}                                          # R48: Bouncing Bullet
@@ -125,7 +131,7 @@ plan:
   - {do: upgrade, id: ac6, to: 0-1-0}                                         # R51: Exploding Pineapple
   - {do: upgrade, id: s5, to: 2-3-0}                                          # R51: Bouncing Bullet
   - {do: upgrade, id: ac6, to: 0-3-1}                                         # R51: Bomber Ace
-  - {do: place, id: ac7, kind: ace, role: dps, at: [0.729, 0.3]}              # R51: permanent glacier (top-right); sees 11% of lane 6, 5% of lane 5
+  - {do: place, id: ac7, kind: ace, role: dps, at: [0.719, 0.291]}              # R51: permanent glacier (top-right); sees 11% of lane 6, 5% of lane 5
   - {do: upgrade, id: ac7, to: 0-1-0}                                         # R51: Exploding Pineapple
   - {do: place, id: ac8, kind: ace, role: dps, at: [0.537, 0.317]}            # R51: ice between the lanes; sees 6% of lane 4
   - {do: upgrade, id: ac8, to: 0-1-0}                                         # R51: Exploding Pineapple

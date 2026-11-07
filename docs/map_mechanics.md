@@ -185,15 +185,80 @@ perks (`RemovableCostMultiplierModModel` exists) - read the panel.
 `mapfit.strategy_fit(..., last_round=...)` likewise wait for the strategy
 and planner to pass the round and the game's length.
 
+## Covered Garden: building under the panes
+
+A build may put a tower on garden ground under a pane (its `at` lies under
+one). The executor then waits for that pane's round: the place step is set
+aside while the pane is shut (`Executor._pane_shut`, fail reason "pane"),
+the rest of the plan goes on, the tower's later steps wait behind it, and
+an upgrade or sale of a tower under a shut pane is set aside the same way
+instead of holding up the plan. `tools/optimize_builds.py --panes` lets the
+optimizer use that ground; its own replay buys as soon as the cash allows,
+so such a plan must be re-checked with the pane timing (a step can wait up
+to three rounds).
+
+## Towers under the HUD
+
+The round counter and the settings gear (top right, from the counter's left
+edge to the play field's edge, down to y = 0.11) take the clicks meant for
+a tower under them: it can be dropped there but never selected again.
+`placement.hud_zones` keeps every tower's centre out of that band. Erosion
+Reverse (2026-11-06) bought four surplus snipers at y = 0.070 there, could
+not select any of them, "forgot" them and bought them again. The lives and
+cash bar (top left) is not excluded: towers there were selected fine.
+
+## Sanctuary: what the bot still needs
+
+The six platforms move at the start of every round along animation curves
+(`MovingPlatformAction`: `triggerNumToStateNum` sequences of 2, 4, 6 and 8
+states, so the whole layout repeats every 24 rounds, as bloonswiki says).
+The scene holds each platform where its clip is at time 0 (an absolute
+curve's time-0 value is the area's own origin); since 2026-11-07 the poses
+are measured from there, not from the starting state, and areas moved by one
+action (the top platform and its two pools) no longer count each other's
+swept ground as unsafe.
+
+What still keeps Sanctuary out of reach (two Medium games, 2026-11-03 and
+2026-11-05, both lost):
+
+1. **Placement in the round being played.** The grids hold the platforms in
+   the scene's pose. A Fast Track game starts at round 15 (Medium) or 22
+   (Hard), with the platforms elsewhere: `sanctuary_medium`'s snipers were
+   refused 22 and 26 times and given up (2026-11-03). Needed: the platform
+   pose for the HUD round (state = sequence[(round - 1 + phase) % length]),
+   and placement grids (`grids_for(now_round=...)`) with each platform moved
+   to it, as Covered Garden's panes already are.
+2. **Following the towers.** A tower rides its platform; the bot clicks the
+   spot where it placed it, finds nothing, and after two failed selections
+   "forgets" the tower and buys it again (sniper1, 2026-11-05 round 33).
+   `carried.CarriedTowers` does this for Geared's gears (`_Rotor`); a
+   `_Platform` mover is needed that moves the remembered click spot by the
+   pose change between rounds.
+3. **The phase, checked in the game.** Which state a platform is in at a
+   given HUD round (and whether a Fast Track start counts the skipped
+   rounds) could not be settled from the logs: the 11 placements logged
+   there all fit the two centre platforms, which barely move. A self-check
+   would settle it in play: after a placement, find which states put the
+   click inside a platform; after a failed selection, try the tower's spot
+   under the other states of its platform before forgetting it, and keep
+   the state that selected it. Also still open: the sign of z and of the
+   rotation in the curves (LH1/RH1 swing far to the side in state 4).
+
+Until then only global-range towers bought in one go (place and upgrade
+within the same round) avoid both problems, and the planner keeps doubting
+the map (placement trouble 2).
+
 ## Needs checking in the game
 
-- Sanctuary's platform offsets: the curves are applied as shifts relative
-  to each platform's starting state, in the scene's x/z (sign of z and the
-  turning centre not confirmed).
+- Sanctuary's platform offsets: the curves are applied as shifts from the
+  clip's time 0 (the scene's pose), in the scene's x/z (sign of z, the sign
+  of the rotation and the turning centre not confirmed; see above).
 - Covered Garden's pane timing is taken from the guides (bottom-left open
   on round 1, clockwise every round), which matches the scene's cycle order
   (LowerLeft, UpperLeft, UpperRight, LowerRight) with roundsPerRotate 0 read
   as 1. A pane that shuts mid-click is not learned as a refused spot.
+  Builds that wait for a pane (above) depend on it, and on a Fast Track
+  start following the round number.
 - Whether `OnMapLoadedWithActiveRegenRemovableTrigger` fires in a fresh
   game (treated as "may happen", which paints both Ancient Portal paths).
 - Removal prices on Easy/Hard/Impoppable compared with the scene's.

@@ -1,0 +1,174 @@
+# Covered Garden, Medium: skywardens and mermonkeys in the garden, each bought
+# in its pane's round; a sniper on the left strip opens.
+#
+# Why: glass panes cover three of the four garden quarters and the open one
+# moves clockwise every round (bottom-left in round 1, then top-left,
+# top-right, bottom-right). Ground outside the garden is open all game, but
+# from there the damage model finds no Medium build that holds: the best
+# strips-only plan (tools/optimize_builds.py, snipers and skywardens on the
+# strips, learned refusals left out) rates round 55 at 0.73. The one cell a
+# heli pad fits on (coveredgarden_hard's Apache plan, which this replaces)
+# was refused by the live game, and the plans played so far lost at round
+# 27 (hard_ninja_alch_sniper, 2026-10-27) and round 76 (a wizard plan that
+# found no spots, 2026-11-07). The garden quarters see far more of the lane.
+#
+# How the bot builds under a pane (docs/map_mechanics.md, "Covered Garden:
+# building under the panes"): a place step whose `at` is under a shut pane
+# is set aside until that pane's round (Executor._pane_shut); the rest of
+# the plan goes on, the tower's later steps wait behind it, and an upgrade of
+# a tower under a shut pane is set aside the same way. Fast Track starts
+# Medium at round 15, when the top-right pane is open.
+#
+# Sources:
+#   * bloonswiki Covered_Garden: pane rule, open quarter per round
+#     (https://www.bloonswiki.com/Covered_Garden)
+#   * bloons fandom Covered_Garden/Strategies: ground under the glass is
+#     usable only in its round (https://bloons.fandom.com/wiki/Covered_Garden/Strategies)
+#   * Touch, Tap, Play Covered Garden guide: towers by the fountain see most
+#     of the lane (https://www.touchtapplay.com/btd6-covered-garden-strategy-guide/)
+#
+# How it was made: tools/optimize_builds.py "Covered Garden" medium --panes
+# --learned on the account's economy (Fast Track: round 15 with $6,057;
+# Double Cash), XP target mermonkey; then the opening sniper s0 was added by
+# hand. The optimizer buys as soon as the cash allows (worst margin 2.00,
+# round 59); replayed with the pane timing (every step on garden ground
+# waits for its pane's round, the rest goes on, as the executor does):
+#   worst margins R15 1.48 (the opening round, bought before Play), R28 1.98
+#   (six leads before the garden's lead poppers stand), R59 2.00, R33 2.09;
+#   every other round 2.28 or more. Without s0's Full Metal Jacket round 28
+#   was 1.81. Reverse was checked too (R59 1.61) and is not listed.
+# Hard, the same plan with the same timing (Fast Track: round 22, $8,930):
+#   worst margins R33 1.92, R37 1.92, R59 1.92, R26 2.04; rounds 61-80 2.89
+#   or more (the plan is bought by round ~59; the executor's surplus
+#   spending after that is not counted).
+# The `R..` in the comments are the optimizer's rounds, before the pane timing
+# moves a step by up to three rounds. The hero's damage is not counted.
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan
+# order for the pane's round, and not on a cell the live game refused (main's
+# learned data/maps/coveredgarden.npz, 2026-11-07). Untested in play:
+# base_success is set low until the record calibrates it.
+id: coveredgarden_medium
+map: Covered Garden
+hero: quincy
+modes: [medium, hard]
+planner:
+  towers: {skywarden: [2, 2, 0], mermonkey: [4, 4, 2], bomb: [0, 0, 0], sniper: [4, 0, 1], wizard: [0, 3, 2], ice: [2, 0, 4]}
+  base_success: {medium: 0.8, hard: 0.78}
+  maps: [Covered Garden]
+plan:
+  - {do: place, id: s0, kind: sniper, role: dps, target: strong, at: [0.045, 0.862]}   # strip, open all game: pops while the garden waits for its panes
+  - {do: upgrade, id: s0, to: 1-0-1}   # Full Metal Jacket: round 28's leads come before the garden's lead poppers
+  - {do: place, id: sky1, kind: skywarden, role: dps, segment: [0.39, 0.83], at: [0.345, 0.249]}   # R15: $205, secures round 15; cash left $5,852; under the top-left pane
+  - {do: place, id: sky2, kind: skywarden, role: dps, segment: [0.38, 0.79], at: [0.334, 0.300]}   # R15: $205, secures round 15; cash left $5,647; under the top-left pane
+  - {do: place, id: sky3, kind: skywarden, role: dps, segment: [0.16, 0.51], at: [0.281, 0.538]}   # R15: $205, secures round 15; cash left $5,442; under the bottom-left pane
+  - {do: place, id: sky4, kind: skywarden, role: dps, segment: [0.14, 0.46], at: [0.238, 0.538]}   # R15: $205, secures round 15; cash left $5,237; under the bottom-left pane
+  - {do: place, id: sky5, kind: skywarden, role: dps, segment: [0.11, 0.42], at: [0.216, 0.624]}   # R15: $205, secures round 15; cash left $5,032; under the bottom-left pane
+  - {do: place, id: sky6, kind: skywarden, role: dps, segment: [0.62, 0.92], at: [0.494, 0.283]}   # R15: $205, secures round 15; cash left $4,827; under the top-right pane
+  - {do: place, id: sky7, kind: skywarden, role: dps, segment: [0.63, 0.93], at: [0.526, 0.266]}   # R15: $205, secures round 15; cash left $4,622; under the top-right pane
+  - {do: place, id: mer8, kind: mermonkey, role: dps, segment: [0.13, 0.3], at: [0.174, 0.760]}   # R15: $300, secures round 15; cash left $4,322; under the bottom-left pane
+  - {do: place, id: sky9, kind: skywarden, role: dps, segment: [0.65, 0.95], at: [0.537, 0.317]}   # R15: $205, secures round 15; cash left $4,117; under the top-right pane
+  - {do: place, id: sky10, kind: skywarden, role: dps, segment: [0.65, 0.93], at: [0.558, 0.249]}   # R15: $205, secures round 15; cash left $3,912; under the top-right pane
+  - {do: place, id: sky11, kind: skywarden, role: dps, segment: [0.64, 0.91], at: [0.505, 0.334]}   # R15: $205, secures round 15; cash left $3,707; under the top-right pane
+  - {do: place, id: sky12, kind: skywarden, role: dps, segment: [0.68, 0.95], at: [0.548, 0.368]}   # R15: $205, secures round 15; cash left $3,502; under the top-right pane
+  - {do: place, id: mer13, kind: mermonkey, role: dps, segment: [0.12, 0.23], at: [0.174, 0.606]}   # R15: $300, secures round 15; cash left $3,202; under the bottom-left pane
+  - {do: place, id: sky14, kind: skywarden, role: dps, segment: [0.38, 0.63], at: [0.227, 0.402]}   # R15: $205, secures round 15; cash left $2,997; under the top-left pane
+  - {do: place, id: hero, kind: hero, role: dps}   # R15: $540; hero: not counted by the model (extra safety)
+  - {do: upgrade, id: mer8, to: 3-0-0}   # R15: $2,200, surplus into the mermonkeys; cash left $257
+  - {do: upgrade, id: mer8, to: 3-1-0}   # R15: $200, surplus into the mermonkeys; cash left $57
+  - {do: upgrade, id: sky1, to: 2-0-0}   # R16: $315, ahead of round 24; cash left $274
+  - {do: upgrade, id: mer13, to: 0-0-1}   # R16: $200, surplus into the mermonkeys; cash left $74
+  - {do: place, id: mer15, kind: mermonkey, role: dps, segment: [0.51, 0.61], at: [0.216, 0.146]}   # R17: $500, surplus into the mermonkeys; cash left $110; under the top-left pane
+  - {do: upgrade, id: mer15, to: 0-0-1}
+  - {do: place, id: mer16, kind: mermonkey, role: dps, segment: [0.27, 0.37], at: [0.387, 0.726]}   # R18: $300, surplus into the mermonkeys; cash left $140; under the bottom-left pane
+  - {do: place, id: mer17, kind: mermonkey, role: dps, segment: [0.46, 0.56], at: [0.195, 0.351]}   # R19: $300, surplus into the mermonkeys; cash left $556; under the top-left pane
+  - {do: place, id: mer18, kind: mermonkey, role: dps, segment: [0.06, 0.16], at: [0.045, 0.606]}   # R19: $300, surplus into the mermonkeys; cash left $256; strip, open all game
+  - {do: upgrade, id: mer8, to: 3-2-0}   # R19: $225, surplus into the mermonkeys; cash left $31
+  - {do: upgrade, id: sky2, to: 0-2-0}   # R20: $450, ahead of round 28; cash left $101
+  - {do: upgrade, id: sky3, to: 0-2-0}   # R21: $450, ahead of round 28; cash left $23
+  - {do: upgrade, id: sky4, to: 0-2-0}   # R22: $450, ahead of round 28; cash left $275
+  - {do: upgrade, id: sky5, to: 0-2-0}   # R23: $450, ahead of round 28; cash left $421
+  - {do: place, id: bom19, kind: bomb, role: dps, segment: [0.45, 0.63], at: [0.184, 0.283]}   # R23: $375, ahead of round 28; cash left $46; under the top-left pane
+  - {do: place, id: mer20, kind: mermonkey, role: dps, segment: [0.06, 0.15], at: [0.045, 0.760]}   # R24: $300, surplus into the mermonkeys; cash left $300; strip, open all game
+  - {do: place, id: mer21, kind: mermonkey, role: dps, segment: [0.27, 0.34], at: [0.387, 0.811]}   # R24: $300, surplus into the mermonkeys; cash left $0; under the bottom-left pane
+  - {do: upgrade, id: sky14, to: 2-0-0}   # R25: $315, ahead of round 33; cash left $19
+  - {do: upgrade, id: sky6, to: 2-0-0}   # R26: $315, ahead of round 33; cash left $374
+  - {do: upgrade, id: sky11, to: 2-0-0}   # R26: $315, ahead of round 33; cash left $59
+  - {do: upgrade, id: sky7, to: 2-0-0}   # R27: $315, ahead of round 33; cash left $410
+  - {do: place, id: mer22, kind: mermonkey, role: dps, segment: [0.53, 0.55], at: [0.174, 0.112]}   # R27: $300, surplus into the mermonkeys; cash left $110; under the top-left pane
+  - {do: upgrade, id: mer13, to: 1-0-1}   # R28: $150, surplus into the mermonkeys; cash left $1,284
+  - {do: upgrade, id: mer13, to: 2-0-1}   # R28: $250, surplus into the mermonkeys; cash left $1,034
+  - {do: upgrade, id: mer13, to: 2-0-2}   # R28: $280, surplus into the mermonkeys; cash left $754
+  - {do: upgrade, id: mer15, to: 1-0-1}   # R28: $150, surplus into the mermonkeys; cash left $604
+  - {do: upgrade, id: mer15, to: 2-0-1}   # R28: $250, surplus into the mermonkeys; cash left $354
+  - {do: upgrade, id: mer16, to: 0-0-1}   # R28: $200, surplus into the mermonkeys; cash left $154
+  - {do: upgrade, id: mer16, to: 1-0-1}   # R28: $150, surplus into the mermonkeys; cash left $4
+  - {do: upgrade, id: mer17, to: 0-1-0}   # R29: $200, ahead of round 37; cash left $336
+  - {do: upgrade, id: mer17, to: 1-1-0}   # R29: $150, ahead of round 37; cash left $186
+  - {do: upgrade, id: mer18, to: 1-0-0}   # R29: $150, surplus into the mermonkeys; cash left $36
+  - {do: upgrade, id: mer15, to: 2-0-2}   # R30: $280, surplus into the mermonkeys; cash left $534
+  - {do: upgrade, id: mer16, to: 2-0-1}   # R30: $250, surplus into the mermonkeys; cash left $284
+  - {do: upgrade, id: mer16, to: 2-0-2}   # R30: $280, surplus into the mermonkeys; cash left $4
+  - {do: upgrade, id: mer17, to: 2-1-0}   # R31: $250, surplus into the mermonkeys; cash left $428
+  - {do: upgrade, id: mer17, to: 2-2-0}   # R31: $225, surplus into the mermonkeys; cash left $203
+  - {do: upgrade, id: mer18, to: 1-1-0}   # R31: $200, surplus into the mermonkeys; cash left $3
+  - {do: upgrade, id: mer18, to: 2-1-0}   # R32: $250, surplus into the mermonkeys; cash left $827
+  - {do: upgrade, id: mer18, to: 2-2-0}   # R32: $225, surplus into the mermonkeys; cash left $602
+  - {do: upgrade, id: mer20, to: 1-0-0}   # R32: $150, surplus into the mermonkeys; cash left $452
+  - {do: upgrade, id: mer20, to: 2-0-0}   # R32: $250, surplus into the mermonkeys; cash left $202
+  - {do: upgrade, id: mer20, to: 2-1-0}   # R32: $200, surplus into the mermonkeys; cash left $2
+  - {do: upgrade, id: mer20, to: 2-2-0}   # R33: $225, surplus into the mermonkeys; cash left $1,031
+  - {do: upgrade, id: mer21, to: 1-0-0}   # R33: $150, surplus into the mermonkeys; cash left $881
+  - {do: upgrade, id: mer21, to: 2-0-0}   # R33: $250, surplus into the mermonkeys; cash left $631
+  - {do: upgrade, id: mer21, to: 2-1-0}   # R33: $200, surplus into the mermonkeys; cash left $431
+  - {do: upgrade, id: mer21, to: 2-2-0}   # R33: $225, surplus into the mermonkeys; cash left $206
+  - {do: upgrade, id: mer22, to: 1-0-0}   # R33: $150, surplus into the mermonkeys; cash left $56
+  - {do: upgrade, id: mer13, to: 3-0-2}   # R35: $1,800, ahead of round 42; cash left $490
+  - {do: upgrade, id: mer22, to: 2-0-0}   # R35: $250, surplus into the mermonkeys; cash left $240
+  - {do: upgrade, id: mer22, to: 2-1-0}   # R35: $200, surplus into the mermonkeys; cash left $40
+  - {do: upgrade, id: mer18, to: 2-3-0}   # R36: $2,000, surplus into the mermonkeys; cash left $340
+  - {do: upgrade, id: mer22, to: 2-2-0}   # R36: $225, surplus into the mermonkeys; cash left $115
+  - {do: upgrade, id: mer20, to: 3-2-0}   # R37: $1,800, surplus into the mermonkeys; cash left $107
+  - {do: upgrade, id: mer21, to: 2-3-0}   # R38: $2,000, surplus into the mermonkeys; cash left $785
+  - {do: upgrade, id: mer15, to: 3-0-2}   # R39: $1,800, surplus into the mermonkeys; cash left $1,539
+  - {do: upgrade, id: mer17, to: 2-3-0}   # R40: $2,000, surplus into the mermonkeys; cash left $3,057
+  - {do: upgrade, id: mer22, to: 2-3-0}   # R40: $2,000, surplus into the mermonkeys; cash left $1,057
+  - {do: upgrade, id: mer16, to: 3-0-2}   # R41: $1,800, surplus into the mermonkeys; cash left $299
+  - {do: upgrade, id: mer8, to: 4-2-0}   # R42: $4,200, surplus into the mermonkeys; cash left $461
+  - {do: upgrade, id: mer15, to: 4-0-2}   # R44: $4,200, surplus into the mermonkeys; cash left $135
+  - {do: upgrade, id: mer13, to: 4-0-2}   # R46: $4,200, surplus into the mermonkeys; cash left $3,367
+  - {do: upgrade, id: mer16, to: 4-0-2}   # R47: $4,200, surplus into the mermonkeys; cash left $599
+  - {do: upgrade, id: mer17, to: 2-4-0}   # R49: $8,000, surplus into the mermonkeys; cash left $1,559
+  - {do: upgrade, id: mer18, to: 2-4-0}   # R50: $8,000, surplus into the mermonkeys; cash left $3,075
+  - {do: upgrade, id: sky4, to: 2-2-0}   # R51: $315, ahead of round 59; cash left $8,792
+  - {do: upgrade, id: sky3, to: 2-2-0}   # R51: $315, ahead of round 59; cash left $8,477
+  - {do: upgrade, id: sky5, to: 2-2-0}   # R51: $315, ahead of round 59; cash left $8,162
+  - {do: upgrade, id: sky2, to: 2-2-0}   # R51: $315, ahead of round 59; cash left $7,847
+  - {do: upgrade, id: sky1, to: 2-2-0}   # R51: $450, ahead of round 59; cash left $7,397
+  - {do: place, id: sni23, kind: sniper, role: dps, at: [0.035, 0.095]}   # R51: $1,400, ahead of round 59; cash left $5,997; strip, open all game
+  - {do: upgrade, id: sni23, to: 1-2-0}
+  - {do: target, id: sni23, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sky14, to: 2-2-0}   # R51: $450, ahead of round 59; cash left $5,547
+  - {do: place, id: wiz24, kind: wizard, role: dps, segment: [0.79, 0.95], at: [0.665, 0.538]}   # R51: $1,150, ahead of round 59; cash left $4,397; under the bottom-right pane
+  - {do: upgrade, id: wiz24, to: 0-1-2}
+  - {do: upgrade, id: wiz24, to: 0-3-2}   # R51: $4,100, ahead of round 59; cash left $297
+  - {do: upgrade, id: sky6, to: 2-2-0}   # R52: $450, ahead of round 59; cash left $2,044
+  - {do: upgrade, id: sky11, to: 2-2-0}   # R52: $450, ahead of round 59; cash left $1,594
+  - {do: upgrade, id: sky7, to: 2-2-0}   # R52: $450, ahead of round 59; cash left $1,144
+  - {do: place, id: ice25, kind: ice, role: dps, segment: [0.89, 0.97], at: [0.815, 0.470]}   # R52: $1,050, ahead of round 59; cash left $94; strip, open all game
+  - {do: upgrade, id: ice25, to: 2-0-1}
+  - {do: upgrade, id: ice25, to: 2-0-4}   # R54: $4,850, ahead of round 59; cash left $284
+  - {do: upgrade, id: mer20, to: 4-2-0}   # R55: $4,200, surplus into the mermonkeys; cash left $479
+  - {do: upgrade, id: mer21, to: 2-4-0}   # R57: $8,000, surplus into the mermonkeys; cash left $18
+  - {do: upgrade, id: mer22, to: 2-4-0}   # R59: $8,000, surplus into the mermonkeys; cash left $332
+fill:
+  - {do: upgrade, kind: mermonkey, to: 4-2-0}   # surplus: the target's own path
+  - {do: place, kind: mermonkey, role: dps, max: 10}
+answers:
+  # the bot's threat table (strategy.ANSWERS) does not rate mermonkeys or
+  # skywardens yet: the strip sniper is the named answer for the blimps
+  ceramic: [{do: upgrade, id: s0, to: 2-0-1}]
+  moab: [{do: upgrade, id: s0, to: 3-0-1}]
+  bfb: [{do: upgrade, id: s0, to: 4-0-1}]
+  zomg: [{do: upgrade, id: s0, to: 4-0-1}]
+  ddt: [{do: upgrade, id: s0, to: 4-0-1}]

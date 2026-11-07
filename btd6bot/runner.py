@@ -1379,13 +1379,22 @@ class Bot:
         A win on the map clears it. A game that never got its defence down
         ("no defence could be placed") or was lost after a plan step was given
         up because every spot was refused adds one: on Tricky Tracks both
-        happened and the planner still rated every mode there p=0.98."""
+        happened and the planner still rated every mode there p=0.98.
+
+        Only steps the game refused spots for count (stats "steps_refused").
+        A step given up after 0 refused spots found no legal spot in reach
+        on the bot's own map data: the build does not fit the map, which the
+        planner's own map-fit gates judge. Counted as trouble, it doubted every
+        build on the map: Geared kept 2 counts from general builds with "0
+        legal cells" for their ninjas and darts (2026-11-04/05), Peninsula one
+        from an Apopalypse ninja with "no spot found" (2026-11-06), and each
+        count took the map's own builds' p down by 0.7 as well."""
         outcome = res.get("outcome")
         if outcome == "victory":
             if not self.account.placement_trouble.get(canonical_map(plan.map)):
                 return      # nothing to forget, nothing to save
             self.account.note_map_won(plan.map)
-        elif outcome == "no defence" or (res.get("steps_given_up") and not res.get("outside_cause")):
+        elif outcome == "no defence" or (res.get("steps_refused") and not res.get("outside_cause")):
             n = self.account.note_placement_trouble(plan.map)
             log.warning("%s: the defence could not be built (%s) - placement trouble %d, "
                         "every mode there is trusted less until a win", plan.map, outcome, n)

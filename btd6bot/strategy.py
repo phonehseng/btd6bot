@@ -1021,6 +1021,11 @@ class Executor:
         # count keyed by id(step) never added up and they retried forever.
         self.step_spot_fails = {}  # step key -> spots refused in a row for that step
         self.dead_steps = set()    # step keys given up for this game (no spot accepted)
+        # ... of those, the ones the game itself refused at least one spot for
+        # (placement trouble); a step given up after 0 refused spots found no
+        # legal spot in reach on the bot's own map data: the build does not
+        # fit the map, the ground is not at fault (runner._note_placement)
+        self.refused_dead_steps = set()
         self.deferred = []         # plan steps retried later instead (the hero)
         self.retry_at = {}         # step key -> time before which it is not retried
         self.hero_misses = 0       # times the hero ran out of accepted spots
@@ -1623,6 +1628,22 @@ class Executor:
             return getattr(self, "now_round", None)
         return None
 
+    def _pane_shut(self, step):
+        """True when a place step's researched spot (`at`) lies under a
+        cycling pane (Covered Garden) that is shut this round. Placed now,
+        the spot search would move the tower off the garden ground the build
+        was made for; it waits for its pane's round instead."""
+        at = step.get("at")
+        if not at or len(at) != 2:
+            return False
+        from . import mapgeom
+        try:
+            pane, open_now = mapgeom.pane_at(self.m, float(at[0]), float(at[1]),
+                                             getattr(self, "now_round", None))
+        except Exception:
+            return False
+        return pane is not None and not open_now
+
     def _reachable(self, p):
         """False while a closed pane covers tower p: a click there hits the
         glass, so it cannot be upgraded or sold this round."""
@@ -1692,7 +1713,8 @@ class Executor:
                 if nxt is None:
                     continue
                 if not self._reachable(p):
-                    return "wait"     # under a closed pane: its round comes
+                    self.g.fail_reason = "pane"
+                    return "wait"     # under a closed pane: set aside until its round
                 path, cost = nxt
                 # a panel that asked more than the price table is believed
                 cost = max(cost, self.panel_price.get((p.tid, path, p.tiers[path - 1] + 1), 0))
@@ -1721,7 +1743,8 @@ class Executor:
                 return "skip"
             targets = self._resolve_targets(step)
             if any(not self._reachable(p) for p in targets):
-                return "wait"         # under a closed pane: its round comes
+                self.g.fail_reason = "pane"
+                return "wait"         # under a closed pane: set aside until its round
             with self.why("plan_sell", f"the plan sells {step.get('id') or step.get('kind')}"):
                 for p in targets:
                     self.g.sell(p)
@@ -1747,6 +1770,12 @@ class Executor:
         key = self._step_key(step)
         if self.place_held_back(step):
             return "skip"
+        if self._pane_shut(step):
+            # its researched spot is under a closed pane: the step is set aside
+            # (_set_aside_blocked) until that pane's round, its later steps
+            # wait behind it, and the rest of the plan goes on
+            self.g.fail_reason = "pane"
+            return "wait"
         price = self.g.price(kind)
         if cash is None or cash < price:
             self.wait_cost = price
@@ -2639,6 +2668,8 @@ class Executor:
             return "skip"
         if key not in self.dead_steps:
             self.dead_steps.add(key)
+            if self.step_spot_fails.get(key, 0) > 0:
+                self.refused_dead_steps.add(key)
             log.warning("giving up on step %s for this game after %d refused spots",
                         step, self.step_spot_fails.get(key, 0))
         return "skip"
@@ -4251,7 +4282,10 @@ class Executor:
           for the plan - Polyphemus (2026-10-27) waited on `su1 -> 3-0-2`
           (the click had no effect) and then on an exit spike with 8 refused
           spots while $2k grew to $15k, and lost 285 lives in one wave.
-        A step with no legal spot ("spot") is set aside in both; an upgrade
+        A step with no legal spot ("spot") is set aside in both, and so is a
+        step on a tower or researched spot under a shut pane ("pane": Covered
+        Garden's glass opens over one garden quarter per round, so the step
+        can go through only every fourth round); an upgrade
         whose click did nothing ("noeffect") or whose price could not be read
         ("unread") only while rounds keep coming, where one attempt is all
         the time there is (Game.upgrade already holds such a retry back for
@@ -4283,9 +4317,9 @@ class Executor:
         leaked."""
         reason = self.g.fail_reason
         if self.rules.get("buy_all_upfront"):
-            blocking = ("spot",)
+            blocking = ("spot", "pane")
         else:
-            blocking = ("spot", "noeffect", "unread")
+            blocking = ("spot", "noeffect", "unread", "pane")
         if reason not in blocking:
             return False
         if reason == "noeffect" and self._keep_waiting(st):
