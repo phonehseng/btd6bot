@@ -105,6 +105,12 @@
 # in both games (its placement "confirmed" by a click that opened r1's
 # panel); once the bot forgot it, it placed r2 at (0.500, 0.768) both times,
 # so that is its spot now (still 4 cells from the village).
+# v1 moved 2026-11-07 11:35 to (0.494, 0.854): with r2 at its new spot the
+# offline footprints overlap the village's old spot (0.494, 0.836), so
+# tests/test_map_hints_offline.py failed. The game itself placed the village
+# lower both times: at (0.494, 0.854) in the 10:16 game (bot.log 10:21:39)
+# and at (0.489, 0.845) in the 11:20 game, after r2 stood at (0.500, 0.768).
+# The new spot is the one that passes offline as well.
 id: alpinerun_chimps
 map: Alpine Run
 hero: quincy
@@ -131,7 +137,7 @@ plan:
   - {do: upgrade, id: r1, to: 2-0-1}
   - {do: upgrade, id: r1, to: 2-0-2}                                      # Red Hot Rangs: lead
   - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet
-  - {do: place, id: v1, kind: village, role: support, near: [r1, r2, r3], at: [0.494, 0.836]}
+  - {do: place, id: v1, kind: village, role: support, near: [r1, r2, r3], at: [0.494, 0.854]}
   - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boomerangs
   - {do: upgrade, id: r1, to: 4-0-2}                                      # MOAR Glaives: the first MOABs
   - {do: upgrade, id: s1, to: 2-2-0}                                      # Large Calibre
