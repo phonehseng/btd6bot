@@ -112,7 +112,9 @@ planner:
   towers: {buccaneer: [4, 2, 2], tack: [4, 0, 0], bomb: [2, 5, 0], village: [2, 3, 0], alchemist: [3, 2, 0]}
   # re-checked 2026-11-05 on the corrected model (strict buff reach, carrier planes): every replay 2.07+
   # re-checked 2026-11-05 on the live map's refused spots: every replay 2.07+, every step 2+ rounds early
-  base_success: {chimps: 0.85}
+  # held back 2026-11-06 22:20: Carved CHIMPS lost twice at round 33 (camo
+  # yellows) with the model rating it 2.95 - until the model fix is in
+  base_success: {chimps: 0.5}
   maps: [Winter Park]
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.452, 0.436]}   # fountain, north-east
