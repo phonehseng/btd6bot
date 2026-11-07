@@ -18,9 +18,16 @@ so the replay puts the towers where the live executor does. Checked here
 with the refusals that game logged:
   * the 2026-11-05 build replays to round 95 at 2.0+ without them, and
     under 1.0 with them, its village far from its spot (the live gap);
-  * the repaired build (strategies/maps/lotusisland_chimps.yaml) keeps
-    every tower on its spot and round 95 at 2.0+ with them (gap closed);
+  * the current build (strategies/maps/lotusisland_chimps.yaml) keeps
+    every tower on its spot with them;
   * CashGame tries the next spot after a refused one, as Game.place does.
+The 2026-11-05 build and its repair are pinned in tests/fixtures/
+lotusisland_chimps_20261105.yaml: on 2026-11-07 the map's build was
+replaced by a community-guide build (Carrier Flagship, Glaive Lord,
+Cripple MOAB with plan_first) after Cracked CHIMPS was won that way.
+The current build is no longer held to round 95 at 2.0+ in the model:
+Cracked's winning board rated 1.87 there, so that bar is not what decides
+a CHIMPS win.
 Run: python tests/test_lotus_refused_spots_offline.py"""
 import base64
 import copy
@@ -51,6 +58,14 @@ SAFE = O.SAFETY_MARGIN
 REFUSED = ROOT / "tests" / "fixtures" / "lotusisland_refused_20261105.json"
 # The spots of the build that was played (commit 5e7180f) where the repair moved them.
 PLAYED_SPOTS = {"b1": [0.43, 0.743], "v1": [0.505, 0.811], "a1": [0.452, 0.845]}
+# That repaired build itself, as it stood before the 2026-11-07 rewrite.
+REPAIRED = ROOT / "tests" / "fixtures" / "lotusisland_chimps_20261105.yaml"
+
+
+def _repaired_build():
+    """The 2026-11-05 repaired build (fixture), as S.load_all would give it."""
+    import yaml
+    return yaml.safe_load(REPAIRED.read_text(encoding="utf-8"))
 
 
 def _with_spots(strat, spots):
@@ -109,7 +124,7 @@ def _cells_off(strat, r, tid):
 
 
 def test_played_build_holds_only_on_spots_the_game_accepts():
-    played = _with_spots(S.load_all()[STRATEGY], PLAYED_SPOTS)
+    played = _with_spots(_repaired_build(), PLAYED_SPOTS)
     r, ok = _replay(played, {})
     assert r["plan_done"].split("/")[0] == r["plan_done"].split("/")[1], r["plan_done"]
     assert ok >= SAFE, f"the replay the build was gated with: round {LOST_ROUND} at {ok:.2f}"
@@ -119,12 +134,20 @@ def test_played_build_holds_only_on_spots_the_game_accepts():
 
 
 def test_repaired_build_keeps_its_spots_and_round_95():
-    strat = S.load_all()[STRATEGY]
+    strat = _repaired_build()
     r, margin = _replay(strat, _refused_layers())
     for st in strat["plan"]:
         if st.get("do") == "place" and st["kind"] != "hero":
             assert _cells_off(strat, r, st["id"]) <= S.Executor.AT_SEARCH_CELLS, st["id"]
     assert margin >= SAFE, f"round {LOST_ROUND} at {margin:.2f}"
+
+
+def test_current_build_keeps_its_spots_under_the_live_refusals():
+    strat = S.load_all()[STRATEGY]
+    r, _ = _replay(strat, _refused_layers())
+    for st in strat["plan"]:
+        if st.get("do") == "place" and st["kind"] != "hero":
+            assert _cells_off(strat, r, st["id"]) <= S.Executor.AT_SEARCH_CELLS, st["id"]
 
 
 def test_cash_game_tries_the_next_spot_after_a_refused_one():
