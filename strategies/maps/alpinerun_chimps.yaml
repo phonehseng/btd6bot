@@ -47,23 +47,60 @@
 #     no BAD answer from that table. Both cost about the same ($45k against
 #     $38k) and Cripple MOAB still stands before round 100;
 #   * the account has the village's top path to tier 4 only - the guide's
-#     village is 4-2-0 (Primary Mentoring) anyway.
+#     village is 4-2-0 (Primary Mentoring) anyway;
+#   * the sniper takes Large Calibre and Deadly Precision (3-2-0) right after
+#     MOAR Glaives, before the second boomerang's path, as round 40's MOAB
+#     answer (see Status): global range, so it hits the MOAB wherever the
+#     boomerangs stand. Those tiers were in the plan already (Maim MOAB is
+#     4-2-0); MOAB Press moves from round 39 to 42, Glaive Lord from 65 to 69;
+#   * the cluster is not the guide's: see Spots.
 #
 # Cash (CHIMPS curve: $650 before round 6, the game's own income, Hard
 # prices; tests/test_chimps_builds_offline.plan_timeline): Quincy alone holds
 # rounds 6-7 (he takes $585 of the $650), the sniper stands from round 8,
-# the three boomerangs by 17, the Radar village by about 33, Glaive Lord by
-# 66 (the guide: 65), MOAB Domination by 88 (the guide: 85) and Cripple MOAB
-# by 97.
+# the three boomerangs by 17, the Radar village by about 33, MOAR Glaives by
+# 36, Deadly Precision by 39, MOAB Press by 43, Glaive Lord by 70 (the
+# guide: 65), MOAB Domination by 89 (the guide: 85) and Cripple MOAB by 97.
 #
-# Spots (map geometry, the worktree's and the main checkout's learned maps,
-# data/maps/alpinerun.npz, checked in plan order): Quincy at (0.339, 0.734),
-# at the middle lane, reaches 616 track cells, the most of any legal hero
-# cell; the village at (0.355, 0.811) has all three boomerangs inside its
-# reach - (0.382, 0.743) 18.3 units, (0.366, 0.683) 29.3, (0.302, 0.785)
-# 20.2 (radius 40, 48 from Bigger Radius) - the village spot whose three
-# boomerangs see the most track (1,106 cells); the sniper at (0.302, 0.726)
-# sees the whole track and stands inside the village's reach.
+# Spots (map geometry and the learned map data/maps/alpinerun.npz with the
+# 2026-11-07 07:51 refusals, checked in plan order as
+# tests/test_map_hints_offline.py and simulate_threats(real_map, learned)
+# do): Quincy at (0.339, 0.734), at the middle lane, reaches 616 track
+# cells, the most of any legal hero cell; the sniper at (0.302, 0.726) sees
+# the whole track (both stood there live). The guide's cluster does not fit
+# round them: the ground between the diagonal lane and the right-hand
+# vertical lane is refused south of y 0.78 (the 07:46 and 07:48 refusals of
+# r3's and v1's spots, and earlier ones), and with Quincy, the sniper and two
+# boomerangs on the rest, no legal village cell is within 40 units of both
+# r1 (0.382, 0.743) and r2 (0.366, 0.683). The boomerangs and the village
+# therefore stand in the open triangle east of the vertical lane, between it
+# and the lower diagonal lane: r1 (0.505, 0.700) reaches 375 track cells,
+# r2 (0.473, 0.760) 322, r3 (0.542, 0.811) 241 (the guide's three: 1,106 in
+# all, these 938); the village at (0.494, 0.836) has them at 31.2, 19.1 and
+# 18.4 units (radius 40 under the strict buff rule: 8.8 units, 4.5 cells,
+# of slack at the least).
+# Every spot is at least 4 cells from a refused cell (the village 6.4).
+#
+# Status: first live attempt 2026-11-07 07:43-07:51 lost round 40 (the first
+# MOAB) with the guide's cluster spots:
+#   * the game refused r3's spot (0.302, 0.785) and its one legal neighbour,
+#     and the executor offered the best spot by role on the whole map next:
+#     r3 stood at (0.639, 0.351). v1's spot was refused too, and the village,
+#     placed near r1-r3, followed r3 to (0.505, 0.521). Fixed in the executor
+#     (Executor._far_from_at: a step with an `at` falls back within 15 cells
+#     of it) and here (the new spots above);
+#   * v1's later steps went aside with it, and once it stood its 4-2-0 step
+#     bought $2,915 of top-path tiers while 0-2-0 waited for Radar Scanner,
+#     ahead of MOAR Glaives, which only the blimp check bought (round 36).
+#     Fixed in the executor (Executor._waits_for_set_aside_place: a tower's
+#     set-aside steps keep plan order);
+#   * at round 40 r1 was 4-0-2 (four rounds already), r2 unupgraded (its
+#     panel read as 4-0-0 and its step was set aside), r3 0-3-2 far away, the
+#     sniper 1-2-0 and the village 3-2-0 buffing none of the cluster, and the
+#     MOAB got through although the damage model rated the round 3.29. MOAR
+#     Glaives alone is not trusted with it any more: Deadly Precision now
+#     stands from round 39 (see above). The offline blimp check with every
+#     tower on its spot rates round 40 at 2.90 (1.63 for the plan before).
 id: alpinerun_chimps
 map: Alpine Run
 hero: quincy
@@ -75,24 +112,26 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Alpine Run]
-  revised: "2026-11-07T04:00"
+  revised: "2026-11-07T08:00"
 plan:
   - {do: place, id: hero, kind: hero, role: dps, at: [0.339, 0.734]}      # Quincy holds the opening
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.302, 0.726]}
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
   - {do: upgrade, id: s1, to: 1-1-0}                                      # Full Metal Jacket: lead
   - {do: upgrade, id: s1, to: 1-2-0}                                      # Shrapnel Shot
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.382, 0.743]}   # becomes Glaive Lord
-  - {do: place, id: r2, kind: boomerang, role: dps, at: [0.366, 0.683]}   # becomes MOAB Domination
-  - {do: place, id: r3, kind: boomerang, role: dps, at: [0.302, 0.785]}   # becomes Turbo Charge
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.505, 0.700]}   # becomes Glaive Lord
+  - {do: place, id: r2, kind: boomerang, role: dps, at: [0.473, 0.760]}   # becomes MOAB Domination
+  - {do: place, id: r3, kind: boomerang, role: dps, at: [0.542, 0.811]}   # becomes Turbo Charge
   - {do: upgrade, id: r1, to: 1-0-0}
   - {do: upgrade, id: r1, to: 2-0-0}                                      # Glaives
   - {do: upgrade, id: r1, to: 2-0-1}
   - {do: upgrade, id: r1, to: 2-0-2}                                      # Red Hot Rangs: lead
   - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet
-  - {do: place, id: v1, kind: village, role: support, near: [r1, r2, r3], at: [0.355, 0.811]}
+  - {do: place, id: v1, kind: village, role: support, near: [r1, r2, r3], at: [0.494, 0.836]}
   - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boomerangs
   - {do: upgrade, id: r1, to: 4-0-2}                                      # MOAR Glaives: the first MOABs
+  - {do: upgrade, id: s1, to: 2-2-0}                                      # Large Calibre
+  - {do: upgrade, id: s1, to: 3-2-0}                                      # Deadly Precision: round 40's MOAB anywhere on the track
   - {do: upgrade, id: r2, to: 0-0-2}
   - {do: upgrade, id: r2, to: 0-2-2}
   - {do: upgrade, id: r2, to: 0-2-3}                                      # Kylie Boomerang
@@ -109,7 +148,7 @@ answers:
   lead: [{do: upgrade, id: r1, to: 2-0-2}]
   ceramic: [{do: upgrade, id: r1, to: 3-0-2}]
   rush: [{do: upgrade, id: r1, to: 3-0-2}]
-  moab: [{do: upgrade, id: r1, to: 4-0-2}]
+  moab: [{do: upgrade, id: r1, to: 4-0-2}, {do: upgrade, id: s1, to: 3-2-0}]
   bfb: [{do: upgrade, id: r1, to: 4-0-2}, {do: upgrade, id: r2, to: 0-2-4}]
   zomg: [{do: upgrade, id: r1, to: 5-0-2}, {do: upgrade, id: s1, to: 4-2-0}]
   ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: r1, to: 4-0-2}]
