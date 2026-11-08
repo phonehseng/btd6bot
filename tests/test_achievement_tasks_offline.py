@@ -186,22 +186,24 @@ def test_panel_open_is_told_by_the_button_not_by_blue():
 
 
 def test_badges_on_the_live_powers_tab():
+    """The tenth hexagon is gold with a "22": an owned Power (the shop page
+    lists the same icons and shows gold + count = owned)."""
     f = _big("powers_panel_live.jpg")
     badges = P.find_badges(f)
     assert len(badges) == 1 and abs(badges[0][0] - 0.977) < 0.005 and abs(badges[0][1] - 0.683) < 0.005
-    assert P.is_gold_tile(f, P.icon_of(badges[0]))         # the "INSTA MONKEYS" tile
-    assert P.power_badges(f) == []                          # no Power hexagon carries a count
+    owned = P.power_badges(f, LIVE_POWERS_WORDS)
+    assert len(owned) == 1 and abs(owned[0][0][0] - 0.958) < 0.005 and abs(owned[0][0][1] - 0.711) < 0.005
     assert P.on_powers_tab(f, LIVE_POWERS_WORDS) and P.on_powers_tab(f)
+    assert P.insta_badges(f) == []
 
 
 def test_badges_on_the_live_insta_tab():
     f = _big("insta_panel_live.jpg")
     badges = P.insta_badges(f)
-    assert len(badges) == 10, badges                        # 9, 12, 14, 20, 12, 11, 19, 6, 16, 9
-    xs = sorted({round(b[0], 2) for _, b in badges})
-    assert xs == [0.91, 0.98], xs
-    icon, badge = badges[0]
-    assert abs(icon[0] - 0.892) < 0.006 and abs(icon[1] - 0.30) < 0.006
+    assert len(badges) == 9, badges                         # 12, 14, 20, 12, 11, 19, 6, 16, 9
+    icon, badge = badges[0]                                 # the gold "9" above is a Power
+    assert abs(icon[0] - 0.958) < 0.006 and abs(icon[1] - 0.30) < 0.006
+    assert len(P.power_badges(f)) == 1                       # that gold "9"
     assert not P.on_powers_tab(f, LIVE_INSTA_WORDS)
 
 
@@ -272,16 +274,12 @@ class FakeModel:
         return [(int(x), int(y), 1.0) for x, y in zip(xs, ys)][:n]
 
 
-def _with_power_badge(frame):
-    """The live Powers tab with the "22" badge copied onto the first blue
-    hexagon (row 3, left): an owned Power as the game would mark it."""
+def _without_badge(frame):
+    """The live Powers tab with its one badge painted over (no Power owned)."""
     f = frame.copy()
     h, w = f.shape[:2]
-    src = (0.977, 0.683)
-    dst = (0.9109, 0.552)                   # badge spot of the hexagon at (0.892, 0.58)
-    hw, hh = int(0.016 * w), int(0.025 * h)
-    sx, sy, dx, dy = int(src[0] * w), int(src[1] * h), int(dst[0] * w), int(dst[1] * h)
-    f[dy - hh:dy + hh, dx - hw:dx + hw] = frame[sy - hh:sy + hh, sx - hw:sx + hw]
+    bx, by = 0.977, 0.683
+    f[int((by - 0.03) * h):int((by + 0.03) * h), int((bx - 0.02) * w):int((bx + 0.02) * w)] = (120, 60, 20)
     return f
 
 
@@ -338,11 +336,11 @@ def _in_grid(pt):
     return P.GRID[0] <= pt[0] <= P.GRID[2] and P.GRID[1] <= pt[1] <= P.GRID[3]
 
 
-def test_live_panel_without_owned_powers_clicks_nothing_in_it():
+def test_panel_without_owned_powers_clicks_nothing_in_it():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
-        g = FakeGame(lambda clicks: live)
+        bare = _without_badge(_big("powers_panel_live.jpg"))
+        g = FakeGame(lambda clicks: bare)
         res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS]), FakeModel(), [])
         assert res["result"] == "done" and res["powers"] == [], res
         assert g.inp.clicks == [P.POWERS_BUTTON, P.POWERS_BUTTON], g.inp.clicks   # open, close
@@ -350,37 +348,42 @@ def test_live_panel_without_owned_powers_clicks_nothing_in_it():
         assert list((Path(tmp) / "cap").glob("powers_panel_*.png"))
 
 
-def test_badged_instant_power_is_used_and_verified():
+LIVE_POWER = (0.958, 0.711)       # the live "22" Power's hexagon (rounded as clicks are)
+
+
+def _is_power_click(c):
+    return abs(c[0] - LIVE_POWER[0]) < 0.003 and abs(c[1] - LIVE_POWER[1]) < 0.003
+
+
+def test_live_owned_power_is_used_and_verified():
+    """The live "22" Power: clicked, nothing on the cursor, count 22 -> 21."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
         live = _big("powers_panel_live.jpg")
-        owned = _with_power_badge(live)
-        icon = P.power_badges(owned)[0][0]
-        # badged until its hexagon is clicked, then the badge is gone (count 1 -> 0)
-        g = FakeGame(lambda clicks: live if (round(icon[0], 3), round(icon[1], 3)) in clicks else owned)
-        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[1]), FakeModel(), [])
-        assert res["result"] == "done" and len(res["powers"]) == 1, res
-        assert b.used("power_uses") == 1
-        assert [c for c in g.inp.clicks if _in_grid(c)] == [(round(icon[0], 3), round(icon[1], 3))]
+        g = FakeGame(lambda clicks: live)
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22, 21, 21, 20]), FakeModel(), [])
+        assert res["result"] == "done" and len(res["powers"]) == 2, res      # POWERS_PER_GAME
+        assert b.used("power_uses") == 2 and b.flag("powers_seen")["owned"] == 1
+        assert [c for c in g.inp.clicks if _in_grid(c)] and all(_is_power_click(c)
+                                                                for c in g.inp.clicks if _in_grid(c))
 
 
-def test_badged_power_on_the_cursor_goes_on_the_track():
+def test_owned_power_on_the_cursor_goes_on_the_track():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        owned = _with_power_badge(_big("powers_panel_live.jpg"))
-        g = FakeGame(lambda clicks: owned, holding=[True, False])
+        live = _big("powers_panel_live.jpg")
+        g = FakeGame(lambda clicks: live, holding=[True, False])
         res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS]), FakeModel(), [])
         assert b.used("power_uses") >= 1, res
-        track_y = 20 / 40
-        assert any(abs(y - track_y) < 1e-3 for _, y in g.inp.clicks), g.inp.clicks
+        assert any(abs(y - 20 / 40) < 1e-3 for _, y in g.inp.clicks), g.inp.clicks
 
 
 def test_power_that_changes_nothing_stops_the_routine():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        owned = _with_power_badge(_big("powers_panel_live.jpg"))
-        g = FakeGame(lambda clicks: owned)
-        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[3, 3]), FakeModel(), [])
+        live = _big("powers_panel_live.jpg")
+        g = FakeGame(lambda clicks: live)
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22, 22]), FakeModel(), [])
         assert res["result"].startswith("bailed: Power slot 1 clicked but nothing changed"), res
         assert b.used("power_uses") == 0 and g.inp.clicks[-1] == P.POWERS_BUTTON
 
@@ -388,8 +391,8 @@ def test_power_that_changes_nothing_stops_the_routine():
 def test_purchase_question_is_declined_never_confirmed():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        owned = _with_power_badge(_big("powers_panel_live.jpg"))
-        g = FakeGame(lambda clicks: owned)
+        live = _big("powers_panel_live.jpg")
+        g = FakeGame(lambda clicks: live)
         question = [_w("Buy this Power for", 0.5, 0.4), _w("35", 0.5, 0.45), _w("Monkey Money", 0.5, 0.47),
                     _w("YES", 0.6, 0.6), _w("NO", 0.4, 0.6)]
         res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS, question]), FakeModel(), [])
@@ -429,11 +432,11 @@ def test_insta_tower_list_without_tiers_places_nothing():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp, want_powers=False, want_instas=True)
         g = _insta_game()
-        counts = [9, 12, 14, 20, 12, 11, 19, 6, 16, 9]
+        counts = [12, 14, 20, 12, 11, 19, 6, 16, 9]
         m = FakeMenus([LIVE_POWERS_WORDS, LIVE_INSTA_WORDS, [_w("SOMETHING", 0.9, 0.4)]], count=counts)
         res = ex.run(g, m, FakeModel(), [])
         assert res["result"] == "done" and res["instas"] == [], res
-        bomb = P.insta_badges(_big("insta_panel_live.jpg"))[3][0]      # the 20
+        bomb = P.insta_badges(_big("insta_panel_live.jpg"))[2][0]      # the 20
         assert g.inp.clicks == [P.POWERS_BUTTON, (0.925, 0.78), (round(bomb[0], 3), round(bomb[1], 3)),
                                 P.POWERS_BUTTON], g.inp.clicks
         assert b.used("insta_uses") == 0
@@ -516,6 +519,7 @@ MAIN = ("main_menu", [_w("PLAY")])
 
 
 TAB = _w("POWERS", 0.5, 0.0567)
+SUBTAB = _w("POWERS", 0.2, 0.152)
 
 
 def _featured():
@@ -523,34 +527,78 @@ def _featured():
     return _ocr("shop_featured")
 
 
+def _powers_all():
+    """The live Powers tab, ALL sub-tab (rec_20261108_005701.mkv 0:41, OCR)."""
+    return _ocr("shop_powers_all")
+
+
+def _shop_frame():
+    """The live Powers page's tiles (left 45%) in a 1280x800 frame."""
+    img = cv2.imread(str(FIX / "shop_powers_tiles.jpg"))
+    f = np.zeros((*SIZE, 3), np.uint8)
+    f[:img.shape[0], :img.shape[1]] = img[:SIZE[0], :SIZE[1]]
+    return f
+
+
 def test_live_featured_page_gives_only_the_powers_tab():
     words = _featured()
     tab = A.find_allowed(words, S.TABS, region=S.TAB_ROW)
     assert tab is not None and abs(tab.x - 0.5) < 0.01 and tab.y < 0.1
-    # the old check bailed here ("INSTASTORe"); the page is no longer judged,
-    # but its words are what they are:
-    assert S.shop_page(words)
+    assert S.shop_page(words)               # "INSTA STORE": why the page is not judged
     texts = {w.text for w in S.page_words(words)}
     assert not {"FEATURED", "POWERS", "InsTAMonkeYS", "$215,150"} & texts
 
 
-def test_shop_clicks_the_powers_tab_then_buys():
-    page = [TAB, _w("Road Spikes", 0.5, 0.4), _w("35", 0.5, 0.5), _w("$215,150", 0.907, 0.057)]
-    confirm = [_w("Buy Road Spikes?", 0.5, 0.4), _w("35", 0.5, 0.5), _w("YES", 0.6, 0.65), _w("NO", 0.4, 0.65),
-               _w("$215,150", 0.907, 0.057)]
+def test_live_powers_page_subtab_promo_and_tiles():
+    words = _powers_all()
+    sub = A.find_allowed(words, S.SUBTABS, region=S.SUBTAB_ROW)
+    assert sub is not None and abs(sub.x - 0.20) < 0.01           # not the top tab, not POWERS PRO
+    assert S.shop_page(S.page_words(words))                       # the 00:57 bail: "MEGA PACK"
+    assert not S.shop_page(S.judged(words))                       # promo left out now
+    # the Sword of Power details: an event Power whose only button is GET MORE
+    title, price_w, price = S.offer(words, 3000)
+    assert "SWORD" in title and price_w is None
+    tiles = S.owned_tiles(_shop_frame())
+    assert len(tiles) == 6, tiles                                 # 22, 15, 5 / 12, 19, 24
+    assert abs(tiles[0][0] - 0.124) < 0.005 and abs(tiles[0][1] - 0.80) < 0.005
+
+
+def _details(name, *button):
+    return [_w(name, 0.72, 0.61)] + [_w(t, 0.72, 0.825) for t in button]
+
+
+def test_offer_rules():
+    key, word, price = S.offer(_details("ROAD SPIKES", "35"), 3000)
+    assert key == "roadspikes" and word.text == "35" and price == 35
+    assert S.offer(_details("ROAD SPIKES", "@35"), 3000)[2] == 35
+    assert S.offer(_details("ROAD SPIKES", "GET MORE"), 3000)[1] is None
+    assert S.offer(_details("ROAD SPIKES", "$0.99"), 3000)[1] is None
+    assert S.offer(_details("ROAD SPIKES", "35"), 20)[1] is None             # over today's cap
+    assert S.offer(_details("SUPER MONKEY STORM", "500"), 3000)[1] is None   # not a cheap one
+    assert S.offer(_details("CASH DROP", "800"), 3000)[1] is None            # over MAX_PRICE
+
+
+def _flow_screens(tile_pages, after=None):
+    return ([MAIN, ("unknown", _featured()), ("unknown", _powers_all()), ("unknown", _powers_all())]
+            + [("unknown", p) for p in tile_pages] + (after or []) + [MAIN])
+
+
+def test_shop_subtab_then_owned_tile_then_buys():
+    road = _powers_all()[:7] + _details("ROAD SPIKES", "35")
+    confirm = [_w("Buy Road Spikes?", 0.5, 0.4), _w("35", 0.5, 0.5), _w("YES", 0.6, 0.65), _w("NO", 0.4, 0.65)]
+    sword = _powers_all()
     with tempfile.TemporaryDirectory() as tmp:
-        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", page), ("unknown", page),
-                              ("unknown", confirm), ("unknown", [_w("PURCHASED")]), MAIN])
+        shop, b = _shop(tmp, _flow_screens([sword, road], [("unknown", confirm), ("unknown", [_w("OK", 0.5, 0.6)])]))
+        shop.s = SimpleNamespace(grab=_shop_frame)
         res = shop.buy_one()
         assert res == "bought roadspikes 35", res
         clicks = shop.inp._inp.clicks
-        assert clicks[:4] == [S.INSTAS_POWERS_BUTTON, (0.5, 0.057), (0.5, 0.4), (0.5, 0.5)], clicks
-        assert b.used("mm") == 35 and b.used("purchases") == 1
-        assert b.flag("powers_seen") is None
+        t1, t2 = [(round(x, 3), round(y, 3)) for x, y in S.owned_tiles(_shop_frame())[:2]]
+        assert clicks[:6] == [S.INSTAS_POWERS_BUTTON, (0.5, 0.057), (0.2, 0.152), t1, t2, (0.72, 0.825)], clicks
+        assert (0.738, 0.828) not in clicks                       # GET MORE never
+        assert not any(x > 0.79 and 0.08 < y < 0.26 for x, y in clicks)   # the promo never
         assert (0.4, 0.65) not in clicks
-        # nothing of the FEATURED page was clicked except the POWERS tab
-        featured = {(round(w.x, 3), round(w.y, 3)) for w in _featured() if w.text != "POWERS"}
-        assert not featured & set(clicks)
+        assert b.used("mm") == 35 and b.used("purchases") == 1
 
 
 def test_shop_without_a_powers_tab_clicks_nothing_more():
@@ -562,32 +610,50 @@ def test_shop_without_a_powers_tab_clicks_nothing_more():
         assert shop.inp._inp.clicks == [S.INSTAS_POWERS_BUTTON]
 
 
-def test_shop_bails_on_real_money_on_the_powers_page():
-    page = [TAB, _w("Road Spikes", 0.5, 0.4), _w("$1.99", 0.5, 0.5), _w("SPECIAL OFFER", 0.5, 0.2)]
+def test_shop_without_the_subtab_clicks_nothing_more():
     with tempfile.TemporaryDirectory() as tmp:
-        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", page), MAIN])
+        no_sub = [w for w in _powers_all() if not (w.y > 0.11 and w.y < 0.19 and w.x < 0.3)]
+        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", no_sub), MAIN])
+        res = shop.buy_one()
+        assert res.startswith("bailed: no POWERS sub-tab"), res
+        assert shop.inp._inp.clicks == [S.INSTAS_POWERS_BUTTON, (0.5, 0.057)]
+
+
+def test_shop_with_only_get_more_buys_nothing():
+    with tempfile.TemporaryDirectory() as tmp:
+        shop, b = _shop(tmp, _flow_screens([_powers_all()] * S.MAX_TILES))
+        shop.s = SimpleNamespace(grab=_shop_frame)
+        res = shop.buy_one()
+        assert res.startswith("bailed: no cheap Power with a Monkey Money price"), res
+        assert (0.738, 0.828) not in shop.inp._inp.clicks and b.used("mm") == 0
+
+
+def test_shop_bails_on_real_money_in_the_details():
+    bad = _powers_all()[:7] + _details("ROAD SPIKES", "$1.99")
+    with tempfile.TemporaryDirectory() as tmp:
+        shop, b = _shop(tmp, _flow_screens([bad]))
+        shop.s = SimpleNamespace(grab=_shop_frame)
         res = shop.buy_one()
         assert res.startswith("bailed: a store"), res
-        assert b.used("mm") == 0 and b.used("powershop_failures") == 1
-        assert (0.5, 0.4) not in shop.inp._inp.clicks and (0.5, 0.5) not in shop.inp._inp.clicks
+        assert (0.72, 0.825) not in shop.inp._inp.clicks and b.used("mm") == 0
 
 
 def test_shop_confirm_with_another_price_is_refused():
-    page = [TAB, _w("Road Spikes", 0.5, 0.4), _w("35", 0.5, 0.5)]
+    road = _powers_all()[:7] + _details("ROAD SPIKES", "35")
     confirm = [_w("Buy 10 Road Spikes?", 0.5, 0.4), _w("350", 0.5, 0.5), _w("YES", 0.6, 0.65), _w("NO", 0.4, 0.65)]
     with tempfile.TemporaryDirectory() as tmp:
-        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", page), ("unknown", page),
-                              ("unknown", confirm), MAIN], mm=(1000, 1000))
+        shop, b = _shop(tmp, _flow_screens([road], [("unknown", confirm)]), mm=(1000, 1000))
+        shop.s = SimpleNamespace(grab=_shop_frame)
         res = shop.buy_one()
         assert res.startswith("bailed: the question shows another price"), res
         assert (0.6, 0.65) not in shop.inp._inp.clicks
 
 
 def test_shop_overspend_stops_buying_for_the_day():
-    page = [TAB, _w("Road Spikes", 0.5, 0.4), _w("35", 0.5, 0.5)]
+    road = _powers_all()[:7] + _details("ROAD SPIKES", "35")
     with tempfile.TemporaryDirectory() as tmp:
-        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", page), ("unknown", page),
-                              ("unknown", []), MAIN], mm=(1000, 500))
+        shop, b = _shop(tmp, _flow_screens([road], [("unknown", [])]), mm=(1000, 500))
+        shop.s = SimpleNamespace(grab=_shop_frame)
         shop.buy_one()
         assert b.resting("powershop") and b.used("mm") == 500
 
@@ -619,6 +685,8 @@ def test_priced_skin_words():
 #   skin_page_unowned  rec_20261107_180600.mkv 0:52 - the page an Obyn skin
 #                      icon opens: "MOUNTAIN GUARDIAN SKIN ... UNLOCK FOR: 2,500"
 #   skin_page_obyn_ocean  logs/achievement_captures/skin_obyn_skin2_20261107_190033.png
+#   shop_powers_all    rec_20261108_005701.mkv 0:41: the Powers tab, ALL sub-tab, with the
+#                      promo banner and the Sword of Power details (GET MORE)
 #   shop_featured      logs/achievement_captures/shop_opened_20261108_003930.png: the
 #                      INSTAS + POWERS screen on its FEATURED tab
 #   skin_page_bundle      .../skin_obyn_skin3_20261107_190041.png: Obyn's third

@@ -25,13 +25,18 @@ insta_panel_20261108_002642.png, 1920x1200)
     lightning+ = ?, monkey face = Insta Monkeys: INSTA_TAB);
   * Powers tab: a two-column grid of hexagon icons with NO names and NO
     prices. Purple hexes (the He-Man event powers) and blue hexes (Banana
-    Farmer, Tech Bot, Portable Lake ...) carry no badge; the gold "INSTA
-    MONKEYS" tile at the bottom carries an orange round badge "22". So a
-    count badge is how the game shows what is owned, and a Power counts as
-    owned only when its hexagon carries such a badge (power_badges). That
-    account owned no Power in the grid: nothing is clicked then.
-  * Insta tab: one icon per tower, each with an orange count badge (9, 12,
-    14, 20, 12, 11, 19, 6, 16, 9 on that account): insta_badges.
+    Farmer, Tech Bot, Portable Lake ...) carry no badge; the tenth, a gold
+    hexagon, carries an orange round badge "22", and under it an "INSTA
+    MONKEYS" divider starts the Insta list. The shop's Powers page
+    (rec_20261108_005701.mkv 0:41) lists the same icons in the same order
+    and shows what the colours mean: purple and blue = not owned, gold with
+    a count = owned (22, 15, 5, 12, 19, 24 ... on that account). So a Power
+    counts as owned only when its hexagon is gold AND carries a count badge
+    (power_badges); the first version wrongly skipped the "22" hexagon.
+  * Insta list (the divider clicked, or scrolled down): blue tower tiles,
+    each with an orange count badge (9, 12, 14, 20, 12, 11, 19, 6, 16, 9 on
+    that account): insta_badges. Gold Power hexagons above them are not
+    Instas and are left out.
   The badge: an orange ring (HSV hue 5-22) about 0.027 of the window wide
   and 0.044 high around a yellow disc with the number; the icon it belongs
   to is centred BADGE_TO_ICON below-left of it.
@@ -78,7 +83,6 @@ POWERS_BUTTON_BOX = (0.870, 0.865, 0.915, 0.945)
 SIDEBAR = (0.855, 0.09, 0.998, 0.86)      # the right-hand panel (towers / powers)
 INSTA_TAB = (0.972, 0.150)                # the monkey-face tab under "POWERS"
 GRID = (0.855, 0.19, 0.998, 0.83)         # the icon grid under the tabs
-POWER_GRID_BOTTOM = 0.77                  # power hexes end above the "INSTA MONKEYS" label
 CAPTURE_DIR = A.CAPTURE_DIR
 
 # The lit button: saturated yellow covering most of POWERS_BUTTON_BOX
@@ -98,7 +102,7 @@ BADGE_H = (0.033, 0.056)
 BADGE_FILL = (0.15, 0.45)
 BADGE_TO_ICON = (-0.019, 0.028)           # badge centre -> its icon's centre
 ICON_HALF = (0.025, 0.035)
-GOLD_HUE = (18, 34)                       # the gold "INSTA MONKEYS" tile (not a Power)
+GOLD_HUE = (18, 34)                       # gold hexagon = an owned Power (is_gold_tile)
 GOLD_MIN_SHARE = 0.30
 
 # -- when ---------------------------------------------------------------------------
@@ -149,13 +153,13 @@ def panel_closed(frame):
 
 
 def on_powers_tab(frame, words=()):
-    """The Powers tab (not the Insta tab): the gold "INSTA MONKEYS" tile
-    sits at the bottom of the grid (its icon below y = 0.6; on the Insta
-    tab the only gold hexagon was at the top), or its label is read there."""
-    if any(norm(w.text) == "instamonkeys" and w.y > 0.7 for w in words):
+    """The panel shows its Powers part (not scrolled to the Insta list): the
+    INSTA MONKEYS divider is read low in the panel, or every badge seen
+    sits on a gold Power hexagon (the Insta list's tiles are blue)."""
+    if any(norm(w.text) == "instamonkeys" and w.y > 0.6 for w in words):
         return True
-    return any(icon_of(b)[1] > 0.6 and is_gold_tile(frame, icon_of(b))
-               for b in find_badges(frame))
+    badges = find_badges(frame)
+    return bool(badges) and all(is_gold_tile(frame, icon_of(b)) for b in badges)
 
 
 def find_badges(frame, region=GRID):
@@ -189,25 +193,49 @@ def _icon_box(icon):
     return (icon[0] - ICON_HALF[0], icon[1] - ICON_HALF[1], icon[0] + ICON_HALF[0], icon[1] + ICON_HALF[1])
 
 
-def is_gold_tile(frame, icon):
-    """The gold hexagon of the "INSTA MONKEYS" tile (not a Power)."""
-    return _share(frame, _icon_box(icon), GOLD_HUE, 150, 180) >= GOLD_MIN_SHARE
+def is_gold_tile(frame, icon, half=None):
+    """A gold hexagon: how the game draws a Power the account OWNS.
+
+    The shop's Powers page (rec_20261108_005701.mkv 0:41) lists the same
+    icons in the same order as the in-game panel: purple (event) and blue
+    hexagons without a badge - not owned - then gold hexagons with a count
+    (22, 15, 5, 12, 19, 24 ...). So the in-game "22" gold hexagon above the
+    INSTA MONKEYS label is an owned Power (the first version took it for an
+    Insta tile and skipped it); the label is a divider before the Insta list
+    further down. Insta towers are blue square tiles.
+
+    Measured share of gold in the icon box: in game 0.57-0.58 for the gold
+    hexagons, 0.04-0.16 for Insta tiles; on the shop page (bigger tiles,
+    half = (0.04, 0.06)) 0.37-0.50. half: the box's half size."""
+    hx, hy = half or ICON_HALF
+    box = (icon[0] - hx, icon[1] - hy, icon[0] + hx, icon[1] + hy)
+    return _share(frame, box, GOLD_HUE, 150, 180) >= GOLD_MIN_SHARE
 
 
-def power_badges(frame):
-    """Icons of owned Powers on the Powers tab: badged hexagons in the power
-    grid, the gold Insta Monkeys tile left out. [(icon, badge)]."""
+def _divider_y(words):
+    """y of the "INSTA MONKEYS" divider under the Powers, or None."""
+    ys = [w.y for w in words if norm(w.text) == "instamonkeys"]
+    return min(ys) if ys else None
+
+
+def power_badges(frame, words=()):
+    """Icons of owned Powers: gold hexagons carrying a count badge, above the
+    INSTA MONKEYS divider when it is read. [(icon, badge)]"""
+    top = _divider_y(words)
     out = []
-    for b in find_badges(frame, (GRID[0], GRID[1], GRID[2], POWER_GRID_BOTTOM)):
+    for b in find_badges(frame):
         icon = icon_of(b)
-        if not is_gold_tile(frame, icon):
+        if top is not None and icon[1] > top - 0.03:
+            continue
+        if is_gold_tile(frame, icon):
             out.append((icon, b))
     return out
 
 
 def insta_badges(frame):
-    """Icons of towers with Instas on the Insta tab: [(icon, badge)]."""
-    return [(icon_of(b), b) for b in find_badges(frame)]
+    """Icons of Insta towers: badged tiles that are not gold Power hexagons.
+    [(icon, badge)]"""
+    return [(icon_of(b), b) for b in find_badges(frame) if not is_gold_tile(frame, icon_of(b))]
 
 
 def badge_region(badge):
@@ -403,10 +431,10 @@ class InGameExtras:
 
     def _use_powers(self, frame, model, words=()):
         if not on_powers_tab(frame, words):
-            log.info("achievement: the panel is not on its Powers tab (no Insta Monkeys tile at the bottom) "
+            log.info("achievement: the panel is not on its Powers tab (it shows the Insta list) "
                      "- no Power used")
             return 0
-        owned = power_badges(frame)
+        owned = power_badges(frame, words)
         if not owned:
             log.info("achievement: no owned Power in the grid (no hexagon carries a count badge)")
             return 0
@@ -428,7 +456,7 @@ class InGameExtras:
                 if not self._open():
                     break
                 frame, words = self._panel
-            owned = power_badges(frame) if on_powers_tab(frame, words) else []
+            owned = power_badges(frame, words) if on_powers_tab(frame, words) else []
         return n
 
     # -- instas ----------------------------------------------------------------------------
@@ -514,7 +542,7 @@ class InGameExtras:
             frame, words = self._panel
             if on_powers_tab(frame, words):
                 # the power shop buys only after a look that found none owned
-                self.budget.set_flag("powers_seen", {"at": time.time(), "owned": len(power_badges(frame))})
+                self.budget.set_flag("powers_seen", {"at": time.time(), "owned": len(power_badges(frame, words))})
             if self.want_powers and self.budget.allow("power_uses"):
                 self._use_powers(frame, model, words)
                 frame, words = self._look("powers_panel_before_instas")
