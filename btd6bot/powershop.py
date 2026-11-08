@@ -16,14 +16,16 @@ The flow (only words of the allow-lists below are clicked)
      rec_20261107_165100.mkv 0:18);
   2. the POWERS tab, by its word, only inside TAB_ROW: the screen opens on
      FEATURED (live 2026-11-08 00:39), whose banners read "INSTA STORE" and
-     "MAP CHALLENGE" - that page is neither judged nor clicked. From the
-     Powers page on, store / real-money words are judged on the page's own
-     words (page_words: tab row and Monkey Money corner left out);
-  3. the name of a cheap Power (BUY_ORDER);
-  4. its price: a whole number (no cents, no currency sign) between
-     MIN_PRICE and MAX_PRICE that fits today's cap, read next to or under
-     the name. A price with cents, a store/offer/bundle word anywhere on the
-     screen, or no price read: bail out;
+     "MAP CHALLENGE" - that page is neither judged nor clicked;
+  3. the plain POWERS sub-tab (ALL / POWERS / POWERS PRO row), by its word,
+     only in SUBTAB_ROW (live 00:57: the ALL sub-tab carries a real-money
+     promo banner). From here on store / real-money words are judged only
+     in the tiles and the details panel (judged), the promo left out;
+  4. owned standard Power tiles (gold hexagons with a count badge) are
+     clicked one by one (MAX_TILES); the details panel must name a cheap
+     Power (BUY_NAMES) and its button show one whole Monkey Money amount
+     between MIN_PRICE and MAX_PRICE that fits today's cap (offer). "GET
+     MORE" (the store) and anything with cents are never clicked;
   5. a confirmation question: confirmed with Yes/OK/Buy/Confirm only when
      it shows the same price and no real-money wording;
   6. the Monkey Money total is read before and after (runner.read_mm): the
@@ -31,9 +33,13 @@ The flow (only words of the allow-lists below are clicked)
      read stops all buying for the day.
   Then back to the main menu with the on-screen back arrow (never Esc).
 
-No recording shows this screen (the bot never opened it), so the first
-runs are the calibration: every screen is saved under
-logs/achievement_captures/ (a few a day) with the words read.
+Every screen is saved under logs/achievement_captures/ (SHOP_LOOKS_PER_DAY)
+with the words read.
+
+Note: the Powers page shows that the main account OWNS standard Powers (22,
+15, 5, 12, 19, 24 ...). powers.py now counts the gold badged hexagons in
+the game as owned, so "powers_seen" reports them and this shop is not due;
+it stays for when they run out.
 """
 import logging
 import re
@@ -48,7 +54,6 @@ INSTAS_POWERS_BUTTON = (0.748, 0.885)     # the bolt icon above its "INSTAS + PO
 BACK_ARROW = (0.044, 0.055)
 SEEN_FRESH = 3 * 86400                    # how recent the "no owned Power" look must be
 MIN_PRICE, MAX_PRICE = 10, 500            # a single cheap Power, in Monkey Money
-BUY_ORDER = ("roadspikes", "gluetrap", "camotrap", "monkeyboost", "moabmine", "thrive")
 TABS = ("powers",)
 # The screen's tab row and Monkey Money corner (live capture 2026-11-08
 # 00:39, shop_opened_20261108_003930.png, 1920x1200): FEATURED (0.32, 0.055),
@@ -56,6 +61,34 @@ TABS = ("powers",)
 # its "+" at the top right.
 TAB_ROW = (0.20, 0.0, 0.79, 0.11)
 MM_CORNER = (0.79, 0.0, 1.0, 0.11)
+# The Powers tab (recording rec_20261108_005701.mkv 0:41, 1280x800):
+#  * a sub-tab row ALL (0.07, 0.15) / POWERS (0.20, 0.15) / POWERS PRO (0.36);
+#  * a real-money promo banner top right ("MASTERS OF THE UNIVERSE MEGA
+#    PACK", PROMO): never judged, never clicked;
+#  * the tiles on the left (TILES): purple/blue hexagons = not owned, gold
+#    hexagons with a count badge = owned standard Powers (22, 15, 5, 12, 19,
+#    24 ...);
+#  * clicking a tile shows its details on the right (DETAILS): the name as
+#    a title ("SWORD OF POWER") and one button under it - "GET MORE" (the
+#    store, with a SOLD till icon) for the event Power: never clicked. What
+#    a standard Power's button shows is not seen yet: only a whole Monkey
+#    Money amount there is clicked.
+SUBTABS = ("powers",)
+SUBTAB_ROW = (0.0, 0.11, 0.45, 0.19)
+PROMO = (0.79, 0.08, 1.0, 0.26)
+TILES = (0.03, 0.19, 0.42, 1.0)
+DETAILS = (0.44, 0.56, 1.0, 0.90)
+DETAILS_TITLE_MAX_Y = 0.66
+DETAILS_BUTTON = (0.55, 0.75, 0.90, 0.90)
+MAX_TILES = 8
+# the shop tiles are bigger than the in-game ones: badge "22" at (0.153, 0.759),
+# its tile at (0.123, 0.80)
+TILE_BADGE_TO_ICON = (-0.030, 0.041)
+TILE_HALF = (0.04, 0.06)                  # gold test box on the bigger shop tiles
+# screens saved a day (the 00:57 run used the old limit of 3 on FEATURED
+# pages and saved no Powers page)
+SHOP_LOOKS_PER_DAY = 12
+BUY_NAMES = ("roadspikes", "gluetrap", "camotrap", "monkeyboost", "thrive", "cashdrop", "moabmine")
 CONFIRM = ("yes", "ok", "buy", "confirm", "purchase")
 DECLINE = ("cancel", "no", "close", "nothanks")
 SETTLE = 1.0
@@ -99,6 +132,48 @@ def page_words(words):
     return [w for w in words if not inside(w, TAB_ROW) and not inside(w, MM_CORNER)]
 
 
+def _inside(w, r):
+    return r[0] <= w.x <= r[2] and r[1] <= w.y <= r[3]
+
+
+def judged(words):
+    """The words store / real-money wording is looked for in: the tiles and
+    the details panel, the promo banner left out."""
+    return [w for w in words if (_inside(w, TILES) or _inside(w, DETAILS)) and not _inside(w, PROMO)]
+
+
+def details_button(words):
+    return [w for w in words if _inside(w, DETAILS_BUTTON)]
+
+
+def offer(words, limit):
+    """(title, price word, price) of the details panel when it names a cheap
+    standard Power (BUY_NAMES) and its button shows one whole Monkey Money
+    amount in MIN_PRICE..min(MAX_PRICE, limit) and nothing of a store
+    ("GET MORE", real money). (title, None, None) otherwise."""
+    title = " ".join(w.text for w in words if _inside(w, DETAILS) and w.y <= DETAILS_TITLE_MAX_Y)
+    key = next((n for n in BUY_NAMES if n in norm(title)), None)
+    button = details_button(words)
+    joined = "".join(norm(w.text) for w in button)
+    if key is None or "getmore" in joined or any(A.real_money(w.text) for w in button):
+        return title, None, None
+    amounts = [(w, mm_amount(w.text)) for w in button if mm_amount(w.text) is not None]
+    if len(amounts) != 1 or not MIN_PRICE <= amounts[0][1] <= min(MAX_PRICE, limit):
+        return title, None, None
+    return key, amounts[0][0], amounts[0][1]
+
+
+def owned_tiles(frame):
+    """Centres of the gold, badged (owned) Power tiles on the Powers page."""
+    from .powers import find_badges, is_gold_tile
+    out = []
+    for b in find_badges(frame, TILES):
+        icon = (b[0] + TILE_BADGE_TO_ICON[0], b[1] + TILE_BADGE_TO_ICON[1])
+        if is_gold_tile(frame, icon, TILE_HALF):
+            out.append(icon)
+    return out
+
+
 def read_price(words, near, limit):
     """The Monkey Money price shown for the Power named by word `near`: a
     whole number in MIN_PRICE..min(MAX_PRICE, limit), to the right of or
@@ -138,7 +213,7 @@ class PowerShop:
         self.menus.identify()
         words = list(self.menus.words)
         log.info("achievement: power shop, %s: %s", what, A.screen_text(words))
-        if self.budget.used("looks_shop") < A.LOOKS_PER_DAY:
+        if self.budget.used("looks_shop") < SHOP_LOOKS_PER_DAY:
             self.budget.add("looks_shop")
             try:
                 save(self.s.grab(), A.CAPTURE_DIR / f"shop_{what}_{time.strftime('%Y%m%d_%H%M%S')}.png")
@@ -181,22 +256,34 @@ class PowerShop:
             return self._bail("no POWERS tab read in the tab row", words)
         self.inp.click(tab.x, tab.y)
         words = self._look("powers_tab")
-        if shop_page(page_words(words)):
+        # The Powers tab opens on its ALL sub-tab with a real-money promo
+        # banner (live 00:57: "MASTERS OF THE UNIVERSE MEGA PACK"): only the
+        # plain POWERS sub-tab is clicked, by its word, in the sub-tab row.
+        sub = A.find_allowed(words, SUBTABS, region=SUBTAB_ROW)
+        if sub is None:
+            return self._bail("no POWERS sub-tab read", words)
+        self.inp.click(sub.x, sub.y)
+        words = self._look("powers_subtab")
+        if shop_page(judged(words)):
             return self._bail("a store or real-money page", words)
-        name = A.find_allowed(page_words(words), BUY_ORDER)
-        if name is None:
-            return self._bail("no cheap Power name read", words)
+        tiles = owned_tiles(self.s.grab())
+        if not tiles:
+            return self._bail("no Power tile with a count read", words)
         limit = self.budget.left("mm")
-        self.inp.click(name.x, name.y)
-        words = self._look("power")
-        if shop_page(page_words(words)):
-            return self._bail("a store or real-money page", words)
-        name2 = A.find_allowed(page_words(words), (norm(name.text),)) or name
-        price_w, price = read_price(page_words(words), name2, limit)
-        if price_w is None:
-            return self._bail("no Monkey Money price within the cap", words)
+        for i, icon in enumerate(tiles[:MAX_TILES], 1):
+            self.inp.click(*icon)
+            words = self._look(f"tile{i}")
+            if shop_page(judged(words)):
+                return self._bail("a store or real-money page", words)
+            label, price_w, price = offer(words, limit)
+            if price_w is not None:
+                break
+            log.info("achievement: power shop - tile %d: %r, button %s - not a cheap Power with a "
+                     "Monkey Money price", i, label, A.screen_text(details_button(words)) or "nothing")
+        else:
+            return self._bail("no cheap Power with a Monkey Money price", words)
         log.info("achievement: power shop - %s costs %d MM (today %d of %d MM spent)",
-                 name.text, price, self.budget.used("mm"), A.MM_PER_DAY)
+                 label, price, self.budget.used("mm"), A.MM_PER_DAY)
         self.inp.click(price_w.x, price_w.y)
         # At most one confirmation, then at most one plain OK (a "purchased"
         # notice). A loop over "buy" words could buy again and again.
@@ -233,9 +320,9 @@ class PowerShop:
         self.budget.add("mm", spent)
         self.budget.add("purchases")
         self.budget.set_flag("powers_seen", None)    # look in a game again before buying more
-        log.info("achievement: bought %s for %d MM (today %d of %d MM)", name.text, spent,
+        log.info("achievement: bought %s for %d MM (today %d of %d MM)", label, spent,
                  self.budget.used("mm"), A.MM_PER_DAY)
-        return f"bought {norm(name.text)} {spent}"
+        return f"bought {label} {spent}"
 
 
 def run_if_needed(screen, inp, menus, account_key, read_mm, statuses=None, budget=None):
