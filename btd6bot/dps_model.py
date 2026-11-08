@@ -1039,6 +1039,9 @@ class Station:
     # Source.camo_shared) holds: those some camo-detecting tower reaches.
     # None = no limit (the tower shares no camo).
     camo_paths: frozenset = None
+    # the same tower's local sources as a station of their own, when its
+    # other sources reach the whole map (station_for); played with it
+    parts: list = field(default_factory=list)
 
     def covers(self, path):
         return path < len(self.zones) and self.zones[path] is not None and self.zones[path].length > 0
@@ -1309,6 +1312,15 @@ def simulate_round(stations, mode, rnd, track, strength=1.0):
     return worst
 
 
+def with_parts(stations):
+    """The stations with their local parts (Station.parts) listed too."""
+    out = []
+    for st in stations:
+        out.append(st)
+        out.extend(getattr(st, "parts", None) or ())
+    return out
+
+
 def _play(stations, track, lots, strength):
     """One scenario of one round: lots flow through the stations in track
     order; what is left after the last one leaks."""
@@ -1316,7 +1328,7 @@ def _play(stations, track, lots, strength):
     end_time = 0.0
     # towers frozen part of the time (Glacial Trail) attack at that share
     strength *= getattr(track, "uptime", 1.0)
-    for st in sorted(stations, key=lambda s: s.order):
+    for st in sorted(with_parts(stations), key=lambda s: s.order):
         st.strength = strength
         out = []
         server = _Server(st, out)
@@ -1551,6 +1563,33 @@ def station_for(t, placed, track, sight=None, strict=False):
     is_global = p.is_global or any(s.placement == "global" for s in sources)
     if strict and t.kind in STRICT_OWN_REACH:
         is_global = False
+    # A tower with map-wide AND local sources (Inferno Ring: meteor + ring of
+    # fire; Aircraft Carrier / Carrier Flagship: planes + the boat's own
+    # cannons; Druid of the Jungle: vines + thorns; ace planes + a map-wide
+    # drop) is two stations: the map-wide sources over the whole map and the
+    # local ones only in the tower's own reach (Station.parts). Before, one
+    # map-wide source gave every source of the tower the whole map: Lost
+    # Crevasse CHIMPS (2026-11-08 01:37, loss case 20261108_014123) had an
+    # Inferno Ring on the lake shore whose ring reached no track (the bot read
+    # 0 pops at 4-0-2), the model let the ring burn the whole track, rated
+    # round 93 2.95, and a fortified MOAB of round 93 leaked at the exit.
+    glob = [s for s in sources if s.placement == "global"]
+    local = [s for s in sources if s.placement != "global"]
+    if is_global and glob and local:
+        main = _make_station(t, glob, True, reach_radius, track, sight, camo_paths)
+        part = _make_station(t, local, False, reach_radius, track, sight, camo_paths)
+        if main is None:
+            return part
+        if part is not None:
+            main.parts = [part]
+        return main
+    return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths)
+
+
+def _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths):
+    """The Station of tower t for these sources: over the whole map when
+    is_global, else within reach_radius (None when that reaches no track)."""
+    from .placement import needs_sight
     travel = max((s.travel for s in sources if s.radial), default=0.0)
     # Snipers reach the whole map but still need line of sight; the other
     # map-wide towers (planes, helis, mortars, Advanced Intel subs) do not.
