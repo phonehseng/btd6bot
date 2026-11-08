@@ -2,7 +2,7 @@
 
 Data: `data/achievements.json` (162 entries: the 156 of the Steam list plus 6
 Legends DLC). Plans for restricted-win achievements:
-`strategies/achievements/ach_*.yaml` (21 files).
+`strategies/achievements/ach_*.yaml` (22 files).
 Sources: the Steam achievement list for app 960090 (names, descriptions, hidden
 flags, global unlock %), bloonswiki "Achievements (BTD6)" and the individual
 achievement pages, which give the exact rules and wiki strategies. Researched
@@ -81,34 +81,158 @@ Offline test: `tests/test_achievement_replays_offline.py`.
 ## Priority plan: what to go after next
 
 Value = reward (Monkey Money, MK points, instas) per minute, single player,
-on this account. "Bot" = the bot can do it with existing code.
+on this account. Re-planned 2026-11-07 from the 2026-11-06 scan: every card
+it read as in progress (0 % included) or unknown, single-player only.
+Unread cards are taken as complete (see above); the hidden ones (2TC, Josh's
+Constant, Nah I'd Win, Golden Ticket, ...) would show as "???" cards if they
+were open, and the scan read none, so they are not planned.
 
-| # | Achievement | Status | Reward | Bot? | What it needs |
+**A. The bot does these on its own now** (planner tier ACH or normal play):
+
+| # | Achievement | Status | Reward | How | Time left |
 |---|---|---|---|---|---|
-| 1 | Unsung Monkeys | 30 % | Banana Farmer x2, 2-0-0 Farm insta | yes, now scheduled | `ach_unsung_monkeys`, 7 Logs Easy wins (~45 min) |
-| 2 | Freaky Friday | 52 % | 150 MM, 0-4-0 Alchemist insta | yes, new build | `ach_freaky_friday`, ~2 Logs Medium games |
-| 3 | Insta Century | 0 % | 1,000 MM, Monkey Boost x3 | owner by hand / new code | Place 100 Instas (the account has held 200 at once: Tower Keeper is done). Code: in-game Insta panel (below) |
-| 4 | Instant Gratification | 0 % | 100 MM, random T5 insta | owner by hand | Place one tier-5 Insta once (1 min) |
-| 5 | First Steps | 0 % | 100 MM | owner by hand | Quests menu -> "First Time Tutorial!" (~5 min) |
-| 6 | Power User / Empowered / You've Got the Power | 32 % / 8 % / not read | 150 MM / 250 MM / Monkey Boost | new code | 17 / 92 more Power uses; cheap Powers bought with MM (owner now allows it). Spec below |
-| 7 | Lookin fab | unknown | 500 MM | owner, once | Equip any owned hero skin on the bot's heroes; 100 wins then come from normal play |
-| 8 | Sapper | 29 % | 500 MM, 1 MK point | passive | 3.55M more fortified layers. Comes from the R80+ games the bot already plays (Hard family, CHIMPS); far faster in long Easy freeplay (not supported). Best poppers: single-target non-insta damage - Elite Defender / Cripple MOAB snipers, Perma-Spike, Ninja, Sun Avatar; avoid BMA, XXXL Trap, Navarch (insta-kills), Shattering Shells / First Strike (strip or skip layers) |
-| 9 | Ultimate Bloons Master | not read | 2,000 MM, 4 MK points | passive | 15 CHIMPS maps; the account record shows 15+ CHIMPS wins, so it is probably done (next scan) |
-| 10 | Heavy Investment | 26 % | 100 MM, 3 Dart instas | new code | Create a Paragon with >= $401,626 extra on the slider; needs paragon purchase + slider code (also gives Big Spender/Apotheosis if open) |
-| 11 | Glittering / Glorious / Magical Gold | 48 % / 9 % / 8 % | 150-250 MM + instas | passive (weekends) | Golden Bloons only on alternate weekends (Fri-Mon 08:00 UTC), R21+, not CHIMPS/Deflation. Magical Gold needs Magic Only games then: weekend gating not coded |
-| 12 | Axis of Havoc | 0 % | Glue Trap x2, Camo Trap x2 | needs a build | One CHIMPS game with 5-x-x, x-5-x and x-x-5 snipers at once (~$95k of snipers at Hard prices). Appending them to a proven CHIMPS build does not fit its cash (Park Path's plan ends at R96). Needs a sniper-carry CHIMPS build checked with `tools/optimize_builds.py`. Low reward for a 35-min one-life game: last |
-| 13 | Hook, Line, and Sinker | 2 % | 100 MM + 2 instas | passive-ish | 2,900 more MOAB Takedown hooks; the AbilityPlanner already fires Monkey Pirates/Pirate Lord on MOAB rounds, so add a 0-4-0 buccaneer to water builds when there is cash to spare |
-| 14 | Crash of the Titans | 12 % | 300 MM, 0-0-4 Mortar insta | no | Shattering Shells (mortar 0-0-4; the account's mortar bottom path reads 0) against fortified DDTs (R90+, freeplay) |
+| 1 | Unsung Monkeys | 30 % | Banana Farmer x2, 2-0-0 Farm insta | `ach_unsung_monkeys`, Logs Easy replays | 7 wins, ~45 min |
+| 2 | Freaky Friday | 52 % | 150 MM, 0-4-0 Alchemist insta | `ach_freaky_friday`, Logs Medium replays | ~2 games, ~20 min |
+| 3 | Axis of Havoc | 0 % | Glue Trap x2, Camo Trap x2 (4 Power uses for Power User / Empowered) | NEW `ach_axis_of_havoc`: Candy Falls CHIMPS replay, the proven candyfalls_chimps build with its exit Spike Factory traded for the three tier-5 snipers; the third (Elite Sniper) is bought at round 99 offline. Section below | one ~20-25 min CHIMPS game |
+| 4 | Sapper | 29 % | 500 MM, 1 MK point | passive: the R80+ games the bot already plays (Hard family, CHIMPS). Best poppers: single-target non-insta damage (Elite Defender / Cripple MOAB snipers - which `ach_axis_of_havoc` buys - Perma-Spike, Ninja, Sun Avatar); avoid BMA, XXXL Trap, Navarch (insta-kills), Shattering Shells / First Strike (strip or skip layers). Far faster in freeplay (not supported) | 3.55M fortified layers: hundreds of games |
+| 5 | Ultimate Bloons Master | not read | 2,000 MM, 4 MK points | passive: the account record shows 33 CHIMPS medals, so it is probably done (next scan) | - |
 
-Not worth it now / blocked: Moving House (Chinook redeploys need tower
-picking), Bloon Master Populous (R200+ freeplay), 2 MegaPops (per-tower
-damage readout), No Harvest (hand placement), 2TC and Josh's Constant (not
-read, probably done), Snap of your fingers and Living on the Edge (need
-deliberate leaks: the owner's never-lose rule; an explicit exception would
-be needed), Limited Run (Trophy Store: real-money adjacent, skipped), I'll
-Be Back (Monkey Money continues: forbidden). Co-op, races, bosses,
-odysseys, daily challenges, contested territory, social and Legends DLC
-entries are out (single-player rule / real money).
+**B. Built, waiting for their first live runs** (calibration, see "Powers,
+Instas, hero skin, First Steps" below):
+
+| # | Achievement | Status | Reward | Module |
+|---|---|---|---|---|
+| 6 | Insta Century | 0 % | 1,000 MM, Monkey Boost x3 | `powers.py` (up to 2 Instas a game) |
+| 7 | Power User / Empowered / You've Got the Power | 32 % / 8 % / not read | 150 MM / 250 MM / Monkey Boost | `powers.py`, `powershop.py` |
+| 8 | Instant Gratification | 0 % | 100 MM, random T5 insta | `powers.py` (one tier-5 Insta while wanted) |
+| 9 | Lookin fab | unknown | 500 MM | `heroskin.py` (one Quincy skin for MM, then 100 wins) |
+| 10 | First Steps | 0 % | 100 MM | owner by hand (~5 min); `quests.py` only looks |
+
+**C. Open, need a feature or a build the bot does not have** (precise needs
+in "What the other open achievements need" below), best value first:
+
+| # | Achievement | Status | Reward | Blocker |
+|---|---|---|---|---|
+| 11 | No Harvest | 0 % | 400 MM (+ a first-time Cornfield CHIMPS medal) | a Cornfield CHIMPS map build (any win counts: the bot never removes corn); the optimizer finds none |
+| 12 | Heavy Investment | 26 % | 100 MM, 3 Dart instas | in-game Paragon purchase + cash slider (not coded, screens never captured) |
+| 13 | Magical Gold / Glittering / Glorious Gold | 8 % / 48 % / 9 % | 150 MM + insta each | Golden Bloon event: a reader for which weekend and map have it, then Magic Only games there |
+| 14 | Ultimate Team-up | 3 % | 3 random tier-3 instas | Monkey Teams screen reader (`ach_team_*` not bot-ready) |
+| 15 | 2 MegaPops | 0 % | Monkey Boost, Time Stop | one tower must pop > 97.9 % of CHIMPS' whole RBE: a near-solo carry the bot cannot verify |
+| 16 | Hook, Line, and Sinker | 2 % | 100 MM + 2 instas | ~2,940 MOAB Takedown hooks: ~75+ Hard games with a Pirate Lord |
+| 17 | Crash of the Titans | 12 % | 300 MM, 0-0-4 Mortar insta | fortified DDTs: 9 per CHIMPS game, 24 per ABR game, hundreds in freeplay; needs freeplay |
+| 18 | Moving House, Bloon Master Populous | 0 % | 150 MM + 2 Powers / 1-0-4 Alchemist insta | Support Chinook tower picking; R200+ freeplay |
+
+**D. Not allowed:** Snap of your fingers and Living on the Edge (both 0 %,
+open) need deliberately leaked lives: the bot's never-lose rule holds (the
+owner's 2026-11-07 exception covers Claude/agent learning games, not the
+bot's own play), so their builds stay SAFETY-blocked; either could be played
+once by hand or as a supervised forced game if the owner wants. Limited Run
+(Trophy Store), I'll Be Back (Monkey Money continues). Co-op, races,
+bosses, odysseys, daily challenges, contested territory, social and Legends
+DLC entries are out (single-player rule / real money).
+
+### Axis of Havoc: `ach_axis_of_havoc` (built 2026-11-07, not yet played)
+
+The game unlocks it when the third tier-5 sniper is bought in a CHIMPS game
+(a win is not required, but the bot never plays to lose). The trio costs
+$94,615 at CHIMPS (Hard) prices - s1 0-1-0 -> 0-5-0 $23,925, a new 0-0-5
+$24,785, a new 5-0-0 $45,905 - out of the ~$178,900 CHIMPS pays from round 6
+to 100 (start cash + `data/rounds.json` income).
+
+Which build: a survey of the 22 CHIMPS map builds (each plan replayed as the
+cash allows): all but one end their plan at round 93-100 with $4-41k left,
+$7-71k short of the trio. `candyfalls_chimps` (won its only game, 19 min)
+ends its plan at round 78 with $94,434 left by round 100 and its mid/late
+game is far over-built (the damage model caps rounds 63-90 at 16x), so it
+fits once its last purchase, the 2-0-4 exit Spike Factory ($8,480), makes
+way. The plan keeps candyfalls_chimps' first 22 steps unchanged, then:
+s2 Elite Defender (0-0-5) and s3 Maim -> Cripple MOAB (4-0-0 -> 5-0-0, the
+DDT and BAD answers the spike was) on the river's left bank 17-18 units from
+the MIB village (reach 48: camo + every damage type for the camo DDTs of
+rounds 90/95/99), and last s1 (the Night Vision sniper) to Elite Sniper.
+
+Evidence (offline, 2026-11-07; tests in `test_achievement_replays_offline`):
+- plan replay (`optimize_builds.replay_plan`): every step bought - s2 0-0-5
+  round 82, s3 4-0-0 round 84, 5-0-0 round 95, s1 0-5-0 round 99 - worst
+  margin 2.23 (round 95; candyfalls_chimps itself 2.18), 98 3.36, 99 2.38,
+  100 5.60; nothing under 2.0;
+- executor game (`tools/simulate_threats.simulate` on the map's geometry,
+  real account): 28/28 steps, no threat gaps, all three tier 5s standing at
+  the start of round 99; its boards rated worst 2.18 (round 95);
+- without `plan_first: true` the same game spent ~$50k from round 92 on blimp
+  towers the plan never asked for (bomb 2-4-0, ace 4-2-0, sniper 3-0-0),
+  stopped s3 at 4-0-2 and never had the trio: so the build sets it;
+- every `at` legal in plan order on the geometry; s2/s3 also on the live map
+  model (b2's and su1's spots, unchanged from candyfalls_chimps, are refused
+  on the live model now: the executor's `at` fallback moves them to a
+  neighbour, as it did in that build's win);
+- validate [] / bot_ready / usable (Candy Falls only) / coverage ok on the
+  live account (all sniper tier 5s unlocked).
+
+Planner: Candy Falls CHIMPS is beaten, so it plays as an ACH replay while the
+scan reads the card in progress (wins_needed 1: once per scan). An untested
+achievement plan is held just under the CHIMPS bar (0.80) until it has CHIMPS
+games of its own; the new `extends: candyfalls_chimps` key lets the planner
+judge it as that map's own build (`planner.is_own_map_build`), and
+`strategy.extends_problems` checks the claim when it loads (same map, a
+bot-ready map build, its plan opening this one but for at most
+`EXTENDS_MAX_DROPPED` = 3 of its last steps; otherwise not bot-ready). On the
+main account's data it ranks as the third ACH replay at p 0.84, after Unsung
+Monkeys and Freaky Friday. Risk the model cannot see: until round 99 the
+plan owns the cash, so the off-plan blimp towers candyfalls_chimps' win had
+are not bought; the model rates every round 2.18+ without them.
+
+### What the other open achievements need
+
+- **Heavy Investment** (26 %): create any
+  Paragon with at least $401,626 extra on the cash slider. Needs (1) a build
+  that stands all three tier 5s of a tower whose paragon the account owns
+  (dart, boomerang, bomb, tack, sniper, sub, buccaneer, ace, wizard, ninja,
+  druid, spike, engineer: `paragons` in the account file) - the Executor's
+  `_tier5_taken` already allows one tier 5 per path per kind, so three
+  towers 5-x-x / x-5-x / x-x-5 are expressible; (2) in-game: select a tier-5
+  tower, press its Paragon upgrade (the panel's 4th/upgrade button - never
+  captured), read the Paragon dialog, drag the cash slider to its right end
+  or to >= $401,626, confirm; (3) money: an Easy game into freeplay, where
+  Double Cash + farms pass $500k (freeplay continuation is not coded either).
+  Screens to capture first: the Paragon upgrade button and dialog. Apotheosis
+  and Big Spender come with it if they are open.
+- **No Harvest** (0 %): any Cornfield CHIMPS win counts, because the bot never
+  removes an obstacle unless a plan has a `do: clear` step. So what it needs
+  is a `strategies/maps/cornfield_chimps.yaml` (it would also be a first-time
+  CHIMPS medal) plus a catalog `passive: true, mode: chimps, map: Cornfield`
+  so the planner credits it; `ach_no_harvest` (Ultra-Juggernaut on 4 hidden
+  bend spots) stays a research note. `tools/optimize_builds.py` finds no
+  Cornfield CHIMPS plan (2026-11-07: worst margin 0.06, every round from 15
+  unsafe; only the middle plot is free), so it needs a hand-researched build
+  from a community route, checked like the other CHIMPS map builds.
+- **Magical Gold / Glittering / Glorious Gold**: Golden Bloons come only in
+  the Golden Bloon event (weekends, alternating with Monkey Teams per the
+  2026-10-21 research), from round 21, not in CHIMPS/Deflation. Needs a
+  reader that knows when (and, if the event shows it on featured maps only,
+  where) the event runs - the same kind of map-select reader as Monkey Teams
+  - then the planner can credit Magical Gold to Magic Monkeys Only games
+  there (`magic_obyn_ninja_wizard` / `ach_abracadabmonkey` fit). Today the
+  planner credits Magical Gold to every Magic Only game, weekend or not.
+- **Ultimate Team-up** (3 %): the Monkey Teams reader (`ach_team_*` notes).
+- **2 MegaPops** (0 %): CHIMPS' whole RBE is 2,042,693 (rounds 6-100), so one
+  tower must pop all but 42,693 of it - every other popping tower and the
+  hero together under 2.1 %. Needs a near-solo carry build (supports that do
+  not pop: village, alchemist, glue without corrosive) and ideally a reading
+  of the carry's pop count from its upgrade panel to stop wasting games. Not
+  something the existing builds come close to.
+- **Hook, Line, and Sinker** (2 %): ~2,940 more hooks; a Hard game has 133
+  MOAB-class bloons (rounds 40-80), CHIMPS 712 (40-100). The AbilityPlanner
+  already fires MOAB Takedown; a cheap step would be a 0-4-0 buccaneer in
+  water builds with spare cash. Low value per minute.
+- **Crash of the Titans** (12 %, 2,640 strips left): fortified DDTs appear
+  only in round 99 up to round 100 (9 per CHIMPS/Impoppable game; ABR 24:
+  rounds 93/97/99), then by the dozen in freeplay (rounds 102-138). Needs
+  freeplay plus a 0-0-4 Shattering Shells mortar; the account's mortar bottom
+  path is locked but 14,990 of its 69,614 banked XP would unlock it.
+- **Moving House** (Support Chinook redeploys: pick a tower, then a spot, per
+  use) and **Bloon Master Populous** (1 billion BMA damage: R200+ freeplay):
+  both need features far beyond a build.
 
 ### Powers, Instas, hero skin, First Steps: built 2026-11-07, not yet run live
 
@@ -198,7 +322,11 @@ executor can't express yet.
 `readiness()` sets `bot_ready` False, with reasons, for any constraint the
 executor cannot enforce. `runner.planner_specs` offers a bot-ready build only
 while its achievement is not complete in the scan, and the planner plays it on
-a first-time medal or as an ACH replay (see above).
+a first-time medal or as an ACH replay (see above). A plan may also say
+`extends: <map build id>` (a proven `strategies/maps` / `optimized` build of
+the same map whose plan opens its own; checked by
+`strategy.extends_problems`) and `plan_first: true`; the planner then judges
+it as that map's own build.
 
 | Achievement | File | Map / mode | Plan |
 |---|---|---|---|
@@ -221,6 +349,7 @@ a first-time medal or as an ACH replay (see above).
 | Josh's Constant | ach_joshs_constant | Dark Castle / chimps | chimps_ninja_sun with the exit Spike Factory kept outside village range and bought to 2-0-5 at full price (>= $40,870) |
 | 2 MegaPops | ach_2_megapops | Logs / chimps, no hero | Heli carry to 5-0-2 Apache Prime, locked in place inside a 2-3-0 MIB Village and a 4-0-0 Stronger Stimulant Alchemist, exit Glue 0-2-3, one early Dart. Every other tower combined must pop under 42,693 |
 | Freaky Friday | ach_freaky_friday | Logs / medium | hard_ninja_alch_sun Medium plan plus two 2-4-0 Transforming Tonic alchemists (t1, t2); the AbilityPlanner fires the Tonic on cooldown; wins_needed 4 |
+| Axis of Havoc | ach_axis_of_havoc | Candy Falls / chimps | extends candyfalls_chimps (steps 1-22: Flagship + Aircraft Carrier, MIB village, Brickell); then s2 0-0-5 Elite Defender and s3 4-0-0 -> 5-0-0 Cripple MOAB inside the MIB, s1 0-1-0 -> 0-5-0 Elite Sniper last (round 99 offline); plan_first |
 
 ## Every achievement
 
@@ -312,7 +441,7 @@ the research's difficulty. Time: rough estimate for what is left on this account
 | What did it cost? - Everything | Sacrifice every tower type in the game to the Temple | single-game | complete | yes (hard) | - | When upgrading a Super Monkey to Sun Temple (4-x-x), have one of every tower type in its range (incl. water towers, so a map with water in range: Logs). Easy freeplay with farming; requires all towers unlocked. |
 | 2 MegaPops | Complete a game of CHIMPS with more than 2 million damage dealt by one tower | single-game | 0% | yes (hard) | one CHIMPS game | `ach_2_megapops` not bot-ready (needs per-tower damage readout) |
 | A Crate Time | Open a Diamond Crate in any Collection Event | event (collection) | not read | no | - | Open a Diamond Crate in a Collection Event. |
-| Axis of Havoc | Have one of each T5 sniper in one game of CHIMPS | single-game | 0% | yes (hard) | one ~35 min CHIMPS game | Needs a sniper-carry CHIMPS build that affords 5-x-x, x-5-x and x-x-5 (~$95k at Hard prices) - not written (see plan) |
+| Axis of Havoc | Have one of each T5 sniper in one game of CHIMPS | single-game | 0% | yes (hard) | one ~20-25 min CHIMPS game | NEW `ach_axis_of_havoc` (Candy Falls CHIMPS replay, extends candyfalls_chimps; trio $94,615 at Hard prices, all three standing by round 99 offline) |
 | Tower Keeper | Have 200 insta monkeys in your inventory at one time | cumulative, passive | complete | yes (easy) | - | Hold 200 Insta Monkeys at once; instas come from achievements, daily chests, quests and events. Do not spend instas. |
 | A year in the making | Open the Daily Chest 365 times | cumulative | not read | yes (easy) | ? | Open the Daily Chest (daily reward) 365 times; claim it once per day from the main menu. |
 | Kali Maaaaaaaa | Gain 10 levels for Adora in one round | single-game | not read | yes (medium) | ? | Adora gains 10 levels in one round by Blood Sacrifice (lvl 7) of an expensive tower (Flying Fortress, Super Mines, Dartling T5). Place Adora late, level her to 7, then sacrifice. Needs Adora. |
@@ -355,7 +484,7 @@ the research's difficulty. Time: rough estimate for what is left on this account
 | Like a Boss | Pop 50 Boss Bloons | event (boss) | not read | no | - | Boss Bloon events / Boss challenges. |
 | Davids vs Goliath | Win a boss battle without using a Hero | event (boss) | 0% | no | - | Boss Bloon events / Boss challenges. |
 | So Spiiicey Ninja Kiwi | Beat Spice Islands on Alternate Bloon Rounds with only land towers | single-game | not read | yes (hard) | ? | Win Spice Islands (Intermediate) on ABR using only land towers (no Sub/Buccaneer/Brickell; amphibious towers OK on land). Ninja/Alchemist/Village land core. Build: `ach_so_spiiicey_ninja_kiwi`. |
-| No Harvest | Beat Cornfield on CHIMPS without removing any corn | single-game | 0% | no (rule/infeasible) | one CHIMPS game | Hand-placed only (`ach_no_harvest` not bot-ready) |
+| No Harvest | Beat Cornfield on CHIMPS without removing any corn | single-game | 0% | yes (hard) | one CHIMPS game | Any Cornfield CHIMPS win counts (the bot never removes corn): needs a cornfield_chimps map build; the optimizer finds none (see plan). `ach_no_harvest` stays a research note |
 | Student Loans | 4 x 10^5 (Go into $400,000 of debt) | single-game | not read | yes (medium) | ? | Be $400,000 in debt: Banana Farm 0-4-0 IMF Loan ability spam (first loan $10k debt, each next +$6k with Backroom Deals); many IMF Loans on End of the Road; Geraldo rejuv potions optional. |
 | Sticky Situation | Glue 500,000 Bloons | cumulative, passive | not read | yes (easy) | passive | Glue 500k bloons. Any strategy with Glue Gunners (primary_core uses 1-0-2/2-0-3 glues; 0-2-3/0-2-4 glue hose/strike glue many). |
 | Big Spender | Spend 1,000,000 cash in one round | single-game | not read | yes (medium) | ? | Spend $1,000,000 in a single round: in late Easy freeplay with big income, buy a Paragon with max cash injection (also gives Apotheosis/Heavy Investment) plus upgrades in the same round. |

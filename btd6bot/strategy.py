@@ -23,7 +23,10 @@ They are *not* general-purpose strategies:
   * load_all() sets `bot_ready` (and `bot_ready_reasons`) on every strategy;
     bot_ready False means "never auto-play", and usable() always rejects it;
   * a strategy pinned to a `map:` also gets planner.maps = [map], and usable()
-    rejects other maps when map_name is passed.
+    rejects other maps when map_name is passed;
+  * `extends: <map build id>` marks a plan that is a proven map build plus
+    extra steps (extends_problems checks the claim; the planner then judges
+    it as that map's own build).
 
 Constraints the executor enforces (see Executor / usable / hero_for):
   allowed_towers, forbidden_towers, land_only, no_income_towers, no_sell,
@@ -847,6 +850,7 @@ def load_all():
                 reasons = readiness(d)
             except Exception as e:
                 reasons = [f"validation failed: {e!r}"]
+            reasons += extends_problems(d, out)
             d["bot_ready"] = not reasons
             d["bot_ready_reasons"] = reasons
             mp = d.get("map")
@@ -856,6 +860,51 @@ def load_all():
                 d["planner"] = p
             out[d["id"]] = d
     return out
+
+
+# An achievement plan that `extends` a map's proven build must keep that
+# build's plan as its own first steps; it may leave off at most this many of
+# the proven plan's LAST steps (whose cash then pays for the achievement's
+# extra steps). ach_axis_of_havoc drops candyfalls_chimps' last two steps
+# (the exit Spike Factory) for its tier-5 snipers.
+EXTENDS_MAX_DROPPED = 3
+
+
+def extends_problems(strat, loaded):
+    """Why an achievement plan's `extends: <map build id>` does not hold
+    (empty list: it holds). loaded: the strategies loaded so far (the map
+    builds are loaded before the achievement plans).
+
+    `extends` says "this plan is that map build, proven in play, plus extra
+    steps bought with its surplus cash"; the planner then judges it as the
+    map's own build (planner.is_own_map_build), which matters in CHIMPS: an
+    untested achievement plan is otherwise held just under the CHIMPS bar.
+    So the claim is checked here rather than trusted: the base must be a
+    bot-ready map build (strategies/maps or strategies/optimized) for the same
+    map, cover every mode of this plan, and its plan steps must open this
+    plan unchanged, in order, but for at most EXTENDS_MAX_DROPPED of its last
+    steps."""
+    base_id = strat.get("extends")
+    if not base_id:
+        return []
+    base = loaded.get(base_id)
+    if base is None:
+        return [f"extends {base_id!r}, which is not a loaded strategy"]
+    probs = []
+    if base.get("source") not in ("maps", "optimized") or not base.get("bot_ready"):
+        probs.append(f"extends {base_id!r}, which is not a bot-ready map build")
+    if base.get("map") != strat.get("map"):
+        probs.append(f"extends {base_id!r}, a build for {base.get('map')!r}, not {strat.get('map')!r}")
+    missing = set(strat.get("modes") or ()) - set(base.get("modes") or ())
+    if missing:
+        probs.append(f"extends {base_id!r}, which does not play {sorted(missing)}")
+    own, proven = strat.get("plan") or [], base.get("plan") or []
+    kept = 0
+    while kept < min(len(own), len(proven)) and own[kept] == proven[kept]:
+        kept += 1
+    if len(proven) - kept > EXTENDS_MAX_DROPPED:
+        probs.append(f"extends {base_id!r} but keeps only its first {kept} of {len(proven)} plan steps")
+    return probs
 
 
 def achievement_strategies(strats, cards=None):

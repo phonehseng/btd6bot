@@ -22,7 +22,7 @@ from btd6bot.account import AccountState  # noqa: E402
 logging.getLogger("strategy").setLevel(logging.ERROR)
 
 READY = {
-    "ach_abracadabmonkey", "ach_all_for_one_and_one_for_one", "ach_big_bloons",
+    "ach_abracadabmonkey", "ach_all_for_one_and_one_for_one", "ach_axis_of_havoc", "ach_big_bloons",
     "ach_bloons_master", "ach_chunky_monkeys", "ach_first_monkeys_first", "ach_freaky_friday",
     "ach_role_reverser", "ach_so_spiiicey_ninja_kiwi", "ach_unsung_monkeys", "ach_war_monkeys",
 }
@@ -124,7 +124,7 @@ def test_all_achievement_yamls_load():
     files = sorted(S.ACH_DIR.rglob("*.yaml"))
     strats = S.load_all()
     ach = {sid: s for sid, s in strats.items() if s.get("achievement")}
-    assert len(files) == 21 and len(ach) == len(files), (len(files), len(ach))
+    assert len(files) == 22 and len(ach) == len(files), (len(files), len(ach))
     top = {f.stem for f in S.STRAT_DIR.glob("*.yaml")}
     assert not (top & set(ach)), "achievement ids collide with general strategies"
     for sid, s in ach.items():

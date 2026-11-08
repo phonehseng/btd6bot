@@ -206,6 +206,96 @@ def test_unsung_monkeys_build_is_offered():
     assert "ach_unsung_monkeys" in ids
 
 
+def test_axis_of_havoc_build():
+    """ach_axis_of_havoc: candyfalls_chimps (won live) with its exit Spike
+    Factory traded for the three tier-5 snipers. Bot-ready, Candy Falls
+    CHIMPS only, every spot legal in plan order, and offline it owns all
+    three tier 5s by round 99 without any round under the safety margin."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import optimize_builds as OB
+    import simulate_threats as SIM
+    import test_map_hints_offline as H
+    strats = S.load_all()
+    a = strats["ach_axis_of_havoc"]
+    acct = F.full_account()
+    assert a["bot_ready"] and S.validate(a) == [], a.get("bot_ready_reasons")
+    assert a["extends"] == "candyfalls_chimps" and S.extends_problems(a, strats) == []
+    assert a.get("plan_first") is True
+    assert S.usable(a, "chimps", acct, map_name="Candy Falls", allow_achievement=True)[0]
+    assert not S.usable(a, "chimps", acct, map_name="Logs", allow_achievement=True)[0]
+    assert S.coverage(a, "chimps", acct) == (True, [])
+    # one sniper per tier 5 (path -> sniper id), each reached by a plan step
+    kinds = {st["id"]: st["kind"] for st in a["plan"] if st.get("do") == "place"}
+    t5 = {path: st["id"] for st in a["plan"] if st.get("do") == "upgrade" and kinds[st["id"]] == "sniper"
+          for path, tier in enumerate(S.parse_cross(st["to"])) if tier == 5}
+    assert sorted(t5) == [0, 1, 2] and len(set(t5.values())) == 3, t5
+    # spots: legal for their tower, in plan order, on the map's geometry
+    spots = [(st["kind"], a["hero"] if st["kind"] == "hero" else None, tuple(st["at"]))
+             for st in a["plan"] if st.get("do") == "place"]
+    assert H.illegal_spots(a["map"], spots, 100) == []
+    # the plan replayed as the cash allows: every round at the safety margin
+    margins = OB.replay_plan(a)
+    assert min(margins.values()) >= OB.SAFETY_MARGIN, min(margins.items(), key=lambda kv: kv[1])
+    # the executor's own game (threat answers, plan_first): all steps bought,
+    # no bloon it cannot pop, and the three tier 5s stand together by round 99
+    boards = {}
+    r = SIM.simulate(dict(a), "chimps", a["map"], real_map=True, boards=boards)
+    assert r["plan_done"] == f"{len(a['plan'])}/{len(a['plan'])}" and not r["gaps"], r["plan_done"]
+    trio = [rnd for rnd in sorted(boards)
+            if {p for k, t, _, _ in boards[rnd].values() if k == "sniper" for p in range(3) if t[p] == 5}
+            == {0, 1, 2}]
+    assert trio and trio[0] <= 99, trio[:1]
+
+
+def test_extends_claim_is_checked():
+    """`extends` is accepted only for a map build of the same map whose plan
+    opens the achievement plan, short of at most EXTENDS_MAX_DROPPED of its
+    last steps."""
+    strats = S.load_all()
+    a = strats["ach_axis_of_havoc"]
+    assert S.extends_problems(dict(a, extends="nope"), strats)
+    assert S.extends_problems(dict(a, map="Logs"), strats)
+    assert S.extends_problems(dict(a, extends="ach_unsung_monkeys"), strats)
+    base = strats["candyfalls_chimps"]["plan"]
+    cut = len(base) - S.EXTENDS_MAX_DROPPED - 1
+    probs = S.extends_problems(dict(a, plan=base[:cut] + a["plan"][22:]), strats)
+    assert probs and "keeps only" in probs[0], probs
+    changed = [dict(st) for st in a["plan"]]
+    changed[2]["at"] = [0.5, 0.5]     # a moved boat is not the proven build
+    assert S.extends_problems(dict(a, plan=changed), strats)
+    assert S.extends_problems(dict(a, extends=None), strats) == []
+
+
+def test_extended_achievement_plan_clears_the_chimps_bar():
+    """An untested achievement plan is held just under the CHIMPS bar; one
+    that extends the map's proven build is judged as that build and may be
+    replayed (tier ACH) while its card is in progress."""
+    acc = AccountState()
+    acc.map_unlocked = lambda m: True     # Candy Falls is an Intermediate map
+    for mode in ("hard", "impoppable", "chimps"):    # CHIMPS beaten, with what unlocks it
+        acc.record_result("Candy Falls", mode, "candyfalls_chimps", True, minutes=19.0)
+    cat = [{"name": "Axis of Havoc", "description": "Have one of each T5 sniper in one game of CHIMPS",
+            "category": "single_player", "kind": "game_stat", "mode": "chimps", "map": None,
+            "passive": False, "strategy": None}]
+    state = {"scanned_at": SCANNED, "cards": {"Axis of Havoc": {"status": "progress", "progress": 0}}}
+
+    def spec(**kw):
+        d = {"id": "ach_axis_of_havoc", "achievement": "Axis of Havoc", "map": "Candy Falls",
+             "modes": ["chimps"], "towers": {"dart": [0, 0, 0]}, "base_success": {"chimps": 0.85},
+             "bot_ready": True, "wins_needed": 1}
+        d.update(kw)
+        return P.StrategySpec.from_any(d)
+
+    with_base, without = spec(extends="candyfalls_chimps"), spec()
+    assert P.is_own_map_build(with_base, "Candy Falls") and not P.is_own_map_build(without, "Candy Falls")
+    assert not P.is_own_map_build(with_base, "Logs")
+    for s, replayed in ((with_base, True), (without, False)):
+        _, _, cands = P.rank_games(acc, [plain(0.5), s], achievements=(cat, state), below_bar=True)
+        ach = [c for c in cands if c.tier == "ACH" and c.s.id == "ach_axis_of_havoc"]
+        assert bool(ach) == replayed, [(c.tier, c.map, c.mode, c.s.id, round(c.p, 3)) for c in cands
+                                       if c.s.id == "ach_axis_of_havoc"]
+
+
 def test_safe_mode_beginner_pass_skips_replays():
     """Safe mode's Beginner-first pass is for open medals; a replay is not one."""
     s = unsung()
