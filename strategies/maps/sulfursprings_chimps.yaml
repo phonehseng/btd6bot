@@ -1,8 +1,9 @@
 # Sulfur Springs, CHIMPS: one buccaneer in the west pool opens alone (no
 # starter dart since 21:00: it reached no track) and grows to a Carrier Flagship beside a
 # Bigger Radius / Radar Scanner / Jungle Drums village; a Crossbow dart holds
-# rounds 16-37 on the north side, Quincy follows, a Glaive Lord boomerang on
-# the east cliff and a Cripple MOAB sniper finish.
+# rounds 16-37 on the north side, Quincy follows, three Spiked Mines spike
+# factories on the south and east bends and a Cripple MOAB sniper finish
+# (no Glaive Lord since 2026-11-07 22:00, see Status).
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -237,6 +238,44 @@
 # neighbours legal with every plan tower standing, 0.39 from the boat. The
 # rest of the plan is unchanged: plan 29/29, no threat gaps, R40 2.62 /
 # 3.40, Flagship R61, Glaive Lord R83, Cripple MOAB R94; R95 0.94 / 0.85.
+# 2026-11-07 22:00: the 21:00 build lost ROUND 95 live (20:52-21:18,
+# journal 20261107_205259, loss case 20261107_2118*): rounds 6-94 with no
+# leak, the whole plan bought (Flagship 21:05, Glaive Lord 21:11 at round
+# 82, Cripple MOAB 21:14:46 at round 93), "plan and fill exhausted", round
+# 95 rated 0.82 and lost with $62. Round 95 is 500 camo regrow purples and
+# 250 camo regrow fortified leads (0-30 s), then 30 camo DDTs and 50
+# fortified MOABs (31-51 s). The desktop recording (rec_20261107_211501
+# +40-49 s) shows the boat and village thinning the purples by the boat,
+# and the DDTs and fortified MOABs filling the whole loop and the
+# bottom-left exit; the model leaks the DDTs' camo regrow ceramic /
+# rainbow children there. Why the plan could not hold it:
+#   * the two tier 5s were $69,660 of the late cash and bought almost
+#     nothing for round 95: on the round-95 board (replay, tools/
+#     simulate_threats on main's learned map) the Glaive Lord adds 0.07
+#     over 4-0-2 and the whole of r1 0.11 (r1 stands outside the village:
+#     no camo, and every bloon of round 95 but the MOABs is camo), the
+#     Cripple MOAB 0.06; flat (see 21:00) both add nothing. The boat and
+#     the village are the defence (without b1 0.16, without v1 0.23). The
+#     plan banked up to $33,000 for 10 rounds (rounds 72-93) for them;
+#   * the winning Flagship maps rate this board's round 95 at 1.04-2.54
+#     (Cracked 1.89 / flat 2.59, Lotus Island 1.23, Spice Islands 1.04;
+#     Adora's Temple 0.71 won once): their boat sees far more track.
+# Change, chosen on that board over every single buy up to $40,000 (every
+# kind in its legal cells, at least 0.08 from every tower, flat and bot
+# views): a Spiked Mines spike factory (4-2-0, $16,855) lifts round 95
+# the most, 0.62 -> 0.88 flat at (0.516, 0.811) on the south bend (42
+# units of track flat); the cliff cells by the village rate 1.0 in the
+# bot's view and nothing flat, so they are not used. A second at (0.580,
+# 0.760) gives 1.08, a third at (0.607, 0.666) 1.27 (6-8 of 8 neighbour
+# cells legal with every earlier tower standing). The Glaive Lord, its
+# 4-0-2 and the village's Primary Mentoring (no Primary tower in its reach)
+# go; r1 stays at 3-0-2 for round 63's rush; the Cripple MOAB stays last
+# (round 100's BAD answer). Replay of the whole plan, flat / bot: plan
+# 36/36, no threat gaps, spikes 4-2-0 R73 / R82 / R85, Maim MOAB R79,
+# Cripple MOAB R98; R92 3.22 / 2.04, R94 2.54 / 1.48, R95 1.27 / 0.66
+# (was 0.70 / 0.78), R96 1.96 / 1.34, R98 1.34 / 0.84 (0.92 / 1.28), R99
+# 1.27 / 0.70 (0.68 / 0.72), R100 5.91 / 4.60. The bot's own forecast
+# uses the bot view and will still call round 95 weak.
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
@@ -244,11 +283,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: none         # no starter dart: no legal cell lets it reach the track (see 21:00; match.Match._no_starter)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4]}
+  towers: {buccaneer: [5, 2, 0], village: [2, 2, 0], boomerang: [3, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Sulfur Springs]
-  revised: "2026-11-07T21:00"
+  revised: "2026-11-07T22:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.436]}   # west pool: opens alone (the match adds a dart)
   - {do: upgrade, id: b1, to: 1-0-0}
@@ -273,12 +312,19 @@ plan:
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.521]}   # east cliff: the rim is the starter's (see 20:00)
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.521]}   # east cliff: round 63's rush only (see 22:00)
   - {do: upgrade, id: r1, to: 3-0-2}
-  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
-  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.516, 0.811]}       # south bend: round 95's camo children (see 22:00)
+  - {do: upgrade, id: p1, to: 2-2-0}
+  - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
+  - {do: place, id: p2, kind: spike, role: dps, at: [0.580, 0.760]}       # south-east bend
+  - {do: upgrade, id: p2, to: 2-2-0}
+  - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
   - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
-  - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB, before round 100
+  - {do: place, id: p3, kind: spike, role: dps, at: [0.607, 0.666]}       # east side, below Quincy
+  - {do: upgrade, id: p3, to: 2-2-0}
+  - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
+  - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB: round 100's BAD
 answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
