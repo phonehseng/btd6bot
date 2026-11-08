@@ -53,6 +53,7 @@ log = logging.getLogger("powershop")
 INSTAS_POWERS_BUTTON = (0.748, 0.885)     # the bolt icon above its "INSTAS + POWERS" caption
 BACK_ARROW = (0.044, 0.055)
 SEEN_FRESH = 3 * 86400                    # how recent the "no owned Power" look must be
+OWNED_METHOD = "gold_badge"               # powers.py writes this with "powers_seen"
 MIN_PRICE, MAX_PRICE = 10, 500            # a single cheap Power, in Monkey Money
 TABS = ("powers",)
 # The screen's tab row and Monkey Money corner (live capture 2026-11-08
@@ -104,6 +105,10 @@ def is_due(budget, statuses, now=None):
     seen = budget.flag("powers_seen")
     if not seen or now - seen.get("at", 0) > SEEN_FRESH:
         return False, "the powers panel was not read lately"
+    if seen.get("method") != OWNED_METHOD:
+        # flags written before owned Powers were recognised as gold badged
+        # hexagons said "none owned" wrongly (the 01:13 purchase came from one)
+        return False, "the last panel look predates the gold-badge reading"
     owned = seen.get("owned")
     if owned:
         # a count of badged Power icons (powers.power_badges); older flags held names
@@ -140,6 +145,32 @@ def judged(words):
     """The words store / real-money wording is looked for in: the tiles and
     the details panel, the promo banner left out."""
     return [w for w in words if (_inside(w, TILES) or _inside(w, DETAILS)) and not _inside(w, PROMO)]
+
+
+def without_promo(words):
+    return [w for w in words if not _inside(w, PROMO)]
+
+
+_TOTAL = re.compile(r"^\$?(\d{1,3}(?:[.,]\d{3})+|\d{1,6})$")
+
+
+def screen_mm(words):
+    """The Monkey Money total in the top-right corner of a shop screen
+    ("$215,104"; OCR also reads the comma as a dot: "$215.204"), or None."""
+    for w in words:
+        if _inside(w, MM_CORNER):
+            m = _TOTAL.match(w.text.strip().replace(" ", ""))
+            if m:
+                return int(re.sub(r"[.,]", "", m.group(1)))
+    return None
+
+
+def _drop(before, after):
+    """Monkey Money spent between two readings of the total, or None when
+    either is unreadable."""
+    if before is None or after is None:
+        return None
+    return before - after
 
 
 def details_button(words):
@@ -284,27 +315,39 @@ class PowerShop:
             return self._bail("no cheap Power with a Monkey Money price", words)
         log.info("achievement: power shop - %s costs %d MM (today %d of %d MM spent)",
                  label, price, self.budget.used("mm"), A.MM_PER_DAY)
+        shown_before = screen_mm(words)             # the total on the shop screen itself
         self.inp.click(price_w.x, price_w.y)
-        # At most one confirmation, then at most one plain OK (a "purchased"
-        # notice). A loop over "buy" words could buy again and again.
-        words = page_words(self._look("confirm"))
-        if shop_page(words):
-            return self._bail("a store or real-money page", words)
-        ok = A.find_allowed(words, CONFIRM)
-        if ok is not None:
-            prices = {v for v in (mm_amount(w.text) for w in words) if v is not None}
-            if prices and price not in prices:
-                return self._bail(f"the question shows another price {sorted(prices)}", words)
-            log.info("achievement: power shop - confirming %d MM via %r", price, ok.text)
-            self.inp.click(ok.x, ok.y)
-            words = page_words(self._look("after_confirm"))
-            notice = A.find_allowed(words, ("ok", "close", "continue"))
-            if notice is not None and not shop_page(words):
-                self.inp.click(notice.x, notice.y)
-                self.sleep(SETTLE)
+        # The drop of the total on screen is the proof of a purchase, so it
+        # is read before anything on the screen is judged: live 01:13 the
+        # "ADD FOR: 100" click bought Monkey Boost at once ($215,204 ->
+        # $215,104, count 15 -> 16) and the routine then bailed on the promo
+        # banner's "PORTABLE LAKE PRO PACK", so the purchase went uncounted.
+        words = self._look("after_buy")
+        spent = _drop(shown_before, screen_mm(words))
+        if not spent:
+            # nothing yet: at most one confirmation (showing the same price),
+            # then the total is read again. A loop over "buy" words could buy
+            # again and again.
+            dialog = without_promo(page_words(words))
+            if shop_page(dialog):
+                return self._bail("a store or real-money page", words)
+            ok = A.find_allowed(dialog, CONFIRM)
+            if ok is not None:
+                prices = {v for v in (mm_amount(w.text) for w in dialog) if v is not None}
+                if prices and price not in prices:
+                    return self._bail(f"the question shows another price {sorted(prices)}", words)
+                log.info("achievement: power shop - confirming %d MM via %r", price, ok.text)
+                self.inp.click(ok.x, ok.y)
+                words = self._look("after_confirm")
+                spent = _drop(shown_before, screen_mm(words))
         self._home()
-        mm_after = self.read_mm()
-        spent = None if mm_after is None else mm_before - mm_after
+        if spent is None:
+            # the total on the shop screen was unreadable: the main menu's
+            mm_after = self.read_mm()
+            spent = None if mm_after is None else mm_before - mm_after
+        else:
+            log.info("achievement: power shop - Monkey Money on screen %s -> %s",
+                     f"{shown_before:,}", f"{shown_before - spent:,}")
         if spent is None:
             # not readable: count the price read, to stay under the cap
             spent = price
@@ -320,7 +363,9 @@ class PowerShop:
         self.budget.add("mm", spent)
         self.budget.add("purchases")
         self.budget.set_flag("powers_seen", None)    # look in a game again before buying more
-        log.info("achievement: bought %s for %d MM (today %d of %d MM)", label, spent,
+        totals = (f" ({shown_before:,} -> {shown_before - spent:,})" if shown_before is not None
+                  else f" ({mm_before:,} -> {mm_before - spent:,})")
+        log.info("achievement: bought %s for %d MM%s (today %d of %d MM)", label, spent, totals,
                  self.budget.used("mm"), A.MM_PER_DAY)
         return f"bought {label} {spent}"
 

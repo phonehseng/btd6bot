@@ -421,13 +421,44 @@ class InGameExtras:
         if classify_panel(words, frame) == "shop":
             self._decline(words)
             raise _Bail(f"a purchase question after Power slot {slot}", words)
+        if self._went_down(frame, badge, before, slot):
+            return True
+        # Live 02:46 (Super Monkey Storm, the gold "22"): the click only
+        # SELECTED the hexagon (a glowing outline, rec_20261108_024601.mkv
+        # 0:16), nothing came onto the cursor and the count stayed 22. The
+        # Power is used by a second click on the map: a point late on the
+        # track first (right for track Powers, anywhere for global ones such
+        # as the Storm), then open ground. Each click is checked by the count.
+        targets = track_points(model)[:1] + insta_spots(model, self.avoid)[:1]
+        for pt in targets:
+            log.info("achievement: Power %d selected, not used - clicking the map at %.3f,%.3f", slot, *pt)
+            self.inp.click(*pt)
+            self.sleep(0.8)
+            if self.g.is_holding():
+                if self._drop(targets, f"Power {slot}"):
+                    return True
+                self.g.cancel_hold()
+                return False
+            frame, words = self._look(f"power{slot}_after_map")
+            if classify_panel(words, frame) == "shop":
+                self._decline(words)
+                raise _Bail(f"a purchase question after Power slot {slot}", words)
+            if self._went_down(frame, badge, before, slot):
+                return True
+        # still selected and unused: click the hexagon again to let it go
+        self.inp.click(*icon)
+        self.sleep(0.4)
+        raise _Bail(f"Power slot {slot} clicked but nothing changed (badge {before}, map clicked too)", words)
+
+    def _went_down(self, frame, badge, before, slot):
+        """The Power's badge count went down (or the badge went away)."""
         now = badge_near(find_badges(frame), badge)
         after = None if now is None else self._count(now)
         if now is None or (before is not None and after is not None and after < before):
-            log.info("achievement: instant Power %d used (badge %s -> %s)", slot, before,
+            log.info("achievement: Power %d used (badge %s -> %s)", slot, before,
                      "gone" if now is None else after)
             return True
-        raise _Bail(f"Power slot {slot} clicked but nothing changed (badge {before} -> {after})", words)
+        return False
 
     def _use_powers(self, frame, model, words=()):
         if not on_powers_tab(frame, words):
@@ -542,7 +573,8 @@ class InGameExtras:
             frame, words = self._panel
             if on_powers_tab(frame, words):
                 # the power shop buys only after a look that found none owned
-                self.budget.set_flag("powers_seen", {"at": time.time(), "owned": len(power_badges(frame, words))})
+                self.budget.set_flag("powers_seen", {"at": time.time(), "owned": len(power_badges(frame, words)),
+                                                     "method": "gold_badge"})
             if self.want_powers and self.budget.allow("power_uses"):
                 self._use_powers(frame, model, words)
                 frame, words = self._look("powers_panel_before_instas")

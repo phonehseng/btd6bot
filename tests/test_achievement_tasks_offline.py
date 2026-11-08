@@ -379,13 +379,33 @@ def test_owned_power_on_the_cursor_goes_on_the_track():
 
 
 def test_power_that_changes_nothing_stops_the_routine():
+    """Tile click and both map clicks leave the count at 22: the hexagon is
+    clicked again (let go) and the panel closed."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
         live = _big("powers_panel_live.jpg")
         g = FakeGame(lambda clicks: live)
-        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22, 22]), FakeModel(), [])
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22] * 6), FakeModel(), [])
         assert res["result"].startswith("bailed: Power slot 1 clicked but nothing changed"), res
-        assert b.used("power_uses") == 0 and g.inp.clicks[-1] == P.POWERS_BUTTON
+        assert b.used("power_uses") == 0
+        grid = [c for c in g.inp.clicks if _in_grid(c)]
+        assert len(grid) == 2 and all(_is_power_click(c) for c in grid)     # selected, then let go
+        assert g.inp.clicks[-1] == P.POWERS_BUTTON
+
+
+def test_selected_power_is_used_by_a_map_click():
+    """Live 02:46: the Super Monkey Storm hexagon only got selected (count
+    22 stayed). A click on the map (a late track point) uses it."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        live = _big("powers_panel_live.jpg")
+        g = FakeGame(lambda clicks: live)
+        # use 1: before 22, after tile 22, after map 21; use 2: 21, 21, 20
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22, 22, 21, 21, 21, 20]), FakeModel(), [])
+        assert res["result"] == "done" and len(res["powers"]) == 2, res
+        assert b.used("power_uses") == 2
+        track = P.track_points(FakeModel())[0]
+        assert g.inp.clicks.count((round(track[0], 3), round(track[1], 3))) == 2, g.inp.clicks
 
 
 def test_purchase_question_is_declined_never_confirmed():
@@ -477,9 +497,12 @@ def test_shop_due_only_with_no_owned_power():
     with tempfile.TemporaryDirectory() as tmp:
         b = _budget(tmp)
         assert not S.is_due(b, st, NOW)[0]                       # panel never read
-        b.set_flag("powers_seen", {"at": NOW - 60, "owned": ["roadspikes"]})
+        b.set_flag("powers_seen", {"at": NOW - 60, "owned": 1, "method": S.OWNED_METHOD})
         assert not S.is_due(b, st, NOW)[0]
-        b.set_flag("powers_seen", {"at": NOW - 60, "owned": []})
+        # the old reading (before gold badged hexagons counted) said 0 wrongly
+        b.set_flag("powers_seen", {"at": NOW - 60, "owned": 0})
+        assert not S.is_due(b, st, NOW)[0]
+        b.set_flag("powers_seen", {"at": NOW - 60, "owned": 0, "method": S.OWNED_METHOD})
         assert S.is_due(b, st, NOW)[0]
         assert not S.is_due(b, {"Power User": "complete"}, NOW)[0]
         b.add("mm", A.MM_PER_DAY)
@@ -599,6 +622,25 @@ def test_shop_subtab_then_owned_tile_then_buys():
         assert not any(x > 0.79 and 0.08 < y < 0.26 for x, y in clicks)   # the promo never
         assert (0.4, 0.65) not in clicks
         assert b.used("mm") == 35 and b.used("purchases") == 1
+
+
+def test_live_one_click_purchase_is_counted_despite_the_promo():
+    """01:13: "ADD FOR: 100" bought Monkey Boost at once ($215,204 ->
+    $215,104, count 15 -> 16); the PORTABLE LAKE PRO PACK promo on that
+    screen made the old code bail without counting it."""
+    tile2 = _ocr("shop_tile2_live")
+    after = _ocr("shop_after_buy_live")
+    assert S.screen_mm(tile2) == 215204 and S.screen_mm(after) == 215104
+    with tempfile.TemporaryDirectory() as tmp:
+        shop, b = _shop(tmp, _flow_screens([_powers_all(), tile2], [("unknown", after)]), mm=(215204,))
+        shop.s = SimpleNamespace(grab=_shop_frame)
+        res = shop.buy_one()
+        assert res == "bought monkeyboost 100", res
+        assert b.used("mm") == 100 and b.used("purchases") == 1
+        clicks = shop.inp._inp.clicks
+        assert (0.757, 0.877) in clicks                                   # ADD FOR: 100
+        assert not any(x > 0.79 and 0.08 < y < 0.26 for x, y in clicks)  # the promo never
+        assert clicks.count((0.757, 0.877)) == 1                          # one purchase click
 
 
 def test_shop_without_a_powers_tab_clicks_nothing_more():
