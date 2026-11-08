@@ -313,6 +313,16 @@ def test_runner_hook():
     assert run(error=ValueError("boom")) == (["UID1"], [1])
 
 
+
+def test_the_monkey_money_counter_is_not_a_real_money_price():
+    """2026-11-07 19:48: '$213,880' read as '$213.88' in the top-right
+    corner made the chest flow bail out as if on a store page."""
+    corner = [Word("$213.88", 0.93, 0.04, 0.1, 0.04, 0.9)]
+    assert not D.shop_like(corner)
+    offer = [Word("$12.99", 0.50, 0.70, 0.1, 0.04, 0.9)]
+    assert D.shop_like(offer), "a price with cents elsewhere still counts"
+    assert D.shop_like(corner + [Word("BUNDLE", 0.5, 0.3, 0.1, 0.04, 0.9)])
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
