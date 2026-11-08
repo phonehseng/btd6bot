@@ -4246,8 +4246,39 @@ class Executor:
                             "rebuilds the rest by then; the rest of the cash goes to this round",
                             rnd, keep, what, due_round, f"{cost:.0f}")
             return None
+        if weak and self._near_hold_too_late(due_round, cost, rnd):
+            note = ("near-too-late", what, rnd)
+            if note not in self._notes():
+                self.noted.add(note)
+                log.warning("round %d is weak and %s ($%.0f, round %d) cannot be paid before round %d "
+                            "starts from $%d - nothing is held for it, the cash goes to the weak rounds "
+                            "first", rnd, what, cost, due_round, rnd + 1, self.cash_seen)
+            return None
         self.saving_for_threat = True
         return False
+
+    def _near_hold_too_late(self, due_round, cost, rnd):
+        """Is a hold for a round at most FAR_ROUNDS away pointless for the
+        weak round(s) before it? True when the cash in hand (cash_seen) and
+        this round's income cannot pay `cost` before round rnd + 1 starts
+        (income_until(rnd + 1, rnd)). weak_now covers rnd and rnd + 1, so
+        the danger comes before the money: a full hold would leave the weak
+        rounds with nothing, and the answer would still not be there for
+        them. Unknown cash or cost: False (hold as before).
+
+        Spring Spring CHIMPS (2026-11-07, case 20261107_225718): from round
+        98 (rated 1.18, round 99 at 1.04) all the cash was held "for the bad
+        answer" of round 100 ($34,560) - two rounds away, so the far-round
+        rule (_far_keep) no longer applied. The plan's Cripple MOAB sniper
+        was never bought, round 99 started with $32,973 in the bank and its
+        bloons took the one life. Far holds keep their own rule; a safe
+        round still holds in full."""
+        cash = getattr(self, "cash_seen", None)
+        if cash is None or cost is None or due_round is None or rnd is None:
+            return False
+        if not rnd < due_round <= rnd + self.FAR_ROUNDS:
+            return False
+        return cash + self.income_until(rnd + 1, rnd) < cost
 
     # -- between rounds -------------------------------------------------------------
     def hold_round(self, rnd, cash):
