@@ -4,7 +4,7 @@
 # winning is not required, but the bot never plays to lose, so the plan is a
 # full CHIMPS win with the three snipers as its late game.
 #
-# Why Candy Falls: the trio costs $94,615 at CHIMPS (Hard) prices on top of
+# Why Candy Falls: the trio costs $96,125 at CHIMPS (Hard) prices on top of
 # a defence, and CHIMPS pays only ~$178,900 from round 6 to 100 (start cash
 # plus data/rounds.json income, no farms). Of the 22 CHIMPS map builds in
 # strategies/maps, candyfalls_chimps (won its only game, 19 min) is the one that
@@ -20,23 +20,31 @@
 # buccaneers to Carrier Flagship 5-2-0 + Aircraft Carrier 4-2-0, MIB village
 # 2-3-0, Night Vision sniper, base Super Monkey for the round-63 rush,
 # Brickell), then instead of the Spike Factory:
-#   * s2, Elite Defender (0-0-5) and s3, Cripple MOAB (5-0-0) on the river's
+#   * s2, Elite Defender (0-2-5) and s3, Cripple MOAB (5-2-0) on the river's
 #     left bank, 17-18 units from the village centre (MIB reach 48): camo
 #     and every damage type from the MIB, so both hit the camo DDTs of rounds
-#     90, 95 and 99. Maim MOAB (4-0-0) comes first, as the DDT answer the
+#     90, 95 and 99. Maim MOAB (4-2-0) comes first, as the DDT answer the
 #     Spike Factory used to be; Cripple MOAB is the BAD answer.
+#     The x-2-x crosspath (Night Vision Goggles + Shrapnel Shot, $755 per
+#     sniper) is what lifts rounds 95 and 99 over the 2.0 margin on the
+#     damage model fixed on 2026-11-08 (78c3b0b: Carrier Flagship planes no
+#     longer count the boat's own local guns map-wide): with plain 0-0-5 /
+#     5-0-0 snipers those rounds rated 1.76 / 1.85, with 0-2-5 / 5-2-0
+#     2.28 / 2.86. Shrapnel spreads each bullet over the DDT's packed
+#     column; 2-0-5 (+$1,785) or an Alchemist ($2,755+) did less.
 #   * s1, the Night Vision sniper (0-1-0, its own camo), to Elite Sniper
 #     (0-5-0) last: the third tier 5 - the achievement.
 # Snipers shoot the whole map, so where they stand only matters for the
 # village buff. Targeting: strong for the blimp snipers.
 #
-# Checked offline 2026-11-07 (docs/achievements.md, "Axis of Havoc"; tests in
-# tests/test_achievement_replays_offline.py):
+# Checked offline 2026-11-08 on the fixed damage model (docs/achievements.md,
+# "Axis of Havoc"; tests in tests/test_achievement_replays_offline.py):
 #   * plan replay (tools/optimize_builds.replay_plan: each step as soon as
 #     the cash allows, CHIMPS economy, Hard prices, hero not counted): every
-#     step bought - s2 0-0-5 round 82, s3 4-0-0 round 84, s3 5-0-0 round 95,
-#     s1 0-5-0 round 99 - worst margin 2.23 (round 95; candyfalls_chimps
-#     2.18), round 98 3.36, 99 2.38, 100 5.60;
+#     step bought - s2 0-2-5 round 82, s3 4-2-0 round 85, s3 5-2-0 round 95,
+#     s1 0-5-0 round 99 - worst margin 2.28 (round 95; candyfalls_chimps
+#     itself now 1.51 at rounds 95 and 99), round 98 2.40, 99 2.86, 100 4.27;
+#     $6,789 left after round 100;
 #   * executor game (tools/simulate_threats.simulate on the map geometry):
 #     28/28 steps, no threat gaps, the three tier 5s standing from round 99,
 #     its boards rated 2.18 at worst (round 95);
@@ -89,10 +97,10 @@ plan:
   - {do: place, id: su1, kind: super, role: dps, at: [0.633, 0.777]}   # base Super Monkey: the round-63 rush answer
   - {do: upgrade, id: b1, to: 5-2-0}   # Carrier Flagship
   - {do: place, id: s2, kind: sniper, role: dps, at: [0.265, 0.624]}   # left bank, inside the MIB
-  - {do: upgrade, id: s2, to: 0-0-5}   # Elite Defender: tier 5 number one
+  - {do: upgrade, id: s2, to: 0-2-5}   # Elite Defender: tier 5 number one
   - {do: place, id: s3, kind: sniper, role: dps, target: strong, at: [0.275, 0.675]}   # left bank, inside the MIB
-  - {do: upgrade, id: s3, to: 4-0-0}   # Maim MOAB: the DDT answer (camo from the MIB)
-  - {do: upgrade, id: s3, to: 5-0-0}   # Cripple MOAB: tier 5 number two, the BAD answer
+  - {do: upgrade, id: s3, to: 4-2-0}   # Maim MOAB: the DDT answer (camo from the MIB)
+  - {do: upgrade, id: s3, to: 5-2-0}   # Cripple MOAB: tier 5 number two, the BAD answer
   - {do: upgrade, id: s1, to: 0-5-0}   # Elite Sniper: tier 5 number three - the achievement
 fill: []
 answers:
@@ -103,5 +111,5 @@ answers:
   moab: [{do: upgrade, id: b2, to: 2-2-0}, {do: upgrade, id: b1, to: 3-2-0}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}]
   zomg: [{do: upgrade, id: b2, to: 4-2-0}]
-  ddt: [{do: upgrade, id: v1, to: 2-3-0}, {do: upgrade, id: s3, to: 4-0-0}]
-  bad: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s3, to: 5-0-0}]
+  ddt: [{do: upgrade, id: v1, to: 2-3-0}, {do: upgrade, id: s3, to: 4-2-0}]
+  bad: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s3, to: 5-2-0}]

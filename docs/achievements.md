@@ -135,8 +135,8 @@ DLC entries are out (single-player rule / real money).
 
 The game unlocks it when the third tier-5 sniper is bought in a CHIMPS game
 (a win is not required, but the bot never plays to lose). The trio costs
-$94,615 at CHIMPS (Hard) prices - s1 0-1-0 -> 0-5-0 $23,925, a new 0-0-5
-$24,785, a new 5-0-0 $45,905 - out of the ~$178,900 CHIMPS pays from round 6
+$96,125 at CHIMPS (Hard) prices as built - s1 0-1-0 -> 0-5-0 $23,925, a new
+0-2-5 $25,540, a new 5-2-0 $46,660 - out of the ~$178,900 CHIMPS pays from round 6
 to 100 (start cash + `data/rounds.json` income).
 
 Which build: a survey of the 22 CHIMPS map builds (each plan replayed as the
@@ -146,16 +146,26 @@ ends its plan at round 78 with $94,434 left by round 100 and its mid/late
 game is far over-built (the damage model caps rounds 63-90 at 16x), so it
 fits once its last purchase, the 2-0-4 exit Spike Factory ($8,480), makes
 way. The plan keeps candyfalls_chimps' first 22 steps unchanged, then:
-s2 Elite Defender (0-0-5) and s3 Maim -> Cripple MOAB (4-0-0 -> 5-0-0, the
+s2 Elite Defender (0-2-5) and s3 Maim -> Cripple MOAB (4-2-0 -> 5-2-0, the
 DDT and BAD answers the spike was) on the river's left bank 17-18 units from
 the MIB village (reach 48: camo + every damage type for the camo DDTs of
 rounds 90/95/99), and last s1 (the Night Vision sniper) to Elite Sniper.
 
-Evidence (offline, 2026-11-07; tests in `test_achievement_replays_offline`):
-- plan replay (`optimize_builds.replay_plan`): every step bought - s2 0-0-5
-  round 82, s3 4-0-0 round 84, 5-0-0 round 95, s1 0-5-0 round 99 - worst
-  margin 2.23 (round 95; candyfalls_chimps itself 2.18), 98 3.36, 99 2.38,
-  100 5.60; nothing under 2.0;
+Reworked 2026-11-08 after the damage-model fix for mixed-range towers
+(78c3b0b: a Carrier Flagship's local guns no longer count map-wide): with
+plain 0-0-5 / 5-0-0 snipers rounds 95 / 99 fell to 1.76 / 1.85, under the
+2.0 gate (candyfalls_chimps itself now rates 1.51 there). The x-2-x crosspath
+on both new snipers (Night Vision + Shrapnel Shot, $755 each) lifts them to
+2.28 / 2.86 and still leaves the trio affordable by round 99; tried and
+weaker for the money: 2-0-5 (+$1,785), an Alchemist 3-0-0 by the snipers
+(+$2,755), s1 at 2-5-0 or 0-5-2.
+
+Evidence (offline, 2026-11-08 on the fixed model; tests in
+`test_achievement_replays_offline`):
+- plan replay (`optimize_builds.replay_plan`): every step bought - s2 0-2-5
+  round 82, s3 4-2-0 round 85, 5-2-0 round 95, s1 0-5-0 round 99 - worst
+  margin 2.28 (round 95), 98 2.40, 99 2.86, 100 4.27; nothing under 2.0;
+  $6,789 left after round 100;
 - executor game (`tools/simulate_threats.simulate` on the map's geometry,
   real account): 28/28 steps, no threat gaps, all three tier 5s standing at
   the start of round 99; its boards rated worst 2.18 (round 95);
@@ -349,7 +359,7 @@ it as that map's own build.
 | Josh's Constant | ach_joshs_constant | Dark Castle / chimps | chimps_ninja_sun with the exit Spike Factory kept outside village range and bought to 2-0-5 at full price (>= $40,870) |
 | 2 MegaPops | ach_2_megapops | Logs / chimps, no hero | Heli carry to 5-0-2 Apache Prime, locked in place inside a 2-3-0 MIB Village and a 4-0-0 Stronger Stimulant Alchemist, exit Glue 0-2-3, one early Dart. Every other tower combined must pop under 42,693 |
 | Freaky Friday | ach_freaky_friday | Logs / medium | hard_ninja_alch_sun Medium plan plus two 2-4-0 Transforming Tonic alchemists (t1, t2); the AbilityPlanner fires the Tonic on cooldown; wins_needed 4 |
-| Axis of Havoc | ach_axis_of_havoc | Candy Falls / chimps | extends candyfalls_chimps (steps 1-22: Flagship + Aircraft Carrier, MIB village, Brickell); then s2 0-0-5 Elite Defender and s3 4-0-0 -> 5-0-0 Cripple MOAB inside the MIB, s1 0-1-0 -> 0-5-0 Elite Sniper last (round 99 offline); plan_first |
+| Axis of Havoc | ach_axis_of_havoc | Candy Falls / chimps | extends candyfalls_chimps (steps 1-22: Flagship + Aircraft Carrier, MIB village, Brickell); then s2 0-2-5 Elite Defender and s3 4-2-0 -> 5-2-0 Cripple MOAB inside the MIB, s1 0-1-0 -> 0-5-0 Elite Sniper last (round 99 offline); plan_first |
 
 ## Every achievement
 
