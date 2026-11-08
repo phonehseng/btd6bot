@@ -424,10 +424,29 @@ class Match:
         was a $280 tack, and round 6 began with the buccaneer alone. The
         damage model rated that round 2.8, yet one red slipped past the lone
         tower's single darts and the game was lost 12 seconds in. A second
-        tower costs the change in hand and covers the misses of the first."""
-        if not self.ex.rules.get("one_life"):
+        tower costs the change in hand and covers the misses of the first.
+
+        A build that writes `starter: none` opts out (_no_starter): on its map
+        no legal cell lets the cheap second tower reach the track, and the
+        change is worth more as the opener's next upgrade."""
+        if not self.ex.rules.get("one_life") or self._no_starter():
             return False
         return sum(1 for p in self.g.towers.values() if p.kind != "hero") == 1
+
+    def _no_starter(self):
+        """True when the build says `starter: none`: no second tower beside
+        a lone opener, and no cash kept back for one.
+
+        Sulfur Springs CHIMPS (2026-11-07, games 18:43 and 19:57): the
+        starter dart stood at (0.473, 0.871) and at (0.345, 0.078), and the
+        recordings show it never threw a dart - the legal cells near the
+        track's first quarter are cliffs out of a dart's reach. Both games
+        were lost in round 9 to its 30 greens with the boat at 1-0-0, $10
+        short of Double Shot (2-0-0, $460). Without the $215 starter the
+        boat has Faster Shooting from round 7's start and Double Shot from
+        round 9's start."""
+        strat = getattr(self.ex, "strat", None)
+        return isinstance(strat, dict) and strat.get("starter") == "none"
 
     def _opener_reserve(self):
         """Cash the plan must leave untouched before the first Play of a

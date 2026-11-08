@@ -1,5 +1,5 @@
-# Sulfur Springs, CHIMPS: one buccaneer in the west pool opens alone (the
-# match adds its starter dart) and grows to a Carrier Flagship beside a
+# Sulfur Springs, CHIMPS: one buccaneer in the west pool opens alone (no
+# starter dart since 21:00: it reached no track) and grows to a Carrier Flagship beside a
 # Bigger Radius / Radar Scanner / Jungle Drums village; a Crossbow dart holds
 # rounds 16-37 on the north side, Quincy follows, a Glaive Lord boomerang on
 # the east cliff and a Cripple MOAB sniper finish.
@@ -194,25 +194,68 @@
 # 127 -> 215; the 16:30 spot below the village 40 -> 62 and 0% / 25% on
 # the reach check). 6 of 8 neighbours legal with every earlier tower
 # standing, 0.065 from Quincy, 0.53 from the starter.
+# 2026-11-07 21:00: the 19:57 game (planned starter at (0.345, 0.078))
+# lost ROUND 9 like 18:43. The desktop recordings of the three games show
+# why (frames in docs/evidence/):
+#   * the starter dart on the north rim never turned or threw in rounds 6-9
+#     while every bloon passed below it (sulfur_1959_r6_rim_starter_idle.png,
+#     rec_20261107_195900 +31-37 s); nor did the 18:43 starter at (0.473,
+#     0.871) in round 9 (sulfur_1845_r9_south_starter_idle.png); both games
+#     credit the dart the same 137 XP. Those two games were lone-boat games:
+#     boat 0-0-0 / 1-0-0 held rounds 6-8 (bloons to ~70%) and round 9's 30
+#     greens went past the boat's second pass (sulfur_2000_r9_greens_pass_
+#     boat.png) with Double Shot $205 away;
+#   * at 16:01 the starter stood on the rock inside the track's first loop
+#     (the route circles that rock, 10-22% of it) and popped at the entrance
+#     (sulfur_1603_r9_rock_starter_pops.png): that is what held rounds 6-15.
+#     The rock is refused on the learned map now (map file blocked, the
+#     game accepted (98,13-15) at 16:02 and refused (98,16) at 18:43, which
+#     marked (98,15) too): only 2 isolated accepted cells, not a legal spot;
+#   * d1 on the rim (0.302, 0.129) popped nothing at 0-1-0 / 0-2-0 in round
+#     16 (sulfur_1605_r16_rim_d1_idle.png): its 32-unit reach does not get to
+#     the track.
+# So the damage model's height shift is wrong here: it places a tower on
+# the 51-unit rim 28 units further down the screen than it is drawn, and
+# rates the rim darts 2.6 for rounds 6-8; measured flat on the screen (as
+# placement.visible_cover does) neither starter reaches the track, which
+# is what the videos show. Ratings below are "flat" (track heights zeroed in
+# dps_model.Track.heights) with the bot's view after the slash.
+# No legal dart cell with 6+ legal neighbours lifts round 9 by more than
+# 0.1 flat (best (0.521, 0.802): 1.56 against 1.46 for the boat alone). The
+# change: `starter: none` (match.Match._no_starter, new) - the $215 goes to
+# the boat, which then has Faster Shooting from round 7's start and Double
+# Shot from round 9's start ($470 in hand at round 9 in the live cash of
+# 16:01 / 18:43 / 19:57 plus the $215). Replay (tools/simulate_threats on
+# main's learned map, buys at round start), rounds 6-15, flat / bot:
+#   new         2.13/2.28 2.38/2.54 1.76/1.85 2.95/3.26 3.40/3.71 3.15/3.63
+#               2.57/3.22 2.25/2.95 3.63/4.97 1.83/2.33
+#   rim starter 2.13/2.65 1.79/2.38 1.76/2.25 1.48/1.83 1.70/2.11 3.15/3.91
+#               2.04/2.54 2.25/3.08 2.35/3.08 1.83/2.35  (lost R9 twice)
+#   rock (16:01, held) 2.59 2.30 2.40 1.92 1.94 3.67 2.33 2.57 2.59 1.98
+# d1 moves along the rim to (0.334, 0.112): 172 / 240 units of track at
+# 0-2-3 (flat / bot) against 128 / 203, 0 below 0-2-2 either way; 7 of 8
+# neighbours legal with every plan tower standing, 0.39 from the boat. The
+# rest of the plan is unchanged: plan 29/29, no threat gaps, R40 2.62 /
+# 3.40, Flagship R61, Glaive Lord R83, Cripple MOAB R94; R95 0.94 / 0.85.
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
-starter: {kind: dart, at: [0.345, 0.078]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
+starter: none         # no starter dart: no legal cell lets it reach the track (see 21:00; match.Match._no_starter)
 modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Sulfur Springs]
-  revised: "2026-11-07T20:00"
+  revised: "2026-11-07T21:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.436]}   # west pool: opens alone (the match adds a dart)
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
   - {do: upgrade, id: b1, to: 2-1-0}                                      # Grape Shot: round 15's pinks
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
-  - {do: place, id: d1, kind: dart, role: dps, at: [0.302, 0.129]}        # north-west, the lanes the boat cannot reach
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.334, 0.112]}        # north rim: reaches the track from Crossbow on (see 21:00)
   - {do: upgrade, id: d1, to: 0-1-0}
   - {do: upgrade, id: d1, to: 0-2-0}                                      # Very Quick Shots
   - {do: upgrade, id: d1, to: 0-2-1}
