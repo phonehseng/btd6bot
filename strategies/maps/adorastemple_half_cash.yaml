@@ -1,0 +1,131 @@
+# Adora's Temple, Half Cash: the Adora's Temple CHIMPS build (won live
+# 2026-11-07 20:04, strategies/maps/adorastemple_chimps.yaml) reordered for
+# the Fast Track start at round 22: Quincy first, the north-east boat to Hot
+# Shot, two wizards and a Night Vision sniper in the setup, the south-west
+# boat to Double Shot, a Druid of the Jungle, a Sharp Shooter dart and the
+# sniper's Full Metal Jacket for round 40's MOAB, then the Destroyer, a Radar
+# / Jungle Drums village, the Carrier Flagship and a Glaive boomerang.
+#
+# Why: Adora's Temple Half Cash was lost at ROUND 40, the first MOAB, with all
+# 100 lives (2026-11-08 04:30-04:35, journal 20261108_043009_AdorasTemple_
+# half_cash, loss case 20261108_044019_AdorasTemple_half_cash). The map had no
+# Half Cash build, so the bot's last-resort pick (p=0.58, under the 0.8 bar)
+# played the general land build hard_ninja_alch_sun. Its towers go down by
+# track segment, and on this map every route crosses the whole temple
+# diamond, whose walls block sight: each tower reaches 8-12% of a route. The
+# damage model rated the defence under 1 in 13 of the 18 rounds played
+# (R25-27 0.53-0.63, R34 0.29, R36-40 0.79/0.92/0.42/0.47/0.35), the cash
+# went into reinforce/surplus buys that lifted a round by 0.01-0.05 (a dart
+# to 3-0-2, a third ninja), the village found no spot near its ninja and
+# alchemist (R38, "no spot near ['n1', 'a1']") and the round-40 answers were
+# two bare snipers ($740). The same build lost 9 of its 10 Half Cash games
+# at rounds 37-40 (Another Brick, X Factor, Pat's Pond, Ship Capture,
+# Bloonarius Prime, Infernal, Party Parade, Cargo, now Adora's Temple). The
+# map's CHIMPS build, whose spots were chosen for this temple, already holds
+# the cash curve: Half Cash with Double Cash pays the Hard income again (the
+# CHIMPS income from round 22 on), and Fast Track starts the game at round 22
+# with $4,465 (optimize_builds.economy("half_cash", boosts)), about what
+# CHIMPS has saved by then.
+#
+# Sources:
+#   * strategies/maps/adorastemple_chimps.yaml (spots, order, the round-40
+#     dart and sniper, the druid) and its sources: bloon.games' Carrier
+#     Flagship CHIMPS recipe (https://bloon.games/how-to-beat-chimps-on-cracked),
+#     bloonswiki Adora's Temple (https://www.bloonswiki.com/Adora%27s_Temple)
+#   * bloonswiki Strategy:Half_Cash (https://www.bloonswiki.com/Strategy:Half_Cash):
+#     Destroyer 3-2-0 where track runs on both sides, Quincy viable, hard
+#     rounds 40, 63, 75, 78
+#   * the Half Cash map builds won on 2026-11-06 (Carved, Lotus Island, ...:
+#     9 of 9): the hero first, camo in the round-22 setup, answers that point
+#     at plan steps
+#
+# Changes from the CHIMPS build, and why:
+#   * Quincy goes first: a plan opening with a boat gets a $200 dart in front
+#     of it (Executor._with_opener: Half Cash's start_round 3 <= 5); no
+#     `starter` (Match only adds one in one-life games);
+#   * the sniper and Night Vision come before the second boat, so camo is in
+#     the round-22 setup: after the boat, the threat calendar (which plans
+#     with half income, no Double Cash) found the camo step too far and the
+#     replay bought an off-plan ninja for it at round 22;
+#   * the second boat takes Double Shot (2-0-0, $640) before the druid: round
+#     27 (the 250-bloon rush) rated 1.28 without it and 1.70 with it; the
+#     druid's Jungle (1-3-0) then stands from R32 instead of R30, while
+#     rounds 29-31 still rate 2.1-2.8;
+#   * the game ends at round 80, so the village stops at Jungle Drums
+#     (2-2-0), the sniper at Maim MOAB (4-2-0) for round 80's ZOMG, and the
+#     Cripple MOAB, Primary Mentoring and the DDT/BAD answers are left out.
+#
+# Spots: those of the CHIMPS build (checked there on data/maps/adorastemple.npz
+# and in tests/test_map_hints_offline.py's spot checks), every one legal and
+# kept by the executor-faithful replay below (every tower stands on its `at`).
+#
+# Replayed executor-faithfully 2026-11-08 (tools/simulate_threats.simulate on
+# the learned map, Fast Track start R22 with $4,465, Double Cash income, the
+# board at each round's start rated by the live forecast: RoundForecast with
+# the learned map's sight grid and heights; no hero). The generic build that
+# lost, replayed the same way: R22 0.68, R25-27 0.63/0.56/0.47, R34 0.23,
+# R36-40 0.75/0.84/0.44/0.42/0.30 (live 0.79/0.92/0.42/0.47/0.35).
+# This build: R22 2.28, R23 2.54, R24 7.42, R25 1.92, R26 2.35, R27 1.70
+# (the lowest), R28 2.40, R29 2.30, R30 2.80, R31 2.11, R32 5.19, R33 2.74,
+# R34 2.11, R35 4.36, R36 2.77, R37 6.95, R38 4.22, R39 5.97, R40 3.63 (the
+# first MOAB: Sharp Shooter 2-0-4 from R38, Full Metal Jacket from R38,
+# Destroyer from R40), R42 3.05, R45 3.63, R47 2.59, R49 2.48, R58 3.59,
+# R62 3.22, R63 4.71, R75 12.2, R78 5.13, R80 8.54; no threat gaps, no
+# answer or surplus buys. Stands from: Destroyer R40, village 2-2-0 R45,
+# Aircraft Carrier R50, Flagship R64, Glaive Ricochet R65, Maim MOAB R72;
+# the Glaive Lord (last step) is not reached by round 80.
+#
+# Status: written 2026-11-08, not played yet.
+id: adorastemple_half_cash
+map: Adora's Temple
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [half_cash]
+planner:
+  towers: {buccaneer: [5, 2, 0], village: [2, 2, 0], boomerang: [5, 0, 2], sniper: [4, 2, 0], wizard: [0, 0, 0], dart: [2, 0, 4], druid: [1, 3, 0]}
+  # the CHIMPS build's spots and order (won live), replayed on the Half Cash
+  # economy to round 80 with every round 1.7+ (see above)
+  base_success: {half_cash: 0.85}
+  maps: [Adora's Temple]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.382, 0.232]}      # Quincy first: no $200 opener dart (Executor._with_opener)
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.633, 0.240]}   # north-east pond
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.484, 0.198]}      # north triangle
+  - {do: place, id: w2, kind: wizard, role: dps, at: [0.537, 0.300]}      # north-east triangle
+  - {do: upgrade, id: b1, to: 1-0-0}
+  - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: upgrade, id: b1, to: 2-1-0}                                      # Grape Shot
+  - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead (R28)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.361, 0.564]}
+  - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo, in the R22 setup
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.248, 0.811]}   # south-west pond
+  - {do: upgrade, id: b2, to: 2-0-0}                                      # Double Shot: round 27's rush
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.355, 0.692]}      # south-west court: Druid of the Jungle's vines reach the whole map
+  - {do: upgrade, id: dr1, to: 1-0-0}                                     # Hard Thorns
+  - {do: upgrade, id: dr1, to: 1-1-0}
+  - {do: upgrade, id: dr1, to: 1-2-0}
+  - {do: upgrade, id: dr1, to: 1-3-0}                                     # Druid of the Jungle
+  - {do: upgrade, id: s1, to: 0-2-0}                                      # Shrapnel Shot
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.329, 0.274]}        # left triangle: round 40's MOAB
+  - {do: upgrade, id: x1, to: 0-0-3}
+  - {do: upgrade, id: x1, to: 0-0-4}                                      # Sharp Shooter
+  - {do: upgrade, id: x1, to: 2-0-4}                                      # Razor Sharp Shots
+  - {do: upgrade, id: s1, to: 1-2-0}                                      # Full Metal Jacket, by round 39
+  - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer: round 40
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.687, 0.317]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
+  - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
+  - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship: BFBs (R60)
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.745, 0.428]}   # east land, in the village's reach
+  - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the R63 rush
+  - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB: round 80's ZOMG
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, if the cash comes
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: dr1, to: 1-3-0}, {do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: x1, to: 0-0-4}, {do: upgrade, id: x1, to: 2-0-4}, {do: upgrade, id: s1, to: 1-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-2-0}]
+  rush: [{do: upgrade, id: dr1, to: 1-3-0}, {do: upgrade, id: r1, to: 3-0-2}]
