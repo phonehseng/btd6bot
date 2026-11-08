@@ -101,8 +101,8 @@
 # 11%); the druid at (0.436, 0.359) 6% (best on the map 7%, in the gap the
 # wizard takes); the village at (0.489, 0.428) is 24.8 units from the druid
 # and the wizard; the second sniper at (0.398, 0.419) 33.0 from it (Jungle
-# Drums radius 48), seeing 23%; the boomerang at (0.120, 0.572) by the
-# entrance lane, 7%. Every short-range tower here sees little: the wizard's
+# Drums radius 48), seeing 23%; the boomerang at (0.574, 0.726) beside the
+# middle stretch since 19:00 (see Status; before, (0.120, 0.572), 7%). Every short-range tower here sees little: the wizard's
 # Guided Magic (1-x-x, on the way to Archmage) sees over walls in the game,
 # which the bot's sight check does not count.
 #
@@ -122,6 +122,22 @@
 # Status: new 2026-11-07, opening reworked 15:30; not played yet. The
 # weakest of the four builds written that day: rounds 9-10 and 13-23 rate
 # under 1 in the model.
+# 2026-11-07 19:00: r1's spot audited (not played to it yet) after two
+# Glaive Lords elsewhere stood where they barely reached the track (Spring
+# Spring 17:12, Lost Crevasse 18:29: 0 pops in 9 rounds). At (0.120,
+# 0.572) the bot's own reach check (strategy.Executor._reach, as
+# sell_useless uses it) gave it 184 of the best legal cell's 357 track cells
+# at 0-0-0 (52%) but only 218 of 695 (31%, against sell_useless's 25%) at
+# Glaive Ricochet's 57.2 units: the cell sits at the exit's last stretch
+# (the last tenth of the route, beside the exit dart t1). r1 now stands at
+# (0.574, 0.726), between the bottom crater and the middle stretch: 327 of
+# 357 cells at 0-0-0 (92%; 164 in sight past the crater walls, 181 before)
+# and 578 of 695 at 3-0-2 (83%; 240 in sight, 215 before); the damage model
+# (sight counted) 70 units at 0-0-0 as before and 102 at 3-0-2 (87 before;
+# the best cell 129). Main's data/maps/moonlanding.npz (19:00, read in
+# place), every earlier tower standing: 7 of 8 neighbour cells legal, 0.11
+# screen heights from t3 and 0.14 from t2. Neither spot is in the village's
+# reach (74.5 units now, 137.6 before).
 id: moonlanding_chimps
 map: Moon Landing
 hero: quincy
@@ -132,7 +148,7 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Moon Landing]
-  revised: "2026-11-07T15:30"
+  revised: "2026-11-07T19:00"
 plan:
   - {do: place, id: t1, kind: dart, role: dps, at: [0.067, 0.436]}       # the exit, on the left
   - {do: place, id: t2, kind: dart, role: dps, at: [0.580, 0.862]}       # the entrance, below the bottom crater
@@ -152,7 +168,7 @@ plan:
   - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.398, 0.419]}
   - {do: upgrade, id: s2, to: 1-1-0}                                      # Full Metal Jacket + Night Vision: camo leads
   - {do: upgrade, id: s2, to: 3-1-0}                                      # Deadly Precision: camo ceramics
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.120, 0.572]}   # by the entrance lane
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.574, 0.726]}   # beside the middle stretch (see 19:00)
   - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the round-63 rush
   - {do: upgrade, id: s1, to: 0-2-5}                                      # Elite Defender
   - {do: upgrade, id: w1, to: 5-0-2}                                      # Archmage (Monkey Sense: camo)

@@ -795,7 +795,9 @@ class Game:
                          "trying again later (panel %s)", p.tid, path, p.crosspath, costs)
                 self.fail_reason = "unread"
                 return True
-            self._closed_path_hides_a_tier(p, path, costs)   # closed for good: the count was behind
+            # closed for good: the count was behind, on another path or this one
+            if not self._closed_path_hides_a_tier(p, path, costs):
+                self._closed_path_took_its_last_tier(p, path, costs)
         self.closed.add((p.tid, path))
         log.info("%s path %d is closed or maxed (panel %s) - not buying it this game",
                  p.tid, path, costs)
@@ -837,6 +839,36 @@ class Game:
             return False
         log.warning("%s path %d is closed although it is counted at %s: path %d must hold a tier - "
                     "corrected to %s", p.tid, path, p.crosspath, zero[0] + 1, "-".join(map(str, new)))
+        p.tiers[:] = new
+        return True
+
+    def _closed_path_took_its_last_tier(self, p, path, costs):
+        """A path its tiers call open that stays blank (CLOSED_AFTER_MISSES
+        reads) is explained by ONE more tier on that same path when that
+        tier is the last the crosspath allows there (the button then reads
+        MAX UPGRADES): the click that bought it was judged "not bought".
+        Corrects p.tiers to that tier and returns True.
+
+        Lost Crevasse CHIMPS (2026-11-07 18:19): x1, counted 1-0-4, read
+        $215 on path 1 (Razor Sharp Shots), was clicked with $364 and judged
+        "not bought" - the button went blank (2-0-4 closes path 1) and pop
+        income mid-round hid the cash drop. Three blank reads then closed
+        the path with the count still at 1-0-4 (logs/closed_misread.png shows
+        Razor Sharp Shots owned and MAX UPGRADES), so the plan's 2-0-4 step
+        was set aside as blocked although it stood.
+
+        The other paths' buttons must fit the corrected tiers (blank where
+        they are closed, a price where they are open), or nothing changes."""
+        new = list(p.tiers)
+        new[path - 1] += 1
+        if not _legal_cross(new) or _path_open_by_tiers(new, path):
+            return False
+        for i in range(3):
+            if i != path - 1 and (costs[i] != (None, None)) != _path_open_by_tiers(new, i + 1):
+                return False
+        log.warning("%s path %d stays blank although it is counted at %s: the tier to %s, the last "
+                    "this crosspath allows there, was bought unseen - corrected", p.tid, path,
+                    p.crosspath, "-".join(map(str, new)))
         p.tiers[:] = new
         return True
 

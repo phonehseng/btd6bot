@@ -1,8 +1,8 @@
 # Sulfur Springs, CHIMPS: one buccaneer in the west pool opens alone (the
 # match adds its starter dart) and grows to a Carrier Flagship beside a
 # Bigger Radius / Radar Scanner / Jungle Drums village; a Crossbow dart holds
-# rounds 16-37 on the north side, Quincy follows, a Glaive Lord boomerang by
-# the village and a Cripple MOAB sniper finish.
+# rounds 16-37 on the north side, Quincy follows, a Glaive Lord boomerang on
+# the north rim and a Cripple MOAB sniper finish.
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -47,8 +47,9 @@
 #     after the Destroyer with Shrapnel Shot, and the dart goes on to Sharp
 #     Shooter (0-2-4): round 40's MOAB, before the village (since 16:30);
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
-#     bot does not place towers on a deck, so the boomerang stands below the
-#     village, in its reach (Jungle Drums, Radar, Primary Mentoring);
+#     bot does not place towers on a deck, so the boomerang stands on the
+#     north rim beside the dart, outside the village's reach: no cell in
+#     that reach sees the track (since 2026-11-07 19:00, see Status);
 #   * the account has the village's top path to tier 4 only, so it ends at
 #     Primary Mentoring (4-2-0), not Primary Expertise;
 #   * the sniper keeps its Night Vision and Shrapnel Shot on the way to
@@ -67,9 +68,9 @@
 #     radius (40) by 1.6 only, so Bigger Radius (48, 1-0-0) comes first;
 #   * dart (0.302, 0.129), on the north rim above the loop's west side: 89
 #     units (the best dart cells 94-99 are 0.02-0.03 from it);
-#   * boomerang (0.120, 0.658), 25.2 units below the village: 62 units with
-#     Glaive Lord's reach; the old spot (0.526, 0.802) reached 41 and stood
-#     outside every village's reach;
+#   * boomerang (0.339, 0.078) on the north rim since 19:00 (see Status);
+#     before, (0.120, 0.658) below the village, 62 units with Glaive Lord's
+#     reach;
 #   * Quincy (0.617, 0.581) and the sniper (0.799, 0.428) as before.
 #
 # Opening (2026-11-07 14:30), replayed executor-faithfully
@@ -147,6 +148,34 @@
 # rates best: 83 units of track, 7 neighbours, rounds 6-12 2.62 / 2.35 /
 # 2.23 / 1.83 / 2.09 / 3.83 / 2.46 (the 16:01 spot 2.71 / 2.40 / 2.43 /
 # 2.07 / 2.09 / 4.00 / 2.57).
+# 2026-11-07 19:00: r1's spot audited after two Glaive Lords elsewhere stood
+# where they barely reached the track (Spring Spring 17:12, Lost Crevasse
+# 18:29: 0 pops in 9 rounds, the dead-tower rule moved them and the Glaive
+# Lord was never bought). Here (0.120, 0.658), below the village, was the
+# worst of the Intermediate builds: the bot's own reach check (strategy.
+# Executor._reach, as sell_useless uses it) gave it 0 of the best legal
+# cell's 167 track cells at 0-0-0 and 81 of 319 (25%, sell_useless's line)
+# at Glaive Lord's 57.2 units; the damage model 40 units of track at 0-0-0
+# and 62 from 3-0-2 with the cliff's height counted, 0 and 34 without it.
+# No cell within the village's reach does better than about 60 units (the
+# west cliff looks at the springs, not the track). r1 now stands at (0.339,
+# 0.078) on the north rim, 0.063 screen heights from the dart, 7 of 8
+# neighbour cells legal (main's data/maps/sulfursprings.npz, 19:00, read in
+# place, with every earlier tower standing): 127 units at 0-0-0 and 215 from
+# 3-0-2 with heights - the most of any boomerang cell with 6+ legal
+# neighbours - and 126 from 3-0-2 without them; the bot's reach check 212 of 319
+# cells (66%; 220 in sight) from 3-0-2. At 0-0-0 that check sees 4 of 167
+# cells (the rim stands 51 units up, and the check does not project
+# heights): the plan buys 3-0-2 right after the placement (plan_first), and
+# the dead-tower rule only reads pops after 6 rounds. The cells that pass
+# the screen check at 0-0-0 too (the east cliff, e.g. (0.644, 0.521): 75% /
+# 63%) reach 32 -> 67 units in the damage model, a third of the rim's. The
+# cost: no Jungle Drums / Radar / Primary Mentoring on the Glaive Lord.
+# The other late towers: the boat (212 of 223 cells, 198 units), the Sharp
+# Shooter dart d1 (0 of 111 cells at 0-0-0 and 189 of 388 at 0-2-4 on the
+# screen check, 89 -> 203 units in the damage model; every dart cell with
+# track in the model's reach reads 0 at 0-0-0 on the screen check, and d1
+# held rounds 16-39 live), the sniper (global): kept.
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
@@ -183,7 +212,7 @@ plan:
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
-  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.120, 0.658]}   # below the village, in its reach
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.339, 0.078]}   # north rim, beside the dart (see 19:00)
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring

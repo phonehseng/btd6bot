@@ -57,7 +57,8 @@
 #     bot does not place towers on a deck. No legal boomerang cell with track
 #     in reach is within the village's buff radius here (the land beside the
 #     lake sees none of the lanes), so the boomerang stands on its own in the
-#     lower-left field, where it sees the most track of the cells left;
+#     left pocket, where it reaches both lanes (since 2026-11-07 19:00, see
+#     Status; it stood in the lower-left field before);
 #   * a Night Vision sniper (0-1-0) by round 18 for round 24's camo (before
 #     Quincy: later, the executor forces the cheapest camo answer, a
 #     Desperado 0-1-0, ahead of the plan);
@@ -187,6 +188,32 @@
 # / 1.83 / 2.04 / 2.65 / 2.09 (the live spot 2.25 / 2.02 / 2.00 / 1.79 /
 # 1.92 / 2.48 / 2.20; no starter 1.85 / 1.41 / 1.63 / 1.59 / 1.70 / 2.11 /
 # 1.72).
+# 2026-11-07 19:00: lost ROUND 95 live (18:13-18:39, journal
+# 20261107_181331): r1 at (0.243, 0.709), the lower-left field, stood at
+# 3-0-2 / 4-0-2 from round 62 and read 0 pops for 9 rounds (18:29:43, from
+# its own panel); the dead-tower rule placed r1 anew and the Glaive Lord
+# was never bought. The bot's own reach check rated that cell well (527 of
+# the best 635 track cells at Glaive Lord's 57.2 units), but the damage
+# model, which follows each lane, has it 25 units of the west lane and 139
+# of the east lane at 0-0-0 (55 / 169 at 3-0-2 and up), all of it the east
+# lane's last third, where the Flagship, the Desperado and the sniper have
+# popped nearly everything first. r1 now stands at (0.227, 0.411), the left
+# pocket - the cell the bot itself moved r1 to at 18:29:47, which the game
+# took with the starter dart standing: both lanes, 171 / 72 units at
+# 0-0-0 (range 43) and 204 / 108 at 3-0-2 and up (57.2); the bot's reach
+# check 471 of the best 500 cells at 0-0-0 (94%; 465 in sight) and 598 of
+# 635 at 3-0-2 (94%; 565 in sight) - sell_useless sells under 25%, spots
+# are picked from 45% up (old cell: 414 / 500 and 527 / 635). Checked on the main
+# checkout's data/maps/lostcrevasse.npz (19:00, read in place); 8 of 8
+# neighbour cells legal, 0.077 screen heights from the Skywarden. No legal
+# cell within the village's reach sees the lanes (as before).
+# The other late towers, checked the same way: the boat (515 of 536 cells,
+# 147 / 75 units), the Sharp Shooter dart x1 (146 of 318 cells at 0-0-0,
+# 436 of 675 from 0-0-3, its range there; 122 / 136 units; it read 1,102
+# pops live), the sniper (global): each reaches both lanes.
+# Also seen in that game: x1 stood at 2-0-4 from 18:19:47 while the bot
+# counted 1-0-4 (a purchase judged "not bought", fixed in game.py the same
+# day: Game._closed_path_took_its_last_tier).
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
@@ -222,7 +249,7 @@ plan:
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.243, 0.709]}   # lower-left field
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.227, 0.411]}   # left pocket: both lanes (see 19:00)
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
