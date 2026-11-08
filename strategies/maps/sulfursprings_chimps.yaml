@@ -2,7 +2,7 @@
 # match adds its starter dart) and grows to a Carrier Flagship beside a
 # Bigger Radius / Radar Scanner / Jungle Drums village; a Crossbow dart holds
 # rounds 16-37 on the north side, Quincy follows, a Glaive Lord boomerang on
-# the north rim and a Cripple MOAB sniper finish.
+# the east cliff and a Cripple MOAB sniper finish.
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -48,8 +48,8 @@
 #     Shooter (0-2-4): round 40's MOAB, before the village (since 16:30);
 #   * the guide puts the boomerang and the sniper on the Flagship's deck; the
 #     bot does not place towers on a deck, so the boomerang stands on the
-#     north rim beside the dart, outside the village's reach: no cell in
-#     that reach sees the track (since 2026-11-07 19:00, see Status);
+#     east cliff, outside the village's reach: no cell in that reach sees
+#     the track (since 2026-11-07 20:00, see Status);
 #   * the account has the village's top path to tier 4 only, so it ends at
 #     Primary Mentoring (4-2-0), not Primary Expertise;
 #   * the sniper keeps its Night Vision and Shrapnel Shot on the way to
@@ -68,7 +68,7 @@
 #     radius (40) by 1.6 only, so Bigger Radius (48, 1-0-0) comes first;
 #   * dart (0.302, 0.129), on the north rim above the loop's west side: 89
 #     units (the best dart cells 94-99 are 0.02-0.03 from it);
-#   * boomerang (0.339, 0.078) on the north rim since 19:00 (see Status);
+#   * boomerang (0.644, 0.521) on the east cliff since 20:00 (see Status);
 #     before, (0.120, 0.658) below the village, 62 units with Glaive Lord's
 #     reach;
 #   * Quincy (0.617, 0.581) and the sniper (0.799, 0.428) as before.
@@ -176,6 +176,24 @@
 # screen check, 89 -> 203 units in the damage model; every dart cell with
 # track in the model's reach reads 0 at 0-0-0 on the screen check, and d1
 # held rounds 16-39 live), the sniper (global): kept.
+# 2026-11-07 20:00: the 19:30 starter spot (0.345, 0.078) and r1's 19:00
+# spot (0.339, 0.078) are the same cell of the north rim. The starter could
+# not move: replayed as at 19:30 (tools/simulate_threats on the learned map,
+# $215 paid, damage model with the starter added), every legal dart cell
+# with 7+ of 8 neighbours at least 0.08 from every plan spot rates rounds
+# 6-9 between 2.23 / 1.89 / 1.83 / 1.63 - the board with no starter at all,
+# the one that lost round 9 at 18:43 - and 2.28 / 1.94 / 1.85 / 1.65
+# ((0.126, 0.658), below the village). Only the rim's east end sees the
+# early track (2.62 / 2.35 / 2.23 / 1.83 at (0.345, 0.078)), and the rim is
+# too narrow for the starter, the dart d1 and r1 apart (with the starter
+# and d1 standing, the boomerang cells left there have 1-3 legal
+# neighbours). Rounds 6-9 come first, so the starter keeps the rim and r1
+# moves off it, to the east cliff at (0.644, 0.521): the bot's reach check
+# 126 of 167 cells at 0-0-0 (75%) and 201 of 319 from 3-0-2 (63%); the
+# damage model 33 -> 67 units with heights, 43 -> 76 without (the rim
+# 127 -> 215; the 16:30 spot below the village 40 -> 62 and 0% / 25% on
+# the reach check). 6 of 8 neighbours legal with every earlier tower
+# standing, 0.065 from Quincy, 0.53 from the starter.
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
@@ -187,7 +205,7 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Sulfur Springs]
-  revised: "2026-11-07T19:30"
+  revised: "2026-11-07T20:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.436]}   # west pool: opens alone (the match adds a dart)
   - {do: upgrade, id: b1, to: 1-0-0}
@@ -212,7 +230,7 @@ plan:
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.339, 0.078]}   # north rim, beside the dart (see 19:00)
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.521]}   # east cliff: the rim is the starter's (see 20:00)
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
