@@ -151,9 +151,28 @@ def shop_like(words):
         return True
     for w in words:
         n = norm(w.text)
-        if any(s in n for s in SHOP_WORDS) or _REAL_PRICE.search(w.text or ""):
+        if any(s in n for s in SHOP_WORDS):
+            return True
+        if _REAL_PRICE.search(w.text or "") and not _money_counter(w):
             return True
     return False
+
+
+# The Monkey Money counter sits in the top-right corner of every menu screen.
+MONEY_COUNTER = (0.75, 0.0, 1.0, 0.09)
+
+
+def _money_counter(w):
+    """Is this word the Monkey Money counter in the top-right corner? Its
+    thousands comma reads as a dot ('$213,880' -> '$213.88'), which looks
+    like a real-money price with cents: the 2026-11-07 19:48 try bailed out
+    on "screen read: $213.88" while the chest was opening. Store prices
+    are never shown in that corner."""
+    x, y = getattr(w, "x", None), getattr(w, "y", None)
+    if x is None or y is None:
+        return False
+    x0, y0, x1, y1 = MONEY_COUNTER
+    return x0 <= x <= x1 and y0 <= y <= y1
 
 
 def classify(words, screen_name="unknown"):
