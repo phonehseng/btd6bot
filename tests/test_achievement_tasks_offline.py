@@ -435,6 +435,9 @@ def test_priced_skin_words():
 #                      (first live run: the Quests menu, ALL tab)
 #   skin_page_unowned  rec_20261107_180600.mkv 0:52 - the page an Obyn skin
 #                      icon opens: "MOUNTAIN GUARDIAN SKIN ... UNLOCK FOR: 2,500"
+#   skin_page_obyn_ocean  logs/achievement_captures/skin_obyn_skin2_20261107_190033.png
+#   skin_page_bundle      .../skin_obyn_skin3_20261107_190041.png: Obyn's third
+#                      icon is a real-money bundle ("SKELETOR PRESTIGE PACK $12.99")
 OCR = json.loads((FIX / "achtasks_ocr_words.json").read_text(encoding="utf-8"))
 
 
@@ -631,14 +634,18 @@ def test_buy_refused_over_the_cap_or_for_real_money():
         assert eq.buy_for("quincy").startswith("bailed: 2500 MM is over the cap")
         assert (0.5, 0.851) not in eq.inp._inp.clicks and b.flag("skin_bought") is None
     with tempfile.TemporaryDirectory() as tmp:
+        # a real-money price: that slot is skipped as a bundle; the next page
+        # (nothing readable here) stops the pass - nothing bought either way
         eq, b = _buyer(tmp, [_page("$213.833", "UNLOCK FOR:", "$24.99")])
-        assert eq.buy_for("quincy").startswith("bailed")
-        assert eq.inp._inp.clicks == [(H.SKIN_X, round(H.SKIN_Y0, 3)), H.BACK_ARROW]
-        assert b.flag("skin_bought") is None
+        assert eq.buy_for("quincy").startswith("bailed: unknown")
+        assert eq.inp._inp.clicks[:2] == [(H.SKIN_X, round(H.SKIN_Y0, 3)), H.BACK_ARROW]
+        assert (0.5, 0.85) not in eq.inp._inp.clicks
+        assert b.flag("skin_bought") is None and b.flag("skin_bundle_slots") == {"quincy": [1]}
     with tempfile.TemporaryDirectory() as tmp:
         bundle = _ocr("skin_page_unowned") + [_w("SKIN BUNDLE", 0.5, 0.5)]
         eq, b = _buyer(tmp, [bundle])
-        assert eq.buy_for("quincy").startswith("bailed: shop")
+        assert eq.buy_for("quincy").startswith("bailed")
+        assert (0.5, 0.851) not in eq.inp._inp.clicks and b.flag("skin_bought") is None
 
 
 def test_buy_only_once_ever_and_only_when_nothing_is_owned():
@@ -667,6 +674,85 @@ def test_buy_only_once_ever_and_only_when_nothing_is_owned():
 def test_quincy_is_the_hero_skins_are_bought_for():
     acct = SimpleNamespace(unlocked_heroes={"obyn", "quincy"}, selected_hero=None)
     assert H.heroes_to_try(acct)[0] == "quincy"
+
+
+# -- hero skin: a real-money bundle in the skin column (live run 2026-11-07 19:00) -------
+def test_live_bundle_page_is_a_shop():
+    """Obyn's third icon opened "SKELETOR PRESTIGE PACK ... $12.99"."""
+    assert H.skin_page(_ocr("skin_page_bundle"))[0] == "shop"
+    assert H.skin_page(_ocr("skin_page_obyn_ocean"))[0] == "unowned"
+    assert H.button_price(_ocr("skin_page_obyn_ocean"))[1] == 2500
+
+
+def _obyn_live_reads():
+    # price under icon 1 ("2.500"), icon 2 ("New"), its page, icon 3 (nothing), its page
+    return [[_w("2.500")], [_w("New")], _ocr("skin_page_obyn_ocean"), [], _ocr("skin_page_bundle")]
+
+
+def test_bundle_slot_is_skipped_and_the_hero_still_counts_as_checked():
+    with tempfile.TemporaryDirectory() as tmp:
+        o = _frame("skins_obyn.jpg", SKIN_CROP)
+        eq, b = _equipper(tmp, o, _obyn_live_reads())
+        assert eq.try_hero("obyn") == "none_owned"
+        slots = [(H.SKIN_X, round(y, 3)) for _, y in H.slot_centres(3)]
+        clicks = eq.inp._inp.clicks
+        assert clicks == [slots[1], H.BACK_ARROW, slots[2], H.BACK_ARROW], clicks
+        assert not any(abs(x - 0.732) < 0.01 and abs(y - 0.794) < 0.01 for x, y in clicks)  # never $12.99
+        assert b.flag("skin_bundle_slots") == {"obyn": [3]}
+        # the next pass never clicks the bundle slot again
+        eq2, _ = _equipper(tmp, o, [[_w("2.500")], [_w("New")], _ocr("skin_page_obyn_ocean")])
+        eq2.budget = b
+        assert eq2.try_hero("obyn") == "none_owned"
+        assert slots[2] not in eq2.inp._inp.clicks
+
+
+def test_buy_pass_skips_the_bundle_slot_too():
+    with tempfile.TemporaryDirectory() as tmp:
+        o = _frame("skins_obyn.jpg", SKIN_CROP)
+        # in this script slot 1 opens the bundle (skipped, remembered), slot 2
+        # the Ocean Guardian page, bought: the total drops by exactly 2,500
+        paid = _ocr("skin_page_obyn_ocean")
+        paid = [w if w.text != "$213.849" else Word("$211.349", w.x, w.y, w.w, w.h, w.conf) for w in paid]
+        paid = [w for w in paid if w.y < 0.8] + [_w("SELECTED", 0.5, 0.87)]
+        reads = [_ocr("skin_page_bundle"), _ocr("skin_page_obyn_ocean"), paid, paid]
+        eq, b = _equipper(tmp, o, reads)
+        res = eq.buy_for("obyn")
+        assert res == "equipped", res
+        assert b.flag("skin_bundle_slots") == {"obyn": [1]}
+        slots = [(H.SKIN_X, round(y, 3)) for _, y in H.slot_centres(2)]
+        assert eq.inp._inp.clicks[:4] == [slots[0], H.BACK_ARROW, slots[1], (0.499, 0.852)], eq.inp._inp.clicks
+        assert b.flag("skin_bought")["state"] == "bought" and b.used("mm") == 2500
+
+
+def test_live_19h_run_now_reaches_the_purchase():
+    """Quincy priced, Obyn: priced, unowned MM skin, bundle -> both checked,
+    so the same run goes on to buy (Quincy first)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        b = _budget(tmp)
+        acct = SimpleNamespace(unlocked_heroes={"obyn", "quincy"}, selected_hero="quincy")
+        q = _frame("skins_quincy.jpg", SKIN_CROP)
+        o = _frame("skins_obyn.jpg", SKIN_CROP)
+        reads = [[_w("2.500")], [_w("@2.500")]] + _obyn_live_reads()
+        frames = [q, q, o, o, o, o, o, o]
+        bought = []
+
+        class Eq(H.SkinEquipper):
+            def _buy(self):
+                bought.append(heroes_first(self.account))
+                return "buy quincy: (scripted)"
+        picker = FakePicker("quincy")
+        menus = SimpleNamespace(v=SimpleNamespace(read=lambda region: reads.pop(0) if reads else []))
+        screen = SimpleNamespace(grab=lambda: frames.pop(0) if len(frames) > 1 else frames[0])
+        eq = Eq(screen, Inp(), menus, acct, b, sleep=lambda s: None, picker=picker,
+                capture_dir=Path(tmp) / "cap")
+        res = H.run_if_due(None, None, None, acct, "ACC", {"Lookin fab": "unknown"}, budget=b, equipper=eq)
+        assert "quincy: none_owned" in res and "obyn: none_owned" in res, res
+        assert bought == ["quincy"], res
+        assert set(b.flag("skins_checked")) == {"quincy", "obyn"}
+
+
+def heroes_first(account):
+    return H.heroes_to_try(account)[0]
 
 
 # -- quests -----------------------------------------------------------------------------

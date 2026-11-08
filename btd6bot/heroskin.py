@@ -212,6 +212,26 @@ class SkinEquipper:
         except Exception:
             pass
 
+    # -- bundle slots -------------------------------------------------------------
+    # Live run 2026-11-07 19:00: Obyn's third "skin" icon opened a real-money
+    # bundle ("SKELETOR PRESTIGE PACK ... $12.99", Masters of the Universe /
+    # Mattel). Such a slot is not a Monkey Money skin: it is remembered in
+    # the flag "skin_bundle_slots" ({hero: [slot numbers]}) and never clicked
+    # again; the hero still counts as checked when its other slots were
+    # unowned Monkey Money skins.
+    def _bundle_slots(self, hero):
+        return set((self.budget.flag("skin_bundle_slots") or {}).get(hero, []))
+
+    def _skip_bundle(self, hero, k, words):
+        """A shop page opened from slot k: log it, back out with the arrow,
+        remember the slot. True when the hero screen came back."""
+        log.warning("achievement: Lookin fab - %s skin %d opened a real-money page (not a Monkey Money "
+                    "skin) - skipped, never clicked again; screen read: %s", hero, k + 1, A.screen_text(words, 40))
+        slots = dict(self.budget.flag("skin_bundle_slots") or {})
+        slots[hero] = sorted(set(slots.get(hero, [])) | {k + 1})
+        self.budget.set_flag("skin_bundle_slots", slots)
+        return self._back_to_hero(hero)
+
     def _back_to_hero(self, hero):
         """Leave a skin page with its back arrow; True once the hero screen
         shows `hero` again (else the next slot click could land anywhere)."""
@@ -228,7 +248,7 @@ class SkinEquipper:
         self._capture(f"{hero}_hero")
         frame = self.s.grab()
         for k, centre in enumerate(slot_centres()):
-            if in_banner(centre) or not has_icon(frame, centre):
+            if in_banner(centre) or k + 1 in self._bundle_slots(hero) or not has_icon(frame, centre):
                 continue
             below = self.menus.v.read(price_region(centre))
             if priced(below):
@@ -255,9 +275,16 @@ class SkinEquipper:
                 log.info("achievement: Lookin fab - %s now wears skin %d (%s)", hero, k + 1, title)
                 self._back_to_hero(hero)
                 return "equipped"
-            if state in ("shop", "unknown"):
-                log.warning("achievement: Lookin fab - %s skin %d: %s page, stopping; screen read: %s",
-                            hero, k + 1, state, A.screen_text(words, 40))
+            if state == "shop":
+                # a real-money bundle sitting in the skin column: not a
+                # Monkey Money skin - skipped now and never clicked again
+                if not self._skip_bundle(hero, k, words):
+                    return f"bailed: the {hero} screen did not come back after the bundle in slot {k + 1}"
+                frame = self.s.grab()
+                continue
+            if state == "unknown":
+                log.warning("achievement: Lookin fab - %s skin %d: unknown page, stopping; screen read: %s",
+                            hero, k + 1, A.screen_text(words, 40))
                 self._back_to_hero(hero)
                 return f"bailed: {state} page after skin {k + 1}"
             # unowned, or SELECT that did not take: back to the hero for the next one
@@ -308,6 +335,11 @@ class SkinEquipper:
         """Settle a purchase by the Monkey Money total: it must drop by
         exactly the price."""
         after = mm_total(words)
+        if after is None:
+            # an animation or a notice can cover the total for a moment
+            self.sleep(1.5)
+            words = self._read_page()
+            after = mm_total(words)
         spent = None if after is None else before - after
         state = "bought" if spent == price else "not_bought" if spent == 0 else "unexpected"
         self.budget.set_flag("skin_bought", {"state": state, "hero": hero, "skin": title, "price": price,
@@ -345,7 +377,7 @@ class SkinEquipper:
         self._capture(f"{hero}_hero_buy")
         frame = self.s.grab()
         for k, centre in enumerate(slot_centres()):
-            if in_banner(centre) or not has_icon(frame, centre):
+            if in_banner(centre) or k + 1 in self._bundle_slots(hero) or not has_icon(frame, centre):
                 continue
             self.inp.click(*centre)
             self.sleep(1.5)
@@ -354,9 +386,14 @@ class SkinEquipper:
             state, _ = skin_page(words)
             log.info("achievement: Lookin fab - %s skin %d page: %s; button area read: %s", hero, k + 1, state,
                      A.screen_text([w for w in words if _inside(w, SKIN_BUTTON)]) or "nothing")
+            if state == "shop":
+                if not self._skip_bundle(hero, k, words):
+                    return f"bailed: the {hero} screen did not come back after the bundle in slot {k + 1}"
+                frame = self.s.grab()
+                continue
             if state != "unowned":
                 self._back_to_hero(hero)
-                if state in ("shop", "unknown"):
+                if state == "unknown":
                     return f"bailed: {state} page after skin {k + 1}"
                 return "bailed: an owned skin turned up - equip it on the next run"
             res = self._buy_on_page(hero, k, words)
