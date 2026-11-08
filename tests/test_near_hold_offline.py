@@ -33,27 +33,36 @@ def bare(cash=23_320.0, weak=True, income=9_600.0):
 
 def test_the_spring_spring_case_holds_nothing_for_round_100():
     ex = bare()
-    assert ex._hold_for(100, 34_560.0, 98, "the bad answer") is None
+    assert ex._hold_for(100, 34_560.0, 98, "the bad answer", threat_answer=True) is None
     assert not ex.saving_for_threat and ex.held_cash == 0.0
     assert ("near-too-late", "the bad answer", 98) in ex.noted
 
 
+def test_a_blimp_damage_hold_is_not_released():
+    """The blimp check's own holds (blimp damage, a plan's blimp step) are
+    for the rounds that make this one weak: they keep their cash, as
+    test_threats_offline.test_plan_blimp_step_keeps_its_cash wants."""
+    ex = bare()
+    assert ex._hold_for(100, 34_560.0, 98, "blimp damage") is False
+    assert ex.saving_for_threat
+
+
 def test_holds_in_full_when_the_answer_comes_before_the_weak_round():
     ex = bare(cash=26_000.0)            # $26,000 + $9,600 this round >= $34,560
-    assert ex._hold_for(100, 34_560.0, 98, "the bad answer") is False
+    assert ex._hold_for(100, 34_560.0, 98, "the bad answer", threat_answer=True) is False
     assert ex.saving_for_threat
 
 
 def test_a_safe_round_holds_in_full_as_before():
     ex = bare(weak=False)
-    assert ex._hold_for(100, 34_560.0, 98, "the bad answer") is False
+    assert ex._hold_for(100, 34_560.0, 98, "the bad answer", threat_answer=True) is False
     assert ex.saving_for_threat
 
 
 def test_unknown_cash_and_far_rounds_are_left_to_the_older_rules():
     ex = bare()
     del ex.cash_seen
-    assert ex._hold_for(100, 34_560.0, 98, "the bad answer") is False
+    assert ex._hold_for(100, 34_560.0, 98, "the bad answer", threat_answer=True) is False
     ex = bare()
     assert not ex._near_hold_too_late(100, 34_560.0, 94)    # far: _far_keep decides
     assert not ex._near_hold_too_late(98, 34_560.0, 98)     # the round being played

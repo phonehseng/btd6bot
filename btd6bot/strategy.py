@@ -3998,7 +3998,8 @@ class Executor:
                 # a property gap has no round of its own: its answer is held
                 # for until it stands (_hold_for), a strength threat for its round
                 due = self._threat_round(threat, rnd) if self._strength_threat(threat) else None
-                if self._hold_for(due, self.wait_total, rnd, f"the {threat} answer") is None:
+                if self._hold_for(due, self.wait_total, rnd, f"the {threat} answer",
+                                  threat_answer=True) is None:
                     continue  # the round being played is weak: only part of the cash is held
                 # (`waiting` is Match's idle line: set only when the cash is
                 # held in full - after a partial hold the plan goes on and says
@@ -4172,7 +4173,7 @@ class Executor:
         r = next((shift.get(t, r) for r, t in THREATS if t == threat), None)
         return rnd if r is None else max(r, self.rules.get("start_round", 1))
 
-    def _hold_for(self, due_round, cost, rnd, what):
+    def _hold_for(self, due_round, cost, rnd, what, threat_answer=False):
         """Keep cash for `what`, which costs `cost` and is needed by due_round.
         Returns False when all of it is held (saving_for_threat: Match spends
         nothing else), None when only self.held_cash is.
@@ -4206,7 +4207,11 @@ class Executor:
         is still wanted for the rounds that follow (round 41's MOABs come
         after round 40's), and nothing presses for the cash. due_round None
         is an answer with no round of its own (a property gap: the defence
-        cannot pop the bloon at all), held as before."""
+        cannot pop the bloon at all), held as before.
+
+        threat_answer marks a hold for a strength threat's answer
+        (_threat_tick): only such a hold is released by
+        _near_hold_too_late while weak rounds come before its round."""
         rnd = rnd or 0
         weak = self.lives_fell_lately(rnd, 1) or self.weak_now(rnd)
         if due_round is not None and due_round <= rnd and weak:
@@ -4246,7 +4251,12 @@ class Executor:
                             "rebuilds the rest by then; the rest of the cash goes to this round",
                             rnd, keep, what, due_round, f"{cost:.0f}")
             return None
-        if weak and self._near_hold_too_late(due_round, cost, rnd):
+        # Only a threat answer (threat_answer=True, from _threat_tick) gives
+        # way here. A blimp-damage hold from the blimp check (_answer_ramp)
+        # is for the very rounds that make this one weak, and has its own
+        # too-dear rule there: releasing it let idle spending eat the cash
+        # of Spillway ABR's Maim MOAB step (test_plan_blimp_step_keeps_its_cash).
+        if weak and threat_answer and self._near_hold_too_late(due_round, cost, rnd):
             note = ("near-too-late", what, rnd)
             if note not in self._notes():
                 self.noted.add(note)

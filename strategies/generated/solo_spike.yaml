@@ -16,8 +16,8 @@
 # Spike Factory line: 2-0-4 Deadly Spikes (sees camo; pops
 # lead/purple/black/white; answers ceramic, moab, bfb, zomg, ddt; ~25 blimp
 # dmg/s)
-# Spike Factory second line (its other tier 5): 3-0-2 Spiked Balls (sees camo;
-# pops lead/purple/black/white; answers ceramic; ~2 blimp dmg/s)
+# Spike Factory second line (its other tier 5): 2-4-0 Spike Storm (sees camo;
+# pops lead/purple/black/white; answers ceramic, moab; ~30 blimp dmg/s)
 # Answers, tried in order when a threat is due and the defence has none: the
 # tower's own path first, then a helper (for accounts whose own tiers are
 # still locked): camo: x1 0-0-0; purple: x1 0-0-0; lead: x1 2-0-0, else a Bomb
@@ -30,9 +30,9 @@
 #   59%, answers bought: ace, bomb
 #   deflation: kept - no gaps, min blimp ratio 0.93, Spike Factory share of the
 #   cash 35%
-#   medium: dropped - blimp damage 0.23 < 0.40
-#   reverse: dropped - blimp damage 0.23 < 0.40
-#   apopalypse: dropped - blimp damage 0.11 < 1.00
+#   medium: dropped - blimp damage 0.19 < 0.40
+#   reverse: dropped - blimp damage 0.19 < 0.40
+#   apopalypse: dropped - blimp damage 0.19 < 1.00
 #   hard: dropped - blimp damage 0.52 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
@@ -65,12 +65,11 @@ plan:
   - {do: upgrade, id: x2, to: 2-0-4}
   - {do: place, id: x3, kind: spike, role: dps, segment: [0.6, 1.0]}
   - {do: upgrade, id: x3, to: 2-0-4}
-  - {do: place, id: y1, kind: spike, role: dps, segment: [0.2, 0.9]}   # second Spike Factory line: 3-0-2
-  - {do: upgrade, id: y1, to: 3-0-2}
-  - {do: upgrade, id: y1, to: 4-0-2}   # Spiked Mines: late-game power
+  - {do: place, id: y1, kind: spike, role: dps, segment: [0.2, 0.9]}   # second Spike Factory line: 2-4-0
+  - {do: upgrade, id: y1, to: 2-4-0}
   - {do: upgrade, id: x1, to: 2-0-5}   # tier 5 Perma-Spike ($30,000): one per path, the biggest XP sink
+  - {do: upgrade, id: y1, to: 2-5-0}   # tier 5 Carpet of Spikes ($41,000): one per path, the biggest XP sink
 fill:
-  - {do: upgrade, id: y1, to: 5-0-2}   # Super Mines costs $125,000, more than half a Hard game: only in fill
   - {do: place, kind: spike, role: dps, max: 8}   # surplus cash goes into Spike Factorys (XP follows the cash)
   - {do: upgrade, kind: spike, to: 2-0-4}
   - {do: upgrade, kind: ninja, to: 0-2-4}   # then the defence's own tier 4
