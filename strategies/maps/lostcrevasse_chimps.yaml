@@ -261,6 +261,38 @@
 # paid): plan 28/28, no threat gaps, Flagship R62, Glaive Lord R83; rounds
 # 83-100 equal or better than with r1 in the pocket (R85 6.04 / 5.72, R90
 # 1.98 / 1.79, R95 0.43 / 0.39, R98 0.92 / 0.75, R100 2.23 / 2.11).
+# 2026-11-07 22:00: the 21:00 build lost ROUND 95 live (21:38-22:01,
+# journal 20261107_213840) with every plan step bought: Flagship R61, Glaive
+# Lord R82, Primary Mentoring R83, Cripple MOAB R94; round 95 rated 0.46
+# (the replay 0.43), lost with $717. Sulfur Springs (21:18) and Spring
+# Spring (19:45) lost round 95 the same way. Round 95: 500 camo regrow
+# purples and 250 camo regrow fortified leads, then 30 camo DDTs and 50
+# fortified MOABs; the leaks are the blimps and the DDTs' camo regrow
+# children. Why: (1) r1 stands outside the village's reach (no legal cell
+# in it sees the lanes), so the Glaive Lord had no camo and could hit only
+# the MOABs of round 95; (2) on the round-95 board the Cripple MOAB adds
+# 0.06 for $34,560 and Primary Mentoring nothing real (no Primary tower in
+# v1's reach; the damage model counts it anyway, CHIMPS_MODEL_DOUBTS).
+# Change (replay on main's learned map, damage model; Lost Crevasse's land
+# is at track height, so flat and bot views agree):
+#   * a second village v2 at (0.452, 0.172), north of r1, 29.4 units from
+#     it, with Radar Scanner (0-2-0, $3,725) right after r1 is placed:
+#     round 95 0.43 -> 0.61 on the full board by itself;
+#   * two Spiked Mines spike factories (4-2-0, $16,855 each), the best
+#     single buy on the round-95 board over every kind in its legal cells
+#     (at least 0.08 from every tower) and crosspath up to $40,000: p1 at
+#     (0.623, 0.487), the middle field right of x1 (0.52 -> 0.88 with the
+#     Glaive Lord standing), before the Glaive Lord; p2 at (0.526, 0.615),
+#     below x1, after it (1.06). 6-8 of 8 neighbour cells legal with every
+#     earlier tower standing;
+#   * Primary Mentoring goes; the Cripple MOAB stays last for round 100's
+#     BAD. Without the Glaive Lord the spikes rate only 0.68: it stays.
+# Replay (starter paid): plan 35/35, no threat gaps, v2 Radar R64, Maim MOAB
+# R75 (forced as the ZOMG answer), p1 R79, Glaive Lord R88, p2 R94, Cripple
+# MOAB R100 (live ran a round ahead of the replay); R90 3.55, R92 2.20,
+# R94 2.04, R95 1.03 (was 0.43), R96 1.68 (1.38), R98 1.06 (0.92), R99
+# 0.91 (0.40), R100 2.83 (2.92 with the Cripple MOAB left out: the BAD is
+# not what decides).
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
@@ -268,11 +300,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: {kind: dart, at: [0.200, 0.428]}   # left pocket, where it held round 23 at 18:13 (see 21:00; match.Match._starter_spec)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4]}
+  towers: {buccaneer: [5, 2, 0], village: [2, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lost Crevasse]
-  revised: "2026-11-07T21:00"
+  revised: "2026-11-07T22:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
   - {do: place, id: d1, kind: desperado, role: dps, at: [0.206, 0.641]}   # R8: lower-left field, the east lane's last third
@@ -297,11 +329,18 @@ plan:
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
   - {do: place, id: r1, kind: boomerang, role: dps, at: [0.419, 0.291]}   # inside the top loop: both lanes (see 21:00)
+  - {do: place, id: v2, kind: village, role: support, near: [r1], at: [0.452, 0.172]}   # north of r1: camo for it (see 22:00)
+  - {do: upgrade, id: v2, to: 0-2-0}                                      # Radar Scanner: round 95 is all camo but the MOABs
   - {do: upgrade, id: r1, to: 3-0-2}
-  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
-  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.623, 0.487]}       # middle field, right of x1: both lanes
+  - {do: upgrade, id: p1, to: 2-2-0}
+  - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord
+  - {do: place, id: p2, kind: spike, role: dps, at: [0.526, 0.615]}       # below x1, above the lake
+  - {do: upgrade, id: p2, to: 2-2-0}
+  - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
   - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
-  - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB, before round 100
+  - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB: round 100's BAD
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}, {do: upgrade, id: s1, to: 1-1-0}]

@@ -171,6 +171,29 @@
 # rounds 6-12 1.96 / 1.61 / 2.16 / 1.85 / 2.20 / 2.46 / 2.83 (no starter
 # 1.38 / 1.10 / 1.72 / 1.56 / 1.92 / 2.09 / 2.48; the live spot about the
 # same as this one).
+# 2026-11-07 22:00: lost ROUND 95 again at 19:45 (journal 20261107_192143,
+# model 0.51; r1 lost its upgrades to the dead-tower rule, fixed in
+# a340423), and Sulfur Springs lost round 95 at 21:18 with every step of
+# the same recipe bought (Glaive Lord and Cripple MOAB included, rated
+# 0.82). Round 95: 500 camo regrow purples and 250 camo regrow fortified
+# leads, then 30 camo DDTs and 50 fortified MOABs; the leaks are the
+# blimps and the DDTs' camo regrow children. With the whole plan bought
+# this build rated 0.82 here too (replay on main's learned map, R98 1.09,
+# R99 0.68): the winning Flagship maps rate 1.04-2.54. On the round-95
+# board the Cripple MOAB adds 0.06 for $34,560. Searched on that board
+# (every kind in its legal cells at least 0.08 from every tower, every
+# crosspath up to $40,000): with Quincy's junction cell taken, a Spiked
+# Mines spike factory (4-2-0, $16,855) lifts round 95 the most, 0.75 ->
+# 1.07 at (0.505, 0.283) on the top lane (Glaive Lord standing, sniper at
+# 4-1-0); a second at (0.163, 0.496), the left end where both lanes start,
+# 1.18. Both cells have 7-8 of 8 neighbours legal with every earlier tower
+# standing. Change: p1 right after r1's 3-0-2, the Glaive Lord, p2, then
+# Primary Mentoring and the Cripple MOAB (round 100's BAD) last. Replay
+# (starter paid): plan 37/37, no threat gaps, no answers forced, p1 4-2-0
+# R73, Glaive Lord R86, p2 R93, Cripple MOAB R100 (at round 100's start;
+# without it the model still rates round 100 2.9 on Lost Crevasse's
+# matching board); R92 2.95, R94 2.51, R95 1.18 (was 0.82), R96 2.04
+# (1.76), R98 1.18 (1.09), R99 1.04 (0.68), R100 3.71.
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
@@ -178,11 +201,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: {kind: dart, at: [0.270, 0.164]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 4], tack: [0, 2, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 4], tack: [0, 2, 0], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-07T19:30"
+  revised: "2026-11-07T22:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
@@ -211,8 +234,14 @@ plan:
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.580, 0.624]}   # between the lanes, in the village's reach
   - {do: upgrade, id: r1, to: 3-0-2}
-  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
-  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.505, 0.283]}       # top lane, right of the sniper: round 95 (see 22:00)
+  - {do: upgrade, id: p1, to: 2-2-0}
+  - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord
+  - {do: place, id: p2, kind: spike, role: dps, at: [0.163, 0.496]}       # left end, both lanes' start
+  - {do: upgrade, id: p2, to: 2-2-0}
+  - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
+  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring (the Glaive Lord is in reach)
   - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
   - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
 answers:
