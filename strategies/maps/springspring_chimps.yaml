@@ -5,8 +5,8 @@
 # junction; a village behind the exit (Bigger Radius first, so it reaches
 # the boat) gives the boat camo and Jungle Drums. Late game (since
 # 2026-11-08 03:00 the 23:30 one again, see Status): a Glaive Lord
-# boomerang beside the village, three Spiked Mines spike factories, Primary
-# Mentoring, and a Cripple MOAB sniper last.
+# boomerang beside the village, four Spiked Mines spike factories (the
+# fourth since 04:30), Primary Mentoring, and a Cripple MOAB sniper last.
 #
 # Why: the owner's goal is CHIMPS black borders. On 2026-11-07 the bot beat
 # CHIMPS on nine maps with builds that follow a published community strategy
@@ -321,6 +321,48 @@
 # rate rounds 95/99 at 0.21-0.68 without the Glaive Lord's credit (Cracked
 # 0.21 / 0.21, Lotus Island 0.68 / 0.68): the model does not settle rounds
 # 95-99, live play does.
+# 2026-11-08 04:30: lost ROUND 99 again (03:16-03:50, journal
+# 20261108_031826_SpringSpring_chimps) on the 03:00 replay's schedule: p2
+# 4-2-0 R92, Primary Mentoring R93, p3 4-2-0 during R96 (live cash within
+# $220 of the replay every round). From then the only step left was the
+# Cripple MOAB ($34,560), so the cash sat idle: $4,982 at R97, $6,399 at
+# R98, $16,053 at R99 ("threat bad: nothing applicable to buy"); rated R98
+# 1.08 and R99 1.07, 0.66 / 0.70 without the Glaive Lord's tier 5. The
+# recording (rec_20261108_035001 +17-22 s) shows the MOABs and the camo
+# DDTs piled from the island to the boat and the exit 4 s into the round;
+# the defeat screen shows a fortified ceramic leaked (a DDT's child), at
+# 7 s. Same round, same shape as the 23:30 game's loss.
+# Search (tools/simulate_threats on main's learned map, starter paid,
+# dps_model.round_margin, Glaive Lord counted / not) on the round-97 board,
+# every upgrade of a standing tower and every kind and crosspath in its two
+# best legal cells at least 0.08 from every tower with 7+ of 8 neighbours
+# legal:
+#   * up to the $6,618 the replay has before round 98 ($6,399 live): no
+#     buy lifts round 98 by more than 0.05 (a sub 2-0-4, $6,485, 0.66 ->
+#     0.71); round 98 is the recipe's ceiling with this cash;
+#   * up to the $16,272 before round 99 ($16,053 live): s1 to Shrapnel Shot
+#     (4-2-0, $485: R99 0.70 -> 0.73) first, then a fourth Spiked Mines
+#     spike factory p4 at (0.639, 0.802), south of the village by the exit,
+#     184 units of the bottom lane: R99 0.73 -> 0.97, R100 1.83 -> 2.20.
+#     A second boat 4-2-0 at (0.778, 0.683) ($14,580) rates more on the
+#     board but cannot stand before round 99 either way (replay R99 0.81).
+#   * bigger moves: the Cripple MOAB in place of Primary Mentoring and p3
+#     (affordable during R98) rates R99 0.52 and R98 0.56 - worse; Primary
+#     Mentoring rates 0.00 on these rounds (v1 2-2-0 = 4-2-0), so it moves
+#     behind p4. MIB (2-3-0, $8,100) adds 0.07 on R99. Nothing before round
+#     92 changes.
+# Change: after p3, s1 4-2-0 (Shrapnel; Cripple MOAB becomes 5-2-0), p4
+# (2-2-0, 4-2-0), then Primary Mentoring, the Cripple MOAB last. The `bad`
+# answer stays on the bought Glaive Lord step, so no bank is held. p4:
+# legal on main's learned map with every tower standing, 7 of 8 neighbours
+# legal, 0.083 from v1 (the cell t2 of the 01:00 build was checked on).
+# Replay (starter paid), new / before: plan 43/44 (Cripple not reached), no
+# threat gaps, no answers forced, p3 4-2-0 and s1 4-2-0 R96, p4 4-2-0 during
+# R98 (stands at R99), Primary Mentoring R99; cash idle at round starts
+# R97 $1,686 / $5,201, R98 $3,103 / $6,618, R99 $1,632 / $16,272. Rounds
+# (Glaive Lord counted, not): R95 1.07 / 0.44 (same), R96 1.72 / 1.00
+# (same), R97 4.86 / 2.86 (4.76 / 2.68), R98 1.09 / 0.68 (1.08 / 0.66), R99
+# 1.13 / 1.00 (1.07 / 0.70), R100 4.00 / 2.25 (2.99 / 1.74).
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
@@ -328,11 +370,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: {kind: dart, at: [0.270, 0.164]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 4], tack: [0, 2, 0], spike: [4, 2, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], tack: [0, 2, 0], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-08T03:00"
+  revised: "2026-11-08T04:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
@@ -368,12 +410,16 @@ plan:
   - {do: place, id: p2, kind: spike, role: dps, at: [0.163, 0.496]}       # left end, both lanes' start
   - {do: upgrade, id: p2, to: 2-2-0}
   - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: v1, to: 4-2-0}                                     # Primary Mentoring (the Glaive Lord is in reach)
   - {do: place, id: p3, kind: spike, role: dps, at: [0.238, 0.683]}       # bottom-left: round 99's MOABs (the cell the game took 00:18; 0.227, 0.709 refused)
   - {do: upgrade, id: p3, to: 2-2-0}
   - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
-  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB (the zomg answer buys it at about round 78)
+  - {do: upgrade, id: s1, to: 4-2-0}                                      # Shrapnel Shot, $485 (see 2026-11-08 04:30)
+  - {do: place, id: p4, kind: spike, role: dps, at: [0.639, 0.802]}       # south of the village, by the exit: round 99 (see 04:30)
+  - {do: upgrade, id: p4, to: 2-2-0}
+  - {do: upgrade, id: p4, to: 4-2-0}                                      # Spiked Mines
+  - {do: upgrade, id: v1, to: 4-2-0}                                     # Primary Mentoring (the Glaive Lord is in reach)
+  - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB, round 100's BAD
 answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
