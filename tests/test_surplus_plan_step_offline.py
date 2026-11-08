@@ -364,6 +364,36 @@ def test_the_stand_ins_upgrade_step_is_not_passed_by_its_placement():
     assert "v1" not in g.towers or ex.idx > 2
 
 
+def test_a_plan_first_tower_on_its_own_spot_keeps_its_upgrades():
+    """Spring Spring CHIMPS (2026-11-07 19:38): r1, standing on the build's
+    own `at` spot, read 0 pops and lost its Glaive Lord step to a fresh
+    boomerang. A plan_first build keeps such a tower and upgrades it."""
+    import test_achievement_strats_offline as F
+    strat = {"id": "t", "name": "t", "hero": None, "plan_first": True, "plan": [
+        {"do": "place", "id": "r1", "kind": "boomerang", "role": "dps", "at": [0.5, 0.5]},
+        {"do": "upgrade", "id": "r1", "to": "3-0-2"},
+        {"do": "upgrade", "id": "r1", "to": "5-0-2"},
+    ]}
+    g = F.FakeGame(None)
+    ex = S.Executor(g, F.FakeModel(), strat, "chimps", F.full_account())
+    ex._sole_answer = lambda p: None
+    for _ in range(10):
+        ex.tick(10 ** 7, 62)
+        if g.towers.get("r1") and g.towers["r1"].tiers == [3, 0, 2]:
+            break
+    old = g.towers["r1"]
+    old.x, old.y = 0.5, 0.5                 # on its planned spot
+    old.tiers = [4, 0, 2]
+    old.pops, old.zero_reads, old.placed_round = 0, 2, 62
+    for _ in range(6):
+        ex.tick(10 ** 7, 71)
+    assert g.towers["r1"] is old, "the planned tower was swapped out"
+    assert old.tiers == [5, 0, 2], old.tiers
+    old2 = old
+    old2.x = 0.9                            # moved off its spot (a refused cell): the rule applies again
+    assert not ex._planned_spot_kept(old2, "r1")
+
+
 def test_the_redirect_keeps_the_callers_journal_reason():
     ex = dead_board("hard")
     up = {"do": "upgrade", "id": "n2", "to": "2-0-4"}
