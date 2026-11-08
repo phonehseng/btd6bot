@@ -1,6 +1,8 @@
 """Removable obstacles: the game's "Remove FOR $N" box is read from a real
 frame (Peninsula, 2026-10-23), and buying Peninsula's kelp frees legal ground
-for towers. Offline: saved frames and map geometry only."""
+for towers. Offline: saved frames and map geometry only (the committed
+data/map_geometry file, never the learned data/maps/<slug>.npz, which the live
+bot rewrites and a fresh checkout may not hold)."""
 import sys
 from pathlib import Path
 from types import SimpleNamespace as N
@@ -51,8 +53,12 @@ def test_no_box_no_purchase():
 
 
 def test_peninsula_kelp_frees_ground():
-    m = MapModel.load("Peninsula", L.get(1920, 1200)["playfield"])
-    m.refused = {}
+    # The model is filled from the game's own map file, as the runner does
+    # (Runner._use_geometry), so learned refusals and the learned track file
+    # play no part.
+    geom = mapgeom.load("Peninsula")
+    assert geom is not None, "data/map_geometry/peninsula.json missing"
+    m = mapgeom.apply(MapModel("Peninsula", L.get(1920, 1200)["playfield"]), geom)
     obstacles = {r["name"]: r for r in mapgeom.removables("Peninsula", m.playfield)}
     assert {"RemovableKelpLowerLeft", "RemovableKelpRight", "RemovableKelpMidLeft"} <= set(obstacles)
     before = PL.valid_spots(m, "sniper")

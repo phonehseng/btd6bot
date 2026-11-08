@@ -284,7 +284,16 @@ def test_long_run_reaches_everything():
     print("\n".join(l for l in log if l.startswith("==")))
     print(f"(long sim took {time.time() - t0:.1f}s)")
     all_maps = [m for m in MAPS if m not in EXCLUDED_MAPS]
-    assert acc.unique_map_wins() >= 0.8 * len(all_maps), acc.unique_map_wins()
+    # The old deadlock stalled the run after a few dozen maps; a healthy run
+    # wins three quarters of them before nothing left clears its bar. The bar
+    # was 80% while the run reached 77 of 88 maps (2026-11-03); two deliberate
+    # tightenings made the planner wait on more Advanced/Expert maps since:
+    # 3fb24e6 (calibration per map category: untried Expert maps priced by
+    # the build's Expert record, 77 -> 72 maps) and c3bd57d (the no-income cap
+    # holds after calibration, 72 -> 70). The run also reads the measured
+    # ceilings (data/model_ceiling.json, strategies/optimized), which the
+    # optimizer keeps changing, so the count moves by a map or two with them.
+    assert acc.unique_map_wins() >= 0.75 * len(all_maps), acc.unique_map_wins()
     hard = sum(1 for m in all_maps if acc.has_medal(m, "hard"))
     assert hard >= 25, hard
     # nothing confident is left behind: every unearned medal that is open now
