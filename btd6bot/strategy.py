@@ -2411,6 +2411,19 @@ class Executor:
             r = self._try_place(redirected[tid], cash)
         if tid in self.g.towers:
             redirected.pop(tid, None)
+            # The stand-in stands, but the upgrade step is not done: it must
+            # keep its place and take the new tower to its target over the
+            # next ticks. "bought" moves the plan past the step; "progress"
+            # counts as a purchase and keeps it. Lost Crevasse CHIMPS
+            # (2026-11-07 18:29): the dead r1's step "r1 -> 5-0-2" placed a
+            # fresh r1, the placement's "bought" passed the step, and the new
+            # r1 stood at 0-0-0 to the round-95 loss - the Glaive Lord was
+            # never bought. A "done" (the id already stood) goes on to the
+            # plain upgrade (None).
+            if r == "bought":
+                return "progress"
+            if r == "done":
+                return None
         return r
 
     def _rekey_tower(self, old, new):
