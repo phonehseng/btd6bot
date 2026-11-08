@@ -1,8 +1,8 @@
-# Rake, CHIMPS: three darts open, each on a cell that sees both lanes
-# (right of the pool, the bottom U, the centre); one
-# buccaneer in the pool grows to a Carrier Flagship with a village in the
-# centre box, Quincy joins in the bottom U, a Glaive Lord boomerang and a
-# Cripple MOAB sniper finish.
+# Rake, CHIMPS: desperados open (right of the bottom U, right of the pool,
+# then the centre), the boomerang comes next; one buccaneer in the pool
+# grows to a Carrier Flagship with a village in the centre box, a fourth
+# desperado and Quincy join, the boomerang becomes a Glaive Lord and a
+# Cripple MOAB sniper finishes.
 #
 # Why: the owner's goal is CHIMPS black borders (all Beginner maps, then
 # Intermediate). On 2026-11-07 the bot beat CHIMPS on 9 maps with builds that
@@ -54,110 +54,144 @@
 #     it stands across that lane, 41.0 units from the boat; Bigger Radius
 #     makes its reach 48 (7 units of slack) before any buff is needed (a village 49.3 units from
 #     its carrier lost Frozen Over at round 56: the strict buff rule);
-#   * three darts open instead of Quincy, and Quincy comes after the boat's
-#     Hot Shot (see "Opening").
+#   * three desperados open (the plan's, Match's starter, a third at round
+#     8), the boomerang comes before the boat, a fourth desperado after
+#     Double Shot, and Quincy after the boat's Hot Shot (see "Opening").
 #
-# Opening (reworked 2026-11-07 15:30). Live, 14:54: Quincy alone opened from
-# the bottom U (his cell (0.532, 0.785) was refused, he stood at (0.516,
-# 0.785), 27% of both lanes) and round 7 was lost with bloons 77% of the way
-# along. Calibration from that day's live CHIMPS openings (damage model,
-# optimize_builds.Evaluator + dps_model.round_margin, rounds 6-10; M = the
-# board's margin, B = its margin with its strongest tower removed; heroes
-# are not counted): M alone did not separate holds from losses - boat +
-# starter dart lost Lost Crevasse at M 1.41 (R8) and 0.95 (R9) and Spring
-# Spring at 1.35 (R9) while boomerang + dart held Hedge at 0.91 (R8). B did:
-# in each loss the starter dart did next to nothing (B 0.06-0.13), in each
-# hold the second tower carried a share (B 0.35-0.65: Frozen Over, Lotus
-# Island, Downstream, Hedge, Skates). Quincy alone held from cells seeing
-# 22-37% of the track and lost from 18%, and from 27% here (two lanes at
-# once). Bar used: M >= 0.9 and B >= 0.35 in every round 6-10, from towers
-# the plan places itself. Why darts: with one non-hero tower down, Match
-# keeps $215 back for its starter dart (Match._opener_reserve) and puts that
-# dart where the executor chooses, so a $650 opening with any tower over
-# $220 gets an unplanned second tower; three darts ($645) are the only
-# opening whose every tower is the plan's.
-# The darts, rounds 6-10 with the boat from round 9: M 1.30 / 1.26 / 1.14 /
-# 1.31 / 1.51, B 0.67 / 0.74 / 0.58 / 0.56 / 0.62 (each lane has two darts:
-# its entrance dart and the crossing dart). The old opening rated 0 (Quincy
-# alone) until the boat at round 9.
+# Opening (reworked 2026-11-07 21:00 after two live losses; history under
+# "Status").
+# What the live games showed (loss cases 20261107_145714_Rake_chimps and
+# 20261107_161539_Rake_chimps, docs/evidence/20261107_rake_chimps_cover.jpg):
+# two lanes, each ~800 units long with ~470 on screen. The top lane comes
+# down, runs right above the pool, drops down the middle, crosses the left
+# lane, swings left and runs out along the bottom to the right; the left
+# lane runs right, up, right across the centre above the statue, down its
+# right side and out at the bottom. Round 6 on fast forward crosses the
+# screen in a few seconds: at 16:13 the first red leaked about 7 s after
+# Play (last_minutes.mp4 64-73 s; frame end_024: a red and a blue on the
+# top lane's drop, where no dart reaches; end_025: defeat). The entrance
+# darts saw 128 / 139 units of the two lanes, each mostly one lane's
+# entrance, so a bloon met about one and a half bare darts. Quincy alone
+# (14:54) saw 27% of both lanes and lost round 7.
+# A track-aware check (each bloon walked along the map's two paths,
+# data/map_geometry, spawns alternating between them, every tower shooting
+# only at the path points in its range and sight on the learned map, round
+# spawns from data/rounds.json at Hard speed; rated as written and with
+# every tower firing 1.3x slower) agrees with those games: the live
+# entrance darts leak 6 / 3 / 6 bloons in rounds 6 / 7 / 8 (slowed 11 / 11
+# / 20), and the darts the 17:45 rework moved to cells that see both lanes
+# - never played - 5 / 6 / 7 (11 / 11 / 19): the move did not fix it. Moon
+# Landing's live darts rate 0 / 1 / 2 (lost round 7) and the openings that
+# held live (KartsNDarts' darts 0 / 0, Quarry's 1 / 1 with 4 / 3 slowed)
+# no worse. The damage model rated the live darts 1.28 / 1.19 and rates
+# the new pair 0.85 / 0.94: it pools a tower's cover over both lanes and
+# does not see how short each lane's covered stretch is.
+# The new opening uses range: a desperado (range 60 in the game's own
+# model, data/game_model and data/placement.json; two instant shots every
+# 1.2 s; $325 at Hard) right of the bottom U covers the last stretch of both
+# lanes before their exits, a second right of the pool the top lane's run
+# above the pool and its drop, and the left lane's crossing - 235 / 249
+# units of the two lanes together. Two of them are exactly the $650 start;
+# with the plan's first one down, Match keeps the starter's price back
+# (Match._opener_reserve) and puts the build's `starter` - the second
+# desperado - where it says. Check, rounds 6 / 7 / 8 with the pair alone:
+# 0 / 0 / 1 leaks (slowed 4 / 4 / 7); other $650 boards found: other
+# desperado pairs 0-1 / 0-1 / 1-3 (the best, with the centre desperado
+# instead, 0 / 0 / 1, slowed 3 / 1 / 8, but 1 / 1 with a range of 56
+# where this pair still leaks 0 / 0 / 2), three darts at the best dart
+# cells 2 / 2 / 5 (6 / 7 / 14), sub + dart 6+ per round. With
+# the plan's purchases on the game's income (third desperado R8, boomerang
+# R10, boat R12, Faster Shooting R13, Double Shot R14, fourth desperado R15)
+# every round 6-18 leaks 0 as written (slowed 4 / 4 / 0 / 5 / 4 / 0 / 1 /
+# 0 / 0 / 1 / 5 / 0 / 4), and also with a range of 56 (slowed 6 / 5 / 0 /
+# 6 / 8 / 0 / 1 / 0 / 2 / 2 / 5 / 0 / 1). Round 10's 102 blues need the
+# boomerang's pierce (without it, boat first: 4 leaks); round 15's five
+# pinks need the fourth desperado (without it: 1 leak).
 #
-# Spots (map geometry with the main checkout's learned refusals,
-# data/maps/rake.npz copied into the worktree for the check, legal in
-# placement order; "cells" are track cells of both lanes in range and in
-# line of sight, of 3,169 on screen; towers at least 0.08 screen-height
-# apart, every new spot with all 8 neighbour cells legal):
-#   * darts (moved 2026-11-07 17:45, see "Status"): d1 (0.633, 0.411)
-#     right of the pool, d2 (0.542, 0.871) below the bottom U, d3 (0.446,
-#     0.581) in the centre - every one sees both lanes. The first darts,
-#     d1 (0.441, 0.164) where the top lane comes on screen, d2
-#     (0.174, 0.589) where the left lane comes on screen, d3 (0.452, 0.555)
-#     in the centre where both lanes pass (0.10 screen-height from the
-#     village's spot); d3 takes Long Range Darts (0-0-1) at round 7, which
-#     still leaves the boat affordable at round 9;
-#   * buccaneer (0.478, 0.394), the pool's bottom edge: 1,010 cells (32%; the
-#     best water cell 1,016), the top stretches of both lanes; 5 of its 8
-#     neighbours legal (the pool's edge);
-#   * Quincy (0.516, 0.785), the bottom U: the cell the game accepted live
-#     (the build's old (0.532, 0.785) was refused), both lanes;
-#   * village (0.516, 0.564), the centre box: 4 cells from a refused one (the
-#     box's cells nearer the pool touch refusals), 41.0 units from the boat
-#     (see above);
-#   * boomerang (0.542, 0.411), between the pool and the lane that comes
-#     down from the top: 645 cells (20%), all 8 neighbours legal, 23.6 units
-#     (0.104 screen-height) from the boat, 36.2 from the village;
-#   * sniper (0.083, 0.521), the left field: sees 95% of the track.
+# Spots (main's learned map data/maps/rake.npz copied in for the check,
+# legal in placement order with the starter after e1, the new spots with
+# at least 7 of 8 neighbour cells legal (the kept boat and village spots
+# have 5), every spot at least 0.10 screen heights from the others;
+# units: track units of the two lanes in range and sight, of 476 / 463 on
+# screen):
+#   * e1 desperado (0.665, 0.802), right of the bottom U: 139 / 139, both
+#     lanes' last stretch before the exits;
+#   * starter desperado (0.639, 0.402), right of the pool: 115 / 121;
+#   * e3 desperado (0.446, 0.581), the centre, left of the village box: 146
+#     / 109, 0.113 screen heights from the village (at (0.462, 0.581), 151 /
+#     115, it would leave the village 3 legal neighbour cells instead of 5);
+#   * r1 boomerang (0.542, 0.411), its old spot between the pool and the
+#     top lane's drop: 645 cells (20%), 23.6 units from the boat, 36.2 from
+#     the village;
+#   * e4 desperado (0.377, 0.683), lower left: 107 / 106;
+#   * buccaneer (0.478, 0.394), Quincy (0.516, 0.785), village (0.516,
+#     0.564), sniper (0.083, 0.521): as before (see below).
+#   The later towers' spots, kept from the 15:30 version: buccaneer, the
+#   pool's bottom edge: 1,010 cells (32%; the best water cell 1,016), the
+#   top stretches of both lanes, 5 of its 8 neighbours legal (the pool's
+#   edge); Quincy, the bottom U, the cell the game accepted live (the old
+#   (0.532, 0.785) was refused); village, the centre box, 41.0 units from
+#   the boat (see above); sniper, the left field, 95% of the track.
+# Note: btd6bot/towers.py still lists the desperado's range as 50; the bot's
+# own reach checks (placement.reach_units) count less for these cells. That
+# only matters to sell_useless, which CHIMPS never runs; the damage model
+# reads the game model's 60.
 #
-# Offline replay (tools/simulate_threats.simulate on the learned map, the
-# live account's unlocks, base income, Match's opener reserve emulated):
-# darts R6, Long Range R7, buccaneer R9, Double Shot R13, Hot Shot R17,
-# sniper R19, Quincy R21, Night Vision R22, Destroyer R32, village R35,
-# Radar R38, Jungle Drums R40, Aircraft Carrier R46, Flagship R59, Glaive
-# Lord R82, Cripple MOAB R93 (the old Quincy opening: Destroyer R30, village
-# R33, Carrier R45, Flagship R59, Glaive Lord R82, Cripple R93). Plan 25/25,
-# no threat gaps, every tower on its spot. Rounds 11-20 rate 1.22-3.75.
-# Doubt: the blimp ratios (damage model, no hero or abilities) are about
-# 0.55-0.65x the Lotus Island build's (which won): R40 0.45, R60 0.65, R75
-# 0.35, R90-100 0.15-0.62 - two short lanes, more than half of each off
-# screen. If it loses mid-game, a second buccaneer in the pool
-# (bloons.fandom's "line of buccaneers") is the first thing to try.
+# Offline replay (tools/simulate_threats.simulate on the learned map, a
+# fully unlocked account, base income; the starter desperado added as the
+# plan's second tower, as Match places it): both desperados R6, e3 R8,
+# boomerang R10, buccaneer R12,
+# Faster Shooting R13, Double Shot R15, e4 R16, Hot Shot R21, sniper R23,
+# Quincy R25, Night Vision R26, Destroyer R35, village R36, Radar R38,
+# Jungle Drums R40, Aircraft Carrier R46, Flagship R60, Glaive Lord R82,
+# Cripple MOAB R93 (the 17:45 darts version: Hot Shot R17, sniper R19,
+# Quincy R21, Destroyer R32, Carrier R46, Flagship R59, Glaive Lord R82,
+# Cripple R93). Plan 25/25, no threat gaps, every tower on its spot. With
+# the sniper at round 23 the round-24 camo is first answered with e1's
+# Eagle Eye (0-1-0, round 19, the executor's cheapest camo answer); the
+# same round-92-100 blimp answer towers as the old build's replay.
 #
-# Status 2026-11-07 15:30: opening reworked after the 14:54 round-7 loss.
-# Status 2026-11-07 17:45: the entrance darts lost round 6 live (16:13, a
-# bloon leaked about 9 s after Play with all three darts 0-0-0 and $5 left).
-# Measured on the map's own bloon paths (data/map_geometry/rake.json, base
-# dart range 32 units; each lane is ~800 units long, ~460 on screen): the
-# entrance darts each saw ONE lane - d1 85 units of the top lane, d2 88 of
-# the left lane, d3 42 + 47 - so whichever lane a bloon took had about 1.5
-# darts on it, and the model's 1.30 margin for round 6 (it pools the darts
-# over both lanes) was far too kind. Searching every legal dart cell (the
-# learned refusals included) at least 0.085 screen-height from the later
-# towers' spots (boat, Quincy, village, boomerang, sniper - darts cannot be
-# sold in CHIMPS) for the best three by the weaker lane: right of the pool
-# 53 / 61, below the bottom U 54 / 48, the centre 51 / 47 - lane totals
-# 158 / 155 against 127 / 135, and every dart now shoots at both lanes, so
-# an uneven split of the round's bloons no longer leaves one lane with a
-# single dart. Doubt: still unupgraded darts on ~30% of each on-screen
-# lane; if this loses round 6-8 too, the next thing to try is fewer,
-# stronger towers on these cells (a 0-0-1 dart pair, or the boat first).
+# Status 2026-11-07 21:00: LOST twice live, both in the opening, and the
+# 17:45 rework below was never played. 14:54 (case
+# 20261107_145714_Rake_chimps): Quincy alone, round 7. 16:13 (case
+# 20261107_161539_Rake_chimps): three entrance darts, round 6. Cause in
+# both: too little of each lane under fire - two short lanes, a bloon
+# crosses the screen in seconds, and a 32-range dart or Quincy covers a
+# small part of one lane. The 17:45 darts saw both lanes but still rate a
+# loss in the track-aware check (see "Opening"). Change: desperados (range
+# 60) open, the boomerang moves up before the boat, a fourth desperado
+# joins after Double Shot; the late plan (Flagship, village, Glaive Lord,
+# Cripple MOAB) is unchanged. Doubt: rounds 6-7 rest on two 0-0-0 towers
+# (4 / 4 leaks in the check when they fire 1.3x slower); if round 6-7 is
+# lost again, the next thing to try is the boat-first water opening with a
+# desperado starter beside it.
+# History: 15:30 the opening became three planned darts (the damage model's
+# margin, M 1.30 / 1.26 / 1.14 / 1.31 / 1.51 for rounds 6-10 with the boat
+# from round 9) after Quincy's round-7 loss; it lost round 6 at 16:13.
+# 17:45: the darts moved to d1 (0.633, 0.411) right of the pool, d2 (0.542,
+# 0.871) below the bottom U, d3 (0.446, 0.581) in the centre - every dart on
+# both lanes, lane totals 158 / 155 units against 127 / 135 (measured on the
+# map's bloon paths, base dart range 32). Not played; replaced at 21:00.
 id: rake_chimps
 map: Rake
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
+starter: {kind: desperado, at: [0.639, 0.402]}   # the second opener Match adds beside e1 (match.Match._starter_spec)
 planner:
-  towers: {dart: [0, 0, 1], buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
+  towers: {desperado: [0, 0, 0], buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Rake]
-  revised: "2026-11-07T15:30"
+  revised: "2026-11-07T21:00"
 plan:
-  - {do: place, id: d1, kind: dart, role: dps, at: [0.633, 0.411]}       # right of the pool: both lanes
-  - {do: place, id: d2, kind: dart, role: dps, at: [0.542, 0.871]}       # below the bottom U: both lanes
-  - {do: place, id: d3, kind: dart, role: dps, at: [0.446, 0.581]}       # the centre: both lanes
-  - {do: upgrade, id: d3, to: 0-0-1}                                      # Long Range Darts
+  - {do: place, id: e1, kind: desperado, role: dps, at: [0.665, 0.802]}   # right of the bottom U: both lanes' exits (the starter desperado follows)
+  - {do: place, id: e3, kind: desperado, role: dps, at: [0.446, 0.581]}   # the centre, left of the village box
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.542, 0.411]}   # between the pool and the top lane's drop: round 10's blues
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.478, 0.394]}   # the pool's bottom edge
   - {do: upgrade, id: b1, to: 1-0-0}
   - {do: upgrade, id: b1, to: 2-0-0}                                      # Double Shot
+  - {do: place, id: e4, kind: desperado, role: dps, at: [0.377, 0.683]}   # lower left: round 15's pinks
   - {do: upgrade, id: b1, to: 2-1-0}
   - {do: upgrade, id: b1, to: 2-2-0}                                      # Hot Shot: lead
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.083, 0.521]}   # left field
@@ -170,7 +204,6 @@ plan:
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.542, 0.411]}   # between the pool and the lane bend
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring

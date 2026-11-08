@@ -1,13 +1,13 @@
-# Moon Landing, CHIMPS: three darts open (at the entrance below the bottom
-# crater, in the middle and at the exit on the left), the wizard joins them
-# in the gap between the craters and a fourth dart covers the left side; a
-# sniper on the high ground above the middle crater and Quincy follow; a
+# Moon Landing, CHIMPS: two desperados open (the plan's in the gap left of
+# the middle stretch, Match's starter beside the middle stretch), the
+# boomerang joins them by the middle stretch, then the sniper on the high
+# ground at the top, the wizard in the gap between the craters and Quincy; a
 # druid, a Jungle Drums village and a second sniper join them round the
 # middle; the first sniper grows to Elite Defender, the wizard to Archmage
 # and the druid to Spirit of the Forest; the second sniper (camo leads, then
-# Cripple MOAB) and a Glaive Ricochet boomerang cover what the bot's checks
-# ask for. This is the Hedge CHIMPS build (won 2026-11-07) on this map's
-# ground.
+# Cripple MOAB) and the boomerang (Glaive Ricochet) cover what the bot's
+# checks ask for. Apart from the opening this is the Hedge CHIMPS build (won
+# 2026-11-07) on this map's ground.
 #
 # Why: the owner's goal is CHIMPS black borders. On 2026-11-07 the bot beat
 # CHIMPS on nine maps with builds that follow a published community strategy
@@ -53,75 +53,107 @@
 #   * the first sniper stands on the high ground at the top (it sees 41% of
 #     the track past the crater walls, the most of any cell) rather than by
 #     the village: the walls leave the cells near the middle 23-37%;
-#   * four darts open, the wizard before the sniper and Quincy (see
-#     "Opening").
+#   * the opening is two desperados, then the boomerang, the sniper, the
+#     wizard and Quincy (see "Opening"); no darts.
 #
-# Opening (reworked 2026-11-07 15:30; the build has not been played live).
-# Calibration from that day's live CHIMPS openings (damage model,
-# optimize_builds.Evaluator + dps_model.round_margin, rounds 6-10; M = the
-# board's margin, B = its margin with its strongest tower removed; heroes
-# are not counted): M alone did not separate holds from losses - boat +
-# starter dart lost Lost Crevasse at M 1.41 (R8) and 0.95 (R9) and Spring
-# Spring at 1.35 (R9) while boomerang + dart held Hedge at 0.91 (R8). B did:
-# in each loss the starter dart did next to nothing (B 0.06-0.13), in each
-# hold the second tower carried a share (B 0.35-0.65: Frozen Over, Lotus
-# Island, Downstream, Hedge, Skates). Quincy alone held from cells seeing
-# 22-37% of the track and lost from 18% (Lotus Island, Hedge) and 27%
-# (Rake); no hero cell here sees more than 11%. Bar used: M >= 0.9 and B >=
-# 0.35 in every round 6-10, from towers the plan places itself. Why darts:
-# with one non-hero tower down, Match keeps $215 back for its starter dart
-# (Match._opener_reserve) and puts that dart where the executor chooses, so
-# a $650 opening with any tower over $220 gets an unplanned second tower;
-# three darts ($645) are the only opening whose every tower is the plan's.
-# (The old header's "sniper and wizard open together" could not happen for
-# that reason: the replay with the reserve gives sniper + starter dart, the
-# wizard at round 8.)
-# Rounds 6-12 (wizard R8, fourth dart R9, Long Range R10, sniper R11): M
-# 1.08 / 1.20 / 1.14 / 0.68 / 0.75 / 1.53 / 1.15, B 0.66 / 0.71 / 0.74 /
-# 0.47 / 0.49 / 1.06 / 0.93. The old opening, with its starter where the
-# replay puts it (the spot is the executor's): M 1.16 / 1.10 / 1.35 / 0.93
-# / 0.93 / 1.23 / 0.95, B 0.42 / 0.51 / 0.81 / 0.47 / 0.54 - better at
-# rounds 8-10 if the starter lands there, near nothing at rounds 6-7 if it
-# does not. Doubt: rounds 9-10 sit under the M bar. No board the round-9
-# bank buys rates 0.8 here (best found: four darts and a desperado, 0.76),
-# so it rests on four towers that each carry a share (B 0.47-0.49).
+# Opening (reworked 2026-11-07 21:00 after the live round-7 loss at 18:09;
+# history under "Status").
+# What the live game showed (loss case 20261107_181211_MoonLanding_chimps,
+# docs/evidence/20261107_moonlanding_chimps_cover.jpg): the track is one
+# lane that spirals down into each crater and back out - into the bottom
+# crater, the top-right one, along the top and through the top-left one to
+# the exit on the left. The crater floors are track or unplaceable and their
+# walls block sight, so the spirals - most of the 1,082 units on screen -
+# are out of every land tower's reach. The three darts saw 140 units in all
+# (t1 the exit, t2 the entrance, t3 the middle stretch: 13%), one dart per
+# open stretch, and each bloon was under fire for about one dart's range at
+# a time. Frames end_020-023: round 6's last blues reach the top-left
+# crater untouched (94% of the route); end_026-029: round 7's reds and
+# blues fill the bottom crater and the middle stretch; last_minutes.mp4
+# 133-147 s: the stragglers pass t3, circle the top-right and top-left
+# craters out of every dart's sight and a red leaks past the exit dart t1
+# (96% of the route; the defeat box shows one red).
+# A track-aware check (each bloon walked along the map's path, data/
+# map_geometry, every tower shooting only at the path points in its range
+# and sight on the learned map, round spawns from data/rounds.json at Hard
+# speed; rated as written and with every tower firing 1.3x slower) agrees
+# with the live games where the damage model did not: the live darts leak 0
+# / 1 bloons in rounds 6 / 7 (7 / 10 slowed: lost), Rake's entrance darts 6
+# / 3 (lost round 6), while openings that held live - KartsNDarts' three
+# darts (0 / 0, slowed 0 / 0), Quarry's (1 / 1, slowed 4 / 3) - rate no
+# worse than that. The damage model rated the live darts 1.08 / 1.20 and the
+# new opening 1.08 / 1.13: it does not see that the darts' stretches are
+# short (it rated round 7 at 1.18 the moment it leaked).
+# The new opening uses range instead: a desperado (range 60 in the game's
+# own model, data/game_model and data/placement.json; two instant shots
+# every 1.2 s; $325 at Hard) sees 2-3 darts' worth of open track from one
+# cell. Two of them are exactly the $650 start; with the plan's first one
+# down, Match keeps the starter's price back (Match._opener_reserve) and
+# puts the build's `starter` - the second desperado - where it says. The
+# pair sees 181 units, 47 of them twice (the darts: 140, none twice). Check,
+# rounds 6 / 7 / 8 with the pair alone: 0 / 0 / 0 leaks (slowed 2 / 1 / 7);
+# other $650 boards found: other desperado pairs 0 / 0 / 0-3 (slowed 0-3 /
+# 1-2 / 5-10), desperado + tack 0 / 0 / 4 (4 / 4 / 13), three darts at the
+# best dart cells 1 / 1 / 4 (7 / 7 / 13), skywarden + two darts 2 / 7 / 6.
+# The pair was picked over the one that rated best (starter at (0.617,
+# 0.683)) because it holds better if the range is short: with a range of 56
+# it still leaks 0 / 1 / 1, the other 0 / 0 / 3 with 4 / 5 / 11 slowed.
+# With the plan's purchases on the game's income (boomerang R8, sniper R10,
+# wizard R11, Improved Rangs R12, Quincy R14, druid R16) every round 6-18
+# leaks 0 as written (slowed 2 / 1 / 0 / 2 / 0 / 0 / 0 / 0 / 0 / 2 / 8 / 0 /
+# 12; rounds 16 and 18, 40-80 greens, rest on Quincy and the druid's thorns,
+# which the check counts poorly). The sniper by round 10 matters: with the
+# boomerang's Improved Rangs bought first it slips to round 11 and round
+# 10's 102 blues leak 10.
 #
-# Spots (map geometry with the main checkout's learned refusals,
-# data/maps/moonlanding.npz, checked in placement order; "cells" are track
-# cells in range and in line of sight, placement.visible_cover, of 2,410;
-# every spot has at least 7 of its 8 neighbour cells legal and stands at
-# least 0.08 screen heights from the others): darts t1 (0.067, 0.436) at the
-# exit on the left, t2 (0.580, 0.862) where the lane comes on screen below
-# the bottom crater, t3 (0.623, 0.624) beside the middle stretch, t4 (0.174,
-# 0.521) on the left side (alone at round 6: 0.41, 0.35, 0.33, 0.35; t3
-# takes Long Range Darts, 0-0-1); sniper s1 at (0.446, 0.198) sees 41%
-# (best cell 43%, 4 legal neighbours); the wizard at (0.542, 0.496) in the
-# gap between the craters 8% (the best wizard cell, 8%, has 5 legal
-# neighbours); Quincy at (0.500, 0.198) 8% (no hero cell sees more than
-# 11%); the druid at (0.436, 0.359) 6% (best on the map 7%, in the gap the
-# wizard takes); the village at (0.489, 0.428) is 24.8 units from the druid
-# and the wizard; the second sniper at (0.398, 0.419) 33.0 from it (Jungle
-# Drums radius 48), seeing 23%; the boomerang at (0.574, 0.726) beside the
-# middle stretch since 19:00 (see Status; before, (0.120, 0.572), 7%). Every short-range tower here sees little: the wizard's
-# Guided Magic (1-x-x, on the way to Archmage) sees over walls in the game,
-# which the bot's sight check does not count.
+# Spots (main's learned map data/maps/moonlanding.npz copied in for the
+# check, legal in placement order with the starter after e1, at least 7 of
+# 8 neighbour cells legal, at least 0.085 screen heights from every other
+# spot of the build; "units": track units in range and sight, of 1,082 on
+# screen):
+#   * e1 desperado (0.441, 0.470), the gap left of the middle stretch: 124
+#     units, the most of any desperado cell that keeps clear of the later
+#     towers' spots (the best cell, (0.484, 0.402), 157 units, is the
+#     village's, and no village cell elsewhere reaches the druid, the wizard
+#     and the second sniper);
+#   * starter desperado (0.633, 0.726), right of the bottom crater's mouth:
+#     104 units, the entrance and the middle stretch;
+#   * r1 boomerang (0.574, 0.726), unchanged (see 19:00 below): 71 units at
+#     0-0-0, 103 at Glaive Ricochet's 57.2; 0.094 screen heights from the
+#     starter;
+#   * s1 sniper (0.446, 0.198) on the high ground: 486 units (45%), the most
+#     of any cell; Quincy (0.500, 0.198), wizard (0.542, 0.496), druid
+#     (0.436, 0.359), village (0.489, 0.428), second sniper (0.398, 0.419),
+#     as before: the village is 24.8 units from the druid and the wizard, the
+#     second sniper 33.0 from it (Jungle Drums radius 48).
+# Note: btd6bot/towers.py still lists the desperado's range as 50; the bot's
+# own reach checks (placement.reach_units) therefore count e1 at 31 units
+# and the starter at 49. That only matters to sell_useless, which CHIMPS
+# never runs; the damage model reads the game model's 60.
+# Every short-range tower here sees little: the wizard's Guided Magic (1-x-x,
+# on the way to Archmage) sees over walls in the game, which the bot's sight
+# check does not count.
 #
-# Offline replay (tools/simulate_threats.simulate on the learned map, the
-# live account's unlocks, base income, Match's opener reserve emulated):
-# darts R6, wizard R8, fourth dart R9, Long Range R10, sniper R11, Quincy
-# R14, druid R15, Hard Thorns R17, Night Vision R20, Druid of the Jungle R24,
-# village R28, Full Auto Rifle R41, Jungle Drums + Commerce and the second
-# sniper R42, Deadly Precision R46, Glaive Ricochet R47, Elite Defender R54,
-# Archmage R79, Spirit of the Forest R92, Cripple MOAB bought in round 99
-# (the old opening: Jungle Drums R34, Cripple in round 98, the rest within a
-# round). Jungle Drums slips because the executor buys the sniper's Full
-# Auto Rifle ahead of it from round 34 when Drums is not yet affordable (the
-# model's rounds 34-41 drop 5-15%, all still above 1.9). Plan 25/25, no
-# threat gaps, every tower on its spot.
+# Offline replay (tools/simulate_threats.simulate on the learned map, a
+# fully unlocked account, base income; the starter desperado added as the
+# plan's second tower, as Match places it): both desperados R6, boomerang
+# R8, sniper R10, wizard R11, Improved Rangs R12, Quincy R15, druid R16,
+# Hard Thorns R18, Night Vision R20, Druid of the Jungle R26, village R29,
+# Jungle Drums + Commerce, Full Auto Rifle and the second sniper R42, Deadly
+# Precision R46, Glaive Ricochet R47, Elite Defender R54, Archmage R79,
+# Spirit of the Forest R92, Cripple MOAB R99. Plan 23/23, no threat gaps,
+# every tower on its spot (the same round-100 blimp answer sniper as the
+# old build's replay).
 #
-# Status: new 2026-11-07, opening reworked 15:30; not played yet. The
-# weakest of the four builds written that day: rounds 9-10 and 13-23 rate
-# under 1 in the model.
+# Status: new 2026-11-07, opening reworked 15:30 and 21:00.
+# 2026-11-07 15:30 opening (three darts at the exit, the entrance and the
+# middle stretch, the wizard R8, a fourth dart R9, Long Range R10): chosen
+# on the damage model, bar M >= 0.9 and B >= 0.35 in rounds 6-10 (M the
+# board's margin, B the margin without its strongest tower; that day's
+# live openings: boat + starter dart lost Lost Crevasse and Spring Spring at
+# M 0.95-1.41 with B 0.06-0.13, holds had B 0.35-0.65), M 1.08 / 1.20 /
+# 1.14 / 0.68 / 0.75 for rounds 6-10. Three darts were the only $650
+# opening whose every tower was the plan's (Match's starter reserve).
 # 2026-11-07 19:00: r1's spot audited (not played to it yet) after two
 # Glaive Lords elsewhere stood where they barely reached the track (Spring
 # Spring 17:12, Lost Crevasse 18:29: 0 pops in 9 rounds). At (0.120,
@@ -134,29 +166,39 @@
 # 357 cells at 0-0-0 (92%; 164 in sight past the crater walls, 181 before)
 # and 578 of 695 at 3-0-2 (83%; 240 in sight, 215 before); the damage model
 # (sight counted) 70 units at 0-0-0 as before and 102 at 3-0-2 (87 before;
-# the best cell 129). Main's data/maps/moonlanding.npz (19:00, read in
-# place), every earlier tower standing: 7 of 8 neighbour cells legal, 0.11
-# screen heights from t3 and 0.14 from t2. Neither spot is in the village's
-# reach (74.5 units now, 137.6 before).
+# the best cell 129). Neither spot is in the village's reach (74.5 units
+# now, 137.6 before).
+# 2026-11-07 21:00: LOST round 7 live at 18:09 (case
+# 20261107_181211_MoonLanding_chimps) with the three-dart opening: t2's
+# (0.580, 0.862) was refused and it stood at (0.580, 0.836); round 6 got
+# to 94% of the route, round 7 leaked at 96% with $191 in hand (the next
+# step, the $270 wizard, not yet affordable). Cause: the darts covered 13%
+# of the on-screen track, one short stretch each, between crater spirals no
+# land tower here can see into (see "Opening"). Change: two desperados open
+# (e1 and the starter), the boomerang moves up to the third tower, the
+# sniper to the fourth, the wizard follows; the darts are gone (they were
+# 0-0-1 at most and only rounds 6-12 needed them). Doubt: rounds 16 and 18
+# (40-80 greens) are thin until the druid's thorns and Quincy level up; if
+# it loses there, a third desperado or the boomerang's Glaives (2-0-0)
+# before Quincy is the next thing to try.
 id: moonlanding_chimps
 map: Moon Landing
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
+starter: {kind: desperado, at: [0.633, 0.726]}   # the second opener Match adds beside e1 (match.Match._starter_spec)
 planner:
-  towers: {dart: [0, 0, 1], sniper: [5, 2, 5], druid: [2, 5, 0], wizard: [5, 0, 2], village: [2, 0, 2], boomerang: [3, 0, 2]}
+  towers: {desperado: [0, 0, 0], sniper: [5, 2, 5], druid: [2, 5, 0], wizard: [5, 0, 2], village: [2, 0, 2], boomerang: [3, 0, 2]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Moon Landing]
-  revised: "2026-11-07T19:00"
+  revised: "2026-11-07T21:00"
 plan:
-  - {do: place, id: t1, kind: dart, role: dps, at: [0.067, 0.436]}       # the exit, on the left
-  - {do: place, id: t2, kind: dart, role: dps, at: [0.580, 0.862]}       # the entrance, below the bottom crater
-  - {do: place, id: t3, kind: dart, role: dps, at: [0.623, 0.624]}       # the middle stretch
+  - {do: place, id: e1, kind: desperado, role: dps, at: [0.441, 0.470]}  # gap left of the middle stretch (the starter desperado follows)
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.574, 0.726]}   # beside the middle stretch (see 19:00)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.446, 0.198]}   # high ground at the top: 45% of the track
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.542, 0.496]}      # gap between the craters
-  - {do: place, id: t4, kind: dart, role: dps, at: [0.174, 0.521]}       # the left side
-  - {do: upgrade, id: t3, to: 0-0-1}                                      # Long Range Darts
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.446, 0.198]}   # high ground at the top
+  - {do: upgrade, id: r1, to: 1-0-0}                                      # Improved Rangs, on the way to Glaive Ricochet
   - {do: place, id: hero, kind: hero, role: dps, at: [0.500, 0.198]}      # Quincy, beside the sniper
   - {do: place, id: d1, kind: druid, role: dps, at: [0.436, 0.359]}
   - {do: upgrade, id: d1, to: 1-0-0}                                      # Hard Thorns: round 28's lead
@@ -168,7 +210,6 @@ plan:
   - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.398, 0.419]}
   - {do: upgrade, id: s2, to: 1-1-0}                                      # Full Metal Jacket + Night Vision: camo leads
   - {do: upgrade, id: s2, to: 3-1-0}                                      # Deadly Precision: camo ceramics
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.574, 0.726]}   # beside the middle stretch (see 19:00)
   - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the round-63 rush
   - {do: upgrade, id: s1, to: 0-2-5}                                      # Elite Defender
   - {do: upgrade, id: w1, to: 5-0-2}                                      # Archmage (Monkey Sense: camo)
