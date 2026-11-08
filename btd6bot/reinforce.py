@@ -268,6 +268,72 @@ def options(ex, cash, kinds=None):
     return trim(out)
 
 
+def camo_round(ex, rnd):
+    """Does round `rnd` of the executor's mode send camo bloons (a camo
+    group, or a bloon whose table entry is camo, such as a DDT)? Read from
+    the game's round sets through the damage model; False when the model's
+    data is missing."""
+    from . import dps_model as D       # here: the model is optional offline
+    if rnd is None or not D.available():
+        return False
+    set_name = "abr" if getattr(ex, "mode", None) == "abr" else "standard"
+    table = D.bloon_table()
+    for g in D._round_groups(set_name, rnd):
+        if g.get("camo") or (table.get(g.get("id") or "") or {}).get("camo"):
+            return True
+    return False
+
+
+def radar_option(ex, cash, rnd):
+    """A Monkey Village beside the main damage tower that cannot see camo,
+    rated at the Radar Scanner (0-2-0) it grows into (grow does the
+    rating) - or None when that would not be an answer.
+
+    Tricky Tracks Medium (2026-11-07, case 20261107_014709): round 51's 15
+    camo ceramics took all 128 lives at once. The only camo sight was one
+    dart, the model rated round 51 at 0.06 from round 49 on, but nothing
+    reinforce offered lifted it: options() offers more of the damage kinds
+    standing (three boomerangs, none of them seeing camo) and the village is
+    no damage kind, so the one purchase that gives the whole group camo sight
+    was never rated.
+
+    Offered only when the round being judged (`rnd`, the worst one) sends
+    camo bloons, no village with Radar Scanner stands yet, and the damage
+    tower with the most money in it does not see camo on its own
+    (dps_model.detects_camo) - it is placed beside that tower (role
+    support). A bare village already standing is grown toward 0-2-0 instead
+    (grow -> grow_standing), so a village bought this way is not left bare."""
+    from . import dps_model as D
+    kind = "village"
+    if ex.at_tower_cap() or not getattr(ex, "kind_allowed", lambda k: True)(kind):
+        return None
+    if not camo_round(ex, rnd):
+        return None
+    towers = list(ex.g.towers.values())
+    if any(t.kind == kind and t.tiers[1] >= 2 for t in towers):
+        return None                     # a Radar Scanner already stands
+    family = _price_family(ex)
+    damage = [t for t in towers if t.kind != "hero" and t.kind not in NOT_DAMAGE and t.kind in T.TOWERS]
+    if not damage:
+        return None
+    main = max(damage, key=lambda t: T.total_cost(t.kind, tuple(t.tiers), family))
+    if D.detects_camo(main.kind, tuple(main.tiers)):
+        return None
+    cost = ex.g.price(kind)
+    if cost is None or cost > cash:
+        return None
+    step = {"do": "place", "kind": kind, "role": "support", "near": [main.tid]}
+    held_back = getattr(ex, "place_held_back", None)
+    if held_back is not None and held_back(step):
+        return None
+    spots = ex.pick_spots(kind, step, n=1)
+    if not spots:
+        return None
+    fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
+    new = SimpleNamespace(tid=f"_new_{kind}", kind=kind, tiers=(0, 0, 0), x=fx, y=fy)
+    return Option(f"another {kind} (camo sight for {main.tid})", cost, step, board(ex) + [new])
+
+
 def trim(out, k=MAX_OPTIONS):
     """At most k of the cost-sorted options: the cheapest half and the
     dearest half. Keeping only the cheapest k hid every strong purchase on
@@ -331,7 +397,11 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     crisis = before is not None and before < 1.0
     pick = None
     deadline = time.monotonic() + LOOK_BUDGET_S
-    tried = grow(ex, forecast, options(ex, cash), cash, worst, deadline=deadline)
+    opts = options(ex, cash)
+    radar = radar_option(ex, cash, worst)     # camo sight for the group (backlog #64)
+    if radar is not None:
+        opts.append(radar)
+    tried = grow(ex, forecast, opts, cash, worst, deadline=deadline)
     if _past(deadline):
         log.info("reinforce: the %.0f s look budget ran out while rating growth paths - "
                  "going with what was rated", LOOK_BUDGET_S)

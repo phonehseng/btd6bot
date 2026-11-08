@@ -657,6 +657,57 @@ def test_a_game_ending_round_is_seen_a_few_rounds_ahead():
     assert found[3] > found[2], found       # the purchase lifts round 40 itself
 
 
+def test_a_camo_round_offers_radar_beside_the_main_tower():
+    # Tricky Tracks Medium (2026-11-07, case 20261107_014709): round 51's
+    # camo ceramics took all 128 lives; the boomerangs carrying the defence
+    # saw no camo, and reinforce never rated the village that would have
+    # given them sight (it only offered more of the damage kinds standing).
+    if not D.available():
+        return
+
+    class Rangs(ToyEx):
+        def __init__(self, main_kind="boomerang"):
+            self.g = N(towers={
+                "b1": N(tid="b1", kind=main_kind, tiers=[4, 0, 2], x=0.5, y=0.5),
+                "d1": N(tid="d1", kind="dart", tiers=[0, 2, 0], x=0.2, y=0.2)},
+                price=lambda kind: T.tower_cost(kind, "medium"))
+            self.m = N(cell_to_frac=lambda cx, cy: (0.52, 0.5))
+            self.mode = "medium"
+            self.asked = []
+
+        def at_tower_cap(self):
+            return False
+
+        def pick_spots(self, kind, step, n=1):
+            self.asked.append(step)
+            return [(10, 10, 1.0)]
+
+    assert R.camo_round(Rangs(), 51) and not R.camo_round(Rangs(), 1)
+    ex = Rangs()
+    o = R.radar_option(ex, 5000, 51)
+    assert o is not None and o.step["kind"] == "village" and o.step["near"] == ["b1"], o
+    assert o.step["role"] == "support" and o.cost == T.tower_cost("village", "medium")
+    # no camo in the round, no cash, a main tower that sees camo, or a Radar
+    # Scanner already standing: nothing offered
+    assert R.radar_option(ex, 5000, 1) is None
+    assert R.radar_option(ex, 100, 51) is None
+    assert R.radar_option(Rangs("ninja"), 5000, 51) is None
+    ex.g.towers["v1"] = N(tid="v1", kind="village", tiers=[0, 2, 0], x=0.5, y=0.6)
+    assert R.radar_option(ex, 5000, 51) is None
+
+    # grow() rates it at the Radar Scanner when only the scanner helps, and
+    # a bare village already standing is grown instead of another bought
+    class NeedsRadar(ToyForecast):
+        def margin(self, towers, rnd):
+            return 2.0 if any(t.kind == "village" and t.tiers[1] >= 2 for t in towers) else 0.1
+    ex = Rangs()
+    grown = R.grow(ex, NeedsRadar(), [R.radar_option(ex, 5000, 51)], 5000, 51)
+    assert grown[0].towers[-1].tiers[1] >= 2 and "to grow to" in grown[0].what, grown
+    ex.g.towers["v1"] = N(tid="v1", kind="village", tiers=[0, 0, 0], x=0.5, y=0.6)
+    grown = R.grow(ex, NeedsRadar(), [R.radar_option(ex, 5000, 51)], 5000, 51)
+    assert grown[0].step == {"do": "upgrade", "id": "v1", "to": "0-1-0"}, grown
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
