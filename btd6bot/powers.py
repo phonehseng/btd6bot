@@ -9,44 +9,54 @@ When (plan_extras decides, the match runs it once per game)
     forbid extra towers), never CHIMPS (the game forbids powers there and
     crosses out the button), Instas never in Primary/Military Only;
   * once, before the first round starts (Match.play, after setup and before
-    Play): the game is waiting, no bloon is on the track, nothing is lost by
-    taking a few seconds;
+    Play): no bloon is on the track, nothing is lost by taking a few seconds;
   * within the daily caps of achtasks (power uses, insta uses, clicks).
 
-What the game shows (from the bot's own recordings, 1280x800, 2026-11-07)
-  The Powers button is the square button left of Play/Fast-forward at the
-  bottom of the right-hand tower panel: a yellow lightning bolt in a normal
-  game (rec_20261107_151000.mkv, Downstream Half Cash) and a brown button
-  crossed out in red in CHIMPS (rec_20261107_173100.mkv). Its centre is
-  POWERS_BUTTON. NO recording shows the panel it opens: neither the bot nor
-  the owner opened it while recording (all 242 recordings of the day were
-  scanned). So everything after the click is read, not assumed:
-  * the panel is taken as open when OCR of the side panel reads a known
-    Power name or the Insta Monkeys tab; a power counts as owned only when a
-    count ("x3" or "3") is read next to its name;
-  * an unknown screen, a shop-like page (achtasks.real_money, menus.page_
-    forbidden) or a purchase question ends the routine: the question is
-    declined with its Cancel/No/Close, nothing is confirmed in a game;
-  * every opening of the panel saves a screenshot (up to LOOKS_PER_DAY a
-    day) under logs/achievement_captures/ and logs the words read, so the
-    first live runs calibrate this module.
+The Powers button (recordings, 1280x800, 2026-11-07)
+  The square button left of Play/Fast-forward: a yellow lightning bolt in a
+  normal game (rec_20261107_151000.mkv) and crossed out in CHIMPS
+  (rec_20261107_173100.mkv). Centre POWERS_BUTTON. While the panel is open
+  the same button shows a monkey face and brings the tower list back.
 
-Using a Power
-  Click its name. A track Power (Road Spikes, Glue Trap, Camo Trap, MOAB
-  Mine) is then held on the cursor like a tower (Game.is_holding sees the
-  red cancel X): it is dropped on a point of the track late in the route
-  (track_points); an instant Power (Monkey Boost, Thrive) works at once.
-  Cash Drop is placed on open ground. A Power still held after
-  TARGET_TRIES clicks is put back with Game.cancel_hold.
+What the panel shows (first live run, Tricky Tracks Easy 2026-11-08 00:26,
+logs/achievement_captures/powers_panel_20261108_002637.png and
+insta_panel_20261108_002642.png, 1920x1200)
+  * a "POWERS" header, three tab buttons under it (lightning = Powers,
+    lightning+ = ?, monkey face = Insta Monkeys: INSTA_TAB);
+  * Powers tab: a two-column grid of hexagon icons with NO names and NO
+    prices. Purple hexes (the He-Man event powers) and blue hexes (Banana
+    Farmer, Tech Bot, Portable Lake ...) carry no badge; the gold "INSTA
+    MONKEYS" tile at the bottom carries an orange round badge "22". So a
+    count badge is how the game shows what is owned, and a Power counts as
+    owned only when its hexagon carries such a badge (power_badges). That
+    account owned no Power in the grid: nothing is clicked then.
+  * Insta tab: one icon per tower, each with an orange count badge (9, 12,
+    14, 20, 12, 11, 19, 6, 16, 9 on that account): insta_badges.
+  The badge: an orange ring (HSV hue 5-22) about 0.027 of the window wide
+  and 0.044 high around a yellow disc with the number; the icon it belongs
+  to is centred BADGE_TO_ICON below-left of it.
+
+Using a Power (only one with a badge; never one without - it may be a
+purchase)
+  Click its hexagon. If something comes onto the cursor (Game.is_holding,
+  the red cancel X) it is a placed Power: dropped on the track late in the
+  route (track_points), else on open ground near the track (insta_spots),
+  else put back. If nothing comes onto the cursor it is an instant Power:
+  used when its badge count went down (or the badge went away). Anything
+  else (a question, an unknown screen) ends the routine; a question is
+  answered Cancel/No, nothing is ever confirmed in a game.
 
 Placing an Insta Monkey
-  Click the Insta Monkeys tab, then a tower name (if the tab lists towers),
-  then a tier "a-b-c": the Insta is held like a tower and dropped on a free
-  spot near the track (insta_spots). The tier is the lowest one on offer,
-  except one tier-5 Insta while Instant Gratification is wanted.
+  Insta tab, the tower with the most Instas (a badge), then its list of
+  tiers. That list has not been seen yet: when it shows tier labels
+  ("2-0-0") the lowest is placed like a tower (one tier 5 while Instant
+  Gratification is wanted); otherwise it is captured, logged, and the
+  routine closes the panel without placing anything.
 
-Never: a key press (Esc ends the operator's session), a purchase, a click
-on a word outside this module's allow-lists.
+Every step saves a capture (a few a day) under logs/achievement_captures/
+and logs what was read. Never: a key press (Esc ends the operator's
+session), a purchase, a click outside the panel's badged icons, its tabs,
+the target points and the Cancel/No of a question.
 """
 import logging
 import re
@@ -63,9 +73,12 @@ from .vision import norm, save
 log = logging.getLogger("powers")
 
 # -- where things are (fractions of the game window) ----------------------------
-POWERS_BUTTON = (0.892, 0.903)            # the lightning button left of Play
+POWERS_BUTTON = (0.892, 0.903)            # lightning button left of Play (monkey face while open)
 POWERS_BUTTON_BOX = (0.870, 0.865, 0.915, 0.945)
 SIDEBAR = (0.855, 0.09, 0.998, 0.86)      # the right-hand panel (towers / powers)
+INSTA_TAB = (0.972, 0.150)                # the monkey-face tab under "POWERS"
+GRID = (0.855, 0.19, 0.998, 0.83)         # the icon grid under the tabs
+POWER_GRID_BOTTOM = 0.77                  # power hexes end above the "INSTA MONKEYS" label
 CAPTURE_DIR = A.CAPTURE_DIR
 
 # The lit button: saturated yellow covering most of POWERS_BUTTON_BOX
@@ -77,26 +90,30 @@ LIT_MIN_SHARE = 0.30
 TILE_HUE = (95, 115)
 TILES_MIN_SHARE = 0.08
 
+# Count badges (measured on the two live captures): the orange ring's
+# bounding box is 0.027 x 0.043-0.044 of the window, filled 0.27-0.29.
+BADGE_HUE = (5, 22)
+BADGE_W = (0.020, 0.035)
+BADGE_H = (0.033, 0.056)
+BADGE_FILL = (0.15, 0.45)
+BADGE_TO_ICON = (-0.019, 0.028)           # badge centre -> its icon's centre
+ICON_HALF = (0.025, 0.035)
+GOLD_HUE = (18, 34)                       # the gold "INSTA MONKEYS" tile (not a Power)
+GOLD_MIN_SHARE = 0.30
+
 # -- when ---------------------------------------------------------------------------
 # mode -> what may be used there ("both" = powers and instas)
 ALLOWED_MODES = {"easy": "both", "medium": "both", "reverse": "both",
                  "primary_only": "powers", "military_only": "powers"}
 MIN_P = 0.85                              # planner.CONFIDENT_P: only sure games
 POWERS_PER_GAME = 2
-INSTAS_PER_GAME = 2
+INSTAS_PER_GAME = 1
 TARGET_TRIES = 3                          # target clicks for a held Power or Insta
 SETTLE = 0.8                              # seconds for the panel to draw after a click
 
-# -- what may be clicked -------------------------------------------------------------
-# Powers in the order they are used: cheap track powers first, then the
-# instant ones; Time Stop (slows the game), Super Monkey Storm and the
-# placeable towers (Banana Farmer, Tech Bot, Totem, Pontoon, Lake) are left out.
-POWER_USE = {"roadspikes": "track", "gluetrap": "track", "camotrap": "track", "moabmine": "track",
-             "monkeyboost": "instant", "thrive": "instant", "cashdrop": "ground"}
-POWER_ORDER = tuple(POWER_USE)
-INSTA_TABS = ("instamonkeys", "instas", "insta")
+INSTA_TABS = ("instamonkeys", "instas")
+PANEL_WORDS = ("powers", "instamonkeys")
 DECLINE = ("cancel", "no", "close", "nothanks", "back")
-COUNT = re.compile(r"^[xÃ—]?(\d{1,3})$")
 TIER = re.compile(r"^([0-5])-([0-5])-([0-5])$")
 
 
@@ -104,7 +121,7 @@ TIER = re.compile(r"^([0-5])-([0-5])-([0-5])$")
 def _share(frame, region, hue, min_sat=120, min_val=0):
     h, w = frame.shape[:2]
     x0, y0, x1, y1 = region
-    patch = frame[int(y0 * h):int(y1 * h), int(x0 * w):int(x1 * w)]
+    patch = frame[max(0, int(y0 * h)):int(y1 * h), max(0, int(x0 * w)):int(x1 * w)]
     if patch.size == 0:
         return 0.0
     hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
@@ -118,45 +135,109 @@ def button_lit(frame):
 
 
 def tower_list_shown(frame):
-    """Are the blue tower tiles in the side panel (the panel is closed)?"""
+    """Blue in the side panel. NOT a test for the panel being closed: the
+    powers panel is blue too (0.2+ on both live captures). Kept for
+    callers that only need "the side panel is drawn"."""
     return _share(frame, SIDEBAR, TILE_HUE) >= TILES_MIN_SHARE
 
 
-def _near(a, b, dx=0.06, dy=0.08):
-    return abs(a.x - b.x) <= dx and abs(a.y - b.y) <= dy
+def panel_closed(frame):
+    """The tower list is back: the button shows its yellow lightning bolt
+    again (while the panel is open it shows a blue monkey face; measured
+    lit share 0.00 on both live captures). Only meaningful outside CHIMPS."""
+    return button_lit(frame)
 
 
-def owned_powers(words):
-    """{power: (name word, count)} for every allowed Power whose name and a
-    count next to it were read. A name with no count is not owned (or its
-    count is unreadable): it is never clicked. Each count belongs to the
-    nearest name read (any name, not only allowed Powers), so a count is
-    never credited to a neighbouring tile."""
-    out = {}
-    names = [w for w in words if sum(c.isalpha() for c in norm(w.text)) >= 4]
-    for cw in words:
-        m = COUNT.match(norm(cw.text))
-        if not m or int(m.group(1)) <= 0:
+def on_powers_tab(frame, words=()):
+    """The Powers tab (not the Insta tab): the gold "INSTA MONKEYS" tile
+    sits at the bottom of the grid (its icon below y = 0.6; on the Insta
+    tab the only gold hexagon was at the top), or its label is read there."""
+    if any(norm(w.text) == "instamonkeys" and w.y > 0.7 for w in words):
+        return True
+    return any(icon_of(b)[1] > 0.6 and is_gold_tile(frame, icon_of(b))
+               for b in find_badges(frame))
+
+
+def find_badges(frame, region=GRID):
+    """Orange count badges inside region: [(badge_x, badge_y)] in window
+    fractions, top to bottom, left to right."""
+    h, w = frame.shape[:2]
+    x0, y0 = int(region[0] * w), int(region[1] * h)
+    x1, y1 = int(region[2] * w), int(region[3] * h)
+    patch = frame[y0:y1, x0:x1]
+    if patch.size == 0:
+        return []
+    hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, (BADGE_HUE[0], 150, 200), (BADGE_HUE[1], 255, 255))
+    n, _, stats, _ = cv2.connectedComponentsWithStats(mask)
+    out = []
+    for i in range(1, n):
+        bx, by, bw, bh, area = stats[i]
+        if not (BADGE_W[0] <= bw / w <= BADGE_W[1] and BADGE_H[0] <= bh / h <= BADGE_H[1]):
             continue
-        close = [w for w in names if _near(w, cw)]
-        if not close:
+        if not BADGE_FILL[0] <= area / float(bw * bh) <= BADGE_FILL[1]:
             continue
-        w = min(close, key=lambda w: abs(w.x - cw.x) + abs(w.y - cw.y))
-        n = norm(w.text)
-        if n in POWER_USE and n not in out and not A.real_money(w.text):
-            out[n] = (w, int(m.group(1)))
+        out.append(((x0 + bx + bw / 2) / w, (y0 + by + bh / 2) / h))
+    return sorted(out, key=lambda b: (round(b[1], 2), b[0]))
+
+
+def icon_of(badge):
+    return badge[0] + BADGE_TO_ICON[0], badge[1] + BADGE_TO_ICON[1]
+
+
+def _icon_box(icon):
+    return (icon[0] - ICON_HALF[0], icon[1] - ICON_HALF[1], icon[0] + ICON_HALF[0], icon[1] + ICON_HALF[1])
+
+
+def is_gold_tile(frame, icon):
+    """The gold hexagon of the "INSTA MONKEYS" tile (not a Power)."""
+    return _share(frame, _icon_box(icon), GOLD_HUE, 150, 180) >= GOLD_MIN_SHARE
+
+
+def power_badges(frame):
+    """Icons of owned Powers on the Powers tab: badged hexagons in the power
+    grid, the gold Insta Monkeys tile left out. [(icon, badge)]."""
+    out = []
+    for b in find_badges(frame, (GRID[0], GRID[1], GRID[2], POWER_GRID_BOTTOM)):
+        icon = icon_of(b)
+        if not is_gold_tile(frame, icon):
+            out.append((icon, b))
     return out
 
 
-def classify_panel(words):
-    """'shop' (store / purchase wording), 'powers' (a Power name or the
-    Insta Monkeys tab read), 'tiers' (Insta tiers "a-b-c" read) or 'unknown'."""
+def insta_badges(frame):
+    """Icons of towers with Instas on the Insta tab: [(icon, badge)]."""
+    return [(icon_of(b), b) for b in find_badges(frame)]
+
+
+def badge_region(badge):
+    return (badge[0] - 0.016, badge[1] - 0.025, badge[0] + 0.016, badge[1] + 0.025)
+
+
+def read_count(words):
+    """The number OCR read on a badge, or None."""
+    digits = "".join(c for w in words for c in w.text if c.isdigit())
+    return int(digits) if digits and len(digits) <= 3 else None
+
+
+def badge_near(badges, badge, tol=0.012):
+    """The badge in `badges` at the same place as `badge`, or None."""
+    for b in badges:
+        if abs(b[0] - badge[0]) <= tol and abs(b[1] - badge[1]) <= tol:
+            return b
+    return None
+
+
+def classify_panel(words, frame=None):
+    """'shop' (store / purchase wording), 'tiers' (Insta tiers "a-b-c"
+    read), 'powers' (the panel's header or Insta tile/tab words, or count
+    badges seen) or 'unknown'."""
     if page_forbidden(words) or any(A.real_money(w.text) for w in words):
         return "shop"
-    norms = [norm(w.text) for w in words]
     if any(TIER.match(w.text.strip()) for w in words):
         return "tiers"
-    if any(n in POWER_USE or n in INSTA_TABS for n in norms):
+    norms = [norm(w.text) for w in words]
+    if any(n in PANEL_WORDS for n in norms) or (frame is not None and find_badges(frame)):
         return "powers"
     return "unknown"
 
@@ -220,8 +301,8 @@ def insta_spots(model, avoid, n=TARGET_TRIES):
 
 # -- the routine ---------------------------------------------------------------------
 class InGameExtras:
-    """Use up to POWERS_PER_GAME Powers and place up to INSTAS_PER_GAME
-    Instas once, before round 1 of a game (see the module notes).
+    """Use up to POWERS_PER_GAME owned Powers and place up to
+    INSTAS_PER_GAME Instas once, before round 1 (see the module notes).
 
     budget: achtasks.Budget of the signed-in account. want_*: which cards
     are wanted. allow_instas: False in modes with a tower restriction."""
@@ -237,20 +318,22 @@ class InGameExtras:
         self.summary = {"powers": [], "instas": [], "result": None}
 
     # -- helpers ---------------------------------------------------------------------
-    def _read(self):
+    def _look(self, what):
+        """Wait, grab, read the side panel, keep a capture. (frame, words)"""
         self.sleep(SETTLE)
-        return list(self.menus.v.read(SIDEBAR))
+        frame = self.g.fresh()
+        words = list(self.menus.v.read(SIDEBAR))
+        log.info("achievement: %s read: %s", what, A.screen_text(words) or "no words")
+        if self.budget.used("looks_powers") < 12:
+            self.budget.add("looks_powers")
+            try:
+                save(frame, self.capture_dir / f"{what}_{time.strftime('%Y%m%d_%H%M%S')}.png")
+            except Exception:
+                pass
+        return frame, words
 
-    def _capture(self, frame, what, words):
-        """Calibration: keep the screen and say what was read."""
-        log.info("achievement: %s read: %s", what, A.screen_text(words))
-        if self.budget.used("looks_" + what) >= A.LOOKS_PER_DAY:
-            return
-        self.budget.add("looks_" + what)
-        try:
-            save(frame, self.capture_dir / f"{what}_{time.strftime('%Y%m%d_%H%M%S')}.png")
-        except Exception:
-            pass
+    def _count(self, badge):
+        return read_count(self.menus.v.read(badge_region(badge)))
 
     def _decline(self, words):
         """A purchase question in the game: answer it with Cancel/No/Close."""
@@ -263,14 +346,13 @@ class InGameExtras:
         return False
 
     def _close(self):
-        """Close the panel with its own button and check the tower list is back."""
-        f = self.g.fresh()
-        if self.g.is_holding(f):
+        """Back to the tower list with the panel's own button."""
+        if self.g.is_holding(self.g.fresh()):
             self.g.cancel_hold()
-        if not tower_list_shown(self.g.fresh()):
+        if not panel_closed(self.g.fresh()):
             self.inp.click(*POWERS_BUTTON)
             self.sleep(SETTLE)
-        if not tower_list_shown(self.g.fresh()):
+        if not panel_closed(self.g.fresh()):
             log.warning("achievement: the tower list did not come back after the powers panel - closing panels")
             self.g.close_panels()
 
@@ -283,8 +365,6 @@ class InGameExtras:
             if not self.g.is_holding():
                 log.info("achievement: %s placed at %.3f,%.3f", what, *pt)
                 return True
-        log.warning("achievement: %s could not be placed - putting it back", what)
-        self.g.cancel_hold()
         return False
 
     def _bail(self, why, words):
@@ -293,129 +373,126 @@ class InGameExtras:
         self.summary["result"] = f"bailed: {why}"
         return self.summary
 
-    # -- one power ----------------------------------------------------------------------
-    def _use_power(self, name, word, count, model):
-        kind = POWER_USE[name]
-        if not self.budget.allow("power_uses"):
-            return False
-        self.inp.click(word.x, word.y)
-        self.sleep(0.5)
-        words = self._read()
-        if classify_panel(words) == "shop":
+    # -- powers --------------------------------------------------------------------------
+    def _use_power(self, slot, icon, badge, model):
+        """Click a badged Power hexagon and use it. True when used."""
+        before = self._count(badge)
+        log.info("achievement: using the owned Power in slot %d at %.3f,%.3f (badge count %s)",
+                 slot, icon[0], icon[1], before if before is not None else "unread")
+        self.inp.click(*icon)
+        self.sleep(0.6)
+        if self.g.is_holding():
+            placed = (self._drop(track_points(model), f"Power {slot} (track)")
+                      or self._drop(insta_spots(model, self.avoid), f"Power {slot} (ground)"))
+            if not placed:
+                log.warning("achievement: Power %d could not be placed - putting it back", slot)
+                self.g.cancel_hold()
+                return False
+            return True
+        frame, words = self._look(f"power{slot}_after")
+        if classify_panel(words, frame) == "shop":
             self._decline(words)
-            raise _Bail("a purchase question after clicking " + name, words)
-        held = self.g.is_holding()
-        if kind == "instant" and not held:
-            used = True
-        elif held:
-            pts = track_points(model) if kind == "track" else insta_spots(model, self.avoid)
-            used = self._drop(pts, name)
-        else:
-            used = False
-        # the count next to the name tells whether it really went
-        after = owned_powers(self._read()).get(name)
-        verified = after is not None and after[1] == count - 1
-        if used:
-            self.budget.add("power_uses")
-            self.summary["powers"].append(name)
-            log.info("achievement: Power used: %s (count %d -> %s, %s)", name, count,
-                     after[1] if after else "?", "verified" if verified else "unverified")
-        else:
-            log.warning("achievement: clicked Power %s but it was not used", name)
-        return used
+            raise _Bail(f"a purchase question after Power slot {slot}", words)
+        now = badge_near(find_badges(frame), badge)
+        after = None if now is None else self._count(now)
+        if now is None or (before is not None and after is not None and after < before):
+            log.info("achievement: instant Power %d used (badge %s -> %s)", slot, before,
+                     "gone" if now is None else after)
+            return True
+        raise _Bail(f"Power slot {slot} clicked but nothing changed (badge {before} -> {after})", words)
 
-    def _use_powers(self, owned, model):
+    def _use_powers(self, frame, model, words=()):
+        if not on_powers_tab(frame, words):
+            log.info("achievement: the panel is not on its Powers tab (no Insta Monkeys tile at the bottom) "
+                     "- no Power used")
+            return 0
+        owned = power_badges(frame)
+        if not owned:
+            log.info("achievement: no owned Power in the grid (no hexagon carries a count badge)")
+            return 0
+        log.info("achievement: owned Powers by badge: %d (slots at %s)", len(owned),
+                 ", ".join("%.3f,%.3f" % icon for icon, _ in owned))
         n = 0
-        for name in POWER_ORDER:
-            if n >= POWERS_PER_GAME or not self.budget.allow("power_uses"):
+        while owned and n < POWERS_PER_GAME and self.budget.allow("power_uses"):
+            icon, badge = owned[0]          # the first badged hexagon, read afresh each time
+            if not self._use_power(n + 1, icon, badge, model):
                 break
-            if name not in owned:
-                continue
-            words = self._read()
-            cur = owned_powers(words).get(name)
-            if cur is None:
-                # the panel closed after the last use: open it again
+            n += 1
+            self.budget.add("power_uses")
+            self.summary["powers"].append("%.3f,%.3f" % icon)
+            if n >= POWERS_PER_GAME:
+                break
+            # the panel may have closed after a use: open it again, re-read
+            frame, words = self._look("powers_panel_again")
+            if panel_closed(frame):
                 if not self._open():
                     break
-                cur = owned_powers(self._read()).get(name)
-                if cur is None:
-                    continue
-            if self._use_power(name, cur[0], cur[1], model):
-                n += 1
+                frame, words = self._panel
+            owned = power_badges(frame) if on_powers_tab(frame, words) else []
         return n
 
-    # -- one insta ------------------------------------------------------------------------
-    def _place_insta(self, model):
-        words = self._read()
-        if classify_panel(words) not in ("powers", "tiers") and not self._open():
+    # -- instas ----------------------------------------------------------------------------
+    def _place_insta(self, model, words):
+        tab = A.find_allowed(words, INSTA_TABS)
+        self.inp.click(*((tab.x, tab.y) if tab is not None else INSTA_TAB))
+        frame, words = self._look("insta_panel")
+        if classify_panel(words, frame) == "shop":
+            self._decline(words)
+            raise _Bail("a shop page on the Insta tab", words)
+        towers = insta_badges(frame)
+        if not towers:
+            log.info("achievement: no Insta tower with a count badge")
             return False
-        words = self._read()
-        if classify_panel(words) != "tiers":
-            tab = A.find_allowed(words, INSTA_TABS)
-            if tab is None:
-                log.info("achievement: no Insta Monkeys tab read in the powers panel")
-                return False
-            self.inp.click(tab.x, tab.y)
-            words = self._read()
-            self._capture(self.g.fresh(), "insta_panel", words)
-            if classify_panel(words) == "shop":
-                self._decline(words)
-                raise _Bail("a shop page after the Insta tab", words)
-            if not tier_words(words):
-                tower = self._insta_tower(words)
-                if tower is None:
-                    log.info("achievement: no owned Insta tower read")
-                    return False
-                self.inp.click(tower.x, tower.y)
-                words = self._read()
+        counts = [(self._count(b), icon, b) for icon, b in towers]
+        log.info("achievement: Insta towers by badge: %s", [c for c, _, _ in counts])
+        count, icon, _ = max(counts, key=lambda c: c[0] or 0)
+        self.inp.click(*icon)
+        frame, words = self._look("insta_tower")
+        if classify_panel(words, frame) == "shop":
+            self._decline(words)
+            raise _Bail("a shop page after an Insta tower", words)
         pick = pick_tier(tier_words(words), self.want_t5)
         if pick is None:
-            log.info("achievement: no Insta tier read")
+            log.info("achievement: the Insta tower's list shows no tier labels - not placing anything "
+                     "(see the insta_tower capture)")
             return False
         word, tier = pick
         self.inp.click(word.x, word.y)
-        self.sleep(0.5)
-        if classify_panel(self._read()) == "shop":
-            raise _Bail("a purchase question after an Insta tier", self.menus.v.read(SIDEBAR))
+        self.sleep(0.6)
         if not self.g.is_holding():
+            frame, words = self._look("insta_tier_after")
+            if classify_panel(words, frame) == "shop":
+                self._decline(words)
+                raise _Bail("a purchase question after an Insta tier", words)
             log.warning("achievement: Insta %s did not come onto the cursor", word.text)
             return False
-        placed = self._drop(insta_spots(model, self.avoid), "Insta " + word.text)
-        if placed:
-            self.budget.add("insta_uses")
-            self.summary["instas"].append("-".join(map(str, tier)))
-            if 5 in tier:
-                self.want_t5 = False
-                log.info("achievement: Instant Gratification - a tier-5 Insta (%s) placed", word.text)
-        return placed
-
-    @staticmethod
-    def _insta_tower(words):
-        """A tower name with a count next to it on the Insta tab."""
-        from . import towers as T
-        names = {norm(t["name"]): k for k, t in T.TOWERS.items() if t.get("name")}
-        counts = [w for w in words if COUNT.match(norm(w.text))]
-        for w in words:
-            if norm(w.text) in names and any(_near(w, c) for c in counts) and not A.real_money(w.text):
-                return w
-        return None
+        if not self._drop(insta_spots(model, self.avoid), "Insta " + word.text):
+            log.warning("achievement: Insta %s could not be placed - putting it back", word.text)
+            self.g.cancel_hold()
+            return False
+        self.budget.add("insta_uses")
+        self.summary["instas"].append("-".join(map(str, tier)))
+        if 5 in tier:
+            self.want_t5 = False
+            log.info("achievement: Instant Gratification - a tier-5 Insta (%s) placed", word.text)
+        return True
 
     # -- open --------------------------------------------------------------------------------
     def _open(self):
         """Click the Powers button and read the panel. True when it shows."""
-        f = self.g.fresh()
-        if not button_lit(f):
+        if not button_lit(self.g.fresh()):
             log.info("achievement: the Powers button is not lit - nothing to do")
             return False
         self.inp.click(*POWERS_BUTTON)
-        words = self._read()
-        kind = classify_panel(words)
-        self._capture(self.g.fresh(), "powers_panel", words)
+        self._clicked = True
+        frame, words = self._look("powers_panel")
+        kind = classify_panel(words, frame)
         if kind == "shop":
             self._decline(words)
             raise _Bail("a shop page behind the Powers button", words)
         if kind == "unknown":
             raise _Bail("the panel could not be read", words)
+        self._panel = (frame, words)
         return True
 
     def run(self, game, menus, model, avoid=()):
@@ -434,17 +511,19 @@ class InGameExtras:
                 self.summary["result"] = "button not lit"
                 return self.summary
             opened = True
-            words = self._read()
-            owned = owned_powers(words)
-            self.budget.set_flag("powers_seen", {"at": time.time(), "owned": sorted(owned)})
-            if self.want_powers:
-                if owned:
-                    self._use_powers(owned, model)
-                else:
-                    log.info("achievement: no owned Power read in the panel (Power names read: %s)",
-                             [norm(w.text) for w in words if norm(w.text) in POWER_USE] or "none")
+            frame, words = self._panel
+            if on_powers_tab(frame, words):
+                # the power shop buys only after a look that found none owned
+                self.budget.set_flag("powers_seen", {"at": time.time(), "owned": len(power_badges(frame))})
+            if self.want_powers and self.budget.allow("power_uses"):
+                self._use_powers(frame, model, words)
+                frame, words = self._look("powers_panel_before_instas")
+                if panel_closed(frame) and self.want_instas:
+                    if not self._open():
+                        raise _Bail("the panel did not open again for the Instas", words)
+                    frame, words = self._panel
             for _ in range(INSTAS_PER_GAME if self.want_instas else 0):
-                if not self.budget.allow("insta_uses") or not self._place_insta(model):
+                if not self.budget.allow("insta_uses") or not self._place_insta(model, words):
                     break
             self.summary["result"] = "done"
             log.info("achievement: powers panel done - powers %s, instas %s",
@@ -462,7 +541,7 @@ class InGameExtras:
             self.summary["result"] = "error"
             return self.summary
         finally:
-            if opened or not tower_list_shown(game.fresh()):
+            if opened or getattr(self, "_clicked", False):
                 try:
                     self._close()
                 except Exception:
@@ -477,7 +556,7 @@ class _Bail(Exception):
 
 # -- the runner's entry point --------------------------------------------------------------
 def plan_extras(plan, strat, account_key, statuses=None, budget=None):
-    """An InGameExtras for this game, or None (and the reason is logged once).
+    """An InGameExtras for this game, or None.
 
     plan: planner.GamePlan (mode_key, p_win); strat: the strategy dict."""
     allowed = ALLOWED_MODES.get(plan.mode_key)
