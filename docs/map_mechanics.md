@@ -197,6 +197,19 @@ optimizer use that ground; its own replay buys as soon as the cash allows,
 so such a plan must be re-checked with the pane timing (a step can wait up
 to three rounds).
 
+Which pane is open is read off the screen (`mapgeom.pane_open_on_screen`):
+a shut pane is drawn with a white grid, the open one without, so each
+quarter's grid-line columns are counted in a fresh frame (at most every
+0.5 s, `Executor._pane_now`) before a pane spot is chosen or a tower under a
+pane is clicked. Exactly one quarter must show no grid and the others a
+grid; otherwise the bot's round decides. The round alone was not enough: in
+the first live game (2026-11-07, 20:37:21-20:38:33) a tower's side panel
+covered the round counter, the bot still believed round 17 and clicked the
+shut bottom-left pane some 40 times while the top-left one was open. The
+side panel hides at most half of the quarters on its side, which still show
+grid. Fixtures: `tests/fixtures/covered_garden_*.jpg`, frames of that
+game's recordings; tests in `tests/test_pane_screen_offline.py`.
+
 ## Towers under the HUD
 
 The round counter and the settings gear (top right, from the counter's left
@@ -253,12 +266,10 @@ the map (placement trouble 2).
 - Sanctuary's platform offsets: the curves are applied as shifts from the
   clip's time 0 (the scene's pose), in the scene's x/z (sign of z, the sign
   of the rotation and the turning centre not confirmed; see above).
-- Covered Garden's pane timing is taken from the guides (bottom-left open
-  on round 1, clockwise every round), which matches the scene's cycle order
-  (LowerLeft, UpperLeft, UpperRight, LowerRight) with roundsPerRotate 0 read
-  as 1. A pane that shuts mid-click is not learned as a refused spot.
-  Builds that wait for a pane (above) depend on it, and on a Fast Track
-  start following the round number.
+- (Confirmed in play 2026-11-07: Covered Garden's panes open one quarter
+  per round, clockwise from bottom-left on round 1, switching when the round
+  changes, also after a Fast Track start at round 15. A pane that shuts
+  mid-click is not learned as a refused spot.)
 - Whether `OnMapLoadedWithActiveRegenRemovableTrigger` fires in a fresh
   game (treated as "may happen", which paints both Ancient Portal paths).
 - Removal prices on Easy/Hard/Impoppable compared with the scene's.

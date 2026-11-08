@@ -1107,6 +1107,79 @@ def pane_at(model, fx, fy, rnd):
     return None, True
 
 
+# Reading the open pane off the screen (Covered Garden). A shut pane is drawn
+# as glass with a white grid; the open one shows the ground without it. In the
+# live game of 2026-11-07 (recordings rec_20261107_2035-2039, 1280x800) each
+# shut quarter showed 12 one-pixel columns of white grid line (6 where the
+# upgrade panel hid half of it) and the open quarter none.
+PANE_INSET = (0.10, 0.15)       # share of a quarter's box left out at each side (x, y): its frame
+PANE_WHITE_V, PANE_WHITE_S = 225, 40   # HSV: a grid-line pixel is this bright and this grey
+PANE_LINE_SHARE = 0.6           # a column is grid line when this share of it is white
+PANE_OPEN_MAX = 1               # grid columns (per 1280 px of frame width) an open quarter may show
+PANE_SHUT_MIN = 3               # ... and a shut one at least shows
+
+
+def pane_line_columns(model, frame):
+    """[grid-line columns in each pane quarter] of a game frame (BGR, any
+    size), in cycle order, or None on maps without panes. Columns are
+    counted inside each pane's box (its outline, inset by PANE_INSET) and
+    scaled to a 1280 px wide frame."""
+    grids = grids_for(model)
+    panes = grids.get("panes") if grids else None
+    if not panes or frame is None:
+        return None
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    white = (hsv[..., 2] > PANE_WHITE_V) & (hsv[..., 1] < PANE_WHITE_S)
+    h, w = white.shape
+    out = []
+    for mask in panes[0][1]:
+        rows, cols = np.nonzero(mask)
+        (x0, y0), (x1, y1) = (model.cell_to_frac(int(cols.min()), int(rows.min())),
+                              model.cell_to_frac(int(cols.max()), int(rows.max())))
+        ix, iy = (x1 - x0) * PANE_INSET[0], (y1 - y0) * PANE_INSET[1]
+        sub = white[int((y0 + iy) * h):int((y1 - iy) * h), int((x0 + ix) * w):int((x1 - ix) * w)]
+        lines = int((sub.mean(axis=0) > PANE_LINE_SHARE).sum()) if sub.size else 0
+        out.append(lines * 1280.0 / w)
+    return out
+
+
+def pane_open_on_screen(model, frame):
+    """Index (in cycle order) of the pane the screen shows open, or None when
+    the frame does not say clearly: exactly one quarter must show no grid
+    and every other quarter a grid.
+
+    Why the screen and not the round: while a tower's side panel is open it
+    covers the HUD round counter, the bot's round number goes stale, and on
+    2026-11-07 (20:37:21-20:38:33) it went on clicking the shut bottom-left
+    pane for over a minute while the top-left one was open. The side panel
+    hides at most half of the right quarters, so they still show grid."""
+    counts = pane_line_columns(model, frame)
+    if not counts:
+        return None
+    open_ = [i for i, c in enumerate(counts) if c <= PANE_OPEN_MAX]
+    shut = [i for i, c in enumerate(counts) if c >= PANE_SHUT_MIN]
+    if len(open_) == 1 and len(shut) == len(counts) - 1:
+        return open_[0]
+    return None
+
+
+def round_for_open_pane(model, index, rnd):
+    """The round nearest at or after `rnd` (1 when unknown) whose open pane
+    is `index`: a round number consistent with what the screen shows, for
+    the code that judges panes by round. The bot's own round lags behind
+    when it is stale, so the search goes forward; one cycle covers every pane."""
+    grids = grids_for(model)
+    panes = grids.get("panes") if grids else None
+    if not panes or index is None:
+        return rnd
+    cycle = panes[0][0]
+    base = max(1, rnd or 1)
+    for r in range(base, base + len(cycle["areas"]) * max(1, cycle["per"])):
+        if pane_open(cycle, r) == index:
+            return r
+    return rnd
+
+
 # A tower on moving ground (a gear, a platform) is carried to other places
 # during the game, and the track it covers changes with it. Such a spot is
 # used only if, wherever the ground takes it, it still covers at least this
