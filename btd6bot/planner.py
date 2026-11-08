@@ -570,6 +570,10 @@ class StrategySpec:
     # When the build was last repaired (ISO time, `planner: revised:` in its
     # file): only games played after it count as its record (build_record).
     revised: str | None = None
+    # An achievement plan built on a map's proven build (`extends:` in its
+    # file, checked by strategy.extends_problems): that build's id. Such a
+    # plan counts as the map's own build (is_own_map_build).
+    extends: str | None = None
 
     @classmethod
     def from_any(cls, obj: Any) -> "StrategySpec":
@@ -612,6 +616,7 @@ class StrategySpec:
             wins_needed=int(wins) if wins else None,
             xp_target=str(get("xp_target")) if get("xp_target") else None,
             revised=str(get("revised")) if get("revised") else None,
+            extends=str(get("extends")) if get("extends") else None,
         )
 
     def share(self) -> dict[str, float]:
@@ -983,9 +988,12 @@ def is_own_map_build(s: StrategySpec, map_name: str) -> bool:
     strategies/optimized): its allowlist is exactly this map. A general
     build with a long map allowlist (e.g. a water build for 24 maps) is not,
     nor is an achievement plan, whose single pinned map is where the
-    achievement is earned rather than where the build was proven."""
+    achievement is earned rather than where the build was proven - unless
+    the plan `extends` that map's proven build (its plan opens with the
+    proven plan, checked by strategy.extends_problems, and only surplus cash
+    buys the achievement's extra steps: ach_axis_of_havoc on Candy Falls)."""
     return (s.maps is not None and len(s.maps) == 1 and map_name in s.maps
-            and not s.achievement)
+            and (not s.achievement or bool(s.extends)))
 
 
 def _prior(s: StrategySpec, map_name: str, category: str, mode: str) -> float:

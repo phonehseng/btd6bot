@@ -1673,7 +1673,7 @@
   "hidden": false,
   "requirement": null,
   "reward": "Glue Trap ×2, Camo Trap ×2",
-  "strategy": null,
+  "strategy": "ach_axis_of_havoc",
   "steam_api_id": 88,
   "steam_name": null,
   "steam_unlock_pct": 4.1,

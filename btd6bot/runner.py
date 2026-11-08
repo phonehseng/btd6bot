@@ -454,6 +454,8 @@ def planner_specs(strats, account):
             "xp_target": s.get("xp_target"),
             # games before the build's last repair do not count (build_record)
             "revised": p.get("revised"),
+            # an achievement plan on a map's proven build (strategy.extends_problems)
+            "extends": s.get("extends"),
         }))
     return specs
 
