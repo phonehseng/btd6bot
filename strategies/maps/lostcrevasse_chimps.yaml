@@ -2,9 +2,9 @@
 # starter dart), a Desperado and a Skywarden on land cover the lane ends the
 # boat cannot see, and the boat grows to a Carrier Flagship beside a Radar
 # Scanner / Jungle Drums village; Quincy follows. Late game (since
-# 2026-11-08 01:00, see Status): an Inferno Ring tack in that village's
-# reach with Primary Mentoring, two Spiked Mines spike factories, a MOAR
-# Glaives boomerang (no Glaive Lord) and a Cripple MOAB sniper last.
+# 2026-11-08 02:00 back to the 23:30 recipe, see Status): a Glaive Lord
+# boomerang with its own Radar / Jungle Drums village, three Spiked Mines
+# spike factories, and a Cripple MOAB sniper last.
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -369,6 +369,59 @@
 #   (2.40), R91 3.33, R92 2.07 (1.33), R93 2.95, R94 1.46 (1.16), R95 1.56
 #   (0.68), R96 2.51 (1.00), R97 9.62, R98 2.28 (0.63), R99 1.70 (0.81),
 #   R100 7.10 (1.94). Rounds 40-81 unchanged (R78 2.86 the lowest).
+# 2026-11-08 02:00: the 01:00 build lost ROUND 93 live (01:13-01:37,
+# journal 20261108_011559) about 9 s in, rated 2.95 (round 92 2.07).
+# Round 93 is 10 fortified BFBs over 20 s and 6 camo DDTs from 12 s. The
+# recording (rec_20261108_013701 +0-7 s) shows the BFBs breaking up at the
+# entrance (top) and one fortified MOAB running the whole west lane to the
+# bottom-left exit, where it is popped at the edge and its children leak
+# (defeat screen: one bloon, -4 lives); the DDTs never got in. Meteors did
+# fire: at round 92 (rec_20261108_013601 +55 s) one leaves the Inferno and
+# hits a BFB at the entrance.
+# Why the 01:00 rating was wrong: dps_model.station_for gives every source
+# of a tower the whole map when any source is map-wide. The Inferno Ring's
+# meteor is map-wide, so the model let its Ring of Fire (range 34.5) burn
+# the whole track, and every cell rated the same - that is why t1 stood on
+# the lake shore at (0.799, 0.785). Split into a map-wide part and a local
+# part ("split" view below, the Carrier Flagship's own cannons split the
+# same way), its ring reaches no track there - the "0 pops" the bot read at
+# 4-0-2 (01:29-01:35, partly 'MO' misread) was right; its 19,798 tack XP is
+# the meteors. And the bank waited for the $49,140 Inferno from round 70 to
+# round 88 (the live forecast said round 92 0.94 and round 95 0.28 then)
+# while the board did not grow; Glaive Lord and spikes were gone.
+# Split view, live round-93 board: R92 0.99, R93 1.45, R95 0.47, R98 0.39
+# (model 2.07 / 2.95 / 1.08 / 0.68). For scale, winning Flagship builds
+# replayed the same way (no Glaive Lord credit) rate round 93 0.63 (Cracked)
+# to 3.02 (Lotus Island) and round 95 0.21-0.68: in rounds 93-99 the model
+# does not tell winning boards from losing ones well, so live evidence
+# decides. With this map's Glaive Lord + Radar village late game the bot
+# passed round 93 live twice (18:13 and 21:38 games, both lost round 95).
+# Change: the 23:30 late game is back (r1 + v2 Radar village, p1 spike,
+# Glaive Lord, p2, p3, Maim, Cripple MOAB last), with two changes:
+#   * v2 to 2-2-0 right after the Glaive Lord (Jungle Drums and Bigger
+#     Radius for it, $2,155);
+#   * the bad answer is the plan's own Glaive Lord step: with the Cripple
+#     MOAB as the answer the executor holds a growing bank for it from
+#     round 94 (Spring Spring, 01:00 notes) - here that pushed p2 from round
+#     95 to 97 (round 95 split 0.88 -> 1.03).
+# Ring-on-track Inferno variants were rated too: a tack at (0.457, 0.402)
+# (ring 66 / 65 units of the two lanes, the best cell) with a Radar
+# village at (0.500, 0.334) covering it and r1 cannot be paid before round
+# 98 next to the Glaive Lord, and in place of it rates rounds 93 / 95 / 98
+# / 99 1.26 / 0.44 / 0.71 / 0.95 split - below the Glaive Lord recipe.
+# v1's spot moves to (0.729, 0.624), the cell the live game took after
+# refusing (0.729, 0.649) (now refused on the learned map; 30.1 units from
+# the boat, inside the radius 48 of 1-x-x; 8 of 8 neighbours legal).
+# Replay (main's learned map, starter paid):
+# plan 38/39, no threat gaps, no answers forced but Maim (round 75, zomg),
+# p1 R79, Glaive Lord R88, v2 2-2-0 R89, p2 R95, p3 R97, Cripple MOAB not
+# reached. Rounds, split (model / split without the Glaive Lord's tier 5):
+#   R85 4.09 (5.24 / 4.09), R88 5.42 (6.04 / 2.57), R90 3.44 (3.71 / 2.18),
+#   R91 3.63, R92 2.02 (2.33 / 1.08), R93 2.20 (2.43 / 1.35), R94 1.76
+#   (1.98 / 0.88), R95 1.03 (1.09 / 0.61), R96 1.76, R97 4.27, R98 1.09
+#   (1.19 / 0.58), R99 1.09 (1.15 / 0.78), R100 2.43 (2.80 / 1.51).
+# The 01:00 build the same way: R92 0.99, R93 1.45, R94 0.73, R95 0.66,
+# R98 0.68, R99 0.93 split. Round 95 stays the open problem on this map.
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
@@ -376,11 +429,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: {kind: dart, at: [0.200, 0.428]}   # left pocket, where it held round 23 at 18:13 (see 21:00; match.Match._starter_spec)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [4, 0, 2], sniper: [5, 2, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4], spike: [4, 2, 0], tack: [5, 0, 2]}
+  towers: {buccaneer: [5, 2, 0], village: [2, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lost Crevasse]
-  revised: "2026-11-08T01:00"
+  revised: "2026-11-08T02:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
   - {do: place, id: d1, kind: desperado, role: dps, at: [0.206, 0.641]}   # R8: lower-left field, the east lane's last third
@@ -399,26 +452,26 @@ plan:
   - {do: upgrade, id: x1, to: 0-0-3}
   - {do: upgrade, id: x1, to: 0-0-4}                                      # Sharp Shooter
   - {do: upgrade, id: x1, to: 2-0-4}                                      # Razor Sharp Shots, by round 38
-  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.729, 0.649]}
+  - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.729, 0.624]}   # the cell the game took (0.649 refused, 2026-11-08)
   - {do: upgrade, id: v1, to: 0-2-0}                                      # Radar Scanner: camo for the boat
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
   - {do: place, id: r1, kind: boomerang, role: dps, at: [0.419, 0.291]}   # inside the top loop: both lanes (see 21:00)
-  - {do: upgrade, id: r1, to: 3-0-2}                                      # round 63's rush
-  # late core since 2026-11-08 01:00: Inferno Ring in the village's reach (see Status)
-  - {do: place, id: t1, kind: tack, role: dps, near: [v1], at: [0.799, 0.785]}   # lake's south-east shore, Radar village in reach
-  - {do: upgrade, id: t1, to: 2-0-2}
-  - {do: upgrade, id: t1, to: 4-0-2}                                      # Ring of Fire
-  - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring: the tack is a Primary tower
-  - {do: upgrade, id: t1, to: 5-0-2}                                      # Inferno Ring: map-wide meteors at the strongest bloon
-  - {do: place, id: p1, kind: spike, role: dps, at: [0.457, 0.394]}       # below r1, west lane
+  - {do: place, id: v2, kind: village, role: support, near: [r1], at: [0.452, 0.172]}   # north of r1: camo for it (see 22:00)
+  - {do: upgrade, id: v2, to: 0-2-0}                                      # Radar Scanner: round 95 is all camo but the MOABs
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.623, 0.487]}       # middle field, right of x1: both lanes
   - {do: upgrade, id: p1, to: 2-2-0}
   - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
-  - {do: place, id: p2, kind: spike, role: dps, at: [0.623, 0.487]}       # middle field, right of x1: both lanes
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord
+  - {do: upgrade, id: v2, to: 2-2-0}                                      # Jungle Drums (and Bigger Radius) for the Glaive Lord (see 2026-11-08 02:00)
+  - {do: place, id: p2, kind: spike, role: dps, at: [0.526, 0.615]}       # below x1, above the lake
   - {do: upgrade, id: p2, to: 2-2-0}
   - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: r1, to: 4-0-2}                                      # MOAR Glaives (no Glaive Lord: counted map-wide)
+  - {do: place, id: p3, kind: spike, role: dps, at: [0.452, 0.385]}       # below r1, west lane: round 99's MOABs (see 23:30)
+  - {do: upgrade, id: p3, to: 2-2-0}
+  - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
   - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
   - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB: round 100's BAD
 answers:
@@ -429,5 +482,5 @@ answers:
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-2-0}]
   ddt: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  bad: [{do: upgrade, id: s1, to: 5-2-0}]
+  bad: [{do: upgrade, id: r1, to: 5-0-2}]   # the plan's own step: no bank held for the Cripple MOAB (see 2026-11-08 02:00)
   rush: [{do: upgrade, id: r1, to: 3-0-2}]
