@@ -2,9 +2,9 @@
 # starter dart since 21:00: it reached no track) and grows to a Carrier Flagship beside a
 # Bigger Radius / Radar Scanner / Jungle Drums village; a Crossbow dart holds
 # rounds 16-37 on the north side, Quincy follows. Late game (since
-# 2026-11-08 01:00, see Status): an Inferno Ring tack in the south-east
-# corner beside a second, MIB village, two Spiked Mines spike factories, the
-# first village to MIB, and a Cripple MOAB sniper last (no Glaive Lord).
+# 2026-11-08 03:00, see Status): four Spiked Mines spike factories on the
+# south and east bends with a Monkey Intelligence Bureau village among them,
+# the first village to MIB, and a Cripple MOAB sniper last.
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -363,6 +363,45 @@
 #   R99 2.68 / 3.22 (0.80 / 1.58), R100 4.41 / 16.0 (1.46 / 5.66). Rounds
 #   40-81 unchanged (this replay reads R40 1.61 / 0.08 and R45 0.06 for the
 #   old build too; live the opening held rounds 6-94 twice).
+# 2026-11-08 03:00: the 01:00 late game (Inferno Ring beside a second MIB
+# village) lost ROUND 95 live (01:42-02:07, journal 20261108_014403, loss
+# case 20261108_0207*), rated 2.43 at round 95. The tack stood in the
+# south-east corner at (0.831, 0.922), where its ring reaches no track (the
+# bot read 0 pops at 4-0-2 at rounds 84-91); the bank waited for the
+# $49,140 Inferno from round 76 to round 91 ("idle with $45,872 ... t1 ->
+# 5-0-2"), and p1 stood at 3-2-0 when round 95 began with $8,033 waiting.
+# The recording (rec_20261108_020601 +58 s) shows the fortified MOABs and
+# DDTs filling the whole loop; the defeat screen shows a fortified ceramic
+# leaked. Why the 01:00 rating was wrong: dps_model.station_for gave every
+# source of a tower the whole map when one source was map-wide (the
+# meteor), so the ring of fire - and the Carrier Flagship's cannons - were
+# counted over the whole track; fixed in the same branch (Station.parts,
+# tests/test_mixed_range_offline.py). With the fix the live round-95 board
+# rates 0.68 bot / 0.61 flat; the replay of the build 0.68 / 0.61.
+# Change: back to the 23:30 late game (p1-p4 Spiked Mines, Maim, v1 to MIB,
+# Cripple MOAB last), with a Monkey Intelligence Bureau village v2 at
+# (0.617, 0.854) after p3: it covers the spike factories, so their Spiked
+# Mines pop the DDTs and leads too (bloon.games "Best strategies to beat
+# CHIMPS mode": a Perma-Spike safety net "with" an MIB village, which "is
+# needed to damage DDTs and Lead"). Chosen by a greedy search with the fixed
+# model (flat view, every kind the account has, best legal cells, gain per
+# dollar on rounds 95-100): three spike factories, then this village, then
+# an Archmage ($48,520, not payable before round 98). And the bad answer is
+# the plan's own p1 step (no bank held for the Cripple MOAB from round 94).
+# No Sulfur Springs late game has passed round 95 live: the 21:00 (Glaive
+# Lord on the east cliff), 22:00 (three spike factories) and 01:00 builds
+# all lost round 95. This one rates highest of them with the fixed model.
+# Replay (main's learned map), flat / bot: plan 42/43, no threat gaps, no
+# answers forced, p1 R73, p2 R82, p3 R85, v2 MIB R91, p4 R95, v1 MIB R97,
+# Cripple MOAB not reached. Rounds:
+#   R88 5.78 / 2.38, R90 5.66 / 3.08, R92 2.33 / 1.51, R93 3.44 / 1.96,
+#   R94 1.70 / 1.11, R95 1.23 / 0.46, R96 1.38 / 1.00, R97 4.71 / 1.63,
+#   R98 0.86 / 0.61, R99 1.33 / 0.55, R100 3.29 / 1.08
+# (23:30 build: R95 1.16 / 0.53, R98 0.82 / 0.61, R99 1.24 / 0.55; the 01:00
+# build R95 0.61 / 0.68, R98 1.08 / 0.92, R99 1.13 / 0.92). The bot view
+# reads the spike factories as reaching no track (heights, see 21:00); the
+# flat view is the one the videos support. Round 98 stays under 1 and round
+# 95 thin: this map still needs a stronger late game.
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
@@ -370,11 +409,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: none         # no starter dart: no legal cell lets it reach the track (see 21:00; match.Match._no_starter)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [3, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], spike: [4, 2, 0], tack: [5, 0, 2]}
+  towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [3, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Sulfur Springs]
-  revised: "2026-11-08T01:00"
+  revised: "2026-11-08T03:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.436]}   # west pool: opens alone (the match adds a dart)
   - {do: upgrade, id: b1, to: 1-0-0}
@@ -401,22 +440,23 @@ plan:
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
   - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.521]}   # east cliff: round 63's rush only (see 22:00)
   - {do: upgrade, id: r1, to: 3-0-2}
-  # late core since 2026-11-08 01:00: Inferno Ring beside a second MIB village (see Status)
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.831, 0.922]}       # south-east corner
-  - {do: upgrade, id: t1, to: 2-0-2}
-  - {do: upgrade, id: t1, to: 4-0-2}                                      # Ring of Fire
-  - {do: place, id: v2, kind: village, role: support, near: [t1], at: [0.820, 0.836]}   # above the tack
-  - {do: upgrade, id: v2, to: 2-2-0}                                      # Radar Scanner + Jungle Drums: camo for the tack
-  - {do: upgrade, id: v2, to: 2-3-0}                                      # Monkey Intelligence Bureau
-  - {do: upgrade, id: t1, to: 5-0-2}                                      # Inferno Ring: map-wide meteors at the strongest bloon
-  - {do: place, id: p1, kind: spike, role: dps, at: [0.516, 0.811]}       # south bend
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.516, 0.811]}       # south bend: round 95's camo children (see 22:00)
   - {do: upgrade, id: p1, to: 2-2-0}
   - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: v1, to: 2-3-0}                                      # Monkey Intelligence Bureau: every damage type for the boat
-  - {do: place, id: p2, kind: spike, role: dps, at: [0.607, 0.666]}       # east side, below Quincy
+  - {do: place, id: p2, kind: spike, role: dps, at: [0.580, 0.760]}       # south-east bend
   - {do: upgrade, id: p2, to: 2-2-0}
   - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
   - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
+  - {do: place, id: p3, kind: spike, role: dps, at: [0.607, 0.666]}       # east side, below Quincy
+  - {do: upgrade, id: p3, to: 2-2-0}
+  - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
+  - {do: place, id: v2, kind: village, role: support, at: [0.617, 0.854]}   # among the spike factories: MIB for them (see 2026-11-08 03:00)
+  - {do: upgrade, id: v2, to: 2-2-0}
+  - {do: upgrade, id: v2, to: 2-3-0}
+  - {do: place, id: p4, kind: spike, role: dps, at: [0.478, 0.888]}       # south edge: round 99's MOABs (see 23:30)
+  - {do: upgrade, id: p4, to: 2-2-0}
+  - {do: upgrade, id: p4, to: 4-2-0}                                      # Spiked Mines
+  - {do: upgrade, id: v1, to: 2-3-0}                                      # Monkey Intelligence Bureau: every damage type for the boat
   - {do: upgrade, id: s1, to: 5-2-0}                                     # Cripple MOAB: round 100's BAD
 answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]
@@ -426,5 +466,5 @@ answers:
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-2-0}]
   ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  bad: [{do: upgrade, id: s1, to: 5-2-0}]
+  bad: [{do: upgrade, id: p1, to: 4-2-0}]   # the plan's own step: no bank held for the Cripple MOAB (see 2026-11-08 03:00)
   rush: [{do: upgrade, id: r1, to: 3-0-2}]

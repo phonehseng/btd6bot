@@ -4,9 +4,9 @@
 # lane hold the lanes the boat cannot reach, Quincy follows at the lanes'
 # junction; a village behind the exit (Bigger Radius first, so it reaches
 # the boat) gives the boat camo and Jungle Drums. Late game (since
-# 2026-11-08 01:00, see Status): an Inferno Ring tack in that village's
-# reach, The Bloon Solver glue for round 98, Crossbow Master on the dart,
-# the village to MIB and a Cripple MOAB sniper last (no Glaive Lord).
+# 2026-11-08 03:00 the 23:30 one again, see Status): a Glaive Lord
+# boomerang beside the village, three Spiked Mines spike factories, Primary
+# Mentoring, and a Cripple MOAB sniper last.
 #
 # Why: the owner's goal is CHIMPS black borders. On 2026-11-07 the bot beat
 # CHIMPS on nine maps with builds that follow a published community strategy
@@ -286,6 +286,41 @@
 #   1.51 (0.78), R100 4.71 (2.48). Rounds 40-81 unchanged. Round 95 stays
 #   the thinnest: the cash before it goes to the Inferno and the glue, and
 #   no buy of $22k or less left lifts it by more than 0.07 (MIB).
+# 2026-11-08 03:00: the 01:00 late game (Inferno Ring + Bloon Solver) is
+# withdrawn before it was played. Lost Crevasse lost round 93 with the same
+# idea (01:37, loss case 20261108_014123): dps_model.station_for gave every
+# source of a tower the whole map when one source was map-wide, so the
+# Inferno Ring's ring of fire (and the Carrier Flagship's own cannons) were
+# counted over the whole track; fixed in the same branch (Station.parts,
+# tests/test_mixed_range_offline.py). With the fix this build's replay rates
+# round 95 0.53, round 98 0.84, round 99 0.79 (it was 1.26 / 1.45 / 1.51):
+# t2 at (0.639, 0.802) burns little track and its meteors carry it alone.
+# Change: back to the 23:30 late game (r1 Glaive Lord beside v1, which
+# already gives it Radar camo and Jungle Drums at 40.3 units; p1-p3 Spiked
+# Mines; Maim and Cripple MOAB last), with:
+#   * Primary Mentoring before p3 (the caretaker's 00:55 order: the 22:00
+#     build bought it at rounds 92-93 and passed round 95 live at 22:28; the
+#     23:30 order put an unfinished p3 on the board at round 95, 00:19);
+#   * the bad answer on the plan's own Glaive Lord step, as on Lost Crevasse
+#     02:00: no growing bank held for the Cripple MOAB from round 94;
+#   * the zomg answer back on Maim MOAB (s1 4-1-0), the Inferno being gone;
+#   * p3 at (0.238, 0.683), the cell the game took at 00:18 after refusing
+#     (0.227, 0.709) (refused on the learned map now; 8 of 8 neighbours
+#     legal, 0.158 from t1).
+# Replay with the fixed model (main's learned map, starter paid): plan 39/40,
+# no threat gaps, Maim forced at R79 as the zomg answer (as live), p1 R73,
+# Glaive Lord R86, p2 R93, Primary Mentoring R94, p3 R97. Rounds (Glaive
+# Lord counted / not):
+#   R88 6.10 / 2.74, R90 4.27 / 1.68, R92 2.51 / 0.96, R93 3.05 / 1.40,
+#   R94 2.20 / 1.10, R95 1.07 / 0.44, R96 1.72 / 1.00, R97 4.76 / 2.68,
+#   R98 1.08 / 0.66, R99 1.07 / 0.70, R100 2.99 / 1.74
+# (the 01:00 build: R92 1.53, R93 1.85, R94 1.13, R95 0.53, R98 0.84, R99
+# 0.79). Live this recipe passed round 95 once (22:28, lost round 99 with
+# $33k banked for the Cripple MOAB - the bank the bad-answer change stops)
+# and lost round 95 twice. Winning Flagship builds replayed the same way
+# rate rounds 95/99 at 0.21-0.68 without the Glaive Lord's credit (Cracked
+# 0.21 / 0.21, Lotus Island 0.68 / 0.68): the model does not settle rounds
+# 95-99, live play does.
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
@@ -293,11 +328,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: {kind: dart, at: [0.270, 0.164]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [3, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 5], tack: [5, 0, 2], glue: [5, 0, 2]}
+  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 4], tack: [0, 2, 0], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-08T01:00"
+  revised: "2026-11-08T03:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
@@ -325,27 +360,27 @@ plan:
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.580, 0.624]}   # between the lanes, in the village's reach
-  - {do: upgrade, id: r1, to: 3-0-2}                                      # round 63's rush
-  # late core since 2026-11-08 01:00: Inferno Ring in the Radar village's reach, Bloon Solver (see Status)
-  - {do: place, id: t2, kind: tack, role: dps, near: [v1], at: [0.639, 0.802]}   # south of the village, in its reach
-  - {do: upgrade, id: t2, to: 2-0-2}
-  - {do: upgrade, id: t2, to: 4-0-2}                                      # Ring of Fire
-  - {do: upgrade, id: t2, to: 5-0-2}                                      # Inferno Ring: map-wide meteors at the strongest bloon
-  - {do: place, id: g1, kind: glue, role: dps, at: [0.574, 0.479]}       # island's tip below the dart: both lanes
-  - {do: upgrade, id: g1, to: 2-0-2}
-  - {do: upgrade, id: g1, to: 4-0-2}                                      # Bloon Liquefier
-  - {do: upgrade, id: g1, to: 5-0-2}                                      # The Bloon Solver: round 98's super ceramics
-  - {do: upgrade, id: d1, to: 0-2-5}                                      # Crossbow Master
-  - {do: upgrade, id: v1, to: 2-3-0}                                      # Monkey Intelligence Bureau: every damage type for the boat
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.505, 0.283]}       # top lane, right of the sniper: round 95 (see 22:00)
+  - {do: upgrade, id: p1, to: 2-2-0}
+  - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
+  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord
+  - {do: place, id: p2, kind: spike, role: dps, at: [0.163, 0.496]}       # left end, both lanes' start
+  - {do: upgrade, id: p2, to: 2-2-0}
+  - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
+  - {do: upgrade, id: v1, to: 4-2-0}                                     # Primary Mentoring (the Glaive Lord is in reach)
+  - {do: place, id: p3, kind: spike, role: dps, at: [0.238, 0.683]}       # bottom-left: round 99's MOABs (the cell the game took 00:18; 0.227, 0.709 refused)
+  - {do: upgrade, id: p3, to: 2-2-0}
+  - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
   - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
-  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB: round 100's BAD, if the cash gets there
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
 answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
   ceramic: [{do: upgrade, id: d1, to: 0-2-3}, {do: upgrade, id: b1, to: 3-2-0}]
   moab: [{do: upgrade, id: d1, to: 0-2-4}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: t2, to: 5-0-2}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
   ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  bad: [{do: upgrade, id: t2, to: 5-0-2}]   # the plan's own step: no bank held for the Cripple MOAB (see 2026-11-08 01:00)
+  bad: [{do: upgrade, id: r1, to: 5-0-2}]   # the plan's own step: no bank held for the Cripple MOAB (see 2026-11-08 03:00)
   rush: [{do: upgrade, id: t1, to: 0-2-0}, {do: upgrade, id: r1, to: 3-0-2}]
