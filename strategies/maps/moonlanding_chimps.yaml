@@ -53,11 +53,13 @@
 #   * the first sniper stands on the high ground at the top (it sees 41% of
 #     the track past the crater walls, the most of any cell) rather than by
 #     the village: the walls leave the cells near the middle 23-37%;
-#   * the opening is two desperados, then the boomerang, the sniper, the
-#     wizard and Quincy (see "Opening"); no darts.
+#   * the opening is two desperados, then two darts at the exit, the
+#     boomerang, the sniper, the wizard and Quincy (see "Opening" and the
+#     22:00 note).
 #
-# Opening (reworked 2026-11-07 21:00 after the live round-7 loss at 18:09;
-# history under "Status").
+# Opening (reworked 2026-11-07 21:00 after the live round-7 loss at 18:09,
+# the steps after it at 22:00 after the second one at 21:21 - see the 22:00
+# note under "Status", which supersedes the round-by-round claims below).
 # What the live game showed (loss case 20261107_181211_MoonLanding_chimps,
 # docs/evidence/20261107_moonlanding_chimps_cover.jpg): the track is one
 # lane that spirals down into each crater and back out - into the bottom
@@ -145,7 +147,8 @@
 # every tower on its spot (the same round-100 blimp answer sniper as the
 # old build's replay).
 #
-# Status: new 2026-11-07, opening reworked 15:30 and 21:00.
+# Status: new 2026-11-07, opening reworked 15:30 and 21:00, steps after it
+# 22:00.
 # 2026-11-07 15:30 opening (three darts at the exit, the entrance and the
 # middle stretch, the wizard R8, a fourth dart R9, Long Range R10): chosen
 # on the damage model, bar M >= 0.9 and B >= 0.35 in rounds 6-10 (M the
@@ -181,6 +184,43 @@
 # (40-80 greens) are thin until the druid's thorns and Quincy level up; if
 # it loses there, a third desperado or the boomerang's Glaives (2-0-0)
 # before Quincy is the next thing to try.
+# 2026-11-07 22:00: LOST round 7 live again at 21:21 (case
+# 20261107_212440_MoonLanding_chimps) with the desperado opening, by ONE
+# red. What the recording showed (rec_20261107_212101.mkv 13-48 s; the
+# case's last_minutes.mp4; docs/evidence/20261107_moonlanding_chimps_r7b.jpg):
+# both desperados fire (the starter at the entrance ramp, e1 at the middle
+# stretch and the top), round 6 was popped completely ($0 -> $163 = 57 pops
+# + the $106 bonus) and round 7 to 74 of its 75 layers ($163 -> $237);
+# the one red that got through crossed the top-right crater, the top
+# stretch and the top-left crater and left past the exit, which no tower
+# covered. The bloons spend most of their time on the crater floors in
+# plain view but behind the walls, where nothing can shoot them - no map
+# mechanic beyond that (data/map_geometry/moonlanding.json: no mechanics,
+# flat path, walls are height-100 blockers). Meanwhile $163-237 sat unspent
+# through round 7: plan_first waited for the $340 boomerang, which the
+# round never paid for. The 18:09 dart game lost the same way, one red, $168
+# idle while the plan waited for the $270 wizard.
+# What the check got wrong: it rated the pair 0 / 0 for rounds 6 / 7 and
+# 2 / 1 slowed - the live result was the slowed one. A round lost by one
+# bloon is inside the check's error; its "as written" rating cannot be
+# the bar on this map. Bar now: 0 leaks slowed (towers 1.3x slower), with
+# plan steps bought the moment the cash covers them, mid-round too (the
+# executor ticks during rounds; the old check bought only between rounds).
+# Change: after the opening the plan buys a $215 dart at the exit (t1, the
+# spot the game accepted at 18:08) - affordable after about 52 of round 7's
+# pops - then a second dart at the exit stretch's start (t2, round 8), then
+# the boomerang, the sniper, the wizard as before. Check with mid-round
+# buys: round 7 now leaks 0 slowed (0 at 1.5x too; without the dart 1 and
+# 3); any late-route dart works, the exit is where the 21:21 red left.
+# Rounds 6-18 as written 0; slowed 2 / 0 / 0 / 1 / 2 / 0 / 0 / 0 / 0 / 1 /
+# 4 / 0 / 7 (the 21:00 order: 2 / 1 / 0 / 2 / 0 / 0 / 0 / 0 / 0 / 2 / 8 /
+# 0 / 12). Doubt: round 6 rests on the same $650 pair (2 slowed; it held
+# live twice, both times at 94%), and rounds 9-10 are a little thinner
+# because the boomerang and the sniper come a round later.
+# Offline replay (simulate_threats, learned map, starter as the second
+# tower): t1 during round 7, t2 round 8, boomerang R10, sniper R11, wizard
+# R12, Improved Rangs R13, Quincy R15, druid R17; plan 25/25, no threat
+# gaps, the same round-100 blimp answer sniper as before.
 id: moonlanding_chimps
 map: Moon Landing
 hero: quincy
@@ -188,13 +228,15 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 starter: {kind: desperado, at: [0.633, 0.726]}   # the second opener Match adds beside e1 (match.Match._starter_spec)
 planner:
-  towers: {desperado: [0, 0, 0], sniper: [5, 2, 5], druid: [2, 5, 0], wizard: [5, 0, 2], village: [2, 0, 2], boomerang: [3, 0, 2]}
+  towers: {desperado: [0, 0, 0], dart: [0, 0, 0], sniper: [5, 2, 5], druid: [2, 5, 0], wizard: [5, 0, 2], village: [2, 0, 2], boomerang: [3, 0, 2]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Moon Landing]
-  revised: "2026-11-07T21:00"
+  revised: "2026-11-07T22:00"
 plan:
   - {do: place, id: e1, kind: desperado, role: dps, at: [0.441, 0.470]}  # gap left of the middle stretch (the starter desperado follows)
+  - {do: place, id: t1, kind: dart, role: dps, at: [0.067, 0.436]}       # the exit: bought mid-round 7 ($215), the last line (see 22:00)
+  - {do: place, id: t2, kind: dart, role: dps, at: [0.152, 0.538]}       # the exit stretch's start, round 8
   - {do: place, id: r1, kind: boomerang, role: dps, at: [0.574, 0.726]}   # beside the middle stretch (see 19:00)
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.446, 0.198]}   # high ground at the top: 45% of the track
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.542, 0.496]}      # gap between the craters
