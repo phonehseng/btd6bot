@@ -214,18 +214,30 @@
 # Also seen in that game: x1 stood at 2-0-4 from 18:19:47 while the bot
 # counted 1-0-4 (a purchase judged "not bought", fixed in game.py the same
 # day: Game._closed_path_took_its_last_tier).
+# 2026-11-07 20:00: the 19:30 starter spot (0.206, 0.419) stood 0.034
+# screen heights from r1's 19:00 spot (0.227, 0.411), so r1's own cell
+# would be taken by round 6. The starter moves to (0.489, 0.172), the north
+# field above the middle: 18 / 56 units of the two lanes, 8 of 8 neighbour
+# cells legal with every plan tower standing (main's data/maps/lostcrevasse
+# .npz, read in place), 0.139 from the nearest plan spot. Replay as at 19:30
+# (tools/simulate_threats on the learned map, $215 paid, damage model with
+# the starter added), rounds 6-9: 2.43 / 2.04 / 2.16 / 1.74 (the 19:30 spot
+# 2.48 / 2.16 / 2.13 / 1.83). It is the best of about 90 legal cells with
+# 7+ neighbours at least 0.08 from every plan spot (the left pocket has
+# none left beside the Skywarden and r1; next best (0.478, 0.164) 2.40 /
+# 2.07 / 2.11 / 1.72).
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
-starter: {kind: dart, at: [0.206, 0.419]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
+starter: {kind: dart, at: [0.489, 0.172]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lost Crevasse]
-  revised: "2026-11-07T19:30"
+  revised: "2026-11-07T20:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
   - {do: place, id: d1, kind: desperado, role: dps, at: [0.206, 0.641]}   # R8: lower-left field, the east lane's last third

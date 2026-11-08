@@ -320,12 +320,48 @@ def test_a_dead_towers_upgrade_places_a_fresh_tower_under_its_id():
         want = S.T.tower_cost("ninja", fam) + sum(S.T.upgrade_cost("ninja", 1, t, fam) for t in (1, 2)) \
             + sum(S.T.upgrade_cost("ninja", 3, t, fam) for t in (1, 2, 3, 4))
         assert ex._steps_cost([up], "the moab answer") == want
-        # the next tick places it, and the id is live again
-        assert ex.try_step(dict(up), 1000, 41) == "bought"
+        # the next tick places it, and the id is live again; the step is not
+        # done (its target is the tiers, not the placement): it keeps its place
+        assert ex.try_step(dict(up), 1000, 41) == "progress"
         assert ex.g.towers["n2"].tiers == [0, 0, 0] and not ex.redirected
         assert len(ex.placed) == 2 and all(p["id"] == "n2" for p in ex.placed)
         # the fresh tower is not dead: the step goes to the normal upgrade path
         assert ex._redirect_dead_upgrade(dict(up), 1000, 41) is None
+
+
+def test_the_stand_ins_upgrade_step_is_not_passed_by_its_placement():
+    """Lost Crevasse CHIMPS (2026-11-07 18:29): r1 (a 4-0-2 boomerang) read 0
+    pops for 9 rounds while the plan waited on "r1 -> 5-0-2". A fresh r1 was
+    placed for that step, the placement's "bought" moved the plan past it,
+    and the new r1 stood at 0-0-0 to the round-95 loss: the Glaive Lord was
+    never bought. The step must hold until the new r1 reaches 5-0-2."""
+    import test_achievement_strats_offline as F
+    strat = {"id": "t", "name": "t", "hero": None, "plan_first": True, "plan": [
+        {"do": "place", "id": "r1", "kind": "boomerang", "role": "dps"},
+        {"do": "upgrade", "id": "r1", "to": "3-0-2"},
+        {"do": "upgrade", "id": "r1", "to": "5-0-2"},
+        {"do": "place", "id": "v1", "kind": "village", "role": "support"},
+    ]}
+    g = F.FakeGame(None)
+    ex = S.Executor(g, F.FakeModel(), strat, "chimps", F.full_account())
+    ex._sole_answer = lambda p: None
+    for _ in range(10):                      # place r1 and take it to 3-0-2
+        ex.tick(10 ** 7, 62)
+        if g.towers.get("r1") and g.towers["r1"].tiers == [3, 0, 2]:
+            break
+    old = g.towers["r1"]
+    assert old.tiers == [3, 0, 2] and ex.idx == 2, (old.tiers, ex.idx)
+    old.tiers = [4, 0, 2]                   # 4-0-2 as live, then 0 pops twice
+    old.pops, old.zero_reads, old.placed_round = 0, 2, 62
+    ex.tick(10 ** 7, 71)                    # the dead r1 is renamed, a fresh r1 placed
+    assert g.towers["r1"] is not old and old.tid != "r1" and old.tiers == [4, 0, 2]
+    assert ex.idx == 2, "the placement passed the 5-0-2 step"
+    for _ in range(12):
+        if ex.idx > 2:
+            break
+        ex.tick(10 ** 7, 72)
+    assert g.towers["r1"].tiers == [5, 0, 2], g.towers["r1"].tiers
+    assert "v1" not in g.towers or ex.idx > 2
 
 
 def test_the_redirect_keeps_the_callers_journal_reason():
