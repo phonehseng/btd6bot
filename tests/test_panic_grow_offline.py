@@ -71,6 +71,27 @@ def test_a_tower_grown_another_way_is_left_alone():
     assert g.towers["s1"].tiers == [0, 0, 3] and g.placed.count("sniper") == 2, g.placed
 
 
+def test_a_leak_with_a_big_bank_buys_more_than_two():
+    """Erosion Reverse (2026-11-08): round 44 cost 28 lives with $14,850 in
+    hand, two panic buys spent $1,750 and round 47 was lost with $19,964
+    unspent. A leak now buys one panic step per $2,000 in hand (2 to 8);
+    past the first two they alternate with the plan's turns."""
+    def panic_buys(cash):
+        g, ex = executor()
+        ex.plan = []                    # nothing else to spend on: only panic buys count
+        ex.fill = []
+        ex.tick(cash, 21, lives_dropped=True)
+        n = 1 + ex.panic_pending        # the first buy happens in the leak's own tick
+        for _ in range(20):             # past the first two, panic buys take every other tick
+            ex.tick(cash, 21)
+        assert ex.panic_pending == 0, ex.panic_pending
+        return n
+
+    assert panic_buys(14850) == 7
+    assert panic_buys(1500) == 2
+    assert panic_buys(10 ** 6) == S.Executor.PANIC_MAX_BUYS
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

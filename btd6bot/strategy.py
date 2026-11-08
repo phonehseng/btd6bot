@@ -2009,6 +2009,16 @@ class Executor:
     # no-sell modes, never while lives fall): their cash goes into towers
     # that pop bloons.
     SELL_REACH_SHARE = 0.25
+    # ... but only when the kind has somewhere better to stand: when its
+    # best legal spot reaches fewer track cells than this, the track the
+    # bot paints right now is simply out of the kind's reach, and a sale
+    # buys nothing back. Erosion Reverse (2026-11-08): bloons take one lane
+    # at a time and the track is painted for the current lane only; with it
+    # far from the bottom-left water the subs "reached -0 of best 0 track
+    # cells", and sb1, sb2 and sb3 ($2,505, $3,240 and $5,990 of upgrades)
+    # were sold at rounds 26, 39 and 42 - the build's whole lead and
+    # ceramic answer for its lane. The game was lost at round 47.
+    SELL_MIN_BEST_CELLS = 10.0
 
     BUFFERS = ("village", "alchemist")   # towers whose value is the towers around them
 
@@ -2314,6 +2324,9 @@ class Executor:
         while lives are falling, never the last real tower. Returns True
         when one was sold.
 
+        Nor for reach when no legal spot of the kind reaches the track
+        painted now (SELL_MIN_BEST_CELLS: a path-phase map's idle lane).
+
         Nor while the defence is in trouble (_sale_blocked): lives fell in
         one of the last SELL_CALM_ROUNDS rounds, or the damage model rates a
         round of the look-ahead under reinforce.WEAK_MARGIN. Bazaar Reverse
@@ -2366,16 +2379,33 @@ class Executor:
                 continue
             if p.kind in ("farm", "spike") or T.TOWERS.get(p.kind, {}).get("range") is None:
                 continue   # income, exit and global-range towers stay
+            if self._map_wide_now(p):
+                continue   # an Advanced Intel sub shoots what the others see, wherever it stands
             reach = self._reach(p.kind)
             valid = PL.valid_spots(self.m, p.kind, removed=tuple(self.removed))
             if reach is None or valid is None or not valid.any():
                 continue
             best = float(reach[valid].max())
+            if best < self.SELL_MIN_BEST_CELLS:
+                continue   # no spot of this kind reaches today's track: nowhere better to go
             cx, cy = (int(round(v)) for v in self.m.frac_to_cell(p.x, p.y))
-            if best > 0 and reach[cy, cx] < self.SELL_REACH_SHARE * best:
+            if reach[cy, cx] < self.SELL_REACH_SHARE * best:
                 return self._sell_and_avoid(p, rnd, f"reaches {reach[cy, cx]:.0f} of best "
                                                     f"{best:.0f} track cells")
         return False
+
+    @staticmethod
+    def _map_wide_now(p):
+        """Does tower p, at its current crosspath, work map-wide in the damage
+        model (dps_model.profile(...).is_global)? A sub with Advanced Intel
+        (2-x-x) shoots any bloon another tower sees, so its own range says
+        nothing about its worth: Erosion Reverse sold three of them."""
+        try:
+            from . import dps_model as D
+            prof = D.profile(p.kind, tuple(int(t) for t in p.tiers))
+            return bool(prof is not None and prof.is_global)
+        except Exception:
+            return False
 
     # Cells around a sold tower's spot that its kind may not use again this game.
     SOLD_SPOT_CELLS = 3
@@ -4367,6 +4397,28 @@ class Executor:
                     steps.append({"do": "upgrade", "id": p.tid, "to": "-".join(map(str, to))})
         return steps[:3]
 
+    # A leak buys at least PANIC_MIN_BUYS panic steps, and one more for every
+    # PANIC_CASH_PER_BUY of cash in hand, up to PANIC_MAX_BUYS.
+    PANIC_MIN_BUYS = 2
+    PANIC_CASH_PER_BUY = 2000
+    PANIC_MAX_BUYS = 8
+
+    def _panic_buys(self, cash):
+        """How many panic steps a leak buys, given the cash in hand.
+
+        It was always two. Erosion Reverse (2026-11-08): round 44 cost 28 of
+        60 lives with $14,850 in hand; the two panic buys spent $1,750, the
+        damage model (which had rated round 44 at 3.79) saw nothing to
+        reinforce, and round 47 was lost with $19,964 unspent. A leak in a
+        round the model called safe means the model is wrong about this
+        board, so the bank goes into the build's panic towers. Past the
+        first PANIC_MIN_BUYS they alternate with the plan (tick)."""
+        try:
+            extra = int(max(0.0, float(cash)) // self.PANIC_CASH_PER_BUY)
+        except (TypeError, ValueError):
+            extra = 0
+        return max(self.PANIC_MIN_BUYS, min(self.PANIC_MAX_BUYS, extra))
+
     def tick(self, cash, rnd, lives_dropped=False):
         """Do at most one action. Returns True if something was bought."""
         self.now_round = rnd
@@ -4376,15 +4428,21 @@ class Executor:
         self.tick_no = getattr(self, "tick_no", 0) + 1     # _set_aside_blocked counts ticks
         self._recheck_doubtful()
         if lives_dropped:
-            self.panic_pending = 2
+            self.panic_pending = self._panic_buys(cash)
+            self.panic_bought = 0          # buys made for this leak so far
             self.note_lives_dropped(rnd)
-        if self.panic_pending:
+        # the first PANIC_MIN_BUYS go at once; the extra ones the bank pays
+        # for take every other tick, so the plan and the threat checks keep
+        # their turn while lives keep falling
+        if self.panic_pending and (getattr(self, "panic_bought", 0) < self.PANIC_MIN_BUYS
+                                   or self.tick_no % 2 == 0):
             for st in self.panic_steps:
                 with self.why("panic", "lives dropped"):
                     # a standing tower of the kind grows before another is bought
                     r = self.try_step(self._panic_grow(dict(st)), cash, rnd)
                 if r in ("bought", "progress"):
                     self.panic_pending -= 1
+                    self.panic_bought = getattr(self, "panic_bought", 0) + 1
                     return True
         self.saving_for_threat = False   # surplus() may spend unless set again below
         self.firm_hold = False           # set by _hold_for for a game-ending blimp round
