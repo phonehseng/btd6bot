@@ -293,6 +293,23 @@
 # R94 2.04, R95 1.03 (was 0.43), R96 1.68 (1.38), R98 1.06 (0.92), R99
 # 0.91 (0.40), R100 2.83 (2.92 with the Cripple MOAB left out: the BAD is
 # not what decides).
+# 2026-11-07 23:30: not played since 22:00. Spring Spring with the same
+# late recipe passed round 95 at 22:28 and lost ROUND 99 (60 MOABs, 9
+# fortified camo DDTs) rated 1.04, with $33.0k waiting for the Cripple
+# MOAB; Sulfur Springs lost round 95 at 23:23 with $32.5k waiting for it.
+# Here round 99 rated 0.91 (0.65 with the Glaive Lord's tier 5 not counted:
+# the model counts it map-wide, CHIMPS_MODEL_DOUBTS), and the Cripple MOAB
+# came at round 100, so the cash of rounds 94-99 would have waited too.
+# Change: a third spike factory p3 (4-2-0) at (0.452, 0.385), below r1 on
+# the west lane, 0.10 from r1 and 0.11 from x1, legal with every earlier
+# tower standing, after p2 and before the Cripple MOAB (last: round 100's
+# BAD). On the round-99 board without the Glaive Lord's credit it lifts
+# round 99 0.65 -> 0.81 for $16,855 (a new 5-0-0 desperado 1.02 for
+# $26,135, not trusted to the model; a 0-2-5 dart 0.76). Replay (starter
+# paid): plan 37/38, no threat gaps, no answers forced, p3 R97, Cripple
+# MOAB not reached by round 100 (round 100 rates 2.71 without it); R94
+# 2.04, R95 1.04, R96 1.68, R98 1.13, R99 1.11 (was 0.91), R100 2.71.
+# Round 99 stays the thinnest round.
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
@@ -304,7 +321,7 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lost Crevasse]
-  revised: "2026-11-07T22:00"
+  revised: "2026-11-07T23:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
   - {do: place, id: d1, kind: desperado, role: dps, at: [0.206, 0.641]}   # R8: lower-left field, the east lane's last third
@@ -339,6 +356,9 @@ plan:
   - {do: place, id: p2, kind: spike, role: dps, at: [0.526, 0.615]}       # below x1, above the lake
   - {do: upgrade, id: p2, to: 2-2-0}
   - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
+  - {do: place, id: p3, kind: spike, role: dps, at: [0.452, 0.385]}       # below r1, west lane: round 99's MOABs (see 23:30)
+  - {do: upgrade, id: p3, to: 2-2-0}
+  - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
   - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
   - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB: round 100's BAD
 answers:
