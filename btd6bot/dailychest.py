@@ -239,15 +239,17 @@ def save_state(state, path=STATE_FILE):
 def is_due(rec, now, glowing):
     """Should the bot click the chest now? rec: this account's saved record.
 
-    Never more than MAX_TRIES_PER_DAY tries in 24 h, nor two within
+    Never more than MAX_TRIES_PER_DAY tries since the last daily reset
+    (00:00 UTC, when the game's chest resets - _since_reset), nor two within
     MIN_TRY_GAP. Otherwise due once next_at has passed. A glow seen before
     then counts too, unless next_at came from the game's own countdown text
     (which is exact; the glow may well show all the time - module notes).
     Returns (due, why) for the log."""
-    tries = [t for t in rec.get("tries", []) if now - t < 24 * 3600]
+    recent = [t for t in rec.get("tries", []) if now - t < 24 * 3600]
+    tries = [t for t in recent if t >= _since_reset(now)]
     if len(tries) >= MAX_TRIES_PER_DAY:
-        return False, f"{len(tries)} tries in the last 24 h"
-    if tries and now - max(tries) < MIN_TRY_GAP:
+        return False, f"{len(tries)} tries since today's reset"
+    if recent and now - max(recent) < MIN_TRY_GAP:
         return False, "tried less than an hour ago"
     next_at = rec.get("next_at", 0.0)
     if now >= next_at:
@@ -255,6 +257,15 @@ def is_due(rec, now, glowing):
     if glowing and not rec.get("next_from_game"):
         return True, "chest glows before the guessed due time"
     return False, f"next chest in {(next_at - now) / 3600:.1f} h"
+
+
+def _since_reset(now):
+    """The last 00:00 UTC at or before `now` (epoch seconds): the game's
+    daily chest resets then. Tries are counted from there, not over a
+    rolling 24 h: on 2026-11-07 the 17:25 and 18:43 (local) tries of the
+    day before still filled the cap at 23:50, after the 19:00 reset, and
+    that day's chest was left unclaimed."""
+    return now - (now % 86400)
 
 
 def record_result(rec, now, result, wait=None):
