@@ -123,7 +123,7 @@ def test_due_rules():
     assert not D.is_due({"next_at": NOW + 3600}, NOW, False)[0]         # not yet
     assert D.is_due({"next_at": NOW + 3600}, NOW, True)[0]              # glow beats a guess
     assert not D.is_due({"next_at": NOW + 3600, "next_from_game": True}, NOW, True)[0]
-    three = {"tries": [NOW - 20000, NOW - 15000, NOW - 9000]}
+    three = {"tries": [NOW - 3990, NOW - 3980, NOW - 3970]}   # all since 00:00 UTC (NOW - 4000)
     assert not D.is_due(three, NOW, True)[0]                            # daily cap
     assert not D.is_due({"tries": [NOW - 600]}, NOW, True)[0]           # an hour between tries
     assert D.is_due({"tries": [NOW - 90000] * 3}, NOW, False)[0]        # old tries expire
@@ -322,6 +322,19 @@ def test_the_monkey_money_counter_is_not_a_real_money_price():
     offer = [Word("$12.99", 0.50, 0.70, 0.1, 0.04, 0.9)]
     assert D.shop_like(offer), "a price with cents elsewhere still counts"
     assert D.shop_like(corner + [Word("BUNDLE", 0.5, 0.3, 0.1, 0.04, 0.9)])
+
+
+def test_the_try_cap_counts_from_the_daily_reset():
+    """2026-11-07: three tries straddling the 00:00 UTC reset blocked the
+    new day's chest under a rolling 24 h cap."""
+    day = 1794096000                   # a 00:00 UTC
+    rec = {"tries": [day - 9000, day - 4300, day + 2900], "next_at": day + 17300}
+    due, why = D.is_due(rec, day + 17500, glowing=True)
+    assert due, why                     # only one try since the reset
+    rec["tries"].append(day + 10000)
+    rec["tries"].append(day + 15000)
+    due, why = D.is_due(rec, day + 17500, glowing=True)
+    assert not due and "since today's reset" in why
 
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
