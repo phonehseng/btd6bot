@@ -136,17 +136,29 @@
 # Also seen: (0.195, 0.436) is refused on the learned map; the replay puts
 # the boat at (0.195, 0.419), live it stood at (0.195, 0.411), 42.3 units
 # from the village (Bigger Radius 48).
+# 2026-11-07 19:30: the starter dart has its own spot (`starter`, the
+# build-file field match.Match._starter_spec reads). The same build held
+# rounds 6-39 at 16:01 with the starter at (0.526, 0.172), then lost ROUND
+# 9 at 18:43: (0.526, 0.181) was refused, the dart went to (0.473, 0.871)
+# and reached no track (replay, rounds 6-12: 2.23 / 1.89 / 1.83 / 1.63 /
+# 1.83 / 3.55 / 2.28, as with no starter at all). The entrance cells are
+# refused on the learned map now; of the legal cells with 5+ of 8 neighbours
+# legal, at least 0.08 from every plan spot, (0.345, 0.078) on the north rim
+# rates best: 83 units of track, 7 neighbours, rounds 6-12 2.62 / 2.35 /
+# 2.23 / 1.83 / 2.09 / 3.83 / 2.46 (the 16:01 spot 2.71 / 2.40 / 2.43 /
+# 2.07 / 2.09 / 4.00 / 2.57).
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+starter: {kind: dart, at: [0.345, 0.078]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Sulfur Springs]
-  revised: "2026-11-07T16:30"
+  revised: "2026-11-07T19:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.436]}   # west pool: opens alone (the match adds a dart)
   - {do: upgrade, id: b1, to: 1-0-0}

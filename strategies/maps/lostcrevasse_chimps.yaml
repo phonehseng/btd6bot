@@ -179,17 +179,26 @@
 # R38 (R37; about R39 live - with Shrapnel the board rates R40 1.53 with
 # the dart at 0-0-4 and 2.48 at 1-0-4, against 0.68 at 0-0-3 before), the
 # Flagship R62 (R61); Glaive Lord stays R83.
+# 2026-11-07 19:30: the starter dart has its own spot (`starter`, the
+# build-file field match.Match._starter_spec reads), so it no longer lands
+# wherever the executor finds room (live it went to (0.190, 0.428)).
+# (0.206, 0.419): 127 / 37 units of the two lanes, 8 of 8 neighbours legal,
+# at least 0.08 from every plan spot; replay rounds 6-12 2.48 / 2.16 / 2.13
+# / 1.83 / 2.04 / 2.65 / 2.09 (the live spot 2.25 / 2.02 / 2.00 / 1.79 /
+# 1.92 / 2.48 / 2.20; no starter 1.85 / 1.41 / 1.63 / 1.59 / 1.70 / 2.11 /
+# 1.72).
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+starter: {kind: dart, at: [0.206, 0.419]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lost Crevasse]
-  revised: "2026-11-07T16:30"
+  revised: "2026-11-07T19:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
   - {do: place, id: d1, kind: desperado, role: dps, at: [0.206, 0.641]}   # R8: lower-left field, the east lane's last third

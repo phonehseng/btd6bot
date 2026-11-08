@@ -163,17 +163,26 @@
 # boat at 41.0 and r1 at 40.3), the boat (816 cells, both lanes), Quincy
 # (161 / 163), the tack (bottom lane, 95) and the dart (top lane, 230):
 # each reaches track on the learned map.
+# 2026-11-07 19:30: the starter dart has its own spot (`starter`, the
+# build-file field match.Match._starter_spec reads), so it no longer lands
+# wherever the executor finds room (it went to (0.222, 0.172) in both live
+# games). (0.270, 0.164) on the top lane's first loop: 150 units of the top
+# lane, 8 of 8 neighbours legal, at least 0.08 from every plan spot; replay
+# rounds 6-12 1.96 / 1.61 / 2.16 / 1.85 / 2.20 / 2.46 / 2.83 (no starter
+# 1.38 / 1.10 / 1.72 / 1.56 / 1.92 / 2.09 / 2.48; the live spot about the
+# same as this one).
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+starter: {kind: dart, at: [0.270, 0.164]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 4], tack: [0, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-07T17:30"
+  revised: "2026-11-07T19:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10

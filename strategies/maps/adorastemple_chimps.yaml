@@ -180,17 +180,25 @@
 # (was R33), Flagship R64 (was R62), Glaive Lord R84 (was R83), Cripple
 # MOAB R97 (was R95); later margins R63 7.26 / 10.3, R85 7.91 / 6.30, R90
 # 4.65 / 4.65, R95 0.74 / 0.89, R100 3.91 / 4.00. Plan 34/34, no gaps.
+# 2026-11-07 19:30: the starter dart has its own spot (`starter`, the
+# build-file field match.Match._starter_spec reads), so it no longer lands
+# wherever the executor finds room (live 17:27 it went to (0.126, 0.445)).
+# (0.120, 0.436) by the west entrance: 100 / 47 units of the two routes, 8
+# of 8 neighbours legal, at least 0.08 from every plan spot; replay rounds
+# 6-12 1.96 / 1.58 / 1.76 / 1.45 / 1.66 / 1.98 / 1.37 (no starter 1.56 /
+# 1.24 / 1.48 / 1.19 / 1.41 / 1.68 / 1.07).
 id: adorastemple_chimps
 map: Adora's Temple
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+starter: {kind: dart, at: [0.120, 0.436]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], wizard: [0, 0, 0], dart: [2, 0, 4], druid: [1, 3, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Adora's Temple]
-  revised: "2026-11-07T18:00"
+  revised: "2026-11-07T19:30"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.633, 0.240]}   # north-east pond: opens alone (the match adds a dart)
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.484, 0.198]}      # north triangle: round 8
