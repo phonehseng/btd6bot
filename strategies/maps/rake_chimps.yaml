@@ -151,6 +151,23 @@
 # Eagle Eye (0-1-0, round 19, the executor's cheapest camo answer); the
 # same round-92-100 blimp answer towers as the old build's replay.
 #
+# Status 2026-11-07 22:30: the desperado opening HELD live (21:24 game, no
+# life lost through round 39), then round 40 was lost (case
+# 20261107_213705_Rake_chimps): the Destroyer popped the MOAB near the pool
+# and its ceramics ran out of the bottom exit (frames end_028-030), where
+# only 0-0-0 desperados and Quincy stand. The board had no MOAB/ceramic
+# damage beyond the boat: the sniper was 0-1-0 (2 a shot), the moab answer
+# was the $8,640 Aircraft Carrier (logged "cannot be paid before round
+# 40"), and rounds 35-40 went to the village ($5,715). The damage model
+# rated round 40 at 1.70 with that board (tools/rate_board.py), the
+# executor's blimp check at 0.4x of the 1.4x wanted - the second was right.
+# Change: right after the Destroyer the global sniper takes Large Calibre
+# (2-1-0, $1,785, ~round 35) and, after the village's Bigger Radius,
+# Deadly Precision (3-1-0, $2,375, ~round 39) - 20 a shot on target
+# strong, wherever the MOAB breaks; Radar Scanner and Jungle Drums move
+# after it. The sniper's path stays the plan's 5-1-0, only earlier; the
+# moab answer starts with these two upgrades instead of the Carrier.
+#
 # Status 2026-11-07 21:00: LOST twice live, both in the opening, and the
 # 17:45 rework below was never played. 14:54 (case
 # 20261107_145714_Rake_chimps): Quincy alone, round 7. 16:13 (case
@@ -198,8 +215,10 @@ plan:
   - {do: place, id: hero, kind: hero, role: dps, at: [0.516, 0.785]}      # Quincy, the bottom U: both lanes
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
   - {do: upgrade, id: b1, to: 3-2-0}                                      # Destroyer
+  - {do: upgrade, id: s1, to: 2-1-0}                                      # Large Calibre: 7 a shot for round 40's MOAB and its ceramics (lost r40 at 21:33)
   - {do: place, id: v1, kind: village, role: support, near: [b1], at: [0.516, 0.564]}   # centre box
   - {do: upgrade, id: v1, to: 1-0-0}                                      # Bigger Radius: reaches the boat (see above)
+  - {do: upgrade, id: s1, to: 3-1-0}                                      # Deadly Precision: 20 a shot before round 40
   - {do: upgrade, id: v1, to: 1-2-0}                                      # Radar Scanner: camo for the boat
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
@@ -212,8 +231,8 @@ plan:
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
-  moab: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: b1, to: 4-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}, {do: upgrade, id: s1, to: 2-1-0}]
+  moab: [{do: upgrade, id: s1, to: 2-1-0}, {do: upgrade, id: s1, to: 3-1-0}, {do: upgrade, id: b1, to: 4-2-0}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
   ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
