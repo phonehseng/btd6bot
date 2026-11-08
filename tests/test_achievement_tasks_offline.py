@@ -79,6 +79,13 @@ class Inp:
         pass
 
 
+OCR = json.loads((FIX / "achtasks_ocr_words.json").read_text(encoding="utf-8"))
+
+
+def _ocr(key):
+    return [Word(t, x, y, 0.1, 0.03, c) for t, x, y, c in OCR[key]]
+
+
 # -- achtasks ------------------------------------------------------------------------
 def test_wanted_cards_from_the_scan():
     st = {"Power User": "progress", "Empowered": "progress", "You've Got the Power": "complete",
@@ -508,36 +515,86 @@ def _shop(tmp, screens, mm=(1000, 965)):
 MAIN = ("main_menu", [_w("PLAY")])
 
 
-def test_shop_buys_one_and_counts_the_real_spend():
-    page = [_w("POWERS", 0.3, 0.1), _w("Road Spikes", 0.5, 0.4), _w("35", 0.5, 0.5)]
-    confirm = [_w("Buy Road Spikes?", 0.5, 0.4), _w("35", 0.5, 0.5), _w("YES", 0.6, 0.65), _w("NO", 0.4, 0.65)]
+TAB = _w("POWERS", 0.5, 0.0567)
+
+
+def _featured():
+    """The live FEATURED page (shop_opened_20261108_003930.png, OCR)."""
+    return _ocr("shop_featured")
+
+
+def test_live_featured_page_gives_only_the_powers_tab():
+    words = _featured()
+    tab = A.find_allowed(words, S.TABS, region=S.TAB_ROW)
+    assert tab is not None and abs(tab.x - 0.5) < 0.01 and tab.y < 0.1
+    # the old check bailed here ("INSTASTORe"); the page is no longer judged,
+    # but its words are what they are:
+    assert S.shop_page(words)
+    texts = {w.text for w in S.page_words(words)}
+    assert not {"FEATURED", "POWERS", "InsTAMonkeYS", "$215,150"} & texts
+
+
+def test_shop_clicks_the_powers_tab_then_buys():
+    page = [TAB, _w("Road Spikes", 0.5, 0.4), _w("35", 0.5, 0.5), _w("$215,150", 0.907, 0.057)]
+    confirm = [_w("Buy Road Spikes?", 0.5, 0.4), _w("35", 0.5, 0.5), _w("YES", 0.6, 0.65), _w("NO", 0.4, 0.65),
+               _w("$215,150", 0.907, 0.057)]
     with tempfile.TemporaryDirectory() as tmp:
-        shop, b = _shop(tmp, [MAIN, ("unknown", page), ("unknown", page), ("unknown", confirm),
-                              ("unknown", [_w("PURCHASED")]), MAIN])
+        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", page), ("unknown", page),
+                              ("unknown", confirm), ("unknown", [_w("PURCHASED")]), MAIN])
         res = shop.buy_one()
         assert res == "bought roadspikes 35", res
+        clicks = shop.inp._inp.clicks
+        assert clicks[:4] == [S.INSTAS_POWERS_BUTTON, (0.5, 0.057), (0.5, 0.4), (0.5, 0.5)], clicks
         assert b.used("mm") == 35 and b.used("purchases") == 1
         assert b.flag("powers_seen") is None
-        assert (0.4, 0.65) not in shop.inp._inp.clicks
+        assert (0.4, 0.65) not in clicks
+        # nothing of the FEATURED page was clicked except the POWERS tab
+        featured = {(round(w.x, 3), round(w.y, 3)) for w in _featured() if w.text != "POWERS"}
+        assert not featured & set(clicks)
 
 
-def test_shop_bails_on_real_money():
-    page = [_w("Road Spikes", 0.5, 0.4), _w("$1.99", 0.5, 0.5), _w("SPECIAL OFFER", 0.5, 0.2)]
+def test_shop_without_a_powers_tab_clicks_nothing_more():
     with tempfile.TemporaryDirectory() as tmp:
-        shop, b = _shop(tmp, [MAIN, ("unknown", page), MAIN])
+        words = [w for w in _featured() if w.text != "POWERS"]
+        shop, b = _shop(tmp, [MAIN, ("unknown", words), MAIN])
         res = shop.buy_one()
-        assert res.startswith("bailed"), res
+        assert res.startswith("bailed: no POWERS tab"), res
+        assert shop.inp._inp.clicks == [S.INSTAS_POWERS_BUTTON]
+
+
+def test_shop_bails_on_real_money_on_the_powers_page():
+    page = [TAB, _w("Road Spikes", 0.5, 0.4), _w("$1.99", 0.5, 0.5), _w("SPECIAL OFFER", 0.5, 0.2)]
+    with tempfile.TemporaryDirectory() as tmp:
+        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", page), MAIN])
+        res = shop.buy_one()
+        assert res.startswith("bailed: a store"), res
         assert b.used("mm") == 0 and b.used("powershop_failures") == 1
         assert (0.5, 0.4) not in shop.inp._inp.clicks and (0.5, 0.5) not in shop.inp._inp.clicks
 
 
-def test_shop_overspend_stops_buying_for_the_day():
-    page = [_w("Road Spikes", 0.5, 0.4), _w("35", 0.5, 0.5)]
+def test_shop_confirm_with_another_price_is_refused():
+    page = [TAB, _w("Road Spikes", 0.5, 0.4), _w("35", 0.5, 0.5)]
+    confirm = [_w("Buy 10 Road Spikes?", 0.5, 0.4), _w("350", 0.5, 0.5), _w("YES", 0.6, 0.65), _w("NO", 0.4, 0.65)]
     with tempfile.TemporaryDirectory() as tmp:
-        shop, b = _shop(tmp, [MAIN, ("unknown", page), ("unknown", page), ("unknown", []), MAIN],
-                        mm=(1000, 500))
+        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", page), ("unknown", page),
+                              ("unknown", confirm), MAIN], mm=(1000, 1000))
+        res = shop.buy_one()
+        assert res.startswith("bailed: the question shows another price"), res
+        assert (0.6, 0.65) not in shop.inp._inp.clicks
+
+
+def test_shop_overspend_stops_buying_for_the_day():
+    page = [TAB, _w("Road Spikes", 0.5, 0.4), _w("35", 0.5, 0.5)]
+    with tempfile.TemporaryDirectory() as tmp:
+        shop, b = _shop(tmp, [MAIN, ("unknown", _featured()), ("unknown", page), ("unknown", page),
+                              ("unknown", []), MAIN], mm=(1000, 500))
         shop.buy_one()
         assert b.resting("powershop") and b.used("mm") == 500
+
+
+def test_mm_amount():
+    assert S.mm_amount("35") == 35 and S.mm_amount("@35") == 35 and S.mm_amount("1,000") == 1000
+    assert S.mm_amount("$0.99") is None and S.mm_amount("0.99") is None and S.mm_amount("x3") is None
 
 
 # -- hero skin --------------------------------------------------------------------------
@@ -556,19 +613,16 @@ def test_priced_skin_words():
 
 
 
-# Words OCR read from real screens (bot's Vision on the full frame):
+# OCR (loaded at the top) holds words the bot's Vision read on real screens:
 #   quests_all         logs/achievement_captures/quests_20261107_180710.png
 #                      (first live run: the Quests menu, ALL tab)
 #   skin_page_unowned  rec_20261107_180600.mkv 0:52 - the page an Obyn skin
 #                      icon opens: "MOUNTAIN GUARDIAN SKIN ... UNLOCK FOR: 2,500"
 #   skin_page_obyn_ocean  logs/achievement_captures/skin_obyn_skin2_20261107_190033.png
+#   shop_featured      logs/achievement_captures/shop_opened_20261108_003930.png: the
+#                      INSTAS + POWERS screen on its FEATURED tab
 #   skin_page_bundle      .../skin_obyn_skin3_20261107_190041.png: Obyn's third
 #                      icon is a real-money bundle ("SKELETOR PRESTIGE PACK $12.99")
-OCR = json.loads((FIX / "achtasks_ocr_words.json").read_text(encoding="utf-8"))
-
-
-def _ocr(key):
-    return [Word(t, x, y, 0.1, 0.03, c) for t, x, y, c in OCR[key]]
 
 
 def test_skin_page_unowned_from_the_live_run():

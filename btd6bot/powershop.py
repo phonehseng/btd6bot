@@ -14,7 +14,11 @@ The flow (only words of the allow-lists below are clicked)
   1. main menu -> the "INSTAS + POWERS" button (bottom row; its place
      INSTAS_POWERS_BUTTON is measured on the level-150 main menu,
      rec_20261107_165100.mkv 0:18);
-  2. the POWERS tab if one is read;
+  2. the POWERS tab, by its word, only inside TAB_ROW: the screen opens on
+     FEATURED (live 2026-11-08 00:39), whose banners read "INSTA STORE" and
+     "MAP CHALLENGE" - that page is neither judged nor clicked. From the
+     Powers page on, store / real-money words are judged on the page's own
+     words (page_words: tab row and Monkey Money corner left out);
   3. the name of a cheap Power (BUY_ORDER);
   4. its price: a whole number (no cents, no currency sign) between
      MIN_PRICE and MAX_PRICE that fits today's cap, read next to or under
@@ -46,6 +50,12 @@ SEEN_FRESH = 3 * 86400                    # how recent the "no owned Power" look
 MIN_PRICE, MAX_PRICE = 10, 500            # a single cheap Power, in Monkey Money
 BUY_ORDER = ("roadspikes", "gluetrap", "camotrap", "monkeyboost", "moabmine", "thrive")
 TABS = ("powers",)
+# The screen's tab row and Monkey Money corner (live capture 2026-11-08
+# 00:39, shop_opened_20261108_003930.png, 1920x1200): FEATURED (0.32, 0.055),
+# POWERS (0.50, 0.055), INSTA MONKEYS (0.68, 0.055); total "$215,150" and
+# its "+" at the top right.
+TAB_ROW = (0.20, 0.0, 0.79, 0.11)
+MM_CORNER = (0.79, 0.0, 1.0, 0.11)
 CONFIRM = ("yes", "ok", "buy", "confirm", "purchase")
 DECLINE = ("cancel", "no", "close", "nothanks")
 SETTLE = 1.0
@@ -73,16 +83,31 @@ def is_due(budget, statuses, now=None):
     return True, "no owned Power left"
 
 
+def mm_amount(text):
+    """A whole Monkey Money amount ("35", "1,000", "@35" - OCR reads the
+    coin icon as @), or None. Real-money prices have cents and never match."""
+    t = (text or "").strip().replace(" ", "").lstrip("@")
+    return int(t.replace(",", "")) if PRICE.match(t) else None
+
+
+def page_words(words):
+    """The words of the page itself: the tab row (FEATURED / POWERS /
+    INSTA MONKEYS) and the Monkey Money corner (the total and its "+",
+    which opens the real-money shop and is never clicked) left out."""
+    def inside(w, r):
+        return r[0] <= w.x <= r[2] and r[1] <= w.y <= r[3]
+    return [w for w in words if not inside(w, TAB_ROW) and not inside(w, MM_CORNER)]
+
+
 def read_price(words, near, limit):
     """The Monkey Money price shown for the Power named by word `near`: a
     whole number in MIN_PRICE..min(MAX_PRICE, limit), to the right of or
     under the name. None if none is read."""
     best = None
     for w in words:
-        t = w.text.strip().replace(" ", "")
-        if not PRICE.match(t):
+        v = mm_amount(w.text)
+        if v is None:
             continue
-        v = int(t.replace(",", ""))
         if not (MIN_PRICE <= v <= min(MAX_PRICE, limit)):
             continue
         if abs(w.x - near.x) <= 0.12 and -0.02 <= w.y - near.y <= 0.2:
@@ -148,24 +173,26 @@ class PowerShop:
             return "Monkey Money not readable"
         self.inp.click(*INSTAS_POWERS_BUTTON)
         words = self._look("opened")
-        if shop_page(words):
+        # The screen opens on FEATURED, whose own banners say "INSTA STORE"
+        # and "MAP CHALLENGE" (live 2026-11-08 00:39): nothing on it is judged
+        # or clicked except the POWERS tab, by its word, inside the tab row.
+        tab = A.find_allowed(words, TABS, region=TAB_ROW)
+        if tab is None:
+            return self._bail("no POWERS tab read in the tab row", words)
+        self.inp.click(tab.x, tab.y)
+        words = self._look("powers_tab")
+        if shop_page(page_words(words)):
             return self._bail("a store or real-money page", words)
-        tab = A.find_allowed(words, TABS)
-        if tab is not None and not any(norm(w.text) in BUY_ORDER for w in words):
-            self.inp.click(tab.x, tab.y)
-            words = self._look("powers_tab")
-            if shop_page(words):
-                return self._bail("a store or real-money page", words)
-        name = A.find_allowed(words, BUY_ORDER)
+        name = A.find_allowed(page_words(words), BUY_ORDER)
         if name is None:
             return self._bail("no cheap Power name read", words)
         limit = self.budget.left("mm")
         self.inp.click(name.x, name.y)
         words = self._look("power")
-        if shop_page(words):
+        if shop_page(page_words(words)):
             return self._bail("a store or real-money page", words)
-        name2 = A.find_allowed(words, (norm(name.text),)) or name
-        price_w, price = read_price(words, name2, limit)
+        name2 = A.find_allowed(page_words(words), (norm(name.text),)) or name
+        price_w, price = read_price(page_words(words), name2, limit)
         if price_w is None:
             return self._bail("no Monkey Money price within the cap", words)
         log.info("achievement: power shop - %s costs %d MM (today %d of %d MM spent)",
@@ -173,17 +200,17 @@ class PowerShop:
         self.inp.click(price_w.x, price_w.y)
         # At most one confirmation, then at most one plain OK (a "purchased"
         # notice). A loop over "buy" words could buy again and again.
-        words = self._look("confirm")
+        words = page_words(self._look("confirm"))
         if shop_page(words):
             return self._bail("a store or real-money page", words)
         ok = A.find_allowed(words, CONFIRM)
         if ok is not None:
-            prices = {int(w.text.strip().replace(",", "")) for w in words if PRICE.match(w.text.strip())}
+            prices = {v for v in (mm_amount(w.text) for w in words) if v is not None}
             if prices and price not in prices:
                 return self._bail(f"the question shows another price {sorted(prices)}", words)
             log.info("achievement: power shop - confirming %d MM via %r", price, ok.text)
             self.inp.click(ok.x, ok.y)
-            words = self._look("after_confirm")
+            words = page_words(self._look("after_confirm"))
             notice = A.find_allowed(words, ("ok", "close", "continue"))
             if notice is not None and not shop_page(words):
                 self.inp.click(notice.x, notice.y)
