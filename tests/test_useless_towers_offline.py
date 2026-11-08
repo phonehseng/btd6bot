@@ -116,6 +116,56 @@ def test_an_accepted_probe_is_learned():
     assert ex.accepted == []
 
 
+def _reach_seller(best, here):
+    """Two subs that popped bloons, on a 20x20 map where the best legal sub
+    spot reaches `best` track cells and the subs' own spot `here`."""
+    from btd6bot import placement as PL
+    ex = Executor.__new__(Executor)
+    ex.no_sell = False
+    ex.removed = ()
+    ex.failed_spots = set()
+    ex._sale_blocked = lambda rnd: None
+    ex.g = FakeGame({"sb1": 40, "sb2": 40})
+    for p in ex.g.towers.values():
+        p.kind, p.x, p.y, p.placed_round, p.pops = "sub", 15, 5, 1, 40
+    reach = np.full((20, 20), best, np.float32)
+    reach[5, 15] = here
+    ex._reach = lambda kind: reach
+    ex.m = SimpleNamespace(frac_to_cell=lambda x, y: (x, y))
+    saved = PL.valid_spots
+    PL.valid_spots = lambda *a, **k: np.ones((20, 20), bool)
+    return ex, lambda: setattr(PL, "valid_spots", saved)
+
+
+def test_no_sale_for_reach_when_no_spot_reaches_the_track_now():
+    """Erosion Reverse (2026-11-08): the track was painted for the current
+    lane only, far from the water; sb1-sb3 'reached -0 of best 0 track cells'
+    and were sold one after another. Nowhere better to go is no reason to sell."""
+    ex, undo = _reach_seller(best=0.3, here=0.0)
+    try:
+        assert not ex.sell_useless(30) and ex.g.sold == []
+    finally:
+        undo()
+    # a bare sub that really stands far from the track while others reach it is still sold
+    ex, undo = _reach_seller(best=200.0, here=5.0)
+    try:
+        assert ex.sell_useless(30) and len(ex.g.sold) == 1
+    finally:
+        undo()
+
+
+def test_an_advanced_intel_sub_is_not_sold_for_its_own_reach():
+    """A 2-x-x sub shoots what other towers see: its own range says nothing
+    (sb3 was 2-0-4 when Erosion Reverse sold it)."""
+    ex, undo = _reach_seller(best=200.0, here=5.0)
+    try:
+        for p in ex.g.towers.values():
+            p.tiers = [2, 0, 4]
+        assert not ex.sell_useless(30) and ex.g.sold == []
+    finally:
+        undo()
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
