@@ -13,8 +13,9 @@ Fixtures are crops of the bot's own recordings (1280x800):
   skins_obyn.jpg          HEROES screen, Obyn: three skins with a "New" ribbon
                           hiding their price (0:39)
   achtasks_ocr_words.json OCR of two real screens (see OCR below)
-No recording shows the powers panel or the power shop: those flows are
-driven with scripted OCR words.
+  powers_panel_live.jpg / insta_panel_live.jpg  the right side of the first
+                          live captures of the powers panel (2026-11-08 00:26)
+No recording shows the power shop: that flow is driven with scripted OCR words.
 
 Run: python tests/test_achievement_tasks_offline.py
 """
@@ -138,34 +139,73 @@ def test_allow_list_never_takes_real_money():
 
 
 # -- powers: the button and the panel ---------------------------------------------------
+# powers_panel_live.jpg / insta_panel_live.jpg: the right 16% (x >= 0.84) of
+# logs/achievement_captures/powers_panel_20261108_002637.png and
+# insta_panel_20261108_002642.png (first live run, Tricky Tracks Easy,
+# 2026-11-08 00:26, 1920x1200).
+BIG = (1200, 1920)
+PANEL_CROP_X = 0.84
+
+
+def _big(name):
+    img = cv2.imread(str(FIX / name))
+    assert img is not None, name
+    f = np.zeros((*BIG, 3), np.uint8)
+    x0 = int(PANEL_CROP_X * BIG[1])
+    f[:, x0:x0 + img.shape[1]] = img[:BIG[0], :BIG[1] - x0]
+    return f
+
+
+# the words OCR read on those two screens (logs/bot.log, 2026-11-08 00:26)
+LIVE_POWERS_WORDS = [_w("POWERS", 0.924, 0.077), _w("+", 0.93, 0.15), _w("22", 0.977, 0.683),
+                     _w("InsTAMonKeYs", 0.925, 0.78)]
+LIVE_INSTA_WORDS = [_w("POWERS", 0.924, 0.077)] + [_w(t, 0.95, 0.3 + 0.03 * i) for i, t in
+                                                    enumerate(["9", "12", "14", "20", "12", "11", "19", "6",
+                                                               "16", "9"])]
+
+
 def test_powers_button_lit_in_a_normal_game_only():
     assert P.button_lit(_frame("powers_side_normal.jpg", SIDE_CROP))
     assert not P.button_lit(_frame("powers_side_chimps.jpg", SIDE_CROP))
     assert not P.button_lit(np.zeros((*SIZE, 3), np.uint8))
 
 
-def test_tower_list_seen():
-    assert P.tower_list_shown(_frame("powers_side_normal.jpg", SIDE_CROP))
-    assert not P.tower_list_shown(np.zeros((*SIZE, 3), np.uint8))
+def test_panel_open_is_told_by_the_button_not_by_blue():
+    """The powers panel is as blue as the tower list; the button tells them
+    apart (bolt = closed, monkey face = open)."""
+    assert P.panel_closed(_frame("powers_side_normal.jpg", SIDE_CROP))
+    for name in ("powers_panel_live.jpg", "insta_panel_live.jpg"):
+        assert P.tower_list_shown(_big(name)) and not P.panel_closed(_big(name)), name
 
 
-def test_owned_powers_need_a_count():
-    words = [_w("Road Spikes", 0.90, 0.30), _w("x3", 0.91, 0.33),
-             _w("Glue Trap", 0.96, 0.30),                      # no count: not owned
-             _w("Monkey Boost", 0.90, 0.50), _w("12", 0.92, 0.53),
-             _w("Time Stop", 0.96, 0.50), _w("x2", 0.97, 0.53)]  # not an allowed Power
-    owned = P.owned_powers(words)
-    assert set(owned) == {"roadspikes", "monkeyboost"}, owned
-    assert owned["roadspikes"][1] == 3 and owned["monkeyboost"][1] == 12
+def test_badges_on_the_live_powers_tab():
+    f = _big("powers_panel_live.jpg")
+    badges = P.find_badges(f)
+    assert len(badges) == 1 and abs(badges[0][0] - 0.977) < 0.005 and abs(badges[0][1] - 0.683) < 0.005
+    assert P.is_gold_tile(f, P.icon_of(badges[0]))         # the "INSTA MONKEYS" tile
+    assert P.power_badges(f) == []                          # no Power hexagon carries a count
+    assert P.on_powers_tab(f, LIVE_POWERS_WORDS) and P.on_powers_tab(f)
+
+
+def test_badges_on_the_live_insta_tab():
+    f = _big("insta_panel_live.jpg")
+    badges = P.insta_badges(f)
+    assert len(badges) == 10, badges                        # 9, 12, 14, 20, 12, 11, 19, 6, 16, 9
+    xs = sorted({round(b[0], 2) for _, b in badges})
+    assert xs == [0.91, 0.98], xs
+    icon, badge = badges[0]
+    assert abs(icon[0] - 0.892) < 0.006 and abs(icon[1] - 0.30) < 0.006
+    assert not P.on_powers_tab(f, LIVE_INSTA_WORDS)
 
 
 def test_classify_panel():
-    assert P.classify_panel([_w("Road Spikes"), _w("x3")]) == "powers"
-    assert P.classify_panel([_w("INSTA MONKEYS")]) == "powers"
+    assert P.classify_panel(LIVE_POWERS_WORDS) == "powers"
+    assert P.classify_panel([_w("9")], _big("insta_panel_live.jpg")) == "powers"
     assert P.classify_panel([_w("0-2-2"), _w("x1")]) == "tiers"
     assert P.classify_panel([_w("Buy for"), _w("35"), _w("Monkey Money"), _w("Are you sure")]) == "shop"
     assert P.classify_panel([_w("$4.99")]) == "shop"
     assert P.classify_panel([_w("UPGRADES")]) == "unknown"
+    assert P.read_count([_w("22")]) == 22 and P.read_count([]) is None
 
 
 def test_pick_tier():
@@ -196,7 +236,7 @@ def test_plan_extras_gating():
         assert po.want_powers and not po.want_instas and not po.want_t5
 
 
-# -- powers: the in-game flow with a scripted panel -------------------------------------
+# -- powers: the in-game flow on the live frames --------------------------------------
 class FakeModel:
     def track_mask(self):
         m = np.zeros((40, 64), bool)
@@ -225,19 +265,36 @@ class FakeModel:
         return [(int(x), int(y), 1.0) for x, y in zip(xs, ys)][:n]
 
 
-class FakeGame:
-    """A game whose powers panel shows scripted words. `holding` is a list
-    of answers for is_holding() (the last one repeats)."""
+def _with_power_badge(frame):
+    """The live Powers tab with the "22" badge copied onto the first blue
+    hexagon (row 3, left): an owned Power as the game would mark it."""
+    f = frame.copy()
+    h, w = f.shape[:2]
+    src = (0.977, 0.683)
+    dst = (0.9109, 0.552)                   # badge spot of the hexagon at (0.892, 0.58)
+    hw, hh = int(0.016 * w), int(0.025 * h)
+    sx, sy, dx, dy = int(src[0] * w), int(src[1] * h), int(dst[0] * w), int(dst[1] * h)
+    f[dy - hh:dy + hh, dx - hw:dx + hw] = frame[sy - hh:sy + hh, sx - hw:sx + hw]
+    return f
 
-    def __init__(self, holding=(False,)):
+
+class FakeGame:
+    """The live frames: the closed tower list until POWERS_BUTTON is clicked,
+    then `panel` (a function of the clicks so far), the tower list again
+    after the next POWERS_BUTTON click. `holding`: answers for is_holding()."""
+
+    def __init__(self, panel, holding=(False,)):
         self.inp = Inp()
-        self.lit = _frame("powers_side_normal.jpg", SIDE_CROP)
+        self.closed_frame = _frame("powers_side_normal.jpg", SIDE_CROP)
+        self.panel = panel
         self.holding = list(holding)
-        self.closed = 0
-        self.cancelled = 0
+        self.cancelled = self.closed = 0
+
+    def _open(self):
+        return self.inp.clicks.count(P.POWERS_BUTTON) % 2 == 1
 
     def fresh(self):
-        return self.lit
+        return self.panel(self.inp.clicks) if self._open() else self.closed_frame
 
     def is_holding(self, f=None):
         return self.holding.pop(0) if len(self.holding) > 1 else self.holding[0]
@@ -250,12 +307,17 @@ class FakeGame:
 
 
 class FakeMenus:
-    def __init__(self, pages):
+    """Side-panel reads pop `pages`; badge reads (small regions) get `count`."""
+
+    def __init__(self, pages, count=()):
         self.pages = list(pages)
+        self.count = list(count)
         self.v = self
 
     def read(self, region=None, img=None):
-        return self.pages.pop(0) if len(self.pages) > 1 else self.pages[0]
+        if region == P.SIDEBAR:
+            return self.pages.pop(0) if len(self.pages) > 1 else self.pages[0]
+        return [_w(str(self.count.pop(0)))] if self.count else []
 
 
 def _extras(tmp, **kw):
@@ -265,33 +327,65 @@ def _extras(tmp, **kw):
     return P.InGameExtras(b, sleep=lambda s: None, capture_dir=Path(tmp) / "cap", **kw), b
 
 
-PANEL = [_w("Road Spikes", 0.90, 0.30), _w("x3", 0.91, 0.33),
-         _w("Monkey Boost", 0.96, 0.30), _w("x1", 0.97, 0.33)]
+def _in_grid(pt):
+    return P.GRID[0] <= pt[0] <= P.GRID[2] and P.GRID[1] <= pt[1] <= P.GRID[3]
 
 
-def test_track_power_is_dropped_on_the_track():
+def test_live_panel_without_owned_powers_clicks_nothing_in_it():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        g = FakeGame(holding=[True, False])     # held after the click, gone after one target click
-        after = [_w("Road Spikes", 0.90, 0.30), _w("x2", 0.93, 0.33),
-                 _w("Monkey Boost", 0.96, 0.30), _w("x1", 0.97, 0.33)]
-        m = FakeMenus([PANEL, PANEL, PANEL, PANEL, after, after, after])
-        res = ex.run(g, m, FakeModel(), [])
-        assert res["result"] == "done", res
-        assert "roadspikes" in res["powers"], res
-        assert b.used("power_uses") >= 1
-        assert P.POWERS_BUTTON in [(x, y) for x, y in g.inp.clicks][:1]
-        assert b.flag("powers_seen")["owned"] == ["monkeyboost", "roadspikes"]
+        live = _big("powers_panel_live.jpg")
+        g = FakeGame(lambda clicks: live)
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS]), FakeModel(), [])
+        assert res["result"] == "done" and res["powers"] == [], res
+        assert g.inp.clicks == [P.POWERS_BUTTON, P.POWERS_BUTTON], g.inp.clicks   # open, close
+        assert b.flag("powers_seen")["owned"] == 0 and b.used("power_uses") == 0
+        assert list((Path(tmp) / "cap").glob("powers_panel_*.png"))
+
+
+def test_badged_instant_power_is_used_and_verified():
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        live = _big("powers_panel_live.jpg")
+        owned = _with_power_badge(live)
+        icon = P.power_badges(owned)[0][0]
+        # badged until its hexagon is clicked, then the badge is gone (count 1 -> 0)
+        g = FakeGame(lambda clicks: live if (round(icon[0], 3), round(icon[1], 3)) in clicks else owned)
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[1]), FakeModel(), [])
+        assert res["result"] == "done" and len(res["powers"]) == 1, res
+        assert b.used("power_uses") == 1
+        assert [c for c in g.inp.clicks if _in_grid(c)] == [(round(icon[0], 3), round(icon[1], 3))]
+
+
+def test_badged_power_on_the_cursor_goes_on_the_track():
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        owned = _with_power_badge(_big("powers_panel_live.jpg"))
+        g = FakeGame(lambda clicks: owned, holding=[True, False])
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS]), FakeModel(), [])
+        assert b.used("power_uses") >= 1, res
+        track_y = 20 / 40
+        assert any(abs(y - track_y) < 1e-3 for _, y in g.inp.clicks), g.inp.clicks
+
+
+def test_power_that_changes_nothing_stops_the_routine():
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        owned = _with_power_badge(_big("powers_panel_live.jpg"))
+        g = FakeGame(lambda clicks: owned)
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[3, 3]), FakeModel(), [])
+        assert res["result"].startswith("bailed: Power slot 1 clicked but nothing changed"), res
+        assert b.used("power_uses") == 0 and g.inp.clicks[-1] == P.POWERS_BUTTON
 
 
 def test_purchase_question_is_declined_never_confirmed():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        g = FakeGame(holding=[False])
-        question = [_w("Buy Road Spikes for", 0.5, 0.4), _w("35", 0.5, 0.45), _w("Monkey Money", 0.5, 0.47),
+        owned = _with_power_badge(_big("powers_panel_live.jpg"))
+        g = FakeGame(lambda clicks: owned)
+        question = [_w("Buy this Power for", 0.5, 0.4), _w("35", 0.5, 0.45), _w("Monkey Money", 0.5, 0.47),
                     _w("YES", 0.6, 0.6), _w("NO", 0.4, 0.6)]
-        m = FakeMenus([PANEL, PANEL, PANEL, question])
-        res = ex.run(g, m, FakeModel(), [])
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS, question]), FakeModel(), [])
         assert res["result"].startswith("bailed"), res
         assert (0.4, 0.6) in g.inp.clicks and (0.6, 0.6) not in g.inp.clicks
         assert b.used("power_uses") == 0 and b.used("powers_failures") == 1
@@ -300,32 +394,64 @@ def test_purchase_question_is_declined_never_confirmed():
 def test_unreadable_panel_bails_and_closes():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        g = FakeGame()
+        g = FakeGame(lambda clicks: np.zeros((*BIG, 3), np.uint8))
         res = ex.run(g, FakeMenus([[_w("???")]]), FakeModel(), [])
         assert res["result"].startswith("bailed"), res
         assert b.used("powers_failures") == 1
+        assert g.inp.clicks.count(P.POWERS_BUTTON) == 2              # opened, then closed
         assert list((Path(tmp) / "cap").glob("powers_panel_*.png")), "no calibration capture"
 
 
 def test_chimps_button_is_never_clicked():
     with tempfile.TemporaryDirectory() as tmp:
         ex, _ = _extras(tmp)
-        g = FakeGame()
-        g.lit = _frame("powers_side_chimps.jpg", SIDE_CROP)
-        res = ex.run(g, FakeMenus([PANEL]), FakeModel(), [])
-        assert res["result"] == "button not lit" and P.POWERS_BUTTON not in g.inp.clicks
+        g = FakeGame(lambda clicks: None)
+        g.closed_frame = _frame("powers_side_chimps.jpg", SIDE_CROP)
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS]), FakeModel(), [])
+        assert res["result"] == "button not lit" and g.inp.clicks == []
 
 
-def test_insta_placed_lowest_tier_then_t5_once():
+def _insta_game(holding=(False,)):
+    powers, instas = _big("powers_panel_live.jpg"), _big("insta_panel_live.jpg")
+    label = (0.925, 0.78)
+    return FakeGame(lambda clicks: instas if label in clicks else powers, holding=holding)
+
+
+def test_insta_tower_list_without_tiers_places_nothing():
+    """The step after a tower icon is not seen yet: no tier label, no placement."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp, want_powers=False, want_instas=True)
+        g = _insta_game()
+        counts = [9, 12, 14, 20, 12, 11, 19, 6, 16, 9]
+        m = FakeMenus([LIVE_POWERS_WORDS, LIVE_INSTA_WORDS, [_w("SOMETHING", 0.9, 0.4)]], count=counts)
+        res = ex.run(g, m, FakeModel(), [])
+        assert res["result"] == "done" and res["instas"] == [], res
+        bomb = P.insta_badges(_big("insta_panel_live.jpg"))[3][0]      # the 20
+        assert g.inp.clicks == [P.POWERS_BUTTON, (0.925, 0.78), (round(bomb[0], 3), round(bomb[1], 3)),
+                                P.POWERS_BUTTON], g.inp.clicks
+        assert b.used("insta_uses") == 0
+        assert list((Path(tmp) / "cap").glob("insta_tower_*.png"))
+
+
+def test_insta_with_tier_labels_is_placed_lowest_first():
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp, want_powers=False, want_instas=True)
+        g = _insta_game(holding=[True, False])
+        tiers = [_w("3-0-0", 0.90, 0.3), _w("0-2-2", 0.96, 0.3)]
+        m = FakeMenus([LIVE_POWERS_WORDS, LIVE_INSTA_WORDS, tiers], count=[9, 12])
+        res = ex.run(g, m, FakeModel(), [])
+        assert res["instas"] == ["3-0-0"], res
+        assert b.used("insta_uses") == 1
+        assert (0.9, 0.3) in g.inp.clicks and (0.96, 0.3) not in g.inp.clicks
+
+
+def test_insta_t5_while_instant_gratification_is_wanted():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp, want_powers=False, want_instas=True, want_t5=True)
-        g = FakeGame(holding=[True, False])
-        tab = [_w("INSTA MONKEYS", 0.92, 0.12)]
-        tiers = [_w("0-2-2", 0.90, 0.3), _w("x4", 0.93, 0.33), _w("5-0-2", 0.96, 0.3), _w("x1", 0.97, 0.33)]
-        m = FakeMenus([tab, tab, tab, tiers, tiers, tiers])
-        res = ex.run(g, m, FakeModel(), [])
-        assert res["instas"][:1] == ["5-0-2"], res        # Instant Gratification first
-        assert b.used("insta_uses") >= 1
+        g = _insta_game(holding=[True, False])
+        tiers = [_w("0-2-2", 0.90, 0.3), _w("5-0-2", 0.96, 0.3)]
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS, LIVE_INSTA_WORDS, tiers]), FakeModel(), [])
+        assert res["instas"] == ["5-0-2"], res
 
 
 def test_track_points_lie_late_on_the_track():

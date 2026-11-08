@@ -61,8 +61,11 @@ def is_due(budget, statuses, now=None):
     seen = budget.flag("powers_seen")
     if not seen or now - seen.get("at", 0) > SEEN_FRESH:
         return False, "the powers panel was not read lately"
-    if seen.get("owned"):
-        return False, "the account still owns " + ", ".join(seen["owned"])
+    owned = seen.get("owned")
+    if owned:
+        # a count of badged Power icons (powers.power_badges); older flags held names
+        return False, "the account still owns %s Power(s)" % (
+            owned if isinstance(owned, int) else ", ".join(owned))
     if budget.resting("powershop"):
         return False, "failed too often today"
     if not budget.allow("purchases") or budget.left("mm") < MIN_PRICE:
