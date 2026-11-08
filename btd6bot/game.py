@@ -718,10 +718,18 @@ class Game:
                 Game._pops_crop_saved = True  # one crop per session, for calibration
                 from .vision import save
                 save(img, "logs/pops_crop.png")
-            v = parse_int(rec_text(img)[0])
+            text = rec_text(img)[0]
+            v = parse_int(text)
             if v is None:
                 return
             if v == 0 and p.kind != "hero":
+                # every zero read leaves its crop behind, for checking the reader
+                try:
+                    from .vision import save
+                    save(img, f"logs/pops_zero_{p.tid}.png")
+                    log.info("%s (%s %s): pop counter read %r as 0", p.tid, p.kind, p.crosspath, text)
+                except Exception:
+                    pass
                 costs = self.path_costs(p, f)
                 kind_prices = all(self._tier_for_price(p.kind, i + 1, v) is not None
                                   for i, (k, v) in enumerate(costs) if k == "cash" and v)

@@ -2372,6 +2372,8 @@ class Executor:
         if p is not None:
             if not self._dead(p):
                 return None
+            if self._planned_spot_kept(p, tid):
+                return None
             if getattr(p, "renamed_dead", False) or tid not in self._build_ids():
                 # No build step waits for this id, so there is nothing to
                 # place anew - and a tower that pops nothing gets no upgrade.
@@ -2425,6 +2427,32 @@ class Executor:
             if r == "done":
                 return None
         return r
+
+    def _planned_spot_kept(self, p, tid):
+        """Does a plan_first build keep tower `tid` although its pop count
+        reads 0? Yes when the build's own place step for it names an exact
+        spot (`at`) and the tower stands there: a hand-written build's spots
+        were checked against the track, and the zero has been wrong three
+        times in one evening. Spring Spring CHIMPS (2026-11-07 19:38): r1, a
+        4-0-2 boomerang on a spot reaching both lanes, read 0 pops nine
+        rounds after placement and its Glaive Lord step went to a fresh
+        0-0-0 boomerang; Lost Crevasse (18:29) and Spring Spring (17:12)
+        lost their Glaive Lords the same way. The tower keeps its upgrades;
+        the zero is logged once (Game._read_pops saves the crop)."""
+        if not self.plan_first():
+            return False
+        place = next((st for st in self.plan if st.get("do") == "place" and st.get("id") == tid), None)
+        at = place.get("at") if place else None
+        if not at or len(at) != 2:
+            return False
+        if abs(p.x - float(at[0])) > 0.05 or abs(p.y - float(at[1])) > 0.05:
+            return False            # it stands elsewhere (a refused spot moved it): the rule applies
+        note = ("planned-zero", tid)
+        if note not in self._notes():
+            self.noted.add(note)
+            log.warning("%s (%s) reads 0 pops but stands on the build's own spot %s - kept, "
+                        "its upgrades stay with it", tid, p.kind, at)
+        return True
 
     def _rekey_tower(self, old, new):
         """Move the per-tower state keyed by a tower's id from `old` to `new`
