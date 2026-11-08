@@ -1,9 +1,10 @@
 # Sulfur Springs, CHIMPS: one buccaneer in the west pool opens alone (no
 # starter dart since 21:00: it reached no track) and grows to a Carrier Flagship beside a
 # Bigger Radius / Radar Scanner / Jungle Drums village; a Crossbow dart holds
-# rounds 16-37 on the north side, Quincy follows, three Spiked Mines spike
-# factories on the south and east bends and a Cripple MOAB sniper finish
-# (no Glaive Lord since 2026-11-07 22:00, see Status).
+# rounds 16-37 on the north side, Quincy follows. Late game (since
+# 2026-11-08 01:00, see Status): an Inferno Ring tack in the south-east
+# corner beside a second, MIB village, two Spiked Mines spike factories, the
+# first village to MIB, and a Cripple MOAB sniper last (no Glaive Lord).
 #
 # Why: the owner's goal is CHIMPS black borders, all Beginner maps first,
 # then Intermediate. On 2026-11-07 the bot beat CHIMPS on nine maps with
@@ -303,6 +304,65 @@
 # 0.81, R99 1.58 / 0.80 (1.27 / 0.70), R100 5.66 / 1.46. About $7k still
 # waits at round 95. Still thin: Sulfur's towers see too little track for
 # this recipe, and a different core may be needed if this loses too.
+# 2026-11-08 01:00: not played since 23:30. Spring Spring lost round 95 at
+# 00:19 with the spike-factory late game (1.20 with the Glaive Lord's
+# credit, 0.53 without), and this map's 23:30 build rates round 95 1.51
+# flat / 0.77 bot, round 98 1.27 / 0.81 (bot = heights as the live forecast
+# reads them, flat = heights zeroed, see 21:00). Change: a new late core
+# from round 63 on (every step before is unchanged):
+#   Why a new core: the damage model, with the Glaive Lord's tier 5 not
+#   counted (it counts the glaives map-wide, CHIMPS_MODEL_DOUBTS), rated the
+#   old late game (Glaive Lord + spike factories + Cripple MOAB) under 1 for
+#   rounds 95-99 here; the winning Flagship maps' boats see far more track.
+#   On the board standing once the Flagship is up (replay round 63, no spike factories, the village at 2-2-0)
+#   every single buy up to $60,000 was rated: every kind the account has,
+#   its crosspaths, its best legal cells at least 0.08 from every tower with
+#   7+ of 8 neighbours legal (tools/simulate_threats on main's learned map,
+#   copied in for the check only; dps_model.round_margin). Then a greedy
+#   search bought the best gain per dollar on rounds 95, 96, 98, 99 and 100
+#   up to about $100,000. In a Radar village's reach the Inferno Ring was
+#   the largest single gain on all three maps (without camo it adds nothing
+#   to rounds 95/99, whose DDTs are camo): its meteors reach the whole map
+#   (game model AttackHomingMeteor: range 9,999,999, 1,000 damage every
+#   4 s), which is what a boat that sees too little track lacks. Alchemists
+#   (the model keeps their acid dip on all the time), Apache Prime (its
+#   village buffs while it flies under Pursuit are not sure), Sub Commander
+#   (Advanced Intel counted map-wide) and Spirit of the Forest (its path
+#   runs through Jungle's Bounty, an income tier) rated well too and were
+#   left out.
+#   Sources: bloon.games "Best strategies to beat CHIMPS mode"
+#   (https://bloon.games/best-strategies-to-beat-chimps-mode-in-btd6/): a
+#   Primary Mentoring village with a 2-0-5 Tack Zone and Super Brittle
+#   against the late blimps, a Perma-Spike with an MIB village as the safety
+#   net, an MIB village "needed to damage DDTs and Lead"; bloonswiki Inferno
+#   Ring (https://www.bloonswiki.com/Inferno_Ring_(BTD6)): the meteor homes
+#   with infinite range, 1,000 damage with Even More Tacks (x-x-2), and
+#   cannot target camo on its own (hence the Radar village).
+#   Here the searches were rated flat (the conservative view, 21:00). The
+#   plan after r1 3-0-2 (round 63's rush): a tack t1 at (0.831, 0.922), the
+#   south-east corner, to Ring of Fire 4-0-2; a second village v2 at
+#   (0.820, 0.836), 19.9 units from t1, to Radar + Jungle Drums 2-2-0 and
+#   Monkey Intelligence Bureau 2-3-0 (camo for the meteors, every damage
+#   type for the ring); t1 to Inferno Ring 5-0-2; a Spiked Mines spike
+#   factory p1 at (0.516, 0.811) (the south bend, as before); v1 to MIB
+#   2-3-0; p2 at (0.607, 0.666) (east side, as before); Maim MOAB; Cripple
+#   MOAB last. p3 and p4 go. With the Inferno after p1 and v1's MIB it was
+#   never bought: the round-100 BAD answer (the Cripple MOAB) is forced
+#   from round 94 and took the bank (plan 35/41), so the Inferno comes
+#   right after the village. t1 and v2: legal on main's learned map with
+#   every earlier tower standing, 8 of 8 neighbours legal, 0.087 apart and
+#   0.40 from the nearest other tower.
+#   Replay (simulate_threats on main's learned map), bot / flat: plan 40/41,
+#   no threat gaps, no answers forced but Maim (round 75, zomg), Ring of
+#   Fire R66, v2 MIB R79, Inferno Ring R92, p1 R96, v1 MIB R97, p2 R100,
+#   Cripple MOAB not reached (round 100 rates 4.41 / 16 without it). Rounds,
+#   new (old): R85 3.87 / 3.40 (3.87 / 14.5), R88 3.08 / 2.74, R90 4.41 /
+#   4.27, R91 2.65 / 2.35, R92 5.91 / 5.54 (2.04 / 3.36), R93 9.21 / 8.72,
+#   R94 3.29 / 3.02 (1.48 / 2.59), R95 2.43 / 2.38 (0.77 / 1.51), R96 2.48
+#   / 4.27 (1.34 / 2.00), R97 7.26 / 14.99, R98 1.58 / 2.25 (0.81 / 1.27),
+#   R99 2.68 / 3.22 (0.80 / 1.58), R100 4.41 / 16.0 (1.46 / 5.66). Rounds
+#   40-81 unchanged (this replay reads R40 1.61 / 0.08 and R45 0.06 for the
+#   old build too; live the opening held rounds 6-94 twice).
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
@@ -310,11 +370,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: none         # no starter dart: no legal cell lets it reach the track (see 21:00; match.Match._no_starter)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [3, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], spike: [4, 2, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [3, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], spike: [4, 2, 0], tack: [5, 0, 2]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Sulfur Springs]
-  revised: "2026-11-07T23:30"
+  revised: "2026-11-08T01:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.436]}   # west pool: opens alone (the match adds a dart)
   - {do: upgrade, id: b1, to: 1-0-0}
@@ -341,20 +401,22 @@ plan:
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
   - {do: place, id: r1, kind: boomerang, role: dps, at: [0.644, 0.521]}   # east cliff: round 63's rush only (see 22:00)
   - {do: upgrade, id: r1, to: 3-0-2}
-  - {do: place, id: p1, kind: spike, role: dps, at: [0.516, 0.811]}       # south bend: round 95's camo children (see 22:00)
+  # late core since 2026-11-08 01:00: Inferno Ring beside a second MIB village (see Status)
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.831, 0.922]}       # south-east corner
+  - {do: upgrade, id: t1, to: 2-0-2}
+  - {do: upgrade, id: t1, to: 4-0-2}                                      # Ring of Fire
+  - {do: place, id: v2, kind: village, role: support, near: [t1], at: [0.820, 0.836]}   # above the tack
+  - {do: upgrade, id: v2, to: 2-2-0}                                      # Radar Scanner + Jungle Drums: camo for the tack
+  - {do: upgrade, id: v2, to: 2-3-0}                                      # Monkey Intelligence Bureau
+  - {do: upgrade, id: t1, to: 5-0-2}                                      # Inferno Ring: map-wide meteors at the strongest bloon
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.516, 0.811]}       # south bend
   - {do: upgrade, id: p1, to: 2-2-0}
   - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
-  - {do: place, id: p2, kind: spike, role: dps, at: [0.580, 0.760]}       # south-east bend
+  - {do: upgrade, id: v1, to: 2-3-0}                                      # Monkey Intelligence Bureau: every damage type for the boat
+  - {do: place, id: p2, kind: spike, role: dps, at: [0.607, 0.666]}       # east side, below Quincy
   - {do: upgrade, id: p2, to: 2-2-0}
   - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
   - {do: upgrade, id: s1, to: 4-2-0}                                      # Maim MOAB
-  - {do: place, id: p3, kind: spike, role: dps, at: [0.607, 0.666]}       # east side, below Quincy
-  - {do: upgrade, id: p3, to: 2-2-0}
-  - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
-  - {do: place, id: p4, kind: spike, role: dps, at: [0.478, 0.888]}       # south edge: round 99's MOABs (see 23:30)
-  - {do: upgrade, id: p4, to: 2-2-0}
-  - {do: upgrade, id: p4, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: v1, to: 2-3-0}                                      # Monkey Intelligence Bureau: every damage type for the boat
   - {do: upgrade, id: s1, to: 5-2-0}                                     # Cripple MOAB: round 100's BAD
 answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]

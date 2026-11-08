@@ -3,8 +3,10 @@
 # Carrier Flagship; a tack on the bottom lane and a Crossbow dart on the top
 # lane hold the lanes the boat cannot reach, Quincy follows at the lanes'
 # junction; a village behind the exit (Bigger Radius first, so it reaches
-# the boat) gives the boat camo and Jungle Drums; a Glaive Lord boomerang
-# beside the village and a Cripple MOAB sniper finish.
+# the boat) gives the boat camo and Jungle Drums. Late game (since
+# 2026-11-08 01:00, see Status): an Inferno Ring tack in that village's
+# reach, The Bloon Solver glue for round 98, Crossbow Master on the dart,
+# the village to MIB and a Cripple MOAB sniper last (no Glaive Lord).
 #
 # Why: the owner's goal is CHIMPS black borders. On 2026-11-07 the bot beat
 # CHIMPS on nine maps with builds that follow a published community strategy
@@ -216,6 +218,74 @@
 # forced, p3 R97, Primary Mentoring R97; R94 2.48, R95 1.20, R96 2.00, R98
 # 1.18, R99 1.16 (was 1.04; 0.79 without the Glaive Lord's map-wide
 # credit), R100 3.63. Nothing big waits idle before round 99 now.
+# 2026-11-08 01:00: lost ROUND 95 again (23:52-00:19, journal
+# 20261107_235250, loss case 20261108_002311) on the replay's schedule (p1
+# 4-2-0 R72, Glaive Lord R85, p2 R92), p3 at 3-2-0 with $5,190 waiting when
+# round 95 began, rated 1.20 - 0.53 with the Glaive Lord's tier 5 not
+# counted. The recording (rec_20261108_001901 +9 s) shows the 50 fortified
+# MOABs and the DDTs filling both lanes past the island to the exit; the
+# defeat screen shows a fortified ceramic leaked. Three games lost rounds
+# 95-99 with this recipe, and the spike factories do not fix it here: on
+# the Flagship board each 4-2-0 adds 0.00-0.03 to rounds 95/99.
+# Change: a new late core from round 63 on (every step before is unchanged):
+#   Why a new core: the damage model, with the Glaive Lord's tier 5 not
+#   counted (it counts the glaives map-wide, CHIMPS_MODEL_DOUBTS), rated the
+#   old late game (Glaive Lord + spike factories + Cripple MOAB) under 1 for
+#   rounds 95-99 here; the winning Flagship maps' boats see far more track.
+#   On the board standing once the Flagship is up (replay round 63, no Glaive Lord or spike factories)
+#   every single buy up to $60,000 was rated: every kind the account has,
+#   its crosspaths, its best legal cells at least 0.08 from every tower with
+#   7+ of 8 neighbours legal (tools/simulate_threats on main's learned map,
+#   copied in for the check only; dps_model.round_margin). Then a greedy
+#   search bought the best gain per dollar on rounds 95, 96, 98, 99 and 100
+#   up to about $100,000. In a Radar village's reach the Inferno Ring was
+#   the largest single gain on all three maps (without camo it adds nothing
+#   to rounds 95/99, whose DDTs are camo): its meteors reach the whole map
+#   (game model AttackHomingMeteor: range 9,999,999, 1,000 damage every
+#   4 s), which is what a boat that sees too little track lacks. Alchemists
+#   (the model keeps their acid dip on all the time), Apache Prime (its
+#   village buffs while it flies under Pursuit are not sure), Sub Commander
+#   (Advanced Intel counted map-wide) and Spirit of the Forest (its path
+#   runs through Jungle's Bounty, an income tier) rated well too and were
+#   left out.
+#   Sources: bloon.games "Best strategies to beat CHIMPS mode"
+#   (https://bloon.games/best-strategies-to-beat-chimps-mode-in-btd6/): a
+#   Primary Mentoring village with a 2-0-5 Tack Zone and Super Brittle
+#   against the late blimps, a Perma-Spike with an MIB village as the safety
+#   net, an MIB village "needed to damage DDTs and Lead"; bloonswiki Inferno
+#   Ring (https://www.bloonswiki.com/Inferno_Ring_(BTD6)): the meteor homes
+#   with infinite range, 1,000 damage with Even More Tacks (x-x-2), and
+#   cannot target camo on its own (hence the Radar village).
+#   The plan after r1 3-0-2 (round 63's rush): a tack t2 at (0.639, 0.802)
+#   south of the village, 20.7 units from v1 (radius 48: Radar camo, Jungle
+#   Drums), to Ring of Fire and Inferno Ring 5-0-2 (round 95 0.46 -> 1.31 on
+#   the Flagship board, the same from every cell in v1's reach - the
+#   meteors do it - and 0.50 from cells outside it); a glue g1 at (0.574,
+#   0.479) on the island's tip to The Bloon Solver 5-0-2 (round 98 0.85 ->
+#   1.45, the best round-98 buy left; Spirit of the Forest 1.48 runs through
+#   Jungle's Bounty, an income tier); d1 to Crossbow Master 0-2-5 (round 99
+#   +0.2); v1 to MIB 2-3-0; Maim and Cripple MOAB last. The spike
+#   factories, the Glaive Lord and Primary Mentoring go. The zomg answer is
+#   now the Inferno Ring (a ZOMG answer, strategy.ANSWERS tack 5xx) instead
+#   of Maim MOAB, so no $11k Maim is forced at round 74 as live. The bad
+#   answer is the plan's own Inferno step: with the Cripple MOAB as the
+#   answer the executor held up to $34,405 for it from round 94 and bought
+#   it at round 98 instead of the Bloon Solver (replay: Solver never bought,
+#   round 98 0.87); the cash cannot pay both by round 98. Without it round
+#   100 rates 4.71; the Cripple MOAB stays the plan's last step.
+#   t2, g1: legal on main's learned map with every earlier tower and the
+#   starter standing, 8 of 8 neighbours legal, 0.082 / 0.083 from the
+#   nearest tower (v1 / Quincy).
+#   Replay (simulate_threats on main's learned map, starter paid; no Glaive
+#   Lord, so the model's view and the doubt-free view are the same): plan
+#   37/39, no threat gaps, no answers forced, Inferno Ring R84, Bloon Solver
+#   R95, Crossbow Master R99, MIB R100, Maim / Cripple not reached. Rounds,
+#   new (old, Glaive Lord not counted): R85 10.04 (4.32), R88 6.24 (3.51),
+#   R90 9.93 (2.23), R91 4.56, R92 3.67 (1.27), R93 4.46, R94 1.76 (1.40),
+#   R95 1.26 (0.53), R96 2.09 (1.27), R97 6.30 (3.63), R98 1.45 (0.77), R99
+#   1.51 (0.78), R100 4.71 (2.48). Rounds 40-81 unchanged. Round 95 stays
+#   the thinnest: the cash before it goes to the Inferno and the glue, and
+#   no buy of $22k or less left lifts it by more than 0.07 (MIB).
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
@@ -223,11 +293,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: {kind: dart, at: [0.270, 0.164]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 4], tack: [0, 2, 0], spike: [4, 2, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [3, 0, 2], sniper: [5, 1, 0], dart: [0, 2, 5], tack: [5, 0, 2], glue: [5, 0, 2]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-07T23:30"
+  revised: "2026-11-08T01:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
@@ -255,27 +325,27 @@ plan:
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.580, 0.624]}   # between the lanes, in the village's reach
-  - {do: upgrade, id: r1, to: 3-0-2}
-  - {do: place, id: p1, kind: spike, role: dps, at: [0.505, 0.283]}       # top lane, right of the sniper: round 95 (see 22:00)
-  - {do: upgrade, id: p1, to: 2-2-0}
-  - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord
-  - {do: place, id: p2, kind: spike, role: dps, at: [0.163, 0.496]}       # left end, both lanes' start
-  - {do: upgrade, id: p2, to: 2-2-0}
-  - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
-  - {do: place, id: p3, kind: spike, role: dps, at: [0.227, 0.709]}       # bottom-left: round 99's MOABs (see 23:30)
-  - {do: upgrade, id: p3, to: 2-2-0}
-  - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: v1, to: 4-2-0}                                     # Primary Mentoring (the Glaive Lord is in reach)
+  - {do: upgrade, id: r1, to: 3-0-2}                                      # round 63's rush
+  # late core since 2026-11-08 01:00: Inferno Ring in the Radar village's reach, Bloon Solver (see Status)
+  - {do: place, id: t2, kind: tack, role: dps, near: [v1], at: [0.639, 0.802]}   # south of the village, in its reach
+  - {do: upgrade, id: t2, to: 2-0-2}
+  - {do: upgrade, id: t2, to: 4-0-2}                                      # Ring of Fire
+  - {do: upgrade, id: t2, to: 5-0-2}                                      # Inferno Ring: map-wide meteors at the strongest bloon
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.574, 0.479]}       # island's tip below the dart: both lanes
+  - {do: upgrade, id: g1, to: 2-0-2}
+  - {do: upgrade, id: g1, to: 4-0-2}                                      # Bloon Liquefier
+  - {do: upgrade, id: g1, to: 5-0-2}                                      # The Bloon Solver: round 98's super ceramics
+  - {do: upgrade, id: d1, to: 0-2-5}                                      # Crossbow Master
+  - {do: upgrade, id: v1, to: 2-3-0}                                      # Monkey Intelligence Bureau: every damage type for the boat
   - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB
-  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB, before round 100
+  - {do: upgrade, id: s1, to: 5-1-0}                                      # Cripple MOAB: round 100's BAD, if the cash gets there
 answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
   ceramic: [{do: upgrade, id: d1, to: 0-2-3}, {do: upgrade, id: b1, to: 3-2-0}]
   moab: [{do: upgrade, id: d1, to: 0-2-4}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: t2, to: 5-0-2}]
   ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  bad: [{do: upgrade, id: t2, to: 5-0-2}]   # the plan's own step: no bank held for the Cripple MOAB (see 2026-11-08 01:00)
   rush: [{do: upgrade, id: t1, to: 0-2-0}, {do: upgrade, id: r1, to: 3-0-2}]
