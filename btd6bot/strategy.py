@@ -1637,12 +1637,50 @@ class Executor:
         except Exception:
             return None
         if grids and grids.get("panes"):
-            return getattr(self, "now_round", None)
+            return self._pane_now()
         return None
+
+    # How long one reading of the open pane off the screen is trusted (s):
+    # long enough for the clicks of one pick-up, short of a round change.
+    PANE_READ_S = 0.5
+
+    def _pane_now(self):
+        """The round to judge Covered Garden's panes by: one whose open pane
+        is the one the screen shows (mapgeom.pane_open_on_screen, read from a
+        fresh frame at most every PANE_READ_S), else - when the screen does
+        not say clearly, or offline - the bot's own round.
+
+        The bot's round goes stale while a tower's side panel covers the HUD
+        counter: on 2026-11-07 (20:37:21-20:38:33) it still believed round
+        17, and clicked the shut bottom-left pane some 40 times while the
+        top-left one was open. The screen is what the game will accept."""
+        from . import mapgeom
+        rnd = getattr(self, "now_round", None)
+        now = time.time()
+        cached = getattr(self, "_pane_read", None)
+        if cached is None or now - cached[0] > self.PANE_READ_S:
+            index = None
+            fresh = getattr(self.g, "fresh", None)
+            if fresh is not None:
+                try:
+                    index = mapgeom.pane_open_on_screen(self.m, fresh())
+                except Exception:
+                    index = None
+            cached = self._pane_read = (now, index)
+        index = cached[1]
+        if index is None:
+            return rnd
+        seen = mapgeom.round_for_open_pane(self.m, index, rnd)
+        if seen != rnd and getattr(self, "_pane_stale_logged", None) != (rnd, index):
+            self._pane_stale_logged = (rnd, index)
+            log.info("panes: the screen shows pane %d open - judging panes as in round %s "
+                     "(the bot's round is %s)", index, seen, rnd)
+        return seen
 
     def _pane_shut(self, step):
         """True when a place step's researched spot (`at`) lies under a
-        cycling pane (Covered Garden) that is shut this round. Placed now,
+        cycling pane (Covered Garden) that is shut now - as the screen shows
+        it (_pane_now), the round only when the screen is unclear. Placed now,
         the spot search would move the tower off the garden ground the build
         was made for; it waits for its pane's round instead."""
         at = step.get("at")
@@ -1650,18 +1688,21 @@ class Executor:
             return False
         from . import mapgeom
         try:
-            pane, open_now = mapgeom.pane_at(self.m, float(at[0]), float(at[1]),
-                                             getattr(self, "now_round", None))
+            pane, _ = mapgeom.pane_at(self.m, float(at[0]), float(at[1]), None)
+            if pane is None:
+                return False
+            return not mapgeom.pane_at(self.m, float(at[0]), float(at[1]), self._pane_now())[1]
         except Exception:
             return False
-        return pane is not None and not open_now
 
     def _reachable(self, p):
         """False while a closed pane covers tower p: a click there hits the
         glass, so it cannot be upgraded or sold this round."""
         from . import mapgeom
         try:
-            return mapgeom.pane_at(self.m, p.x, p.y, getattr(self, "now_round", None))[1]
+            if mapgeom.pane_at(self.m, p.x, p.y, None)[0] is None:
+                return True          # open ground: no screen read needed
+            return mapgeom.pane_at(self.m, p.x, p.y, self._pane_now())[1]
         except Exception:
             return True
 

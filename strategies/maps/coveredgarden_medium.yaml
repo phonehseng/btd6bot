@@ -62,7 +62,7 @@ plan:
   - {do: place, id: sky1, kind: skywarden, role: dps, segment: [0.39, 0.83], at: [0.345, 0.249]}   # R15: $205, secures round 15; cash left $5,852; under the top-left pane
   - {do: place, id: sky2, kind: skywarden, role: dps, segment: [0.38, 0.79], at: [0.334, 0.300]}   # R15: $205, secures round 15; cash left $5,647; under the top-left pane
   - {do: place, id: sky3, kind: skywarden, role: dps, segment: [0.16, 0.51], at: [0.281, 0.538]}   # R15: $205, secures round 15; cash left $5,442; under the bottom-left pane
-  - {do: place, id: sky4, kind: skywarden, role: dps, segment: [0.14, 0.46], at: [0.238, 0.538]}   # R15: $205, secures round 15; cash left $5,237; under the bottom-left pane
+  - {do: place, id: sky4, kind: skywarden, role: dps, segment: [0.14, 0.46], at: [0.222, 0.530]}   # R15: $205, secures round 15; cash left $5,237; under the bottom-left pane (21 units clear of sky3: 0.238,0.538 was 15.6, and its click was refused live)
   - {do: place, id: sky5, kind: skywarden, role: dps, segment: [0.11, 0.42], at: [0.216, 0.624]}   # R15: $205, secures round 15; cash left $5,032; under the bottom-left pane
   - {do: place, id: sky6, kind: skywarden, role: dps, segment: [0.62, 0.92], at: [0.494, 0.283]}   # R15: $205, secures round 15; cash left $4,827; under the top-right pane
   - {do: place, id: sky7, kind: skywarden, role: dps, segment: [0.63, 0.93], at: [0.526, 0.266]}   # R15: $205, secures round 15; cash left $4,622; under the top-right pane
