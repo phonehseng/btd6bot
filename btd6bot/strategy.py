@@ -617,9 +617,9 @@ def validate(strat):
     # `starter: {kind, at}`: the tower Match adds beside a lone opener in a
     # one-life game (match.Match._starter_spec)
     starter = strat.get("starter")
-    if starter is not None:
+    if starter is not None and starter != "none":   # none: no starter at all (match.Match._no_starter)
         if not isinstance(starter, dict) or set(starter) - {"kind", "at"}:
-            probs.append("starter: must be {kind: <tower>, at: [fx, fy]}")
+            probs.append("starter: must be {kind: <tower>, at: [fx, fy]} or none")
         elif starter.get("kind") not in T.TOWERS:
             probs.append(f"starter: unknown tower {starter.get('kind')}")
         elif starter.get("at") is not None and not (

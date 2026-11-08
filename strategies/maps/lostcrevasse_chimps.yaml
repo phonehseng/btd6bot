@@ -226,18 +226,53 @@
 # 7+ neighbours at least 0.08 from every plan spot (the left pocket has
 # none left beside the Skywarden and r1; next best (0.478, 0.164) 2.40 /
 # 2.07 / 2.11 / 1.72).
+# 2026-11-07 21:00: the 20:00 starter spot lost ROUND 23 live (19:48,
+# journal 20261107_195012; model 3.67). The 18:13 game played the same
+# plan, buy for buy and round for round, with the starter at (0.190, 0.428)
+# in the left pocket and held round 23 (and on to round 95). The recordings
+# (frames in docs/evidence/):
+#   * 19:53 (rec_20261107_195300 +52-55 s): round 23's blacks and whites
+#     split at the top towers; the children on the west lane's last third
+#     (the route from (0.28, 0.60) past (0.33, 0.65) and (0.32, 0.82) to the
+#     bottom-left exit) met only the Desperado, and a yellow left the map
+#     3 s into the round (lostcrevasse_1953_r23_leak_west_exit.png). The
+#     starter at (0.489, 0.172) threw only at the entrance, beside it, where
+#     the sniper and Skywarden already work;
+#   * 18:17 (rec_20261107_181700 +7-10 s): the pocket starter popped the
+#     children where both lanes pass the pocket, next to the Skywarden,
+#     and the round was clear 3.5 s in, nothing past the Desperado
+#     (lostcrevasse_1817_r23_pocket_starter_pops.png).
+# The damage model cannot tell the two apart (R23 3.59 top / 3.51 pocket):
+# the video decides. Change: the starter goes back to the pocket, at
+# (0.200, 0.428) - 0.01 from the 18:13 cell, 8 of 8 neighbour cells legal
+# with the boat standing (the 18:13 cell has 4), the Skywarden still legal
+# after it, 0.10 from the Skywarden and at least 0.08 from every plan spot.
+# Replay rounds 6-12 (as at 19:30): 2.57 / 2.13 / 2.11 / 1.83 / 2.02 / 2.65
+# / 2.11 (Lost Crevasse's land sits at track height where these towers
+# stand, so the model's height shift changes nothing here).
+# r1 cannot stay at (0.227, 0.411), 0.06 from the starter: the pocket holds
+# the Skywarden and the starter 0.08 apart and nothing else. r1 moves to
+# (0.419, 0.291), the island inside the west lane's first loop: both lanes,
+# 170 / 155 units from 5-0-2 (the pocket cell 215 / 109), 63 / 62 at 0-0-0;
+# the bot's reach check 168 of 515 cells at 0-0-0 (33%, over the 25%
+# sell_useless line) and 529 of 705 at 57.2 units (75%); 8 of 8 neighbours
+# legal with every earlier tower standing (main's data/maps/lostcrevasse.npz,
+# read in place), 0.16 from the sniper. Replay of the whole plan (starter
+# paid): plan 28/28, no threat gaps, Flagship R62, Glaive Lord R83; rounds
+# 83-100 equal or better than with r1 in the pocket (R85 6.04 / 5.72, R90
+# 1.98 / 1.79, R95 0.43 / 0.39, R98 0.92 / 0.75, R100 2.23 / 2.11).
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
-starter: {kind: dart, at: [0.489, 0.172]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
+starter: {kind: dart, at: [0.200, 0.428]}   # left pocket, where it held round 23 at 18:13 (see 21:00; match.Match._starter_spec)
 modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Lost Crevasse]
-  revised: "2026-11-07T20:00"
+  revised: "2026-11-07T21:00"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.709]}   # the lake: opens alone (the match adds a dart)
   - {do: place, id: d1, kind: desperado, role: dps, at: [0.206, 0.641]}   # R8: lower-left field, the east lane's last third
@@ -261,7 +296,7 @@ plan:
   - {do: upgrade, id: v1, to: 2-2-0}                                      # Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                      # Aircraft Carrier
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.227, 0.411]}   # left pocket: both lanes (see 19:00)
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.419, 0.291]}   # inside the top loop: both lanes (see 21:00)
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord, before round 80
   - {do: upgrade, id: v1, to: 4-2-0}                                      # Primary Mentoring

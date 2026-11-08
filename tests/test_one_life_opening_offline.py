@@ -102,9 +102,25 @@ def test_build_names_its_starter_spot_and_kind():
     assert m._opener_reserve() == T.price(T.TOWERS["dart"]["cost"], "hard")
 
 
+def test_build_can_opt_out_of_the_starter():
+    """Sulfur Springs CHIMPS (2026-11-07 18:43, 19:57): the recordings show
+    the starter dart never threw a dart from either spot, and round 9 was
+    lost with the boat $10 short of Double Shot. `starter: none`: a lone
+    opener stays alone and the plan keeps nothing back for a second tower."""
+    m = _priced_match("chimps", ["buccaneer"])
+    m.ex.strat = {"starter": "none"}
+    assert not m._lone_opener()
+    assert m._opener_reserve() == 0
+    # without the opt-out the same board still wants its second tower
+    m.ex.strat = {"id": "x"}
+    assert m._lone_opener()
+
+
 def test_validate_checks_the_starter_field():
     from btd6bot.strategy import validate
     base = {"id": "x", "modes": ["chimps"], "plan": [{"do": "place", "id": "b1", "kind": "buccaneer"}]}
+    assert validate(dict(base, starter="none")) == []
+    assert validate(dict(base, starter="nothing"))
     assert validate(dict(base, starter={"kind": "dart", "at": [0.2, 0.4]})) == []
     assert validate(dict(base, starter={"kind": "dart"})) == []
     assert validate(dict(base, starter={"kind": "laser", "at": [0.2, 0.4]}))
