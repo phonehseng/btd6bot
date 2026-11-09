@@ -66,6 +66,41 @@ def test_glacial_trail_towers_count_their_frozen_rounds():
     assert abs(frozen / always_on - 0.8) < 0.05, (always_on, frozen)
 
 
+def test_glacial_trail_freeze_phase_from_the_placement_round():
+    # Glacial Trail ABR 2026-11-09: bought in round 22, free in 30, frozen in 31
+    assert not D.frozen_in("Glacial Trail", 22, 30)
+    assert D.frozen_in("Glacial Trail", 22, 31) and D.frozen_in("glacialtrail", 22, 32)
+    assert not D.frozen_in("Glacial Trail", 22, 33)
+    assert D.frozen_in("Glacial Trail", 22, 41) and D.frozen_in("Glacial Trail", 15, 25)
+    # no freeze elsewhere, nor with a round unknown
+    assert not D.frozen_in("Water Park", 22, 31)
+    assert not D.frozen_in("Glacial Trail", None, 31) and not D.frozen_in("Glacial Trail", 22, None)
+
+
+def test_a_defence_bought_in_one_round_is_rated_frozen_together():
+    """Glacial Trail ABR 2026-11-09: the whole Fast Track opening was bought
+    in round 22 and froze together in round 31, which the average uptime had
+    rated 0.81. With placement rounds known, that round is rated with no
+    tower awake, the rounds around it at full strength."""
+    if not D.available():
+        return
+    f = RoundForecast("Water Park", "easy")
+    full = {r: f.margin(WATER_PARK_R28, r) for r in (20, 21)}
+    f.map_name = "Glacial Trail"          # Water Park's track, Glacial Trail's freeze
+    f.track.uptime = D.tower_uptime("Glacial Trail")
+    # bought in round 12: awake in round 20 (8 rounds on), in ice in 21 and 22
+    one_round = [N(**{**t.__dict__, "placed_round": 12}) for t in WATER_PARK_R28]
+    assert abs(f.margin(one_round, 20) - full[20]) < 0.05 * full[20]    # all awake: full strength
+    assert f.margin(one_round, 21) < CRISIS_MARGIN                         # all in ice
+    assert f.leaks(one_round, [21], 1.0) > f.leaks(WATER_PARK_R28, [21], 1.0)
+    # bought over two rounds: half the defence still stands in round 21
+    staggered = [N(**{**t.__dict__, "placed_round": 12 + i % 2}) for i, t in enumerate(WATER_PARK_R28)]
+    assert f.margin(one_round, 21) < f.margin(staggered, 21) <= full[21]
+    # a tower without a known placement round: the old average for everyone
+    unknown = one_round[:-2] + [WATER_PARK_R28[-2], one_round[-1]]
+    assert abs(f.margin(unknown, 20) - 0.8 * full[20]) < 0.08 * full[20]
+
+
 def test_crisis_threshold():
     assert RoundForecast.is_crisis(CRISIS_MARGIN - 0.01)
     assert not RoundForecast.is_crisis(CRISIS_MARGIN)
