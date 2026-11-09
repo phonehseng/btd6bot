@@ -46,7 +46,31 @@ def test_held_tower_is_seen_on_cracked():
     assert g.is_holding(frame("cracked_holding.jpg")), "the red cancel button with its X was missed"
 
 
+# Mesa Military Only (2026-11-09 01:21, recordings rec_20261109_0121/0122):
+# Fast Track's "FAST TRACK ENABLED" banner stands where the cancel button is
+# drawn until round one, its white "ED" over Mesa's red ground. Quincy was
+# placed on the first click ($6,700 -> $6,215) yet logged as refused, as were
+# seven snipers and two helis after him; the bot recorded no tower and gave
+# the match up with "no defence".
+
+def test_fast_track_banner_on_mesa_is_not_a_held_tower():
+    g = make_game()
+    assert not g.is_holding(frame("mesa_fast_track_not_holding.jpg")), \
+        "the Fast Track banner's white text over Mesa's red ground read as a held tower"
+    assert not g.is_holding(frame("mesa_fast_track_cursor_not_holding.jpg")), \
+        "the banner with the cursor over it read as a held tower"
+
+
+def test_held_tower_is_seen_on_mesa():
+    g = make_game()
+    assert g.is_holding(frame("mesa_holding.jpg")), "the cancel X on Mesa was missed"
+    assert g.is_holding(frame("mesa_holding_cursor_on_x.jpg")), \
+        "the cancel X with the cursor over it was missed"
+
+
 if __name__ == "__main__":
     test_cracked_ground_is_not_a_held_tower()
     test_held_tower_is_seen_on_cracked()
+    test_fast_track_banner_on_mesa_is_not_a_held_tower()
+    test_held_tower_is_seen_on_mesa()
     print("OK test_holding_offline")
