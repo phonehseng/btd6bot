@@ -1217,10 +1217,16 @@ def map_fit_factor(s: StrategySpec, map_name: str, mode: str) -> float:
     return min(1.0, max(MIN_FIT_FACTOR, fit / FULL_FIT))
 
 
-def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> float:
+def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str, mode: str,
+                          map_losses: bool = True) -> float:
     """Prior p before any record/calibration: declared rate x map x readiness,
     then the account's Double Cash (when it pays in this mode), then how well
-    the plan's towers can reach this map's track."""
+    the plan's towers can reach this map's track.
+
+    map_losses=False leaves out the doubt a general build gets from the
+    losses on record for this map and mode (MAP_LOSS_FACTOR). _Calibration
+    measures a build's wins against this prior, and the losses it measures
+    must not first lower what it expects (see _Calibration)."""
     from .boosts import double_cash_applies
     from .strategy import MODE_RULES
     boosts = getattr(account, "boosts", {}) or {}
@@ -1244,7 +1250,7 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
     if trouble_applies(s, map_name):
         trouble = getattr(account, "placement_trouble", {}).get(canonical_map(map_name), 0)
         p *= max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR ** trouble)
-    if s.maps is None:
+    if s.maps is None and map_losses:
         # a general build answers for the map's record too: Last Resort Hard
         # was lost by three general builds in turn, each of them rated 0.8-0.9
         # untested there because only its own record counted
@@ -1496,7 +1502,15 @@ class _Calibration:
             wins, losses = (build_record(account, s, m, mode) if s.revised
                             else (st.get("wins", 0), st.get("losses", 0)))
             games = wins + losses
-            exp = prior_win_probability(account, s, m, mode) * games
+            # Measured against the prior WITHOUT the map's own losses
+            # (MAP_LOSS_FACTOR): with them, every loss lowered the wins
+            # expected on its map, so the losses all but cancelled out of
+            # the factor. apopalypse_ninja_sniper had won 13 of 22 games on
+            # Advanced maps (59%), yet the eight maps it had lost on counted
+            # at 0.7^n of their prior, the factor came out 1.24, and untried
+            # Spillway Apopalypse was played at p=0.82 and lost at round 46
+            # (2026-11-09, its fifth Advanced loss in a row).
+            exp = prior_win_probability(account, s, m, mode, map_losses=False) * games
             for a in (acc.setdefault((sid, mode), [0.0, 0.0]),
                       acc_cat.setdefault((sid, mode, account.map_category(m)), [0.0, 0.0])):
                 a[0] += wins

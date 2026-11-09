@@ -640,6 +640,37 @@ def test_losses_on_a_map_mode_count_against_every_general_build():
     assert P.prior_win_probability(acc2, own, "Ravine", "hard") == p0
 
 
+def test_calibration_counts_a_maps_losses_once():
+    """Spillway Apopalypse (2026-11-09): apopalypse_ninja_sniper had won 13
+    of 22 Advanced games, but each map it had lost on counted at 0.7^losses
+    of its prior (MAP_LOSS_FACTOR) in the wins the calibration expected, so
+    those losses hardly lowered the factor (x1.24). The untried map was
+    played at p=0.82 and lost at round 46. The calibration now expects the
+    prior without the map's own losses: a build that wins half its games on
+    a category is not rated far above half on an untried map there.
+
+    Here: six Advanced maps won once, three lost twice each (6 of 12), on
+    maps whose prior is the same. Counted with the map losses the factor
+    came out 0.99 and the untried map 0.67; now 0.74 and 0.50."""
+    acc = _fresh_ish_account()
+    s = _spec(id="g_adv", modes=("medium",), rate=0.8, towers={"dart": (0, 0, 2)})
+    adv = [m for m in sorted(MAPS) if m not in EXCLUDED_MAPS and acc.map_category(m) == "advanced"]
+    top = max(P.prior_win_probability(acc, s, m, "medium") for m in adv)
+    alike = [m for m in adv if abs(P.prior_win_probability(acc, s, m, "medium") - top) < 1e-9]
+    won, lost, untried = alike[:6], alike[6:9], alike[9]
+    for m in won:
+        acc.record_result(m, "medium", s.id, True, minutes=20)
+    for m in lost + lost:
+        acc.record_result(m, "medium", s.id, False, round_reached=50)
+    cal = P._Calibration(acc, {s.id: s})
+    assert cal.get(s.id, "medium", "advanced") < 0.9, cal.get(s.id, "medium", "advanced")
+    p, n = P.win_probability(acc, s, untried, "medium", calib=cal)
+    assert n == 0 and p < 0.6, p
+    # the doubt for a map's own losses still applies to that map itself
+    assert (P.prior_win_probability(acc, s, lost[0], "medium")
+            < P.prior_win_probability(acc, s, lost[0], "medium", map_losses=False))
+
+
 def test_general_builds_are_not_trusted_beyond_their_record_without_income():
     """Dark Path Deflation (2026-11-02): solo_dartling at p=0.90 lost at
     round 35. In a no-income mode a general build is capped at its record;
@@ -1221,7 +1252,7 @@ if __name__ == "__main__":
              "test_fresh_account_first_40", "test_duration_defaults_and_first_visit_scan",
              "test_duration_learns_from_observed_games", "test_planner_prefers_faster_games",
              "test_hard_medals_preferred_when_reliable", "test_hard_submode_chain_after_hard",
-             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_harder_versions_of_a_mode_inherit_its_ceiling", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_a_solo_family_record_in_a_kind_of_game_counts_for_every_member", "test_hard_first_by_default", "test_black_borders_beginner_maps_first", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
+             "test_hard_losses_stop_hard_attempts", "test_map_modes_no_build_holds_are_not_trusted", "test_harder_versions_of_a_mode_inherit_its_ceiling", "test_calibration_cannot_lift_a_game_over_its_ceiling_cap", "test_optimized_builds_set_the_ceiling", "test_losses_on_a_map_mode_count_against_every_general_build", "test_calibration_counts_a_maps_losses_once", "test_general_builds_are_not_trusted_beyond_their_record_without_income", "test_a_solo_family_record_in_a_kind_of_game_counts_for_every_member", "test_hard_first_by_default", "test_black_borders_beginner_maps_first", "test_fresh_ish_account_warms_up", "test_confident_games_first_within_a_tier",
              "test_learned_tracks_first", "test_weak_roster_falls_back_to_easy_with_reason",
              "test_never_prefers_low_p", "test_missing_upgrades_degrade_instead_of_block",
              "test_map_difficulty_matters_less_in_easy", "test_achievement_state_fuzzy_match",
