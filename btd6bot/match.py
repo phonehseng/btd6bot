@@ -16,6 +16,7 @@ from .towerxp import TowerXpCounter
 from .carried import CarriedTowers
 
 REINFORCE_EVERY = 2.0   # seconds between model-chosen purchases (each choice takes ~1 s)
+PLAN_YIELD_DEPTH = 0.9  # bloons this far along the route last round: a plan_first step may yield (_plan_lets_reinforce)
 REINFORCE_WAIT = 8.0    # ... and after a look that found nothing affordable to help
 WATCH_EVERY = 0.2       # seconds between looks of the bloon watch during a round
 EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
@@ -786,9 +787,10 @@ class Match:
                         self._last_wait_log = now
                         log.info("idle with $%d: %s", cash, getattr(self.ex, "waiting", "?"))
                     held = self._cash_held(dropped, crisis)
-                    # a plan_first build's plan owns the cash (Executor.plan_first)
-                    plan_first = getattr(self.ex, "plan_first", None)
-                    if plan_first is not None and plan_first():
+                    # a plan_first build's plan owns the cash (Executor.plan_first),
+                    # unless its waiting step cannot come before a near round
+                    # rated a crisis (Executor.plan_first_yields)
+                    if weak and not self._plan_lets_reinforce(cash, last_round):
                         weak = False
                     if weak and not held and now - self._t_reinforce > REINFORCE_EVERY:
                         # the coming rounds look weak: the damage model picks
@@ -1292,6 +1294,34 @@ class Match:
         if self._weak_round != rnd or rnd >= worst:
             return 0
         return cost
+
+    def _plan_lets_reinforce(self, cash, rnd):
+        """May reinforce spend this tick as far as the plan is concerned? A
+        plan_first build's plan owns the bank (Executor.plan_first) except
+        when both of these hold:
+
+          * the bloons of the last round watched got PLAN_YIELD_DEPTH or
+            more along the route (bloonwatch: the defence is really short,
+            not only in the damage model);
+          * the waiting plan step cannot be paid before a near round the
+            damage model rates a crisis (Executor.plan_first_yields).
+
+        The depth is what tells the real danger apart from the model's
+        pessimism. Over the CHIMPS games of 2026-11-07..09, the won Cracked,
+        Hedge, KartsNDarts and Lotus Island games had 22-60 rounds whose
+        look-ahead was rated under 0.5, and none of them with the bloons past
+        90% while the weak round was at most four rounds off; Moon Landing's
+        round-59 loss (2026-11-09) had five in a row (rounds 55-59, 93-96%),
+        its round-40 loss two. Skates' win had four (rounds 37-38, 97-98).
+        No bloon watch: the plan keeps the cash. Any other build: yes."""
+        plan_first = getattr(self.ex, "plan_first", None)
+        if plan_first is None or not plan_first():
+            return True
+        depths = getattr(self, "depths", None)
+        if not depths or (depths[-1].get("deepest") or 0.0) < PLAN_YIELD_DEPTH:
+            return False
+        yields = getattr(self.ex, "plan_first_yields", None)
+        return bool(yields is not None and yields(cash, rnd))
 
     def _reinforce(self, cash, rnd):
         """One model-chosen purchase (reinforce.py). True when one was bought;

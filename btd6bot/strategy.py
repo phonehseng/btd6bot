@@ -4777,11 +4777,76 @@ class Executor:
         a crisis, reinforce spent the plan's cash on snipers each time, and
         the Glaive Lord ($35,100) was never bought. Skates' real cause was
         a far threat's hold taking the whole bank (_far_keep says why, and
-        now lets it go)."""
+        now lets it go).
+
+        The one narrow exception is plan_first_yields: a waiting step that
+        cannot be paid before a near round rated under YIELD_MARGIN lets
+        reinforce spend for that round (Moon Landing CHIMPS, 2026-11-09)."""
         strat = getattr(self, "strat", None)
         if not (isinstance(strat, dict) and strat.get("plan_first")):
             return False
         return getattr(self, "idx", 0) < len(getattr(self, "plan", None) or [])
+
+    # plan_first_yields: how weak and how near a round must be for a plan_first
+    # build's unreachable plan step to give way to reinforcing
+    YIELD_MARGIN = RF.CRISIS_MARGIN   # rated under this: a crisis round (forecast.py)
+    YIELD_ROUNDS = 4                  # at most this many rounds after the one being played
+
+    def plan_first_yields(self, cash, rnd):
+        """Does a plan_first build's plan let reinforce spend this tick? True
+        only when all of these hold:
+
+          * plan_first() is on and its current step waits for cash
+            (reinforce.waiting_plan_step: it costs more than `cash`);
+          * the damage model's weakest look-ahead round (lookahead_worst) is
+            rated under YIELD_MARGIN and comes at most YIELD_ROUNDS after the
+            round being played;
+          * the step cannot be paid before that round (the next one, when it
+            is the round being played) from `cash` and the income until then
+            (reinforce.payable_by False).
+
+        Then waiting cannot bring the step in time for the round the game is
+        at stake in, and the cash it waits for is better spent on what lifts
+        that round - reinforce.best picks it, and lets go of the step by the
+        same payable_by test (plan_keeps_claim). Moon Landing CHIMPS
+        (2026-11-09) lost round 59 that way: from round 50 the model rated
+        it 0.10, the next step was the Archmage (w1 5-0-2, $46,925), and
+        "idle with $9388: plan step 20 w1 5-0-2 -> wait" was the last line
+        before the defeat. Spring Spring CHIMPS lost round 99 with $16k
+        idle for an unaffordable Cripple MOAB (2026-11-08).
+
+        Narrow on purpose (Executor.plan_first: the crisis exception that
+        let reinforce spend in any crisis of the round being played was
+        taken out after Alpine Run CHIMPS, 2026-11-07, spent its Glaive
+        Lord's cash on snipers for rounds rated 0.59-0.99 that all passed).
+        A step income can still deliver before the weak round keeps all of
+        its cash; a weak round rated over YIELD_MARGIN, or further off than
+        YIELD_ROUNDS, does not count; unknown income (payable_by None) or no
+        rating means the plan keeps the cash."""
+        if cash is None or rnd is None or not self.plan_first():
+            return False
+        if (getattr(self, "rules", None) or {}).get("income") is False:
+            return False          # no income: saving is all the step has
+        wait = RF.waiting_plan_step(self, cash)
+        if wait is None:
+            return False
+        worst = self.lookahead_worst(rnd)
+        if worst is None or worst[0] is None or worst[1] is None:
+            return False
+        margin, weak = worst
+        if margin >= self.YIELD_MARGIN or weak - rnd > self.YIELD_ROUNDS:
+            return False
+        step, cost = wait
+        pay_by = max(weak, rnd + 1)   # the round being played: no income reaches it
+        if RF.payable_by(self, cost, cash, pay_by, rnd) is not False:
+            return False
+        note = ("plan-first-yields", getattr(self, "idx", None), weak)
+        if note not in self._notes():
+            self.noted.add(note)
+            log.warning("plan_first: plan step %s ($%.0f) cannot be paid before round %d from $%d and the "
+                        "income until then, and the damage model rates round %d at %.2f - reinforce may "
+                        "spend for that round", step, cost, pay_by, cash, weak, margin)
+        return True
 
     def surplus(self, cash, rnd):
         """Cash is piling up while the plan waits: buy damage anyway.
