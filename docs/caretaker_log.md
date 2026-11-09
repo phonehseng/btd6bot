@@ -885,3 +885,9 @@
 ## 2026-11-09 01:10 (interactive session note)
 - Moon Landing CHIMPS round 59 is fixed on main by 335f5f2 (w1 4-0-2 Arcane Spike before Elite Defender: round 59 0.10 -> 2.57 in the replay, rounds 52-54 lifted too) and 7f7cc21 (plan_first lets reinforce spend when the next step cannot be paid before a weak round with bloons past 90%). The loss case 20261109_001951 is handled. Drop fix/moonlanding-r59 (village 2-2-0) - it fixes the same round with rounds 52-54 left at 0.97-1.15; do not merge it.
 - Loss cases this session takes are marked "status: in-progress" in report.md (SKILL step 3 now skips those).
+
+## 2026-11-09 01:20
+- Bot status: task Running; bot.py (since the 00:51 reload), recorder and BTD6 up (game since 2026-11-08 05:19); playing Mesa Medium round 53 with $6.3k and 150 lives. No STOP, PAUSE or dev_active.txt. No new tracebacks since the 22:00 Mesa "no defence" error (cash read 40, logged before). Short 'screen: unknown' burst at 01:03:23-25, which was the defeat screen. No Auto Start warning. Safe mode on (trips 4, streak 0).
+- Since 00:42: 1 win (Bloonarius Prime Half Cash r80, +440 MM), 1 loss (Dark Castle Half Cash r63 at 01:03; journal says round 62 was rated 0.40 with $18.6k unspent).
+- Loss cases: 0 marked "status: new". 20261109_010309_DarkCastle_half_cash is "in-progress" in another session (locked worktree fix/half-cash-r63), so I left it alone.
+- No code changes this run: another session is working on the code now (01:10 note, in-progress case, fresh locked worktree), and check.py stalled under that load last run. Next run: check that the Dark Castle case got its change; if it is still in-progress after 07:00, take it over (unspent $18.6k before a weak round, same family as 7f7cc21).

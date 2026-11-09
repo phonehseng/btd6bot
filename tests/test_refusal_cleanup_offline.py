@@ -70,8 +70,36 @@ def test_cleanup_runs_once_per_map():
     print("ok clean-up runs once per map and is remembered")
 
 
+def test_listed_map_drops_its_refusals_once():
+    """REFUSAL_RESETS (Mesa, 2026-11-09): every refusal learned on a listed
+    map is dropped on the first load, then new ones are kept; maps not
+    listed keep theirs."""
+    with tempfile.TemporaryDirectory() as tmp:
+        old = maplearn.DATA
+        maplearn.DATA = Path(tmp)
+        try:
+            for name in ("Mesa", "Monkey Meadow"):
+                m = MapModel(name, PF)
+                m.refuse("land", 41, 41)
+                m.refuse("land", 81, 81)
+                m.save()
+            mesa = MapModel.load("Mesa", PF)
+            assert not mesa.refused_mask("land").any(), "Mesa's old refusals must go"
+            assert mesa.refusal_reset == maplearn.REFUSAL_RESETS["mesa"]
+            mesa.refuse("land", 41, 41)       # learned after the fix
+            mesa.save()
+            assert MapModel.load("Mesa", PF).refused_mask("land").sum() == 9, \
+                "a refusal learned after the reset must stay"
+            meadow = MapModel.load("Monkey Meadow", PF)
+            assert meadow.refused_mask("land").sum() == 18, "an unlisted map keeps its refusals"
+        finally:
+            maplearn.DATA = old
+    print("ok a listed map drops its refusals once")
+
+
 if __name__ == "__main__":
     test_unrefuse_clears_square()
     test_cleanup_uses_tower_surface()
     test_cleanup_runs_once_per_map()
+    test_listed_map_drops_its_refusals_once()
     print("ALL OK")

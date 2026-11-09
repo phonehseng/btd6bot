@@ -29,6 +29,15 @@ SPOT_BUCKET = 4    # spot_stats groups tower spots into squares of this many cel
 # Bump to run MapModel.forget_contradicted_refusals once more on every map
 # (stored per map in the model's meta as "refusal_cleanup").
 REFUSAL_CLEANUP = 1
+# Maps whose learned refusals are known to be wrong and are dropped whole
+# once (map slug -> reset number; bump a map's number to drop them again).
+# Stored per map in the model's meta as "refusal_reset".
+#   mesa, mesareverse: until 2026-11-09 Game.is_holding took Fast Track's
+#   "FAST TRACK ENABLED" banner over Mesa's red ground for the cancel button,
+#   so towers that WERE placed before round one read as refused clicks and
+#   the short runs among them were learned as bad ground (1,121 refused land
+#   cells on Mesa). Mesa has game geometry, so nothing is lost by dropping them.
+REFUSAL_RESETS = {"mesa": 1, "mesareverse": 1}
 
 
 def slug(name):
@@ -74,6 +83,8 @@ class MapModel:
         self.spot_stats = {}
         # which REFUSAL_CLEANUP last ran on this map (0 = never)
         self.refusal_cleanup = 0
+        # which REFUSAL_RESETS entry last dropped this map's refusals (0 = never)
+        self.refusal_reset = 0
 
     # -- persistence ------------------------------------------------------
     @property
@@ -98,7 +109,8 @@ class MapModel:
                                      "px_per_unit": self.px_per_unit, "playfield": self.playfield,
                              "spot_stats": self.spot_stats, "sandbox_rounds": self.sandbox_rounds,
                              "geometry_bundle": self.geometry_bundle,
-                             "refusal_cleanup": self.refusal_cleanup}),
+                             "refusal_cleanup": self.refusal_cleanup,
+                             "refusal_reset": self.refusal_reset}),
                 )
                 os.replace(tmp, self.path)
                 return True
@@ -134,8 +146,10 @@ class MapModel:
                     elif k.startswith("accepted_"):
                         m.accepted[k[len("accepted_"):]] = d[k].astype(bool)
                 m.refusal_cleanup = meta.get("refusal_cleanup", 0)
+                m.refusal_reset = meta.get("refusal_reset", 0)
             except Exception:
                 return cls(name, playfield)  # corrupt file: relearn rather than crash
+            m.apply_refusal_reset()
             if m.refusal_cleanup < REFUSAL_CLEANUP:
                 # in memory only; the game's own save at the end keeps it
                 cleared = m.forget_contradicted_refusals()
@@ -222,6 +236,20 @@ class MapModel:
             cleared += int(sq.sum())
             sq[:] = False
         return cleared
+
+    def apply_refusal_reset(self):
+        """Drop every learned refusal once when REFUSAL_RESETS lists this map
+        with a newer number than the one it last had (in memory; the game's
+        own save at the end keeps it). Returns the refused cells dropped."""
+        want = REFUSAL_RESETS.get(slug(self.name), 0)
+        if self.refusal_reset >= want:
+            return 0
+        dropped = sum(int(g.sum()) for g in self.refused.values())
+        self.refused = {}
+        self.refusal_reset = want
+        log.info("%s: dropped all %d learned refused cells (REFUSAL_RESETS %d)",
+                 self.name, dropped, want)
+        return dropped
 
     def accepted_mask(self, surface):
         """bool grid: cells the game accepted a tower on although the map

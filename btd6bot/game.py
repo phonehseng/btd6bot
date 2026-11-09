@@ -257,6 +257,14 @@ class Game:
     # reads 0.38-0.50 red but at most 0.015 white.
     HOLD_RED_MIN = 0.3
     HOLD_WHITE_MIN = 0.1
+    # The white must also be shaped like an X: share of the pixels on the two
+    # diagonals that are white, and how many times whiter the diagonals are
+    # than the rest of the region. Measured on 1280x800 recordings: a held
+    # tower's X reads 0.60-0.82 on the diagonals and 0.14-0.19 off them
+    # (Cracked, Mesa, also with the cursor over the button); the white text
+    # "ENABLED" of Fast Track's banner reads 0.18-0.25 on and ~0.30 off.
+    HOLD_X_DIAG_MIN = 0.35
+    HOLD_X_RATIO_MIN = 1.8
 
     def is_holding(self, f=None):
         """True while a tower is on the cursor: the red cancel button with its
@@ -267,16 +275,46 @@ class Game:
         placement click read as 'refused': the bot picked the tower up again
         and placed it elsewhere, bought ~30 towers it never recorded (no
         upgrades, no answers) and lost Apopalypse at round 46 (case
-        20261106_171204). The white X is what the ground does not have."""
+        20261106_171204). The white X is what the ground does not have.
+
+        Red and some white are not enough either: with Fast Track on, the
+        "FAST TRACK ENABLED" banner is shown over the same spot until the
+        first round starts, and the white "ED" of its text lies inside the
+        region. On Mesa the ground there is orange-red, so with nothing held
+        the test said "holding": every opener the bot placed before round
+        one was logged as a refused click and never recorded, ~$5,800 of
+        towers stood on the map unknown to the bot, and the match was
+        abandoned with "no defence" (Mesa, 2026-11-08/09, 114 refusal runs).
+        So the white must lie on the X's diagonals (_x_shaped)."""
         f = f if f is not None else self.fresh()
         x, y = self.lay["cancel_place"]
         reg = (x - 0.012, y - 0.02, x + 0.012, y + 0.02)
         c = crop(f, reg)
         hsv = cv2.cvtColor(c, cv2.COLOR_BGR2HSV)
         red = cv2.inRange(hsv, (0, 130, 150), (15, 255, 255)) | cv2.inRange(hsv, (172, 130, 150), (180, 255, 255))
-        white = cv2.inRange(hsv, (0, 0, 200), (180, 60, 255))
+        white = cv2.inRange(hsv, (0, 0, 200), (180, 60, 255)) > 0
         return (np.count_nonzero(red) / red.size > self.HOLD_RED_MIN
-                and np.count_nonzero(white) / white.size > self.HOLD_WHITE_MIN)
+                and white.mean() > self.HOLD_WHITE_MIN
+                and self._x_shaped(white))
+
+    @classmethod
+    def _x_shaped(cls, white):
+        """Does this white mask (the cancel-button region) hold an X? The
+        X's two strokes run corner to corner through the centre, so the
+        pixels near the diagonals must be mostly white and clearly whiter
+        than the pixels far from them (text or ground highlights are not
+        laid out that way)."""
+        h, w = white.shape
+        yy, xx = np.mgrid[0:h, 0:w]
+        u = np.abs((xx - (w - 1) / 2) / (w / 2))    # 0 at the centre, 1 at the edge
+        v = np.abs((yy - (h - 1) / 2) / (h / 2))
+        off_diag = np.abs(u - v)
+        on = (off_diag < 0.25) & (u < 0.7)           # the strokes, short of the corners
+        off = off_diag > 0.55                        # between the strokes
+        if not on.any() or not off.any():
+            return False
+        on_share, off_share = white[on].mean(), white[off].mean()
+        return on_share >= cls.HOLD_X_DIAG_MIN and on_share >= cls.HOLD_X_RATIO_MIN * off_share
 
     def hold(self, kind, tries=3):
         """Pick up a tower (or the hero) with its hotkey. True when it is on
