@@ -808,15 +808,42 @@ def map_routes(geom):
 # most boomerangs frozen.)
 TOWER_FREEZE = {"Glacial Trail": (2, 10)}
 
+# The first frozen round, counted from the round a tower was placed in (the
+# round on the HUD when it was bought). Read off two lost games whose whole
+# defence was bought in one round: placed in round 22 -> free in round 30,
+# frozen in round 31 (Glacial Trail ABR 2026-11-09, end_025/end_028.jpg);
+# placed in round 15 -> free in 22, frozen in 25 (Medium 2026-11-07). So a
+# tower placed in round p is frozen in rounds p+9, p+10, p+19, p+20, ...
+FREEZE_FIRST_OFFSET = 9
+
+
+def _freeze_cycle(map_name):
+    """(rounds off, cycle length) of the map's tower freeze, (0, 1) where
+    towers never freeze. Takes the display name or the file key."""
+    key = "".join(c for c in str(map_name).lower() if c.isalnum())
+    by_key = {"".join(c for c in m.lower() if c.isalnum()): v for m, v in TOWER_FREEZE.items()}
+    return by_key.get(key, (0, 1))
+
 
 def tower_uptime(map_name):
     """Share of the time a tower on this map can attack (1.0 on maps that
     never switch towers off; see TOWER_FREEZE). Takes the display name or
     the file key ("Glacial Trail" or "glacialtrail")."""
-    key = "".join(c for c in str(map_name).lower() if c.isalnum())
-    by_key = {"".join(c for c in m.lower() if c.isalnum()): v for m, v in TOWER_FREEZE.items()}
-    off, cycle = by_key.get(key, (0, 1))
+    off, cycle = _freeze_cycle(map_name)
     return (cycle - off) / cycle
+
+
+def frozen_in(map_name, placed_round, rnd):
+    """True when a tower placed in `placed_round` sits in ice during round
+    `rnd` on this map (False on maps without a freeze, or when either round
+    is unknown). Towers bought in the same round share one phase, so a
+    Fast Track opening bought in one round freezes all at once - the
+    average uptime hides that round (backlog 18)."""
+    off, cycle = _freeze_cycle(map_name)
+    if not off or placed_round is None or rnd is None:
+        return False
+    since = rnd - placed_round - FREEZE_FIRST_OFFSET
+    return since >= 0 and since % cycle < off
 
 
 class Track:

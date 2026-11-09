@@ -213,6 +213,9 @@ def test_damage_spots_reach_the_track():
 
 # -- map strategies ----------------------------------------------------------------------
 
+# a map build's base_success at or under this is "parked": kept on file, not played
+PARKED_SUCCESS = 0.1
+
 def test_map_strategies_load_valid_and_ready():
     strats = map_strategies()
     assert strats
@@ -230,8 +233,12 @@ def test_map_strategies_load_valid_and_ready():
         assert sid not in general or general[sid].get("map") == s["map"], (sid, "id clash")
         for mode in s["modes"]:
             assert mode in S.MODE_RULES, (sid, mode)
-            # conservative: below the hand-tested strategies of the same difficulty
-            assert 0.5 <= s["planner"]["base_success"][mode] <= 0.85, (sid, mode)
+            # conservative: below the hand-tested strategies of the same
+            # difficulty - or parked after live losses (Spring Spring CHIMPS,
+            # Ship Capture Half Cash at 0.05: the planner stops picking them
+            # until a new core is designed, the file stays as the record)
+            p = s["planner"]["base_success"][mode]
+            assert 0.5 <= p <= 0.85 or p <= PARKED_SUCCESS, (sid, mode, p)
 
 
 def test_map_strategies_usable_and_covered():

@@ -83,6 +83,47 @@ class RoundForecast:
             placed.append(D.Placed(p.tid, p.kind, tuple(p.tiers), x, z))
         return D.stations_for(placed, self.track, self.sight) if placed else None
 
+    def _phases(self, towers, rounds):
+        """Split `rounds` by which towers are awake in them, on maps that
+        freeze towers (dps_model.TOWER_FREEZE): [(stations, rounds, exact)].
+
+        When every tower's placement round is known (Executor sets
+        placed_round), each round is rated with only the towers that are
+        not in ice then, at full strength (exact=True) - a Fast Track opening
+        bought in one round freezes all at once, and the average uptime rated
+        that round 1.70 (Medium 2026-11-07) and 0.81 (ABR 2026-11-09) while it
+        had nothing awake. Otherwise every round is rated with the whole
+        defence at the average uptime (exact=False). Stations are [] when
+        every tower is frozen, None when there is no tower at all."""
+        from . import dps_model as D
+        built = [p for p in towers if p.kind != "hero"]
+        if (getattr(self.track, "uptime", 1.0) >= 1.0 or not built
+                or any(getattr(p, "placed_round", None) is None for p in built)):
+            return [(self.stations(towers), list(rounds), False)]
+        groups = {}
+        for r in rounds:
+            awake = tuple(p for p in built if not D.frozen_in(self.map_name, p.placed_round, r))
+            groups.setdefault(tuple(p.tid for p in awake), (awake, []))[1].append(r)
+        return [((self.stations(list(awake)) or []) if awake else [], rs, True)
+                for awake, rs in groups.values()]
+
+    def _rate(self, towers, rounds, rate):
+        """{round: rate(stations, round)} over `rounds`, rating each round
+        with the towers awake in it (_phases); None without towers."""
+        out = {}
+        for st, rs, exact in self._phases(towers, rounds):
+            if st is None:
+                return None
+            saved = self.track.uptime
+            if exact:
+                self.track.uptime = 1.0     # the frozen towers are left out instead
+            try:
+                for r in rs:
+                    out[r] = rate(st, r)
+            finally:
+                self.track.uptime = saved
+        return out
+
     def margins(self, towers, rounds, iterations=9):
         """{round: margin} over `rounds` for `towers`, or None.
         The defence is built once and rated round by round (~70 ms each;
@@ -93,10 +134,8 @@ class RoundForecast:
             if not self._ready():
                 return None
             from . import dps_model as D
-            st = self.stations(towers)
-            if not st:
-                return None
-            return {r: D.round_margin(st, self.mode, r, self.track, iterations=iterations) for r in rounds}
+            return self._rate(towers, rounds, lambda st, r: D.round_margin(
+                st, self.mode, r, self.track, iterations=iterations))
         except Exception:   # a forecast must never cost a game
             log.exception("round forecast failed - off for the rest of this game")
             self.off = True
@@ -116,11 +155,10 @@ class RoundForecast:
             if not self._ready():
                 return None
             from . import dps_model as D
-            st = self.stations(towers)
-            if not st:
+            lost = self._rate(towers, rounds, lambda st, r: D.simulate_round(
+                st, self.mode, r, self.track, strength=strength).lives_lost)
+            if lost is None:
                 return None
-            lost = {r: D.simulate_round(st, self.mode, r, self.track, strength=strength).lives_lost
-                    for r in rounds}
             return lost if per_round else sum(lost.values())
         except Exception:   # a forecast must never cost a game
             log.exception("round forecast failed - off for the rest of this game")

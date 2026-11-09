@@ -1911,6 +1911,10 @@ class Executor:
         self._note_refused(kind, key, spots, fracs, placed=bool(placed))
         if placed:
             p = self.g.towers[tid]
+            if getattr(self, "now_round", None) is not None:
+                # the round it was bought in: its freeze phase on Glacial
+                # Trail (forecast._phases) and its pop grace (sell_useless)
+                p.placed_round = self.now_round
             self._learn_probe(kind, p)
             self._learn_accepted(kind, p)
             self.purchased += 1
