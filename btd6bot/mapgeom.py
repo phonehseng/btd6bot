@@ -638,37 +638,103 @@ def _mover_poses(action, areas_by_id):
         cx, cz = (area.get("pivot") or area.get("origin") or [0.0, 0.0])[:2]
         return [(0.0, 0.0, k * step, cx, cz) for k in range(1, k_max)]
     if kind == "MovingPlatformAction":
-        moved = [areas_by_id[i] for i in _ids(action.get("areasToMove")) if i in areas_by_id]
-        times = action.get("stateTimes") or []
-        if not moved or not times:
-            return []
-        # The scene holds each platform where its animation clip is at time 0,
-        # not in its starting state: where a curve is absolute, its time-0
-        # value is the area's own origin (Sanctuary: PlatformCentreTop x
-        # -26.56 vs origin -26.3, PlatformLH2 (-68.8, -74.9) vs (-70.06,
-        # -73.15), PlatformCentreBottom x -14.8 vs -14.76), while the starting
-        # state is elsewhere (CentreTop starts in state 1, x = 0). So every
-        # state the platform takes - the starting one included - is a shift
-        # from time 0. (Measured from the starting state instead, CentreTop's
-        # swept ground lay 26.5 units too far left.)
-        start = int(action.get("startingState", 0))
-        states = {start} | set(action.get("triggerNumToStateNum") or [])
-        t0 = 0.0
-        cx, cz = (moved[0].get("origin") or [0.0, 0.0])[:2]
-        xs, zs, rs = (action.get(k) or [] for k in ("xPosCurve", "zPosCurve", "yRotCurve"))
-        poses = []
-        for s in sorted(states):
-            t = times[min(s, len(times) - 1)]
-            pose = (_curve(xs, t) - _curve(xs, t0), _curve(zs, t) - _curve(zs, t0),
-                    _curve(rs, t) - _curve(rs, t0), cx, cz)
-            if any(abs(v) > 1e-6 for v in pose[:3]):
-                poses.append(pose)   # the scene's own pose needs no entry
-        return poses
+        poses = _platform_state_poses(action, areas_by_id)
+        # the scene's own pose needs no entry
+        return [p for _, p in sorted(poses.items()) if any(abs(v) > 1e-6 for v in p[:3])]
     return []
 
 
+# Sanctuary's two swinging platforms (PlatformLH1, PlatformRH1: the only
+# MovingPlatformAction curves that also turn the platform, yRotCurve) do not
+# go where their x/z curves say. Measured in the recordings of 2026-11-09
+# (Medium game, rounds 15-59, platform stone found on screen per state;
+# tools/measure_platforms.py): every state sits where the curve's shift
+# lands after turning it PLATFORM_ARM_TURN degrees towards the map's top
+# (counter-clockwise for the right arm, clockwise for the left one, as seen
+# on screen) and shrinking it by PLATFORM_ARM_SCALE - within 4 world units
+# for all eight states, against 25-40 units off as read. The curves are
+# most likely kept in a parent transform that is turned and scaled; the
+# other four platforms only shift, and their curves fit as read.
+PLATFORM_ARM_TURN = 28.0
+PLATFORM_ARM_SCALE = 0.84
+
+
+def _platform_state_poses(action, areas_by_id):
+    """{state: pose (dx, dz, degrees, cx, cz)} for every state a
+    MovingPlatformAction takes its areas to, measured from the scene.
+
+    The scene holds each platform where its animation clip is at time 0,
+    not in its starting state: where a curve is absolute, its time-0 value
+    is the area's own origin (Sanctuary: PlatformCentreTop x -26.56 vs
+    origin -26.3, PlatformLH2 (-68.8, -74.9) vs (-70.06, -73.15),
+    PlatformCentreBottom x -14.8 vs -14.76), while the starting state is
+    elsewhere (CentreTop starts in state 1, x = 0). So every state the
+    platform takes - the starting one included - is a shift from time 0.
+    (Measured from the starting state instead, CentreTop's swept ground lay
+    26.5 units too far left.) The state at time 0 has the zero pose."""
+    moved = [areas_by_id[i] for i in _ids(action.get("areasToMove")) if i in areas_by_id]
+    times = action.get("stateTimes") or []
+    if not moved or not times:
+        return {}
+    start = int(action.get("startingState", 0))
+    states = {start} | set(action.get("triggerNumToStateNum") or [])
+    cx, cz = (moved[0].get("origin") or [0.0, 0.0])[:2]
+    xs, zs, rs = (action.get(k) or [] for k in ("xPosCurve", "zPosCurve", "yRotCurve"))
+    out = {}
+    for s in sorted(states):
+        t = times[min(s, len(times) - 1)]
+        dx, dz = _curve(xs, t) - _curve(xs, 0.0), _curve(zs, t) - _curve(zs, 0.0)
+        if rs:   # a swinging arm (see PLATFORM_ARM_TURN)
+            a = math.radians(PLATFORM_ARM_TURN) * (1.0 if cx > 0 else -1.0)
+            dx, dz = (PLATFORM_ARM_SCALE * (dx * math.cos(a) - dz * math.sin(a)),
+                      PLATFORM_ARM_SCALE * (dx * math.sin(a) + dz * math.cos(a)))
+        out[s] = (dx, dz, _curve(rs, t) - _curve(rs, 0.0), cx, cz)
+    return out
+
+
+def platform_state(mover, rnd):
+    """State a moving platform (a dynamics() mover with "seq") stands in
+    while round `rnd` is being played. The state changes when a round
+    starts (StartRoundTrigger, every round from round 1): round r takes
+    seq[(r - 1) % len(seq)], counted from round 1 whatever round the game
+    started at. Before Play of a game's first round the platforms stand as
+    in the round before it (a Fast Track game waits at round 15 in round
+    14's state), and between rounds as in the round just played: the round
+    to ask about is the last one STARTED (see Executor._pose_round).
+    Confirmed on screen for every round of two games (2026-11-09, Medium
+    and Reverse, rounds 15-59) and before Play at round 15."""
+    seq = mover.get("seq") or []
+    first = mover.get("first_round") or 1
+    if not seq or rnd is None or rnd < first:
+        return mover.get("start", 0)
+    return seq[(rnd - first) % len(seq)]
+
+
+def _pose_matrix(pose):
+    """3x3 matrix of a pose: a tuple (dx, dz, degrees, cx, cz) or a matrix."""
+    if isinstance(pose, np.ndarray):
+        return pose
+    dx, dz, deg, cx, cz = pose
+    a = math.radians(deg)
+    rot = np.array([[math.cos(a), math.sin(a)], [-math.sin(a), math.cos(a)]])
+    out = np.eye(3)
+    out[:2, :2] = rot
+    out[:2, 2] = np.array([cx, cz]) - rot @ np.array([cx, cz]) + np.array([dx, dz])
+    return out
+
+
+def relative_pose(base, pose):
+    """Matrix taking points from pose `base` to pose `pose` (both measured
+    from the scene): undo base, then apply pose."""
+    return _pose_matrix(pose) @ np.linalg.inv(_pose_matrix(base))
+
+
 def _pose_points(xz, pose):
-    """Move world points (array [..., 2]) to one pose."""
+    """Move world points (array [..., 2]) to one pose: a tuple (dx, dz,
+    degrees, cx, cz), or a 3x3 matrix (relative_pose)."""
+    if isinstance(pose, np.ndarray):
+        xz = np.asarray(xz, float)
+        return xz @ pose[:2, :2].T + pose[:2, 2]
     dx, dz, deg, cx, cz = pose
     a = math.radians(deg)
     x, z = xz[..., 0] - cx, xz[..., 1] - cz
@@ -701,6 +767,7 @@ class Dynamics:
         self.offered = {}      # removable id -> first round it can be bought
         self.fired = {}        # event id -> (automatic, first round, certain)
         self.panes = []        # timed pane cycles, see _pane_cycle_of()
+        self.pose_round = None # last round started, when platforms are posed for it
 
 
 def _pane_cycle_of(act, areas_by_id):
@@ -730,7 +797,7 @@ def pane_open(cycle, rnd):
     return ((max(1, rnd) - 1 - cycle["start"]) // cycle["per"]) % len(cycle["areas"])
 
 
-def dynamics(geom, sold=(), now_round=None, last_round=None):
+def dynamics(geom, sold=(), now_round=None, last_round=None, pose_round=None):
     """Sort a map's events into what happens during a game.
 
     sold:       removables the player buys (ids or names): their areas go,
@@ -739,8 +806,13 @@ def dynamics(geom, sold=(), now_round=None, last_round=None):
                 certainly happened (One Two Tree's plots have opened).
     last_round: the game's last round: changes after it are left out
                 (Erosion's late melts do not matter in a 40-round game).
+    pose_round: the last round started, for maps with moving platforms
+                (Sanctuary): each platform mover gets "base", the pose it
+                stands in now, and its "poses" become the moves from there
+                to its other states (see platform_state).
     Without these, every automatic change of the whole game is a "may"."""
     dyn = Dynamics()
+    dyn.pose_round = pose_round
     mech = geom.get("mechanics") or {}
     areas = geom.get("areas", [])
     areas_by_id = {a["id"]: a for a in areas if "id" in a}
@@ -864,8 +936,18 @@ def dynamics(geom, sold=(), now_round=None, last_round=None):
                 poses = _mover_poses(act, areas_by_id)
                 ids = _ids(act.get("area")) + _ids(act.get("areasToMove"))
                 if poses:
-                    dyn.movers.append({"type": kind, "areas": [i for i in ids if i in areas_by_id],
-                                       "poses": poses, "first_round": first, "event": eid})
+                    mover = {"type": kind, "areas": [i for i in ids if i in areas_by_id],
+                             "poses": poses, "first_round": first, "event": eid}
+                    if kind == "MovingPlatformAction":
+                        mover.update(seq=list(act.get("triggerNumToStateNum") or []),
+                                     start=int(act.get("startingState", 0)),
+                                     state_poses=_platform_state_poses(act, areas_by_id))
+                        if pose_round is not None and mover["seq"]:
+                            base = mover["state_poses"][platform_state(mover, pose_round)]
+                            mover["base"] = base
+                            mover["poses"] = [relative_pose(base, p) for s, p in
+                                              sorted(mover["state_poses"].items()) if p != base]
+                    dyn.movers.append(mover)
             elif kind == "SuspendTowersOnAreaAction" and not act.get("isUnsuspendAction"):
                 if act.get("area") in areas_by_id:
                     dyn.suspend.setdefault(act["area"], first)
@@ -1026,6 +1108,27 @@ def forget_pane_refusals(model, geom, aspect=1920 / 1200):
     return dropped
 
 
+def forget_platform_refusals(model, geom, aspect=1920 / 1200):
+    """Refusals on ground a moving platform covers at some time (Sanctuary:
+    all of its ground) were clicks where the platform was not standing at
+    that moment - the grids held it in the scene's pose until 2026-11-09 -
+    so they say nothing about the ground and are forgotten: 944 of the 1,016
+    refused land cells learned on Sanctuary were such clicks, half of its
+    platform ground. Returns how many refused cells were dropped."""
+    proj = Projection(model.playfield, aspect)
+    ground = _platform_ground(_platform_info(geom, proj), proj)
+    if ground is None:
+        return 0
+    dropped = 0
+    for grid in getattr(model, "refused", {}).values():
+        if grid is not None and grid.shape == ground.shape:
+            dropped += int((grid & ground).sum())
+            grid &= ~ground
+    if dropped:
+        log.info("%s: forgot %d refused cells on the moving platforms", model.name, dropped)
+    return dropped
+
+
 def apply(model, geom, aspect=1920 / 1200):
     """Overwrite a MapModel's track and placement grids from geometry.
 
@@ -1051,6 +1154,7 @@ def apply(model, geom, aspect=1920 / 1200):
     model.ground_height = grids["ground"]
     model.geometry_version = geom.get("version", 1)
     forget_pane_refusals(model, geom)
+    forget_platform_refusals(model, geom)
     log.info("%s: geometry applied (%d paths, %d areas)", model.name,
              len(geom.get("paths", [])), len(geom.get("areas", [])))
     return model
@@ -1084,12 +1188,8 @@ _GRIDS_CACHE = {}
 _MAP_IDS = {}
 
 
-def grids_for(model, removed=(), now_round=None, last_round=None):
-    """placement_grids() for a model's map (cached), or None without
-    geometry. removed: obstacles (names or ids) treated as bought;
-    now_round / last_round: see dynamics(). The grids hold "scan" as well,
-    in MapModel.scan's form, so they can stand in for the model's own.
-    Cheap to call again: the answer is kept until the geometry file changes."""
+def _geometry_file(model):
+    """(path, mtime stamp) of a model's geometry file, or None."""
     id_key = (str(GEOMETRY_DIR), model.name)
     map_id = _MAP_IDS.get(id_key) or map_id_for(model.name)
     if map_id is None:
@@ -1097,14 +1197,89 @@ def grids_for(model, removed=(), now_round=None, last_round=None):
     _MAP_IDS[id_key] = map_id
     path = GEOMETRY_DIR / f"{map_id}.json"
     try:
-        stamp = path.stat().st_mtime_ns
+        return path, path.stat().st_mtime_ns
     except OSError:
         return None
-    key = (str(path), stamp, tuple(model.playfield), frozenset(removed), now_round, last_round)
-    if key not in _GRIDS_CACHE:
+
+
+_GEOM_CACHE = {}
+
+
+def _geometry_of(path, stamp):
+    """The parsed geometry file, kept: with its platforms followed,
+    Sanctuary's is asked for on every placement."""
+    key = (str(path), stamp)
+    if key not in _GEOM_CACHE:
         try:
             geom = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
+            return None
+        if len(_GEOM_CACHE) > 8:
+            _GEOM_CACHE.clear()
+        _GEOM_CACHE[key] = geom
+    return _GEOM_CACHE[key]
+
+
+_PLATFORM_MOVERS = {}
+
+
+def _platform_movers(geom):
+    """dynamics() movers of the map's moving platforms (MovingPlatformAction
+    with a state sequence), in a fixed order; [] on other maps."""
+    key = id(geom)
+    cached = _PLATFORM_MOVERS.get(key)
+    if cached is None or cached[0] is not geom:
+        movers = [m for m in dynamics(geom).movers if m["type"] == "MovingPlatformAction" and m.get("seq")]
+        if len(_PLATFORM_MOVERS) > 16:
+            _PLATFORM_MOVERS.clear()
+        cached = _PLATFORM_MOVERS[key] = (geom, movers)
+    return cached[1]
+
+
+def _posed_geometry(geom, dyn):
+    """A copy of geom with every platform that dyn poses (mover "base")
+    drawn where it stands now."""
+    posed = {}
+    for mover in dyn.movers:
+        if "base" in mover:
+            for aid in mover["areas"]:
+                posed[aid] = mover["base"]
+    if not posed:
+        return geom
+    out = dict(geom)
+    out["areas"] = [dict(a, polygons=_pose_polygons(a["polygons"], posed[a["id"]])) if a.get("id") in posed
+                    else a for a in geom.get("areas", [])]
+    return out
+
+
+def grids_for(model, removed=(), now_round=None, last_round=None, pose_round=None):
+    """placement_grids() for a model's map (cached), or None without
+    geometry. removed: obstacles (names or ids) treated as bought;
+    now_round / last_round: see dynamics(). pose_round: the last round
+    started, on maps with moving platforms (Sanctuary): the platforms are
+    drawn where they stand in it, so "land" is the ground under them now
+    (towers ride along; finite-range ones still need steady spots, judged
+    from there). Ignored on other maps. The grids hold "scan" as well, in
+    MapModel.scan's form, so they can stand in for the model's own.
+    Cheap to call again: the answer is kept until the geometry file changes."""
+    found = _geometry_file(model)
+    if found is None:
+        return None
+    path, stamp = found
+    states = None
+    if pose_round is not None:
+        geom = _geometry_of(path, stamp)
+        if geom is None:
+            return None
+        movers = _platform_movers(geom)
+        if movers:   # one entry per layout of the platforms, not per round
+            states = tuple(platform_state(m, pose_round) for m in movers)
+        else:
+            pose_round = None
+    key = (str(path), stamp, tuple(model.playfield), frozenset(removed), now_round, last_round, states)
+    if key not in _GRIDS_CACHE:
+        geom = _geometry_of(path, stamp)
+        if geom is None:
             return None
         if len(_GRIDS_CACHE) > 64:
             _GRIDS_CACHE.clear()
@@ -1112,8 +1287,8 @@ def grids_for(model, removed=(), now_round=None, last_round=None):
         lanes = np.zeros(GRID[::-1], bool)
         skip = idle_phase_paths(geom, now_round)
         heat, _, _ = paint_paths(geom, proj, lanes, skip)
-        dyn = dynamics(geom, removed, now_round, last_round)
-        grids = placement_grids(geom, proj, lanes | (heat > 0), dyn)
+        dyn = dynamics(geom, removed, now_round, last_round, pose_round)
+        grids = placement_grids(_posed_geometry(geom, dyn), proj, lanes | (heat > 0), dyn)
         grids["scan"] = {k: np.where(grids[k], 1, 2).astype(np.uint8) for k in ("land", "water")}
         grids["track"] = heat > 0
         grids["path_masks"] = path_masks(geom, proj, skip)
@@ -1123,9 +1298,218 @@ def grids_for(model, removed=(), now_round=None, last_round=None):
         areas_by_id = {a["id"]: a for a in geom.get("areas", []) if "id" in a}
         grids["panes"] = [(c, [_poly_mask(areas_by_id[i]["polygons"], proj) for i in c["areas"]])
                           for c in dyn.panes]
+        grids["platforms"] = _platform_info(geom, proj)
+        grids["platform_ground"] = _platform_ground(grids["platforms"], proj)
+        grids["pose_round"] = pose_round
         grids["steady"] = {}
         _GRIDS_CACHE[key] = grids
     return _GRIDS_CACHE[key]
+
+
+# ---------------------------------------------------------------------------
+# Moving platforms (Sanctuary): where they stand, on screen and in the grids
+# ---------------------------------------------------------------------------
+
+def _platform_info(geom, proj):
+    """[{name, mover, areas: [(area, height)], ground}] for each moving
+    platform: its areas with their outline height (a tower on one is drawn
+    that much higher, Projection.to_frac); `ground` when one of its areas
+    takes towers (not a solid body)."""
+    areas_by_id = {a["id"]: a for a in geom.get("areas", []) if "id" in a}
+    events = {e["id"]: e for e in (geom.get("mechanics") or {}).get("events", []) if "id" in e}
+    out = []
+    for mover in _platform_movers(geom):
+        parts = []
+        for aid in mover["areas"]:
+            area = areas_by_id[aid]
+            heights = [pt[2] for poly in area["polygons"] for pt in poly if len(pt) > 2]
+            parts.append((area, float(np.mean(heights)) if heights else 0.0))
+        out.append({"name": events.get(mover.get("event"), {}).get("name") or str(mover.get("event")),
+                    "mover": mover, "areas": parts,
+                    "ground": any(a["type"] not in SOLID_TYPES and not a.get("blocks_sight")
+                                  for a, _ in parts)})
+    return out
+
+
+def _platform_ground(platforms, proj):
+    """Bool grid of every cell a platform that takes towers covers in any of
+    its states, or None without platforms."""
+    if not platforms:
+        return None
+    out = np.zeros(GRID[::-1], bool)
+    for plat in platforms:
+        for area, _ in plat["areas"]:
+            if area["type"] in SOLID_TYPES or area.get("blocks_sight"):
+                continue
+            for pose in plat["mover"]["state_poses"].values():
+                out |= _poly_mask(_pose_polygons(area["polygons"], pose), proj)
+    return out
+
+
+def platform_ground(model):
+    """Bool grid of the cells some moving platform covers at some time
+    (Sanctuary: all of its ground), or None on maps without platforms.
+    A refusal there says where the platform was not at that moment, not
+    that the ground is bad."""
+    grids = grids_for(model)
+    return grids.get("platform_ground") if grids else None
+
+
+def has_platforms(model):
+    """True on maps whose ground moves on platforms (Sanctuary)."""
+    grids = grids_for(model)
+    return bool(grids and grids.get("platforms"))
+
+
+def _platform_pose_at(plat, rnd):
+    """Pose (from the scene) of a platform while round `rnd` is played; the
+    scene's own pose for rnd None."""
+    if rnd is None:
+        return (0.0, 0.0, 0.0, 0.0, 0.0)
+    mover = plat["mover"]
+    return mover["state_poses"][platform_state(mover, rnd)]
+
+
+def _spot_world(proj, fx, fy, height):
+    """Screen fractions -> world (x, z) of a point standing `height` up."""
+    return (fx - proj.cx) / proj.ux, (proj.cy - fy) / proj.uy - HEIGHT_FACTOR * height
+
+
+def _inside(polys, x, z):
+    """True when world point (x, z) lies inside the outline (first polygon)
+    and outside every hole (the rest)."""
+    for i, poly in enumerate(polys):
+        pts = np.asarray([p[:2] for p in poly], np.float32)
+        if len(pts) < 3:
+            continue
+        inside = cv2.pointPolygonTest(pts, (float(x), float(z)), False) >= 0
+        if i == 0 and not inside:
+            return False
+        if i > 0 and inside:
+            return False
+    return True
+
+
+def platform_under(model, fx, fy, rnd):
+    """(platform, height) of the moving platform that takes towers under
+    screen spot (fx, fy) while round rnd is played (None: as in the scene),
+    or (None, None). Where two cover the spot the higher one counts."""
+    grids = grids_for(model)
+    plats = grids.get("platforms") if grids else None
+    if not plats:
+        return None, None
+    found = []
+    for plat in plats:
+        pose = _platform_pose_at(plat, rnd)
+        for area, height in plat["areas"]:
+            if area["type"] in SOLID_TYPES or area.get("blocks_sight"):
+                continue
+            if _inside(_pose_polygons(area["polygons"], pose), *_spot_world(grids["proj"], fx, fy, height)):
+                found.append((height, id(plat), plat))
+    if not found:
+        return None, None
+    height, _, plat = max(found, key=lambda f: f[:2])
+    return plat, height
+
+
+def carry_spot(model, fx, fy, from_round, to_round):
+    """Where a spot (screen fractions) on a moving platform is while round
+    to_round is played, given where it was in from_round (None = the scene,
+    as a build's `at` spots are written). Spots off the platforms, and maps
+    without them, come back unchanged."""
+    plat, height = platform_under(model, fx, fy, from_round)
+    if plat is None:
+        return fx, fy
+    return move_with_platform(model, plat, height, fx, fy, from_round, to_round)
+
+
+def move_with_platform(model, plat, height, fx, fy, from_round, to_round):
+    """Spot (screen fractions) on platform `plat` (from platform_under),
+    standing `height` up, moved from where the platform is in from_round to
+    where it is in to_round (None = the scene)."""
+    proj = grids_for(model)["proj"]
+    move = relative_pose(_platform_pose_at(plat, from_round), _platform_pose_at(plat, to_round))
+    (nx, nz), = _pose_points(np.array([_spot_world(proj, fx, fy, height)], float), move)
+    nfx, nfy = proj.to_frac([[nx, nz, height]])[0]
+    return float(nfx), float(nfy)
+
+
+# Reading the platforms off the screen: the stone of a platform's top is a
+# dull yellow-olive (OpenCV HSV below); the water, vines and walls around
+# it are not. Measured on the recordings of 2026-11-09: the outline of the
+# state a platform is in held 55-85 % stone, the outlines of its other
+# states 0-40 % (tools/measure_platforms.py).
+STONE_HUE = (15, 35)            # OpenCV hue (0-180)
+STONE_SAT = (60, 200)
+STONE_VAL_MIN = 90
+PANEL_X = 0.855                 # columns right of this (the tower list) are not looked at
+PLATFORM_READ_MARGIN = 0.10     # the best layout must show this much more stone (share) than the next
+
+
+def stone_mask(frame):
+    """Bool image: pixels that look like platform stone."""
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+    return ((h >= STONE_HUE[0]) & (h <= STONE_HUE[1]) & (s >= STONE_SAT[0]) & (s <= STONE_SAT[1])
+            & (v >= STONE_VAL_MIN))
+
+
+def platform_stone(model, frame, rnd):
+    """Mean share of stone pixels inside the outlines of the platforms that
+    take towers, drawn where they stand in round rnd (the tower list left
+    out), or None on maps without platforms."""
+    grids = grids_for(model)
+    plats = grids.get("platforms") if grids else None
+    if not plats or frame is None:
+        return None
+    if frame.shape[1] > 960:   # plenty to tell the layouts apart, and cheap
+        frame = cv2.resize(frame, (960, int(round(frame.shape[0] * 960 / frame.shape[1]))),
+                           interpolation=cv2.INTER_AREA)
+    stone = stone_mask(frame)
+    h, w = stone.shape
+    proj = grids["proj"]
+    shares = []
+    for plat in plats:
+        pose = _platform_pose_at(plat, rnd)
+        mask = np.zeros((h, w), np.uint8)
+        for area, _ in plat["areas"]:
+            if area["type"] != "land":
+                continue
+            for i, poly in enumerate(_pose_polygons(area["polygons"], pose)):
+                pts = np.round(proj.to_frac(np.asarray(poly))[:, :2] * [w, h]).astype(np.int32)
+                cv2.fillPoly(mask, [pts], 1 if i == 0 else 0)
+        mask[:, int(w * PANEL_X):] = 0
+        if mask.any():
+            shares.append(float(stone[mask > 0].mean()))
+    return float(np.mean(shares)) if shares else None
+
+
+def platform_round_on_screen(model, frame, candidates):
+    """Which of the candidate rounds the platforms on screen stand as in,
+    or None when the frame does not say clearly (the best layout shows less
+    than PLATFORM_READ_MARGIN more stone than the next) or the map has no
+    platforms. Candidates whose layouts are the same count as one (the
+    first of them is returned)."""
+    grids = grids_for(model)
+    plats = grids.get("platforms") if grids else None
+    if not plats or frame is None:
+        return None
+    scored = {}
+    for rnd in candidates:
+        if rnd is None:
+            continue
+        layout = tuple(platform_state(p["mover"], rnd) for p in plats)
+        if layout not in scored:
+            share = platform_stone(model, frame, rnd)
+            if share is None:
+                return None
+            scored[layout] = (share, rnd)
+    if not scored:
+        return None
+    ranked = sorted(scored.values(), key=lambda v: -v[0])
+    if len(ranked) > 1 and ranked[0][0] - ranked[1][0] < PLATFORM_READ_MARGIN:
+        return None
+    return ranked[0][1]
 
 
 def pane_at(model, fx, fy, rnd):
@@ -1240,12 +1624,13 @@ def _posed_cells(grids, cells_mask, pose):
     return np.floor(cells[:, 1]).astype(int), np.floor(cells[:, 0]).astype(int)
 
 
-def steady_spots(model, reach_units):
+def steady_spots(model, reach_units, pose_round=None):
     """Bool grid of moving-ground cells (see placement_grids' "moving") where
     a tower with this reach (world units) keeps covering the track wherever
     the ground carries it (STEADY_KEEP), plus moving cells that barely move
-    (STEADY_DRIFT). None on maps without moving ground."""
-    grids = grids_for(model)
+    (STEADY_DRIFT). pose_round: platforms where they stand in that round
+    (grids_for). None on maps without moving ground."""
+    grids = grids_for(model, pose_round=pose_round)
     if grids is None or not grids["moving"].any():
         return None
     key = round(float(reach_units or 0.0), 1)

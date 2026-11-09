@@ -1,4 +1,4 @@
-"""Towers carried around by rotating ground (Geared's gears).
+"""Towers carried around by moving ground (Geared's gears, Sanctuary's platforms).
 
 On Geared both gears turn after every round - the big one by 45 degrees,
 the small one by 108 (`data/map_geometry/geared.json`, RotateAreaAction) -
@@ -15,10 +15,18 @@ about the same pivot, so the next click lands on the tower again.
 
 Everything comes from the game's own map data (pivot, angle, which rounds
 the event fires after); nothing here is specific to Geared except that it is
-the only standard map with RotateAreaAction today. Sanctuary's platforms move
-along animation curves (MovingPlatformAction) and are not followed yet.
+the only standard map with RotateAreaAction today.
+
+Sanctuary's six platforms (MovingPlatformAction) move when a round STARTS,
+not when the HUD round changes: follow_platforms() is told the last round
+started (Executor._pose_round) and moves every tower on a platform from the
+platform's old layout to its new one (mapgeom.move_with_platform). Without
+it the bot clicked the water where a sniper had stood, forgot the tower
+after two failed selections and bought it again (2026-11-05 round 33; on
+2026-11-09 s4 at round 18).
 """
 import logging
+from types import SimpleNamespace
 
 import cv2
 import numpy as np
@@ -84,11 +92,16 @@ class CarriedTowers:
     with the ground. Build it with for_map(); None means the map has no
     rotating ground and there is nothing to follow."""
 
-    def __init__(self, rotors, proj, name=""):
+    def __init__(self, rotors, proj, name="", platforms=None):
         self.rotors = rotors
         self.proj = proj
         self.name = name
         self.riders = {}    # tower id -> (id() of its Placed object, rotor or None)
+        # moving platforms: a stand-in model for mapgeom (name, playfield),
+        # or None on maps without them
+        self.platforms = platforms
+        self.pose_round = None      # the layout the remembered platform spots are in
+        self.platform_riders = {}   # tower id -> (id() of its Placed object, (platform, height) or None)
 
     @classmethod
     def for_map(cls, name, playfield, aspect=1920 / 1200):
@@ -108,11 +121,16 @@ class CarriedTowers:
                 if areas[aid]["type"] in mapgeom.SOLID_TYPES:
                     continue   # nothing stands on a turning obstacle
                 rotors.append(_Rotor(areas[aid], step, mover["first_round"], _every_nth(event)))
-        if not rotors:
+        platforms = None
+        if any(m["type"] == "MovingPlatformAction" and m.get("seq") for m in dyn.movers):
+            platforms = SimpleNamespace(name=name, playfield=playfield)
+            log.info("%s: following towers on the moving platforms", name)
+        if not rotors and platforms is None:
             return None
-        log.info("%s: following towers on %s", name,
-                 ", ".join(f"{r.name} ({r.step:g} deg after rounds from {r.first - 1})" for r in rotors))
-        return cls(rotors, mapgeom.Projection(playfield, aspect), name)
+        if rotors:
+            log.info("%s: following towers on %s", name,
+                     ", ".join(f"{r.name} ({r.step:g} deg after rounds from {r.first - 1})" for r in rotors))
+        return cls(rotors, mapgeom.Projection(playfield, aspect), name, platforms)
 
     # -- screen <-> world -----------------------------------------------------------
     def _world(self, fx, fy, height):
@@ -164,4 +182,35 @@ class CarriedTowers:
                 moved.append(tid)
         if moved:
             log.info("round %d: %s carried round by the gears", new_round, ", ".join(moved))
+        return moved
+
+    def follow_platforms(self, pose_round, towers):
+        """The platforms stand as in round pose_round (the last round
+        started): move the remembered spot of every tower on one from the
+        layout it was in to this one. Towers placed since the last call are
+        first matched to the platform under them in that earlier layout
+        (they were placed then). Call it once per pass of the match loop;
+        it only acts when the layout changes. Returns the ids moved."""
+        if self.platforms is None or pose_round is None:
+            return []
+        before = self.pose_round if self.pose_round is not None else pose_round
+        for tid, p in towers.items():
+            known = self.platform_riders.get(tid)
+            if known is None or known[0] != id(p):
+                plat, height = mapgeom.platform_under(self.platforms, p.x, p.y, before)
+                self.platform_riders[tid] = (id(p), (plat, height) if plat is not None else None)
+        self.pose_round = pose_round
+        if before == pose_round:
+            return []
+        moved = []
+        for tid, (_, ride) in self.platform_riders.items():
+            p = towers.get(tid)
+            if ride is None or p is None:
+                continue
+            fx, fy = mapgeom.move_with_platform(self.platforms, ride[0], ride[1], p.x, p.y, before, pose_round)
+            if abs(fx - p.x) > 1e-4 or abs(fy - p.y) > 1e-4:
+                p.x, p.y = fx, fy
+                moved.append(tid)
+        if moved:
+            log.info("platforms now as in round %d: %s carried along", pose_round, ", ".join(moved))
         return moved

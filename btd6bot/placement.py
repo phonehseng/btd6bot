@@ -212,18 +212,18 @@ def reach_units(kind, hero=None):
     return T.TOWERS.get(kind, {}).get("range")
 
 
-def _game_grids(model, removed=(), now_round=None, last_round=None):
+def _game_grids(model, removed=(), now_round=None, last_round=None, pose_round=None):
     """The map's placement grids worked out from its geometry (mapgeom,
     cached), or None when the model's map has no geometry file."""
     try:
         from . import mapgeom
-        return mapgeom.grids_for(model, removed, now_round, last_round)
+        return mapgeom.grids_for(model, removed, now_round, last_round, pose_round)
     except Exception:  # a map-file problem must never stop placement
         return None
 
 
 def valid_spots(model, kind, hero=None, towers=(), where=None,
-                removed=(), now_round=None, last_round=None, moving=None):
+                removed=(), now_round=None, last_round=None, moving=None, pose_round=None):
     """Bool grid: cells where this tower's centre may go. None without geometry.
 
     towers: [(cx, cy, kind, hero)] already placed (their footprints block).
@@ -237,7 +237,14 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
             Without them every change of the whole game is planned for.
     moving: moving ground (gears, platforms) - None: global-range towers
             anywhere on it, others only on steady spots; True: anywhere;
-            False: never."""
+            False: never.
+    pose_round: on maps with moving platforms (Sanctuary), the last round
+            started: the platforms are where they stand in it, not in the
+            scene's pose (mapgeom.grids_for). Ignored elsewhere.
+
+    Learned refusals (MapModel.refused) never cover platform ground:
+    mapgeom.forget_platform_refusals drops them and the strategy does not
+    learn them there."""
     if not has_geometry(model):
         return None
     where = surfaces(kind, hero) & set(where) if where else surfaces(kind, hero)
@@ -258,8 +265,8 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
         return mask(surface) if mask else np.zeros(ok.shape, bool)
 
     scan, mermonkey_water, size_limit = model.scan, model.mermonkey_water, model.size_limit
-    if removed or now_round is not None or last_round is not None:
-        alt = _game_grids(model, tuple(removed), now_round, last_round)
+    if removed or now_round is not None or last_round is not None or pose_round is not None:
+        alt = _game_grids(model, tuple(removed), now_round, last_round, pose_round)
         if alt is not None:
             scan = alt["scan"]
             mermonkey_water, size_limit = alt["mermonkey_water"], alt["size_limit"]
@@ -279,7 +286,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
         ok &= fits
         free &= fits
     if moving is not True:
-        grids = _game_grids(model)
+        grids = _game_grids(model, pose_round=pose_round)
         if grids is not None and grids["moving"].any():
             rng = reach_units(kind, hero)
             if moving is False:
@@ -287,7 +294,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
                 free &= ~grids["moving"]
             elif rng is not None:   # global range does not care where it is carried
                 from .mapgeom import steady_spots
-                steady = steady_spots(model, rng) if rng else None
+                steady = steady_spots(model, rng, pose_round) if rng else None
                 carried = ~grids["moving"] | (steady if steady is not None else False)
                 ok &= carried
                 free &= carried

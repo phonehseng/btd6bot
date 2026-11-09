@@ -88,8 +88,11 @@ def test_several_rounds_at_once_and_new_towers():
 def test_maps_without_rotating_ground():
     assert CarriedTowers.for_map("Monkey Meadow", PLAYFIELD) is None
     assert CarriedTowers.for_map(None, PLAYFIELD) is None
-    # Sanctuary's platforms move along curves: not followed (yet)
-    assert CarriedTowers.for_map("Sanctuary", PLAYFIELD) is None
+    # Sanctuary's platforms are followed by layout (follow_platforms), not
+    # by rotors: tests/test_sanctuary_platforms_offline.py
+    sanctuary = CarriedTowers.for_map("Sanctuary", PLAYFIELD)
+    if mapgeom.load("Sanctuary") is not None:
+        assert sanctuary is not None and not sanctuary.rotors and sanctuary.platforms is not None
     assert mapgeom.load("Geared") is not None
 
 
