@@ -34,6 +34,17 @@ plan:
   - {do: upgrade, id: v1, to: 2-0-2}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: n1, to: 4-0-2}
+  # Rounds 45-51 lost six games on 2026-11-08 (Ravine, Firing Range, Muddy
+  # Puddles, Peninsula, Bloody Puddles, Sunset Gulch): one dense wave of
+  # rainbows/ceramics took 90-150 lives in seconds (Bloody Puddles' defeat
+  # screen: 94 rainbows leaked) while the money went into two $5,300 Maim
+  # MOAB snipers, which hit one bloon at a time. A second Bloonjitsu ninja
+  # on the back half of the track is cheap (about $4.6k), sees camo and
+  # throws five blades, so it comes before the MOAB tiers; the MOAB answer
+  # (s1 3-2-0) is already bought and the bfb/zomg answers still buy s1
+  # 4-2-0 early when those blimps really come.
+  - {do: place, id: n3, kind: ninja, role: dps, segment: [0.5, 1.0]}
+  - {do: upgrade, id: n3, to: 4-0-2}
   - {do: upgrade, id: s1, to: 4-2-0}
   - {do: upgrade, id: n2, to: 2-0-4}
   - {do: upgrade, id: a1, to: 4-2-0}
