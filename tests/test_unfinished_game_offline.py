@@ -77,6 +77,29 @@ def test_nothing_to_do_without_an_unfinished_game():
     assert bot.account.results == [] and bot.benches == {} and rows == []
 
 
+def test_a_game_left_before_play_is_not_a_defeat_after_a_reload():
+    """Quad Deflation (2026-11-09 13:40): the finished no-income build rated
+    round 33 at 0.06, so the bot left before Play (WeakBuild). It reloaded a
+    minute later and the new bot recorded that game as a crashed defeat,
+    because the in-progress note was still there. Leaving clears it."""
+    from types import SimpleNamespace
+    from btd6bot.match import WeakBuild
+    plan = SimpleNamespace(map="Quad", mode_key="deflation", strategy_id="solo_buccaneer")
+    with tempfile.TemporaryDirectory() as tmp:
+        game_file = Path(tmp) / "game.json"
+        bot = R.Bot.__new__(R.Bot)
+        bot.benches = {}
+        bot.bench = lambda m, mode, hours, why="": bot.benches.update({(m, mode): hours})
+        with mock.patch.object(R, "GAME_FILE", game_file), \
+                mock.patch("btd6bot.status.set_focus", lambda *_: None):
+            R._note_game_started(plan)
+            assert game_file.exists()
+            bot._left_before_play(plan, WeakBuild(0.06, 33))
+            assert not game_file.exists()
+            assert R._game_in_progress() is None      # a reloaded bot finds nothing to settle
+    assert bot.benches == {("Quad", "deflation"): 24}
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

@@ -1402,11 +1402,7 @@ class Bot:
                 log.warning("%s - waiting for the game to be in front again", e)
                 time.sleep(10)
             except WeakBuild as e:
-                # a no-income build the damage model says would lose: leave
-                # before Play (nothing won or lost) and keep the map/mode out
-                # of the plan for a day; not an error, so no error streak
-                log.warning("%s %s: %s", plan.map, plan.mode_key, e)
-                self.bench(plan.map, plan.mode_key, hours=24, why=f"{plan.strategy_id} rated {e.margin:.2f}")
+                self._left_before_play(plan, e)
                 self.to_main_menu()
             except Exception as e:
                 log.exception("game loop error - recovering to main menu")
@@ -1416,6 +1412,21 @@ class Bot:
                 # bench only a map/mode that fails twice; wait instead when the
                 # same error repeats game after game (a bot bug, not a bad map)
                 self._game_error(e, plan, code_stamp)
+
+    def _left_before_play(self, plan, e):
+        """A no-income build the damage model says would lose (WeakBuild):
+        the game is left before Play - nothing won or lost - and the map/mode
+        stays out of the plan for a day. Not an error, so no error streak.
+
+        The game was noted as in progress when it started (GAME_FILE), so
+        that note is cleared here: otherwise a bot restarted before the next
+        game (a code reload) finds it and records a defeat for a game that
+        never began. Quad Deflation (2026-11-09 13:40) was left that way at
+        round 33 rated 0.06, the bot reloaded at 13:41, and the new one wrote
+        down a loss, benched the map again and counted it in safe mode."""
+        log.warning("%s %s: %s", plan.map, plan.mode_key, e)
+        self.bench(plan.map, plan.mode_key, hours=24, why=f"{plan.strategy_id} rated {e.margin:.2f}")
+        _note_game_over()
 
     def _note_placement(self, plan, res):
         """Keep the account's per-map placement record (planner prior) up to date.

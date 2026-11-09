@@ -5279,7 +5279,7 @@ class Executor:
     # build's unreachable plan step to give way to reinforcing
     YIELD_MARGIN = RF.CRISIS_MARGIN   # rated under this: a crisis round (forecast.py)
     YIELD_ROUNDS = 4                  # at most this many rounds after the one being played
-    YIELD_FLOOR = 0.10                # rated at most this in a mode with lives: no bloon depth needed
+    YIELD_FLOOR = 0.12                # rated at most this in a mode with lives: no bloon depth needed
 
     def plan_first_yields(self, cash, rnd, deep=True):
         """Does a plan_first build's plan let reinforce spend this tick? True
@@ -5332,7 +5332,12 @@ class Executor:
         Adora's Temple) and their plan cash stays behind the depth. In the
         Half Cash wins of 2026-11-08/09 (Adora's Temple, Spillway) the floor
         rule fires only in rounds 23-37 with under $650 in hand; Spillway's
-        win held round 78 rated 0.14 with the same build, hence the 0.10."""
+        win held round 78 rated 0.14 with the same build, so the floor stays
+        under that. It was 0.10 until Dark Castle Half Cash (2026-11-09 13:21,
+        same build) lost round 78 rated 0.11: after the Dartship came at round
+        75 the plan waited for h1 4-2-0 ($21,600) with $4.8-9.6k in hand, out
+        of reach before round 78, and 0.11 missed the old floor by 0.01. The
+        floor is now 0.12, still clear of Spillway's 0.14."""
         if cash is None or rnd is None or not self.plan_first():
             return False
         rules = getattr(self, "rules", None) or {}

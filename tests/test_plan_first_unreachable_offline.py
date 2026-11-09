@@ -175,6 +175,17 @@ def test_the_floor_rule_is_narrow():
     assert not ex.plan_first_yields(11_210, 77, deep=False)
 
 
+def test_dark_castle_rating_just_over_the_old_floor_yields():
+    """Dark Castle Half Cash (2026-11-09 13:21, hard_ninja_alch_sun) lost round
+    78 rated 0.112: rounds 76-77 began with $4,800 and $6,630 while the plan
+    waited for h1 4-2-0 ($21,600), the bloons never past 66% of the route.
+    The old 0.10 floor kept that cash for the step; 0.12 lets it go."""
+    for rnd, cash in ((76, 4_800), (77, 6_630)):
+        ex = x_factor(rnd, weak=(0.112, 78))
+        assert ex.plan_first_yields(cash, rnd, deep=False), rnd
+        assert Match._plan_lets_reinforce(match(ex, [{"round": rnd - 1, "deepest": 0.66}]), cash, rnd) is True
+
+
 def test_chimps_floor_rating_still_needs_depth():
     """Cracked CHIMPS (2026-11-07) won with rounds 56 and 59 rated 0.06 from
     round 52 on while $15-26k waited for its $28,080 step: in a one-life
