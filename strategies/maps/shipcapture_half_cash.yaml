@@ -40,7 +40,30 @@
 # map's sight grid and heights; no hero): see
 # tests/test_shipcapture_half_cash_offline.py for the numbers it keeps.
 #
-# Status: written 2026-11-08, not played yet.
+# Status: written 2026-11-08. PARKED 2026-11-09 after its first live game.
+#
+# 2026-11-09 01:40, PARKED: the first live game lost ROUND 39. It held to R36
+# with 100 lives, then lost 2/11/11/11/23 lives in rounds 37-39. Each leak
+# was a black, white or zebra bloon (11 or 23 lives), the bloons the bombs
+# pop worst; the last 7 bloons of R37 are camo whites that only snp1 sees.
+# The forecast rated the live board 1.61/1.85/2.68 at the start of R37/38/39.
+# Two reasons the numbers here are not to be trusted on this map:
+#   * bmb3/bmb4's crow's-nest spots were refused in the game (round 25: "spot
+#     0.387,0.121 / 0.468,0.121 refused the click"). snp1 already stood at
+#     0.409,0.189 on the crow's nest: refused cells learned earlier around its
+#     own spot (0.409,0.215) moved it 3 cells up. The right spot lies on the
+#     nest's rim, under a Halloween ghost. Both bombs then went "by role
+#     anywhere" to the bottom corners (0.612,0.700 and 0.227,0.726), next to
+#     the exits. The replay (CashGame accepts every cell not learned as
+#     refused) keeps them on the nest.
+#   * even the board that really stood rates R37/38/39 at 2.00/1.76/2.46 offline
+#     (live forecast, learned map). Without snp1, R37 rates 0.06 while R38-39
+#     barely move. So the model relies on one single-target sniper for the camo
+#     whites and credits the bombs' frags (8 per explosion, modelled as aimed)
+#     with the blacks and zebras. Neither held.
+# base_success drops to 0.05 so the planner does not pick this build until a
+# different core is designed: more sharp and camo damage before R37 (the
+# desperados and snipers come late here), on spots checked in the game.
 id: shipcapture_half_cash
 map: Ship Capture
 hero: obyn
@@ -48,7 +71,8 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [half_cash]
 planner:
   towers: {sniper: [1, 2, 0], bomb: [3, 4, 3], mermonkey: [3, 0, 1], desperado: [4, 3, 0], ice: [2, 0, 4]}
-  base_success: {half_cash: 0.8}
+  base_success: {half_cash: 0.05}     # parked 2026-11-09 (lost R39 live, see above)
+  revised: "2026-11-09T01:40"
   maps: [Ship Capture]
 plan:
   - {do: place, id: hero, kind: hero, role: dps, at: [0.500, 0.624]}                       # central grate, between the lanes; no $200 opener dart

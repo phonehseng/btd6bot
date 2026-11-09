@@ -48,7 +48,10 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 #   Bazaar: worst R36 0.84; R35 1.09, R37 1.06, R40 2.04 (general: worst
 #     0.06; R37 0.43, R40 0.12)
 #   Ship Capture: worst R79 0.86; R34 1.04, R36 1.15, R37 1.46, R40 1.59
-#     (general: worst 0.06; R34 0.32, R36 0.75, R37 0.92, R40 1.14)
+#     (general: worst 0.06; R34 0.32, R36 0.75, R37 0.92, R40 1.14).
+#     PARKED 2026-11-09 (base_success 0.05): the first live game lost R39.
+#     The replay over-rates this map (see the build's header), so these
+#     numbers only guard the replay, not the live game.
 #   Bloonarius Prime: worst R30 0.46 (Razor Rotors stands from R30); R22
 #     2.04, R25 2.28, R26 1.89, R40 2.99 (general: worst 0.06; R22 0.43,
 #     R25 0.41, R26 0.76, R40 2.33)
