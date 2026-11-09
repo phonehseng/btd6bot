@@ -4,9 +4,10 @@
 # lane hold the lanes the boat cannot reach, Quincy follows at the lanes'
 # junction; a village behind the exit (Bigger Radius first, so it reaches
 # the boat) gives the boat camo and Jungle Drums. Late game (since
-# 2026-11-08 03:00 the 23:30 one again, see Status): a Glaive Lord
-# boomerang beside the village, four Spiked Mines spike factories (the
-# fourth since 04:30), Primary Mentoring, and a Cripple MOAB sniper last.
+# 2026-11-08 05:40, see Status): no Glaive Lord; four Spiked Mines spike
+# factories all standing before round 95, two Bloon Sabotage ninjas
+# (rounds 95, 98, 99), an Aircraft Carrier second boat, an MIB village, a
+# Cripple MOAB sniper last.
 #
 # Why: the owner's goal is CHIMPS black borders. On 2026-11-07 the bot beat
 # CHIMPS on nine maps with builds that follow a published community strategy
@@ -54,7 +55,8 @@
 #     Bigger Radius (48) the slack is 7.0 units under the strict buff rule
 #     (dps_model.buff_covers: the boat's centre must be inside the radius);
 #   * the account has the village's top path to tier 4 only, so it ends at
-#     Primary Mentoring (4-2-0), not Primary Expertise.
+#     Primary Mentoring (4-2-0), not Primary Expertise (since 2026-11-08
+#     05:40 it ends at MIB, 2-3-0, and the late game has no Glaive Lord).
 #
 # Spots (data/maps/springspring.npz from the main checkout, 2026-11-07
 # 14:30, which holds the refusal of (0.735, 0.598); "cells" are track cells
@@ -363,6 +365,84 @@
 # (Glaive Lord counted, not): R95 1.07 / 0.44 (same), R96 1.72 / 1.00
 # (same), R97 4.86 / 2.86 (4.76 / 2.68), R98 1.09 / 0.68 (1.08 / 0.66), R99
 # 1.13 / 1.00 (1.07 / 0.70), R100 4.00 / 2.25 (2.99 / 1.74).
+# 2026-11-08 05:40: lost ROUND 95 again (04:41-05:13, journal
+# 20261108_044352, loss case 20261108_051901), the sixth loss of the Glaive
+# Lord recipe in rounds 95-99. Same schedule as the replay: Glaive Lord R85
+# ($35,100), p2 4-2-0 R92, p3 at 3-2-0 with $5,194 waiting for its $10,260
+# 4-2-0 when round 95 began; rated 1.07, 0.44 without the Glaive Lord's
+# tier 5. The defeat came 21 s into the round, about 11 game seconds after
+# the fortified MOABs and camo DDTs began (30.8 s); bloons reached 81-84%
+# of the route in every round 91-95.
+# Diagnosis: the doubt-free view (Glaive Lord rated at 4-0-2) has matched
+# live play here - round 95 rated 0.44-0.53 was lost (00:19, 05:13), round
+# 99 rated 0.70-0.79 was lost (22:57, 03:50), round 98 rated 0.66-0.68 was
+# passed every time it was reached. In that view
+# the $35,100 Glaive Lord adds ~0 to rounds 95-99 and is bought at R85, so
+# p2-p4 come late: on the replay's round-95 board p3 is unfinished and p4
+# missing. The spike factories are not the weak part - with all four at
+# 4-2-0 (no Glaive Lord) round 95 rates 1.11 (the "0.00-0.03" of 01:00 was
+# each one on a board that already counted the Glaive Lord map-wide).
+# Research (text sources; the Spring Spring pages are video-only or
+# unreachable: bloon.games/how-to-beat-chimps-on-spring-spring holds only
+# a video, bloonswiki/fandom Spring_Spring refused the fetch; their search
+# snippets say towers go at the island's right end and Carrier Flagship is
+# a good late damager). Generic CHIMPS late game: bloon.games "Best
+# strategies to beat CHIMPS mode" (bloon.games/best-strategies-to-beat-
+# chimps-mode-in-btd6): a 0-4-0 Bloon Sabotage ninja for rounds 95 and 99
+# (halves the DDTs' speed), a 2-3-0 MIB village, Tack Zone 2-0-5 + Super
+# Brittle 5-0-2 with a Primary Mentoring village, Perma-Spike 0-2-5 at the
+# exit; touchtapplay "How to beat round 95 in CHIMPS" (Bloon Sabotage,
+# slows); a Steam thread on round 99 (steamcommunity app 960090, 0-2-5 ice,
+# x-x-3 glue, Apache Prime); bloonswiki Strategy:CHIMPS (Bloon Sabotage the
+# easiest DDT patch). Account: everything but the village's top path past
+# tier 4 (data/accounts/SFYOSHHYV.json), so MIB and Primary Mentoring are
+# open, Primary Expertise is not.
+# Measured (tools/simulate_threats on main's learned map, starter paid,
+# dps_model.round_margin, Glaive Lord at 4-0-2): every kind and crosspath
+# up to $70,000 in its best legal cells (>= 0.08 from every tower, 7+ of 8
+# neighbours) on the round-63 board (Flagship up, R95 0.29 / R98 0.45 /
+# R99 0.25), then a greedy best-gain-per-dollar and whole late boards at
+# their cost (s1 Maim on all):
+#   current recipe complete (Glaive Lord, p1-p4, s1 4-2-0, $105k)
+#     R95 1.11, R98 0.70, R99 1.00 - all of it from the spike factories,
+#     Shrapnel and r1 4-0-2 ($70k); the Glaive Lord's $35k adds nothing;
+#   MIB + Aircraft Carrier + Crossbow Master + Elite Defender ($75k) 0.71
+#     / 0.77 / 0.71; with an Archmage instead of the Elite Defender ($97k)
+#     0.93 / 1.01 / 0.87; with an Inferno Ring instead ($103k) 0.76 / 0.72
+#     / 1.04;
+#   Tack Zone 2-0-5 ($26.5k) +0.02, Super Brittle ($35.7k) +0.00,
+#     Perma-Spike ($40.9k) +0.02, glue and alchemists <= +0.03, Apache
+#     Dartship 4-2-0 ($27k) +0.03 / +0.11 / +0.01 (Apache Prime $75k);
+#   a second Carrier Flagship rated best of all single buys (R98 0.81) but
+#     BTD6 allows one of each tier 5 (the replay's executor never buys it);
+#   a Sub Commander 2-0-5 rated well only through Advanced Intel, which
+#     the model counts map-wide - left out.
+# The Bloon Sabotage ninja rates 0 here (the model counts no abilities);
+# every bloon of the round at half speed lifts the new build's R95 1.11 ->
+# 2.09, R98 0.72 -> 1.30, R99 1.07 -> 2.09 (an upper bound: the slow lasts
+# seconds, not the whole round). Code (btd6bot/abilities.py, this branch):
+# Bloon Sabotage now waits for the round's first blimp (round 95's come at
+# 30.8 s; pressed at the start it was spent on the purples), round 99 is a
+# heavy round, and identical abilities share their cooldown (two ninjas:
+# one presses at round 94, the other is ready for round 95's blimps).
+# Change: from p1 on, no Glaive Lord (r1 stops at 4-0-2) and the order p1,
+# Maim (s1 4-1-0, the zomg answer, a plan step before round 74 as before),
+# r1 4-0-2, p2, p3, p4, Shrapnel, then two Bloon Sabotage ninjas n1/n2,
+# then b2 (Aircraft Carrier 4-2-0, the best R98/R99 buy left on the
+# round-96 board: R98 0.70 -> 0.82, R99 1.07 -> 1.20), MIB, Cripple MOAB
+# last. The bad answer is p3's 4-2-0 (bought by R86), so no bank is held.
+# Spots on main's learned map with the final board standing: n1 (0.574,
+# 0.462) island tip, 8/8 neighbours, 0.091 from the nearest tower; n2
+# (0.542, 0.547) 8/8, 0.085; b2 (0.772, 0.700) water, 8/8, 0.104 from b1,
+# 37.1 units from v1 (radius 48: Radar camo, drums, MIB); p1-p4 as before
+# (7-8/8). Replay (starter paid): plan 50/51 (Cripple not reached), no
+# threat gaps, no answers forced; p1 4-2-0 R72, Maim R77, p2 R82, p3 R85,
+# p4 R92, n1 R94, n2 R95, b2 4-2-0 R98, MIB R99. Rounds, new (old with the
+# Glaive Lord counted / not): R83 2.04 (1.65), R92 1.41 (2.51 / 0.96), R94
+# 1.43 (2.18 / 1.10), R95 1.11 (1.07 / 0.44), R96 1.20 (1.72 / 1.00), R98
+# 0.72 (1.09 / 0.68), R99 1.07 (1.13 / 1.00), R100 2.95 (4.00 / 2.25). No
+# tier the model is doubted on stands any more, so the two views agree;
+# rounds 6-82 unchanged.
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
@@ -370,11 +450,11 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 starter: {kind: dart, at: [0.270, 0.164]}   # the dart Match adds beside the lone boat (match.Match._starter_spec)
 modes: [chimps]
 planner:
-  towers: {buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], tack: [0, 2, 0], spike: [4, 2, 0]}
+  towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [4, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], tack: [0, 2, 0], spike: [4, 2, 0], ninja: [0, 4, 0]}
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Spring Spring]
-  revised: "2026-11-08T04:30"
+  revised: "2026-11-08T05:40"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
@@ -403,22 +483,29 @@ plan:
   - {do: upgrade, id: b1, to: 5-2-0}                                      # Carrier Flagship, before round 60
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.580, 0.624]}   # between the lanes, in the village's reach
   - {do: upgrade, id: r1, to: 3-0-2}
-  - {do: place, id: p1, kind: spike, role: dps, at: [0.505, 0.283]}       # top lane, right of the sniper: round 95 (see 22:00)
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.505, 0.283]}       # top lane, right of the sniper
   - {do: upgrade, id: p1, to: 2-2-0}
   - {do: upgrade, id: p1, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: r1, to: 5-0-2}                                      # Glaive Lord
+  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB: the zomg answer, a plan step before round 74
+  - {do: upgrade, id: r1, to: 4-0-2}                                      # MOAR Glaives; no Glaive Lord (see 2026-11-08 05:40)
   - {do: place, id: p2, kind: spike, role: dps, at: [0.163, 0.496]}       # left end, both lanes' start
   - {do: upgrade, id: p2, to: 2-2-0}
   - {do: upgrade, id: p2, to: 4-2-0}                                      # Spiked Mines
-  - {do: place, id: p3, kind: spike, role: dps, at: [0.238, 0.683]}       # bottom-left: round 99's MOABs (the cell the game took 00:18; 0.227, 0.709 refused)
+  - {do: place, id: p3, kind: spike, role: dps, at: [0.238, 0.683]}       # bottom-left (the cell the game took 00:18)
   - {do: upgrade, id: p3, to: 2-2-0}
   - {do: upgrade, id: p3, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: s1, to: 4-1-0}                                      # Maim MOAB (the zomg answer buys it at about round 78)
-  - {do: upgrade, id: s1, to: 4-2-0}                                      # Shrapnel Shot, $485 (see 2026-11-08 04:30)
-  - {do: place, id: p4, kind: spike, role: dps, at: [0.639, 0.802]}       # south of the village, by the exit: round 99 (see 04:30)
+  - {do: place, id: p4, kind: spike, role: dps, at: [0.639, 0.802]}       # south of the village, by the exit
   - {do: upgrade, id: p4, to: 2-2-0}
-  - {do: upgrade, id: p4, to: 4-2-0}                                      # Spiked Mines
-  - {do: upgrade, id: v1, to: 4-2-0}                                     # Primary Mentoring (the Glaive Lord is in reach)
+  - {do: upgrade, id: p4, to: 4-2-0}                                      # Spiked Mines: the four stand before round 95
+  - {do: upgrade, id: s1, to: 4-2-0}                                      # Shrapnel Shot, $485
+  - {do: place, id: n1, kind: ninja, role: support, at: [0.574, 0.462]}   # island tip: Bloon Sabotage for round 95's blimps
+  - {do: upgrade, id: n1, to: 0-4-0}                                      # Bloon Sabotage
+  - {do: place, id: n2, kind: ninja, role: support, at: [0.542, 0.547]}   # second Sabotage: rounds 98 and 99 both get one
+  - {do: upgrade, id: n2, to: 0-4-0}                                      # Bloon Sabotage
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.772, 0.700]}   # exit water, 37.1 units from v1 (camo, drums)
+  - {do: upgrade, id: b2, to: 3-2-0}
+  - {do: upgrade, id: b2, to: 4-2-0}                                      # Aircraft Carrier (one Flagship per game): round 99
+  - {do: upgrade, id: v1, to: 2-3-0}                                      # MIB: every damage type for the towers it reaches
   - {do: upgrade, id: s1, to: 5-2-0}                                      # Cripple MOAB, round 100's BAD
 answers:
   camo: [{do: upgrade, id: d1, to: 0-2-2}]
@@ -426,7 +513,7 @@ answers:
   ceramic: [{do: upgrade, id: d1, to: 0-2-3}, {do: upgrade, id: b1, to: 3-2-0}]
   moab: [{do: upgrade, id: d1, to: 0-2-4}]
   bfb: [{do: upgrade, id: b1, to: 4-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  zomg: [{do: upgrade, id: b1, to: 5-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
-  ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: b1, to: 5-2-0}]
-  bad: [{do: upgrade, id: r1, to: 5-0-2}]   # the plan's own step: no bank held for the Cripple MOAB (see 2026-11-08 03:00)
+  zomg: [{do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: v1, to: 1-2-0}, {do: upgrade, id: s1, to: 4-1-0}]
+  bad: [{do: upgrade, id: p3, to: 4-2-0}]   # a plan step bought by round 86: no bank held for the Cripple MOAB (see 2026-11-08 03:00)
   rush: [{do: upgrade, id: t1, to: 0-2-0}, {do: upgrade, id: r1, to: 3-0-2}]
