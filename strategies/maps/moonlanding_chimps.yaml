@@ -231,6 +231,31 @@
 # and s1 0-2-4 and v1 2-0-2 come after it. Replay (tools/simulate_threats on
 # the learned map): round 40's blimp check 0.4x -> 1.3x of the MOAB's HP in
 # reach, s2 3-1-0 bought by round 40; plan 24/24, no gaps, the rest the same.
+# 2026-11-09 01:00: LOST ROUND 59 live at 00:19 (main logs/bot.log from
+# 00:01): the round-40 fix held (R40 passed), but from round 50 the damage
+# model rated round 59 at 0.10, and the plan reached nothing for it. Round 59
+# (data/rounds.json) is 20 ceramics, 50 camo leads in 7.5 s and 10 regrow
+# ceramics; tools/rate_board.py --drop on the loss board puts the whole
+# rating on the camo leads (0.30 without sight, 9.31 without them): only s2
+# (3-1-0, one bullet a shot) both sees camo and pops lead. At round 54 the
+# plan's s1 0-2-5 took $14.6k, the next step was the Archmage (w1 5-0-2,
+# $46,925), and with plan_first nothing else was bought ("idle with $9388:
+# plan step 20 w1 5-0-2 -> wait" in round 59; the executor change on this
+# branch, Executor.plan_first_yields, now lets reinforce spend in that
+# case). Candidate buys rated on the loss board (learned map, sight): w1
+# 4-0-2 (Arcane Spike; Monkey Sense from 0-0-2 sees camo, magic pops lead)
+# $10,800 -> round 59 0.10 -> 2.92 (rounds 60-63 up 0.3-0.7 too); a Radar
+# Scanner village $3,725 -> 2.48 on that board but 0.10 in the replay (the
+# wizard stands at 1-0-2 there); s2 3-2-0 0.49, s2 4-1-0 0.20, a spike
+# factory 2-0-0 0.37, a Flash Bomb ninja 0.43, a third sniper 0.21; Elite
+# Defender (s1 0-2-5) adds nothing to round 59. Change: w1 -> 4-0-2 before
+# s1 0-2-5 (on the Archmage's own path, so nothing is wasted). Replay
+# (tools/simulate_threats.simulate, learned map): w1 3-0-2 R49, 4-0-2 R52,
+# Elite Defender R62 (was R54), Archmage R79 as before; rounds 50-63 rate
+# 1.18-3.44 (round 59 2.57, round 52 0.97 -> 2.95); plan 25/25, no gaps, the
+# same round-99 blimp answer sniper. Doubt: round 60's BFB (1.18) now
+# meets Full Auto Rifle, not Elite Defender; rounds 77-100 rate 0.22-0.87
+# as before (the damage model is pessimistic late; unplayed live).
 id: moonlanding_chimps
 map: Moon Landing
 hero: quincy
@@ -242,7 +267,7 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Moon Landing]
-  revised: "2026-11-08T06:30"
+  revised: "2026-11-09T01:00"
 plan:
   - {do: place, id: e1, kind: desperado, role: dps, at: [0.441, 0.470]}  # gap left of the middle stretch (the starter desperado follows)
   - {do: place, id: t1, kind: dart, role: dps, at: [0.067, 0.436]}       # the exit: bought mid-round 7 ($215), the last line (see 22:00)
@@ -263,6 +288,7 @@ plan:
   - {do: upgrade, id: s1, to: 0-2-4}                                      # Full Auto Rifle
   - {do: upgrade, id: v1, to: 2-0-2}                                      # Jungle Drums, Monkey Commerce
   - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the round-63 rush
+  - {do: upgrade, id: w1, to: 4-0-2}                                      # Arcane Spike + Monkey Sense: round 59's 50 camo leads (see 2026-11-09)
   - {do: upgrade, id: s1, to: 0-2-5}                                      # Elite Defender
   - {do: upgrade, id: w1, to: 5-0-2}                                      # Archmage (Monkey Sense: camo)
   - {do: upgrade, id: d1, to: 2-5-0}                                      # Spirit of the Forest
