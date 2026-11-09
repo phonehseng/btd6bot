@@ -1005,6 +1005,8 @@ class Bot:
         clicked_any = False
         for _ in range(3):
             words = self.menus.read()
+            if clicked_any and not self._still_on_mode_select():
+                break       # the last click took: the map is loading
             clicked = self.menus.click_word(MODE_BUTTON_TEXT.get(plan.mode, plan.mode), dy=-0.08)
             if not clicked and plan.mode in MODE_BUTTON_POS:
                 x, y = MODE_BUTTON_POS[plan.mode]
@@ -1041,6 +1043,25 @@ class Bot:
             elif st == "unknown":
                 self.menus.dismiss_popup()
         return self.menus.in_game()
+
+    def _still_on_mode_select(self):
+        """Before clicking a mode a second time: is the mode-select screen
+        really still up, in the read just made (Menus.words)?
+
+        Sunken Columns Double HP (2026-11-09 07:53): the first click on the
+        mode's slot worked and the map started loading, but the wait after
+        it ended on a look taken before the game had reacted (its OCR, slowed
+        by the loading, ran past the 3 s timeout), so it returned
+        "mode_select". The retry then clicked the slot blind over the
+        LOADING screen, the click reached the map as it appeared, hit the
+        water there and opened "Remove for $1,000"; the box covered the HUD
+        and no tower could be placed. A second click is only for a screen
+        that still shows the modes."""
+        st = self.menus.identify(read=False)
+        if st == "mode_select":
+            return True
+        log.info("start: the mode screen is gone (%s) after the click - not clicking again", st)
+        return False
 
     # The intro box of a mode ("DEFLATION - Start at round 31 with $40,400
     # cash, but you can't earn any more. OK") sits over a game that already
