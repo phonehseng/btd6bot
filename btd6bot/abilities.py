@@ -63,8 +63,12 @@ HERO_XP_PESSIMISM = 0.8       # "certainly unlocked": XP estimate x this
 HEAVY_SHARE = 0.3
 # Rounds picked by hand before HEAVY_SHARE, kept as a floor: their content is
 # notable in ways blimp HP alone does not show (R63's ceramic rush, the
-# first MOAB at R40 and BFB at R60, R100's BAD).
-HEAVY_FLOOR = frozenset({40, 60, 63, 76, 78, 80, 95, 98, 100})
+# first MOAB at R40 and BFB at R60, R100's BAD), and R99: 60 MOABs in 12 s
+# with 9 fortified camo DDTs from 6.5 s - light in blimp HP (it falls under
+# HEAVY_SHARE) but it ended three Spring Spring CHIMPS games (2026-11-07/08)
+# and CHIMPS guides spend Bloon Sabotage on it (bloon.games, "Best
+# strategies to beat CHIMPS mode": a 0-4-0 ninja for rounds 95 and 99).
+HEAVY_FLOOR = frozenset({40, 60, 63, 76, 78, 80, 95, 98, 99, 100})
 
 
 @lru_cache(maxsize=None)
@@ -82,10 +86,27 @@ def heavy_rounds(set_name="standard", end_round=100):
 HEAVY_ROUNDS = heavy_rounds("standard", 100)
 
 
+def _mode_of(rules):
+    """The mode key whose strategy.MODE_RULES entry is `rules` (None if none)."""
+    return next((m for m, r in MODE_RULES.items() if r is rules), None)
+
+
+@lru_cache(maxsize=None)
+def first_blimp_s(set_name, rnd):
+    """Game seconds into round rnd before its first MOAB-class bloon spawns
+    (the groups' start_s in the round data), or None for a round without
+    blimps. Round 95 sends its 500 purples and 250 leads in 0-30 s and the
+    50 fortified MOABs and 30 camo DDTs only from 30.8 s; round 98's ZOMGs
+    come at 0 s."""
+    starts = [float(g.get("start_s") or 0.0) for g in TH.round_groups(set_name, rnd)
+              if (TH.bloons().get(g["bloon"]) or {}).get("class") == "blimp"]
+    return min(starts) if starts else None
+
+
 def heavy_rounds_for(rules):
     """Heavy rounds for a mode's rules (strategy.MODE_RULES entry): the
     mode's round set (ABR has its own) up to its last round."""
-    mode = next((m for m, r in MODE_RULES.items() if r is rules), None)
+    mode = _mode_of(rules)
     end = (rules or {}).get("end_round") or 100
     return heavy_rounds(TH.set_for_mode(mode), end)
 
@@ -153,12 +174,19 @@ TOWER_ABILITIES = {
 }
 
 # 'moab' abilities that act on every bloon of the wave, including those still
-# to spawn, rather than on a target on screen. They are pressed at the very
-# start of a round, without MOAB_DELAY_S (R98's ZOMGs spawn within its first
-# 5 game seconds), and only in heavy rounds (heavy_rounds_for), so their
-# 60 s cooldown is not spent on a light round right before a heavy one.
-# A crisis or a leak still fires them like any other ability.
+# to spawn, rather than on a target on screen. They are pressed when the
+# round's first blimp spawns (first_blimp_s), without MOAB_DELAY_S (R98's
+# ZOMGs spawn within its first 5 game seconds), and only in heavy rounds
+# (heavy_rounds_for), so their 60 s cooldown is not spent on a light round
+# right before a heavy one. A crisis round waits for the blimps too; only a
+# leak (lives falling) fires them at once.
+# Why wait for the blimps: round 95 brings its 30 camo DDTs and 50 fortified
+# MOABs from 30.8 game seconds, after 30 s of purples and leads. Pressed at
+# the round's start, as before, the slow would be over (and the 60 s
+# cooldown running) when the blimps came - the bloons Spring Spring CHIMPS
+# lost to in rounds 95 and 99 (2026-11-07/08).
 ROUND_START = {"Bloon Sabotage"}
+BLIMP_LEAD_S = 1.0            # ROUND_START fires this many game seconds before the first blimp
 
 
 def _tower_ability_index():
@@ -263,6 +291,7 @@ class AbilityPlanner:
         self.hero_round = None          # round the hero was placed
         self.slots = {}                 # ability name -> _Slot (currently on the board)
         self._tower_seen = {}           # ability name -> (acquired round, game_t, seq)
+        self._tower_count = {}          # ability name -> towers on the board that have it
         self._seq = 0
         self.game_t = 0.0               # in-round game seconds elapsed
         self._prev_now = None
@@ -274,13 +303,15 @@ class AbilityPlanner:
     # -- board state ------------------------------------------------------------
     def update_towers(self, towers, rnd):
         """towers: objects with .tid, .kind ('hero' or a tower id) and .tiers."""
-        names = set()
+        names = {}
         has_hero = False
         for p in towers:
             if p.kind == "hero":
                 has_hero = True
                 continue
-            names.update(tower_abilities(p.kind, p.tiers))
+            for n in tower_abilities(p.kind, p.tiers):
+                names[n] = names.get(n, 0) + 1
+        self._tower_count = names
         if has_hero and self.hero_round is None:
             self.hero_round = rnd if rnd is not None else self.rules.get("start_round", 1)
         if not has_hero:
@@ -315,7 +346,14 @@ class AbilityPlanner:
         for n, (r, t0, seq) in self._tower_seen.items():
             cd, use = TOWER_ABILITIES[n]
             # a fresh tower ability may start on cooldown: certain after one cooldown
-            entries.append(((r, 1, seq), n, use, cd, self.game_t - t0 >= cd))
+            certain = self.game_t - t0 >= cd
+            # Identical abilities share one button, and each press uses a tower
+            # whose ability is ready: with k of them the button comes back k
+            # times as often. Spring Spring CHIMPS (2026-11-08) buys two
+            # Bloon Sabotage ninjas so the slow is there for round 95's
+            # blimps (30.8 s in) after round 94's press, and for both 98 and 99.
+            cd = cd / max(1, self._tower_count.get(n, 1))
+            entries.append(((r, 1, seq), n, use, cd, certain))
         entries.sort(key=lambda e: e[0])
         return [(i, name, use, cd, certain)
                 for i, (_, name, use, cd, certain) in enumerate(entries, start=1)
@@ -333,6 +371,18 @@ class AbilityPlanner:
             self.round_start = None
         self._prev_now, self._prev_in_round, self._prev_round = now, in_round, rnd
         return in_round
+
+    def _blimps_here(self, now, rnd):
+        """Has the current round reached its first blimp spawn (less
+        BLIMP_LEAD_S)? Game seconds into the round are the real seconds since
+        it started times the game speed. A round without blimps, or one the
+        round data does not know, counts from its start."""
+        if self.round_start is None:
+            return False
+        first = first_blimp_s(TH.set_for_mode(_mode_of(self.rules)), rnd) if rnd is not None else None
+        if not first:
+            return True
+        return (now - self.round_start) * self.speed >= first - BLIMP_LEAD_S
 
     def _due(self, slot, cooldown):
         if slot.last_press is None:
@@ -357,6 +407,7 @@ class AbilityPlanner:
         in_round = self._advance(now, rnd, in_round)
         crisis_now = (crisis and in_round and self.round_start is not None
                       and now - self.round_start >= MOAB_DELAY_S)
+        blimps_here = self._blimps_here(now, rnd)
         fired = []
         live = {}
         for key, name, use, cd, certain in self.hotkeys(rnd):
@@ -365,14 +416,16 @@ class AbilityPlanner:
                 continue
             if lives_dropped:
                 reason = "emergency"
-            elif crisis_now:
+            elif crisis_now and (name not in ROUND_START or blimps_here):
                 reason = "crisis round"
+            elif crisis_now:
+                continue      # a wave-wide slow is kept for the round's blimps
             elif not in_round or use == "save":
                 continue
             elif use == "on_cooldown":
                 reason = "cooldown"
             elif use == "moab" and name in ROUND_START:
-                if not is_heavy_round(rnd, self.rules) or self.round_start is None:
+                if not is_heavy_round(rnd, self.rules) or not blimps_here:
                     continue
                 reason = "heavy round"
             elif use == "moab":
