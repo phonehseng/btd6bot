@@ -345,9 +345,12 @@ STEP_KEYS = {"do", "id", "kind", "role", "segment", "near", "near_radius", "roun
              "lane",       # "blimp": score only the track blimps ride (Executor.pick_spots)
              "obstacle",   # do: clear - the removable obstacle's name in the map file
              "name",       # do: ability - the ability (TARGETED_ABILITIES)
-             "when",       # do: ability - {round, hero_level_min, hero_level_max}
+             "when",       # do: ability - {round, hero_level_min, hero_level_max, min_margin}
              "min_value"}  # do: ability - the target's least worth (table price of its tiers)
-ABILITY_WHEN_KEYS = {"round", "hero_level_min", "hero_level_max"}
+# min_margin: the damage model must rate every round left (the one being
+# played to the mode's last) at least this high on the board without the
+# target, or the step waits (Executor._sacrifice_margin).
+ABILITY_WHEN_KEYS = {"round", "hero_level_min", "hero_level_max", "min_margin"}
 
 
 def _targeted_abilities():
@@ -737,6 +740,9 @@ def _ability_problems(strat, where, st, placed):
     elif when.get("hero_level_min") is not None and when["hero_level_min"] < spec["level"]:
         probs.append(f"{where}: hero_level_min {when['hero_level_min']} is below "
                      f"{st['name']}'s unlock level {spec['level']}")
+    if isinstance(when, dict) and when.get("min_margin") is not None and \
+            not (isinstance(when["min_margin"], (int, float)) and when["min_margin"] > 0):
+        probs.append(f"{where}: min_margin must be a positive number (a damage-model margin)")
     if st.get("min_value") is not None and not (isinstance(st["min_value"], int) and st["min_value"] > 0):
         probs.append(f"{where}: min_value must be a positive whole number of dollars")
     return probs
@@ -2165,6 +2171,16 @@ class Executor:
         if tries >= self.ABILITY_MAX_TRIES:
             log.warning("ability step %s: %d presses armed nothing - given up", name, tries)
             return "skip"
+        if when.get("min_margin"):
+            worst = self._sacrifice_margin(p, rnd)
+            if worst is None or worst[0] < when["min_margin"]:
+                if self._margin_wait_logged != rnd:
+                    self._margin_wait_logged = rnd
+                    log.info("ability step %s: waits - without %s the damage model rates %s, under %s",
+                             name, p.tid, "nothing" if worst is None else
+                             f"round {worst[1]} at {worst[0]:.2f}", when["min_margin"])
+                self.g.fail_reason = "margin"
+                return "wait"
         level, how = self._hero_level_now(hero, rnd)
         lo = max(spec["level"], when.get("hero_level_min") or 0)
         hi = when.get("hero_level_max")
@@ -2195,6 +2211,23 @@ class Executor:
             return "skip"
         self.retry_at[key] = time.time() + self.ABILITY_RETRY_S
         return "wait"
+
+    _margin_wait_logged = None      # the round whose margin wait was logged (_try_ability)
+
+    def _sacrifice_margin(self, p, rnd):
+        """(lowest margin, its round) the damage model gives the board
+        without tower p over every round left - the one being played to the
+        mode's last - or None when it cannot rate them. A sacrifice may only
+        take a tower the rest of the game does without: on Logs Hard
+        (2026-11-09) Blood Sacrifice took the M.A.D. 8 s into round 76,
+        rated 0.81 with it, and the ceramics it was shooting at the exit
+        leaked 0.3 s later - 100 lives."""
+        if rnd is None:
+            return None
+        end = (getattr(self, "rules", None) or {}).get("end_round", 80)
+        rounds = list(range(rnd, end + 1))
+        return self._rated(f"without:{p.tid}", rnd, lambda fc, towers: fc.worst(
+            [t for t in towers if t.tid != p.tid], rounds))
 
     def _hero_level_now(self, hero, rnd):
         """(level, "panel" | "estimate") for the placed hero: read off its
@@ -5013,15 +5046,31 @@ class Executor:
                 continue
             if r == "wait" and self._set_aside_blocked(st):
                 continue
+            if r == "wait" and self._only_free_steps_left():
+                # an ability step waiting for its round, level or margin costs
+                # nothing: the fill builds the defence meanwhile
+                ability_wait = f"plan step {self.idx} {st} -> {r} ({self.g.fail_reason})"
+                break
             self.waiting = f"plan step {self.idx} {st} -> {r} ({self.g.fail_reason})"
             return r == "progress"  # waiting for cash / round, or mid-upgrade
+        else:
+            ability_wait = None
         for st in self.fill:
             with self.why("fill", "the plan is done: fill step", step=dict(st)):
                 r = self.try_step(st, cash, rnd)
             if r in ("bought", "progress"):
                 return True
-        self.waiting = PLAN_EXHAUSTED
+        self.waiting = ability_wait or PLAN_EXHAUSTED
         return False
+
+    def _only_free_steps_left(self):
+        """True when every plan step from the current one is a `do: ability`
+        step: they cost nothing, so neither plan_first nor the plan's wait
+        holds the cash for them. Kali Maaaaaaaa on Logs Hard (2026-11-09):
+        the sacrifice step waited from round 74 and nothing else was bought
+        - rounds 76 and 78 were rated 0.81 and 0.58 with $10k in hand."""
+        rest = (getattr(self, "plan", None) or [])[getattr(self, "idx", 0):]
+        return bool(rest) and all(st.get("do") == "ability" for st in rest)
 
     def _plan_bundles(self, rnd):
         """The plan steps of clicktime.PLAN_WINDOW from the current one, as
@@ -5446,7 +5495,9 @@ class Executor:
         strat = getattr(self, "strat", None)
         if not (isinstance(strat, dict) and strat.get("plan_first")):
             return False
-        return getattr(self, "idx", 0) < len(getattr(self, "plan", None) or [])
+        # steps that cost nothing (a waiting `do: ability`) hold no cash
+        return (getattr(self, "idx", 0) < len(getattr(self, "plan", None) or [])
+                and not self._only_free_steps_left())
 
     # plan_first_yields: how weak and how near a round must be for a plan_first
     # build's unreachable plan step to give way to reinforcing

@@ -413,10 +413,12 @@ def test_not_lacking_critical_information_build():
 
 def test_kali_build():
     """Bot-ready since the `do: ability` step exists: the sacrificial M.A.D.
-    is bought by round 79 and is worth the worst case of ten Adora levels
-    from level 7-10 (4 XP per dollar; the step's min_value is exactly that
-    worst case), and Adora placed at round 70 is level 7-10 from round 76
-    to 80, when the step may fire."""
+    is bought by round 80, last, after the defence for rounds 76-80
+    (Perma-Spike), and is worth the worst case of ten Adora levels from
+    level 7-10 (4 XP per dollar; the step's min_value is exactly that worst
+    case); Adora placed at round 70 is level 7-10 from round 76 to 80, when
+    the step may fire, and the step waits for a board rated min_margin
+    without d1."""
     from btd6bot import abilities as AB
     from btd6bot import towers as T
     from btd6bot.towerxp import EDUCATION_MULT
@@ -428,9 +430,10 @@ def test_kali_build():
     idx = {(st.get("id"), st.get("to")): i for i, st in enumerate(k["plan"])}
     mad_round = bought[idx[("d1", "0-5-0")]]
     hero_round = bought[idx[("hero", None)]]
-    assert hero_round == 70 and mad_round <= 79, (hero_round, mad_round)
+    assert hero_round == 70 and mad_round <= 80, (hero_round, mad_round)
+    assert idx[("sp1", "2-0-5")] < idx[("d1", "0-5-0")]          # the defence first
     sac = k["plan"][-1]
-    assert sac["do"] == "ability" and sac["target"] == "d1" and bought[len(k["plan"]) - 1] <= 79
+    assert sac["do"] == "ability" and sac["target"] == "d1" and bought[len(k["plan"]) - 1] <= 80
     xp = AB.HERO_LEVEL_XP
     scale = AB.HERO_XP_SCALE["adora"]
     worst = max((xp[lv + 10] - xp[lv]) * scale for lv in range(7, 11))
@@ -438,6 +441,7 @@ def test_kali_build():
     assert T.total_cost("dartling", "0-5-0", "hard") >= sac["min_value"]
     when = sac["when"]
     assert (when["hero_level_min"], when["hero_level_max"]) == (7, 10)
+    assert when["min_margin"] >= 1.0
     levels = [AB.estimate_hero_level("adora", hero_round, r, EDUCATION_MULT)
               for r in range(max(when["round"], mad_round), 81)]
     assert all(7 <= lv <= 10 for lv in levels), levels
@@ -446,11 +450,15 @@ def test_kali_build():
 def test_kali_replay_survives_the_sacrifice():
     """The executor's own replay of the build on Logs Hard (tools/
     simulate_threats.py: the map's learned spots, the account's Fast Track
-    start and Double Cash): the plan runs to its last step, d1 is 0-5-0 when
-    Blood Sacrifice takes it in rounds 76-79, no round lacks an answer, and
-    the boards after the sacrifice rate about as well as with d1 kept (the
-    M.A.D. carries little: rounds 76-80 within 0.15 of the no-sacrifice
-    replay). Without plan_first the spare-cash ninjas took the M.A.D.'s cash
+    start and Double Cash): the plan runs to its last step, no round lacks
+    an answer, Blood Sacrifice takes d1 in round 76-80, and every round
+    from 76 to 80 is rated at least the step's min_margin on the board
+    without d1 - the defence never needs the M.A.D.
+
+    The first live try (2026-11-09) had the spike at 2-0-4: the replay
+    rated round 76 1.09 and 78 0.84 (live 0.81 and 0.58), the step fired 8 s
+    into round 76 and the ceramics the M.A.D. was shooting at the exit
+    leaked. Without plan_first the spare-cash ninjas took the M.A.D.'s cash
     and d1 ended at 0-4-0, worth $12,475."""
     import logging
     from types import SimpleNamespace as SN
@@ -465,31 +473,25 @@ def test_kali_replay_survives_the_sacrifice():
     m = SIM.map_model("Logs", learned=True)
     fc = RoundForecast("Logs", "hard", m.sight, (getattr(m, "sight_height", None), getattr(m, "ground_height", None)))
     assert fc._ready()
-
-    def replay(strat):
-        boards = {}
-        logging.disable(logging.CRITICAL)
-        try:
-            r = SIM.simulate(strat, "hard", "Logs", real_map=True, learned=True, scenario=sc, boards=boards)
-        finally:
-            logging.disable(logging.NOTSET)
-        margins = {}
-        for rnd in range(76, 81):
-            towers = [SN(tid=t, kind=kk, tiers=ti, x=fx, y=fy) for t, (kk, ti, fx, fy) in boards[rnd].items()]
-            margins[rnd] = D.round_margin(fc.stations(towers), "hard", rnd, fc.track)
-        return r, boards, margins
-
-    r, boards, margins = replay(k)
+    boards = {}
+    logging.disable(logging.CRITICAL)
+    try:
+        r = SIM.simulate(k, "hard", "Logs", real_map=True, learned=True, scenario=sc, boards=boards)
+    finally:
+        logging.disable(logging.NOTSET)
     assert r["plan_done"] == f"{len(k['plan'])}/{len(k['plan'])}", r["plan_done"]
     assert r["gaps"] == [], r["gaps"]
     # the first board without d1 (the simulator plays the step before the
-    # round's board is taken; live it waits for the round to play)
+    # round's board is taken; live it fires while the round plays)
     sac = [rnd for rnd, b in sorted(boards.items()) if rnd >= 70 and "d1" not in b]
-    assert sac and 76 <= sac[0] <= 79, sac
-    assert boards[sac[0] - 1]["d1"][1] == (0, 5, 0)
-    keep = dict(k, plan=[st for st in k["plan"] if st["do"] != "ability"])
-    _, _, kept = replay(keep)
-    assert all(margins[rnd] >= kept[rnd] - 0.15 for rnd in margins), (margins, kept)
+    assert sac and 76 <= sac[0] <= 80, sac
+    floor = k["plan"][-1]["when"]["min_margin"]
+    without = {}
+    for rnd in range(76, 81):
+        towers = [SN(tid=t, kind=kk, tiers=ti, x=fx, y=fy) for t, (kk, ti, fx, fy) in boards[rnd].items()
+                  if t != "d1"]
+        without[rnd] = D.round_margin(fc.stations(towers), "hard", rnd, fc.track)
+    assert all(v >= floor for v in without.values()), without
 
 
 def test_catalog_points_at_the_new_builds():

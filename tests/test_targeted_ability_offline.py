@@ -158,6 +158,52 @@ def test_gives_up_when_it_can_never_go_right():
     assert ex.try_step(STEP, 0, 78) == "skip"
 
 
+def test_waits_for_a_board_that_does_without_the_target():
+    """min_margin: the step waits while the damage model rates any round
+    left under it on the board without the target (Logs Hard, 2026-11-09:
+    the M.A.D. was taken in round 76, rated 0.81 with it, and the ceramics
+    it was shooting leaked at once)."""
+    step = dict(STEP, when=dict(STEP["when"], min_margin=1.2))
+    assert S.validate(strat(step)) == []
+    bad = dict(STEP, when=dict(STEP["when"], min_margin=-1))
+    assert "min_margin must be a positive number" in " | ".join(S.validate(strat(bad)))
+    g = Game()
+    ex = executor(g)
+    rated = []
+
+    def worst(towers, rounds):
+        rated.append(([t.tid for t in towers], list(rounds)))
+        return (2.0 if "n9" in [t.tid for t in towers] else 0.81, rounds[0])
+    ex.forecast = N(worst=worst)
+    assert ex.try_step(step, 0, 76) == "wait" and g.presses == [] and g.fail_reason == "margin"
+    assert "d1" not in rated[-1][0] and "hero" in rated[-1][0]
+    assert rated[-1][1] == list(range(76, 81))                 # every round left
+    g.towers["n9"] = Placed("n9", "ninja", 0.6, 0.6, tiers=[4, 0, 2])   # the defence grew
+    assert ex.try_step(step, 0, 76) == "done" and g.presses == [(1, "d1")]
+    ex2 = executor(Game())
+    ex2.forecast = N(worst=lambda towers, rounds: None)          # cannot rate: no sacrifice
+    assert ex2.try_step(step, 0, 76) == "wait"
+
+
+def test_a_waiting_ability_step_holds_no_cash():
+    """Once only `do: ability` steps are left, plan_first lets go and the
+    fill builds while the step waits (live, the waiting sacrifice step held
+    every dollar from round 74 on and nothing else was bought)."""
+    s = strat()
+    s["plan_first"] = True
+    s["fill"] = [{"do": "place", "kind": "ninja", "role": "support", "max": 2}]
+    g = Game(level=6)                                            # the step waits for level 7
+    ex = S.Executor(g, F.FakeModel(), s, "hard", F.full_account())
+    ex.play_running = True
+    assert ex.plan_first() and not ex._only_free_steps_left()    # placements still to go
+    for _ in range(12):
+        ex.tick(50000, 76)
+    assert ex.plan[ex.idx]["do"] == "ability" and g.presses == []   # it waits
+    assert not ex.plan_first() and ex._only_free_steps_left()
+    assert g.placed.count("ninja") == 2, g.placed                 # the fill went on, to its max
+    assert ex.waiting.startswith(f"plan step {ex.idx}") and not ex.plan_exhausted()
+
+
 def test_without_a_panel_read_the_level_is_estimated_from_the_placement_round():
     g = Game(level=None)
     ex = executor(g)
@@ -182,6 +228,22 @@ def test_no_presses_once_blood_sacrifice_may_be_unlocked():
     pl.update_towers([hero, dart], rnd)
     for i in range(120):
         assert pl.decide(2000.0 + i, rnd, True, lives_dropped=(i % 7 == 0), crisis=True) == []
+
+
+def test_the_assumed_hotkey_order_matched_the_live_bar():
+    """Logs Hard, 2026-11-09: Adora placed at round 70, d1 bought to 0-4-0
+    (Rocket Storm) in round 71, Blood Sacrifice from round ~76. The bar
+    showed Long Arm of Light, Rocket Storm/M.A.D., Blood Sacrifice (the
+    recording, rec_20261109_150300.mkv), and key 3 armed Blood Sacrifice -
+    the planner's acquisition order and its first candidate."""
+    pl = A.AbilityPlanner("adora", MODE_RULES_HARD)
+    hero = N(tid="hero", kind="hero", tiers=[0, 0, 0])
+    pl.update_towers([hero], 70)
+    pl.update_towers([hero, N(tid="d1", kind="dartling", tiers=[0, 4, 0])], 71)
+    pl.update_towers([hero, N(tid="d1", kind="dartling", tiers=[0, 5, 0])], 76)
+    order = [n for _, n, _, _, _ in pl.hotkeys(76)]
+    assert order == ["hero:Long Arm of Light", "Rocket Storm", "hero:Blood Sacrifice"], order
+    assert pl.key_candidates("Blood Sacrifice", 76)[0] == 3
 
 
 def test_key_candidates_guess_first_and_skip_other_never_abilities():
@@ -210,8 +272,9 @@ MODE_RULES_HARD = S.MODE_RULES["hard"]
 
 def _game(panels, boxes, screen_ok=True):
     """A Game whose panel reads (_open_side) and sacrifice-text reads
-    (find_sacrifice_box, after the press and after each click) are
-    scripted; key presses and clicks are recorded."""
+    (find_sacrifice_box, after each click that left the ability unarmed)
+    are scripted; the armed signs read nothing (no frame, no words) unless
+    a test scripts _armed_sign; key presses and clicks are recorded."""
     g = G.Game.__new__(G.Game)
     g.towers, g.why = {}, None
     g.events = []
@@ -262,14 +325,14 @@ def test_its_own_panel_means_nothing_was_armed():
 
 def test_a_sacrifice_box_is_confirmed_then_the_tower_must_be_gone():
     box = {"text": "Sacrifice?", "confirm": (0.55, 0.6), "cancel": (0.45, 0.6), "purchase": False}
-    r, g = _run(_game(panels=[None, None, None], boxes=[None, dict(box), None, None]))
+    r, g = _run(_game(panels=[None, None, None], boxes=[dict(box), None, None]))   # read after each click
     assert r == "done"
     assert g.events == [("press", "3"), TOWER, ("click", 0.55, 0.6), TOWER, TOWER]
 
 
 def test_a_box_that_asks_for_money_is_cancelled_never_confirmed():
     box = {"text": "Sacrifice for $500", "confirm": (0.55, 0.6), "cancel": (0.45, 0.6), "purchase": True}
-    r, g = _run(_game(panels=[None], boxes=[None, dict(box)]))
+    r, g = _run(_game(panels=[None], boxes=[dict(box)]))
     assert r == "unclear" and "d1" in g.towers
     assert ("click", 0.55, 0.6) not in g.events and g.events[-1] == ("click", 0.45, 0.6)
 
@@ -279,6 +342,61 @@ def test_a_banner_without_buttons_keeps_clicking_the_tower_only():
     r, g = _run(_game(panels=[], boxes=[dict(banner)] * 5))
     assert r == "unclear"
     assert set(g.events[1:]) == {TOWER} and len(g.events) == 1 + G.Game.ABILITY_CLICKS
+
+
+def test_still_armed_after_a_click_clicks_again():
+    """The pentagram still over the tower after a click: the click did not
+    take; the next click goes to the tower again and only two blank looks
+    afterwards count it gone."""
+    g = _game(panels=[None, None, None], boxes=[])
+    signs = [("pentagram", None), ("pentagram", None), (None, []), (None, [])]
+    g._armed_sign = lambda f, p: signs.pop(0)
+    r, g = _run(g)
+    assert r == "done" and g.events == [("press", "3"), TOWER, TOWER, TOWER]
+
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+D1 = (0.430, 0.308)        # where d1 stood on Logs Hard (logs/bot.log 2026-11-09 14:59:02)
+
+
+def _fixture(name):
+    import cv2
+    img = cv2.imread(str(FIXTURES / name))
+    assert img is not None, name
+    return img
+
+
+def test_the_armed_screen_is_recognised():
+    """Live, Logs Hard 2026-11-09: key 3 armed Blood Sacrifice, but the
+    check read "no sacrifice text" - the armed screen says "Select a
+    Monkey". Now the banner (as OCR read it there) and the red pentagram
+    over the target both tell it; the same spot unarmed (the hero-level
+    frame of the same game, 5 s earlier) shows neither."""
+    from btd6bot.vision import Word
+    armed = _fixture("blood_sacrifice_armed.png")
+    unarmed = _fixture("blood_sacrifice_unarmed.jpg")
+    banner = [Word("Select a Monkey", 0.500, 0.077, 0.2, 0.03, 1.0), Word("76/80", 0.770, 0.086, 0.05, 0.03, 1.0)]
+    assert G.pentagram_on(armed, *D1)
+    assert not G.pentagram_on(unarmed, *D1)
+    assert not G.pentagram_on(unarmed, 0.55, 0.44)          # the board's red tower, unarmed
+    assert G.sacrifice_armed(armed, [], at=D1) == "pentagram"
+    assert G.sacrifice_armed(unarmed, banner) == "banner"   # the words alone
+    assert G.sacrifice_armed(unarmed, [], at=D1) is None
+    elsewhere = [Word("Select a Monkey", 0.5, 0.6, 0.2, 0.03, 1.0)]   # not the banner's place
+    assert G.sacrifice_armed(unarmed, elsewhere) is None
+
+
+def test_the_armed_banner_is_read_off_the_fixture():
+    """The OCR engine itself reads the banner off the captured frame (skipped
+    where rapidocr is not installed)."""
+    try:
+        import rapidocr_onnxruntime  # noqa: F401
+    except ImportError:
+        return
+    from btd6bot.vision import Vision
+    armed = _fixture("blood_sacrifice_armed.png")
+    words = Vision(None).read(region=G.ARMED_BANNER_REGION, img=armed)
+    assert G.sacrifice_armed(armed, words) == "banner", words
 
 
 def test_off_the_match_screen_nothing_is_pressed():

@@ -1532,15 +1532,21 @@ class Game:
 
     # -- targeted abilities (Adora's Blood Sacrifice) ------------------------------
     # Blood Sacrifice is pressed like any ability and then waits for a click
-    # on the tower to destroy. Nothing of that screen has been captured yet,
-    # so every step leaves a frame in logs/ (ABILITY_CAPTURE) and every
-    # outcome is told by what the game does with a click on the tower's own
-    # spot - the one click that can never hurt a tower we did not pick:
+    # on the tower to destroy. The armed screen was first captured on Logs
+    # Hard (2026-11-09, tests/fixtures/blood_sacrifice_armed.png): a blue
+    # banner "Select a Monkey" at the top centre and a red pentagram circle
+    # on every tower that may be taken (sacrifice_armed); no box, no button -
+    # the click on the tower takes it at once. Every step still leaves a
+    # frame in logs/ (ABILITY_CAPTURE), and every outcome is told by what the
+    # game does with a click on the tower's own spot - the one click that can
+    # never hurt a tower we did not pick:
     # - its upgrade panel opens: nothing was armed (wrong key, cooldown,
     #   level too low); the panel is closed again;
+    # - the armed signs still show: the click did not take - click again;
     # - nothing opens, twice: the tower is gone (sacrificed);
     # - a box worded "sacrifice" with a green check: confirmed, unless it
     #   also shows a price or a buy word (then cancelled: never a purchase).
+    #   No such box was seen live; the check stays for safety.
     ABILITY_ARM_S = 0.5        # after the hotkey, before the click on the tower
     ABILITY_CLICK_S = 0.6      # after a click, before looking
     ABILITY_CLICKS = 4         # clicks on the tower's spot at most
@@ -1592,9 +1598,9 @@ class Game:
         time.sleep(self.ABILITY_ARM_S)
         f = self.fresh()
         self._capture(f, self.ABILITY_CAPTURE.format(tid=p.tid, step="armed"))
-        banner = find_sacrifice_box(f, self._vision().read(img=f))
+        armed, words = self._armed_sign(f, p)
         log.info("ability key %s pressed for %s: %s", key, p.tid,
-                 "a sacrifice text is showing" if banner else "no sacrifice text read")
+                 f"armed ({armed})" if armed else "no armed sign seen (no banner, no pentagram)")
         blank = 0
         for i in range(1, self.ABILITY_CLICKS + 1):
             self.inp.click(p.x, p.y)
@@ -1608,7 +1614,13 @@ class Game:
                 log.info("ability key %s: %s's panel opened on click %d - %s", key, p.tid, i,
                          "nothing was armed" if not blank else "the click before took nothing")
                 return "not_armed"
-            box = find_sacrifice_box(f, self._vision().read(img=f))
+            still, words = self._armed_sign(f, p)
+            if still:
+                blank = 0
+                log.info("ability key %s: still armed (%s) after click %d on %s - clicking again",
+                         key, still, i, p.tid)
+                continue
+            box = find_sacrifice_box(f, words if words is not None else self._vision().read(img=f))
             if box is not None:
                 blank = 0
                 if box["purchase"]:
@@ -1634,6 +1646,21 @@ class Game:
         log.warning("ability key %s: %s neither opened its panel nor went away in %d clicks",
                     key, p.tid, self.ABILITY_CLICKS)
         return "unclear"
+
+    def _armed_sign(self, f, p):
+        """(sign, words): how frame f shows a targeted ability armed over
+        tower p - "pentagram", "banner" or None (sacrifice_armed) - and the
+        OCR words read for it (None when the pentagram alone decided, which
+        needs no OCR: a full-screen read takes ~2 s, and on Logs Hard the
+        bloons it let through in that time were at the exit)."""
+        if pentagram_on(f, p.x, p.y):
+            return "pentagram", None
+        try:
+            words = self._vision().read(img=f)
+        except Exception:
+            log.exception("armed-state read failed")
+            return None, []
+        return sacrifice_armed(f, words), words
 
 
 # -- removable obstacles ------------------------------------------------------
@@ -1748,6 +1775,44 @@ def find_sacrifice_box(img, words):
     confirm = _colour_blob(img, (text.x, below[0], text.x + REMOVE_BOX_SIDE, below[1]), (40, 120, 120), (85, 255, 255))
     cancel = _colour_blob(img, (text.x - REMOVE_BOX_SIDE, below[0], text.x, below[1]), (0, 120, 140), (12, 255, 255))
     return {"text": text.text, "confirm": confirm, "cancel": cancel, "purchase": purchase}
+
+
+# Blood Sacrifice armed (tests/fixtures/blood_sacrifice_armed.png, Logs Hard
+# 2026-11-09): the banner "Select a Monkey" (OCR read it whole, conf 1.00,
+# centred at 0.50,0.08) and a red pentagram circle over every tower it may
+# take. The red share of a square of PENTAGRAM_HALF (of the screen width)
+# either side of the target: 0.62-0.66 armed (the screenshot and the
+# recording), 0.02-0.06 on the same spot before the press and once the tower
+# was gone, 0.16-0.18 over the board's red tower unarmed.
+ARMED_BANNER = "selectamonkey"
+ARMED_BANNER_REGION = (0.25, 0.0, 0.75, 0.18)
+PENTAGRAM_HALF = 0.03
+PENTAGRAM_RED = 0.35
+
+
+def pentagram_on(img, fx, fy):
+    """Does a red pentagram circle (Blood Sacrifice armed) cover the tower
+    at (fx, fy) (screen fractions) in img?"""
+    if img is None:
+        return False
+    h, w = img.shape[:2]
+    half = int(PENTAGRAM_HALF * w)
+    cx, cy = int(fx * w), int(fy * h)
+    crop = img[max(0, cy - half):cy + half, max(0, cx - half):cx + half]
+    return crop.size > 0 and _red_frac(crop) >= PENTAGRAM_RED
+
+
+def sacrifice_armed(img, words, at=None):
+    """How a frame shows Blood Sacrifice armed: "pentagram" (the red circle
+    over the tower at `at`, (fx, fy), when given), "banner" (the words hold
+    "Select a Monkey" in the banner's place at the top centre) or None."""
+    if at is not None and pentagram_on(img, *at):
+        return "pentagram"
+    from .vision import norm
+    x0, y0, x1, y1 = ARMED_BANNER_REGION
+    if any(ARMED_BANNER in norm(w.text) and x0 <= w.x <= x1 and y0 <= w.y <= y1 for w in words or ()):
+        return "banner"
+    return None
 
 
 def hero_level_from_text(texts):
