@@ -1,5 +1,6 @@
 # Hard all-rounder (land maps): Obyn + Ninja/Alchemist/Village, two Heli
-# Pilots for the first MOABs, both made Apache Dartships late.
+# Pilots for the first MOABs, two Druids and a Bomb Shooter for round 63's
+# ceramic rush, both helis made Apache Dartships late.
 # The magic core most Hard guides converge on: Ninjas see camo from tier 0,
 # Alchemist acid pops lead and Berserker Brew/Stronger Stimulant buff the
 # ninjas, a 2-0-2 Village discounts everything near it. Ninja #1 goes
@@ -65,7 +66,8 @@ hero: obyn
 plan_first: true
 modes: [medium, hard, double_hp, half_cash]
 planner:
-  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], heli: [4, 2, 2], super: [3, 0, 2], spike: [2, 0, 4]}
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], heli: [4, 2, 2], super: [3, 0, 2], spike: [2, 0, 4],
+           druid: [0, 4, 2], bomb: [3, 0, 2]}
   base_success: {medium: 0.93, hard: 0.88, double_hp: 0.68, half_cash: 0.6}
   # not Bazaar: data/map_fit.json gives the heli 0.0 from both ends there (no
   # legal heliport cell reaches the track), so both helis are given up and
@@ -95,6 +97,28 @@ plan:
   - {do: upgrade, id: n1, to: 4-0-2}
   - {do: upgrade, id: n2, to: 2-0-4}
   - {do: upgrade, id: a1, to: 4-2-0}
+  # Round 63's ceramic rush (three bursts of 40 ceramics, 75 leads) before
+  # the Dartships (2026-11-09): under half income the first Dartship ($21.6k)
+  # lands at round 64-65, and while the plan saved for it the live forecast
+  # rated R63 at 0.17-0.61 on every map this build plays - Dark Castle Half
+  # Cash lost there holding $19,953. Probing the replayed R58 board with every
+  # tower kind put Druid of the Jungle (0-3-2, vines grab whole ceramics)
+  # first per dollar among the towers we trust (+0.19 per $1k on Dark
+  # Castle; Dartship +0.03, Really Big Bombs +0.05); Jungle's Bounty (0-4-2)
+  # adds vines and income, the bomb pops the leads the ninjas cannot. These
+  # $13.7k replay R63 at 1.24-4.65 (Dark Castle 0.18 -> 1.24, X Factor
+  # 0.17 -> 1.49) and lift R55-61 too; the Dartships come a few rounds later.
+  # Half Cash only (`modes`): in Hard, Medium and Double HP the Dartships
+  # stand by round 63 and these steps only delayed the rest of the plan
+  # (Tricky Tracks worst round: Hard 0.90 -> 0.68, Double HP 0.66 -> 0.48).
+  # tests/test_hard_ninja_alch_sun_r40_offline.py keeps R63.
+  - {do: place, id: d1, kind: druid, role: dps, modes: [half_cash]}
+  - {do: upgrade, id: d1, to: 0-3-2, modes: [half_cash]}
+  - {do: place, id: b1, kind: bomb, role: dps, modes: [half_cash]}
+  - {do: upgrade, id: b1, to: 3-0-2, modes: [half_cash]}
+  - {do: upgrade, id: d1, to: 0-4-2, modes: [half_cash]}
+  - {do: place, id: d2, kind: druid, role: dps, modes: [half_cash]}
+  - {do: upgrade, id: d2, to: 0-3-2, modes: [half_cash]}
   # Apache Dartships, not a Sun Avatar, for rounds 63-80 (2026-11-08): the
   # same $21,600 bought +1.0 to +2.1 at R63/R76 as h2 4-0-2 and +0.0 to +0.05
   # as s1 3-0-2 (dps_model probe of the replayed boards). The super stays

@@ -17,7 +17,10 @@ hero is not counted):
   * on maps the build lost in Half Cash, both helis stand when round 40
     starts and rounds 37 and 40 rate at R37_MARGIN / R40_MARGIN or more (the
     old plan: R40 0.12-0.66, R37 0.06 on most of them);
-  * on the maps it lost in Double HP, round 40 rates at R40_MARGIN or more.
+  * on the maps it lost in Double HP, round 40 rates at R40_MARGIN or more;
+  * in Half Cash, round 63's ceramic rush rates at R63_MARGIN or more with
+    the two Druids and the Bomb Shooter standing (Dark Castle lost there,
+    2026-11-09), and those Half Cash-only steps stay out of Double HP.
 Run: python tests/test_hard_ninja_alch_sun_r40_offline.py"""
 import logging
 import sys
@@ -92,6 +95,8 @@ def test_half_cash_holds_rounds_37_and_40():
 def test_double_hp_holds_round_40():
     for map_name in DOUBLE_HP_MAPS:
         _, boards = _replay("double_hp", map_name)
+        # the round-63 Druids/Bomb are Half Cash steps (`modes: [half_cash]`)
+        assert not {"d1", "d2", "b1"} & set(boards[max(boards)]), (map_name, boards[max(boards)])
         m40 = _margin("double_hp", map_name, boards[FIRST_MOAB], FIRST_MOAB)
         assert m40 >= R40_MARGIN, f"{map_name}: round 40 rated {m40:.2f}"
 
@@ -112,6 +117,26 @@ def test_half_cash_late_game_has_the_dartships():
         assert board["h2"][1] == (4, 0, 2), (map_name, board)
         m = _margin("half_cash", map_name, board, LATE_ROUND)
         assert m >= LATE_MARGIN, f"{map_name}: round {LATE_ROUND} rated {m:.2f}"
+
+
+# Round 63 in Half Cash: three bursts of 40 ceramics and 75 leads. Dark
+# Castle lost there on 2026-11-09 holding $19,953 for the first Dartship
+# (R63 rated 0.17-0.61 on every map, the Dartship landing at R64-65). Two
+# Druids (0-4-2, 0-3-2) and a Bomb Shooter 3-0-2 come before the Dartships
+# now (R63 when written: Dark Castle 1.24, X Factor 1.49, Cargo 2.07, Pat's
+# Pond 1.85, Quad 1.66, Party Parade 1.56, Chutes 2.02, Dark Path 2.92).
+R63 = 63
+R63_MARGIN = 1.0
+R63_MAPS = ("Dark Castle", "X Factor", "Cargo", "Pat's Pond", "Quad", "Party Parade", "Chutes", "Dark Path")
+
+
+def test_half_cash_holds_round_63():
+    for map_name in R63_MAPS:
+        _, boards = _replay("half_cash", map_name)
+        board = boards[R63]
+        assert board["d1"][1] == (0, 4, 2) and board["b1"][1] == (3, 0, 2), (map_name, board)
+        m = _margin("half_cash", map_name, board, R63)
+        assert m >= R63_MARGIN, f"{map_name}: round {R63} rated {m:.2f}"
 
 
 if __name__ == "__main__":

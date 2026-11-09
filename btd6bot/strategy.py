@@ -338,6 +338,7 @@ SAFETY_ACHIEVEMENTS = {
 }
 STEP_KEYS = {"do", "id", "kind", "role", "segment", "near", "near_radius", "round", "max",
              "target", "to", "mode",
+             "modes",      # only in these game modes (Executor._step_allowed), e.g. [half_cash]
              "at",         # exact spot [fx, fy] (screen fractions) from a map's own build
              "obstacle"}   # do: clear - the removable obstacle's name in the map file
 UNSUPPORTED_STEP_KEYS = {
@@ -591,6 +592,10 @@ def validate(strat):
     for m in strat.get("modes") or []:
         if m not in MODE_RULES:
             probs.append(f"unknown mode {m}")
+    for where, st in _all_steps(strat):
+        for m in st.get("modes") or ():
+            if m not in MODE_RULES:
+                probs.append(f"unknown mode {m} in a step's modes [{where}]")
     hero = strat.get("hero")
     if hero is not None and hero not in T.HEROES:
         probs.append(f"unknown hero {hero}")
@@ -1168,6 +1173,14 @@ class Executor:
         return bool(getattr(self, "no_income", False) or rules_.get("income") is False)
 
     def _step_allowed(self, step):
+        """Is this plan/fill/panic step played in this game? A step with
+        `modes: [...]` is played only in those modes: hard_ninja_alch_sun's
+        round-63 Druids and Bomb Shooter are a Half Cash fix (2026-11-09) and
+        in Hard and Double HP, where the Dartships already stand by round 63,
+        they only delayed the rest of the plan."""
+        only = step.get("modes")
+        if only and self.mode not in only:
+            return False
         do = step.get("do")
         if do == "place":
             return self.kind_allowed(step.get("kind"))
