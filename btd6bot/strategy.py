@@ -1492,6 +1492,9 @@ class Executor:
             # a step with a researched spot falls back to cells round that
             # spot, never to the best spot by role anywhere on the map
             block = block | far
+        room = self._no_buffer_room(step, valid)
+        if room is not None:
+            block = block | room
         covered = None if role == "support" else self._covered()
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
@@ -2908,6 +2911,57 @@ class Executor:
         cx, cy = self.m.frac_to_cell(*self._at_now(at))
         yy, xx = np.ogrid[0:shape[0], 0:shape[1]]
         return (xx - cx) ** 2 + (yy - cy) ** 2 > self.AT_FALLBACK_CELLS ** 2
+
+    # A tower a later buffer step stands "near" goes where that buffer can
+    # stand within this share of its range: the rest of the radius is left
+    # for the towers that gather round the buffer afterwards.
+    BUFFER_ROOM_SHARE = 0.75
+
+    def _no_buffer_room(self, step, valid):
+        """Bool grid of the cells where this step's tower would leave no
+        legal ground for a buffer (village, alchemist) the plan places
+        `near` it later, within BUFFER_ROOM_SHARE of the buffer's range;
+        None when no such buffer step waits, the step has a researched spot
+        (`at`), there is no geometry, or every legal cell would be blocked.
+
+        Mesa ABR (2026-11-09, loss case 20261109_120238): s1, a sniper,
+        stood on the central mesa top where the nearest legal village cell
+        was 21.6 cells away (village range 21.05). v1 "near s1" found no
+        spot and was given up, the camo answer put the Radar village by the
+        ninjas instead, and round 27's 250 camo bloons walked past four
+        snipers that could not see them."""
+        tid = step.get("id")
+        if not tid or step.get("at") or valid is None:
+            return None
+        buffers = {st.get("kind") for st in list(getattr(self, "plan", None) or ())
+                   if st.get("do") == "place" and st.get("kind") in self.BUFFERS
+                   and tid in (st.get("near") or ()) and st.get("id") not in self.g.towers}
+        if not buffers:
+            return None
+        import cv2
+        from . import placement as PL
+        upc = PL.units_per_cell(self.m)
+        own = PL.footprint_radius(step.get("kind")) / upc if upc else 0.0
+        block = np.zeros(valid.shape, bool)
+        for kind in sorted(buffers):
+            ground = self._legal_cells(kind)
+            if ground is None or not ground.any():
+                continue
+            # the buffer's ground must lie in a ring round the cell: beyond
+            # both footprints (the tower itself takes the ground under it -
+            # on Mesa that was all the village ground near s1) and within
+            # the share of the buffer's range
+            inner = own + (PL.footprint_radius(kind) / upc if upc else 0.0)
+            outer = max(inner + 1.0, self.BUFFER_ROOM_SHARE * self._range_cells(kind))
+            r = int(np.ceil(outer))
+            yy, xx = np.mgrid[-r:r + 1, -r:r + 1]
+            d2 = xx * xx + yy * yy
+            ring = ((d2 >= inner * inner) & (d2 <= outer * outer)).astype(np.float32)
+            room = cv2.filter2D(ground.astype(np.float32), -1, ring, borderType=cv2.BORDER_CONSTANT)
+            block |= room < 0.5
+        if not (valid & ~block).any():
+            return None      # no cell keeps room: placing the tower comes first
+        return block
 
     def _edge_band(self):
         """Cells within EDGE_CELLS of the bloon path's line (computed once per

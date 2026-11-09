@@ -1702,6 +1702,7 @@ class Match:
         if self.depths:
             # the deepest point bloons reached in any round (bloonwatch.py)
             self.stats["bloon_depth"] = max(s["deepest"] for s in self.depths)
+        self._count_last_lives(outcome)
         self.stats.update(outcome=outcome, round=rnd, minutes=(time.time() - self.stats["start"]) / 60)
         if not self._idle_seen and self.stats.get("rounds", 0) >= AUTO_START_ROUNDS                 and not self.ex.rules.get("continuous"):
             log.warning("the Play button was never idle in %d rounds: BTD6's Auto Start setting looks "
@@ -1715,6 +1716,17 @@ class Match:
         else:
             log.info("game over: %s", self.stats)
         return self.stats
+
+    def _count_last_lives(self, outcome):
+        """A defeat means the lives went to 0: the lives the tracker still
+        trusted were lost too, even when it never confirmed the drop. Mesa
+        ABR (2026-11-09, loss case 20261109_120238): round 27's 250 camo
+        bloons took all 100 lives within ten seconds of the round's start,
+        the Defeat card came before a falling read was confirmed, and the
+        loss report said "lives lost: 0"."""
+        left = getattr(self, "_lives", None) and self._lives.confirmed
+        if outcome == "defeat" and left and left > 0:
+            self.stats["lives_lost"] = self.stats.get("lives_lost", 0) + left
 
     def _journal_end(self, outcome, rnd):
         """Write game_end; for a game not won, with its cause of death
