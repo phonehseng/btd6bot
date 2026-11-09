@@ -268,6 +268,13 @@ class Source:
                 another tower's detection covers (a Monkey Sub's Advanced
                 Intel: attacks.json "camo_shared"); station_for turns it
                 into camo when such a tower stands on the board
+    off_struck  a piece its carrier throws off where it struck a bloon and
+                that flies away from it (a sniper's Shrapnel Shot, a bomb's
+                frags): it never hits the struck bloon, only the other
+                bloons near that spot and what the carrier's hit left there
+                (see _hit_rate)
+    carrier     (damage, immune, bonus) of the projectile that throws an
+                off_struck piece off, or None
     """
     name: str
     shots: float
@@ -291,6 +298,8 @@ class Source:
     dot_total: float = 0.0     # damage over time a hit applies (total)
     dot_rate: float = 0.0      # ... per second on one bloon
     camo_shared: bool = False
+    off_struck: bool = False
+    carrier: tuple = None
 
     def can_hit(self, lay):
         """Can this source damage this layer at all?"""
@@ -407,9 +416,39 @@ def _single_hits(p):
     return 1.0
 
 
+def _thrown_off(spawn):
+    """Is this spawn a piece thrown off where its carrier struck a bloon,
+    flying away from it (Shrapnel, Frag), rather than a blast centred on the
+    spot (a bomb's Explosion), which takes in the struck bloon too?"""
+    sub = spawn.get("projectile") or {}
+    return spawn.get("on") == "contact" and sub.get("motion") not in (None, "static", "instant")
+
+
+def _carrier_of(p):
+    """(damage, immune, bonus) of projectile p's own hit (see Source.carrier)."""
+    hit = p.get("damage") or {}
+    return float(hit.get("amount", 0.0)), _immune_set(hit), p.get("bonus") or {}
+
+
+def _left_at_spot(carrier, lay):
+    """Does the carrier's hit on a bloon of layer `lay` pop it and leave
+    children on the spot? Then the pieces thrown off there have bloons to
+    hit next to them: the children (a 7-damage bullet on a lead leaves
+    greens; on a pink it leaves nothing)."""
+    damage, immune, bonus = carrier
+    if immune & lay.immune or lay.moab:
+        return False
+    for key, b in bonus.items():
+        if key in lay.tags:
+            damage = damage * b["mult"] + b["add"]
+    return lay.hp <= damage < rbe(lay.id)
+
+
 def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, radial, travel, out, depth=0,
-                        subtower_cap=MAX_SUBTOWERS):
-    """Add the damage sources of projectile p (and what it spawns) to out."""
+                        subtower_cap=MAX_SUBTOWERS, carrier=None):
+    """Add the damage sources of projectile p (and what it spawns) to out.
+    carrier: p was thrown off where this projectile hit struck a bloon
+    (_thrown_off; Source.carrier)."""
     if not p or depth > 8:
         return
     camo = camo_chain and p.get("camo", False)
@@ -441,6 +480,8 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             dot_total=dot.get("amount", 0.0) * ticks if dot else 0.0,
             dot_rate=(dot.get("amount", 0.0) / max(dot.get("interval") or 1.0, 1e-3)) if dot else 0.0,
             camo_shared=bool(attack.get("camo_shared")) and not camo,
+            off_struck=carrier is not None,
+            carrier=carrier,
         ))
     pierce = max(1.0, p.get("pierce", 1.0))
     contacts = min(pierce, CONTACTS_PER_CARRIER)
@@ -464,7 +505,8 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             sub = dict(p, spawn=[s2 for s2 in p.get("spawn", []) if s2.get("on") != "lightning"])
         else:                                        # exhaust, expire, blocker: once per projectile
             k = k1 = n
-        _flatten_projectile(sub, shots * k, shots_single * k1, attack, camo, placement, radial, travel, out, depth + 1)
+        _flatten_projectile(sub, shots * k, shots_single * k1, attack, camo, placement, radial, travel, out, depth + 1,
+                            carrier=_carrier_of(p) if _thrown_off(s) else None)
     for t in p.get("subtowers", []):
         # sub-towers made by this projectile (an Engineer's sentries): as many
         # stand at once as are made during one lifespan, up to the cap
@@ -1130,13 +1172,27 @@ def _hit_rate(src, lay, rho, zone):
     pierce, but no more than the bloons it can meet - except that a
     lingering projectile may hit one bloon several times (single_hits)."""
     met = _bloons_met(src, rho, zone)
+    if src.off_struck and not src.zone_wide and not math.isinf(met):
+        # thrown off the bloon its carrier struck and flying away from it:
+        # the game's frags and shrapnel never hit the struck bloon, only the
+        # other bloons near that spot and the children the carrier's hit
+        # left there. Counting the struck bloon itself credited every piece
+        # with a hit even on a lone bloon - five Shrapnel hits per sniper
+        # bullet - and rated sniper boards several times too strong on
+        # spread-out rounds (Sanctuary, 2026-11-08/09; docs/optimizer.md
+        # "Thrown-off pieces")
+        if not _left_at_spot(src.carrier, lay):
+            met -= 1.0
     sparse = lay.moab or met < 2.0
     shots = src.shots_single if sparse else src.shots
     if src.radial:
         shots *= zone.angular if zone is not None else 1.0
     if src.placement == "air":
         shots *= AIR_PATTERN_EFFICIENCY
-    per_shot = min(src.pierce, max(met, src.single_hits))
+    if src.off_struck:
+        per_shot = min(src.pierce, met)
+    else:
+        per_shot = min(src.pierce, max(met, src.single_hits))
     return shots * per_shot
 
 

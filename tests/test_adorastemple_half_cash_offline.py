@@ -19,7 +19,10 @@ forecast (RoundForecast with the learned map's sight grid and heights):
     tower on its `at` spot, has its round-40 MOAB answer (Sharp Shooter
     dart 2-0-4, sniper Full Metal Jacket 1-2-0, Destroyer) standing when
     round 40 starts, and rates every round from 22 to 80 at MIN_MARGIN or
-    more (1.70 when written, round 27) and round 40 at R40_MARGIN or more
+    more (1.70 when written, round 27; 1.22 at round 33 since 2026-11-09,
+    when Shrapnel Shot and frags stopped counting hits on the bloon their
+    carrier struck - tests/test_thrown_off_pieces_offline.py; the build won
+    live 2026-11-08 without a life lost) and round 40 at R40_MARGIN or more
     (3.63 when written).
 Run: python tests/test_adorastemple_half_cash_offline.py"""
 import logging
@@ -41,7 +44,7 @@ from btd6bot.forecast import RoundForecast  # noqa: E402
 MAP, MODE = "Adora's Temple", "half_cash"
 BUILD, GENERAL = "adorastemple_half_cash", "hard_ninja_alch_sun"
 FIRST_MOAB = {t: r for r, t in S.THREATS}["moab"]      # round 40
-MIN_MARGIN = 1.5
+MIN_MARGIN = 1.2
 R40_MARGIN = 2.5
 BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (account.boosts)
 

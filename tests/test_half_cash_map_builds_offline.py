@@ -46,18 +46,22 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 # map -> (build, MIN_MARGIN over rounds 22-80, rounds the general build lost
 # or rated lowest, LOST_MARGIN for them). When written:
 #   Bazaar: worst R36 0.84; R35 1.09, R37 1.06, R40 2.04 (general: worst
-#     0.06; R37 0.43, R40 0.12)
+#     0.06; R37 0.43, R40 0.12). Worst R34 0.75 since 2026-11-09 (below).
 #   Ship Capture: worst R79 0.86; R34 1.04, R36 1.15, R37 1.46, R40 1.59
 #     (general: worst 0.06; R34 0.32, R36 0.75, R37 0.92, R40 1.14).
 #     PARKED 2026-11-09 (base_success 0.05): the first live game lost R39.
 #     The replay over-rates this map (see the build's header), so these
-#     numbers only guard the replay, not the live game.
+#     numbers only guard the replay, not the live game. Since 2026-11-09
+#     the replay rates R34 0.44, R36 1.01, R37 0.85, R40 0.90: frags and
+#     Shrapnel Shot no longer count hits on the bloon their carrier struck
+#     (tests/test_thrown_off_pieces_offline.py), which brings the replay
+#     closer to the live loss.
 #   Bloonarius Prime: worst R30 0.46 (Razor Rotors stands from R30); R22
 #     2.04, R25 2.28, R26 1.89, R40 2.99 (general: worst 0.06; R22 0.43,
 #     R25 0.41, R26 0.76, R40 2.33)
 CASES = {
-    "Bazaar": ("bazaar_half_cash", 0.75, (35, 37, 40), 1.0),
-    "Ship Capture": ("shipcapture_half_cash", 0.75, (34, 36, 37, 40), 1.0),
+    "Bazaar": ("bazaar_half_cash", 0.7, (35, 37, 40), 1.0),
+    "Ship Capture": ("shipcapture_half_cash", 0.4, (34, 36, 37, 40), 0.4),
     "Bloonarius Prime": ("bloonariusprime_half_cash", 0.4, (22, 25, 26, 40), 1.5),
 }
 

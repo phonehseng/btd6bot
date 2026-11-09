@@ -113,6 +113,20 @@ and put MOAB-class jobs first. A job's work is
   track (spikes) meet everything that passes; blasts as wide as the tower's
   range (Ice) meet everything in the zone; lingering projectiles may hit one
   bloon several times.
+- *Thrown-off pieces*: pieces a projectile throws off where it struck a
+  bloon and that fly away from it (a sniper's Shrapnel Shot, a bomb's or a
+  buccaneer's frags, a desperado's shrapnel: `spawn` "on contact" with a
+  moving projectile, `Source.off_struck`) never hit the struck bloon. They
+  meet `packing x reach` bloons (the others near that spot), plus one more
+  when the carrier's hit popped the struck layer and left children on the
+  spot (a 7-damage bullet on a lead leaves greens there; on a pink it leaves
+  nothing): `dps_model._left_at_spot`. Blasts centred on the spot (a bomb's
+  Explosion) still count the struck bloon. Until 2026-11-09 every piece was
+  credited with at least one hit, so a lone pink took a sniper bullet plus
+  five Shrapnel hits: a 2-2-0 sniper counted as six pink pops per shot. On
+  Sanctuary (eight routes, bloons spread thin) that rated the losing
+  five-sniper Military Only board 1.41 at round 38 (now 0.51) and the
+  Medium two-sniper board 2.1 (now 0.55).
 - *damage*: with the game's tag bonuses; zero if the damage type cannot pop
   the layer, if the layer is camo and the tower cannot see camo (or a
   village radar in range lends it), or if a MOAB filter excludes it. A
