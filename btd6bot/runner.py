@@ -1310,7 +1310,8 @@ class Bot:
                     log.exception("XP spending failed - continuing")
                     self.to_main_menu()
                 self._learn_track_if_needed(plan.map)
-                self.equip_hero_for(plan)
+                if not self.equip_hero_for(plan) and self._needs_its_hero(plan):
+                    continue
                 started = self.start(plan)
                 if started == "known":
                     continue
@@ -1479,14 +1480,33 @@ class Bot:
     def equip_hero_for(self, plan):
         """Before opening the map: equip the hero the plan's strategy wants
         (strategy.hero_for: its own hero if owned, else the best owned one its
-        constraints allow). Nothing happens when it is already equipped."""
+        constraints allow). Nothing happens when it is already equipped.
+        True when the wanted hero is the one equipped afterwards."""
         hero = hero_for(self.strats[plan.strategy_id], self.account)
         if not hero or hero == getattr(self.account, "selected_hero", None):
-            return
+            return True
         if hero in self._hero_failed:
-            return   # the picker could not find it this session; don't retry every game
+            return False   # the picker could not find it this session; don't retry every game
         if not self.select_hero(hero):
             self._hero_failed.add(hero)
+            return False
+        return True
+
+    def _needs_its_hero(self, plan):
+        """After the build's hero could not be equipped: True (and the game
+        is skipped for this session) when `plan` is a one-life game. A one-life
+        build is timed to its hero's price and help: Spring Spring CHIMPS lost
+        round 33 on 2026-11-08 with Obyn ($700) instead of Quincy ($585), $238
+        short of the Destroyer that held the round in the game before.
+        Multi-life games still go ahead with the equipped hero."""
+        from .strategy import rules
+        if not rules(plan.mode_key).get("one_life"):
+            return False
+        log.warning("%s %s is a one-life game and its hero could not be equipped "
+                    "(still %s) - not played this session", plan.map, plan.mode_key,
+                    self.account_selected_hero())
+        self.bad.add((plan.map, plan.mode_key))
+        return True
 
     def select_hero(self, hero):
         """Equip `hero` in the HEROES menu of the main menu (heroes.HeroPicker:
