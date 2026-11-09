@@ -10,6 +10,11 @@ was bought - "idle with $9388: plan step 20 w1 5-0-2 -> wait" during round
 round being played) was reverted because Alpine Run CHIMPS spent its Glaive
 Lord's cash on rounds rated 0.59-0.99 that passed; those cases still wait.
 
+X Factor Half Cash (2026-11-09) lost round 78 the same way, but the bloons
+never got deep (74% most rounds): its 72 camo ceramics took all 78 lives at
+once. In a mode with lives a weak round rated at the model's floor
+(YIELD_FLOOR) lets the step yield without the depth; CHIMPS still needs it.
+
 Fakes in the style of tests/test_one_life_executor_offline.py and
 tests/test_reinforce_offline.py.
 Run: python tests/test_plan_first_unreachable_offline.py"""
@@ -114,10 +119,70 @@ def test_the_bloons_must_have_got_deep_too():
     assert gate(match(moon_landing(58), []), 6_649, 58) is False                # no bloon watch
     assert gate(match(moon_landing(58), [{"round": 57, "deepest": None}]), 6_649, 58) is False
     assert gate(match(moon_landing(58), [{"round": 57, "deepest": 0.90}]), 6_649, 58) is True
-    # shallow bloons and an unreachable step: plan_first_yields is not even asked (nothing logged)
+    # shallow bloons in CHIMPS and an unreachable step: the plan keeps the cash, nothing logged
     ex = moon_landing(58)
     gate(match(ex, [{"round": 57, "deepest": 0.5}]), 6_649, 58)
     assert not any(n[0] == "plan-first-yields" for n in ex.noted)
+
+
+# -- the floor rating in a mode with lives (X Factor Half Cash, 2026-11-09) -------------
+APACHE = 21_600        # plan step 30, h1 3-2-0 -> 4-2-0 (Apache Dartship), hard prices
+XF_INCOME = 700.0      # about what rounds 74-78 pay in Half Cash, counted at 1/LEAD_MARGIN
+
+# the start of rounds 74-78 in the game: cash, and how far the round before's bloons got
+X_FACTOR_ROUNDS = ((74, 4_004, 0.33), (75, 7_108, 0.74), (76, 9_835, 0.81), (77, 11_210, 0.74),
+                   (78, 13_810, 0.74))
+
+
+def x_factor(rnd, weak=(0.06, 78), income=XF_INCOME):
+    """Round `rnd` of X Factor Half Cash: the plan waits for the Apache
+    Dartship on h1 and the model rates round `weak[1]` at `weak[0]`."""
+    margin, wr = weak
+    h1 = tower("h1", "heli", [3, 2, 0])
+    step = {"do": "upgrade", "id": "h1", "to": "4-2-0"}
+    ex = bare_executor("half_cash", [h1], forecast=Fixed(3.0, {wr: margin}),
+                       strat={"plan_first": True, "plan": [step]})
+    ex.plan, ex.idx = [step], 0
+    ex._first_step_cost = lambda st: APACHE
+    if income is not None:
+        ex.income_until = lambda due, r: income * max(0, due - r)
+    return ex
+
+
+def test_x_factor_floor_rating_yields_without_depth():
+    gate = Match._plan_lets_reinforce
+    for rnd, cash, depth in X_FACTOR_ROUNDS:
+        ex = x_factor(rnd)
+        assert R.payable_by(ex, APACHE, cash, max(78, rnd + 1), rnd) is False
+        assert ex.plan_first_yields(cash, rnd, deep=False), rnd
+        assert gate(match(ex, [{"round": rnd - 1, "deepest": depth}]), cash, rnd) is True, rnd
+    assert any(n[0] == "plan-first-yields" for n in ex.noted)
+    # the real Half Cash income figure (the round set's cash, halved) agrees at round 74
+    assert x_factor(74, income=None).plan_first_yields(4_004, 74, deep=False)
+    # no bloon watch at all: the floor rating alone still counts
+    assert gate(match(x_factor(77), []), 11_210, 77) is True
+
+
+def test_the_floor_rule_is_narrow():
+    # rated over YIELD_FLOOR: Spillway Half Cash won round 78 rated 0.14 with
+    # the same build and the same waiting step; deep bloons still count as before
+    assert not x_factor(74, weak=(0.14, 78)).plan_first_yields(9_955, 74, deep=False)
+    assert x_factor(74, weak=(0.14, 78)).plan_first_yields(9_955, 74, deep=True)
+    # the near-round and reachability tests still apply
+    assert not x_factor(70).plan_first_yields(18_345, 70, deep=False)      # round 78 is 8 rounds off
+    ex = x_factor(77)
+    ex._first_step_cost = lambda st: 11_800                                # $11,210 + a round's income
+    assert not ex.plan_first_yields(11_210, 77, deep=False)
+
+
+def test_chimps_floor_rating_still_needs_depth():
+    """Cracked CHIMPS (2026-11-07) won with rounds 56 and 59 rated 0.06 from
+    round 52 on while $15-26k waited for its $28,080 step: in a one-life
+    mode the floor rating alone does not let the plan's cash go."""
+    assert not moon_landing(55, weak=(0.06, 59)).plan_first_yields(1_151, 55, deep=False)
+    assert moon_landing(55, weak=(0.06, 59)).plan_first_yields(1_151, 55, deep=True)
+    shallow = [{"round": 54, "deepest": 0.6}]
+    assert Match._plan_lets_reinforce(match(moon_landing(55, weak=(0.06, 59)), shallow), 1_151, 55) is False
 
 
 # -- end to end: the gate, then reinforce's own choice -----------------------------------

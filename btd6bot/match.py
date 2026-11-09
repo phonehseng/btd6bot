@@ -1302,7 +1302,10 @@ class Match:
 
           * the bloons of the last round watched got PLAN_YIELD_DEPTH or
             more along the route (bloonwatch: the defence is really short,
-            not only in the damage model);
+            not only in the damage model) - or, in a mode with lives, the
+            model rates the near round at its floor (YIELD_FLOOR, decided
+            in plan_first_yields: X Factor Half Cash lost round 78 to camo
+            ceramics that killed in one go, the bloons never past 81%);
           * the waiting plan step cannot be paid before a near round the
             damage model rates a crisis (Executor.plan_first_yields).
 
@@ -1313,15 +1316,15 @@ class Match:
         90% while the weak round was at most four rounds off; Moon Landing's
         round-59 loss (2026-11-09) had five in a row (rounds 55-59, 93-96%),
         its round-40 loss two. Skates' win had four (rounds 37-38, 97-98).
-        No bloon watch: the plan keeps the cash. Any other build: yes."""
+        No bloon watch counts as shallow bloons (only the floor rating of a
+        mode with lives can let the cash go). Any other build: yes."""
         plan_first = getattr(self.ex, "plan_first", None)
         if plan_first is None or not plan_first():
             return True
         depths = getattr(self, "depths", None)
-        if not depths or (depths[-1].get("deepest") or 0.0) < PLAN_YIELD_DEPTH:
-            return False
+        deep = bool(depths) and (depths[-1].get("deepest") or 0.0) >= PLAN_YIELD_DEPTH
         yields = getattr(self.ex, "plan_first_yields", None)
-        return bool(yields is not None and yields(cash, rnd))
+        return bool(yields is not None and yields(cash, rnd, deep=deep))
 
     def _reinforce(self, cash, rnd):
         """One model-chosen purchase (reinforce.py). True when one was bought;
