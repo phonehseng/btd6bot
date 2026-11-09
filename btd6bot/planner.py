@@ -2300,6 +2300,7 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
                                  fail_minutes=t_fail, learned=learned,
                                  ok=p >= p_threshold(mode, cfg), ease=CATEGORY_EASE.get(cat, 0),
                                  missing=sum(not account.has_medal(m, x) for x in MODES)))
+    _below_own_build_without_income(out, cfg)
     # XP + MM value. Tower XP counts extra where it unblocks the Hard roster
     # and, in games the planner is quite sure of (paragon_min_p), where it
     # brings a paragon closer (it must never make a riskier game look better).
@@ -2319,6 +2320,36 @@ def _candidates(account: AccountState, strategies: Mapping[str, StrategySpec],
             + (["paragon focus: " + ", ".join(g.label for g in feeds[:2])] if feeds else [])
         c.notes.insert(2, f"xp {c.xp_win:,.0f}x{xp_w:.2f}" + (f" ({'; '.join(why)})" if why else ""))
     return out
+
+
+OWN_BUILD_MARGIN = 0.01   # how far under the map's own build a general one is kept
+
+
+def _below_own_build_without_income(cands: list[_Cand], cfg: PlannerConfig) -> None:
+    """In a mode with no income (Deflation), keep every general build's p
+    just under that of the map's own build for the mode (is_own_map_build),
+    when one is on offer: the own build was checked round by round to the
+    last round in the damage model, a general one never was, and in such a
+    mode nothing can be bought once the game runs.
+
+    Tricky Tracks Deflation (2026-11-08, loss case 20261108_110044) went to
+    solo_mortar at p=0.76 (NO_INCOME_GENERAL_CAP) over trickytracks_deflation
+    at about 0.71: the mortar build's three snipers held rounds 31-46, the
+    model rated rounds 47-54 at 0.59-1.2 from round 34 on, and round 49 took
+    the 159 lives left. Up to 2026-11-02 map-specific builds had won 9 of 10
+    Deflation games, general ones 29 of 38."""
+    own: dict[tuple[str, str], float] = {}
+    for c in cands:
+        if _no_income(c.mode) and is_own_map_build(c.s, c.map):
+            key = (c.map, c.mode)
+            own[key] = max(own.get(key, 0.0), c.p)
+    for c in cands:
+        best = own.get((c.map, c.mode))
+        if best is None or c.s.maps is not None or c.p < best:
+            continue
+        c.p = max(0.01, best - OWN_BUILD_MARGIN)
+        c.ok = c.p >= p_threshold(c.mode, cfg)
+        c.notes[0] = f"p={c.p:.2f} (n={c.n}, under the map's own build)"
 
 
 def _tier(c: _Cand, cfg: PlannerConfig) -> str | None:
