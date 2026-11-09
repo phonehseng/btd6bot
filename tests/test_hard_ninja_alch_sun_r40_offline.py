@@ -20,7 +20,10 @@ hero is not counted):
   * on the maps it lost in Double HP, round 40 rates at R40_MARGIN or more;
   * in Half Cash, round 63's ceramic rush rates at R63_MARGIN or more with
     the two Druids and the Bomb Shooter standing (Dark Castle lost there,
-    2026-11-09), and those Half Cash-only steps stay out of Double HP.
+    2026-11-09), and those Half Cash-only steps stay out of Double HP;
+  * in Half Cash, h1's Dartship stands by round 76 and a second Radar
+    Scanner by round 78, which rates at R78_FLOORS or more (X Factor, Dark
+    Castle and Mesa lost round 78's camo ceramics on 2026-11-09).
 Run: python tests/test_hard_ninja_alch_sun_r40_offline.py"""
 import logging
 import sys
@@ -115,7 +118,7 @@ def test_double_hp_holds_round_40():
         _, boards = _replay("double_hp", map_name)
         # the round-63 Druids/Bomb and the R59-78 radar/third heli are Half
         # Cash steps (`modes: [half_cash]`)
-        assert not {"d1", "d2", "b1", "v2", "h3"} & set(boards[max(boards)]), (map_name, boards[max(boards)])
+        assert not {"d1", "d2", "b1", "v2", "v3", "h3"} & set(boards[max(boards)]), (map_name, boards[max(boards)])
         m40 = _margin("double_hp", map_name, boards[FIRST_MOAB], FIRST_MOAB)
         assert m40 >= R40_MARGIN, f"{map_name}: round 40 rated {m40:.2f}"
 
@@ -159,7 +162,9 @@ def test_half_cash_holds_round_63():
     for map_name in R63_MAPS:
         _, boards = _replay("half_cash", map_name)
         board = boards[R63]
-        assert board["d1"][1] == (0, 4, 2) and board["b1"][1] == (3, 0, 2), (map_name, board)
+        # d1 stands 0-3-2 here: its Jungle's Bounty (0-4-2) waits for h1's
+        # Dartship since 2026-11-09 18:30 (see R78 below)
+        assert board["d1"][1][1] >= 3 and board["b1"][1] == (3, 0, 2), (map_name, board)
         m = _margin("half_cash", map_name, board, R63)
         assert m >= R63_MARGIN, f"{map_name}: round {R63} rated {m:.2f}"
 
@@ -183,9 +188,15 @@ def test_half_cash_holds_round_63():
 #   0.68 (R75), Pat's Pond 0.73 (R62), Quad 0.39 (R62), Party Parade 0.43
 #   (R77), Chutes 0.61 (R75). Rounds 62 on X Factor and Quad come before
 #   either Dartship, so the order does not change them.
+# Since 2026-11-09 18:30 Jungle's Bounty (d1 0-4-2) waits until after h1's
+# Dartship (which lands by round 75 instead of 78) and a second radar (v3)
+# comes between them; worst round 59-78 ->
+#   Mesa 0.41 (R59), X Factor 0.43 (R71), Dark Castle 0.51 (R71), Cargo
+#   1.00 (R71), Pat's Pond 1.02 (R71), Quad 0.43 (R59), Party Parade 0.49
+#   (R71), Chutes 0.76 (R71).
 LATE_ROUNDS = range(59, 79)
-LATE_FLOORS = {"Mesa": 0.35, "X Factor": 0.2, "Dark Castle": 0.35, "Cargo": 0.6,
-               "Pat's Pond": 0.6, "Quad": 0.35, "Party Parade": 0.4, "Chutes": 0.55}
+LATE_FLOORS = {"Mesa": 0.35, "X Factor": 0.35, "Dark Castle": 0.45, "Cargo": 0.85,
+               "Pat's Pond": 0.85, "Quad": 0.35, "Party Parade": 0.4, "Chutes": 0.65}
 
 
 def test_half_cash_rounds_59_to_78_floors():
@@ -198,10 +209,37 @@ def test_half_cash_rounds_59_to_78_floors():
         assert margins[worst] >= floor, f"{map_name}: round {worst} rated {margins[worst]:.2f} (floor {floor})"
 
 
+# Round 78 in Half Cash: 72 camo ceramics among 150 rainbows, 80 purples and
+# a BFB. Lost on X Factor (03:22), Dark Castle (13:37) and Mesa (17:59) on
+# 2026-11-09; rate_board --drop: the round hangs on the camo ceramics alone.
+# h1's Dartship came at round 78 itself in the replay, so live income a
+# round or two short left round 78 without it. Jungle's Bounty now waits
+# for the Dartship (by round 76) and a second Radar Scanner (v3, beside the
+# druids and the bomb) stands before round 78. R78 when written, before ->
+# after: Mesa 1.53 -> 1.26, X Factor 0.52 -> 1.09, Dark Castle 0.44 ->
+# 0.76, Moon Landing 1.81 -> 2.71, Cargo 1.02 -> 1.03, Chutes 0.86 -> 0.86,
+# Quad 0.52 -> 0.81, Party Parade 0.64 -> 0.64. The same round rated on the
+# board one round earlier (the plan a round behind) was 0.09-0.86 before.
+R78 = 78
+DARTSHIP_BY_R78 = 76
+R78_FLOORS = {"Mesa": 1.1, "X Factor": 0.9, "Dark Castle": 0.65, "Moon Landing": 2.2, "Cargo": 0.9,
+              "Chutes": 0.75, "Quad": 0.7, "Party Parade": 0.55}
+
+
+def test_half_cash_holds_round_78():
+    for map_name, floor in R78_FLOORS.items():
+        _, boards = _replay("half_cash", map_name)
+        assert boards[DARTSHIP_BY_R78]["h1"][1] == (4, 2, 0), (map_name, boards[DARTSHIP_BY_R78])
+        board = boards[R78]
+        assert board["v3"][1] == (0, 2, 0), (map_name, board)
+        m = _margin("half_cash", map_name, board, R78)
+        assert m >= floor, f"{map_name}: round {R78} rated {m:.2f} (floor {floor})"
+
+
 def test_hard_and_double_hp_skip_the_half_cash_steps():
     strat = S.load_all()[BUILD]
     hc_ids = {st["id"] for st in strat["plan"] if st.get("modes") == ["half_cash"] and st["do"] == "place"}
-    assert {"d1", "d2", "b1", "v2", "h3"} <= hc_ids, hc_ids
+    assert {"d1", "d2", "b1", "v2", "v3", "h3"} <= hc_ids, hc_ids
 
 
 if __name__ == "__main__":

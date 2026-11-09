@@ -2,7 +2,8 @@
 # Pilots for the first MOABs, two Druids and a Bomb Shooter for round 63's
 # ceramic rush, both helis made Apache Dartships late. Half Cash also buys
 # a Radar Scanner village and a third heli before the Dartships (rounds
-# 59-78, see the block above the d1 steps).
+# 59-78, see the block above the d1 steps), and a second Radar Scanner
+# before Jungle's Bounty after h1's Dartship (round 78, see above h1 4-2-0).
 # The magic core most Hard guides converge on: Ninjas see camo from tier 0,
 # Alchemist acid pops lead and Berserker Brew/Stronger Stimulant buff the
 # ninjas, a 2-0-2 Village discounts everything near it. Ninja #1 goes
@@ -162,7 +163,6 @@ plan:
   - {do: upgrade, id: b1, to: 3-0-2, modes: [half_cash]}
   - {do: place, id: d2, kind: druid, role: dps, modes: [half_cash]}
   - {do: upgrade, id: d2, to: 0-3-2, modes: [half_cash]}
-  - {do: upgrade, id: d1, to: 0-4-2, modes: [half_cash]}
   - {do: place, id: h3, kind: heli, role: dps, modes: [half_cash]}
   - {do: upgrade, id: h3, to: 0-2-0, modes: [half_cash]}
   - {do: upgrade, id: h3, to: 3-2-0, modes: [half_cash]}      # MOAB rounds 64-77 before the $21.6k Dartship
@@ -173,7 +173,32 @@ plan:
   # (2026-11-09): h1 and h3 are the only towers that reach round 78's camo
   # ceramics on X Factor, Quad, Party Parade, Chutes and Pat's Pond, where
   # R78 was rated 0.09-0.20 with h2's first and 0.44-0.91 with h1's.
+  #
+  # Round 78 in Half Cash (2026-11-09: X Factor 03:22, Dark Castle 13:37,
+  # Mesa 17:59 all lost it; 72 camo ceramics among 150 rainbows, 80 purples,
+  # a BFB). tools/rate_board.py --drop on the replayed and the live boards:
+  # the round hangs on the camo ceramics alone (Mesa live 0.49, 1.76
+  # without them; Dark Castle 0.44 -> 1.09), and what leaks is their camo
+  # rainbow children. Only h1/h3 (IFR) and the towers by v2 see camo; the
+  # druids and the bomb further along do not, nor does h2 3-0-2. The
+  # Dartship landed at round 78 itself in the replay, so a round or two of
+  # short income in the live game left round 78 without it. Probing the
+  # replayed boards (every buy inserted before the Dartship: second radar,
+  # d2 0-4-2, b1 4-0-2, a fourth heli, the spike, n3, a wizard 0-3-2 or
+  # 4-0-2) each pushed the Dartship past round 78 and lowered R78 on most
+  # maps. What worked: Jungle's Bounty (d1 0-4-2, $5.3k, round 63 holds
+  # without it) waits until after h1's Dartship, which now lands by round
+  # 75, and a second Radar Scanner village (v3, beside d2 and the bomb)
+  # comes right after it, by round 77. R78 replayed (each map in its own
+  # process) before -> after: Dark Castle 0.44 -> 0.76, X Factor 0.52 ->
+  # 1.09, Quad 0.52 -> 0.81, Moon Landing 1.81 -> 2.71, Chutes 0.86 ->
+  # 0.86, Cargo 1.02 -> 1.03, Party Parade 0.64 -> 0.64, Mesa 1.53 -> 1.26
+  # (1.53 only with the Dartship bought the same round), and the worst of
+  # rounds 59-78 rose on every map (tests/test_hard_ninja_alch_sun_r40_offline.py).
   - {do: upgrade, id: h1, to: 4-2-0}
+  - {do: place, id: v3, kind: village, role: support, near: [d2, b1], near_radius: 7, modes: [half_cash]}
+  - {do: upgrade, id: v3, to: 0-2-0, modes: [half_cash]}      # Radar Scanner #2: camo for the druids and the bomb
+  - {do: upgrade, id: d1, to: 0-4-2, modes: [half_cash]}
   - {do: upgrade, id: h2, to: 4-0-2}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
