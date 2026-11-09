@@ -12,10 +12,31 @@ modes: [medium, hard, magic_only]
 # track does not match where the bloons go (backlog 47): ranged towers placed
 # by it read no pops and the damage model sits at its floor all game. Only
 # global-range builds have won there; back on when the track is verified.
-excluded_maps: [Water Park]
+# 2026-11-08: lost there AGAIN at round 63 (case 20261108_140042) because this
+# key sat at the top level of the file, where the planner never looked - the
+# runner reads `excluded_maps` from the planner block, like `maps`. Moved there.
+# 2026-11-08: lost 6 Magic Monkeys Only games AT ROUND 40 (Ravine, Muddy
+# Puddles, Spillway, Bloody Puddles, Dark Dungeons, Midnight Mansion), every
+# one to the first MOAB with lives full. The wins and the losses reached n2's
+# Sticky Bomb at the same rounds (29 vs 31); after it the plan spent on the
+# Necromancer (w1 0-2-4, R35), Acid Mixture Dip (R36) and saved for Bloonjitsu
+# (n1 4-0-2, $2,970), so one Sticky Bomb met the MOAB on the faster and more
+# winding maps and the damage model rated round 40 at 0.12 from round 38 on
+# (case 20261108_141147_DarkDungeons_magic_only: "$1948 kept for plan step 12
+# 4-0-2" two rounds before the MOAB). Change: after n2's Sticky Bomb come the
+# blimp upgrades - a1's Acidic Mixture Dip, then n2's Master Bomber - and only
+# then Bloonjitsu and the Necromancer, so the cash of rounds 31-39 is not tied
+# up in the Necromancer and the executor's blimp-ramp buys (a Super Monkey at
+# R39 in tools/simulate_threats) still get it. A second Sticky Bomb ninja was
+# tried first and dropped: simulated on Dark Dungeons it took the R39 money
+# and round 40's blimp check fell from 0.89x to 0.39x. The new order keeps
+# 0.89x at R40 and lifts R50 from 2.06x to 2.27x.
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], wizard: [0, 2, 5], super: [3, 0, 2]}
+  excluded_maps: [Water Park]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
+  # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
+  # losses keep counting against these maps until live wins say otherwise
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
@@ -27,10 +48,11 @@ plan:
   - {do: upgrade, id: n1, to: 3-0-2}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
   - {do: upgrade, id: n2, to: 2-0-3}
-  - {do: upgrade, id: w1, to: 0-2-4}
-  - {do: upgrade, id: a1, to: 3-2-0}
-  - {do: upgrade, id: n1, to: 4-0-2}
-  - {do: upgrade, id: n2, to: 2-0-4}
+  # blimp damage before the Necromancer (see 2026-11-08 above)
+  - {do: upgrade, id: a1, to: 3-2-0}     # Acidic Mixture Dip: more MOAB damage
+  - {do: upgrade, id: n2, to: 2-0-4}     # Master Bomber
+  - {do: upgrade, id: n1, to: 4-0-2}     # Bloonjitsu
+  - {do: upgrade, id: w1, to: 0-2-4}     # Necromancer
   - {do: upgrade, id: a1, to: 4-2-0}
   - {do: place, id: n3, kind: ninja, role: support, near: [a1], near_radius: 6}
   - {do: upgrade, id: n3, to: 4-0-2}
