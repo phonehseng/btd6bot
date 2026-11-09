@@ -44,11 +44,13 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 R40_MARGIN = 1.2
 R37_MARGIN = 0.9
 # Half Cash maps it lost (R40 / R37 when written: Cargo 1.61/2.33, Pat's
-# Pond 2.04/1.66, Quad 1.28/1.01, Party Parade 1.45/1.51, Infernal
-# 2.02/2.51, Chutes 1.66/2.25). Bazaar is excluded from this build (no
-# legal heliport cell); Bazaar, Ship Capture and Bloonarius Prime have their
-# own Half Cash builds (tests/test_half_cash_map_builds_offline.py).
-HALF_CASH_MAPS = ("Cargo", "Pat's Pond", "Quad", "Party Parade", "Infernal", "Chutes")
+# Pond 2.04/1.66, Quad 1.28/1.01, Party Parade 1.45/1.51, Chutes 1.66/2.25,
+# Another Brick 2.09/2.54). Bazaar is excluded from this build (no legal
+# heliport cell), and Infernal since 2026-11-09 (the game refuses the
+# heliport there; see test_infernal_is_excluded); Bazaar, Ship Capture and
+# Bloonarius Prime have their own Half Cash builds
+# (tests/test_half_cash_map_builds_offline.py).
+HALF_CASH_MAPS = ("Cargo", "Pat's Pond", "Quad", "Party Parade", "Chutes", "Another Brick")
 # Double HP maps it lost (R40 when written: Castle Revenge 1.96, Tricky
 # Tracks 1.24)
 DOUBLE_HP_MAPS = ("Castle Revenge", "Tricky Tracks")
@@ -81,6 +83,22 @@ def test_moab_answers_are_the_helis():
     assert {st["id"] for st in strat["answers"]["moab"]} == {"h1", "h2"}
 
 
+def test_infernal_is_excluded():
+    """The game refused every heliport spot on Infernal in both live games
+    that tried one (Military Only 2026-11-04, this build's Half Cash
+    2026-11-09: 9 spots each, no heli ever stood). The replay cannot see
+    those refusals (8+ in a row are not learned) and places the helis, so
+    the build stays off the map: without them it lost round 49."""
+    from btd6bot import planner as PL
+    from btd6bot.account import AccountState
+    strat = S.load_all()[BUILD]
+    spec = PL.StrategySpec.from_any(dict(strat, id=BUILD, **(strat.get("planner") or {})))
+    assert "Infernal" in spec.excluded_maps
+    category = AccountState().map_category("Infernal")
+    for mode in strat["modes"]:
+        assert not PL._strategy_fits(spec, "Infernal", category, mode), mode
+
+
 def test_half_cash_holds_rounds_37_and_40():
     for map_name in HALF_CASH_MAPS:
         r, boards = _replay("half_cash", map_name)
@@ -95,8 +113,9 @@ def test_half_cash_holds_rounds_37_and_40():
 def test_double_hp_holds_round_40():
     for map_name in DOUBLE_HP_MAPS:
         _, boards = _replay("double_hp", map_name)
-        # the round-63 Druids/Bomb are Half Cash steps (`modes: [half_cash]`)
-        assert not {"d1", "d2", "b1"} & set(boards[max(boards)]), (map_name, boards[max(boards)])
+        # the round-63 Druids/Bomb and the R59-78 radar/third heli are Half
+        # Cash steps (`modes: [half_cash]`)
+        assert not {"d1", "d2", "b1", "v2", "h3"} & set(boards[max(boards)]), (map_name, boards[max(boards)])
         m40 = _margin("double_hp", map_name, boards[FIRST_MOAB], FIRST_MOAB)
         assert m40 >= R40_MARGIN, f"{map_name}: round 40 rated {m40:.2f}"
 
@@ -104,8 +123,12 @@ def test_double_hp_holds_round_40():
 # Late Half Cash: the build lost Dark Path at round 63 and Moon Landing at
 # round 76 on 2026-11-08 with a Sun Avatar as its late step. Two Apache
 # Dartships replace it (R76 when written: Dark Path 2.02, Moon Landing 4.09;
-# 0.40 / 0.61 with the Sun Avatar).
+# 0.40 / 0.61 with the Sun Avatar). Since 2026-11-09 the radar village and
+# a third heli 3-2-0 come first in Half Cash, so h2's Dartship stands from
+# round 78 rather than 74; round 76 is held by h3 (R76: Dark Path 2.71,
+# Moon Landing 4.56).
 LATE_ROUND = 76
+DARTSHIP_BY = 78
 LATE_MARGIN = 1.2
 LATE_MAPS = ("Dark Path", "Moon Landing")
 
@@ -113,8 +136,9 @@ LATE_MAPS = ("Dark Path", "Moon Landing")
 def test_half_cash_late_game_has_the_dartships():
     for map_name in LATE_MAPS:
         _, boards = _replay("half_cash", map_name)
+        assert boards[DARTSHIP_BY]["h2"][1] == (4, 0, 2), (map_name, boards[DARTSHIP_BY])
         board = boards[LATE_ROUND]
-        assert board["h2"][1] == (4, 0, 2), (map_name, board)
+        assert board["h3"][1] == (3, 2, 0), (map_name, board)
         m = _margin("half_cash", map_name, board, LATE_ROUND)
         assert m >= LATE_MARGIN, f"{map_name}: round {LATE_ROUND} rated {m:.2f}"
 
@@ -137,6 +161,37 @@ def test_half_cash_holds_round_63():
         assert board["d1"][1] == (0, 4, 2) and board["b1"][1] == (3, 0, 2), (map_name, board)
         m = _margin("half_cash", map_name, board, R63)
         assert m >= R63_MARGIN, f"{map_name}: round {R63} rated {m:.2f}"
+
+
+# Half Cash rounds 59-78: Mesa lost R64 (9 MOABs) holding $13,190 and X
+# Factor lost R78 (72 camo ceramics) holding $13-17k on 2026-11-09, both
+# waiting for the $21,600 Dartship. A Radar Scanner village (v2 0-2-0) and
+# a third heli (h3 3-2-0) come first now. Worst round over 59-78, before ->
+# when written (each map in its own process; in one process the numbers
+# can differ a little, hence the slack below them):
+#   Mesa 0.08 -> 0.41 (R59), X Factor 0.06 -> 0.36 (R77), Dark Castle
+#   0.07 -> 0.20 (R78), Cargo 0.10 -> 0.68 (R75), Pat's Pond 0.09 -> 0.45
+#   (R59), Quad 0.09 -> 0.81 (R61), Party Parade 0.08 -> 0.46 (R77),
+#   Chutes 0.10 -> 0.67 (R77). The old worst was round 78 on every map.
+LATE_ROUNDS = range(59, 79)
+LATE_FLOORS = {"Mesa": 0.35, "X Factor": 0.3, "Dark Castle": 0.15, "Cargo": 0.6,
+               "Pat's Pond": 0.4, "Quad": 0.7, "Party Parade": 0.4, "Chutes": 0.6}
+
+
+def test_half_cash_rounds_59_to_78_floors():
+    for map_name, floor in LATE_FLOORS.items():
+        _, boards = _replay("half_cash", map_name)
+        assert boards[R63]["v2"][1] == (0, 2, 0), (map_name, boards[R63])   # radar by R63
+        assert boards[max(LATE_ROUNDS)]["h3"][1] == (3, 2, 0), map_name
+        margins = {rnd: _margin("half_cash", map_name, boards[rnd], rnd) for rnd in LATE_ROUNDS}
+        worst = min(margins, key=margins.get)
+        assert margins[worst] >= floor, f"{map_name}: round {worst} rated {margins[worst]:.2f} (floor {floor})"
+
+
+def test_hard_and_double_hp_skip_the_half_cash_steps():
+    strat = S.load_all()[BUILD]
+    hc_ids = {st["id"] for st in strat["plan"] if st.get("modes") == ["half_cash"] and st["do"] == "place"}
+    assert {"d1", "d2", "b1", "v2", "h3"} <= hc_ids, hc_ids
 
 
 if __name__ == "__main__":

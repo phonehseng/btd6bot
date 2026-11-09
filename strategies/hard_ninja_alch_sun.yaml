@@ -1,6 +1,8 @@
 # Hard all-rounder (land maps): Obyn + Ninja/Alchemist/Village, two Heli
 # Pilots for the first MOABs, two Druids and a Bomb Shooter for round 63's
-# ceramic rush, both helis made Apache Dartships late.
+# ceramic rush, both helis made Apache Dartships late. Half Cash also buys
+# a Radar Scanner village and a third heli before the Dartships (rounds
+# 59-78, see the block above the d1 steps).
 # The magic core most Hard guides converge on: Ninjas see camo from tier 0,
 # Alchemist acid pops lead and Berserker Brew/Stronger Stimulant buff the
 # ninjas, a 2-0-2 Village discounts everything near it. Ninja #1 goes
@@ -66,7 +68,7 @@ hero: obyn
 plan_first: true
 modes: [medium, hard, double_hp, half_cash]
 planner:
-  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], heli: [4, 2, 2], super: [3, 0, 2], spike: [2, 0, 4],
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 2, 2], heli: [4, 2, 2], super: [3, 0, 2], spike: [2, 0, 4],
            druid: [0, 4, 2], bomb: [3, 0, 2]}
   base_success: {medium: 0.93, hard: 0.88, double_hp: 0.68, half_cash: 0.6}
   # not Bazaar: data/map_fit.json gives the heli 0.0 from both ends there (no
@@ -76,7 +78,16 @@ planner:
   # 20261108_203247; replayed R37/R40 0.43/0.12 with or without the helis).
   # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
   # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
-  excluded_maps: [Bazaar, Tricky Tracks]
+  # not Infernal (2026-11-09): the game refused every heliport spot there in
+  # both games that tried one - military_heli_sniper Military Only
+  # 2026-11-04 23:12 (9 spots refused, h1/h2/fill given up) and this build's
+  # Half Cash 2026-11-09 04:43 (9 refused, h1 and h2 given up, then v1 and
+  # the exit spike found no spot). Without the helis the build has no answer
+  # from round 40 on: it lost round 49 (loss case 20261109_045250; the
+  # pre-heli order lost there at round 38 on 2026-11-06). The refusals came 8+ in a row, so the executor treated them
+  # as the game's fault and did not learn them; the replay still places the
+  # helis there and cannot vouch for this map.
+  excluded_maps: [Bazaar, Tricky Tracks, Infernal]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
@@ -114,13 +125,39 @@ plan:
   # stand by round 63 and these steps only delayed the rest of the plan
   # (Tricky Tracks worst round: Hard 0.90 -> 0.68, Double HP 0.66 -> 0.48).
   # tests/test_hard_ninja_alch_sun_r40_offline.py keeps R63.
+  #
+  # Half Cash rounds 59-78 (2026-11-09): with only the druids and the bomb
+  # before the $21,600 Dartship, the plan sat on its cash from ~R58 to ~R70
+  # (Mesa lost R64 to 9 MOABs holding $13,190; X Factor lost R78 to 72 camo
+  # ceramics holding $13-17k) and the replay rated rounds 59-78 at 0.06-0.21
+  # at worst on every map, round 78 last of all. Nothing on the board gave
+  # the alchemist, the druids or the bomb camo sight - v1 is 2-0-2 and
+  # cannot take the middle path. Probing the replayed R50-R60 boards with
+  # every tower kind (dps_model.round_margin, live-forecast sight) put a
+  # Radar Scanner village (0-2-0, $3,725) first per dollar on most maps
+  # (+0.3 to +1.3 per $1k over rounds 53-78: camo rainbows R56, camo leads
+  # R59, camo regrow ceramics R67/R74, camo whites R70, camo ceramics R78)
+  # and a third Heli Pilot 3-2-0 ($5.6k, chases the bloons, IFR camo) next
+  # (+0.2 to +0.6 per $1k, R59/R64/R71 too); the Dartship was +0.2-0.4.
+  # So v2 0-2-0 stands beside n1/a1 (where v1 also stands) right after the
+  # first druid, d2 comes before Jungle's Bounty, and h3 3-2-0 before the
+  # Dartships. Replayed worst round over 59-78 on 11 maps: avg 0.10 -> 0.58,
+  # rounds under 0.5: 41 -> 12, R63 still 1.34+ (variants tried: radar near
+  # the druids/bomb, druids placed by the village, a Crossbow Master, a
+  # second radar, b1 4-0-2, h3 before d1 0-4-2 - each lost R63 on Dark
+  # Castle or R77-78 elsewhere). Half Cash only, like the druids.
   - {do: place, id: d1, kind: druid, role: dps, modes: [half_cash]}
   - {do: upgrade, id: d1, to: 0-3-2, modes: [half_cash]}
+  - {do: place, id: v2, kind: village, role: support, near: [n1, a1], near_radius: 7, modes: [half_cash]}
+  - {do: upgrade, id: v2, to: 0-2-0, modes: [half_cash]}      # Radar Scanner: camo for a1, n1, the druids near it
   - {do: place, id: b1, kind: bomb, role: dps, modes: [half_cash]}
   - {do: upgrade, id: b1, to: 3-0-2, modes: [half_cash]}
-  - {do: upgrade, id: d1, to: 0-4-2, modes: [half_cash]}
   - {do: place, id: d2, kind: druid, role: dps, modes: [half_cash]}
   - {do: upgrade, id: d2, to: 0-3-2, modes: [half_cash]}
+  - {do: upgrade, id: d1, to: 0-4-2, modes: [half_cash]}
+  - {do: place, id: h3, kind: heli, role: dps, modes: [half_cash]}
+  - {do: upgrade, id: h3, to: 0-2-0, modes: [half_cash]}
+  - {do: upgrade, id: h3, to: 3-2-0, modes: [half_cash]}      # MOAB rounds 64-77 before the $21.6k Dartship
   # Apache Dartships, not a Sun Avatar, for rounds 63-80 (2026-11-08): the
   # same $21,600 bought +1.0 to +2.1 at R63/R76 as h2 4-0-2 and +0.0 to +0.05
   # as s1 3-0-2 (dps_model probe of the replayed boards). The super stays
