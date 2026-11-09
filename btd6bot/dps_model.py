@@ -697,14 +697,27 @@ def map_routes(geom):
     if not paths:
         return [], []
     names = {p.get("name"): pid for pid, p in paths.items()}
-    # continuations: named plain/toggle splitters first, then geometry
+    ends = {pid: np.asarray(p["points"][-1][:2], float) for pid, p in paths.items()}
+    starts_xy = {pid: np.asarray(p["points"][0][:2], float) for pid, p in paths.items()}
+
+    def leads_back(src, p):
+        """Path p ends where src starts and does not start where src ends:
+        it comes before src, so a splitter naming it is for Reverse."""
+        return (np.linalg.norm(ends[p] - starts_xy[src]) <= JOIN_DISTANCE
+                and np.linalg.norm(ends[src] - starts_xy[p]) > JOIN_DISTANCE)
+    # continuations: named plain/toggle splitters first, then geometry. A map
+    # may carry a second set of splitters for Reverse, naming each path's
+    # predecessor (Workshop: "P1" -> PathMiddle1 and "P1" -> PathStart); those
+    # are not continuations. Kept, they turned Workshop's belt into a loop
+    # whose only routes were two short stretches (78 and 100 units of 440),
+    # and the live model rated Workshop Medium's rounds 0.06-0.8 while no
+    # bloon got past 37% of the track (loss case 20261108_184916).
     follow = {pid: [] for pid in paths}
     for s in splitters:
         src = names.get(s.get("name"))
         if src is not None and s.get("type") in ("Splitter", "ToggleSplitter"):
-            follow[src] += [p for p in s.get("paths") or [] if p in paths and p != src]
-    ends = {pid: np.asarray(p["points"][-1][:2], float) for pid, p in paths.items()}
-    starts_xy = {pid: np.asarray(p["points"][0][:2], float) for pid, p in paths.items()}
+            follow[src] += [p for p in s.get("paths") or [] if p in paths and p != src
+                            and not leads_back(src, p)]
     # paths a spawn splitter offers side by side are alternatives, never one
     # after the other (Pat's Pond's two lanes start at opposite ends)
     siblings = [set(s.get("paths") or []) for s in splitters
@@ -740,6 +753,25 @@ def map_routes(geom):
 
     for r in roots:
         walk([r])
+    # A MOAB-only branch onto a hidden path (Workshop's chute, switched on
+    # after round 39): MOAB-class bloons drop out of sight and come out on
+    # the belt where the chute ends. Their route is what follows the chute,
+    # for MOAB-class bloons only - without it they rode the whole belt in
+    # the model, which is far longer than the real drop.
+    by_id = {p["id"]: p for p in geom.get("paths", [])}
+    for pid, is_moab in list(moab_flag.items()):
+        hp = by_id.get(pid)
+        if not is_moab or pid in paths or hp is None or not hp.get("hidden") or pid not in usable:
+            continue
+        drop = np.asarray(hp["points"][-1][:2], float)
+        nxt = [p for s in splitters if s.get("name") == hp.get("name") and s.get("type") == "Splitter"
+               for p in s.get("paths") or [] if p in paths
+               and np.linalg.norm(starts_xy[p] - drop) <= JOIN_DISTANCE]
+        for p in nxt:
+            before = len(routes)
+            walk([p])
+            for r in routes[before:]:
+                r["moab"] = True
     # alternating spawns / branches: one scenario per alternative
     alternating = [s for s in splitters if str(s.get("type", "")).startswith("AlternateRound")]
     alt_paths = [p for s in alternating for p in s.get("paths") or [] if p in paths]
