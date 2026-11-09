@@ -47,7 +47,10 @@ purchase)
   the red cancel X) it is a placed Power: dropped on the track late in the
   route (track_points), else on open ground near the track (insta_spots),
   else put back. If nothing comes onto the cursor it is an instant Power:
-  used when its badge count went down (or the badge went away). Anything
+  used when its badge count went down (or the badge went away while the
+  panel still shows its Powers tab). A click that closed the panel proves
+  nothing: the panel is opened again and the count compared there
+  (_check_use; live 2026-11-09 05:40 the map click only closed it). Anything
   else (a question, an unknown screen) ends the routine; a question is
   answered Cancel/No, nothing is ever confirmed in a game.
 
@@ -416,19 +419,27 @@ class InGameExtras:
                 log.warning("achievement: Power %d could not be placed - putting it back", slot)
                 self.g.cancel_hold()
                 return False
-            return True
+            return self._placed_counts(slot, badge, before)
         frame, words = self._look(f"power{slot}_after")
-        if classify_panel(words, frame) == "shop":
-            self._decline(words)
-            raise _Bail(f"a purchase question after Power slot {slot}", words)
-        if self._went_down(frame, badge, before, slot):
+        self._refuse_shop(frame, words, slot)
+        used, reopened = self._check_use(frame, words, badge, before, slot, "the hexagon click")
+        if used:
             return True
+        if reopened:
+            raise _Bail(f"Power slot {slot}: the panel closed after the hexagon click and the count "
+                        f"stayed {before}", words)
         # Live 02:46 (Super Monkey Storm, the gold "22"): the click only
         # SELECTED the hexagon (a glowing outline, rec_20261108_024601.mkv
-        # 0:16), nothing came onto the cursor and the count stayed 22. The
-        # Power is used by a second click on the map: a point late on the
-        # track first (right for track Powers, anywhere for global ones such
-        # as the Storm), then open ground. Each click is checked by the count.
+        # 0:16), nothing came onto the cursor and the count stayed 22. A
+        # second click on the map was meant to fire it: a point late on the
+        # track first, then open ground. Each click is checked by the count.
+        # Live 2026-11-09 05:40 (rec_20261109_054000.mkv 0:05-0:12) showed
+        # what that map click really does: the hexagon glows (selected) for
+        # ~2 s, the map click comes, and the next frame shows the tower list
+        # ("UPGRADES", the lit bolt button) - no Storm effect, cash and the
+        # count unchanged. The map click only closed the panel, so a closed
+        # panel is reopened and its count compared (_check_use) before
+        # anything counts as used.
         targets = track_points(model)[:1] + insta_spots(model, self.avoid)[:1]
         for pt in targets:
             log.info("achievement: Power %d selected, not used - clicking the map at %.3f,%.3f", slot, *pt)
@@ -436,29 +447,79 @@ class InGameExtras:
             self.sleep(0.8)
             if self.g.is_holding():
                 if self._drop(targets, f"Power {slot}"):
-                    return True
+                    return self._placed_counts(slot, badge, before)
                 self.g.cancel_hold()
                 return False
             frame, words = self._look(f"power{slot}_after_map")
-            if classify_panel(words, frame) == "shop":
-                self._decline(words)
-                raise _Bail(f"a purchase question after Power slot {slot}", words)
-            if self._went_down(frame, badge, before, slot):
+            self._refuse_shop(frame, words, slot)
+            used, reopened = self._check_use(frame, words, badge, before, slot, "the map click")
+            if used:
                 return True
+            if reopened:
+                # the reopened panel has nothing selected: no hexagon click to let go
+                raise _Bail(f"Power slot {slot}: the panel closed after the map click and the count "
+                            f"stayed {before} - the map click did not fire the Power", words)
         # still selected and unused: click the hexagon again to let it go
         self.inp.click(*icon)
         self.sleep(0.4)
         raise _Bail(f"Power slot {slot} clicked but nothing changed (badge {before}, map clicked too)", words)
 
-    def _went_down(self, frame, badge, before, slot):
-        """The Power's badge count went down (or the badge went away)."""
+    def _refuse_shop(self, frame, words, slot):
+        if classify_panel(words, frame) == "shop":
+            self._decline(words)
+            raise _Bail(f"a purchase question after Power slot {slot}", words)
+
+    def _placed_counts(self, slot, badge, before):
+        """A Power went from the cursor onto the map: check the count. Live
+        2026-11-08 20:06 a "placed" Power left the count at 22. A count that
+        cannot be read keeps the old answer (the cursor emptied = used)."""
+        frame, words = self._look(f"power{slot}_after_drop")
+        self._refuse_shop(frame, words, slot)
+        used, _ = self._check_use(frame, words, badge, before, slot, "the drop")
+        if used is False:
+            raise _Bail(f"Power slot {slot} left the cursor but the count stayed {before}", words)
+        if used is None:
+            log.info("achievement: Power %d left the cursor; its count could not be compared - "
+                     "counting it as used", slot)
+        return True
+
+    def _check_use(self, frame, words, badge, before, slot, what):
+        """Did the click (`what`) use the Power? -> (used, reopened).
+
+        used: True when the count went down, or the badge is gone while the
+        frame is on the Powers tab; False when the count was read before and
+        after and did not go down; None when it cannot be told.
+
+        "Badge not found" alone is no use: live 2026-11-09 05:40 the map click
+        closed the panel, the frame showed the tower list (OCR "$330 | $310
+        ..."), the badge was simply not on screen and two false uses were
+        counted - the reopened panel still read 22. So a closed panel is
+        opened again (as run() does for the Instas) and read there."""
+        reopened = False
+        if panel_closed(frame):
+            log.info("achievement: the powers panel closed after %s - opening it again to read "
+                     "Power %d's count", what, slot)
+            if not self._open():
+                return None, True
+            frame, words = self._panel
+            reopened = True
+        if not on_powers_tab(frame, words):
+            log.info("achievement: after %s the panel is not on its Powers tab - Power %d's count "
+                     "not compared", what, slot)
+            return None, reopened
         now = badge_near(find_badges(frame), badge)
-        after = None if now is None else self._count(now)
-        if now is None or (before is not None and after is not None and after < before):
-            log.info("achievement: Power %d used (badge %s -> %s)", slot, before,
-                     "gone" if now is None else after)
-            return True
-        return False
+        if now is None:
+            log.info("achievement: Power %d used (badge %s -> gone on the Powers tab)", slot, before)
+            return True, reopened
+        after = self._count(now)
+        if before is not None and after is not None:
+            if after < before:
+                log.info("achievement: Power %d used (badge %s -> %s)", slot, before, after)
+                return True, reopened
+            log.info("achievement: Power %d not used by %s: %sthe count stayed %s", slot, what,
+                     "the panel closed and " if reopened else "", after)
+            return False, reopened
+        return None, reopened
 
     def _use_powers(self, frame, model, words=()):
         if not on_powers_tab(frame, words):
