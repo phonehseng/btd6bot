@@ -949,3 +949,10 @@
 - Handled (a5b2cf7, merged 66d8f88; check.py ALL OK on the branch): Castle Revenge Half Cash r25 (Fast Track r22 start rated 0.15 -> 0.06; model_ceiling 0.06), Sunken Columns ABR (double_hp_sniper_sun skips the map), Workshop Primary Only (third r40 loss; primary_core skips Workshop), Castle Revenge Apopalypse (already fixed by 75ea499). Test tests/test_losses_20261109_1000_offline.py. The merge conflicted with another session's Pat's Pond / Sanctuary ceiling commits; both sides kept, targeted tests re-run, full check.py not re-run after the merge.
 - Checked: "pop counter read 'MO' as 0" (2,751 lines) is not an OCR bug - a full-resolution crop of the recording shows the game's own panel at 0 pops ('M' is the icon's edge).
 - Left for the next run: Sanctuary Reverse (103708) and Pat's Pond ABR (104706) cases are "status: new"; Sanctuary Military Only is in-progress under another session.
+
+## 2026-11-09 11:17 (finished 11:45)
+- Bot status: task Running; bot.py (since the 11:02 reload), recorder and BTD6 up; no STOP, PAUSE or dev_active.txt; no Auto Start warning. Safe mode on (trips 4, streak 0). Brief "BTD6 is not the foreground window" pause at 11:06 cleared by itself.
+- Since 11:00: 2 wins (Party Parade Half Cash r80, Dark Path Half Cash r80), 2 losses: Pat's Pond Half Cash r47, Dark Path Apopalypse r55 (another session already excluded the Apopalypse build from Dark Path in 76932e1; its case folder was not filed yet).
+- Handled Pat's Pond ABR r40 (104706): closed on 4fe4160 (sniper-sun build skips Pat's Pond, made after the game).
+- Handled Pat's Pond Half Cash r47 (110224): third loss of hard_ninja_alch_sun there (r40, r40, r47; model rated r40 at 2.3 yet a lone MOAB leaked 33). Pat's Pond added to its excluded_maps (5a00f2f, merged b9d7fa0, test test_patspond_half_cash_excluded_offline.py, check.py ALL OK). hard_sniper_elite and obyn_druid_poplust remain for that medal. The game also lost rounds 3-21 to an 8-minute pause behind a Steam window.
+- Next: a water/map build for Pat's Pond Half Cash/ABR (patspond_hard / water_sub_alch adapted) would serve better than general builds.
