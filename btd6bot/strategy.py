@@ -2235,11 +2235,16 @@ class Executor:
         return [p for p in self.g.towers.values()
                 if p.kind != "hero" and p.kind not in self.BUFFERS and p.kind != "farm"]
 
-    def _buffed(self, kind, cx, cy):
-        """How many damage towers a `kind` buffer at cell (cx, cy) has in range."""
+    def _damage_towers_ids(self):
+        return [tid for tid, p in self.g.towers.items()
+                if p.kind != "hero" and p.kind not in self.BUFFERS and p.kind != "farm"]
+
+    def _buffed(self, kind, cx, cy, towers=None):
+        """How many damage towers (or of `towers`) a `kind` buffer at cell
+        (cx, cy) has in range."""
         r2 = self._range_cells(kind) ** 2
         n = 0
-        for p in self._damage_towers():
+        for p in self._damage_towers() if towers is None else towers:
             tx, ty = self.m.frac_to_cell(p.x, p.y)
             n += (tx - cx) ** 2 + (ty - cy) ** 2 <= r2
         return n
@@ -2268,10 +2273,22 @@ class Executor:
                if self._buffed(kind, c[0], c[1]) >= 1]
         if len(out) >= self.SPOTS_PER_HOLD:
             return out
+        # The damage towers the step names (`near`) come first: a cell that
+        # buffs one of them beats one that buffs more of the others. #Ouch
+        # Apopalypse (2026-11-09 12:17): a1 "near n1" found no spot within
+        # its near radius, went where it buffed the most towers - n2 and the
+        # opener on the right - and the left lane, held by n1 alone without
+        # the alchemist's lead and damage, leaked 119 lives in a second.
+        damage = set(self._damage_towers_ids())
+        named = [self.g.towers[i] for i in (step or {}).get("near") or () if i in damage]
         ys, xs = np.nonzero(valid & ~self.blocked)
-        scored = sorted(((self._buffed(kind, x, y), x, y) for x, y in zip(xs.tolist(), ys.tolist())
+        scored = sorted(((self._buffed(kind, x, y, named) if named else 0, self._buffed(kind, x, y), x, y)
+                         for x, y in zip(xs.tolist(), ys.tolist())
                          if (kind, x, y) not in self.failed_spots), reverse=True)
-        for n, x, y in scored:
+        if named and scored and scored[0][0] < 1:
+            log.info("%s: no spot buffs %s - placed where it buffs the most towers",
+                     kind, step.get("near"))
+        for _, n, x, y in scored:
             if n < 1:
                 break
             if any((x - ox) ** 2 + (y - oy) ** 2 < 9 for ox, oy, _ in out):

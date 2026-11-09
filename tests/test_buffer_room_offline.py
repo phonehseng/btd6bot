@@ -69,6 +69,28 @@ def test_no_buffer_step_no_block():
     assert ex._no_buffer_room(plan["plan"][0], valid) is None
 
 
+def test_ouch_alchemist_buffs_the_ninja_it_was_meant_for():
+    """#Ouch Apopalypse (2026-11-09 12:17): a1 "near n1" found no spot in its
+    near radius and went where it buffed the most towers (n2 and the opener
+    on the right, at 0.644,0.462); the left lane, n1's, leaked 119 lives in
+    a second. A cell that buffs a named tower now comes first."""
+    m = MapModel.load("#Ouch", L.get(1920, 1200)["playfield"])
+    if not m.known():
+        return
+    plan = yaml.safe_load((ROOT / "strategies" / "apopalypse_ninja_sniper.yaml").read_text())
+    ex = S.Executor(F.FakeGame("obyn"), m, plan, "apopalypse", F.full_account())
+    towers = {"opener": F.Placed("opener", "dart", 0.590, 0.291),
+              "n1": F.Placed("n1", "ninja", 0.350, 0.726),     # the live game's spots
+              "n2": F.Placed("n2", "ninja", 0.521, 0.419)}
+    ex.g.towers = towers
+    a1_step = plan["plan"][4]
+    assert a1_step["id"] == "a1" and a1_step["near"] == ["n1"]
+    spots = ex._spots_widening("alchemist", a1_step)
+    assert spots
+    x, y, _ = spots[0]
+    assert ex._buffed("alchemist", x, y, [towers["n1"]]) == 1, m.cell_to_frac(x, y)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
