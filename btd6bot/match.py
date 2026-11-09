@@ -424,6 +424,8 @@ class Match:
             # one life and one tower so far: the plan may not spend the
             # money a second tower needs (_opener_reserve)
             plan_cash = cash if cash is None else max(0, cash - self._opener_reserve())
+            self.ex.play_running = False     # before Play: platforms as in the round before
+            self._follow_platforms(rnd)
             bought = self.ex.tick(plan_cash, rnd)
             if not bought and late and cash is not None and cash > 600 and self._opening_surplus_ok():
                 bought = self.ex.surplus(cash, rnd)
@@ -790,6 +792,8 @@ class Match:
                         self._journal_round(rnd, cash, lives, reset=True)
                 self.ex.reinforce_hold = self._reinforce_hold(last_round, dropped)
                 self._mark("plan tick")
+                self.ex.play_running = self._in_round
+                self._follow_platforms(last_round)
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
                 if getattr(self.g, "unconfirmed_streak", 0) >= 2 or self.g.screen_lost:
                     # Placements that leave no tower are clicks landing on
@@ -1131,6 +1135,21 @@ class Match:
             self._carried.round_advanced(old_round, new_round, self.g.towers)
         except Exception:
             log.exception("moving towers with the ground failed - carrying on")
+
+    def _follow_platforms(self, rnd):
+        """Move the remembered spots of towers on moving platforms
+        (Sanctuary) when the platforms have moved: they move when a round
+        starts, which the executor tracks (Executor._pose_round, from the
+        Play button and the screen). Cheap when nothing moved."""
+        if self._carried is None or getattr(self._carried, "platforms", None) is None:
+            return
+        try:
+            if rnd is not None:
+                self.ex.now_round = rnd      # tick() would set it only after the move
+            pose = self.ex._pose_round()
+            self._carried.follow_platforms(pose, self.g.towers)
+        except Exception:
+            log.exception("moving towers with the platforms failed - carrying on")
 
     @staticmethod
     def _path_phases(model):
@@ -1670,7 +1689,15 @@ class Match:
         # plan steps given up for this game (journal), and those among them the
         # game refused spots for: the runner notes a lost game with any of
         # the latter as placement trouble on the map
-        self.stats["steps_given_up"] = len(getattr(self.ex, "dead_steps", ()))
+        counts = self.ex.given_up_counts() if hasattr(self.ex, "given_up_counts") else None
+        if counts is not None:
+            # the build's own steps; threat answers and fills apart (one
+            # threat tries a new tower of every kind: Sanctuary 2026-11-09
+            # counted 130 of its 145 "plan steps given up" that way)
+            self.stats["steps_given_up"] = counts["plan"]
+            self.stats["answers_given_up"] = counts["other"]
+        else:
+            self.stats["steps_given_up"] = len(getattr(self.ex, "dead_steps", ()))
         self.stats["steps_refused"] = len(getattr(self.ex, "refused_dead_steps", ()))
         if self.depths:
             # the deepest point bloons reached in any round (bloonwatch.py)

@@ -220,52 +220,60 @@ Reverse (2026-11-06) bought four surplus snipers at y = 0.070 there, could
 not select any of them, "forgot" them and bought them again. The lives and
 cash bar (top left) is not excluded: towers there were selected fine.
 
-## Sanctuary: what the bot still needs
+## Sanctuary: moving platforms (followed since 2026-11-09)
 
 The six platforms move at the start of every round along animation curves
 (`MovingPlatformAction`: `triggerNumToStateNum` sequences of 2, 4, 6 and 8
 states, so the whole layout repeats every 24 rounds, as bloonswiki says).
 The scene holds each platform where its clip is at time 0 (an absolute
-curve's time-0 value is the area's own origin); since 2026-11-07 the poses
-are measured from there, not from the starting state, and areas moved by one
-action (the top platform and its two pools) no longer count each other's
-swept ground as unsafe.
+curve's time-0 value is the area's own origin); the poses are measured from
+there, and areas moved by one action (the top platform and its two pools)
+do not count each other's swept ground as unsafe.
 
-What still keeps Sanctuary out of reach (two Medium games, 2026-11-03 and
-2026-11-05, both lost):
+Settled on the recordings of two games (2026-11-09, Medium and Reverse,
+every round from 15 to 59; `tools/measure_platforms.py` finds the platform
+stone on screen per state):
 
-1. **Placement in the round being played.** The grids hold the platforms in
-   the scene's pose. A Fast Track game starts at round 15 (Medium) or 22
-   (Hard), with the platforms elsewhere: `sanctuary_medium`'s snipers were
-   refused 22 and 26 times and given up (2026-11-03). Needed: the platform
-   pose for the HUD round (state = sequence[(round - 1 + phase) % length]),
-   and placement grids (`grids_for(now_round=...)`) with each platform moved
-   to it, as Covered Garden's panes already are.
-2. **Following the towers.** A tower rides its platform; the bot clicks the
-   spot where it placed it, finds nothing, and after two failed selections
-   "forgets" the tower and buys it again (sniper1, 2026-11-05 round 33).
-   `carried.CarriedTowers` does this for Geared's gears (`_Rotor`); a
-   `_Platform` mover is needed that moves the remembered click spot by the
-   pose change between rounds.
-3. **The phase, checked in the game.** Which state a platform is in at a
-   given HUD round (and whether a Fast Track start counts the skipped
-   rounds) could not be settled from the logs: the 11 placements logged
-   there all fit the two centre platforms, which barely move. A self-check
-   would settle it in play: after a placement, find which states put the
-   click inside a platform; after a failed selection, try the tower's spot
-   under the other states of its platform before forgetting it, and keep
-   the state that selected it. Also still open: the sign of z and of the
-   rotation in the curves (LH1/RH1 swing far to the side in state 4).
+1. **The phase.** While round r is played each platform stands in state
+   `seq[(r - 1) % len(seq)]` (`mapgeom.platform_state`), counted from round
+   1 whatever round the game started at, in Reverse as in Medium. The move
+   happens when a round STARTS: before Play of a Fast Track game (HUD round
+   15) the platforms stand as in round 14, and between rounds as in the
+   round just played. `Executor._pose_round` gives that round from the Play
+   button (the match's `play_running`) and checks it on screen
+   (`mapgeom.platform_round_on_screen`: 81 of 82 round frames read right,
+   the other was taken while the platforms were still moving).
+2. **The swinging platforms.** LH1 and RH1 (the only ones whose curves turn
+   them too) stand where their x/z curve says after turning it 28 degrees
+   (towards the map's top) and shrinking it to 0.84
+   (`PLATFORM_ARM_TURN`, `PLATFORM_ARM_SCALE`), within 4 units in every
+   state; read as written they were 25-40 units off. The other four fit
+   their curves as read.
+3. **Placement in the round being played.** `grids_for(pose_round=...)` /
+   `valid_spots(pose_round=...)` draw every platform where it stands; the
+   strategy passes its pose round, carries a build's `at` spots (written in
+   the scene's pose) with their platform (`mapgeom.carry_spot`), probes no
+   blocked spots there, and tries spots refused in an old layout again
+   once the platforms move.
+4. **Refusals.** A refusal on platform ground only says where the platform
+   was not at that moment. They are no longer learned there, and the ones
+   learned before are dropped when the geometry is applied
+   (`forget_platform_refusals`): 944 of Sanctuary's 1,016 refused land
+   cells, half its platform ground ("no legal spot left (22 legal cells)").
+5. **Following the towers.** `carried.CarriedTowers.follow_platforms` moves
+   the remembered click spot of every tower on a platform when the layout
+   changes, so selections land on the tower (before: "could not be selected
+   2 times in a row - not on the map; forgotten", dr1 and s3 in the Reverse
+   game of 2026-11-09, four snipers in Military Only).
 
-Until then only global-range towers bought in one go (place and upgrade
-within the same round) avoid both problems, and the planner keeps doubting
-the map (placement trouble 2).
+Still open: the platforms' own turning (yRotCurve) is applied about their
+centre as the curve says, but its sign was not checked on screen; a tower
+far from the centre of LH1/RH1 may be clicked a few units off.
 
 ## Needs checking in the game
 
-- Sanctuary's platform offsets: the curves are applied as shifts from the
-  clip's time 0 (the scene's pose), in the scene's x/z (sign of z, the sign
-  of the rotation and the turning centre not confirmed; see above).
+- Sanctuary's platforms turning (yRotCurve) about their centre: sign not
+  confirmed on screen (their positions are, see above).
 - (Confirmed in play 2026-11-07: Covered Garden's panes open one quarter
   per round, clockwise from bottom-left on round 1, switching when the round
   changes, also after a Fast Track start at round 15. A pane that shuts

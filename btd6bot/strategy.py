@@ -1233,6 +1233,15 @@ class Executor:
                 log.info("spot (%d,%d) under a pane refused - not learned (the pane may have just closed)",
                          cx, cy)
                 return
+            # Ground a moving platform covers (Sanctuary) is there only in
+            # some rounds: a refusal says where the platform was not then.
+            # Learned, 944 such cells took half of Sanctuary's ground.
+            ground = mapgeom.platform_ground(self.m)
+            if ground is not None and 0 <= cy < ground.shape[0] and 0 <= cx < ground.shape[1] \
+                    and ground[cy, cx]:
+                log.info("spot (%d,%d) on platform ground refused - not learned (the platform "
+                         "stands elsewhere this round)", cx, cy)
+                return
         except Exception:
             pass
         # an amphibious tower refused here stands neither on land nor on water;
@@ -1623,7 +1632,7 @@ class Executor:
                 continue
             if st.get("id") in self.g.towers:
                 continue    # placed already
-            out.append(self.m.frac_to_cell(float(at[0]), float(at[1])))
+            out.append(self.m.frac_to_cell(*self._at_now(at)))
         return out
 
     def _next_path(self, p, target):
@@ -1703,6 +1712,7 @@ class Executor:
     HERO_RETRY_MAX_S = 120.0  # ... up to this
     # Failed selections in a row after which a tower is taken to be absent.
     MAX_SELECT_FAILS = 2
+    PLATFORM_SELECT_SPARE = 2   # ... more for a tower riding a moving platform
 
     @staticmethod
     def _step_key(step):
@@ -1779,6 +1789,99 @@ class Executor:
             return not mapgeom.pane_at(self.m, float(at[0]), float(at[1]), self._pane_now())[1]
         except Exception:
             return False
+
+    # How long one reading of the platforms off the screen is trusted (s).
+    PLATFORM_READ_S = 0.5
+
+    def _pose_round(self):
+        """On maps whose ground moves on platforms (Sanctuary): the last
+        round STARTED, whose layout the platforms stand in (mapgeom.
+        platform_state). None elsewhere, so other maps keep their grids.
+
+        The HUD shows the next round as soon as one ends, but the platforms
+        only move when it starts: before Play (a Fast Track game waiting at
+        round 15 stands as in round 14) and between rounds they stand as in
+        the round before the HUD's. The match says whether a round is
+        running (play_running, from the Play button); the screen has the
+        last word when it clearly shows one of the neighbouring layouts
+        (mapgeom.platform_round_on_screen, read at most every
+        PLATFORM_READ_S).
+
+        Sanctuary (2026-11-09): with the platforms held in the scene's pose
+        the bot clicked water - 85 refused spots and 107 given-up steps in
+        one Reverse game, lost at round 52."""
+        from . import mapgeom
+        rnd = getattr(self, "now_round", None)
+        try:
+            if rnd is None or not mapgeom.has_platforms(self.m):
+                return None
+        except Exception:
+            return None
+        guess = rnd if getattr(self, "play_running", None) is not False else rnd - 1
+        now = time.time()
+        cached = getattr(self, "_platform_read", None)
+        if cached is None or now - cached[0] > self.PLATFORM_READ_S or cached[1] != guess:
+            seen = None
+            fresh = getattr(self.g, "fresh", None)
+            if fresh is not None:
+                try:
+                    seen = mapgeom.platform_round_on_screen(self.m, fresh(), [guess, guess - 1, guess + 1])
+                except Exception:
+                    seen = None
+            cached = self._platform_read = (now, guess, seen)
+        seen = cached[2]
+        if seen is not None and seen != guess:
+            if getattr(self, "_platform_seen_logged", None) != (guess, seen):
+                self._platform_seen_logged = (guess, seen)
+                log.info("platforms: the screen shows them as in round %d (expected round %d)", seen, guess)
+            guess = seen
+        last = getattr(self, "_pose_seen", None)
+        if last != guess:
+            self._pose_seen = guess
+            if last is not None:
+                self._platforms_moved()
+        return guess
+
+    def _platforms_moved(self):
+        """The platforms moved: spots refused or avoided on their ground
+        were judged in the old layout, so they are tried again. (Towers'
+        own footprints come from their current spots, carried by the
+        match: carried.CarriedTowers.)"""
+        from . import mapgeom
+        ground = mapgeom.platform_ground(self.m)
+        if ground is None:
+            return
+        h, w = ground.shape
+        self.failed_spots = {k for k in self.failed_spots
+                             if not (0 <= k[2] < h and 0 <= k[1] < w and ground[k[2], k[1]])}
+        self.blocked &= ~ground
+        for p in self.g.towers.values():
+            self._block(*self.m.frac_to_cell(p.x, p.y), 3)
+
+    def _on_platform(self, p):
+        """True when tower p stands on a moving platform's ground."""
+        from . import mapgeom
+        try:
+            ground = mapgeom.platform_ground(self.m)
+        except Exception:
+            return False
+        if ground is None:
+            return False
+        cx, cy = (int(round(v)) for v in self.m.frac_to_cell(p.x, p.y))
+        return 0 <= cy < ground.shape[0] and 0 <= cx < ground.shape[1] and bool(ground[cy, cx])
+
+    def _at_now(self, at):
+        """A build's exact spot (`at`, written as the map stands in the
+        scene) where it is now: on a moving platform (Sanctuary) it moves
+        with the platform (mapgeom.carry_spot); elsewhere it stays."""
+        rnd = self._pose_round()
+        if rnd is None:
+            return float(at[0]), float(at[1])
+        from . import mapgeom
+        try:
+            return mapgeom.carry_spot(self.m, float(at[0]), float(at[1]), None, rnd)
+        except Exception:
+            return float(at[0]), float(at[1])
 
     def _reachable(self, p):
         """False while a closed pane covers tower p: a click there hits the
@@ -2153,7 +2256,8 @@ class Executor:
         placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
                   for p in self.g.towers.values()]
         valid = PL.valid_spots(self.m, kind, None, placed, where={"land"} if self.land_only else None,
-                               now_round=self._pane_round(), removed=tuple(self.removed))
+                               now_round=self._pane_round(), removed=tuple(self.removed),
+                               pose_round=self._pose_round())
         if valid is None:
             return []
         # the researched spot and its neighbours first, where they buff something
@@ -2187,6 +2291,11 @@ class Executor:
         probed again), an acceptance too (_learn_probe). None when nothing
         is worth it."""
         if kind == "hero" or valid is None or not valid.any():
+            return None
+        if self._pose_round() is not None:
+            # Sanctuary: off the platforms there is nothing to stand on, and
+            # the platforms' ground is followed round by round - the six
+            # probes of 2026-11-09 were all refused (water)
             return None
         reach = self._reach(kind)
         if reach is None:
@@ -2306,7 +2415,7 @@ class Executor:
             last = self.ground_horizon if last is None else min(last, self.ground_horizon)
         return PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                               where={"land"} if self.land_only else None,
-                              last_round=last, now_round=self._pane_round(),
+                              last_round=last, now_round=self._pane_round(), pose_round=self._pose_round(),
                               removed=tuple(self.removed))
 
     # Global-range kinds whose attack still stays round the spot they stand
@@ -2488,6 +2597,8 @@ class Executor:
                 continue   # income, exit and global-range towers stay
             if self._map_wide_now(p):
                 continue   # an Advanced Intel sub shoots what the others see, wherever it stands
+            if self._on_platform(p):
+                continue   # it rides a moving platform: what it reaches changes every round
             reach = self._reach(p.kind)
             valid = PL.valid_spots(self.m, p.kind, removed=tuple(self.removed))
             if reach is None or valid is None or not valid.any():
@@ -2753,7 +2864,7 @@ class Executor:
         at = step.get("at")
         if not at or len(at) != 2:
             return []
-        cx, cy = (int(round(v)) for v in self.m.frac_to_cell(float(at[0]), float(at[1])))
+        cx, cy = (int(round(v)) for v in self.m.frac_to_cell(*self._at_now(at)))
         h, w = self.blocked.shape
         r = radius or self.AT_SEARCH_CELLS
         near = []
@@ -2794,7 +2905,7 @@ class Executor:
         at = step.get("at") if step else None
         if not at or len(at) != 2:
             return None
-        cx, cy = self.m.frac_to_cell(float(at[0]), float(at[1]))
+        cx, cy = self.m.frac_to_cell(*self._at_now(at))
         yy, xx = np.ogrid[0:shape[0], 0:shape[1]]
         return (xx - cx) ** 2 + (yy - cy) ** 2 > self.AT_FALLBACK_CELLS ** 2
 
@@ -2954,6 +3065,17 @@ class Executor:
                         step, self.step_spot_fails.get(key, 0))
         return "skip"
 
+    def given_up_counts(self):
+        """{"plan": place steps of the build itself given up this game,
+        "other": the rest - threat answers (each threat tries a new tower of
+        every allowed kind, ans_<threat>_<kind>, and gives up each kind
+        that finds no spot without a click), panic and reinforce fills}.
+        Counted together, one Sanctuary game reported 145 "plan steps given
+        up" of which 12 were the build's own (2026-11-09)."""
+        plan_ids = {s.get("id") for s in getattr(self, "plan", None) or () if s.get("id")}
+        plan = sum(1 for key in self.dead_steps if key[3] is not None and key[3] in plan_ids)
+        return {"plan": plan, "other": len(self.dead_steps) - plan}
+
     def _defer(self, step, key, pause):
         """Put a place step aside for `pause` seconds; tick() tries it again
         from the deferred list. Returns 'skip' so the plan moves on."""
@@ -3036,8 +3158,13 @@ class Executor:
         round 15, so all of them froze together in round 25; the dart opener
         failed two selections, was forgotten as "not on the map", and its
         place step was queued again with no spot left - while it stood there
-        frozen. It thaws on its own and is selected again then."""
-        if p.kind == "hero" or getattr(p, "select_fails", 0) < self.MAX_SELECT_FAILS:
+        frozen. It thaws on its own and is selected again then.
+
+        A tower on a moving platform (Sanctuary) gets PLATFORM_SELECT_SPARE
+        more tries: its spot follows the platform (carried.py), but a click
+        in the second the platforms slide at a round's start misses."""
+        limit = self.MAX_SELECT_FAILS + (self.PLATFORM_SELECT_SPARE if self._on_platform(p) else 0)
+        if p.kind == "hero" or getattr(p, "select_fails", 0) < limit:
             return False
         from . import dps_model as D   # imported here, like the other model uses in this file
         if D.tower_uptime(getattr(self.m, "name", "")) < 1.0:

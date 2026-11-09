@@ -34,6 +34,11 @@
 # `at` = exact spot (screen fractions of the 1920x1200 window), legal in plan order
 # (placement.valid_spots, as tests/test_map_hints_offline.py checks). Untested in
 # play: base_success is set low until the record calibrates it.
+# Every spot lies on a platform and is written as the scene holds it: in play the
+# bot moves it with its platform to where that stands in the round being played
+# (mapgeom.carry_spot), and follows the towers as they ride (carried.py). Reverse
+# uses the same spots: its platforms move exactly as in Medium (recordings of
+# 2026-11-09, tests/test_sanctuary_platforms_offline.py).
 id: sanctuary_medium
 map: Sanctuary
 hero: quincy
