@@ -63,6 +63,46 @@ PARK_SLACK = 12      # pixels: closer than this to the spot, the cursor stays pu
 # (0.06-0.78) and 1 of the 19 wins (Balance, 0.53). Leaving costs a minute;
 # a loss is never acceptable.
 NO_INCOME_MIN_MARGIN = 0.8
+# One pass of the play loop normally takes well under a second; a run of
+# purchases or a reinforce look can take several. A pass that took longer
+# than this means the loop was held up (a starved PC, a blocking call), and
+# the game may have ended meanwhile: Spring Spring CHIMPS (2026-11-08) was
+# lost at 22:30:28, while the PC was busy with tools/check.py's 16 test
+# processes, and the bot logged nothing until "off game screen: defeat" at
+# 22:32:25. After such a pass the loop looks for an end screen first.
+LOOP_STALL_S = 15.0
+
+
+class LoopBeat:
+    """The play loop's heartbeat: when it last passed a checkpoint and which.
+
+    Match.play marks each phase of a pass (_mark); bot.py's stack-snapshot
+    thread asks stall_report() every few seconds and, when the loop has
+    been stuck in one phase for long, saves where every thread was. The
+    minute-by-minute logs/stacks.txt is overwritten, so the snapshot taken
+    during a two-minute stall was gone by the time anyone looked."""
+    t = 0.0           # time.time() of the last checkpoint; 0 = no game being played
+    phase = ""
+    reported = 0.0    # the checkpoint time a stall was last reported for
+
+    @classmethod
+    def mark(cls, phase, now=None):
+        cls.t = time.time() if now is None else now
+        cls.phase = phase
+
+    @classmethod
+    def stop(cls):
+        cls.t = 0.0
+        cls.phase = ""
+
+    @classmethod
+    def stall_report(cls, now=None, limit=LOOP_STALL_S):
+        """'stuck N s in <phase>' once per stall longer than `limit`, else None."""
+        now = time.time() if now is None else now
+        if not cls.t or now - cls.t <= limit or cls.reported == cls.t:
+            return None
+        cls.reported = cls.t
+        return f"stuck {now - cls.t:.0f} s in {cls.phase or '?'}"
 
 
 class WeakBuild(RuntimeError):
@@ -552,8 +592,57 @@ class Match:
         self.tracer.start_round()
         t_hud = t_ability = 0.0
         cash = None
+        t_pass = time.time()
+        try:
+            return self._play_loop(max_minutes, last_round, t_hud, t_ability, cash, t_pass)
+        finally:
+            LoopBeat.stop()
+
+    def _mark(self, phase, now=None):
+        """Note which phase of the play loop starts now (LoopBeat), and keep
+        the slowest phase since the last _take_slowest as (name, seconds)."""
+        now = time.time() if now is None else now
+        prev, t0 = getattr(self, "_phase", ""), getattr(self, "_t_phase", now)
+        if prev and now - t0 > getattr(self, "_slowest", ("", 0.0))[1]:
+            self._slowest = (prev, now - t0)
+        self._phase, self._t_phase = phase, now
+        LoopBeat.mark(phase, now)
+
+    def _take_slowest(self):
+        """The slowest phase marked since the last call, and start afresh."""
+        slow = getattr(self, "_slowest", ("", 0.0))
+        self._slowest = ("", 0.0)
+        return slow
+
+    def _after_stall(self, away, slowest, f):
+        """The last pass of the play loop took `away` seconds, most of them
+        in `slowest` (name, seconds): look at the screen before anything
+        else - the game may have ended meanwhile. Returns the outcome when
+        it has, else None."""
+        name, secs = slowest
+        log.warning("match loop was held up %.0f s (%.0f s of it in %s) - looking for an end screen",
+                    away, secs, name or "?")
+        st = self.menus.identify()
+        if st in ("victory", "defeat") and self._real_end(st, f):
+            return st
+        if st not in ("in_game", "unknown"):
+            return self._off_screen(st)
+        return None
+
+    def _play_loop(self, max_minutes, last_round, t_hud, t_ability, cash, t_pass):
         while not self._out_of_time(max_minutes):
+            self._mark("screen grab")
             f = self.g.fresh()
+            self._mark("pass start")
+            slowest = self._take_slowest()
+            away, t_pass = time.time() - t_pass, time.time()
+            if away > LOOP_STALL_S and self.g.in_game(f):
+                outcome = self._after_stall(away, slowest, f)
+                if outcome:
+                    return self._finish(outcome, last_round)
+                if self.g.towers:    # abilities first: they may be due by now
+                    t_ability = time.time()
+                    self._abilities(last_round)
             if not self.g.in_game(f):
                 outcome = self._off_screen()
                 if outcome:
@@ -568,11 +657,13 @@ class Match:
             if last_round is not None and last_round >= end_round - 3 and now - getattr(self, "_t_end", 0) > 2.5:
                 # final round: the victory overlay dims but does not hide the HUD
                 self._t_end = now
+                self._mark("end screen check")
                 st = self.menus.identify()
                 if st in ("victory", "defeat") and self._real_end(st, f):
                     return self._finish(st, last_round)
             if self._frozen(f, now):
                 # a modal popup pauses the game while the HUD stays visible
+                self._mark("frozen screen")
                 st = self.menus.identify()
                 log.info("screen frozen (%s) - looking for a popup", st)
                 if st == "game_error":
@@ -592,10 +683,12 @@ class Match:
                 self.tracer.feed(f, self._exclude())
             if self._in_round and now - self._t_watch > WATCH_EVERY:
                 self._t_watch = now
+                self._mark("bloon watch")
                 self._watch_look(f, now)
             dropped = False
             if now - t_hud > 0.35:
                 t_hud = now
+                self._mark("HUD read")
                 cash = self.g.hud.cash(f)
                 rnd = self.g.hud.round(f)
                 lives = self.g.hud.lives(f)
@@ -614,6 +707,7 @@ class Match:
                     # 4 s after the first leak, behind the buying)
                     if self.g.towers:
                         t_ability = now
+                        self._mark("abilities")
                         self._abilities(last_round, dropped=True)
                 self._prev_lives_read = lives
                 # rounds only move forward, one or two at a time
@@ -621,6 +715,7 @@ class Match:
                     self.tracer.end_round()
                     self.tracer.start_round()
                     self.stats["rounds"] += rnd - last_round
+                    self._mark("round change")
                     if self.stats["rounds"] % 5 == 0:
                         self.m.save()
                     self._watch_round_end(last_round)
@@ -658,6 +753,7 @@ class Match:
                         self._forecast_round(rnd)
                         self._journal_round(rnd, cash, lives, reset=True)
                 self.ex.reinforce_hold = self._reinforce_hold(last_round, dropped)
+                self._mark("plan tick")
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
                 if getattr(self.g, "unconfirmed_streak", 0) >= 2 or self.g.screen_lost:
                     # Placements that leave no tower are clicks landing on
@@ -699,6 +795,7 @@ class Match:
                         # what the spare cash buys (reinforce.py), the plan's
                         # own steps and patience keep their place before it
                         self._t_reinforce = now
+                        self._mark("reinforce")
                         bought = self._reinforce(cash, last_round)
                     # reinforce is saving for a purchase that holds the weakest
                     # round: the usual spending would eat that cash
@@ -706,6 +803,7 @@ class Match:
                         # with lives to spare a waiting plan step claims the
                         # bank only while the look-ahead is weak (plan_claim)
                         self.ex.lookahead_weak = weak
+                        self._mark("surplus")
                         bought = self.ex.surplus(cash, last_round)
                 if bought:
                     self._last_buy = now
@@ -717,9 +815,11 @@ class Match:
                 # bananas pay only when the cursor passes over them
                 if now - self._t_bananas > BANANA_EVERY:
                     self._t_bananas = now
+                    self._mark("bananas")
                     got = self.g.collect_bananas()
                     if got:
                         self.stats["banana_moves"] = self.stats.get("banana_moves", 0) + got
+                self._mark("Play button")
                 self._hud_update(cash, last_round)
                 st = self.g.button_state()
                 if st in ("play_idle", "play_run", "play_fast"):
@@ -733,6 +833,7 @@ class Match:
                     self._in_round = True
             if self.g.towers and now - t_ability > 1.0:
                 t_ability = now
+                self._mark("abilities")
                 self._abilities(last_round)
             time.sleep(0.02)
         return self._finish("timeout", last_round)
