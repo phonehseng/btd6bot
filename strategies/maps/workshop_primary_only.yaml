@@ -1,0 +1,83 @@
+# Workshop, Primary Only: three Sharp Shooter darts in the pocket below the exit
+# and a fourth below the chute's stretch, a Crossbow dart and a MOAB Mauler bomb
+# above the belt where the chute comes out, a Ring of Fire tack and a Cluster
+# Bombs bomb for the rushes. The game ends after round 40.
+#
+# Why: Workshop Primary Only was lost at ROUND 40, the first MOAB, three times
+# (2026-10-23 starter_tack_dart, 2026-11-04 primary_glaive_dart, 2026-11-09
+# 10:09 primary_core, loss case 20261109_100957; primary_core has been kept
+# off Workshop since). Workshop's MOAB-class bloons drop down a hidden chute
+# after round 39 and ride only the belt's last 106 units (x 0.566-0.852 on
+# screen; dps_model.map_routes since 9296ff3), and tables beside the belt
+# block sight: towers by the belt's first two thirds never touch the MOAB.
+# Primary towers all need sight, so every MOAB answer here stands in one of
+# the spots that see the chute's stretch: the pocket below the exit (x
+# 0.77-0.83, y 0.606-0.641), the spot under its middle (0.719, 0.709) and
+# the pocket above the belt by the chute (x 0.48-0.52, y 0.453).
+#
+# Sources:
+#   * bloon.games, Workshop map page (https://bloon.games/btd6-wiki/maps/workshop/):
+#     the chute opens at round 40 near the end of the belt and gives little
+#     time; cover the end of the track and the chute
+#   * bloonswiki Workshop_(BTD6) (https://www.bloonswiki.com/Workshop_(BTD6)):
+#     belt +50% speed; three darts in precise spots hold the CHIMPS opening
+#   * OneEyedDeacon, Easiest Workshop CHIMPS w/ NO ABILITIES, v53.2
+#     (https://www.youtube.com/watch?v=e2jZofvcaNQ): four darts and Sauda; the
+#     MOAB answers sit at the bottom-right exit
+#   * strategies/maps/workshop_easy.yaml (Sharp Shooter in the exit pocket)
+#
+# Evidence: replayed executor-faithfully 2026-11-09 (tools/simulate_threats.
+# simulate on the learned map, Fast Track start R10 with $3,832, Double Cash
+# income; each round's start board rated by the live forecast with the
+# learned map's sight grid and heights; hero not counted). This build: R10
+# 2.02, R12 1.54, R13 1.31 (the lowest), R15 2.28, R28 1.51, R30 2.62, R34
+# 1.92, R38 4.46, R40 3.71 (four Sharp Shooters 2-0-4 and the MOAB Mauler
+# standing from R37); no threat gaps, every tower on its `at` spot. The plan
+# (the three exit-pocket Sharp Shooters and the MOAB Mauler, done at round 27)
+# is paid by round 40 on base income too; `fill` is what Double Cash buys
+# after it (done by R38; the bot also bought one off-plan dart at R33). The
+# R40 board without the pocket's third dart (d5) rates 1.58.
+#
+# Status: written 2026-11-09, not played yet.
+id: workshop_primary_only
+map: Workshop
+hero: sauda
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [primary_only]
+planner:
+  towers: {dart: [2, 2, 4], bomb: [0, 3, 4], tack: [4, 0, 2]}
+  base_success: {primary_only: 0.8}
+  maps: [Workshop]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.387, 0.453]}       # Sauda above the belt; first, so no $200 opener dart
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.826, 0.606]}         # exit pocket
+  - {do: upgrade, id: d1, to: 0-0-2}                                       # Enhanced Eyesight: camo
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.478, 0.453]}        # above the belt by the chute's exit
+  - {do: upgrade, id: bm1, to: 0-2-0}
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.494, 0.598]}         # below the belt before the chute
+  - {do: upgrade, id: t1, to: 2-0-2}
+  - {do: upgrade, id: d1, to: 0-2-3}                                       # Crossbow
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.772, 0.606]}         # exit pocket
+  - {do: upgrade, id: d2, to: 2-0-2}
+  - {do: upgrade, id: d1, to: 0-2-4}                                       # Sharp Shooter
+  - {do: upgrade, id: t1, to: 3-0-2}
+  - {do: upgrade, id: d2, to: 2-0-4}                                       # Sharp Shooter
+  - {do: upgrade, id: bm1, to: 0-3-2}                                      # MOAB Mauler
+  - {do: place, id: d5, kind: dart, role: dps, at: [0.799, 0.641]}         # exit pocket, second row
+  - {do: upgrade, id: d5, to: 2-0-4}                                       # Sharp Shooter: round 40's MOAB
+# what Double Cash pays for after the plan (the plan alone is paid by round
+# 40 on base income, as tests/test_map_hints_offline.py checks)
+fill:
+  - {do: upgrade, id: t1, to: 4-0-2}                                       # Ring of Fire
+  - {do: place, id: d3, kind: dart, role: dps, at: [0.516, 0.453]}         # above the belt by the chute's exit
+  - {do: upgrade, id: d3, to: 0-2-4}
+  - {do: place, id: b2, kind: bomb, role: dps, at: [0.430, 0.641]}         # below the belt
+  - {do: upgrade, id: b2, to: 0-2-3}                                       # Cluster Bombs: round 37's rush
+  - {do: place, id: d4, kind: dart, role: dps, at: [0.719, 0.709]}         # under the chute's stretch
+  - {do: upgrade, id: d4, to: 2-0-4}
+  - {do: upgrade, id: b2, to: 0-2-4}                                       # Recursive Cluster
+answers:
+  camo: [{do: upgrade, id: d1, to: 0-0-2}]
+  lead: [{do: upgrade, id: bm1, to: 0-2-0}]
+  moab: [{do: upgrade, id: d2, to: 2-0-4}, {do: upgrade, id: bm1, to: 0-3-2}, {do: upgrade, id: d5, to: 2-0-4}]
+  rush: [{do: upgrade, id: t1, to: 4-0-2}, {do: upgrade, id: b2, to: 0-2-3}]
