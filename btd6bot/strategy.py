@@ -5565,8 +5565,18 @@ class Executor:
         its planned crosspath and $24k unspent). A tower whose leading path
         is past tier 2 may also take its side path up to tier 2 (_side_path_ok):
         that cannot turn it onto another path. Income tiers are left out
-        where income pays nothing (_income_pays_nothing)."""
-        towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
+        where income pays nothing (_income_pays_nothing).
+
+        A tower that pops nothing (_dead) is offered no tier at all. When the
+        defence is short, sell_useless keeps such a tower standing
+        (_sale_blocked), and until 2026-11-09 surplus and reinforce went on
+        buying tiers for it: the bot logs of 2026-11-05 to 11-09 show about
+        170 tiers ($388k) bought for towers already logged as "keeping ...
+        although not a single pop" - e.g. Water Park ABR's boomerang1, 58
+        rounds at a spot no bloon passed. That cash belongs on towers that
+        pop (plan upgrades for a dead tower move to a fresh one, see
+        _redirect_dead_upgrade)."""
+        towers = sorted((p for p in self.g.towers.values() if p.kind != "hero" and not self._dead(p)),
                         key=lambda p: (p.kind != first, -p.spent))
         family = PRICE_FAMILY.get(self.mode, "hard")
         no_pay = self._income_pays_nothing()
