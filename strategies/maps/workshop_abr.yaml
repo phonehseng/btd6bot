@@ -1,0 +1,99 @@
+# Workshop, Alternate Bloons Rounds: the Workshop Double HP build (strategies/
+# maps/workshop_double_hp.yaml) with a Radar Scanner village for ABR's camo
+# rounds, the Spiked Mines before the ninja's Bloonjitsu, and a second Sharp
+# Shooter in the exit pocket.
+#
+# Why: Workshop ABR was lost at ROUND 40, the first MOAB, with 100 lives
+# (2026-11-09 04:43, double_hp_sniper_sun, loss case 20261109_044354): the
+# blimp check read "21 units of track" in reach, 0.0x of the 1.4x wanted, and
+# the model rated round 40 at 0.06 from round 31. Workshop's MOAB-class
+# bloons drop down a hidden chute after round 39 and ride only the belt's
+# last 106 units (x 0.566-0.852 on screen; dps_model.map_routes since
+# 9296ff3) while tables beside the belt block sight, so that build's towers
+# never reached them. Every general build lost Workshop the same way (Medium
+# four times, Primary Only three times). This build stands its MOAB damage
+# where the chute's stretch is in reach (see workshop_medium.yaml for the
+# spots and how much of the stretch each one sees).
+#
+# ABR's own rounds: round 27 is 250 camo bloons and round 30 nine camo leads.
+# The Double HP plan, replayed in ABR, rated them 0.92 and 0.66 (only the
+# ninja and the spikes see camo); a Radar Scanner village (0-2-0) by the
+# druid lifts them to 2.30 and 15.3. Round 47 (three MOABs and 70 camo
+# regrow pinks) rated 1.11 with the Spiked Mines still at 3-0-2; with them
+# before Bloonjitsu and MOAB Assassin, 1.34.
+#
+# Sources:
+#   * bloon.games, Workshop map page (https://bloon.games/btd6-wiki/maps/workshop/):
+#     the chute opens at round 40; Spike Factories (Spiked Balls, later
+#     Spiked Mines) at the exit cover the belt and the chute; Heli Pilots
+#     ignore the tables; villages can cover the chute
+#   * BlueCliff, Workshop Hard No MK (https://www.youtube.com/watch?v=sukBmxvnnk4,
+#     data/map_strategy_hints.json): Ninja 4-0-2 above the belt, two Spike
+#     Factories at the exit, villages
+#   * OneEyedDeacon, Easiest Workshop CHIMPS w/ NO ABILITIES, v53.2
+#     (https://www.youtube.com/watch?v=e2jZofvcaNQ): Sauda just left of the
+#     MOAB drop, Druid of the Jungle, Perma-Spike and Spiked Mines
+#   * bloon.games ABR on Workshop (https://bloon.games/how-to-beat-alternate-bloons-rounds-on-workshop/)
+#     has no community strategy yet (checked 2026-11-09)
+#
+# Evidence: replayed executor-faithfully 2026-11-09 (tools/simulate_threats.
+# simulate on the learned map, Fast Track start R22 with $9,004, Double Cash
+# income; each round's start board rated by the live forecast with the
+# learned map's sight grid and heights; hero not counted): R22 4.00, R27
+# 2.30, R29 2.43, R30 15.3, R40 1.58 (Sharp Shooter 2-0-4 from R34, MOAB
+# Mauler from R35, Deadly Spikes from R37 and R40), R43 1.45, R47 1.34, R50
+# 1.51, R58 1.24 (the lowest), R61 1.35, R71 1.35, R76 1.46, R80 1.27; no
+# threat gaps, every tower on its `at` spot, no answer or surplus buy (the
+# Grandmaster Ninja, last, is not reached by round 80).
+#
+# Status: written 2026-11-09, not played yet.
+id: workshop_abr
+map: Workshop
+hero: sauda
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [abr]
+planner:
+  towers: {druid: [1, 3, 0], village: [0, 2, 0], ninja: [5, 0, 2], spike: [4, 0, 5], dart: [2, 0, 5], bomb: [0, 5, 2], heli: [4, 0, 2]}
+  base_success: {abr: 0.8}
+  maps: [Workshop]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.387, 0.453]}       # Sauda above the belt; first, so no $200 opener dart
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.323, 0.453]}       # above the belt
+  - {do: upgrade, id: dr1, to: 1-3-0}                                      # Druid of the Jungle: vines on the whole belt (R22)
+  - {do: place, id: v1, kind: village, role: support, near: [dr1], at: [0.291, 0.385]} # by the druid and Sauda
+  - {do: upgrade, id: v1, to: 0-2-0}                                       # Radar Scanner: camo for the druid (R22; rounds 27 and 30)
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.516, 0.453]}        # above the belt, sees the chute's exit
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: sp1, kind: spike, role: exit, at: [0.772, 0.606]}      # exit pocket: 66 of the MOAB stretch
+  - {do: upgrade, id: sp1, to: 2-0-2}                                      # White Hot Spikes: lead
+  - {do: place, id: bm1, kind: bomb, role: dps, at: [0.478, 0.453]}        # above the belt by the chute's exit
+  - {do: upgrade, id: bm1, to: 0-2-2}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.826, 0.606]}         # exit pocket: 66 of the MOAB stretch
+  - {do: upgrade, id: d1, to: 0-0-4}                                       # Sharp Shooter
+  - {do: upgrade, id: sp1, to: 2-0-3}
+  - {do: upgrade, id: d1, to: 2-0-4}                                       # Razor Sharp Shots (R34)
+  - {do: upgrade, id: bm1, to: 0-3-2}                                      # MOAB Mauler (R35)
+  - {do: upgrade, id: sp1, to: 2-0-4}                                      # Deadly Spikes (R37)
+  - {do: place, id: sp2, kind: spike, role: exit, at: [0.804, 0.351]}      # north of the exit: 38 of the MOAB stretch
+  - {do: upgrade, id: sp2, to: 2-0-4}                                      # Deadly Spikes (R40): round 40's MOAB
+  - {do: place, id: sp3, kind: spike, role: exit, at: [0.633, 0.351]}      # north field above the chute: 40 of the MOAB stretch
+  - {do: upgrade, id: sp3, to: 4-0-2}                                      # Spiked Mines (R46): round 47's MOABs
+  - {do: upgrade, id: n1, to: 4-0-2}                                       # Bloonjitsu
+  - {do: upgrade, id: bm1, to: 0-4-2}                                      # MOAB Assassin
+  - {do: place, id: d2, kind: dart, role: dps, at: [0.804, 0.65]}          # exit pocket, second row: 53 of the MOAB stretch
+  - {do: upgrade, id: d2, to: 2-0-4}                                       # Sharp Shooter (R50)
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.152, 0.129]}         # heliport in the north-west corner; flies to the MOABs
+  - {do: upgrade, id: h1, to: 3-0-2}                                       # Razor Rotors
+  - {do: upgrade, id: sp1, to: 2-0-5}                                      # Perma-Spike
+  - {do: upgrade, id: h1, to: 4-0-2}                                       # Apache Dartship
+  - {do: upgrade, id: bm1, to: 0-5-2}                                      # MOAB Eliminator
+  - {do: upgrade, id: d1, to: 2-0-5}                                       # Crossbow Master: rounds 75-80
+  - {do: upgrade, id: n1, to: 5-0-2}                                       # Grandmaster Ninja, if the cash comes
+answers:
+  camo: [{do: upgrade, id: v1, to: 0-2-0}, {do: upgrade, id: n1, to: 2-0-1}]
+  lead: [{do: upgrade, id: sp1, to: 2-0-2}, {do: upgrade, id: bm1, to: 0-2-2}]
+  ceramic: [{do: upgrade, id: dr1, to: 1-3-0}, {do: upgrade, id: sp1, to: 2-0-4}]
+  moab: [{do: upgrade, id: d1, to: 2-0-4}, {do: upgrade, id: bm1, to: 0-3-2}, {do: upgrade, id: sp1, to: 2-0-4}, {do: upgrade, id: sp2, to: 2-0-4}]
+  bfb: [{do: upgrade, id: sp3, to: 4-0-2}, {do: upgrade, id: bm1, to: 0-4-2}]
+  zomg: [{do: upgrade, id: h1, to: 4-0-2}, {do: upgrade, id: bm1, to: 0-5-2}, {do: upgrade, id: d1, to: 2-0-5}]
+  rush: [{do: upgrade, id: dr1, to: 1-3-0}]
