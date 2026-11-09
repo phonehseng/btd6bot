@@ -16,6 +16,7 @@ it sits at the top - which is what claim() relies on.
 """
 import json
 import logging
+import math
 import re
 import time
 from pathlib import Path
@@ -30,9 +31,39 @@ CATALOG = Path(__file__).resolve().parents[1] / "data" / "achievements.json"
 BADGE = (0.044, 0.32)      # achievements ribbon on the main menu (left column)
 LIST_POINT = (0.5, 0.6)    # where to hover while scrolling
 SCROLL_TICKS = 15          # ~1.8 card rows per page, so cards overlap between pages
+WHEEL_TICK = 0.035         # one mouse-wheel tick scrolls ~3.5% of the screen
 ROW_PITCH = 0.288          # vertical distance between card rows
 COLLECT_WORDS = ("collect", "collegt", "colleci")
 CLAIM_PAGES = 4            # claim(): pages it may scroll through at most
+
+# scan(): when the walk down the list ends. It used to end after two pages
+# in a row that brought no new card, or after 40 pages. The 2026-11-08 scan
+# read 107 cards and stopped at "What is this new Bloonery?", although the
+# claimed cards are listed in catalog order and about a dozen more came
+# after it (Who's the Boss?, Apotheosis, World League Training...): a
+# stretch of cards it could not tell apart or read at all ("???" hidden
+# cards, near-identical Boss cards) looks just like the end of the list.
+# Now the end is where scrolling stops moving the list - the same page read
+# twice more after a refocus - and a run of pages without anything new only
+# ends the walk after STALE_PAGES of them.
+STALE_PAGES = 6            # pages in a row without a new card before giving up
+END_REPEATS = 2            # unchanged pages in a row (the list no longer moves) = its end
+PAGE_SLACK = 1.5           # page limit: the pages the catalog needs, times this
+
+
+def page_limit(n_cards):
+    """Pages scan() may read for a list of n_cards cards (two per row,
+    ROW_PITCH apart, SCROLL_TICKS x WHEEL_TICK of the screen per page),
+    with PAGE_SLACK for wheel ticks the game drops, plus the first page and
+    the END_REPEATS reads that find the end. 162 cards: 71 pages."""
+    rows_per_page = SCROLL_TICKS * WHEEL_TICK / ROW_PITCH
+    return math.ceil(math.ceil(n_cards / 2) / rows_per_page * PAGE_SLACK) + 1 + END_REPEATS + 1
+
+
+def _page_key(words):
+    """What a page shows, to tell whether a scroll moved the list: every
+    word's text with its height on the screen."""
+    return frozenset((norm(w.text), round(w.y, 2)) for w in words if norm(w.text))
 
 
 def _is_collect(text):
@@ -254,17 +285,27 @@ class Achievements:
             cards.setdefault(key, {"desc": "", "progress": None}).update(status="complete", progress=None)
         cls.save(cards, scanned_at=data.get("scanned_at"))
 
-    def scan(self, collect=True, max_pages=40):
-        """Walk the whole list; claim rewards; return {name: card}. Ends on main menu."""
+    def scan(self, collect=True, max_pages=None):
+        """Walk the whole list; claim rewards; return {name: card}. Ends on main menu.
+
+        The walk ends at the bottom of the list: a page read the same as the
+        one before it, again after a refocus and another scroll
+        (END_REPEATS) - or after STALE_PAGES pages in a row without a new
+        card, or at max_pages (default: page_limit of the catalog)."""
         if not self.open():
             log.warning("could not open achievements")
             return {}
         catalog = _catalog_names()
+        if max_pages is None:
+            max_pages = page_limit(len(catalog) or 160)
         seen, stale, claimed = {}, 0, 0
+        prev_key, repeats, pages, why = None, 0, 0, f"the {max_pages}-page limit"
         self._focus_list()
         try:
             for page in range(max_pages):
-                cards = parse_cards(self.menus.read(), catalog)
+                pages = page + 1
+                words = self.menus.read()
+                cards = parse_cards(words, catalog)
                 if collect:
                     for c in [c for c in cards if c["status"] == "collect"]:
                         self._claim(c["collect_xy"])
@@ -285,16 +326,26 @@ class Achievements:
                         rec["desc"] = prev["desc"]
                     seen[key] = rec
                 stale = stale + 1 if new == 0 else 0
-                if stale >= 2:
+                key = _page_key(words)
+                # an unchanged page of readable cards: the scroll did not move
+                # the list (pages of unreadable "???" cards can look alike)
+                repeats = repeats + 1 if (cards and key == prev_key) else 0
+                prev_key = key
+                if repeats >= END_REPEATS:
+                    why = "the end of the list"
                     break
-                if claimed:
-                    self._focus_list()  # popups take the list's focus away
+                if stale >= STALE_PAGES:
+                    why = f"{stale} pages without a new card"
+                    break
+                if claimed or repeats:
+                    self._focus_list()  # popups (or a stray click) take the list's focus away
                 self.inp.scroll(-SCROLL_TICKS, *LIST_POINT)
                 time.sleep(0.5)
         finally:
             self.close()
         total = self._total_text()
-        log.info("achievements: %d cards read, %d rewards claimed %s", len(seen), claimed, total)
+        log.info("achievements: %d cards read on %d pages (stopped at %s), %d rewards claimed %s",
+                 len(seen), pages, why, claimed, total)
         self.save(seen)
         return seen
 

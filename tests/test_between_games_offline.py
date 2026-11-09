@@ -191,6 +191,94 @@ def test_claim_with_nothing_to_claim_stops_at_once():
     assert claimed == [] and fake.scrolls == 0
 
 
+# -- the full scan ---------------------------------------------------------------
+class EndList(FakeList):
+    """The list as the full scan meets it: scrolling stops at the bottom
+    (the last page shows the last four cards), hidden cards read "???" (no
+    title, no description: parse_cards finds no card there), and the first
+    `stuck` scrolls do nothing (the list lost the wheel's focus)."""
+
+    def __init__(self, cards, stuck=0):
+        super().__init__(cards)
+        self.stuck, self.drags = stuck, 0
+
+    def words(self):
+        out = super().words()
+        return [Word("???", w.x, w.y, w.w, w.h, w.conf) if w.text.startswith(("hidden", "None")) else w
+                for w in out]
+
+
+class EndInput(FakeInput):
+    def drag(self, *a, **k):
+        self.list.drags += 1
+
+    def scroll(self, ticks, x, y):
+        self.list.scrolls += 1
+        if self.list.stuck:
+            self.list.stuck -= 1
+            return
+        self.list.top = min(self.list.top + 4, len(self.list.cards) - 4)
+
+
+def named(i, status, progress=None):
+    """A card whose title and description differ from every other's (as
+    real ones do: _same_card would join look-alike test names)."""
+    import hashlib
+    title = "Q" + hashlib.sha1(str(i).encode()).hexdigest()[:9]
+    return {"name": title, "desc": f"Win {i} games with {title}", "status": status, "progress": progress}
+
+
+def hidden(i):
+    return {"name": f"hidden{i}", "desc": f"hidden{i}", "status": "unknown", "progress": None}
+
+
+def run_scan(cards, stuck=0):
+    fake = EndList(cards, stuck)
+    ach = A.Achievements(None, EndInput(fake), FakeMenus(fake))
+    with tempfile.TemporaryDirectory() as d, \
+            mock.patch.object(A, "STATE", Path(d) / "state.json"), \
+            mock.patch.object(A, "_catalog_names", lambda: {}), \
+            mock.patch.object(A.time, "sleep", lambda s: None):
+        seen = ach.scan(collect=False)
+    return seen, fake
+
+
+# SFYOSHHYV's list on 2026-11-08: 44 in-progress cards first, then the
+# claimed ones in catalog order; the scan read 107 cards and stopped at
+# "What is this new Bloonery?" (catalog #115) with a dozen claimed cards
+# still below it. Here: a stretch of unreadable cards in the middle of the
+# claimed ones, longer than the two blank pages that used to end the walk.
+ACCOUNT_LIST = ([named(i, "progress", 96 - i) for i in range(44)]
+                + [named(100 + i, "complete") for i in range(30)]
+                + [hidden(i) for i in range(12)]
+                + [named(200 + i, "complete") for i in range(40)])
+
+
+def test_the_scan_reads_down_to_the_end_of_the_list():
+    seen, fake = run_scan(ACCOUNT_LIST)
+    want = {c["name"] for c in ACCOUNT_LIST if not c["name"].startswith("hidden")}
+    assert set(seen) == want, sorted(want - set(seen))[:5]
+    assert seen[ACCOUNT_LIST[-1]["name"]]["status"] == "complete"
+    # it ends where the list stops moving: one page per four cards, plus the
+    # END_REPEATS re-reads of the bottom page (and open()'s read of the title)
+    assert fake.reads <= len(ACCOUNT_LIST) // 4 + A.END_REPEATS + 2, fake.reads
+
+
+def test_a_scroll_that_did_not_move_the_list_is_tried_again():
+    """The first scroll is lost (no focus): the same page twice is not the
+    end yet - the list is clicked into focus and scrolled again."""
+    seen, fake = run_scan(ACCOUNT_LIST, stuck=1)
+    assert ACCOUNT_LIST[-1]["name"] in seen and len(seen) == 114
+    assert fake.drags >= 2          # the first focus, and the refocus after the lost scroll
+
+
+def test_the_page_limit_covers_the_whole_catalog():
+    """The old 40-page cap covered 72 card rows at 1.8 rows a page, fewer
+    than the catalog's 81 when a few wheel ticks were dropped."""
+    rows_per_page = A.SCROLL_TICKS * A.WHEEL_TICK / A.ROW_PITCH
+    assert A.page_limit(162) * rows_per_page >= 1.4 * 81
+
+
 # -- the runner ------------------------------------------------------------------
 def bare_bot():
     """A Bot without a game window: only the attributes these tests use."""
