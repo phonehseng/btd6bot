@@ -1881,7 +1881,8 @@ class Bot:
         strategy the fitting one with the highest win chance is used. The
         pick is refused, with a warning, when:
 
-        - the map/mode is already beaten (never replay);
+        - the map/mode is already beaten (never replay), unless the named
+          strategy is an achievement build (achievement replays allowed);
         - the mode is locked on this account (CHIMPS needs the map's
           Impoppable medal: AccountState.mode_unlocked);
         - the mode is one-life (Impoppable, CHIMPS: rules "one_life") and
@@ -1916,9 +1917,7 @@ class Bot:
         if m is None or mode not in MODES:
             log.warning("NEXT file ignored: unknown map or mode in %r", line)
             return None
-        if self.account.has_medal(m, mode):
-            log.warning("NEXT file ignored: %s %s is already beaten", m, mode)
-            return None
+        beaten = self.account.has_medal(m, mode)
         if not self.account.mode_unlocked(m, mode):
             req = MODES[mode].requires
             log.warning("NEXT file ignored: %s %s is locked on this account%s", m, mode,
@@ -1942,6 +1941,12 @@ class Bot:
         if s is None:
             log.warning("NEXT file ignored: no strategy for %s %s", m, mode)
             return None
+        # Never replay a beaten map/mode - except with an achievement build,
+        # which the owner allowed on 2026-11-07 ("achievement replays"):
+        # Logs Hard is beaten, but ach_kali_maaaaaaaa is played there.
+        if beaten and not getattr(s, "achievement", None):
+            log.warning("NEXT file ignored: %s %s is already beaten", m, mode)
+            return None
         p = p_of(s)
         bar = p_threshold(mode)
         log.info("NEXT file: %s %s with %s, p=%.2f (bar %.2f)%s", m, mode, s.id, p, bar,
@@ -1960,7 +1965,7 @@ class Bot:
                         strategy_id=s.id, hero=(s.heroes or (None,))[0], reason=reason,
                         reasons=[reason], phase="OWNER", p_win=round(p, 3),
                         expected_minutes=mi.minutes, expected_xp=0, expected_mm=0,
-                        score=0.0, first_time=True)
+                        score=0.0, first_time=not beaten)
 
     def _warn_auto_start(self, plan):
         """Warn when the last game saw BTD6's Auto Start on and `plan` is a

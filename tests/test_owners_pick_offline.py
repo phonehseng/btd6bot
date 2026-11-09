@@ -68,6 +68,27 @@ def test_a_beaten_pick_is_ignored():
             assert bot.owners_pick(R.planner_specs(bot.strats, bot.account)) is None
 
 
+def test_a_beaten_map_takes_an_achievement_build():
+    """Achievement replays are allowed (owner, 2026-11-07): Logs Hard is
+    beaten, but ach_kali_maaaaaaaa is played there (2026-11-09 14:34 the
+    NEXT line was refused as "already beaten"). A general build still is not."""
+    for line, want in (("Logs / hard / ach_kali_maaaaaaaa !force", "ach_kali_maaaaaaaa"),
+                       ("Logs / hard / hard_ninja_alch_sun", None)):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "NEXT"
+            f.write_text(line, encoding="utf-8")
+            bot = R.Bot.__new__(R.Bot)
+            bot.account = F.full_account()
+            bot.account.has_medal = lambda m, mode: True
+            bot.strats = load_all()
+            with mock.patch.object(R, "NEXT_FILE", f):
+                plan = bot.owners_pick(R.planner_specs(bot.strats, bot.account))
+        if want is None:
+            assert plan is None, line
+        else:
+            assert plan is not None and plan.strategy_id == want and not plan.first_time, line
+
+
 def test_no_file_means_the_planner_decides():
     assert pick(None) == (None, False)
 
