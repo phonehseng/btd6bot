@@ -13,6 +13,13 @@ modes: [hard, double_hp, abr]
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], sniper: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
   base_success: {hard: 0.88, double_hp: 0.75, abr: 0.75}
+  # Never won here in any mode (logs/results.jsonl to 2026-11-08: Tricky
+  # Tracks ABR R63 and Double HP R40, Water Park ABR R61 three times, Mesa
+  # ABR R30 and Double HP R50), and the Fast Track replay of this build still
+  # rates the rounds lost there under 1 (Tricky Tracks ABR 63: 0.33, Double
+  # HP 40: 0.58; Water Park ABR 61: 0.52; Mesa Double HP 50: 0.75) with
+  # every reorder tried. These maps need their own builds.
+  excluded_maps: [Tricky Tracks, Water Park, Mesa]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
@@ -21,9 +28,18 @@ plan:
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   - {do: upgrade, id: a1, to: 2-0-0}
-  - {do: upgrade, id: n1, to: 3-0-2}
+  # The sniper comes before Shinobi Tactics: a Fast Track game starts at
+  # round 22 and ABR rounds 23-30 bring leads and camo leads. Ninjas pop no
+  # lead and the Acidic Mixture Dip reaches only the ninjas next to the
+  # alchemist; a map-wide 2-2-0 sniper (Full Metal Jacket pops lead, Night
+  # Vision Goggles see camo, Shrapnel Shot pops what the lead leaves) covers
+  # every lane. Bloody Puddles ABR (2026-11-08) leaked round 23's leads with
+  # the sniper still at 0-0-0; the replay rated round 23 0.06 before this
+  # change and 1.04 after (Mesa, Spillway, Tricky Tracks, Water Park,
+  # Bazaar: 0.06 -> 1.2-2.0).
   - {do: place, id: s1, kind: sniper, role: dps, target: strong}
   - {do: upgrade, id: s1, to: 2-2-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
@@ -48,13 +64,21 @@ fill:
   - {do: place, kind: super, role: support, near: [v1], near_radius: 9, max: 3}
   - {do: upgrade, kind: super, to: 3-0-2}
   - {do: upgrade, kind: spike, to: 2-0-4}
+  # Last: a sink for idle cash that needs no new spot. Sunset Gulch ABR
+  # (2026-11-08) gave up 12 placement steps (no spot for the supers and
+  # fill towers), sat on $25,000-33,000 from round 66 with "plan and fill
+  # exhausted", and lost round 76 (ten BFBs; blimp check 0.5x). Cripple
+  # MOAB on the lead sniper is the BFB/ZOMG answer that cash could buy.
+  - {do: upgrade, id: s1, to: 5-2-0}
 panic:
   - {do: place, kind: ninja, role: exit}
   - {do: place, kind: spike, role: exit}
 answers:
+  # Full Metal Jacket: map-wide, so it reaches the lane the alchemist's dip
+  # does not (see s1 in the plan)
   lead:
-    - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+    - {do: upgrade, id: s1, to: 1-0-0}
+    - {do: place, id: s1, kind: sniper, role: dps, target: strong}
   ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
   moab: [{do: upgrade, id: n2, to: 2-0-3}]
   bfb: [{do: upgrade, id: s1, to: 4-2-0}]

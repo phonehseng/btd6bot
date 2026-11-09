@@ -15,9 +15,14 @@ planner:
            bomb: [2, 0, 3]}
   base_success: {hard: 0.9, impoppable: 0.6, chimps: 0.5}
   maps: [Logs, Resort, Lotus Island, Spa Pits, "Pat's Pond", Peninsula, Off The Coast, Cargo,
-         Spillway, Sunken Columns, Flooded Valley, Dark Castle, Bloody Puddles, Muddy Puddles,
+         Sunken Columns, Flooded Valley, Dark Castle, Bloody Puddles, Muddy Puddles,
          Water Park, Downstream, Streambed, Spice Islands, Ravine, Sanctuary, Ship Capture,
          Erosion, Luminous Cove]
+  # not Spillway: the inflatable walls round the central loop block the side
+  # pools' sight; two Advanced Intel subs there let 80 greens of round 18
+  # through and Medium was lost at round 21 (2026-11-08, loss case
+  # 20261108_171359; with line of sight its two subs reached 0 and 40 of the
+  # 2,611 track units)
   # not Castle Revenge: its moat holds the first sub only, sb2 (segment
   # 0.3-1.0) finds no water and Impoppable was lost at round 33 (2026-11-05,
   # loss case 20261105_063635)

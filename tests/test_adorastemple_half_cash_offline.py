@@ -13,7 +13,8 @@ Checked here with the executor-faithful replay (simulate_threats.simulate
 on the learned map, Fast Track start and Double Cash income as the account
 plays Half Cash), the board at each round's start rated by the live
 forecast (RoundForecast with the learned map's sight grid and heights):
-  * the general build that lost replays as it played: round 40 under 1;
+  * the map build rates round 40 above the general build (which replayed
+    its loss at 0.30 before its 2026-11-08 heli rework, 2.89 after);
   * the map build buys no off-plan answer or surplus tower, keeps every
     tower on its `at` spot, has its round-40 MOAB answer (Sharp Shooter
     dart 2-0-4, sniper Full Metal Jacket 1-2-0, Destroyer) standing when
@@ -69,9 +70,14 @@ def _margin(fc, board, rnd):
     return D.round_margin(st, MODE, rnd, fc.track) if st else 0.0
 
 
-def test_general_build_loses_round_40_as_it_did_live():
-    _, boards = _replay(S.load_all()[GENERAL])
-    assert _margin(_forecast(), boards[FIRST_MOAB], FIRST_MOAB) < 1.0
+def test_map_build_beats_the_general_build_at_round_40():
+    """The general build lost here (old plan: R40 0.30 replayed). Since its
+    heli rework (2026-11-08, tests/test_hard_ninja_alch_sun_r40_offline.py)
+    it rates R40 2.89 here; the map build stays ahead of it (3.63)."""
+    fc = _forecast()
+    _, general = _replay(S.load_all()[GENERAL])
+    _, own = _replay(S.load_all()[BUILD])
+    assert _margin(fc, own[FIRST_MOAB], FIRST_MOAB) > _margin(fc, general[FIRST_MOAB], FIRST_MOAB)
 
 
 def test_map_build_holds_rounds_22_to_80():

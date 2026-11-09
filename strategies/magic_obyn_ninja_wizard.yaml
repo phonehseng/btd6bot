@@ -33,10 +33,16 @@ modes: [medium, hard, magic_only]
 # 0.16 / 0.10 / 0.44 and round 28 at the floor. Midnight Mansion is left out
 # because live the map gave no spot for n2, a1 or the super (7 plan steps
 # given up, $20k unspent at round 40).
+# (Merged 2026-11-08 22:30 with the caretaker's b56a3ea, which had put
+# Acidic Mixture Dip before the same 2-0-4 and called it Master Bomber;
+# 2-0-4 is the Sticky Bomb, Master Bomber is 0-0-5. The Sticky Bomb stays
+# first here, as the `moab` answer.)
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], wizard: [0, 2, 5], super: [3, 0, 2]}
   excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
+  # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
+  # losses keep counting against these maps until live wins say otherwise
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}

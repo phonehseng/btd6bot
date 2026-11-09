@@ -8,6 +8,10 @@ modes: [easy, medium, hard, military_only, abr, reverse]
 planner:
   towers: {heli: [2, 0, 2], sniper: [2, 2, 0]}
   base_success: {easy: 0.98, medium: 0.95, military_only: 0.92, hard: 0.85, abr: 0.8, reverse: 0.92}
+  # not Sanctuary: the game refused the heli pad on every legal cell (the
+  # platforms move each round); Medium 2026-11-08 was left with two snipers
+  # and $17,966 unspent and lost round 38 (loss case 20261108_2127)
+  excluded_maps: [Sanctuary]
 plan:
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: s1, kind: sniper, role: dps, target: first}

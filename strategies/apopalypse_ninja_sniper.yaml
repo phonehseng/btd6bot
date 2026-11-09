@@ -2,14 +2,16 @@
 # Nothing can be bought "between rounds", so every purchase is front-loaded and
 # cheap-first: Ninja (camo) + Alchemist (lead) immediately, Sniper 2-2-0 (map
 # wide, camo, lead, ceramics) by ~R15, Flash Bomb ninja for the first MOABs.
-# Sniper 4-2-0 Maim MOAB stuns BFBs/ZOMGs/DDTs (it has camo + lead), Sticky
-# Bomb + exit 2-0-4 Spike Factory cover DDTs, and Sniper 5-2-0 Cripple MOAB
-# (tier 5, $32k) is the BAD answer. No farms: random rush waves punish greed.
+# The MOAB damage is three Full Auto Rifle snipers (0-2-4) beside the
+# alchemist; one Sniper 4-2-0 Maim MOAB stuns BFBs/ZOMGs/DDTs (it has camo +
+# lead), Sticky Bomb + exit 2-0-4 Spike Factory cover DDTs, and Sniper 5-2-0
+# Cripple MOAB (tier 5, $32k) is the BAD answer. No farms: random rush waves
+# punish greed.
 id: apopalypse_ninja_sniper
 hero: obyn
 modes: [apopalypse]
 planner:
-  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], sniper: [5, 2, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], sniper: [5, 2, 4], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
   base_success: {apopalypse: 0.65}
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
@@ -17,6 +19,32 @@ planner:
 # alchemist and the hero down and $3-5k still in hand. So the second ninja
 # (the back half of the track) and its first tiers come right after the
 # first, before the support towers.
+#
+# The round 45-51 wall (2026-11-08: Bloody Puddles r45, Ravine r45, Firing
+# Range r47, Tricky Tracks r47, Muddy Puddles r49, Peninsula r50, Sunset
+# Gulch r51): every game held rounds 15-44 without a leak and then lost
+# 90-150 lives in seconds when 2-5 MOABs shared the track (Apopalypse's
+# MOAB groups start at round 41 and the next round arrives before the last
+# is popped). The MOAB damage then was two Maim MOAB snipers: Maim MOAB is
+# the dearest MOAB damage per dollar there is in this build (4-2-0, $11,200:
+# about 19 damage a second to a MOAB, 1.7 per $1k; dps_model profiles),
+# where a Full Auto Rifle 0-2-4 ($8,750) does about 31 plus its shrapnel and
+# keeps camo. On the round-45 board of Tricky Tracks the damage model (the
+# Apopalypse windows of tools/apopalypse_check.py) rates one more 0-2-4
+# beside the alchemist +0.62 and s1's 4-2-0 tier +0.06. So the snipers
+# after s1 are Full Auto Rifles, the first one before n1's Bloonjitsu,
+# n2's Sticky Bomb comes before the second, s1 alone goes on to Maim MOAB
+# for the stun, and a third ninja with Sticky Bomb follows s4. With four
+# snipers in the plan the match loop's spare cash buys more snipers
+# (Executor._main_kind), upgraded to 0-2-4 by the fill.
+#
+# Replayed with tools/apopalypse_check.py's windows (poor-game income,
+# Fast Track + Double Cash, live refused spots), rounds 41-50, old -> new:
+# Tricky Tracks ~0.6 -> ~0.9, Firing Range ~0.8 -> ~1.5, Ravine ~0.6 ->
+# ~1.2, Sunset Gulch ~0.8 -> ~1.5, Muddy Puddles ~0.2 -> ~0.7, Bloody
+# Puddles ~0.1 -> ~0.6, Peninsula ~0.2 -> 0.4 (camo leads with no
+# alchemist placed: still a map the build does not fit). Castle Revenge
+# drops ~0.38 -> ~0.28 (walls hide half its lanes from the snipers).
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: upgrade, id: n1, to: 1-0-1}
@@ -33,12 +61,31 @@ plan:
   - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
   - {do: upgrade, id: v1, to: 2-0-2}
   - {do: upgrade, id: a1, to: 3-2-0}
+  # The MOAB core: Full Auto Rifle snipers (0-2-4: Night Vision for camo,
+  # Shrapnel, Full Auto) beside the alchemist, whose Acidic Mixture Dip lets
+  # them pop lead and whose brew adds damage. See the note above the plan.
+  - {do: place, id: s2, kind: sniper, role: support, near: [a1], near_radius: 7, target: strong}
+  - {do: upgrade, id: s2, to: 0-2-4}
   - {do: upgrade, id: n1, to: 4-0-2}
-  - {do: upgrade, id: s1, to: 4-2-0}
+  # (caretaker 22:05, kept in the merge with the 0-2-4 sniper order below)
+  # Rounds 45-51 lost six games on 2026-11-08 (Ravine, Firing Range, Muddy
+  # Puddles, Peninsula, Bloody Puddles, Sunset Gulch): one dense wave of
+  # rainbows/ceramics took 90-150 lives in seconds (Bloody Puddles' defeat
+  # screen: 94 rainbows leaked) while the money went into two $5,300 Maim
+  # MOAB snipers, which hit one bloon at a time. A second Bloonjitsu ninja
+  # on the back half of the track is cheap (about $4.6k), sees camo and
+  # throws five blades, so it comes before the MOAB tiers; the MOAB answer
+  # (s1 3-2-0) is already bought and the bfb/zomg answers still buy s1
+  # 4-2-0 early when those blimps really come.
+  - {do: place, id: n3, kind: ninja, role: dps, segment: [0.5, 1.0]}
+  - {do: upgrade, id: n3, to: 4-0-2}
   - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: place, id: s3, kind: sniper, role: support, near: [a1], near_radius: 7, target: strong}
+  - {do: upgrade, id: s3, to: 0-2-4}
+  - {do: upgrade, id: s1, to: 4-2-0}     # Maim MOAB: the stun for BFBs
   - {do: upgrade, id: a1, to: 4-2-0}
-  - {do: place, id: s2, kind: sniper, role: dps, target: strong}
-  - {do: upgrade, id: s2, to: 4-2-0}
+  - {do: place, id: s4, kind: sniper, role: support, near: [a1], near_radius: 7, target: strong}
+  - {do: upgrade, id: s4, to: 0-2-4}
   - {do: place, id: su1, kind: super, role: support, near: [v1], near_radius: 7}
   - {do: upgrade, id: su1, to: 3-0-2}
   - {do: place, id: sp1, kind: spike, role: exit}
@@ -47,8 +94,8 @@ plan:
 fill:
   - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 5}
   - {do: upgrade, kind: ninja, to: 4-0-2}
-  - {do: place, kind: sniper, role: dps, target: strong, max: 4}
-  - {do: upgrade, kind: sniper, to: 4-2-0}
+  - {do: place, kind: sniper, role: support, near: [a1, v1], near_radius: 8, target: strong, max: 4}
+  - {do: upgrade, kind: sniper, to: 0-2-4}
   - {do: place, kind: super, role: support, near: [v1], near_radius: 8, max: 2}
   - {do: upgrade, kind: super, to: 3-0-2}
   - {do: upgrade, kind: spike, to: 2-0-4}

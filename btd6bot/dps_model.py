@@ -697,14 +697,27 @@ def map_routes(geom):
     if not paths:
         return [], []
     names = {p.get("name"): pid for pid, p in paths.items()}
-    # continuations: named plain/toggle splitters first, then geometry
+    ends = {pid: np.asarray(p["points"][-1][:2], float) for pid, p in paths.items()}
+    starts_xy = {pid: np.asarray(p["points"][0][:2], float) for pid, p in paths.items()}
+
+    def leads_back(src, p):
+        """Path p ends where src starts and does not start where src ends:
+        it comes before src, so a splitter naming it is for Reverse."""
+        return (np.linalg.norm(ends[p] - starts_xy[src]) <= JOIN_DISTANCE
+                and np.linalg.norm(ends[src] - starts_xy[p]) > JOIN_DISTANCE)
+    # continuations: named plain/toggle splitters first, then geometry. A map
+    # may carry a second set of splitters for Reverse, naming each path's
+    # predecessor (Workshop: "P1" -> PathMiddle1 and "P1" -> PathStart); those
+    # are not continuations. Kept, they turned Workshop's belt into a loop
+    # whose only routes were two short stretches (78 and 100 units of 440),
+    # and the live model rated Workshop Medium's rounds 0.06-0.8 while no
+    # bloon got past 37% of the track (loss case 20261108_184916).
     follow = {pid: [] for pid in paths}
     for s in splitters:
         src = names.get(s.get("name"))
         if src is not None and s.get("type") in ("Splitter", "ToggleSplitter"):
-            follow[src] += [p for p in s.get("paths") or [] if p in paths and p != src]
-    ends = {pid: np.asarray(p["points"][-1][:2], float) for pid, p in paths.items()}
-    starts_xy = {pid: np.asarray(p["points"][0][:2], float) for pid, p in paths.items()}
+            follow[src] += [p for p in s.get("paths") or [] if p in paths and p != src
+                            and not leads_back(src, p)]
     # paths a spawn splitter offers side by side are alternatives, never one
     # after the other (Pat's Pond's two lanes start at opposite ends)
     siblings = [set(s.get("paths") or []) for s in splitters
@@ -740,6 +753,25 @@ def map_routes(geom):
 
     for r in roots:
         walk([r])
+    # A MOAB-only branch onto a hidden path (Workshop's chute, switched on
+    # after round 39): MOAB-class bloons drop out of sight and come out on
+    # the belt where the chute ends. Their route is what follows the chute,
+    # for MOAB-class bloons only - without it they rode the whole belt in
+    # the model, which is far longer than the real drop.
+    by_id = {p["id"]: p for p in geom.get("paths", [])}
+    for pid, is_moab in list(moab_flag.items()):
+        hp = by_id.get(pid)
+        if not is_moab or pid in paths or hp is None or not hp.get("hidden") or pid not in usable:
+            continue
+        drop = np.asarray(hp["points"][-1][:2], float)
+        nxt = [p for s in splitters if s.get("name") == hp.get("name") and s.get("type") == "Splitter"
+               for p in s.get("paths") or [] if p in paths
+               and np.linalg.norm(starts_xy[p] - drop) <= JOIN_DISTANCE]
+        for p in nxt:
+            before = len(routes)
+            walk([p])
+            for r in routes[before:]:
+                r["moab"] = True
     # alternating spawns / branches: one scenario per alternative
     alternating = [s for s in splitters if str(s.get("type", "")).startswith("AlternateRound")]
     alt_paths = [p for s in alternating for p in s.get("paths") or [] if p in paths]
@@ -890,10 +922,12 @@ class Track:
         """Hittable length of each path (world units)."""
         return [float(np.sum(np.diff(p["dist"])[p["hittable"][:-1]])) for p in self.paths]
 
-    def zones(self, x, z, radius, travel=0.0, sight=None):
+    def zones(self, x, z, radius, travel=0.0, sight=None, lent=()):
         """[Zone or None per path] for a reach of `radius` around (x, z).
         radius None or inf = the whole hittable path. sight(x0, z0, pts) ->
-        bool mask of points visible from the tower (line of sight), optional."""
+        bool mask of points visible from the tower (line of sight), optional.
+        lent: more (x, z, radius) circles the tower may also shoot into
+        (an Advanced Intel sub borrows other towers' ranges, station_for)."""
         out = []
         for p in self.paths:
             xyz, dist, ok = p["xyz"], p["dist"], p["hittable"]
@@ -902,6 +936,8 @@ class Track:
             else:
                 d2 = (xyz[:, 0] - x) ** 2 + (xyz[:, 1] - z) ** 2
                 inside = ok & (d2 <= radius * radius)
+                for lx, lz, lr in lent:
+                    inside |= ok & (((xyz[:, 0] - lx) ** 2 + (xyz[:, 1] - lz) ** 2) <= lr * lr)
             if sight is not None and inside.any():
                 # map-wide or not, a tower that needs sight hits only what it sees
                 vis = sight(x, z, xyz[inside])
@@ -1463,6 +1499,18 @@ MAP_WIDE_NEEDS_SIGHT = ("sniper",)
 # circle (range + pattern radius).
 STRICT_OWN_REACH = ("sub", "ace")
 
+# Advanced Intel (Monkey Sub 2-x-x): the game lets the sub shoot bloons
+# inside the range of its other towers, which attacks.json records as a
+# map-wide reach (profile.is_global). The model used to give such a sub the
+# whole track. Two games of 2026-11-08 lost 105 and 143 lives by round 21
+# with the defence rated 5-16x: Spillway Medium (two 2-0-x subs and an
+# alchemist, nothing else attacking) and Erosion Reverse (two Intel subs
+# and a map-wide sniper; 80 greens of round 18 leaked). An Intel sub now
+# reaches its own circle plus the circles of the other attacking towers
+# (intel_lent_circles); map-wide towers lend nothing, since the leak with a
+# sniper on the board shows the sub did not shoot along its sight.
+INTEL_KINDS = ("sub",)
+
 
 @lru_cache(maxsize=None)
 def detects_camo(kind, tiers):
@@ -1563,6 +1611,12 @@ def station_for(t, placed, track, sight=None, strict=False):
     is_global = p.is_global or any(s.placement == "global" for s in sources)
     if strict and t.kind in STRICT_OWN_REACH:
         is_global = False
+    lent = ()
+    if is_global and t.kind in INTEL_KINDS and not any(s.placement == "global" for s in sources):
+        # Advanced Intel: the sub's darts reach its own circle and the
+        # circles of the other towers - not the whole map (see INTEL_KINDS)
+        is_global = False
+        lent = intel_lent_circles(t, placed)
     # A tower with map-wide AND local sources (Inferno Ring: meteor + ring of
     # fire; Aircraft Carrier / Carrier Flagship: planes + the boat's own
     # cannons; Druid of the Jungle: vines + thorns; ace planes + a map-wide
@@ -1577,18 +1631,42 @@ def station_for(t, placed, track, sight=None, strict=False):
     local = [s for s in sources if s.placement != "global"]
     if is_global and glob and local:
         main = _make_station(t, glob, True, reach_radius, track, sight, camo_paths)
-        part = _make_station(t, local, False, reach_radius, track, sight, camo_paths)
+        part = _make_station(t, local, False, reach_radius, track, sight, camo_paths,
+                             intel_lent_circles(t, placed) if t.kind in INTEL_KINDS else ())
         if main is None:
             return part
         if part is not None:
             main.parts = [part]
         return main
-    return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths)
+    return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent)
 
 
-def _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths):
+def intel_lent_circles(t, placed):
+    """The (x, z, radius) circles an Advanced Intel sub t borrows from the
+    other towers in `placed`: each tower that attacks, with its own reach
+    (range or flight pattern, no range buffs). Map-wide towers (snipers,
+    mortars, heli pilots) lend nothing, and another Intel sub lends only its
+    own circle (see INTEL_KINDS)."""
+    out = []
+    for o in placed:
+        if o.tid == t.tid:
+            continue
+        q = profile(o.kind, o.tiers)
+        if q is None or not q.sources:
+            continue
+        if o.kind in INTEL_KINDS:
+            out.append((o.x, o.z, q.range))
+            continue
+        if q.is_global or any(s.placement == "global" for s in q.sources):
+            continue
+        out.append((o.x, o.z, max((q.pattern_radius or 0.0) + q.range, q.own_radius)))
+    return tuple(out)
+
+
+def _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent=()):
     """The Station of tower t for these sources: over the whole map when
-    is_global, else within reach_radius (None when that reaches no track)."""
+    is_global, else within reach_radius and the `lent` circles (None when
+    that reaches no track)."""
     from .placement import needs_sight
     travel = max((s.travel for s in sources if s.radial), default=0.0)
     # Snipers reach the whole map but still need line of sight; the other
@@ -1597,7 +1675,8 @@ def _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths)
     # corners that see little of the track (Balance's top row).
     sees = needs_sight(t.kind) and (not is_global or t.kind in MAP_WIDE_NEEDS_SIGHT)
     blocked = sight if (sight is not None and sees) else None
-    zones = track.zones(t.x, t.z, None if is_global else reach_radius, travel=travel, sight=blocked)
+    zones = track.zones(t.x, t.z, None if is_global else reach_radius, travel=travel, sight=blocked,
+                        lent=() if is_global else lent)
     if not any(zones):
         return None
     order = min((z.entry / max(pl["length"], 1e-6) for z, pl in zip(zones, track.paths) if z), default=1.0)

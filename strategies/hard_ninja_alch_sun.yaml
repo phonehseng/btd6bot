@@ -1,27 +1,80 @@
-# Hard all-rounder (land maps): Obyn + Ninja/Alchemist/Village, Sun Avatar late.
+# Hard all-rounder (land maps): Obyn + Ninja/Alchemist/Village, two Heli
+# Pilots for the first MOABs, Sun Avatar late.
 # The magic core most Hard guides converge on: Ninjas see camo from tier 0,
 # Alchemist acid pops lead and Berserker Brew/Stronger Stimulant buff the
 # ninjas, a 2-0-2 Village discounts everything near it. Ninja #1 goes
 # 4-0-2 Bloonjitsu (crowds, R63 ceramic rush), Ninja #2 goes 2-0-3 Flash Bomb
-# (lead + stun, first MOAB) -> 2-0-4 Sticky Bomb (BFB/ZOMG). A 3-0-2 Sun
-# Avatar (Ultravision = camo) and an exit 2-0-4 Spike Factory finish R80.
-# Nothing here needs aiming; every tower is placed by coverage.
+# -> 2-0-4 Sticky Bomb (BFB/ZOMG). Two helis carry rounds 37-40: h1 3-2-0
+# (Razor Rotors, IFR = camo, pursues the bloons over the whole track) and h2
+# 3-0-2. A 3-0-2 Sun Avatar (Ultravision = camo) and an exit 2-0-4 Spike
+# Factory finish R80. Nothing here needs aiming; every tower is placed by
+# coverage, and the helis fly to the bloons wherever they stand.
+#
+# Why the helis (2026-11-08): this build is the planner's last-resort pick
+# for open Half Cash and Double HP medals. 16 of its Half Cash losses came at
+# rounds 35-40 (2026-11-06: Another Brick, X Factor, Pat's Pond, Ship
+# Capture, Bloonarius Prime, Infernal, Party Parade, Cargo; 2026-11-08:
+# Adora's Temple, Bazaar x2, Chutes, Quad, Ship Capture, Pat's Pond, Party
+# Parade), and Double HP lost Dark Castle and Tricky Tracks at R40 (Castle
+# Revenge at R28). The old plan's only MOAB answer was n2's Flash Bomb (2-0-3), a short-
+# range ninja placed by track segment; under half income it came at R35-40
+# and the live forecast rated rounds 37-40 at 0.06-0.9 (0.34-0.66 at R40 in
+# the losses, ~1.0-1.3 in the wins). The threat calendar also saved for that
+# Flash Bomb as the `moab` answer, and the reinforce/surplus buys spent the
+# rest on darts and loose ninjas that lifted a round by 0.01-0.05.
+# Probing the replayed R40 boards with each candidate purchase (dps_model.
+# round_margin, live-forecast sight) put a Heli Pilot 3-0-2 / 3-2-0 ($5.2-5.6k)
+# first per dollar on every map (+0.5 to +1.0 at R40; Flash Bomb +0.1 to
+# +0.3): it chases the bloons, so it does not depend on where the coverage
+# placement put it; IFR (x-2-x) gives it camo, which the two ninjas leave
+# uncovered on long or split tracks (R24/R33/R36/R37 rated at the 0.06 floor
+# on Castle Revenge, Pat's Pond, Party Parade, Quad).
+#
+# Replayed 2026-11-08 (tools/simulate_threats.simulate on the learned maps,
+# Fast Track start, Double Cash income, boards rated by the live forecast:
+# RoundForecast with each map's sight grid and heights; no hero), R37/R40,
+# old -> this plan:
+#   Half Cash: Cargo 1.00/0.66 -> 2.33/1.61, Pat's Pond 0.06/0.12 ->
+#   1.66/2.04, Moon Landing 1.45/0.53 -> 3.44/4.00, Quad 0.06/0.40 ->
+#   1.01/1.28, Chutes 0.68/0.29 -> 2.25/1.66, Party Parade 0.06/0.17 ->
+#   1.51/1.45, Infernal 0.06/0.40 -> 2.51/2.02, Another Brick 1.03/0.52 ->
+#   2.54/2.09, Bloonarius Prime 0.06/0.26 -> 1.94/2.33, Dark Path 0.89/0.52
+#   -> 2.80/2.57, Ship Capture 0.51/0.45 -> 0.92/1.14, Adora's Temple
+#   0.84/0.30 -> 2.92/2.89, X Factor 0.06/0.06 -> 1.78/0.94.
+#   Bazaar is unchanged (0.43/0.12): the heli's heliport finds no legal cell
+#   there, the executor gives the heli steps up and the old order plays on.
+#   Double HP: Castle Revenge 0.21/0.95 -> 1.34/1.96, Dark Castle 1.76/3.55
+#   -> 2.99/3.02, Tricky Tracks 0.12/0.55 -> 1.83/1.24, Quad 0.06/0.91 ->
+#   2.28/1.27
+#   Hard and Medium (Castle Revenge, Dark Castle, Tricky Tracks, Cargo, Quad,
+#   Moon Landing) rate higher at R37-40 and no lower at the worst round.
+# tests/test_hard_ninja_alch_sun_r40_offline.py keeps these.
+#
+# plan_first: the plan owns the cash (Executor.plan_first): without it the
+# same plan replays at R37 0.06 on five of eight Half Cash maps, the cash
+# going to reinforce/surplus buys before the helis.
 id: hard_ninja_alch_sun
 hero: obyn
+plan_first: true
 modes: [medium, hard, double_hp, half_cash]
 planner:
-  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], heli: [3, 2, 2], super: [3, 0, 2], spike: [2, 0, 4]}
   base_success: {medium: 0.93, hard: 0.88, double_hp: 0.68, half_cash: 0.6}
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: upgrade, id: n1, to: 2-0-1}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 0.9]}
-  - {do: upgrade, id: n2, to: 1-0-1}
-  - {do: upgrade, id: n1, to: 2-0-2}
+  - {do: upgrade, id: n2, to: 0-0-1}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  - {do: place, id: h1, kind: heli, role: dps}
+  - {do: upgrade, id: h1, to: 0-2-0}                # IFR: camo everywhere the heli flies
   - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: h1, to: 3-2-0}                # Razor Rotors: round 37's rush, round 40's MOAB
   - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: place, id: h2, kind: heli, role: dps}
+  - {do: upgrade, id: h2, to: 3-0-0}                # by round 40 under Half Cash
+  - {do: upgrade, id: h2, to: 3-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
@@ -47,13 +100,16 @@ panic:
   - {do: place, kind: ninja, role: exit}
   - {do: place, kind: spike, role: exit}
 # Backups (bought before the round if the plan is behind). Upgrade-first then
-# place: an existing tower is upgraded, a missing one gets placed.
+# place: an existing tower is upgraded, a missing one gets placed. The MOAB
+# answer is the helis (the threat calendar saves for it), not n2's Flash Bomb;
+# adding the Flash Bomb as a third MOAB answer made the calendar save for it
+# too and cost R40 0.3-1.0 on Cargo, Quad and Pat's Pond, so it is left out.
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
     - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
-  moab: [{do: upgrade, id: n2, to: 2-0-3}]
+  moab: [{do: upgrade, id: h1, to: 3-2-0}, {do: upgrade, id: h2, to: 3-0-0}]
   bfb: [{do: upgrade, id: n2, to: 2-0-4}]
   rush: [{do: upgrade, id: n1, to: 4-0-2}]
   zomg: [{do: upgrade, id: n2, to: 2-0-4}]
