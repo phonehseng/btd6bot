@@ -4668,8 +4668,9 @@ class Executor:
 
         Within clicktime.PLAN_WINDOW steps, each tower's steps form one
         bundle (its placement and its upgrades: what it is rated by). A
-        bundle of a tower already standing, made of upgrades the cash pays
-        for now in full, may come before the current step's bundle when it
+        bundle of a tower already standing, made of upgrades, may come
+        - when the cash pays for it and the current bundle both, now -
+        before the current step's bundle when it
         saves more lives (the damage model at half strength, as reinforce.py
         rates purchases, over the round being played, the next and the
         weakest of the look-ahead) per share of the cash and of the seconds
@@ -4733,7 +4734,13 @@ class Executor:
             if tid not in rated:
                 continue
             saved, cost, secs = rated[tid]
-            if saved < RF.MIN_SAVED or cost > cash:
+            # only a bank that pays for both: then the order is a question of
+            # time alone, and the step put first takes no cash the current
+            # one needs. With less, the Park Path build (tests/
+            # test_apopalypse_offline.py) lost rounds 16-34 in the check:
+            # early upgrades pulled ahead delayed placements the model,
+            # rating standard rounds, undervalued against Apopalypse's.
+            if saved < RF.MIN_SAVED or cost + rated[current][1] > cash:
                 continue
             v = value(tid)
             if v > mine and (best is None or v > best[0]):

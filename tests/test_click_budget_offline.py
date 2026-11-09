@@ -19,10 +19,10 @@ Checked offline, with fakes:
   * Executor.try_step buys the next tiers of a path from the panel it keeps
     open (Game.hold_panel) - several tiers in one tick - and closes it after;
     in other modes one tier a tick as before;
-  * Executor._quicker_step: with the bank large, a one-click upgrade of a
-    standing tower further on in the plan comes before a placement that
-    needs seven clicks; with little cash, in other modes, or when the
-    model sees no gain, the plan keeps its order;
+  * Executor._quicker_step: with a bank that pays for both, a one-click
+    upgrade of a standing tower further on in the plan comes before a
+    placement that needs seven clicks; with less cash, in other modes, or
+    when the model sees no gain, the plan keeps its order;
   * Game.select reuses a held panel without clicking;
   * tools/simulate_threats.py's click model charges what clicktime says.
 Run: python tests/test_click_budget_offline.py
@@ -262,10 +262,14 @@ def test_the_plan_keeps_its_order_otherwise():
     g, ex = executor("medium", MESA_PLAN, 14_000, [("n2", "ninja", (2, 0, 3))])
     ex.forecast = ToyForecast()
     assert ex.tick(g.cash, 45) and "n3" in g.towers and g.towers["n2"].tiers == [2, 0, 3]
-    # the cash does not pay for n2's step in full
+    # the cash does not pay for n2's step
     g, ex = executor("apopalypse", MESA_PLAN, 4_000, [("n2", "ninja", (2, 0, 3))])
     ex.forecast = ToyForecast()
     assert ex._quicker_step(4_000, 45) is None
+    # it does, but not n3's steps as well: n2 would take cash n3 needs
+    g, ex = executor("apopalypse", MESA_PLAN, 7_000, [("n2", "ninja", (2, 0, 3))])
+    ex.forecast = ToyForecast()
+    assert ex._quicker_step(7_000, 45) is None
     # the model sees nothing leak: no reason to change the order
     g, ex = executor("apopalypse", MESA_PLAN, 14_000, [("n2", "ninja", (2, 0, 3))])
     ex.forecast = N(leaks=lambda towers, rounds, scale, per_round=False: 0.0,
