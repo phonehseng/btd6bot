@@ -1497,6 +1497,10 @@ class Executor:
             # still better than setting the answer aside
             log.info("%s: no legal spot reaches the blimp route - scoring the whole track", kind)
             return self.pick_spots(kind, {k: v for k, v in step.items() if k != "lane"}, n)
+        if self._segment_out_of_reach(kind, step, role, only, cover, rc, placement,
+                                      block, covered, valid):
+            # _spots_widening drops the segment and asks again
+            return []
         if valid is not None and role not in ("support", "far") and PL.needs_sight(kind, hero):
             # count only the track this spot can actually see past walls/blockers
             weight = (self.m.spot_weight(seg, covered) if only is None
@@ -1571,6 +1575,50 @@ class Executor:
             if len(out) >= n:
                 break
         return out
+
+    # A progress `segment` counts as out of reach when the best legal spot
+    # for it covers less than this share of the track the best legal spot
+    # covers when the whole track counts (see _segment_out_of_reach).
+    SEGMENT_REACH_SHARE = 0.15
+
+    def _segment_out_of_reach(self, kind, step, role, only, cover, rc, placement,
+                              block, covered, valid):
+        """Is this damage step's progress `segment` beyond every legal spot?
+
+        pick_spots ranks spots by how much of the segment's track they
+        cover. When no legal cell reaches that part of the track, every
+        score is close to 0 and the ranking is noise: the tower goes to
+        whichever cell happens to graze the segment, not to a spot that
+        covers track. Firing Range ABR (loss case 20261104_035430): the
+        opener's `segment [0.05, 0.45]` is the top rows, out of reach of
+        the land, and the dart was offered near-zero spots instead of a
+        good one elsewhere.
+
+        The yardstick is the same scoring with the whole track counted
+        (same range, blocked cells, already-covered track): if the
+        segment's best is under SEGMENT_REACH_SHARE of that, the answer
+        is True and pick_spots offers nothing, so _spots_widening drops
+        the segment ("any part of the track") and the tower stands where
+        it pops bloons. A researched spot (`at`), a blimp lane and the
+        exit role keep their own rules and are never judged here."""
+        seg = step.get("segment")
+        if role != "dps" or only is not None or step.get("at") or seg is None:
+            return False
+        known = getattr(self.m, "known", None)   # stand-in models have no progress
+        if tuple(float(v) for v in seg) == (0.0, 1.0) or known is None or not known():
+            return False
+        whole = self.m.score_spots(rc, (0.0, 1.0), self._occupied(), placement=placement,
+                                   extra_block=block, covered=covered, valid=valid)
+        best_whole = float(whole.max())
+        if best_whole <= 0:
+            return False    # no track in reach at all: the reach floor decides
+        best_seg = max(0.0, float(cover.max()))
+        if best_seg >= self.SEGMENT_REACH_SHARE * best_whole:
+            return False
+        log.info("%s: its track segment %s is out of reach (best legal spot covers %.0f%% of what "
+                 "the best covers on the whole track) - not placed by that segment",
+                 step.get("id", kind), list(seg), 100.0 * best_seg / best_whole)
+        return True
 
     def _experience_factor(self, kind, cx, cy, rc, lane):
         """The learned score multiplier of a spot (maplearn.spot_factor),
