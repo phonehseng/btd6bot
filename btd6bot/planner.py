@@ -1981,6 +1981,42 @@ def _strategy_achievement_ok(s: StrategySpec, goals: Mapping[str, AchievementGoa
     return s.bot_ready is True and s.achievement in goals
 
 
+# A last-resort pick (tier "LAST") is skipped once its build has lost the
+# same map and mode this many times without ever winning it. Owner rules:
+# never idle while medals are open (2026-11-03), and every loss must lead to
+# a change (2026-11-07); on 2026-11-08/09 the same general builds kept
+# losing the same maps (Apopalypse on Firing Range four times, Dark Path,
+# Castle Revenge, Sunken Columns three times each; sniper-sun on Pat's Pond
+# ABR three times) and each was excluded by hand afterwards. This does it
+# for every build: the medal stays open for another build or a map build.
+LAST_RESORT_STRIKES = 3
+
+
+def build_map_record(account: AccountState, strategy_id: str, map_name: str,
+                     mode: str) -> tuple[int, int]:
+    """(wins, losses) of ``strategy_id`` on ``map_name`` / ``mode`` in the
+    account's history (AccountState.history)."""
+    m = canonical_map(map_name)
+    wins = losses = 0
+    for h in account.history:
+        if h.get("strategy") != strategy_id or h.get("mode") != mode:
+            continue
+        if canonical_map(str(h.get("map") or "")) != m:
+            continue
+        if h.get("won"):
+            wins += 1
+        else:
+            losses += 1
+    return wins, losses
+
+
+def struck_out(account: AccountState, strategy_id: str, map_name: str, mode: str) -> bool:
+    """Has ``strategy_id`` lost ``map_name`` / ``mode`` LAST_RESORT_STRIKES
+    times without a win? Then it is not played there as a last resort."""
+    wins, losses = build_map_record(account, strategy_id, map_name, mode)
+    return wins == 0 and losses >= LAST_RESORT_STRIKES
+
+
 def _wins_since(account: AccountState, strategy_id: str, since: str | None) -> int:
     """Wins of ``strategy_id`` in the account's history after ``since`` (the
     scan's "YYYY-MM-DD HH:MM:SS"; history uses "YYYY-MM-DDTHH:MM:SS", so
@@ -2605,7 +2641,8 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
     if below_bar:
         from .strategy import MODE_RULES
         rest = [c for c in scored
-                if c.tier is None and c.mode != "chimps" and not c.s.achievement]
+                if c.tier is None and c.mode != "chimps" and not c.s.achievement
+                and not struck_out(account, c.s.id, c.map, c.mode)]
         rest.sort(key=lambda c: (not MODE_RULES.get(c.mode, {}).get("one_life"),
                                  c.p, c.ease, c.score), reverse=True)
         for c in rest:
