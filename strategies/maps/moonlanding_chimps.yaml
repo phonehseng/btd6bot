@@ -221,6 +221,16 @@
 # tower): t1 during round 7, t2 round 8, boomerang R10, sniper R11, wizard
 # R12, Improved Rangs R13, Quincy R15, druid R17; plan 25/25, no threat
 # gaps, the same round-100 blimp answer sniper as before.
+# 2026-11-08 06:30: LOST ROUND 40 live at 05:37 (journal
+# 20261108_052702_MoonLanding_chimps): the opening held (past round 7), but
+# the plan's MOAB answer (s2 3-1-0, Deadly Precision) came after s1 0-2-4 and
+# the village 2-0-2, so s2 was not even placed; the executor fell back to s1
+# 0-2-5 ($27k, out of reach), bought s1 0-2-3 at R37 and v1 2-0-2 at R39, and
+# met the first MOAB with $1,720. Bloons reached 93-95% of the route in
+# rounds 36-39. Change: s2 (place, 1-1-0, 3-1-0) moves before the village,
+# and s1 0-2-4 and v1 2-0-2 come after it. Replay (tools/simulate_threats on
+# the learned map): round 40's blimp check 0.4x -> 1.3x of the MOAB's HP in
+# reach, s2 3-1-0 bought by round 40; plan 24/24, no gaps, the rest the same.
 id: moonlanding_chimps
 map: Moon Landing
 hero: quincy
@@ -232,7 +242,7 @@ planner:
   # not gated on the damage model: played live to learn (see above)
   base_success: {chimps: 0.5}
   maps: [Moon Landing]
-  revised: "2026-11-07T22:00"
+  revised: "2026-11-08T06:30"
 plan:
   - {do: place, id: e1, kind: desperado, role: dps, at: [0.441, 0.470]}  # gap left of the middle stretch (the starter desperado follows)
   - {do: place, id: t1, kind: dart, role: dps, at: [0.067, 0.436]}       # the exit: bought mid-round 7 ($215), the last line (see 22:00)
@@ -246,12 +256,12 @@ plan:
   - {do: upgrade, id: d1, to: 1-0-0}                                      # Hard Thorns: round 28's lead
   - {do: upgrade, id: d1, to: 1-3-0}                                      # Druid of the Jungle
   - {do: upgrade, id: s1, to: 0-1-0}                                      # Night Vision: round 24's camo
-  - {do: place, id: v1, kind: village, role: support, near: [d1, w1], at: [0.489, 0.428]}
-  - {do: upgrade, id: v1, to: 2-0-2}                                      # Jungle Drums, Monkey Commerce
-  - {do: upgrade, id: s1, to: 0-2-4}                                      # Full Auto Rifle
   - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.398, 0.419]}
   - {do: upgrade, id: s2, to: 1-1-0}                                      # Full Metal Jacket + Night Vision: camo leads
   - {do: upgrade, id: s2, to: 3-1-0}                                      # Deadly Precision: camo ceramics
+  - {do: place, id: v1, kind: village, role: support, near: [d1, w1], at: [0.489, 0.428]}
+  - {do: upgrade, id: s1, to: 0-2-4}                                      # Full Auto Rifle
+  - {do: upgrade, id: v1, to: 2-0-2}                                      # Jungle Drums, Monkey Commerce
   - {do: upgrade, id: r1, to: 3-0-2}                                      # Glaive Ricochet: the round-63 rush
   - {do: upgrade, id: s1, to: 0-2-5}                                      # Elite Defender
   - {do: upgrade, id: w1, to: 5-0-2}                                      # Archmage (Monkey Sense: camo)
