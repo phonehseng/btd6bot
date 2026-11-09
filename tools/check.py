@@ -6,6 +6,13 @@ The steps run side by side (by default half the CPU cores, so a game the
 bot is playing keeps the other half): one after another they now take over
 ten minutes, longer than an hourly caretaker run can wait for one command.
 The results are still printed in a fixed order.
+
+Each step runs at below-normal CPU priority with one math-library thread,
+so the live bot and the game come first. A run started at normal priority
+at 22:30:22 on 2026-11-08 (16 test processes, beside three build
+optimisers) is the likeliest reason the bot then logged nothing for two
+minutes and noticed a CHIMPS defeat (22:30:28) only at 22:32:25, while the
+screen recorder fell 45 s behind as well.
 """
 import argparse
 import os
@@ -17,9 +24,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# numpy/OpenCV start one thread per core in every process by default: with
+# 16 steps side by side that is hundreds of busy threads
+ONE_THREAD = {k: "1" for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "OPENCV_FOR_THREADS_NUM")}
+
+
 def run_step(cmd):
     """Run one check step; returns (name, passed, last lines of its output)."""
-    r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", creationflags=subprocess.CREATE_NO_WINDOW)
+    flags = subprocess.CREATE_NO_WINDOW | getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0)
+    r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       creationflags=flags, env={**os.environ, **ONE_THREAD})
     name = Path(cmd[-1]).name if cmd[-1].endswith(".py") else "import"
     return name, r.returncode == 0, "\n".join((r.stdout + r.stderr).strip().splitlines()[-8:])
 

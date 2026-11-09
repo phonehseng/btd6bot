@@ -11,7 +11,8 @@
 # general build's towers go down by track segment and reach one side. Its
 # 2026-11-08 fix (two Heli Pilots before round 40, commit ec02b87) lifts the
 # replay only to R34 0.32, R36 0.75, R37 0.92, R38-39 0.59, R40 1.14, with
-# R28 at the 0.06 floor and R63 0.31, R76 0.25: still under 1.
+# R28 at the 0.06 floor and R63 0.26 (with the late Apache Dartships, R76
+# 0.98): still under 1.
 #
 # The Deflation build's spots were chosen for this ship (the grate and the
 # decks reach whichever side a round boards from; checked legal on

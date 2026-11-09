@@ -41,10 +41,11 @@
 # round's start rated by the live forecast: RoundForecast with the learned
 # map's sight grid and heights; no hero): R22 1.14, R25 1.07, R27 0.90,
 # R34 1.06, R36 0.84 (the lowest), R37 1.06, R39 0.84, R40 2.04, R47 1.74,
-# R60 5.08, R62 1.26, R63 2.18, R64 1.41, R71 1.33, R75 2.35, R76 2.30,
-# R78 1.16, R80 4.32. Every plan tower stands on its `at` spot. The plan is
-# done by round 63; the threat calendar's blimp answers (a bomb and an ace,
-# from R64) and two surplus subs (R72, R76) carry rounds 64-80.
+# R54 0.98, R60 4.27, R62 1.28, R63 2.20 (Cluster Bombs bmb1 0-2-3 stands for
+# the rush), R64 1.40, R71 1.38, R75 2.35, R76 2.33, R78 1.30, R80 4.32. Every
+# plan tower stands on its `at` spot. The plan is done by round 63; the
+# threat calendar's blimp answers (an ace from R66, a super at R79) and
+# surplus subs (from R70) carry rounds 64-80.
 # tests/test_bazaar_half_cash_offline.py keeps these.
 #
 # Status: written 2026-11-08, not played yet.
@@ -54,7 +55,7 @@ hero: admiral_brickell
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [half_cash]
 planner:
-  towers: {sub: [4, 4, 4], sniper: [4, 2, 0]}
+  towers: {sub: [4, 4, 4], sniper: [4, 2, 0], bomb: [0, 2, 3]}
   # every round 0.84+ in the replay (the general build: 0.06): below the
   # 0.85 of the Half Cash map builds that rate 1.5+
   base_success: {half_cash: 0.8}
@@ -83,6 +84,8 @@ plan:
   - {do: place, id: sub4, kind: sub, role: dps, at: [0.441, 0.709]}
   - {do: upgrade, id: sub4, to: 2-3-0}                                    # Ballistic Missile
   - {do: upgrade, id: sni1, to: 4-2-0}                                    # Maim MOAB: BFBs (R60)
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.687, 0.845]}      # bottom-right grass (where the replay's blimp-answer bomb stood)
+  - {do: upgrade, id: bmb1, to: 0-2-3}                                    # Cluster Bombs: round 63's ceramic/lead rush
   - {do: place, id: sub5, kind: sub, role: dps, at: [0.398, 0.266]}
   - {do: upgrade, id: sub5, to: 2-0-4}                                    # Armor Piercing Darts
   - {do: upgrade, id: sub1, to: 2-0-4}                                    # Armor Piercing Darts
@@ -98,3 +101,4 @@ answers:
   moab: [{do: upgrade, id: sni1, to: 3-2-0}, {do: upgrade, id: sub2, to: 4-2-0}]
   bfb: [{do: upgrade, id: sni1, to: 4-2-0}]
   zomg: [{do: upgrade, id: sni1, to: 4-2-0}, {do: upgrade, id: sni2, to: 4-2-0}]
+  rush: [{do: upgrade, id: bmb1, to: 0-2-3}]

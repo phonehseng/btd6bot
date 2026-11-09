@@ -271,6 +271,23 @@ def is_heavy_round(rnd, rules=None):
     return rnd is not None and rnd in heavy_rounds_for(rules)
 
 
+def is_slow_round(rnd, rules=None):
+    """A round for a wave-wide slow (ROUND_START: Bloon Sabotage). On the
+    standard round set only the hand-picked rounds of HEAVY_FLOOR, not every
+    round over HEAVY_SHARE: rounds 92, 94, 95 and 96 are all heavy by blimp
+    HP, and Spring Spring CHIMPS (2026-11-08 22:30) pressed the slow twice in
+    round 94 and met round 95's 50 fortified MOABs and 30 camo DDTs without
+    it. ABR and other sets keep heavy_rounds_for, which HEAVY_FLOOR does not
+    describe."""
+    if rnd is None:
+        return False
+    mode = _mode_of(rules)
+    if TH.set_for_mode(mode) == "standard":
+        end = (rules or {}).get("end_round") or 100
+        return rnd in HEAVY_FLOOR and rnd <= end
+    return is_heavy_round(rnd, rules)
+
+
 # -- planner ------------------------------------------------------------------------
 
 class _Slot:
@@ -425,7 +442,7 @@ class AbilityPlanner:
             elif use == "on_cooldown":
                 reason = "cooldown"
             elif use == "moab" and name in ROUND_START:
-                if not is_heavy_round(rnd, self.rules) or not blimps_here:
+                if not is_slow_round(rnd, self.rules) or not blimps_here:
                     continue
                 reason = "heavy round"
             elif use == "moab":

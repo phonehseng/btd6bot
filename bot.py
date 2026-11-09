@@ -27,6 +27,8 @@ def setup_logging():
 
 
 STACKS_EVERY_S = 60
+STALL_CHECK_S = 5      # how often the match loop's heartbeat is checked
+STALLS_KEPT = 20       # stack dumps of stalls kept in logs/stalls/
 
 
 def keep_stack_snapshot():
@@ -35,22 +37,52 @@ def keep_stack_snapshot():
     On 2026-10-23 the bot sat 25 minutes on a Victory screen with its log
     silent; nothing showed which loop it was in. This file always holds
     the latest answer (it is overwritten, not appended).
+
+    Every few seconds the match loop's heartbeat (match.LoopBeat) is checked
+    too: a loop stuck in one phase for long gets its stacks saved to
+    logs/stalls/ and a warning in the log. Spring Spring CHIMPS
+    (2026-11-08) went two minutes without a line, and the stacks.txt
+    written during that stall had been overwritten by the time it was read.
     """
     import threading
     import time
     import traceback
 
+    def stacks():
+        frames = sys._current_frames()
+        text = [time.strftime("%Y-%m-%d %H:%M:%S")]
+        for t in threading.enumerate():
+            if t.ident in frames and t is not threading.current_thread():
+                text.append(f"\n--- thread {t.name}")
+                text.append("".join(traceback.format_stack(frames[t.ident])))
+        return "\n".join(text)
+
+    def save_stall(report):
+        folder = ROOT / "logs" / "stalls"
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+            path = folder / time.strftime("stall_%Y%m%d_%H%M%S.txt")
+            path.write_text(report + "\n" + stacks(), encoding="utf-8")
+            for old in sorted(folder.glob("stall_*.txt"))[:-STALLS_KEPT]:
+                old.unlink()
+        except OSError:
+            path = None
+        logging.getLogger("bot").warning("match loop %s - stacks in %s", report, path)
+
     def loop():
+        last = time.time()
         while True:
-            time.sleep(STACKS_EVERY_S)
-            frames = sys._current_frames()
-            text = [time.strftime("%Y-%m-%d %H:%M:%S")]
-            for t in threading.enumerate():
-                if t.ident in frames and t is not threading.current_thread():
-                    text.append(f"\n--- thread {t.name}")
-                    text.append("".join(traceback.format_stack(frames[t.ident])))
+            time.sleep(STALL_CHECK_S)
+            # only once the bot itself has imported it: no import from this thread
+            match = sys.modules.get("btd6bot.match")
+            report = match.LoopBeat.stall_report() if match else None
+            if report:
+                save_stall(report)
+            if time.time() - last < STACKS_EVERY_S:
+                continue
+            last = time.time()
             try:
-                (ROOT / "logs" / "stacks.txt").write_text("\n".join(text), encoding="utf-8")
+                (ROOT / "logs" / "stacks.txt").write_text(stacks(), encoding="utf-8")
             except OSError:
                 pass   # a locked file must never stop the bot
 

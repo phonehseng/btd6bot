@@ -10,8 +10,8 @@
 # 26 at 0.46 / 0.36 / 0.32). The map's two long lanes run past each other
 # around the boss arena; ninjas placed by track segment reach a short stretch
 # of one lane. Its 2026-11-08 fix (two Heli Pilots before round 40, commit
-# ec02b87) lifts rounds 37-40, not the start: the replay still rates R22 0.43,
-# R25 0.41, R28 0.06, R63 0.48, R76 0.41.
+# ec02b87) and its late Apache Dartships lift rounds 37-40 and 71-80, not
+# the start: the replay still rates R22 0.43, R25 0.41, R28 0.06, R63 0.46.
 #
 # The towers and spots: the map's Military Only build (bloonariusprime_
 # military_only.yaml: the optimizer's search on the map, spots checked legal
@@ -27,6 +27,8 @@
 #     round 28's leads: R28 0.29 with one sniper, 0.56 with two;
 #   * hel6 3-2-0 (IFR: camo for the heli) comes before round 37;
 #   * the two subs (0-0-0 / 1-0-0, reaching 21-29% of one lane) are left out.
+#   * a Cluster Bombs bomb (0-2-3, the Deflation build's entrance spot) before
+#     the Apaches: the rush answer for round 63 (helis and snipers are none).
 #
 # Sources:
 #   * strategies/maps/bloonariusprime_military_only.yaml and its sources
@@ -38,9 +40,9 @@
 # round's start rated by the live forecast: RoundForecast with the learned
 # map's sight grid and heights; no hero): R22 2.04, R24 7.42, R25 2.28,
 # R28 0.56, R30 0.46 (the lowest: Razor Rotors comes at R30), R33 4.22,
-# R34 1.61, R36 3.40, R37 2.77, R40 2.99, R47 2.59, R60 6.73, R63 2.95,
-# R71 2.51, R75 3.29, R76 3.55, R78 1.35, R80 3.47; no answer or surplus
-# buys, every tower on its `at` spot; the last step (h7 4-2-0) is not reached
+# R34 1.61, R36 3.40, R37 2.77, R40 2.99, R47 2.59, R60 7.03, R63 2.95,
+# R71 1.79, R75 3.40, R76 3.55, R78 1.40, R80 3.51; no answer or surplus
+# buys, every tower on its `at` spot; the last step (hel7 4-2-0) is not reached
 # by round 80. tests/test_bloonariusprime_half_cash_offline.py keeps these.
 #
 # Status: written 2026-11-08, not played yet.
@@ -50,7 +52,7 @@ hero: etienne
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [half_cash]
 planner:
-  towers: {heli: [4, 2, 2], sniper: [1, 2, 1]}
+  towers: {heli: [4, 2, 2], sniper: [1, 2, 0], bomb: [0, 2, 3]}
   base_success: {half_cash: 0.8}
   maps: [Bloonarius Prime]
 plan:
@@ -76,8 +78,9 @@ plan:
   - {do: upgrade, id: hel7, to: 2-0-0}                                                    # Pursuit first
   - {do: upgrade, id: hel7, to: 3-2-0}
   - {do: upgrade, id: sni8, to: 1-2-0}                                                    # Night Vision + Shrapnel Shot
+  - {do: place, id: bom1, kind: bomb, role: dps, at: [0.184, 0.198]}                      # by the entrance (bloonariusprime_deflation's bom6 spot)
+  - {do: upgrade, id: bom1, to: 0-2-3}                                                    # Cluster Bombs: round 63's ceramic/lead rush
   - {do: upgrade, id: hel5, to: 4-0-2}                                                    # Apache Dartship: BFBs (R60)
-  - {do: upgrade, id: sni4, to: 1-2-1}
   - {do: upgrade, id: hel6, to: 4-2-0}                                                    # Apache Dartship
   - {do: upgrade, id: hel1, to: 4-0-2}                                                    # Apache Dartship
   - {do: upgrade, id: hel7, to: 4-2-0}                                                    # Apache Dartship, if the cash comes
@@ -90,3 +93,4 @@ answers:
   moab: [{do: upgrade, id: hel6, to: 3-2-0}, {do: upgrade, id: hel5, to: 3-0-2}]
   bfb: [{do: upgrade, id: hel5, to: 4-0-2}]
   zomg: [{do: upgrade, id: hel6, to: 4-2-0}]
+  rush: [{do: upgrade, id: bom1, to: 0-2-3}]
