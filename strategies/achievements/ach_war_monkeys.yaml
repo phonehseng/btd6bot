@@ -12,6 +12,9 @@ constraints:
 planner:
   towers: {heli: [2, 0, 2], sniper: [2, 2, 0]}
   base_success: {military_only: 0.92, medium: 0.95}
+  # not Sanctuary: the heli pad is refused on every legal cell there (see
+  # military_heli_sniper; loss case 20261108_2127)
+  excluded_maps: [Sanctuary]
 plan:
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: s1, kind: sniper, role: dps, target: first}
