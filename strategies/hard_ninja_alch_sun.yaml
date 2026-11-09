@@ -87,7 +87,15 @@ planner:
   # pre-heli order lost there at round 38 on 2026-11-06). The refusals came 8+ in a row, so the executor treated them
   # as the game's fault and did not learn them; the replay still places the
   # helis there and cannot vouch for this map.
-  excluded_maps: [Bazaar, Tricky Tracks, Infernal]
+  # Pat's Pond: lost all three Half Cash games there (2026-11-06 r40,
+  # 2026-11-08 r40, 2026-11-09 r47 - loss case 20261109_110224). It is a pond
+  # map: two lanes meet at two junctions far apart, and this build's
+  # coverage-placed land towers sit between them. On 2026-11-09 the board was
+  # rated 2.3 at round 40 with two helis, and a lone MOAB still leaked 33
+  # lives; rounds 44-47 leaked zebras, rainbows and ceramics. Every medal won
+  # there came from a water or map build (water_sub_alch Hard, patspond_hard
+  # Medium, double_hp_sniper_sun Double HP).
+  excluded_maps: [Bazaar, Tricky Tracks, Infernal, "Pat's Pond"]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
