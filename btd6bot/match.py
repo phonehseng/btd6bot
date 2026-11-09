@@ -1169,6 +1169,21 @@ class Match:
             log.exception("reading the map's path phases failed - every path counts as track")
         return None, False
 
+    def _map_round(self, rnd):
+        """The round the map's own round-driven changes (path phases, melting
+        ground) have reached while the HUD shows `rnd`: one more in a
+        continuous mode, where the next round's bloons are already coming.
+
+        Erosion Apopalypse (2026-11-09, loss case 20261109_120839): the ice
+        under n1, n2, a1 and the opener, which mapgeom.lost_ground melts at
+        round 19, went while the HUD still read 18 (frames end_027: 17, all
+        towers; end_028: 18, the bloons walking where they stood). The bot
+        still counted them ("could not select n1"), rebuilt nothing, and
+        146 lives were gone within seconds. In the other modes the same ice
+        went at 18 -> 19 as modelled (Erosion Reverse, 2026-11-08 02:15)."""
+        continuous = bool((getattr(self.ex, "rules", None) or {}).get("continuous"))
+        return rnd + 1 if continuous and rnd is not None else rnd
+
     def _follow_track(self, rnd):
         """Paint only the paths bloons take in this round's phase and the
         next one (mapgeom.repaint_track), so towers go where bloons come now.
@@ -1176,6 +1191,7 @@ class Match:
         beside paths bloons first take in rounds 37-91."""
         if self._phase_geom is None or rnd is None:
             return
+        rnd = self._map_round(rnd)
         try:
             from . import mapgeom
             if mapgeom.repaint_track(self.m, self._phase_geom, rnd, self._reverse):
