@@ -48,7 +48,16 @@
 # surplus subs (from R70) carry rounds 64-80.
 # tests/test_bazaar_half_cash_offline.py keeps these.
 #
-# Status: written 2026-11-08, not played yet.
+# Status: written 2026-11-08. First live game (2026-11-09 08:35) lost round
+# 63 with 100 lives: 125 lives of pinks and yellows leaked in six seconds
+# (loss case 20261109_084520_Bazaar_half_cash). Round 63's rush answer,
+# Cluster Bombs bmb1, never stood where the replay put it: the game refused
+# (0.687, 0.845) and (0.671, 0.836), the executor found nothing legal within
+# 15 cells and placed bmb1 "by role" at (0.184, 0.828), where it read 0 pops
+# for 11 rounds while $2,265 went into it. bmb1 now aims at (0.697, 0.828),
+# a cell the learned map still holds legal with the same whole-track cover
+# (2 cells off the refused ones), and the build's confidence drops 0.8 ->
+# 0.5 until a live game shows the bomb standing and popping there.
 id: bazaar_half_cash
 map: Bazaar
 hero: admiral_brickell
@@ -58,7 +67,7 @@ planner:
   towers: {sub: [4, 4, 4], sniper: [4, 2, 0], bomb: [0, 2, 3]}
   # every round 0.84+ in the replay (the general build: 0.06): below the
   # 0.85 of the Half Cash map builds that rate 1.5+
-  base_success: {half_cash: 0.8}
+  base_success: {half_cash: 0.5}   # was 0.8: lost its first live game at r63 (see Status above)
   maps: [Bazaar]
 plan:
   - {do: place, id: hero, kind: hero, role: dps, at: [0.468, 0.76]}       # Brickell in the canal first: no $200 opener dart (Executor._with_opener)
@@ -84,7 +93,7 @@ plan:
   - {do: place, id: sub4, kind: sub, role: dps, at: [0.441, 0.709]}
   - {do: upgrade, id: sub4, to: 2-3-0}                                    # Ballistic Missile
   - {do: upgrade, id: sni1, to: 4-2-0}                                    # Maim MOAB: BFBs (R60)
-  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.687, 0.845]}      # bottom-right grass (where the replay's blimp-answer bomb stood)
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.697, 0.828]}      # bottom-right grass; the game refused (0.687, 0.845) live on 2026-11-09
   - {do: upgrade, id: bmb1, to: 0-2-3}                                    # Cluster Bombs: round 63's ceramic/lead rush
   - {do: place, id: sub5, kind: sub, role: dps, at: [0.398, 0.266]}
   - {do: upgrade, id: sub5, to: 2-0-4}                                    # Armor Piercing Darts

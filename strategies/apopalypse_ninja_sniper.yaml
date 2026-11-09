@@ -16,7 +16,12 @@ planner:
   # not Tricky Tracks (2026-11-09): lost there at rounds 47 and 50 with the
   # board rated 1.2-1.5, and tools/apopalypse_check.py rates it 0.26
   # (tests/test_trickytracks_excluded_offline.py)
-  excluded_maps: [Tricky Tracks]
+  # not Sunken Columns (2026-11-09 08:20, lost at round 33): its land is
+  # pools and narrow hex columns, so the first ninja (placed by the plan's
+  # segment in the left pool) popped nothing for 15 rounds, and the damage
+  # model rated the opening board 0.59 at round 17 and 0.37 at round 18,
+  # before a single purchase could be late. 109 lives went in rounds 18-32.
+  excluded_maps: [Tricky Tracks, Sunken Columns]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an
@@ -86,13 +91,21 @@ plan:
   - {do: upgrade, id: n2, to: 2-0-4}
   - {do: place, id: s3, kind: sniper, role: support, near: [a1], near_radius: 7, target: strong}
   - {do: upgrade, id: s3, to: 0-2-4}
+  # The exit Spike Factory comes here, not last (2026-11-09, Sunset Gulch
+  # r56): every tower stood on the first half of the route, and a flood of
+  # red, yellow and green bloons from popped blimps crossed the bridge to
+  # the exit, where only an unupgraded dart stood - 88 lives in one round
+  # with $4.6-6.1k in hand, while sp1 waited behind $30k of super monkey.
+  # Long Life Spikes + Faster Production (2-0-2) is cheap, sits at the
+  # exit and catches what slips past; its 2-0-4 MOAB tier stays at the end.
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-2}
   - {do: upgrade, id: s1, to: 4-2-0}     # Maim MOAB: the stun for BFBs
   - {do: upgrade, id: a1, to: 4-2-0}
   - {do: place, id: s4, kind: sniper, role: support, near: [a1], near_radius: 7, target: strong}
   - {do: upgrade, id: s4, to: 0-2-4}
   - {do: place, id: su1, kind: super, role: support, near: [v1], near_radius: 7}
   - {do: upgrade, id: su1, to: 3-0-2}
-  - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
   - {do: upgrade, id: s1, to: 5-2-0}
 fill:
