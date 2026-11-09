@@ -897,3 +897,9 @@
 - Since 01:20: 4 wins (Mesa Medium, Mesa Reverse, Mesa Primary Only r40 with 53 lives lost, Spillway Magic Only r80 +660 MM), 1 loss (Ship Capture Half Cash r39 at 01:40 - already handled and parked by 465e566). Dark Castle Half Cash r63 case is handled (a5e556f).
 - Two 'no defence could be placed' errors on Mesa Military Only (01:22, 01:25: heli h2 had no valid spot); the bot benched it 6 h and moved on. Covered by 5691b45 (Mesa learned refusals reset, committed 01:36); check that Mesa Military Only places its helis after the bench ends (~07:25).
 - 0 loss cases marked new. No code changes this run: an interactive session committed at 02:04 and 02:11, so I stayed out of the code to avoid clashing with it.
+
+## 2026-11-09 03:20
+- Bot status: task Running; bot.py (since the 02:15 reload), recorder and BTD6 up; playing X Factor Half Cash, round 66, 78 lives. No STOP, PAUSE or dev_active.txt; no Auto Start warning, tracebacks or loops. Safe mode on (trips 4).
+- Since 02:20: 2 wins (Spillway Double HP, Spillway Half Cash, 660 MM each), 3 losses (Tricky Tracks ABR r40, Tricky Tracks Apopalypse r50, Firing Range Half Cash r28 after a Fast Track start at round 22).
+- Both Tricky Tracks cases are "in-progress" in another session (an ABR diagnosis.md was written at 03:15). Firing Range is still "new", but 7c7d0e3 (03:09) already put a 0.06 model ceiling on it, and its report.md was touched at 03:11, so another session is on it. I left all three alone.
+- No code changes this run, because another session is working through the losses right now. For the next run: X Factor Half Cash held $13.9k at round 66 (rated 0.43) while plan step 29 (h2 -> 4-0-2) waited. This is the same "unspent before a weak round" family as a5e556f. Check how the game ends and whether the Firing Range case was marked handled with a build change, not just the ceiling.

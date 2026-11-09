@@ -4813,8 +4813,9 @@ class Executor:
     # build's unreachable plan step to give way to reinforcing
     YIELD_MARGIN = RF.CRISIS_MARGIN   # rated under this: a crisis round (forecast.py)
     YIELD_ROUNDS = 4                  # at most this many rounds after the one being played
+    YIELD_FLOOR = 0.10                # rated at most this in a mode with lives: no bloon depth needed
 
-    def plan_first_yields(self, cash, rnd):
+    def plan_first_yields(self, cash, rnd, deep=True):
         """Does a plan_first build's plan let reinforce spend this tick? True
         only when all of these hold:
 
@@ -4825,7 +4826,10 @@ class Executor:
             round being played;
           * the step cannot be paid before that round (the next one, when it
             is the round being played) from `cash` and the income until then
-            (reinforce.payable_by False).
+            (reinforce.payable_by False);
+          * `deep` (Match: the last round's bloons got far along the route),
+            or the mode has lives (not one_life) and the weak round is rated
+            YIELD_FLOOR or less (see the last paragraph).
 
         Then waiting cannot bring the step in time for the round the game is
         at stake in, and the cash it waits for is better spent on what lifts
@@ -4844,10 +4848,29 @@ class Executor:
         A step income can still deliver before the weak round keeps all of
         its cash; a weak round rated over YIELD_MARGIN, or further off than
         YIELD_ROUNDS, does not count; unknown income (payable_by None) or no
-        rating means the plan keeps the cash."""
+        rating means the plan keeps the cash.
+
+        The bloon depth cannot see a round that kills in one go. X Factor
+        Half Cash (2026-11-09, hard_ninja_alch_sun) lost all 78 lives to
+        round 78's 72 camo ceramics at once (each leaked ceramic costs 104
+        lives): no life was lost from round 36 to 77, the bloons never got
+        past 81% of the route, yet the model rated round 78 at 0.06 from
+        round 69 on, and the bot idled with $11-17k for plan step h1 4-2-0
+        ($21,600) that income could not bring before round 79. A Radar
+        Scanner village ($3,725) beside the Dartship lifts round 78 to 0.62
+        in the model and was affordable from round 74 (radar_option offers
+        it). So in a mode with lives a weak round rated at the model's floor
+        lets the step yield without the depth. Not in CHIMPS: there the won
+        games rated rounds at 0.06-0.10 often (Cracked rounds 52-58 with
+        $15-26k waiting for its Glaive Lord, End Of The Road, Spice Islands,
+        Adora's Temple) and their plan cash stays behind the depth. In the
+        Half Cash wins of 2026-11-08/09 (Adora's Temple, Spillway) the floor
+        rule fires only in rounds 23-37 with under $650 in hand; Spillway's
+        win held round 78 rated 0.14 with the same build, hence the 0.10."""
         if cash is None or rnd is None or not self.plan_first():
             return False
-        if (getattr(self, "rules", None) or {}).get("income") is False:
+        rules = getattr(self, "rules", None) or {}
+        if rules.get("income") is False:
             return False          # no income: saving is all the step has
         wait = RF.waiting_plan_step(self, cash)
         if wait is None:
@@ -4858,6 +4881,8 @@ class Executor:
         margin, weak = worst
         if margin >= self.YIELD_MARGIN or weak - rnd > self.YIELD_ROUNDS:
             return False
+        if not deep and (rules.get("one_life") or margin > self.YIELD_FLOOR):
+            return False          # shallow bloons: only a floor rating in a mode with lives counts
         step, cost = wait
         pay_by = max(weak, rnd + 1)   # the round being played: no income reaches it
         if RF.payable_by(self, cost, cash, pay_by, rnd) is not False:
