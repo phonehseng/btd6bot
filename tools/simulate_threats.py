@@ -165,6 +165,13 @@ class CashGame:
         self.towers.pop(p.tid, None)
         return True
 
+    def targeted_ability(self, key, p):
+        """A `do: ability` step's press (Blood Sacrifice): the tower is gone,
+        as live once the game took it (Game.targeted_ability)."""
+        self.towers.pop(p.tid, None)
+        self.bought.append((self.round, f"sacrifice {p.tid} ({p.kind} {p.crosspath})"))
+        return "done"
+
     def select(self, p):
         return True
 

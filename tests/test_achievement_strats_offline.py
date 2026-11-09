@@ -24,6 +24,7 @@ logging.getLogger("strategy").setLevel(logging.ERROR)
 READY = {
     "ach_abracadabmonkey", "ach_all_for_one_and_one_for_one", "ach_axis_of_havoc", "ach_big_bloons",
     "ach_bloons_master", "ach_chunky_monkeys", "ach_first_monkeys_first", "ach_freaky_friday",
+    "ach_kali_maaaaaaaa",   # since the `do: ability` step (Blood Sacrifice), 2026-11-09
     "ach_not_lacking_critical_information", "ach_role_reverser", "ach_so_spiiicey_ninja_kiwi",
     "ach_unsung_monkeys", "ach_war_monkeys", "ach_world_league_training",
 }

@@ -322,7 +322,6 @@ UNENFORCEABLE_CONSTRAINTS = {
     "no_removables": "removable-obstacle rule / precise hidden spots",
     "dynamic_tower_set": "tower set is read from an event screen at play time",
     "event_window_utc": "only playable inside an event window",
-    "targeted_ability": "needs a targeted ability step (press the ability, then click a tower)",
 }
 # Constraint keys that would break the owner's hard rules (never deliberately
 # lose lives or games, never spend Monkey Money on continues).
@@ -344,7 +343,27 @@ STEP_KEYS = {"do", "id", "kind", "role", "segment", "near", "near_radius", "roun
              "modes",      # only in these game modes (Executor._step_allowed), e.g. [half_cash]
              "at",         # exact spot [fx, fy] (screen fractions) from a map's own build
              "lane",       # "blimp": score only the track blimps ride (Executor.pick_spots)
-             "obstacle"}   # do: clear - the removable obstacle's name in the map file
+             "obstacle",   # do: clear - the removable obstacle's name in the map file
+             "name",       # do: ability - the ability (TARGETED_ABILITIES)
+             "when",       # do: ability - {round, hero_level_min, hero_level_max}
+             "min_value"}  # do: ability - the target's least worth (table price of its tiers)
+ABILITY_WHEN_KEYS = {"round", "hero_level_min", "hero_level_max"}
+
+
+def _targeted_abilities():
+    """{ability name: {"hero", "level"}} for the abilities a `do: ability`
+    step may press: a hero ability that is pressed and then given a tower
+    with a click (Executor._try_ability, Game.targeted_ability). The hero
+    and the unlock level come from towers.HEROES."""
+    out = {}
+    for hero, h in T.HEROES.items():
+        for ab in h.get("abilities", []):
+            if ab["name"] in ("Blood Sacrifice",):
+                out[ab["name"]] = {"hero": hero, "level": ab["level"]}
+    return out
+
+
+TARGETED_ABILITIES = _targeted_abilities()
 UNSUPPORTED_STEP_KEYS = {
     "avoid": "spot avoidance (`avoid`) is not implemented by pick_spot",
     "avoid_radius": "spot avoidance (`avoid`) is not implemented by pick_spot",
@@ -647,8 +666,11 @@ def validate(strat):
     forbidden = set(c.get("forbidden_towers") or ())
     for where, st in _all_steps(strat):
         do = st.get("do")
-        if do not in ("place", "upgrade", "target", "sell", "clear"):
+        if do not in ("place", "upgrade", "target", "sell", "clear", "ability"):
             probs.append(f"{where}: unknown step {do!r}")
+            continue
+        if do == "ability":
+            probs += _ability_problems(strat, where, st, placed)
             continue
         if do == "clear":
             if not st.get("obstacle"):
@@ -690,6 +712,36 @@ def validate(strat):
     return probs
 
 
+def _ability_problems(strat, where, st, placed):
+    """Problems of one `do: ability` step (validate): a known targeted
+    ability of the strategy's own hero, given a placed, non-hero tower,
+    only in the plan (an answer or fill step would fire it at any time)."""
+    probs = []
+    spec = TARGETED_ABILITIES.get(st.get("name"))
+    if spec is None:
+        return [f"{where}: unknown targeted ability {st.get('name')!r} "
+                f"(known: {', '.join(sorted(TARGETED_ABILITIES))})"]
+    hero = constraints(strat).get("required_hero") or strat.get("hero")
+    if hero != spec["hero"]:
+        probs.append(f"{where}: {st['name']} is {spec['hero']}'s ability, the strategy's hero is {hero}")
+    if not where.startswith("plan"):
+        probs.append(f"{where}: an ability step belongs in the plan")
+    tgt = st.get("target")
+    if not tgt or tgt not in placed:
+        probs.append(f"{where}: ability target {tgt!r} is never placed")
+    elif placed[tgt] == "hero":
+        probs.append(f"{where}: ability target {tgt!r} is the hero")
+    when = st.get("when") or {}
+    if not isinstance(when, dict) or set(when) - ABILITY_WHEN_KEYS:
+        probs.append(f"{where}: ability `when` takes only {sorted(ABILITY_WHEN_KEYS)}")
+    elif when.get("hero_level_min") is not None and when["hero_level_min"] < spec["level"]:
+        probs.append(f"{where}: hero_level_min {when['hero_level_min']} is below "
+                     f"{st['name']}'s unlock level {spec['level']}")
+    if st.get("min_value") is not None and not (isinstance(st["min_value"], int) and st["min_value"] > 0):
+        probs.append(f"{where}: min_value must be a positive whole number of dollars")
+    return probs
+
+
 def readiness(strat):
     """Reasons this strategy must not be auto-played (empty list: bot-ready)."""
     reasons = []
@@ -716,7 +768,9 @@ def readiness(strat):
                 reasons.append(f"{UNSUPPORTED_STEP_KEYS[k]} [{where}]")
             elif k not in STEP_KEYS:
                 reasons.append(f"unknown step key {k!r} [{where}]")
-        for tm in (st.get("target"), st.get("mode") if st.get("do") == "target" else None):
+        # an ability step's `target` is the tower it is given, not a targeting mode
+        tmode = st.get("target") if st.get("do") != "ability" else None
+        for tm in (tmode, st.get("mode") if st.get("do") == "target" else None):
             if tm is not None and str(tm).lower() not in TARGET_MODES:
                 reasons.append(f"targeting {tm!r} needs a calibrated point [{where}]")
         if st.get("do") == "sell" and (c.get("no_sell") or "chimps" in (strat.get("modes") or [])):
@@ -1103,6 +1157,12 @@ class Executor:
         self.upgrade_fails = {}    # (tid, path) -> non-XP failures this game
         self.panel_price = {}      # (tid, path, tier) -> price the panel asked (above table)
         self.last_try = 0.0
+        # `do: ability` steps (_try_ability): the match's AbilityPlanner
+        # (Match sets it: its hotkey order and the hero's placement round),
+        # presses made per step, and the round the hero was placed in
+        self.abil = None
+        self.ability_tries = {}
+        self.hero_round = None
         self.blocked = np.zeros(model.heat.shape, bool)  # this game's no-go cells
         for p in game.towers.values():
             cx, cy = model.frac_to_cell(p.x, p.y)
@@ -1942,7 +2002,12 @@ class Executor:
             return "wait"
         do = step["do"]
         if do == "place":
-            return self._try_place(step, cash)
+            r = self._try_place(step, cash)
+            if r == "bought" and step.get("kind") == "hero" and getattr(self, "hero_round", None) is None:
+                self.hero_round = rnd      # the hero's level estimate counts from here
+            return r
+        if do == "ability":
+            return self._try_ability(step, rnd)
         if do == "clear":
             return self._try_clear(step, cash)
         if do == "upgrade":
@@ -2046,6 +2111,114 @@ class Executor:
                 self.account.note_bought(p.kind, path, p.tiers[path - 1])
             self._aim(p)
             cash_left -= cost
+
+    # `do: ability` (Blood Sacrifice): seconds between presses when a key
+    # armed nothing (the next try takes the next candidate key), seconds
+    # before the hero's level is looked at again when it is too low, and
+    # presses before the step is given up for the game.
+    ABILITY_RETRY_S = 5.0
+    ABILITY_LEVEL_RECHECK_S = 10.0
+    ABILITY_MAX_TRIES = 12
+
+    def _try_ability(self, step, rnd):
+        """One attempt at a `do: ability` step, e.g.
+            {do: ability, name: Blood Sacrifice, target: d1, min_value: 72795,
+             when: {round: 76, hero_level_min: 7, hero_level_max: 10}}
+        Presses the hero's ability and gives it the target tower
+        (Game.targeted_ability). Returns try_step's results: "done" once
+        the target is gone, "wait" while its round, the hero's level, the
+        round being played or a retry pause stands in the way, "skip" when
+        it can never go right this game (no target, the target worth less
+        than min_value, the hero past hero_level_max, the tries used up, or
+        a press whose outcome the screen did not show)."""
+        name = step.get("name")
+        spec = TARGETED_ABILITIES.get(name)
+        if spec is None:
+            log.warning("ability step %s: unknown ability", step)
+            return "skip"
+        when = step.get("when") or {}
+        if when.get("round") and (rnd is None or rnd < when["round"]):
+            return "wait"
+        p = self.g.towers.get(step.get("target"))
+        if p is None or p.kind == "hero":
+            log.warning("ability step %s: target %s is not standing - given up", name, step.get("target"))
+            return "skip"
+        if getattr(self.g, "hero", None) != spec["hero"]:
+            log.warning("ability step %s: the hero is %s, not %s - given up", name,
+                        getattr(self.g, "hero", None), spec["hero"])
+            return "skip"
+        hero = next((h for h in self.g.towers.values() if h.kind == "hero"), None)
+        if hero is None:
+            self.g.fail_reason = "hero"
+            return "wait"
+        value = T.total_cost(p.kind, p.tiers, PRICE_FAMILY.get(self.mode, "hard"))
+        if step.get("min_value") and value < step["min_value"]:
+            log.warning("ability step %s: %s (%s %s) is worth $%s, under the $%s it needs - given up",
+                        name, p.tid, p.kind, p.crosspath, value, step["min_value"])
+            return "skip"
+        if getattr(self, "play_running", None) is False:
+            return "wait"          # only while a round plays: the achievement counts a round's levels
+        key = self._step_key(step)
+        if time.time() < self.retry_at.get(key, 0):
+            return "wait"
+        tries = self.ability_tries.get(key, 0)
+        if tries >= self.ABILITY_MAX_TRIES:
+            log.warning("ability step %s: %d presses armed nothing - given up", name, tries)
+            return "skip"
+        level, how = self._hero_level_now(hero, rnd)
+        lo = max(spec["level"], when.get("hero_level_min") or 0)
+        hi = when.get("hero_level_max")
+        if level is None or level < lo:
+            self.retry_at[key] = time.time() + self.ABILITY_LEVEL_RECHECK_S
+            self.g.fail_reason = "hero_level"
+            return "wait"
+        if hi and level > hi:
+            log.warning("ability step %s: the hero is level %s (%s), over %s - given up", name, level, how, hi)
+            return "skip"
+        keys = self._ability_keys(name, rnd)
+        if not keys:
+            log.warning("ability step %s: no hotkey may be pressed for it - given up", name)
+            return "skip"
+        k = keys[tries % len(keys)]
+        self.ability_tries[key] = tries + 1
+        with self.why("plan_ability", f"{name} on {p.tid} ({p.kind} {p.crosspath}, ${value}): "
+                                      f"hero level {level} ({how}), key {k}"):
+            r = self.g.targeted_ability(k, p)
+        if r == "done":
+            after, how_after = self._hero_level_now(hero, rnd)
+            log.info("%s: %s given up, hero level %s (%s) -> %s (%s)", name, p.tid, level, how,
+                     after, how_after)
+            return "done"
+        if r == "unclear":
+            log.error("ability step %s: the screen did not show what key %s did with %s - given up "
+                      "(see logs/ability_%s_*.png)", name, k, p.tid, p.tid)
+            return "skip"
+        self.retry_at[key] = time.time() + self.ABILITY_RETRY_S
+        return "wait"
+
+    def _hero_level_now(self, hero, rnd):
+        """(level, "panel" | "estimate") for the placed hero: read off its
+        panel when the game can (Game.hero_level), else estimated from the
+        rounds since it was placed (abilities.estimate_hero_level, with the
+        account's Monkey Education XP bonus). (None, ...) when neither."""
+        read = getattr(self.g, "hero_level", None)
+        if callable(read):
+            lvl = read(hero)
+            if lvl is not None:
+                return lvl, "panel"
+        from .abilities import estimate_hero_level
+        from .towerxp import EDUCATION_MULT
+        placed = getattr(self.abil, "hero_round", None) or getattr(self, "hero_round", None)
+        if placed is None or rnd is None:
+            return None, "unknown"
+        return estimate_hero_level(getattr(self.g, "hero", None), placed, rnd, EDUCATION_MULT), "estimate"
+
+    def _ability_keys(self, name, rnd):
+        """Hotkeys to try for hero ability `name`, best guess first
+        (AbilityPlanner.key_candidates); [1] without a planner (offline)."""
+        if self.abil is None:
+            return [1]
+        return self.abil.key_candidates(name, rnd)
 
     def _release_panel(self):
         """Close the panel kept open for a run of tiers (Game.release_panel);

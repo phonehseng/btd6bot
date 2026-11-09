@@ -339,6 +339,13 @@ def walk_plan(plan, mode, boosts=None):
             st = steps[i]
             if st.get("round") and rnd < st["round"]:
                 break
+            if st["do"] == "ability":       # costs nothing; the tower goes (Blood Sacrifice)
+                if rnd < (st.get("when") or {}).get("round", 0):
+                    break
+                kinds.pop(st["target"], None)
+                bought[i] = rnd
+                i += 1
+                continue
             if st["do"] == "place":
                 cost = (T.hero_cost(plan["hero"], econ.family) if st["kind"] == "hero"
                         else T.tower_cost(st["kind"], econ.family))
@@ -404,17 +411,17 @@ def test_not_lacking_critical_information_build():
     assert n == len(c["plan"]), f"plan stuck at step {n}"
 
 
-def test_kali_build_research():
-    """Not bot-ready (Blood Sacrifice needs a targeted ability step), but the
-    numbers hold: the sacrificial M.A.D. is bought by round 79 and is worth
-    the worst case of ten Adora levels from level 7-10 (4 XP per dollar),
-    and Adora placed at round 70 is level 7-10 from round 76 to 80."""
+def test_kali_build():
+    """Bot-ready since the `do: ability` step exists: the sacrificial M.A.D.
+    is bought by round 79 and is worth the worst case of ten Adora levels
+    from level 7-10 (4 XP per dollar; the step's min_value is exactly that
+    worst case), and Adora placed at round 70 is level 7-10 from round 76
+    to 80, when the step may fire."""
     from btd6bot import abilities as AB
     from btd6bot import towers as T
     from btd6bot.towerxp import EDUCATION_MULT
     k = S.load_all()["ach_kali_maaaaaaaa"]
-    reasons = S.readiness(k)
-    assert not k["bot_ready"] and any("targeted ability" in r for r in reasons), reasons
+    assert k["bot_ready"] and S.readiness(k) == [], S.readiness(k)
     assert S.validate(k) == []
     bought, _, n = walk_plan(k, "hard")
     assert n == len(k["plan"]), f"plan stuck at step {n}"
@@ -422,12 +429,67 @@ def test_kali_build_research():
     mad_round = bought[idx[("d1", "0-5-0")]]
     hero_round = bought[idx[("hero", None)]]
     assert hero_round == 70 and mad_round <= 79, (hero_round, mad_round)
+    sac = k["plan"][-1]
+    assert sac["do"] == "ability" and sac["target"] == "d1" and bought[len(k["plan"]) - 1] <= 79
     xp = AB.HERO_LEVEL_XP
     scale = AB.HERO_XP_SCALE["adora"]
     worst = max((xp[lv + 10] - xp[lv]) * scale for lv in range(7, 11))
-    assert 4 * T.total_cost("dartling", "0-5-0", "hard") >= worst
-    levels = [AB.estimate_hero_level("adora", hero_round, r, EDUCATION_MULT) for r in range(max(76, mad_round), 81)]
+    assert sac["min_value"] * 4 >= worst > (sac["min_value"] - 1) * 4
+    assert T.total_cost("dartling", "0-5-0", "hard") >= sac["min_value"]
+    when = sac["when"]
+    assert (when["hero_level_min"], when["hero_level_max"]) == (7, 10)
+    levels = [AB.estimate_hero_level("adora", hero_round, r, EDUCATION_MULT)
+              for r in range(max(when["round"], mad_round), 81)]
     assert all(7 <= lv <= 10 for lv in levels), levels
+
+
+def test_kali_replay_survives_the_sacrifice():
+    """The executor's own replay of the build on Logs Hard (tools/
+    simulate_threats.py: the map's learned spots, the account's Fast Track
+    start and Double Cash): the plan runs to its last step, d1 is 0-5-0 when
+    Blood Sacrifice takes it in rounds 76-79, no round lacks an answer, and
+    the boards after the sacrifice rate about as well as with d1 kept (the
+    M.A.D. carries little: rounds 76-80 within 0.15 of the no-sacrifice
+    replay). Without plan_first the spare-cash ninjas took the M.A.D.'s cash
+    and d1 ended at 0-4-0, worth $12,475."""
+    import logging
+    from types import SimpleNamespace as SN
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import optimize_builds as OB
+    import simulate_threats as SIM
+    from btd6bot import dps_model as D
+    from btd6bot.forecast import RoundForecast
+    k = S.load_all()["ach_kali_maaaaaaaa"]
+    econ = OB.economy("hard", {"double_cash": True, "fast_track": True})
+    sc = {"start_round": econ.start_round, "start_cash": econ.start_cash, "income_multiplier": econ.cash_mult}
+    m = SIM.map_model("Logs", learned=True)
+    fc = RoundForecast("Logs", "hard", m.sight, (getattr(m, "sight_height", None), getattr(m, "ground_height", None)))
+    assert fc._ready()
+
+    def replay(strat):
+        boards = {}
+        logging.disable(logging.CRITICAL)
+        try:
+            r = SIM.simulate(strat, "hard", "Logs", real_map=True, learned=True, scenario=sc, boards=boards)
+        finally:
+            logging.disable(logging.NOTSET)
+        margins = {}
+        for rnd in range(76, 81):
+            towers = [SN(tid=t, kind=kk, tiers=ti, x=fx, y=fy) for t, (kk, ti, fx, fy) in boards[rnd].items()]
+            margins[rnd] = D.round_margin(fc.stations(towers), "hard", rnd, fc.track)
+        return r, boards, margins
+
+    r, boards, margins = replay(k)
+    assert r["plan_done"] == f"{len(k['plan'])}/{len(k['plan'])}", r["plan_done"]
+    assert r["gaps"] == [], r["gaps"]
+    # the first board without d1 (the simulator plays the step before the
+    # round's board is taken; live it waits for the round to play)
+    sac = [rnd for rnd, b in sorted(boards.items()) if rnd >= 70 and "d1" not in b]
+    assert sac and 76 <= sac[0] <= 79, sac
+    assert boards[sac[0] - 1]["d1"][1] == (0, 5, 0)
+    keep = dict(k, plan=[st for st in k["plan"] if st["do"] != "ability"])
+    _, _, kept = replay(keep)
+    assert all(margins[rnd] >= kept[rnd] - 0.15 for rnd in margins), (margins, kept)
 
 
 def test_catalog_points_at_the_new_builds():
@@ -451,7 +513,7 @@ def test_catalog_points_at_the_new_builds():
     ids = ("ach_world_league_training", "ach_not_lacking_critical_information", "ach_kali_maaaaaaaa")
     with mock.patch.object(R.Achievements, "load", staticmethod(lambda: {})):     # no card read
         specs = [plain(0.5)] + R.planner_specs({sid: strats[sid] for sid in ids}, F.full_account())
-    assert {sp.id for sp in specs} == {"plain", *ids[:2]}     # Kali: not bot-ready, not offered
+    assert {sp.id for sp in specs} == {"plain", *ids}         # Kali: bot-ready since `do: ability`
     unread = {"scanned_at": SCANNED, "cards": {}}
     _, _, cands = P.rank_games(acc, specs, achievements=(cat, unread), below_bar=True)
     ach = {c.s.id for c in cands if c.tier == "ACH"}

@@ -188,6 +188,17 @@ TOWER_ABILITIES = {
 ROUND_START = {"Bloon Sabotage"}
 BLIMP_LEAD_S = 1.0            # ROUND_START fires this many game seconds before the first blimp
 
+# Abilities that, once pressed, wait for a click on a tower and then destroy
+# it: Adora's Blood Sacrifice (level 7) turns the clicked tower into hero XP.
+# The planner never presses them (they are 'never' in towers.HEROES), and
+# while one may be on the board it presses NOTHING: the hotkey order is only
+# assumed (see the module docstring), so a press meant for The Long Arm of
+# Light could arm Blood Sacrifice instead, and the bot's next click on a
+# tower - to upgrade it - would sacrifice it. Only a plan's own `do: ability`
+# step (strategy.Executor._try_ability) presses one, and it then clicks the
+# tower it means to destroy itself (Game.targeted_ability).
+DESTRUCTIVE_ABILITIES = {"Blood Sacrifice"}
+
 
 def _tower_ability_index():
     """(kind, path 1..3, tier 1..5) -> upgrade name, for TOWER_ABILITIES."""
@@ -357,6 +368,35 @@ class AbilityPlanner:
                         ab.get("cooldown_s"), lvl_lo >= ab["level"]))
         return out
 
+    def destructive_possible(self, rnd):
+        """Name of a DESTRUCTIVE_ABILITIES hero ability that may be unlocked
+        now (optimistic level estimate), or None."""
+        for _, name, _, _, _ in self._hero_abilities(rnd):
+            plain = name.split(":", 1)[1]
+            if plain in DESTRUCTIVE_ABILITIES:
+                return plain
+        return None
+
+    def key_candidates(self, name, rnd):
+        """Hotkeys to try, in order, for hero ability `name` (its plain name,
+        e.g. "Blood Sacrifice"): the assumed slot first, then the other
+        slots, nearest first, up to one past the last when the level
+        estimate does not list the ability yet (the slot it gets when the
+        estimate is behind the game). Slots whose assumed ability is another
+        'never' one are left out: pressing those blind is what 'never'
+        forbids. The caller checks each try on the screen
+        (Game.targeted_ability), so a wrong guess costs one press of a
+        harmless ability."""
+        entries = self.hotkeys(rnd)
+        want = "hero:" + name
+        guess = next((k for k, n, _, _, _ in entries if n == want), None)
+        last = len(entries) if guess is not None else len(entries) + 1
+        if guess is None:
+            guess = last
+        unsafe = {k for k, n, use, _, _ in entries if use == "never" and n != want}
+        keys = sorted(range(1, min(last, MAX_HOTKEY) + 1), key=lambda k: (abs(k - guess), k))
+        return [k for k in keys if k not in unsafe]
+
     def hotkeys(self, rnd):
         """[(hotkey, name, use, cooldown, certain_now)] in assumed hotkey order."""
         entries = list(self._hero_abilities(rnd))
@@ -427,6 +467,15 @@ class AbilityPlanner:
         blimps_here = self._blimps_here(now, rnd)
         fired = []
         live = {}
+        guard = self.destructive_possible(rnd)
+        if guard:
+            # any key could be the one that arms it (DESTRUCTIVE_ABILITIES)
+            if not getattr(self, "_guard_logged", False):
+                self._guard_logged = True
+                log.info("abilities: no hotkey presses from round %s on - %s may be unlocked "
+                         "and a wrong guess of its key would arm it", rnd, guard)
+            self.last_fired = []
+            return []
         for key, name, use, cd, certain in self.hotkeys(rnd):
             slot = live[name] = self.slots.get(name) or _Slot(name)
             if use == "never":

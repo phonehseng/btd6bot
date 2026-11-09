@@ -1530,6 +1530,111 @@ class Game:
     def ability(self, n):
         self.inp.press(str(n))
 
+    # -- targeted abilities (Adora's Blood Sacrifice) ------------------------------
+    # Blood Sacrifice is pressed like any ability and then waits for a click
+    # on the tower to destroy. Nothing of that screen has been captured yet,
+    # so every step leaves a frame in logs/ (ABILITY_CAPTURE) and every
+    # outcome is told by what the game does with a click on the tower's own
+    # spot - the one click that can never hurt a tower we did not pick:
+    # - its upgrade panel opens: nothing was armed (wrong key, cooldown,
+    #   level too low); the panel is closed again;
+    # - nothing opens, twice: the tower is gone (sacrificed);
+    # - a box worded "sacrifice" with a green check: confirmed, unless it
+    #   also shows a price or a buy word (then cancelled: never a purchase).
+    ABILITY_ARM_S = 0.5        # after the hotkey, before the click on the tower
+    ABILITY_CLICK_S = 0.6      # after a click, before looking
+    ABILITY_CLICKS = 4         # clicks on the tower's spot at most
+    ABILITY_CAPTURE = "logs/ability_{tid}_{step}.png"
+    HERO_PANEL_CAPTURE = "logs/hero_panel_level.png"
+
+    def _capture(self, img, path):
+        """Keep a frame for calibration; never let saving it break the game."""
+        try:
+            from .vision import save
+            save(img, path)
+        except Exception:
+            pass
+
+    def hero_level(self, p):
+        """Hero p's level read off its upgrade panel, or None when no
+        "Level N" could be read (see hero_level_from_text). The panel is
+        opened with a click on the hero and closed again; nothing in it is
+        clicked. Its frame is kept (HERO_PANEL_CAPTURE) for calibration."""
+        if not self.select(p):
+            return None
+        try:
+            f = self.fresh()
+            self._capture(f, self.HERO_PANEL_CAPTURE)
+            words = self._vision().read(region=self.panel(p)["box"], img=f)
+            return hero_level_from_text([w.text for w in words])
+        except Exception:
+            log.exception("hero level read failed")
+            return None
+        finally:
+            self.deselect(p)
+
+    def targeted_ability(self, key, p):
+        """Press ability hotkey `key`, then click tower p to give it to the
+        ability (Blood Sacrifice). Returns:
+        "done"       p is gone: twice no panel opened on its spot; it is
+                     dropped from self.towers;
+        "not_armed"  p's own panel opened: the key armed nothing that takes
+                     a tower (wrong key, cooldown, level); p still stands;
+        "unclear"    neither: a box that was not confirmed, or the clicks
+                     ran out - the ability may still be armed;
+        "refused"    nothing pressed (the match screen is not showing)."""
+        if not self.screen_ok():
+            return "refused"
+        if self.is_holding():
+            self.cancel_hold()
+        self.close_panels()
+        self.inp.press(str(key))
+        time.sleep(self.ABILITY_ARM_S)
+        f = self.fresh()
+        self._capture(f, self.ABILITY_CAPTURE.format(tid=p.tid, step="armed"))
+        banner = find_sacrifice_box(f, self._vision().read(img=f))
+        log.info("ability key %s pressed for %s: %s", key, p.tid,
+                 "a sacrifice text is showing" if banner else "no sacrifice text read")
+        blank = 0
+        for i in range(1, self.ABILITY_CLICKS + 1):
+            self.inp.click(p.x, p.y)
+            time.sleep(self.ABILITY_CLICK_S)
+            f = self.fresh()
+            self._capture(f, self.ABILITY_CAPTURE.format(tid=p.tid, step=f"click{i}"))
+            side = self._open_side(f)
+            if side:
+                p.panel_side = side
+                self.close_panels()
+                log.info("ability key %s: %s's panel opened on click %d - %s", key, p.tid, i,
+                         "nothing was armed" if not blank else "the click before took nothing")
+                return "not_armed"
+            box = find_sacrifice_box(f, self._vision().read(img=f))
+            if box is not None:
+                blank = 0
+                if box["purchase"]:
+                    log.warning("ability key %s: the box over %s asks for money (%s) - cancelled",
+                                key, p.tid, box["text"])
+                    self.inp.click(*(box["cancel"] or (0.5, 0.012)))
+                    time.sleep(0.4)
+                    return "unclear"
+                if box["confirm"] is not None:
+                    log.info("ability key %s: confirming the sacrifice box (%s)", key, box["text"])
+                    self.inp.click(*box["confirm"])
+                    time.sleep(self.ABILITY_CLICK_S)
+                # no button: still armed (a banner), the click did not take - click again
+                continue
+            blank += 1
+            if blank >= 2:
+                self.towers.pop(p.tid, None)
+                log.info("%s (%s %s, $%s) is gone after ability key %s", p.tid, p.kind, p.crosspath,
+                         p.spent, key)
+                journal.current().event("sacrifice", tid=p.tid, kind=p.kind, cross=p.crosspath,
+                                        spent=p.spent, key=key, why=getattr(self, "why", None))
+                return "done"
+        log.warning("ability key %s: %s neither opened its panel nor went away in %d clicks",
+                    key, p.tid, self.ABILITY_CLICKS)
+        return "unclear"
+
 
 # -- removable obstacles ------------------------------------------------------
 # Clicking a removable obstacle (Peninsula's kelp, Dark Castle's trees...)
@@ -1618,6 +1723,43 @@ def find_removal_box(img, words):
     confirm = _colour_blob(img, (text.x, below[0], text.x + REMOVE_BOX_SIDE, below[1]), (40, 120, 120), (85, 255, 255))
     cancel = _colour_blob(img, (text.x - REMOVE_BOX_SIDE, below[0], text.x, below[1]), (0, 120, 140), (12, 255, 255))
     return {"price": price, "confirm": confirm, "cancel": cancel}
+
+
+SACRIFICE_WORD = "sacrific"            # "Sacrifice", "sacrificed", "SACRIFICE TOWER?"
+PURCHASE_WORDS = ("$", "buy", "purchase", "monkeymoney", "cost")
+SACRIFICE_BOX_REACH = 0.2              # words this near the sacrifice text belong to its box
+
+
+def find_sacrifice_box(img, words):
+    """Text about a sacrifice in a frame (Blood Sacrifice's banner or box):
+    {"text", "confirm", "cancel", "purchase"} or None when no such text
+    shows. confirm/cancel: centres of a green check / red X below the text
+    (as in the removal box, find_removal_box), None when there is none;
+    purchase: a word near it asks for money - such a box is never
+    confirmed (Game.targeted_ability)."""
+    from .vision import norm
+    text = next((w for w in words if SACRIFICE_WORD in norm(w.text)), None)
+    if text is None:
+        return None
+    near = [norm(w.text) for w in words
+            if abs(w.x - text.x) <= SACRIFICE_BOX_REACH and abs(w.y - text.y) <= SACRIFICE_BOX_REACH]
+    purchase = any(p in t for t in near for p in PURCHASE_WORDS)
+    below = (text.y, text.y + REMOVE_BOX_BELOW)
+    confirm = _colour_blob(img, (text.x, below[0], text.x + REMOVE_BOX_SIDE, below[1]), (40, 120, 120), (85, 255, 255))
+    cancel = _colour_blob(img, (text.x - REMOVE_BOX_SIDE, below[0], text.x, below[1]), (0, 120, 140), (12, 255, 255))
+    return {"text": text.text, "confirm": confirm, "cancel": cancel, "purchase": purchase}
+
+
+def hero_level_from_text(texts):
+    """The hero's level from the words of its upgrade panel: the smallest
+    N of every "Level N" / "Lvl N" / "Lv N" read (1-20), so that a level-up
+    button labelled with the next level does not count; None without one.
+    OCR may glue the number on ("Level7") or read l as I or 1."""
+    import re
+    joined = " ".join(texts).lower()
+    vals = [int(m) for m in re.findall(r"(?:[l1i]ev[e3][l1i]|[l1i]v[l1i]|[l1i]v)\s*[:.]?\s*(\d{1,2})\b", joined)]
+    vals = [v for v in vals if 1 <= v <= 20]
+    return min(vals) if vals else None
 
 
 def _red_mask(img):

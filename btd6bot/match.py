@@ -331,6 +331,9 @@ class Match:
         self._t_park = 0.0         # last cursor park (PARK_EVERY)
         self._park = None          # where the cursor rests: the busiest track (screen fractions)
         self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
+        # a plan's `do: ability` step takes its hotkey guesses and the hero's
+        # placement round from the same planner (Executor._try_ability)
+        executor.abil = self.abil
         self._in_round = False
         # the damage model's view of each round as it starts (forecast.py)
         self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None),

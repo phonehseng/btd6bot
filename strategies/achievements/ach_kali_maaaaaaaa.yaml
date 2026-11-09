@@ -1,6 +1,5 @@
 # Achievement 'Kali Maaaaaaaa': "Gain 10 levels for Adora in one round"
-# (not hidden; reward: a Cash Drop Power). Research build: NOT bot-ready -
-# it needs one new executor step (see bot_ready_reason and the notes).
+# (not hidden; reward: a Cash Drop Power).
 #
 # The rule (bloonswiki "Kali Maaaaaaaa" and "Adora (BTD6)"): Adora's level-7
 # ability Blood Sacrifice destroys the tower the player selects (not a
@@ -22,37 +21,40 @@
 # (account.round_xp x1.08 Monkey Education) brings her to level 7 during
 # round 76 and she stays under level 10 to round 80. The sacrifice goes in
 # round 76-79, after the M.A.D. is bought; the defence never counts on it.
-# Offline cash walk: tests/test_achievement_replays_offline.py
-# (test_kali_build_research).
+# Offline cash walk and replay: tests/test_achievement_replays_offline.py
+# (test_kali_build, test_kali_replay_survives_the_sacrifice).
 #
-# What the executor needs (why bot_ready is false):
-#  1. a `do: ability` step: press the hero's Blood Sacrifice (its hotkey or
-#     its icon in the ability bar), then click the target tower `id` - the
-#     only click-targeted ability so far; the AbilityPlanner lists Blood
-#     Sacrifice as 'never' (towers.HEROES adora) and must keep it that way;
-#  2. a check that Adora is at least level 7 (her level is only estimated
-#     from round XP: abilities.estimate_hero_level), e.g. by reading her
-#     upgrade panel's level, and at most level 10;
-#  3. a capture of the Blood Sacrifice selection screen (bloonswiki's "Blood
-#     Sacrifice menu" image): whether a click on the tower is enough or a
-#     confirm button follows. A wrong click destroys a defence tower.
+# The sacrifice is the plan's last step, `do: ability`
+# (strategy.Executor._try_ability, Game.targeted_ability): from round 76,
+# while a round plays, with d1 worth at least $72,795 and Adora's level
+# (read off her upgrade panel, else estimated from round XP) 7-10, it
+# presses her Blood Sacrifice hotkey (AbilityPlanner.key_candidates: the
+# assumed slot first, the others after) and clicks d1. Done when d1 is gone
+# (twice no panel on its spot); a panel opening on d1 means the key armed
+# nothing - the next try takes the next key. The AbilityPlanner presses no
+# key at all once Blood Sacrifice may be unlocked (abilities.
+# DESTRUCTIVE_ABILITIES), so no stray press can arm it. Every try leaves its
+# frames in logs/ability_d1_*.png and logs/hero_panel_level.png: the
+# selection screen has never been captured.
 id: ach_kali_maaaaaaaa
 achievement: Kali Maaaaaaaa
 map: Logs
 modes: [hard]
 hero: adora
-bot_ready: false
-bot_ready_reason: 'needs a targeted ability step: Blood Sacrifice on the Dartling (press, then click the tower)'
+# The plan owns the cash until the sacrifice (Executor.plan_first): without
+# it the spare-cash buys took every dollar for extra 4-0-2 ninjas (the
+# Logs replay, tools/simulate_threats.py on the account's Fast Track and
+# Double Cash) and d1 never got past 0-4-0, worth $12,475 - no sacrifice.
+plan_first: true
 constraints:
   wins_needed: 1
   required_hero: adora
-  targeted_ability: Blood Sacrifice
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2],
            spike: [2, 0, 4], dartling: [0, 5, 0]}
   base_success: {hard: 0.85}
 notes:
-  - 'Round 70: place Adora (hero step below). Round 76-79, once d1 is 0-5-0 and Adora is level 7-10: Blood Sacrifice on d1 (new `do: ability` step, not coded).'
+  - 'Round 70: place Adora (hero step below). Round 76-79, once d1 is 0-5-0 and Adora is level 7-10: Blood Sacrifice on d1 (the `do: ability` step).'
   - 'Do not let the fill buy a second Dartling: only d1 is the sacrifice.'
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
@@ -77,6 +79,9 @@ plan:
   - {do: place, id: d1, kind: dartling, role: far, round: 60}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6], round: 70}
   - {do: upgrade, id: d1, to: 0-5-0}     # M.A.D.: the sacrifice, $82,675
+  # 4 XP a dollar: $72,795 is ten levels from level 10, the worst case
+  - {do: ability, name: Blood Sacrifice, target: d1, min_value: 72795,
+     when: {round: 76, hero_level_min: 7, hero_level_max: 10}}
 fill:
   - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 5}
   - {do: upgrade, kind: ninja, to: 4-0-2}

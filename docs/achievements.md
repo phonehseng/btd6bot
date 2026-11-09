@@ -156,7 +156,7 @@ real money).
 
 | Achievement | Scan 11-08 | Reward | What is missing | Effort |
 |---|---|---|---|---|
-| Kali Maaaaaaaa | never read | Cash Drop | `ach_kali_maaaaaaaa` is written (research, not bot-ready): Logs Hard, a sacrificial Dartling 0-5-0 M.A.D. ($82,675 = 330,700 Adora XP; ten levels from level 7-10 need at most 291,179), Adora placed at round 70 so she is level 7-10 in rounds 76-80. Missing: a `do: ability` step (press Blood Sacrifice, click the tower), a check of Adora's level, and a capture of the sacrifice screen | small code + 1 capture; then one ~25 min game |
+| Kali Maaaaaaaa | never read | Cash Drop | `ach_kali_maaaaaaaa` is bot-ready (2026-11-09): Logs Hard, plan_first, a sacrificial Dartling 0-5-0 M.A.D. ($82,675 = 330,700 Adora XP; ten levels from level 7-10 need at most 291,179), Adora placed at round 70 so she is level 7-10 in rounds 76-80, then the `do: ability` step (Blood Sacrifice on d1). Open: the sacrifice screen was never captured - the first live try leaves its frames in logs/ability_d1_*.png | one ~25 min game, watched |
 | Golden Ticket (hidden) | "???" | Small Monkeys mode | an 8-click Easter-egg sequence on Candy Falls (spots in the catalog's `how`; a wrong spot or pause resets) before round 1, calibrated once from a capture | small routine; ~1 min |
 | Our Powers Combined | not read | 200 MM | `powershop.py` buying 12 different cheap Powers once (MM allowed) | small, once powershop works |
 | Heavy Investment / Apotheosis / Big Spender | 26 % / not read / not read | 100 MM + 3 instas / 3 T3 instas / 50 MM + insta | Paragon purchase (upgrade button + cash slider, never captured); Big Spender ($1M in one round) also needs freeplay | medium code |
@@ -412,7 +412,7 @@ it as that map's own build.
 | Freaky Friday | ach_freaky_friday | Logs / medium | hard_ninja_alch_sun Medium plan plus two 2-4-0 Transforming Tonic alchemists (t1, t2); the AbilityPlanner fires the Tonic on cooldown; wins_needed 4 |
 | World League Training | ach_world_league_training | Logs / medium | ach_freaky_friday's ninja core without the Tonic alchemists, plus Beast Handler bh1 0-2-0 at once -> 0-3-0 -> 0-4-0 T-Rex (largest share of the invested cash, which tower XP is split by); wins_needed 2; catalog assume_open |
 | Not Lacking Critical Information | ach_not_lacking_critical_information | Logs / medium | the same core with its Sun Avatar traded for three 2-3-0 Robo Monkeys (r1-r3) next to the 2-0-2 Jungle Drums village; wins_needed 3; catalog assume_open |
-| Kali Maaaaaaaa | ach_kali_maaaaaaaa | Logs / hard, hero adora | NOT bot-ready (constraint targeted_ability): the core, d1 Dartling placed round 60, Adora placed round 70, d1 to 0-5-0 M.A.D.; Blood Sacrifice on d1 in rounds 76-79 needs a new `do: ability` step |
+| Kali Maaaaaaaa | ach_kali_maaaaaaaa | Logs / hard, hero adora | plan_first; the core, d1 Dartling placed round 60, Adora placed round 70, d1 to 0-5-0 M.A.D.; then `{do: ability, name: Blood Sacrifice, target: d1, min_value: 72795, when: {round: 76, hero_level_min: 7, hero_level_max: 10}}` (Executor._try_ability, Game.targeted_ability). The AbilityPlanner presses no hotkey once Blood Sacrifice may be unlocked (abilities.DESTRUCTIVE_ABILITIES) |
 | Axis of Havoc | ach_axis_of_havoc | Candy Falls / chimps | extends candyfalls_chimps (steps 1-22: Flagship + Aircraft Carrier, MIB village, Brickell); then s2 0-2-5 Elite Defender and s3 4-2-0 -> 5-2-0 Cripple MOAB inside the MIB, s1 0-1-0 -> 0-5-0 Elite Sniper last (round 99 offline); plan_first |
 
 ## Every achievement
@@ -508,7 +508,7 @@ the research's difficulty. Time: rough estimate for what is left on this account
 | Axis of Havoc | Have one of each T5 sniper in one game of CHIMPS | single-game | complete | yes (hard) | - | done by `ach_axis_of_havoc` (Candy Falls CHIMPS win, 2026-11-08 04:27) |
 | Tower Keeper | Have 200 insta monkeys in your inventory at one time | cumulative, passive | complete | yes (easy) | - | Hold 200 Insta Monkeys at once; instas come from achievements, daily chests, quests and events. Do not spend instas. |
 | A year in the making | Open the Daily Chest 365 times | cumulative | not read | yes (easy) | ? | Open the Daily Chest (daily reward) 365 times; claim it once per day from the main menu. |
-| Kali Maaaaaaaa | Gain 10 levels for Adora in one round | single-game | not read | yes (medium) | one Hard game once coded | `ach_kali_maaaaaaaa` (research, not bot-ready): Logs Hard, sacrificial Dartling 0-5-0 M.A.D. ($82,675), Adora placed R70 (level 7 in R76), Blood Sacrifice in R76-79. Needs a targeted ability step + a capture of the sacrifice screen |
+| Kali Maaaaaaaa | Gain 10 levels for Adora in one round | single-game | not read | yes (medium) | one Hard game | `ach_kali_maaaaaaaa` (bot-ready): Logs Hard, sacrificial Dartling 0-5-0 M.A.D. ($82,675), Adora placed R70 (level 7 in R76), Blood Sacrifice in R76-79 by the `do: ability` step; the sacrifice screen is still uncaptured |
 | Adventurer | Complete an Odyssey | event (odyssey) | not read | no | - | Odysseys. |
 | Seasoned Adventurer | Complete a Hard Odyssey | event (odyssey) | complete | no | - | Odysseys. |
 | No Stone Left Unturned | Complete all 3 difficulties of a single Odyssey | event (odyssey) | 0% | no | - | Odysseys. |
