@@ -33,6 +33,9 @@ rating is the whole path's, so buy_best buys the path's tiers one after
 another while the cash it was rated on lasts, and an unfinished goal stays
 on offer at the next looks (goal_option) until it stands, is overtaken, or
 cannot come before its round any more.
+
+Under a click budget (Apopalypse: clicktime.py) a purchase costs seconds as
+well as dollars, and the lives it saves are weighed against both (worth()).
 """
 from __future__ import annotations
 
@@ -42,6 +45,7 @@ import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
+from . import clicktime as CT
 from . import towers as T
 from .forecast import CRISIS_MARGIN
 
@@ -354,7 +358,8 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     affordable lifts it over 1, a dearer purchase would (save_target) and
     the rounds before it do not cost the `lives` left (dies_first); else
     ("buy", (Option, its worst round, that round's margin before, after))
-    for the purchase that saves the most lives per dollar.
+    for the purchase that saves the most lives per dollar (under a click
+    budget, per share of the cash and of the seconds left: worth()).
 
     While the round being played is in trouble (crisis_now) neither a
     waiting plan step nor a dearer purchase holds more of the cash than
@@ -408,6 +413,10 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     unfinished = goal_option(ex, cash, rnd)
     if unfinished is not None:
         tried = [unfinished] + tried       # judged like any other purchase, by the whole path
+    # under a click budget (Apopalypse) the seconds a purchase takes count
+    # too: worth(), clicktime.py
+    budget_s = CT.time_left(ex, rnd, worst)
+    now_board = board(ex)
     for o in tried:
         leak = forecast.leaks(o.towers, rounds_rated, half)
         if leak is None:
@@ -415,7 +424,7 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
         saved = base - leak
         if saved < MIN_SAVED:
             continue
-        value = saved if crisis else saved / max(o.cost, 1.0)
+        value = worth(ex, o, saved, cash, budget_s, crisis, now_board)
         if pick is None or value > pick[0]:
             pick = (value, o)
     if pick is None and crisis:
@@ -488,6 +497,36 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
                  cash, worst, before or 0.0, len(tried))
         return "wait", None
     return "buy", (pick[1], worst, before, after)
+
+
+def worth(ex, o, saved, cash, budget_s, crisis, now=None):
+    """How much purchase `o`, saving `saved` lives, is worth against the
+    others of one look.
+
+    Without a click budget (budget_s None: every mode whose rounds wait for
+    the bot) it is the lives saved per dollar, or in a crisis (the worst
+    round leaks at full strength) the lives saved.
+
+    Under a click budget (clicktime.time_limited: Apopalypse, where a round
+    passes every 3-4 s and one purchase takes about one of them) the
+    seconds of clicking it takes (clicktime.board_seconds: a placement, a
+    tier, or the whole path a grown option is rated at) are spent too, out
+    of the budget_s seconds before the round judged. Per dollar, Mesa
+    Apopalypse (2026-11-09) bought $300-$450 tiers one a round while
+    $7.7k-$17.4k sat in the bank from round 44 to the loss at round 59. So
+    a purchase is worth the lives it saves per share of both budgets
+    (clicktime.effort: its cost over the cash in hand plus its seconds over
+    budget_s): with little cash that is about per dollar, with a large bank
+    about per second, so a big tier on a standing tower (one click) beats a
+    new tower grown tier by tier. In a crisis the dollars still do not
+    count, but a purchase that cannot be clicked before the round is worth
+    only the share of it that can (budget_s over its seconds)."""
+    if budget_s is None:
+        return saved if crisis else saved / max(o.cost, 1.0)
+    secs = CT.board_seconds(ex, board(ex) if now is None else now, o.towers)
+    if crisis:
+        return saved * min(1.0, budget_s / max(secs, 1e-6))
+    return saved / CT.effort(o.cost, secs, cash, budget_s)
 
 
 def deciding_round(forecast, ex, rounds, lives):

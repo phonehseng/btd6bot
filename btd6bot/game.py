@@ -69,6 +69,7 @@ class Game:
         self.difficulty = difficulty
         self.hero = hero
         self.towers = {}           # tid -> Placed
+        self.hold_panel = None     # tid whose panel stays open between tiers (release_panel)
         self.learned_cost = {}     # (kind, path, tier) -> observed price
         self.locked_seen = None    # (kind, path, tier) last upgrade found XP-locked
         self.fail_reason = None    # why the last place()/upgrade() did nothing
@@ -733,6 +734,10 @@ class Game:
         Off the match screen nothing is clicked and no score is kept."""
         if not self.screen_ok():
             return False
+        if getattr(self, "hold_panel", None) == p.tid and self.panel_open(p):
+            # its panel was left open after the last tier (hold_panel): no
+            # click, no wait, no pop count - the next tier is bought from it
+            return True
         if self.is_holding():
             self.cancel_hold()
         for attempt in range(3):
@@ -799,6 +804,14 @@ class Game:
                 p.pops = v
         except Exception:
             pass
+
+    def release_panel(self):
+        """Close the panel hold_panel kept open for a run of tiers (see
+        _upgrade) and stop holding it."""
+        tid, self.hold_panel = getattr(self, "hold_panel", None), None
+        p = self.towers.get(tid) if tid is not None else None
+        if p is not None:
+            self.deselect(p)
 
     def deselect(self, p):
         if self.panel_open(p):
@@ -1315,7 +1328,13 @@ class Game:
             self.fail_reason = "noeffect"
             return False
         finally:
-            self.deselect(p)
+            # A tower named in hold_panel keeps its panel open after a tier
+            # that went through: the executor buys its next tier from the
+            # same panel (Executor._chain_tiers, under a click budget -
+            # clicktime.py) and closes it with release_panel. Anything that
+            # failed closes it as always.
+            if getattr(self, "hold_panel", None) != p.tid or self.fail_reason is not None:
+                self.deselect(p)
 
     # The price on an upgrade button can take most of a second to change after
     # a purchase. Judged 0.3 s after the click, a bought tier looked "not

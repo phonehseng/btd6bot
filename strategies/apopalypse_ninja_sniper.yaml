@@ -21,7 +21,10 @@ planner:
   # segment in the left pool) popped nothing for 15 rounds, and the damage
   # model rated the opening board 0.59 at round 17 and 0.37 at round 18,
   # before a single purchase could be late. 109 lives went in rounds 18-32.
-  excluded_maps: [Tricky Tracks, Sunken Columns]
+  # not Castle Revenge: three Apopalypse losses (the latest round 49, 2026-11-09
+  # 09:49); its walls hide half the lanes from the snipers, and the 0-2-4
+  # sniper order rated it lower still (0.38 -> 0.28 in apopalypse_check).
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an

@@ -45,10 +45,12 @@ import re
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import yaml
 
+from . import clicktime as CT
 from . import reinforce as RF
 from . import threats as TH
 from . import towers as T
@@ -1857,13 +1859,26 @@ class Executor:
                 if cash is None or cash < cost:
                     self.wait_cost = cost
                     return "wait"
-                if self.g.upgrade(p, path):
-                    if self.account and p.kind != "hero":
-                        self.account.note_bought(p.kind, path, p.tiers[path - 1])
-                    self._aim(p)       # a heli reaching 2xx can now pursue
-                    return "progress" if self._next_path(p, target) else "bought"
-                self._upgrade_failed(p, path, cash)
-                return "wait"
+                # under a click budget the panel stays open for the next tiers
+                # toward the target (_chain_tiers), when the cash covers one more
+                chain = CT.time_limited(self) and self._more_tiers_after(p, path, target, cash - cost)
+                if chain:
+                    self.g.hold_panel = p.tid
+                try:
+                    t0 = time.monotonic()
+                    if self.g.upgrade(p, path):
+                        CT.note(self, "upgrade", time.monotonic() - t0)
+                        if self.account and p.kind != "hero":
+                            self.account.note_bought(p.kind, path, p.tiers[path - 1])
+                        self._aim(p)       # a heli reaching 2xx can now pursue
+                        if chain:
+                            self._chain_tiers(p, target, cash - cost)
+                        return "progress" if self._next_path(p, target) else "bought"
+                    self._upgrade_failed(p, path, cash)
+                    return "wait"
+                finally:
+                    if chain:
+                        self._release_panel()
             reached = [p for p in targets if all(c >= t for c, t in zip(p.tiers, target))]
             if reached:
                 return "done"
@@ -1886,6 +1901,53 @@ class Executor:
                     self.g.sell(p)
             return "bought"
         return "skip"
+
+    def _more_tiers_after(self, p, path, target, cash_left):
+        """Would a tier on `path` leave p short of `target` with a next tier
+        that `cash_left` covers? Then its panel is worth keeping open."""
+        after = list(p.tiers)
+        after[path - 1] += 1
+        nxt = self._next_path(SimpleNamespace(tid=p.tid, kind=p.kind, tiers=after), target)
+        return nxt is not None and nxt[1] <= cash_left
+
+    def _chain_tiers(self, p, target, cash_left):
+        """Under a click budget (clicktime.time_limited), after a tier of p
+        went through: buy the next tiers toward `target` from the panel still
+        open (Game.hold_panel), up to clicktime.CHAIN_MAX_TIERS in all, while
+        `cash_left` covers them.
+
+        Mesa Apopalypse (2026-11-09): n3 went 0-0-0 -> 4-0-2 one tier per
+        tick, each re-selecting the tower and passing through the whole match
+        loop - about 3.5 s a tier, a tier a round - while $14k waited. From
+        the open panel a tier takes about 1.1 s. Each tier is still checked
+        as any other (Game._upgrade: the panel's owner, its prices, the
+        verdict); the first that does not go through ends the run."""
+        for _ in range(CT.CHAIN_MAX_TIERS - 1):
+            nxt = self._next_path(p, target)
+            if nxt is None:
+                return
+            path, cost = nxt
+            cost = max(cost, self.panel_price.get((p.tid, path, p.tiers[path - 1] + 1), 0))
+            if cash_left < cost:
+                return
+            t0 = time.monotonic()
+            if not self.g.upgrade(p, path):
+                self._upgrade_failed(p, path, cash_left)
+                return
+            CT.note(self, "chained", time.monotonic() - t0)
+            if self.account and p.kind != "hero":
+                self.account.note_bought(p.kind, path, p.tiers[path - 1])
+            self._aim(p)
+            cash_left -= cost
+
+    def _release_panel(self):
+        """Close the panel kept open for a run of tiers (Game.release_panel);
+        a game without one (offline fakes) just stops holding it."""
+        release = getattr(self.g, "release_panel", None)
+        if callable(release):
+            release()
+        else:
+            self.g.hold_panel = None
 
     def _try_place(self, step, cash):
         """One attempt at a `place` step (see try_step for the results)."""
@@ -1923,7 +1985,10 @@ class Executor:
             return self._out_of_spots(step, key)
         fracs = [self.m.cell_to_frac(cx, cy) for cx, cy, _ in spots]
         tid = step.get("id") or self._new_tid(kind)
+        t0 = time.monotonic()
         placed = self.g.place(tid, kind, *fracs[0], more_spots=fracs[1:])
+        if placed:
+            CT.note(self, "place", time.monotonic() - t0)
         self._note_refused(kind, key, spots, fracs, placed=bool(placed))
         if placed:
             p = self.g.towers[tid]
@@ -4548,6 +4613,18 @@ class Executor:
                 waiting_ids.add(tid)
             if r == "bought":
                 return True
+        if CT.time_limited(self) and not self.deferred:
+            # under a click budget a later plan step may come first (_quicker_step)
+            ahead = self._quicker_step(cash, rnd)
+            if ahead is not None:
+                j, why = ahead
+                st = self.plan[j]
+                with self.why("plan", f"plan step {j} before step {self.idx}: {why}",
+                              step_idx=j, step=dict(st)):
+                    r = self.try_step(st, cash, rnd)
+                if r in ("bought", "progress"):
+                    log.info("plan step %d %s comes before step %d: %s", j, st, self.idx, why)
+                    return True
         while self.idx < len(self.plan):
             st = self.plan[self.idx]
             if self._waits_for_set_aside_place(st):
@@ -4573,6 +4650,151 @@ class Executor:
                 return True
         self.waiting = PLAN_EXHAUSTED
         return False
+
+    def _plan_bundles(self, rnd):
+        """The plan steps of clicktime.PLAN_WINDOW from the current one, as
+        {tower id: [(index, step), ...]} in plan order, cut at the first step
+        that is not a placement or an upgrade of a named tower, or that
+        waits for a later round: steps past such a step keep their order."""
+        bundles = {}
+        for i in range(self.idx, min(len(self.plan), self.idx + CT.PLAN_WINDOW)):
+            st = self.plan[i]
+            if (st.get("do") not in ("place", "upgrade") or not st.get("id")
+                    or (st.get("round") and (rnd is None or rnd < st["round"]))):
+                break
+            bundles.setdefault(st["id"], []).append((i, st))
+        return bundles
+
+    def _bundle_after(self, steps, now, spot):
+        """(board after, cost, seconds) once the plan `steps` of one tower
+        are done, from the board `now` - or None when they cannot be rated
+        (an upgrade of a tower not standing, a target the tower has passed).
+        spot: (fx, fy) for a tower the steps place."""
+        family = PRICE_FAMILY.get(self.mode, "hard")
+        tid = steps[0][1]["id"]
+        p = self.g.towers.get(tid)
+        kind = p.kind if p is not None else steps[0][1].get("kind")
+        tiers = tuple(p.tiers) if p is not None else None
+        cost = 0.0
+        for _, st in steps:
+            if st["do"] == "place":
+                if p is not None or spot is None or tiers is not None or kind is None:
+                    return None
+                cost += self.g.price(kind) or 0.0
+                tiers = (0, 0, 0)
+            else:
+                if tiers is None:
+                    return None
+                target = tuple(parse_cross(st["to"]))
+                if any(c > t for c, t in zip(tiers, target)):
+                    return None
+                cost += T.total_cost(kind, target, family) - T.total_cost(kind, tiers, family)
+                tiers = target
+        if p is not None:
+            after = [SimpleNamespace(**{**vars(t), "tiers": tiers}) if t.tid == tid else t for t in now]
+        else:
+            after = now + [SimpleNamespace(tid=tid, kind=kind, tiers=tiers, x=spot[0], y=spot[1])]
+        return after, cost, CT.board_seconds(self, now, after)
+
+    def _quicker_step(self, cash, rnd):
+        """(index, why) of a later plan step to buy before the current one,
+        or None. Only under a click budget (clicktime.time_limited).
+
+        Mesa Apopalypse (2026-11-09, lost at round 59): from round 45 the plan
+        was at "place n3", then "n3 -> 4-0-2" (a placement and six tiers,
+        $5.4k), then "n2 -> 2-0-4" ($5,000, one tier). Rounds came every
+        3-4 s and a purchase took one of them, so n3 grew a tier a round for
+        seven rounds while the bank went $5k -> $17k and n2's Sticky Bomb -
+        one click - waited behind it.
+
+        Within clicktime.PLAN_WINDOW steps, each tower's steps form one
+        bundle (its placement and its upgrades: what it is rated by). A
+        bundle of a tower already standing, made of upgrades, may come
+        - when the cash pays for it and the current bundle both, now -
+        before the current step's bundle when it
+        saves more lives (the damage model at half strength, as reinforce.py
+        rates purchases, over the round being played, the next and the
+        weakest of the look-ahead) per share of the cash and of the seconds
+        left before that round (clicktime.effort). Its first step is bought
+        now; the plan reaches it later as "done". The rest of the plan keeps
+        its order.
+
+        Rated once per board and round (Executor._rated), and only when such
+        a bundle exists."""
+        if self.idx >= len(self.plan) or cash is None or rnd is None:
+            return None
+        bundles = self._plan_bundles(rnd)
+        current = self.plan[self.idx].get("id")
+        if len(bundles) < 2 or current not in bundles:
+            return None
+        ahead = [tid for tid, steps in bundles.items()
+                 if tid != current and tid in self.g.towers
+                 and all(st["do"] == "upgrade" for _, st in steps)]
+        if not ahead:
+            return None
+        worst = self.lookahead_worst(rnd)
+        if worst is None:
+            return None
+        end = (getattr(self, "rules", None) or {}).get("end_round", 80)
+        rounds = sorted({r for r in (rnd, rnd + 1, worst[1]) if r <= end})
+        if not rounds:
+            return None
+        budget = CT.time_left(self, rnd, rounds[-1])
+
+        def rate(fc, towers):
+            now = RF.board(self)
+            half = 1.0 / RF.TARGET_MARGIN
+            base = fc.leaks(now, rounds, half)
+            if not base:
+                return None                    # nothing leaks: the order does not matter
+            spot = None
+            first = self.plan[self.idx]
+            if first["do"] == "place" and not self.at_tower_cap():
+                spots = self.pick_spots(first["kind"], first, n=1)
+                spot = self.m.cell_to_frac(spots[0][0], spots[0][1]) if spots else None
+            out = {}
+            for tid in [current] + ahead:
+                done = self._bundle_after(bundles[tid], now, spot if tid == current else None)
+                if done is None:
+                    continue
+                after, cost, secs = done
+                leak = fc.leaks(after, rounds, half)
+                if leak is not None:
+                    out[tid] = (base - leak, cost, secs)
+            return out
+
+        rated = self._rated("quicker", rnd, rate)
+        if not rated or current not in rated:
+            return None
+
+        def value(tid):
+            saved, cost, secs = rated[tid]
+            return saved / CT.effort(cost, secs, cash, budget)
+        mine, best = value(current), None
+        for tid in ahead:
+            if tid not in rated:
+                continue
+            saved, cost, secs = rated[tid]
+            # only a bank that pays for both: then the order is a question of
+            # time alone, and the step put first takes no cash the current
+            # one needs. With less, the Park Path build (tests/
+            # test_apopalypse_offline.py) lost rounds 16-34 in the check:
+            # early upgrades pulled ahead delayed placements the model,
+            # rating standard rounds, undervalued against Apopalypse's.
+            if saved < RF.MIN_SAVED or cost + rated[current][1] > cash:
+                continue
+            v = value(tid)
+            if v > mine and (best is None or v > best[0]):
+                best = (v, tid)
+        if best is None:
+            return None
+        tid = best[1]
+        saved, cost, secs = rated[tid]
+        c_saved, c_cost, c_secs = rated[current]
+        why = (f"{tid}'s steps save {saved:.0f} lives for ${cost:.0f} in about {secs:.0f} s of "
+               f"clicking, {current}'s {c_saved:.0f} for ${c_cost:.0f} in about {c_secs:.0f} s "
+               f"(${cash:.0f} in hand, about {budget or 0:.0f} s to round {rounds[-1]})")
+        return bundles[tid][0][0], why
 
     def plan_exhausted(self):
         """True once the last tick found nothing left in the plan or fill."""

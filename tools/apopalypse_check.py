@@ -50,6 +50,14 @@ The check
    docs/map_strategies/beginner.md): a spot the game shifts a little must
    not take a buff away.
 
+The clicking. Live, a round passes every 3-4 s and a purchase takes about
+one of them (btd6bot/clicktime.py), so a bank can pile up that the clicks
+never spend (Mesa, 2026-11-09: $7.7k-$17.4k idle from round 44). By
+default the board is bought as fast as the cash allows; --click-budget S
+gives each round after the start S seconds of clicking, each purchase
+costing what it costs live, and --old-clicks buys as the bot did before
+clicktime.py (one tier a tick, in plan order) for comparing the two.
+
 Not modelled (on the safe side unless noted): the hero, abilities, Monkey
 Knowledge; the end-of-round bonus is assumed paid every round although the
 game pays it only once a round is fully popped (a board that holds at 2.0
@@ -147,13 +155,15 @@ def use_maps_dir(maps_dir):
     return tmp
 
 
-def boards(strat, map_name, boosts=None, learned=True):
+def boards(strat, map_name, boosts=None, learned=True, click_budget=None):
     """Play the build the executor's way; ({round: board}, simulate's result).
-    A board is {tid: (kind, tiers, fx, fy)} at the start of the round."""
+    A board is {tid: (kind, tiers, fx, fy)} at the start of the round.
+    click_budget: seconds of clicking per round after the start (simulate's
+    click model), or None for as many purchases as the cash allows."""
     import simulate_threats as SIM
     out = {}
     res = SIM.simulate(strat, MODE, map_name, real_map=True, learned=learned, scenario=scenario(boosts),
-                       income=low_income, boards=out)
+                       income=low_income, boards=out, click_budget=click_budget)
     return {r: b for r, b in out.items() if r <= A.END_ROUND}, res
 
 
@@ -276,11 +286,12 @@ def check_boards(map_name, round_boards, drift=0.0, samples=SAMPLES, seed=0, rou
     return out
 
 
-def check(strat, map_name, boosts=None, samples=SAMPLES, drift=DRIFT_UNITS, learned=True, rounds=None):
+def check(strat, map_name, boosts=None, samples=SAMPLES, drift=DRIFT_UNITS, learned=True, rounds=None,
+          click_budget=None):
     """The whole check of one build on one map: {"plain": [RoundCheck],
     "drift": [RoundCheck], "worst": float, "passes": bool, "plan_done": str,
-    "spots_off": {tid: cells}}."""
-    round_boards, res = boards(strat, map_name, boosts, learned)
+    "spots_off": {tid: cells}}. click_budget: see boards()."""
+    round_boards, res = boards(strat, map_name, boosts, learned, click_budget)
     plain = check_boards(map_name, round_boards, 0.0, samples, rounds=rounds)
     drift_checks = check_boards(map_name, round_boards, drift, samples, seed=1, rounds=rounds) if drift else []
     worst = min(c.margin for c in plain + drift_checks)
@@ -327,7 +338,15 @@ def main():
     ap.add_argument("--samples", type=int, default=SAMPLES)
     ap.add_argument("--no-drift", action="store_true")
     ap.add_argument("-v", action="store_true", help="every round")
+    ap.add_argument("--click-budget", type=float, metavar="SECONDS",
+                    help="seconds of clicking each round allows (live: about one round, 3-4 s); "
+                         "default: as many purchases as the cash pays for")
+    ap.add_argument("--old-clicks", action="store_true",
+                    help="buy as before clicktime.py (one tier per tick, plan order, per dollar)")
     a = ap.parse_args()
+    if a.old_clicks:
+        from btd6bot import clicktime
+        clicktime.ENABLED = False
     logging.basicConfig(level=logging.ERROR, format="%(name)s: %(message)s")
     if a.maps_dir:
         use_maps_dir(a.maps_dir)
@@ -337,7 +356,8 @@ def main():
     maps = [a.map] if a.map else ((strat.get("planner") or {}).get("maps") or [strat.get("map")])
     for m in maps:
         print(f"{sid} on {m}:")
-        r = check(strat, m, samples=a.samples, drift=0.0 if a.no_drift else DRIFT_UNITS)
+        r = check(strat, m, samples=a.samples, drift=0.0 if a.no_drift else DRIFT_UNITS,
+                  click_budget=a.click_budget)
         if a.v:
             for c in r["plain"]:
                 print(f"    R{c.rnd:3d} towers {c.towers:2d}  worst {c.worst:5.2f}  sampled {c.sampled:5.2f}"
