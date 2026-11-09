@@ -94,6 +94,24 @@ def test_double_hp_holds_round_40():
         assert m40 >= R40_MARGIN, f"{map_name}: round 40 rated {m40:.2f}"
 
 
+# Late Half Cash: the build lost Dark Path at round 63 and Moon Landing at
+# round 76 on 2026-11-08 with a Sun Avatar as its late step. Two Apache
+# Dartships replace it (R76 when written: Dark Path 2.02, Moon Landing 4.09;
+# 0.40 / 0.61 with the Sun Avatar).
+LATE_ROUND = 76
+LATE_MARGIN = 1.2
+LATE_MAPS = ("Dark Path", "Moon Landing")
+
+
+def test_half_cash_late_game_has_the_dartships():
+    for map_name in LATE_MAPS:
+        _, boards = _replay("half_cash", map_name)
+        board = boards[LATE_ROUND]
+        assert board["h2"][1] == (4, 0, 2), (map_name, board)
+        m = _margin("half_cash", map_name, board, LATE_ROUND)
+        assert m >= LATE_MARGIN, f"{map_name}: round {LATE_ROUND} rated {m:.2f}"
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.ERROR)
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
