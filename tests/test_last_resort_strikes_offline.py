@@ -38,7 +38,22 @@ def test_a_win_or_another_build_or_mode_is_not_struck():
     assert not planner.struck_out(acc, "apopalypse_ninja_sniper", "Firing Range", "apopalypse")
 
 
+def test_a_map_mode_every_build_lost_is_played_last():
+    """Dark Dungeons Military Only, 2026-11-04..09: five losses by four builds,
+    none of them struck out on its own."""
+    acc = AccountState()
+    for sid in ("military_heli_sniper", "military_heli_sniper", "solo_sniper", "solo_ace"):
+        _game(acc, "Dark Dungeons", "military_only", sid, False)
+    assert not planner.struck_out(acc, "solo_heli", "Dark Dungeons", "military_only")
+    assert planner.map_mode_record(acc, "Dark Dungeons", "military_only") == (0, 4)
+    assert planner.map_struck_out(acc, "Dark Dungeons", "military_only")
+    assert not planner.map_struck_out(acc, "Dark Dungeons", "magic_only")
+    _game(acc, "Dark Dungeons", "military_only", "solo_heli", True)
+    assert not planner.map_struck_out(acc, "Dark Dungeons", "military_only")
+
+
 if __name__ == "__main__":
     test_three_losses_without_a_win_strike_out()
     test_a_win_or_another_build_or_mode_is_not_struck()
+    test_a_map_mode_every_build_lost_is_played_last()
     print("ok")

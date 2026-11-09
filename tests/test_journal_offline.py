@@ -228,6 +228,20 @@ def test_a_journaled_leak_is_not_doubled_and_names_uncovered_properties():
         assert jr.events[-1]["cause"]["category"] == "property_gap"
 
 
+def test_a_defeat_counts_the_lives_still_trusted_as_lost():
+    """Mesa ABR 2026-11-09: 100 lives gone in one round, the drop never
+    confirmed before the Defeat card - the report said 0 lives lost."""
+    m = bare_match()
+    m._lives = M.LivesTracker(100)
+    m._lives.update(100)
+    m.stats = {"lives_lost": 0}
+    m._count_last_lives("defeat")
+    assert m.stats["lives_lost"] == 100
+    m.stats = {"lives_lost": 3}
+    m._count_last_lives("victory")
+    assert m.stats["lives_lost"] == 3
+
+
 def test_a_win_has_no_cause():
     with TempJournalDir():
         jr = chimps_game()
