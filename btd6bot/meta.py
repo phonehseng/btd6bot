@@ -1042,7 +1042,14 @@ class Meta:
         if self.m.has("play") and self.m.has("knowledge"):
             return False
         names = sum(1 for w in self.m.words if match_hero(w.text))
-        return self.m.has("select", "selected") or names >= 2
+        # "Ingame cost:" sits under every hero's portrait and nowhere else.
+        # Needed since 2026-11-08 19:02, when the bot bought Obyn's Mountain
+        # Guardian skin: on that page the green "Selected" is not read at
+        # full screen size and the title shows one hero name, so the screen
+        # was not recognised and every later game kept Obyn (Spring Spring
+        # CHIMPS lost round 33 with Obyn's $700 instead of Quincy's $585;
+        # tests/test_heroes_screen_offline.py).
+        return self.m.has("select", "selected", "ingamecost") or names >= 2
 
     def _open_hero_picker(self):
         st = self._state()

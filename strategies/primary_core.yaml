@@ -4,10 +4,16 @@
 # Assassin, Ring of Fire, MOAR Glaives, Sharp Shooter), Glue slows everything.
 id: primary_core
 hero: quincy
-modes: [easy, medium, hard, primary_only, abr]
+# Not ABR (dropped 2026-11-08): 2 wins in 7 ABR games, and Bazaar ABR was
+# lost at round 40 (a Fortified MOAB) with Bomb 0-3-2 as the only MOAB
+# damage (blimp check 0.2x). The Fast Track replay on Bazaar rates 41 ABR
+# rounds under 1, round 40 at 0.69 (0.70 with MOAB Mauler moved up), and even
+# Park Path, an ABR win, at 0.09 for round 63: no reorder of this build makes
+# ABR's dense lead/camo rounds and early MOABs hold.
+modes: [easy, medium, hard, primary_only]
 planner:
   towers: {tack: [3, 0, 0], boomerang: [2, 0, 2], bomb: [0, 3, 0], dart: [0, 0, 2]}
-  base_success: {easy: 0.98, primary_only: 0.95, medium: 0.93, hard: 0.8, abr: 0.7}
+  base_success: {easy: 0.98, primary_only: 0.95, medium: 0.93, hard: 0.8}
 plan:
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: t1, kind: tack, role: dps, segment: [0.0, 0.5]}
