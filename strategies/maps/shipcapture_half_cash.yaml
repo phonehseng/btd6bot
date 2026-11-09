@@ -1,0 +1,103 @@
+# Ship Capture, Half Cash: the Ship Capture Deflation build (bombs, mermonkeys,
+# desperados and Night Vision snipers on the central grate and both decks)
+# bought in order on the Half Cash economy, with the MOAB Mauler / Assassin
+# bomb written into the plan for rounds 40 and 60.
+#
+# Why: Ship Capture Half Cash was lost three times by the general land build
+# hard_ninja_alch_sun, the planner's last-resort pick (p=0.6): 2026-11-06 at
+# round 37, 2026-11-08 at round 36 (loss case 20261108_133053_ShipCapture_
+# half_cash: round 34 rated 0.25, 52 lives lost). Ship Capture's four short
+# plank lanes board the ship from the left, the right or both sides; the
+# general build's towers go down by track segment and reach one side. Its
+# 2026-11-08 fix (two Heli Pilots before round 40, commit ec02b87) lifts the
+# replay only to R34 0.32, R36 0.75, R37 0.92, R38-39 0.59, R40 1.14, with
+# R28 at the 0.06 floor and R63 0.31, R76 0.25: still under 1.
+#
+# The Deflation build's spots were chosen for this ship (the grate and the
+# decks reach whichever side a round boards from; checked legal on
+# data/maps/shipcapture.npz in tests/test_map_hints_offline.py). Its first
+# purchases (Obyn, a 1-2-0 Night Vision sniper on the bow, two 0-2-2 bombs on
+# the grate) cost about the $4,465 Fast Track hands Half Cash at round 22
+# (optimize_builds.economy("half_cash", boosts)), so the round-22 setup has
+# camo, lead and crowd damage. Changes from the Deflation build:
+#   * plan + fill are one plan, bought in order (plan_first: the plan owns
+#     the cash);
+#   * bmb1 0-3-2 (MOAB Mauler) after bmb5 for round 40 and bmb1 0-4-2 (MOAB
+#     Assassin) after the mermonkeys for round 60's BFB are plan steps (the
+#     Deflation build has them only as answers).
+#
+# Sources:
+#   * strategies/maps/shipcapture_deflation.yaml and its sources: bloonswiki
+#     Ship_Capture (https://www.bloonswiki.com/Ship_Capture), dq7reimagined
+#     Ship Capture CHIMPS (https://dq7reimagined.com/btd6/ship-capture-chimps/)
+#   * bloonswiki Strategy:Half_Cash (https://www.bloonswiki.com/Strategy:Half_Cash)
+#   * strategies/maps/adorastemple_half_cash.yaml (the Half Cash map-build pattern)
+#
+# Replayed executor-faithfully 2026-11-08 (tools/simulate_threats.simulate on
+# the learned map, Fast Track start R22, Double Cash income, the board at each
+# round's start rated by the live forecast: RoundForecast with the learned
+# map's sight grid and heights; no hero): see
+# tests/test_shipcapture_half_cash_offline.py for the numbers it keeps.
+#
+# Status: written 2026-11-08, not played yet.
+id: shipcapture_half_cash
+map: Ship Capture
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [half_cash]
+planner:
+  towers: {sniper: [1, 2, 0], bomb: [3, 4, 3], mermonkey: [3, 0, 1], desperado: [4, 3, 0], ice: [2, 0, 4]}
+  base_success: {half_cash: 0.8}
+  maps: [Ship Capture]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.500, 0.624]}                       # central grate, between the lanes; no $200 opener dart
+  - {do: place, id: snp1, kind: sniper, role: dps, target: strong, at: [0.409, 0.215]}     # bow
+  - {do: upgrade, id: snp1, to: 1-2-0}                                                     # Night Vision (camo, R24), Full Metal Jacket (lead, R28), Shrapnel
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.452, 0.692]}                       # central grate
+  - {do: upgrade, id: bmb1, to: 0-2-2}
+  - {do: place, id: bmb2, kind: bomb, role: dps, at: [0.409, 0.692]}                       # central grate
+  - {do: upgrade, id: bmb2, to: 0-2-2}
+  - {do: place, id: bmb3, kind: bomb, role: dps, at: [0.387, 0.138]}                       # crow's nest / bow
+  - {do: upgrade, id: bmb3, to: 0-2-2}
+  - {do: place, id: bmb4, kind: bomb, role: dps, at: [0.468, 0.138]}                       # crow's nest / bow
+  - {do: upgrade, id: bmb4, to: 0-2-2}
+  - {do: place, id: bmb5, kind: bomb, role: dps, at: [0.366, 0.709]}                       # central grate
+  - {do: upgrade, id: bmb5, to: 3-0-2}
+  - {do: upgrade, id: bmb1, to: 0-3-2}                                                     # MOAB Mauler: round 40
+  - {do: upgrade, id: bmb4, to: 0-2-3}
+  - {do: place, id: mer1, kind: mermonkey, role: dps, at: [0.494, 0.692]}                  # central grate
+  - {do: upgrade, id: mer1, to: 3-0-0}
+  - {do: place, id: mer2, kind: mermonkey, role: dps, at: [0.270, 0.675]}                  # left deck
+  - {do: upgrade, id: mer2, to: 3-0-0}
+  - {do: upgrade, id: mer1, to: 3-0-1}
+  - {do: upgrade, id: mer2, to: 3-0-1}
+  - {do: upgrade, id: bmb1, to: 0-4-2}                                                     # MOAB Assassin: round 60's BFB
+  - {do: place, id: mer3, kind: mermonkey, role: dps, at: [0.590, 0.675]}                  # right deck
+  - {do: upgrade, id: mer3, to: 3-0-0}
+  - {do: place, id: dsp1, kind: desperado, role: dps, target: strong, at: [0.430, 0.589]}  # central grate
+  - {do: upgrade, id: dsp1, to: 0-3-0}
+  - {do: place, id: dsp2, kind: desperado, role: dps, target: strong, at: [0.387, 0.624]}  # central grate
+  - {do: upgrade, id: dsp2, to: 4-1-0}
+  - {do: place, id: snp2, kind: sniper, role: dps, target: strong, at: [0.452, 0.215]}     # crow's nest / bow
+  - {do: upgrade, id: snp2, to: 1-2-0}
+  - {do: place, id: snp3, kind: sniper, role: dps, target: strong, at: [0.526, 0.266]}
+  - {do: upgrade, id: snp3, to: 1-2-0}
+  - {do: place, id: ic1, kind: ice, role: dps, at: [0.430, 0.760]}                         # central grate
+  - {do: upgrade, id: ic1, to: 2-0-4}
+  - {do: place, id: snp4, kind: sniper, role: dps, target: strong, at: [0.355, 0.283]}
+  - {do: upgrade, id: snp4, to: 1-2-0}
+  - {do: place, id: snp5, kind: sniper, role: dps, target: strong, at: [0.473, 0.283]}
+  - {do: upgrade, id: snp5, to: 1-2-0}
+  - {do: place, id: snp6, kind: sniper, role: dps, target: strong, at: [0.377, 0.385]}
+  - {do: upgrade, id: snp6, to: 1-2-0}
+  - {do: place, id: snp7, kind: sniper, role: dps, target: strong, at: [0.473, 0.385]}
+  - {do: upgrade, id: snp7, to: 1-2-0}
+  - {do: place, id: snp8, kind: sniper, role: dps, target: strong, at: [0.302, 0.402]}     # left deck
+  - {do: upgrade, id: snp8, to: 1-2-0}
+panic:
+  - {do: place, kind: desperado, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: snp1, to: 1-2-0}]
+  lead: [{do: upgrade, id: snp1, to: 1-2-0}]
+  moab: [{do: upgrade, id: bmb1, to: 0-3-2}]
+  bfb: [{do: upgrade, id: bmb1, to: 0-4-2}]

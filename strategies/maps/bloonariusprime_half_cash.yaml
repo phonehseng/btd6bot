@@ -1,0 +1,92 @@
+# Bloonarius Prime, Half Cash: Pursuit helis from the map's own pads and two
+# Night Vision / Full Metal Jacket snipers by the entrance, Etienne.
+#
+# Why: Bloonarius Prime Half Cash was lost twice by the general land build
+# hard_ninja_alch_sun, the planner's last-resort pick (p=0.6): 2026-11-06 at
+# round 40 and 2026-11-08 at round 26 (loss case 20261108_115051_
+# BloonariusPrime_half_cash: 31 lives lost in round 22, the Fast Track start,
+# and 32 more in round 25, with the setup bought: two segment-placed ninjas
+# 2-0-2 / 2-0-1 and an alchemist; the live forecast rated rounds 23, 25 and
+# 26 at 0.46 / 0.36 / 0.32). The map's two long lanes run past each other
+# around the boss arena; ninjas placed by track segment reach a short stretch
+# of one lane. Its 2026-11-08 fix (two Heli Pilots before round 40, commit
+# ec02b87) lifts rounds 37-40, not the start: the replay still rates R22 0.43,
+# R25 0.41, R28 0.06, R63 0.48, R76 0.41.
+#
+# The towers and spots: the map's Military Only build (bloonariusprime_
+# military_only.yaml: the optimizer's search on the map, spots checked legal
+# on data/maps/bloonariusprime.npz in tests/test_map_hints_offline.py). Its
+# helis take Pursuit (2-x-x) first, so they chase the bloons over both lanes
+# from wherever their pad stands; a sniper by the entrance sees ~60% of one
+# lane and all of the other. Replayed on Half Cash as written, it rates the
+# start well (R22 2.00, R25 1.89) but leaves camo and lead to off-plan
+# answers (R24, R28, R37 at the 0.06 floor). Changes, and why:
+#   * Etienne first (no $200 opener dart: Executor._with_opener), then the
+#     first heli and sniper 0-1-0 (Night Vision: round 24's camo) in the R22
+#     setup, sniper 1-1-0 (Full Metal Jacket) and a second sniper 1-0-0 for
+#     round 28's leads: R28 0.29 with one sniper, 0.56 with two;
+#   * hel6 3-2-0 (IFR: camo for the heli) comes before round 37;
+#   * the two subs (0-0-0 / 1-0-0, reaching 21-29% of one lane) are left out.
+#
+# Sources:
+#   * strategies/maps/bloonariusprime_military_only.yaml and its sources
+#   * bloonswiki Strategy:Half_Cash (https://www.bloonswiki.com/Strategy:Half_Cash)
+#   * strategies/maps/adorastemple_half_cash.yaml (the Half Cash map-build pattern)
+#
+# Replayed executor-faithfully 2026-11-08 (tools/simulate_threats.simulate on
+# the learned map, Fast Track start R22, Double Cash income, the board at each
+# round's start rated by the live forecast: RoundForecast with the learned
+# map's sight grid and heights; no hero): R22 2.04, R24 7.42, R25 2.28,
+# R28 0.56, R30 0.46 (the lowest: Razor Rotors comes at R30), R33 4.22,
+# R34 1.61, R36 3.40, R37 2.77, R40 2.99, R47 2.59, R60 6.73, R63 2.95,
+# R71 2.51, R75 3.29, R76 3.55, R78 1.35, R80 3.47; no answer or surplus
+# buys, every tower on its `at` spot; the last step (h7 4-2-0) is not reached
+# by round 80. tests/test_bloonariusprime_half_cash_offline.py keeps these.
+#
+# Status: written 2026-11-08, not played yet.
+id: bloonariusprime_half_cash
+map: Bloonarius Prime
+hero: etienne
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [half_cash]
+planner:
+  towers: {heli: [4, 2, 2], sniper: [1, 2, 1]}
+  base_success: {half_cash: 0.8}
+  maps: [Bloonarius Prime]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.238, 0.146]}                      # Etienne by the entrance, where both lanes start
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.094, 0.325]}                      # pad only: with Pursuit the heli chases bloons map-wide
+  - {do: upgrade, id: hel1, to: 2-0-0}                                                    # Pursuit first: then it never follows the mouse
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.077, 0.138]}    # sees ~60% of one lane, all of the other
+  - {do: upgrade, id: sni4, to: 0-1-0}                                                    # Night Vision: round 24's camo, in the R22 setup
+  - {do: upgrade, id: hel1, to: 2-0-2}                                                    # Faster Darts + Faster Firing
+  - {do: upgrade, id: sni4, to: 1-1-0}                                                    # Full Metal Jacket: round 28's leads
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.168, 0.138]}
+  - {do: upgrade, id: sni8, to: 1-0-0}                                                    # Full Metal Jacket
+  - {do: upgrade, id: hel1, to: 3-0-2}                                                    # Razor Rotors
+  - {do: upgrade, id: sni4, to: 1-2-0}                                                    # Shrapnel Shot
+  - {do: place, id: hel6, kind: heli, role: dps, at: [0.248, 0.283]}
+  - {do: upgrade, id: hel6, to: 2-0-0}                                                    # Pursuit first
+  - {do: upgrade, id: hel6, to: 3-2-0}                                                    # Razor Rotors + IFR (camo): round 37
+  - {do: place, id: hel5, kind: heli, role: dps, at: [0.783, 0.675]}
+  - {do: upgrade, id: hel5, to: 2-0-0}                                                    # Pursuit first
+  - {do: upgrade, id: hel5, to: 2-0-2}
+  - {do: upgrade, id: hel5, to: 3-0-2}                                                    # Razor Rotors
+  - {do: place, id: hel7, kind: heli, role: dps, at: [0.484, 0.896]}
+  - {do: upgrade, id: hel7, to: 2-0-0}                                                    # Pursuit first
+  - {do: upgrade, id: hel7, to: 3-2-0}
+  - {do: upgrade, id: sni8, to: 1-2-0}                                                    # Night Vision + Shrapnel Shot
+  - {do: upgrade, id: hel5, to: 4-0-2}                                                    # Apache Dartship: BFBs (R60)
+  - {do: upgrade, id: sni4, to: 1-2-1}
+  - {do: upgrade, id: hel6, to: 4-2-0}                                                    # Apache Dartship
+  - {do: upgrade, id: hel1, to: 4-0-2}                                                    # Apache Dartship
+  - {do: upgrade, id: hel7, to: 4-2-0}                                                    # Apache Dartship, if the cash comes
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: sni4, to: 0-1-0}]
+  lead: [{do: upgrade, id: sni4, to: 1-1-0}]
+  ceramic: [{do: upgrade, id: hel1, to: 3-0-2}]
+  moab: [{do: upgrade, id: hel6, to: 3-2-0}, {do: upgrade, id: hel5, to: 3-0-2}]
+  bfb: [{do: upgrade, id: hel5, to: 4-0-2}]
+  zomg: [{do: upgrade, id: hel6, to: 4-2-0}]

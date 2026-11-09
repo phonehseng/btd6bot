@@ -1,0 +1,100 @@
+# Bazaar, Half Cash: Night Vision snipers on the grass columns, Advanced
+# Intel subs in the canal (one with Airburst Darts), Brickell in the canal.
+#
+# Why: Bazaar Half Cash was lost twice on 2026-11-08 (loss cases
+# 20261108_081202_Bazaar_half_cash at round 35, 20261108_203247_Bazaar_
+# half_cash at round 37), both by the general land build hard_ninja_alch_sun,
+# the planner's last-resort pick (p=0.6). Its towers go down by track segment,
+# and on Bazaar the market stalls block line of sight: the ground between the
+# two alternating lanes reaches ~10% of each lane (bazaar_medium.yaml's map
+# analysis). The live forecast rated rounds 34-37 at 0.25-0.5; the cash went
+# to reinforce buys that lifted a round by 0.01-0.05, and a placement was
+# refused in the last rounds. Its 2026-11-08 fix (two Heli Pilots before
+# round 40, commit ec02b87) does not reach Bazaar: no cell fits the heliport,
+# so the executor gives the heli steps up and the old order plays on. That
+# build replays here at R22 0.22, R28 0.06, R34 0.08, R37 0.43, R40 0.12,
+# R63 0.07 (the worst 0.06).
+#
+# The towers and spots: the map's Medium/Deflation builds (bazaar_medium.yaml,
+# bazaar_deflation.yaml: the optimizer's search on the map, spots checked
+# legal on data/maps/bazaar.npz). A sniper on the left or right grass column
+# sees ~58% of both lanes; subs with Advanced Intel (2-x-x) shoot whatever
+# the other towers see. Those plans buy the snipers late, so replayed on Half
+# Cash they leave camo to an off-plan ninja that reaches little and rate the
+# camo rounds 24/33/36/37 at the 0.06 floor. Here a Night Vision sniper is
+# the second purchase (camo for round 24), Full Metal Jacket comes before the
+# lead (round 28), and the first sub takes Airburst Darts (2-0-2) instead of
+# the Ballistic Missile (2-3-0): round 27 (the 250-bloon rush) 0.63 -> 0.90,
+# round 40 0.85 -> 2.04, R62 0.75 -> 1.26, R78 0.76 -> 1.16 in the replay.
+#
+# Sources:
+#   * strategies/maps/bazaar_medium.yaml and bazaar_deflation.yaml (spots,
+#     towers) and their sources: bloonswiki Bazaar
+#     (https://www.bloonswiki.com/Bazaar), bloons fandom Bazaar/Strategies
+#     (https://bloons.fandom.com/wiki/Bazaar/Strategies)
+#   * bloonswiki Strategy:Half_Cash (https://www.bloonswiki.com/Strategy:Half_Cash)
+#   * strategies/maps/adorastemple_half_cash.yaml (the Half Cash map-build
+#     pattern: the hero first, camo in the round-22 setup, plan_first)
+#
+# Replayed executor-faithfully 2026-11-08 (tools/simulate_threats.simulate on
+# the learned map, Fast Track start R22, Double Cash income, the board at each
+# round's start rated by the live forecast: RoundForecast with the learned
+# map's sight grid and heights; no hero): R22 1.14, R25 1.07, R27 0.90,
+# R34 1.06, R36 0.84 (the lowest), R37 1.06, R39 0.84, R40 2.04, R47 1.74,
+# R60 5.08, R62 1.26, R63 2.18, R64 1.41, R71 1.33, R75 2.35, R76 2.30,
+# R78 1.16, R80 4.32. Every plan tower stands on its `at` spot. The plan is
+# done by round 63; the threat calendar's blimp answers (a bomb and an ace,
+# from R64) and two surplus subs (R72, R76) carry rounds 64-80.
+# tests/test_bazaar_half_cash_offline.py keeps these.
+#
+# Status: written 2026-11-08, not played yet.
+id: bazaar_half_cash
+map: Bazaar
+hero: admiral_brickell
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [half_cash]
+planner:
+  towers: {sub: [4, 4, 4], sniper: [4, 2, 0]}
+  # every round 0.84+ in the replay (the general build: 0.06): below the
+  # 0.85 of the Half Cash map builds that rate 1.5+
+  base_success: {half_cash: 0.8}
+  maps: [Bazaar]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.468, 0.76]}       # Brickell in the canal first: no $200 opener dart (Executor._with_opener)
+  - {do: place, id: sni1, kind: sniper, role: dps, target: strong, at: [0.761, 0.436]}   # right grass: sees ~57% of the top lane, ~67% of the bottom one
+  - {do: upgrade, id: sni1, to: 0-1-0}                                    # Night Vision: round 24's camo, in the R22 setup
+  - {do: place, id: sub1, kind: sub, role: dps, at: [0.398, 0.334]}       # top canal
+  - {do: upgrade, id: sub1, to: 2-0-0}                                    # Advanced Intel: shoots what the snipers see
+  - {do: place, id: sni2, kind: sniper, role: dps, target: strong, at: [0.11, 0.487]}    # left grass
+  - {do: upgrade, id: sni2, to: 0-1-0}                                    # Night Vision
+  - {do: upgrade, id: sni1, to: 1-2-0}                                    # Full Metal Jacket (lead, R28) + Shrapnel Shot
+  - {do: upgrade, id: sub1, to: 2-0-2}                                    # Twin Guns + Airburst Darts: round 27's rush
+  - {do: upgrade, id: sni2, to: 1-2-0}
+  - {do: place, id: sub2, kind: sub, role: dps, at: [0.441, 0.334]}       # top canal
+  - {do: upgrade, id: sub2, to: 2-2-0}
+  - {do: upgrade, id: sni1, to: 3-2-0}                                    # Deadly Precision: round 40's MOAB
+  - {do: upgrade, id: sub2, to: 4-2-0}                                    # Bloontonium Reactor
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.74, 0.504]}
+  - {do: upgrade, id: sni3, to: 1-2-0}
+  - {do: place, id: sub3, kind: sub, role: dps, at: [0.398, 0.709]}       # bottom canal
+  - {do: upgrade, id: sub3, to: 4-2-0}
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.142, 0.504]}
+  - {do: upgrade, id: sni4, to: 1-2-0}
+  - {do: place, id: sub4, kind: sub, role: dps, at: [0.441, 0.709]}
+  - {do: upgrade, id: sub4, to: 2-3-0}                                    # Ballistic Missile
+  - {do: upgrade, id: sni1, to: 4-2-0}                                    # Maim MOAB: BFBs (R60)
+  - {do: place, id: sub5, kind: sub, role: dps, at: [0.398, 0.266]}
+  - {do: upgrade, id: sub5, to: 2-0-4}                                    # Armor Piercing Darts
+  - {do: upgrade, id: sub1, to: 2-0-4}                                    # Armor Piercing Darts
+  - {do: place, id: sub6, kind: sub, role: dps, at: [0.452, 0.266]}
+  - {do: upgrade, id: sub6, to: 4-2-0}
+  - {do: upgrade, id: sni2, to: 4-2-0}                                    # Maim MOAB: round 80's ZOMG
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: sni1, to: 0-1-0}]
+  lead: [{do: upgrade, id: sni1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: sni1, to: 1-2-0}, {do: upgrade, id: sub2, to: 4-2-0}]
+  moab: [{do: upgrade, id: sni1, to: 3-2-0}, {do: upgrade, id: sub2, to: 4-2-0}]
+  bfb: [{do: upgrade, id: sni1, to: 4-2-0}]
+  zomg: [{do: upgrade, id: sni1, to: 4-2-0}, {do: upgrade, id: sni2, to: 4-2-0}]
