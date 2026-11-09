@@ -493,11 +493,27 @@ class Game:
         return bool(red_now - red_base < 0.2)
 
     def _held_range(self):
+        """Radius (game units) of the circle the game draws round the held
+        tower: the price table's range, else the game's own (TowerModel
+        range, data/game_model), else a small default.
+
+        The towers the price table lists without a range (sniper, ace,
+        heli, mortar, dartling, farm) still get a circle of their model's
+        range. The ace's is 22 (~78 px at 1280 wide), and its runway sprite
+        alone is ~52 px wide. The old guess of 12 put the whole probe ring
+        on the runway, so a red circle round it went unseen: on Tricky
+        Tracks ABR (2026-11-09 02:55) the probe passed 16 spots the game
+        refused, each one a click and a fresh pick-up (~1.7 s), for 33 s
+        before round 40's MOAB."""
         kind = getattr(self, "_held_kind", None)
         if kind == "hero":
             return T.HEROES.get(self.hero, {}).get("range") or 40
         if kind in T.TOWERS:
-            return T.TOWERS[kind].get("range") or 12  # unlimited-range towers show a small circle
+            if T.TOWERS[kind].get("range"):
+                return T.TOWERS[kind]["range"]
+            from . import gamemodel
+            model = gamemodel.tower(kind) or {}
+            return model.get("range") or 12
         return 32
 
     # -- prices -----------------------------------------------------------------

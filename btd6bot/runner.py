@@ -718,8 +718,14 @@ class Bot:
                 break
             log.info("unlocking map %s", map_name)  # first click unlocks a new map (free)
             time.sleep(1.5)
+        # A slow load can pass the 4 s wait: Castle Revenge (2026-11-09 04:54)
+        # showed its difficulty screen just after it, and the map was benched.
+        screen = self.menus.wait_for("difficulty", timeout=3)
+        if screen == "difficulty":
+            log.info("open_map: %s's difficulty screen came after a slow load", map_name)
+            return True
         log.warning("open_map: clicking %s did not open its difficulty screen (screen: %s, saw %s)",
-                    map_name, self.menus.identify(), [w.text for w in self.menus.words][:12])
+                    map_name, screen, [w.text for w in self.menus.words][:12])
         return False
 
     # Map-select screen (calibrated 2026-10-21, 1920x1200): category tabs along

@@ -74,7 +74,9 @@ planner:
   # the old Flash-Bomb-only order plays - the one that lost Bazaar Half Cash
   # at rounds 37 and 35 on 2026-11-08 (loss cases 20261108_081202 and
   # 20261108_203247; replayed R37/R40 0.43/0.12 with or without the helis).
-  excluded_maps: [Bazaar]
+  # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
+  # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
+  excluded_maps: [Bazaar, Tricky Tracks]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}

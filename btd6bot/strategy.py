@@ -1232,10 +1232,15 @@ class Executor:
                 return
         except Exception:
             pass
-        # an amphibious tower refused here stands neither on land nor on water
-        for surface in (("land", "water") if cls == "land_or_water" else (cls,)):
-            refuse(surface, cx, cy)
-        log.info("learned: %s spot (%d,%d) is not placeable on this map", cls, cx, cy)
+        # an amphibious tower refused here stands neither on land nor on water;
+        # a big tower's refusal is kept for its kind only (placement.refusal_layer)
+        from .placement import refusal_layer
+        hero = self.g.hero if kind == "hero" else None
+        layers = [refusal_layer(surface, kind, hero)
+                  for surface in (("land", "water") if cls == "land_or_water" else (cls,))]
+        for layer in layers:
+            refuse(layer, cx, cy)
+        log.info("learned: %s spot (%d,%d) is not placeable on this map", "/".join(layers), cx, cy)
         self.learned_blocks += 1
         if (self.learned_blocks > 10 and cls in self.m.scan
                 and getattr(self.m, "geometry_bundle", None) is None):
@@ -2136,6 +2141,10 @@ class Executor:
         cx, cy = (int(round(v)) for v in self.m.frac_to_cell(p.x, p.y))
         surface = "water" if T.TOWERS.get(kind, {}).get("placement") == "water" else "land"
         n = unrefuse(surface, cx, cy)
+        from .placement import refusal_layer
+        own = refusal_layer(surface, kind)
+        if own != surface:
+            n += unrefuse(own, cx, cy)
         if n:
             log.info("learned: %s stands at (%d,%d) - forgot %d refused cells there", kind, cx, cy, n)
 

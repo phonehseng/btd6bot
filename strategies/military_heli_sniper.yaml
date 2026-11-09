@@ -11,7 +11,9 @@ planner:
   # not Sanctuary: the game refused the heli pad on every legal cell (the
   # platforms move each round); Medium 2026-11-08 was left with two snipers
   # and $17,966 unspent and lost round 38 (loss case 20261108_2127)
-  excluded_maps: [Sanctuary]
+  # not Tricky Tracks (2026-11-09): ABR replays 9 rounds under 1 there, worst
+  # r78 0.56 (tests/test_trickytracks_excluded_offline.py); Military Only is won
+  excluded_maps: [Sanctuary, Tricky Tracks]
 plan:
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: s1, kind: sniper, role: dps, target: first}

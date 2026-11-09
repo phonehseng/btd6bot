@@ -101,16 +101,20 @@ class CashGame:
         """Did the live game refuse a `kind` tower centred here (the model's
         learned refused layer, MapModel.refused)? An amphibious tower is
         refused where both surfaces are, as Executor._learn_blocked records
-        its refusals."""
+        its refusals; a big tower also where its own layer says so
+        (placement.refusal_layer)."""
         if self.model is None or not getattr(self.model, "refused", None):
             return False
+        from btd6bot.placement import refusal_layer
         if kind == "hero":
             cls = T.HEROES.get(self.hero, {}).get("placement") or "land"
         else:
             cls = T.TOWERS.get(kind, {}).get("placement") or "land"
         cx, cy = (int(round(v)) for v in self.model.frac_to_cell(fx, fy))
         surfaces = ("land", "water") if cls == "land_or_water" else (cls,)
-        masks = [self.model.refused_mask(sf) for sf in surfaces]
+        hero = self.hero if kind == "hero" else None
+        masks = [self.model.refused_mask(sf) | self.model.refused_mask(refusal_layer(sf, kind, hero))
+                 for sf in surfaces]
         h, w = masks[0].shape
         return 0 <= cx < w and 0 <= cy < h and all(m[cy, cx] for m in masks)
 

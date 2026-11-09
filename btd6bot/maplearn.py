@@ -37,7 +37,14 @@ REFUSAL_CLEANUP = 1
 #   so towers that WERE placed before round one read as refused clicks and
 #   the short runs among them were learned as bad ground (1,121 refused land
 #   cells on Mesa). Mesa has game geometry, so nothing is lost by dropping them.
-REFUSAL_RESETS = {"mesa": 1, "mesareverse": 1}
+REFUSAL_RESETS = {"mesa": 1, "mesareverse": 1,
+                  # Tricky Tracks: 1,148 refused land cells (26% of a small
+                  # tower's ground), nearly all 9-16 units from the track:
+                  # big towers' footprint refusals learned as bad land for
+                  # every tower (placement.refusal_layer), plus clicks read
+                  # as refused before the red-ground fix of is_holding
+                  # (2026-11-06; the ground under its cancel button is red)
+                  "trickytracks": 1}
 
 
 def slug(name):
