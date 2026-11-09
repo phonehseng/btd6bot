@@ -509,6 +509,20 @@ def _show_choice(pick, phase, others):
         log.exception("HUD planner note failed - carrying on")
 
 
+def map_title_matches(target, text):
+    """Does a map card's OCR'd title `text` name the map `target` (already
+    norm()ed)? Contained either way (a part over 4 letters), or the same
+    length with at most one letter misread: X Factor's card read "XFAGTOR"
+    on 2026-11-09 (C as G) and the map was benched for 2 hours."""
+    t = norm(text)
+    if not t:
+        return False
+    if target in t or (t in target and len(t) > 4):
+        return True
+    return (len(t) == len(target) and len(t) >= 5
+            and sum(a != b for a, b in zip(t, target)) <= 1)
+
+
 class Bot:
     def __init__(self, account_path=None):
         import ctypes
@@ -686,7 +700,7 @@ class Bot:
             for w in sorted(self.menus.read(scale=1.0 if reads % 2 == 0 else 0.5), key=lambda w: (w.y, w.x)):
                 if w.y < 0.1 or w.y > 0.9:
                     continue  # the search box itself / bottom buttons
-                if target in norm(w.text) or norm(w.text) in target and len(norm(w.text)) > 4:
+                if map_title_matches(target, w.text):
                     label = w
                     break
         if label is None:
