@@ -1300,7 +1300,7 @@ def ceiling_cap(p: float, map_name: str, mode: str) -> float:
     The cap is CEILING_P_CAP scaled by how far the ceiling falls short of
     CEILING_PLAYABLE, so among such games (played only as a last resort) the
     nearly-holding ones come first: Mesa Primary Only (ceiling 0.8) before
-    Last Resort Primary Only (0.33) before Muddy Puddles Deflation (0.06).
+    Last Resort Primary Only (0.09) before Muddy Puddles Deflation (0.06).
     Only a win on record raises the posterior above it (win_probability)."""
     ceiling = model_ceiling(map_name, mode)
     if ceiling is None or ceiling >= CEILING_PLAYABLE:
