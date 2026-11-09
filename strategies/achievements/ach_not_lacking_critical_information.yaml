@@ -1,0 +1,84 @@
+# Hidden achievement 'Not Lacking Critical Information': land 25,000
+# critical hits in total, across games. Only Sharp Shooter / Crossbow Master
+# (Dart 0-0-4 / 0-0-5), Robo Monkey / Tech Terror / The Anti-Bloon (Super
+# 0-3-0 / 0-4-0 / 0-5-0) count; Desperado crits do not (bloonswiki, v50
+# strategy). Reward: a 0-0-4 Dart and a 0-3-0 Super Monkey Insta.
+#
+# Status: hidden, so the achievements list shows a "???" card until it is
+# earned and the scan never reads its progress. No scan (2026-11-05 to
+# 2026-11-08) read it complete either, but they all stopped before its place
+# in the COMPLETE cards (catalog order; the 2026-11-08 scan's last one was
+# "What is this new Bloonery?", #128 of 165, this is #138), so that proves
+# nothing. Passive crits from the bot's Sharp Shooter darts may have finished
+# it. The catalog marks it `assume_open`, and the planner replays this build
+# at most wins_needed times in all (planner._replay_allowed): a bounded bet.
+# After those games the next scan shows the card named and COMPLETE if it
+# worked.
+#
+# How (bloonswiki strategy): Robo Monkeys (2-3-0) fire faster than Sharp
+# Shooters and Crossbow Masters and crit as often, so they land the most
+# crits per round; Jungle Drums (Village 2-x-x) speeds them up. The build is
+# the Logs Medium plan of ach_freaky_friday (won 4 of 4, ~9 min; ninjas
+# carry, hard_ninja_alch_sun's Medium core) with its two Tonic alchemists
+# and its 3-0-2 Sun Avatar traded for three 2-3-0 Robo Monkeys inside the
+# 2-0-2 Jungle Drums village. Robo Monkeys need no aiming and have no
+# ability (Tech Terror at 0-4-0 would add a button the AbilityPlanner fires
+# on cooldown, but it costs more than the plan has room for on Medium).
+#
+# Effort: the crit rate is not modelled. A 2-3-0 Robo Monkey fires two arms
+# at Super Monkey speed; at one crit in every ~10-20 hits that is a few
+# thousand crits per Robo Monkey per Medium game, so ~3 games for 25,000.
+# wins_needed 3 caps the blind replays at about 27 minutes.
+id: ach_not_lacking_critical_information
+achievement: Not Lacking Critical Information
+map: Logs
+modes: [medium]
+hero: obyn
+constraints:
+  wins_needed: 3
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], super: [2, 3, 0], spike: [2, 0, 4]}
+  base_success: {medium: 0.9}
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 0.9]}
+  - {do: upgrade, id: n2, to: 1-0-1}
+  - {do: upgrade, id: n1, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-0-2}      # Jungle Drums: faster Robo Monkeys
+  - {do: place, id: r1, kind: super, role: dps, near: [v1], near_radius: 7}
+  - {do: upgrade, id: r1, to: 0-3-0}      # Robo Monkey: crits from here on
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: upgrade, id: r1, to: 2-3-0}
+  - {do: place, id: r2, kind: super, role: dps, near: [v1], near_radius: 7}
+  - {do: upgrade, id: r2, to: 2-3-0}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: place, id: r3, kind: super, role: dps, near: [v1], near_radius: 8}
+  - {do: upgrade, id: r3, to: 2-3-0}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+fill:
+  - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 5}
+  - {do: upgrade, kind: ninja, to: 4-0-2}
+  - {do: place, kind: spike, role: exit, max: 2}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: n2, to: 2-0-3}]
+  bfb: [{do: upgrade, id: n2, to: 2-0-4}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: n2, to: 2-0-4}]

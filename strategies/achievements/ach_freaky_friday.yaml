@@ -10,6 +10,11 @@
 # new code. Medium (to R60) gives ~30+ rounds of tonic use per game; the bot
 # assumes a 60 s cooldown (at 2x speed: one press every ~30 real seconds),
 # so about 20-25 uses a game: 4 games from 0 %, 2 from 52 %.
+# Live (2026-11-09 recalibration): the card read 52 % on 2026-11-06 and 68 %
+# on 2026-11-08 22:36 after two wins of this build (00:56 and 01:12 on
+# 11-08), so ~8 uses a game, not 20-25 (the ability fires far less often
+# than the assumed cooldown allows). wins_needed is 12 now (100 / 8): from
+# 68 % that allows 4 replays per scan instead of 2.
 #
 # Logs Medium is already beaten on the main account, so this plays as an
 # achievement replay (planner tier "ACH": after every first-time medal that
@@ -22,7 +27,7 @@ map: Logs
 modes: [medium]
 hero: obyn
 constraints:
-  wins_needed: 4
+  wins_needed: 12
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 4, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
   base_success: {medium: 0.9}

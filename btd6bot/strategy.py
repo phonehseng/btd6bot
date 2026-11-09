@@ -322,6 +322,7 @@ UNENFORCEABLE_CONSTRAINTS = {
     "no_removables": "removable-obstacle rule / precise hidden spots",
     "dynamic_tower_set": "tower set is read from an event screen at play time",
     "event_window_utc": "only playable inside an event window",
+    "targeted_ability": "needs a targeted ability step (press the ability, then click a tower)",
 }
 # Constraint keys that would break the owner's hard rules (never deliberately
 # lose lives or games, never spend Monkey Money on continues).

@@ -1,0 +1,78 @@
+# Achievement 'World League Training': have 150,000 Beast Handler tower XP
+# at once (the Monkeys menu's unspent XP for the Beast Handler).
+#
+# Where the account stands: the Monkeys-menu sync of SFYOSHHYV
+# (data/accounts/SFYOSHHYV.json, tower_xp) reads 133,191 Beast Handler XP,
+# so 16,809 are missing. Every Beast Handler upgrade is unlocked already and
+# the tower has no paragon, so xpspend never spends this XP again: whatever
+# the games earn stays banked. The card itself was not read by the
+# 2026-11-08 scan (it sits below where the scan stopped), so the catalog
+# marks it `assume_open` and the planner replays this build at most
+# wins_needed times in all (planner._replay_allowed).
+#
+# How tower XP is paid (btd6bot/towerxp.py, docs/tower_xp.md): at the end
+# of every round, base round XP x the map's category (Beginner x1.0) x1.08
+# (Monkey Education), split between the tower types by the cash invested in
+# each at that moment. So the Beast Handler must hold a large share of the
+# money on the board for as many rounds as possible.
+#
+# The build: the Logs Medium plan of ach_freaky_friday (won 4 of 4, ~9 min;
+# hard_ninja_alch_sun's Medium core: ninjas carry), with its two extra
+# Transforming Tonic alchemists replaced by one Beast Handler bought early
+# and taken to 0-4-0 (the land path's T-Rex) before the late upgrades.
+# Offline cash walk (tests/test_achievement_replays_offline.py,
+# test_world_league_training_build): about 10,000 Beast Handler XP a game,
+# so two wins cover the 16,809.
+id: ach_world_league_training
+achievement: World League Training
+map: Logs
+modes: [medium]
+hero: obyn
+constraints:
+  wins_needed: 2
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2],
+           spike: [2, 0, 4], beast_handler: [0, 4, 0]}
+  base_success: {medium: 0.9}
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: bh1, kind: beast_handler, role: dps, segment: [0.1, 0.7]}
+  - {do: upgrade, id: bh1, to: 0-2-0}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 0.9]}
+  - {do: upgrade, id: n2, to: 1-0-1}
+  - {do: upgrade, id: bh1, to: 0-3-0}     # Velociraptor: most of the money early
+  - {do: upgrade, id: n1, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: bh1, to: 0-4-0}     # T-Rex: the XP share's big step
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
+  - {do: upgrade, id: s1, to: 3-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+fill:
+  - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 5}
+  - {do: upgrade, kind: ninja, to: 4-0-2}
+  - {do: place, kind: spike, role: exit, max: 2}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: n2, to: 2-0-3}]
+  bfb: [{do: upgrade, id: n2, to: 2-0-4}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: n2, to: 2-0-4}]
