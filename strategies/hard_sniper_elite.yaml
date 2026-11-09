@@ -35,7 +35,13 @@ planner:
   towers: {sniper: [2, 0, 5], village: [2, 3, 0], boomerang: [5, 0, 2], spike: [2, 0, 4]}
   # Untested on this account: the planner caps unproven Hard priors at 0.85
   # and its win/loss record takes over after a few games.
-  base_success: {hard: 0.88, double_hp: 0.8, half_cash: 0.75, abr: 0.8}
+  # Half Cash 0.75 -> 0.5 (2026-11-08): 0 wins in 2 (High Finance r49,
+  # Firing Range r27, loss case 20261108_150120). At the Fast Track start
+  # (round 22, $4,420 at half cash) the opening sniper 2-0-2 and village
+  # 0-1-0 leave nothing for rounds 23-27, which the model rated 0.06-0.86;
+  # round 27 took every life. tools/optimize_builds.py found no safe
+  # Firing Range Half Cash build either (worst margin 0.06).
+  base_success: {hard: 0.88, double_hp: 0.8, half_cash: 0.5, abr: 0.8}
 plan:
   - {do: place, id: s1, kind: sniper, role: dps}
   - {do: upgrade, id: s1, to: 2-0-2}
