@@ -823,6 +823,18 @@ class Game:
         f = f if f is not None else self.fresh()
         return [price_row(rec_text(crop(f, reg))[0]) for reg in self.panel(p)["cost_rows"]]
 
+    def path_pips(self, p, path, f=None):
+        """Tiers owned on `path` (1..3) as the open panel's pips show them
+        (tier_pips), or None when they cannot be read."""
+        regs = self.panel(p).get("tier_pips")
+        if not regs:
+            return None
+        try:
+            f = f if f is not None else self.fresh()
+            return None if f is None else tier_pips(crop(f, regs[path - 1]))
+        except Exception:      # a screen read must never break a purchase
+            return None
+
     def _path_closed(self, p, path, costs):
         """Does the panel show no price at all on this path? Then it is closed
         (two other paths in use, or another path past tier 2) or maxed, and
@@ -989,6 +1001,28 @@ class Game:
             return False
         log.warning("%s is really %s, not %s (panel prices %s) - corrected",
                     p.tid, "-".join(map(str, new)), p.crosspath, costs)
+        p.tiers[:] = new
+        return True
+
+    def _resync_from_pips(self, p, path):
+        """Correct p.tiers on `path` by one tier when its pips show one more
+        than counted, where the price cannot tell (this tier and the next
+        cost the same, _next_tier_same_price): a purchase judged "not
+        bought" before the pips were read, or with them unreadable. Spillway
+        Apopalypse (2026-11-09): s2 and s3 owned Fast Firing while the bot
+        counted 0-2-0 and the $375 on the button fit both. Returns True when
+        corrected."""
+        if p.kind == "hero" or not self._next_tier_same_price(p, path):
+            return False
+        shown = self.path_pips(p, path)
+        if shown != p.tiers[path - 1] + 1:
+            return False
+        new = list(p.tiers)
+        new[path - 1] = shown
+        if not _legal_cross(new):
+            return False
+        log.warning("%s is really %s, not %s (path %d shows %d pips) - corrected",
+                    p.tid, "-".join(map(str, new)), p.crosspath, path, shown)
         p.tiers[:] = new
         return True
 
@@ -1215,7 +1249,7 @@ class Game:
                     self._wrong_panel(p, owner, costs)
                     return False
                 p.wrong_panels = 0
-                drifted = self._resync_tiers(p, costs)
+                drifted = self._resync_tiers(p, costs) or self._resync_from_pips(p, path)
                 if self._path_closed(p, path, costs):
                     return False
                 if drifted:
@@ -1258,6 +1292,11 @@ class Game:
             # bot believed neither (Lost Crevasse: spike factories went
             # 0-0-0 -> 0-0-2 in one "failed" upgrade). The hotkey is pressed
             # only while the same price is still on the button.
+            # The path's pips are read too (kept only when they agree with
+            # the count): one more lit pip after the click proves the tier
+            # where the price cannot (_upgrade_verdict).
+            pips = self.path_pips(p, path) if p.kind != "hero" else None
+            self._pips_before = pips if pips == p.tiers[path - 1] else None
             self.inp.click(*self.panel(p)["paths"][path - 1])
             verdict = self._await_verdict(p, path, shown, before, cost, dx)
             if verdict == "same":
@@ -1328,8 +1367,25 @@ class Game:
         (2026-11-04) took such cash as "same" four times; each time the
         hotkey bought a second tier (ninjas 0-0-1 -> 2-0-1, ninja1 2-0-1 ->
         4-0-1) and the bot counted one or none. "unknown" retries later,
-        after the panel's prices have corrected the count."""
-        again = self.path_costs(p)[path - 1]
+        after the panel's prices have corrected the count.
+
+        The pips settle what the price cannot: one more lit pip on the path
+        than before the click (Game._pips_before, kept only when it agreed
+        with the count) is the tier bought. Spillway Apopalypse (2026-11-09):
+        Fast Firing and Even Faster Firing both cost $375 beside the village,
+        the round's income hid the cash drop, and both 0-2-0 snipers meant to
+        become Full Auto Rifles were judged "not bought" (the panel showed
+        Fast Firing owned), set aside as blocked and never upgraded again;
+        the game was lost at round 46 with $6-10k unspent. Only a panel that
+        still shows a price is trusted for it: with the panel gone, the map
+        under the pip column can look like a lit pip."""
+        f = self.fresh()
+        panel_costs = self.path_costs(p, f)
+        again = panel_costs[path - 1]
+        before_pips = getattr(self, "_pips_before", None)
+        if (before_pips is not None and any(c != (None, None) for c in panel_costs)
+                and self.path_pips(p, path, f) == before_pips + 1):
+            return "bought"
         same_price = self._next_tier_same_price(p, path)
         moved = shown[1] is not None and again[0] is not None and again != shown
         if shown[1] is not None and again[0] is not None:
@@ -1560,6 +1616,42 @@ def _red_frac(img):
 def _expand(pt, dx, dy):
     x, y = pt
     return (x - dx, y - dy, x + dx, y + dy)
+
+
+# The upgrade panel shows a column of five pips at the left of every path's
+# row, lit yellow-green from the bottom up for each tier owned (brown when
+# not). A slot counts as lit when PIP_LIT of its pixels are that green, as
+# dark when at most PIP_DARK are. Measured on the Spillway Apopalypse
+# recording (2026-11-09): lit pips 0.65-0.72, dark ones 0.0.
+PIP_SLOTS = 5
+PIP_LIT = 0.4
+PIP_DARK = 0.15
+PIP_HSV_LO = (25, 120, 150)
+PIP_HSV_HI = (75, 255, 255)
+
+
+def tier_pips(img):
+    """The tiers one path's pip column (`img`, crop of layout "tier_pips")
+    shows as owned, or None when it does not read as such a column: every
+    slot must be clearly lit or clearly dark, and the lit ones must be the
+    bottom ones (a closed path hides its pips; something else in the crop -
+    no panel open, a tooltip - rarely looks like that)."""
+    if img is None or getattr(img, "size", 0) == 0:
+        return None
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lit = cv2.inRange(hsv, PIP_HSV_LO, PIP_HSV_HI) > 0
+    rows = lit.mean(axis=1)
+    n = len(rows)
+    if n < PIP_SLOTS:
+        return None
+    shares = [float(rows[k * n // PIP_SLOTS:(k + 1) * n // PIP_SLOTS].mean()) for k in range(PIP_SLOTS)]
+    if any(PIP_DARK < s < PIP_LIT for s in shares):
+        return None
+    on = [s >= PIP_LIT for s in shares]          # top slot first
+    count = sum(on)
+    if on != [False] * (PIP_SLOTS - count) + [True] * count:
+        return None
+    return count
 
 
 def price_row(text):

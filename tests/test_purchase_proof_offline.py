@@ -331,6 +331,72 @@ def test_equal_tier_prices_with_income_press_no_hotkey():
     assert p.tiers == [0, 0, 1] and not g.inp.keys, "no hotkey, so no second tier"
 
 
+# Frames of the Spillway Apopalypse recording (2026-11-09, 1280x800): s2's
+# panel (left side) at 0-2-0 before the Fast Firing click and 0-2-1 after it,
+# n2's (right side) at 2-0-3 and 2-0-4, s1's at 3-2-0.
+FIX = Path(__file__).resolve().parent / "fixtures"
+S2_PANEL = [("cash", 290), ("cash", 1745), ("cash", 375)]   # the same before and after
+
+
+def _frame(name):
+    import cv2
+    f = cv2.imread(str(FIX / f"spillway_apop_{name}_panel.jpg"))
+    assert f is not None, name
+    return f
+
+
+def test_tier_pips_are_read_from_the_panel():
+    from btd6bot.vision import crop
+    lay = L.get(1920, 1200)
+    for name, side, tiers in [("s2_020", "upg_left", [0, 2, 0]), ("s2_021", "upg_left", [0, 2, 1]),
+                              ("n2_203", "upg_right", [2, 0, 3]), ("n2_204", "upg_right", [2, 0, 4]),
+                              ("s1_320", "upg_right", [3, 2, 0])]:
+        f = _frame(name)
+        assert [G.tier_pips(crop(f, r)) for r in lay[side]["tier_pips"]] == tiers, name
+    assert G.tier_pips(None) is None
+
+
+def test_equal_tier_prices_are_proven_by_the_pips():
+    """Spillway Apopalypse (2026-11-09 06:03): s2 0-2-0 bought Fast Firing
+    for $375 beside the village; the button then asked $375 for Even Faster
+    Firing, the round's income hid the cash drop (2133 -> 2041), and the
+    purchase was judged "not bought": the plan's Full Auto Rifle step was
+    set aside and s2 stayed a 0-2-1 the bot thought 0-2-0. The pips show
+    the tier: one more lit than before the click."""
+    g = upgrade_game(S2_PANEL, difficulty="medium")
+    g.cash_stable = scripted([2133, 2041])
+    before, after = _frame("s2_020"), _frame("s2_021")
+    g.fresh = scripted([before, before, after])
+    p = Placed("s2", "sniper", 0.778, 0.308, tiers=[0, 2, 0])
+    p.panel_side = "upg_left"
+    assert g.upgrade(p, 3) is True, g.fail_reason
+    assert p.tiers == [0, 2, 1] and not g.inp.keys, "one tier bought, one counted, no hotkey"
+
+
+def test_equal_tier_prices_without_pips_stay_unknown():
+    """The same purchase with the pips unchanged (the click did not land)
+    is still not counted, and no hotkey is pressed."""
+    g = upgrade_game(S2_PANEL, difficulty="medium")
+    g.cash_stable = scripted([2133, 2300])
+    g.fresh = lambda: _frame("s2_020")
+    p = Placed("s2", "sniper", 0.778, 0.308, tiers=[0, 2, 0])
+    p.panel_side = "upg_left"
+    assert g.upgrade(p, 3) is False and g.fail_reason == "noeffect"
+    assert p.tiers == [0, 2, 0] and not g.inp.keys
+
+
+def test_a_count_behind_on_an_equal_price_path_is_corrected_by_the_pips():
+    """s3 (06:05:06): counted 0-2-0 while the panel showed Fast Firing owned;
+    the $375 on the button fits both. The pips correct the count before any
+    click, so the next try buys the tier the plan wants."""
+    g = upgrade_game(S2_PANEL, difficulty="medium", cash=6205)
+    g.fresh = lambda: _frame("s2_021")
+    p = Placed("s3", "sniper", 0.783, 0.249, tiers=[0, 2, 0])
+    p.panel_side = "upg_left"
+    assert g.upgrade(p, 3) is False and g.fail_reason == "drift"
+    assert p.tiers == [0, 2, 1] and not path_clicks(g, p)
+
+
 def test_button_showing_a_later_tier_proves_the_purchase():
     """Rake Impoppable: the bot believed ninja1 1-0-1 (really 2-0-1). The
     click bought tier 3 and the button jumped to Bloonjitsu's $3,300, two

@@ -28,6 +28,10 @@ LAYOUTS = {
             "paths": [(0.804, 0.47), (0.804, 0.61), (0.804, 0.75)],
             "cost_rows": [(0.76, 0.49, 0.85, 0.535), (0.76, 0.63, 0.85, 0.675), (0.76, 0.77, 0.85, 0.81)],
             "tier_rows": [(0.635, 0.40, 0.75, 0.50), (0.635, 0.54, 0.75, 0.64), (0.635, 0.68, 0.75, 0.78)],
+            # the five tier pips at the left edge of each path's row, lit
+            # green from the bottom up for the tiers owned (Game.path_pips)
+            "tier_pips": [(0.635, 0.413, 0.652, 0.524), (0.635, 0.553, 0.652, 0.664),
+                          (0.635, 0.693, 0.652, 0.804)],
             "target_prev": (0.658, 0.363),
             "target_next": (0.82, 0.363),
             "target_text": (0.66, 0.34, 0.82, 0.385),
