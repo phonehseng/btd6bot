@@ -12,9 +12,30 @@ modes: [medium, hard, magic_only]
 # track does not match where the bloons go (backlog 47): ranged towers placed
 # by it read no pops and the damage model sits at its floor all game. Only
 # global-range builds have won there; back on when the track is verified.
-excluded_maps: [Water Park]
+# It was lost there AGAIN on 2026-11-08 (r63, case 20261108_140042) because
+# this key sat at the top level of the file, where nothing reads it: the
+# runner takes `excluded_maps` from the planner block (runner.py), like
+# `maps`. It is in the planner block now.
+#
+# 2026-11-08: six Magic Monkeys Only games (Fast Track from round 22) were
+# lost AT ROUND 40, the first MOAB, with full lives: Ravine, Muddy Puddles,
+# Spillway, Bloody Puddles, Dark Dungeons, Midnight Mansion. In every one n2
+# stood at 2-0-3 when the MOAB came: the build's only MOAB damage, the Sticky
+# Bomb (2-0-4: 450 damage per bomb, a MOAB has 200), came after the
+# Necromancer, Berserker Brew and Bloonjitsu in the plan, and the `moab`
+# answer named 2-0-3 (Flash Bomb), which the build already had, so the
+# blimp check bought a bare Super Monkey instead (rated 0.3-0.46x at death).
+# Now the Sticky Bomb follows the Flash Bomb directly and is the `moab`
+# answer. Muddy Puddles, Bloody Puddles and Dark Dungeons are left out: their
+# 4-6 parallel lanes cannot all be reached by this build's short-range
+# towers, and even with the Sticky Bomb the replay (tools/simulate_threats
+# on the learned map, rated by the live forecast) rates round 40 at
+# 0.16 / 0.10 / 0.44 and round 28 at the floor. Midnight Mansion is left out
+# because live the map gave no spot for n2, a1 or the super (7 plan steps
+# given up, $20k unspent at round 40).
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], wizard: [0, 2, 5], super: [3, 0, 2]}
+  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
@@ -27,10 +48,10 @@ plan:
   - {do: upgrade, id: n1, to: 3-0-2}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
   - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: n2, to: 2-0-4}     # Sticky Bomb: the round-40 MOAB answer (see above)
   - {do: upgrade, id: w1, to: 0-2-4}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: n1, to: 4-0-2}
-  - {do: upgrade, id: n2, to: 2-0-4}
   - {do: upgrade, id: a1, to: 4-2-0}
   - {do: place, id: n3, kind: ninja, role: support, near: [a1], near_radius: 6}
   - {do: upgrade, id: n3, to: 4-0-2}
@@ -55,7 +76,7 @@ answers:
     - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
   moab:
-    - {do: upgrade, id: n2, to: 2-0-3}
+    - {do: upgrade, id: n2, to: 2-0-4}
     - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
   bfb: [{do: upgrade, id: n2, to: 2-0-4}]
   rush: [{do: upgrade, id: n1, to: 4-0-2}]
