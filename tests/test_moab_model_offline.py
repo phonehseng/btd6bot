@@ -242,14 +242,17 @@ def _r94_then_r95(ninjas):
     return out
 
 
-def test_two_sabotage_ninjas_cover_round_94_and_round_95():
-    """One ninja pressed at round 94's start is still cooling down (60 s)
-    when round 95's blimps come 50 game seconds later, and slows them only
-    from 12 game seconds after they started; with two, the shared button
-    comes back twice as often (Spring Spring CHIMPS buys two)."""
-    one = _r94_then_r95(1)
-    assert one[0] == (94, 0) and one[1][0] == 95 and one[1][1] > 45, one
-    assert _r94_then_r95(2) == [(94, 0), (95, 45)]
+def test_the_slow_is_kept_from_round_94_for_round_95():
+    """Rounds 92, 94, 95 and 96 are all heavy by blimp HP, but the slow is
+    pressed only in the hand-picked rounds (abilities.is_slow_round): live
+    2026-11-08 22:29 Spring Spring CHIMPS pressed it twice in round 94 and
+    met round 95's MOABs and DDTs without it. Now round 94 passes without a
+    press and round 95's blimps get it as they come (45 s here), with one
+    ninja or two."""
+    assert 94 in A.HEAVY_ROUNDS and not A.is_slow_round(94, MODE_RULES["chimps"])
+    assert A.is_slow_round(95, MODE_RULES["chimps"]) and A.is_slow_round(99, MODE_RULES["chimps"])
+    assert _r94_then_r95(1) == [(95, 45)]
+    assert _r94_then_r95(2) == [(95, 45)]
 
 
 if __name__ == "__main__":
