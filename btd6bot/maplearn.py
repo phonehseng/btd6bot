@@ -432,10 +432,14 @@ class MapModel:
         return px / cell_px
 
     # -- choosing tower spots ---------------------------------------------
-    def spot_weight(self, segment=(0.0, 1.0), covered=None):
+    def spot_weight(self, segment=(0.0, 1.0), covered=None, only=None):
         """Per-cell value of track for a new tower: track in the wanted progress
-        segment, with track our towers already cover counting less."""
+        segment, with track our towers already cover counting less.
+        only: optional bool grid; track outside it is worth nothing (a blimp
+        answer counts only the track blimps ride, mapgeom.blimp_track)."""
         mask = self.track_weight()
+        if only is not None:
+            mask = mask * only
         if self.known() and segment != (0.0, 1.0):
             prog = self.progress_full()
             seg = ((prog >= segment[0]) & (prog <= segment[1])).astype(np.float32)
@@ -450,7 +454,7 @@ class MapModel:
 
     def score_spots(self, range_cells, segment=(0.0, 1.0), avoid=(), min_sep=3.0, near=None,
                     near_radius=None, placement="land", extra_block=None, covered=None,
-                    valid=None):
+                    valid=None, only=None):
         """Score every cell by how much (weighted) track lies within range.
 
         segment: only count track whose progress lies in this window.
@@ -459,9 +463,10 @@ class MapModel:
         valid: optional bool grid of where this tower may stand (placement.py,
                from the game's geometry incl. footprints and other towers);
                replaces the placement-class check and the avoid list.
+        only:  optional bool grid of the only track worth covering (spot_weight).
         """
         mask = self.track_weight()
-        weight = self.spot_weight(segment, covered)
+        weight = self.spot_weight(segment, covered, only)
         r = max(1, int(round(range_cells)))
         disk = np.zeros((2 * r + 1, 2 * r + 1), np.float32)
         cv2.circle(disk, (r, r), r, 1.0, -1)
