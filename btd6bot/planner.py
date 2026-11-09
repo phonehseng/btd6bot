@@ -2017,6 +2017,37 @@ def struck_out(account: AccountState, strategy_id: str, map_name: str, mode: str
     return wins == 0 and losses >= LAST_RESORT_STRIKES
 
 
+# A map/mode that every build keeps losing goes to the back of the last-resort
+# queue. struck_out above is per build, so a map/mode that four builds lost
+# once or twice each never struck out: Dark Dungeons Military Only lost five
+# games with four builds (military_heli_sniper twice, solo_sniper, solo_ace,
+# solo_heli, 2026-11-04..09) and was still picked. It is demoted, not
+# dropped, so the bot still plays it when nothing else is open (owner rule:
+# never idle while medals are open).
+MAP_STRIKES = 4
+
+
+def map_mode_record(account: AccountState, map_name: str, mode: str) -> tuple[int, int]:
+    """(wins, losses) of every build together on ``map_name`` / ``mode``."""
+    m = canonical_map(map_name)
+    wins = losses = 0
+    for h in account.history:
+        if h.get("mode") != mode or canonical_map(str(h.get("map") or "")) != m:
+            continue
+        if h.get("won"):
+            wins += 1
+        else:
+            losses += 1
+    return wins, losses
+
+
+def map_struck_out(account: AccountState, map_name: str, mode: str) -> bool:
+    """Have MAP_STRIKES or more games on ``map_name`` / ``mode`` been lost,
+    by any builds, without a single win? Then it is played last of all."""
+    wins, losses = map_mode_record(account, map_name, mode)
+    return wins == 0 and losses >= MAP_STRIKES
+
+
 def _wins_since(account: AccountState, strategy_id: str, since: str | None) -> int:
     """Wins of ``strategy_id`` in the account's history after ``since`` (the
     scan's "YYYY-MM-DD HH:MM:SS"; history uses "YYYY-MM-DDTHH:MM:SS", so
@@ -2640,14 +2671,26 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
     rest: list[_Cand] = []
     if below_bar:
         from .strategy import MODE_RULES
-        rest = [c for c in scored
-                if c.tier is None and c.mode != "chimps" and not c.s.achievement
-                and not struck_out(account, c.s.id, c.map, c.mode)]
+        open_rest = [c for c in scored
+                     if c.tier is None and c.mode != "chimps" and not c.s.achievement]
+        rest = [c for c in open_rest if not struck_out(account, c.s.id, c.map, c.mode)]
+        if not rest:
+            # Every last resort has struck out: play them anyway rather
+            # than idle (owner rule, 2026-11-03).
+            rest = open_rest
+        # Multi-life before one-life, then map/modes some build can still
+        # win before the ones every build has lost (map_struck_out), then
+        # the surest.
+        struck_maps = {(c.map, c.mode) for c in rest if map_struck_out(account, c.map, c.mode)}
         rest.sort(key=lambda c: (not MODE_RULES.get(c.mode, {}).get("one_life"),
+                                 (c.map, c.mode) not in struck_maps,
                                  c.p, c.ease, c.score), reverse=True)
         for c in rest:
             c.tier = "LAST"
             c.notes.append("last resort: under every bar, played rather than idling")
+            if (c.map, c.mode) in struck_maps:
+                c.notes.append(f"every build lost {c.map}/{c.mode} "
+                               f"{map_mode_record(account, c.map, c.mode)[1]}x without a win: played last")
         if rest and not cands and not ach_replays:
             reasons.append(f"{PHASES['LAST']} (best {rest[0].map}/{rest[0].mode} "
                            f"with {rest[0].s.id} p={rest[0].p:.2f})")

@@ -33,7 +33,10 @@ planner:
   # 54 at 0.33 and round 57 at 0.65 after every reinforcement, and the plan's
   # Elite Sniper ($6,805) could not be paid in time. The map's research
   # ceiling is 0.5 in every mode; the ninja/alchemist build won its Medium.
-  excluded_maps: [Tricky Tracks, Water Park, Mesa, Workshop, "#Ouch", "Pat's Pond", Sunken Columns]
+  # Bloody Puddles: ABR lost at rounds 23 and 27 (2026-11-08, 2026-11-09 12:50);
+  # the 2026-11-08 ABR replay rates its rounds 40+ at 0.06-0.3 even with the
+  # earlier sniper, so a fixed opening would still not carry it.
+  excluded_maps: [Tricky Tracks, Water Park, Mesa, Workshop, "#Ouch", "Pat's Pond", Sunken Columns, Bloody Puddles]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
