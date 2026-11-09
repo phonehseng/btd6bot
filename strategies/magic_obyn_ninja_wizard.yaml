@@ -39,7 +39,10 @@ modes: [medium, hard, magic_only]
 # first here, as the `moab` answer.)
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], wizard: [0, 2, 5], super: [3, 0, 2]}
-  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion]
+  # Sunset Gulch: Magic Monkeys Only lost three times (2026-10-23 round 40,
+  # 2026-11-08 20:27 before round 1, 2026-11-09 05:22 round 60 to the BFB
+  # with the Sticky Bomb fix in); its Hard medal here is already won.
+  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
   # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
   # losses keep counting against these maps until live wins say otherwise
