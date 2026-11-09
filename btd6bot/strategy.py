@@ -342,6 +342,7 @@ STEP_KEYS = {"do", "id", "kind", "role", "segment", "near", "near_radius", "roun
              "target", "to", "mode",
              "modes",      # only in these game modes (Executor._step_allowed), e.g. [half_cash]
              "at",         # exact spot [fx, fy] (screen fractions) from a map's own build
+             "lane",       # "blimp": score only the track blimps ride (Executor.pick_spots)
              "obstacle"}   # do: clear - the removable obstacle's name in the map file
 UNSUPPORTED_STEP_KEYS = {
     "avoid": "spot avoidance (`avoid`) is not implemented by pick_spot",
@@ -1458,6 +1459,12 @@ class Executor:
             role = "dps"
         if role == "exit":
             seg = (0.65, 1.0)
+        only = self._blimp_lane() if step.get("lane") == "blimp" and role != "support" else None
+        if only is not None:
+            # the blimps' own route is already a part of the track: the
+            # progress window would cut it further (Workshop's chute route
+            # starts at 55% of the belt), so the whole route counts
+            seg = (0.0, 1.0)
         if role == "support" and step.get("near"):
             ids = [i for i in step["near"] if i in self.g.towers]
             if ids:
@@ -1484,11 +1491,18 @@ class Executor:
         else:
             cover = self.m.score_spots(rc, seg, self._occupied(), near=near, near_radius=near_r,
                                        placement=placement, extra_block=block,
-                                       covered=covered, valid=valid)
+                                       covered=covered, valid=valid,
+                                       **({"only": only} if only is not None else {}))
         cands = self.m.best_spots(cover, n=30 if valid is not None else 12)
+        if only is not None and not cands:
+            # no legal cell reaches the blimps' route: the whole track is
+            # still better than setting the answer aside
+            log.info("%s: no legal spot reaches the blimp route - scoring the whole track", kind)
+            return self.pick_spots(kind, {k: v for k, v in step.items() if k != "lane"}, n)
         if valid is not None and role not in ("support", "far") and PL.needs_sight(kind, hero):
             # count only the track this spot can actually see past walls/blockers
-            weight = self.m.spot_weight(seg, covered)
+            weight = (self.m.spot_weight(seg, covered) if only is None
+                      else self.m.spot_weight(seg, covered, only))
             cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight)) for cx, cy, _ in cands]
         edge = self._edge_band()
         lane = None if covered is None else self._lane_cover(self._tower_cover())
@@ -1540,7 +1554,9 @@ class Executor:
         if len(out) >= n:
             return out      # the researched spot's neighbourhood fills the pick-up
         # (a probe goes wherever the most track is: not for a step with a researched spot)
-        probe = self._probe_spot(kind, valid) if role in ("dps", "exit") and far is None else None
+        # (nor for a blimp answer: the probe looks at all of the track)
+        probe = (self._probe_spot(kind, valid) if role in ("dps", "exit") and far is None
+                 and only is None else None)
         if probe is not None:
             out.append(probe)       # tried first; a refusal costs ~0.1 s and is learned
         reserved = self._reserved_cells(step)
@@ -3391,6 +3407,29 @@ class Executor:
             return False          # no legal cell in reach of the track: a kind that fits answers instead
         return True
 
+    # threat names (threats.py's older strength threats and the blimp ramp's
+    # "blimps") that mean MOAB-class bloons; signatures say it with "blimp"
+    BLIMP_THREATS = ("blimps", "moab", "bfb", "zomg", "ddt", "bad")
+
+    @classmethod
+    def _is_blimp_need(cls, need):
+        """True when the answer for `need` is there to pop MOAB-class bloons."""
+        if need in cls.BLIMP_THREATS:
+            return True
+        sig = TH.sig_from_name(need)
+        return sig is not None and "blimp" in sig
+
+    def _blimp_lane(self):
+        """Bool grid of the track blimps ride on this map (mapgeom.blimp_track),
+        or None when they ride all of it or the map has no geometry."""
+        from . import mapgeom
+        try:
+            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed))
+        except Exception:                      # geometry is a help, never a must
+            log.debug("blimp lane: no geometry grids", exc_info=True)
+            return None
+        return (grids or {}).get("blimp_track")
+
     def _new_tower_option(self, need, kind, cost, tiers):
         """An answer option that places a new tower and upgrades it."""
         tid = f"ans_{need.replace('+', '_')}_{kind}"
@@ -3399,6 +3438,8 @@ class Executor:
             place.update(role="support", near=self._near_ids(), near_radius=8)
         else:
             place.update(role="dps", segment=[0.0, 0.7])
+            if self._is_blimp_need(need):
+                place["lane"] = "blimp"     # stand where the blimps pass (pick_spots)
         cross = "-".join(map(str, tiers))
         steps = [place] + ([{"do": "upgrade", "id": tid, "to": cross}] if any(tiers) else [])
         return {"cost": cost, "desc": f"new {kind} {cross}", "steps": steps}

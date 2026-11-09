@@ -419,6 +419,7 @@ class Match:
         # after 4 idle passes whatever the cash - and lost 47 lives in seconds.
         cash = None
         while time.time() - t < max_seconds and idle < 8:
+            self._setup_screen_check()
             cash = self.g.cash_stable()
             # one life and one tower so far: the plan may not spend the
             # money a second tower needs (_opener_reserve)
@@ -435,6 +436,7 @@ class Match:
         if late and cash is not None and cash >= 600:
             log.warning("starting round %s with $%d unspent: %s", rnd, cash,
                         getattr(self.ex, "waiting", "nothing more could be bought"))
+        self._setup_screen_check()
         if not self.ex.defended():
             self._place_starter(rnd)
         elif self._lone_opener():
@@ -446,6 +448,33 @@ class Match:
         # at the cash reading rather than at the spots (108 valid offline)
         self._setup_cash = cash
         return self.ex.defended()
+
+    def _setup_screen_check(self):
+        """During the opening build: once a placement found the HUD gone
+        (Game.screen_ok set screen_lost), look at the screen, close a popup
+        over the match and allow clicks again when the HUD is back.
+
+        The match loop does this for every pass (play), but the opening
+        build ran before it: on Sunken Columns Double HP (2026-11-09 07:53)
+        a stray click had opened an obstacle's "Remove for $1,000" box
+        before the first placement, every plan step then waited "(screen)"
+        for 20 s, and the game was refused with "no defence could be
+        placed". Menus.dismiss_popup closes such a box with its red X and
+        never confirms a purchase."""
+        if not self.g.screen_lost:
+            return
+        menus = getattr(self, "menus", None)
+        if menus is None:
+            return
+        st = menus.identify()
+        log.info("opening build: the HUD is covered (%s) - looking for a popup", st)
+        if st in ("in_game", "unknown"):
+            menus.dismiss_popup()
+        elif st not in ("victory", "defeat", *self.MENU_SCREENS):
+            self._off_screen(st)        # level up, reward screens, pause ...
+        if self.g.in_game():
+            log.info("opening build: the HUD is back - placing again")
+            self.g.screen_lost = False
 
     def _opening_surplus_ok(self):
         """May surplus() spend between plan steps of the opening build?
