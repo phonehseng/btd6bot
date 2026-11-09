@@ -42,7 +42,10 @@ planner:
   # Sunset Gulch: Magic Monkeys Only lost three times (2026-10-23 round 40,
   # 2026-11-08 20:27 before round 1, 2026-11-09 05:22 round 60 to the BFB
   # with the Sticky Bomb fix in); its Hard medal here is already won.
-  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch]
+  # Workshop: Magic Only lost twice at round 40 (the MOAB drops through the
+  # chute and comes out by the exit, out of this build's reach; the
+  # workshop_* map builds of c40edc8 place for it, but none is Magic Only).
+  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
   # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
   # losses keep counting against these maps until live wins say otherwise
