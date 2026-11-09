@@ -2,6 +2,7 @@
 import logging
 import time
 
+from . import clicktime as CT
 from . import hudstate
 from . import journal
 from . import status
@@ -735,6 +736,7 @@ class Match:
                     log.info("round %d  cash %s  lives %s%s", rnd, cash, self._lives.confirmed,
                              _misread_note(lives, self._lives.confirmed))
                     status.in_game(f"round {rnd}, ${cash}, {self._lives.confirmed} lives")
+                    self._note_round_length(now - self._t_round_change, rnd - last_round)
                     last_round = rnd
                     self._t_round_change = now
                     self._forecast_round(rnd)
@@ -848,6 +850,23 @@ class Match:
                 self._abilities(last_round)
             time.sleep(0.02)
         return self._finish("timeout", last_round)
+
+    # rounds longer than this are not the game's pace (a pause, a popup,
+    # a round the bot held back) and are left out of the measured length
+    ROUND_LENGTH_MAX_S = 30.0
+
+    def _note_round_length(self, seconds, rounds):
+        """Under a click budget (clicktime.time_limited) keep the measured
+        length of a round in ex.round_seconds - a running mean of the time
+        between round changes, per round - for the seconds a purchase has
+        before the round it is for (clicktime.time_left)."""
+        if not CT.time_limited(self.ex) or rounds <= 0:
+            return
+        per = seconds / rounds
+        if not 0.5 <= per <= self.ROUND_LENGTH_MAX_S:
+            return
+        old = getattr(self.ex, "round_seconds", None)
+        self.ex.round_seconds = per if not old else (1 - CT.LEARN) * old + CT.LEARN * per
 
     def _in_round_powers_due(self, now, rnd, dropped):
         """Time for the once-a-game Powers run (powers.InGameExtras, phase

@@ -31,6 +31,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from btd6bot import clicktime as CT  # noqa: E402
 from btd6bot import strategy as S  # noqa: E402
 from btd6bot import threats as TH  # noqa: E402
 from btd6bot import towers as T  # noqa: E402
@@ -61,6 +62,13 @@ class CashGame:
         self.bought = []          # (round, text)
         self.round = None
         self.s = type("Screen", (), {"width": 1920})()
+        # the seconds of clicking spent (simulate(click_budget=...)): each
+        # purchase costs what clicktime.seconds says it does live - a tier
+        # bought from the panel the executor kept open (hold_panel) costs a
+        # chained tier, any other a whole upgrade and a pass of the match loop
+        self.clock = 0.0
+        self.hold_panel = None
+        self._open = None          # tid whose panel is open (held from the last tier)
 
     def price(self, kind):
         return T.hero_cost(self.hero, self.family) if kind == "hero" else T.tower_cost(kind, self.family)
@@ -92,6 +100,8 @@ class CashGame:
         self.click_refusals = len(self.refused_spots)
         fx, fy = sx, sy
         self.cash -= cost
+        self.clock += CT.seconds(None, 1, [])
+        self._open = None
         p = Placed(tid, kind, fx, fy, spent=cost)
         self.towers[tid] = p
         self.bought.append((self.round, f"place {tid} ({kind})"))
@@ -127,10 +137,16 @@ class CashGame:
             self.last_price = cost
             return False
         self.cash -= cost
+        held = self.hold_panel == p.tid
+        self.clock += CT.CHAINED_S if (held and self._open == p.tid) else CT.seconds(None, 0, [1])
+        self._open = p.tid if held else None
         p.tiers[path - 1] += 1
         p.spent += cost
         self.bought.append((self.round, f"upgrade {p.tid} -> {p.crosspath}"))
         return True
+
+    def release_panel(self):
+        self.hold_panel = self._open = None
 
     def remove_obstacle(self, fx, fy, cost, name=""):
         """Removable obstacles only exist on a real map (simulate(real_map=True));
@@ -232,7 +248,7 @@ def full_account():
 
 
 def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, account=None, scenario=None,
-             real_map=False, learned=False, income=None, boards=None):
+             real_map=False, learned=False, income=None, boards=None, click_budget=None):
     """Run one game offline. scenario: {"start_round", "start_cash",
     "income_multiplier"} to play an optimized build as it was planned (Fast
     Track start, Double Cash income: its `optimizer.scenario`); default the
@@ -244,6 +260,12 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
     calendar's (Apopalypse's random rounds: tools/apopalypse_check.py);
     boards: a dict filled with {round: {tid: (kind, tiers, fx, fy)}}, the
     towers standing when each round starts.
+    click_budget: seconds of clicking each round allows after the first
+    (Apopalypse: about one round's length), each purchase costing what it
+    costs live (CashGame.clock, clicktime.seconds); None: as many purchases
+    as `ticks` allows, however long they would take. The round is paid
+    first and the board it starts with is the one rated - its purchases are
+    made while it plays, as under continuous sends.
     Returns a dict:
     gaps      [(round, need, what is missing)] signatures the defence could not
               pop at the start of a round that brings them
@@ -273,6 +295,22 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
     total_in = g.cash
     for rnd in range(start, end + 1):
         g.round = rnd
+        if click_budget and rnd > start:
+            # continuous sends: the round starts with the board as it stands,
+            # pays as it plays, and the bot buys while it does - as far as
+            # the seconds go
+            if boards is not None:
+                boards[rnd] = {p.tid: (p.kind, tuple(p.tiers), p.x, p.y) for p in g.towers.values()}
+            income = (TH.round_cash(set_name, rnd) if income_fn is None else income_fn(rnd)) * mult
+            g.cash += income
+            total_in += income
+            g.clock = 0.0
+            for _ in range(50):           # (a purchase that costs no clicking cannot loop forever)
+                if g.clock >= click_budget:
+                    break
+                if not ex.tick(g.cash, rnd) and not (g.cash > 800 and ex.surplus(g.cash, rnd)):
+                    break
+            continue
         # between rounds: build. Before the first Play the bot spends down
         # what it has (Match.setup), not a few steps of it: a Fast Track
         # start, and Deflation's $20,000 at round 31
