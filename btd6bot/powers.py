@@ -8,8 +8,17 @@ When (plan_extras decides, the match runs it once per game)
     planner's p >= MIN_P, never an achievement build (its constraints may
     forbid extra towers), never CHIMPS (the game forbids powers there and
     crosses out the button), Instas never in Primary/Military Only;
-  * once, before the first round starts (Match.play, after setup and before
-    Play): no bloon is on the track, nothing is lost by taking a few seconds;
+  * Instas: once, before the first round starts (Match.play, after setup
+    and before Play): no bloon is on the track, nothing is lost by taking a
+    few seconds;
+  * Powers: once, IN a round (Match._in_round_powers_due: the second round
+    the game plays, a few seconds after it started, lives steady, no
+    crisis) - the instant Powers (Super Monkey Storm, Monkey Boost, Cash
+    Drop ...) are greyed out before round 1 (see "Greyed-out Powers"). The
+    run is phase="round": Powers only, the top view's un-greyed ones first,
+    else the Insta tab's view (the placed Powers such as Energizing Totem,
+    the old pre-round path). With powers_in_round=False the pre-round run
+    uses Powers as before;
   * within the daily caps of achtasks (power uses, insta uses, clicks).
 
 The Powers button (recordings, 1280x800, 2026-11-07)
@@ -390,9 +399,12 @@ class InGameExtras:
     are wanted. allow_instas: False in modes with a tower restriction."""
 
     def __init__(self, budget, want_powers, want_instas, want_t5=False, allow_instas=True,
-                 sleep=time.sleep, capture_dir=CAPTURE_DIR):
+                 sleep=time.sleep, capture_dir=CAPTURE_DIR, powers_in_round=True):
         self.budget = budget
         self.want_powers = want_powers
+        # Powers wait for a running round (Match calls run(phase="round"))
+        self.powers_in_round = powers_in_round
+        self.phase = "pre"
         self.want_instas = want_instas and allow_instas
         self.want_t5 = want_t5 and self.want_instas
         self.sleep = sleep
@@ -665,6 +677,10 @@ class InGameExtras:
         if owned:
             log.info("achievement: owned Powers in the top view: %d (slots at %s), %d of them usable, "
                      "the rest greyed out", len(owned), ", ".join("%.3f,%.3f" % i for i, _ in owned), len(usable))
+            if self.phase == "round" and not usable:
+                # expected to un-grey once bloons are out: worth a look at the capture
+                log.warning("achievement: the top view's owned Powers are STILL GREYED during a round "
+                            "(see the powers_panel capture) - trying the Insta tab's view")
         if usable:
             return usable
         frame, words = self._jump_to_instas()
@@ -770,9 +786,35 @@ class InGameExtras:
         self._panel = (frame, words)
         return True
 
-    def run(self, game, menus, model, avoid=()):
+    def wants_pre_round(self):
+        """Anything to do before round 1: Instas, or Powers when they do not wait for a round."""
+        return self.want_instas or (self.want_powers and not self.powers_in_round)
+
+    def wants_in_round(self):
+        """Powers wait for a running round and that run has not happened yet."""
+        return self.want_powers and self.powers_in_round and not getattr(self, "_round_run", False)
+
+    def run(self, game, menus, model, avoid=(), phase="pre"):
         """Open the panel, use Powers, place Instas, close it. Returns a
-        summary dict; never raises (a failure closes the panel and is logged)."""
+        summary dict; never raises (a failure closes the panel and is logged).
+
+        phase "pre": before round 1 - Instas, and Powers only when
+        powers_in_round is False. phase "round": during a round - Powers
+        only, once per game."""
+        self.phase = phase
+        if phase == "round":
+            self._round_run = True
+        self.summary = {"powers": [], "instas": [], "result": None, "phase": phase}
+        self.seen = None
+        return self._run(game, menus, model, avoid)
+
+    def _powers_now(self):
+        return self.want_powers and (self.phase == "round" or not self.powers_in_round)
+
+    def _instas_now(self):
+        return self.want_instas and self.phase == "pre"
+
+    def _run(self, game, menus, model, avoid=()):
         self.g, self.menus, self.avoid = game, menus, list(avoid)
         self.inp = A.CountingInput(game.inp, self.budget)
         if self.budget.resting("powers"):
@@ -790,14 +832,15 @@ class InGameExtras:
             if on_powers_tab(frame, words):
                 # written in `finally`: the power shop buys only after a look that found none owned
                 self.seen = {"owned": len(power_badges(frame, words)), "usable": len(usable_powers(frame, words))}
-            if self.want_powers and self.budget.allow("power_uses"):
+            if self._powers_now() and self.budget.allow("power_uses"):
                 self._use_powers(frame, model, words)
+            if self._powers_now() and self._instas_now():
                 frame, words = self._look("powers_panel_before_instas")
-                if panel_closed(frame) and self.want_instas:
+                if panel_closed(frame):
                     if not self._open():
                         raise _Bail("the panel did not open again for the Instas", words)
                     frame, words = self._panel
-            for _ in range(INSTAS_PER_GAME if self.want_instas else 0):
+            for _ in range(INSTAS_PER_GAME if self._instas_now() else 0):
                 if not self.budget.allow("insta_uses") or not self._place_insta(model, words):
                     break
             self.summary["result"] = "done"

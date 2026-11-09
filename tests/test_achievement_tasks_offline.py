@@ -379,7 +379,118 @@ def _extras(tmp, **kw):
     b = _budget(tmp)
     kw.setdefault("want_powers", True)
     kw.setdefault("want_instas", False)
+    # the panel mechanics below are the same in both phases; most tests run
+    # them in the old pre-round phase (powers_in_round=False)
+    kw.setdefault("powers_in_round", False)
     return P.InGameExtras(b, sleep=lambda s: None, capture_dir=Path(tmp) / "cap", **kw), b
+
+
+def test_powers_wait_for_a_round_instas_do_not():
+    """Default: the pre-round run places Instas only and never clicks a
+    Power hexagon; the in-round run uses the Powers once (the Storm greyed
+    in these frames, so the Totem in the Insta tab's view) and no Insta."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp, want_instas=True, powers_in_round=True)
+        assert ex.wants_pre_round() and ex.wants_in_round()
+        g = _two_views()
+        tiers = [_w("3-0-0", 0.90, 0.3)]
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS, LIVE_INSTA_WORDS, tiers], count=[12]), FakeModel(), [])
+        assert res["phase"] == "pre" and res["powers"] == [] and b.used("power_uses") == 0, res
+        assert LIVE_TOTEM not in g.inp.clicks
+        assert ex.wants_in_round()
+        g = _two_views(holding=[True, False, True, False])
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS, LIVE_INSTA_WORDS], count=[9, 8, 8, 7]), FakeModel(), [],
+                     phase="round")
+        assert res["phase"] == "round" and len(res["powers"]) == 2 and res["instas"] == [], res
+        assert b.used("power_uses") == 2 and not ex.wants_in_round()       # once a game
+        assert g.inp.clicks[:3] == [P.POWERS_BUTTON, P.INSTA_TAB, LIVE_TOTEM], g.inp.clicks
+
+
+def test_in_round_uses_the_top_view_power_once_it_is_in_colour():
+    """Mid-round the Storm is expected in full colour: it is used from the
+    top view, the Insta tab is never clicked."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp, powers_in_round=True)
+        assert not ex.wants_pre_round()
+        live = _vivid(_big("powers_panel_live.jpg"))
+        g = FakeGame(lambda clicks: live)
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22, 21, 21, 20]), FakeModel(), [], phase="round")
+        assert res["result"] == "done" and len(res["powers"]) == 2, res
+        assert P.INSTA_TAB not in g.inp.clicks
+        assert b.flag("powers_seen")["usable"] == 1
+
+
+def _match_for_powers(extras, first=10, since=3.0):
+    """A Match with only what _in_round_powers_due / _achievement_extras touch."""
+    from btd6bot.match import Match
+    m = Match.__new__(Match)
+    m.extras, m._in_round, m._first_round = extras, True, first
+    m._t_round_change = 1000.0 - since
+    m._crisis_round = None
+    m.stats = {}
+    m.g, m.menus, m.m = None, None, None
+    m._exclude = lambda: []
+    return m
+
+
+class _Extras:
+    def __init__(self, pre=True, rnd=True):
+        self.pre, self.rnd, self.calls = pre, rnd, []
+
+    def wants_pre_round(self):
+        return self.pre
+
+    def wants_in_round(self):
+        return self.rnd
+
+    def run(self, g, menus, model, avoid, phase="pre"):
+        self.calls.append(phase)
+        if phase == "round":
+            self.rnd = False
+        return {"phase": phase}
+
+
+def test_match_runs_the_powers_in_the_second_round_once():
+    from btd6bot import match as MM
+    ex = _Extras()
+    m = _match_for_powers(ex)
+    assert not m._in_round_powers_due(1000.0, 10, False)          # the first round: not yet
+    assert m._in_round_powers_due(1000.0, 11, False)
+    assert not m._in_round_powers_due(1000.0, 11, True)           # lives just dropped
+    m._crisis_round = 11
+    assert not m._in_round_powers_due(1000.0, 11, False)          # a crisis forecast
+    m._crisis_round = None
+    m._in_round = False
+    assert not m._in_round_powers_due(1000.0, 11, False)          # between rounds
+    m._in_round = True
+    m._t_round_change = 1000.0 - MM.IN_ROUND_POWERS_AFTER + 0.5
+    assert not m._in_round_powers_due(1000.0, 11, False)          # bloons not out yet
+    m._t_round_change = 1000.0 - MM.IN_ROUND_POWERS_UNTIL - 1
+    assert not m._in_round_powers_due(1000.0, 11, False)          # the round may be over
+    m._t_round_change = 997.0
+    m._achievement_extras(phase="round")
+    assert ex.calls == ["round"] and m.stats["achievement_powers_in_round"] == {"phase": "round"}
+    assert not m._in_round_powers_due(1000.0, 12, False)          # once a game
+
+
+def test_match_pre_round_run_only_when_something_to_do():
+    ex = _Extras(pre=False)
+    m = _match_for_powers(ex)
+    m._achievement_extras()
+    assert ex.calls == []
+    ex.pre = True
+    m._achievement_extras()
+    assert ex.calls == ["pre"] and m.stats["achievement_extras"] == {"phase": "pre"}
+    m = _match_for_powers(None)
+    m._achievement_extras()
+    assert not m._in_round_powers_due(1000.0, 12, False)
+
+
+def test_match_first_round_unread_at_play_waits_for_one_read():
+    ex = _Extras()
+    m = _match_for_powers(ex, first=None)
+    assert not m._in_round_powers_due(1000.0, 7, False) and m._first_round == 7
+    assert m._in_round_powers_due(1000.0, 8, False)
 
 
 def _in_grid(pt):

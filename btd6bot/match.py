@@ -72,6 +72,9 @@ NO_INCOME_MIN_MARGIN = 0.8
 # processes, and the bot logged nothing until "off game screen: defeat" at
 # 22:32:25. After such a pass the loop looks for an end screen first.
 LOOP_STALL_S = 15.0
+# the in-round Powers run (Match._in_round_powers_due): seconds after a round began
+IN_ROUND_POWERS_AFTER = 2.0
+IN_ROUND_POWERS_UNTIL = 8.0
 
 
 class LoopBeat:
@@ -587,6 +590,7 @@ class Match:
         self.g.go_fast(allow_start=True)
         self._in_round = True
         last_round = self.g.round()
+        self._first_round = last_round          # the in-round Powers wait for the round after it
         self._lives.update(self.g.lives())
         # the defence built before Play, as the first round snapshot
         self._journal_round(last_round, self.g.cash_stable(), setup=True)
@@ -833,6 +837,11 @@ class Match:
                         and not self._hold_for_clear(last_round, f, now):
                     self.g.go_fast(allow_start=True)
                     self._in_round = True
+                if self._in_round_powers_due(now, last_round, dropped):
+                    # once a game; the panel covers the tower list for a few seconds
+                    self._mark("achievement powers")
+                    self._achievement_extras(phase="round")
+                    t_hud = 0               # re-read the HUD right after
             if self.g.towers and now - t_ability > 1.0:
                 t_ability = now
                 self._mark("abilities")
@@ -840,15 +849,46 @@ class Match:
             time.sleep(0.02)
         return self._finish("timeout", last_round)
 
-    def _achievement_extras(self):
-        """Before the first Play: use Powers / place Instas for their
-        achievements (powers.InGameExtras; the runner only passes one for a
-        sure Easy/Medium game while a card wants it). The round has not
-        started, so nothing leaks meanwhile; any failure is logged and the
+    def _in_round_powers_due(self, now, rnd, dropped):
+        """Time for the once-a-game Powers run (powers.InGameExtras, phase
+        "round")? The instant Powers are greyed out before round 1, so they
+        are used in a running round: the second round this game plays (the
+        first one's bloons have shown the defence holds), IN_ROUND_POWERS_AFTER
+        seconds after it began (its bloons are on screen) and before
+        IN_ROUND_POWERS_UNTIL (the round is still running), with no lives
+        lost this pass and no crisis forecast. The panel covers the tower
+        list for its few seconds; nothing is bought meanwhile."""
+        ex = self.extras
+        if ex is None or not getattr(ex, "wants_in_round", lambda: False)():
+            return False
+        if not self._in_round or dropped or rnd is None or self._in_crisis(rnd):
+            return False
+        first = getattr(self, "_first_round", None)
+        if first is None:
+            self._first_round = rnd             # the round was not read at Play: the first one read
+            return False
+        if rnd < first + 1:
+            return False
+        since = now - self._t_round_change
+        return IN_ROUND_POWERS_AFTER <= since <= IN_ROUND_POWERS_UNTIL
+
+    def _achievement_extras(self, phase="pre"):
+        """Use Powers / place Instas for their achievements
+        (powers.InGameExtras; the runner only passes one for a sure
+        Easy/Medium game while a card wants it). phase "pre": before the
+        first Play, nothing leaks meanwhile (Instas; Powers only when they
+        do not wait for a round). phase "round": the Powers, once, in an
+        early round (_in_round_powers_due). Any failure is logged and the
         game goes on as usual."""
         if self.extras is None:
             return
+        if phase == "pre" and not getattr(self.extras, "wants_pre_round", lambda: True)():
+            return
         try:
+            if phase == "round":
+                res = self.extras.run(self.g, self.menus, self.m, self._exclude(), phase="round")
+                self.stats["achievement_powers_in_round"] = res
+                return
             res = self.extras.run(self.g, self.menus, self.m, self._exclude())
             self.stats["achievement_extras"] = res
         except Exception:
