@@ -42,7 +42,7 @@
   "Dark Path|medium": 1.48,
   "Dark Path|reverse": 1.48,
   "Erosion|medium": 1.1,
-  "Erosion|reverse": 2.54,
+  "Erosion|reverse": 0.34,
   "Castle Revenge|reverse": 1.51,
   "Last Resort|reverse": 1.72,
   "Cargo|reverse": 1.78,
@@ -52,6 +52,7 @@
   "Ascent|hard": 1.41,
   "Last Resort|hard": 0.14,
   "Dark Dungeons|military_only": 0.37,
-  "Midnight Mansion|military_only": 0.53
+  "Midnight Mansion|military_only": 0.53,
+  "Erosion|military_only": 0.34
  }
 }
