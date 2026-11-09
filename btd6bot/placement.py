@@ -12,7 +12,9 @@ The game's placement rule (as read from its map data and code):
 
 The map side comes from MapModel grids filled by mapgeom.apply (exact
 surfaces, no margin); spots the game refused during play come from
-MapModel.refused, a separate layer that survives re-applying the geometry.
+MapModel.refused, a separate layer that survives re-applying the geometry
+(one shared by every tower for the small towers' refusals, one per kind for
+the bigger towers', see refusal_layer).
 This module adds each tower's own footprint on top, with a
 distance transform: a centre is valid when the nearest forbidden cell is at
 least r away.
@@ -95,6 +97,28 @@ def footprint_radius(kind, hero=None):
     if r:
         return float(r)
     return SIZE_WORD_RADIUS.get(str(e.get("footprint", "")).lower(), DEFAULT_RADIUS)
+
+
+# Footprint radius up to which a refusal is learned for every tower on the
+# surface: the smallest towers' (dart, ninja, sniper, alchemist: 6). Where
+# the game refuses one of those, the ground itself is bad.
+SHARED_REFUSAL_RADIUS = 6.0
+
+
+def refusal_layer(surface, kind, hero=None):
+    """The MapModel.refused layer a refusal of this tower is learned in.
+
+    A small tower's refusal goes into the surface's shared layer, which
+    every tower avoids. A bigger tower's goes into a layer of its own
+    ("land@ace"): the game turned down its footprint, which reaches further
+    than a small tower's. The ground under the centre may be fine. Tricky
+    Tracks (2026-11-09): aces refused next to the diagonal tracks (their
+    28x18 runway reaches past the radius-12 circle the grid checks) had been
+    learned as bad land for every tower. 1,148 refused cells, nearly all 9-16
+    units from the track, took 26% of the ground a ninja may use."""
+    if footprint_radius(kind, hero) <= SHARED_REFUSAL_RADIUS:
+        return surface
+    return f"{surface}@{hero if kind == 'hero' and hero else kind}"
 
 
 def size_level(kind, hero=None):
@@ -223,7 +247,10 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
     # outside the geometry grids (MapModel.refused), so subtract them here
     def refused(surface):
         mask = getattr(model, "refused_mask", None)
-        return mask(surface) if mask else np.zeros(ok.shape, bool)
+        if not mask:
+            return np.zeros(ok.shape, bool)
+        own = refusal_layer(surface, kind, hero)    # this tower's own refusals, when big
+        return mask(surface) | mask(own) if own != surface else mask(surface)
 
     # ... and spots the game accepted although the map file says blocked
     def accepted(surface):
