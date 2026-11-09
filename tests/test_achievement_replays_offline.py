@@ -296,6 +296,168 @@ def test_extended_achievement_plan_clears_the_chimps_bar():
                                        if c.s.id == "ach_axis_of_havoc"]
 
 
+def test_assume_open_replays_an_unread_card_a_bounded_number_of_times():
+    """A hidden card ("???" until earned) is never read by the scan. With
+    the catalog's assume_open the plan replays until its wins *ever* reach
+    wins_needed; no new scan resets that. A card the scan does read decides
+    as before."""
+    acc = account()
+    cat = [dict(CATALOG[0], assume_open=True)]
+    unread = {"scanned_at": SCANNED, "cards": {}}
+    spec = unsung(wins_needed=2)
+    g = {x.name: x for x in P.wanted_achievements(acc, unread, cat)}
+    assert g["Unsung Monkeys"].status == "unknown" and g["Unsung Monkeys"].assume_open
+    assert P._replay_allowed(spec, g, acc, SCANNED)
+    _, _, cands = P.rank_games(acc, [plain(0.5), spec], achievements=(cat, unread), below_bar=True)
+    assert [c for c in cands if c.tier == "ACH" and c.s.id == "ach_unsung_monkeys"]
+    for _ in range(2):
+        acc.record_result("Logs", "easy", "ach_unsung_monkeys", True, minutes=6.0)
+    assert not P._replay_allowed(spec, g, acc, SCANNED)
+    assert not P._replay_allowed(spec, g, acc, "2999-01-01 00:00:00")   # a later scan changes nothing
+    done = {x.name: x for x in P.wanted_achievements(acc, scan(status="complete", progress=None), cat)}
+    assert "Unsung Monkeys" not in done
+
+
+def walk_plan(plan, mode, boosts=None):
+    """The plan bought in order as the cash allows (a step with `round:`
+    waits for that round), on the account's economy: Double Cash and Fast
+    Track (data/accounts/SFYOSHHYV.json boosts). Fill, answers and
+    reinforcement buys are left out. Returns (round each step was bought
+    {index: round}, tower XP earned per kind {kind: xp}, steps bought).
+    Tower XP: base round XP x1.08 (Monkey Education; Logs is a Beginner map,
+    x1.0), split by the cash invested per kind (btd6bot/towerxp.py)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import optimize_builds as OB
+    from btd6bot import towers as T
+    from btd6bot.account import round_xp
+    from btd6bot.towerxp import EDUCATION_MULT
+    econ = OB.economy(mode, boosts or {"double_cash": True, "fast_track": True})
+    cash, kinds, tiers, spent, bought, xp, i = econ.start_cash, {}, {}, {}, {}, {}, 0
+    steps = plan["plan"]
+    for rnd in range(econ.start_round, econ.end_round + 1):
+        while i < len(steps):
+            st = steps[i]
+            if st.get("round") and rnd < st["round"]:
+                break
+            if st["do"] == "place":
+                cost = (T.hero_cost(plan["hero"], econ.family) if st["kind"] == "hero"
+                        else T.tower_cost(st["kind"], econ.family))
+            else:
+                cost = OB.upgrade_cost(kinds[st["id"]], tiers[st["id"]], S.parse_cross(st["to"]), econ.family)
+            if cost > cash:
+                break
+            cash -= cost
+            if st["do"] == "place":
+                kinds[st["id"]], tiers[st["id"]], spent[st["id"]] = st["kind"], (0, 0, 0), cost
+            else:
+                tiers[st["id"]] = tuple(max(a, b) for a, b in zip(tiers[st["id"]], S.parse_cross(st["to"])))
+                spent[st["id"]] += cost
+            bought[i] = rnd
+            i += 1
+        invested = {}
+        for tid, kind in kinds.items():
+            if kind != "hero":
+                invested[kind] = invested.get(kind, 0) + spent[tid]
+        total = sum(invested.values()) or 1
+        for kind, v in invested.items():
+            xp[kind] = xp.get(kind, 0) + round_xp(rnd) * EDUCATION_MULT * v / total
+        cash += econ.income(rnd)
+    return bought, xp, i
+
+
+def test_world_league_training_build():
+    """Logs Medium replay: an early Beast Handler holds enough of the cash on
+    the board to earn more than half of the 16,809 Beast Handler XP the
+    account is short of in one game, so two wins (wins_needed) finish it."""
+    strats = S.load_all()
+    w = strats["ach_world_league_training"]
+    acct = F.full_account()
+    assert w["bot_ready"] and S.validate(w) == [], w.get("bot_ready_reasons")
+    assert S.usable(w, "medium", acct, map_name="Logs", allow_achievement=True)[0]
+    assert not S.usable(w, "medium", acct, map_name="Resort", allow_achievement=True)[0]
+    assert S.coverage(w, "medium", acct)[0]
+    bought, xp, n = walk_plan(w, "medium")
+    assert n == len(w["plan"]), f"plan stuck at step {n}"
+    short = 150_000 - 133_191
+    wins = P.StrategySpec.from_any(dict(w)).wins_needed
+    assert wins == 2 and xp["beast_handler"] * wins >= short, xp
+
+
+def test_not_lacking_critical_information_build():
+    """Logs Medium replay: three 2-3-0 Robo Monkeys (crits count) inside a
+    Jungle Drums village, all bought by round 60."""
+    strats = S.load_all()
+    c = strats["ach_not_lacking_critical_information"]
+    acct = F.full_account()
+    assert c["bot_ready"] and S.validate(c) == [], c.get("bot_ready_reasons")
+    assert S.usable(c, "medium", acct, map_name="Logs", allow_achievement=True)[0]
+    assert S.coverage(c, "medium", acct)[0]
+    final = {}
+    for st in c["plan"]:
+        if st.get("do") == "upgrade":
+            final[st["id"]] = tuple(S.parse_cross(st["to"]))
+    robos = [tid for tid, t in final.items() if tid.startswith("r") and t == (2, 3, 0)]
+    assert len(robos) == 3, final
+    assert final["v1"][0] >= 2                    # Jungle Drums
+    assert all("v1" in st.get("near", []) for st in c["plan"] if st.get("id") in robos and st["do"] == "place")
+    _, _, n = walk_plan(c, "medium")
+    assert n == len(c["plan"]), f"plan stuck at step {n}"
+
+
+def test_kali_build_research():
+    """Not bot-ready (Blood Sacrifice needs a targeted ability step), but the
+    numbers hold: the sacrificial M.A.D. is bought by round 79 and is worth
+    the worst case of ten Adora levels from level 7-10 (4 XP per dollar),
+    and Adora placed at round 70 is level 7-10 from round 76 to 80."""
+    from btd6bot import abilities as AB
+    from btd6bot import towers as T
+    from btd6bot.towerxp import EDUCATION_MULT
+    k = S.load_all()["ach_kali_maaaaaaaa"]
+    reasons = S.readiness(k)
+    assert not k["bot_ready"] and any("targeted ability" in r for r in reasons), reasons
+    assert S.validate(k) == []
+    bought, _, n = walk_plan(k, "hard")
+    assert n == len(k["plan"]), f"plan stuck at step {n}"
+    idx = {(st.get("id"), st.get("to")): i for i, st in enumerate(k["plan"])}
+    mad_round = bought[idx[("d1", "0-5-0")]]
+    hero_round = bought[idx[("hero", None)]]
+    assert hero_round == 70 and mad_round <= 79, (hero_round, mad_round)
+    xp = AB.HERO_LEVEL_XP
+    scale = AB.HERO_XP_SCALE["adora"]
+    worst = max((xp[lv + 10] - xp[lv]) * scale for lv in range(7, 11))
+    assert 4 * T.total_cost("dartling", "0-5-0", "hard") >= worst
+    levels = [AB.estimate_hero_level("adora", hero_round, r, EDUCATION_MULT) for r in range(max(76, mad_round), 81)]
+    assert all(7 <= lv <= 10 for lv in levels), levels
+
+
+def test_catalog_points_at_the_new_builds():
+    """data/achievements.json: the new builds are wired to their
+    achievements, the unreadable cards are assume_open, and on a scan that
+    does not read them the planner replays both bot-ready builds."""
+    root = Path(__file__).resolve().parents[1]
+    cat = json.loads((root / "data" / "achievements.json").read_text(encoding="utf-8"))
+    by = {e["name"]: e for e in cat}
+    assert by["World League Training"]["strategy"] == "ach_world_league_training"
+    assert by["Not Lacking Critical Information"]["strategy"] == "ach_not_lacking_critical_information"
+    assert by["Kali Maaaaaaaa"]["strategy"] == "ach_kali_maaaaaaaa"
+    assert by["World League Training"].get("assume_open") and by["Not Lacking Critical Information"].get("assume_open")
+    strats = S.load_all()
+    acc = AccountState()
+    acc.record_result("Logs", "medium", "plain", True, minutes=9.0)
+    kinds = ("ninja", "alchemist", "village", "super", "spike", "beast_handler", "dartling")
+    acc.unlocked_towers |= set(kinds)       # the main account owns every upgrade
+    acc.unlocked_upgrades = {k: [5, 5, 5] for k in kinds}
+    acc.unlocked_heroes |= {"obyn", "adora"}
+    ids = ("ach_world_league_training", "ach_not_lacking_critical_information", "ach_kali_maaaaaaaa")
+    with mock.patch.object(R.Achievements, "load", staticmethod(lambda: {})):     # no card read
+        specs = [plain(0.5)] + R.planner_specs({sid: strats[sid] for sid in ids}, F.full_account())
+    assert {sp.id for sp in specs} == {"plain", *ids[:2]}     # Kali: not bot-ready, not offered
+    unread = {"scanned_at": SCANNED, "cards": {}}
+    _, _, cands = P.rank_games(acc, specs, achievements=(cat, unread), below_bar=True)
+    ach = {c.s.id for c in cands if c.tier == "ACH"}
+    assert ach == {"ach_world_league_training", "ach_not_lacking_critical_information"}, ach
+
+
 def test_safe_mode_beginner_pass_skips_replays():
     """Safe mode's Beginner-first pass is for open medals; a replay is not one."""
     s = unsung()

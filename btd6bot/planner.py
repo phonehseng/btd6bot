@@ -514,7 +514,12 @@ _TOWER_ALIASES = {
     "dartling_gunner": "dartling", "wizard_monkey": "wizard", "super_monkey": "super",
     "ninja_monkey": "ninja", "druid_monkey": "druid", "banana_farm": "farm",
     "spike_factory": "spike", "monkey_village": "village", "engineer_monkey": "engineer",
-    "beast_handler": "beast",
+    # The Beast Handler's id is the game's (towers.TOWERS) "beast_handler":
+    # it is what the Monkeys-menu sync writes to unlocked_towers and
+    # unlocked_upgrades. It used to be canonicalised to "beast", which no
+    # account file contains, so every build with a Beast Handler read
+    # "tower beast locked" and was never planned.
+    "beast": "beast_handler",
 }
 
 
@@ -1300,7 +1305,7 @@ def ceiling_cap(p: float, map_name: str, mode: str) -> float:
     The cap is CEILING_P_CAP scaled by how far the ceiling falls short of
     CEILING_PLAYABLE, so among such games (played only as a last resort) the
     nearly-holding ones come first: Mesa Primary Only (ceiling 0.8) before
-    Last Resort Primary Only (0.33) before Muddy Puddles Deflation (0.06).
+    Last Resort Primary Only (0.09) before Muddy Puddles Deflation (0.06).
     Only a win on record raises the posterior above it (win_probability)."""
     ceiling = model_ceiling(map_name, mode)
     if ceiling is None or ceiling >= CEILING_PLAYABLE:
@@ -1910,6 +1915,12 @@ class AchievementGoal:
     strategy: str | None        # catalog's suggested strategy id
     passive: bool
     wins_needed: int
+    # The catalog's `assume_open`: the scan cannot read this card (a hidden
+    # achievement shows as a "???" card until it is earned) or keeps missing
+    # it, but other evidence says it is still open (e.g. World League
+    # Training: the account shows 133,191 of the 150,000 Beast Handler XP).
+    # See _replay_allowed.
+    assume_open: bool = False
 
     @property
     def plannable(self) -> bool:
@@ -1959,7 +1970,7 @@ def wanted_achievements(account: AccountState, state: Mapping[str, Any] | None,
             name=e["name"], kind=str(e.get("kind") or ""), status=status,
             progress=float(card.get("progress") or 0), modes=modes, map=mp,
             strategy=e.get("strategy"), passive=bool(e.get("passive")),
-            wins_needed=_wins_needed(e)))
+            wins_needed=_wins_needed(e), assume_open=bool(e.get("assume_open"))))
     # a CHIMPS/Impoppable medal etc. already earned on the account means the
     # one-win achievements of that mode are done even if the scan lags behind
     out = [g for g in out if not (g.wins_needed == 1 and g.kind == "game_win_constraint"
@@ -2070,11 +2081,23 @@ def _replay_allowed(s: StrategySpec, goals: Mapping[str, AchievementGoal],
     plan's own (``constraints.wins_needed``: games of this plan that finish
     the achievement from 0 %, e.g. 4 for a 100-ability-use counter) or else
     the catalog's. The next scan (daily, or the reward claim that marks the
-    card complete) settles it."""
+    card complete) settles it.
+
+    One exception: a card the scan did not read whose catalog entry says
+    ``assume_open`` (hidden achievements, which the list shows as "???"
+    cards until they are earned, so the scan never reads their progress).
+    Such a plan replays until its wins *ever* reach wins_needed - no scan
+    resets that count, so a card that was finished after all costs at most
+    wins_needed games. A scan that reads the card (complete or in
+    progress) takes over from then on."""
     g = goals.get(s.achievement) if s.achievement else None
-    if g is None or g.status != "progress":
+    if g is None:
         return False
     need = s.wins_needed or g.wins_needed
+    if g.status == "unknown" and g.assume_open:
+        return _wins_since(account, s.id, None) < max(1, need)
+    if g.status != "progress":
+        return False
     left = math.ceil(need * max(0.0, 100.0 - g.progress) / 100.0 - 1e-9)
     return _wins_since(account, s.id, scanned_at) < max(1, left)
 

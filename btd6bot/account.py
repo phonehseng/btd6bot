@@ -42,7 +42,7 @@ TOWER_CATEGORIES: dict[str, list[str]] = {
     "primary": ["dart", "boomerang", "bomb", "tack", "ice", "glue", "desperado"],
     "military": ["sniper", "sub", "buccaneer", "ace", "heli", "mortar", "dartling"],
     "magic": ["wizard", "super", "ninja", "alchemist", "druid", "mermonkey", "skywarden"],
-    "support": ["farm", "spike", "village", "engineer", "beast"],
+    "support": ["farm", "spike", "village", "engineer", "beast_handler"],
 }
 TOWER_TO_CATEGORY: dict[str, str] = {
     t: cat for cat, towers in TOWER_CATEGORIES.items() for t in towers
@@ -50,7 +50,7 @@ TOWER_TO_CATEGORY: dict[str, str] = {
 # Not offered as level-up choices; unlocked from post-L30 gift boxes.
 # UNVERIFIED: desperado's category and whether skywarden (v56, magic) is a
 # gift-box tower or a level choice.
-GIFT_BOX_TOWERS = frozenset({"dartling", "beast", "mermonkey", "desperado", "skywarden"})
+GIFT_BOX_TOWERS = frozenset({"dartling", "beast_handler", "mermonkey", "desperado", "skywarden"})
 
 STARTING_TOWERS = frozenset({"dart"})
 STARTING_HEROES = frozenset({"quincy"})

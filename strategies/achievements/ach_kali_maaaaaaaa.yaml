@@ -1,0 +1,94 @@
+# Achievement 'Kali Maaaaaaaa': "Gain 10 levels for Adora in one round"
+# (not hidden; reward: a Cash Drop Power). Research build: NOT bot-ready -
+# it needs one new executor step (see bot_ready_reason and the notes).
+#
+# The rule (bloonswiki "Kali Maaaaaaaa" and "Adora (BTD6)"): Adora's level-7
+# ability Blood Sacrifice destroys the tower the player selects (not a
+# sub-tower; 30 s cooldown) and gives Adora XP = 4 x the cash spent on it
+# (more with the Energizer, Scholarships, Monkeys Together Strong). Ten
+# levels in one round only come from that: no Sun Temple sacrifice, MK or
+# Power grants that much hero XP at once. Adora is a 1.71x hero, so from
+# level L the jump to L+10 costs (abilities.HERO_LEVEL_XP x 1.71):
+#   L7 -> 17: 251,627 XP = $62,907 of tower   L10 -> 20: 291,179 XP = $72,795
+# and she must be level 7-10 when it fires (from 11 up, +10 passes the cap).
+# So: a tower worth >= $72,795 (any L7-10 works) and Adora placed late, so
+# that she is level 7-10 at that moment (the wiki's advice too).
+#
+# The plan: Logs Hard (beaten: a replay; Hard prices, Double Cash and Fast
+# Track as on the account, which starts at round 22). The proven Medium core
+# of ach_freaky_friday (ninjas carry) plus, from round 60, a sacrificial
+# Dartling Gunner taken to 0-5-0 M.A.D. ($82,675 at Hard prices: 330,700 XP,
+# 39,500 above the worst case). Adora is placed at round 70: round XP alone
+# (account.round_xp x1.08 Monkey Education) brings her to level 7 during
+# round 76 and she stays under level 10 to round 80. The sacrifice goes in
+# round 76-79, after the M.A.D. is bought; the defence never counts on it.
+# Offline cash walk: tests/test_achievement_replays_offline.py
+# (test_kali_build_research).
+#
+# What the executor needs (why bot_ready is false):
+#  1. a `do: ability` step: press the hero's Blood Sacrifice (its hotkey or
+#     its icon in the ability bar), then click the target tower `id` - the
+#     only click-targeted ability so far; the AbilityPlanner lists Blood
+#     Sacrifice as 'never' (towers.HEROES adora) and must keep it that way;
+#  2. a check that Adora is at least level 7 (her level is only estimated
+#     from round XP: abilities.estimate_hero_level), e.g. by reading her
+#     upgrade panel's level, and at most level 10;
+#  3. a capture of the Blood Sacrifice selection screen (bloonswiki's "Blood
+#     Sacrifice menu" image): whether a click on the tower is enough or a
+#     confirm button follows. A wrong click destroys a defence tower.
+id: ach_kali_maaaaaaaa
+achievement: Kali Maaaaaaaa
+map: Logs
+modes: [hard]
+hero: adora
+bot_ready: false
+bot_ready_reason: 'needs a targeted ability step: Blood Sacrifice on the Dartling (press, then click the tower)'
+constraints:
+  wins_needed: 1
+  required_hero: adora
+  targeted_ability: Blood Sacrifice
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2],
+           spike: [2, 0, 4], dartling: [0, 5, 0]}
+  base_success: {hard: 0.85}
+notes:
+  - 'Round 70: place Adora (hero step below). Round 76-79, once d1 is 0-5-0 and Adora is level 7-10: Blood Sacrifice on d1 (new `do: ability` step, not coded).'
+  - 'Do not let the fill buy a second Dartling: only d1 is the sacrifice.'
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 0.9]}
+  - {do: upgrade, id: n2, to: 1-0-1}
+  - {do: upgrade, id: n1, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7}
+  - {do: upgrade, id: s1, to: 3-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: place, id: d1, kind: dartling, role: far, round: 60}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6], round: 70}
+  - {do: upgrade, id: d1, to: 0-5-0}     # M.A.D.: the sacrifice, $82,675
+fill:
+  - {do: place, kind: ninja, role: support, near: [v1], near_radius: 8, max: 5}
+  - {do: upgrade, kind: ninja, to: 4-0-2}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: n2, to: 2-0-3}]
+  bfb: [{do: upgrade, id: n2, to: 2-0-4}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: n2, to: 2-0-4}]

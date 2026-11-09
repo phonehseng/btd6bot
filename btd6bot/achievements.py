@@ -59,8 +59,22 @@ def _past_finished(cards, claimed):
                for c in cards)
 
 
+def _numbers(text):
+    """The digit runs of a text: "Win 50 times..." -> ("50",)."""
+    return tuple(re.findall(r"\d+", text or ""))
+
+
 def _same_card(card, seen, catalog):
-    """Key of an already-seen card that is this one under another OCR spelling."""
+    """Key of an already-seen card that is this one under another OCR spelling.
+
+    The description fallback only joins two cards whose descriptions carry
+    the same numbers: sibling achievements differ in little but their count
+    ("Win 25 times with Monkey Teams" / "Win 50 times ...", "Defeat a Tier 1
+    Boss" / "Tier 5", "Pop 100 Golden Bloons" / "500"), and their texts are
+    0.92-0.96 alike - above the 0.85 bar - so a garbled title made the scan
+    file one under the other and count the page as "nothing new" (the
+    2026-11-08 scan has no Team Player, Glittering Gold, Superior/Ultimate
+    Bloons Master, Who's the Boss?, Challenger, Challenge Apprentice)."""
     import difflib
     n = norm(card["name"])
     if catalog:
@@ -68,11 +82,28 @@ def _same_card(card, seen, catalog):
         if hit:
             return catalog[hit[0]]
     d = norm(card["desc"])
+    nums = _numbers(card["desc"])
     for key, rec in seen.items():
-        if difflib.SequenceMatcher(None, n, norm(key)).ratio() > 0.8 or (
-                len(d) > 12 and difflib.SequenceMatcher(None, d, norm(rec["desc"])).ratio() > 0.85):
+        if difflib.SequenceMatcher(None, n, norm(key)).ratio() > 0.8:
+            return key
+        if (len(d) > 12 and _numbers(rec["desc"]) == nums
+                and difflib.SequenceMatcher(None, d, norm(rec["desc"])).ratio() > 0.85):
             return key
     return None
+
+
+def _catalog_title(text, catalog):
+    """A title the OCR read with its spaces ("Power User"): the catalog key
+    it closely matches, or None. Without this a spaced title was dropped -
+    parse_cards took only single tokens as titles - and the card was lost:
+    the 2026-11-08 scan has no Power User card although Empowered read 8 %
+    (8 Power uses, so Power User was at 32 %), nor Kali Maaaaaaaa or 12 Tasks
+    of Monk-ules (Modysseus Rises read 4 %: two Odysseys done)."""
+    import difflib
+    if not catalog:
+        return None
+    hit = difflib.get_close_matches(norm(text), list(catalog), n=1, cutoff=0.85)
+    return hit[0] if hit else None
 
 
 def parse_cards(words, catalog=None):
@@ -83,7 +114,13 @@ def parse_cards(words, catalog=None):
     # immediately followed by a sentence-like description just below them
     for w in words:
         n = norm(w.text)
-        if " " in w.text.strip() or len(n) < 4 or _is_collect(w.text) or n in ("complete", "search"):
+        if " " in w.text.strip():
+            # a title read with its spaces counts when it is a catalog name
+            # (descriptions are sentences and match none)
+            n = _catalog_title(w.text, catalog)
+            if n is None:
+                continue
+        if len(n) < 4 or _is_collect(w.text) or n in ("complete", "search"):
             continue
         if re.fullmatch(r"[0-9$%/]+", n):
             continue

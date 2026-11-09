@@ -137,6 +137,33 @@ def test_collect_word_is_a_button_not_a_description():
     assert only["status"] == "progress" and only["progress"] == 4
 
 
+def test_spaced_titles_are_read_when_they_are_catalog_names():
+    """The OCR glues most bold titles into one token, but not all: a title
+    read with its spaces ("Power User") used to be dropped with its card.
+    Spaced text that is no catalog name (descriptions) is still no title."""
+    catalog = {"poweruser": "Power User", "kalimaaaaaaaa": "Kali Maaaaaaaa"}
+    words = [Word("Power User", 0.25, 0.30, 0.1, 0.03, 0.9),
+             Word("Use Powers 25 times", 0.25, 0.34, 0.3, 0.02, 0.9),
+             Word("32%", 0.35, 0.45, 0.05, 0.03, 0.9),
+             Word("Kali Maaaaaaa", 0.75, 0.30, 0.1, 0.03, 0.9),     # one 'a' short
+             Word("Gain 10 levels for Adora in one round", 0.75, 0.34, 0.3, 0.02, 0.9),
+             Word("0%", 0.85, 0.45, 0.05, 0.03, 0.9)]
+    cards = {c["name"]: c for c in A.parse_cards(words, catalog)}
+    assert set(cards) == {"Power User", "Kali Maaaaaaaa"}, cards
+    assert cards["Power User"]["progress"] == 32 and cards["Kali Maaaaaaaa"]["progress"] == 0
+    assert A.parse_cards(words, {}) == []     # without a catalog: single tokens only, as before
+
+
+def test_sibling_cards_are_not_merged_by_their_descriptions():
+    """Garbled titles fall back to the description, but "Win 25 times with
+    Monkey Teams" is not "Win 50 times with Monkey Teams" (0.96 alike)."""
+    seen = {"Team Captain": {"desc": "Win 50 times with Monkey Teams", "status": "progress", "progress": 6}}
+    player = {"name": "TEAMPIAYE", "desc": "Win 25 times with Monkey Teams"}
+    assert A._same_card(player, seen, {}) is None
+    again = {"name": "TEAMCAPI", "desc": "Win 50 times withMonkey Teams"}
+    assert A._same_card(again, seen, {}) == "Team Captain"
+
+
 def test_claim_reads_one_page_when_the_finished_cards_are_on_top():
     cards = [card("Alpha", "collect"), card("Bravo", "collect"), card("Charlie", "progress", 80),
              card("Delta", "progress", 77)] + [card(f"Card{i}", "progress", 0) for i in range(80)]

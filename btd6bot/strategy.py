@@ -322,6 +322,7 @@ UNENFORCEABLE_CONSTRAINTS = {
     "no_removables": "removable-obstacle rule / precise hidden spots",
     "dynamic_tower_set": "tower set is read from an event screen at play time",
     "event_window_utc": "only playable inside an event window",
+    "targeted_ability": "needs a targeted ability step (press the ability, then click a tower)",
 }
 # Constraint keys that would break the owner's hard rules (never deliberately
 # lose lives or games, never spend Monkey Money on continues).
@@ -1492,6 +1493,9 @@ class Executor:
             # a step with a researched spot falls back to cells round that
             # spot, never to the best spot by role anywhere on the map
             block = block | far
+        room = self._no_buffer_room(step, valid)
+        if room is not None:
+            block = block | room
         covered = None if role == "support" else self._covered()
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
@@ -2232,11 +2236,16 @@ class Executor:
         return [p for p in self.g.towers.values()
                 if p.kind != "hero" and p.kind not in self.BUFFERS and p.kind != "farm"]
 
-    def _buffed(self, kind, cx, cy):
-        """How many damage towers a `kind` buffer at cell (cx, cy) has in range."""
+    def _damage_towers_ids(self):
+        return [tid for tid, p in self.g.towers.items()
+                if p.kind != "hero" and p.kind not in self.BUFFERS and p.kind != "farm"]
+
+    def _buffed(self, kind, cx, cy, towers=None):
+        """How many damage towers (or of `towers`) a `kind` buffer at cell
+        (cx, cy) has in range."""
         r2 = self._range_cells(kind) ** 2
         n = 0
-        for p in self._damage_towers():
+        for p in self._damage_towers() if towers is None else towers:
             tx, ty = self.m.frac_to_cell(p.x, p.y)
             n += (tx - cx) ** 2 + (ty - cy) ** 2 <= r2
         return n
@@ -2265,10 +2274,22 @@ class Executor:
                if self._buffed(kind, c[0], c[1]) >= 1]
         if len(out) >= self.SPOTS_PER_HOLD:
             return out
+        # The damage towers the step names (`near`) come first: a cell that
+        # buffs one of them beats one that buffs more of the others. #Ouch
+        # Apopalypse (2026-11-09 12:17): a1 "near n1" found no spot within
+        # its near radius, went where it buffed the most towers - n2 and the
+        # opener on the right - and the left lane, held by n1 alone without
+        # the alchemist's lead and damage, leaked 119 lives in a second.
+        damage = set(self._damage_towers_ids())
+        named = [self.g.towers[i] for i in (step or {}).get("near") or () if i in damage]
         ys, xs = np.nonzero(valid & ~self.blocked)
-        scored = sorted(((self._buffed(kind, x, y), x, y) for x, y in zip(xs.tolist(), ys.tolist())
+        scored = sorted(((self._buffed(kind, x, y, named) if named else 0, self._buffed(kind, x, y), x, y)
+                         for x, y in zip(xs.tolist(), ys.tolist())
                          if (kind, x, y) not in self.failed_spots), reverse=True)
-        for n, x, y in scored:
+        if named and scored and scored[0][0] < 1:
+            log.info("%s: no spot buffs %s - placed where it buffs the most towers",
+                     kind, step.get("near"))
+        for _, n, x, y in scored:
             if n < 1:
                 break
             if any((x - ox) ** 2 + (y - oy) ** 2 < 9 for ox, oy, _ in out):
@@ -2908,6 +2929,57 @@ class Executor:
         cx, cy = self.m.frac_to_cell(*self._at_now(at))
         yy, xx = np.ogrid[0:shape[0], 0:shape[1]]
         return (xx - cx) ** 2 + (yy - cy) ** 2 > self.AT_FALLBACK_CELLS ** 2
+
+    # A tower a later buffer step stands "near" goes where that buffer can
+    # stand within this share of its range: the rest of the radius is left
+    # for the towers that gather round the buffer afterwards.
+    BUFFER_ROOM_SHARE = 0.75
+
+    def _no_buffer_room(self, step, valid):
+        """Bool grid of the cells where this step's tower would leave no
+        legal ground for a buffer (village, alchemist) the plan places
+        `near` it later, within BUFFER_ROOM_SHARE of the buffer's range;
+        None when no such buffer step waits, the step has a researched spot
+        (`at`), there is no geometry, or every legal cell would be blocked.
+
+        Mesa ABR (2026-11-09, loss case 20261109_120238): s1, a sniper,
+        stood on the central mesa top where the nearest legal village cell
+        was 21.6 cells away (village range 21.05). v1 "near s1" found no
+        spot and was given up, the camo answer put the Radar village by the
+        ninjas instead, and round 27's 250 camo bloons walked past four
+        snipers that could not see them."""
+        tid = step.get("id")
+        if not tid or step.get("at") or valid is None:
+            return None
+        buffers = {st.get("kind") for st in list(getattr(self, "plan", None) or ())
+                   if st.get("do") == "place" and st.get("kind") in self.BUFFERS
+                   and tid in (st.get("near") or ()) and st.get("id") not in self.g.towers}
+        if not buffers:
+            return None
+        import cv2
+        from . import placement as PL
+        upc = PL.units_per_cell(self.m)
+        own = PL.footprint_radius(step.get("kind")) / upc if upc else 0.0
+        block = np.zeros(valid.shape, bool)
+        for kind in sorted(buffers):
+            ground = self._legal_cells(kind)
+            if ground is None or not ground.any():
+                continue
+            # the buffer's ground must lie in a ring round the cell: beyond
+            # both footprints (the tower itself takes the ground under it -
+            # on Mesa that was all the village ground near s1) and within
+            # the share of the buffer's range
+            inner = own + (PL.footprint_radius(kind) / upc if upc else 0.0)
+            outer = max(inner + 1.0, self.BUFFER_ROOM_SHARE * self._range_cells(kind))
+            r = int(np.ceil(outer))
+            yy, xx = np.mgrid[-r:r + 1, -r:r + 1]
+            d2 = xx * xx + yy * yy
+            ring = ((d2 >= inner * inner) & (d2 <= outer * outer)).astype(np.float32)
+            room = cv2.filter2D(ground.astype(np.float32), -1, ring, borderType=cv2.BORDER_CONSTANT)
+            block |= room < 0.5
+        if not (valid & ~block).any():
+            return None      # no cell keeps room: placing the tower comes first
+        return block
 
     def _edge_band(self):
         """Cells within EDGE_CELLS of the bloon path's line (computed once per
@@ -5494,8 +5566,18 @@ class Executor:
         its planned crosspath and $24k unspent). A tower whose leading path
         is past tier 2 may also take its side path up to tier 2 (_side_path_ok):
         that cannot turn it onto another path. Income tiers are left out
-        where income pays nothing (_income_pays_nothing)."""
-        towers = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
+        where income pays nothing (_income_pays_nothing).
+
+        A tower that pops nothing (_dead) is offered no tier at all. When the
+        defence is short, sell_useless keeps such a tower standing
+        (_sale_blocked), and until 2026-11-09 surplus and reinforce went on
+        buying tiers for it: the bot logs of 2026-11-05 to 11-09 show about
+        170 tiers ($388k) bought for towers already logged as "keeping ...
+        although not a single pop" - e.g. Water Park ABR's boomerang1, 58
+        rounds at a spot no bloon passed. That cash belongs on towers that
+        pop (plan upgrades for a dead tower move to a fresh one, see
+        _redirect_dead_upgrade)."""
+        towers = sorted((p for p in self.g.towers.values() if p.kind != "hero" and not self._dead(p)),
                         key=lambda p: (p.kind != first, -p.spent))
         family = PRICE_FAMILY.get(self.mode, "hard")
         no_pay = self._income_pays_nothing()

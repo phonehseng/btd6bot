@@ -168,7 +168,46 @@ def test_reverse_model_uses_the_map_geometry():
     assert counts[0] > 1000 and counts[1] == counts[0]
 
 
+def test_apopalypse_ice_goes_one_hud_round_early():
+    """Case 20261109_120839 (Erosion Apopalypse, Fast Track start at round
+    15): the ice that melts at round 19 went while the HUD read 18, with
+    the next round's bloons already coming. In a continuous mode the map is
+    followed one round ahead: at HUD 18 the towers on that ice are
+    forgotten (and rebuilt), and ground for new towers lasts until HUD 17's
+    phase end only. Other modes keep the HUD round."""
+    geom = _erosion()
+    if geom is None:
+        return
+    from types import SimpleNamespace
+    from btd6bot import match as M
+    seen = []
+
+    def make(rules):
+        mt = M.Match.__new__(M.Match)
+        mt._phase_geom, mt._reverse = geom, False
+        mt.m = mapgeom.apply(MapModel("Erosion", PF), geom)
+        mt.ex = SimpleNamespace(rules=rules, ground_horizon=None, track_changed=lambda: None,
+                                ground_lost=lambda lost: seen.append(int(lost.sum())))
+        return mt
+
+    apop = make({"continuous": True})
+    apop._follow_track(15)
+    assert apop.ex.ground_horizon == 18 and not seen      # map round 16: ice lasts to 18
+    apop._follow_track(17)
+    assert not seen
+    apop._follow_track(18)                                 # map round 19: the ice is gone
+    assert len(seen) == 1 and seen[0] > 0 and apop.ex.ground_horizon == 36
+    seen.clear()
+    hard = make({})
+    hard._follow_track(15)
+    hard._follow_track(18)
+    assert not seen and hard.ex.ground_horizon == 18
+    hard._follow_track(19)
+    assert len(seen) == 1
+
+
 if __name__ == "__main__":
+    test_apopalypse_ice_goes_one_hud_round_early()
     test_reverse_model_uses_the_map_geometry()
     test_erosion_phases()
     test_maps_without_phases_keep_every_path()
