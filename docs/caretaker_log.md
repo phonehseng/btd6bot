@@ -891,3 +891,9 @@
 - Since 00:42: 1 win (Bloonarius Prime Half Cash r80, +440 MM), 1 loss (Dark Castle Half Cash r63 at 01:03; journal says round 62 was rated 0.40 with $18.6k unspent).
 - Loss cases: 0 marked "status: new". 20261109_010309_DarkCastle_half_cash is "in-progress" in another session (locked worktree fix/half-cash-r63), so I left it alone.
 - No code changes this run: another session is working on the code now (01:10 note, in-progress case, fresh locked worktree), and check.py stalled under that load last run. Next run: check that the Dark Castle case got its change; if it is still in-progress after 07:00, take it over (unspent $18.6k before a weak round, same family as 7f7cc21).
+
+## 2026-11-09 02:20
+- Bot status: task Running; bot.py (since the 02:15 reload), recorder and BTD6 up (game since 2026-11-08 05:19); opening Spillway. No STOP, PAUSE or dev_active.txt; no Auto Start warning. Safe mode on (trips 4, streak 2).
+- Since 01:20: 4 wins (Mesa Medium, Mesa Reverse, Mesa Primary Only r40 with 53 lives lost, Spillway Magic Only r80 +660 MM), 1 loss (Ship Capture Half Cash r39 at 01:40 - already handled and parked by 465e566). Dark Castle Half Cash r63 case is handled (a5e556f).
+- Two 'no defence could be placed' errors on Mesa Military Only (01:22, 01:25: heli h2 had no valid spot); the bot benched it 6 h and moved on. Covered by 5691b45 (Mesa learned refusals reset, committed 01:36); check that Mesa Military Only places its helis after the bench ends (~07:25).
+- 0 loss cases marked new. No code changes this run: an interactive session committed at 02:04 and 02:11, so I stayed out of the code to avoid clashing with it.
