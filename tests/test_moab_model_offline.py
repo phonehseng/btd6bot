@@ -199,6 +199,59 @@ def test_sabotage_is_saved_for_heavy_rounds():
     assert _presses(97) == []
 
 
+def test_sabotage_waits_for_the_rounds_blimps():
+    """Round 95 (Spring Spring CHIMPS, lost there 2026-11-07/08): 30 s of
+    purples and leads, then the fortified MOABs and camo DDTs from 30.8 game
+    seconds. The slow is pressed as they come (15 real seconds at 2x), not
+    at the round's start - also when the forecast calls the round a crisis;
+    round 99's MOABs come at once, and round 99 counts as heavy."""
+    assert A.first_blimp_s("standard", 95) == 30.81 and A.first_blimp_s("standard", 99) == 0.0
+    assert A.first_blimp_s("standard", 30) is None
+    presses = _presses(95)
+    assert presses and presses[0][0] == 15 and presses[0][2] == ["heavy round"], presses
+    assert 99 in A.HEAVY_ROUNDS
+    presses = _presses(99)
+    assert presses and presses[0][0] == 0, presses
+    pl = A.AbilityPlanner(None, MODE_RULES["chimps"])
+    ninja = SimpleNamespace(tid="n", kind="ninja", tiers=(0, 4, 0))
+    first = None
+    for t in range(30):
+        pl.update_towers([ninja], 95)
+        if pl.decide(float(t), 95, True, crisis=True) and first is None:
+            first = (t, [r for _, _, r in pl.last_fired])
+    assert first and first[0] == 15, first
+    # a leak still fires it at once
+    pl = A.AbilityPlanner(None, MODE_RULES["chimps"])
+    pl.update_towers([ninja], 95)
+    assert pl.decide(0.0, 95, True, lives_dropped=True)
+
+
+def _r94_then_r95(ninjas):
+    """Presses of round 94 (10 real s = 20 game s in progress) and round 95
+    (from 30 real s) with `ninjas` Bloon Sabotage ninjas on the board."""
+    pl = A.AbilityPlanner(None, MODE_RULES["chimps"])
+    towers = [SimpleNamespace(tid=f"n{i}", kind="ninja", tiers=(0, 4, 0)) for i in range(ninjas)]
+    pl.update_towers(towers, 93)
+    pl.game_t = 120.0               # bought rounds ago: certainly off cooldown
+    out = []
+    for t in range(0, 60):
+        rnd, in_round = (94, t < 10) if t < 30 else (95, True)
+        pl.update_towers(towers, rnd)
+        if pl.decide(float(t), rnd, in_round):
+            out.append((rnd, t))
+    return out
+
+
+def test_two_sabotage_ninjas_cover_round_94_and_round_95():
+    """One ninja pressed at round 94's start is still cooling down (60 s)
+    when round 95's blimps come 50 game seconds later, and slows them only
+    from 12 game seconds after they started; with two, the shared button
+    comes back twice as often (Spring Spring CHIMPS buys two)."""
+    one = _r94_then_r95(1)
+    assert one[0] == (94, 0) and one[1][0] == 95 and one[1][1] > 45, one
+    assert _r94_then_r95(2) == [(94, 0), (95, 45)]
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in tests:
