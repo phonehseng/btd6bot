@@ -288,15 +288,22 @@ class FakeGame:
     then `panel` (a function of the clicks so far), the tower list again
     after the next POWERS_BUTTON click. `holding`: answers for is_holding()."""
 
-    def __init__(self, panel, holding=(False,)):
+    def __init__(self, panel, holding=(False,), map_closes=False):
         self.inp = Inp()
         self.closed_frame = _frame("powers_side_normal.jpg", SIDE_CROP)
         self.panel = panel
         self.holding = list(holding)
+        self.map_closes = map_closes      # a click on the map closes the panel (live 2026-11-09 05:40)
         self.cancelled = self.closed = 0
 
     def _open(self):
-        return self.inp.clicks.count(P.POWERS_BUTTON) % 2 == 1
+        shown = False
+        for c in self.inp.clicks:
+            if c == P.POWERS_BUTTON:
+                shown = not shown
+            elif self.map_closes and c[0] < P.SIDEBAR[0]:
+                shown = False
+        return shown
 
     def fresh(self):
         return self.panel(self.inp.clicks) if self._open() else self.closed_frame
@@ -406,6 +413,65 @@ def test_selected_power_is_used_by_a_map_click():
         assert b.used("power_uses") == 2
         track = P.track_points(FakeModel())[0]
         assert g.inp.clicks.count((round(track[0], 3), round(track[1], 3))) == 2, g.inp.clicks
+
+
+# what OCR read on the tower list after the map click closed the panel (logs/bot.log 2026-11-09 05:40:09)
+LIVE_TOWER_LIST_WORDS = [_w(t, 0.93, 0.3 + 0.05 * i) for i, t in
+                         enumerate(["$330", "$310", "$380", "$760", "$1,425", "$570", "$810"])]
+
+
+def test_map_click_that_closes_the_panel_is_no_use():
+    """Live 2026-11-09 05:40: the map click closed the panel; the badge was
+    not on the tower list, which counted as "used (badge 22 -> gone)". The
+    panel is opened again and still reads 22: no use, a clean bail without
+    another hexagon click (nothing is selected in a reopened panel)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        live = _big("powers_panel_live.jpg")
+        g = FakeGame(lambda clicks: live, map_closes=True)
+        menus = FakeMenus([LIVE_POWERS_WORDS, LIVE_POWERS_WORDS, LIVE_TOWER_LIST_WORDS, LIVE_POWERS_WORDS],
+                          count=[22, 22, 22])
+        res = ex.run(g, menus, FakeModel(), [])
+        assert res["result"].startswith("bailed: Power slot 1: the panel closed after the map click"), res
+        assert b.used("power_uses") == 0 and res["powers"] == []
+        grid = [c for c in g.inp.clicks if _in_grid(c)]
+        assert len(grid) == 1 and _is_power_click(grid[0]), g.inp.clicks       # selected once, no let-go
+        track = P.track_points(FakeModel())[0]
+        assert g.inp.clicks == [P.POWERS_BUTTON, grid[0], (round(track[0], 3), round(track[1], 3)),
+                                P.POWERS_BUTTON, P.POWERS_BUTTON], g.inp.clicks  # open, reopen, close
+        assert g.closed == 0
+
+
+def test_map_click_that_closes_the_panel_counts_when_the_count_went_down():
+    """The same closing map click, but the reopened panel reads 21: one use.
+    The second try leaves 21 -> 21: no second use."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        live = _big("powers_panel_live.jpg")
+        g = FakeGame(lambda clicks: live, map_closes=True)
+        menus = FakeMenus([LIVE_POWERS_WORDS, LIVE_POWERS_WORDS, LIVE_TOWER_LIST_WORDS, LIVE_POWERS_WORDS,
+                           LIVE_POWERS_WORDS, LIVE_POWERS_WORDS, LIVE_TOWER_LIST_WORDS, LIVE_POWERS_WORDS],
+                          count=[22, 22, 21, 21, 21, 21])
+        res = ex.run(g, menus, FakeModel(), [])
+        assert b.used("power_uses") == 1 and len(res["powers"]) == 1, res
+        assert res["result"].startswith("bailed: Power slot 2: the panel closed after the map click"), res
+
+
+def test_badge_gone_counts_only_on_the_powers_tab():
+    """A frame without the Powers tab (the CHIMPS tower list: no badge, the
+    button not lit so the panel is not taken for closed) is never read as
+    "badge gone"; the badge gone ON the Powers tab is a use."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, _ = _extras(tmp)
+        ex.g = FakeGame(lambda clicks: None)
+        ex.menus, ex.inp = FakeMenus([LIVE_TOWER_LIST_WORDS], count=[22]), ex.g.inp
+        badge = (0.977, 0.683)
+        towers = _frame("powers_side_chimps.jpg", SIDE_CROP)
+        used, reopened = ex._check_use(towers, LIVE_TOWER_LIST_WORDS, badge, 22, 1, "the map click")
+        assert used is None and not reopened and ex.g.inp.clicks == []
+        bare = _without_badge(_big("powers_panel_live.jpg"))
+        used, reopened = ex._check_use(bare, LIVE_POWERS_WORDS, badge, 22, 1, "the map click")
+        assert used is True and not reopened
 
 
 def test_purchase_question_is_declined_never_confirmed():
