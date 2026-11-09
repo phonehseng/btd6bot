@@ -42,6 +42,9 @@ planner:
   # round 27 took every life. tools/optimize_builds.py found no safe
   # Firing Range Half Cash build either (worst margin 0.06).
   base_success: {hard: 0.88, double_hp: 0.8, half_cash: 0.5, abr: 0.8}
+  # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
+  # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
+  excluded_maps: [Tricky Tracks]
 plan:
   - {do: place, id: s1, kind: sniper, role: dps}
   - {do: upgrade, id: s1, to: 2-0-2}

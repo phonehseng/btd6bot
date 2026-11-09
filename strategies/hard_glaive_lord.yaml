@@ -31,6 +31,9 @@ modes: [medium, hard, abr]
 planner:
   towers: {boomerang: [5, 0, 4], sniper: [4, 2, 4], alchemist: [4, 2, 0], village: [2, 2, 0]}
   base_success: {medium: 0.85, hard: 0.75, abr: 0.65}
+  # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
+  # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
+  excluded_maps: [Tricky Tracks]
 plan:
   - {do: place, id: b1, kind: boomerang, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}

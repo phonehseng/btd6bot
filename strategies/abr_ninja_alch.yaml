@@ -10,6 +10,9 @@ modes: [abr]
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
   base_success: {abr: 0.75}
+  # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
+  # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
+  excluded_maps: [Tricky Tracks]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}

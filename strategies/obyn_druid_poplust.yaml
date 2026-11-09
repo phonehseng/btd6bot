@@ -11,6 +11,9 @@ modes: [medium, hard, half_cash]
 planner:
   towers: {druid: [2, 0, 4], dart: [0, 2, 4], alchemist: [4, 2, 0], village: [2, 3, 0], spike: [2, 0, 4]}
   base_success: {medium: 0.9, hard: 0.8, half_cash: 0.62}
+  # not Tricky Tracks (2026-11-09): Half Cash replays 59 rounds under 1 there
+  # (tests/test_trickytracks_excluded_offline.py)
+  excluded_maps: [Tricky Tracks]
 plan:
   - {do: place, id: d1, kind: druid, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: support, near: [d1], near_radius: 7}

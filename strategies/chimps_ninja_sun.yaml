@@ -30,6 +30,9 @@ planner:
            bomb: [2, 4, 0], sniper: [4, 0, 2]}
   # chimps stays at 0.4: the re-timed plan has no CHIMPS evidence yet
   base_success: {hard: 0.9, impoppable: 0.5, chimps: 0.4}
+  # not Tricky Tracks (2026-11-09): Impoppable replays 66 rounds under 1 there
+  # (tests/test_trickytracks_excluded_offline.py)
+  excluded_maps: [Tricky Tracks]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: upgrade, id: n1, to: 1-0-1}
