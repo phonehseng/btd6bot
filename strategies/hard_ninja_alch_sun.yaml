@@ -9,7 +9,7 @@
 # 4-0-2 Bloonjitsu (crowds, R63 ceramic rush), Ninja #2 goes 2-0-3 Flash Bomb
 # -> 2-0-4 Sticky Bomb (BFB/ZOMG). Two helis carry rounds 37-40: h1 3-2-0
 # (Razor Rotors, IFR = camo, pursues the bloons over the whole track) and h2
-# 3-0-2; late, h2 4-0-2 and h1 4-2-0 (Apache Dartship) and an exit 2-0-4
+# 3-0-2; late, h1 4-2-0 and h2 4-0-2 (Apache Dartships) and an exit 2-0-4
 # Spike Factory finish R80. Replayed Half Cash R76 on Dark Path / Moon
 # Landing / Cargo: 0.40/0.61/0.26 with the old Sun Avatar step, 2.02/4.09/
 # 1.65 with the Dartships (Hard Dark Path's worst round 0.58 -> 1.20); the
@@ -169,9 +169,12 @@ plan:
   # Apache Dartships, not a Sun Avatar, for rounds 63-80 (2026-11-08): the
   # same $21,600 bought +1.0 to +2.1 at R63/R76 as h2 4-0-2 and +0.0 to +0.05
   # as s1 3-0-2 (dps_model probe of the replayed boards). The super stays
-  # in `fill` for when the plan is done.
-  - {do: upgrade, id: h2, to: 4-0-2}
+  # in `fill` for when the plan is done. h1's Dartship comes first
+  # (2026-11-09): h1 and h3 are the only towers that reach round 78's camo
+  # ceramics on X Factor, Quad, Party Parade, Chutes and Pat's Pond, where
+  # R78 was rated 0.09-0.20 with h2's first and 0.44-0.91 with h1's.
   - {do: upgrade, id: h1, to: 4-2-0}
+  - {do: upgrade, id: h2, to: 4-0-2}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
   - {do: place, id: n3, kind: ninja, role: support, near: [a1, v1], near_radius: 7}
