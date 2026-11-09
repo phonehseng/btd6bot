@@ -27,7 +27,8 @@ insta_panel_20261108_002642.png, 1920x1200)
     prices. Purple hexes (the He-Man event powers) and blue hexes (Banana
     Farmer, Tech Bot, Portable Lake ...) carry no badge; the tenth, a gold
     hexagon, carries an orange round badge "22", and under it an "INSTA
-    MONKEYS" divider starts the Insta list. The shop's Powers page
+    MONKEYS" jump button (see "Greyed-out Powers" below: it is drawn over
+    more owned Powers, the Insta list comes further down). The shop's Powers page
     (rec_20261108_005701.mkv 0:41) lists the same icons in the same order
     and shows what the colours mean: purple and blue = not owned, gold with
     a count = owned (22, 15, 5, 12, 19, 24 ... on that account). So a Power
@@ -41,8 +42,29 @@ insta_panel_20261108_002642.png, 1920x1200)
   and 0.044 high around a yellow disc with the number; the icon it belongs
   to is centred BADGE_TO_ICON below-left of it.
 
+Greyed-out Powers (2026-11-09, rec_20261109_065800.mkv 0:30-0:40 and every
+powers_panel_* capture since 2026-11-08)
+  The panel is ONE scrolling two-column list: the purple event Powers, the
+  blue Powers Pro (not owned), then the owned standard Powers in the shop's
+  order (Super Monkey Storm 22, Monkey Boost 15, Thrive 5, Time Stop 12,
+  Cash Drop 19, ...), then the Insta towers. "INSTA MONKEYS" with its down
+  arrow is a sticky jump button drawn OVER the bottom row (the badges "15"
+  and "5" of Monkey Boost and Thrive show faintly through it), not an
+  entry: it has no badge and is never taken for a Power.
+  The gold "22" is Super Monkey Storm (the shop's 22) - but before round 1
+  its art is washed out (power_greyed), like every icon in the top view,
+  selected or not, for the whole 10 s the panel was open. Hexagon click, map
+  click and drag never moved its count (02:46, 19:55, 20:06, 05:40, 06:58).
+  The Insta tab's jump shows the end of the Powers list instead: Portable
+  Lake, Tech Bot and Energizing Totem ("9") in FULL colour - placed Powers
+  are usable there, the instant ones are not (all captures are before round
+  1 with FAST TRACK ENABLED; whether the greying comes from "between rounds"
+  or from Fast Track is not told apart by them). So only a gold, badged AND
+  not greyed hexagon is used (usable_powers): in the top view if any, else
+  in the Insta tab's view.
+
 Using a Power (only one with a badge; never one without - it may be a
-purchase)
+purchase - and never a greyed one)
   Click its hexagon. If something comes onto the cursor (Game.is_holding,
   the red cancel X) it is a placed Power: dropped on the track late in the
   route (track_points), else on open ground near the track (insta_spots),
@@ -110,6 +132,14 @@ BADGE_TO_ICON = (-0.019, 0.028)           # badge centre -> its icon's centre
 ICON_HALF = (0.025, 0.035)
 GOLD_HUE = (18, 34)                       # gold hexagon = an owned Power (is_gold_tile)
 GOLD_MIN_SHARE = 0.30
+# A greyed-out (unusable now) Power: its art is washed into the gold, so
+# hardly any strongly coloured pixel outside the gold/olive hues is left in
+# the middle of the hexagon. Share of such pixels in GREY_HALF around the
+# icon: 0.012-0.024 for the greyed Super Monkey Storm (7 captures and the
+# fixture), 0.154-0.185 for the full-colour Energizing Totem.
+GREY_HALF = (0.018, 0.026)
+GREY_ART_HUE = (12, 40)                   # the gold/olive tint a greyed icon is washed into
+ART_MIN_SHARE = 0.06
 
 # -- when ---------------------------------------------------------------------------
 # mode -> what may be used there ("both" = powers and instas)
@@ -226,7 +256,8 @@ def _divider_y(words):
 
 def power_badges(frame, words=()):
     """Icons of owned Powers: gold hexagons carrying a count badge, above the
-    INSTA MONKEYS divider when it is read. [(icon, badge)]"""
+    INSTA MONKEYS jump button when it is read (the row under it shows
+    through it and is not clickable). Greyed ones included. [(icon, badge)]"""
     top = _divider_y(words)
     out = []
     for b in find_badges(frame):
@@ -236,6 +267,23 @@ def power_badges(frame, words=()):
         if is_gold_tile(frame, icon):
             out.append((icon, b))
     return out
+
+
+def power_greyed(frame, icon):
+    """Is this Power hexagon drawn washed out (not usable right now)? See
+    the module notes: the greyed Super Monkey Storm keeps its gold hexagon
+    and orange badge, only its art loses its colours."""
+    hx, hy = GREY_HALF
+    box = (icon[0] - hx, icon[1] - hy, icon[0] + hx, icon[1] + hy)
+    colourful = (_share(frame, box, (0, GREY_ART_HUE[0] - 1), 130, 110)
+                 + _share(frame, box, (GREY_ART_HUE[1] + 1, 180), 130, 110))
+    return colourful < ART_MIN_SHARE
+
+
+def usable_powers(frame, words=()):
+    """Owned Powers that can be used now: gold, badged, not greyed.
+    [(icon, badge)]"""
+    return [(icon, b) for icon, b in power_badges(frame, words) if not power_greyed(frame, icon)]
 
 
 def insta_badges(frame):
@@ -352,6 +400,8 @@ class InGameExtras:
         self.summary = {"powers": [], "instas": [], "result": None}
         self._dragged = set()             # Power hexagons already dragged this game (one try each)
         self._failure_counted = False     # powers_failures grows at most once per game
+        self._view = "powers"             # which view of the list the Power in use sits in
+        self.seen = None                  # {"owned", "usable"} for the "powers_seen" flag
 
     # -- helpers ---------------------------------------------------------------------
     def _look(self, what):
@@ -452,6 +502,9 @@ class InGameExtras:
         # count unchanged. The map click only closed the panel, so a closed
         # panel is reopened and its count compared (_check_use) before
         # anything counts as used.
+        # 2026-11-09: in all of those runs the Storm was GREYED OUT (module
+        # notes) - no gesture could have used it, and greyed Powers are no
+        # longer clicked. These steps stay for a usable instant Power.
         targets = track_points(model)[:1] + insta_spots(model, self.avoid)[:1]
         for pt in targets:
             log.info("achievement: Power %d selected, not used - clicking the map at %.3f,%.3f", slot, *pt)
@@ -544,16 +597,19 @@ class InGameExtras:
         if panel_closed(frame):
             log.info("achievement: the powers panel closed after %s - opening it again to read "
                      "Power %d's count", what, slot)
-            if not self._open():
+            if not self._reopen():
                 return None, True
             frame, words = self._panel
             reopened = True
-        if not on_powers_tab(frame, words):
-            log.info("achievement: after %s the panel is not on its Powers tab - Power %d's count "
-                     "not compared", what, slot)
+        if not self._in_view(frame, words):
+            log.info("achievement: after %s the panel is not on the view of Power %d (%s) - its count "
+                     "not compared", what, slot, self._view)
             return None, reopened
         now = badge_near(find_badges(frame), badge)
         if now is None:
+            if self._view != "powers":
+                # the Insta view's place may differ by a scroll: a missing badge proves nothing
+                return None, reopened
             log.info("achievement: Power %d used (badge %s -> gone on the Powers tab)", slot, before)
             return True, reopened
         after = self._count(now)
@@ -566,20 +622,74 @@ class InGameExtras:
             return False, reopened
         return None, reopened
 
+    # -- the two views of the list ---------------------------------------------------------
+    def _jump_to_instas(self):
+        """The Insta tab: the list jumps to its Insta part, whose top rows are
+        the last (placed) Powers. Sets self._panel."""
+        self.inp.click(*INSTA_TAB)
+        frame, words = self._look("powers_insta_view")
+        if classify_panel(words, frame) == "shop":
+            self._decline(words)
+            raise _Bail("a shop page on the Insta tab", words)
+        self._panel = (frame, words)
+        return frame, words
+
+    def _reopen(self):
+        """Open the closed panel again on the view in use. True when shown."""
+        if not self._open():
+            return False
+        if self._view == "instas":
+            self._jump_to_instas()
+        return True
+
+    def _in_view(self, frame, words):
+        """The frame shows the view the Power in use was found in."""
+        if self._view == "powers":
+            return on_powers_tab(frame, words)
+        return not panel_closed(frame) and not on_powers_tab(frame, words) and bool(find_badges(frame))
+
+    def _usable_here(self, frame, words):
+        if self._view == "powers":
+            return usable_powers(frame, words) if on_powers_tab(frame, words) else []
+        return usable_powers(frame) if self._in_view(frame, words) else []
+
+    def _find_usable(self, frame, words):
+        """Usable Powers: the top view's first, else the Insta view's.
+        Returns [(icon, badge)] and leaves self._view on the view used.
+        Records what was seen in self.seen (for the "powers_seen" flag)."""
+        self._view = "powers"
+        owned = power_badges(frame, words)
+        usable = usable_powers(frame, words)
+        self.seen["owned"] = len(owned)
+        self.seen["usable"] = len(usable)
+        if owned:
+            log.info("achievement: owned Powers in the top view: %d (slots at %s), %d of them usable, "
+                     "the rest greyed out", len(owned), ", ".join("%.3f,%.3f" % i for i, _ in owned), len(usable))
+        if usable:
+            return usable
+        frame, words = self._jump_to_instas()
+        self._view = "instas"
+        owned_low = power_badges(frame)
+        usable = usable_powers(frame)
+        self.seen["owned"] += len(owned_low)
+        self.seen["usable"] = len(usable)
+        log.info("achievement: owned Powers in the Insta tab's view: %d, %d usable (slots at %s)",
+                 len(owned_low), len(usable), ", ".join("%.3f,%.3f" % i for i, _ in usable) or "none")
+        return usable
+
     def _use_powers(self, frame, model, words=()):
         if not on_powers_tab(frame, words):
             log.info("achievement: the panel is not on its Powers tab (it shows the Insta list) "
                      "- no Power used")
             return 0
-        owned = power_badges(frame, words)
+        owned = self._find_usable(frame, words)
         if not owned:
-            log.info("achievement: no owned Power in the grid (no hexagon carries a count badge)")
+            log.info("achievement: no usable owned Power in either view (none badged, or all greyed out) "
+                     "- nothing clicked")
             return 0
-        log.info("achievement: owned Powers by badge: %d (slots at %s)", len(owned),
-                 ", ".join("%.3f,%.3f" % icon for icon, _ in owned))
         n = 0
         while owned and n < POWERS_PER_GAME and self.budget.allow("power_uses"):
-            icon, badge = owned[0]          # the first badged hexagon, read afresh each time
+            icon, badge = owned[0]          # the first usable hexagon, read afresh each time
             if not self._use_power(n + 1, icon, badge, model):
                 break
             n += 1
@@ -590,10 +700,10 @@ class InGameExtras:
             # the panel may have closed after a use: open it again, re-read
             frame, words = self._look("powers_panel_again")
             if panel_closed(frame):
-                if not self._open():
+                if not self._reopen():
                     break
                 frame, words = self._panel
-            owned = power_badges(frame, words) if on_powers_tab(frame, words) else []
+            owned = self._usable_here(frame, words)
         return n
 
     # -- instas ----------------------------------------------------------------------------
@@ -678,9 +788,8 @@ class InGameExtras:
             opened = True
             frame, words = self._panel
             if on_powers_tab(frame, words):
-                # the power shop buys only after a look that found none owned
-                self.budget.set_flag("powers_seen", {"at": time.time(), "owned": len(power_badges(frame, words)),
-                                                     "method": "gold_badge"})
+                # written in `finally`: the power shop buys only after a look that found none owned
+                self.seen = {"owned": len(power_badges(frame, words)), "usable": len(usable_powers(frame, words))}
             if self.want_powers and self.budget.allow("power_uses"):
                 self._use_powers(frame, model, words)
                 frame, words = self._look("powers_panel_before_instas")
@@ -707,6 +816,9 @@ class InGameExtras:
             self.summary["result"] = "error"
             return self.summary
         finally:
+            if self.seen is not None:
+                # owned: gold badged hexagons seen (greyed ones too); usable: of those, not greyed
+                self.budget.set_flag("powers_seen", {"at": time.time(), "method": "gold_badge", **self.seen})
             if opened or getattr(self, "_clicked", False):
                 try:
                     self._close()

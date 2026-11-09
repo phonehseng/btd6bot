@@ -195,13 +195,18 @@ def test_panel_open_is_told_by_the_button_not_by_blue():
 
 
 def test_badges_on_the_live_powers_tab():
-    """The tenth hexagon is gold with a "22": an owned Power (the shop page
-    lists the same icons and shows gold + count = owned)."""
+    """The tenth hexagon is gold with a "22": the owned Super Monkey Storm
+    (the shop's 22) - but greyed out before round 1 (its art washed out in
+    every capture; no click ever moved its count), so it is not usable. The
+    INSTA MONKEYS jump button under it is no entry at all."""
     f = _big("powers_panel_live.jpg")
     badges = P.find_badges(f)
     assert len(badges) == 1 and abs(badges[0][0] - 0.977) < 0.005 and abs(badges[0][1] - 0.683) < 0.005
     owned = P.power_badges(f, LIVE_POWERS_WORDS)
     assert len(owned) == 1 and abs(owned[0][0][0] - 0.958) < 0.005 and abs(owned[0][0][1] - 0.711) < 0.005
+    assert P.power_greyed(f, owned[0][0])
+    assert P.usable_powers(f, LIVE_POWERS_WORDS) == []
+    assert not P.power_greyed(_vivid(f), owned[0][0]) and len(P.usable_powers(_vivid(f), LIVE_POWERS_WORDS)) == 1
     assert P.on_powers_tab(f, LIVE_POWERS_WORDS) and P.on_powers_tab(f)
     assert P.insta_badges(f) == []
 
@@ -212,7 +217,8 @@ def test_badges_on_the_live_insta_tab():
     assert len(badges) == 9, badges                         # 12, 14, 20, 12, 11, 19, 6, 16, 9
     icon, badge = badges[0]                                 # the gold "9" above is a Power
     assert abs(icon[0] - 0.958) < 0.006 and abs(icon[1] - 0.30) < 0.006
-    assert len(P.power_badges(f)) == 1                       # that gold "9"
+    assert len(P.power_badges(f)) == 1                       # that gold "9": Energizing Totem
+    assert P.usable_powers(f) == P.power_badges(f)           # in full colour: usable
     assert not P.on_powers_tab(f, LIVE_INSTA_WORDS)
 
 
@@ -255,6 +261,10 @@ def test_plan_extras_gating():
 
 
 # -- powers: the in-game flow on the live frames --------------------------------------
+LIVE_POWER = (0.958, 0.711)       # the live "22" Storm's hexagon (rounded as clicks are)
+LIVE_TOTEM = (0.892, 0.300)       # the full-colour Energizing Totem "9" in the Insta tab's view
+
+
 class FakeModel:
     def track_mask(self):
         m = np.zeros((40, 64), bool)
@@ -283,13 +293,28 @@ class FakeModel:
         return [(int(x), int(y), 1.0) for x, y in zip(xs, ys)][:n]
 
 
-def _without_badge(frame):
-    """The live Powers tab with its one badge painted over (no Power owned)."""
+def _vivid(frame):
+    """The live Powers tab with the Storm's art painted in full colour (a
+    blue patch in the hexagon's middle): how a usable instant Power looks."""
     f = frame.copy()
     h, w = f.shape[:2]
-    bx, by = 0.977, 0.683
+    x, y = LIVE_POWER
+    f[int((y - 0.016) * h):int((y + 0.016) * h), int((x - 0.012) * w):int((x + 0.012) * w)] = (200, 80, 20)
+    return f
+
+
+def _without_badge_at(frame, badge):
+    """frame with the badge at `badge` painted over in the panel's blue."""
+    f = frame.copy()
+    h, w = f.shape[:2]
+    bx, by = badge
     f[int((by - 0.03) * h):int((by + 0.03) * h), int((bx - 0.02) * w):int((bx + 0.02) * w)] = (120, 60, 20)
     return f
+
+
+def _without_badge(frame):
+    """The live Powers tab with its one badge painted over (no Power owned)."""
+    return _without_badge_at(frame, (0.977, 0.683))
 
 
 class FakeGame:
@@ -342,6 +367,14 @@ class FakeMenus:
         return [_w(str(self.count.pop(0)))] if self.count else []
 
 
+def _two_views(holding=(False,), instas=None):
+    """The live Powers tab until the Insta tab is clicked, then the Insta
+    tab's view (the Totem "9" on top)."""
+    powers = _big("powers_panel_live.jpg")
+    instas = _big("insta_panel_live.jpg") if instas is None else instas
+    return FakeGame(lambda clicks: instas if P.INSTA_TAB in clicks else powers, holding=holding)
+
+
 def _extras(tmp, **kw):
     b = _budget(tmp)
     kw.setdefault("want_powers", True)
@@ -360,23 +393,55 @@ def test_panel_without_owned_powers_clicks_nothing_in_it():
         g = FakeGame(lambda clicks: bare)
         res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS]), FakeModel(), [])
         assert res["result"] == "done" and res["powers"] == [], res
-        assert g.inp.clicks == [P.POWERS_BUTTON, P.POWERS_BUTTON], g.inp.clicks   # open, close
+        # open, the Insta tab (the list's last Powers), close
+        assert g.inp.clicks == [P.POWERS_BUTTON, P.INSTA_TAB, P.POWERS_BUTTON], g.inp.clicks
         assert b.flag("powers_seen")["owned"] == 0 and b.used("power_uses") == 0
         assert list((Path(tmp) / "cap").glob("powers_panel_*.png"))
-
-
-LIVE_POWER = (0.958, 0.711)       # the live "22" Power's hexagon (rounded as clicks are)
 
 
 def _is_power_click(c):
     return abs(c[0] - LIVE_POWER[0]) < 0.003 and abs(c[1] - LIVE_POWER[1]) < 0.003
 
 
-def test_live_owned_power_is_used_and_verified():
-    """The live "22" Power: clicked, nothing on the cursor, count 22 -> 21."""
+def test_live_greyed_storm_is_never_clicked_the_totem_is_used():
+    """The live panel (rec_20261109_065800.mkv): the Storm "22" is greyed
+    out, so the Insta tab's view is read, where the Energizing Totem "9" is
+    in full colour: clicked, it comes onto the cursor, is put down and its
+    count goes 9 -> 8 (twice: 8 -> 7). The Storm's hexagon is never clicked."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
+        g = _two_views(holding=[True, False, True, False])
+        pages = [LIVE_POWERS_WORDS, LIVE_INSTA_WORDS]
+        res = ex.run(g, FakeMenus(pages, count=[9, 8, 8, 7]), FakeModel(), [])
+        assert res["result"] == "done" and len(res["powers"]) == 2, res      # POWERS_PER_GAME
+        assert b.used("power_uses") == 2 and b.used("powers_failures") == 0
+        seen = b.flag("powers_seen")
+        assert seen["owned"] == 2 and seen["usable"] == 1, seen
+        assert not any(_is_power_click(c) for c in g.inp.clicks), g.inp.clicks
+        assert g.inp.clicks[:3] == [P.POWERS_BUTTON, P.INSTA_TAB, LIVE_TOTEM], g.inp.clicks
+
+
+def test_only_greyed_powers_click_nothing_and_count_no_failure():
+    """The Storm greyed and no usable Power in the Insta view either (the
+    Totem's badge painted over): no Power clicked, no failure, the flag says
+    owned but none usable."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        g = _two_views(instas=_without_badge_at(_big("insta_panel_live.jpg"), (0.911, 0.272)))
+        res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS, LIVE_INSTA_WORDS]), FakeModel(), [])
+        assert res["result"] == "done" and res["powers"] == [], res
+        assert g.inp.clicks == [P.POWERS_BUTTON, P.INSTA_TAB, P.POWERS_BUTTON], g.inp.clicks
+        assert b.used("powers_failures") == 0 and b.used("power_uses") == 0
+        seen = b.flag("powers_seen")
+        assert seen["owned"] == 1 and seen["usable"] == 0, seen
+
+
+def test_vivid_owned_power_is_used_and_verified():
+    """A usable "22" Power in the top view: clicked, nothing on the cursor,
+    count 22 -> 21."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        live = _vivid(_big("powers_panel_live.jpg"))
         g = FakeGame(lambda clicks: live)
         res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22, 21, 21, 20]), FakeModel(), [])
         assert res["result"] == "done" and len(res["powers"]) == 2, res      # POWERS_PER_GAME
@@ -388,7 +453,7 @@ def test_live_owned_power_is_used_and_verified():
 def test_owned_power_on_the_cursor_goes_on_the_track():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
+        live = _vivid(_big("powers_panel_live.jpg"))
         g = FakeGame(lambda clicks: live, holding=[True, False])
         res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS]), FakeModel(), [])
         assert b.used("power_uses") >= 1, res
@@ -400,7 +465,7 @@ def test_power_that_changes_nothing_stops_the_routine():
     clicked again (let go) and the panel closed."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
+        live = _vivid(_big("powers_panel_live.jpg"))
         g = FakeGame(lambda clicks: live)
         res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22] * 6), FakeModel(), [])
         assert res["result"].startswith("bailed: Power slot 1 clicked but nothing changed"), res
@@ -415,7 +480,7 @@ def test_selected_power_is_used_by_a_map_click():
     22 stayed). A click on the map (a late track point) uses it."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
+        live = _vivid(_big("powers_panel_live.jpg"))
         g = FakeGame(lambda clicks: live)
         # use 1: before 22, after tile 22, after map 21; use 2: 21, 21, 20
         res = ex.run(g, FakeMenus([LIVE_POWERS_WORDS], count=[22, 22, 21, 21, 21, 20]), FakeModel(), [])
@@ -441,7 +506,7 @@ def test_map_click_that_closes_the_panel_is_no_use():
     let-go click (nothing is selected in a reopened panel), one failure."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
+        live = _vivid(_big("powers_panel_live.jpg"))
         g = FakeGame(lambda clicks: live, map_closes=True)
         # open, after hexagon, after map (closed), reopen, after drag (closed), reopen
         menus = FakeMenus([L, L, T, L, T, L], count=[22, 22, 22, 22])
@@ -464,7 +529,7 @@ def test_drag_that_uses_the_power_counts_one_use():
     second Power try gets no second drag (one per Power per game) and bails."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
+        live = _vivid(_big("powers_panel_live.jpg"))
         g = FakeGame(lambda clicks: live, map_closes=True)
         menus = FakeMenus([L, L, T, L, T, L,            # use 1: hexagon, map, reopen, drag, reopen
                            L, L, T, L],                 # again; use 2: hexagon, map, reopen
@@ -482,7 +547,7 @@ def test_map_click_that_closes_the_panel_counts_when_the_count_went_down():
     by its one drag: no second use, one failure."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
+        live = _vivid(_big("powers_panel_live.jpg"))
         g = FakeGame(lambda clicks: live, map_closes=True)
         menus = FakeMenus([L, L, T, L,                  # use 1: hexagon, map, reopen
                            L, L, T, L, T, L],           # again; use 2: hexagon, map, reopen, drag, reopen
@@ -514,7 +579,7 @@ def test_badge_gone_counts_only_on_the_powers_tab():
 def test_purchase_question_is_declined_never_confirmed():
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
-        live = _big("powers_panel_live.jpg")
+        live = _vivid(_big("powers_panel_live.jpg"))
         g = FakeGame(lambda clicks: live)
         question = [_w("Buy this Power for", 0.5, 0.4), _w("35", 0.5, 0.45), _w("Monkey Money", 0.5, 0.47),
                     _w("YES", 0.6, 0.6), _w("NO", 0.4, 0.6)]

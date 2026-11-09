@@ -39,7 +39,13 @@ with the words read.
 Note: the Powers page shows that the main account OWNS standard Powers (22,
 15, 5, 12, 19, 24 ...). powers.py now counts the gold badged hexagons in
 the game as owned, so "powers_seen" reports them and this shop is not due;
-it stays for when they run out.
+it stays for when they run out. Since 2026-11-09 the flag also holds
+"usable" (owned and not greyed out). It is deliberately NOT what makes the
+shop due: the account owns many Powers but the bot sees only two views of
+the in-game list (the top, where the instant Super Monkey Storm is greyed
+before round 1, and the Insta tab's view with the last placed Powers), and
+a cheap Power bought here (Road Spikes, Glue Trap ...) sits in the middle
+of that list, out of both views - buying it would not give a usable one.
 """
 import logging
 import re
