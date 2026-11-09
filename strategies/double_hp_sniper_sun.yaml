@@ -26,7 +26,9 @@ planner:
   # first and with a 6- or 9-round look-ahead (the conveyors keep the
   # blimps out of reach); #Ouch stays at 0.9-1.1x, and the live game read
   # 0.9x and lost all 100 lives (tests/test_r40_moab_excluded_offline.py).
-  excluded_maps: [Tricky Tracks, Water Park, Mesa, Workshop, "#Ouch"]
+  # Pat's Pond: ABR lost three times (rounds 54, 57, 40 - the last 2026-11-09
+  # 10:47); its Double HP medal there is already won.
+  excluded_maps: [Tricky Tracks, Water Park, Mesa, Workshop, "#Ouch", "Pat's Pond"]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
