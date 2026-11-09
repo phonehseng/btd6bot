@@ -19,7 +19,14 @@ planner:
   # rates the rounds lost there under 1 (Tricky Tracks ABR 63: 0.33, Double
   # HP 40: 0.58; Water Park ABR 61: 0.52; Mesa Double HP 50: 0.75) with
   # every reorder tried. These maps need their own builds.
-  excluded_maps: [Tricky Tracks, Water Park, Mesa]
+  # Workshop ABR and #Ouch Double HP (2026-11-09) were both lost at round
+  # 40, the first MOAB, with every life in hand and $4,219 / $2,502 unspent.
+  # The Fast Track replay rates Workshop's round-40 blimp check 0.02-0.05x of
+  # the 1.4x wanted with a Sticky Bomb, Deadly Precision or MOAB Mauler moved
+  # first and with a 6- or 9-round look-ahead (the conveyors keep the
+  # blimps out of reach); #Ouch stays at 0.9-1.1x, and the live game read
+  # 0.9x and lost all 100 lives (tests/test_r40_moab_excluded_offline.py).
+  excluded_maps: [Tricky Tracks, Water Park, Mesa, Workshop, "#Ouch"]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
