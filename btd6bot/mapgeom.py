@@ -457,6 +457,42 @@ def path_masks(geom, proj, skip=()):
     return out
 
 
+def blimp_track(geom, proj, skip=()):
+    """Bool grid of the track MOAB-class bloons ride, or None when they ride
+    all of it (most maps).
+
+    Some maps send blimps their own way with a MoabOnlySplitter (Workshop's
+    chute drops them onto the belt past its middle; Dark Dungeons, Castle
+    Revenge and Quiet Street have MOAB lanes). The routes and their classes
+    come from dps_model.map_routes, which reads those splitters; this paints
+    the paths of every route that is not for non-MOAB bloons only. A blimp
+    answer scored on the whole track can stand where no blimp ever passes:
+    Workshop ABR (case 20261109_044354) put its MOAB answer at the entrance,
+    x 0.02, while the blimps' route is only x 0.57-0.85, and lost round 40.
+    Paths in `skip` (idle for now, idle_phase_paths) are left out."""
+    from .dps_model import map_routes     # (dps_model imports this module)
+    routes, _ = map_routes(geom)
+    if not any(r.get("moab") is not None for r in routes):
+        return None                       # no class has a route of its own
+    ids = {pid for r in routes if r.get("moab") is not False for pid in r["paths"]}
+    by_id = {p["id"]: p for p in geom.get("paths", [])}
+    w, h = GRID
+    mask = np.zeros((h, w), np.uint8)
+    for pid in ids - set(skip):
+        path = by_id.get(pid)
+        if path is None or path.get("hidden") or len(path.get("points") or ()) < 2:
+            continue
+        cells = proj.to_cells(path["points"])
+        hidden = path.get("invulnerable", [])
+        for i in range(len(cells) - 1):
+            if _in_ranges(i, hidden) or _in_ranges(i + 1, hidden):
+                continue
+            p0 = tuple(int(round(v)) for v in cells[i])
+            p1 = tuple(int(round(v)) for v in cells[i + 1])
+            cv2.line(mask, p0, p1, 1, TRACK_THICKNESS)
+    return mask > 0 if mask.any() else None
+
+
 # ---------------------------------------------------------------------------
 # Map mechanics: what changes during a game, and when
 # ---------------------------------------------------------------------------
@@ -1081,6 +1117,8 @@ def grids_for(model, removed=(), now_round=None, last_round=None):
         grids["scan"] = {k: np.where(grids[k], 1, 2).astype(np.uint8) for k in ("land", "water")}
         grids["track"] = heat > 0
         grids["path_masks"] = path_masks(geom, proj, skip)
+        # where blimps can be hit, when they have a route of their own
+        grids["blimp_track"] = blimp_track(geom, proj, skip)
         grids["proj"] = proj
         areas_by_id = {a["id"]: a for a in geom.get("areas", []) if "id" in a}
         grids["panes"] = [(c, [_poly_mask(areas_by_id[i]["polygons"], proj) for i in c["areas"]])
