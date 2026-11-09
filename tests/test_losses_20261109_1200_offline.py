@@ -34,10 +34,19 @@ def test_workshop_medium_ceiling():
     the last third of the belt (the blimp check: 21 units of track in
     reach, 0.1x of the damage wanted). tools/optimize_builds.py Workshop
     medium: no safe build (worst margin 0.15, unsafe rounds 28-41 and
-    49-60). Military Only, Medium with fewer towers, inherits it."""
-    assert PL.model_ceiling("Workshop", "medium") <= 0.2
-    assert PL.model_ceiling("Workshop", "military_only") <= 0.2
-    assert PL.ceiling_cap(0.9, "Workshop", "medium") < 0.06
+    49-60), so the ceiling was set to 0.15.
+
+    Since f87a9b8 (2026-11-09 14:05) the map has its own build,
+    strategies/maps/workshop_medium.yaml, whose towers stand in the two
+    pockets that see the chute's stretch; its worst round is rated 2.54
+    and data/model_ceiling.json carries that number. So the ceiling no
+    longer holds the game down, and Military Only (Medium with fewer
+    towers) inherits it as before."""
+    from btd6bot import strategy as S
+    assert "workshop_medium" in S.load_all()       # the build the number comes from
+    assert PL.model_ceiling("Workshop", "medium") >= 2.0
+    assert PL.model_ceiling("Workshop", "military_only") == PL.model_ceiling("Workshop", "medium")
+    assert PL.ceiling_cap(0.9, "Workshop", "medium") == 0.9
 
 
 if __name__ == "__main__":

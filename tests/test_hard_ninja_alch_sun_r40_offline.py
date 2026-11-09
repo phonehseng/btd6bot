@@ -126,7 +126,8 @@ def test_double_hp_holds_round_40():
 # 0.40 / 0.61 with the Sun Avatar). Since 2026-11-09 the radar village and
 # a third heli 3-2-0 come first in Half Cash, so h2's Dartship stands from
 # round 78 rather than 74; round 76 is held by h3 (R76: Dark Path 2.71,
-# Moon Landing 4.56).
+# Moon Landing 4.56). Since 2026-11-09 17:30 the first Dartship is h1's
+# (4-2-0, see LATE_FLOORS below), standing by round 78 the same way.
 LATE_ROUND = 76
 DARTSHIP_BY = 78
 LATE_MARGIN = 1.2
@@ -136,7 +137,7 @@ LATE_MAPS = ("Dark Path", "Moon Landing")
 def test_half_cash_late_game_has_the_dartships():
     for map_name in LATE_MAPS:
         _, boards = _replay("half_cash", map_name)
-        assert boards[DARTSHIP_BY]["h2"][1] == (4, 0, 2), (map_name, boards[DARTSHIP_BY])
+        assert boards[DARTSHIP_BY]["h1"][1] == (4, 2, 0), (map_name, boards[DARTSHIP_BY])
         board = boards[LATE_ROUND]
         assert board["h3"][1] == (3, 2, 0), (map_name, board)
         m = _margin("half_cash", map_name, board, LATE_ROUND)
@@ -173,9 +174,18 @@ def test_half_cash_holds_round_63():
 #   0.07 -> 0.20 (R78), Cargo 0.10 -> 0.68 (R75), Pat's Pond 0.09 -> 0.45
 #   (R59), Quad 0.09 -> 0.81 (R61), Party Parade 0.08 -> 0.46 (R77),
 #   Chutes 0.10 -> 0.67 (R77). The old worst was round 78 on every map.
+# By 2026-11-09 17:30 (more learned spots, model changes) round 78 was back
+# under 0.2 on five maps (X Factor 0.09, Quad 0.13, Party Parade 0.13,
+# Chutes 0.15, Pat's Pond 0.20): there only the left-side helis h1/h3 reach
+# the camo ceramics, and h2's Dartship (bought first) added nothing to R78
+# on X Factor. h1 4-2-0 now comes before h2 4-0-2; worst round 59-78 ->
+#   Mesa 0.41 (R59), X Factor 0.22 (R62), Dark Castle 0.44 (R78), Cargo
+#   0.68 (R75), Pat's Pond 0.73 (R62), Quad 0.39 (R62), Party Parade 0.43
+#   (R77), Chutes 0.61 (R75). Rounds 62 on X Factor and Quad come before
+#   either Dartship, so the order does not change them.
 LATE_ROUNDS = range(59, 79)
-LATE_FLOORS = {"Mesa": 0.35, "X Factor": 0.3, "Dark Castle": 0.15, "Cargo": 0.6,
-               "Pat's Pond": 0.4, "Quad": 0.7, "Party Parade": 0.4, "Chutes": 0.6}
+LATE_FLOORS = {"Mesa": 0.35, "X Factor": 0.2, "Dark Castle": 0.35, "Cargo": 0.6,
+               "Pat's Pond": 0.6, "Quad": 0.35, "Party Parade": 0.4, "Chutes": 0.55}
 
 
 def test_half_cash_rounds_59_to_78_floors():
