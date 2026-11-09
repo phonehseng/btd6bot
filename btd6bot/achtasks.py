@@ -222,6 +222,13 @@ class CountingInput:
         self.budget.add("clicks")
         return self._inp.click(fx, fy, *a, **kw)
 
+    def drag(self, fx0, fy0, fx1, fy1, *a, **kw):
+        """A press-move-release: counts as one click."""
+        if not self.budget.allow("clicks"):
+            raise CapReached("daily click cap reached")
+        self.budget.add("clicks")
+        return self._inp.drag(fx0, fy0, fx1, fy1, *a, **kw)
+
     def move(self, fx, fy, *a, **kw):
         if hasattr(self._inp, "move"):
             return self._inp.move(fx, fy, *a, **kw)

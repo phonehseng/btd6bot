@@ -68,9 +68,18 @@ class Inp:
 
     def __init__(self):
         self.clicks = []
+        self.drags = []
+        self.events = []              # clicks and drags in order: ("click", pt) / ("drag", pt0, pt1)
 
     def click(self, fx, fy, *a, **kw):
-        self.clicks.append((round(fx, 3), round(fy, 3)))
+        pt = (round(fx, 3), round(fy, 3))
+        self.clicks.append(pt)
+        self.events.append(("click", pt))
+
+    def drag(self, fx0, fy0, fx1, fy1, *a, **kw):
+        d = ((round(fx0, 3), round(fy0, 3)), (round(fx1, 3), round(fy1, 3)))
+        self.drags.append(d)
+        self.events.append(("drag", *d))
 
     def scroll(self, *a, **kw):
         pass
@@ -298,10 +307,11 @@ class FakeGame:
 
     def _open(self):
         shown = False
-        for c in self.inp.clicks:
-            if c == P.POWERS_BUTTON:
+        for kind, *pts in self.inp.events:
+            end = pts[-1]                  # a drag ends where it is released
+            if kind == "click" and end == P.POWERS_BUTTON:
                 shown = not shown
-            elif self.map_closes and c[0] < P.SIDEBAR[0]:
+            elif self.map_closes and end[0] < P.SIDEBAR[0]:
                 shown = False
         return shown
 
@@ -420,41 +430,68 @@ LIVE_TOWER_LIST_WORDS = [_w(t, 0.93, 0.3 + 0.05 * i) for i, t in
                          enumerate(["$330", "$310", "$380", "$760", "$1,425", "$570", "$810"])]
 
 
+L, T = LIVE_POWERS_WORDS, LIVE_TOWER_LIST_WORDS
+
+
 def test_map_click_that_closes_the_panel_is_no_use():
     """Live 2026-11-09 05:40: the map click closed the panel; the badge was
     not on the tower list, which counted as "used (badge 22 -> gone)". The
-    panel is opened again and still reads 22: no use, a clean bail without
-    another hexagon click (nothing is selected in a reopened panel)."""
+    panel is opened again and still reads 22: no use. One drag is tried; it
+    closes the panel too and the count stays 22: a clean bail, no hexagon
+    let-go click (nothing is selected in a reopened panel), one failure."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
         live = _big("powers_panel_live.jpg")
         g = FakeGame(lambda clicks: live, map_closes=True)
-        menus = FakeMenus([LIVE_POWERS_WORDS, LIVE_POWERS_WORDS, LIVE_TOWER_LIST_WORDS, LIVE_POWERS_WORDS],
-                          count=[22, 22, 22])
+        # open, after hexagon, after map (closed), reopen, after drag (closed), reopen
+        menus = FakeMenus([L, L, T, L, T, L], count=[22, 22, 22, 22])
         res = ex.run(g, menus, FakeModel(), [])
         assert res["result"].startswith("bailed: Power slot 1: the panel closed after the map click"), res
         assert b.used("power_uses") == 0 and res["powers"] == []
+        assert b.used("powers_failures") == 1
         grid = [c for c in g.inp.clicks if _in_grid(c)]
         assert len(grid) == 1 and _is_power_click(grid[0]), g.inp.clicks       # selected once, no let-go
         track = P.track_points(FakeModel())[0]
-        assert g.inp.clicks == [P.POWERS_BUTTON, grid[0], (round(track[0], 3), round(track[1], 3)),
-                                P.POWERS_BUTTON, P.POWERS_BUTTON], g.inp.clicks  # open, reopen, close
-        assert g.closed == 0
+        track = (round(track[0], 3), round(track[1], 3))
+        assert g.inp.clicks == [P.POWERS_BUTTON, grid[0], track,
+                                P.POWERS_BUTTON, P.POWERS_BUTTON, P.POWERS_BUTTON], g.inp.clicks
+        assert len(g.inp.drags) == 1 and _is_power_click(g.inp.drags[0][0]) and g.inp.drags[0][1] == track
 
 
-def test_map_click_that_closes_the_panel_counts_when_the_count_went_down():
-    """The same closing map click, but the reopened panel reads 21: one use.
-    The second try leaves 21 -> 21: no second use."""
+def test_drag_that_uses_the_power_counts_one_use():
+    """The map click only closes the panel (22 stays); the drag onto the
+    track takes the count to 21: one use, logged as "used by drag". The
+    second Power try gets no second drag (one per Power per game) and bails."""
     with tempfile.TemporaryDirectory() as tmp:
         ex, b = _extras(tmp)
         live = _big("powers_panel_live.jpg")
         g = FakeGame(lambda clicks: live, map_closes=True)
-        menus = FakeMenus([LIVE_POWERS_WORDS, LIVE_POWERS_WORDS, LIVE_TOWER_LIST_WORDS, LIVE_POWERS_WORDS,
-                           LIVE_POWERS_WORDS, LIVE_POWERS_WORDS, LIVE_TOWER_LIST_WORDS, LIVE_POWERS_WORDS],
-                          count=[22, 22, 21, 21, 21, 21])
+        menus = FakeMenus([L, L, T, L, T, L,            # use 1: hexagon, map, reopen, drag, reopen
+                           L, L, T, L],                 # again; use 2: hexagon, map, reopen
+                          count=[22, 22, 22, 21, 21, 21, 21])
         res = ex.run(g, menus, FakeModel(), [])
         assert b.used("power_uses") == 1 and len(res["powers"]) == 1, res
+        assert len(g.inp.drags) == 1, g.inp.drags
+        assert res["result"].startswith("bailed: Power slot 2"), res
+        assert b.used("powers_failures") == 1
+
+
+def test_map_click_that_closes_the_panel_counts_when_the_count_went_down():
+    """The same closing map click, but the reopened panel reads 21: one use
+    by the map click, no drag. The second try leaves 21 by the map click and
+    by its one drag: no second use, one failure."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ex, b = _extras(tmp)
+        live = _big("powers_panel_live.jpg")
+        g = FakeGame(lambda clicks: live, map_closes=True)
+        menus = FakeMenus([L, L, T, L,                  # use 1: hexagon, map, reopen
+                           L, L, T, L, T, L],           # again; use 2: hexagon, map, reopen, drag, reopen
+                          count=[22, 22, 21, 21, 21, 21, 21])
+        res = ex.run(g, menus, FakeModel(), [])
+        assert b.used("power_uses") == 1 and len(res["powers"]) == 1, res
+        assert len(g.inp.drags) == 1
         assert res["result"].startswith("bailed: Power slot 2: the panel closed after the map click"), res
+        assert b.used("powers_failures") == 1
 
 
 def test_badge_gone_counts_only_on_the_powers_tab():

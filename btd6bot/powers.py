@@ -50,7 +50,10 @@ purchase)
   used when its badge count went down (or the badge went away while the
   panel still shows its Powers tab). A click that closed the panel proves
   nothing: the panel is opened again and the count compared there
-  (_check_use; live 2026-11-09 05:40 the map click only closed it). Anything
+  (_check_use; live 2026-11-09 05:40 the map click only closed it). When
+  the map click closed the panel and the count stayed, one drag of the
+  hexagon onto the track is tried (once per Power per game); the log says
+  which gesture used it ("used by drag", "used by select + map click"). Anything
   else (a question, an unknown screen) ends the routine; a question is
   answered Cancel/No, nothing is ever confirmed in a game.
 
@@ -347,6 +350,8 @@ class InGameExtras:
         self.sleep = sleep
         self.capture_dir = Path(capture_dir)
         self.summary = {"powers": [], "instas": [], "result": None}
+        self._dragged = set()             # Power hexagons already dragged this game (one try each)
+        self._failure_counted = False     # powers_failures grows at most once per game
 
     # -- helpers ---------------------------------------------------------------------
     def _look(self, what):
@@ -398,9 +403,15 @@ class InGameExtras:
                 return True
         return False
 
+    def _count_failure(self):
+        """One powers_failures per game at most, whatever gestures failed."""
+        if not self._failure_counted:
+            self._failure_counted = True
+            self.budget.add("powers_failures")
+
     def _bail(self, why, words):
         log.warning("achievement: powers panel - bailing out (%s); screen read: %s", why, A.screen_text(words))
-        self.budget.add("powers_failures")
+        self._count_failure()
         self.summary["result"] = f"bailed: {why}"
         return self.summary
 
@@ -424,6 +435,7 @@ class InGameExtras:
         self._refuse_shop(frame, words, slot)
         used, reopened = self._check_use(frame, words, badge, before, slot, "the hexagon click")
         if used:
+            log.info("achievement: Power %d used by the hexagon click", slot)
             return True
         if reopened:
             raise _Bail(f"Power slot {slot}: the panel closed after the hexagon click and the count "
@@ -454,15 +466,48 @@ class InGameExtras:
             self._refuse_shop(frame, words, slot)
             used, reopened = self._check_use(frame, words, badge, before, slot, "the map click")
             if used:
+                log.info("achievement: Power %d used by select + map click", slot)
                 return True
             if reopened:
                 # the reopened panel has nothing selected: no hexagon click to let go
+                if self._drag_power(slot, icon, badge, before, pt):
+                    return True
                 raise _Bail(f"Power slot {slot}: the panel closed after the map click and the count "
-                            f"stayed {before} - the map click did not fire the Power", words)
+                            f"stayed {before} - neither the map click nor a drag fired the Power", words)
         # still selected and unused: click the hexagon again to let it go
         self.inp.click(*icon)
         self.sleep(0.4)
         raise _Bail(f"Power slot {slot} clicked but nothing changed (badge {before}, map clicked too)", words)
+
+    def _drag_power(self, slot, icon, badge, before, target):
+        """The next gesture after select + map click (which only closed the
+        panel, live 2026-11-09 05:40): drag the hexagon onto the map at
+        `target` in one press-move-release. At most one drag per Power per
+        game, so a gesture that does not work costs one click. True when the
+        count went down (checked as _check_use does)."""
+        key = (round(icon[0], 3), round(icon[1], 3))
+        if key in self._dragged:
+            log.info("achievement: Power %d was already dragged once this game - no second drag", slot)
+            return False
+        self._dragged.add(key)
+        frame = self._panel[0]                      # the reopened panel: nothing selected
+        now = badge_near(find_badges(frame), badge)
+        src = icon_of(now) if now is not None else icon
+        log.info("achievement: Power %d - trying a drag from %.3f,%.3f to %.3f,%.3f", slot, *src, *target)
+        self.inp.drag(*src, *target)
+        self.sleep(0.8)
+        if self.g.is_holding():
+            log.warning("achievement: Power %d is on the cursor after the drag - putting it back", slot)
+            self.g.cancel_hold()
+            return False
+        frame, words = self._look(f"power{slot}_after_drag")
+        self._refuse_shop(frame, words, slot)
+        used, _ = self._check_use(frame, words, badge, before, slot, "the drag")
+        if used:
+            log.info("achievement: Power %d used by drag", slot)
+            return True
+        log.info("achievement: Power %d not used by the drag either", slot)
+        return False
 
     def _refuse_shop(self, frame, words, slot):
         if classify_panel(words, frame) == "shop":
@@ -658,7 +703,7 @@ class InGameExtras:
             return self.summary
         except Exception:
             log.exception("achievement: powers panel failed")
-            self.budget.add("powers_failures")
+            self._count_failure()
             self.summary["result"] = "error"
             return self.summary
         finally:
