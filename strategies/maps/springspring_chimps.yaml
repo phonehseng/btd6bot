@@ -443,6 +443,18 @@
 # 0.72 (1.09 / 0.68), R99 1.07 (1.13 / 1.00), R100 2.95 (4.00 / 2.25). No
 # tier the model is doubted on stands any more, so the two views agree;
 # rounds 6-82 unchanged.
+# 2026-11-08 23:55: PARKED. The 05:40 late game lost ROUND 95 three times
+# live (22:30, 23:02, 23:49), the last with Bloon Sabotage pressed as round
+# 95's blimps came (3469a55) and every planned tower up to n2 0-3-0 standing;
+# the blimp check read 0.3x of round 95's 41,600 blimp HP in reach each time,
+# and the 50 fortified MOABs and camo DDTs leaked down the left lane ~18 s
+# in. Nine live losses in all, five at round 95, with three late games
+# (Glaive Lord + spikes, Inferno, spikes + ninjas + MIB). The boat sees 24%
+# of a track that is 40% off screen; a Carrier Flagship recipe does not
+# reach round 95 here. Not forced again until a different core is designed
+# (candidates from the 05:40 research: MIB + Tack Zone/Super Brittle at the
+# exit, a Perma-Spike net, or a map guide's exact build); base_success
+# drops to 0.05 so the planner does not pick it meanwhile.
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
@@ -452,9 +464,9 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [4, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], tack: [0, 2, 0], spike: [4, 2, 0], ninja: [0, 4, 0]}
   # not gated on the damage model: played live to learn (see above)
-  base_success: {chimps: 0.5}
+  base_success: {chimps: 0.05}
   maps: [Spring Spring]
-  revised: "2026-11-08T05:40"
+  revised: "2026-11-08T23:55"
 plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.751, 0.598]}   # exit water, both lanes (the cell the game took): opens alone
   - {do: place, id: t1, kind: tack, role: dps, at: [0.302, 0.828]}        # bottom lane's first bend: rounds 8-10
