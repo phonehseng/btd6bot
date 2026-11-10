@@ -1028,6 +1028,9 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
         if i == 0:
             out["static_land"], out["static_water"] = land_ok & ~solid, water_ok & ~solid
             out["ground"] = masks["ground"]
+            # cells an unplaceable sight blocker decides (walls, icicles,
+            # rocks): the map file is surest about these (Executor._probe_spot)
+            out["solid_blockers"] = masks["blockers"] & masks["unplaceable"]
         out["land"] &= land_ok & ~solid
         out["water"] &= water_ok & ~solid
         out["mermonkey_water"] &= masks["water_mermonkey"] & ~solid

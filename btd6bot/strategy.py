@@ -1170,6 +1170,7 @@ class Executor:
         self.ability_tries = {}
         self.hero_round = None
         self.blocked = np.zeros(model.heat.shape, bool)  # this game's no-go cells
+        self.layer_blocked = {}   # refusal layer -> no-go cells for that layer's towers only
         for p in game.towers.values():
             cx, cy = model.frac_to_cell(p.x, p.y)
             self._block(cx, cy, 3)
@@ -1311,12 +1312,7 @@ class Executor:
                 return
         except Exception:
             pass
-        # an amphibious tower refused here stands neither on land nor on water;
-        # a big tower's refusal is kept for its kind only (placement.refusal_layer)
-        from .placement import refusal_layer
-        hero = self.g.hero if kind == "hero" else None
-        layers = [refusal_layer(surface, kind, hero)
-                  for surface in (("land", "water") if cls == "land_or_water" else (cls,))]
+        layers = self._refusal_layers(kind)
         for layer in layers:
             refuse(layer, cx, cy)
         log.info("learned: %s spot (%d,%d) is not placeable on this map", "/".join(layers), cx, cy)
@@ -1328,9 +1324,63 @@ class Executor:
             log.warning("map scan disagrees with the game too often - rescanning next visit")
             self.m.scan.pop(cls, None)
 
-    def _block(self, cx, cy, r):
-        h, w = self.blocked.shape
-        self.blocked[max(0, cy - r):min(h, cy + r + 1), max(0, cx - r):min(w, cx + r + 1)] = True
+    def _refusal_layers(self, kind):
+        """The MapModel.refused layers a refusal of `kind` is learned in: an
+        amphibious tower refused somewhere stands neither on land nor on
+        water; a big tower's refusal is kept for its kind only
+        (placement.refusal_layer, "land@quincy"), a small one's in the
+        surface's shared layer ("land")."""
+        from .placement import refusal_layer
+        if kind == "hero":
+            cls = T.HEROES.get(self.g.hero, {}).get("placement") or "land"
+        else:
+            cls = T.TOWERS.get(kind, {}).get("placement") or "land"
+        hero = self.g.hero if kind == "hero" else None
+        return [refusal_layer(surface, kind, hero)
+                for surface in (("land", "water") if cls == "land_or_water" else (cls,))]
+
+    def _block(self, cx, cy, r, layer=None):
+        """Mark the cells within r of (cx, cy) as no-go for this game: for
+        every tower (layer None), or only for the towers whose refusals are
+        learned in `layer` (a big tower's own layer, _block_refused)."""
+        if layer is None:
+            grid = self.blocked
+        else:
+            layers = self.__dict__.setdefault("layer_blocked", {})
+            grid = layers.setdefault(layer, np.zeros(self.blocked.shape, bool))
+        h, w = grid.shape
+        grid[max(0, cy - r):min(h, cy + r + 1), max(0, cx - r):min(w, cx + r + 1)] = True
+
+    def _block_refused(self, kind, cx, cy, r=2):
+        """A `kind` tower was refused at (cx, cy): keep the cells round it
+        from being offered again this game - to every tower when the refusal
+        says the ground is bad (a small tower's, the shared layer), to this
+        tower's own kind only when it says its footprint did not fit (a big
+        tower's own layer, as the map learns it: _learn_blocked).
+
+        Glacial Trail Medium (2026-11-09 19:12): Quincy was refused twice on
+        Floor2, one of the map's two patches of ground beside the track. The
+        map learned it for Quincy alone ("land@quincy"), but the game's block
+        took the whole patch from every tower: the tack, the dart, the glue
+        and later the camo answers found no spot that reached the track, 7
+        plan steps and 12 answers were given up, and round 40 was lost with a
+        lone boomerang and a sniper standing."""
+        layers = self._refusal_layers(kind)
+        own = [layer for layer in layers if "@" in layer]
+        if not own:
+            self._block(cx, cy, r)
+            return
+        for layer in own:
+            self._block(cx, cy, r, layer=layer)
+
+    def _blocked_for(self, kind):
+        """This game's no-go cells for a new `kind` tower: the shared ones
+        plus those blocked for its own refusal layer (_block_refused)."""
+        blocked = getattr(self, "layer_blocked", None) or {}
+        own = [blocked[layer] for layer in self._refusal_layers(kind) if layer in blocked]
+        if not own:
+            return self.blocked
+        return self.blocked | np.logical_or.reduce(own)
 
     def _best_panic_kind(self):
         """Cheapest sensible panic tower that this game's rules and constraints allow
@@ -1553,7 +1603,7 @@ class Executor:
         from . import placement as PL
         hero = self.g.hero if kind == "hero" else None
         valid = self._legal_cells(kind)
-        block = self._keep_off_scarce(kind, valid, self.blocked)
+        block = self._keep_off_scarce(kind, valid, self._blocked_for(kind))
         far = self._far_from_at(step, block.shape)
         if far is not None:
             # a step with a researched spot falls back to cells round that
@@ -1925,6 +1975,8 @@ class Executor:
         self.failed_spots = {k for k in self.failed_spots
                              if not (0 <= k[2] < h and 0 <= k[1] < w and ground[k[2], k[1]])}
         self.blocked &= ~ground
+        for grid in (getattr(self, "layer_blocked", None) or {}).values():
+            grid &= ~ground
         for p in self.g.towers.values():
             self._block(*self.m.frac_to_cell(p.x, p.y), 3)
 
@@ -2386,7 +2438,7 @@ class Executor:
                 continue
             cx, cy, _ = spots[fracs.index(spot)]
             self.failed_spots.add((kind, cx, cy))
-            self._block(cx, cy, 2)
+            self._block_refused(kind, cx, cy)
             if persist:
                 self._learn_blocked(kind, cx, cy)
             self.step_spot_fails[key] = self.step_spot_fails.get(key, 0) + 1
@@ -2488,7 +2540,7 @@ class Executor:
         # the alchemist's lead and damage, leaked 119 lives in a second.
         damage = set(self._damage_towers_ids())
         named = [self.g.towers[i] for i in (step or {}).get("near") or () if i in damage]
-        ys, xs = np.nonzero(valid & ~self.blocked)
+        ys, xs = np.nonzero(valid & ~self._blocked_for(kind))
         scored = sorted(((self._buffed(kind, x, y, named) if named else 0, self._buffed(kind, x, y), x, y)
                          for x, y in zip(xs.tolist(), ys.tolist())
                          if (kind, x, y) not in self.failed_spots), reverse=True)
@@ -2536,7 +2588,10 @@ class Executor:
         refused_mask = getattr(self.m, "refused_mask", None)
         refused = refused_mask(surface) if refused_mask else np.zeros(valid.shape, bool)
         best_legal = float(reach[valid].max())
-        cand = ~valid & ~on_track & ~refused & ~self.blocked & (reach > self.PROBE_GAIN * best_legal)
+        cand = ~valid & ~on_track & ~refused & ~self._blocked_for(kind) & (reach > self.PROBE_GAIN * best_legal)
+        solid = self._solid_blockers(valid.shape)
+        if solid is not None:
+            cand &= ~solid
         ys, xs = np.nonzero(cand)
         for i in np.argsort(-reach[ys, xs])[:50]:
             cx, cy = int(xs[i]), int(ys[i])
@@ -2547,6 +2602,25 @@ class Executor:
                      "the best legal one %.0f)", kind, reach[cy, cx], best_legal)
             return (cx, cy, 2e9)
         return None
+
+    def _solid_blockers(self, shape):
+        """Bool grid of the cells an unplaceable sight blocker of the map's
+        geometry decides (mapgeom.placement_grids "solid_blockers": walls,
+        icicles, rocks), which are never probed; None without geometry.
+
+        Every probe the game accepted on 11 maps (data/maps accepted layers,
+        2026-11-09: Water Park's circle, Bazaar, Cargo, Ravine ...) lay on
+        land or on an unplaceable area that does not block sight. On Glacial
+        Trail Medium (2026-11-09 19:12) all ten probes were refused, most of
+        them inside the icicle and wall blockers round the loops: ~1.5 s
+        each, and the only spot some of the steps were offered."""
+        try:
+            from . import mapgeom
+            grids = mapgeom.grids_for(self.m)
+        except Exception:
+            return None
+        solid = grids.get("solid_blockers") if grids else None
+        return solid if solid is not None and solid.shape == shape else None
 
     def _learn_accepted(self, kind, p):
         """The tower stands: the ground under it is placeable, so any refusal
@@ -3092,7 +3166,8 @@ class Executor:
         if not at or len(at) != 2:
             return []
         cx, cy = (int(round(v)) for v in self.m.frac_to_cell(*self._at_now(at)))
-        h, w = self.blocked.shape
+        blocked = self._blocked_for(step.get("kind")) if step.get("kind") else self.blocked
+        h, w = blocked.shape
         r = radius or self.AT_SEARCH_CELLS
         near = []
         for dy in range(-r, r + 1):
@@ -3100,7 +3175,7 @@ class Executor:
                 x, y = cx + dx, cy + dy
                 if dx * dx + dy * dy > r * r:
                     continue    # a circle, not the square's corners
-                if not (0 <= x < w and 0 <= y < h) or self.blocked[y, x]:
+                if not (0 <= x < w and 0 <= y < h) or blocked[y, x]:
                     continue
                 if valid is not None and not valid[y, x]:
                     continue
@@ -3298,7 +3373,7 @@ class Executor:
             return []
         # cells are walked top row first, so without this a sniper takes the
         # scarce ground near the top of the map (Cargo's pier corner)
-        block = self._keep_off_scarce(kind, valid, self.blocked)
+        block = self._keep_off_scarce(kind, valid, self._blocked_for(kind))
         ys, xs = np.nonzero(valid)
         out = []
         for cx, cy in zip(xs.tolist(), ys.tolist()):
