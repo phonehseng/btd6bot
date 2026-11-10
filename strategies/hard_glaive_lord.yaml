@@ -38,7 +38,12 @@ planner:
   # refused spots": no legal cell in its segment on the ice) and rounds 24,
   # 27, 30 and 31 rated 0.06; double_hp_sniper_sun lost ABR there at round
   # 31 too. The map's frozen ground needs a build of its own.
-  excluded_maps: [Tricky Tracks, Glacial Trail]
+  # not Mesa (2026-11-10, case 20261110_002619): ABR from a Fast Track start
+  # at round 22 lost round 63 (43 lives at round 54, the rest at 63). The
+  # model rated the defence a crisis in 17 of rounds 23-40 and 0.06 from 54;
+  # boomerangs on Mesa's ledges popped nothing for 13-17 rounds (boomerang2,
+  # b3). hard_sniper_elite lost Mesa ABR at round 27 the same morning.
+  excluded_maps: [Tricky Tracks, Glacial Trail, Mesa]
 plan:
   - {do: place, id: b1, kind: boomerang, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
