@@ -196,6 +196,7 @@ class LivesTracker:
         """Feed one read (None = unreadable). Returns the lives lost (0 if none)."""
         if read is not None and self.max_lives and read > self.max_lives and not self.can_gain:
             read = None    # impossible for this mode, even as the very first read
+        read = self._drop_phantom_digit(read)
         if read is not None and self.confirmed is not None and read > self.confirmed + self.RISE_LIMIT:
             if not self._vote_rise(read):
                 return 0
@@ -210,6 +211,42 @@ class LivesTracker:
         if self.confirmed is None and med is not None:
             self.confirmed = med
         return 0
+
+    def _drop_phantom_digit(self, read):
+        """A read that can only be the true count with a phantom digit on the
+        end becomes its leading digits.
+
+        Refusing such a read (the vote's start cap) keeps the count from
+        jumping up, but it also keeps the count at its last value, so the leak
+        behind it is never seen: Last Resort Medium (2026-11-10) read 21 lives
+        as "218" and Last Resort Magic Only read 13 as "131"; both counts
+        stayed at the pre-leak value and crisis spending never began.
+
+        The read is rewritten only when all of these hold, so a true count is
+        never touched: nothing in the defence can gain lives; the read is above
+        the starting lives (impossible then) and far above the confirmed count
+        (a jump the rise check would ignore anyway); and its leading digits
+        (read // 10) are at or below the confirmed count, i.e. they describe a
+        leak, not a gain. A wrong low first read (15 for 150) is unaffected:
+        the true 150 is not above the start.
+
+        The OCR also adds a phantom LEADING 1 at the heart's edge (see the
+        class docstring): 50 lives read as "150" must stay 50, not become a
+        35-life leak. So when the digits after a leading 1 equal the confirmed
+        count (within 2), that reading wins."""
+        if (read is None or self.can_gain or not self.start_lives
+                or self.confirmed is None):
+            return read
+        if not (read > self.start_lives and read > self.confirmed + self.RISE_LIMIT):
+            return read
+        digits = str(read)
+        if digits.startswith("1") and len(digits) > 1 and abs(int(digits[1:]) - self.confirmed) <= 2:
+            log.debug("lives read %d taken as %s (phantom leading 1)", read, digits[1:])
+            return int(digits[1:])
+        if read // 10 <= self.confirmed:
+            log.debug("lives read %d taken as %d (phantom trailing digit)", read, read // 10)
+            return read // 10
+        return read
 
     def _vote_rise(self, read):
         """A read far above the confirmed count. True once RISE_VOTES reads in

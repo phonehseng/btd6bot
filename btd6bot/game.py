@@ -827,8 +827,12 @@ class Game:
             time.sleep(0.15)
 
     def close_panels(self):
-        """Close any upgrade panel left open (it also shifts the HUD)."""
+        """Close any upgrade panel left open (it also shifts the HUD).
+        Without a frame (no capture yet) there is nothing to read, so nothing
+        is clicked: a blind click on "close" could land on the map."""
         f = self.fresh()
+        if f is None:
+            return False
         for side in ("upg_left", "upg_right"):
             pan = self.lay[side]
             text, _ = rec_text(crop(f, _expand(pan["sell"], 0.04, 0.025)))

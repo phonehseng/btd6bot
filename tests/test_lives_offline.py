@@ -112,6 +112,38 @@ def test_a_vote_never_lifts_lives_above_the_start():
     assert t.confirmed == 150
 
 
+def test_a_phantom_trailing_digit_is_read_as_the_leak():
+    """Backlog 73: with the vote capped at the start, "218" for a true 21
+    left the count at 143 and the 122-life leak unseen. Its leading digits
+    are the true count, so the leak is counted at once."""
+    t = LivesTracker(150)
+    feed(t, [150, 150, 143, 143, 143])
+    lost = sum(t.update(r) for r in [218] * 6)
+    assert t.confirmed == 21 and lost == 122, (t.confirmed, lost)
+    t = LivesTracker(100)                  # Last Resort Magic Only: 13 read as 131
+    feed(t, [56] * 5)
+    feed(t, [131] * 5)
+    assert t.confirmed == 13, t.confirmed
+
+
+def test_a_phantom_leading_one_is_not_a_leak():
+    """50 lives read as "150" (a phantom 1 at the heart's edge) keep 50;
+    a true count is never rewritten; a life-gaining defence is left alone."""
+    t = LivesTracker(100)
+    feed(t, [50] * 5)
+    feed(t, [150] * 6)
+    assert t.confirmed == 50, t.confirmed
+    t = LivesTracker(150)
+    feed(t, [150] * 5)
+    feed(t, [149, 148, 148, 148, 148])
+    assert t.confirmed == 148, t.confirmed
+    t = LivesTracker(150)
+    t.can_gain = True
+    feed(t, [150] * 3)
+    feed(t, [218] * 5)
+    assert t.confirmed == 218, t.confirmed
+
+
 def test_life_gaining_towers_lift_the_caps():
     """Druids, Support Chinooks, Energizers, farms and Benjamin take lives
     past the start (owner, 2026-11-10): with one of them a steady high read
