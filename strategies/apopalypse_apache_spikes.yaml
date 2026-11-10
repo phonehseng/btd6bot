@@ -12,27 +12,31 @@
 #
 # The core. Heli Pilot 4-2-0: Pursuit (2xx; Executor sets it) flies the heli
 # to the bloons wherever they are, IFR (x2x) gives it camo, Razor Rotors
-# (3xx) pops lead and ceramics, Apache Dartship (4xx, one $8,500 tier) adds
+# (3xx) pops lead and ceramics, Apache Dartship (4xx, one $20,000 tier) adds
 # missiles and machine guns that shred MOABs and dense waves alike. On
 # every map the map-fit table (data/map_fit.json) gives the heli 1.0 except
 # Covered Garden 0.33, Peninsula and Sanctuary 0.67 and Erosion 0.0
 # (excluded). A screen of 40 crosspaths with tools/apopalypse_check.py's
 # rater (one tower beside an alchemist at the old build's n1 spot, fixed
-# random windows of rounds 25/35/45/55) put Apache Dartship first per dollar
-# among towers that work on every map: Firing Range 10.2/3.9/2.6/2.5 for
-# $15,300 (Full Auto Rifle 0-2-4: 0.06/1.7/0.61/0.06 for $12,400; even
-# with an MIB village beside it 5.1/1.8/0.75/0.47), Ravine 5.2/2.5/1.3/1.2 where every
-# placed tower but the heli floored at 0.06 (it cannot reach the other
-# lanes). Spiked Mines rated 9.2/8.2/3.2/2.0 for $7,850 where it reaches the
+# random windows of rounds 25/35/45/55) put Apache Dartship first among
+# towers that work on every map: Firing Range 10.2/3.9/2.6/2.5 for $25,150
+# (Medium prices, towers.total_cost; Full Auto Rifle 0-2-4 0.06/1.7/0.61/
+# 0.06 for $8,750, and even with an MIB village beside it 5.1/1.8/0.75/0.47
+# - the heli keeps twice its rating per dollar in the 50s), Ravine
+# 5.2/2.5/1.3/1.2, where every placed tower but the heli floored at 0.06
+# (it cannot reach the other lanes). Spiked Mines rated 9.2/8.2/3.2/2.0 for
+# $14,750 where it reaches the
 # track (Firing Range), 0.06 where it does not, so it stands at the exit and
 # is skipped (`not_maps`) on the maps with no spike ground (map_fit 0.0 or
 # near it: Covered Garden, Geared, Flooded Valley, Sanctuary), where the
 # fill buys helis instead. On Covered Garden the helis stand off the glass
 # while open ground is left (Executor._off_panes): a tower under a pane can
 # be upgraded only in one round of four, and the Apache tier waited there.
-# Few big upgrades: a heli is 7 tiers bought from one panel in two runs (clicktime.CHAIN_MAX_TIERS); the plan is 10 towers
-# in 25 steps ($79k, about what a poor game pays) against the old build's
-# 11 towers in 34 steps.
+# Few big upgrades: a heli is 7 tiers bought from one panel in two runs
+# (clicktime.CHAIN_MAX_TIERS); the plan is 10 towers in 25 steps against
+# the old build's 11 in 34. It costs $135k in all and a poor game pays
+# about $79k, so the order is the priority: the third heli's Apache and
+# the fourth heli come only in a rich game.
 #
 # Economy: Apopalypse with Fast Track starts at round 15 with $6,057, pays
 # a poor game about $36.5k over rounds 16-60 (x2 Double Cash; apopalypse_
@@ -43,7 +47,7 @@
 # heli's 3xx (lead, camo leads from round 20) before anything else.
 # plan_first: true: the plan owns the bank. Without it the match loop's
 # surplus spending bought copies of the cheapest tiers (eight 3-2-0 helis,
-# a 4-2-0 opener dart) and the $8,500 Apache tier was never bought.
+# a 4-2-0 opener dart) and the $20,000 Apache tier was never bought.
 #
 # Sources:
 #   * bloonswiki Strategy:Apopalypse_(BTD6) (raw page, last updated 46.3):
@@ -78,7 +82,7 @@
 #   Tricky Tracks    0.46|0.26  0.39|0.40  0.56|0.58  0.59|0.68
 #   Workshop         0.48|0.25  0.55|0.06  0.90|0.06  0.93|0.06
 #   #Ouch            0.42|0.26  0.47|0.34  0.46|0.50  0.67|0.57
-#   Geared           1.37|0.68  0.59|0.40  1.31|0.28  1.10|0.18
+#   Geared           1.37|0.68  0.59|0.40  1.31|0.28  1.10|0.18   (excluded: lost live, see planner)
 #   Flooded Valley   0.39|0.13  0.45|0.06  1.20|0.06  1.11|0.10
 #   Last Resort      0.47|0.21  0.54|0.22  0.75|0.36  0.94|0.43
 #   Glacial Trail    0.51|0.20  0.49|0.11  1.54|0.13  2.25|0.14
@@ -102,7 +106,16 @@ planner:
   # Tricky Tracks: rated 0.39-0.59 from round 31 on, no better than the
   # old build late (0.58-0.68: its six short lanes suit snipers); every
   # general build stays off its unbeaten modes (test_trickytracks_excluded).
-  excluded_maps: [Erosion, Tricky Tracks]
+  # Geared (2026-11-09 22:01, lost round 36; tests/test_apopalypse_geared_
+  # offline.py): every legal cell there is on a turning gear, and only
+  # global-range towers may stand on one (Executor: short-range towers keep
+  # off moving ground), so the dart, ninjas, alchemist and hero found no
+  # spot and the helis stood alone. They are carried round by the gears and
+  # chase the bloons, the bot lost track of them (h2's upgrade read h1's
+  # panel at round 17, h1 "not on the map; forgotten" at round 35) and
+  # $21.8k went unspent from round 17 to 36. The cost_share above let the
+  # build past the planner's moving-ground gate (_land_towers_have_no_spot).
+  excluded_maps: [Erosion, Tricky Tracks, Geared]
 plan_first: true
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
