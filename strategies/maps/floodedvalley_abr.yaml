@@ -1,0 +1,117 @@
+# Flooded Valley, Alternate Bloons Rounds: thirteen buccaneers and a sub in the
+# river right of the dam, every boat with Crow's Nest (x-x-2) for camo, Monkey
+# Pirates and a Pirate Lord for the MOAB rounds, Carrier Flagship late; a heli
+# on the left bank (it flies: no sight needed) grown to an Apache Dartship.
+#
+# Why: both ABR games here were lost by general land builds - double_hp_sniper_sun
+# at round 23 (2026-11-05, case 20261105_182651) and hard_glaive_lord at round 22
+# (2026-11-09 21:12, case 20261109_211336): ABR's round 22 sends 16 purples
+# (33 lives each with their children) down the dam, and every land tower stood
+# behind it.
+#   * The dam blocks sight. The track runs along the dam's river side; the dam
+#     itself (the map's sight blockers, MapModel.sight) hides it from the whole
+#     left land. On the learned map no legal land cell lets a ninja, spike
+#     factory or mortar reach a single unit of track (forecast sight test,
+#     2026-11-09); the narrow concrete strip between the dam crest and the track
+#     is the dam (refused live: boomerang 0.478,0.402, ice 0.473,0.274, dart
+#     0.468,0.300 - learned, but the executor still probes cells next to them).
+#   * The river on the right touches the track along its whole length:
+#     buccaneers (range 60-71) reach both of the dam's bends from there.
+#   * ABR's own threats: one camo lead alone is round 24 (b1's 0-2-2 by then),
+#     purples from 22 (buccaneer darts pop them), camo ceramics in 63 and 78,
+#     MOAB-class from 61 (15 MOABs), BFBs in 78-79, ZOMGs in 79-80.
+# The flood (map_mechanics.json: a $5,000 hidden button turns the left land into
+# water) is not used: the bot does not press map buttons, and the build needs
+# no room there.
+#
+# Sources:
+#   * bloon.games, Flooded Valley CHIMPS (https://bloon.games/how-to-beat-chimps-
+#     on-flooded-valley): subs, a mermonkey and a buccaneer carry the map to a
+#     Carrier Flagship - "almost all water".
+#   * Tiggy Gaming, Flooded Valley: buccaneer start, sub, Brickell, Carrier
+#     Flagship (https://www.youtube.com/watch?v=5x1IfnoZy2c); G-Horizon's CHIMPS
+#     guide (https://www.youtube.com/watch?v=68Jbc9m1zts).
+#   * bloonswiki Flooded_Valley: land towers left of the dam cannot see the
+#     bloons (https://www.bloonswiki.com/Flooded_Valley).
+#   The buccaneer spots are floodedvalley_medium's, which won Medium and Reverse
+#   (rounds 1-60) on the main account.
+#
+# Evidence: replayed executor-faithfully 2026-11-09 (tools/simulate_threats.
+# simulate on the learned map, Fast Track start R22 with $9,004, Double Cash
+# income), each round's start board rated by the live forecast (sight grid and
+# heights): worst 2.07 (R63, 40 camo ceramics among 110), then R71 2.35, R61
+# 2.80, R38 2.83, R78 2.83. No threat gaps, no answers and nothing off the
+# plan, every tower on its `at`; 46 of 53 steps bought by round 80 (the
+# dartling, last, only gives strategy.coverage a rush line - its static
+# tables list no buccaneer for ceramic/BFB/ZOMG/rush, hence the heli too). The losing hard_glaive_lord replays to 0.06 from round 24
+# on. Test: tests/test_floodedvalley_builds_offline.py.
+#
+# Status: written 2026-11-09, not played yet.
+id: floodedvalley_abr
+map: Flooded Valley
+hero: admiral_brickell
+plan_first: true
+modes: [abr]
+planner:
+  towers: {buccaneer: [5, 4, 2], sub: [0, 2, 4], heli: [4, 0, 0]}
+  base_success: {abr: 0.8}
+  maps: [Flooded Valley]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.537, 0.146]}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.526, 0.709]}
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.569, 0.743]}
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.548, 0.641]}
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.537, 0.794]}
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.569, 0.572]}
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.537, 0.215]}
+  - {do: upgrade, id: b1, to: 0-2-2}
+  - {do: upgrade, id: b3, to: 0-2-0}
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.494, 0.164]}
+  - {do: upgrade, id: sb1, to: 0-1-2}
+  - {do: upgrade, id: b6, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 0-3-2}
+  - {do: upgrade, id: b3, to: 0-3-2}
+  - {do: upgrade, id: b5, to: 2-0-2}
+  - {do: place, id: b7, kind: buccaneer, role: dps, at: [0.58, 0.453]}
+  - {do: upgrade, id: b7, to: 2-0-2}
+  - {do: upgrade, id: sb1, to: 0-1-3}
+  - {do: place, id: b8, kind: buccaneer, role: dps, at: [0.59, 0.675]}
+  - {do: upgrade, id: b8, to: 2-0-2}
+  - {do: place, id: b9, kind: buccaneer, role: dps, at: [0.612, 0.777]}
+  - {do: upgrade, id: b9, to: 2-0-2}
+  - {do: place, id: b10, kind: buccaneer, role: dps, at: [0.58, 0.368]}
+  - {do: upgrade, id: b10, to: 2-0-2}
+  - {do: upgrade, id: b7, to: 3-0-2}
+  - {do: place, id: b11, kind: buccaneer, role: dps, at: [0.569, 0.266]}
+  - {do: upgrade, id: b11, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 0-4-2}
+  - {do: upgrade, id: b5, to: 3-0-2}
+  - {do: place, id: b12, kind: buccaneer, role: dps, at: [0.58, 0.828]}
+  - {do: place, id: b13, kind: buccaneer, role: dps, at: [0.601, 0.521]}
+  - {do: upgrade, id: b13, to: 2-0-2}
+  - {do: upgrade, id: b12, to: 2-0-2}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.35, 0.504]}     # left bank: flies, needs no sight
+  - {do: upgrade, id: h1, to: 2-0-0}
+  - {do: upgrade, id: b7, to: 4-0-2}
+  - {do: upgrade, id: b3, to: 0-4-2}
+  - {do: upgrade, id: b5, to: 4-0-2}
+  - {do: upgrade, id: b13, to: 4-0-2}
+  - {do: upgrade, id: b10, to: 4-0-2}
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: upgrade, id: b4, to: 2-0-2}
+  - {do: upgrade, id: b8, to: 4-0-2}
+  - {do: upgrade, id: b1, to: 0-5-2}
+  - {do: upgrade, id: b2, to: 4-0-2}
+  - {do: upgrade, id: b4, to: 4-0-2}
+  - {do: upgrade, id: b7, to: 5-0-2}
+  - {do: upgrade, id: sb1, to: 0-2-4}
+  - {do: upgrade, id: b9, to: 4-0-2}
+  - {do: upgrade, id: b11, to: 4-0-2}
+  - {do: upgrade, id: b12, to: 4-0-2}
+  - {do: upgrade, id: h1, to: 4-0-0}                                    # Apache Dartship: BFB/ZOMG cover
+  - {do: place, id: d1, kind: dartling, role: dps}                     # rush cover for strategy.coverage only (no sight here)
+answers:
+  lead: [{do: upgrade, id: b1, to: 0-2-2}]
+  camo: [{do: upgrade, id: b1, to: 0-2-2}]
+  moab: [{do: upgrade, id: b1, to: 0-4-2}]
+  ceramic: [{do: place, id: h1, kind: heli, role: dps, at: [0.35, 0.504]}, {do: upgrade, id: h1, to: 2-0-0}]
