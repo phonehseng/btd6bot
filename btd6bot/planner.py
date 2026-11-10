@@ -964,7 +964,7 @@ def _water_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
     lost round 33 two minutes into the game. Maps the table does not know,
     and tables measured before "room" was recorded, keep the benefit of
     the doubt."""
-    from .mapfit import load
+    from .mapfit import WATER_ROOM_MAX, load
     from .towers import TOWERS
     fits = (load().get(map_name) or {}).get("towers") or {}
     for kind in s.towers:
@@ -976,7 +976,11 @@ def _water_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
         if not fit.get("early", 1.0) and not fit.get("late", 1.0):
             return True
         room = fit.get("room")
-        if room is not None and s.placed.get(kind, 0) > room:
+        # mapfit counts room only up to WATER_ROOM_MAX: a room at the cap is
+        # "that many or more", not a limit. Flooded Valley's river holds far
+        # more than 8 buccaneers (floodedvalley_medium won Medium with 13 on
+        # it), yet its 13-boat ABR build was dropped here as "no room".
+        if room is not None and room < WATER_ROOM_MAX and s.placed.get(kind, 0) > room:
             return True
     return False
 

@@ -60,6 +60,25 @@ def test_water_build_is_gated_where_fewer_subs_fit_than_it_places():
     _with_table(check)
 
 
+def test_room_at_the_measuring_cap_is_no_limit():
+    """mapfit counts room only up to WATER_ROOM_MAX (8): 8 means "8 or more".
+    Flooded Valley's river reads 8 although floodedvalley_medium won Medium
+    there with 13 buccaneers; its 13-boat ABR build (2026-11-09) was gated
+    out as if the river held only 8."""
+    table = dict(TABLE, **{"River Map": {"stamp": "x", "towers": {
+        "buccaneer": {"early": 1.0, "late": 1.0, "room": mapfit.WATER_ROOM_MAX}}},
+        "Pond Map": {"stamp": "x", "towers": {
+            "buccaneer": {"early": 1.0, "late": 1.0, "room": mapfit.WATER_ROOM_MAX - 1}}}})
+    saved = mapfit.load
+    mapfit.load = lambda: table
+    try:
+        many = _spec(placed={"buccaneer": 13}, buccaneer=(5, 4, 2))
+        assert P._strategy_fits(many, "River Map", "expert", "medium")
+        assert not P._strategy_fits(many, "Pond Map", "expert", "medium")
+    finally:
+        mapfit.load = saved
+
+
 def test_placed_counts_count_the_plan_only():
     from btd6bot.runner import placed_counts
     strat = {"plan": [{"do": "place", "id": "sb1", "kind": "sub"}, {"do": "place", "id": "hero", "kind": "hero"},
