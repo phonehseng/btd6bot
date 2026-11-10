@@ -3716,6 +3716,7 @@ class Executor:
     HOLD_MAX_S = 30.0        # longest wait between rounds to buy an affordable answer
     RAMP_OK = 1.0            # blimp damage in reach / blimp HP a round brings
     RAMP_OK_LETHAL = 1.4     # ... when the round's blimps leaking would end the game (ramp_bar)
+    RAMP_OK_ONE_LIFE = 2.5   # ... with one life (Impoppable, CHIMPS): any blimp through ends it
     RAMP_PANIC = 0.4         # below this, the round before, buy blimp damage even mid-plan
     # The damage model's margin at which a blimp round counts as held, whatever
     # the blimp check says: the bar every map build is checked against (the
@@ -3724,7 +3725,8 @@ class Executor:
     DEFAULT_TRACK = 600.0    # world units of track when the map geometry is unknown
 
     def ramp_bar(self, load):
-        """The blimp-check bar for a round: RAMP_OK_LETHAL when the lives its
+        """The blimp-check bar for a round: RAMP_OK_ONE_LIFE in a one-life
+        mode, else RAMP_OK_LETHAL when the lives its
         blimps would cost if they got through (load["leak"], from
         threats.round_blimp_load) are at least the mode's lives (MODE_RULES),
         else RAMP_OK.
@@ -3738,6 +3740,13 @@ class Executor:
         blimp step keeps its cash (plan_hold) until the margin is there."""
         lives = (self.rules or {}).get("lives")
         leak = (load or {}).get("leak")
+        if (self.rules or {}).get("one_life") and leak:
+            # Bloonarius Prime Impoppable (2026-11-10 17:04): round 75's seven
+            # BFBs were checked at 2.0x, over the 1.4x bar, so nothing was
+            # bought for them, and one got through. With one life the check's
+            # roughness has no lives to absorb it; the damage model can still
+            # overrule the check when it is sure (_model_holds).
+            return max(self.RAMP_OK_LETHAL, self.RAMP_OK_ONE_LIFE)
         if lives and leak and leak >= lives:
             return self.RAMP_OK_LETHAL
         return self.RAMP_OK

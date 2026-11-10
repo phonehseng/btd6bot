@@ -232,7 +232,7 @@ def test_a_lethal_blimp_round_wants_a_margin():
     assert ex.ramp_bar({"hp": 200}) == ex.RAMP_OK and ex.ramp_bar(None) == ex.RAMP_OK
     # one life: every blimp leak ends the game
     g, ex = executor({}, mode="impoppable", towers=[("s1", "sniper", (3, 2, 0))], cash=1000)
-    assert ex.ramp_bar({**load, "leak": 1}) == ex.RAMP_OK_LETHAL
+    assert ex.ramp_bar({**load, "leak": 1}) == ex.RAMP_OK_ONE_LIFE > ex.RAMP_OK_LETHAL
 
 
 # -- the Executor -----------------------------------------------------------------------------
@@ -617,6 +617,17 @@ def test_a_held_blimp_round_does_not_hide_a_short_one_behind_it():
     ratios[10000] = 1.6                     # both held: the first is reported, as before
     ex.noted.discard(("ramp", 40))
     assert ex._ramp_due(38)[0] == 39
+
+
+def test_one_life_wants_a_wider_blimp_margin():
+    """Bloonarius Prime Impoppable (2026-11-10 17:04): round 75's seven BFBs
+    were checked at 2.0x, over the 1.4x bar, and one got through. With one
+    life the bar is RAMP_OK_ONE_LIFE; other modes keep theirs."""
+    load = {"hp": 11700, "leak": 5000}
+    g, ex = executor({"plan": []}, mode="medium", towers=[("s1", "sniper", (2, 2, 0))], cash=5000)
+    assert ex.ramp_bar(load) == ex.RAMP_OK_LETHAL
+    g, ex = executor({"plan": []}, mode="impoppable", towers=[("s1", "sniper", (2, 2, 0))], cash=5000)
+    assert ex.ramp_bar(load) == ex.RAMP_OK_ONE_LIFE > 2.0
 
 
 if __name__ == "__main__":
