@@ -993,3 +993,10 @@
 - Since 17:14: 0 wins, 3 losses. Mesa Half Cash r78 (case folder in-progress by another session, left alone). Workshop Magic Only r40 (MOAB from the chute, cash held for blimp damage but too little) and Spillway Apopalypse r48 (39 lives in one leak): both closed as handled, citing the exclusions another session committed right after them (73df430, 7bf01dc).
 - losses.py had not filed the 18:13 Spillway defeat (the bot reloaded at 18:14, inside the ~5 min filing window); filed it with `python -m btd6bot.losses`. Worth checking whether a reload drops pending filings.
 - The main checkout shows ~40 modified data/maps/*.npz files (not committed by anyone); left untouched. No code changes or check.py run in this run, since another session was committing fixes at 18:06-18:14.
+
+## 2026-11-09 19:17 (finished 20:10)
+- Bot status: task Running; bot.py, recorder and BTD6 up; no STOP, PAUSE or dev_active.txt; no tracebacks, loops or Auto Start warning. Safe mode on (trips 4). At 20:06 it was playing Sunset Gulch ABR.
+- Since 18:17: 3 wins (Sunken Columns and X Factor Half Cash, High Finance Half Cash), 6 losses: #Ouch Double HP r63, Ravine Apopalypse r53, Glacial Trail Medium r40 (in-progress by another session, left alone), Muddy Puddles Apopalypse r53, Mesa Apopalypse r45, Sunset Gulch ABR r40.
+- Handled: #Ouch Double HP (closed on f2b2ca9, the 0.3 model ceiling committed after it); Ravine Apopalypse (third loss there; rounds 42-53 came in ~45 s, one 15 s plan tick held the loop and $16k sat unspent). Ravine is off apopalypse_ninja_sniper (fc801e5, merged with the concurrent Mesa exclusion in 3bb3fdf); the plan-tick stall is backlog item 69.
+- Fixed a check.py failure already on main: the plan_first test toy lacked _only_free_steps_left (asked by plan_first since 10eddc4). check.py ALL OK.
+- For the next run: Muddy Puddles Apopalypse (third loss there: r46, r49, r53) and Sunset Gulch ABR r40 are "status: new"; Mesa's folder is new too but 79c0eda already excludes it. apopalypse_ninja_sniper has lost all 12 of its games since its last win (Midnight Mansion, 06:45), so the build's late-game spending (item 69) matters more than more exclusions.
