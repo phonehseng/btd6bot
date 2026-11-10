@@ -28,7 +28,12 @@ planner:
   # 2026-11-09 11:41).
   # Spillway: lost rounds 46 and 48 (2026-11-09 06:05 and 18:12), the second
   # with the 76855ff tier runs and the d816c59 purchase fix both in play.
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway]
+  # Mesa: lost rounds 59 and 45 (2026-11-09 07:53 and 20:00).
+  # Ravine: three Apopalypse losses (rounds 42, 45 and 53 - the last
+  # 2026-11-09 19:10). In the last one rounds 42-53 came in about 45 s, the
+  # plan tick held the match loop up 15 s while placing a sniper, and $16k
+  # sat unspent as the ceramics of round 52-53 walked the long single lane.
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an
