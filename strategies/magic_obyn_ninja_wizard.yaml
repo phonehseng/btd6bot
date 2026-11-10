@@ -54,7 +54,10 @@ planner:
   # Glacial Trail: Magic Only lost round 31 twice (2026-10-24 and
   # 2026-11-09 21:28), the same round both times; no general build has won a
   # Hard-family medal there.
-  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop, Peninsula, Erosion, Glacial Trail]
+  # Flooded Valley: lost round 23 (2026-11-10 05:29) within a minute; the dam
+  # hides the river track from all land, and of the magic towers only
+  # mermonkeys reach it (feat/flooded-valley's research).
+  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop, Peninsula, Erosion, Glacial Trail, Flooded Valley]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
   # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
   # losses keep counting against these maps until live wins say otherwise
