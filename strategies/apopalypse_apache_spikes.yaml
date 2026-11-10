@@ -127,6 +127,10 @@ planner:
   # towers whenever it is shut - the opening never got its helis down.
   excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary, "#Ouch", Covered Garden]
 plan_first: true
+# Bloody Puddles has six lanes, three leaving at the top and three at the
+# bottom: one exit spike covers one of them (2026-11-10, sp1 at the Path2
+# exit while 65 pinks and 11 blacks left at the top right on round 33). Its
+# spikes are skipped there and the fill buys helis, which chase every lane.
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: upgrade, id: n1, to: 1-0-1}
@@ -140,19 +144,19 @@ plan:
   # The exit spikes come before the first Apache Dartship: Ravine (2026-11-10)
   # saved from round 30 to 36 for it with nothing at the exit, and lead
   # (R30, 41 lives) and pink/green (R36, all the rest) walked out.
-  - {do: place, id: sp1, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
-  - {do: upgrade, id: sp1, to: 2-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: place, id: sp1, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary, Bloody Puddles]}
+  - {do: upgrade, id: sp1, to: 2-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary, Bloody Puddles]}
   - {do: upgrade, id: h1, to: 4-2-0}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
   - {do: upgrade, id: n2, to: 1-0-1}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: h2, to: 4-2-0}
-  - {do: upgrade, id: sp1, to: 4-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: upgrade, id: sp1, to: 4-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary, Bloody Puddles]}
   - {do: place, id: h3, kind: heli, role: dps}
   - {do: upgrade, id: h3, to: 4-2-0}
-  - {do: place, id: sp2, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
-  - {do: upgrade, id: sp2, to: 4-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: place, id: sp2, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary, Bloody Puddles]}
+  - {do: upgrade, id: sp2, to: 4-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary, Bloody Puddles]}
   - {do: place, id: h4, kind: heli, role: dps}
   - {do: upgrade, id: h4, to: 4-2-0}
 fill:
