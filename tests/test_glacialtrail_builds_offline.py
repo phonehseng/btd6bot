@@ -59,7 +59,7 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 GENERAL = "primary_core"                               # lost Medium at R40 on 2026-11-09
 # build -> [(mode, the worst round rating allowed)]
 BUILDS = {
-    "glacialtrail_medium": [("medium", 2.0), ("reverse", 2.0)],
+    "glacialtrail_medium": [("easy", 2.0), ("medium", 2.0), ("reverse", 2.0)],
 }
 SPIKES = ("sp1", "sp2")
 MOAB_ANSWER = "sp1"
@@ -145,6 +145,8 @@ def test_map_builds_hold_every_round():
             early = [(rnd, what) for rnd, what in r["answers"] + r["surplus"] if rnd < done - 1]
             assert early == [], (build, mode, early)
             for st in strat["plan"]:
+                if st.get("modes") and mode not in st["modes"]:
+                    continue            # a step for other modes (dr0: Easy only)
                 if st.get("do") == "place" and st["kind"] != "hero":
                     _, _, fx, fy = r["placed"][st["id"]]
                     (ax, ay), (px, py) = model.frac_to_cell(*st["at"]), model.frac_to_cell(fx, fy)
