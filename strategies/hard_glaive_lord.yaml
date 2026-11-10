@@ -33,7 +33,12 @@ planner:
   base_success: {medium: 0.85, hard: 0.75, abr: 0.65}
   # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
   # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
-  excluded_maps: [Tricky Tracks]
+  # not Glacial Trail (2026-11-09, case 20261109_212639): ABR lost round 31
+  # with the first boomerang given up in the round-22 setup ("after 0
+  # refused spots": no legal cell in its segment on the ice) and rounds 24,
+  # 27, 30 and 31 rated 0.06; double_hp_sniper_sun lost ABR there at round
+  # 31 too. The map's frozen ground needs a build of its own.
+  excluded_maps: [Tricky Tracks, Glacial Trail]
 plan:
   - {do: place, id: b1, kind: boomerang, role: dps, segment: [0.0, 0.6]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}

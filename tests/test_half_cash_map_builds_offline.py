@@ -14,6 +14,9 @@ got its own Half Cash build from the spots of its other map builds:
     in order, the MOAB Mauler / Assassin in the plan)
   * strategies/maps/bloonariusprime_half_cash.yaml (Pursuit helis and
     snipers from bloonariusprime_military_only, camo and lead in the setup)
+  * strategies/maps/enchantedglade_half_cash.yaml (2026-11-09: the general
+    build lost round 31 there; Pursuit helis with Razor Rotors and IFR, top-
+    left snipers, a bottom-centre ninja, all from the map's other builds)
 
 Checked here with the executor-faithful replay (simulate_threats.simulate on
 each learned map, Fast Track start and Double Cash income as the account
@@ -64,10 +67,14 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 #   Bloonarius Prime: worst R30 0.46 (Razor Rotors stands from R30); R22
 #     2.04, R25 2.28, R26 1.89, R40 2.99 (general: worst 0.06; R22 0.43,
 #     R25 0.41, R26 0.76, R40 2.33)
+#   Enchanted Glade (2026-11-09, after the general build lost R31 live with
+#     the opening rated 0.06): worst R67/R78 0.81; R26 1.59, R27 1.19, R28
+#     7.91, R31 2.38 (general: worst R28 0.64; R27 0.82, R31 0.92)
 CASES = {
     "Bazaar": ("bazaar_half_cash", 0.55, (35, 37, 40), 1.0),
     "Ship Capture": ("shipcapture_half_cash", 0.4, (34, 36, 37, 40), 0.4),
     "Bloonarius Prime": ("bloonariusprime_half_cash", 0.4, (22, 25, 26, 40), 1.5),
+    "Enchanted Glade": ("enchantedglade_half_cash", 0.7, (26, 27, 28, 31), 1.0),
 }
 
 
@@ -140,6 +147,10 @@ def test_shipcapture_half_cash():
 
 def test_bloonariusprime_half_cash():
     _check_map("Bloonarius Prime")
+
+
+def test_enchantedglade_half_cash():
+    _check_map("Enchanted Glade")
 
 
 if __name__ == "__main__":
