@@ -34,7 +34,10 @@ hero: etienne
 # Firing Range and Quad at round 27 - five rounds after the Fast Track start
 # its opening cannot hold - and Park Path R63, High Finance R49.
 # hard_ninja_alch_sun plays Half Cash instead (its own wins since 2026-11-08).
-modes: [hard, double_hp, abr]
+# ABR dropped 2026-11-10: 0 wins in 4 (Bloonarius Prime R27, Quad R63, Mesa
+# R27, Sunken Columns R23) - the snipers' opening cannot hold ABR's early
+# camo/lead rounds after the Fast Track start.
+modes: [hard, double_hp]
 planner:
   towers: {sniper: [2, 0, 5], village: [2, 3, 0], boomerang: [5, 0, 2], spike: [2, 0, 4]}
   # Untested on this account: the planner caps unproven Hard priors at 0.85
@@ -45,7 +48,7 @@ planner:
   # 0-1-0 leave nothing for rounds 23-27, which the model rated 0.06-0.86;
   # round 27 took every life. tools/optimize_builds.py found no safe
   # Firing Range Half Cash build either (worst margin 0.06).
-  base_success: {hard: 0.88, double_hp: 0.8, abr: 0.8}
+  base_success: {hard: 0.88, double_hp: 0.8}
   # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
   # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
   excluded_maps: [Tricky Tracks]
