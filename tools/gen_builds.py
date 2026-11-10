@@ -1378,8 +1378,27 @@ def _wrap(text, width=76, prefix="# "):
     return out
 
 
+EXCLUSIONS = ROOT / "data" / "generated_exclusions.json"
+
+
+def exclusions(kind):
+    """{"maps": [...], "why": [...]} for the solo build of `kind`: maps a
+    live loss took the generated build off (data/generated_exclusions.json,
+    written by hand after a loss's diagnosis). The simulation cannot see
+    them - Workshop's MOABs drop down a chute out of a solo tower's reach -
+    and a file written here is overwritten on every run, so they live
+    outside the generated files and are copied into each as
+    planner.excluded_maps."""
+    try:
+        data = json.loads(EXCLUSIONS.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data.get(kind) or {}
+
+
 def to_yaml(r):
     b, kind = r.build, r.kind
+    excluded = exclusions(kind)
     prices = P.load_tower_xp_prices(str(P.TOWER_XP_FILE)).get(kind)
     par = f" (paragon {prices.paragon}: {prices.paragon_xp:,} XP on top of all 15 upgrades)" \
         if prices and prices.paragon else ""
@@ -1424,6 +1443,10 @@ def to_yaml(r):
     lines.append(f"  base_success: {_fmt(d['planner']['base_success'])}")
     if "maps" in d["planner"]:
         lines.append(f"  maps: {_fmt(d['planner']['maps'])}")
+    for note in excluded.get("why") or ():
+        lines += _wrap(note, prefix="  # ")
+    if excluded.get("maps"):
+        lines.append(f"  excluded_maps: {_fmt(excluded['maps'])}")
     lines.append("plan:")
     lines += _steps_yaml(b.plan)
     lines.append("fill:")

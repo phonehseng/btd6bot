@@ -1,0 +1,8 @@
+{
+  "boomerang": {
+    "maps": ["Workshop"],
+    "why": [
+      "Workshop: Deflation lost round 40 (2026-11-10 00:02, case 20261110_000215): only a1 found a spot reaching the track (a2, a5 and a6 had none), the MOAB rides the chute route where the blimp check read 0.1x of the 1.4x wanted, and with no Deflation income $8k sat idle for a $27.6k step."
+    ]
+  }
+}
