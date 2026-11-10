@@ -77,10 +77,12 @@ def test_planned_on_harder_maps_ahead_of_the_old_build():
     assert not PL._strategy_fits(new, "Park Path", acc.map_category("Park Path"), "apopalypse")
     # Erosion: the map-fit table gives the heli no reach there (0.0)
     assert not PL._strategy_fits(new, "Erosion", acc.map_category("Erosion"), "apopalypse")
-    # Covered Garden (lost round 45 on 2026-11-09) goes to the new build only
+    # Covered Garden: the old build (round 45 on 2026-11-09) plays it again
+    # since the new one lost round 16 there (2026-11-10: no heli ground off
+    # the panes)
     cg = acc.map_category("Covered Garden")
-    assert PL._strategy_fits(new, "Covered Garden", cg, "apopalypse")
-    assert not PL._strategy_fits(old, "Covered Garden", cg, "apopalypse")
+    assert not PL._strategy_fits(new, "Covered Garden", cg, "apopalypse")
+    assert PL._strategy_fits(old, "Covered Garden", cg, "apopalypse")
 
 
 def _executor(map_name):

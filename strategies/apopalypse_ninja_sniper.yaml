@@ -48,7 +48,9 @@ planner:
   # to 25 rainbows and 180 pinks while 15 s went on seven refused clicks
   # for the exit spike);
   # tools/apopalypse_check.py rates its rounds 41-50 0.41 here against 0.81
-  # for apopalypse_apache_spikes, which plays the map now.
+  # for apopalypse_apache_spikes, which played the map until it lost there on
+  # round 16 (2026-11-10: no ground off the panes for its helis). Covered
+  # Garden is back on this build - its round 45 is the furthest any build got.
   # Flooded Valley (2026-11-09, case 20261109_212128): lost round 15 before
   # a single round was played - the opener dart and n2 were given up (every
   # spot in their track segments refused: the valley is mostly water), and
@@ -60,7 +62,7 @@ planner:
   # that lasts to the end of the current path phase, and under continuous
   # sends there is no time to rebuild 25 plan steps before round 37.
   # apopalypse_apache_spikes is off Erosion for the same reason.
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Covered Garden, Flooded Valley, Erosion]
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Flooded Valley, Erosion]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an

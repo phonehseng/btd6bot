@@ -121,7 +121,11 @@ planner:
   # #Ouch: lost round 48 (2026-11-10 03:20, 150 lives, two Apaches and the
   # exit spike standing); its check rated #Ouch 0.42-0.67, barely above the
   # old build, which lost there at rounds 47 and 49.
-  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary, "#Ouch"]
+  # Covered Garden (2026-11-10, lost round 16 in 30 s): off the glass panes
+  # the garden has only two strips of rose beds and path, too narrow for a
+  # heli pad (all 72 legal heli cells are on panes), and a pane refuses
+  # towers whenever it is shut - the opening never got its helis down.
+  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary, "#Ouch", Covered Garden]
 plan_first: true
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
