@@ -61,6 +61,16 @@
   "Pat's Pond|half_cash": 0.3,
   "#Ouch|double_hp": 0.3,
   "Sunset Gulch|abr": 0.3,
-  "Glacial Trail|abr": 0.06
+  "Glacial Trail|abr": 0.06,
+  "Glacial Trail|easy": 0.06,
+  "Glacial Trail|primary_only": 0.06,
+  "Glacial Trail|deflation": 0.06,
+  "Glacial Trail|military_only": 0.06,
+  "Glacial Trail|apopalypse": 0.06,
+  "Glacial Trail|magic_only": 0.06,
+  "Glacial Trail|double_hp": 0.06,
+  "Glacial Trail|half_cash": 0.06,
+  "Glacial Trail|impoppable": 0.06,
+  "Glacial Trail|chimps": 0.06
  }
 }
