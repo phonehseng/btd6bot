@@ -1030,7 +1030,7 @@ class Bot:
                 return "locked"
             log.warning("start: mode %s did not start", plan.mode)
             return False
-        end = time.time() + 30  # loading, overwrite prompt, mode intro popups
+        end = time.time() + self.LOAD_WAIT_S  # loading, overwrite prompt, mode intro popups
         while time.time() < end:
             st = self.menus.wait_for({"in_game", "overwrite", "mode_intro_play"}, timeout=3)
             if st == "in_game":
@@ -1043,6 +1043,16 @@ class Bot:
             elif st == "unknown":
                 self.menus.dismiss_popup()
         return self.menus.in_game()
+
+    # How long a map may take to load after the mode click before the start
+    # counts as failed. It was 30 s: Apopalypse games whose intro box came
+    # about 24 s after the click started fine, but five loads between
+    # 2026-11-09 23:50 and 2026-11-10 02:19 (Sanctuary twice, #Ouch, Workshop,
+    # Erosion) took 33-48 s. Each one was logged "failed to start", the game
+    # was left from the pause menu as soon as it appeared and the map was
+    # benched for 2 hours - a lost game every half hour. A failed start
+    # costs far more than waiting longer for one that is only slow.
+    LOAD_WAIT_S = 75
 
     def _still_on_mode_select(self):
         """Before clicking a mode a second time: is the mode-select screen
