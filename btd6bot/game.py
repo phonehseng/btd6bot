@@ -590,6 +590,14 @@ class Game:
             self.fail_reason = "cash"
             return None
         self.cancel_hold()
+        # An upgrade panel left open covers a third of the map on its side:
+        # a click there lands on the panel, the game keeps the tower on the
+        # cursor, and the spot is learned as unplaceable for every later
+        # game. Glacial Trail Medium (2026-11-10): dr2 was placed on the
+        # right and confirmed by selecting it, so its panel sat over the left
+        # third; sp2's planned Floor2 spot (0.142, 0.521) was "refused", the
+        # step was given up, and round 45 met one spike factory instead of two.
+        self.close_panels()
         baseline = self.fresh()  # the spots without a held tower, to compare against
         if not self.hold(kind):
             log.info("could not pick up %s (locked or unaffordable)", kind)
