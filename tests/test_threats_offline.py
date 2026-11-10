@@ -596,6 +596,29 @@ def test_ramp_passes_over_an_answer_it_cannot_finish():
     assert g.towers["n2"].tiers[2] >= 2, g.towers["n2"].tiers
 
 
+def test_a_held_blimp_round_does_not_hide_a_short_one_behind_it():
+    """Spillway Impoppable (2026-11-10 15:43): on round 79 the blimp check
+    rated round 79 (2.2x) and stopped; round 80's ZOMG (1.1x of 1.4x) was
+    first seen as it began and took the one life with $18,870 in hand. The
+    check now looks past a round the defence holds."""
+    g, ex = executor({"plan": []}, towers=[("s1", "sniper", (2, 2, 0))], cash=5000)
+    ex.rules.update(one_life=True)
+    ex._init_threats()
+    loads = {39: {"hp": 12000, "rounds": [39]}, 40: {"hp": 10000, "rounds": [40]}}
+    ratios = {12000: 2.2, 10000: 1.1}
+    ex.blimp_load = lambda R: loads.get(R)
+    ex.blimp_ratio = lambda load: ratios[load["hp"]]
+    ex.ramp_bar = lambda load: 1.4
+    ex._model_holds = lambda *a: False
+    ex._ramp_lead_for = lambda R: 5
+    ex._ramp_lead = lambda: 5
+    due = ex._ramp_due(38)
+    assert due is not None and due[0] == 40, due
+    ratios[10000] = 1.6                     # both held: the first is reported, as before
+    ex.noted.discard(("ramp", 40))
+    assert ex._ramp_due(38)[0] == 39
+
+
 if __name__ == "__main__":
     failed = 0
     for name, fn in list(globals().items()):

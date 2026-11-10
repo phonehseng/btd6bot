@@ -4499,13 +4499,23 @@ class Executor:
         return TH.round_blimp_load(self.round_set, R, double_hp=double_hp)
 
     def _ramp_due(self, rnd):
-        """(round, load, ratio) for the next blimp round within _ramp_lead()
-        rounds, or None. Logs the estimate once per blimp round."""
+        """(round, load, ratio) for the first blimp round within _ramp_lead()
+        rounds that the defence is short for, else the first blimp round
+        there (ratio at the bar or above), or None. Logs the estimate once
+        per blimp round.
+
+        A round the defence holds no longer hides the ones behind it.
+        Spillway Impoppable (2026-11-10 15:43): on round 79 the check looked
+        at round 79's blimps (2.2x, fine) and stopped there; round 80's ZOMG
+        (1.1x of 1.4x) was first seen when round 80 began, the cash was held
+        for the plan's $24,000 Sun Avatar, and the ZOMG took the one life
+        with $18,870 in hand."""
         if rnd is None or self.no_answers or not TH.available():
             return None
         # the widest lead any round may get bounds the scan; each blimp round
         # is then checked only if it is within its own lead (_ramp_lead_for)
         widest = min(self.MAX_LEAD, self._ramp_lead() * self.FIRST_BLIMP_LEAD_FACTOR)
+        first = None
         for R in range(max(rnd, self.window[0]), min(rnd + widest, self.window[1]) + 1):
             load = self.blimp_load(R)
             if not load or R - rnd > self._ramp_lead_for(R):
@@ -4525,8 +4535,11 @@ class Executor:
                          "" if ratio >= bar else f" - short of the {bar:.1f}x wanted")
             if ratio < bar and self._model_holds(R, rnd, ratio, bar):
                 continue
-            return R, load, ratio
-        return None
+            if ratio < bar:
+                return R, load, ratio
+            if first is None:
+                first = (R, load, ratio)      # held: reported only if no later round is short
+        return first
 
     def model_bar(self, ratio, bar):
         """The damage-model rating needed to overrule a blimp check that reads
