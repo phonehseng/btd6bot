@@ -90,6 +90,8 @@ def test_a_game_left_before_play_is_not_a_defeat_after_a_reload():
         bot = R.Bot.__new__(R.Bot)
         bot.benches = {}
         bot.bench = lambda m, mode, hours, why="": bot.benches.update({(m, mode): hours})
+        bot.strats = {}                                   # build_fingerprint of an unknown build
+        bot._weak_file = lambda: Path(tmp) / "x.weak.json"  # not the account's real record
         with mock.patch.object(R, "GAME_FILE", game_file), \
                 mock.patch("btd6bot.status.set_focus", lambda *_: None):
             R._note_game_started(plan)

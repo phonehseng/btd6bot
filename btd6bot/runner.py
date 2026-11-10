@@ -1474,7 +1474,7 @@ class Bot:
         (weak_bench_hours); the record is kept in <account>.weak.json."""
         import json
         log.warning("%s %s: %s", plan.map, plan.mode_key, e)
-        path = ROOT_DIR / "data" / "accounts" / f"{self.uid or 'default'}.weak.json"
+        path = self._weak_file()
         try:
             records = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -1565,6 +1565,10 @@ class Bot:
     # -- benches: (map, mode) that just lost or broke are not retried for a while
     def _bench_file(self):
         return ROOT_DIR / "data" / "accounts" / f"{self.uid or 'default'}.bench.json"
+
+    def _weak_file(self):
+        """Where the builds left before Play are recorded (weak_bench_hours)."""
+        return ROOT_DIR / "data" / "accounts" / f"{self.uid or 'default'}.weak.json"
 
     def _benches(self):
         import json
