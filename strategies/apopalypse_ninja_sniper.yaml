@@ -44,7 +44,11 @@ planner:
   # then rounds 46-53 came in 18 s with $14k in hand and 9 lives could not
   # absorb a single ceramic leak. Four short lanes crossing in the middle
   # need splash this ninja/sniper build does not have early.
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles]
+  # Flooded Valley (2026-11-09, case 20261109_212128): lost round 15 before
+  # a single round was played - the opener dart and n2 were given up (every
+  # spot in their track segments refused: the valley is mostly water), and
+  # round 16 was lost the same way on 2026-11-06.
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Flooded Valley]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an
