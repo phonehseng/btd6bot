@@ -5975,6 +5975,15 @@ class Executor:
         if claim:
             cash = max(0, cash - claim[0])
             rated = claim[4]
+        if not rated and (getattr(self, "rules", None) or {}).get("one_life"):
+            # With one life, while the look-ahead is weak, spare cash buys
+            # only what lifts it. Infernal Impoppable (2026-11-10): with rounds 71-78 rated
+            # 0.26-0.83, surplus put $19,200 and $28,600 into ace1 2-4-0 and
+            # 2-5-0, which the model rated as no lift at all, while mermonkey1
+            # 5-2-0 ($27,600) would have taken round 76 from 0.36 to 1.28;
+            # round 78 took the one life with $11k left.
+            worst = self.lookahead_worst(rnd)
+            rated = bool(worst and worst[0] is not None and worst[0] < RF.WEAK_MARGIN)
         # An XP build (strategies/generated: `xp_target`) puts surplus into the
         # tower it levels up first - tower XP follows invested cash - and only
         # then into helpers, side paths or the opener.
