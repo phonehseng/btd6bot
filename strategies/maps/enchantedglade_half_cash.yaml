@@ -1,0 +1,85 @@
+# Enchanted Glade, Half Cash: Pursuit Heli Pilots that chase the bloons on
+# both lanes, Night Vision / Full Metal Jacket snipers on the top-left island
+# (map-wide sight), a ninja on the bottom-centre island where the two lanes
+# share their last stretch, and a Cluster Bomb shooter beside it for round
+# 63's ceramic/lead rush. Quincy.
+#
+# Why: the general land build hard_ninja_alch_sun lost Half Cash here on
+# 2026-11-09 (case 20261109_211909): the Fast Track start (round 22, $4,850)
+# went into two short-range ninjas, an alchemist and a hero; round 22 began
+# with $1,355 waiting for a $1,620 heli, the damage model rated round 28 at
+# 0.06 from round 23 on, and 53 lives went in rounds 26-27 while the cash
+# under half income never caught up. The two lanes alternate by round (odd
+# from the bottom-left, even from the top-right), so a short-range tower
+# guards one lane at a time; a Pursuit heli flies to whichever lane is
+# active, and the snipers on the top-left island see both. The same pattern
+# (helis + snipers, camo and lead in the round-22 setup) won Bloonarius
+# Prime Half Cash (bloonariusprime_half_cash).
+#
+# Spots: from the map's Medium and Hard builds (enchantedglade_medium,
+# enchantedglade_hard): the top-left island sniper cells, the bottom-centre
+# island for the ninja and the bomb, the heli cell the live game placed a
+# heli on (0.398, 0.896). Helis need no track in reach: the executor sets
+# Lock in Place, then Pursuit from 2-x-x (Executor._aim).
+#
+# Order (each step tried in the replay below):
+#   * rounds 28 and 30 are lead rounds and the top-left sniper sees too
+#     little of the lanes to carry them alone (0.07 and 0.06 with Razor
+#     Rotors bought after them), so the first heli's Razor Rotors (3-0-0,
+#     pops lead) comes before round 28;
+#   * round 24's camo: the sniper's Night Vision alone rated it 0.41, so
+#     the ninja (camo from tier 0) is placed in the round-22 setup;
+#   * rounds 47 and 78 are camo rounds the first IFR heli carried alone
+#     (0.56 and 0.83); the third heli takes IFR too (x-2-x), and they rate
+#     1.63 and 0.81.
+#
+# Checked offline (tests/test_half_cash_map_builds_offline.py, Fast Track
+# start and Double Cash income as the account plays Half Cash, boards rated by
+# the live forecast), 2026-11-09: every step bought (26/26), worst rounds 67
+# and 78 at 0.81, rounds 22-40 at 1.19 or more (R27 1.19, R28 7.91, R31
+# 2.38); the general build on the same replay: worst R28 0.64, R31 0.92.
+id: enchantedglade_half_cash
+map: Enchanted Glade
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [half_cash]
+planner:
+  towers: {heli: [4, 2, 2], sniper: [1, 2, 0], ninja: [2, 0, 1], bomb: [0, 2, 3]}
+  base_success: {half_cash: 0.8}
+  maps: [Enchanted Glade]
+plan:
+  - {do: place, id: hel1, kind: heli, role: dps, at: [0.398, 0.896]}                  # bottom-centre island (the live game's heli cell)
+  - {do: upgrade, id: hel1, to: 2-0-0}                                                # Pursuit first: then it never follows the mouse
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.04, 0.198]}   # top-left island: map-wide sight
+  - {do: upgrade, id: s1, to: 0-1-0}                                                  # Night Vision: round 24's camo, in the R22 setup
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.43, 0.794]}                    # top edge of the bottom-centre island: both lanes' shared stretch
+  - {do: upgrade, id: hel1, to: 3-0-0}                                                # Razor Rotors: lead (rounds 28 and 30) wherever the lanes run
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: upgrade, id: hel1, to: 3-2-0}                                                # IFR: camo for the heli (rounds 33 and 37)
+  - {do: upgrade, id: s1, to: 1-1-0}                                                  # Full Metal Jacket
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.168, 0.146]}
+  - {do: upgrade, id: s2, to: 1-0-0}                                                  # Full Metal Jacket
+  - {do: upgrade, id: s1, to: 1-2-0}                                                  # Shrapnel Shot
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.462, 0.913]}                  # Quincy, bottom-centre island (not counted by the model)
+  - {do: place, id: hel2, kind: heli, role: dps, at: [0.633, 0.828]}                  # bottom-right island
+  - {do: upgrade, id: hel2, to: 2-0-0}                                                # Pursuit first
+  - {do: upgrade, id: hel2, to: 3-0-2}                                                # Razor Rotors + Faster Darts/Firing
+  - {do: place, id: hel3, kind: heli, role: dps, at: [0.168, 0.300]}                  # top-left island
+  - {do: upgrade, id: hel3, to: 2-0-0}                                                # Pursuit first
+  - {do: upgrade, id: hel3, to: 3-2-0}                                                # Razor Rotors + IFR: a second camo heli (rounds 47 and 78)
+  - {do: upgrade, id: s2, to: 1-2-0}                                                  # Shrapnel Shot
+  - {do: place, id: bom1, kind: bomb, role: dps, at: [0.452, 0.854]}                  # bottom-centre island, under the shared stretch
+  - {do: upgrade, id: bom1, to: 0-2-3}                                                # Cluster Bombs: round 63's ceramic/lead rush
+  - {do: upgrade, id: hel2, to: 4-0-2}                                                # Apache Dartship: BFBs (R60)
+  - {do: upgrade, id: hel1, to: 4-2-0}                                                # Apache Dartship
+  - {do: upgrade, id: hel3, to: 4-2-0}                                                # Apache Dartship, if the cash comes
+panic:
+  - {do: place, kind: sniper, role: dps, target: strong}
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: hel1, to: 3-2-0}]
+  ceramic: [{do: upgrade, id: hel1, to: 3-2-0}]
+  moab: [{do: upgrade, id: hel2, to: 3-0-2}, {do: upgrade, id: hel3, to: 3-2-0}]
+  bfb: [{do: upgrade, id: hel2, to: 4-0-2}]
+  zomg: [{do: upgrade, id: hel1, to: 4-2-0}]
+  rush: [{do: upgrade, id: bom1, to: 0-2-3}]

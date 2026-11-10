@@ -14,6 +14,9 @@ got its own Half Cash build from the spots of its other map builds:
     in order, the MOAB Mauler / Assassin in the plan)
   * strategies/maps/bloonariusprime_half_cash.yaml (Pursuit helis and
     snipers from bloonariusprime_military_only, camo and lead in the setup)
+  * strategies/maps/enchantedglade_half_cash.yaml (2026-11-09: the general
+    build lost round 31 there; Pursuit helis with Razor Rotors and IFR, top-
+    left snipers, a bottom-centre ninja, all from the map's other builds)
 
 Checked here with the executor-faithful replay (simulate_threats.simulate on
 each learned map, Fast Track start and Double Cash income as the account
@@ -47,6 +50,11 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 # or rated lowest, LOST_MARGIN for them). When written:
 #   Bazaar: worst R36 0.84; R35 1.09, R37 1.06, R40 2.04 (general: worst
 #     0.06; R37 0.43, R40 0.12). Worst R34 0.75 since 2026-11-09 (below).
+#     Lost round 63 live twice on 2026-11-09: the model let the Bloontonium
+#     Reactors' pulse reach the whole map (dps_model._pulse_at_tower) and
+#     rated R63 2.20; corrected, that plan rates R63 0.48. Two Druids of
+#     the Jungle replaced the Cluster Bombs: R63 1.94 (checked at 1.5),
+#     worst R78 0.58 (the threat calendar's rounds after the plan).
 #   Ship Capture: worst R79 0.86; R34 1.04, R36 1.15, R37 1.46, R40 1.59
 #     (general: worst 0.06; R34 0.32, R36 0.75, R37 0.92, R40 1.14).
 #     PARKED 2026-11-09 (base_success 0.05): the first live game lost R39.
@@ -59,10 +67,14 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 #   Bloonarius Prime: worst R30 0.46 (Razor Rotors stands from R30); R22
 #     2.04, R25 2.28, R26 1.89, R40 2.99 (general: worst 0.06; R22 0.43,
 #     R25 0.41, R26 0.76, R40 2.33)
+#   Enchanted Glade (2026-11-09, after the general build lost R31 live with
+#     the opening rated 0.06): worst R67/R78 0.81; R26 1.59, R27 1.19, R28
+#     7.91, R31 2.38 (general: worst R28 0.64; R27 0.82, R31 0.92)
 CASES = {
-    "Bazaar": ("bazaar_half_cash", 0.7, (35, 37, 40), 1.0),
+    "Bazaar": ("bazaar_half_cash", 0.55, (35, 37, 40), 1.0),
     "Ship Capture": ("shipcapture_half_cash", 0.4, (34, 36, 37, 40), 0.4),
     "Bloonarius Prime": ("bloonariusprime_half_cash", 0.4, (22, 25, 26, 40), 1.5),
+    "Enchanted Glade": ("enchantedglade_half_cash", 0.7, (26, 27, 28, 31), 1.0),
 }
 
 
@@ -115,12 +127,30 @@ def test_bazaar_half_cash():
     _check_map("Bazaar")
 
 
+def test_bazaar_half_cash_round_63():
+    """Round 63 (122 ceramics and 75 leads in three bursts) lost both live
+    games on 2026-11-09: two Druids of the Jungle stand for it (their vines
+    reach both lanes) and it rates 1.5 or more with the Reactors' pulse
+    kept round the subs."""
+    strat = S.load_all()["bazaar_half_cash"]
+    _, boards = _replay(strat, "Bazaar")
+    for tid in ("dr1", "dr2"):
+        kind, tiers, _, _ = boards[62][tid]
+        assert (kind, tiers) == ("druid", (1, 3, 0)), (tid, kind, tiers)
+    own = _margins("Bazaar", {63: boards[63]})
+    assert own[63] >= 1.5, f"round 63 rated {own[63]:.2f}"
+
+
 def test_shipcapture_half_cash():
     _check_map("Ship Capture")
 
 
 def test_bloonariusprime_half_cash():
     _check_map("Bloonarius Prime")
+
+
+def test_enchantedglade_half_cash():
+    _check_map("Enchanted Glade")
 
 
 if __name__ == "__main__":

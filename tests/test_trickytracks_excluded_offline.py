@@ -22,6 +22,9 @@ Apopalypse with tools/apopalypse_check.py):
   ABR         military_heli_sniper 9 under 1, worst 0.56 (r78)
   Half Cash   obyn_druid_poplust 59 under 1, worst 0.06 (r24)
   Impoppable  chimps_ninja_sun   66 under 1, worst 0.13 (r98)
+  Apopalypse  apopalypse_apache_spikes (added 2026-11-09): worst 0.39
+              (r31-40), 0.56-0.59 in rounds 41-60 - no better than the old
+              build's 0.58-0.68 there
 The map's own Medium build (trickytracks_medium) was tried in these modes
 too, with late steps added (Crossbow Master, Bloonjitsu ninjas, Radar
 villages, Maim MOAB) and its snipers moved first for ABR's early leads. It
@@ -48,7 +51,8 @@ MAP = "Tricky Tracks"
 UNBEATEN = ("abr", "double_hp", "half_cash", "apopalypse", "impoppable")
 EXCLUDED = ("abr_ninja_alch", "hard_sniper_elite", "hard_glaive_lord",
             "apopalypse_ninja_sniper", "hard_ninja_alch_sun", "double_hp_sniper_sun",
-            "military_heli_sniper", "obyn_druid_poplust", "chimps_ninja_sun")
+            "military_heli_sniper", "obyn_druid_poplust", "chimps_ninja_sun",
+            "apopalypse_apache_spikes")
 
 
 def _specs():

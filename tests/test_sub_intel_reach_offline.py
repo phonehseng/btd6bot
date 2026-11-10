@@ -84,6 +84,25 @@ def test_a_sub_without_intel_is_unchanged():
                - _reach(D.stations_for([sub, dart], track), "sb1")) < 1e-6
 
 
+def test_reactor_pulse_stays_round_the_sub():
+    """Bloontonium Reactor (4-x-x): the submerged pulse is a 52-unit circle
+    round the sub, not map-wide, and it borrows no other tower's circle
+    (Bazaar Half Cash lost round 63 twice on 2026-11-09 with three Reactors
+    rated as if their radiation covered the whole track)."""
+    pulses = [s for s in D.profile("sub", (4, 2, 0)).sources if "Submerge" in s.name]
+    assert pulses and all(s.placement != "global" for s in pulses), pulses
+    assert all(s.range == 52.0 for s in pulses), [s.range for s in pulses]
+    track, placed = _setup()
+    sub = placed("sb1", "sub", (4, 2, 0), 0.47, 0.52)
+    dart = placed("d1", "dart", (0, 0, 0), 0.15, 0.30)
+    st = next(s for s in D.stations_for([sub, dart], track) if s.tid == "sb1")
+    pulse_station = next(p for p in [st] + st.parts if any("Submerge" in s.name for s in p.sources))
+    own = sum(z.length for z in track.zones(sub.x, sub.z, 52.0) if z)
+    got = sum(z.length for z in pulse_station.zones if z)
+    assert abs(got - own) < 1e-6, (got, own)
+    assert got < 0.8 * sum(track.total_length()), got
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
