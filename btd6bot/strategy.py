@@ -4636,6 +4636,25 @@ class Executor:
                   key=TH.blimp_hp, default=None)
         why = f"blimp ramp round {R} ratio {ratio:.1f}"
         own = [st for st in (self.strat.get("answers") or {}).get(cls) or () if self._step_allowed(st)]
+        # what can be paid before round R: cash now + the rounds in between
+        money = self.cash_seen + sum(TH.round_cash(self.round_set, r) * self.income_mult
+                                     for r in range(rnd, R))
+        total = self._steps_cost(own, f"the {cls} answer") if own else None
+        if total is not None and total > money:
+            # The strategy's own answer cannot be finished before the blimps:
+            # buying it tier by tier only spends what a cheaper purchase that
+            # does stand by round R needs. Sunset Gulch Impoppable (2026-11-10
+            # 15:13): the MOAB answer was "n2 -> 2-0-4", n2 had just been found
+            # to pop nothing (_redirect_dead_upgrade), so the answer became a
+            # fresh ninja to 2-0-4 (~$10.8k); the ramp bought it to 2-0-3 for
+            # $4,830 at round 39 while the ace it had placed for round 40 stood
+            # at 0-0-0, and the MOAB took the one life with $4,321 in hand.
+            note = ("ramp-own-unaffordable", cls, R)
+            if note not in self._notes():
+                self.noted.add(note)
+                log.warning("blimp ramp round %d: the %s answer ($%d) cannot be paid before it "
+                            "($%d) - buying blimp damage that can", R, cls, total, money)
+            own = []
         for i, st in enumerate(own):
             with self.why("ramp", why, step=dict(st)):
                 r = self.try_step(dict(st), cash, rnd)
@@ -4644,9 +4663,6 @@ class Executor:
                 return "bought"
             if r == "wait":
                 return self._wait_total(self._steps_cost(own[i:], f"the {cls} answer"))
-        # what can be paid before round R: cash now + the rounds in between
-        money = self.cash_seen + sum(TH.round_cash(self.round_set, r) * self.income_mult
-                                     for r in range(rnd, R))
         # The last rounds in which the plan may still take its turn. With one
         # life (Impoppable, CHIMPS) any blimp that gets through loses the game,
         # so the plan gets its last turn two rounds before the blimps and is

@@ -570,6 +570,32 @@ def test_every_strategy_pops_every_bloon_in_time():
     assert not gaps, gaps[:10]
 
 
+def test_ramp_passes_over_an_answer_it_cannot_finish():
+    """Sunset Gulch Impoppable (2026-11-10 15:13): the MOAB answer "n2 ->
+    2-0-4" became a fresh ninja (n2 popped nothing) and the ramp bought it
+    to 2-0-3 for $4,830 at round 39 while its ace stood at 0-0-0; the MOAB
+    took the one life with $4,321 in hand. An answer that cannot be paid
+    in full before the blimps is passed over for blimp damage that can."""
+    answers = {"moab": [{"do": "upgrade", "id": "n2", "to": "2-0-4"}]}
+    towers = [("s1", "sniper", (2, 2, 0)), ("n1", "ninja", (2, 0, 1)), ("n2", "ninja", (2, 0, 1))]
+    g, ex = executor({"plan": [], "answers": answers}, towers=towers, cash=2500)
+    ex.rules.update(tough_moabs=False, one_life=True)
+    ex._init_threats()
+    ex.cash_seen = 2500
+    R, load, ratio = ex._ramp_due(39)
+    assert R == 40, R
+    assert ex._steps_cost(answers["moab"]) > 2500 + 2 * 1000
+    ex._answer_ramp(R, load, ratio, 2500, 39)
+    assert tuple(g.towers["n2"].tiers) == (2, 0, 1), "the unaffordable answer is not started"
+    # an answer that can be paid in time is still bought first
+    g, ex = executor({"plan": [], "answers": answers}, towers=towers, cash=20000)
+    ex.rules.update(tough_moabs=False, one_life=True)
+    ex._init_threats()
+    ex.cash_seen = 20000
+    assert ex._answer_ramp(*ex._ramp_due(39), 20000, 39) == "bought"
+    assert g.towers["n2"].tiers[2] >= 2, g.towers["n2"].tiers
+
+
 if __name__ == "__main__":
     failed = 0
     for name, fn in list(globals().items()):
