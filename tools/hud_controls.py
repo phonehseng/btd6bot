@@ -1,5 +1,6 @@
 """The HUD's window plumbing and the owner's STOP / GO / OFF buttons, shared
-by the thin strip (tools/overlay.py) and the big HUD (tools/big_hud.py).
+by the thin strip (tools/overlay.py), the big HUD (tools/big_hud.py) and the
+glass HUD (tools/glass_hud.py).
 
 Every HUD window stays out of the bot's way:
 

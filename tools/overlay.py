@@ -1,23 +1,28 @@
 """The bot's on-screen HUD, started by run_forever.ps1; single instance.
 
-By default this is the big HUD (tools/big_hud.py): a full-screen,
-click-through overlay showing what the bot is thinking - its decisions and
-why, the damage model's margins for the rounds ahead, ghost towers where
-the build still wants towers, and between games the planner's pick and a
-black-border board of every map.
+Three HUDs, one chosen at start:
 
-The thin strip it replaced is still here: a strip at the top of the screen
-with what the bot is doing (latest log line) and how long ago it last did
-anything. It is used when
+  glass   (the default) tools/glass_hud.py: a few small see-through
+          "liquid glass" widgets at the screen's edges - a status pill at
+          the top centre, the coming rounds' margins and the latest decision
+          along the bottom in a game, the planner's pick and the
+          black-border progress at the right edge in menus - and faint ghost
+          towers where the build still wants towers
+  big     tools/big_hud.py: the full-screen HUD it replaced (a thinking
+          panel down the left, a black-border board over the menus); used
+          when a HUD_BIG file exists in the repo root or BTD6BOT_HUD is
+          "big", or when the glass HUD fails to start
+  strip   the thin strip at the top of the screen with what the bot is
+          doing (latest log line) and how long ago it last did anything;
+          used when a HUD_STRIP file exists in the repo root or BTD6BOT_HUD
+          is "strip", or when the others fail to start
 
-  * a HUD_STRIP file exists in the repo root, or
-  * the environment variable BTD6BOT_HUD is "strip", or
-  * the big HUD fails to start (the error goes to logs/hud_error.txt).
-
-Both keep the STOP / GO / OFF buttons at the top of the screen, right of
-the status strip (tools/hud_controls.py says what they do), never take
-focus and let every click pass through to the game; the bot captures the
-game with PrintWindow, so neither shows up in its OCR.
+A HUD that fails to start leaves its error in logs/hud_error.txt. All three
+keep the STOP / GO / OFF buttons at the top of the screen, right of the
+status pill or strip (tools/hud_controls.py says what they do), never take
+focus, let every click pass through to the game and stay out of screen
+captures; the bot captures the game with PrintWindow, so none shows up in
+its OCR.
 
 Close it with the STOP file or by ending the process.
 """
@@ -38,8 +43,10 @@ LOG = ROOT / "logs" / "bot.log"
 STATE = ROOT / "logs" / "state.txt"
 FOCUS = ROOT / "logs" / "focus.txt"    # the game's XP focus (btd6bot.status.set_focus)
 LEVEL = ROOT / "logs" / "level.txt"    # player level and XP bar (btd6bot.status.set_level)
-STRIP_SWITCH = ROOT / "HUD_STRIP"      # this file: the thin strip instead of the big HUD
-HUD_ENV = "BTD6BOT_HUD"                # ... or this variable set to "strip"
+STRIP_SWITCH = ROOT / "HUD_STRIP"      # this file: the thin strip
+BIG_SWITCH = ROOT / "HUD_BIG"          # this file: the big full-screen HUD
+HUD_ENV = "BTD6BOT_HUD"                # ... or this variable set to "strip", "big" or "glass"
+HUDS = ("glass", "big", "strip")       # the HUDs, each falling back to the ones after it
 ERROR_FILE = ROOT / "logs" / "hud_error.txt"
 
 BG = "#101010"
@@ -79,6 +86,16 @@ def describe():
 def strip_wanted():
     """The owner's switch back to the thin strip (HUD_STRIP file or BTD6BOT_HUD=strip)."""
     return STRIP_SWITCH.exists() or os.environ.get(HUD_ENV, "").strip().lower() == "strip"
+
+
+def hud_wanted():
+    """Which HUD the owner wants: "strip" (HUD_STRIP file or BTD6BOT_HUD=strip),
+    "big" (HUD_BIG file or BTD6BOT_HUD=big), else "glass"."""
+    if strip_wanted():
+        return "strip"
+    if BIG_SWITCH.exists() or os.environ.get(HUD_ENV, "").strip().lower() == "big":
+        return "big"
+    return "glass"
 
 
 def note_error(what):
@@ -156,12 +173,13 @@ def main():
     if not take_single_instance():
         return
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    if not strip_wanted():
+    chain = HUDS[HUDS.index(hud_wanted()):]
+    for name, fallback in zip(chain, chain[1:]):     # the strip, last, has nothing to fall back to
         try:
-            import big_hud
-            return big_hud.run()
+            module = __import__({"glass": "glass_hud", "big": "big_hud"}[name])
+            return module.run()
         except Exception:
-            note_error("the big HUD failed to start - showing the thin strip")
+            note_error(f"the {name} HUD failed to start - trying the {fallback} HUD")
     run_strip()
 
 
