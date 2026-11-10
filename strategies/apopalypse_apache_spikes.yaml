@@ -115,7 +115,14 @@ planner:
   # panel at round 17, h1 "not on the map; forgotten" at round 35) and
   # $21.8k went unspent from round 17 to 36. The cost_share above let the
   # build past the planner's moving-ground gate (_land_towers_have_no_spot).
-  excluded_maps: [Erosion, Tricky Tracks, Geared]
+  # Sanctuary (2026-11-10 02:50, lost round 51): the platforms refused every
+  # spot tried for h1 and h2 (four clicks for h1, then both steps given up),
+  # so the build's two Apache Dartships became one stand-in heli (h3, at
+  # 3-2-0 by round 19). The plan then held $1-16k for that heli's 4-2-0 from
+  # round 18 to 33; the model rated round 33 at 5.08, yet it cost 109 lives
+  # and the game was lost at round 51. Without its helis the build has
+  # nothing to answer Apopalypse's piled-up rounds here.
+  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary]
 plan_first: true
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
