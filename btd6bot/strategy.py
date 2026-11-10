@@ -2606,13 +2606,23 @@ class Executor:
         damage = set(self._damage_towers_ids())
         named = [self.g.towers[i] for i in (step or {}).get("near") or () if i in damage]
         ys, xs = np.nonzero(valid & ~self._blocked_for(kind))
-        scored = sorted(((self._buffed(kind, x, y, named) if named else 0, self._buffed(kind, x, y), x, y)
-                         for x, y in zip(xs.tolist(), ys.tolist())
+        # Cells that buff equally many towers are told apart by how close
+        # they stand to the whole defence (summed distance to every damage
+        # tower, least first): the buffer's range grows with its upgrades and
+        # more towers come, so the cell nearest the others reaches them
+        # later. Without it the tie went to the largest x: Logs ABR's Radar
+        # Scanner village stood at the right edge of n2's circle, and as a
+        # 4-2-0 it never reached n1, the alchemist or the opener (the replay
+        # rated round 63 at 0.63, tests/test_abr_double_hp_sniper_sun_offline.py).
+        cells = [self.m.frac_to_cell(p.x, p.y) for p in self._damage_towers()]
+        spread = sum(np.hypot(xs - tx, ys - ty) for tx, ty in cells)
+        scored = sorted(((self._buffed(kind, x, y, named) if named else 0, self._buffed(kind, x, y), -far, x, y)
+                         for x, y, far in zip(xs.tolist(), ys.tolist(), np.round(spread, 1).tolist())
                          if (kind, x, y) not in self.failed_spots), reverse=True)
         if named and scored and scored[0][0] < 1:
             log.info("%s: no spot buffs %s - placed where it buffs the most towers",
                      kind, step.get("near"))
-        for _, n, x, y in scored:
+        for _, n, _, x, y in scored:
             if n < 1:
                 break
             if any((x - ox) ** 2 + (y - oy) ** 2 < 9 for ox, oy, _ in out):
