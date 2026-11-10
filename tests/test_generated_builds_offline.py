@@ -99,6 +99,21 @@ def test_simulation_passes_every_listed_mode():
             assert v.ok, (kind, mode, v.why)
 
 
+def test_live_loss_exclusions_are_carried():
+    """Maps a live loss took a generated build off (data/generated_exclusions.json)
+    are in that build's planner.excluded_maps, and the planner reads them:
+    Workshop Deflation (2026-11-10, solo_boomerang) lost round 40 to the MOAB
+    chute."""
+    from btd6bot import planner as P
+    builds = generated()
+    for kind in builds:
+        want = G.exclusions(kind).get("maps") or []
+        assert builds[kind]["planner"].get("excluded_maps", []) == want, kind
+    s = builds["boomerang"]
+    spec = P.StrategySpec.from_any(dict(s, **(s.get("planner") or {})))
+    assert "Workshop" in spec.excluded_maps
+
+
 def test_files_match_the_generator():
     """A file that no longer matches what the generator makes from the
     current game data must be regenerated (python tools/gen_builds.py).
