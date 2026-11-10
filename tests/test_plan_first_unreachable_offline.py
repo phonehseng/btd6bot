@@ -255,6 +255,46 @@ def test_given_up_credit_yields_with_shallow_bloons_until_spent():
     assert not ex.plan_first_yields(1_950, 58, deep=False)
 
 
+# -- continuous sends (Apopalypse) ------------------------------------------------------
+APO_INCOME = 1_300.0   # Sanctuary Apopalypse rounds 30-34: cash rose ~$1.2-1.5k a round
+APO_STEP = 19_000      # about what h3 -> 4-2-0 still cost (it waited with $17,657 at round 34)
+
+
+def sanctuary_apopalypse(rnd=30, weak=(0.37, 39), cost=APO_STEP, mode="apopalypse"):
+    """Sanctuary Apopalypse (2026-11-10 03:00, apopalypse_apache_spikes):
+    plan step h3 4-2-0 waits, the model's weakest look-ahead round is `weak`."""
+    margin, weak_round = weak
+    h3 = tower("h3", "heli", [2, 2, 0])
+    step = {"do": "upgrade", "id": "h3", "to": "4-2-0"}
+    ex = bare_executor(mode, [h3], forecast=Fixed(3.0, {weak_round: margin}),
+                       strat={"plan_first": True, "plan": [step]})
+    ex.plan, ex.idx = [step], 0
+    ex._first_step_cost = lambda st: cost
+    ex.income_until = lambda due, r: APO_INCOME * max(0, due - r)
+    return ex
+
+
+def test_continuous_sends_look_further_and_save_shorter():
+    assert S.rules("apopalypse").get("continuous")
+    # rounds 30-31 and 33: $11.8-15.9k held, round 39 rated 0.37-0.38, bloons 91-93 % deep
+    for rnd, cash in ((30, 11_809), (31, 12_997), (33, 15_901)):
+        assert sanctuary_apopalypse(rnd).plan_first_yields(cash, rnd), rnd
+    # the same board in Medium (rounds wait between sends): round 39 is too far off
+    assert not sanctuary_apopalypse(30, mode="medium").plan_first_yields(11_809, 30)
+
+
+def test_continuous_sends_still_keep_a_short_saving_and_need_a_near_crisis():
+    # payable within CONTINUOUS_SAVE_ROUNDS from $11,809 and $1,300 a round: the plan buys it
+    assert not sanctuary_apopalypse(30, cost=14_000).plan_first_yields(11_809, 30)
+    # the weak round past CONTINUOUS_YIELD_ROUNDS, or not a crisis
+    far = 30 + S.Executor.CONTINUOUS_YIELD_ROUNDS + 1
+    assert not sanctuary_apopalypse(30, weak=(0.37, far)).plan_first_yields(11_809, 30)
+    assert not sanctuary_apopalypse(30, weak=(0.54, 38)).plan_first_yields(11_809, 30)
+    # Workshop Apopalypse (won 03:12): round 40 rated 0.43, but bloons at most 36 %
+    # along the route - shallow bloons keep the cash (no floor rating, no given-up steps)
+    assert not sanctuary_apopalypse(31, weak=(0.43, 40)).plan_first_yields(10_246, 31, deep=False)
+
+
 # -- end to end: the gate, then reinforce's own choice -----------------------------------
 class PlanFirstToy(ToyEx):
     """ToyEx (one sniper, a $300 and a $2,000 upgrade) as a plan_first build
@@ -270,6 +310,7 @@ class PlanFirstToy(ToyEx):
     _board_key = S.Executor._board_key
     _notes = S.Executor._notes
     YIELD_MARGIN, YIELD_ROUNDS = S.Executor.YIELD_MARGIN, S.Executor.YIELD_ROUNDS
+    CONTINUOUS_YIELD_ROUNDS = S.Executor.CONTINUOUS_YIELD_ROUNDS
 
     def __init__(self, income):
         super().__init__()

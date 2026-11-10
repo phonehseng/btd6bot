@@ -5710,6 +5710,10 @@ class Executor:
     # build's unreachable plan step to give way to reinforcing
     YIELD_MARGIN = RF.CRISIS_MARGIN   # rated under this: a crisis round (forecast.py)
     YIELD_ROUNDS = 4                  # at most this many rounds after the one being played
+    # under continuous sends (Apopalypse) a round passes every 3-4 s, so four
+    # rounds are ~15 s: look as far as the match's own look-ahead window
+    # (10 rounds, "rounds 30-39: the damage model rates round 39 ...")
+    CONTINUOUS_YIELD_ROUNDS = 10
     YIELD_FLOOR = 0.12                # rated at most this in a mode with lives: no bloon depth needed
 
     def plan_first_yields(self, cash, rnd, deep=True):
@@ -5770,7 +5774,18 @@ class Executor:
         same build) lost round 78 rated 0.11: after the Dartship came at round
         75 the plan waited for h1 4-2-0 ($21,600) with $4.8-9.6k in hand, out
         of reach before round 78, and 0.11 missed the old floor by 0.01. The
-        floor is now 0.12, still clear of Spillway's 0.14."""
+        floor is now 0.12, still clear of Spillway's 0.14.
+
+        Under continuous sends (rules `continuous`, Apopalypse) both clocks
+        are counted in rounds that last 3-4 s. The weak round may be up to
+        CONTINUOUS_YIELD_ROUNDS away, and the step must be payable within
+        reinforce.CONTINUOUS_SAVE_ROUNDS rounds - the same test reinforce
+        puts on its own savings there. Sanctuary Apopalypse (2026-11-10
+        03:00, apopalypse_apache_spikes) held $11.8-15.9k for h3 4-2-0
+        through rounds 30-33 while the model rated round 39 at 0.37-0.38
+        (8-9 rounds off) and bloons reached 91-93 % of the route; round 33
+        then cost 109 lives. With four rounds of horizon the rule never
+        looked that far."""
         if cash is None or rnd is None or not self.plan_first():
             return False
         rules = getattr(self, "rules", None) or {}
@@ -5783,7 +5798,9 @@ class Executor:
         if worst is None or worst[0] is None or worst[1] is None:
             return False
         margin, weak = worst
-        if margin >= self.YIELD_MARGIN or weak - rnd > self.YIELD_ROUNDS:
+        continuous = bool(rules.get("continuous"))
+        horizon = self.CONTINUOUS_YIELD_ROUNDS if continuous else self.YIELD_ROUNDS
+        if margin >= self.YIELD_MARGIN or weak - rnd > horizon:
             return False
         credit = 0
         if not deep and (rules.get("one_life") or margin > self.YIELD_FLOOR):
@@ -5794,6 +5811,9 @@ class Executor:
                 return False
         step, cost = wait
         pay_by = max(weak, rnd + 1)   # the round being played: no income reaches it
+        if continuous:
+            # back-to-back rounds: a saving longer than a few rounds is not one
+            pay_by = min(pay_by, rnd + RF.CONTINUOUS_SAVE_ROUNDS)
         if RF.payable_by(self, cost, cash, pay_by, rnd) is not False:
             return False
         note = ("plan-first-yields", getattr(self, "idx", None), weak)
