@@ -87,17 +87,55 @@
 # R27 0.83, R34 0.75, R36 0.84, R40 1.15, R43 2.25, R53 1.18, R60 1.98,
 # R62 1.24, R63 1.94, R64 1.00, R78 0.58 (the lowest: the threat calendar's
 # rounds after the plan), R80 0.82 (the old plan on the corrected model:
-# R63 0.48, R78 0.45, R79 0.44). tests/test_half_cash_map_builds_offline.py
-# keeps these.
+# R63 0.48, R78 0.45, R79 0.44).
+#
+# Third loss, 2026-11-10 11:29 (loss case 20261110_114329_Bazaar_half_
+# cash): round 63 once more, 100 lives in about seven seconds with the whole
+# plan standing, druids included; the defeat screen counted 104 lives of
+# yellows, 9 of greens and 1 red: the ceramics were worn down and the rest
+# got out. The model had rated that board 1.98. Its error this time: the
+# druid's vine. The game's JungleVine projectile has 9,999,999 pierce and a
+# 4-unit radius but a CollideOnlyWithTargetModel - it grabs the one bloon
+# it was sent at (bloonswiki: "kills the strongest non-MOAB bloon on
+# screen", one per attack; https://www.bloonswiki.com/Druid_of_the_Jungle_(BTD6)).
+# The export leaves that behaviour uninterpreted, so the model read the vine
+# as a 4-unit blast that took ~6 ceramics of a packed burst at once (round
+# 63 spawns 40 ceramics in 0.2 s, three times). dps_model._target_only now
+# keeps it on its target (tests/test_druid_vine_one_bloon_offline.py): the
+# live board rates 0.83, the replayed plan R63 0.85. Each druid is still
+# worth ~0.1-0.15 at round 63 (a vine on both lanes every 2.6 s), more than
+# anything else of its price on this map: every land tower reaches one of
+# the two lanes, and a lane's leak is what the margin reads.
+#
+# The answer now (2026-11-10): four more Druids of the Jungle (dr3-dr6,
+# $2.2-2.3k each) and two Acidic Mixture Dip alchemists (al1/al2, 2-0-0,
+# $1,245 each, beside dr3/dr5: the dip lets the druids' thorns pop lead and
+# hit ceramics harder) right after sni1's Maim MOAB, bought before the
+# Armor Piercing subs (sub5, sub1 2-0-4), sub6's Reactor and sni2's 4-2-0,
+# which stand for rounds 64-80 and barely touch round 63. A $405 bomb and a
+# $270 wizard at the lanes' ends (bmb1, wiz1) catch the last rainbows of the
+# ZOMG at round 80. Chosen by a greedy search over every tower kind x
+# crosspath x legal cell on the round-62 board (cut leak at 1/2.2 strength
+# per dollar; the Mermonkey's Abyss Dweller rated higher still but its 8
+# tentacles x 10 blasts each per attack could not be checked against the
+# game, so it is not used). The package stands by round 59. Replayed
+# 2026-11-10 with the corrected model: R22 1.08, R27 0.83, R34 0.75,
+# R36 0.84, R40 1.15, R60 1.56, R61 1.18, R62 0.87, R63 2.11 (the old plan:
+# 0.85; the live loss board: 0.83), R64 0.92, R75 0.88, R78 0.53 (the
+# lowest: camo ceramics after the plan, which no druid sees), R80 0.66.
+# tests/test_half_cash_map_builds_offline.py keeps these. Caveats the model
+# does not see: a vine takes longer to crush a ceramic than a red, and an
+# alchemist's dip lasts a number of shots, not for ever; both make the game
+# a little weaker than 2.11 - the reason for the margin.
 id: bazaar_half_cash
 map: Bazaar
 hero: admiral_brickell
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [half_cash]
 planner:
-  towers: {sub: [4, 4, 4], sniper: [4, 2, 0], druid: [1, 3, 0]}
-  # lost both live games at r63 (see Status above); the druid answer is
-  # unplayed, so it stays behind the confident games
+  towers: {sub: [4, 4, 4], sniper: [4, 2, 0], druid: [1, 3, 1], alchemist: [2, 0, 0], bomb: [0, 0, 0], wizard: [0, 0, 0]}
+  # lost all three live games at r63 (see Status above); the six-druid
+  # answer is unplayed, so it stays behind the confident games
   base_success: {half_cash: 0.5}
   maps: [Bazaar]
 plan:
@@ -128,6 +166,20 @@ plan:
   - {do: place, id: sub4, kind: sub, role: dps, at: [0.441, 0.709]}
   - {do: upgrade, id: sub4, to: 2-3-0}                                    # Ballistic Missile
   - {do: upgrade, id: sni1, to: 4-2-0}                                    # Maim MOAB: BFBs (R60)
+  - {do: place, id: dr3, kind: druid, role: dps, at: [0.655, 0.181]}      # round 63's rush (see Status): top-right grass
+  - {do: upgrade, id: dr3, to: 0-3-1}                                     # Druid of the Jungle: a vine anywhere every 2.6 s
+  - {do: place, id: al1, kind: alchemist, role: support, at: [0.719, 0.164]}   # beside dr3 and dr5
+  - {do: upgrade, id: al1, to: 2-0-0}                                     # Acidic Mixture Dip: thorns pop lead, +1 on ceramics
+  - {do: place, id: dr4, kind: druid, role: dps, at: [0.184, 0.164]}      # top-left grass
+  - {do: upgrade, id: dr4, to: 0-3-1}
+  - {do: place, id: al2, kind: alchemist, role: support, at: [0.729, 0.215]}
+  - {do: upgrade, id: al2, to: 2-0-0}
+  - {do: place, id: dr5, kind: druid, role: dps, at: [0.751, 0.266]}
+  - {do: upgrade, id: dr5, to: 0-3-1}
+  - {do: place, id: dr6, kind: druid, role: dps, at: [0.74, 0.368]}
+  - {do: upgrade, id: dr6, to: 0-3-0}                                     # the package stands by round 59
+  - {do: place, id: bmb1, kind: bomb, role: dps, at: [0.633, 0.845]}      # cheap catchers at the lane ends: round 80's last rainbows
+  - {do: place, id: wiz1, kind: wizard, role: dps, at: [0.174, 0.828]}
   - {do: place, id: sub5, kind: sub, role: dps, at: [0.398, 0.266]}
   - {do: upgrade, id: sub5, to: 2-0-4}                                    # Armor Piercing Darts
   - {do: upgrade, id: sub1, to: 2-0-4}                                    # Armor Piercing Darts
@@ -143,4 +195,5 @@ answers:
   moab: [{do: upgrade, id: sni1, to: 3-2-0}, {do: upgrade, id: sub2, to: 4-2-0}]
   bfb: [{do: upgrade, id: sni1, to: 4-2-0}]
   zomg: [{do: upgrade, id: sni1, to: 4-2-0}, {do: upgrade, id: sni2, to: 4-2-0}]
-  rush: [{do: upgrade, id: dr1, to: 1-3-0}, {do: upgrade, id: dr2, to: 1-3-0}]
+  rush: [{do: upgrade, id: dr1, to: 1-3-0}, {do: upgrade, id: dr2, to: 1-3-0}, {do: upgrade, id: dr3, to: 0-3-1},
+         {do: upgrade, id: dr4, to: 0-3-1}, {do: upgrade, id: dr5, to: 0-3-1}, {do: upgrade, id: dr6, to: 0-3-0}]

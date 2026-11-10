@@ -58,8 +58,12 @@ FIRST_MOAB = {t: r for r, t in S.THREATS}["moab"]      # round 40
 BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (account.boosts)
 GENERAL = "primary_core"                               # lost Medium at R40 on 2026-11-09
 # build -> [(mode, the worst round rating allowed)]
+# 2026-11-10: a druid's vine now grabs one bloon, not a 4-unit blast of a
+# packed group (tests/test_druid_vine_one_bloon_offline.py); the two
+# druids count for less and Medium's worst is R36 1.37, Reverse's R36 1.34
+# (Easy R27 2.48). The floors hold those numbers.
 BUILDS = {
-    "glacialtrail_medium": [("easy", 2.0), ("medium", 2.0), ("reverse", 2.0)],
+    "glacialtrail_medium": [("easy", 2.0), ("medium", 1.3), ("reverse", 1.3)],
 }
 SPIKES = ("sp1", "sp2")
 MOAB_ANSWER = "sp1"

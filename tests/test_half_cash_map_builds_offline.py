@@ -55,6 +55,13 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 #     rated R63 2.20; corrected, that plan rates R63 0.48. Two Druids of
 #     the Jungle replaced the Cluster Bombs: R63 1.94 (checked at 1.5),
 #     worst R78 0.58 (the threat calendar's rounds after the plan).
+#     Lost round 63 a third time on 2026-11-10 with the druids standing:
+#     the model read a druid's vine (one grabbed bloon a shot) as a 4-unit
+#     blast through the packed burst (tests/test_druid_vine_one_bloon_
+#     offline.py); corrected, that plan rates R63 0.85. Four more druids
+#     and two Acidic Mixture Dip alchemists before the late subs: R63 2.11
+#     (checked at 2.0), worst R78 0.53 (camo ceramics after the plan;
+#     checked at 0.5), R80 0.66.
 #   Ship Capture: worst R79 0.86; R34 1.04, R36 1.15, R37 1.46, R40 1.59
 #     (general: worst 0.06; R34 0.32, R36 0.75, R37 0.92, R40 1.14).
 #     PARKED 2026-11-09 (base_success 0.05): the first live game lost R39.
@@ -71,7 +78,7 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 #     the opening rated 0.06): worst R67/R78 0.81; R26 1.59, R27 1.19, R28
 #     7.91, R31 2.38 (general: worst R28 0.64; R27 0.82, R31 0.92)
 CASES = {
-    "Bazaar": ("bazaar_half_cash", 0.55, (35, 37, 40), 1.0),
+    "Bazaar": ("bazaar_half_cash", 0.5, (35, 37, 40), 1.0),
     "Ship Capture": ("shipcapture_half_cash", 0.4, (34, 36, 37, 40), 0.4),
     "Bloonarius Prime": ("bloonariusprime_half_cash", 0.4, (22, 25, 26, 40), 1.5),
     "Enchanted Glade": ("enchantedglade_half_cash", 0.7, (26, 27, 28, 31), 1.0),
@@ -128,17 +135,19 @@ def test_bazaar_half_cash():
 
 
 def test_bazaar_half_cash_round_63():
-    """Round 63 (122 ceramics and 75 leads in three bursts) lost both live
-    games on 2026-11-09: two Druids of the Jungle stand for it (their vines
-    reach both lanes) and it rates 1.5 or more with the Reactors' pulse
-    kept round the subs."""
+    """Round 63 (122 ceramics and 75 leads in three bursts) lost all three
+    live games (2026-11-09/10): six Druids of the Jungle (vines on both
+    lanes) and two Acidic Mixture Dip alchemists stand for it before round
+    63, and it rates 2.0 or more with the Reactors' pulse kept round the
+    subs and each vine on its one bloon (the live loss board: 0.83)."""
     strat = S.load_all()["bazaar_half_cash"]
     _, boards = _replay(strat, "Bazaar")
-    for tid in ("dr1", "dr2"):
-        kind, tiers, _, _ = boards[62][tid]
-        assert (kind, tiers) == ("druid", (1, 3, 0)), (tid, kind, tiers)
+    want = {"dr1": (1, 3, 0), "dr2": (1, 3, 0), "dr3": (0, 3, 1), "dr4": (0, 3, 1), "dr5": (0, 3, 1),
+            "dr6": (0, 3, 0), "al1": (2, 0, 0), "al2": (2, 0, 0)}
+    for tid, tiers in want.items():
+        assert tid in boards[62] and boards[62][tid][1] == tiers, (tid, boards[62].get(tid))
     own = _margins("Bazaar", {63: boards[63]})
-    assert own[63] >= 1.5, f"round 63 rated {own[63]:.2f}"
+    assert own[63] >= 2.0, f"round 63 rated {own[63]:.2f}"
 
 
 def test_shipcapture_half_cash():

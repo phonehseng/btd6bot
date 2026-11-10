@@ -384,14 +384,30 @@ def _potion_buffs(entry):
     return out
 
 
+def _target_only(p):
+    """Does projectile p touch its own target and nothing else?
+
+    Two game behaviours say so: a FilterAllExceptTargetModel (sniper
+    bullets; the export writes it as "target_only") and a
+    CollideOnlyWithTargetModel, which the export leaves uninterpreted in
+    "other". The second is the Druid of the Jungle's vine (x-3-x): its
+    projectile has 9,999,999 pierce and a 4-unit radius, but the game lets
+    it collide with the one bloon it grabbed. Read as a 4-unit blast, a
+    vine took ~6 bloons of a packed burst at once, so two druids rated
+    Bazaar Half Cash's round 63 (40 ceramics spawned in 0.2 s, three
+    times) 1.98 where the game lost all 100 lives in seconds with them
+    standing (loss case 20261110_114329_Bazaar_half_cash)."""
+    return bool(p.get("target_only")) or "CollideOnlyWithTargetModel" in (p.get("other") or ())
+
+
 def _reach_of(p, placement, attack_range):
     """Track length one projectile sweeps (see Source.reach): its own
     diameter plus a bloon's (8 units radius) on each side, plus a share of
     the distance it flies (TRAVEL_OVERLAP: darts cross the lane at an angle),
     counting at most twice the attack's range of flight (beyond that it is
     past the bloons it was fired at; boomerangs live long but loop back)."""
-    if p.get("target_only"):
-        return 0.0                       # hits its target only (sniper bullets)
+    if _target_only(p):
+        return 0.0                       # hits its target only (sniper bullets, druid vines)
     if placement == "track":
         return math.inf                  # waits on the track: every passing bloon meets it
     radius = p.get("radius", 0.0)
@@ -484,6 +500,12 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             carrier=carrier,
         ))
     pierce = max(1.0, p.get("pierce", 1.0))
+    if "CollideOnlyWithTargetModel" in (p.get("other") or ()):
+        # it touches the one bloon it grabbed: one contact, one spawn (a
+        # vine's thorn patch), not CONTACTS_PER_CARRIER of its 9,999,999
+        # pierce. (Sniper bullets with pierce 3-5 and Shrapnel are
+        # target-only too and still count two contacts: left as calibrated.)
+        pierce = 1.0
     contacts = min(pierce, CONTACTS_PER_CARRIER)
     contacts_single = min(pierce, _single_hits(p))
     life = p.get("lifespan") or 0.0
