@@ -923,26 +923,42 @@ def _land_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
     none in a village's range of the track). Water towers have their own
     gate (_water_towers_have_no_spot).
 
-    Only maps with moving ground (MOVING_GROUND) are gated. There the bot's
-    own placement rule keeps every short-range tower off the moving parts,
-    so reinforce buys cannot make up for the lost towers with other land
-    kinds either. Elsewhere they can: High Finance Double HP was won at
-    12:40 the same day with both of double_hp_sniper_sun's supers given up."""
+    On maps with moving ground (MOVING_GROUND) losing NO_SPOT_SHARE_MAX of
+    the cost is enough. There the bot's own placement rule keeps every
+    short-range tower off the moving parts, so reinforce buys cannot make
+    up for the lost towers with other land kinds either. Elsewhere they
+    can: High Finance Double HP was won at 12:40 the same day with both of
+    double_hp_sniper_sun's supers given up.
+
+    Elsewhere a build is gated only when NONE of its towers reaches the
+    track: then nothing of it stands, and the reinforce buys come from the
+    same unreachable kinds. Flooded Valley Primary Only (2026-11-10, lost at
+    10:08:57) played primary_core at p=0.02 as a last resort:
+    the dam hides the river track from all land, map-fit is 0.0 for tack,
+    dart, bomb, boomerang and glue, the tack, dart and bomb steps were given
+    up within seconds, two boomerangs and a glue on the far bank leaked 200
+    lives by round 11. Builds with a tower that does reach (solo_ice, ice
+    fit 0.59) stay open there."""
     from .mapfit import load
     from .strategy import Executor
     from .towers import TOWERS
     entry = load().get(map_name) or {}
-    if not set(entry.get("mechanics") or ()) & MOVING_GROUND:
-        return False
+    moving = bool(set(entry.get("mechanics") or ()) & MOVING_GROUND)
     fits = entry.get("towers") or {}
-    lost = 0.0
+    lost = counted = 0.0      # cost share unreachable / cost share weighed
     for kind, share in s.share().items():
-        if kind in Executor.BUFFERS or TOWERS.get(kind, {}).get("placement") == "water":
-            continue
+        if kind in Executor.BUFFERS or kind not in TOWERS:
+            continue          # buffers (see above) and the hero
+        counted += share
+        if TOWERS[kind].get("placement") == "water":
+            continue          # weighed (a reachable sub keeps the build), gated elsewhere
         fit = fits.get(kind)
         if fit and not fit.get("early", 1.0) and not fit.get("late", 1.0):
             lost += share
-    return lost >= NO_SPOT_SHARE_MAX
+    if moving:
+        return lost >= NO_SPOT_SHARE_MAX
+    # every land tower of the build is unreachable (a tiny epsilon for float sums)
+    return counted > 0 and lost >= counted - 1e-9
 
 
 def _water_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:

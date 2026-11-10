@@ -73,6 +73,34 @@ def test_buffers_and_small_shares_are_not_counted():
     _with_table(check)
 
 
+def test_build_with_no_tower_in_reach_is_gated_on_any_map():
+    """Flooded Valley Primary Only (2026-11-10 10:06): primary_core's tack,
+    dart, bomb and boomerang all have map fit 0.0 behind the dam; it lost 200
+    lives by round 11. On still ground a build is gated only when none of
+    its towers reaches the track."""
+    table = dict(TABLE)
+    table["Dam Map"] = {"stamp": "x", "mechanics": ["removable"], "towers": {
+        "tack": NOWHERE, "dart": NOWHERE, "bomb": NOWHERE, "boomerang": NOWHERE,
+        "ice": {"early": 0.59, "late": 0.59}, "sub": EVERYWHERE}}
+    saved = mapfit.load
+    mapfit.load = lambda: table
+    try:
+        primary_core = _spec({"tack": 3000, "dart": 2000, "bomb": 4000, "boomerang": 3000},
+                             tack=(2, 0, 4), dart=(0, 2, 3), bomb=(0, 3, 2), boomerang=(3, 0, 2))
+        assert not P._strategy_fits(primary_core, "Dam Map", "expert", "medium")
+        # one tower that does reach keeps the build (solo_ice reached round 26)
+        ice_and_dart = _spec({"ice": 9000, "dart": 1000}, ice=(0, 2, 4), dart=(0, 0, 2))
+        assert P._strategy_fits(ice_and_dart, "Dam Map", "expert", "medium")
+        # a reachable water tower keeps a build whose land towers are cut off
+        sub_and_dart = _spec({"sub": 9000, "dart": 1000}, sub=(2, 0, 4), dart=(0, 0, 2))
+        assert not P._land_towers_have_no_spot(sub_and_dart, "Dam Map")
+        # "Still Map" keeps its snipers in reach: the ninja build stays open
+        ninja_build = _spec({"ninja": 25600, "sniper": 22400}, ninja=(4, 0, 2), sniper=(4, 2, 0))
+        assert not P._land_towers_have_no_spot(ninja_build, "Still Map")
+    finally:
+        mapfit.load = saved
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
