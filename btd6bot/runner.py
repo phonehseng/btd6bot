@@ -78,6 +78,37 @@ IDLE_POLL = 5                          # seconds between checks for PAUSE / new 
 ERROR_FILE = ROOT_DIR / "logs" / "error_streak.json"
 ERROR_STREAK_WAIT = 3                  # the same error this many games in a row = a bot bug
 ERROR_BENCH_AFTER = 2                  # failures of one map/mode before it is benched
+# A no-income build left before Play (match.WeakBuild) is benched for a day;
+# the same unchanged build left again doubles that, up to a week. The model's
+# verdict on an unchanged build does not change from one day to the next:
+# Cargo (0.63), Quad (0.06), Castle Revenge (0.32-0.42) and Party Parade
+# (0.06) Deflation were each opened, built and left on three days of
+# 2026-11-06..10, about six minutes of play time per visit.
+WEAK_BENCH_HOURS = 24
+WEAK_BENCH_MAX_HOURS = 7 * 24
+
+
+def build_fingerprint(strat):
+    """A short hash of a strategy's whole definition (the dict load_all gives).
+    Any edit to the build - a spot, a step, a tower - changes it."""
+    import hashlib
+    import json
+    text = json.dumps(strat, sort_keys=True, default=str)
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:12]
+
+
+def weak_bench_hours(previous, strategy_id, fingerprint):
+    """How long to bench a map/mode whose build was just left before Play,
+    and the record to keep for next time.
+
+    `previous` is the record kept from the last time this map/mode was left
+    (None if never). Left again with the same, unchanged build, the bench
+    doubles (24 h, 48 h, 96 h, then a week); another strategy or an edited
+    build starts again at a day, so a fixed build is tried the next day."""
+    same = (previous or {}).get("build") == [strategy_id, fingerprint]
+    n = previous["n"] + 1 if same else 1
+    hours = min(WEAK_BENCH_HOURS * 2 ** (n - 1), WEAK_BENCH_MAX_HOURS)
+    return hours, {"n": n, "build": [strategy_id, fingerprint]}
 
 
 def _read_stamp(path):
@@ -1437,9 +1468,27 @@ class Bot:
         game (a code reload) finds it and records a defeat for a game that
         never began. Quad Deflation (2026-11-09 13:40) was left that way at
         round 33 rated 0.06, the bot reloaded at 13:41, and the new one wrote
-        down a loss, benched the map again and counted it in safe mode."""
+        down a loss, benched the map again and counted it in safe mode.
+
+        The bench grows when the same unchanged build is left again
+        (weak_bench_hours); the record is kept in <account>.weak.json."""
+        import json
         log.warning("%s %s: %s", plan.map, plan.mode_key, e)
-        self.bench(plan.map, plan.mode_key, hours=24, why=f"{plan.strategy_id} rated {e.margin:.2f}")
+        path = ROOT_DIR / "data" / "accounts" / f"{self.uid or 'default'}.weak.json"
+        try:
+            records = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            records = {}
+        key = f"{plan.map}|{plan.mode_key}"
+        hours, records[key] = weak_bench_hours(
+            records.get(key), plan.strategy_id, build_fingerprint(self.strats.get(plan.strategy_id)))
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(records, indent=1), encoding="utf-8")
+        except OSError:
+            log.exception("could not save the weak-build record")
+        self.bench(plan.map, plan.mode_key, hours=hours,
+                   why=f"{plan.strategy_id} rated {e.margin:.2f}, left {records[key]['n']}x")
         _note_game_over()
 
     def _note_placement(self, plan, res):
