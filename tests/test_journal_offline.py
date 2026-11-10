@@ -242,6 +242,35 @@ def test_a_defeat_counts_the_lives_still_trusted_as_lost():
     assert m.stats["lives_lost"] == 3
 
 
+def test_a_defeat_loses_at_least_the_starting_lives():
+    """Flooded Valley 2026-11-09: ABR lost 100 lives in five seconds with the
+    tracker holding one low read (10) - reported 10 lost; Apopalypse leaked
+    150 -> 53 during the opening build before the first read, then counted
+    20 more - reported 53. A defeat ends at 0: the whole start went."""
+    m = bare_match()
+    m.ex.rules = {"lives": 100}              # an instance attribute: the class's CHIMPS rules stay
+    m._lives = M.LivesTracker(100)
+    m._lives.update(10)                       # the one low read
+    m.stats = {"lives_lost": 0}
+    m._count_last_lives("defeat")
+    assert m.stats["lives_lost"] == 100
+    m.ex.rules = {"lives": 150, "continuous": True}
+    m._lives = M.LivesTracker(150)
+    for read in (53, 51, 51, 51, 49, 49, 49, 37, 37, 37, 33, 33, 33):
+        m.stats["lives_lost"] = 0 if read == 53 else m.stats["lives_lost"]
+        m.stats["lives_lost"] += m._lives.update(read)
+    assert m.stats["lives_lost"] == 20
+    m._count_last_lives("defeat")
+    assert m.stats["lives_lost"] == 150
+    # the journal's inferred leak carries the same uncounted lives
+    with TempJournalDir():
+        chimps_game()
+        m._margins, m._round_lost, m._leak_rounds = {}, 0, set()
+        m._journal_end("defeat", 15)
+        leak = [e for e in J.current().events if e["ev"] == "leak"][-1]
+        assert leak["inferred"] and leak["lost"] == 130, leak
+
+
 def test_a_win_has_no_cause():
     with TempJournalDir():
         jr = chimps_game()

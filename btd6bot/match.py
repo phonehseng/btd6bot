@@ -1743,9 +1743,28 @@ class Match:
         bloons took all 100 lives within ten seconds of the round's start,
         the Defeat card came before a falling read was confirmed, and the
         loss report said "lives lost: 0"."""
-        left = getattr(self, "_lives", None) and self._lives.confirmed
-        if outcome == "defeat" and left and left > 0:
+        if outcome != "defeat":
+            return
+        left = self._defeat_left = self._lives_left_at_defeat()
+        if left > 0:
             self.stats["lives_lost"] = self.stats.get("lives_lost", 0) + left
+
+    def _lives_left_at_defeat(self):
+        """The lives a defeat took that the tracker never counted: at least
+        what it still trusted, and at least the mode's starting lives less
+        the leaks it did count - a defeat ends at 0, so the whole start went.
+
+        The tracker alone undercounts fast defeats. It is fed only between
+        purchases once the opening build is done, and its first read sets the
+        count: Flooded Valley ABR (2026-11-09 21:12) lost 100 lives in five
+        seconds right after the build, the tracker held 10 (one low read) and
+        the report said 10 lost; Flooded Valley Apopalypse (21:20) leaked
+        from 150 to 53 during the 40-second opening build (Apopalypse sends
+        bloons from the start), the first read was 53 and the report said 53."""
+        lives = getattr(self, "_lives", None)
+        left = (lives.confirmed if lives is not None else None) or 0
+        start = (getattr(self.ex, "rules", None) or {}).get("lives") or 0
+        return max(left, start - self.stats.get("lives_lost", 0), 0)
 
     def _journal_end(self, outcome, rnd):
         """Write game_end; for a game not won, with its cause of death
@@ -1756,7 +1775,9 @@ class Match:
         the tracker trusted."""
         try:
             if outcome == "defeat" and rnd not in self._leak_rounds:
-                lives = self._lives.confirmed
+                # the lives _count_last_lives found still uncounted (it runs
+                # first); else what the tracker trusted, else the mode's start
+                lives = getattr(self, "_defeat_left", None) or self._lives.confirmed
                 if lives is None:
                     lives = (getattr(self.ex, "rules", None) or {}).get("lives")
                 self._journal_leak(rnd, lives, 0, inferred=True)
