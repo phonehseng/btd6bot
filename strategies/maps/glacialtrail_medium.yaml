@@ -1,0 +1,93 @@
+# Glacial Trail, Medium and Reverse: a Spike Factory on each of the map's two
+# patches of ground beside the track, grown to Spiked Mines; two Druids of the
+# Jungle and an Apache Dartship where nothing else fits; bought in four groups
+# rounds apart so the map's freeze never stops more than one of them.
+#
+# Why: every general build lost Glacial Trail Medium - primary_glaive_dart R25
+# (2026-11-03), hard_ninja_alch_sun R16 (11-05), hard_ninja_alch_sniper R25
+# (11-07) and primary_core R40 (2026-11-09 19:11-19:19, loss case
+# 20261109_192015_GlacialTrail_medium: 7 plan steps and 12 answers given up,
+# a boomerang and a sniper standing). Two map facts did it:
+#   * Ground. Towers fit beside the track only on Floor2 (by the first loop,
+#     ~0.14, 0.52) and Floor4 (by the second, ~0.72, 0.65), one tower each.
+#     The snowfield between the loops is the map's "Wall" area, the loops and
+#     the ice behind them are icicle blockers (all refused when clicked live).
+#     From the ice floes and the two hills the ice walls hide the track from
+#     every tower that needs line of sight (dps_model sight test: 0-127 of 856
+#     units). Spike Factories need no sight; Druid of the Jungle vines, heli
+#     and the hero reach the track from anywhere.
+#   * Freeze. Every tower but the Ice Monkey sits in ice for two rounds in
+#     ten, counted from the round it was placed (rounds p+9, p+10, p+19 ...:
+#     dps_model.frozen_in). A Fast Track opening bought in one round froze all
+#     at once in two of the losses (R25 Medium 11-07, R31 ABR 11-09). The
+#     groups here: R15 (sp1, dr1), R17 (dr2), R18 (sp2), the heli when the
+#     plan reaches it (~R38); none is placed in a round 0 or 1 mod 10, so the
+#     round-40 MOAB meets sp1 awake.
+#
+# Sources:
+#   * bloon.games, Glacial Trail CHIMPS guide
+#     (https://bloon.games/how-to-beat-chimps-on-glacial-trail): Spike Factory
+#     (later Perma-Spike) with an alchemist beside it, a druid, a mortar aimed
+#     at the first loop and an Ultra-Juggernaut bouncing off the walls; Sauda.
+#   * bloonswiki Glacial_Trail (https://www.bloonswiki.com/Glacial_Trail): towers
+#     freeze every 9+10n rounds after their placement round and cannot be
+#     selected then; Ice Monkeys and Silas are immune.
+#   * Steam discussion (https://steamcommunity.com/app/960090/discussions/0/
+#     4040355763637948690): space the purchases out so the freezes do not line up.
+#   The account cannot use the mortar's camo path (0-0-x locked) and the model
+#   rates Spiked Mines far above Perma-Spike on these two patches, so the spikes
+#   go to the top path; the druids replace the guide's dart and engineer, which
+#   would need the same two patches.
+#
+# Spots: the `at` spots are where the game took a tower before (main logs and
+# loss cases 2026-10-23..11-09): hero (0.120, 0.828) five times; Floor4 (0.719,
+# 0.649) between the accepted boomerang/dart/ninja spots (the patch's south
+# edge, y >= 0.69, was refused); Floor2 (0.142, 0.521) beside Quincy's and the
+# darts' accepted spots (0.136-0.147, 0.513-0.521); druid dr1 on the ice floe
+# where snipers stood (0.158, 0.879); dr2 on the right hill where a druid stood
+# (0.729, 0.274); heli at (0.767, 0.112), beside where a heli stood (0.767,
+# 0.104; the cell itself is not legal for the heli's footprint). The spikes reach
+# 109 (Floor4) and 73 (Floor2) of the track's 856 hittable units.
+#
+# Evidence: replayed executor-faithfully 2026-11-09 (tools/simulate_threats.
+# simulate on the learned map, Fast Track start R15 with $6,057, Double Cash
+# income), each round's start board rated by the live forecast with every tower
+# frozen by its placement round (the board's first round or the one before,
+# the worse counts; hero not counted): Medium worst 2.23 (R43), then R36 2.35,
+# R27 2.46, R34 3.26; R40 15.5; Reverse worst 2.23 (R43), R36 2.28. No threat
+# gaps, every tower on its spot, nothing bought off the plan while it runs.
+# The general build that lost (primary_core) replays to 0.06 at rounds 24, 33,
+# 45 and 53, its board frozen together - with the replay even accepting its
+# towers inside the walls. Test: tests/test_glacialtrail_builds_offline.py.
+#
+# Status: written 2026-11-09, not played yet.
+id: glacialtrail_medium
+map: Glacial Trail
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [medium, reverse]
+planner:
+  towers: {spike: [4, 2, 0], druid: [1, 3, 0], heli: [4, 2, 0]}
+  base_success: {medium: 0.8, reverse: 0.8}
+  maps: [Glacial Trail]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.120, 0.828]}                # ice floe, bottom left
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.719, 0.649]}                # Floor4, second loop (group R15)
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.158, 0.879]}                # ice floe: vines reach the whole track
+  - {do: upgrade, id: dr1, to: 1-3-0}                                               # Druid of the Jungle
+  - {do: upgrade, id: sp1, to: 2-0-0}                                               # White Hot Spikes: lead (R28)
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.729, 0.274], round: 17}     # right hill (group R17)
+  - {do: place, id: sp2, kind: spike, role: dps, at: [0.142, 0.521], round: 18}     # Floor2, first loop (group R18)
+  - {do: upgrade, id: dr2, to: 1-3-0}
+  - {do: upgrade, id: sp2, to: 2-0-0}
+  - {do: upgrade, id: sp1, to: 3-2-0}                                               # Spiked Balls, Even Faster Production
+  - {do: upgrade, id: sp2, to: 3-2-0}
+  - {do: upgrade, id: sp1, to: 4-2-0}                                               # Spiked Mines: round 40's MOAB
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.767, 0.112], round: 23}       # right hill (group ~R38)
+  - {do: upgrade, id: h1, to: 3-2-0}
+  - {do: upgrade, id: sp2, to: 4-2-0}                                               # Spiked Mines
+  - {do: upgrade, id: h1, to: 4-2-0}                                                # Apache Dartship
+answers:
+  lead: [{do: upgrade, id: sp1, to: 2-0-0}]
+  ceramic: [{do: upgrade, id: dr1, to: 1-3-0}]
+  moab: [{do: upgrade, id: sp1, to: 4-2-0}]
