@@ -2009,9 +2009,20 @@ LAST_RESORT_STRIKES = 3
 
 def build_map_record(account: AccountState, strategy_id: str, map_name: str,
                      mode: str) -> tuple[int, int]:
-    """(wins, losses) of ``strategy_id`` on ``map_name`` / ``mode`` in the
-    account's history (AccountState.history)."""
+    """(wins, losses) of ``strategy_id`` on ``map_name`` / ``mode``.
+
+    From AccountState.strategy_stats, which is never trimmed: the game
+    history keeps only the last HISTORY_LIMIT (500) games, and on 2026-11-10
+    00:38 Ravine Magic Only was played a fourth time because only two of
+    its three earlier losses were still in the history. The history is the
+    fallback for an account without stats."""
     m = canonical_map(map_name)
+    stats = getattr(account, "strategy_stats", None) or {}
+    if stats:
+        for sm, smode, sid, st in account.iter_strategy_stats():
+            if sid == strategy_id and smode == mode and canonical_map(sm) == m:
+                return int(st.get("wins") or 0), int(st.get("losses") or 0)
+        return 0, 0
     wins = losses = 0
     for h in account.history:
         if h.get("strategy") != strategy_id or h.get("mode") != mode:

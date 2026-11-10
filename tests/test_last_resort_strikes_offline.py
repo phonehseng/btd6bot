@@ -52,7 +52,18 @@ def test_a_map_mode_every_build_lost_is_played_last():
     assert not planner.map_struck_out(acc, "Dark Dungeons", "military_only")
 
 
+def test_the_untrimmed_stats_count_when_the_history_has_rolled_over():
+    """Ravine Magic Only, 2026-11-10: three losses in strategy_stats but only
+    two left in the 500-game history - the stats decide."""
+    acc = AccountState()
+    acc.strategy_stats["Ravine|magic_only|magic_obyn_ninja_wizard"] = {"wins": 0, "losses": 3, "games": 3}
+    for _ in range(2):
+        _game(acc, "Ravine", "magic_only", "magic_obyn_ninja_wizard", False)
+    assert planner.struck_out(acc, "magic_obyn_ninja_wizard", "Ravine", "magic_only")
+
+
 if __name__ == "__main__":
+    test_the_untrimmed_stats_count_when_the_history_has_rolled_over()
     test_three_losses_without_a_win_strike_out()
     test_a_win_or_another_build_or_mode_is_not_struck()
     test_a_map_mode_every_build_lost_is_played_last()
