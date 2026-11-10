@@ -1093,3 +1093,8 @@
 - Since the last entry: 1 win (Workshop Deflation r60, but 125 lives lost), 2 losses: #Ouch Half Cash r27 (already handled by another session, ceiling 0.3 in 236b4bf) and Castle Revenge Deflation r56 (solo_dartling; journal: round 54 rated 0.40 with $335 in hand).
 - Castle Revenge Deflation: case still "status: new", but another session is editing strategies/maps/castlerevenge_deflation.yaml in the cr-deflation worktree right now (file written 13:18), so I left the case and its fix to it.
 - No code changes: other sessions were committing up to 12:54 and are active now without a dev_active.txt; stayed out of the code to avoid clashes. Docs-only commit, check.py not needed.
+## 2026-11-10 14:18 (finished ~14:22)
+- Bot status: task Running; bot.py (reloaded 13:56), recorder and BTD6 up; no STOP, PAUSE or dev_active.txt; no tracebacks, loops, pauses or Auto Start warning in the last 300 log lines. Safe mode on (trips 4, streak 0). Now on Sunken Columns ABR, round 32 with 100 lives.
+- Since the last entry: 1 win (Mesa ABR r80, 42 lives lost), 3 losses: Pat's Pond ABR r30 and Water Park Impoppable r33 (both already "status: handled"; Pat's Pond ceiling 0.06 in eb0dfe9) and Bazaar Impoppable r63 at 14:14.
+- Bazaar Impoppable: another session committed cf1b5a6 (ceiling 0.3) one minute after the defeat, from the bazaar-imp worktree; the recorder had not filed its case folder yet at 14:18, so that session (or the next run) closes it against cf1b5a6.
+- No code changes: other sessions are committing right now without a dev_active.txt; stayed out of the code to avoid clashes. Docs-only commit, check.py not needed.
