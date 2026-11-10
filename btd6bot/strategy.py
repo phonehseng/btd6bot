@@ -101,17 +101,42 @@ def _first_appearance():
 _STD, _ABR = _first_appearance()
 _STD["rush"] = _ABR["rush"] = 63   # 122 ceramics + 75 leads (14,413 RBE)
 # camo in bulk: one camo-capable tower handles round 24's lone camo green, not
-# camo ceramics (51) or camo leads (59; ABR 24) - those need "strong camo"
+# camo ceramics (51) or camo leads (59; ABR 30) - those need "strong camo"
+CAMO_LEAD_BULK = 5      # camo leads in one round that make it a strong-camo round
+
+
+def _first_bulk_camo_lead(rounds):
+    """The first round (data/rounds.json's per-round groups) that sends at
+    least CAMO_LEAD_BULK camo leads, or None.
+
+    ABR's first camo lead comes alone on round 24, and dating the
+    strong-camo threat by first appearance made every ABR opening (a Fast
+    Track start at round 22) buy a Radar Scanner village for it, though a
+    ninja with acid pops one camo lead: Pat's Pond and Bloody Puddles ABR
+    (2026-11-10) spent $3.7-4.3k of a $5k opening on it and lost rounds
+    30 and 23. The bulk comes on ABR round 30 (9) and 59 (50); standard
+    rounds start at 59 (50) either way."""
+    found = []
+    for r, v in rounds.items():
+        n = sum(g.get("count", 0) for g in v.get("groups", [])
+                if g.get("camo") and str(g.get("bloon", "")).lower().startswith("lead"))
+        if n >= CAMO_LEAD_BULK:
+            found.append(int(r))
+    return min(found) if found else None
+
+
 try:
     import json as _json
     from pathlib import Path as _Path
-    _fa = _json.loads((_Path(__file__).resolve().parents[1] / "data" / "rounds.json")
-                      .read_text(encoding="utf-8"))["first_appearance"]
+    _rounds = _json.loads((_Path(__file__).resolve().parents[1] / "data" / "rounds.json")
+                          .read_text(encoding="utf-8"))
+    _fa = _rounds["first_appearance"]
     _STD["camo_ceramic"], _ABR["camo_ceramic"] = _fa["standard"]["camo_ceramic"], _fa["abr"]["camo_ceramic"]
-    _STD["camo_lead"], _ABR["camo_lead"] = _fa["standard"]["camo_lead"], _fa["abr"]["camo_lead"]
+    _STD["camo_lead"], _ABR["camo_lead"] = (_first_bulk_camo_lead(_rounds[k]) or _fa[k]["camo_lead"]
+                                            for k in ("standard", "abr"))
 except (OSError, ValueError, KeyError):
     _STD.update(camo_ceramic=51, camo_lead=59)
-    _ABR.update(camo_ceramic=51, camo_lead=24)
+    _ABR.update(camo_ceramic=51, camo_lead=30)
 THREATS = sorted((r, t) for t, r in _STD.items())
 ABR_SHIFT = {t: r for t, r in _ABR.items() if r != _STD.get(t)}
 
