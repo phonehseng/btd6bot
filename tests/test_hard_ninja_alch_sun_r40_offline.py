@@ -23,7 +23,10 @@ hero is not counted):
     2026-11-09), and those Half Cash-only steps stay out of Double HP;
   * in Half Cash, h1's Dartship stands by round 76 and a second Radar
     Scanner by round 78, which rates at R78_FLOORS or more (X Factor, Dark
-    Castle and Mesa lost round 78's camo ceramics on 2026-11-09).
+    Castle and Mesa lost round 78's camo ceramics on 2026-11-09);
+  * in Half Cash, the opening (rounds 22-35) rates at OPENING_FLOORS or more
+    with h1 at 3-0-0 by round 28's leads (Enchanted Glade lost round 31,
+    Castle Revenge round 25, Bloonarius Prime round 26).
 Run: python tests/test_hard_ninja_alch_sun_r40_offline.py"""
 import logging
 import sys
@@ -70,14 +73,25 @@ def _replay(mode, map_name):
     return r, boards
 
 
-def _margin(mode, map_name, board, rnd):
-    """The live forecast's rating of `board` for round `rnd` on the map."""
+def _stations(mode, map_name, board):
+    """(stations, track) of `board` as the live forecast sees it on the map."""
     m = SIM.map_model(map_name, learned=True)
     fc = RoundForecast(map_name, mode, m.sight, (getattr(m, "sight_height", None), getattr(m, "ground_height", None)))
     assert fc._ready(), map_name
     towers = [SimpleNamespace(tid=tid, kind=k, tiers=ti, x=fx, y=fy) for tid, (k, ti, fx, fy) in board.items()]
-    st = fc.stations(towers)
-    return D.round_margin(st, mode, rnd, fc.track) if st else 0.0
+    return fc.stations(towers), fc.track
+
+
+def _margin(mode, map_name, board, rnd):
+    """The live forecast's rating of `board` for round `rnd` on the map."""
+    st, track = _stations(mode, map_name, board)
+    return D.round_margin(st, mode, rnd, track) if st else 0.0
+
+
+def _lives_lost(mode, map_name, board, rnd):
+    """The lives the damage model expects `board` to lose in round `rnd`."""
+    st, track = _stations(mode, map_name, board)
+    return D.simulate_round(st, mode, rnd, track).lives_lost
 
 
 def test_moab_answers_are_the_helis():
@@ -220,10 +234,17 @@ def test_half_cash_rounds_59_to_78_floors():
 # 0.76, Moon Landing 1.81 -> 2.71, Cargo 1.02 -> 1.03, Chutes 0.86 -> 0.86,
 # Quad 0.52 -> 0.81, Party Parade 0.64 -> 0.64. The same round rated on the
 # board one round earlier (the plan a round behind) was 0.09-0.86 before.
+# Quad 0.81 -> 0.58 since 2026-11-09 22:30 with the same towers and tiers:
+# placement no longer counts the helis' heliports as covered ground
+# (Executor._tower_cover), so b1, d2 and v3 stand by n2 and the druid on
+# the right rather than together at the bottom. The old build replays the
+# same 0.58 with that change; without it the new Half Cash opening put
+# Mesa at 0.71, X Factor 0.52, Dark Castle 0.62 and Quad 0.52 here.
+# Party Parade 0.64 -> 0.56 the same way.
 R78 = 78
 DARTSHIP_BY_R78 = 76
 R78_FLOORS = {"Mesa": 1.1, "X Factor": 0.9, "Dark Castle": 0.65, "Moon Landing": 2.2, "Cargo": 0.9,
-              "Chutes": 0.75, "Quad": 0.7, "Party Parade": 0.55}
+              "Chutes": 0.75, "Quad": 0.5, "Party Parade": 0.5}
 
 
 def test_half_cash_holds_round_78():
@@ -234,6 +255,44 @@ def test_half_cash_holds_round_78():
         assert board["v3"][1] == (0, 2, 0), (map_name, board)
         m = _margin("half_cash", map_name, board, R78)
         assert m >= floor, f"{map_name}: round {R78} rated {m:.2f} (floor {floor})"
+
+
+# The Half Cash opening, rounds 22-35. Enchanted Glade lost round 31
+# (2026-11-09 21:18, 53 lives on round 27's rush, the rest in 28-31),
+# Castle Revenge round 25 and Bloonarius Prime round 26 that day, all with
+# the old order (n1 2-0-1, hero, n2, a1, then the heli): it covered one lane
+# of a split track, and h1 reached Razor Rotors (3-x-x, pops lead) only at
+# round 31-33, so rounds 28 and 30 (6 and 9 leads) rated 0.06 on most maps.
+# Now n1 stands first, then h1 2-0-0 (Pursuit: it chases the bloons over
+# every lane) before round 22 and 3-0-0 by round 28. Worst of rounds 22-35
+# but 24, old -> when written (each map in its own process):
+#   Enchanted Glade 0.64 -> 1.45, Castle Revenge 0.06 -> 0.72, X Factor
+#   0.06 -> 1.06, Quad 0.06 -> 0.58, Mesa 0.06 -> 0.99, Dark Castle 0.13 ->
+#   0.45, Cargo 0.44 -> 1.41, Bloonarius Prime 0.06 -> 1.16, Chutes 0.24 ->
+#   1.43, Party Parade 0.06 -> 0.93 (round 34's 160 yellows is now the
+#   worst on most maps; round 28 rates 2.6-10).
+# Round 24 is a single camo green: IFR comes after Razor Rotors (the cash
+# cannot buy both by round 28), so where n1 does not reach the green leaks
+# (3 lives); the model rates any leak at its floor, so that round is held
+# to its lives instead.
+OPENING_ROUNDS = range(22, 36)
+CAMO_GREEN_ROUND = 24
+CAMO_GREEN_LIVES = 3.5
+OPENING_LEAD_BY = 28
+OPENING_FLOORS = {"Enchanted Glade": 1.2, "Castle Revenge": 0.6, "X Factor": 0.9, "Quad": 0.5, "Mesa": 0.85,
+                  "Dark Castle": 0.4, "Cargo": 1.2, "Bloonarius Prime": 1.0}
+
+
+def test_half_cash_opening_holds_rounds_22_to_35():
+    for map_name, floor in OPENING_FLOORS.items():
+        _, boards = _replay("half_cash", map_name)
+        assert boards[OPENING_LEAD_BY]["h1"][1][0] >= 3, (map_name, boards[OPENING_LEAD_BY])
+        margins = {rnd: _margin("half_cash", map_name, boards[rnd], rnd)
+                   for rnd in OPENING_ROUNDS if rnd != CAMO_GREEN_ROUND}
+        worst = min(margins, key=margins.get)
+        assert margins[worst] >= floor, f"{map_name}: round {worst} rated {margins[worst]:.2f} (floor {floor})"
+        lives = _lives_lost("half_cash", map_name, boards[CAMO_GREEN_ROUND], CAMO_GREEN_ROUND)
+        assert lives <= CAMO_GREEN_LIVES, f"{map_name}: round {CAMO_GREEN_ROUND} costs {lives:.1f} lives"
 
 
 def test_hard_and_double_hp_skip_the_half_cash_steps():
