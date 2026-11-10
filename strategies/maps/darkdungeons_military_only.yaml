@@ -1,0 +1,154 @@
+# Dark Dungeons, Medium Military Monkeys Only: a sniper team in every room.
+#
+# Map (data/map_geometry/darkdungeons.json): six walled rooms. Three bloon
+# lanes run at once - left (PathLeft), middle (PathMiddle) and right
+# (PathRight) - and MOAB-class bloons take two lanes of their own (a
+# MoabOnlySplitter): the middle MOAB lane and the long top MOAB lane. The
+# walls block 37% of all sight lines, so a sniper sees only the room it
+# stands in. Water: the sludge pool in the right room (one buccaneer fits).
+#
+# Why the general builds lost here (six games, 2026-11-04..10: two
+# military_heli_sniper, solo_sniper, solo_ace, solo_heli, solo_mortar): a
+# general build brings one main tower and a few helpers, and three walled
+# lanes at once need towers in every room. The optimizer that set the
+# ceiling of 0.37 (2026-11-08) ranked map-wide towers by nothing, so its
+# snipers went to the top rows, which see the left, right and top MOAB
+# lanes but not one unit of the middle lane.
+#
+# Build: snipers on the floor of each room, where they see their own lane
+# end to end (comments: track length in sight, in world units, per lane):
+# the middle room at x 0.30-0.47 sees all 232 units of the middle lane and
+# 225 of the middle MOAB lane; the left room at x 0.05-0.13, y 0.86-0.91
+# sees 273 of the left lane's ~296 hittable units; the top row sees the
+# top MOAB lane. Each sniper comes with Full Metal Jacket (lead) and
+# Night Vision (camo), then 3-2-0 Deadly Precision for the ceramic and
+# MOAB rounds. The
+# buccaneer in the sludge pool, top-row snipers and an ace over the right
+# room cover the right lane; a Bomber Ace over the left room helps there
+# and on the top MOAB lane. No mortar or dartling (the bot does not aim
+# them), no heli (Pursuit chases one target across three lanes at once). Spots
+# and order: tools/optimize_builds.py's greedy search, run with every
+# placement offered at the best free spot for each lane and snipers ranked
+# by the track they see, every round required to hold at 2.5x in two
+# readings at once (below), at most 20 towers, each sniper placed with
+# lead and camo.
+#
+# Model check (btd6bot/dps_model.round_margin, Fast Track start at round 15
+# with $6,057, Double Cash income, steps bought in order as cash allows;
+# 1.0 = pops everything at full strength, 2.0 = still at half strength):
+#   * live reading (map-wide aces, sight blocked by every wall - what the
+#     live forecast computes): worst 1.41 at R15, 1.45 R40, 1.51 R60; all
+#     other rounds 1.98 or more. With raised-ground sight heights: the same
+#     (1.41 R15, 1.45 R40, 1.53 R60) - no sniper stands on raised ground
+#     that the plan needs.
+#   * hard reading (aces only over their own flight circle): worst 1.26 at
+#     R60, 1.41 R15, 1.53 R40, 1.56 R34.
+#   * tools/simulate_threats.simulate(real_map=True, learned=True), same
+#     economy, the executor buying as it does live (threat answers,
+#     surplus): no threat gaps, 74 of 79 steps bought; its boards rate
+#     worst 1.41 (R15) live and 1.08 (R60) hard; with the $6,700 the game
+#     really gave on 2026-11-10: 76 of 79, worst 1.53 live, 1.15 hard.
+# Every round pops at full strength; none reaches the optimizer's 2.0 bar,
+# hence base_success 0.6 until the record says more.
+#
+# Sources:
+#   * bloonswiki Dark Dungeons: three separate lanes behind walls that rule
+#     out map-wide snipers; only two MOAB lanes
+#     (https://www.bloonswiki.com/Dark_Dungeons)
+#   * bloonswiki Military Only: Military towers and heroes, 60 rounds
+#     (https://www.bloonswiki.com/Military_Only)
+#   * docs/map_strategies/expert.md, Dark Dungeons (rooms, lanes, sight)
+#
+# `at` = exact spot (screen fractions of the 1920x1200 window), legal in
+# plan order (tests/test_map_hints_offline.py). R = round the replay buys
+# it in. The hero is not counted by the model (extra safety).
+id: darkdungeons_military_only
+map: Dark Dungeons
+hero: quincy
+modes: [military_only]
+planner:
+  towers: {buccaneer: [0, 3, 2], sniper: [4, 4, 0], ace: [2, 3, 1]}
+  base_success: {military_only: 0.6}
+  maps: [Dark Dungeons]
+plan:
+  - {do: place, id: buc1, kind: buccaneer, role: dps, at: [0.729, 0.811]}   # R15: sees right 159 units
+  - {do: upgrade, id: buc1, to: 0-1-0}   # R15
+  - {do: place, id: sni2, kind: sniper, role: dps, target: strong, at: [0.131, 0.879]}   # R15: sees left 273 units
+  - {do: upgrade, id: sni2, to: 1-2-0}   # R15
+  - {do: place, id: sni3, kind: sniper, role: dps, target: strong, at: [0.302, 0.862]}   # R15: sees middle 232, middle MOAB 225, top MOAB 10 units
+  - {do: upgrade, id: sni3, to: 1-2-0}   # R15
+  - {do: place, id: sni4, kind: sniper, role: dps, target: strong, at: [0.302, 0.930]}   # R15: sees middle 232, middle MOAB 225, top MOAB 3 units
+  - {do: upgrade, id: sni4, to: 1-1-0}   # R15
+  - {do: place, id: sni5, kind: sniper, role: dps, target: strong, at: [0.099, 0.896]}   # R15: sees left 271, top MOAB 22 units
+  - {do: upgrade, id: sni5, to: 1-1-0}   # R15
+  - {do: upgrade, id: buc1, to: 0-1-1}   # R15
+  - {do: upgrade, id: sni4, to: 1-2-0}   # R16
+  - {do: upgrade, id: sni5, to: 1-2-0}   # R17
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.163, 0.709]}   # R18: Quincy in the left room, where the game took it on 2026-11-10 (not counted by the model)
+  - {do: place, id: sni6, kind: sniper, role: dps, target: strong, at: [0.377, 0.896]}   # R19: sees middle 174, middle MOAB 171 units
+  - {do: upgrade, id: sni6, to: 1-1-0}   # R20
+  - {do: place, id: ace7, kind: ace, role: dps, at: [0.067, 0.436]}   # R21: sees left 150, top MOAB 81 units
+  - {do: upgrade, id: ace7, to: 0-1-0}   # R22
+  - {do: upgrade, id: buc1, to: 0-2-1}   # R22
+  - {do: upgrade, id: sni6, to: 1-2-0}   # R23
+  - {do: upgrade, id: buc1, to: 0-2-2}   # R24
+  - {do: upgrade, id: ace7, to: 1-1-0}   # R25
+  - {do: upgrade, id: buc1, to: 0-3-2}   # R26
+  - {do: upgrade, id: ace7, to: 2-1-0}   # R27
+  - {do: place, id: sni8, kind: sniper, role: dps, target: strong, at: [0.067, 0.164]}   # R28: sees right 12, left 145, top MOAB 213 units
+  - {do: upgrade, id: sni8, to: 1-2-0}   # R28
+  - {do: upgrade, id: ace7, to: 2-3-0}   # R30
+  - {do: place, id: sni9, kind: sniper, role: dps, target: strong, at: [0.377, 0.589]}   # R31: sees middle 150, middle MOAB 147 units
+  - {do: upgrade, id: sni9, to: 1-2-0}   # R32
+  - {do: place, id: sni10, kind: sniper, role: dps, target: strong, at: [0.056, 0.913]}   # R32: sees right 2, left 199, top MOAB 27 units
+  - {do: upgrade, id: sni10, to: 1-2-0}   # R33
+  - {do: place, id: sni11, kind: sniper, role: dps, target: strong, at: [0.302, 0.589]}   # R34: sees middle 147, middle MOAB 144 units
+  - {do: upgrade, id: sni11, to: 1-2-0}   # R35
+  - {do: place, id: sni12, kind: sniper, role: dps, target: strong, at: [0.302, 0.521]}   # R35: sees middle 143, middle MOAB 141 units
+  - {do: upgrade, id: sni12, to: 1-2-0}   # R36
+  - {do: place, id: sni13, kind: sniper, role: dps, target: strong, at: [0.045, 0.862]}   # R36: sees left 194, top MOAB 22 units
+  - {do: upgrade, id: sni13, to: 1-2-0}   # R36
+  - {do: place, id: sni14, kind: sniper, role: dps, target: strong, at: [0.804, 0.181]}   # R36: sees right 148, left 6, top MOAB 166 units
+  - {do: upgrade, id: sni14, to: 1-2-0}   # R37
+  - {do: place, id: sni15, kind: sniper, role: dps, target: strong, at: [0.045, 0.215]}   # R37: sees right 17, left 135, top MOAB 143 units
+  - {do: upgrade, id: sni15, to: 1-2-0}   # R38
+  - {do: place, id: ace16, kind: ace, role: dps, at: [0.719, 0.453]}   # R38: sees right 159, top MOAB 98 units
+  - {do: upgrade, id: ace16, to: 0-3-0}   # R38
+  - {do: place, id: sni17, kind: sniper, role: dps, target: strong, at: [0.729, 0.164]}   # R39: sees right 115, left 6, top MOAB 165 units
+  - {do: upgrade, id: sni17, to: 1-2-0}   # R39
+  - {do: place, id: sni18, kind: sniper, role: dps, target: strong, at: [0.302, 0.453]}   # R39: sees middle 139, middle MOAB 137 units
+  - {do: upgrade, id: sni18, to: 1-1-0}   # R39
+  - {do: upgrade, id: sni18, to: 1-2-0}   # R40
+  - {do: place, id: sni19, kind: sniper, role: dps, target: strong, at: [0.387, 0.845]}   # R40: sees middle 126, middle MOAB 124 units
+  - {do: upgrade, id: sni19, to: 1-2-0}   # R40
+  - {do: place, id: sni20, kind: sniper, role: dps, target: strong, at: [0.473, 0.930]}   # R40: sees middle 124, middle MOAB 122 units
+  - {do: upgrade, id: sni20, to: 1-2-0}   # R40
+  - {do: upgrade, id: ace16, to: 0-3-1}   # R40
+  - {do: upgrade, id: sni8, to: 3-2-0}   # R42
+  - {do: upgrade, id: sni9, to: 2-2-0}   # R42
+  - {do: upgrade, id: sni4, to: 2-2-0}   # R43
+  - {do: upgrade, id: sni4, to: 3-2-0}   # R44
+  - {do: upgrade, id: sni11, to: 3-2-0}   # R45
+  - {do: upgrade, id: sni2, to: 3-2-0}   # R46
+  - {do: upgrade, id: sni3, to: 3-2-0}   # R48
+  - {do: upgrade, id: sni14, to: 3-2-0}   # R49
+  - {do: upgrade, id: sni15, to: 3-2-0}   # R49
+  - {do: upgrade, id: sni5, to: 2-2-0}   # R49
+  - {do: upgrade, id: sni6, to: 3-2-0}   # R50
+  - {do: upgrade, id: sni18, to: 3-2-0}   # R50
+  - {do: upgrade, id: sni12, to: 3-2-0}   # R51
+  - {do: upgrade, id: sni17, to: 3-2-0}   # R51
+  - {do: upgrade, id: sni9, to: 3-2-0}   # R52
+  - {do: upgrade, id: sni13, to: 2-2-0}   # R52
+  - {do: upgrade, id: sni13, to: 3-2-0}   # R53
+  - {do: upgrade, id: sni10, to: 2-2-0}   # R54
+  - {do: upgrade, id: sni19, to: 2-2-0}   # R54
+  - {do: upgrade, id: sni10, to: 3-2-0}   # R55
+  - {do: upgrade, id: sni5, to: 3-2-0}   # R55
+  - {do: upgrade, id: sni4, to: 4-2-0}   # R57
+  - {do: upgrade, id: sni20, to: 2-2-0}   # R57
+  - {do: upgrade, id: sni20, to: 3-2-0}   # R58
+  - {do: upgrade, id: sni19, to: 2-3-0}   # R59
+  - {do: upgrade, id: sni19, to: 2-4-0}   # R60
+panic:
+  - {do: place, kind: sniper, role: dps}

@@ -146,6 +146,7 @@ CHIMPS guides, removable obstacles, BTD6 Index records) is in
 | Dark Castle | `strategies/maps/darkcastle_reverse.yaml` | reverse | reverse 2.02 (R59) | obyn |
 | Dark Dungeons | `strategies/maps/darkdungeons_easy.yaml` | easy | easy 2.38 (R40) | sauda |
 | Dark Dungeons | `strategies/maps/darkdungeons_medium.yaml` | medium, reverse | medium 2.02 (R54); reverse 2.02 (R54) | sauda |
+| Dark Dungeons | `strategies/maps/darkdungeons_military_only.yaml` | military_only | military_only 1.41 (R15), 1.26 (R60) with aces on their own circle | quincy |
 | Flooded Valley | `strategies/maps/floodedvalley_deflation.yaml` | deflation | deflation 3.79 (R54) | admiral_brickell |
 | Flooded Valley | `strategies/maps/floodedvalley_easy.yaml` | easy | easy 2.33 (R39) | admiral_brickell |
 | Flooded Valley | `strategies/maps/floodedvalley_medium.yaml` | medium, military_only, reverse | medium 2.33 (R15); military_only 2.33 (R15); reverse 2.25 (R55) | admiral_brickell |
@@ -294,7 +295,7 @@ Model: 5 routes in one scenario (3 bloon lanes, 2 MOAB lanes), 10% of the track 
 
 - primary_only: not written: best reached 0.34 at round 37 after repairs (camo darts were added for rounds 24/28; the camo and white rounds 33-37 stay short in three walled rooms at once).
 - deflation: not written: best reached 0.06 at round 59 (camo leads; a bomb build without radar). Not redone with a radar village for lack of time.
-- military_only: not written: best reached 1.65 at round 43 (aces, helis and a sludge-pool sub; snipers left out because walls block their sight).
+- military_only: written 2026-11-10 (`darkdungeons_military_only.yaml`, after six losses of general builds): snipers on the floor of each room see their own lane whole - the walls block only what lies outside the room. The earlier note (best 1.65, later 0.37, "snipers left out because walls block their sight") came from the optimizer ranking map-wide towers by nothing, which put every sniper on the top rows, blind to the middle lane. Worst margin 1.41 (R15) in the live reading, 1.26 (R60) with aces held to their own circle; every round pops at full strength, none reaches 2.0.
 - apopalypse: not written: random continuous rounds; no round data to check a build against (see gaps).
 
 ## Flooded Valley
