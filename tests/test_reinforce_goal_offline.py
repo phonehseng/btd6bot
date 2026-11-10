@@ -137,6 +137,59 @@ def test_a_goal_is_dropped_when_it_no_longer_holds():
     assert R.goal_option(ex, 5000, 93) is None and ex.reinforce_goal is None
 
 
+class PlaceEx(GrowEx):
+    """GrowEx whose try_step can also place: a "place" step puts down a bare
+    tower of the step's kind under the next free id (dart1, dart2, ...)."""
+    mode = "impoppable"
+
+    def __init__(self):
+        super().__init__()
+        self.g.towers = {"dr": N(tid="dr", kind="dart", tiers=[0, 2, 3], x=0.4, y=0.4)}
+        self.placed = []
+
+    def try_step(self, step, cash, rnd):
+        if step.get("do") == "place":
+            tid = f"{step['kind']}{len(self.placed) + 1}"
+            self.g.towers[tid] = N(tid=tid, kind=step["kind"], tiers=[0, 0, 0], x=0.6, y=0.6)
+            self.placed.append(tid)
+            return "bought"
+        global FAMILY
+        old, FAMILY = FAMILY, "impoppable"
+        try:
+            return GrowEx.try_step(self, step, cash, rnd)
+        finally:
+            FAMILY = old
+
+
+def test_a_placement_rated_grown_is_grown():
+    """Water Park Impoppable (2026-11-10 13:44): "another dart (to grow to
+    0-3-2)" was bought on rounds 30, 31 and 32 as three bare darts and none
+    grew; round 33's camo yellows took the one life with $2,945 unspent.
+    The placed dart is now grown to the crosspath it was rated at, with the
+    cash left after its own price."""
+    ex = PlaceEx()
+    opt = R.Option("another dart (to grow to 0-3-2)", 1200, {"do": "place", "kind": "dart", "role": "dps"},
+                   [], goal={"do": "upgrade", "id": None, "to": "0-3-2"})
+    cash = T.total_cost("dart", (0, 3, 2), "impoppable") + 50
+    real_best = R.best
+    R.best = lambda *a, **k: ("buy", (opt, 33, 0.06, 4.3))
+    try:
+        assert R.buy_best(ex, None, cash, 30, 60) == "bought"
+    finally:
+        R.best = real_best
+    assert ex.placed == ["dart1"], ex.placed
+    assert tuple(ex.g.towers["dart1"].tiers) == (0, 3, 2), ex.g.towers["dart1"].tiers
+    assert getattr(ex, "reinforce_goal", None) is None
+    # short of cash: the rest stays as the goal for the next looks
+    ex2 = PlaceEx()
+    R.best = lambda *a, **k: ("buy", (opt, 33, 0.06, 4.3))
+    try:
+        R.buy_best(ex2, None, T.total_cost("dart", (0, 1, 0), "impoppable") + 10, 30, 60)
+    finally:
+        R.best = real_best
+    assert ex2.reinforce_goal and ex2.reinforce_goal["step"]["id"] == "dart1", ex2.reinforce_goal
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

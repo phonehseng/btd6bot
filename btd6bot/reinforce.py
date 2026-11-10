@@ -828,8 +828,12 @@ def grow(ex, forecast, opts, cash, rnd, deadline=None):
                     out.append(standing)
                     continue
                 new = SimpleNamespace(**{**vars(new), "tiers": tiers})
-                o = Option(f"{o.what} (to grow to {'-'.join(map(str, tiers))})", -neg_cost,
-                           o.step, rest + [new])
+                whole = "-".join(map(str, tiers))
+                # the placement was rated at the crosspath it grows into, so
+                # growing it is part of the purchase: the goal's tower id is
+                # filled in once it stands (buy_best, _new_tower_goal)
+                o = Option(f"{o.what} (to grow to {whole})", -neg_cost,
+                           o.step, rest + [new], goal={"do": "upgrade", "id": None, "to": whole})
         out.append(o)
     return out
 
@@ -972,6 +976,28 @@ def follow_goal(ex, goal, cash, due, rnd, start):
         ex.reinforce_goal = None
     else:
         ex.reinforce_goal = {"step": dict(goal), "round": due}
+
+
+def _new_tower_goal(ex, goal, step, standing):
+    """(goal, start) for a placement rated at the crosspath it grows into:
+    the goal's upgrade step aimed at the tower the placement just put down
+    (the one of its kind that was not standing before), and its tiers now -
+    or (None, None) when no new tower can be found.
+
+    Water Park Impoppable (2026-11-10 13:44): reinforce chose "another dart
+    (to grow to 0-3-2)" - Enhanced Eyesight for round 33's camo yellows - on
+    rounds 30, 31 and 32. Each time it placed a bare $240 dart and nothing
+    grew it, so the next look rated another bare dart at 0-3-2 again; round
+    33 came with three 0-0-0 darts and $2,945 unspent, and its camo took
+    the one life. follow_goal now grows the placed tower the way it grows
+    an upgrade chosen for its whole path, from the tiers it stands at."""
+    kind = step.get("kind")
+    new = [tid for tid, p in ex.g.towers.items()
+           if tid not in standing and (kind is None or getattr(p, "kind", None) == kind)]
+    if len(new) != 1:
+        return None, None
+    tid = new[0]
+    return dict(goal, id=tid), tuple(ex.g.towers[tid].tiers)
 
 
 def _price_family(ex):
@@ -1129,8 +1155,9 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
     if status != "buy":
         return status
     o, worst, before, after = found
-    tower = ex.g.towers.get(o.goal["id"]) if o.goal else None
+    tower = ex.g.towers.get(o.goal["id"]) if o.goal and o.goal.get("id") else None
     start = tuple(tower.tiers) if tower is not None else None
+    standing = set(ex.g.towers)          # to find a tower this purchase places
     with _why(ex, "reinforce", f"{o.what}: round {worst} {before or 0.0:.2f}->{after or 0.0:.2f}"):
         r = ex.try_step(dict(o.step), cash, rnd)
     if r in ("bought", "progress"):
@@ -1142,9 +1169,14 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
             # yields; what it spends uses up the given-up steps' share of the
             # bank (Executor.given_up_credit)
             ex.yield_spent = (getattr(ex, "yield_spent", 0) or 0) + o.cost
-        if o.goal:
+        goal = o.goal
+        if goal and goal.get("id") is None:
+            goal, start = _new_tower_goal(ex, goal, o.step, standing)
+            if goal:            # the placement itself is paid: grow it from what is left
+                cash -= T.total_cost(ex.g.towers[goal["id"]].kind, start, _price_family(ex))
+        if goal:
             # the path was rated whole: the rest of its tiers follow
-            follow_goal(ex, o.goal, cash, worst, rnd, start)
+            follow_goal(ex, goal, cash, worst, rnd, start)
         return "bought"
     log.info("reinforce: %s ($%d) did not go through (%s)", o.what, o.cost, r)
     return "failed"
