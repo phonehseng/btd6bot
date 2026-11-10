@@ -1,0 +1,95 @@
+# Flooded Valley, Apopalypse: eight buccaneers in the river right of the dam
+# bought first (Apopalypse sends bloons while the opening is bought), then
+# Crow's Nest (x-x-2) on every boat for camo, Destroyers for the camo
+# ceramics of rounds 33-43 and Monkey Pirates for the MOABs from 41.
+#
+# Why: apopalypse_ninja_sniper lost Flooded Valley Apopalypse twice - round 16
+# (2026-11-06) and round 15 (2026-11-09 21:20, case 20261109_212128): its
+# opening dart and second ninja probed the dam (refused), the towers it did
+# place stood behind the dam, and the recording shows lives going 150 -> 140 ->
+# 100 -> 53 during the 40-second opening build, 0 by 21:20:34. The map facts
+# are floodedvalley_abr.yaml's: the dam hides the track from every land cell,
+# the right-hand river touches all of it. floodedvalley_medium (the Medium
+# winner) rates 0.92 on Apopalypse's random rounds (round 35: 10 camo
+# ceramics; its boats are x-0-1, no camo).
+#
+# Sources: as floodedvalley_abr.yaml, and bloonswiki Strategy:Apopalypse_(BTD6):
+# Destroyers with camo support carry the mode
+# (https://www.bloonswiki.com/Strategy:Apopalypse_(BTD6)).
+#
+# Evidence: tools/apopalypse_check.py 2026-11-09 (learned map, Fast Track R15
+# with $6,057, Double Cash, a poor game's income; constructed worst windows and
+# 8 random ones): worst 1.26 at round 17 (Pink x40 window, sampled 3.08), under
+# 2.0 at rounds 16-22, 24-25, 35 (1.70), 47 (1.61), 51 (1.94); with drift also
+# 1.26; plan 49/50 bought, every tower on its `at`. The heli (left bank, flies)
+# is there for strategy.coverage's ceramic/BFB lines, which list no buccaneer. Under the check's 2.0 gate, so
+# data/model_ceiling.json records Flooded Valley Apopalypse at 1.26 and the
+# planner caps every build there (planner.ceiling_cap) - this build is the
+# best measured, not a safe one. Variants tried: six bare boats + sub (1.22,
+# R35), four 2-0-2 boats (0.74), Grape Shot middle-path boats (1.18).
+# Test (spots): tests/test_floodedvalley_builds_offline.py.
+#
+# Status: written 2026-11-09, not played yet.
+id: floodedvalley_apopalypse
+map: Flooded Valley
+hero: admiral_brickell
+plan_first: true
+modes: [apopalypse]
+planner:
+  towers: {buccaneer: [4, 4, 2], heli: [4, 0, 0]}
+  base_success: {apopalypse: 0.6}
+  maps: [Flooded Valley]
+plan:
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.526, 0.709]}
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.569, 0.743]}
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.548, 0.641]}
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.537, 0.794]}
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.569, 0.572]}
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.537, 0.215]}
+  - {do: place, id: b7, kind: buccaneer, role: dps, at: [0.58, 0.453]}
+  - {do: place, id: b8, kind: buccaneer, role: dps, at: [0.59, 0.675]}
+  - {do: upgrade, id: b1, to: 0-2-2}
+  - {do: upgrade, id: b3, to: 0-2-0}
+  - {do: upgrade, id: b2, to: 2-0-0}
+  - {do: upgrade, id: b4, to: 2-0-0}
+  - {do: upgrade, id: b5, to: 2-0-0}
+  - {do: upgrade, id: b6, to: 2-0-0}
+  - {do: upgrade, id: b7, to: 2-0-0}
+  - {do: upgrade, id: b8, to: 2-0-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.537, 0.146]}
+  - {do: upgrade, id: b6, to: 2-0-2}
+  - {do: upgrade, id: b5, to: 2-0-2}
+  - {do: upgrade, id: b7, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 0-3-2}
+  - {do: upgrade, id: b3, to: 0-3-2}
+  - {do: upgrade, id: b5, to: 3-0-2}
+  - {do: upgrade, id: b8, to: 2-0-2}
+  - {do: upgrade, id: b7, to: 3-0-2}
+  - {do: place, id: b9, kind: buccaneer, role: dps, at: [0.612, 0.777]}
+  - {do: upgrade, id: b9, to: 2-0-2}
+  - {do: place, id: b10, kind: buccaneer, role: dps, at: [0.58, 0.368]}
+  - {do: upgrade, id: b10, to: 2-0-2}
+  - {do: upgrade, id: b1, to: 0-4-2}
+  - {do: place, id: b11, kind: buccaneer, role: dps, at: [0.569, 0.266]}
+  - {do: upgrade, id: b11, to: 2-0-2}
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: upgrade, id: b4, to: 2-0-2}
+  - {do: upgrade, id: b6, to: 3-0-2}
+  - {do: upgrade, id: b8, to: 3-0-2}
+  - {do: place, id: b12, kind: buccaneer, role: dps, at: [0.58, 0.828]}
+  - {do: place, id: b13, kind: buccaneer, role: dps, at: [0.601, 0.521]}
+  - {do: upgrade, id: b13, to: 2-0-2}
+  - {do: upgrade, id: b12, to: 2-0-2}
+  - {do: upgrade, id: b7, to: 4-0-2}
+  - {do: upgrade, id: b3, to: 0-4-2}
+  - {do: upgrade, id: b5, to: 4-0-2}
+  - {do: upgrade, id: b10, to: 3-0-2}
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: b4, to: 3-0-2}
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.35, 0.504]}     # left bank: flies, needs no sight
+  - {do: upgrade, id: h1, to: 2-0-0}                                    # ceramic cover (strategy.coverage)
+  - {do: upgrade, id: h1, to: 4-0-0}                                    # Apache Dartship: BFB cover
+answers:
+  lead: [{do: upgrade, id: b1, to: 0-2-2}]
+  camo: [{do: upgrade, id: b1, to: 0-2-2}]
+  moab: [{do: upgrade, id: b1, to: 0-4-2}]
