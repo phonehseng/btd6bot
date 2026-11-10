@@ -1,0 +1,104 @@
+# Glacial Trail, Alternate Bloons Rounds: two helis and a Spectre ace (they
+# need no line of sight), one Spike Factory grown to Spiked Mines on Floor4,
+# two Druids of the Jungle and a Radar Scanner village, placed in four
+# phases so the map's freeze never stops more than about a third of them.
+#
+# Why: all three ABR games on Glacial Trail were lost on round 31 -
+# double_hp_sniper_sun (2026-11-09 03:24), hard_glaive_lord (11-09 21:22)
+# and abr_ninja_alch (2026-11-10 11:17, journal logs/journal/
+# 20261110_111721_GlacialTrail_abr.jsonl: margin 0.06 from round 30, 32
+# lives lost to round 31's zebras, then the game). Each bought its whole
+# Fast Track opening at round 22, so all of it sat in ice on rounds 30-32.
+# The Medium build (glacialtrail_medium.yaml) replays to 0.13 on ABR (round
+# 40, its group-R22 spike frozen for the first MOAB) and 0.24 at round 80.
+#
+# Map facts (see glacialtrail_medium.yaml for the sources):
+#   * Ground. Beside the track only Floor2 (~0.14, 0.52) and Floor4 (~0.72,
+#     0.65) take a tower. The game refused a Spike Factory on Floor2 live
+#     (Medium, 2026-11-10 07:26, "spot 0.142,0.521 refused the click for
+#     spike"; medium-sized darts, wizards and heroes did fit there), so this
+#     build has one spike, on Floor4, where the game took it. Everything else
+#     stands where the ice walls do not matter: helis and aces are global
+#     and need no sight, druid vines reach the whole track, the village only
+#     has to be near the druids. Heli/ace-sized ground is only on the right
+#     hill (x 0.66-0.82, y 0.10-0.22) and the bottom-left ice floe.
+#   * Freeze. Every tower but the Ice Monkey sits in ice for two rounds in
+#     ten, counted from the round it was placed (rounds p+9, p+10, p+19 ...:
+#     dps_model.frozen_in). With the test's one-round slack a tower first on
+#     the board at round f is counted frozen in rounds f+8..f+10 (+10n).
+#   * ABR. Hard prices; with Fast Track the game starts at round 22 with
+#     about $9,000 (optimize_builds.economy('abr', double_cash + fast_track)).
+#     data/rounds.json "abr": purples from 22, a camo lead on 24, nine camo
+#     leads on 30, camo whites and zebras on 31, the first (fortified) MOAB
+#     on 40, two MOABs on 43, three on 47, BFBs from 54 (64, 65, 75), ZOMGs
+#     on 79-80. Camo leads need Razor Rotors with the heli's camo (3-2-0);
+#     druids pop neither camo nor (below Hard Thorns) lead.
+#
+# Phases (first board round as replayed; frozen rounds mod 10):
+#   A  h1 heli          22      0, 1, 2   (30-32, 40-42 ... 80)
+#   B  h2 heli, dr1     25      3, 4, 5
+#   S  sp1 spike        26      4, 5, 6   awake for the MOAB rounds 40, 43, 47
+#   C  dr2 29 (7-9), a1 ace 38 (6-8), v1 village 41 (9, 0, 1)
+# Rounds 22-24 are h1's alone (3-2-0: 2.59, 6.30, 16); rounds 30-32 are
+# held by h2 3-2-0 and dr1 while h1 is frozen; round 40 by sp1's Spiked
+# Mines; rounds 44-45 (B and S frozen) by h1, dr2 and the Radar Scanner;
+# the ace takes over the A-frozen rounds from 50 (Spectre, global, sees
+# camo). Steps are bought in order and a step with a later `round` holds the
+# ones after it: a1 is placed at 38 ($865, its phase) before sp1's $14k
+# Spiked Mines, which still lands before round 40.
+#
+# Spots: hero (0.120, 0.828) where heroes stood five times; h1 (0.767,
+# 0.112) where the Medium build's heli stood (2026-11-10); dr1 (0.158,
+# 0.879) and dr2 (0.729, 0.274) where druids stood; sp1 (0.719, 0.649)
+# where the Medium spike stood. Not yet taken live, legal on the map's
+# geometry with the towers before them: h2 (0.680, 0.160, beside the ace
+# the game took at 0.671, 0.240 on 11-09), a1 (0.090, 0.900, beside the
+# villages taken at 0.110-0.120, 0.913) and v1 (0.785, 0.215, within its
+# 40-unit range of dr2 and h1).
+#
+# Evidence: replayed executor-faithfully 2026-11-10 (tools/simulate_threats.
+# simulate on the learned map, Fast Track start R22 with $9,004, Double
+# Cash income), each round's start board rated by the live forecast with
+# every tower frozen by its placement round (the board's first round or the
+# one before, the worse counts; hero not counted): ABR worst 2.35 (R31),
+# then R35 2.40, R58 2.57, R22 2.59, R65 2.71; R40 6.17, R80 3.87. No threat
+# gaps, every tower on its spot, nothing bought off the plan (h2 5-2-0, the
+# last step, is still saving at round 80). Test: tests/
+# test_glacialtrail_builds_offline.py.
+#
+# Status: written 2026-11-10, not played yet.
+id: glacialtrail_abr
+map: Glacial Trail
+hero: obyn            # no sight needed; buffs the druids (not rated by the forecast)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [abr]
+planner:
+  towers: {spike: [4, 2, 0], druid: [1, 3, 0], heli: [5, 2, 0], ace: [0, 2, 4], village: [0, 2, 0]}
+  base_success: {abr: 0.8}
+  maps: [Glacial Trail]
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.120, 0.828]}                  # ice floe
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.767, 0.112]}                    # phase A (R22), right hill
+  - {do: upgrade, id: h1, to: 3-2-0}                                                  # Razor Rotors + camo: R24 camo lead
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.680, 0.160], round: 25}         # phase B, right hill (west)
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.158, 0.879], round: 25}       # phase B, ice floe
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.719, 0.649], round: 26}       # phase S, Floor4
+  - {do: upgrade, id: h2, to: 3-2-0}                                                  # R30's camo leads while h1 is frozen
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.729, 0.274], round: 28}       # phase C, right hill
+  - {do: upgrade, id: dr1, to: 1-3-0}                                                 # Druid of the Jungle, Hard Thorns
+  - {do: upgrade, id: dr2, to: 1-3-0}                                                 # holds R34-35 with h1
+  - {do: place, id: a1, kind: ace, role: dps, at: [0.090, 0.900], round: 38}          # phase C (R38), ice floe
+  - {do: upgrade, id: sp1, to: 4-0-0}                                                 # Spiked Mines: R40's MOAB
+  - {do: place, id: v1, kind: village, role: support, at: [0.785, 0.215]}             # right hill, by dr2 and h1
+  - {do: upgrade, id: v1, to: 0-2-0}                                                  # Radar Scanner: R45's camo purples
+  - {do: upgrade, id: a1, to: 0-2-4}                                                  # Spectre: the A-frozen rounds from 50
+  - {do: upgrade, id: h1, to: 4-2-0}                                                  # Apache Dartship
+  - {do: upgrade, id: sp1, to: 4-2-0}
+  - {do: upgrade, id: h1, to: 5-2-0}                                                  # Apache Prime: BFBs and ZOMGs
+  - {do: upgrade, id: h2, to: 4-2-0}
+  - {do: upgrade, id: h2, to: 5-2-0}
+answers:
+  camo_lead: [{do: upgrade, id: h1, to: 3-2-0}]
+  lead: [{do: upgrade, id: h1, to: 3-2-0}]
+  ceramic: [{do: upgrade, id: dr1, to: 1-3-0}]
+  moab: [{do: upgrade, id: sp1, to: 4-0-0}]

@@ -34,6 +34,19 @@ of the two counts; the hero is not counted):
     when written Medium worst 2.23 (R43), Reverse 2.23 (R43); the general build that lost Medium replays to 0.06 at rounds 24,
     33, 45 and 53 (its whole board frozen at once), even with the replay
     accepting its spots inside the walls.
+
+ABR (strategies/maps/glacialtrail_abr.yaml) is its own build: all three
+ABR games were lost on round 31 (2026-11-09 03:24 and 21:22, 2026-11-10
+11:17), each with a Fast Track opening bought at round 22 and frozen
+together in rounds 30-32. ABR starts at round 22 with about $9,000 and
+brings camo leads (24, 30) before the first MOAB (40), which the Medium
+build cannot meet: it replays to 0.13 (round 40) on ABR. The live Floor2
+spike was refused (Medium, 2026-11-10 07:26), so the ABR build keeps one
+spike (sp1, Floor4) and puts its weight on two helis, a Spectre ace and
+two druids, placed in four phases: h1 at round 22 (frozen rounds 0-2 mod
+10), h2 and dr1 at 25 (3-5), sp1 at 26 (4-6: awake for the MOAB rounds
+40, 43 and 47), dr2 and a1 at 28-38 (6-8). When written ABR worst 2.35
+(R31), then R35 2.40, R58 2.57, R22 2.59.
 Run: python tests/test_glacialtrail_builds_offline.py"""
 import logging
 import math
@@ -60,8 +73,10 @@ GENERAL = "primary_core"                               # lost Medium at R40 on 2
 # build -> [(mode, the worst round rating allowed)]
 BUILDS = {
     "glacialtrail_medium": [("easy", 2.0), ("medium", 2.0), ("reverse", 2.0)],
+    "glacialtrail_abr": [("abr", 2.0)],
 }
-SPIKES = ("sp1", "sp2")
+# build -> its spike factories (ABR: Floor4 only - the game refused a spike on Floor2)
+SPIKES = {"glacialtrail_medium": ("sp1", "sp2"), "glacialtrail_abr": ("sp1",)}
 MOAB_ANSWER = "sp1"
 
 
@@ -113,7 +128,7 @@ def test_spikes_reach_the_track_from_their_spots():
     fc = _forecast("medium")
     for build in BUILDS:
         steps = {st["id"]: st for st in S.load_all()[build]["plan"] if st.get("do") == "place"}
-        for tid in SPIKES:
+        for tid in SPIKES[build]:
             x, z, _ = fc.track.frac_to_world(*steps[tid]["at"])
             sight = fc.sight if P.needs_sight("spike") else None
             zones = fc.track.zones(x, z, D.profile("spike", (4, 2, 0)).range, sight=sight)
