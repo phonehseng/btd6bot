@@ -431,7 +431,26 @@ def test_half_cash_blimp_check_looks_twice_as_far():
     ex._init_threats()
     ex.cash_seen = 500
     assert ex._ramp_lead() == ex.MIN_LEAD
-    assert ex._ramp_due(34) is None, "full income: round 40 is six rounds away, not yet checked"
+    # Ravine Magic Only / Pat's Pond ABR (2026-11-10): the damage model rated
+    # round 40 at 0.06-0.15 for six rounds. Only then is the first blimp
+    # round looked at twice as early; a model rating of 0.5 keeps the plain lead.
+    ex.rules["start_round"] = 22      # both were Fast Track starts
+    ex._init_threats()
+    ex.cash_seen = 500
+    ex._rated = lambda key, rnd, fn: (0.5,)
+    assert ex._ramp_due(34) is None, "the model does not call round 40 hopeless: plain lead"
+    ex._rated = lambda key, rnd, fn: (0.06,)
+    assert ex._ramp_due(33) is None, "round 40 is seven rounds away, not yet checked"
+    due = ex._ramp_due(34)
+    assert due and due[0] == 40, "round 40, the first blimp round, is checked twice as early"
+    del ex._rated
+    # a later blimp round keeps the plain lead of MIN_LEAD rounds
+    second = next(R for R in range(41, 81) if ex.blimp_load(R))
+    assert ex._ramp_lead_for(second) == ex.MIN_LEAD
+    assert ex._ramp_lead_for(40) == 2 * ex.MIN_LEAD
+    ex.rules["start_round"] = 3       # a full Hard game has 37 rounds to grow: plain lead
+    ex._init_threats()
+    assert ex._ramp_lead_for(40) == ex.MIN_LEAD
     ex.rules["half_cash"] = True
     ex._init_threats()
     ex.cash_seen = 500

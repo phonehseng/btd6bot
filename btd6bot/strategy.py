@@ -3678,6 +3678,10 @@ class Executor:
     MIN_LEAD = 3             # rounds ahead a property answer is bought at the latest
     MIN_LEAD_ONE_LIFE = 5    # Impoppable/CHIMPS: one leak loses, so start earlier
     MAX_LEAD = 10            # never hold the plan for a threat further away than this
+    FIRST_BLIMP_LEAD_FACTOR = 2  # the game's first blimp round is checked this much earlier ...
+    FIRST_BLIMP_HOPELESS = 0.3   # ... when the damage model rates it under this
+    FIRST_BLIMP_SHORT_START = 20 # ... and the game started fewer rounds than this before it
+                                 # (Fast Track: round 22 -> 40 is 18; a round-3 Hard start is 37)
     LEAD_MARGIN = 1.25       # count on only 80 % of the income still to come
     PLAN_FIRST_FACTOR = 1.5  # follow the plan when it covers the threat for <= 1.5x ...
     PLAN_FIRST_SLACK = 300   # ... (or <= $300 more than) the cheapest answer
@@ -3716,7 +3720,8 @@ class Executor:
         self.round_set = TH.set_for_mode(self.mode)
         self.window = (self.rules.get("start_round", 1), self.rules.get("end_round", 80))
         self.calendar = TH.calendar(self.round_set, *self.window) if TH.available() else {}
-        self.latched = {}      # threat -> round it is being answered for (stays due until covered)
+        self.__dict__.pop("_first_blimp", None)   # _first_blimp_round() works it out again
+        self.latched = {}     # threat -> round it is being answered for (stays due until covered)
         self.noted = set()     # what was already logged, so that each line appears once
         self.opt_cache = {}    # answer options per (threat, towers on the map)
         self.hold_since = {}   # round -> when Play was first held for it
@@ -4410,6 +4415,50 @@ class Executor:
             lead = math.ceil(lead / mult)
         return min(self.MAX_LEAD, lead)
 
+    def _first_blimp_round(self):
+        """The first round of this game's window that brings blimps, or None.
+        Worked out once from the round set (blimp_load) and kept."""
+        if not hasattr(self, "_first_blimp"):
+            self._first_blimp = next((R for R in range(self.window[0], self.window[1] + 1)
+                                      if self.blimp_load(R)), None)
+        return self._first_blimp
+
+    def _ramp_lead_for(self, R):
+        """How many rounds ahead the blimp check looks at blimp round R:
+        _ramp_lead(), but FIRST_BLIMP_LEAD_FACTOR times that for the game's
+        first blimp round (never past MAX_LEAD).
+
+        Ravine Magic Only and Pat's Pond ABR (2026-11-10, both Fast Track
+        starts at round 22) were lost to round 40's first MOAB. Nothing on
+        the map had ever had to pop a blimp, so the defence read 0.1x of the
+        1.4x wanted - but the check first looked from round 37. On Ravine the
+        damage model had rated round 40 at 0.06 since round 31 while surplus
+        cash went to more ninjas and wizards; on Pat's Pond the Ace for the
+        MOAB came at round 38-39 and $2,675 was still in hand when it leaked.
+        The first blimp round needs a whole MOAB answer bought from nothing,
+        so it is looked at as early as Half Cash looks at every blimp round -
+        but only after a short start (Fast Track, FIRST_BLIMP_SHORT_START):
+        from round 3 the build has 37 rounds to grow into blimp damage, and
+        looking early there cost the bomb solo build its round-40 margin in
+        the build simulation (0.97 of the 1.0 blimp damage wanted)."""
+        lead = self._ramp_lead()
+        if R == self._first_blimp_round() and R - self.window[0] < self.FIRST_BLIMP_SHORT_START:
+            lead = min(self.MAX_LEAD, lead * self.FIRST_BLIMP_LEAD_FACTOR)
+        return lead
+
+    def _far_blimp_round_hopeless(self, R, rnd):
+        """True when the damage model rates blimp round R under
+        FIRST_BLIMP_HOPELESS on the board as it stands - the condition for the
+        blimp check to look at the first blimp round earlier than usual.
+
+        Looking early unconditionally held cash from round 34 in the Ship
+        Capture Half Cash simulation and left round 34 itself rated 0.38. The
+        two lost games had the model rating round 40 at 0.06 (Ravine) and 0.15
+        (Pat's Pond) for six rounds or more: only a defence that the model
+        already calls hopeless against the first blimps holds cash early."""
+        rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
+        return bool(rated) and rated[0] is not None and rated[0] < self.FIRST_BLIMP_HOPELESS
+
     def blimp_load(self, R):
         """The blimp load round R asks the defence to pop: the round's own
         (threats.round_blimp_load), or under continuous sends (Apopalypse)
@@ -4426,11 +4475,15 @@ class Executor:
         rounds, or None. Logs the estimate once per blimp round."""
         if rnd is None or self.no_answers or not TH.available():
             return None
-        lead = self._ramp_lead()
-        for R in range(max(rnd, self.window[0]), min(rnd + lead, self.window[1]) + 1):
+        # the widest lead any round may get bounds the scan; each blimp round
+        # is then checked only if it is within its own lead (_ramp_lead_for)
+        widest = min(self.MAX_LEAD, self._ramp_lead() * self.FIRST_BLIMP_LEAD_FACTOR)
+        for R in range(max(rnd, self.window[0]), min(rnd + widest, self.window[1]) + 1):
             load = self.blimp_load(R)
-            if not load:
+            if not load or R - rnd > self._ramp_lead_for(R):
                 continue
+            if R - rnd > self._ramp_lead() and not self._far_blimp_round_hopeless(R, rnd):
+                continue      # early look: only when the damage model agrees it is lost
             ratio = self.blimp_ratio(load)
             bar = self.ramp_bar(load)
             if ("ramp", R) not in self.noted:
