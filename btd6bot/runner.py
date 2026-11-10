@@ -1262,21 +1262,7 @@ class Bot:
         won = res.get("outcome") == "victory"
         # towers that played earned XP: their "can't afford" notes are stale
         forget_short(self.account, {p.kind for p in g.towers.values()} | strategy_towers(strat))
-        # a game not won may have ended for a reason outside the map: look at
-        # the screen before leaving it (see outside_cause)
-        screen = None if won else self.menus.identify()
-        cause = None if won else outside_cause(res.get("outcome"), screen)
-        if screen in ("title", "account"):
-            self._games_since_id = ID_CHECK_EVERY  # read the User ID before the next game
-        if won:
-            self.menus.leave_victory()
-        else:
-            self.menus.leave_defeat()
-        # the Monkey Money total on the main menu, before vs after, is the game's real reward
-        mm_after = self.read_mm()
-        mm = None
-        if self._mm_before is not None and mm_after is not None and 0 <= mm_after - self._mm_before < 5000:
-            mm = mm_after - self._mm_before
+        cause, mm = self._leave_finished_game(plan, res.get("outcome"))
         res["mm"] = mm
         # Note: Monkey Money gained is NOT proof of a win (level-up rewards pay
         # too: an abandoned Tree Stump game "paid" 200). The medal sweep, which
@@ -1294,6 +1280,47 @@ class Bot:
                     f"{k} {v:,}" for k, v in sorted(res["tower_xp"].items(), key=lambda kv: -kv[1])))
         self.account.save()
         return res
+
+    def _leave_finished_game(self, plan, outcome):
+        """Leave the end screen of a game Match has finished and return
+        (outside cause or None, Monkey Money gained or None).
+
+        The outcome is already known here, so nothing on the way home may
+        lose it. Sanctuary Apopalypse (2026-11-10 17:16) was lost at round 45;
+        BTD6, at 37 GB after two and a half days, then froze on the loading
+        screen behind the Home button. When the frozen game was closed the
+        screen read raised GameNotFound out of play(), run() only waited for
+        the game, and the defeat was never recorded or benched: six minutes
+        later the planner chose the same game again.
+
+        So a game that closes (GameNotFound) or goes behind another window
+        (FocusLost) while the bot is leaving costs only what is read on the
+        way: the Monkey Money, and the look at the screen that tells a
+        sign-in to another account apart from a loss. The caller records the
+        result, and the main loop meets the missing game at its next screen
+        read and waits for it there. An owner stop (Aborted) still stops."""
+        won = outcome == "victory"
+        cause = None if won else outside_cause(outcome, None)
+        try:
+            # a game not won may have ended for a reason outside the map: look
+            # at the screen before leaving it (see outside_cause)
+            screen = None if won else self.menus.identify()
+            cause = None if won else outside_cause(outcome, screen)
+            if screen in ("title", "account"):
+                self._games_since_id = ID_CHECK_EVERY  # read the User ID before the next game
+            if won:
+                self.menus.leave_victory()
+            else:
+                self.menus.leave_defeat()
+            # the Monkey Money total on the main menu, before vs after, is the game's real reward
+            mm_after = self.read_mm()
+        except (GameNotFound, FocusLost) as e:
+            log.warning("%s %s: could not leave the %s screen (%s) - the result is kept",
+                        plan.map, plan.mode_key, outcome, e)
+            return cause, None
+        if self._mm_before is not None and mm_after is not None and 0 <= mm_after - self._mm_before < 5000:
+            return cause, mm_after - self._mm_before
+        return cause, None
 
     def read_mm(self):
         """Monkey Money on the main menu (two agreeing reads), else None."""
