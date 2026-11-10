@@ -5673,7 +5673,9 @@ class Executor:
             (reinforce.payable_by False);
           * `deep` (Match: the last round's bloons got far along the route),
             or the mode has lives (not one_life) and the weak round is rated
-            YIELD_FLOOR or less (see the last paragraph).
+            YIELD_FLOOR or less (see the last paragraph), or some of the
+            cash of plan steps given up for want of a spot is left
+            (given_up_credit, Sanctuary Half Cash 2026-11-09).
 
         Then waiting cannot bring the step in time for the round the game is
         at stake in, and the cash it waits for is better spent on what lifts
@@ -5730,8 +5732,13 @@ class Executor:
         margin, weak = worst
         if margin >= self.YIELD_MARGIN or weak - rnd > self.YIELD_ROUNDS:
             return False
+        credit = 0
         if not deep and (rules.get("one_life") or margin > self.YIELD_FLOOR):
-            return False          # shallow bloons: only a floor rating in a mode with lives counts
+            # shallow bloons: only a floor rating in a mode with lives counts -
+            # or cash the plan meant to spend on steps it had to give up
+            credit = self.given_up_credit()
+            if credit <= 0:
+                return False
         step, cost = wait
         pay_by = max(weak, rnd + 1)   # the round being played: no income reaches it
         if RF.payable_by(self, cost, cash, pay_by, rnd) is not False:
@@ -5741,8 +5748,55 @@ class Executor:
             self.noted.add(note)
             log.warning("plan_first: plan step %s ($%.0f) cannot be paid before round %d from $%d and the "
                         "income until then, and the damage model rates round %d at %.2f - reinforce may "
-                        "spend for that round", step, cost, pay_by, cash, weak, margin)
+                        "spend for that round%s", step, cost, pay_by, cash, weak, margin,
+                        f" (up to ${credit:.0f} of given-up plan steps)" if credit else "")
         return True
+
+    def given_up_plan_cost(self):
+        """What the build's own plan steps before the current one would have
+        cost, had their tower not been given up: each `place` step of the
+        plan given up for this game (dead_steps, no spot accepted) and the
+        plan's upgrades of that id, priced like an answer (_sim_step from an
+        empty board). An id that stands on the board after all (placed later,
+        or a stand-in from _redirect_dead_upgrade) is not counted.
+
+        This is cash the plan meant to have spent by now. Its timing - when
+        the next big step comes, and what defends the rounds before it - was
+        written with those towers in it; without them the bank piles up
+        toward the big step while the rounds they were meant to carry come
+        unguarded (backlog 70, Sanctuary Half Cash)."""
+        dead = getattr(self, "dead_steps", None)
+        plan = getattr(self, "plan", None) or []
+        if not dead or not plan:
+            return 0
+        towers = getattr(self.g, "towers", {}) or {}
+        pending = getattr(self, "redirected", {}) or {}
+        ids = {key[3] for key in dead
+               if key[0] == "place" and key[3] and key[3] not in towers and key[3] not in pending}
+        sim, cost = {}, 0
+        for n, st in enumerate(plan[:getattr(self, "idx", 0)]):
+            if st.get("id") in ids and st.get("do") in ("place", "upgrade"):
+                cost += self._sim_step(st, sim, n) or 0
+        return cost
+
+    def given_up_credit(self):
+        """given_up_plan_cost less what reinforce has bought for a plan_first
+        build since (yield_spent, counted in reinforce.buy_best): how much of
+        the given-up steps' cash plan_first_yields may still let reinforce
+        spend while the bloons are shallow.
+
+        Sanctuary Half Cash (2026-11-09 22:23, hard_ninja_alch_sun, won but
+        lost 69 lives at rounds 63-64): the platforms left no spot for v1, v2
+        (Radar Scanner), d2 (druid 0-3-2) and h3 (heli 3-2-0), so the plan
+        went straight on to h1 4-2-0 ($21,600) and idled with $2-21k from
+        round 52 to 63 while every round was rated 0.15-0.52. The bloons
+        stayed at 82-86% of the route, under PLAN_YIELD_DEPTH, and no round
+        was rated at YIELD_FLOOR, so the cash never moved until round 63 cost
+        65 lives. The given-up towers' share of the bank was never the
+        Dartship's to wait for. Capped by what they would have cost, so the
+        big step is late by no more than the plan itself had planned to
+        spend before it."""
+        return self.given_up_plan_cost() - (getattr(self, "yield_spent", 0) or 0)
 
     def surplus(self, cash, rnd):
         """Cash is piling up while the plan waits: buy damage anyway.

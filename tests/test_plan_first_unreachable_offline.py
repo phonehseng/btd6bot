@@ -196,6 +196,65 @@ def test_chimps_floor_rating_still_needs_depth():
     assert Match._plan_lets_reinforce(match(moon_landing(55, weak=(0.06, 59)), shallow), 1_151, 55) is False
 
 
+# -- given-up plan steps (Sanctuary Half Cash, 2026-11-09 22:23) -----------------------
+SANCTUARY_GIVEN_UP = [
+    {"do": "place", "id": "v2", "kind": "village", "role": "support", "near": ["n1", "a1"], "near_radius": 7},
+    {"do": "upgrade", "id": "v2", "to": "0-2-0"},
+    {"do": "place", "id": "d2", "kind": "druid", "role": "dps"},
+    {"do": "upgrade", "id": "d2", "to": "0-3-2"},
+    {"do": "place", "id": "h3", "kind": "heli", "role": "dps"},
+    {"do": "upgrade", "id": "h3", "to": "0-2-0"},
+    {"do": "upgrade", "id": "h3", "to": "3-2-0"},
+]
+
+
+def sanctuary(rnd=58, weak=(0.30, 61), given_up=True):
+    """Round `rnd` of Sanctuary Half Cash: the platforms left no spot for
+    v2, d2 and h3, and the plan waits for h1 4-2-0 with the bloons at 82-86%
+    of the route and rounds rated 0.15-0.52 (never the floor)."""
+    ex = x_factor(rnd, weak=weak)
+    apache = ex.plan[0]
+    ex.plan = SANCTUARY_GIVEN_UP + [apache]
+    ex.idx = len(SANCTUARY_GIVEN_UP)
+    ex.strat = {"plan_first": True, "plan": ex.plan}
+    ex.allowed, ex.forbidden, ex.land_only = None, set(), False     # kind_allowed: any land tower
+    ex.dead_steps = {S.Executor._step_key(st) for st in SANCTUARY_GIVEN_UP
+                     if given_up and st["do"] == "place"}
+    return ex
+
+
+def test_given_up_steps_price_their_whole_share():
+    ex = sanctuary()
+    fam = S.PRICE_FAMILY.get("half_cash", "hard")
+    from btd6bot import towers as T
+    want = (T.total_cost("village", "0-2-0", fam) + T.total_cost("druid", "0-3-2", fam)
+            + T.total_cost("heli", "3-2-0", fam))
+    assert ex.given_up_plan_cost() == want, (ex.given_up_plan_cost(), want)
+    assert sanctuary(given_up=False).given_up_plan_cost() == 0
+    # a step given up but standing after all (a later placement) is not counted
+    ex.g.towers["d2"] = tower("d2", "druid", [0, 0, 0])
+    assert ex.given_up_plan_cost() == want - T.total_cost("druid", "0-3-2", fam)
+
+
+def test_given_up_credit_yields_with_shallow_bloons_until_spent():
+    gate = Match._plan_lets_reinforce
+    shallow = [{"round": 57, "deepest": 0.84}]
+    ex = sanctuary()
+    assert ex.plan_first_yields(1_950, 58, deep=False)
+    assert gate(match(ex, shallow), 1_950, 58) is True
+    # without given-up steps the old rule holds: 0.30 is over the floor, no depth
+    assert not sanctuary(given_up=False).plan_first_yields(1_950, 58, deep=False)
+    # reinforce spent the given-up share: the plan keeps the rest for its step
+    ex = sanctuary()
+    ex.yield_spent = ex.given_up_plan_cost()
+    assert not ex.plan_first_yields(1_950, 58, deep=False)
+    # the near-crisis and reachability tests still apply
+    assert not sanctuary(weak=(0.70, 61)).plan_first_yields(1_950, 58, deep=False)
+    ex = sanctuary()
+    ex._first_step_cost = lambda st: 2_500
+    assert not ex.plan_first_yields(1_950, 58, deep=False)
+
+
 # -- end to end: the gate, then reinforce's own choice -----------------------------------
 class PlanFirstToy(ToyEx):
     """ToyEx (one sniper, a $300 and a $2,000 upgrade) as a plan_first build
