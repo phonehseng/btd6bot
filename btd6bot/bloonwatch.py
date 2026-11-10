@@ -66,13 +66,28 @@ SNAPS_PER_GAME = 3      # ... at most this many per game
 def route_progress(track, shape, band_cells=2):
     """Grid (shape = working resolution) of the progress (0..1) along the
     bloon routes, NaN off them; the lowest progress where routes overlap.
-    Only stretches bloons can be hit on (track.paths[i]["hittable"])."""
+    Only stretches bloons can be hit on (track.paths[i]["hittable"]).
+
+    1 is the last point of a path where a bloon can still be seen and hit,
+    not the path's end in the game data. On maps whose exits run underground
+    the two are far apart: every path of Quad and Dark Castle is hidden for
+    its last ~30%, so measured against the full length the watch could never
+    read more than 0.71 there - under DEEP and match.PLAN_YIELD_DEPTH even in
+    rounds that leaked. Quad Half Cash (2026-11-10 00:58-01:04) lost 38, 60
+    and 59 lives at "70% along the route at most, past 80% in 0% of looks",
+    so a plan_first step kept $4-21k waiting while the game nearly ended.
+    A bloon past the last visible point cannot be popped any more: it is
+    leaking, which is what a reading of 1 should mean."""
     from .maplearn import GRID
     w, h = GRID
     lo = np.full((h, w), np.inf, np.float32)
     for p in track.paths:
         cells = track.proj.to_cells(p["xyz"])
-        frac = p["dist"] / max(p["length"], 1e-6)
+        hittable = np.asarray(p["hittable"], bool)
+        dist = np.asarray(p["dist"], np.float32)
+        # the visible end: where the last hittable stretch stops
+        end = float(dist[hittable].max()) if hittable.any() else float(p["length"])
+        frac = np.minimum(dist / max(end, 1e-6), 1.0)
         for (cx, cy), f, ok in zip(cells, frac, p["hittable"]):
             if not ok:
                 continue

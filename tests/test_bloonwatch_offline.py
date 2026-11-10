@@ -111,6 +111,43 @@ def test_off_without_a_map():
     assert not w.ready() and w.look(background(), now=0.0) is None
 
 
+class _Proj:
+    """Track projection stand-in: path points are already grid cells."""
+    @staticmethod
+    def to_cells(xyz):
+        return [(x, y) for x, y, _ in xyz]
+
+
+def test_progress_ends_at_the_last_visible_point():
+    """A path whose last 30% runs underground reads 1 at its last visible
+    cell, not 0.7 (Quad Half Cash, 2026-11-10: leaks read as 70% deep)."""
+    n = 100
+    xyz = [(10 + i, 50, 0) for i in range(n)]
+    dist = np.arange(n, dtype=np.float32)
+    track = N(proj=_Proj(), paths=[{"xyz": xyz, "dist": dist, "length": float(n - 1),
+                                    "hittable": [i < 70 for i in range(n)]}])
+    g = B.route_progress(track, (GRID[1], GRID[0]))
+    assert abs(np.nanmax(g) - 1.0) < 1e-6
+    # halfway along what can be seen (the 2-cell band takes the lowest
+    # progress of its neighbours, so a cell reads up to 2 steps early)
+    assert abs(g[50, 10 + 35] - 35 / 69) < 3 / 69
+    assert np.isnan(g[50, 10 + 90])                   # the hidden stretch is no route
+
+
+def test_real_maps_with_hidden_exits_can_read_deep():
+    """Quad and Dark Castle (exits hidden for ~30% of each path) can now
+    reach DEEP and match.PLAN_YIELD_DEPTH; skipped without map geometry."""
+    try:
+        from btd6bot.dps_model import Track
+        tracks = [Track(name) for name in ("Quad", "Dark Castle")]
+    except Exception as e:
+        print("skip (no map geometry):", e)
+        return
+    from btd6bot.match import PLAN_YIELD_DEPTH
+    for t in tracks:
+        assert np.nanmax(B.route_progress(t, (SH, SW))) > max(B.DEEP, PLAN_YIELD_DEPTH)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
