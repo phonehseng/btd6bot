@@ -27,10 +27,14 @@
 # untested Hard priors at 0.85 anyway and its win/loss record takes over.
 id: hard_glaive_lord
 hero: quincy
-modes: [medium, hard, abr]
+# ABR dropped 2026-11-10: 1 win in 7 (Water Park), lost Pat's Pond R40, Dark
+# Dungeons R27, Sunset Gulch R40, Flooded Valley R22, Glacial Trail R31 and
+# Mesa R63 - the boomerangs reach too little of ABR's early camo/lead rounds
+# and its MOAB rounds on these maps.
+modes: [medium, hard]
 planner:
   towers: {boomerang: [5, 0, 4], sniper: [4, 2, 4], alchemist: [4, 2, 0], village: [2, 2, 0]}
-  base_success: {medium: 0.85, hard: 0.75, abr: 0.65}
+  base_success: {medium: 0.85, hard: 0.75}
   # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
   # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
   # not Glacial Trail (2026-11-09, case 20261109_212639): ABR lost round 31
