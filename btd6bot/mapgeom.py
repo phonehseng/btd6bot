@@ -1512,6 +1512,21 @@ def platform_round_on_screen(model, frame, candidates):
     return ranked[0][1]
 
 
+def pane_ground(model):
+    """Bool grid (model cells) of the ground under any cycling pane, or None
+    on maps without panes. A tower standing there can be clicked only in
+    its pane's rounds (pane_at)."""
+    grids = grids_for(model)
+    panes = grids.get("panes") if grids else None
+    if not panes:
+        return None
+    out = None
+    for _, masks in panes:
+        for mask in masks:
+            out = mask.copy() if out is None else (out | mask)
+    return out
+
+
 def pane_at(model, fx, fy, rnd):
     """For a spot (screen fractions) under a cycling pane: (pane index, open
     during round rnd). (None, True) for ground no pane covers, and on maps
