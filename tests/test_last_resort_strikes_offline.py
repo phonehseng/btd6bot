@@ -62,7 +62,24 @@ def test_the_untrimmed_stats_count_when_the_history_has_rolled_over():
     assert planner.struck_out(acc, "magic_obyn_ninja_wizard", "Ravine", "magic_only")
 
 
+def test_a_hopeless_map_mode_is_not_a_last_resort():
+    """A ceiling under HOPELESS_CEILING plus three losses across builds:
+    skipped (Last Resort Primary Only, ceiling 0.09, 2026-11-10). Two losses,
+    or a ceiling at or above it, or a medal on record: still played."""
+    from unittest import mock
+    acc = AccountState()
+    acc.strategy_stats["Last Resort|primary_only|solo_bomb"] = {"wins": 0, "losses": 2, "games": 2}
+    with mock.patch.object(planner, "model_ceiling", lambda m, mode: 0.09):
+        assert not planner.hopeless(acc, "Last Resort", "primary_only")
+        acc.strategy_stats["Last Resort|primary_only|primary_core"] = {"wins": 0, "losses": 1, "games": 1}
+        acc._map_mode_losses = None
+        assert planner.hopeless(acc, "Last Resort", "primary_only")
+    with mock.patch.object(planner, "model_ceiling", lambda m, mode: 1.41):
+        assert not planner.hopeless(acc, "Last Resort", "primary_only")
+
+
 if __name__ == "__main__":
+    test_a_hopeless_map_mode_is_not_a_last_resort()
     test_the_untrimmed_stats_count_when_the_history_has_rolled_over()
     test_three_losses_without_a_win_strike_out()
     test_a_win_or_another_build_or_mode_is_not_struck()

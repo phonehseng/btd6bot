@@ -2036,6 +2036,29 @@ def build_map_record(account: AccountState, strategy_id: str, map_name: str,
     return wins, losses
 
 
+# A last-resort map/mode is skipped while other open medals remain when no
+# build the research found holds it (model ceiling under HOPELESS_CEILING)
+# and builds have lost it HOPELESS_LOSSES times between them: a ceiling
+# only caps p, and last resorts are played whatever their p, so on
+# 2026-11-10 Dark Dungeons Military Only (ceiling 0.37, six losses with five
+# builds), Last Resort Primary Only (0.09, three builds) and Flooded Valley
+# Magic Only (0.51) kept being played and lost within minutes. A new map
+# build lifts the ceiling (Workshop Medium 0.15 -> 2.54 with its build).
+HOPELESS_CEILING = 0.2
+HOPELESS_LOSSES = 3
+
+
+def hopeless(account: AccountState, map_name: str, mode: str) -> bool:
+    """Is ``map_name`` / ``mode`` hopeless for a last resort (see
+    HOPELESS_CEILING)? Never once it has been won."""
+    ceiling = model_ceiling(map_name, mode)
+    if ceiling is None or ceiling >= HOPELESS_CEILING:
+        return False
+    if account.has_medal(canonical_map(map_name), mode):
+        return False
+    return map_mode_losses(account).get((canonical_map(map_name), mode), 0) >= HOPELESS_LOSSES
+
+
 def struck_out(account: AccountState, strategy_id: str, map_name: str, mode: str) -> bool:
     """Has ``strategy_id`` lost ``map_name`` / ``mode`` LAST_RESORT_STRIKES
     times without a win? Then it is not played there as a last resort."""
@@ -2711,7 +2734,8 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
         from .strategy import MODE_RULES
         open_rest = [c for c in scored
                      if c.tier is None and c.mode != "chimps" and not c.s.achievement]
-        rest = [c for c in open_rest if not struck_out(account, c.s.id, c.map, c.mode)]
+        rest = [c for c in open_rest if not struck_out(account, c.s.id, c.map, c.mode)
+                and not hopeless(account, c.map, c.mode)]
         if not rest:
             # Every last resort has struck out: play them anyway rather
             # than idle (owner rule, 2026-11-03).
