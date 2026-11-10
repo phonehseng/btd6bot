@@ -133,13 +133,16 @@ plan:
   - {do: upgrade, id: n1, to: 2-0-2}
   - {do: place, id: h2, kind: heli, role: dps}
   - {do: upgrade, id: h2, to: 3-2-0}
+  # The exit spikes come before the first Apache Dartship: Ravine (2026-11-10)
+  # saved from round 30 to 36 for it with nothing at the exit, and lead
+  # (R30, 41 lives) and pink/green (R36, all the rest) walked out.
+  - {do: place, id: sp1, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: upgrade, id: sp1, to: 2-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
   - {do: upgrade, id: h1, to: 4-2-0}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
   - {do: upgrade, id: n2, to: 1-0-1}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   - {do: upgrade, id: a1, to: 2-0-0}
-  - {do: place, id: sp1, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
-  - {do: upgrade, id: sp1, to: 2-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
   - {do: upgrade, id: h2, to: 4-2-0}
   - {do: upgrade, id: sp1, to: 4-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
   - {do: place, id: h3, kind: heli, role: dps}
