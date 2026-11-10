@@ -57,7 +57,11 @@ planner:
   # Flooded Valley: lost round 23 (2026-11-10 05:29) within a minute; the dam
   # hides the river track from all land, and of the magic towers only
   # mermonkeys reach it (feat/flooded-valley's research).
-  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop, Peninsula, Erosion, Glacial Trail, Flooded Valley]
+  # Last Resort: lost round 27 twice (175 lives, then 2026-11-10 14:56): from
+  # the Fast Track start the model rated every round 0.06, and round 24's
+  # twenty blues alone took 52 lives - the towers barely reach the track
+  # there (the map's placement problem, backlog 72; 1 win in 13 games).
+  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop, Peninsula, Erosion, Glacial Trail, Flooded Valley, Last Resort]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
   # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
   # losses keep counting against these maps until live wins say otherwise
