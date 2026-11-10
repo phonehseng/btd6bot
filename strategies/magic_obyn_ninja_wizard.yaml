@@ -45,7 +45,13 @@ planner:
   # Workshop: Magic Only lost twice at round 40 (the MOAB drops through the
   # chute and comes out by the exit, out of this build's reach; the
   # workshop_* map builds of c40edc8 place for it, but none is Magic Only).
-  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop]
+  # Peninsula: Magic Only lost at rounds 30 and 40 (the last 2026-11-09
+  # 20:14). The land next to the track is mostly taken by water and the
+  # obstacles, so n1, n2 and a1 were given up ("no legal spot reaches the
+  # track"), ninja2 popped nothing in 18 rounds and round 40 was rated 0.23.
+  # Erosion: Magic Only lost rounds 22 and 36 (the ice melts under towers;
+  # Erosion Reverse and Military Only hold in no build either, 0295f4c).
+  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop, Peninsula, Erosion]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
   # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
   # losses keep counting against these maps until live wins say otherwise

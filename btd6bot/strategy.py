@@ -343,6 +343,7 @@ SAFETY_ACHIEVEMENTS = {
 STEP_KEYS = {"do", "id", "kind", "role", "segment", "near", "near_radius", "round", "max",
              "target", "to", "mode",
              "modes",      # only in these game modes (Executor._step_allowed), e.g. [half_cash]
+             "not_maps",   # skipped on these maps (Executor._step_allowed), e.g. [Covered Garden]
              "at",         # exact spot [fx, fy] (screen fractions) from a map's own build
              "lane",       # "blimp": score only the track blimps ride (Executor.pick_spots)
              "obstacle",   # do: clear - the removable obstacle's name in the map file
@@ -624,6 +625,12 @@ def validate(strat):
         for m in st.get("modes") or ():
             if m not in MODE_RULES:
                 probs.append(f"unknown mode {m} in a step's modes [{where}]")
+        for m in st.get("not_maps") or ():
+            try:
+                from .account import canonical_map
+                canonical_map(m)
+            except KeyError:
+                probs.append(f"not_maps: {m!r} is not a real map [{where}]")
     hero = strat.get("hero")
     if hero is not None and hero not in T.HEROES:
         probs.append(f"unknown hero {hero}")
@@ -1250,9 +1257,19 @@ class Executor:
         `modes: [...]` is played only in those modes: hard_ninja_alch_sun's
         round-63 Druids and Bomb Shooter are a Half Cash fix (2026-11-09) and
         in Hard and Double HP, where the Dartships already stand by round 63,
-        they only delayed the rest of the plan."""
+        they only delayed the rest of the plan.
+
+        A step with `not_maps: [...]` is skipped on those maps: a tower kind
+        that has no ground there. Covered Garden Apopalypse (2026-11-09, lost
+        round 45 with apopalypse_ninja_sniper) spent 15 s of round 45 on seven
+        refused clicks for the exit spike - the panes leave a spike nowhere
+        that reaches the track (data/map_fit.json: spike 0.17 early, 0.0
+        late) - while the MOABs came; apopalypse_apache_spikes skips its
+        spikes there and its fill buys helis instead."""
         only = step.get("modes")
         if only and self.mode not in only:
+            return False
+        if step.get("not_maps") and self._on_map(step["not_maps"]):
             return False
         do = step.get("do")
         if do == "place":
@@ -1266,6 +1283,15 @@ class Executor:
         if do == "sell":
             return not self.no_sell
         return True
+
+    def _on_map(self, maps):
+        """Is this game's map one of `maps` (names compared canonically)?"""
+        from .account import canonical_map
+        here = getattr(self.m, "name", None)
+        if not here:
+            return False
+        here = canonical_map(here)
+        return any(canonical_map(m) == here for m in maps)
 
     def at_tower_cap(self):
         if self.max_on_screen is not None and len(self.g.towers) >= self.max_on_screen:
@@ -2594,6 +2620,9 @@ class Executor:
         solid = self._solid_blockers(valid.shape)
         if solid is not None:
             cand &= ~solid
+        under = self._pane_ground_for(kind, cand.shape)
+        if under is not None:
+            cand &= ~under          # not onto the glass either (_off_panes)
         ys, xs = np.nonzero(cand)
         for i in np.argsort(-reach[ys, xs])[:50]:
             cx, cy = int(xs[i]), int(ys[i])
@@ -2716,10 +2745,46 @@ class Executor:
         last = self.rules.get("end_round")
         if self.ground_horizon is not None and kind != "hero":
             last = self.ground_horizon if last is None else min(last, self.ground_horizon)
-        return PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
+        grid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                               where={"land"} if self.land_only else None,
                               last_round=last, now_round=self._pane_round(), pose_round=self._pose_round(),
                               removed=tuple(self.removed))
+        return self._off_panes(kind, grid)
+
+    def _off_panes(self, kind, grid):
+        """On a map with cycling panes (Covered Garden), keep a tower that
+        pops bloons wherever it stands (_needs_no_reach: heli, sniper) off
+        the ground under the panes while open ground is left for it.
+
+        A tower under a pane can be upgraded only in its pane's rounds, one
+        in four (_reachable). Covered Garden Apopalypse (2026-11-09, lost
+        round 45): s1 stood on the open pane and its 2-2-0 step was "blocked
+        (pane)" and set aside, and in the offline replay of
+        apopalypse_apache_spikes all three helis went onto garden ground,
+        the Apache tier ($8,500) waited for a round with both the pane open
+        and the cash in hand, and the rounds 41-50 board had none. A heli
+        flies to the bloons and a sniper shoots map-wide, so the ground
+        under the glass is worth nothing more to them; short-range towers
+        keep it (the garden is where their track is)."""
+        if grid is None:
+            return grid
+        under = self._pane_ground_for(kind, grid.shape)
+        if under is None:
+            return grid
+        off = grid & ~under
+        return off if off.any() else grid
+
+    def _pane_ground_for(self, kind, shape):
+        """The ground under the panes (mapgeom.pane_ground) when `kind` is
+        to be kept off it (_off_panes), else None."""
+        if not self._needs_no_reach(kind) or self._pane_round() is None:
+            return None
+        from . import mapgeom
+        try:
+            under = mapgeom.pane_ground(self.m)
+        except Exception:
+            return None
+        return under if under is not None and under.shape == shape else None
 
     # Global-range kinds whose attack still stays round the spot they stand
     # on: the Monkey Ace flies its figure-eight about its own spot, so it is
