@@ -3595,6 +3595,9 @@ class Executor:
         A tower on a moving platform (Sanctuary) gets PLATFORM_SELECT_SPARE
         more tries: its spot follows the platform (carried.py), but a click
         in the second the platforms slide at a round's start misses."""
+        melt = getattr(self, "melt_check", None)   # Match._melt_check: ground melted early
+        if melt is not None and p.kind != "hero" and melt(p):
+            return True
         limit = self.MAX_SELECT_FAILS + (self.PLATFORM_SELECT_SPARE if self._on_platform(p) else 0)
         if p.kind == "hero" or getattr(p, "select_fails", 0) < limit:
             return False

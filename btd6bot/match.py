@@ -162,6 +162,13 @@ class LivesTracker:
       11 in 29 of 65 reads of a 1. The confirmed count survived that game,
       but a game whose first five reads median to 11 would start there and
       count the next true reads as a 10-life leak.
+    * A vote never lifts the count above the starting lives. The vote exists
+      to undo a wrong LOW count (15 for 150), which the start bounds. Last
+      Resort Medium (2026-11-10): lives fell 150 -> 21 in rounds 15-16 and
+      the OCR then read the 21 as "218" (a phantom digit beside the shield
+      badge) four times in a row. The vote took 218, the bot thought it was
+      safe and lost three rounds later. True gains past the start (bonus
+      lives) come a few at a time and still pass the RISE_LIMIT check.
     """
     RISE_LIMIT = 50
     RISE_VOTES = 4
@@ -169,6 +176,7 @@ class LivesTracker:
     def __init__(self, start_lives=None, fixed=False):
         self.confirmed = None
         self.reads = []                       # last 5 accepted reads
+        self.start_lives = start_lives
         if start_lives and fixed:
             self.max_lives = start_lives
         else:
@@ -200,7 +208,11 @@ class LivesTracker:
     def _vote_rise(self, read):
         """A read far above the confirmed count. True once RISE_VOTES reads in
         a row agree (within 2): the count then restarts from it. False while
-        it is still only a suspected misread."""
+        it is still only a suspected misread, and always False above the
+        starting lives (see the class docstring)."""
+        if self.start_lives and read > self.start_lives:
+            self._cand, self._votes = None, 0
+            return False
         if self._cand is not None and abs(read - self._cand) <= 2:
             self._votes += 1
         else:
@@ -324,6 +336,10 @@ class Match:
         # Erosion's bloons take a new path every 18 rounds: the track is
         # repainted for the round's path phase as rounds pass (_follow_track)
         self._phase_geom, self._reverse = self._path_phases(model)
+        # rounds the map's melts come before the trigger rounds in this game
+        # (learned from the first early melt, _melt_check)
+        self._ground_lead = 0
+        self.ex.melt_check = self._melt_check
         self._t_round_change = time.time()   # when the tracked round last changed
         self._last_buy = time.time()
         self._last_wait_log = 0.0
@@ -1194,6 +1210,7 @@ class Match:
         beside paths bloons first take in rounds 37-91."""
         if self._phase_geom is None or rnd is None:
             return
+        self._track_round = rnd
         rnd = self._map_round(rnd)
         try:
             from . import mapgeom
@@ -1202,17 +1219,62 @@ class Match:
             # Ground for new towers only has to last until this phase ends
             # (mapgeom.phase_end); towers on ground the map destroyed since
             # the last round seen are forgotten and their plan steps redone.
-            horizon = mapgeom.phase_end(self._phase_geom, rnd)
+            # Both count in the map's trigger rounds: the HUD round plus the
+            # lead learned in this game (_melt_check).
+            ground_rnd = rnd + getattr(self, "_ground_lead", 0)
+            horizon = mapgeom.phase_end(self._phase_geom, ground_rnd)
             if horizon != getattr(self.ex, "ground_horizon", None):
                 self.ex.ground_horizon = horizon
                 self.ex.track_changed()
             seen = getattr(self, "_ground_round", None)
-            lost = mapgeom.lost_ground(self.m, self._phase_geom, seen, rnd)
+            lost = mapgeom.lost_ground(self.m, self._phase_geom, seen, ground_rnd)
             if lost is not None and hasattr(self.ex, "ground_lost"):
                 self.ex.ground_lost(lost)
-            self._ground_round = rnd
+            self._ground_round = ground_rnd
         except Exception:
             log.exception("repainting the track for round %s failed - carrying on", rnd)
+
+    # how many rounds before its trigger round a melt is believed on evidence
+    MELT_EARLY_MAX = 3
+
+    def _melt_check(self, p):
+        """Tower p could not be selected. When it stands on ground the map
+        destroys within MELT_EARLY_MAX rounds, that melt has come early: it is
+        applied now (every tower on that ground forgotten, plan steps redone)
+        and the lead is kept for the rest of the game. True when p went so.
+
+        Erosion Easy Primary Only (2026-11-10, Fast Track from round 10):
+        the ice that triggers melt for round 19 and round 37 was gone in HUD
+        rounds 17 and 35 (the game refunded the towers: cash $370 -> $5,322
+        and $1,341 -> $16,063). Round 35 was spent clicking eleven missing
+        towers for 35 s, one at a time, and round 36 had no defence: 107
+        lives lost. Other Erosion games saw the melt on time or one round
+        early (Apopalypse, see _map_round), so the lead is learned per game."""
+        geom, rnd = self._phase_geom, getattr(self, "_track_round", None)
+        if geom is None or rnd is None or getattr(self, "_ground_round", None) is None:
+            return False
+        try:
+            from . import mapgeom
+            now = self._ground_round
+            soon = sorted({f for f in mapgeom.dynamics(geom).vanish.values()
+                           if f is not None and now < f <= now + self.MELT_EARLY_MAX})
+            for first in soon:
+                lost = mapgeom.lost_ground(self.m, geom, now, first)
+                if lost is None:
+                    continue
+                cx, cy = self.m.frac_to_cell(p.x, p.y)
+                h, w = lost.shape
+                if not (0 <= cy < h and 0 <= cx < w and lost[cy, cx]):
+                    continue
+                self._ground_lead += first - now
+                log.warning("%s cannot be selected and stands on ground the map destroys for "
+                            "round %d: the melt came %d round(s) early - applying it now",
+                            p.tid, first, self._ground_lead)
+                self._follow_track(rnd)
+                return p.tid not in self.g.towers
+        except Exception:
+            log.exception("checking for an early melt failed - carrying on")
+        return False
 
     def _crisis_margin(self, towers, rnd):
         """(margin, crisis, leak) for round rnd: the damage model's margin,

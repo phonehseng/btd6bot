@@ -97,6 +97,21 @@ def test_round_line_names_a_misread_beside_the_confirmed_count():
     assert _misread_note(100, 100) == "" and _misread_note(None, 100) == ""
 
 
+def test_a_vote_never_lifts_lives_above_the_start():
+    """Last Resort Medium (2026-11-10): 21 lives were read as 218 four times
+    in a row and the vote took it. A correction stops at the start count;
+    a wrong low first read is still corrected up to it."""
+    t = LivesTracker(150)
+    feed(t, [150, 150, 143, 143, 143, 21, 21, 21])
+    assert t.confirmed == 21
+    feed(t, [218] * 8)
+    assert t.confirmed == 21, t.confirmed
+    t = LivesTracker(150)
+    t.update(15)
+    feed(t, [150] * 5)
+    assert t.confirmed == 150
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

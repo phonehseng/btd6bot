@@ -206,7 +206,60 @@ def test_apopalypse_ice_goes_one_hud_round_early():
     assert len(seen) == 1
 
 
+def test_an_early_melt_is_applied_on_the_first_missing_tower():
+    """Erosion Easy Primary Only (2026-11-10, Fast Track from round 10): the
+    ice that melts for round 19 was gone at HUD 17, and the round-37 ice at
+    HUD 35. The first tower on that ice that cannot be selected applies the
+    melt at once (every tower there forgotten) and the two-round lead is
+    kept, so the next melt is followed at HUD 35 without waiting for misses."""
+    geom = _erosion()
+    if geom is None:
+        return
+    from types import SimpleNamespace
+    from btd6bot import match as M
+    m = mapgeom.apply(MapModel("Erosion", PF), geom)
+    lost19 = mapgeom.lost_ground(m, geom, 18, 19)
+    rows, cols = lost19.nonzero()
+    x0, y0, x1, y1 = m.playfield
+    gh, gw = lost19.shape
+
+    def frac(c, r):
+        return x0 + (c + 0.5) / gw * (x1 - x0), y0 + (r + 0.5) / gh * (y1 - y0)
+
+    x, y = frac(cols[0], rows[0])
+    towers = {"b1": SimpleNamespace(tid="b1", kind="boomerang", x=x, y=y)}
+    seen = []
+
+    def ground_lost(lost):
+        seen.append(int(lost.sum()))
+        for tid, p in list(towers.items()):
+            cx, cy = m.frac_to_cell(p.x, p.y)
+            if lost[cy, cx]:
+                towers.pop(tid)
+
+    mt = M.Match.__new__(M.Match)
+    mt._phase_geom, mt._reverse, mt.m = geom, False, m
+    mt.g = SimpleNamespace(towers=towers)
+    mt.ex = SimpleNamespace(rules={}, ground_horizon=None, track_changed=lambda: None,
+                            ground_lost=ground_lost)
+    mt._ground_lead = 0
+    for r in range(10, 18):
+        mt._follow_track(r)
+    assert not seen and "b1" in towers
+    far = SimpleNamespace(tid="d9", kind="dart", x=0.99, y=0.99)
+    assert mt._melt_check(far) is False or not seen   # a tower elsewhere proves nothing
+    assert mt._melt_check(towers["b1"]) is True
+    assert len(seen) == 1 and "b1" not in towers and mt._ground_lead == 2
+    assert mt.ex.ground_horizon == 36
+    for r in range(18, 35):
+        mt._follow_track(r)
+    assert len(seen) == 1
+    mt._follow_track(35)                                # trigger round 37: the next melt
+    assert len(seen) == 2 and mt.ex.ground_horizon == 54
+
+
 if __name__ == "__main__":
+    test_an_early_melt_is_applied_on_the_first_missing_tower()
     test_apopalypse_ice_goes_one_hud_round_early()
     test_reverse_model_uses_the_map_geometry()
     test_erosion_phases()
