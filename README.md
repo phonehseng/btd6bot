@@ -26,18 +26,25 @@ schtasks /end /tn BTD6Bot                                         # stop the sup
 
 ## The HUD
 
-`run_forever.ps1` starts the HUD (`tools/overlay.py`): a full-screen,
-see-through overlay of what the bot is thinking. In a game: its latest
-decision and why, the damage model's margin for each round ahead, what
-reinforce saves for, and ghost towers where the build still wants towers;
-between games: the planner's pick with its runner-ups and a black-border
-board of every map. It never takes focus, every click passes through to the
-game, and screenshots and recordings leave it out. The STOP / GO / OFF
-buttons sit at the top of the screen, right of the status line.
+`run_forever.ps1` starts the HUD (`tools/overlay.py`): a few small,
+see-through "glass" widgets at the screen's edges, clear of the game's own
+UI (pictures: `docs/hud/game.png`, `docs/hud/menu.png`). A status pill at the
+top centre says where the bot is and what it is doing, with the newest log
+lines faintly under it. In a game two cards along the bottom show the damage
+model's margin for the coming rounds and the latest decision with its why,
+what reinforce saves for and what the build wants next; faint ghost towers
+mark where the build still wants towers. Between games two cards at the
+right edge show the planner's pick with its runner-ups and the black-border
+progress. It never takes focus, every click passes through to the game, and
+screenshots and recordings leave it out. The STOP / GO / OFF buttons sit
+right of the pill.
 
-- A file named `HUD_STRIP` in the project folder (or `BTD6BOT_HUD=strip`)
-  brings back the old thin status strip; it takes effect when the HUD starts.
-- `python tools/hud_preview.py out.png` draws the HUD into an image offline.
+- A file named `HUD_BIG` (or `BTD6BOT_HUD=big`) brings back the full-screen
+  HUD, `HUD_STRIP` (or `BTD6BOT_HUD=strip`) the old thin status strip; they
+  take effect when the HUD starts. `HUD_NO_THOUGHTS` hides the log lines
+  under the pill (checked twice a second).
+- `python tools/hud_preview.py out.png --demo --view game` draws the HUD into
+  an image offline (`--background` a game frame, `--hud big` the old one).
 
 ## Offline play
 

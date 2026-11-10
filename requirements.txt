@@ -7,3 +7,4 @@ PyDirectInput>=1.0         # keyboard/mouse input the game accepts
 pywin32>=306               # window handling, focus, PrintWindow capture
 PyYAML>=6.0                # strategy files (strategies/*.yaml)
 UnityPy>=1.20              # reading map geometry from the game's asset bundles (read-only)
+Pillow>=10.1               # the HUD's glass widgets (tools/glass_scene.py)

@@ -398,9 +398,10 @@ class Match:
         # Erosion's bloons take a new path every 18 rounds: the track is
         # repainted for the round's path phase as rounds pass (_follow_track)
         self._phase_geom, self._reverse = self._path_phases(model)
-        # rounds the map's melts come before the trigger rounds in this game
-        # (learned from the first early melt, _melt_check)
-        self._ground_lead = 0
+        # rounds the map's melts come before the trigger rounds in this game:
+        # MELT_LEAD from the start on maps with path phases (Erosion), raised
+        # by _melt_check if a melt comes earlier still
+        self._ground_lead = self._default_ground_lead()
         self.ex.melt_check = self._melt_check
         self._t_round_change = time.time()   # when the tracked round last changed
         self._last_buy = time.time()
@@ -1299,6 +1300,25 @@ class Match:
 
     # how many rounds before its trigger round a melt is believed on evidence
     MELT_EARLY_MAX = 3
+    # rounds ahead of the trigger round that path-phase maps (Erosion) are
+    # rebuilt from the start. Every Erosion melt seen live came early: two
+    # rounds on Easy Primary Only, one on Reverse and Apopalypse
+    # (2026-11-09/10). Reverse 2026-11-10 11:48: the round-37 ice went as
+    # round 36 began, _melt_check caught it four seconds in, and round 36's
+    # bloons took all 150 lives in six seconds - evidence comes too late, so
+    # the towers on doomed ice are rebuilt two rounds ahead. The game
+    # refunds the old ones when the ice goes.
+    MELT_LEAD = 2
+
+    def _default_ground_lead(self):
+        """MELT_LEAD on a map with long path phases (its melts follow the
+        phases), else 0 (other maps' vanishing ground is left as modelled)."""
+        geom = getattr(self, "_phase_geom", None)
+        try:
+            from . import mapgeom
+            return self.MELT_LEAD if geom is not None and mapgeom.phase_end(geom, 1) is not None else 0
+        except Exception:
+            return 0
 
     def _melt_check(self, p):
         """Tower p could not be selected. When it stands on ground the map
