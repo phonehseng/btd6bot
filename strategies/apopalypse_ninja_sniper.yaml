@@ -29,7 +29,12 @@ planner:
   # Spillway: lost rounds 46 and 48 (2026-11-09 06:05 and 18:12), the second
   # with the 76855ff tier runs and the d816c59 purchase fix both in play.
   # Mesa: lost rounds 59 and 45 (2026-11-09 07:53 and 20:00).
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa]
+  # Covered Garden: lost round 45 (2026-11-09 20:36, all 122 lives in 20 s
+  # to 25 rainbows and 180 pinks while 15 s went on seven refused clicks
+  # for the exit spike);
+  # tools/apopalypse_check.py rates its rounds 41-50 0.41 here against 0.81
+  # for apopalypse_apache_spikes, which plays the map now.
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Covered Garden]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an

@@ -1,0 +1,147 @@
+# Apopalypse on the harder maps: Apache Dartship helis (Heli Pilot 4-2-0)
+# as the core, Spiked Mines (Spike Factory 4-0-2) at the exit, a cheap ninja
+# opening and an alchemist's dip.
+#
+# Why a new build: the 22 open Apopalypse medals are all on Intermediate,
+# Advanced and Expert maps, where apopalypse_ninja_sniper won 17 and lost 32
+# (2-14 since 2026-11-08), losing a wall at rounds 42-59 when dense ceramic
+# and rainbow waves overlapped MOAB groups. Its damage is single-target
+# snipers and ninjas tied to one stretch of track: walls (Castle Revenge),
+# pools (Sunken Columns), alternating lanes (Ravine, Muddy Puddles) and
+# panes (Covered Garden) each left half of it idle.
+#
+# The core. Heli Pilot 4-2-0: Pursuit (2xx; Executor sets it) flies the heli
+# to the bloons wherever they are, IFR (x2x) gives it camo, Razor Rotors
+# (3xx) pops lead and ceramics, Apache Dartship (4xx, one $8,500 tier) adds
+# missiles and machine guns that shred MOABs and dense waves alike. On
+# every map the map-fit table (data/map_fit.json) gives the heli 1.0 except
+# Covered Garden 0.33, Peninsula and Sanctuary 0.67 and Erosion 0.0
+# (excluded). A screen of 40 crosspaths with tools/apopalypse_check.py's
+# rater (one tower beside an alchemist at the old build's n1 spot, fixed
+# random windows of rounds 25/35/45/55) put Apache Dartship first per dollar
+# among towers that work on every map: Firing Range 10.2/3.9/2.6/2.5 for
+# $15,300 (Full Auto Rifle 0-2-4: 0.06/1.7/0.61/0.06 for $12,400; even
+# with an MIB village beside it 5.1/1.8/0.75/0.47), Ravine 5.2/2.5/1.3/1.2 where every
+# placed tower but the heli floored at 0.06 (it cannot reach the other
+# lanes). Spiked Mines rated 9.2/8.2/3.2/2.0 for $7,850 where it reaches the
+# track (Firing Range), 0.06 where it does not, so it stands at the exit and
+# is skipped (`not_maps`) on the maps with no spike ground (map_fit 0.0 or
+# near it: Covered Garden, Geared, Flooded Valley, Sanctuary), where the
+# fill buys helis instead. On Covered Garden the helis stand off the glass
+# while open ground is left (Executor._off_panes): a tower under a pane can
+# be upgraded only in one round of four, and the Apache tier waited there.
+# Few big upgrades: a heli is 7 tiers bought from one panel in two runs (clicktime.CHAIN_MAX_TIERS); the plan is 10 towers
+# in 25 steps ($79k, about what a poor game pays) against the old build's
+# 11 towers in 34 steps.
+#
+# Economy: Apopalypse with Fast Track starts at round 15 with $6,057, pays
+# a poor game about $36.5k over rounds 16-60 (x2 Double Cash; apopalypse_
+# check._poor_game_curve), nothing between rounds, and the rounds never
+# wait. No farms (they need rounds to pay back, and the random rush rounds
+# punish greed - both sources below). The opening is what that cash buys
+# at once: ninja 1-0-1 (camo, early pinks), heli 2-2-0, hero; then the
+# heli's 3xx (lead, camo leads from round 20) before anything else.
+# plan_first: true: the plan owns the bank. Without it the match loop's
+# surplus spending bought copies of the cheapest tiers (eight 3-2-0 helis,
+# a 4-2-0 opener dart) and the $8,500 Apache tier was never bought.
+#
+# Sources:
+#   * bloonswiki Strategy:Apopalypse_(BTD6) (raw page, last updated 46.3):
+#     no farms; cover camo/lead/purple early; "Comanche Defense is very
+#     solid"; Neva-Miss/Spectre aces and Destroyers for the late game;
+#     Berserker Brew (not modelled here, so not bought) for the top tower
+#     (https://www.bloonswiki.com/Strategy:Apopalypse_(BTD6))
+#   * touchtapplay Apopalypse guide: Ninja 4-0-2 + Alchemist 4-2-0 + Ace,
+#     no Banana Farms ("no break between rounds") - the old build's core
+#     (https://www.touchtapplay.com/btd6-apopalypse-mode-strategy-2022/)
+#   * hard_ninja_alch_sun.yaml (2026-11-08): two helis 3-2-0 -> Apache
+#     Dartship carried its ceramic and MOAB rounds on Hard; the bot's heli
+#     handling (Lock in Place, Pursuit at 2xx) is in Executor._aim.
+#
+# Checked offline 2026-11-09 with tools/apopalypse_check.py (live refused
+# spots, Fast Track + Double Cash, poor-game income, --click-budget 4 s per
+# round, 6 random windows + the constructed worst ones per round, no drift),
+# worst margin per stretch of rounds, new | old (apopalypse_ninja_sniper):
+#   map              rounds 15-30  31-40      41-50      51-60
+#   Covered Garden   1.15|0.37  0.81|0.43  0.81|0.41  1.53|0.46   (helis off the panes)
+#   Firing Range     1.18|0.53  0.91|0.71  1.53|0.99  2.74|0.91
+#   Ravine           0.36|0.06  0.45|0.13  0.53|0.16  1.11|0.21
+#   Muddy Puddles    0.39|0.15  0.48|0.26  0.69|0.43  1.61|0.53
+#   Bloody Puddles   0.38|0.06  0.47|0.19  0.68|0.35  0.89|0.39
+#   Sunset Gulch     0.81|0.53  1.01|0.61  1.28|0.89  1.83|1.07
+#   Peninsula        0.57|0.06  0.57|0.16  1.85|0.24  2.71|0.35
+#   Spillway         0.68|0.06  0.62|0.22  0.90|1.01  1.53|0.77
+#   Mesa             0.56|0.06  0.68|0.06  0.81|0.06  1.01|0.06
+#   Dark Path        0.66|0.23  0.93|0.16  2.09|0.20  2.43|0.24
+#   Castle Revenge   0.48|0.24  0.37|0.37  0.75|0.27  1.03|0.21
+#   Sunken Columns   0.68|0.07  0.76|0.15  1.02|0.21  1.18|0.19
+#   Tricky Tracks    0.46|0.26  0.39|0.40  0.56|0.58  0.59|0.68
+#   Workshop         0.48|0.25  0.55|0.06  0.90|0.06  0.93|0.06
+#   #Ouch            0.42|0.26  0.47|0.34  0.46|0.50  0.67|0.57
+#   Geared           1.37|0.68  0.59|0.40  1.31|0.28  1.10|0.18
+#   Flooded Valley   0.39|0.13  0.45|0.06  1.20|0.06  1.11|0.10
+#   Last Resort      0.47|0.21  0.54|0.22  0.75|0.36  0.94|0.43
+#   Glacial Trail    0.51|0.20  0.49|0.11  1.54|0.13  2.25|0.14
+#   Dark Dungeons    0.43|0.06  0.52|0.18  0.87|0.10  1.10|0.22
+#   Sanctuary        0.37|0.13  0.35|0.22  0.76|0.43  0.86|0.57
+# The check is pessimistic (no hero, no abilities, no brew; the old build
+# held rounds 15-44 live where it rates 0.4-0.9), so compare the columns,
+# not the gate. Two caveats: the model places a heli at its pad, so the
+# alchemist's dip reaches it only where the pad is near a1 (Ravine 51-60:
+# 1.11 with a1, 0.67 without - still above the old 0.26); and Tricky Tracks
+# (0.39-0.59) and Erosion stay excluded.
+id: apopalypse_apache_spikes
+hero: obyn
+modes: [apopalypse]
+planner:
+  towers: {heli: [4, 2, 0], ninja: [2, 0, 2], alchemist: [2, 0, 0], spike: [4, 0, 2]}
+  base_success: {apopalypse: 0.7}
+  cost_share: {heli: 0.75, spike: 0.15, ninja: 0.05, alchemist: 0.05}
+  categories: [intermediate, advanced, expert]
+  # Erosion: the heli has no pad that reaches its track (map_fit 0.0).
+  # Tricky Tracks: rated 0.39-0.59 from round 31 on, no better than the
+  # old build late (0.58-0.68: its six short lanes suit snipers); every
+  # general build stays off its unbeaten modes (test_trickytracks_excluded).
+  excluded_maps: [Erosion, Tricky Tracks]
+plan_first: true
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
+  - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: place, id: h1, kind: heli, role: dps}
+  - {do: upgrade, id: h1, to: 2-2-0}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: h1, to: 3-2-0}
+  - {do: upgrade, id: n1, to: 2-0-2}
+  - {do: place, id: h2, kind: heli, role: dps}
+  - {do: upgrade, id: h2, to: 3-2-0}
+  - {do: upgrade, id: h1, to: 4-2-0}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
+  - {do: upgrade, id: n2, to: 1-0-1}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: place, id: sp1, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: upgrade, id: sp1, to: 2-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: upgrade, id: h2, to: 4-2-0}
+  - {do: upgrade, id: sp1, to: 4-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: place, id: h3, kind: heli, role: dps}
+  - {do: upgrade, id: h3, to: 4-2-0}
+  - {do: place, id: sp2, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: upgrade, id: sp2, to: 4-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary]}
+  - {do: place, id: h4, kind: heli, role: dps}
+  - {do: upgrade, id: h4, to: 4-2-0}
+fill:
+  - {do: place, kind: heli, role: dps, max: 6}
+  - {do: upgrade, kind: heli, to: 4-2-0}
+  - {do: upgrade, kind: spike, to: 4-0-2}
+panic:
+  - {do: place, kind: heli, role: dps}
+  - {do: place, kind: ninja, role: exit}
+answers:
+  lead: [{do: upgrade, id: h1, to: 3-2-0}]
+  ceramic: [{do: upgrade, id: h1, to: 3-2-0}]
+  moab: [{do: upgrade, id: h1, to: 4-2-0}]
+  bfb: [{do: upgrade, id: h2, to: 4-2-0}]
+  rush: [{do: upgrade, id: n1, to: 2-0-2}]
+  zomg: [{do: upgrade, id: h2, to: 4-2-0}]
+  ddt: [{do: upgrade, id: h2, to: 4-2-0}]
+  bad: [{do: upgrade, id: h3, to: 4-2-0}]
