@@ -913,7 +913,11 @@ class Bot:
     def _use_geometry(self, model, map_name, reverse=False):
         """Fill the model from the game's own map files when they are available
         (exact track, progress, placement and sight blockers - no learning).
-        Re-applied when the game updates the map or the scan was dropped.
+        Re-applied when the game updates the map, the scan was dropped, or the
+        saved model lacks a grid apply() fills (MapModel.has_geometry_grids:
+        models saved before the sight heights were kept, which left the live
+        forecast and placement without them while the offline replay, which
+        applies the geometry afresh, had them).
         Returns True when the model now holds game geometry."""
         from . import mapgeom
         from .tracklearn import LEARNED_ROUNDS
@@ -924,7 +928,7 @@ class Bot:
         # game update and an improved extractor re-apply the geometry
         stamp = f'{geom.get("bundle")}#v{geom.get("version")}'
         mapgeom.forget_pane_refusals(model, geom)
-        if model.geometry_bundle == stamp and model.scanned("land"):
+        if model.geometry_bundle == stamp and model.scanned("land") and model.has_geometry_grids():
             return True
         mapgeom.apply(model, geom)
         if reverse:  # Reverse runs the same track backwards

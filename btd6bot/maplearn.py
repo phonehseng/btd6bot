@@ -46,6 +46,14 @@ REFUSAL_RESETS = {"mesa": 1, "mesareverse": 1,
                   # (2026-11-06; the ground under its cancel button is red)
                   "trickytracks": 1}
 
+# Grids mapgeom.apply derives from the game's map files, saved with the model
+# (as "geom_<name>") and read back with these types. A model loaded without
+# one of them has to have the geometry applied again (has_geometry_grids).
+GEOMETRY_GRIDS = {"small_only": bool, "sight": bool, "mermonkey_water": bool,
+                  "size_limit": np.uint8,
+                  "sight_height": np.float32,    # -inf where nothing blocks sight
+                  "ground_height": np.float32}
+
 
 def slug(name):
     return "".join(c for c in name.lower() if c.isalnum())
@@ -104,7 +112,12 @@ class MapModel:
         scans = {f"scan_{k}": v for k, v in self.scan.items()}
         scans.update({f"refused_{k}": v for k, v in self.refused.items()})
         scans.update({f"accepted_{k}": v for k, v in self.accepted.items()})
-        for key in ("small_only", "sight", "size_limit", "mermonkey_water"):
+        # everything mapgeom.apply fills, so a later game that finds the
+        # geometry already applied (runner._use_geometry) sees the same map;
+        # the heights used to be dropped here, and the live forecast and
+        # placement then let every sight blocker hide bloons from towers on
+        # raised ground too
+        for key in GEOMETRY_GRIDS:
             if getattr(self, key, None) is not None:
                 scans[f"geom_{key}"] = getattr(self, key)
         tmp = self.path.with_suffix(".tmp.npz")
@@ -116,6 +129,7 @@ class MapModel:
                                      "px_per_unit": self.px_per_unit, "playfield": self.playfield,
                              "spot_stats": self.spot_stats, "sandbox_rounds": self.sandbox_rounds,
                              "geometry_bundle": self.geometry_bundle,
+                             "geometry_version": self.geometry_version,
                              "refusal_cleanup": self.refusal_cleanup,
                              "refusal_reset": self.refusal_reset}),
                 )
@@ -140,11 +154,10 @@ class MapModel:
                 m.spot_stats = meta.get("spot_stats", {})
                 m.sandbox_rounds = meta.get("sandbox_rounds", 0)
                 m.geometry_bundle = meta.get("geometry_bundle")
-                for key in ("small_only", "sight", "mermonkey_water"):
+                m.geometry_version = meta.get("geometry_version")
+                for key, dtype in GEOMETRY_GRIDS.items():
                     if f"geom_{key}" in d.files:
-                        setattr(m, key, d[f"geom_{key}"].astype(bool))
-                if "geom_size_limit" in d.files:
-                    m.size_limit = d["geom_size_limit"].astype(np.uint8)
+                        setattr(m, key, d[f"geom_{key}"].astype(dtype))
                 for k in d.files:
                     if k.startswith("scan_"):
                         m.scan[k[5:]] = d[k]
@@ -165,6 +178,14 @@ class MapModel:
                     log.info(
                         "%s: forgot %d refused cells that later placements contradict", name, cleared)
         return m
+
+    def has_geometry_grids(self):
+        """True when every grid mapgeom.apply fills is here (and the version
+        it stamps). A model saved before the heights were kept lacks some:
+        runner._use_geometry applies the geometry again rather than play
+        on without them."""
+        return (self.geometry_version is not None
+                and all(getattr(self, key, None) is not None for key in GEOMETRY_GRIDS))
 
     # -- placement scan -------------------------------------------------------
     def blocked(self, cls="land"):
