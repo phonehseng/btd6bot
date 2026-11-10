@@ -1557,12 +1557,24 @@ class Executor:
         lane, so that lane looked as defended as the right one with its
         0-2-2 bomb, and a2, b1 and the village all went right. Bloons split
         between the two lanes, and the left one leaked 90 lives by round 31.
-        A hero with no known price still counts in full."""
+        A hero with no known price still counts in full.
+
+        Towers that pop wherever they stand (_needs_no_reach: heli, sniper,
+        mortar, dartling) are left out: they cover every cell alike, so they
+        say nothing about where the next tower is needed. Counted as a disc
+        round the spot they stand on, a heli bought early (hard_ninja_alch_sun
+        in Half Cash since 2026-11-09: 3-0-0, $4.6k, right after n1) was the
+        most-invested tower, so the ninjas after it counted for a fraction of
+        their cost and n2 went to n1's lane: on Mesa both ninjas, the hero
+        and both villages ended up on the left lane, and the replay rated
+        round 78 at 0.71 against 1.43 with the same towers spread over both
+        lanes (X Factor 0.52 -> 1.09, Dark Castle 0.62 -> 0.76)."""
         import cv2
         from .towerxp import invested
         family = PRICE_FAMILY.get(self.mode, "hard")
         poppers = [p for p in self.g.towers.values()
-                   if p.kind not in ("village", "alchemist", "farm")]   # support towers do not pop
+                   if p.kind not in ("village", "alchemist", "farm")   # support towers do not pop
+                   and not self._needs_no_reach(p.kind)]
         cash = {p.tid: sum(invested([p], family).values()) for p in poppers}
         hero_price = T.HEROES.get(self.g.hero, {}).get("cost") if self.g.hero else None
         for p in poppers:

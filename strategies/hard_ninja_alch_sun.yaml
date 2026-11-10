@@ -99,6 +99,38 @@ planner:
   excluded_maps: [Bazaar, Tricky Tracks, Infernal, "Pat's Pond"]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
+  # Half Cash opening, rounds 22-35 (2026-11-09): after n1, h1 is taken
+  # straight to 3-2-0 before anything else. The game starts at round 22 with
+  # ~$4.4-5k (Fast Track, Double Cash, half income ~$170-660 a round). The
+  # old order (n1 2-0-1, hero, n2 0-0-1, a1, then h1) spent it on segment-
+  # placed land towers that cover one lane of a split or long track, and h1
+  # reached 3-2-0 only at round 31-33: the replay rated rounds 22-25 at
+  # 0.06-0.5 on X Factor and Castle Revenge (whites and purples on lanes no
+  # tower reaches) and rounds 28 and 30 (6 and 9 leads, nothing else) at
+  # 0.06 on most maps. rate_board --drop: round 28 hangs on the leads alone
+  # (16.0 without them); the alchemist's acid, a bomb or a sniper placed by
+  # coverage lifted it to 0.4 at best. Enchanted Glade lost round 31 on
+  # 2026-11-09 21:18 (53 lives on round 27's rush, the rest in 28-31),
+  # Castle Revenge round 25 and Bloonarius Prime round 26 before it.
+  # A heli at 2-x-x pursues the bloons over every lane (Pursuit; below 2xx
+  # it sits Locked in Place), Razor Rotors (3-x-x) pop lead, IFR (x-2-x)
+  # sees camo. 2-0-0 ($3,025) stands before round 22, 3-0-0 by round 27,
+  # IFR by round 30 (round 33's camo). Probing the replayed boards with
+  # every buy put the heli first per dollar on every map (the ninja and
+  # alchemist upgrades added 0.00-0.05 on split tracks).
+  # Why n1 first and IFR last: n1 sees camo, so round 24's one camo green is
+  # popped where n1 reaches (3 lives at most elsewhere); and with the heli
+  # first the lead answer placed a1 before n1 stood, away from the ninjas
+  # (no potion buff, no radar camo later): rounds 59-78 fell on Pat's Pond
+  # and Quad. IFR first (0-2-0 -> 2-2-0 -> 3-2-0) costs the same and left
+  # round 28's leads to a 2-2-0 heli. Replayed worst of rounds 22-35 before
+  # -> after: tests/test_hard_ninja_alch_sun_r40_offline.py (OPENING_FLOORS).
+  # The h1 steps further down are then already done in Half Cash; Hard,
+  # Medium and Double HP keep the old order.
+  - {do: place, id: h1, kind: heli, role: dps, modes: [half_cash]}
+  - {do: upgrade, id: h1, to: 2-0-0, modes: [half_cash]}       # Pursuit: the heli chases the bloons over every lane
+  - {do: upgrade, id: h1, to: 3-0-0, modes: [half_cash]}       # Razor Rotors: rounds 28/30's leads
+  - {do: upgrade, id: h1, to: 3-2-0, modes: [half_cash]}       # IFR: round 33's camo
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: upgrade, id: n1, to: 2-0-1}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 0.9]}
