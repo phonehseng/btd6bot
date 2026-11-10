@@ -12,7 +12,12 @@ hero: obyn
 modes: [apopalypse]
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], sniper: [5, 2, 4], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
-  base_success: {apopalypse: 0.65}
+  # The declared win rate is the record, not a hope: 0.65 until 2026-11-09,
+  # when the build had won 2 of its last 23 games (Infernal and Midnight
+  # Mansion; 21 losses at rounds 18-59, most to rounds 45-56 arriving faster
+  # than the bot spends). At about 0.1 the planner plays it only after every
+  # game it trusts more, while a dedicated Apopalypse build is worked on.
+  base_success: {apopalypse: 0.1}
   # not Tricky Tracks (2026-11-09): lost there at rounds 47 and 50 with the
   # board rated 1.2-1.5, and tools/apopalypse_check.py rates it 0.26
   # (tests/test_trickytracks_excluded_offline.py)
