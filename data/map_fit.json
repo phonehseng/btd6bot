@@ -3,7 +3,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_-ouch_scenes_all_145a565c204475a40d6b0b01e1025650.bundle#v8#f3#r2",
+  "stamp": "map_-ouch_scenes_all_145a565c204475a40d6b0b01e1025650.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -117,7 +117,7 @@
   "mechanics": [
    "alternating_paths"
   ],
-  "stamp": "map_adorastemple_scenes_all_db35e8f1641ddb68f8992f43e01a339a.bundle#v8#f3#r2",
+  "stamp": "map_adorastemple_scenes_all_db35e8f1641ddb68f8992f43e01a339a.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -133,20 +133,20 @@
    },
    "bomb": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.997
    },
    "boomerang": {
     "early": 1.0,
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.824,
-    "late": 0.728,
+    "early": 0.821,
+    "late": 0.389,
     "room": 8
    },
    "dart": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.997,
+    "late": 0.982
    },
    "dartling": {
     "early": 1.0,
@@ -157,12 +157,12 @@
     "late": 1.0
    },
    "druid": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.989
    },
    "engineer": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.997
    },
    "farm": {
     "early": 1.0,
@@ -177,12 +177,12 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.904,
-    "late": 0.828
+    "early": 0.9,
+    "late": 0.81
    },
    "mermonkey": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.876
    },
    "mortar": {
     "early": 1.0,
@@ -205,17 +205,17 @@
     "late": 0.993
    },
    "sub": {
-    "early": 0.632,
-    "late": 0.346,
+    "early": 0.618,
+    "late": 0.243,
     "room": 8
    },
    "super": {
-    "early": 0.87,
-    "late": 0.809
+    "early": 0.862,
+    "late": 0.658
    },
    "tack": {
-    "early": 0.963,
-    "late": 0.938
+    "early": 0.95,
+    "late": 0.899
    },
    "village": {
     "early": 0.831,
@@ -223,12 +223,12 @@
    },
    "wizard": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.997
    }
   }
  },
  "Alpine Run": {
-  "stamp": "map_alpinerun_scenes_all_014b0bab8383ece1c88840dc2097074c.bundle#v8#f3#r2",
+  "stamp": "map_alpinerun_scenes_all_014b0bab8383ece1c88840dc2097074c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -346,7 +346,7 @@
    "paid_switch",
    "path_opens"
   ],
-  "stamp": "map_ancientportal_scenes_all_17e2eecc904f66be5c1f3e5bf90a3049.bundle#v8#f3#r2",
+  "stamp": "map_ancientportal_scenes_all_17e2eecc904f66be5c1f3e5bf90a3049.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -361,36 +361,36 @@
     "late": 0.804
    },
    "bomb": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "boomerang": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.51,
-    "late": 0.459,
+    "early": 0.478,
+    "late": 0.452,
     "room": 7
    },
    "dart": {
-    "early": 1.0,
-    "late": 0.993
+    "early": 0.963,
+    "late": 0.969
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "druid": {
-    "early": 1.0,
-    "late": 0.992
+    "early": 0.966,
+    "late": 0.987
    },
    "engineer": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "farm": {
@@ -398,7 +398,7 @@
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "heli": {
@@ -406,11 +406,11 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.922,
-    "late": 0.836
+    "early": 0.898,
+    "late": 0.832
    },
    "mermonkey": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "mortar": {
@@ -418,11 +418,11 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "skywarden": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "sniper": {
@@ -434,24 +434,24 @@
     "late": 0.987
    },
    "sub": {
-    "early": 0.382,
-    "late": 0.321,
+    "early": 0.378,
+    "late": 0.316,
     "room": 8
    },
    "super": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    },
    "tack": {
-    "early": 0.958,
-    "late": 0.871
+    "early": 0.918,
+    "late": 0.855
    },
    "village": {
     "early": 0.993,
     "late": 0.992
    },
    "wizard": {
-    "early": 1.0,
+    "early": 0.97,
     "late": 1.0
    }
   }
@@ -460,7 +460,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_anotherbrick_scenes_all_91531d221ef2dcfefbf2ac8edd706c97.bundle#v8#f3#r2",
+  "stamp": "map_anotherbrick_scenes_all_91531d221ef2dcfefbf2ac8edd706c97.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -475,21 +475,21 @@
     "late": 0.428
    },
    "bomb": {
-    "early": 0.997,
-    "late": 0.829
+    "early": 0.992,
+    "late": 0.823
    },
    "boomerang": {
     "early": 1.0,
-    "late": 0.844
+    "late": 0.843
    },
    "buccaneer": {
-    "early": 0.482,
-    "late": 0.765,
+    "early": 0.476,
+    "late": 0.71,
     "room": 8
    },
    "dart": {
-    "early": 0.957,
-    "late": 1.0
+    "early": 0.945,
+    "late": 0.998
    },
    "dartling": {
     "early": 1.0,
@@ -497,15 +497,15 @@
    },
    "desperado": {
     "early": 1.0,
-    "late": 0.899
+    "late": 0.891
    },
    "druid": {
-    "early": 0.96,
-    "late": 0.787
+    "early": 0.957,
+    "late": 0.786
    },
    "engineer": {
-    "early": 0.997,
-    "late": 0.829
+    "early": 0.992,
+    "late": 0.823
    },
    "farm": {
     "early": 1.0,
@@ -520,8 +520,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.578,
-    "late": 0.641
+    "early": 0.575,
+    "late": 0.639
    },
    "mermonkey": {
     "early": 1.0,
@@ -532,7 +532,7 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
+    "early": 0.997,
     "late": 1.0
    },
    "skywarden": {
@@ -548,30 +548,30 @@
     "late": 0.76
    },
    "sub": {
-    "early": 0.343,
-    "late": 0.577,
+    "early": 0.335,
+    "late": 0.566,
     "room": 8
    },
    "super": {
     "early": 1.0,
-    "late": 0.833
+    "late": 0.824
    },
    "tack": {
-    "early": 0.815,
-    "late": 0.874
+    "early": 0.677,
+    "late": 0.751
    },
    "village": {
     "early": 0.956,
     "late": 0.76
    },
    "wizard": {
-    "early": 0.997,
-    "late": 0.829
+    "early": 0.992,
+    "late": 0.823
    }
   }
  },
  "Ascent": {
-  "stamp": "map_ascent_scenes_all_8b1460c4c19f846582ab15c4edbd2b43.bundle#v8#f3#r2",
+  "stamp": "map_ascent_scenes_all_8b1460c4c19f846582ab15c4edbd2b43.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -586,69 +586,69 @@
     "late": 0.059
    },
    "bomb": {
-    "early": 0.627,
-    "late": 0.744
+    "early": 0.571,
+    "late": 0.705
    },
    "boomerang": {
-    "early": 0.675,
-    "late": 0.802
+    "early": 0.624,
+    "late": 0.784
    },
    "buccaneer": {
-    "early": 0.341,
-    "late": 0.614,
+    "early": 0.315,
+    "late": 0.51,
     "room": 2
    },
    "dart": {
-    "early": 0.472,
-    "late": 0.568
+    "early": 0.421,
+    "late": 0.513
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.788,
-    "late": 0.917
+    "early": 0.705,
+    "late": 0.881
    },
    "druid": {
-    "early": 0.466,
-    "late": 0.578
+    "early": 0.451,
+    "late": 0.564
    },
    "engineer": {
-    "early": 0.627,
-    "late": 0.744
+    "early": 0.571,
+    "late": 0.705
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.779,
-    "late": 0.903
+    "early": 0.695,
+    "late": 0.865
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.15,
-    "late": 0.182
+    "early": 0.147,
+    "late": 0.178
    },
    "mermonkey": {
-    "early": 0.593,
-    "late": 0.818
+    "early": 0.571,
+    "late": 0.772
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.686,
-    "late": 0.801
+    "early": 0.621,
+    "late": 0.758
    },
    "skywarden": {
-    "early": 0.797,
-    "late": 0.918
+    "early": 0.713,
+    "late": 0.885
    },
    "sniper": {
     "early": 1.0,
@@ -659,30 +659,30 @@
     "late": 0.555
    },
    "sub": {
-    "early": 0.194,
-    "late": 0.356,
+    "early": 0.185,
+    "late": 0.309,
     "room": 2
    },
    "super": {
-    "early": 0.404,
-    "late": 0.523
+    "early": 0.382,
+    "late": 0.476
    },
    "tack": {
-    "early": 0.192,
-    "late": 0.221
+    "early": 0.176,
+    "late": 0.193
    },
    "village": {
     "early": 0.202,
     "late": 0.279
    },
    "wizard": {
-    "early": 0.627,
-    "late": 0.744
+    "early": 0.571,
+    "late": 0.705
    }
   }
  },
  "Balance": {
-  "stamp": "map_balance_scenes_all_b3feacbb9e062c798aba1fef41edee61.bundle#v8#f3#r2",
+  "stamp": "map_balance_scenes_all_b3feacbb9e062c798aba1fef41edee61.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -697,69 +697,69 @@
     "late": 0.348
    },
    "bomb": {
-    "early": 0.935,
-    "late": 0.935
+    "early": 0.744,
+    "late": 0.742
    },
    "boomerang": {
-    "early": 0.947,
-    "late": 0.946
+    "early": 0.779,
+    "late": 0.778
    },
    "buccaneer": {
-    "early": 0.297,
-    "late": 0.298,
+    "early": 0.291,
+    "late": 0.292,
     "room": 2
    },
    "dart": {
-    "early": 0.959,
-    "late": 0.959
+    "early": 0.754,
+    "late": 0.753
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.976,
-    "late": 0.976
+    "early": 0.86,
+    "late": 0.86
    },
    "druid": {
-    "early": 0.886,
-    "late": 0.886
+    "early": 0.671,
+    "late": 0.67
    },
    "engineer": {
-    "early": 0.935,
-    "late": 0.935
+    "early": 0.744,
+    "late": 0.742
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.935,
+    "late": 0.934
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.535,
-    "late": 0.535
+    "early": 0.495,
+    "late": 0.495
    },
    "mermonkey": {
-    "early": 0.87,
-    "late": 0.87
+    "early": 0.525,
+    "late": 0.523
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.88,
+    "late": 0.88
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.948,
+    "late": 0.948
    },
    "sniper": {
     "early": 1.0,
@@ -770,25 +770,25 @@
     "late": 0.686
    },
    "sub": {
-    "early": 0.195,
-    "late": 0.196,
+    "early": 0.188,
+    "late": 0.189,
     "room": 3
    },
    "super": {
-    "early": 0.849,
-    "late": 0.848
+    "early": 0.504,
+    "late": 0.503
    },
    "tack": {
-    "early": 0.706,
-    "late": 0.705
+    "early": 0.553,
+    "late": 0.552
    },
    "village": {
     "early": 0.722,
     "late": 0.721
    },
    "wizard": {
-    "early": 0.935,
-    "late": 0.935
+    "early": 0.744,
+    "late": 0.742
    }
   }
  },
@@ -797,7 +797,7 @@
    "alternating_paths",
    "removable"
   ],
-  "stamp": "map_bazaar_scenes_all_53f0be9e2eca42cce2b75587feb76fd8.bundle#v8#f3#r2",
+  "stamp": "map_bazaar_scenes_all_53f0be9e2eca42cce2b75587feb76fd8.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -812,69 +812,69 @@
     "late": 0.506
    },
    "bomb": {
-    "early": 0.649,
-    "late": 0.668
+    "early": 0.621,
+    "late": 0.619
    },
    "boomerang": {
-    "early": 0.662,
-    "late": 0.677
+    "early": 0.638,
+    "late": 0.637
    },
    "buccaneer": {
-    "early": 0.442,
-    "late": 0.442,
+    "early": 0.353,
+    "late": 0.355,
     "room": 8
    },
    "dart": {
-    "early": 0.611,
-    "late": 0.631
+    "early": 0.588,
+    "late": 0.586
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.712,
-    "late": 0.717
+    "early": 0.677,
+    "late": 0.681
    },
    "druid": {
-    "early": 0.607,
-    "late": 0.631
+    "early": 0.594,
+    "late": 0.592
    },
    "engineer": {
-    "early": 0.649,
-    "late": 0.668
+    "early": 0.621,
+    "late": 0.619
    },
    "farm": {
     "early": 0.0,
     "late": 0.0
    },
    "glue": {
-    "early": 0.707,
-    "late": 0.715
+    "early": 0.671,
+    "late": 0.672
    },
    "heli": {
     "early": 0.0,
     "late": 0.0
    },
    "ice": {
-    "early": 0.494,
-    "late": 0.515
+    "early": 0.49,
+    "late": 0.5
    },
    "mermonkey": {
-    "early": 0.797,
-    "late": 0.821
+    "early": 0.758,
+    "late": 0.755
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.669,
-    "late": 0.685
+    "early": 0.639,
+    "late": 0.637
    },
    "skywarden": {
-    "early": 0.719,
-    "late": 0.724
+    "early": 0.683,
+    "late": 0.685
    },
    "sniper": {
     "early": 1.0,
@@ -885,25 +885,25 @@
     "late": 0.613
    },
    "sub": {
-    "early": 0.226,
-    "late": 0.226,
+    "early": 0.2,
+    "late": 0.2,
     "room": 8
    },
    "super": {
-    "early": 0.681,
-    "late": 0.694
+    "early": 0.64,
+    "late": 0.646
    },
    "tack": {
-    "early": 0.532,
-    "late": 0.552
+    "early": 0.516,
+    "late": 0.522
    },
    "village": {
     "early": 0.613,
     "late": 0.64
    },
    "wizard": {
-    "early": 0.649,
-    "late": 0.668
+    "early": 0.621,
+    "late": 0.619
    }
   }
  },
@@ -914,7 +914,7 @@
    "area_vanishes",
    "removable"
   ],
-  "stamp": "map_bloodypuddles_scenes_all_4a08207d4e09fb2fcb93f83086dda5bb.bundle#v8#f3#r2",
+  "stamp": "map_bloodypuddles_scenes_all_4a08207d4e09fb2fcb93f83086dda5bb.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -926,24 +926,24 @@
    },
    "beast_handler": {
     "early": 0.952,
-    "late": 0.949
+    "late": 0.948
    },
    "bomb": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    },
    "boomerang": {
     "early": 1.0,
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.662,
-    "late": 0.736,
+    "early": 0.65,
+    "late": 0.728,
     "room": 8
    },
    "dart": {
-    "early": 0.991,
-    "late": 0.991
+    "early": 0.988,
+    "late": 0.988
    },
    "dartling": {
     "early": 1.0,
@@ -954,12 +954,12 @@
     "late": 1.0
    },
    "druid": {
-    "early": 0.99,
-    "late": 0.99
+    "early": 0.989,
+    "late": 0.989
    },
    "engineer": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    },
    "farm": {
     "early": 1.0,
@@ -974,8 +974,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.981,
-    "late": 0.981
+    "early": 0.98,
+    "late": 0.98
    },
    "mermonkey": {
     "early": 1.0,
@@ -1002,8 +1002,8 @@
     "late": 0.99
    },
    "sub": {
-    "early": 0.472,
-    "late": 0.552,
+    "early": 0.465,
+    "late": 0.543,
     "room": 8
    },
    "super": {
@@ -1011,16 +1011,16 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.971,
-    "late": 0.971
+    "early": 0.969,
+    "late": 0.969
    },
    "village": {
     "early": 0.991,
     "late": 0.991
    },
    "wizard": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    }
   }
  },
@@ -1028,7 +1028,7 @@
   "mechanics": [
    "path_opens"
   ],
-  "stamp": "map_bloonariusprime_scenes_all_deafe78b2a6b0d5d74981d3703b00e70.bundle#v8#f3#r2",
+  "stamp": "map_bloonariusprime_scenes_all_deafe78b2a6b0d5d74981d3703b00e70.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -1043,45 +1043,45 @@
     "late": 0.597
    },
    "bomb": {
-    "early": 0.785,
-    "late": 0.852
+    "early": 0.777,
+    "late": 0.834
    },
    "boomerang": {
-    "early": 0.805,
-    "late": 0.862
+    "early": 0.804,
+    "late": 0.848
    },
    "buccaneer": {
-    "early": 0.781,
-    "late": 0.893,
+    "early": 0.761,
+    "late": 0.874,
     "room": 8
    },
    "dart": {
-    "early": 0.806,
-    "late": 0.888
+    "early": 0.788,
+    "late": 0.869
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.882,
-    "late": 0.903
+    "early": 0.874,
+    "late": 0.886
    },
    "druid": {
-    "early": 0.728,
-    "late": 0.816
+    "early": 0.725,
+    "late": 0.804
    },
    "engineer": {
-    "early": 0.785,
-    "late": 0.852
+    "early": 0.777,
+    "late": 0.834
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.963,
-    "late": 0.986
+    "early": 0.955,
+    "late": 0.974
    },
    "heli": {
     "early": 1.0,
@@ -1089,23 +1089,23 @@
    },
    "ice": {
     "early": 0.996,
-    "late": 0.98
+    "late": 0.966
    },
    "mermonkey": {
     "early": 1.0,
-    "late": 0.999
+    "late": 0.985
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.907,
-    "late": 0.955
+    "early": 0.896,
+    "late": 0.939
    },
    "skywarden": {
-    "early": 0.975,
-    "late": 0.991
+    "early": 0.969,
+    "late": 0.98
    },
    "sniper": {
     "early": 1.0,
@@ -1116,30 +1116,30 @@
     "late": 0.81
    },
    "sub": {
-    "early": 0.709,
-    "late": 0.786,
+    "early": 0.707,
+    "late": 0.78,
     "room": 8
    },
    "super": {
-    "early": 0.827,
-    "late": 0.873
+    "early": 0.816,
+    "late": 0.847
    },
    "tack": {
-    "early": 0.664,
-    "late": 0.766
+    "early": 0.646,
+    "late": 0.748
    },
    "village": {
     "early": 0.728,
     "late": 0.801
    },
    "wizard": {
-    "early": 0.785,
-    "late": 0.852
+    "early": 0.777,
+    "late": 0.834
    }
   }
  },
  "Candy Falls": {
-  "stamp": "map_candyfalls_scenes_all_f5bff754a574ab3d9f4b2455555f0c4d.bundle#v8#f3#r2",
+  "stamp": "map_candyfalls_scenes_all_f5bff754a574ab3d9f4b2455555f0c4d.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -1155,20 +1155,20 @@
    },
    "bomb": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.987
    },
    "boomerang": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.995
    },
    "buccaneer": {
-    "early": 0.511,
-    "late": 0.506,
+    "early": 0.492,
+    "late": 0.488,
     "room": 8
    },
    "dart": {
-    "early": 0.979,
-    "late": 0.976
+    "early": 0.97,
+    "late": 0.957
    },
    "dartling": {
     "early": 1.0,
@@ -1179,12 +1179,12 @@
     "late": 1.0
    },
    "druid": {
-    "early": 0.985,
-    "late": 0.978
+    "early": 0.981,
+    "late": 0.964
    },
    "engineer": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.987
    },
    "farm": {
     "early": 1.0,
@@ -1200,7 +1200,7 @@
    },
    "ice": {
     "early": 1.0,
-    "late": 0.99
+    "late": 0.987
    },
    "mermonkey": {
     "early": 1.0,
@@ -1212,7 +1212,7 @@
    },
    "ninja": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.991
    },
    "skywarden": {
     "early": 1.0,
@@ -1227,17 +1227,17 @@
     "late": 0.971
    },
    "sub": {
-    "early": 0.35,
-    "late": 0.359,
+    "early": 0.34,
+    "late": 0.35,
     "room": 8
    },
    "super": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.996
    },
    "tack": {
-    "early": 0.93,
-    "late": 0.926
+    "early": 0.921,
+    "late": 0.914
    },
    "village": {
     "early": 0.975,
@@ -1245,7 +1245,7 @@
    },
    "wizard": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.987
    }
   }
  },
@@ -1258,7 +1258,7 @@
    "path_opens",
    "removable"
   ],
-  "stamp": "map_cargo_scenes_all_1d963c430aa3fedc2c28754e22ad90c0.bundle#v8#f3#r2",
+  "stamp": "map_cargo_scenes_all_1d963c430aa3fedc2c28754e22ad90c0.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -1273,56 +1273,56 @@
     "late": 0.43
    },
    "bomb": {
-    "early": 0.676,
-    "late": 0.722
+    "early": 0.511,
+    "late": 0.713
    },
    "boomerang": {
-    "early": 0.76,
+    "early": 0.556,
     "late": 0.735
    },
    "buccaneer": {
-    "early": 1.0,
+    "early": 0.995,
     "late": 1.0,
     "room": 8
    },
    "dart": {
-    "early": 0.774,
-    "late": 0.661
+    "early": 0.762,
+    "late": 0.643
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.909,
-    "late": 0.789
+    "early": 0.651,
+    "late": 0.78
    },
    "druid": {
-    "early": 0.469,
-    "late": 0.674
+    "early": 0.468,
+    "late": 0.67
    },
    "engineer": {
-    "early": 0.676,
-    "late": 0.722
+    "early": 0.511,
+    "late": 0.713
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.999,
-    "late": 0.761
+    "early": 0.852,
+    "late": 0.754
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.565,
-    "late": 0.817
+    "early": 0.563,
+    "late": 0.813
    },
    "mermonkey": {
-    "early": 0.955,
+    "early": 0.914,
     "late": 1.0
    },
    "mortar": {
@@ -1330,12 +1330,12 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.902,
-    "late": 0.722
+    "early": 0.817,
+    "late": 0.713
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 0.774
+    "early": 0.864,
+    "late": 0.767
    },
    "sniper": {
     "early": 1.0,
@@ -1346,30 +1346,30 @@
     "late": 0.652
    },
    "sub": {
-    "early": 0.923,
-    "late": 0.9,
+    "early": 0.892,
+    "late": 0.88,
     "room": 8
    },
    "super": {
-    "early": 0.875,
-    "late": 0.752
+    "early": 0.574,
+    "late": 0.746
    },
    "tack": {
-    "early": 0.651,
-    "late": 0.591
+    "early": 0.596,
+    "late": 0.578
    },
    "village": {
     "early": 0.509,
     "late": 0.68
    },
    "wizard": {
-    "early": 0.676,
-    "late": 0.722
+    "early": 0.511,
+    "late": 0.713
    }
   }
  },
  "Carved": {
-  "stamp": "map_carved_scenes_all_a7d709f366037bc4312b5188df4f98d5.bundle#v8#f3#r2",
+  "stamp": "map_carved_scenes_all_a7d709f366037bc4312b5188df4f98d5.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -1489,7 +1489,7 @@
    "hidden_track",
    "paid_switch"
   ],
-  "stamp": "map_castlerevenge_scenes_all_92b789e494a5829b155a3b9ec3c0259c.bundle#v8#f3#r2",
+  "stamp": "map_castlerevenge_scenes_all_92b789e494a5829b155a3b9ec3c0259c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -1504,69 +1504,69 @@
     "late": 0.792
    },
    "bomb": {
-    "early": 1.0,
-    "late": 0.944
+    "early": 0.996,
+    "late": 0.934
    },
    "boomerang": {
-    "early": 1.0,
-    "late": 0.961
+    "early": 0.996,
+    "late": 0.96
    },
    "buccaneer": {
-    "early": 0.065,
-    "late": 0.269,
+    "early": 0.058,
+    "late": 0.24,
     "room": 2
    },
    "dart": {
-    "early": 1.0,
-    "late": 0.897
+    "early": 0.996,
+    "late": 0.886
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
-    "late": 0.998
+    "early": 0.998,
+    "late": 0.997
    },
    "druid": {
-    "early": 1.0,
-    "late": 0.901
+    "early": 0.996,
+    "late": 0.897
    },
    "engineer": {
-    "early": 1.0,
-    "late": 0.944
+    "early": 0.996,
+    "late": 0.934
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 0.99
+    "early": 0.996,
+    "late": 0.986
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.992,
-    "late": 0.923
+    "early": 0.981,
+    "late": 0.921
    },
    "mermonkey": {
-    "early": 1.0,
-    "late": 0.989
+    "early": 0.995,
+    "late": 0.982
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 0.953
+    "early": 0.996,
+    "late": 0.944
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 0.996
+    "early": 0.996,
+    "late": 0.993
    },
    "sniper": {
     "early": 1.0,
@@ -1577,25 +1577,25 @@
     "late": 0.894
    },
    "sub": {
-    "early": 0.031,
-    "late": 0.234,
+    "early": 0.027,
+    "late": 0.215,
     "room": 2
    },
    "super": {
-    "early": 1.0,
-    "late": 0.979
+    "early": 0.995,
+    "late": 0.972
    },
    "tack": {
-    "early": 1.0,
-    "late": 0.834
+    "early": 0.983,
+    "late": 0.818
    },
    "village": {
     "early": 1.0,
     "late": 0.905
    },
    "wizard": {
-    "early": 1.0,
-    "late": 0.944
+    "early": 0.996,
+    "late": 0.934
    }
   }
  },
@@ -1604,7 +1604,7 @@
    "alternating_paths",
    "removable"
   ],
-  "stamp": "map_chutes_scenes_all_cab191837cb175c7accdbcff52e98bf2.bundle#v8#f3#r2",
+  "stamp": "map_chutes_scenes_all_cab191837cb175c7accdbcff52e98bf2.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -1627,8 +1627,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.14,
-    "late": 0.645,
+    "early": 0.119,
+    "late": 0.622,
     "room": 6
    },
    "dart": {
@@ -1664,8 +1664,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.965,
-    "late": 0.971
+    "early": 0.963,
+    "late": 0.969
    },
    "mermonkey": {
     "early": 1.0,
@@ -1692,8 +1692,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.06,
-    "late": 0.53,
+    "early": 0.055,
+    "late": 0.522,
     "room": 8
    },
    "super": {
@@ -1701,8 +1701,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.998,
-    "late": 0.973
+    "early": 0.995,
+    "late": 0.966
    },
    "village": {
     "early": 1.0,
@@ -1718,7 +1718,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_cornfield_scenes_all_72f54c71a9e06b93d98b7a875675347d.bundle#v8#f3#r2",
+  "stamp": "map_cornfield_scenes_all_72f54c71a9e06b93d98b7a875675347d.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 0.333,
@@ -1733,12 +1733,12 @@
     "late": 0.32
    },
    "bomb": {
-    "early": 0.399,
-    "late": 0.438
+    "early": 0.397,
+    "late": 0.433
    },
    "boomerang": {
-    "early": 0.404,
-    "late": 0.447
+    "early": 0.403,
+    "late": 0.446
    },
    "buccaneer": {
     "early": 0.0,
@@ -1746,32 +1746,32 @@
     "room": 0
    },
    "dart": {
-    "early": 0.383,
-    "late": 0.403
+    "early": 0.379,
+    "late": 0.395
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.42,
-    "late": 0.481
+    "early": 0.416,
+    "late": 0.473
    },
    "druid": {
     "early": 0.387,
-    "late": 0.412
+    "late": 0.411
    },
    "engineer": {
-    "early": 0.399,
-    "late": 0.438
+    "early": 0.397,
+    "late": 0.433
    },
    "farm": {
     "early": 0.333,
     "late": 0.333
    },
    "glue": {
-    "early": 0.412,
-    "late": 0.465
+    "early": 0.406,
+    "late": 0.456
    },
    "heli": {
     "early": 0.333,
@@ -1782,20 +1782,20 @@
     "late": 0.328
    },
    "mermonkey": {
-    "early": 0.394,
-    "late": 0.426
+    "early": 0.39,
+    "late": 0.42
    },
    "mortar": {
     "early": 0.667,
     "late": 0.667
    },
    "ninja": {
-    "early": 0.399,
-    "late": 0.438
+    "early": 0.397,
+    "late": 0.433
    },
    "skywarden": {
-    "early": 0.416,
-    "late": 0.472
+    "early": 0.412,
+    "late": 0.466
    },
    "sniper": {
     "early": 1.0,
@@ -1811,20 +1811,20 @@
     "room": 0
    },
    "super": {
-    "early": 0.41,
-    "late": 0.46
+    "early": 0.397,
+    "late": 0.442
    },
    "tack": {
-    "early": 0.354,
-    "late": 0.356
+    "early": 0.348,
+    "late": 0.351
    },
    "village": {
     "early": 0.388,
     "late": 0.414
    },
    "wizard": {
-    "early": 0.399,
-    "late": 0.438
+    "early": 0.397,
+    "late": 0.433
    }
   }
  },
@@ -1835,7 +1835,7 @@
   "mechanics": [
    "area_cycle"
   ],
-  "stamp": "map_coveredgarden_scenes_all_024e5ac9f23b23df568eeae40c9cc4bf.bundle#v8#f3#r2",
+  "stamp": "map_coveredgarden_scenes_all_024e5ac9f23b23df568eeae40c9cc4bf.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -1850,7 +1850,7 @@
     "late": 0.0
    },
    "bomb": {
-    "early": 0.198,
+    "early": 0.194,
     "late": 0.0
    },
    "boomerang": {
@@ -1863,23 +1863,23 @@
     "room": 0
    },
    "dart": {
-    "early": 0.173,
-    "late": 0.136
+    "early": 0.167,
+    "late": 0.127
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.237,
-    "late": 0.008
+    "early": 0.226,
+    "late": 0.0
    },
    "druid": {
-    "early": 0.18,
+    "early": 0.179,
     "late": 0.0
    },
    "engineer": {
-    "early": 0.198,
+    "early": 0.194,
     "late": 0.0
    },
    "farm": {
@@ -1887,8 +1887,8 @@
     "late": 0.0
    },
    "glue": {
-    "early": 0.215,
-    "late": 0.175
+    "early": 0.212,
+    "late": 0.169
    },
    "heli": {
     "early": 0.333,
@@ -1899,7 +1899,7 @@
     "late": 0.094
    },
    "mermonkey": {
-    "early": 0.191,
+    "early": 0.186,
     "late": 0.0
    },
    "mortar": {
@@ -1907,12 +1907,12 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.198,
-    "late": 0.158
+    "early": 0.194,
+    "late": 0.153
    },
    "skywarden": {
-    "early": 0.221,
-    "late": 0.18
+    "early": 0.22,
+    "late": 0.177
    },
    "sniper": {
     "early": 1.0,
@@ -1928,19 +1928,19 @@
     "room": 0
    },
    "super": {
-    "early": 0.214,
+    "early": 0.209,
     "late": 0.0
    },
    "tack": {
-    "early": 0.142,
-    "late": 0.106
+    "early": 0.138,
+    "late": 0.103
    },
    "village": {
     "early": 0.183,
     "late": 0.0
    },
    "wizard": {
-    "early": 0.198,
+    "early": 0.194,
     "late": 0.0
    }
   }
@@ -1949,7 +1949,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_cracked_scenes_all_54d90ab2bdc53125ba23a4ab4b173f20.bundle#v8#f3#r2",
+  "stamp": "map_cracked_scenes_all_54d90ab2bdc53125ba23a4ab4b173f20.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -1964,12 +1964,12 @@
     "late": 0.989
    },
    "bomb": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.996,
+    "late": 0.996
    },
    "boomerang": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.997,
+    "late": 0.997
    },
    "buccaneer": {
     "early": 0.0,
@@ -1977,8 +1977,8 @@
     "room": 0
    },
    "dart": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.996,
+    "late": 0.996
    },
    "dartling": {
     "early": 1.0,
@@ -1989,40 +1989,40 @@
     "late": 1.0
    },
    "druid": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.996,
+    "late": 0.996
    },
    "engineer": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.996,
+    "late": 0.996
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.998,
+    "late": 0.998
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.993,
-    "late": 0.993
+    "early": 0.987,
+    "late": 0.986
    },
    "mermonkey": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.996,
+    "late": 0.996
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.997,
+    "late": 0.997
    },
    "skywarden": {
     "early": 1.0,
@@ -2042,25 +2042,25 @@
     "room": 0
    },
    "super": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    },
    "tack": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.994,
+    "late": 0.994
    },
    "village": {
     "early": 1.0,
     "late": 1.0
    },
    "wizard": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.996,
+    "late": 0.996
    }
   }
  },
  "Cubism": {
-  "stamp": "map_cubism_scenes_all_337c5a88c7ba18b97efd0efffac0f840.bundle#v8#f3#r2",
+  "stamp": "map_cubism_scenes_all_337c5a88c7ba18b97efd0efffac0f840.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -2178,7 +2178,7 @@
    "hidden_track",
    "removable"
   ],
-  "stamp": "map_darkcastle_scenes_all_e74db88afba497443b0814fa81428c86.bundle#v8#f3#r2",
+  "stamp": "map_darkcastle_scenes_all_e74db88afba497443b0814fa81428c86.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -2193,21 +2193,21 @@
     "late": 0.658
    },
    "bomb": {
-    "early": 0.996,
-    "late": 0.98
+    "early": 0.995,
+    "late": 0.974
    },
    "boomerang": {
     "early": 0.999,
-    "late": 0.991
+    "late": 0.99
    },
    "buccaneer": {
-    "early": 0.293,
-    "late": 0.357,
+    "early": 0.288,
+    "late": 0.347,
     "room": 8
    },
    "dart": {
-    "early": 0.979,
-    "late": 0.941
+    "early": 0.974,
+    "late": 0.931
    },
    "dartling": {
     "early": 1.0,
@@ -2219,11 +2219,11 @@
    },
    "druid": {
     "early": 0.979,
-    "late": 0.946
+    "late": 0.944
    },
    "engineer": {
-    "early": 0.996,
-    "late": 0.98
+    "early": 0.995,
+    "late": 0.974
    },
    "farm": {
     "early": 1.0,
@@ -2238,20 +2238,20 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.772,
-    "late": 0.682
+    "early": 0.771,
+    "late": 0.681
    },
    "mermonkey": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.991,
+    "late": 0.99
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.998,
-    "late": 0.984
+    "early": 0.996,
+    "late": 0.977
    },
    "skywarden": {
     "early": 1.0,
@@ -2266,25 +2266,25 @@
     "late": 0.896
    },
    "sub": {
-    "early": 0.238,
-    "late": 0.246,
+    "early": 0.226,
+    "late": 0.233,
     "room": 8
    },
    "super": {
-    "early": 1.0,
-    "late": 0.972
+    "early": 0.954,
+    "late": 0.917
    },
    "tack": {
-    "early": 0.878,
-    "late": 0.823
+    "early": 0.845,
+    "late": 0.776
    },
    "village": {
     "early": 0.966,
     "late": 0.917
    },
    "wizard": {
-    "early": 0.996,
-    "late": 0.98
+    "early": 0.995,
+    "late": 0.974
    }
   }
  },
@@ -2294,7 +2294,7 @@
    "hidden_track",
    "map_ability"
   ],
-  "stamp": "map_darkdungeons_scenes_all_cdff634816b8e1c8a99bdd0ca26306a6.bundle#v8#f3#r2",
+  "stamp": "map_darkdungeons_scenes_all_cdff634816b8e1c8a99bdd0ca26306a6.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -2309,69 +2309,69 @@
     "late": 0.862
    },
    "bomb": {
-    "early": 0.982,
-    "late": 0.99
+    "early": 0.879,
+    "late": 0.954
    },
    "boomerang": {
-    "early": 0.994,
-    "late": 0.996
+    "early": 0.893,
+    "late": 0.965
    },
    "buccaneer": {
-    "early": 0.217,
-    "late": 0.108,
+    "early": 0.183,
+    "late": 0.07,
     "room": 4
    },
    "dart": {
-    "early": 0.923,
-    "late": 0.97
+    "early": 0.849,
+    "late": 0.93
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.919,
+    "late": 0.984
    },
    "druid": {
-    "early": 0.939,
-    "late": 0.974
+    "early": 0.86,
+    "late": 0.939
    },
    "engineer": {
-    "early": 0.982,
-    "late": 0.99
+    "early": 0.879,
+    "late": 0.954
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.906,
+    "late": 0.973
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.921,
-    "late": 0.914
+    "early": 0.905,
+    "late": 0.896
    },
    "mermonkey": {
-    "early": 0.999,
-    "late": 0.999
+    "early": 0.97,
+    "late": 0.968
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.985,
-    "late": 0.992
+    "early": 0.883,
+    "late": 0.956
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.915,
+    "late": 0.98
    },
    "sniper": {
     "early": 1.0,
@@ -2382,25 +2382,25 @@
     "late": 0.951
    },
    "sub": {
-    "early": 0.201,
-    "late": 0.089,
+    "early": 0.183,
+    "late": 0.07,
     "room": 4
    },
    "super": {
-    "early": 0.763,
-    "late": 0.805
+    "early": 0.68,
+    "late": 0.745
    },
    "tack": {
-    "early": 0.838,
-    "late": 0.929
+    "early": 0.795,
+    "late": 0.884
    },
    "village": {
     "early": 0.62,
     "late": 0.739
    },
    "wizard": {
-    "early": 0.982,
-    "late": 0.99
+    "early": 0.879,
+    "late": 0.954
    }
   }
  },
@@ -2410,7 +2410,7 @@
    "area_vanishes",
    "removable"
   ],
-  "stamp": "map_darkpath_scenes_all_ef38c9cb8d2dd35671cabd1cd3700b9c.bundle#v8#f3#r2",
+  "stamp": "map_darkpath_scenes_all_ef38c9cb8d2dd35671cabd1cd3700b9c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -2425,12 +2425,12 @@
     "late": 0.164
    },
    "bomb": {
-    "early": 0.693,
-    "late": 0.713
+    "early": 0.42,
+    "late": 0.47
    },
    "boomerang": {
-    "early": 0.759,
-    "late": 0.757
+    "early": 0.506,
+    "late": 0.517
    },
    "buccaneer": {
     "early": 0.0,
@@ -2438,56 +2438,56 @@
     "room": 0
    },
    "dart": {
-    "early": 0.458,
-    "late": 0.606
+    "early": 0.261,
+    "late": 0.394
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.951,
-    "late": 0.946
+    "early": 0.675,
+    "late": 0.681
    },
    "druid": {
-    "early": 0.396,
-    "late": 0.575
+    "early": 0.24,
+    "late": 0.374
    },
    "engineer": {
-    "early": 0.693,
-    "late": 0.713
+    "early": 0.42,
+    "late": 0.47
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.988,
-    "late": 0.988
+    "early": 0.674,
+    "late": 0.617
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.057,
-    "late": 0.222
+    "early": 0.055,
+    "late": 0.212
    },
    "mermonkey": {
-    "early": 0.607,
-    "late": 0.653
+    "early": 0.378,
+    "late": 0.415
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.845,
-    "late": 0.85
+    "early": 0.538,
+    "late": 0.505
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.725,
+    "late": 0.666
    },
    "sniper": {
     "early": 1.0,
@@ -2503,20 +2503,20 @@
     "room": 0
    },
    "super": {
-    "early": 0.523,
-    "late": 0.528
+    "early": 0.239,
+    "late": 0.469
    },
    "tack": {
-    "early": 0.13,
-    "late": 0.33
+    "early": 0.092,
+    "late": 0.262
    },
    "village": {
     "early": 0.132,
     "late": 0.328
    },
    "wizard": {
-    "early": 0.693,
-    "late": 0.713
+    "early": 0.42,
+    "late": 0.47
    }
   }
  },
@@ -2524,7 +2524,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_downstream_scenes_all_13d6dba06e71141546cca00be26b15e9.bundle#v8#f3#r2",
+  "stamp": "map_downstream_scenes_all_13d6dba06e71141546cca00be26b15e9.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -2547,8 +2547,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.532,
-    "late": 0.529,
+    "early": 0.525,
+    "late": 0.523,
     "room": 8
    },
    "dart": {
@@ -2584,12 +2584,12 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.967,
-    "late": 0.958
+    "early": 0.965,
+    "late": 0.956
    },
    "mermonkey": {
-    "early": 0.999,
-    "late": 0.994
+    "early": 0.997,
+    "late": 0.989
    },
    "mortar": {
     "early": 1.0,
@@ -2612,17 +2612,17 @@
     "late": 0.973
    },
    "sub": {
-    "early": 0.21,
-    "late": 0.194,
+    "early": 0.197,
+    "late": 0.169,
     "room": 8
    },
    "super": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.999
    },
    "tack": {
-    "early": 0.983,
-    "late": 0.995
+    "early": 0.974,
+    "late": 0.991
    },
    "village": {
     "early": 0.992,
@@ -2639,7 +2639,7 @@
    "alternating_paths",
    "hidden_track"
   ],
-  "stamp": "map_enchantedglade_scenes_all_e99bd8c3a39d5dd1702b9ce1453bf507.bundle#v8#f3#r2",
+  "stamp": "map_enchantedglade_scenes_all_e99bd8c3a39d5dd1702b9ce1453bf507.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -2654,69 +2654,69 @@
     "late": 0.247
    },
    "bomb": {
-    "early": 0.637,
-    "late": 0.655
+    "early": 0.422,
+    "late": 0.594
    },
    "boomerang": {
-    "early": 0.66,
-    "late": 0.694
+    "early": 0.429,
+    "late": 0.631
    },
    "buccaneer": {
-    "early": 0.047,
-    "late": 0.051,
+    "early": 0.001,
+    "late": 0.002,
     "room": 4
    },
    "dart": {
-    "early": 0.512,
-    "late": 0.522
+    "early": 0.396,
+    "late": 0.49
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.714,
-    "late": 0.808
+    "early": 0.441,
+    "late": 0.715
    },
    "druid": {
-    "early": 0.524,
-    "late": 0.528
+    "early": 0.402,
+    "late": 0.515
    },
    "engineer": {
-    "early": 0.637,
-    "late": 0.655
+    "early": 0.422,
+    "late": 0.594
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.691,
-    "late": 0.781
+    "early": 0.44,
+    "late": 0.692
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.322,
-    "late": 0.353
+    "early": 0.317,
+    "late": 0.347
    },
    "mermonkey": {
-    "early": 0.627,
-    "late": 0.678
+    "early": 0.422,
+    "late": 0.624
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.649,
-    "late": 0.682
+    "early": 0.427,
+    "late": 0.619
    },
    "skywarden": {
-    "early": 0.703,
-    "late": 0.801
+    "early": 0.443,
+    "late": 0.715
    },
    "sniper": {
     "early": 1.0,
@@ -2727,25 +2727,25 @@
     "late": 0.511
    },
    "sub": {
-    "early": 0.167,
-    "late": 0.235,
+    "early": 0.081,
+    "late": 0.105,
     "room": 8
    },
    "super": {
-    "early": 0.686,
-    "late": 0.759
+    "early": 0.432,
+    "late": 0.667
    },
    "tack": {
-    "early": 0.3,
-    "late": 0.328
+    "early": 0.284,
+    "late": 0.311
    },
    "village": {
     "early": 0.566,
     "late": 0.571
    },
    "wizard": {
-    "early": 0.637,
-    "late": 0.655
+    "early": 0.422,
+    "late": 0.594
    }
   }
  },
@@ -2755,7 +2755,7 @@
    "area_vanishes",
    "removable"
   ],
-  "stamp": "map_encrypted_scenes_all_091f28d0a9351c53340d941d7ce8723b.bundle#v8#f3#r2",
+  "stamp": "map_encrypted_scenes_all_091f28d0a9351c53340d941d7ce8723b.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -2770,69 +2770,69 @@
     "late": 0.255
    },
    "bomb": {
-    "early": 0.686,
-    "late": 0.462
+    "early": 0.606,
+    "late": 0.329
    },
    "boomerang": {
-    "early": 0.721,
-    "late": 0.5
+    "early": 0.622,
+    "late": 0.339
    },
    "buccaneer": {
-    "early": 0.545,
-    "late": 0.239,
+    "early": 0.357,
+    "late": 0.034,
     "room": 4
    },
    "dart": {
-    "early": 0.566,
-    "late": 0.345
+    "early": 0.541,
+    "late": 0.307
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.86,
-    "late": 0.66
-   },
-   "druid": {
-    "early": 0.588,
+    "early": 0.653,
     "late": 0.365
    },
+   "druid": {
+    "early": 0.57,
+    "late": 0.316
+   },
    "engineer": {
-    "early": 0.686,
-    "late": 0.462
+    "early": 0.606,
+    "late": 0.329
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.803,
-    "late": 0.594
+    "early": 0.637,
+    "late": 0.348
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.511,
-    "late": 0.255
+    "early": 0.503,
+    "late": 0.248
    },
    "mermonkey": {
-    "early": 0.661,
-    "late": 0.435
+    "early": 0.545,
+    "late": 0.272
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.694,
-    "late": 0.467
+    "early": 0.609,
+    "late": 0.329
    },
    "skywarden": {
-    "early": 0.838,
-    "late": 0.632
+    "early": 0.646,
+    "late": 0.354
    },
    "sniper": {
     "early": 1.0,
@@ -2843,30 +2843,30 @@
     "late": 0.293
    },
    "sub": {
-    "early": 0.338,
-    "late": 0.055,
+    "early": 0.279,
+    "late": 0.0,
     "room": 4
    },
    "super": {
-    "early": 0.754,
-    "late": 0.547
+    "early": 0.56,
+    "late": 0.28
    },
    "tack": {
-    "early": 0.472,
-    "late": 0.287
+    "early": 0.452,
+    "late": 0.273
    },
    "village": {
     "early": 0.55,
     "late": 0.336
    },
    "wizard": {
-    "early": 0.686,
-    "late": 0.462
+    "early": 0.606,
+    "late": 0.329
    }
   }
  },
  "End Of The Road": {
-  "stamp": "map_endoftheroad_scenes_all_3990a7ea522bdd3d9eb4d539cc66243c.bundle#v8#f3#r2",
+  "stamp": "map_endoftheroad_scenes_all_3990a7ea522bdd3d9eb4d539cc66243c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -2889,8 +2889,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.638,
-    "late": 0.64,
+    "early": 0.635,
+    "late": 0.637,
     "room": 7
    },
    "dart": {
@@ -2954,8 +2954,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.579,
-    "late": 0.581,
+    "early": 0.569,
+    "late": 0.57,
     "room": 8
    },
    "super": {
@@ -2963,8 +2963,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.963,
-    "late": 0.963
+    "early": 0.944,
+    "late": 0.943
    },
    "village": {
     "early": 1.0,
@@ -2991,8 +2991,8 @@
      "late": 0.703
     },
     "beast_handler": {
-     "early": 0.666,
-     "late": 0.694
+     "early": 0.664,
+     "late": 0.693
     },
     "bomb": {
      "early": 0.683,
@@ -3099,8 +3099,8 @@
      "late": 0.47
     },
     "beast_handler": {
-     "early": 0.414,
-     "late": 0.445
+     "early": 0.413,
+     "late": 0.444
     },
     "bomb": {
      "early": 0.44,
@@ -3207,8 +3207,8 @@
      "late": 0.237
     },
     "beast_handler": {
-     "early": 0.181,
-     "late": 0.187
+     "early": 0.18,
+     "late": 0.186
     },
     "bomb": {
      "early": 0.217,
@@ -3310,7 +3310,7 @@
    "alternating_paths",
    "area_vanishes"
   ],
-  "stamp": "map_erosion_scenes_all_68098eceb912a0faf9326d98bedf6954.bundle#v8#f3#r2",
+  "stamp": "map_erosion_scenes_all_68098eceb912a0faf9326d98bedf6954.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 0.333,
@@ -3321,8 +3321,8 @@
     "late": 0.159
    },
    "beast_handler": {
-    "early": 0.078,
-    "late": 0.11
+    "early": 0.077,
+    "late": 0.108
    },
    "bomb": {
     "early": 0.078,
@@ -3370,7 +3370,7 @@
     "late": 0.0
    },
    "ice": {
-    "early": 0.21,
+    "early": 0.209,
     "late": 0.238
    },
    "mermonkey": {
@@ -3403,7 +3403,7 @@
     "room": 8
    },
    "super": {
-    "early": 0.062,
+    "early": 0.057,
     "late": 0.093
    },
    "tack": {
@@ -3411,8 +3411,8 @@
     "late": 0.115
    },
    "village": {
-    "early": 0.048,
-    "late": 0.075
+    "early": 0.047,
+    "late": 0.074
    },
    "wizard": {
     "early": 0.078,
@@ -3424,7 +3424,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_firingrange_scenes_all_ddd9c8933d16d5a6d1805b546e8e36ba.bundle#v8#f3#r2",
+  "stamp": "map_firingrange_scenes_all_ddd9c8933d16d5a6d1805b546e8e36ba.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -3439,37 +3439,37 @@
     "late": 0.273
    },
    "bomb": {
-    "early": 0.001,
-    "late": 0.39
+    "early": 0.0,
+    "late": 0.342
    },
    "boomerang": {
     "early": 0.002,
-    "late": 0.453
+    "late": 0.448
    },
    "buccaneer": {
-    "early": 0.252,
-    "late": 0.33,
+    "early": 0.241,
+    "late": 0.325,
     "room": 2
    },
    "dart": {
     "early": 0.0,
-    "late": 0.318
+    "late": 0.312
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.014,
-    "late": 0.657
+    "early": 0.013,
+    "late": 0.624
    },
    "druid": {
     "early": 0.0,
     "late": 0.324
    },
    "engineer": {
-    "early": 0.001,
-    "late": 0.39
+    "early": 0.0,
+    "late": 0.342
    },
    "farm": {
     "early": 1.0,
@@ -3477,7 +3477,7 @@
    },
    "glue": {
     "early": 0.003,
-    "late": 0.582
+    "late": 0.512
    },
    "heli": {
     "early": 1.0,
@@ -3485,23 +3485,23 @@
    },
    "ice": {
     "early": 0.001,
-    "late": 0.328
+    "late": 0.326
    },
    "mermonkey": {
-    "early": 0.058,
-    "late": 0.466
+    "early": 0.051,
+    "late": 0.458
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.001,
-    "late": 0.391
+    "early": 0.0,
+    "late": 0.342
    },
    "skywarden": {
-    "early": 0.008,
-    "late": 0.644
+    "early": 0.007,
+    "late": 0.568
    },
    "sniper": {
     "early": 1.0,
@@ -3512,25 +3512,25 @@
     "late": 0.315
    },
    "sub": {
-    "early": 0.098,
-    "late": 0.249,
+    "early": 0.088,
+    "late": 0.238,
     "room": 2
    },
    "super": {
     "early": 0.003,
-    "late": 0.572
+    "late": 0.51
    },
    "tack": {
     "early": 0.0,
-    "late": 0.288
+    "late": 0.284
    },
    "village": {
     "early": 0.0,
     "late": 0.326
    },
    "wizard": {
-    "early": 0.001,
-    "late": 0.39
+    "early": 0.0,
+    "late": 0.342
    }
   }
  },
@@ -3541,7 +3541,7 @@
    "click_event",
    "removable"
   ],
-  "stamp": "map_floodedvalley_scenes_all_90e4982f5f408ed3dd887662ca1823cc.bundle#v8#f3#r2",
+  "stamp": "map_floodedvalley_scenes_all_90e4982f5f408ed3dd887662ca1823cc.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -3556,12 +3556,12 @@
     "late": 0.0
    },
    "bomb": {
-    "early": 0.091,
-    "late": 0.091
+    "early": 0.0,
+    "late": 0.0
    },
    "boomerang": {
-    "early": 0.168,
-    "late": 0.168
+    "early": 0.0,
+    "late": 0.0
    },
    "buccaneer": {
     "early": 1.0,
@@ -3569,40 +3569,40 @@
     "room": 8
    },
    "dart": {
-    "early": 0.013,
-    "late": 0.013
+    "early": 0.0,
+    "late": 0.0
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.461,
-    "late": 0.461
+    "early": 0.0,
+    "late": 0.0
    },
    "druid": {
     "early": 0.0,
     "late": 0.0
    },
    "engineer": {
-    "early": 0.091,
-    "late": 0.091
+    "early": 0.0,
+    "late": 0.0
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.349,
-    "late": 0.349
+    "early": 0.0,
+    "late": 0.0
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.604,
-    "late": 0.604
+    "early": 0.586,
+    "late": 0.586
    },
    "mermonkey": {
     "early": 1.0,
@@ -3613,12 +3613,12 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.166,
-    "late": 0.166
+    "early": 0.0,
+    "late": 0.0
    },
    "skywarden": {
-    "early": 0.403,
-    "late": 0.403
+    "early": 0.0,
+    "late": 0.0
    },
    "sniper": {
     "early": 1.0,
@@ -3634,8 +3634,8 @@
     "room": 8
    },
    "super": {
-    "early": 0.232,
-    "late": 0.232
+    "early": 0.0,
+    "late": 0.0
    },
    "tack": {
     "early": 0.0,
@@ -3646,13 +3646,13 @@
     "late": 0.0
    },
    "wizard": {
-    "early": 0.091,
-    "late": 0.091
+    "early": 0.0,
+    "late": 0.0
    }
   }
  },
  "Four Circles": {
-  "stamp": "map_fourcircles_scenes_all_520eb80fd48acd661b863983d998f05c.bundle#v8#f3#r2",
+  "stamp": "map_fourcircles_scenes_all_520eb80fd48acd661b863983d998f05c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -3675,8 +3675,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.776,
-    "late": 0.553,
+    "early": 0.751,
+    "late": 0.528,
     "room": 6
    },
    "dart": {
@@ -3740,8 +3740,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.568,
-    "late": 0.363,
+    "early": 0.557,
+    "late": 0.353,
     "room": 6
    },
    "super": {
@@ -3763,7 +3763,7 @@
   }
  },
  "Frozen Over": {
-  "stamp": "map_frozenover_scenes_all_908d05748c1ad64ad95cbe10f1e57af2.bundle#v8#f3#r2",
+  "stamp": "map_frozenover_scenes_all_908d05748c1ad64ad95cbe10f1e57af2.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -3786,8 +3786,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.746,
-    "late": 0.692,
+    "early": 0.738,
+    "late": 0.683,
     "room": 8
    },
    "dart": {
@@ -3851,8 +3851,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.561,
-    "late": 0.586,
+    "early": 0.527,
+    "late": 0.563,
     "room": 8
    },
    "super": {
@@ -3861,7 +3861,7 @@
    },
    "tack": {
     "early": 1.0,
-    "late": 0.987
+    "late": 0.982
    },
    "village": {
     "early": 0.996,
@@ -3880,7 +3880,7 @@
   "mechanics": [
    "rotating_area"
   ],
-  "stamp": "map_geared_scenes_all_9f5a13fa3162f040201e65d06e9ece5c.bundle#v8#f3#r2",
+  "stamp": "map_geared_scenes_all_9f5a13fa3162f040201e65d06e9ece5c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -3997,7 +3997,7 @@
   "mechanics": [
    "hidden_track"
   ],
-  "stamp": "map_glacialtrail_scenes_all_2ff2e826e637738dd71bb128c0ccc2d9.bundle#v8#f3#r2",
+  "stamp": "map_glacialtrail_scenes_all_2ff2e826e637738dd71bb128c0ccc2d9.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -4012,69 +4012,69 @@
     "late": 0.348
    },
    "bomb": {
-    "early": 0.595,
-    "late": 0.741
+    "early": 0.512,
+    "late": 0.676
    },
    "boomerang": {
-    "early": 0.633,
-    "late": 0.783
+    "early": 0.556,
+    "late": 0.713
    },
    "buccaneer": {
-    "early": 0.066,
-    "late": 0.202,
+    "early": 0.0,
+    "late": 0.0,
     "room": 5
    },
    "dart": {
-    "early": 0.612,
-    "late": 0.617
+    "early": 0.537,
+    "late": 0.576
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.842,
-    "late": 0.906
+    "early": 0.653,
+    "late": 0.761
    },
    "druid": {
-    "early": 0.492,
-    "late": 0.631
+    "early": 0.442,
+    "late": 0.598
    },
    "engineer": {
-    "early": 0.595,
-    "late": 0.741
+    "early": 0.512,
+    "late": 0.676
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.846,
-    "late": 0.869
+    "early": 0.683,
+    "late": 0.748
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.378,
-    "late": 0.387
+    "early": 0.363,
+    "late": 0.381
    },
    "mermonkey": {
-    "early": 0.575,
-    "late": 0.706
+    "early": 0.492,
+    "late": 0.654
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.73,
-    "late": 0.765
+    "early": 0.639,
+    "late": 0.691
    },
    "skywarden": {
-    "early": 0.88,
-    "late": 0.894
+    "early": 0.705,
+    "late": 0.757
    },
    "sniper": {
     "early": 1.0,
@@ -4086,24 +4086,24 @@
    },
    "sub": {
     "early": 0.0,
-    "late": 0.009,
+    "late": 0.0,
     "room": 7
    },
    "super": {
     "early": 0.042,
-    "late": 0.756
+    "late": 0.585
    },
    "tack": {
-    "early": 0.452,
-    "late": 0.461
+    "early": 0.411,
+    "late": 0.437
    },
    "village": {
     "early": 0.039,
     "late": 0.559
    },
    "wizard": {
-    "early": 0.595,
-    "late": 0.741
+    "early": 0.512,
+    "late": 0.676
    }
   }
  },
@@ -4111,7 +4111,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_haunted_scenes_all_8d159355917e07125bd7474336b332fd.bundle#v8#f3#r2",
+  "stamp": "map_haunted_scenes_all_8d159355917e07125bd7474336b332fd.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -4126,45 +4126,45 @@
     "late": 0.576
    },
    "bomb": {
-    "early": 0.872,
-    "late": 0.872
+    "early": 0.861,
+    "late": 0.861
    },
    "boomerang": {
-    "early": 0.89,
-    "late": 0.89
+    "early": 0.882,
+    "late": 0.881
    },
    "buccaneer": {
-    "early": 0.611,
-    "late": 0.61,
+    "early": 0.602,
+    "late": 0.601,
     "room": 6
    },
    "dart": {
-    "early": 0.809,
-    "late": 0.809
+    "early": 0.794,
+    "late": 0.794
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.947,
-    "late": 0.947
+    "early": 0.909,
+    "late": 0.909
    },
    "druid": {
-    "early": 0.822,
-    "late": 0.822
+    "early": 0.816,
+    "late": 0.816
    },
    "engineer": {
-    "early": 0.872,
-    "late": 0.872
+    "early": 0.861,
+    "late": 0.861
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.931,
-    "late": 0.931
+    "early": 0.899,
+    "late": 0.899
    },
    "heli": {
     "early": 1.0,
@@ -4175,20 +4175,20 @@
     "late": 0.648
    },
    "mermonkey": {
-    "early": 0.874,
-    "late": 0.874
+    "early": 0.864,
+    "late": 0.864
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.884,
-    "late": 0.884
+    "early": 0.869,
+    "late": 0.869
    },
    "skywarden": {
-    "early": 0.942,
-    "late": 0.942
+    "early": 0.904,
+    "late": 0.904
    },
    "sniper": {
     "early": 1.0,
@@ -4199,30 +4199,30 @@
     "late": 0.809
    },
    "sub": {
-    "early": 0.503,
-    "late": 0.503,
+    "early": 0.493,
+    "late": 0.493,
     "room": 8
    },
    "super": {
-    "early": 0.924,
-    "late": 0.924
+    "early": 0.895,
+    "late": 0.895
    },
    "tack": {
-    "early": 0.756,
-    "late": 0.756
+    "early": 0.741,
+    "late": 0.74
    },
    "village": {
     "early": 0.837,
     "late": 0.837
    },
    "wizard": {
-    "early": 0.872,
-    "late": 0.872
+    "early": 0.861,
+    "late": 0.861
    }
   }
  },
  "Hedge": {
-  "stamp": "map_hedge_scenes_all_ea13ea95fe276562bf8b926ae339af27.bundle#v8#f3#r2",
+  "stamp": "map_hedge_scenes_all_ea13ea95fe276562bf8b926ae339af27.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -4237,12 +4237,12 @@
     "late": 0.461
    },
    "bomb": {
-    "early": 0.781,
-    "late": 0.783
+    "early": 0.711,
+    "late": 0.719
    },
    "boomerang": {
-    "early": 0.801,
-    "late": 0.803
+    "early": 0.746,
+    "late": 0.75
    },
    "buccaneer": {
     "early": 0.0,
@@ -4250,56 +4250,56 @@
     "room": 0
    },
    "dart": {
-    "early": 0.689,
-    "late": 0.698
+    "early": 0.625,
+    "late": 0.637
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.873,
-    "late": 0.876
+    "early": 0.8,
+    "late": 0.803
    },
    "druid": {
-    "early": 0.703,
-    "late": 0.712
+    "early": 0.658,
+    "late": 0.669
    },
    "engineer": {
-    "early": 0.781,
-    "late": 0.783
+    "early": 0.711,
+    "late": 0.719
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.848,
-    "late": 0.852
+    "early": 0.779,
+    "late": 0.783
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.471,
-    "late": 0.478
+    "early": 0.467,
+    "late": 0.472
    },
    "mermonkey": {
-    "early": 0.748,
-    "late": 0.755
+    "early": 0.688,
+    "late": 0.701
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.792,
-    "late": 0.794
+    "early": 0.727,
+    "late": 0.735
    },
    "skywarden": {
-    "early": 0.866,
-    "late": 0.87
+    "early": 0.8,
+    "late": 0.803
    },
    "sniper": {
     "early": 1.0,
@@ -4315,20 +4315,20 @@
     "room": 0
    },
    "super": {
-    "early": 0.821,
-    "late": 0.823
+    "early": 0.754,
+    "late": 0.763
    },
    "tack": {
-    "early": 0.54,
-    "late": 0.546
+    "early": 0.512,
+    "late": 0.519
    },
    "village": {
     "early": 0.702,
     "late": 0.708
    },
    "wizard": {
-    "early": 0.781,
-    "late": 0.783
+    "early": 0.711,
+    "late": 0.719
    }
   }
  },
@@ -4337,7 +4337,7 @@
    "alternating_paths",
    "removable"
   ],
-  "stamp": "map_highfinance_scenes_all_ce9450d8cb26969b9ecc68c64c783afe.bundle#v8#f3#r2",
+  "stamp": "map_highfinance_scenes_all_ce9450d8cb26969b9ecc68c64c783afe.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 0.0,
@@ -4352,69 +4352,69 @@
     "late": 0.102
    },
    "bomb": {
-    "early": 0.333,
-    "late": 0.387
+    "early": 0.324,
+    "late": 0.352
    },
    "boomerang": {
-    "early": 0.349,
-    "late": 0.42
+    "early": 0.342,
+    "late": 0.384
    },
    "buccaneer": {
-    "early": 0.377,
-    "late": 0.455,
+    "early": 0.346,
+    "late": 0.395,
     "room": 2
    },
    "dart": {
-    "early": 0.287,
-    "late": 0.294
+    "early": 0.272,
+    "late": 0.279
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.442,
-    "late": 0.552
+    "early": 0.393,
+    "late": 0.46
    },
    "druid": {
     "early": 0.289,
-    "late": 0.299
+    "late": 0.298
    },
    "engineer": {
-    "early": 0.333,
-    "late": 0.387
+    "early": 0.324,
+    "late": 0.352
    },
    "farm": {
     "early": 0.0,
     "late": 0.0
    },
    "glue": {
-    "early": 0.409,
-    "late": 0.509
+    "early": 0.376,
+    "late": 0.434
    },
    "heli": {
     "early": 0.0,
     "late": 0.0
    },
    "ice": {
-    "early": 0.201,
-    "late": 0.207
+    "early": 0.199,
+    "late": 0.206
    },
    "mermonkey": {
-    "early": 0.329,
-    "late": 0.378
+    "early": 0.322,
+    "late": 0.343
    },
    "mortar": {
     "early": 0.0,
     "late": 0.0
    },
    "ninja": {
-    "early": 0.342,
-    "late": 0.408
+    "early": 0.333,
+    "late": 0.369
    },
    "skywarden": {
-    "early": 0.431,
-    "late": 0.539
+    "early": 0.391,
+    "late": 0.456
    },
    "sniper": {
     "early": 1.0,
@@ -4425,8 +4425,8 @@
     "late": 0.076
    },
    "sub": {
-    "early": 0.24,
-    "late": 0.243,
+    "early": 0.232,
+    "late": 0.235,
     "room": 3
    },
    "super": {
@@ -4434,21 +4434,21 @@
     "late": 0.0
    },
    "tack": {
-    "early": 0.178,
-    "late": 0.185
+    "early": 0.163,
+    "late": 0.169
    },
    "village": {
     "early": 0.0,
     "late": 0.0
    },
    "wizard": {
-    "early": 0.333,
-    "late": 0.387
+    "early": 0.324,
+    "late": 0.352
    }
   }
  },
  "In The Loop": {
-  "stamp": "map_intheloop_scenes_all_65bde93b2d296ea33b09177d2f3543be.bundle#v8#f3#r2",
+  "stamp": "map_intheloop_scenes_all_65bde93b2d296ea33b09177d2f3543be.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -4471,8 +4471,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.454,
-    "late": 0.471,
+    "early": 0.45,
+    "late": 0.466,
     "room": 3
    },
    "dart": {
@@ -4508,8 +4508,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.977,
-    "late": 0.975
+    "early": 0.976,
+    "late": 0.974
    },
    "mermonkey": {
     "early": 1.0,
@@ -4536,8 +4536,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.338,
-    "late": 0.355,
+    "early": 0.332,
+    "late": 0.345,
     "room": 4
    },
    "super": {
@@ -4545,8 +4545,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.981,
-    "late": 0.981
+    "early": 0.97,
+    "late": 0.969
    },
    "village": {
     "early": 1.0,
@@ -4562,7 +4562,7 @@
   "mechanics": [
    "alternating_paths"
   ],
-  "stamp": "map_infernal_scenes_all_6f8e48c21d7efc9d74ad27898f6ef012.bundle#v8#f3#r2",
+  "stamp": "map_infernal_scenes_all_6f8e48c21d7efc9d74ad27898f6ef012.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -4680,7 +4680,7 @@
    "hidden_track",
    "removable"
   ],
-  "stamp": "map_kartsndarts_scenes_all_cff198aab0d7ad217075ce95880cdf0b.bundle#v8#f3#r2",
+  "stamp": "map_kartsndarts_scenes_all_cff198aab0d7ad217075ce95880cdf0b.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -4797,7 +4797,7 @@
    "area_vanishes",
    "removable"
   ],
-  "stamp": "map_lastresort_scenes_all_886fa8f9f8a52ae9fa84d85d1b22b53d.bundle#v8#f3#r2",
+  "stamp": "map_lastresort_scenes_all_886fa8f9f8a52ae9fa84d85d1b22b53d.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -4812,12 +4812,12 @@
     "late": 0.062
    },
    "bomb": {
-    "early": 0.616,
-    "late": 0.538
+    "early": 0.61,
+    "late": 0.532
    },
    "boomerang": {
     "early": 0.625,
-    "late": 0.549
+    "late": 0.548
    },
    "buccaneer": {
     "early": 0.0,
@@ -4825,56 +4825,56 @@
     "room": 0
    },
    "dart": {
-    "early": 0.549,
-    "late": 0.482
+    "early": 0.517,
+    "late": 0.461
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.665,
-    "late": 0.581
+    "early": 0.66,
+    "late": 0.578
    },
    "druid": {
-    "early": 0.554,
-    "late": 0.486
+    "early": 0.552,
+    "late": 0.483
    },
    "engineer": {
-    "early": 0.616,
-    "late": 0.538
+    "early": 0.61,
+    "late": 0.532
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.647,
-    "late": 0.569
+    "early": 0.641,
+    "late": 0.565
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.05,
-    "late": 0.066
+    "early": 0.049,
+    "late": 0.065
    },
    "mermonkey": {
-    "early": 0.527,
-    "late": 0.459
+    "early": 0.513,
+    "late": 0.446
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.618,
-    "late": 0.543
+    "early": 0.614,
+    "late": 0.537
    },
    "skywarden": {
-    "early": 0.657,
-    "late": 0.577
+    "early": 0.652,
+    "late": 0.573
    },
    "sniper": {
     "early": 1.0,
@@ -4890,25 +4890,25 @@
     "room": 0
    },
    "super": {
-    "early": 0.58,
-    "late": 0.503
+    "early": 0.572,
+    "late": 0.496
    },
    "tack": {
-    "early": 0.191,
-    "late": 0.209
+    "early": 0.117,
+    "late": 0.135
    },
    "village": {
     "early": 0.477,
     "late": 0.417
    },
    "wizard": {
-    "early": 0.616,
-    "late": 0.538
+    "early": 0.61,
+    "late": 0.532
    }
   }
  },
  "Logs": {
-  "stamp": "map_logs_scenes_all_e58c11918f653e9b184935a9cb987a3d.bundle#v8#f3#r2",
+  "stamp": "map_logs_scenes_all_e58c11918f653e9b184935a9cb987a3d.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -4923,21 +4923,21 @@
     "late": 0.925
    },
    "bomb": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    },
    "boomerang": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.999
    },
    "buccaneer": {
-    "early": 0.352,
-    "late": 0.415,
+    "early": 0.311,
+    "late": 0.405,
     "room": 3
    },
    "dart": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.968,
+    "late": 0.981
    },
    "dartling": {
     "early": 1.0,
@@ -4948,12 +4948,12 @@
     "late": 1.0
    },
    "druid": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.985,
+    "late": 0.994
    },
    "engineer": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    },
    "farm": {
     "early": 1.0,
@@ -4961,27 +4961,27 @@
    },
    "glue": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.999
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.895,
-    "late": 0.932
+    "early": 0.863,
+    "late": 0.906
    },
    "mermonkey": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.998,
+    "late": 0.999
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    },
    "skywarden": {
     "early": 1.0,
@@ -4996,30 +4996,30 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.23,
-    "late": 0.257,
+    "early": 0.223,
+    "late": 0.247,
     "room": 4
    },
    "super": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.999
    },
    "tack": {
-    "early": 0.951,
-    "late": 0.972
+    "early": 0.888,
+    "late": 0.926
    },
    "village": {
     "early": 1.0,
     "late": 1.0
    },
    "wizard": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    }
   }
  },
  "Lost Crevasse": {
-  "stamp": "map_lostcrevasse_scenes_all_a26effb6adae13b8b82383267265fb42.bundle#v8#f3#r2",
+  "stamp": "map_lostcrevasse_scenes_all_a26effb6adae13b8b82383267265fb42.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -5035,20 +5035,20 @@
    },
    "bomb": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.992
    },
    "boomerang": {
     "early": 1.0,
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.173,
-    "late": 0.364,
+    "early": 0.171,
+    "late": 0.363,
     "room": 8
    },
    "dart": {
     "early": 1.0,
-    "late": 0.978
+    "late": 0.97
    },
    "dartling": {
     "early": 1.0,
@@ -5060,11 +5060,11 @@
    },
    "druid": {
     "early": 1.0,
-    "late": 0.978
+    "late": 0.974
    },
    "engineer": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.992
    },
    "farm": {
     "early": 1.0,
@@ -5079,8 +5079,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.931,
-    "late": 0.985
+    "early": 0.929,
+    "late": 0.984
    },
    "mermonkey": {
     "early": 1.0,
@@ -5107,17 +5107,17 @@
     "late": 0.974
    },
    "sub": {
-    "early": 0.106,
-    "late": 0.325,
+    "early": 0.102,
+    "late": 0.322,
     "room": 8
    },
    "super": {
     "early": 1.0,
-    "late": 0.859
+    "late": 0.855
    },
    "tack": {
-    "early": 0.973,
-    "late": 0.941
+    "early": 0.962,
+    "late": 0.934
    },
    "village": {
     "early": 1.0,
@@ -5125,7 +5125,7 @@
    },
    "wizard": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.992
    }
   }
  },
@@ -5133,7 +5133,7 @@
   "mechanics": [
    "click_event"
   ],
-  "stamp": "map_lotusisland_scenes_all_2ecc328cbabad66356b826c51ff48af1.bundle#v8#f3#r2",
+  "stamp": "map_lotusisland_scenes_all_2ecc328cbabad66356b826c51ff48af1.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -5148,11 +5148,11 @@
     "late": 0.913
    },
    "bomb": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.992,
+    "late": 0.999
    },
    "boomerang": {
-    "early": 1.0,
+    "early": 0.996,
     "late": 1.0
    },
    "buccaneer": {
@@ -5161,31 +5161,31 @@
     "room": 8
    },
    "dart": {
-    "early": 0.994,
-    "late": 0.998
+    "early": 0.973,
+    "late": 0.99
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
+    "early": 0.998,
     "late": 1.0
    },
    "druid": {
-    "early": 0.998,
-    "late": 0.999
+    "early": 0.981,
+    "late": 0.995
    },
    "engineer": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.992,
+    "late": 0.999
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
+    "early": 0.999,
     "late": 1.0
    },
    "heli": {
@@ -5194,7 +5194,7 @@
    },
    "ice": {
     "early": 1.0,
-    "late": 0.991
+    "late": 0.989
    },
    "mermonkey": {
     "early": 1.0,
@@ -5205,8 +5205,8 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.995,
+    "late": 0.999
    },
    "skywarden": {
     "early": 1.0,
@@ -5226,20 +5226,20 @@
     "room": 8
    },
    "super": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.98,
+    "late": 0.995
    },
    "tack": {
-    "early": 0.966,
-    "late": 0.977
+    "early": 0.94,
+    "late": 0.963
    },
    "village": {
     "early": 0.998,
     "late": 1.0
    },
    "wizard": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.992,
+    "late": 0.999
    }
   }
  },
@@ -5249,7 +5249,7 @@
    "area_vanishes",
    "click_event"
   ],
-  "stamp": "map_luminouscove_scenes_all_9af90359c7c28986a1320a59dac5e691.bundle#v8#f3#r2",
+  "stamp": "map_luminouscove_scenes_all_9af90359c7c28986a1320a59dac5e691.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -5264,53 +5264,53 @@
     "late": 0.348
    },
    "bomb": {
-    "early": 0.2,
-    "late": 0.518
+    "early": 0.08,
+    "late": 0.51
    },
    "boomerang": {
-    "early": 0.218,
+    "early": 0.089,
     "late": 0.533
    },
    "buccaneer": {
     "early": 1.0,
-    "late": 0.976,
+    "late": 0.973,
     "room": 8
    },
    "dart": {
-    "early": 0.191,
-    "late": 0.549
+    "early": 0.109,
+    "late": 0.525
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.313,
-    "late": 0.62
+    "early": 0.14,
+    "late": 0.607
    },
    "druid": {
-    "early": 0.129,
-    "late": 0.476
+    "early": 0.064,
+    "late": 0.472
    },
    "engineer": {
-    "early": 0.2,
-    "late": 0.518
+    "early": 0.08,
+    "late": 0.51
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.38,
-    "late": 0.677
+    "early": 0.202,
+    "late": 0.667
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.881,
-    "late": 0.92
+    "early": 0.855,
+    "late": 0.917
    },
    "mermonkey": {
     "early": 1.0,
@@ -5321,12 +5321,12 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.33,
-    "late": 0.629
+    "early": 0.17,
+    "late": 0.617
    },
    "skywarden": {
-    "early": 0.394,
-    "late": 0.692
+    "early": 0.214,
+    "late": 0.683
    },
    "sniper": {
     "early": 1.0,
@@ -5338,24 +5338,24 @@
    },
    "sub": {
     "early": 1.0,
-    "late": 0.863,
+    "late": 0.854,
     "room": 8
    },
    "super": {
-    "early": 0.091,
-    "late": 0.458
+    "early": 0.008,
+    "late": 0.449
    },
    "tack": {
-    "early": 0.03,
-    "late": 0.424
+    "early": 0.023,
+    "late": 0.411
    },
    "village": {
     "early": 0.03,
     "late": 0.396
    },
    "wizard": {
-    "early": 0.2,
-    "late": 0.518
+    "early": 0.08,
+    "late": 0.51
    }
   }
  },
@@ -5363,7 +5363,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_mesa_scenes_all_e1bcfd88b74e811b2f554023543c5f66.bundle#v8#f3#r2",
+  "stamp": "map_mesa_scenes_all_e1bcfd88b74e811b2f554023543c5f66.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -5378,11 +5378,11 @@
     "late": 0.926
    },
    "bomb": {
-    "early": 0.977,
+    "early": 0.97,
     "late": 1.0
    },
    "boomerang": {
-    "early": 0.985,
+    "early": 0.984,
     "late": 1.0
    },
    "buccaneer": {
@@ -5391,7 +5391,7 @@
     "room": 0
    },
    "dart": {
-    "early": 0.951,
+    "early": 0.943,
     "late": 1.0
    },
    "dartling": {
@@ -5403,11 +5403,11 @@
     "late": 1.0
    },
    "druid": {
-    "early": 0.952,
+    "early": 0.949,
     "late": 1.0
    },
    "engineer": {
-    "early": 0.977,
+    "early": 0.97,
     "late": 1.0
    },
    "farm": {
@@ -5423,11 +5423,11 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.875,
-    "late": 0.972
+    "early": 0.871,
+    "late": 0.971
    },
    "mermonkey": {
-    "early": 0.977,
+    "early": 0.97,
     "late": 1.0
    },
    "mortar": {
@@ -5435,7 +5435,7 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.984,
+    "early": 0.978,
     "late": 1.0
    },
    "skywarden": {
@@ -5456,25 +5456,25 @@
     "room": 0
    },
    "super": {
-    "early": 0.868,
-    "late": 0.942
+    "early": 0.855,
+    "late": 0.933
    },
    "tack": {
-    "early": 0.909,
-    "late": 0.998
+    "early": 0.903,
+    "late": 0.995
    },
    "village": {
     "early": 0.774,
     "late": 0.871
    },
    "wizard": {
-    "early": 0.977,
+    "early": 0.97,
     "late": 1.0
    }
   }
  },
  "Middle of the Road": {
-  "stamp": "map_middleoftheroad_scenes_all_7aed58d0e751526a4844a8c72868b4ff.bundle#v8#f3#r2",
+  "stamp": "map_middleoftheroad_scenes_all_7aed58d0e751526a4844a8c72868b4ff.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -5497,13 +5497,13 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.306,
-    "late": 0.306,
+    "early": 0.305,
+    "late": 0.305,
     "room": 3
    },
    "dart": {
-    "early": 0.987,
-    "late": 0.983
+    "early": 0.955,
+    "late": 0.946
    },
    "dartling": {
     "early": 1.0,
@@ -5514,8 +5514,8 @@
     "late": 1.0
    },
    "druid": {
-    "early": 0.993,
-    "late": 0.99
+    "early": 0.982,
+    "late": 0.979
    },
    "engineer": {
     "early": 1.0,
@@ -5534,8 +5534,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.73,
-    "late": 0.709
+    "early": 0.726,
+    "late": 0.704
    },
    "mermonkey": {
     "early": 1.0,
@@ -5562,8 +5562,8 @@
     "late": 0.97
    },
    "sub": {
-    "early": 0.259,
-    "late": 0.259,
+    "early": 0.253,
+    "late": 0.253,
     "room": 4
    },
    "super": {
@@ -5571,8 +5571,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.817,
-    "late": 0.795
+    "early": 0.78,
+    "late": 0.75
    },
    "village": {
     "early": 0.994,
@@ -5594,7 +5594,7 @@
    "hidden_track",
    "removable"
   ],
-  "stamp": "map_midnightmansion_scenes_all_ce0c4e9e9fa0d0a21dfb1c823bf57d31.bundle#v8#f3#r2",
+  "stamp": "map_midnightmansion_scenes_all_ce0c4e9e9fa0d0a21dfb1c823bf57d31.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 0.0,
@@ -5609,12 +5609,12 @@
     "late": 0.542
    },
    "bomb": {
-    "early": 1.0,
-    "late": 0.694
+    "early": 0.907,
+    "late": 0.643
    },
    "boomerang": {
-    "early": 1.0,
-    "late": 0.7
+    "early": 0.907,
+    "late": 0.653
    },
    "buccaneer": {
     "early": 0.0,
@@ -5622,40 +5622,40 @@
     "room": 0
    },
    "dart": {
-    "early": 1.0,
-    "late": 0.888
+    "early": 0.893,
+    "late": 0.828
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
-    "late": 0.733
+    "early": 0.915,
+    "late": 0.68
    },
    "druid": {
-    "early": 1.0,
-    "late": 0.675
+    "early": 0.902,
+    "late": 0.623
    },
    "engineer": {
-    "early": 1.0,
-    "late": 0.694
+    "early": 0.907,
+    "late": 0.643
    },
    "farm": {
     "early": 0.0,
     "late": 0.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 0.933
+    "early": 0.907,
+    "late": 0.882
    },
    "heli": {
     "early": 0.0,
     "late": 0.0
    },
    "ice": {
-    "early": 0.896,
-    "late": 0.719
+    "early": 0.829,
+    "late": 0.686
    },
    "mermonkey": {
     "early": 0.0,
@@ -5666,12 +5666,12 @@
     "late": 0.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 0.914
+    "early": 0.907,
+    "late": 0.864
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 0.938
+    "early": 0.909,
+    "late": 0.891
    },
    "sniper": {
     "early": 1.0,
@@ -5691,21 +5691,21 @@
     "late": 0.0
    },
    "tack": {
-    "early": 0.992,
-    "late": 0.842
+    "early": 0.869,
+    "late": 0.765
    },
    "village": {
     "early": 0.0,
     "late": 0.0
    },
    "wizard": {
-    "early": 1.0,
-    "late": 0.694
+    "early": 0.907,
+    "late": 0.643
    }
   }
  },
  "Monkey Meadow": {
-  "stamp": "map_tutorial_scenes_all_fe2b44543653a011c76692347229952e.bundle#v8#f3#r2",
+  "stamp": "map_tutorial_scenes_all_fe2b44543653a011c76692347229952e.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -5720,11 +5720,11 @@
     "late": 1.0
    },
    "bomb": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "boomerang": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "buccaneer": {
@@ -5733,7 +5733,7 @@
     "room": 0
    },
    "dart": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "dartling": {
@@ -5741,15 +5741,15 @@
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
+    "early": 0.997,
     "late": 1.0
    },
    "druid": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "engineer": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "farm": {
@@ -5757,7 +5757,7 @@
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "heli": {
@@ -5765,11 +5765,11 @@
     "late": 1.0
    },
    "ice": {
-    "early": 1.0,
+    "early": 0.99,
     "late": 1.0
    },
    "mermonkey": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "mortar": {
@@ -5777,11 +5777,11 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "skywarden": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "sniper": {
@@ -5798,11 +5798,11 @@
     "room": 0
    },
    "super": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    },
    "tack": {
-    "early": 1.0,
+    "early": 0.99,
     "late": 1.0
    },
    "village": {
@@ -5810,33 +5810,33 @@
     "late": 1.0
    },
    "wizard": {
-    "early": 1.0,
+    "early": 0.994,
     "late": 1.0
    }
   }
  },
  "Moon Landing": {
-  "stamp": "map_moonlanding_scenes_all_d7e496e9e052b1f88e0f16d9ab1c7855.bundle#v8#f3#r2",
+  "stamp": "map_moonlanding_scenes_all_d7e496e9e052b1f88e0f16d9ab1c7855.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
     "late": 1.0
    },
    "alchemist": {
-    "early": 0.944,
-    "late": 0.965
+    "early": 0.943,
+    "late": 0.964
    },
    "beast_handler": {
     "early": 0.236,
     "late": 0.296
    },
    "bomb": {
-    "early": 0.818,
-    "late": 0.852
+    "early": 0.353,
+    "late": 0.398
    },
    "boomerang": {
-    "early": 0.875,
-    "late": 0.903
+    "early": 0.371,
+    "late": 0.418
    },
    "buccaneer": {
     "early": 0.0,
@@ -5844,64 +5844,64 @@
     "room": 0
    },
    "dart": {
-    "early": 0.614,
-    "late": 0.67
+    "early": 0.312,
+    "late": 0.362
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.991,
-    "late": 0.998
+    "early": 0.447,
+    "late": 0.499
    },
    "druid": {
-    "early": 0.632,
-    "late": 0.685
+    "early": 0.324,
+    "late": 0.372
    },
    "engineer": {
-    "early": 0.818,
-    "late": 0.852
+    "early": 0.353,
+    "late": 0.398
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.97,
-    "late": 0.984
+    "early": 0.419,
+    "late": 0.471
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.253,
-    "late": 0.307
+    "early": 0.237,
+    "late": 0.297
    },
    "mermonkey": {
-    "early": 0.8,
-    "late": 0.84
+    "early": 0.344,
+    "late": 0.391
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.855,
-    "late": 0.886
+    "early": 0.362,
+    "late": 0.408
    },
    "skywarden": {
-    "early": 0.985,
-    "late": 0.995
+    "early": 0.442,
+    "late": 0.495
    },
    "sniper": {
     "early": 1.0,
     "late": 1.0
    },
    "spike": {
-    "early": 0.613,
-    "late": 0.666
+    "early": 0.605,
+    "late": 0.659
    },
    "sub": {
     "early": 0.0,
@@ -5909,20 +5909,20 @@
     "room": 0
    },
    "super": {
-    "early": 0.952,
-    "late": 0.971
+    "early": 0.385,
+    "late": 0.441
    },
    "tack": {
-    "early": 0.308,
-    "late": 0.349
+    "early": 0.259,
+    "late": 0.318
    },
    "village": {
-    "early": 0.681,
-    "late": 0.723
+    "early": 0.668,
+    "late": 0.712
    },
    "wizard": {
-    "early": 0.818,
-    "late": 0.852
+    "early": 0.353,
+    "late": 0.398
    }
   }
  },
@@ -5930,7 +5930,7 @@
   "mechanics": [
    "alternating_paths"
   ],
-  "stamp": "map_muddypuddles_scenes_all_f02485b4d72c564b36139c3853e070fe.bundle#v8#f3#r2",
+  "stamp": "map_muddypuddles_scenes_all_f02485b4d72c564b36139c3853e070fe.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -6047,7 +6047,7 @@
    "no_path_targeting",
    "removable"
   ],
-  "stamp": "map_mushroomgrotto_scenes_all_56008574b216a565b927be2348180006.bundle#v8#f3#r2",
+  "stamp": "map_mushroomgrotto_scenes_all_56008574b216a565b927be2348180006.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 0.0,
@@ -6062,12 +6062,12 @@
     "late": 0.456
    },
    "bomb": {
-    "early": 0.456,
-    "late": 0.711
+    "early": 0.451,
+    "late": 0.701
    },
    "boomerang": {
-    "early": 0.466,
-    "late": 0.726
+    "early": 0.465,
+    "late": 0.725
    },
    "buccaneer": {
     "early": 0.0,
@@ -6075,56 +6075,56 @@
     "room": 0
    },
    "dart": {
-    "early": 0.455,
-    "late": 0.686
+    "early": 0.449,
+    "late": 0.675
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.49,
-    "late": 0.775
+    "early": 0.486,
+    "late": 0.767
    },
    "druid": {
-    "early": 0.419,
+    "early": 0.418,
     "late": 0.651
    },
    "engineer": {
-    "early": 0.456,
-    "late": 0.711
+    "early": 0.451,
+    "late": 0.701
    },
    "farm": {
     "early": 0.0,
     "late": 0.0
    },
    "glue": {
-    "early": 0.497,
-    "late": 0.771
+    "early": 0.493,
+    "late": 0.764
    },
    "heli": {
     "early": 0.0,
     "late": 0.0
    },
    "ice": {
-    "early": 0.329,
-    "late": 0.519
+    "early": 0.325,
+    "late": 0.515
    },
    "mermonkey": {
-    "early": 0.2,
-    "late": 0.356
+    "early": 0.197,
+    "late": 0.345
    },
    "mortar": {
     "early": 0.0,
     "late": 0.0
    },
    "ninja": {
-    "early": 0.481,
-    "late": 0.737
+    "early": 0.477,
+    "late": 0.729
    },
    "skywarden": {
-    "early": 0.501,
-    "late": 0.781
+    "early": 0.499,
+    "late": 0.776
    },
    "sniper": {
     "early": 1.0,
@@ -6144,21 +6144,21 @@
     "late": 0.0
    },
    "tack": {
-    "early": 0.399,
-    "late": 0.604
+    "early": 0.388,
+    "late": 0.589
    },
    "village": {
     "early": 0.0,
     "late": 0.0
    },
    "wizard": {
-    "early": 0.456,
-    "late": 0.711
+    "early": 0.451,
+    "late": 0.701
    }
   }
  },
  "Off The Coast": {
-  "stamp": "map_offthecoast_scenes_all_45dee0c84ef77846f53940f84c16994d.bundle#v8#f3#r2",
+  "stamp": "map_offthecoast_scenes_all_45dee0c84ef77846f53940f84c16994d.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -6173,45 +6173,45 @@
     "late": 0.723
    },
    "bomb": {
-    "early": 0.895,
-    "late": 0.908
+    "early": 0.882,
+    "late": 0.896
    },
    "boomerang": {
     "early": 0.914,
-    "late": 0.926
+    "late": 0.924
    },
    "buccaneer": {
-    "early": 0.676,
-    "late": 0.665,
+    "early": 0.673,
+    "late": 0.661,
     "room": 8
    },
    "dart": {
-    "early": 0.833,
-    "late": 0.85
+    "early": 0.813,
+    "late": 0.836
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.978,
-    "late": 0.97
+    "early": 0.974,
+    "late": 0.967
    },
    "druid": {
-    "early": 0.836,
-    "late": 0.851
+    "early": 0.828,
+    "late": 0.849
    },
    "engineer": {
-    "early": 0.895,
-    "late": 0.908
+    "early": 0.882,
+    "late": 0.896
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.964,
-    "late": 0.965
+    "early": 0.955,
+    "late": 0.958
    },
    "heli": {
     "early": 1.0,
@@ -6219,7 +6219,7 @@
    },
    "ice": {
     "early": 1.0,
-    "late": 0.997
+    "late": 0.996
    },
    "mermonkey": {
     "early": 1.0,
@@ -6230,12 +6230,12 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.911,
-    "late": 0.924
+    "early": 0.902,
+    "late": 0.912
    },
    "skywarden": {
-    "early": 0.974,
-    "late": 0.971
+    "early": 0.97,
+    "late": 0.968
    },
    "sniper": {
     "early": 1.0,
@@ -6246,25 +6246,25 @@
     "late": 0.843
    },
    "sub": {
-    "early": 0.528,
-    "late": 0.507,
+    "early": 0.512,
+    "late": 0.49,
     "room": 8
    },
    "super": {
-    "early": 0.809,
-    "late": 0.828
+    "early": 0.808,
+    "late": 0.825
    },
    "tack": {
-    "early": 0.738,
-    "late": 0.753
+    "early": 0.736,
+    "late": 0.748
    },
    "village": {
     "early": 0.764,
     "late": 0.794
    },
    "wizard": {
-    "early": 0.895,
-    "late": 0.908
+    "early": 0.882,
+    "late": 0.896
    }
   }
  },
@@ -6276,7 +6276,7 @@
    "area_appears",
    "area_vanishes"
   ],
-  "stamp": "map_onetwotree_scenes_all_4b994aee4c8d8efe2d57eeb13179f9da.bundle#v8#f3#r2",
+  "stamp": "map_onetwotree_scenes_all_4b994aee4c8d8efe2d57eeb13179f9da.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -6291,12 +6291,12 @@
     "late": 0.091
    },
    "bomb": {
-    "early": 0.436,
-    "late": 0.254
+    "early": 0.433,
+    "late": 0.235
    },
    "boomerang": {
     "early": 0.452,
-    "late": 0.269
+    "late": 0.252
    },
    "buccaneer": {
     "early": 0.0,
@@ -6304,56 +6304,56 @@
     "room": 0
    },
    "dart": {
-    "early": 0.382,
-    "late": 0.198
+    "early": 0.371,
+    "late": 0.179
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.513,
-    "late": 0.335
+    "early": 0.508,
+    "late": 0.305
    },
    "druid": {
     "early": 0.393,
-    "late": 0.211
+    "late": 0.197
    },
    "engineer": {
-    "early": 0.436,
-    "late": 0.254
+    "early": 0.433,
+    "late": 0.235
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.483,
-    "late": 0.301
+    "early": 0.475,
+    "late": 0.274
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.26,
-    "late": 0.094
+    "early": 0.259,
+    "late": 0.093
    },
    "mermonkey": {
-    "early": 0.423,
-    "late": 0.191
+    "early": 0.418,
+    "late": 0.169
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.439,
-    "late": 0.257
+    "early": 0.434,
+    "late": 0.235
    },
    "skywarden": {
-    "early": 0.498,
-    "late": 0.317
+    "early": 0.493,
+    "late": 0.289
    },
    "sniper": {
     "early": 1.0,
@@ -6369,25 +6369,25 @@
     "room": 0
    },
    "super": {
-    "early": 0.475,
-    "late": 0.235
+    "early": 0.472,
+    "late": 0.21
    },
    "tack": {
-    "early": 0.306,
-    "late": 0.125
+    "early": 0.296,
+    "late": 0.117
    },
    "village": {
     "early": 0.402,
     "late": 0.173
    },
    "wizard": {
-    "early": 0.436,
-    "late": 0.254
+    "early": 0.433,
+    "late": 0.235
    }
   }
  },
  "Park Path": {
-  "stamp": "map_parkpath_scenes_all_4e3c3ff61f76ed8886305434f01d8f43.bundle#v8#f3#r2",
+  "stamp": "map_parkpath_scenes_all_4e3c3ff61f76ed8886305434f01d8f43.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -6410,8 +6410,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.552,
-    "late": 0.837,
+    "early": 0.544,
+    "late": 0.831,
     "room": 6
    },
    "dart": {
@@ -6447,12 +6447,12 @@
     "late": 1.0
    },
    "ice": {
-    "early": 1.0,
+    "early": 0.999,
     "late": 1.0
    },
    "mermonkey": {
-    "early": 0.993,
-    "late": 0.994
+    "early": 0.989,
+    "late": 0.99
    },
    "mortar": {
     "early": 1.0,
@@ -6475,13 +6475,13 @@
     "late": 0.976
    },
    "sub": {
-    "early": 0.243,
-    "late": 0.464,
+    "early": 0.218,
+    "late": 0.436,
     "room": 7
    },
    "super": {
-    "early": 0.846,
-    "late": 0.767
+    "early": 0.818,
+    "late": 0.735
    },
    "tack": {
     "early": 1.0,
@@ -6498,7 +6498,7 @@
   }
  },
  "Party Parade": {
-  "stamp": "map_partyparade_scenes_all_ab9f1f0fc9c96daf135c6ea30037931c.bundle#v8#f3#r2",
+  "stamp": "map_partyparade_scenes_all_ab9f1f0fc9c96daf135c6ea30037931c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -6558,8 +6558,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.879,
-    "late": 0.878
+    "early": 0.875,
+    "late": 0.875
    },
    "mermonkey": {
     "early": 1.0,
@@ -6595,8 +6595,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.987,
-    "late": 0.986
+    "early": 0.977,
+    "late": 0.974
    },
    "village": {
     "early": 1.0,
@@ -6612,7 +6612,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_patspond_scenes_all_06f19dc726877a30ee75d02588f11f7e.bundle#v8#f3#r2",
+  "stamp": "map_patspond_scenes_all_06f19dc726877a30ee75d02588f11f7e.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -6627,69 +6627,69 @@
     "late": 0.749
    },
    "bomb": {
-    "early": 0.884,
-    "late": 0.884
+    "early": 0.876,
+    "late": 0.876
    },
    "boomerang": {
     "early": 0.892,
     "late": 0.892
    },
    "buccaneer": {
-    "early": 0.944,
-    "late": 0.944,
+    "early": 0.934,
+    "late": 0.934,
     "room": 8
    },
    "dart": {
-    "early": 0.861,
-    "late": 0.861
+    "early": 0.851,
+    "late": 0.851
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.918,
-    "late": 0.918
+    "early": 0.912,
+    "late": 0.912
    },
    "druid": {
-    "early": 0.859,
-    "late": 0.859
+    "early": 0.853,
+    "late": 0.853
    },
    "engineer": {
-    "early": 0.884,
-    "late": 0.884
+    "early": 0.876,
+    "late": 0.876
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.912,
-    "late": 0.912
+    "early": 0.906,
+    "late": 0.906
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.864,
-    "late": 0.864
+    "early": 0.862,
+    "late": 0.862
    },
    "mermonkey": {
-    "early": 0.963,
-    "late": 0.963
+    "early": 0.955,
+    "late": 0.955
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.893,
-    "late": 0.893
+    "early": 0.886,
+    "late": 0.885
    },
    "skywarden": {
-    "early": 0.918,
-    "late": 0.918
+    "early": 0.912,
+    "late": 0.912
    },
    "sniper": {
     "early": 1.0,
@@ -6700,25 +6700,25 @@
     "late": 0.825
    },
    "sub": {
-    "early": 0.816,
-    "late": 0.821,
+    "early": 0.799,
+    "late": 0.808,
     "room": 8
    },
    "super": {
-    "early": 0.831,
-    "late": 0.831
+    "early": 0.815,
+    "late": 0.815
    },
    "tack": {
-    "early": 0.803,
-    "late": 0.803
+    "early": 0.788,
+    "late": 0.788
    },
    "village": {
     "early": 0.754,
     "late": 0.753
    },
    "wizard": {
-    "early": 0.884,
-    "late": 0.884
+    "early": 0.876,
+    "late": 0.876
    }
   }
  },
@@ -6726,7 +6726,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_peninsula_scenes_all_2ce067ee89b4f6062947853acdf9afb4.bundle#v8#f3#r2",
+  "stamp": "map_peninsula_scenes_all_2ce067ee89b4f6062947853acdf9afb4.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 0.667,
@@ -6741,12 +6741,12 @@
     "late": 0.073
    },
    "bomb": {
-    "early": 0.235,
-    "late": 0.246
+    "early": 0.228,
+    "late": 0.238
    },
    "boomerang": {
-    "early": 0.242,
-    "late": 0.261
+    "early": 0.241,
+    "late": 0.259
    },
    "buccaneer": {
     "early": 1.0,
@@ -6754,56 +6754,56 @@
     "room": 8
    },
    "dart": {
-    "early": 0.215,
-    "late": 0.211
+    "early": 0.206,
+    "late": 0.203
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.282,
-    "late": 0.368
+    "early": 0.265,
+    "late": 0.335
    },
    "druid": {
-    "early": 0.208,
-    "late": 0.204
+    "early": 0.203,
+    "late": 0.2
    },
    "engineer": {
-    "early": 0.235,
-    "late": 0.246
+    "early": 0.228,
+    "late": 0.238
    },
    "farm": {
     "early": 0.667,
     "late": 0.667
    },
    "glue": {
-    "early": 0.271,
-    "late": 0.315
+    "early": 0.264,
+    "late": 0.303
    },
    "heli": {
     "early": 0.667,
     "late": 0.667
    },
    "ice": {
-    "early": 0.146,
-    "late": 0.166
+    "early": 0.138,
+    "late": 0.154
    },
    "mermonkey": {
-    "early": 0.999,
-    "late": 0.965
+    "early": 0.994,
+    "late": 0.944
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.249,
-    "late": 0.268
+    "early": 0.242,
+    "late": 0.259
    },
    "skywarden": {
-    "early": 0.278,
-    "late": 0.344
+    "early": 0.271,
+    "late": 0.325
    },
    "sniper": {
     "early": 1.0,
@@ -6814,25 +6814,25 @@
     "late": 0.204
    },
    "sub": {
-    "early": 1.0,
-    "late": 1.0,
+    "early": 0.999,
+    "late": 0.952,
     "room": 8
    },
    "super": {
-    "early": 0.256,
-    "late": 0.275
+    "early": 0.249,
+    "late": 0.266
    },
    "tack": {
-    "early": 0.139,
-    "late": 0.137
+    "early": 0.132,
+    "late": 0.13
    },
    "village": {
     "early": 0.206,
     "late": 0.203
    },
    "wizard": {
-    "early": 0.235,
-    "late": 0.246
+    "early": 0.228,
+    "late": 0.238
    }
   }
  },
@@ -6847,7 +6847,7 @@
    "removable",
    "towers_suspended"
   ],
-  "stamp": "map_polyphemus_scenes_all_fea04f9d05d6feffd806aa37d09300fb.bundle#v8#f3#r2",
+  "stamp": "map_polyphemus_scenes_all_fea04f9d05d6feffd806aa37d09300fb.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -6862,69 +6862,69 @@
     "late": 0.656
    },
    "bomb": {
-    "early": 0.857,
-    "late": 0.857
+    "early": 0.849,
+    "late": 0.849
    },
    "boomerang": {
-    "early": 0.866,
-    "late": 0.866
+    "early": 0.864,
+    "late": 0.864
    },
    "buccaneer": {
-    "early": 0.714,
-    "late": 0.714,
+    "early": 0.202,
+    "late": 0.202,
     "room": 8
    },
    "dart": {
-    "early": 0.828,
-    "late": 0.828
+    "early": 0.813,
+    "late": 0.813
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.897,
-    "late": 0.897
+    "early": 0.893,
+    "late": 0.893
    },
    "druid": {
-    "early": 0.827,
-    "late": 0.827
+    "early": 0.82,
+    "late": 0.82
    },
    "engineer": {
-    "early": 0.857,
-    "late": 0.857
+    "early": 0.849,
+    "late": 0.849
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.893,
-    "late": 0.893
+    "early": 0.887,
+    "late": 0.887
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.741,
-    "late": 0.741
+    "early": 0.74,
+    "late": 0.74
    },
    "mermonkey": {
-    "early": 0.994,
-    "late": 0.994
+    "early": 0.849,
+    "late": 0.849
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.87,
-    "late": 0.87
+    "early": 0.863,
+    "late": 0.863
    },
    "skywarden": {
-    "early": 0.899,
-    "late": 0.899
+    "early": 0.895,
+    "late": 0.895
    },
    "sniper": {
     "early": 1.0,
@@ -6935,25 +6935,25 @@
     "late": 0.824
    },
    "sub": {
-    "early": 0.53,
-    "late": 0.53,
+    "early": 0.156,
+    "late": 0.156,
     "room": 8
    },
    "super": {
-    "early": 0.872,
-    "late": 0.872
+    "early": 0.865,
+    "late": 0.865
    },
    "tack": {
-    "early": 0.739,
-    "late": 0.739
+    "early": 0.725,
+    "late": 0.725
    },
    "village": {
     "early": 0.821,
     "late": 0.821
    },
    "wizard": {
-    "early": 0.857,
-    "late": 0.857
+    "early": 0.849,
+    "late": 0.849
    }
   }
  },
@@ -6965,7 +6965,7 @@
    "hidden_track",
    "removable"
   ],
-  "stamp": "map_quad_scenes_all_6ed7cb1cff045e7d28a2828d2b1a1e5d.bundle#v8#f3#r2",
+  "stamp": "map_quad_scenes_all_6ed7cb1cff045e7d28a2828d2b1a1e5d.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -6980,69 +6980,69 @@
     "late": 0.704
    },
    "bomb": {
-    "early": 0.991,
-    "late": 0.981
+    "early": 0.95,
+    "late": 0.954
    },
    "boomerang": {
-    "early": 0.997,
-    "late": 0.989
+    "early": 0.96,
+    "late": 0.961
    },
    "buccaneer": {
-    "early": 0.621,
-    "late": 0.618,
+    "early": 0.603,
+    "late": 0.6,
     "room": 8
    },
    "dart": {
-    "early": 0.942,
-    "late": 0.933
+    "early": 0.895,
+    "late": 0.903
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.978,
+    "late": 0.975
    },
    "druid": {
-    "early": 0.942,
-    "late": 0.935
+    "early": 0.909,
+    "late": 0.917
    },
    "engineer": {
-    "early": 0.991,
-    "late": 0.981
+    "early": 0.95,
+    "late": 0.954
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.965,
+    "late": 0.966
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.726,
-    "late": 0.734
+    "early": 0.717,
+    "late": 0.726
    },
    "mermonkey": {
-    "early": 0.991,
-    "late": 0.981
+    "early": 0.948,
+    "late": 0.953
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.995,
-    "late": 0.987
+    "early": 0.955,
+    "late": 0.958
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.965,
+    "late": 0.966
    },
    "sniper": {
     "early": 1.0,
@@ -7053,25 +7053,25 @@
     "late": 0.935
    },
    "sub": {
-    "early": 0.151,
-    "late": 0.124,
+    "early": 0.112,
+    "late": 0.084,
     "room": 8
    },
    "super": {
-    "early": 1.0,
-    "late": 0.999
+    "early": 0.975,
+    "late": 0.972
    },
    "tack": {
-    "early": 0.784,
-    "late": 0.79
+    "early": 0.757,
+    "late": 0.766
    },
    "village": {
     "early": 0.959,
     "late": 0.948
    },
    "wizard": {
-    "early": 0.991,
-    "late": 0.981
+    "early": 0.95,
+    "late": 0.954
    }
   }
  },
@@ -7081,7 +7081,7 @@
    "click_event",
    "path_opens"
   ],
-  "stamp": "map_quarry_scenes_all_375fab4a22db638b6b65a96061b49794.bundle#v8#f3#r2",
+  "stamp": "map_quarry_scenes_all_375fab4a22db638b6b65a96061b49794.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -7096,21 +7096,21 @@
     "late": 0.741
    },
    "bomb": {
-    "early": 1.0,
-    "late": 0.999
+    "early": 0.99,
+    "late": 0.992
    },
    "boomerang": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.995,
+    "late": 0.994
    },
    "buccaneer": {
-    "early": 0.102,
-    "late": 0.344,
+    "early": 0.098,
+    "late": 0.337,
     "room": 5
    },
    "dart": {
-    "early": 0.999,
-    "late": 0.979
+    "early": 0.978,
+    "late": 0.962
    },
    "dartling": {
     "early": 1.0,
@@ -7118,15 +7118,15 @@
    },
    "desperado": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.996
    },
    "druid": {
-    "early": 1.0,
-    "late": 0.981
+    "early": 0.984,
+    "late": 0.974
    },
    "engineer": {
-    "early": 1.0,
-    "late": 0.999
+    "early": 0.99,
+    "late": 0.992
    },
    "farm": {
     "early": 1.0,
@@ -7134,31 +7134,31 @@
    },
    "glue": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.995
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.885,
-    "late": 0.911
+    "early": 0.868,
+    "late": 0.898
    },
    "mermonkey": {
-    "early": 0.878,
-    "late": 1.0
+    "early": 0.839,
+    "late": 0.994
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.992,
+    "late": 0.994
    },
    "skywarden": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.995
    },
    "sniper": {
     "early": 1.0,
@@ -7169,25 +7169,25 @@
     "late": 0.932
    },
    "sub": {
-    "early": 0.002,
-    "late": 0.344,
+    "early": 0.0,
+    "late": 0.334,
     "room": 8
    },
    "super": {
-    "early": 0.804,
-    "late": 0.92
+    "early": 0.648,
+    "late": 0.906
    },
    "tack": {
-    "early": 0.94,
-    "late": 0.854
+    "early": 0.903,
+    "late": 0.819
    },
    "village": {
     "early": 0.645,
     "late": 0.841
    },
    "wizard": {
-    "early": 1.0,
-    "late": 0.999
+    "early": 0.99,
+    "late": 0.992
    }
   }
  },
@@ -7197,7 +7197,7 @@
    "area_vanishes",
    "removable"
   ],
-  "stamp": "map_quietstreet_scenes_all_13b4be788ad93b3ee647efc362a3fd12.bundle#v8#f3#r2",
+  "stamp": "map_quietstreet_scenes_all_13b4be788ad93b3ee647efc362a3fd12.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -7212,12 +7212,12 @@
     "late": 0.372
    },
    "bomb": {
-    "early": 0.891,
-    "late": 0.903
+    "early": 0.756,
+    "late": 0.754
    },
    "boomerang": {
-    "early": 0.907,
-    "late": 0.921
+    "early": 0.761,
+    "late": 0.759
    },
    "buccaneer": {
     "early": 0.0,
@@ -7225,56 +7225,56 @@
     "room": 0
    },
    "dart": {
-    "early": 0.762,
-    "late": 0.769
+    "early": 0.614,
+    "late": 0.622
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.964,
-    "late": 0.97
+    "early": 0.77,
+    "late": 0.768
    },
    "druid": {
-    "early": 0.785,
-    "late": 0.792
+    "early": 0.671,
+    "late": 0.678
    },
    "engineer": {
-    "early": 0.891,
-    "late": 0.903
+    "early": 0.756,
+    "late": 0.754
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.948,
-    "late": 0.96
+    "early": 0.765,
+    "late": 0.763
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.393,
-    "late": 0.392
+    "early": 0.385,
+    "late": 0.384
    },
    "mermonkey": {
-    "early": 0.872,
-    "late": 0.881
+    "early": 0.747,
+    "late": 0.746
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.897,
-    "late": 0.91
+    "early": 0.757,
+    "late": 0.754
    },
    "skywarden": {
-    "early": 0.96,
-    "late": 0.97
+    "early": 0.767,
+    "late": 0.765
    },
    "sniper": {
     "early": 1.0,
@@ -7290,20 +7290,20 @@
     "room": 0
    },
    "super": {
-    "early": 0.923,
-    "late": 0.934
+    "early": 0.754,
+    "late": 0.753
    },
    "tack": {
-    "early": 0.466,
-    "late": 0.468
+    "early": 0.428,
+    "late": 0.43
    },
    "village": {
     "early": 0.802,
     "late": 0.812
    },
    "wizard": {
-    "early": 0.891,
-    "late": 0.903
+    "early": 0.756,
+    "late": 0.754
    }
   }
  },
@@ -7311,7 +7311,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_rake_scenes_all_8e167e83c567e8c3e117fdc98a88a9fa.bundle#v8#f3#r2",
+  "stamp": "map_rake_scenes_all_8e167e83c567e8c3e117fdc98a88a9fa.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -7334,8 +7334,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.647,
-    "late": 0.338,
+    "early": 0.631,
+    "late": 0.324,
     "room": 8
    },
    "dart": {
@@ -7371,8 +7371,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.989,
-    "late": 0.946
+    "early": 0.988,
+    "late": 0.944
    },
    "mermonkey": {
     "early": 1.0,
@@ -7399,8 +7399,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.478,
-    "late": 0.217,
+    "early": 0.47,
+    "late": 0.213,
     "room": 8
    },
    "super": {
@@ -7409,7 +7409,7 @@
    },
    "tack": {
     "early": 1.0,
-    "late": 0.999
+    "late": 0.996
    },
    "village": {
     "early": 1.0,
@@ -7426,7 +7426,7 @@
    "alternating_paths",
    "click_event"
   ],
-  "stamp": "map_ravine_scenes_all_909d1b176940283e86962452f0fab88c.bundle#v8#f3#r2",
+  "stamp": "map_ravine_scenes_all_909d1b176940283e86962452f0fab88c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -7437,73 +7437,73 @@
     "late": 0.81
    },
    "beast_handler": {
-    "early": 0.411,
-    "late": 0.267
+    "early": 0.408,
+    "late": 0.265
    },
    "bomb": {
-    "early": 0.734,
-    "late": 0.63
+    "early": 0.6,
+    "late": 0.516
    },
    "boomerang": {
-    "early": 0.761,
-    "late": 0.664
+    "early": 0.612,
+    "late": 0.542
    },
    "buccaneer": {
-    "early": 0.582,
-    "late": 0.767,
+    "early": 0.009,
+    "late": 0.078,
     "room": 8
    },
    "dart": {
-    "early": 0.681,
-    "late": 0.638
+    "early": 0.604,
+    "late": 0.571
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.868,
-    "late": 0.81
+    "early": 0.647,
+    "late": 0.612
    },
    "druid": {
-    "early": 0.649,
-    "late": 0.545
+    "early": 0.579,
+    "late": 0.487
    },
    "engineer": {
-    "early": 0.734,
-    "late": 0.63
+    "early": 0.6,
+    "late": 0.516
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.874,
-    "late": 0.841
+    "early": 0.665,
+    "late": 0.659
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.483,
-    "late": 0.363
+    "early": 0.475,
+    "late": 0.359
    },
    "mermonkey": {
-    "early": 0.897,
-    "late": 0.793
+    "early": 0.591,
+    "late": 0.5
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.793,
-    "late": 0.752
+    "early": 0.641,
+    "late": 0.626
    },
    "skywarden": {
-    "early": 0.893,
-    "late": 0.864
+    "early": 0.677,
+    "late": 0.673
    },
    "sniper": {
     "early": 1.0,
@@ -7514,30 +7514,30 @@
     "late": 0.528
    },
    "sub": {
-    "early": 0.292,
-    "late": 0.33,
+    "early": 0.0,
+    "late": 0.0,
     "room": 8
    },
    "super": {
-    "early": 0.719,
-    "late": 0.605
+    "early": 0.561,
+    "late": 0.483
    },
    "tack": {
-    "early": 0.551,
-    "late": 0.483
+    "early": 0.524,
+    "late": 0.451
    },
    "village": {
     "early": 0.605,
     "late": 0.49
    },
    "wizard": {
-    "early": 0.734,
-    "late": 0.63
+    "early": 0.6,
+    "late": 0.516
    }
   }
  },
  "Resort": {
-  "stamp": "map_resort_scenes_all_4efc2327e8b49d2d5067972ffc813f23.bundle#v8#f3#r2",
+  "stamp": "map_resort_scenes_all_4efc2327e8b49d2d5067972ffc813f23.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -7552,21 +7552,21 @@
     "late": 0.916
    },
    "bomb": {
-    "early": 0.995,
-    "late": 0.996
+    "early": 0.991,
+    "late": 0.993
    },
    "boomerang": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    },
    "buccaneer": {
-    "early": 0.741,
-    "late": 0.344,
+    "early": 0.738,
+    "late": 0.341,
     "room": 7
    },
    "dart": {
-    "early": 0.967,
-    "late": 0.974
+    "early": 0.961,
+    "late": 0.969
    },
    "dartling": {
     "early": 1.0,
@@ -7577,12 +7577,12 @@
     "late": 1.0
    },
    "druid": {
-    "early": 0.976,
-    "late": 0.981
+    "early": 0.974,
+    "late": 0.979
    },
    "engineer": {
-    "early": 0.995,
-    "late": 0.996
+    "early": 0.991,
+    "late": 0.993
    },
    "farm": {
     "early": 1.0,
@@ -7609,8 +7609,8 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.995,
-    "late": 0.996
+    "early": 0.991,
+    "late": 0.993
    },
    "skywarden": {
     "early": 1.0,
@@ -7625,8 +7625,8 @@
     "late": 0.973
    },
    "sub": {
-    "early": 0.66,
-    "late": 0.291,
+    "early": 0.652,
+    "late": 0.286,
     "room": 8
    },
    "super": {
@@ -7634,16 +7634,16 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.93,
-    "late": 0.944
+    "early": 0.921,
+    "late": 0.941
    },
    "village": {
     "early": 0.976,
     "late": 0.981
    },
    "wizard": {
-    "early": 0.995,
-    "late": 0.996
+    "early": 0.991,
+    "late": 0.993
    }
   }
  },
@@ -7654,27 +7654,27 @@
   "mechanics": [
    "moving_platform"
   ],
-  "stamp": "map_sanctuary_scenes_all_321d505888648f761ef5f55406d584b7.bundle#v8#f3#r2",
+  "stamp": "map_sanctuary_scenes_all_321d505888648f761ef5f55406d584b7.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
     "late": 1.0
    },
    "alchemist": {
-    "early": 0.148,
-    "late": 0.164
+    "early": 0.158,
+    "late": 0.174
    },
    "beast_handler": {
     "early": 0.0,
     "late": 0.0
    },
    "bomb": {
-    "early": 0.011,
-    "late": 0.012
+    "early": 0.026,
+    "late": 0.028
    },
    "boomerang": {
-    "early": 0.067,
-    "late": 0.073
+    "early": 0.087,
+    "late": 0.092
    },
    "buccaneer": {
     "early": 0.0,
@@ -7690,48 +7690,48 @@
     "late": 1.0
    },
    "desperado": {
-    "early": 0.186,
-    "late": 0.182
+    "early": 0.217,
+    "late": 0.221
    },
    "druid": {
     "early": 0.0,
     "late": 0.0
    },
    "engineer": {
-    "early": 0.011,
-    "late": 0.012
+    "early": 0.026,
+    "late": 0.028
    },
    "farm": {
-    "early": 0.667,
-    "late": 0.667
+    "early": 1.0,
+    "late": 1.0
    },
    "glue": {
-    "early": 0.146,
-    "late": 0.16
+    "early": 0.164,
+    "late": 0.179
    },
    "heli": {
-    "early": 0.667,
-    "late": 0.667
+    "early": 1.0,
+    "late": 1.0
    },
    "ice": {
     "early": 0.0,
     "late": 0.0
    },
    "mermonkey": {
-    "early": 0.008,
-    "late": 0.008
+    "early": 0.018,
+    "late": 0.019
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.024,
-    "late": 0.025
+    "early": 0.045,
+    "late": 0.047
    },
    "skywarden": {
-    "early": 0.173,
-    "late": 0.173
+    "early": 0.202,
+    "late": 0.205
    },
    "sniper": {
     "early": 1.0,
@@ -7747,8 +7747,8 @@
     "room": 0
    },
    "super": {
-    "early": 0.075,
-    "late": 0.082
+    "early": 0.102,
+    "late": 0.11
    },
    "tack": {
     "early": 0.0,
@@ -7759,8 +7759,8 @@
     "late": 0.0
    },
    "wizard": {
-    "early": 0.011,
-    "late": 0.012
+    "early": 0.026,
+    "late": 0.028
    }
   }
  },
@@ -7768,7 +7768,7 @@
   "mechanics": [
    "click_event"
   ],
-  "stamp": "map_scrapyard_scenes_all_83a94f105a067209a039b15c2607cc68.bundle#v8#f3#r2",
+  "stamp": "map_scrapyard_scenes_all_83a94f105a067209a039b15c2607cc68.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -7783,12 +7783,12 @@
     "late": 0.772
    },
    "bomb": {
-    "early": 0.921,
-    "late": 0.972
+    "early": 0.901,
+    "late": 0.957
    },
    "boomerang": {
-    "early": 0.934,
-    "late": 0.976
+    "early": 0.93,
+    "late": 0.971
    },
    "buccaneer": {
     "early": 0.0,
@@ -7796,56 +7796,56 @@
     "room": 0
    },
    "dart": {
-    "early": 0.867,
-    "late": 0.929
+    "early": 0.834,
+    "late": 0.896
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.962,
-    "late": 0.996
+    "early": 0.959,
+    "late": 0.993
    },
    "druid": {
-    "early": 0.858,
-    "late": 0.939
+    "early": 0.841,
+    "late": 0.92
    },
    "engineer": {
-    "early": 0.921,
-    "late": 0.972
+    "early": 0.901,
+    "late": 0.957
    },
    "farm": {
     "early": 0.667,
     "late": 0.667
    },
    "glue": {
-    "early": 0.956,
-    "late": 0.995
+    "early": 0.954,
+    "late": 0.991
    },
    "heli": {
     "early": 0.667,
     "late": 0.667
    },
    "ice": {
-    "early": 0.69,
-    "late": 0.792
+    "early": 0.689,
+    "late": 0.791
    },
    "mermonkey": {
-    "early": 0.828,
-    "late": 0.877
+    "early": 0.803,
+    "late": 0.859
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.933,
-    "late": 0.98
+    "early": 0.922,
+    "late": 0.97
    },
    "skywarden": {
-    "early": 0.961,
-    "late": 0.999
+    "early": 0.958,
+    "late": 0.997
    },
    "sniper": {
     "early": 1.0,
@@ -7861,20 +7861,20 @@
     "room": 0
    },
    "super": {
-    "early": 0.733,
-    "late": 0.746
+    "early": 0.717,
+    "late": 0.735
    },
    "tack": {
-    "early": 0.748,
-    "late": 0.832
+    "early": 0.736,
+    "late": 0.82
    },
    "village": {
     "early": 0.58,
     "late": 0.669
    },
    "wizard": {
-    "early": 0.921,
-    "late": 0.972
+    "early": 0.901,
+    "late": 0.957
    }
   }
  },
@@ -7888,7 +7888,7 @@
    "hidden_track",
    "removable"
   ],
-  "stamp": "map_shipcapture_scenes_all_90cff6af4a69de159baea702fa83a9cb.bundle#v8#f3#r2",
+  "stamp": "map_shipcapture_scenes_all_90cff6af4a69de159baea702fa83a9cb.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -7903,11 +7903,11 @@
     "late": 0.901
    },
    "bomb": {
-    "early": 0.631,
+    "early": 0.623,
     "late": 1.0
    },
    "boomerang": {
-    "early": 0.648,
+    "early": 0.645,
     "late": 1.0
    },
    "buccaneer": {
@@ -7916,7 +7916,7 @@
     "room": 0
    },
    "dart": {
-    "early": 0.585,
+    "early": 0.573,
     "late": 1.0
    },
    "dartling": {
@@ -7924,15 +7924,15 @@
     "late": 1.0
    },
    "desperado": {
-    "early": 0.702,
+    "early": 0.693,
     "late": 1.0
    },
    "druid": {
-    "early": 0.589,
+    "early": 0.586,
     "late": 1.0
    },
    "engineer": {
-    "early": 0.631,
+    "early": 0.623,
     "late": 1.0
    },
    "farm": {
@@ -7940,7 +7940,7 @@
     "late": 1.0
    },
    "glue": {
-    "early": 0.685,
+    "early": 0.676,
     "late": 1.0
    },
    "heli": {
@@ -7952,7 +7952,7 @@
     "late": 0.936
    },
    "mermonkey": {
-    "early": 0.628,
+    "early": 0.62,
     "late": 1.0
    },
    "mortar": {
@@ -7960,11 +7960,11 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.642,
+    "early": 0.634,
     "late": 1.0
    },
    "skywarden": {
-    "early": 0.697,
+    "early": 0.691,
     "late": 1.0
    },
    "sniper": {
@@ -7981,19 +7981,19 @@
     "room": 0
    },
    "super": {
-    "early": 0.586,
-    "late": 0.988
+    "early": 0.577,
+    "late": 0.982
    },
    "tack": {
-    "early": 0.51,
-    "late": 0.98
+    "early": 0.499,
+    "late": 0.969
    },
    "village": {
     "early": 0.517,
     "late": 0.942
    },
    "wizard": {
-    "early": 0.631,
+    "early": 0.623,
     "late": 1.0
    }
   }
@@ -8005,7 +8005,7 @@
    "click_event",
    "removable"
   ],
-  "stamp": "map_skates_scenes_all_b6c98726cde46c3175ee5ae1e20f68e7.bundle#v8#f3#r2",
+  "stamp": "map_skates_scenes_all_b6c98726cde46c3175ee5ae1e20f68e7.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8028,8 +8028,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.647,
-    "late": 0.656,
+    "early": 0.639,
+    "late": 0.651,
     "room": 8
    },
    "dart": {
@@ -8065,7 +8065,7 @@
     "late": 1.0
    },
    "ice": {
-    "early": 1.0,
+    "early": 0.999,
     "late": 0.997
    },
    "mermonkey": {
@@ -8093,8 +8093,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.508,
-    "late": 0.551,
+    "early": 0.5,
+    "late": 0.537,
     "room": 8
    },
    "super": {
@@ -8102,8 +8102,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.999,
-    "late": 0.999
+    "early": 0.995,
+    "late": 0.995
    },
    "village": {
     "early": 0.991,
@@ -8125,7 +8125,7 @@
    "path_opens",
    "removable"
   ],
-  "stamp": "map_skulltweak_scenes_all_c16c2551d03bfbfc56299896c2d8fd6b.bundle#v8#f3#r2",
+  "stamp": "map_skulltweak_scenes_all_c16c2551d03bfbfc56299896c2d8fd6b.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8140,69 +8140,69 @@
     "late": 0.398
    },
    "bomb": {
-    "early": 0.907,
-    "late": 0.767
+    "early": 0.888,
+    "late": 0.753
    },
    "boomerang": {
     "early": 0.933,
-    "late": 0.793
+    "late": 0.792
    },
    "buccaneer": {
-    "early": 0.696,
-    "late": 0.858,
+    "early": 0.686,
+    "late": 0.848,
     "room": 8
    },
    "dart": {
-    "early": 0.828,
-    "late": 0.696
+    "early": 0.791,
+    "late": 0.664
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.98,
-    "late": 0.856
+    "early": 0.977,
+    "late": 0.849
    },
    "druid": {
-    "early": 0.82,
-    "late": 0.687
+    "early": 0.815,
+    "late": 0.683
    },
    "engineer": {
-    "early": 0.907,
-    "late": 0.767
+    "early": 0.888,
+    "late": 0.753
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.989,
-    "late": 0.862
+    "early": 0.983,
+    "late": 0.853
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.718,
-    "late": 0.712
+    "early": 0.717,
+    "late": 0.711
    },
    "mermonkey": {
-    "early": 0.903,
-    "late": 0.852
+    "early": 0.893,
+    "late": 0.847
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.941,
-    "late": 0.806
+    "early": 0.926,
+    "late": 0.793
    },
    "skywarden": {
-    "early": 0.995,
-    "late": 0.88
+    "early": 0.992,
+    "late": 0.873
    },
    "sniper": {
     "early": 1.0,
@@ -8213,25 +8213,25 @@
     "late": 0.556
    },
    "sub": {
-    "early": 0.542,
-    "late": 0.701,
+    "early": 0.532,
+    "late": 0.689,
     "room": 8
    },
    "super": {
-    "early": 0.695,
-    "late": 0.552
+    "early": 0.684,
+    "late": 0.545
    },
    "tack": {
-    "early": 0.599,
-    "late": 0.494
+    "early": 0.58,
+    "late": 0.472
    },
    "village": {
     "early": 0.564,
     "late": 0.467
    },
    "wizard": {
-    "early": 0.907,
-    "late": 0.767
+    "early": 0.888,
+    "late": 0.753
    }
   }
  },
@@ -8244,7 +8244,7 @@
    "path_opens",
    "removable"
   ],
-  "stamp": "map_spapits_scenes_all_8ba1f4b431dee9362027fa915fd865a6.bundle#v8#f3#r2",
+  "stamp": "map_spapits_scenes_all_8ba1f4b431dee9362027fa915fd865a6.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8358,7 +8358,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_spiceislands_scenes_all_9a3546b029b94fc92f6719c1723f148b.bundle#v8#f3#r2",
+  "stamp": "map_spiceislands_scenes_all_9a3546b029b94fc92f6719c1723f148b.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8373,8 +8373,8 @@
     "late": 0.333
    },
    "bomb": {
-    "early": 0.897,
-    "late": 0.777
+    "early": 0.886,
+    "late": 0.774
    },
    "boomerang": {
     "early": 0.927,
@@ -8386,32 +8386,32 @@
     "room": 8
    },
    "dart": {
-    "early": 0.759,
-    "late": 0.693
+    "early": 0.722,
+    "late": 0.666
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.977,
+    "early": 0.975,
     "late": 0.812
    },
    "druid": {
-    "early": 0.754,
-    "late": 0.69
+    "early": 0.75,
+    "late": 0.687
    },
    "engineer": {
-    "early": 0.897,
-    "late": 0.777
+    "early": 0.886,
+    "late": 0.774
    },
    "farm": {
     "early": 0.667,
     "late": 0.667
    },
    "glue": {
-    "early": 0.972,
-    "late": 0.804
+    "early": 0.969,
+    "late": 0.803
    },
    "heli": {
     "early": 0.667,
@@ -8430,12 +8430,12 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.93,
-    "late": 0.791
+    "early": 0.923,
+    "late": 0.789
    },
    "skywarden": {
-    "early": 0.976,
-    "late": 0.808
+    "early": 0.973,
+    "late": 0.807
    },
    "sniper": {
     "early": 1.0,
@@ -8451,20 +8451,20 @@
     "room": 8
    },
    "super": {
-    "early": 0.825,
-    "late": 0.665
+    "early": 0.806,
+    "late": 0.651
    },
    "tack": {
-    "early": 0.521,
-    "late": 0.508
+    "early": 0.493,
+    "late": 0.486
    },
    "village": {
     "early": 0.658,
     "late": 0.58
    },
    "wizard": {
-    "early": 0.897,
-    "late": 0.777
+    "early": 0.886,
+    "late": 0.774
    }
   }
  },
@@ -8472,7 +8472,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_spillway_scenes_all_04c36792aed0a031ad9920d0bb4f6889.bundle#v8#f3#r2",
+  "stamp": "map_spillway_scenes_all_04c36792aed0a031ad9920d0bb4f6889.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8487,69 +8487,69 @@
     "late": 0.452
    },
    "bomb": {
-    "early": 0.729,
-    "late": 0.735
+    "early": 0.6,
+    "late": 0.609
    },
    "boomerang": {
-    "early": 0.771,
-    "late": 0.773
+    "early": 0.622,
+    "late": 0.632
    },
    "buccaneer": {
-    "early": 0.733,
-    "late": 0.728,
+    "early": 0.168,
+    "late": 0.173,
     "room": 8
    },
    "dart": {
-    "early": 0.641,
-    "late": 0.65
+    "early": 0.567,
+    "late": 0.569
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.952,
-    "late": 0.954
+    "early": 0.657,
+    "late": 0.668
    },
    "druid": {
-    "early": 0.643,
-    "late": 0.65
+    "early": 0.567,
+    "late": 0.572
    },
    "engineer": {
-    "early": 0.729,
-    "late": 0.735
+    "early": 0.6,
+    "late": 0.609
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.905,
-    "late": 0.909
+    "early": 0.649,
+    "late": 0.664
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.554,
-    "late": 0.558
+    "early": 0.461,
+    "late": 0.463
    },
    "mermonkey": {
-    "early": 0.999,
-    "late": 1.0
+    "early": 0.6,
+    "late": 0.609
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.751,
-    "late": 0.755
+    "early": 0.617,
+    "late": 0.627
    },
    "skywarden": {
-    "early": 0.941,
-    "late": 0.944
+    "early": 0.665,
+    "late": 0.676
    },
    "sniper": {
     "early": 1.0,
@@ -8560,30 +8560,30 @@
     "late": 0.646
    },
    "sub": {
-    "early": 0.629,
-    "late": 0.619,
+    "early": 0.037,
+    "late": 0.04,
     "room": 8
    },
    "super": {
-    "early": 0.873,
-    "late": 0.875
+    "early": 0.624,
+    "late": 0.636
    },
    "tack": {
-    "early": 0.541,
-    "late": 0.548
+    "early": 0.496,
+    "late": 0.496
    },
    "village": {
     "early": 0.663,
     "late": 0.668
    },
    "wizard": {
-    "early": 0.729,
-    "late": 0.735
+    "early": 0.6,
+    "late": 0.609
    }
   }
  },
  "Spring Spring": {
-  "stamp": "map_springspring_scenes_all_c1e48a4cad94c97560cb593dea920e8e.bundle#v8#f3#r2",
+  "stamp": "map_springspring_scenes_all_c1e48a4cad94c97560cb593dea920e8e.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8598,45 +8598,45 @@
     "late": 0.855
    },
    "bomb": {
-    "early": 0.983,
-    "late": 0.961
+    "early": 0.98,
+    "late": 0.959
    },
    "boomerang": {
-    "early": 0.986,
+    "early": 0.985,
     "late": 0.964
    },
    "buccaneer": {
-    "early": 0.948,
-    "late": 0.975,
+    "early": 0.911,
+    "late": 0.971,
     "room": 8
    },
    "dart": {
-    "early": 0.97,
-    "late": 0.947
+    "early": 0.966,
+    "late": 0.943
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.998,
-    "late": 0.982
+    "early": 0.994,
+    "late": 0.98
    },
    "druid": {
-    "early": 0.973,
+    "early": 0.972,
     "late": 0.947
    },
    "engineer": {
-    "early": 0.983,
-    "late": 0.961
+    "early": 0.98,
+    "late": 0.959
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.991,
-    "late": 0.974
+    "early": 0.988,
+    "late": 0.971
    },
    "heli": {
     "early": 1.0,
@@ -8647,7 +8647,7 @@
     "late": 1.0
    },
    "mermonkey": {
-    "early": 1.0,
+    "early": 0.997,
     "late": 1.0
    },
    "mortar": {
@@ -8655,12 +8655,12 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.983,
-    "late": 0.964
+    "early": 0.98,
+    "late": 0.962
    },
    "skywarden": {
-    "early": 0.995,
-    "late": 0.981
+    "early": 0.991,
+    "late": 0.979
    },
    "sniper": {
     "early": 1.0,
@@ -8671,25 +8671,25 @@
     "late": 0.947
    },
    "sub": {
-    "early": 0.839,
-    "late": 0.858,
+    "early": 0.794,
+    "late": 0.842,
     "room": 8
    },
    "super": {
-    "early": 0.991,
-    "late": 0.971
+    "early": 0.988,
+    "late": 0.969
    },
    "tack": {
-    "early": 0.944,
-    "late": 0.923
+    "early": 0.937,
+    "late": 0.917
    },
    "village": {
     "early": 0.977,
     "late": 0.953
    },
    "wizard": {
-    "early": 0.983,
-    "late": 0.961
+    "early": 0.98,
+    "late": 0.959
    }
   }
  },
@@ -8697,7 +8697,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_streambed_scenes_all_df340f0bf9ed9ae2817268117bcbe139.bundle#v8#f3#r2",
+  "stamp": "map_streambed_scenes_all_df340f0bf9ed9ae2817268117bcbe139.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8720,13 +8720,13 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.357,
-    "late": 0.495,
+    "early": 0.285,
+    "late": 0.491,
     "room": 8
    },
    "dart": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.998,
+    "late": 0.998
    },
    "dartling": {
     "early": 1.0,
@@ -8737,8 +8737,8 @@
     "late": 1.0
    },
    "druid": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.999,
+    "late": 0.999
    },
    "engineer": {
     "early": 1.0,
@@ -8785,8 +8785,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.228,
-    "late": 0.351,
+    "early": 0.198,
+    "late": 0.347,
     "room": 8
    },
    "super": {
@@ -8794,8 +8794,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.996,
-    "late": 0.996
+    "early": 0.986,
+    "late": 0.986
    },
    "village": {
     "early": 1.0,
@@ -8811,7 +8811,7 @@
   "mechanics": [
    "click_event"
   ],
-  "stamp": "map_sulfursprings_scenes_all_21a55404b1fe17303cc3620d7b544a1e.bundle#v8#f3#r2",
+  "stamp": "map_sulfursprings_scenes_all_21a55404b1fe17303cc3620d7b544a1e.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8826,69 +8826,69 @@
     "late": 0.034
    },
    "bomb": {
-    "early": 0.443,
-    "late": 0.489
+    "early": 0.41,
+    "late": 0.453
    },
    "boomerang": {
-    "early": 0.499,
-    "late": 0.55
+    "early": 0.493,
+    "late": 0.543
    },
    "buccaneer": {
-    "early": 0.348,
-    "late": 0.199,
+    "early": 0.339,
+    "late": 0.194,
     "room": 8
    },
    "dart": {
-    "early": 0.307,
-    "late": 0.348
+    "early": 0.278,
+    "late": 0.311
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.709,
-    "late": 0.744
+    "early": 0.678,
+    "late": 0.716
    },
    "druid": {
-    "early": 0.312,
-    "late": 0.353
+    "early": 0.3,
+    "late": 0.34
    },
    "engineer": {
-    "early": 0.443,
-    "late": 0.489
+    "early": 0.41,
+    "late": 0.453
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.667,
-    "late": 0.699
+    "early": 0.634,
+    "late": 0.667
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.054,
-    "late": 0.055
+    "early": 0.052,
+    "late": 0.054
    },
    "mermonkey": {
-    "early": 0.512,
-    "late": 0.516
+    "early": 0.489,
+    "late": 0.488
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.512,
-    "late": 0.555
+    "early": 0.474,
+    "late": 0.519
    },
    "skywarden": {
-    "early": 0.707,
-    "late": 0.737
+    "early": 0.685,
+    "late": 0.717
    },
    "sniper": {
     "early": 1.0,
@@ -8899,25 +8899,25 @@
     "late": 0.353
    },
    "sub": {
-    "early": 0.22,
-    "late": 0.121,
+    "early": 0.21,
+    "late": 0.116,
     "room": 8
    },
    "super": {
-    "early": 0.464,
-    "late": 0.506
+    "early": 0.427,
+    "late": 0.466
    },
    "tack": {
-    "early": 0.128,
-    "late": 0.131
+    "early": 0.103,
+    "late": 0.105
    },
    "village": {
     "early": 0.263,
     "late": 0.303
    },
    "wizard": {
-    "early": 0.443,
-    "late": 0.489
+    "early": 0.41,
+    "late": 0.453
    }
   }
  },
@@ -8925,7 +8925,7 @@
   "mechanics": [
    "removable"
   ],
-  "stamp": "map_sunkencolumns_scenes_all_b8e35b5ef9d53c869ec24ef3191ed1f1.bundle#v8#f3#r2",
+  "stamp": "map_sunkencolumns_scenes_all_b8e35b5ef9d53c869ec24ef3191ed1f1.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -8940,69 +8940,69 @@
     "late": 0.639
    },
    "bomb": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.859,
+    "late": 0.858
    },
    "boomerang": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.877,
+    "late": 0.876
    },
    "buccaneer": {
-    "early": 0.536,
-    "late": 0.572,
+    "early": 0.044,
+    "late": 0.059,
     "room": 8
    },
    "dart": {
-    "early": 0.981,
-    "late": 0.981
+    "early": 0.823,
+    "late": 0.821
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.915,
+    "late": 0.915
    },
    "druid": {
-    "early": 0.983,
-    "late": 0.983
+    "early": 0.829,
+    "late": 0.828
    },
    "engineer": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.859,
+    "late": 0.858
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.903,
+    "late": 0.903
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.671,
-    "late": 0.708
+    "early": 0.656,
+    "late": 0.694
    },
    "mermonkey": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.859,
+    "late": 0.858
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.87,
+    "late": 0.869
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.915,
+    "late": 0.915
    },
    "sniper": {
     "early": 1.0,
@@ -9013,25 +9013,25 @@
     "late": 0.971
    },
    "sub": {
-    "early": 0.169,
-    "late": 0.29,
+    "early": 0.012,
+    "late": 0.032,
     "room": 8
    },
    "super": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.889,
+    "late": 0.889
    },
    "tack": {
-    "early": 0.77,
-    "late": 0.786
+    "early": 0.738,
+    "late": 0.763
    },
    "village": {
     "early": 0.989,
     "late": 0.989
    },
    "wizard": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.859,
+    "late": 0.858
    }
   }
  },
@@ -9039,7 +9039,7 @@
   "mechanics": [
    "path_opens"
   ],
-  "stamp": "map_sunsetgulch_scenes_all_4e70eeeb42493efa87952f9ca6592f45.bundle#v8#f3#r2",
+  "stamp": "map_sunsetgulch_scenes_all_4e70eeeb42493efa87952f9ca6592f45.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9054,11 +9054,11 @@
     "late": 0.615
    },
    "bomb": {
-    "early": 0.84,
-    "late": 0.839
+    "early": 0.834,
+    "late": 0.832
    },
    "boomerang": {
-    "early": 0.856,
+    "early": 0.855,
     "late": 0.854
    },
    "buccaneer": {
@@ -9067,32 +9067,32 @@
     "room": 0
    },
    "dart": {
-    "early": 0.799,
-    "late": 0.798
+    "early": 0.792,
+    "late": 0.79
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 0.914,
-    "late": 0.914
+    "early": 0.908,
+    "late": 0.908
    },
    "druid": {
-    "early": 0.808,
-    "late": 0.807
+    "early": 0.807,
+    "late": 0.805
    },
    "engineer": {
-    "early": 0.84,
-    "late": 0.839
+    "early": 0.834,
+    "late": 0.832
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 0.894,
-    "late": 0.893
+    "early": 0.886,
+    "late": 0.885
    },
    "heli": {
     "early": 1.0,
@@ -9100,23 +9100,23 @@
    },
    "ice": {
     "early": 0.629,
-    "late": 0.63
+    "late": 0.629
    },
    "mermonkey": {
-    "early": 0.829,
-    "late": 0.827
+    "early": 0.823,
+    "late": 0.821
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 0.846,
-    "late": 0.845
+    "early": 0.84,
+    "late": 0.839
    },
    "skywarden": {
-    "early": 0.906,
-    "late": 0.905
+    "early": 0.901,
+    "late": 0.9
    },
    "sniper": {
     "early": 1.0,
@@ -9132,20 +9132,20 @@
     "room": 0
    },
    "super": {
-    "early": 0.856,
-    "late": 0.855
+    "early": 0.85,
+    "late": 0.848
    },
    "tack": {
-    "early": 0.739,
-    "late": 0.737
+    "early": 0.726,
+    "late": 0.724
    },
    "village": {
     "early": 0.81,
     "late": 0.808
    },
    "wizard": {
-    "early": 0.84,
-    "late": 0.839
+    "early": 0.834,
+    "late": 0.832
    }
   }
  },
@@ -9154,7 +9154,7 @@
    "click_event",
    "removable"
   ],
-  "stamp": "map_thecabin_scenes_all_1f69365d14931fd8ae1ada332b8ea398.bundle#v8#f3#r2",
+  "stamp": "map_thecabin_scenes_all_1f69365d14931fd8ae1ada332b8ea398.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9169,21 +9169,21 @@
     "late": 0.798
    },
    "bomb": {
-    "early": 0.971,
-    "late": 0.969
+    "early": 0.966,
+    "late": 0.964
    },
    "boomerang": {
     "early": 0.981,
     "late": 0.98
    },
    "buccaneer": {
-    "early": 0.887,
-    "late": 0.654,
+    "early": 0.883,
+    "late": 0.646,
     "room": 8
    },
    "dart": {
-    "early": 0.943,
-    "late": 0.939
+    "early": 0.936,
+    "late": 0.932
    },
    "dartling": {
     "early": 1.0,
@@ -9194,12 +9194,12 @@
     "late": 1.0
    },
    "druid": {
-    "early": 0.94,
-    "late": 0.937
+    "early": 0.938,
+    "late": 0.934
    },
    "engineer": {
-    "early": 0.971,
-    "late": 0.969
+    "early": 0.966,
+    "late": 0.964
    },
    "farm": {
     "early": 1.0,
@@ -9214,8 +9214,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.944,
-    "late": 0.956
+    "early": 0.942,
+    "late": 0.954
    },
    "mermonkey": {
     "early": 1.0,
@@ -9226,8 +9226,8 @@
     "late": 1.0
    },
    "ninja": {
-    "early": 0.984,
-    "late": 0.983
+    "early": 0.979,
+    "late": 0.978
    },
    "skywarden": {
     "early": 1.0,
@@ -9242,25 +9242,25 @@
     "late": 0.935
    },
    "sub": {
-    "early": 0.788,
-    "late": 0.583,
+    "early": 0.777,
+    "late": 0.58,
     "room": 8
    },
    "super": {
-    "early": 0.921,
-    "late": 0.967
+    "early": 0.914,
+    "late": 0.962
    },
    "tack": {
-    "early": 0.88,
-    "late": 0.865
+    "early": 0.87,
+    "late": 0.855
    },
    "village": {
     "early": 0.846,
     "late": 0.919
    },
    "wizard": {
-    "early": 0.971,
-    "late": 0.969
+    "early": 0.966,
+    "late": 0.964
    }
   }
  },
@@ -9268,7 +9268,7 @@
   "mechanics": [
    "round_removable"
   ],
-  "stamp": "map_threeminesaround_scenes_all_0b3be9eaba064b5f685c4206cdff3352.bundle#v8#f3#r2",
+  "stamp": "map_threeminesaround_scenes_all_0b3be9eaba064b5f685c4206cdff3352.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9356,13 +9356,13 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.187,
-    "late": 0.163,
+    "early": 0.171,
+    "late": 0.14,
     "room": 3
    },
    "super": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.997,
+    "late": 0.997
    },
    "tack": {
     "early": 1.0,
@@ -9382,7 +9382,7 @@
   "mechanics": [
    "click_event"
   ],
-  "stamp": "map_tinkerton_scenes_all_6f018bdc23458a3a10714958efa99c9c.bundle#v8#f3#r2",
+  "stamp": "map_tinkerton_scenes_all_6f018bdc23458a3a10714958efa99c9c.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9406,7 +9406,7 @@
    },
    "buccaneer": {
     "early": 0.26,
-    "late": 0.502,
+    "late": 0.5,
     "room": 4
    },
    "dart": {
@@ -9470,17 +9470,17 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.237,
-    "late": 0.316,
+    "early": 0.235,
+    "late": 0.3,
     "room": 4
    },
    "super": {
-    "early": 0.99,
-    "late": 0.985
+    "early": 0.985,
+    "late": 0.977
    },
    "tack": {
-    "early": 0.986,
-    "late": 0.987
+    "early": 0.98,
+    "late": 0.979
    },
    "village": {
     "early": 0.951,
@@ -9493,7 +9493,7 @@
   }
  },
  "Town Center": {
-  "stamp": "map_towncentre_scenes_all_85ddd0703a69ef7b3de1f5e2e0dbf9cd.bundle#v8#f3#r2",
+  "stamp": "map_towncentre_scenes_all_85ddd0703a69ef7b3de1f5e2e0dbf9cd.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9516,7 +9516,7 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.133,
+    "early": 0.123,
     "late": 0.0,
     "room": 7
    },
@@ -9581,7 +9581,7 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.01,
+    "early": 0.006,
     "late": 0.0,
     "room": 8
    },
@@ -9604,7 +9604,7 @@
   }
  },
  "Tree Stump": {
-  "stamp": "map_treestump_scenes_all_49a22e7eaf8ddd91588e43ee249160fc.bundle#v8#f3#r2",
+  "stamp": "map_treestump_scenes_all_49a22e7eaf8ddd91588e43ee249160fc.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9620,11 +9620,11 @@
    },
    "bomb": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.995
    },
    "boomerang": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.995
    },
    "buccaneer": {
     "early": 0.0,
@@ -9633,7 +9633,7 @@
    },
    "dart": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.994
    },
    "dartling": {
     "early": 1.0,
@@ -9641,15 +9641,15 @@
    },
    "desperado": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.997
    },
    "druid": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.995
    },
    "engineer": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.995
    },
    "farm": {
     "early": 1.0,
@@ -9664,12 +9664,12 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.986,
-    "late": 1.0
+    "early": 0.978,
+    "late": 0.99
    },
    "mermonkey": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.994
    },
    "mortar": {
     "early": 1.0,
@@ -9677,7 +9677,7 @@
    },
    "ninja": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.999
    },
    "skywarden": {
     "early": 1.0,
@@ -9697,12 +9697,12 @@
     "room": 0
    },
    "super": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.995,
+    "late": 0.995
    },
    "tack": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.992,
+    "late": 0.991
    },
    "village": {
     "early": 0.921,
@@ -9710,7 +9710,7 @@
    },
    "wizard": {
     "early": 1.0,
-    "late": 1.0
+    "late": 0.995
    }
   }
  },
@@ -9719,7 +9719,7 @@
    "map_ability",
    "seasonal_area"
   ],
-  "stamp": "map_trickytracks_scenes_all_761051d62b93f3b3230fc2753d5b27bd.bundle#v8#f3#r2",
+  "stamp": "map_trickytracks_scenes_all_761051d62b93f3b3230fc2753d5b27bd.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9779,8 +9779,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.929,
-    "late": 0.949
+    "early": 0.927,
+    "late": 0.948
    },
    "mermonkey": {
     "early": 1.0,
@@ -9816,8 +9816,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.981,
-    "late": 0.994
+    "early": 0.963,
+    "late": 0.985
    },
    "village": {
     "early": 1.0,
@@ -9830,7 +9830,7 @@
   }
  },
  "Underground": {
-  "stamp": "map_underground_scenes_all_36ce92a236305c9d3f17ea1e7c787ac0.bundle#v8#f3#r2",
+  "stamp": "map_underground_scenes_all_36ce92a236305c9d3f17ea1e7c787ac0.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9944,7 +9944,7 @@
   "mechanics": [
    "alternating_paths"
   ],
-  "stamp": "map_waterpark_scenes_all_0676a886babc65f8172d32cf15b0e852.bundle#v8#f3#r2",
+  "stamp": "map_waterpark_scenes_all_0676a886babc65f8172d32cf15b0e852.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -9955,25 +9955,25 @@
     "late": 0.971
    },
    "beast_handler": {
-    "early": 0.432,
+    "early": 0.421,
     "late": 0.345
    },
    "bomb": {
-    "early": 0.998,
-    "late": 0.96
+    "early": 0.95,
+    "late": 0.875
    },
    "boomerang": {
-    "early": 1.0,
-    "late": 0.965
+    "early": 0.987,
+    "late": 0.921
    },
    "buccaneer": {
-    "early": 0.667,
-    "late": 0.902,
+    "early": 0.35,
+    "late": 0.364,
     "room": 8
    },
    "dart": {
-    "early": 0.946,
-    "late": 0.888
+    "early": 0.818,
+    "late": 0.699
    },
    "dartling": {
     "early": 1.0,
@@ -9981,81 +9981,81 @@
    },
    "desperado": {
     "early": 1.0,
-    "late": 0.976
+    "late": 0.957
    },
    "druid": {
-    "early": 0.953,
-    "late": 0.896
+    "early": 0.865,
+    "late": 0.762
    },
    "engineer": {
-    "early": 0.998,
-    "late": 0.96
+    "early": 0.95,
+    "late": 0.875
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 0.973
+    "early": 0.999,
+    "late": 0.95
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.686,
-    "late": 0.7
+    "early": 0.642,
+    "late": 0.6
    },
    "mermonkey": {
-    "early": 0.998,
-    "late": 1.0
+    "early": 0.93,
+    "late": 0.895
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 0.965
+    "early": 0.957,
+    "late": 0.888
    },
    "skywarden": {
     "early": 1.0,
-    "late": 0.976
+    "late": 0.957
    },
    "sniper": {
     "early": 1.0,
     "late": 1.0
    },
    "spike": {
-    "early": 0.946,
+    "early": 0.945,
     "late": 0.885
    },
    "sub": {
-    "early": 0.578,
-    "late": 0.731,
+    "early": 0.346,
+    "late": 0.36,
     "room": 8
    },
    "super": {
-    "early": 0.96,
-    "late": 0.962
+    "early": 0.956,
+    "late": 0.935
    },
    "tack": {
-    "early": 0.716,
-    "late": 0.61
+    "early": 0.598,
+    "late": 0.446
    },
    "village": {
     "early": 0.885,
     "late": 0.886
    },
    "wizard": {
-    "early": 0.998,
-    "late": 0.96
+    "early": 0.95,
+    "late": 0.875
    }
   }
  },
  "Winter Park": {
-  "stamp": "map_winterpark_scenes_all_fdb29b41221a9b81d2715f266f0d8663.bundle#v8#f3#r2",
+  "stamp": "map_winterpark_scenes_all_fdb29b41221a9b81d2715f266f0d8663.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -10078,8 +10078,8 @@
     "late": 1.0
    },
    "buccaneer": {
-    "early": 0.357,
-    "late": 0.369,
+    "early": 0.341,
+    "late": 0.356,
     "room": 3
    },
    "dart": {
@@ -10143,8 +10143,8 @@
     "late": 1.0
    },
    "sub": {
-    "early": 0.12,
-    "late": 0.127,
+    "early": 0.108,
+    "late": 0.115,
     "room": 4
    },
    "super": {
@@ -10170,7 +10170,7 @@
    "map_ability",
    "path_opens"
   ],
-  "stamp": "map_workshop_scenes_all_9e061b0c89034950e57fc903424c6e29.bundle#v8#f3#r2",
+  "stamp": "map_workshop_scenes_all_9e061b0c89034950e57fc903424c6e29.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -10185,12 +10185,12 @@
     "late": 0.533
    },
    "bomb": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.834,
+    "late": 0.834
    },
    "boomerang": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.849,
+    "late": 0.849
    },
    "buccaneer": {
     "early": 0.0,
@@ -10198,56 +10198,56 @@
     "room": 0
    },
    "dart": {
-    "early": 0.892,
-    "late": 0.892
+    "early": 0.77,
+    "late": 0.77
    },
    "dartling": {
     "early": 1.0,
     "late": 1.0
    },
    "desperado": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.913,
+    "late": 0.913
    },
    "druid": {
-    "early": 0.948,
-    "late": 0.948
+    "early": 0.797,
+    "late": 0.797
    },
    "engineer": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.834,
+    "late": 0.834
    },
    "farm": {
     "early": 1.0,
     "late": 1.0
    },
    "glue": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.875,
+    "late": 0.875
    },
    "heli": {
     "early": 1.0,
     "late": 1.0
    },
    "ice": {
-    "early": 0.535,
-    "late": 0.535
+    "early": 0.53,
+    "late": 0.53
    },
    "mermonkey": {
-    "early": 0.996,
-    "late": 0.996
+    "early": 0.811,
+    "late": 0.811
    },
    "mortar": {
     "early": 1.0,
     "late": 1.0
    },
    "ninja": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.834,
+    "late": 0.834
    },
    "skywarden": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.892,
+    "late": 0.892
    },
    "sniper": {
     "early": 1.0,
@@ -10263,20 +10263,20 @@
     "room": 0
    },
    "super": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.778,
+    "late": 0.778
    },
    "tack": {
-    "early": 0.704,
-    "late": 0.704
+    "early": 0.663,
+    "late": 0.663
    },
    "village": {
     "early": 0.93,
     "late": 0.93
    },
    "wizard": {
-    "early": 1.0,
-    "late": 1.0
+    "early": 0.834,
+    "late": 0.834
    }
   }
  },
@@ -10290,7 +10290,7 @@
    "hidden_track",
    "removable"
   ],
-  "stamp": "map_xfactor_scenes_all_ceb2dc5def3018c08a0edfe4379cf003.bundle#v8#f3#r2",
+  "stamp": "map_xfactor_scenes_all_ceb2dc5def3018c08a0edfe4379cf003.bundle#v8#f4#r2",
   "towers": {
    "ace": {
     "early": 1.0,
@@ -10318,8 +10318,8 @@
     "room": 0
    },
    "dart": {
-    "early": 0.992,
-    "late": 0.993
+    "early": 0.977,
+    "late": 0.978
    },
    "dartling": {
     "early": 1.0,
@@ -10330,8 +10330,8 @@
     "late": 1.0
    },
    "druid": {
-    "early": 0.997,
-    "late": 0.997
+    "early": 0.993,
+    "late": 0.993
    },
    "engineer": {
     "early": 1.0,
@@ -10350,8 +10350,8 @@
     "late": 1.0
    },
    "ice": {
-    "early": 0.716,
-    "late": 0.719
+    "early": 0.712,
+    "late": 0.715
    },
    "mermonkey": {
     "early": 1.0,
@@ -10387,8 +10387,8 @@
     "late": 1.0
    },
    "tack": {
-    "early": 0.861,
-    "late": 0.862
+    "early": 0.832,
+    "late": 0.833
    },
    "village": {
     "early": 0.998,

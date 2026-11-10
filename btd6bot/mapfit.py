@@ -61,7 +61,10 @@ def _model_for(map_name):
 # Version of the measurement itself (kind_coverage); part of the stamp, so
 # bumping it re-measures every map. 2: global-range towers need room to stand.
 # 3: water towers also record how many of them the map's water holds ("room").
-FIT_VERSION = 3
+# 4: a tower that needs line of sight counts only the track it can see
+#    (placement.sight_blockers): Flooded Valley's dam hides the river from
+#    every land cell, yet ninjas were measured at 0.17 by range alone.
+FIT_VERSION = 4
 
 # A water tower's entry also counts the towers of its kind that fit on the
 # map's water at once (room_for), up to this many: a plan placing more subs
@@ -111,15 +114,60 @@ def kind_coverage(model, kind, last_round=None):
     ok = valid_spots(model, kind, last_round=last_round)
     if ok is None:
         return None
-    cover = _coverage(model, kind, ok, rng)
+    from .placement import needs_sight
+    # towers that need line of sight count only the track they can see
+    seen = visible_track(model, ok, rng) if rng is not None and needs_sight(kind) else None
+    cover = _coverage(model, kind, ok, rng, visible=seen)
     if cover is not None and T.TOWERS[kind].get("placement") == "water":
         cover["room"] = room_for(model, kind, ok, limit=WATER_ROOM_MAX)
     return cover
 
 
-def _coverage(model, kind, ok, rng):
+def visible_track(model, ok, rng):
+    """Bool grid of the track cells that some legal cell in `ok` both has in
+    range `rng` (game units) and can see: no sight-blocking cell
+    (placement.sight_blockers, so a tower on raised ground sees over lower
+    walls) on the straight line between them. None when the map has no
+    sight blockers, so the plain range disc stands.
+
+    This is the map-wide version of placement.visible_cover, which the bot
+    already uses to pick a spot. Measuring fit by range alone said a land
+    ninja reaches 17 % of Flooded Valley's track; in the game none of the
+    3,000+ legal land cells sees the river behind the dam, so two land
+    builds lost there within a minute (Apopalypse round 16, 2026-11-06;
+    Magic Monkeys Only round 23, 2026-11-10 05:29)."""
+    from .placement import SIGHT_SAMPLES, sight_blockers, units_per_cell
+    if getattr(model, "sight", None) is None or not model.sight.any():
+        return None
+    track = model.t_cnt > 0
+    hh, ww = track.shape
+    rc = rng / units_per_cell(model)
+    r = int(np.ceil(rc))
+    t = np.linspace(0.1, 0.9, SIGHT_SAMPLES, dtype=np.float32)[:, None]
+    seen = np.zeros_like(track)
+    # only cells with some track in range need the line-of-sight check
+    disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+    near = ok & (cv2.dilate(track.astype(np.uint8), disc) > 0)
+    for cy, cx in zip(*np.nonzero(near)):
+        y0, y1 = max(0, cy - r), min(hh, cy + r + 1)
+        x0, x1 = max(0, cx - r), min(ww, cx + r + 1)
+        yy, xx = np.mgrid[y0:y1, x0:x1]
+        inside = ((xx - cx) ** 2 + (yy - cy) ** 2 <= rc * rc) & track[y0:y1, x0:x1] \
+            & ~seen[y0:y1, x0:x1]
+        if not inside.any():
+            continue
+        tx, ty = xx[inside], yy[inside]
+        px = np.clip(np.rint(cx + (tx - cx) * t), 0, ww - 1).astype(np.int32)
+        py = np.clip(np.rint(cy + (ty - cy) * t), 0, hh - 1).astype(np.int32)
+        clear = ~sight_blockers(model, cx, cy)[py, px].any(axis=0)
+        seen[ty[clear], tx[clear]] = True
+    return seen
+
+
+def _coverage(model, kind, ok, rng, visible=None):
     """kind_coverage's track shares for the legal cells `ok` of a tower with
-    range rng (None: global)."""
+    range rng (None: global). `visible` (visible_track), when given, limits
+    the reach to the track those cells can see."""
     from .placement import units_per_cell
     if rng is None:
         # global range reaches the whole map - from wherever it can stand.
@@ -140,6 +188,8 @@ def _coverage(model, kind, ok, rng):
         radius = max(1, int(round(rng / units_per_cell(model))))
         disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * radius + 1, 2 * radius + 1))
         reach = cv2.dilate(ok.astype(np.uint8), disc) > 0
+    if visible is not None:
+        reach = reach & visible
     early = track & (progress <= EARLY_SPAN)
     late = track & (progress >= 1.0 - EARLY_SPAN)
 
