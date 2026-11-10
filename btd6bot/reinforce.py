@@ -1136,6 +1136,12 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
     if r in ("bought", "progress"):
         log.warning("reinforce: %s ($%d) - round %d, the weakest ahead, goes %.2f -> %.2f in the model",
                     o.what, o.cost, worst, before or 0.0, after or 0.0)
+        plan_first = getattr(ex, "plan_first", None)
+        if callable(plan_first) and plan_first():
+            # a plan_first build lets reinforce spend only when its plan
+            # yields; what it spends uses up the given-up steps' share of the
+            # bank (Executor.given_up_credit)
+            ex.yield_spent = (getattr(ex, "yield_spent", 0) or 0) + o.cost
         if o.goal:
             # the path was rated whole: the rest of its tiers follow
             follow_goal(ex, o.goal, cash, worst, rnd, start)
