@@ -145,8 +145,10 @@ ANSWERS = {
              ("wizard", 2, 4), ("ace", 0, 0), ("sub", 3, 3), ("buccaneer", 2, 4)],
     "bfb": [("tack", 1, 5), ("bomb", 2, 4), ("sniper", 1, 4), ("heli", 1, 4), ("boomerang", 1, 4), ("dart", 3, 4),
             ("super", 1, 3), ("ninja", 3, 4), ("spike", 3, 4), ("druid", 2, 4), ("tack", 1, 4)],
+    # druid 2-3: Druid of the Jungle - its vines take whole non-MOAB bloons
+    # anywhere on the map (bazaar_half_cash's round-63 answer, 2026-11-09)
     "rush": [("tack", 1, 4), ("bomb", 3, 3), ("ninja", 1, 4), ("super", 0, 0), ("wizard", 2, 3),
-             ("dartling", 0, 0), ("boomerang", 1, 3), ("ice", 3, 3)],
+             ("dartling", 0, 0), ("boomerang", 1, 3), ("ice", 3, 3), ("druid", 2, 3)],
     "zomg": [("tack", 1, 5), ("bomb", 2, 4), ("sniper", 1, 4), ("super", 1, 3), ("heli", 1, 4), ("spike", 3, 4),
              ("boomerang", 1, 5), ("druid", 2, 4), ("ninja", 3, 4)],
     "ddt": [("sniper", 1, 4), ("bomb", 2, 4), ("heli", 1, 4), ("super", 1, 3), ("spike", 3, 4),
