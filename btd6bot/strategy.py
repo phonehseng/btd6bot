@@ -1629,6 +1629,28 @@ class Executor:
         spots = self.pick_spots(kind, step, n=1)
         return spots[0] if spots else None
 
+    def peek_spots(self, kind, step, n=1):
+        """pick_spots for a placement that is only being rated, not bought:
+        the same spots, but the one probe per kind and game (_probe_spot) is
+        not spent and not logged - it stays for the pick-up that clicks it.
+
+        Infernal Impoppable (2026-11-10, chimps_ninja_sun, lost round 78):
+        one look of reinforce.new_kind_options at 16:13:05 rated a placement
+        of 13 tower kinds and so "probed" all 13 without a single click, and
+        from round 63 every look offered only "another mermonkey" (the last
+        free legal cell): the sniper and the sub had no free legal cell left
+        but a probe each, which their first rating had used up. That day's
+        log shows 40 of 81 probes offered with no placement attempt of the
+        kind following them. Reinforce rates every placement it offers, at
+        every look (options, radar_option, plan_option, save_target), and
+        the match's bundle ordering rates the plan's next placement, so any
+        game with blocked cells worth probing lost its probes this way."""
+        self._peeking = True
+        try:
+            return self.pick_spots(kind, step, n)
+        finally:
+            self._peeking = False
+
     def pick_spots(self, kind, step, n=1):
         """Up to n spots (cx, cy, score), best first, at least 3 cells apart:
         the alternatives Game.place tries while still holding the tower.
@@ -2665,6 +2687,8 @@ class Executor:
             cx, cy = int(xs[i]), int(ys[i])
             if (kind, cx, cy) in self.failed_spots:
                 continue
+            if getattr(self, "_peeking", False):
+                return (cx, cy, 2e9)    # only rated (peek_spots): the probe stays unspent
             probed.add((kind, cx, cy))
             log.info("%s: probing a spot the map file marks blocked (reaches %.0f track cells, "
                      "the best legal one %.0f)", kind, reach[cy, cx], best_legal)
@@ -5435,7 +5459,7 @@ class Executor:
             spot = None
             first = self.plan[self.idx]
             if first["do"] == "place" and not self.at_tower_cap():
-                spots = self.pick_spots(first["kind"], first, n=1)
+                spots = self.peek_spots(first["kind"], first, n=1)    # rated only: no probe spent
                 spot = self.m.cell_to_frac(spots[0][0], spots[0][1]) if spots else None
             out = {}
             for tid in [current] + ahead:
