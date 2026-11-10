@@ -118,7 +118,10 @@ planner:
   # Sanctuary: lost round 51 (2026-11-10 03:00, 150 lives); the build's own
   # apopalypse_check rated it 0.35-0.86, among its weakest maps, and the
   # moving platforms cost it spike placements.
-  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary]
+  # #Ouch: lost round 48 (2026-11-10 03:20, 150 lives, two Apaches and the
+  # exit spike standing); its check rated #Ouch 0.42-0.67, barely above the
+  # old build, which lost there at rounds 47 and 49.
+  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary, "#Ouch"]
 plan_first: true
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
