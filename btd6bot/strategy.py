@@ -2625,6 +2625,9 @@ class Executor:
     PROBE_GAIN = 1.2       # probe a blocked spot only if it reaches this much more track
     POP_GRACE_ROUNDS = 6   # rounds a damage tower may stand without a single pop
     ZERO_POP_READS = 2     # pop reads of 0, rounds apart, before it counts as dead (one misread is not proof)
+    # rounds a tower with no pops is not called dead while nothing shows that
+    # a bloon came as far as it stands (_shielded): three grace periods
+    SHIELD_ROUNDS = 3 * POP_GRACE_ROUNDS
     BUFFER_RETRY_S = 20.0  # a village/alchemist with nothing to buff yet waits this long
 
     def _probe_spot(self, kind, valid):
@@ -3069,10 +3072,13 @@ class Executor:
         """Is p a damage tower that has popped nothing since it was placed, by
         sell_useless's rule: ZERO_POP_READS reads of 0 from its panel, rounds
         apart, once it had POP_GRACE_ROUNDS to prove itself? Never the only
-        tower that pops a bloon property (_sole_answer, said once)."""
+        tower that pops a bloon property (_sole_answer, said once), and not
+        a tower no bloon has come as far as yet (_shielded)."""
         if p.kind in self.BUFFERS or p.kind in ("farm", "spike", "hero"):
             return False
         if getattr(p, "zero_reads", 0) < self.ZERO_POP_READS or getattr(p, "pops", 0) != 0:
+            return False
+        if self._shielded(p):
             return False
         needed = self._sole_answer(p)
         if needed:
@@ -3082,6 +3088,61 @@ class Executor:
                 log.info("keeping %s (%s) with no pops read: the only tower that pops %s",
                          p.tid, p.kind, needed)
             return False
+        return True
+
+    def _route_position(self, progress, p):
+        """How far along the route tower p stands, 0 (entrance) to 1 (exit):
+        the progress of the track cell nearest to it (`progress` is the map
+        model's progress_full grid, indexed [row, column])."""
+        cx, cy = self.m.frac_to_cell(p.x, p.y)
+        rows, cols = progress.shape
+        return float(progress[min(max(int(cy), 0), rows - 1), min(max(int(cx), 0), cols - 1)])
+
+    def _shielded(self, p):
+        """Has p popped nothing only because no bloon has come as far as it
+        stands? True while nothing shows that one did:
+
+        - no lives were lost since p was placed (a leak passed the towers), and
+        - no tower standing at p's place on the route or further along has a
+          pop to its name (those bloons came past p).
+
+        The benefit of the doubt lasts SHIELD_ROUNDS rounds after placement;
+        a tower that still reads 0 then is judged by the old rule. Without a
+        learned route (no progress grid) nothing can be shown either way and
+        the old rule stands as well.
+
+        Sunset Gulch Impoppable (2026-11-10 15:13, lost round 40): a Fast
+        Track start at round 29 bought the whole opening at once, n1 to 4-0-2
+        Bloonjitsu at the entrance included, and with Obyn it popped every
+        bloon of rounds 29-38. n2, a 2-0-3 Flash Bomb ninja at the far end of
+        the bridge, truly read 0 pops (the recording shows its panel) - like
+        the four ninjas reinforce had put in the last bend. It was called
+        dead at round 39, its Sticky Bomb step ($6,000, with $5,723 in hand)
+        went to a fresh ninja a few cells on, $4,832 rebuilt 2-0-3 there, and
+        round 40's MOAB took the one life with neither ninja at 2-0-4. In a
+        one-life game "no bloon got this far" is the normal state of every
+        tower behind the first."""
+        placed, read = getattr(p, "placed_round", None), getattr(p, "pops_round", None)
+        if placed is None or read is None or read - placed >= self.SHIELD_ROUNDS:
+            return False
+        if any(r >= placed for r in getattr(self, "drop_rounds", ())):
+            return False                    # a bloon reached the exit since p stands
+        try:
+            progress = self.m.progress_full()
+            here = self._route_position(progress, p)
+            passed = any(q is not p and (getattr(q, "pops", 0) or 0) > 0
+                         and self._route_position(progress, q) >= here
+                         for q in self.g.towers.values())
+        except Exception:
+            return False                    # no learned route to place the towers on
+        if passed:
+            return False
+        note = ("shielded", p.tid)
+        if note not in self._notes():
+            self.noted.add(note)
+            log.info("keeping %s (%s) with no pops read: no lives lost since it was placed and no "
+                     "tower further along the route has a pop - no bloon has come this far yet",
+                     p.tid, p.kind)
         return True
 
     def _redirect_dead_upgrade(self, step, cash, rnd):
