@@ -38,7 +38,16 @@ plan:
   - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 7}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: dr, to: 0-0-3}
+  # A second camo-seeing dart on the other half of the track before round 33:
+  # its 13 camo yellows and 20 camo reds took the one life on four of the
+  # build's last eight Impoppable games (Castle Revenge, Water Park, Muddy
+  # Puddles twice, 2026-11-10), each time with dr's half of the track covered
+  # and the radar village still far down the plan. Enhanced Eyesight (0-0-2)
+  # sees camo; about $600.
   - {do: upgrade, id: sb1, to: 2-0-3}
+  # (after sb1's MOAB answer, which CHIMPS needs by round 40)
+  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0]}
+  - {do: upgrade, id: dr2, to: 0-0-2}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: sb1, to: 2-0-4}
   - {do: upgrade, id: sb2, to: 2-0-4}
