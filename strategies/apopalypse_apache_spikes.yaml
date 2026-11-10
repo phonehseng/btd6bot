@@ -115,7 +115,10 @@ planner:
   # panel at round 17, h1 "not on the map; forgotten" at round 35) and
   # $21.8k went unspent from round 17 to 36. The cost_share above let the
   # build past the planner's moving-ground gate (_land_towers_have_no_spot).
-  excluded_maps: [Erosion, Tricky Tracks, Geared]
+  # Sanctuary: lost round 51 (2026-11-10 03:00, 150 lives); the build's own
+  # apopalypse_check rated it 0.35-0.86, among its weakest maps, and the
+  # moving platforms cost it spike placements.
+  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary]
 plan_first: true
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
