@@ -112,6 +112,27 @@ def test_a_vote_never_lifts_lives_above_the_start():
     assert t.confirmed == 150
 
 
+def test_life_gaining_towers_lift_the_caps():
+    """Druids, Support Chinooks, Energizers, farms and Benjamin take lives
+    past the start (owner, 2026-11-10): with one of them a steady high read
+    is believed again, even past max_lives (the 1000-lives achievement)."""
+    from types import SimpleNamespace as N
+    from btd6bot.match import lives_gainers
+    assert not lives_gainers([N(kind="druid", tiers=[1, 3, 0]), N(kind="heli", tiers=[4, 2, 0])], "obyn")
+    assert lives_gainers([N(kind="druid", tiers=[0, 4, 0])])
+    assert lives_gainers([N(kind="heli", tiers=[0, 4, 0])])
+    assert lives_gainers([N(kind="sub", tiers=[5, 0, 0])])
+    assert lives_gainers([N(kind="farm", tiers=[0, 0, 0])])
+    assert lives_gainers([], "benjamin")
+    t = LivesTracker(150)
+    t.can_gain = True
+    feed(t, [150, 150, 150])
+    feed(t, [260] * 5)
+    assert t.confirmed == 260, t.confirmed
+    feed(t, [400] * 5)
+    assert t.confirmed == 400, "past max_lives (325) with a life-gaining defence"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

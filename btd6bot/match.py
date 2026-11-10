@@ -162,13 +162,18 @@ class LivesTracker:
       11 in 29 of 65 reads of a 1. The confirmed count survived that game,
       but a game whose first five reads median to 11 would start there and
       count the next true reads as a 10-life leak.
-    * A vote never lifts the count above the starting lives. The vote exists
-      to undo a wrong LOW count (15 for 150), which the start bounds. Last
-      Resort Medium (2026-11-10): lives fell 150 -> 21 in rounds 15-16 and
-      the OCR then read the 21 as "218" (a phantom digit beside the shield
-      badge) four times in a row. The vote took 218, the bot thought it was
-      safe and lost three rounds later. True gains past the start (bonus
-      lives) come a few at a time and still pass the RISE_LIMIT check.
+    * A vote never lifts the count above the starting lives, unless the
+      defence can gain lives (`can_gain`, set from the towers by the match:
+      lives_gainers). The vote exists to undo a wrong LOW count (15 for
+      150), which the start bounds. Last Resort Medium (2026-11-10): lives
+      fell 150 -> 21 in rounds 15-16 and the OCR then read the 21 as "218"
+      (a phantom digit beside the shield badge) four times in a row. The
+      vote took 218, the bot thought it was safe and lost three rounds
+      later. Small true gains still pass the RISE_LIMIT check either way.
+    * With `can_gain` the max_lives ceiling is lifted too: Spirit of the
+      Forest, Support Chinook, Energizer, Benjamin and Healthy Bananas farms
+      take lives far past the start (the 1000-lives achievement), and a
+      count stuck below the truth would hide every later leak.
     """
     RISE_LIMIT = 50
     RISE_VOTES = 4
@@ -177,6 +182,7 @@ class LivesTracker:
         self.confirmed = None
         self.reads = []                       # last 5 accepted reads
         self.start_lives = start_lives
+        self.can_gain = False                 # the defence can add lives (see lives_gainers)
         if start_lives and fixed:
             self.max_lives = start_lives
         else:
@@ -188,7 +194,7 @@ class LivesTracker:
 
     def update(self, read):
         """Feed one read (None = unreadable). Returns the lives lost (0 if none)."""
-        if read is not None and self.max_lives and read > self.max_lives:
+        if read is not None and self.max_lives and read > self.max_lives and not self.can_gain:
             read = None    # impossible for this mode, even as the very first read
         if read is not None and self.confirmed is not None and read > self.confirmed + self.RISE_LIMIT:
             if not self._vote_rise(read):
@@ -210,7 +216,7 @@ class LivesTracker:
         a row agree (within 2): the count then restarts from it. False while
         it is still only a suspected misread, and always False above the
         starting lives (see the class docstring)."""
-        if self.start_lives and read > self.start_lives:
+        if self.start_lives and read > self.start_lives and not self.can_gain:
             self._cand, self._votes = None, 0
             return False
         if self._cand is not None and abs(read - self._cand) <= 2:
@@ -224,6 +230,25 @@ class LivesTracker:
         self.confirmed, self.reads = read, []
         self._cand, self._votes = None, 0
         return True
+
+
+def lives_gainers(towers, hero=None):
+    """True when the defence can add lives, so a count above the starting
+    lives is possible (LivesTracker.can_gain). From the bot's achievement
+    notes (Reach 1000 lives): Druid middle path 4+ (Jungle's Bounty, Spirit
+    of the Forest), Heli middle path 4+ (Support Chinook), Sub top path 5
+    (Energizer), any Banana Farm (Healthy Bananas knowledge) and Benjamin."""
+    if str(hero or "").lower() == "benjamin":
+        return True
+    for p in towers:
+        kind, tiers = getattr(p, "kind", ""), list(getattr(p, "tiers", None) or (0, 0, 0))
+        if kind in ("druid", "heli") and tiers[1] >= 4:
+            return True
+        if kind == "sub" and tiers[0] >= 5:
+            return True
+        if kind == "farm":
+            return True
+    return False
 
 
 class RoundVotes:
@@ -751,6 +776,7 @@ class Match:
                 if (cash is None or lives is None) and self.g.close_panels():
                     continue
                 # leaks, misreads and upward corrections: see LivesTracker
+                self._lives.can_gain = lives_gainers(self.g.towers.values(), getattr(self.g, "hero", None))
                 lost = self._lives.update(lives)
                 if lost:
                     self.stats["lives_lost"] += lost
