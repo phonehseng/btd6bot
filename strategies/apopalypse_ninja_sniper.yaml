@@ -53,7 +53,14 @@ planner:
   # a single round was played - the opener dart and n2 were given up (every
   # spot in their track segments refused: the valley is mostly water), and
   # round 16 was lost the same way on 2026-11-06.
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Covered Garden, Flooded Valley]
+  # Erosion: 0 wins in 3 (rounds 18 and 37 among them). In the last one
+  # (2026-11-10 03:29, case 20261110_032906) the ice melted under all eight
+  # towers at once at round 35-36 ("the map destroyed the ground under s1,
+  # sniper1, opener, n1, n2, a1, v1, s2"): new towers only stand on ground
+  # that lasts to the end of the current path phase, and under continuous
+  # sends there is no time to rebuild 25 plan steps before round 37.
+  # apopalypse_apache_spikes is off Erosion for the same reason.
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Covered Garden, Flooded Valley, Erosion]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an
