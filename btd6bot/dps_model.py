@@ -632,6 +632,34 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
                                 out, depth)
 
 
+def _pulse_at_tower(a, entry):
+    """An attack the export calls map-wide ("unbounded": "map") whose every
+    projectile is a static pulse, on a tower that stays where it stands (no
+    air unit, not aimed by hand), works only around the tower: read it as
+    "self" with its pulses' radius as own_radius. Returns the attack as it is
+    otherwise.
+
+    The case: the Monkey Sub's submerged pulse (3-x-x Submerge and Support,
+    4-x-x Bloontonium Reactor). The export marks it "map" because the sub is
+    a map-wide tower in the game's model (TowerModel.isGlobalRange, for
+    Advanced Intel), so the damage model let one Reactor's 100-pierce
+    radiation burn the whole track. Bazaar Half Cash (2026-11-09 08:45 and
+    21:03, loss cases 20261109_084520 / 20261109_210310) stood three
+    Reactors in the canal; the model rated round 63 2.20 (1.51 without one
+    Reactor), and the round's ceramics and leads took 100 lives in nine
+    seconds. In the game the pulse is a 52-unit circle around the sub."""
+    if a.get("unbounded") != "map" or a.get("air") or entry.get("air_unit") \
+            or a.get("targeting") in ("point", "cursor"):
+        return a
+    projectiles = [w.get("projectile") or {} for w in a.get("weapons", [])]
+    if not projectiles or any(p.get("motion") != "static" for p in projectiles):
+        return a
+    radius = max(p.get("radius") or 0.0 for p in projectiles)
+    if radius <= 0.0:
+        return a
+    return dict(a, unbounded="self", own_radius=radius)
+
+
 @lru_cache(maxsize=None)
 def profile(kind, tiers):
     """Profile of a tower crosspath (None when the game has no such model)."""
@@ -641,6 +669,7 @@ def profile(kind, tiers):
     sources = []
     aim_bound = False
     follows = (entry.get("air_unit") or {}).get("movement") == "follows"
+    entry = dict(entry, attacks=[_pulse_at_tower(a, entry) for a in entry.get("attacks", [])])
     for a in entry.get("attacks", []):
         if a.get("targeting") in ("point", "cursor") and any(
                 (w.get("projectile") or {}) for w in a.get("weapons", [])):
@@ -1700,6 +1729,18 @@ def station_for(t, placed, track, sight=None, strict=False):
         # circles of the other towers - not the whole map (see INTEL_KINDS)
         is_global = False
         lent = intel_lent_circles(t, placed)
+        own = [s for s in sources if not s.camo_shared]
+        shared = [s for s in sources if s.camo_shared]
+        if own and shared and lent:
+            # the submerged pulse (_pulse_at_tower) works around the sub
+            # only; the borrowed circles are for its darts
+            main = _make_station(t, shared, False, reach_radius, track, sight, camo_paths, lent)
+            part = _make_station(t, own, False, reach_radius, track, sight, camo_paths)
+            if main is None:
+                return part
+            if part is not None:
+                main.parts = [part]
+            return main
     # A tower with map-wide AND local sources (Inferno Ring: meteor + ring of
     # fire; Aircraft Carrier / Carrier Flagship: planes + the boat's own
     # cannons; Druid of the Jungle: vines + thorns; ace planes + a map-wide

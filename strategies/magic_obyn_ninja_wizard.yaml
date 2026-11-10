@@ -51,7 +51,10 @@ planner:
   # track"), ninja2 popped nothing in 18 rounds and round 40 was rated 0.23.
   # Erosion: Magic Only lost rounds 22 and 36 (the ice melts under towers;
   # Erosion Reverse and Military Only hold in no build either, 0295f4c).
-  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop, Peninsula, Erosion]
+  # Glacial Trail: Magic Only lost round 31 twice (2026-10-24 and
+  # 2026-11-09 21:28), the same round both times; no general build has won a
+  # Hard-family medal there.
+  excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop, Peninsula, Erosion, Glacial Trail]
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
   # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
   # losses keep counting against these maps until live wins say otherwise

@@ -12,7 +12,12 @@ hero: obyn
 modes: [apopalypse]
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], sniper: [5, 2, 4], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
-  base_success: {apopalypse: 0.65}
+  # The declared win rate is the record, not a hope: 0.65 until 2026-11-09,
+  # when the build had won 2 of its last 23 games (Infernal and Midnight
+  # Mansion; 21 losses at rounds 18-59, most to rounds 45-56 arriving faster
+  # than the bot spends). At about 0.1 the planner plays it only after every
+  # game it trusts more, while a dedicated Apopalypse build is worked on.
+  base_success: {apopalypse: 0.1}
   # not Tricky Tracks (2026-11-09): lost there at rounds 47 and 50 with the
   # board rated 1.2-1.5, and tools/apopalypse_check.py rates it 0.26
   # (tests/test_trickytracks_excluded_offline.py)
@@ -39,7 +44,16 @@ planner:
   # then rounds 46-53 came in 18 s with $14k in hand and 9 lives could not
   # absorb a single ceramic leak. Four short lanes crossing in the middle
   # need splash this ninja/sniper build does not have early.
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles]
+  # Covered Garden: lost round 45 (2026-11-09 20:36, all 122 lives in 20 s
+  # to 25 rainbows and 180 pinks while 15 s went on seven refused clicks
+  # for the exit spike);
+  # tools/apopalypse_check.py rates its rounds 41-50 0.41 here against 0.81
+  # for apopalypse_apache_spikes, which plays the map now.
+  # Flooded Valley (2026-11-09, case 20261109_212128): lost round 15 before
+  # a single round was played - the opener dart and n2 were given up (every
+  # spot in their track segments refused: the valley is mostly water), and
+  # round 16 was lost the same way on 2026-11-06.
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Covered Garden, Flooded Valley]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an
