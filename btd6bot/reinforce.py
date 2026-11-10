@@ -221,6 +221,19 @@ def lookahead_rounds(rnd, end_round, k=LOOKAHEAD):
     return [r for r in range(rnd, rnd + k) if r <= end_round] if rnd is not None else []
 
 
+def _rating_spots(ex, kind, step):
+    """The spot a placement on offer is rated at: Executor.peek_spots, which
+    leaves the kind's one probe of a blocked cell (_probe_spot) for the
+    pick-up that clicks it. Every look rates every placement it offers, and
+    pick_spots spent the probe on the first rating: on Infernal Impoppable
+    (2026-11-10) the sniper and the sub, whose only spot left was their
+    probe, dropped out of the offers after one look, and from round 63 one
+    purchase was tried per look. Executors without peek_spots (test fakes)
+    are asked pick_spots."""
+    peek = getattr(ex, "peek_spots", None)
+    return (peek if callable(peek) else ex.pick_spots)(kind, step, n=1)
+
+
 def board(ex):
     """The towers standing, as plain records the forecast reads."""
     return [SimpleNamespace(tid=p.tid, kind=p.kind, tiers=tuple(p.tiers), x=p.x, y=p.y)
@@ -262,7 +275,7 @@ def options(ex, cash, kinds=None):
             held_back = getattr(ex, "place_held_back", None)
             if held_back is not None and held_back(step):
                 continue
-            spots = ex.pick_spots(kind, step, n=1)
+            spots = _rating_spots(ex, kind, step)
             if not spots:
                 continue
             fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
@@ -330,7 +343,7 @@ def radar_option(ex, cash, rnd):
     held_back = getattr(ex, "place_held_back", None)
     if held_back is not None and held_back(step):
         return None
-    spots = ex.pick_spots(kind, step, n=1)
+    spots = _rating_spots(ex, kind, step)
     if not spots:
         return None
     fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
@@ -734,7 +747,7 @@ def plan_option(ex, step, cost):
         kind = step.get("kind")
         if kind is None or ex.at_tower_cap():
             return None
-        spots = ex.pick_spots(kind, step, n=1)
+        spots = _rating_spots(ex, kind, step)
         if not spots:
             return None
         fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])

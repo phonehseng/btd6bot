@@ -95,7 +95,7 @@ def test_with_lives_to_spare_the_step_claims_the_bank_only_while_the_lookahead_i
     ex.rules = S.rules("medium")
     ex.forecast = Fixed(3.0, {34: 0.08})
     ex.lookahead_weak = True
-    assert ex.plan_claim(1_957, 25) is None and ex.surplus(1_957, 25) is True
+    assert ex.plan_claim(1_957, 25) is None and ex.surplus(1_957, 25) is True   # medium: spends freely
 
 
 def test_a_step_with_a_round_keeps_what_income_does_not_pay():
@@ -114,6 +114,10 @@ def test_an_unpayable_step_holds_nothing():
     ex = portal(Fixed(3.0, {75: 0.5}).m, cost=200_000)
     ex.forecast = Fixed(3.0, {75: 0.5})
     assert ex.plan_claim(8_000, 70) is None
+    # one life and round 75 weak: the spare cash buys what lifts it, never
+    # a tier that lifts nothing (Infernal Impoppable, 2026-11-10)
+    assert ex.surplus(8_000, 70) is False and not ex.bought
+    ex._lifts_now = lambda step, cost, rnd: True
     assert ex.surplus(8_000, 70) is True and ex.bought == [("1-0-0", 8_000)]
     assert any(n[0] == "surplus-unpayable" for n in ex.noted)
 
@@ -128,12 +132,14 @@ def test_a_step_unpayable_before_the_next_round_holds_nothing_in_a_crisis():
     assert R.payable_by(ex, 36_000, 17_562, 94, 94) is False
     assert ex.plan_claim(17_562, 94) is None
     assert any(n == ("surplus-unpayable", 0, 95) for n in ex.noted)
+    ex._lifts_now = lambda step, cost, rnd: True     # one life, round 94 weak: lifting buys only
     assert ex.surplus(17_562, 94) is True and ex.bought == [("1-0-0", 17_562)]
     # the same a round earlier with the weak round next (Quad ABR's shape:
     # round 62, round 63 rated 0.5, a $35,100 Glaive Lord against $15,000)
     ex = portal(3.0, cost=35_100)
     ex.forecast = Fixed(3.0, {63: 0.5})
     assert ex.plan_claim(15_000, 62) is None
+    ex._lifts_now = lambda step, cost, rnd: True     # one life, round 63 weak: lifting buys only
     assert ex.surplus(15_000, 62) is True and ex.bought == [("1-0-0", 15_000)]
     # payable by the next round from the cash and one round's income: kept
     ex = portal(0.41, cost=18_000, income=1_000)
