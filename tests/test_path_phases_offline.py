@@ -258,7 +258,36 @@ def test_an_early_melt_is_applied_on_the_first_missing_tower():
     assert len(seen) == 2 and mt.ex.ground_horizon == 54
 
 
+def test_erosion_is_rebuilt_two_rounds_ahead_from_the_start():
+    """Erosion Reverse (2026-11-10 11:48): the round-37 ice went as round 36
+    began and the bloons took all 150 lives in six seconds. On a path-phase
+    map the ice is treated as gone MELT_LEAD rounds ahead from the start:
+    at HUD 35 the towers on the round-37 ice are rebuilt."""
+    geom = _erosion()
+    if geom is None:
+        return
+    from types import SimpleNamespace
+    from btd6bot import match as M
+    seen = []
+    mt = M.Match.__new__(M.Match)
+    mt._phase_geom, mt._reverse = geom, False
+    mt.m = mapgeom.apply(MapModel("Erosion", PF), geom)
+    mt.ex = SimpleNamespace(rules={}, ground_horizon=None, track_changed=lambda: None,
+                            ground_lost=lambda lost: seen.append(int(lost.sum())))
+    mt._ground_lead = mt._default_ground_lead()
+    assert mt._ground_lead == M.Match.MELT_LEAD == 2
+    for r in range(22, 35):
+        mt._follow_track(r)
+    assert not seen
+    mt._follow_track(35)
+    assert len(seen) == 1
+    other = M.Match.__new__(M.Match)
+    other._phase_geom = None
+    assert other._default_ground_lead() == 0
+
+
 if __name__ == "__main__":
+    test_erosion_is_rebuilt_two_rounds_ahead_from_the_start()
     test_an_early_melt_is_applied_on_the_first_missing_tower()
     test_apopalypse_ice_goes_one_hud_round_early()
     test_reverse_model_uses_the_map_geometry()
