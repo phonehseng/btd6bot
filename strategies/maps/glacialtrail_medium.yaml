@@ -90,12 +90,18 @@ plan:
   - {do: upgrade, id: dr2, to: 1-3-0}
   - {do: upgrade, id: sp2, to: 2-0-0}
   - {do: upgrade, id: sp1, to: 3-2-0}                                               # Spiked Balls, Even Faster Production
-  - {do: upgrade, id: sp2, to: 3-2-0}
-  - {do: upgrade, id: sp1, to: 4-2-0}                                               # Spiked Mines: round 40's MOAB
-  - {do: place, id: h1, kind: heli, role: dps, at: [0.767, 0.112], round: 23}       # right hill (group ~R38)
-  - {do: upgrade, id: h1, to: 3-2-0}
-  - {do: upgrade, id: sp2, to: 4-2-0}                                               # Spiked Mines
-  - {do: upgrade, id: h1, to: 4-2-0}                                                # Apache Dartship
+  # Easy (40 rounds) stops here: base income pays this far by round 40.
+  # There the fill spends Double Cash on both spikes' Spiked Mines, and the
+  # moab answer buys sp1's in time without it. The heli is for Medium's 60.
+  - {do: upgrade, id: sp2, to: 3-2-0, modes: [medium, reverse]}
+  - {do: upgrade, id: sp1, to: 4-2-0, modes: [medium, reverse]}                     # Spiked Mines: round 40's MOAB
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.767, 0.112], round: 23, modes: [medium, reverse]}  # right hill (group ~R38)
+  - {do: upgrade, id: h1, to: 3-2-0, modes: [medium, reverse]}
+  - {do: upgrade, id: sp2, to: 4-2-0, modes: [medium, reverse]}                     # Spiked Mines
+  - {do: upgrade, id: h1, to: 4-2-0, modes: [medium, reverse]}                      # Apache Dartship
+fill:
+  - {do: upgrade, kind: spike, to: 3-2-0}
+  - {do: upgrade, kind: spike, to: 4-2-0}
 answers:
   lead: [{do: upgrade, id: sp1, to: 2-0-0}]
   ceramic: [{do: upgrade, id: dr1, to: 1-3-0}]

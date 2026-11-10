@@ -153,7 +153,7 @@ def test_map_builds_hold_every_round():
         for mode, min_margin in modes:
             r, boards = _replay(build, mode)
             assert r["gaps"] == [], (build, mode, r["gaps"])
-            last = strat["plan"][-1]
+            last = [st for st in strat["plan"] if not st.get("modes") or mode in st["modes"]][-1]
             done = min((rnd for rnd, b in boards.items()
                         if b.get(last["id"], (None, None))[1] == tuple(int(t) for t in last["to"].split("-"))),
                        default=math.inf)
