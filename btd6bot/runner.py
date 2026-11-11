@@ -474,6 +474,7 @@ def planner_specs(strats, account):
             "map": s.get("map"), "constraints": s.get("constraints"),
             "wins_needed": s.get("wins_needed"),
             "maps": p.get("maps"), "excluded_maps": p.get("excluded_maps"),
+            "excluded_by_mode": p.get("excluded_by_mode"),
             "categories": p.get("categories"), "minutes": p.get("minutes"),
             # tower XP follows invested cash: which towers this game levels up
             "cost_share": invested_cash(s),

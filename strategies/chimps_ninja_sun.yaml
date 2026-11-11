@@ -81,7 +81,11 @@ planner:
   base_success: {hard: 0.9, impoppable: 0.5, chimps: 0.4}
   # not Tricky Tracks (2026-11-09): Impoppable replays 66 rounds under 1 there
   # (tests/test_trickytracks_excluded_offline.py)
-  excluded_maps: [Tricky Tracks]
+  # not Glacial Trail (2026-11-11 13:35, Impoppable): the opening bought on
+  # round 6 froze together on round 15 (dps_model.frozen_in: 15-16, 25-26,
+  # 35-36) and round 15 took the one life. A one-life build there needs its
+  # towers bought in groups rounds apart, as glacialtrail_medium does.
+  excluded_maps: [Tricky Tracks, Glacial Trail]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: upgrade, id: n1, to: 1-0-1}

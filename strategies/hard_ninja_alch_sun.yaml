@@ -72,6 +72,11 @@ planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 2, 2], heli: [4, 2, 2], super: [3, 0, 2], spike: [2, 0, 4],
            druid: [0, 4, 2], bomb: [3, 0, 2]}
   base_success: {medium: 0.93, hard: 0.88, double_hp: 0.68, half_cash: 0.6}
+  # not #Ouch Half Cash: lost round 27 three times running (2026-11-10,
+  # 2026-11-11 01:00 and 13:33; loss case 20261111_010036_Ouch_half_cash):
+  # the Fast Track opening, n1 and h1 3-2-0, cannot hold rounds 25-27 on the
+  # long track with half income. Hard there stays open to this build.
+  excluded_by_mode: {half_cash: ["#Ouch"]}
   # not Bazaar: data/map_fit.json gives the heli 0.0 from both ends there (no
   # legal heliport cell reaches the track), so both helis are given up and
   # the old Flash-Bomb-only order plays - the one that lost Bazaar Half Cash
