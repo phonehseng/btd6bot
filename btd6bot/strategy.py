@@ -5133,7 +5133,10 @@ class Executor:
         # case 20261111_093749_EnchantedGlade_impoppable) held $26,200 of $37,320 for round 100 three
         # rounds ahead while round 98 was rated 0.43, and the plan's $24,000
         # Sun Avatar waited until the game was lost
-        if weak and threat_answer and self._likely_lost_first(due_round, rnd):
+        # every hold, a blimp-damage one too: Mesa Impoppable (2026-11-11,
+        # case 20261111_104642_Mesa_impoppable) kept $11,437 "for blimp damage before round
+        # 80" through round 78, rated 0.26, and lost round 78
+        if weak and self._likely_lost_first(due_round, rnd):
             note = ("lost-first", what, rnd)
             if note not in self._notes():
                 self.noted.add(note)

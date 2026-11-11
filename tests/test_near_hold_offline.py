@@ -97,7 +97,9 @@ def test_likely_lost_needs_one_life_and_a_rating():
     assert not ex._likely_lost_first(100, 98)
     ex = bare(cash=26_245.0, margin=0.29)
     assert not ex._likely_lost_first(98, 98)       # the round itself: the playing-hold rule
-    assert ex._hold_for(100, 31_200.0, 98, "blimp damage") is False   # blimp holds keep their cash
+    assert ex._hold_for(100, 31_200.0, 98, "blimp damage") is None    # blimp holds give way too (Mesa)
+    ex = bare(cash=11_437.0, margin=1.1)
+    assert ex._hold_for(80, 20_000.0, 78, "blimp damage") is False     # ... but only when likely lost
 
 
 if __name__ == "__main__":
