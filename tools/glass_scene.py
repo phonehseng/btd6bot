@@ -29,7 +29,11 @@ What shows where (fractions of a 16:10 screen, BTD6's own UI avoided):
               model's margin per coming round, coloured by danger, and what
               is at risk) and DECISION (the latest purchase and why, what
               reinforce saves for or what the build wants next); over the
-              field thin, faint GHOSTS where the build still wants towers
+              field thin, faint GHOSTS where the build still wants towers,
+              and under them the FIELD layer (tools/glass_field.py): the
+              ground the bot may place on, its learned refusals and the
+              bloon paths with their direction (switched off with a
+              HUD_NO_FIELD file in the repo root or BTD6BOT_HUD_FIELD=off)
   in menus    a PICK card (the planner's choice, its chance, its reasons and
               two runner-ups) and a PROGRESS card (black borders, CHIMPS
               wins and medals) at the right edge
@@ -114,7 +118,7 @@ BUTTON_GAP = 6               # hud_controls.BUTTON_GAP
 # entry there and was measured on a 1920x1200 frame: activated abilities
 # and the power button start at the bottom left and grow to the right.
 ABILITY_ROW = (0.0, 0.86, 0.33, 0.96)
-MIDDLE_OF_FIELD = (0.15, 0.2, 0.7, 0.8)   # where no widget may ever sit (ghosts aside)
+MIDDLE_OF_FIELD = (0.15, 0.2, 0.7, 0.8)   # where no widget may ever sit (ghosts and the field layer aside)
 
 # -- motion ----------------------------------------------------------------------------------
 PILL_FPS = 4                 # heartbeat frames a second (the only animation)
@@ -467,11 +471,25 @@ def p_colour(p):
 
 
 class GlassScene:
-    """Builds the widgets for a w x h screen."""
+    """Builds the widgets for a w x h screen. `field` is the FIELD layer
+    (glass_field.FieldLayer: what the bot sees of the map, under the
+    ghosts); None makes one reading this repo's learned models.
+    show_field=False hides it (the owner's HUD_NO_FIELD switch)."""
 
-    def __init__(self, w, h, thoughts=True):
+    def __init__(self, w, h, thoughts=True, field=None, show_field=True):
         self.lay = Layout(w, h)
         self.show_thoughts = thoughts
+        self.show_field = show_field
+        self._field = field
+
+    @property
+    def field(self):
+        """The field layer, made on first use (it imports numpy and OpenCV,
+        which only a game needs)."""
+        if self._field is None:
+            import glass_field
+            self._field = glass_field.FieldLayer()
+        return self._field
 
     # -- the widgets ---------------------------------------------------------------------------
     def widgets(self, snap, now, game_rect=None):
@@ -495,7 +513,11 @@ class GlassScene:
         ghosts_key = (tuple((x.tid, x.kind, x.x, x.y, x.target, x.placed) for x in snap.ghosts[:MAX_GHOSTS]),
                       game_rect, tuple(sorted((k, tuple(v)) for k, v in snap.sizes.items())))
         hidden = ("hidden",)
+        field_key = self.field.key(snap, game_rect) if g and game_rect and self.show_field else None
         return [
+            # first, so a preview composites it under everything else (the HUD keeps its window lowest)
+            ("field", ("field", field_key) if field_key is not None else hidden,
+             lambda: self.field.picture(snap, game_rect) if field_key is not None else None),
             ("pill", pill_key, lambda: self.pill(snap, now)),
             ("thoughts", (tuple(newest), self.show_thoughts) if self.show_thoughts and newest else hidden,
              lambda: self.thoughts(snap) if self.show_thoughts else None),

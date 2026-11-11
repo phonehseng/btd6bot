@@ -2,6 +2,7 @@
 
     python tools/hud_preview.py out.png [--root DIR | --demo] [--background IMG] [--size 1920x1200]
                                         [--view auto|game|menu] [--at SECONDS] [--hud glass|big]
+                                        [--map NAME [--mode MODE] [--round N] [--maps DIR]] [--no-field]
 
 Reads the bot's files under --root (default: this repo) the way the live HUD
 does (hud_data.Collector) - or, with --demo, a made-up bot folder in a
@@ -16,6 +17,16 @@ files were read.
   --hud glass   (the default) the glass HUD (tools/glass_scene.py): each
                 widget's picture composited where its window would sit; the
                 time each widget took to draw is printed
+  --map NAME    draw the game as being on this map (with --mode and
+                --round): the glass HUD's FIELD layer (tools/glass_field.py,
+                what the bot sees of the map) shows that map; the demo's
+                planned towers are left out unless it is the demo's Bazaar.
+                Use a frame of that map as --background to check the layer
+                lines up with the real track
+  --maps DIR    the learned map models the field layer reads (default:
+                --root's data/maps; the live bot's newest are in the main
+                checkout's data/maps); read only
+  --no-field    leave the field layer out (as the HUD_NO_FIELD switch does)
   --hud big     the old big HUD (tools/hud_scene.py): its shapes painted at
                 the window's alpha; with --at, the margins grown and the
                 newest log line typed
@@ -219,6 +230,25 @@ def demo_root(root, now, in_game):
     return root
 
 
+def on_map(snap, map_name, mode=None, rnd=None):
+    """Make `snap` a game on `map_name` (keeping its mode and round unless
+    given). The planned towers belong to the snapshot's own map, so they
+    go when the map changes."""
+    game = dict(snap.game or {})
+    if game.get("map") != map_name:
+        snap.ghosts, snap.unplaced = [], []
+    game["map"] = map_name
+    if mode:
+        game["mode"] = mode
+        from btd6bot.strategy import rules          # the mode's last round (Medium: 60)
+        game["end_round"] = rules(mode).get("end_round", game.get("end_round"))
+    snap.game = game
+    if rnd is not None:
+        snap.round = rnd
+    snap.in_game = True
+    return snap
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("out")
@@ -229,6 +259,11 @@ def main(argv=None):
     ap.add_argument("--view", choices=("auto", "game", "menu"), default="auto")
     ap.add_argument("--at", type=float, default=2.0)
     ap.add_argument("--hud", choices=("glass", "big"), default="glass")
+    ap.add_argument("--map", help="the map the game is on (the field layer shows it)")
+    ap.add_argument("--mode", help="the game's mode with --map (e.g. medium, half_cash, reverse)")
+    ap.add_argument("--round", type=int, help="the round being played with --map")
+    ap.add_argument("--maps", help="folder of learned map models (default: ROOT/data/maps)")
+    ap.add_argument("--no-field", action="store_true", help="leave the field layer out")
     args = ap.parse_args(argv)
     w, h = (int(v) for v in args.size.lower().split("x"))
     if args.demo:
@@ -239,17 +274,27 @@ def main(argv=None):
         snap = hud_data.Collector(args.root).poll()
     if args.view != "auto":
         snap.in_game = args.view == "game"
+    if args.map:
+        on_map(snap, args.map, args.mode, args.round)
     if args.hud == "glass":
+        import glass_field as F
         import glass_scene as G
-        scene = G.GlassScene(w, h)
+        maps = Path(args.maps) if args.maps else Path(args.root) / "data" / "maps"
+        scene = G.GlassScene(w, h, field=F.FieldLayer(maps), show_field=not args.no_field)
         timed = time_glass(scene, snap, snap.now + args.at, (0, 0, w, h))
         render_glass({n: t[0] for n, t in timed.items()}, (w, h), args.background).save(args.out)
-        area = sum(p.image.width * p.image.height for n, (p, _b, _c) in timed.items() if n != "ghosts")
+        area = sum(p.image.width * p.image.height for n, (p, _b, _c) in timed.items()
+                   if n not in ("ghosts", "field"))
         print(args.out)
         for name, (pic, best, cold) in timed.items():
             print(f"  {name:9s} {pic.image.width:4d}x{pic.image.height:<4d} at ({pic.x}, {pic.y})  "
                   f"{best:6.2f} ms  (first draw {cold:.1f} ms)")
-        print(f"  widgets' windows cover {area / (w * h):.1%} of the screen (ghosts aside)")
+        print(f"  widgets' windows cover {area / (w * h):.1%} of the screen (ghosts and field aside)")
+        if "field" in timed:
+            pic, best, cold = timed["field"]
+            print(f"  field layer: {pic.image.width * pic.image.height * 4 / 2**20:.1f} MB of pixels, drawn once "
+                  f"per map / round phase / model save ({cold:.0f} ms to draw, "
+                  f"{best:.0f} ms when asked again unchanged)")
         return
     scene = S.Scene(w, h)
     t0 = snap.now

@@ -29,7 +29,13 @@ Cheap on purpose, as the bot and BTD6 share the laptop: the loop ticks
 TICK_HZ times a second, the bot's files are polled every POLL_S seconds,
 and a widget is drawn and pushed again only when its key changes - the
 pill a few times a second for its heartbeat, the cards when what they say
-changes, the ghosts when the plan or the game window moves.
+changes, the ghosts when the plan or the game window moves, the field
+layer (what the bot sees of the map, over the whole play field) when the
+map, the round's path phase, the learned model's file or the game window
+changes - never per frame. The field's window is the lowest of the
+widgets': the cards and ghosts stay on top of it. A HUD_NO_FIELD file in
+the repo root hides it (glass_field.field_wanted), polled like
+HUD_NO_THOUGHTS.
 """
 import ctypes
 import os
@@ -44,6 +50,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hud_controls as C            # noqa: E402
 import hud_data                     # noqa: E402
 import glass_scene as G             # noqa: E402
+import glass_field as F             # noqa: E402
 
 TICK_HZ = 8              # loop ticks a second (the pill's heartbeat runs at glass_scene.PILL_FPS)
 POLL_S = 0.5             # seconds between reads of the bot's files
@@ -53,6 +60,7 @@ ERROR_EVERY_S = 60       # at most one error note a minute
 ERROR_FILE = hud_data.ROOT / "logs" / "hud_error.txt"
 THOUGHTS_OFF = hud_data.ROOT / "HUD_NO_THOUGHTS"     # this file hides the thoughts card ...
 THOUGHTS_ENV = "BTD6BOT_HUD_THOUGHTS"                # ... as does this variable set to "off"
+FIELD = "field"          # the field layer's widget (glass_field.py): its window is kept under the others
 
 # -- Win32 ------------------------------------------------------------------------------------
 # Own WinDLL instances, so the argument types set here never change the
@@ -194,7 +202,9 @@ class GlassHud:
         sw, sh = size or (root.winfo_screenwidth(), root.winfo_screenheight())
         self.size = (sw, sh)
         self.collector = collector or hud_data.Collector()
-        self.scene = G.GlassScene(sw, sh, thoughts=thoughts_wanted())
+        self.scene = G.GlassScene(sw, sh, thoughts=thoughts_wanted(),
+                                  field=F.FieldLayer(Path(self.collector.root) / "data" / "maps"),
+                                  show_field=F.field_wanted(self.collector.root))
         self.make_window = make_window
         self.windows = {}           # widget name -> its window, made when first shown
         self.keys = {}              # widget name -> the key of what its window shows
@@ -223,6 +233,7 @@ class GlassHud:
             self._t_poll = now
             self.snap = self.collector.poll()
             self.scene.show_thoughts = thoughts_wanted()
+            self.scene.show_field = F.field_wanted(self.collector.root)
         if now - self._t_rect >= RECT_S:
             self._t_rect = now
             self.game_rect = C.game_client_rect()
@@ -235,13 +246,20 @@ class GlassHud:
                     self.windows[name].hide()
             else:
                 self.window(name).show(picture)
+                if name == FIELD:
+                    self._t_top = -1e9          # just shown on top of everything: put the others back above it
             self.keys[name] = key
         if now - self._t_top >= TOPMOST_S:
             self._t_top = now
-            for win in self.windows.values():
-                win.keep_on_top()
+            for name in self.stacking():
+                self.windows[name].keep_on_top()
             if self.buttons:
                 self.buttons.refresh()
+
+    def stacking(self):
+        """The widgets' windows from the bottom up: the field layer first,
+        so each re-assertion of topmost leaves every other widget above it."""
+        return sorted(self.windows, key=lambda name: name != FIELD)
 
     def note_error(self):
         now = self.clock()

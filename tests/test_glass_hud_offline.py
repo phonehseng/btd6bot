@@ -104,7 +104,7 @@ def test_game_view_widgets():
     W, H = 1920, 1200
     scene = G.GlassScene(W, H)
     pics = scene.build_all(snap, now, (0, 0, W, H))
-    assert set(pics) == {"pill", "thoughts", "rounds", "decision", "ghosts"}
+    assert set(pics) == {"field", "pill", "thoughts", "rounds", "decision", "ghosts"}
     for name in ("pill", "thoughts", "rounds", "decision"):
         assert body_of(pics[name], scene.lay) == tuple(getattr(scene.lay, name)), name
         img = pics[name].image
@@ -220,7 +220,7 @@ def test_glass_hud_pushes_only_what_changed():
                                      make_window=FakeWindow)
             hud.frame()
             wins = hud.windows
-            assert set(wins) == {"pill", "thoughts", "rounds", "decision", "ghosts"}
+            assert set(wins) == {"field", "pill", "thoughts", "rounds", "decision", "ghosts"}
             assert all(w.shown == 1 for w in wins.values())
             hud.frame()                                       # same instant: nothing drawn again
             assert all(w.shown == 1 for w in wins.values())
@@ -231,6 +231,7 @@ def test_glass_hud_pushes_only_what_changed():
             hud._t_poll = clock.t                             # (no new poll, which would read the game again)
             hud.frame()
             assert wins["rounds"].hidden == 1 and wins["decision"].hidden == 1 and wins["ghosts"].hidden == 1
+            assert wins["field"].hidden == 1
             assert wins["pick"].shown == 1 and wins["progress"].shown == 1
     finally:
         hud_controls.game_client_rect = old_rect

@@ -6,8 +6,10 @@ Three HUDs, one chosen at start:
           "liquid glass" widgets at the screen's edges - a status pill at
           the top centre, the coming rounds' margins and the latest decision
           along the bottom in a game, the planner's pick and the
-          black-border progress at the right edge in menus - and faint ghost
-          towers where the build still wants towers
+          black-border progress at the right edge in menus - faint ghost
+          towers where the build still wants towers, and under them the
+          field layer: the ground the bot may place on and the bloon paths
+          (tools/glass_field.py; a HUD_NO_FIELD file hides it)
   big     tools/big_hud.py: the full-screen HUD it replaced (a thinking
           panel down the left, a black-border board over the menus); used
           when a HUD_BIG file exists in the repo root or BTD6BOT_HUD is

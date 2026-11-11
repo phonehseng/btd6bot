@@ -33,7 +33,12 @@ top centre says where the bot is and what it is doing, with the newest log
 lines faintly under it. In a game two cards along the bottom show the damage
 model's margin for the coming rounds and the latest decision with its why,
 what reinforce saves for and what the build wants next; faint ghost towers
-mark where the build still wants towers. Between games two cards at the
+mark where the build still wants towers. Under them a faint field layer
+shows what the bot sees of the map: the ground it may place on (mint land,
+blue water, red hatch where the game refused a tower before) and the bloon
+paths with chevrons for their direction, this round's path brightest
+(pictures: `docs/hud/field_bazaar.png`, `docs/hud/field_lastresort.png`,
+`docs/hud/field_glacialtrail.png`). Between games two cards at the
 right edge show the planner's pick with its runner-ups and the black-border
 progress. It never takes focus, every click passes through to the game, and
 screenshots and recordings leave it out. The STOP / GO / OFF buttons sit
@@ -42,9 +47,12 @@ right of the pill.
 - A file named `HUD_BIG` (or `BTD6BOT_HUD=big`) brings back the full-screen
   HUD, `HUD_STRIP` (or `BTD6BOT_HUD=strip`) the old thin status strip; they
   take effect when the HUD starts. `HUD_NO_THOUGHTS` hides the log lines
-  under the pill (checked twice a second).
+  under the pill, `HUD_NO_FIELD` (or `BTD6BOT_HUD_FIELD=off`) the field
+  layer (both checked twice a second, no restart).
 - `python tools/hud_preview.py out.png --demo --view game` draws the HUD into
-  an image offline (`--background` a game frame, `--hud big` the old one).
+  an image offline (`--background` a game frame, `--hud big` the old one;
+  `--map "Last Resort" --mode medium --round 15 --maps <folder of learned
+  models>` puts the field layer of that map over the frame).
 
 ## Offline play
 

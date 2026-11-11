@@ -488,6 +488,37 @@ def path_round_shares(geom):
     return shares
 
 
+def paths_this_round(geom, rnd):
+    """Path ids an AlternateRoundSplitter hands round `rnd` (the round the
+    game shows, 1 = the first): one per splitter. An empty frozenset when
+    the map has no such splitter or rnd is unknown; paths no alternating
+    splitter lists carry every round and are not in it.
+
+    Every-round splitters (roundsPerPath 0 or 1) take the next path each
+    round, starting with the first listed on round 1: Last Resort's
+    [Path1, Path2, Path3, Path4] gives round mod 4 = 1 the big loop, 2 the
+    medium, 3 the small one and 0 the straight (docs/backlog.md item 72),
+    and Luminous Cove's [PathLeftStart, PathRightStart] odd rounds on the
+    left (docs/map_strategies.md). Long phases (Erosion) are counted as in
+    idle_phase_paths."""
+    if rnd is None:
+        return frozenset()
+    out = set()
+    for s in (geom.get("mechanics") or {}).get("splitters") or []:
+        if s.get("type") != "AlternateRoundSplitter":    # (multi-path splitters send several at once)
+            continue
+        n, paths = int(s.get("roundsPerPath") or 1), list(s.get("paths") or [])
+        if len(paths) < 2:
+            continue
+        offset = int(s.get("currentRoundOffset") or 0)
+        if n < 2:
+            out.add(paths[(rnd - 1 - offset) % len(paths)])
+            continue
+        i = max(0, (rnd - offset) // n)             # same count as idle_phase_paths
+        out.add(paths[min(i, len(paths) - 1) if s.get("doesNotLoop") else i % len(paths)])
+    return frozenset(out)
+
+
 def round_share(geom, proj, skip=()):
     """Float grid: on each cell where bloons can be hit (the cells
     path_masks marks), the share of the rounds whose bloons pass it, 0..1.
