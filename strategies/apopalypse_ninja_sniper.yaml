@@ -62,7 +62,10 @@ planner:
   # that lasts to the end of the current path phase, and under continuous
   # sends there is no time to rebuild 25 plan steps before round 37.
   # apopalypse_apache_spikes is off Erosion for the same reason.
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Flooded Valley, Erosion]
+  # not Sanctuary (2026-11-11): lost rounds 40 and 45 here (all 150 lives at
+  # round 45 though the model rated it 2.13), and apopalypse_apache_spikes
+  # already excludes it after its round-51 loss
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Flooded Valley, Erosion, Sanctuary]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an

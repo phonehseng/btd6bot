@@ -15,7 +15,7 @@ planner:
            bomb: [2, 0, 3]}
   base_success: {hard: 0.9, impoppable: 0.6, chimps: 0.5}
   maps: [Logs, Resort, Lotus Island, Spa Pits, "Pat's Pond", Peninsula, Off The Coast, Cargo,
-         Sunken Columns, Dark Castle, Bloody Puddles, Muddy Puddles,
+         Sunken Columns, Dark Castle, Bloody Puddles,
          Water Park, Downstream, Streambed, Spice Islands, Ravine, Sanctuary, Ship Capture,
          Erosion, Luminous Cove]
   # not Spillway: the inflatable walls round the central loop block the side
@@ -27,6 +27,10 @@ planner:
   # spot and were given up, the subs cannot see camo below 3-x-x, and round
   # 24's camo took the one life in Impoppable (2026-11-11, loss case
   # 20261111_050913_FloodedValley_impoppable)
+  # not Muddy Puddles: three Impoppable losses (rounds 33, 33, 7); on
+  # 2026-11-11 the opening (two subs and a dart) was rated 0.06 before round
+  # 6 and round 7 took the one life - the four lanes are too many for it
+  # (loss case 20261111_065909_MuddyPuddles_impoppable)
   # not Castle Revenge: its moat holds the first sub only, sb2 (segment
   # 0.3-1.0) finds no water and Impoppable was lost at round 33 (2026-11-05,
   # loss case 20261105_063635)
