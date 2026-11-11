@@ -2526,9 +2526,10 @@ class Executor:
         up for the game - under the pane of two rounds later the same search
         has its best spots. The alchemist, named `near: [n1]`, then went to
         the far side of the map beside a reinforce dart, the discount village
-        v1 (`near: [n1, a1]`) was given up the same way at round 26, the Sun
-        Avatar was never bought, and from round 66 on the model rated the
-        board 0.3-0.5 with purchases that moved it by 0.01.
+        v1 (`near: [n1, a1]`) was given up the same way at round 26 - every
+        later tier, the $24,000 Sun Avatar among them, was paid without its
+        15% discount - and from round 66 on the model rated the board
+        0.3-0.6 with purchases that moved it by 0.01; round 93 was lost.
 
         Only the build's own towers wait: fills, answers and panic steps are
         offered again every tick by whoever runs them, and the hero has its
