@@ -23,6 +23,15 @@ would cost LETHAL_SHARE of the lives left is a crisis round as well
 
 Line of sight is not passed to the model here (it rates towers behind
 walls a little high); any failure turns the forecast off for the game.
+
+When the game proves the model wrong - a round it rated 1 or more (the
+defence pops it) still costs lives - the forecast trusts the defence less
+for the rest of the game (observe_leak, `trust`): every later margin is
+scaled down and every leak simulated at that much less strength. Without
+it the bot kept believing the model after the first leak: Glacial Trail
+Apopalypse (2026-11-10 20:08) lost 102 lives in round 24 rated 8.72, the
+next rounds still read 3.3-11, nothing was reinforced, and round 33
+(rated 11.07) took the last 42 lives with $11,056 in the bank.
 """
 from __future__ import annotations
 
@@ -33,6 +42,11 @@ log = logging.getLogger("forecast")
 CRISIS_MARGIN = 0.5
 LETHAL_SHARE = 0.5            # a round expected to cost this share of the lives left is a crisis too
 REVERSE_SUFFIX = " reverse"   # map models of Reverse games are keyed "<map> reverse"
+# A round that leaked had less than it needed: it is taken to have held at
+# most this share of it (a margin just under 1), so a leak in a round rated
+# m leaves the defence trusted at LEAKED_MARGIN / m of what the model says.
+LEAKED_MARGIN = 0.9
+TRUST_FLOOR = 0.05            # never trust the defence at less than this share
 
 
 def lowest(margins):
@@ -56,6 +70,27 @@ class RoundForecast:
         self._sight_grid = sight_grid
         self._sight_heights = sight_heights
         self.off = not map_key
+        # share of the model's strength the game has shown the defence to
+        # have (observe_leak); 1.0 until a round rated safe leaks
+        self.trust = 1.0
+
+    def observe_leak(self, margin, lost):
+        """A round rated `margin` cost `lost` lives. When the model had rated
+        it 1 or more (it pops in the model) the model overrates this defence
+        on this map: trust it at LEAKED_MARGIN / margin from now on (never
+        less than TRUST_FLOOR, never more than before). A round with no
+        rating - the Fast Track opening, bought while it is sent - says
+        nothing about the model. True when the trust went down."""
+        # `margin` is what the bot was told (the raw rating times the trust
+        # already in force): under 1 the leak was foreseen, nothing new
+        if margin is None or not lost or margin < 1.0:
+            return False
+        raw = margin / self.trust      # the new trust is taken against the raw rating
+        trust = max(TRUST_FLOOR, LEAKED_MARGIN / raw)
+        if trust >= self.trust:
+            return False
+        self.trust = trust
+        return True
 
     def _ready(self):
         """Load the track once; False when the forecast is off."""
@@ -127,15 +162,20 @@ class RoundForecast:
     def margins(self, towers, rounds, iterations=9):
         """{round: margin} over `rounds` for `towers`, or None.
         The defence is built once and rated round by round (~70 ms each;
-        fewer `iterations` of the margin search are quicker and coarser)."""
+        fewer `iterations` of the margin search are quicker and coarser).
+        Each margin is scaled by the trust the game has left the model
+        (observe_leak)."""
         if not rounds:
             return None
         try:
             if not self._ready():
                 return None
             from . import dps_model as D
-            return self._rate(towers, rounds, lambda st, r: D.round_margin(
+            rated = self._rate(towers, rounds, lambda st, r: D.round_margin(
                 st, self.mode, r, self.track, iterations=iterations))
+            if rated is None or self.trust >= 1.0:
+                return rated
+            return {r: m * self.trust for r, m in rated.items()}
         except Exception:   # a forecast must never cost a game
             log.exception("round forecast failed - off for the rest of this game")
             self.off = True
@@ -150,11 +190,14 @@ class RoundForecast:
         tower at `strength` (0.5 = half strength: what a margin of 2 must
         hold); {round: lives} with per_round. One simulation per round, and
         it moves with every purchase - unlike the margin search, whose steps
-        hide small gains. None when it cannot be rated."""
+        hide small gains. None when it cannot be rated. The towers fight at
+        `strength` times the trust the game has left the model
+        (observe_leak)."""
         try:
             if not self._ready():
                 return None
             from . import dps_model as D
+            strength *= self.trust
             lost = self._rate(towers, rounds, lambda st, r: D.simulate_round(
                 st, self.mode, r, self.track, strength=strength).lives_lost)
             if lost is None:

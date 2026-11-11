@@ -822,6 +822,7 @@ class Match:
                     log.warning("lost %d lives (now %d)", lost, self._lives.confirmed)
                     self._round_lost += lost
                     self._journal_leak(last_round, lost, self._lives.confirmed)
+                    self._distrust_model(last_round, lost)
                     # abilities first: a key press takes milliseconds, the panic
                     # purchases below take seconds (Water Park: Rapid Shot came
                     # 4 s after the first leak, behind the buying)
@@ -1468,6 +1469,37 @@ class Match:
             journal.current().round(**fields)
         except Exception:
             log.exception("journal round snapshot failed - carrying on")
+
+    def _distrust_model(self, rnd, lost):
+        """Lives went in round `rnd`: if the damage model had rated it safe
+        (1 or more), it overrates this defence, and the forecast trusts it
+        less for the rest of the game (RoundForecast.observe_leak). The next
+        look-ahead then sees the weak rounds and reinforcing spends the cash
+        the old ratings left idle (Glacial Trail Apopalypse, 2026-11-10:
+        round 24 rated 8.72 lost 102 lives, round 33 rated 11.07 the rest)."""
+        observe = getattr(self.forecast, "observe_leak", None)
+        if observe is None or rnd is None:
+            return
+        margin = self._margins.get(rnd)
+        try:
+            if not observe(margin, lost):
+                return
+        except Exception:      # bookkeeping must never cost a game
+            log.exception("model trust update failed - carrying on")
+            return
+        trust = self.forecast.trust
+        log.warning("round %d was rated %.2f and still cost %d lives: the damage model is trusted at "
+                    "%.2f of its strength for the rest of the game", rnd, margin, lost, trust)
+        journal.current().event("model_trust", rnd=rnd, margin=round(margin, 3), lost=lost,
+                                trust=round(trust, 3))
+        # rate this round and the look-ahead again at once with the lower
+        # trust: the round still being played may become a crisis round and
+        # the weak look-ahead starts reinforcing before the next round starts
+        try:
+            self._forecast_round(rnd)
+        except Exception:
+            log.exception("re-rating after the leak failed - carrying on")
+        self._t_reinforce = 0.0
 
     def _journal_leak(self, rnd, lost, lives_after, inferred=False):
         """A leak, tied to what the round brings: its bloon groups with their
