@@ -1151,6 +1151,10 @@ class Executor:
         # "Removable" - so a name cannot say which one went
         self.removed = []
         self.removal_fails = {}     # obstacle id -> failed attempts
+        # plan placements with no ground, waiting for an obstacle to be
+        # bought (_clear_for_place): step key -> (the obstacles gone when it
+        # was chosen, the obstacle's entry or None when none helps)
+        self.clear_wait = {}
         self.allowed = set(c["allowed_towers"]) if c.get("allowed_towers") is not None else None
         self.forbidden = set(c.get("forbidden_towers") or ())
         self.land_only = bool(c.get("land_only"))
@@ -2434,7 +2438,10 @@ class Executor:
             return self._defer(step, key, self.BUFFER_RETRY_S)   # nothing to buff yet
         spots = self._spots_widening(kind, step)
         if not spots:
-            return self._out_of_spots(step, key)
+            # a plan tower with no ground is first given the ground under a
+            # removable obstacle, when the map sells one that helps
+            r = self._clear_for_place(step, key, kind, cash)
+            return self._out_of_spots(step, key) if r is None else r
         fracs = [self.m.cell_to_frac(cx, cy) for cx, cy, _ in spots]
         tid = step.get("id") or self._new_tid(kind)
         t0 = time.monotonic()
@@ -5481,7 +5488,9 @@ class Executor:
                 self.deferred.remove(st)
             elif tid:
                 waiting_ids.add(tid)
-            if r == "bought":
+            if r in ("bought", "progress"):
+                # cash was spent ("progress": a tier on the way, or the
+                # obstacle its tower needs is gone): the next tick reads it anew
                 return True
         if CT.time_limited(self) and not self.deferred:
             # under a click budget a later plan step may come first (_quicker_step)
@@ -6381,6 +6390,7 @@ class Executor:
         log.info("clearing obstacle %s ($%s) for the plan", r["name"], r["cost"])
         if self.g.remove_obstacle(*r["frac"], r["cost"], name=r["name"]):
             self.removed.append(r["id"])
+            self._ground_cleared()
             return "bought"
         self.removal_fails[r["id"]] = self.removal_fails.get(r["id"], 0) + 1
         return "wait"
@@ -6415,9 +6425,172 @@ class Executor:
         log.info("clearing obstacle %s ($%s): frees %d legal cells for %s", best["name"], best["cost"], gain, kind)
         if self.g.remove_obstacle(*best["frac"], best["cost"], name=best["name"]):
             self.removed.append(best["id"])
+            self._ground_cleared()
             return True
         self.removal_fails[best["id"]] = self.removal_fails.get(best["id"], 0) + 1
         return False
+
+    # A plan placement waiting for an obstacle (_clear_for_place) looks again
+    # this often (s): the cash for the removal comes in meanwhile.
+    CLEAR_RETRY_S = 5.0
+    # ... and tries at most this many obstacles, the ones that free the most
+    # ground for its tower: each trial is a full spot search (~0.25 s each on
+    # High Finance, which has fifteen obstacles).
+    CLEAR_TRIALS = 6
+
+    def _plan_place_ids(self):
+        """The ids of the towers the build's plan places (once per game)."""
+        if not hasattr(self, "_plan_place_id_set"):
+            self._plan_place_id_set = {st["id"] for st in getattr(self, "plan", None) or ()
+                                       if st.get("do") == "place" and st.get("id")}
+        return self._plan_place_id_set
+
+    def _clear_for_place(self, step, key, kind, cash):
+        """A plan placement found no spot at all (_spots_widening): when a
+        removable obstacle would give it one, the step is not given up. It is
+        set aside (self.deferred, the plan goes on) until the cash covers the
+        obstacle and the tower, then the obstacle is bought ('progress') and
+        the next tick places the tower on the freed ground. Returns None when
+        this is not a case for it - the step is then given up as before.
+
+        High Finance Impoppable (2026-11-11 08:31, chimps_ninja_sun, loss
+        case 20261111_090319): nearly all of the map's land lies under
+        fifteen removable plazas. Its geometry gives a ninja 36 legal cells
+        and a village, a Super Monkey or an ace none; after n1, the opener,
+        the hero and n2 no kind had a cell left. The alchemist was given up
+        at round 14 and at round 35 both villages, the Sun Avatar, both
+        Ground Zero aces, the Sabotage ninja, the MOAB Eliminator bomb and
+        the exit spikes went the same way in one second ("0 legal cells",
+        "after 0 refused spots") - the whole build from round 35 on. Only
+        surplus ever bought obstacles (clear_obstacle, for "another ninja",
+        from round 50); by then the plan was past those steps, the cash went
+        into twelve bare ninjas and what reinforce could rate, and round 95
+        was lost at 0.35. The game of 2026-11-10 (round 98) ran the same way.
+
+        Which obstacle: the one whose ground gives the step its best spot
+        (_obstacle_for_place), chosen once per state of the map and kept in
+        self.clear_wait. While one step waits for its obstacle, the others
+        with no ground wait behind it without a search of their own - the
+        freed plaza usually has room for them too - and no more than one
+        search is made per tick, so a run of such steps (thirteen at once
+        above) cannot hold the match loop up."""
+        if getattr(self, "no_removals", True) or kind == "hero":
+            return None             # the hero has its own retry (_out_of_spots)
+        if step.get("id") not in self._plan_place_ids():
+            return None             # fills, answers and panic steps run every tick anyway
+        gone = tuple(self.removed)
+        entry = self.clear_wait.get(key)
+        if entry is None or entry[0] != gone:
+            behind = any(k != key and rem == gone and r is not None
+                         for k, (rem, r) in self.clear_wait.items())
+            tick = getattr(self, "tick_no", None)
+            if behind or (tick is not None and getattr(self, "_clear_search_tick", None) == tick):
+                if not self._obstacles():
+                    return None
+                return self._defer(step, key, self.CLEAR_RETRY_S)
+            self._clear_search_tick = tick
+            entry = self.clear_wait[key] = (gone, self._obstacle_for_place(kind, step))
+        choice = entry[1]
+        if choice is None or self.removal_fails.get(choice["id"], 0) >= self.REMOVAL_TRIES:
+            self.clear_wait.pop(key, None)
+            return None
+        need = choice["cost"] + self.g.price(kind)
+        if cash is None or cash < need:
+            noted = self.__dict__.setdefault("_clear_noted", set())
+            if key not in noted:
+                noted.add(key)
+                log.info("%s: no ground for it - set aside until $%d buys obstacle %s ($%d) and the tower",
+                         step.get("id"), need, choice["name"], choice["cost"])
+            return self._defer(step, key, self.CLEAR_RETRY_S)
+        log.info("clearing obstacle %s ($%s) for plan step %s: no ground for its %s without it",
+                 choice["name"], choice["cost"], step.get("id"), kind)
+        self.clear_wait.pop(key, None)
+        if self.g.remove_obstacle(*choice["frac"], choice["cost"], name=choice["name"]):
+            self.removed.append(choice["id"])
+            self._ground_cleared()
+            self._defer(step, key, 0)   # stays in line: placed at the next tick
+            return "progress"
+        self.removal_fails[choice["id"]] = self.removal_fails.get(choice["id"], 0) + 1
+        return self._defer(step, key, self.CLEAR_RETRY_S)
+
+    def _obstacle_for_place(self, kind, step):
+        """The removable obstacle whose ground gives place step `step` its
+        best spot, or None when none gives it one. Tried: the CLEAR_TRIALS
+        obstacles that free the most legal ground for `kind`, each by
+        searching for the step's spots as if it were gone. An obstacle that
+        satisfies the step as written (its `near`, its segment) comes before
+        one that only fits a relaxed search; then the better spot, then the
+        lower price."""
+        from . import placement as PL
+        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
+                  for p in self.g.towers.values()]
+        where = {"land"} if self.land_only else None
+        gone = tuple(self.removed)
+        base = PL.valid_spots(self.m, kind, None, placed, where=where, removed=gone)
+        if base is None:
+            return None
+        gains = []
+        for r in self._obstacles():
+            after = PL.valid_spots(self.m, kind, None, placed, where=where, removed=gone + (r["id"],))
+            gain = int((after & ~base).sum()) if after is not None else 0
+            if gain >= self.REMOVAL_MIN_CELLS:
+                gains.append((gain, r))
+        gains.sort(key=lambda t: -t[0])
+        best, best_rank = None, None
+        level = log.level
+        log.setLevel(logging.WARNING)       # the trial searches' dead ends are not the game's
+        try:
+            for _, r in gains[:self.CLEAR_TRIALS]:
+                self.removed.append(r["id"])
+                try:
+                    strict = self.pick_spots(kind, step, n=1)
+                    spots = strict or self._spots_widening(kind, step)
+                finally:
+                    self.removed.pop()
+                if not spots:
+                    continue
+                rank = (bool(strict), spots[0][2], -r["cost"])
+                if best_rank is None or rank > best_rank:
+                    best, best_rank = r, rank
+        finally:
+            log.setLevel(level)
+        return best
+
+    def _ground_cleared(self):
+        """An obstacle was just bought: place steps given up because the
+        map had no ground for them (no spot the game refused, see
+        refused_dead_steps) get another look. Plan steps go back in line
+        (self.deferred) unless their tower stands by now; fill, panic and
+        answer steps are simply offered again by whoever runs them.
+
+        High Finance Impoppable (2026-11-11): the blimp answers' ace and
+        sniper were given up at round 35 with 0 legal cells; from round 50
+        surplus cleared seven plazas (892 legal ninja cells), and the blimp
+        check still could not ask for either."""
+        dead = getattr(self, "dead_steps", None)
+        if not dead:
+            return
+        refused = getattr(self, "refused_dead_steps", ())
+        back = {k for k in dead if k not in refused and k[0] == "place"}
+        if not back:
+            return
+        self.dead_steps -= back
+        towers = getattr(self.g, "towers", {}) or {}
+        plan = getattr(self, "plan", None) or ()
+        passed = plan[:getattr(self, "idx", 0)]
+        waiting = {self._step_key(st) for st in self.deferred}
+        for st in plan:
+            k = self._step_key(st)
+            if k in back and k not in waiting and st.get("id") and st["id"] not in towers:
+                self.deferred.append(st)
+                waiting.add(k)
+                # The plan skipped this tower's upgrades when it came to them
+                # with no such tower: they go in line behind the placement
+                # (tick() takes a tower's set-aside steps in plan order). The
+                # replay of the lost game put v1 back as a bare village.
+                self.deferred.extend(up for up in passed if up.get("do") == "upgrade"
+                                     and up.get("id") == st["id"] and up not in self.deferred)
+        log.info("an obstacle is gone: %d place steps given up for want of ground are tried again", len(back))
 
     def upgrade_choices(self, first=None, past_plan=False):
         """Every next tier the towers standing may take, as (tower, tiers
