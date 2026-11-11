@@ -87,13 +87,12 @@ def test_the_chutes_case_holds_nothing_while_round_98_would_end_the_game():
     assert ("lost-round-hold", "the bad answer", 98) in ex.noted
 
 
-def test_a_far_hold_keeps_nothing_while_the_round_played_would_end_the_game():
-    """The same three rounds before the answer's round: the far-round rule
-    would keep what income cannot rebuild ($31,200 - 3 x $3,700)."""
+def test_a_far_hold_still_keeps_what_income_cannot_rebuild():
+    """Three rounds before the answer's round the far-round rule decides as
+    before: it already frees most of the cash ($31,200 - 3 x $3,700 kept)."""
     ex = rated(bare(cash=25_355.0, income=3_700.0), 0.29, 0.5)
-    assert ex._far_keep(31_200.0, 100, 97, True, "the bad answer") == 0.0
     assert ex._hold_for(100, 31_200.0, 97, "the bad answer", threat_answer=True) is None
-    assert ex.held_cash == 0.0
+    assert ex.held_cash == 31_200.0 - 3 * 3_700.0
 
 
 def test_a_later_round_the_model_fears_more_keeps_its_hold():
@@ -109,8 +108,6 @@ def test_a_later_round_the_model_fears_more_keeps_its_hold():
 def test_a_round_rated_to_hold_keeps_the_older_rules():
     ex = rated(bare(cash=26_389.0), 1.2, 1.3)       # weak (under 1.5) but not lost
     assert ex._hold_for(100, 31_200.0, 98, "the bad answer", threat_answer=True) is False
-    ex = rated(bare(cash=25_355.0, income=3_700.0), 1.2, 1.3)
-    assert ex._far_keep(31_200.0, 100, 97, True, "the bad answer") == 31_200.0 - 3 * 3_700.0
 
 
 def test_lives_to_spare_and_unrated_rounds_keep_the_older_rules():

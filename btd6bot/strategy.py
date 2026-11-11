@@ -4998,14 +4998,8 @@ class Executor:
         any hold while the round being played is not weak; with plan_first
         the released cash still goes only to the plan, its answers and a
         crisis purchase for the round at hand - Cracked's off-plan buys for
-        rounds far ahead stay forbidden. Unknown cash: kept as before.
-
-        It also keeps nothing while a one-life game's round being played is
-        rated under 1 and no higher than due_round (_lost_as_it_stands)."""
+        rounds far ahead stay forbidden. Unknown cash: kept as before."""
         keep = max(0.0, cost - self.income_until(due_round, rnd))
-        if weak_now and keep and self._lost_as_it_stands(rnd, due_round):
-            self._note_lost_round_hold(what, due_round, rnd)
-            return 0.0
         cash = getattr(self, "cash_seen", None)
         if weak_now and keep and cash is not None and RF.payable_by(self, cost, cash, due_round, rnd) is False:
             note = ("far-unpayable", what, rnd)
@@ -5105,9 +5099,9 @@ class Executor:
 
         threat_answer marks a hold for a strength threat's answer
         (_threat_tick): only such a hold is released by
-        _near_hold_too_late while weak rounds come before its round, and by
-        _lost_as_it_stands while the round being played would end a
-        one-life game."""
+        _near_hold_too_late while weak rounds come before its round, and
+        (at most FAR_ROUNDS before its round) by _lost_as_it_stands while
+        the round being played would end a one-life game."""
         rnd = rnd or 0
         weak = self.lives_fell_lately(rnd, 1) or self.weak_now(rnd)
         if due_round is not None and due_round <= rnd and weak:
@@ -5152,6 +5146,8 @@ class Executor:
         # is for the very rounds that make this one weak, and has its own
         # too-dear rule there: releasing it let idle spending eat the cash
         # of Spillway ABR's Maim MOAB step (test_plan_blimp_step_keeps_its_cash).
+        # (a far hold was dealt with above: it keeps only what income cannot
+        # rebuild, tests/test_one_life_executor_offline.py)
         if weak and threat_answer and due_round is not None and due_round > rnd \
                 and self._lost_as_it_stands(rnd, due_round):
             self._note_lost_round_hold(what, due_round, rnd)
