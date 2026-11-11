@@ -2854,16 +2854,20 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
 def next_game(account: AccountState, available_strategies: Iterable[Any] | None = None, *,
               config: PlannerConfig | None = None, playable_maps: Iterable[str] | None = None,
               achievements: tuple[Sequence[Mapping[str, Any]] | None, Mapping[str, Any] | None]
-              | None = None,
+              | None = None, below_bar: bool = False,
               ) -> GamePlan | None:
     """Best next game, or None when no first-time medal is winnable (every
     open map/mode is beaten or below its p bar); the reason is logged.
 
     ``available_strategies``: StrategySpec / dict / objects (see StrategySpec);
     defaults to EXAMPLE_STRATEGIES. ``playable_maps`` restricts to maps the
-    bot has placement data for."""
+    bot has placement data for. ``below_bar``: like the live runner
+    (Runner.next_plan), fall back to the open medals under every bar
+    (phase "LAST") instead of returning None - the bot never idles while
+    medals are open."""
     phase, preasons, cands = rank_games(account, available_strategies, config=config,
-                                        playable_maps=playable_maps, achievements=achievements)
+                                        playable_maps=playable_maps, achievements=achievements,
+                                        below_bar=below_bar)
     if not cands:
         log.info("%s", preasons[0])
         return None
