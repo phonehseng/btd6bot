@@ -332,12 +332,7 @@ def idle_phase_paths(geom, rnd, lead=PHASE_LEAD):
         # the boss route lies on top of one phase's path (Erosion's PathBoss
         # copies Path3) and no boss comes in the bot's games: painting it
         # would keep that path's track live in every phase
-        for s in (geom.get("mechanics") or {}).get("splitters") or []:
-            if s.get("overrideBossPath") is not None:
-                idle.add(s["overrideBossPath"])
-            for p, tag in zip(s.get("paths") or [], s.get("tagOnlyPath") or []):
-                if tag == "Boss":
-                    idle.add(p)
+        idle |= _boss_paths(geom)
     return frozenset(idle)
 
 
@@ -454,6 +449,92 @@ def path_masks(geom, proj, skip=()):
             cv2.line(mask, p0, p1, 1, TRACK_THICKNESS)
         if mask.any():
             out.append(mask > 0)
+    return out
+
+
+def _boss_paths(geom):
+    """Ids of the paths only boss bloons take (a splitter's overrideBossPath
+    or a path it tags "Boss"). No boss comes in the bot's games."""
+    out = set()
+    for s in (geom.get("mechanics") or {}).get("splitters") or []:
+        if s.get("overrideBossPath") is not None:
+            out.add(s["overrideBossPath"])
+        for p, tag in zip(s.get("paths") or [], s.get("tagOnlyPath") or []):
+            if tag == "Boss":
+                out.add(p)
+    return out
+
+
+def path_round_shares(geom):
+    """{path id: share of the rounds whose bloons take it} for the paths an
+    AlternateRoundSplitter hands a new round every round; {} on maps without
+    one. Paths not listed carry bloons every round.
+
+    roundsPerPath 0 (or 1) means the next path every round: every map but
+    Erosion (18-round phases, see idle_phase_paths) stores 0, and the guides
+    agree - Last Resort runs a 4-round cycle (big loop, medium loop, small
+    loop, straight), Luminous Cove and Enchanted Glade alternate two lanes.
+    A path listed twice gets two turns of the cycle: Muddy Puddles' order
+    1, 2, 3, 4, 3, 2 gives Path2 and Path3 a third of the rounds each."""
+    shares = {}
+    for s in (geom.get("mechanics") or {}).get("splitters") or []:
+        if s.get("type") != "AlternateRoundSplitter":
+            continue
+        paths = list(s.get("paths") or [])
+        if int(s.get("roundsPerPath") or 1) > 1 or len(paths) < 2:
+            continue
+        for p in paths:
+            shares[p] = shares.get(p, 0.0) + 1.0 / len(paths)
+    return shares
+
+
+def round_share(geom, proj, skip=()):
+    """Float grid: on each cell where bloons can be hit (the cells
+    path_masks marks), the share of the rounds whose bloons pass it, 0..1.
+    None when every path carries bloons every round (path_round_shares is
+    empty), so callers keep the plain track.
+
+    Why: placement used to value every track cell alike. On Last Resort the
+    four routes of the 4-round cycle all enter along the top straight and
+    leave along it, and three of them loop down the map in between. The big
+    loop's cells (a quarter of the rounds) outnumber the top straight's
+    (every round), so every short-range tower went to the walkway beside the
+    big loop's bottom row, out of reach of three rounds in four: Medium was
+    lost at rounds 16 and 19 (2026-11-10, obyn_druid_poplust and
+    hard_ninja_alch_sniper, Fast Track start at round 15: the small-loop,
+    straight and medium-loop rounds 15, 16 and 18 leaked 129 lives). Weighted
+    by this grid the top straight counts four times a loop cell.
+
+    A cell on a path no alternating splitter lists (a shared tail after the
+    alternating starts) carries every round: 1. Boss-only paths and paths in
+    `skip` (idle for now, idle_phase_paths) are left out."""
+    shares = path_round_shares(geom)
+    if not shares:
+        return None
+    w, h = GRID
+    alternating = np.zeros((h, w), np.float32)
+    always = np.zeros((h, w), bool)
+    boss = _boss_paths(geom)
+    for path in bloon_paths(geom):
+        pid = path.get("id")
+        if path.get("hidden") or len(path["points"]) < 2 or pid in skip or pid in boss:
+            continue
+        cells = proj.to_cells(path["points"])
+        hidden = path.get("invulnerable", [])
+        mask = np.zeros((h, w), np.uint8)
+        for i in range(len(cells) - 1):
+            if _in_ranges(i, hidden) or _in_ranges(i + 1, hidden):
+                continue
+            p0 = tuple(int(round(v)) for v in cells[i])
+            p1 = tuple(int(round(v)) for v in cells[i + 1])
+            cv2.line(mask, p0, p1, 1, TRACK_THICKNESS)
+        on = mask > 0      # a cell the path crosses twice still counts once per round
+        if pid in shares:
+            alternating[on] += shares[pid]
+        else:
+            always |= on
+    out = np.minimum(alternating, 1.0)
+    out[always] = 1.0
     return out
 
 
@@ -1295,6 +1376,8 @@ def grids_for(model, removed=(), now_round=None, last_round=None, pose_round=Non
         grids["scan"] = {k: np.where(grids[k], 1, 2).astype(np.uint8) for k in ("land", "water")}
         grids["track"] = heat > 0
         grids["path_masks"] = path_masks(geom, proj, skip)
+        # how many of the rounds pass each track cell (None: all of them)
+        grids["round_share"] = round_share(geom, proj, skip)
         # where blimps can be hit, when they have a route of their own
         grids["blimp_track"] = blimp_track(geom, proj, skip)
         grids["proj"] = proj

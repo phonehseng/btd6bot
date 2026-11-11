@@ -2539,6 +2539,35 @@ def _below_own_build_without_income(cands: list[_Cand], cfg: PlannerConfig) -> N
         c.notes[0] = f"p={c.p:.2f} (n={c.n}, under the map's own build)"
 
 
+def _own_builds_first(rest: list[_Cand]) -> list[_Cand]:
+    """The last-resort list (sorted surest first) with each map/mode's own
+    builds (is_own_map_build) moved ahead of the general builds for the same
+    map/mode. The map/modes keep their order: each one's candidates fill the
+    places its candidates had, own builds first, then the rest by p as before.
+
+    Why: under a low model ceiling (ceiling_cap) every build of a map/mode is
+    capped at about the same p, so the order among them says nothing about
+    the map, and a build with one old loss sorts behind untested general
+    builds. Last Resort Medium (ceiling 0.1, all builds near p=0.03) went to
+    obyn_druid_poplust on 2026-11-10 19:22 and was lost at round 16 in 72 s,
+    while its own build lastresort_medium (one loss, 2026-10-27, at round 40
+    with 150 lives up to then) sat at p=0.024. Offline the general build is
+    rated 0.06-0.5 in rounds 15-25 there and the map's own build 1.7 or more:
+    the own build is the one checked round by round on that map's ground.
+    The tiered candidates already put own builds first (_sort_key)."""
+    slots: dict[tuple[str, str], list[int]] = {}
+    for i, c in enumerate(rest):
+        slots.setdefault((c.map, c.mode), []).append(i)
+    out: list[_Cand] = list(rest)
+    for key, idx in slots.items():
+        group = [rest[i] for i in idx]
+        # sorted() is stable: within own and general builds the p order stays
+        group = sorted(group, key=lambda c: not is_own_map_build(c.s, c.map))
+        for i, c in zip(idx, group):
+            out[i] = c
+    return out
+
+
 def _tier(c: _Cand, cfg: PlannerConfig) -> str | None:
     """Progression tier of a first-time medal candidate (``c.ok`` already
     set), or None when its p is below every bar that applies to it: such a
@@ -2792,6 +2821,7 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
         rest.sort(key=lambda c: (not MODE_RULES.get(c.mode, {}).get("one_life"),
                                  (c.map, c.mode) not in struck_maps,
                                  c.p, c.ease, c.score), reverse=True)
+        rest = _own_builds_first(rest)
         for c in rest:
             c.tier = "LAST"
             c.notes.append("last resort: under every bar, played rather than idling")
