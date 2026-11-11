@@ -85,6 +85,11 @@ ERROR_BENCH_AFTER = 2                  # failures of one map/mode before it is b
 # (0.06) Deflation were each opened, built and left on three days of
 # 2026-11-06..10, about six minutes of play time per visit.
 WEAK_BENCH_HOURS = 24
+# With every open medal benched, a map/mode benched after a loss at least
+# this long ago is played again rather than idling (Bot._retry_benched).
+BENCH_RETRY_AFTER_H = 1.0
+LOSS_BENCH_HOURS = 12                  # how long a lost game sits out
+RETRYABLE_BENCHES = frozenset({"defeat", "loss", "unfinished game"})
 WEAK_BENCH_MAX_HOURS = 7 * 24
 
 
@@ -1644,13 +1649,59 @@ class Bot:
     def bench(self, map_name, mode, hours, why=""):
         import json
         d = self._benches()
-        d[f"{map_name}|{mode}"] = time.time() + hours * 3600
+        key = f"{map_name}|{mode}"
+        d[key] = time.time() + hours * 3600
+        reasons = self._bench_reasons()
+        reasons[key] = {"why": why, "since": time.time()}
         try:
             self._bench_file().parent.mkdir(parents=True, exist_ok=True)
             self._bench_file().write_text(json.dumps(d), encoding="utf-8")
+            self._bench_why_file().write_text(json.dumps(reasons), encoding="utf-8")
         except OSError:
             pass
         log.warning("benched %s %s for %gh (%s)", map_name, mode, hours, why)
+
+    def _bench_why_file(self):
+        """Why and since when each bench was set ({key: {why, since}})."""
+        return ROOT_DIR / "data" / "accounts" / f"{self.uid or 'default'}.bench_why.json"
+
+    def _bench_reasons(self):
+        import json
+        try:
+            return dict(json.loads(self._bench_why_file().read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            return {}
+
+    def _retry_benched(self, cands):
+        """When every candidate is benched: the one that only sits out a loss
+        and was lost longest ago (at least BENCH_RETRY_AFTER_H) - or None. Benches set for errors or games that would not start
+        (their `why` is not a game outcome) are kept: those fail again at
+        once.
+
+        Owner, 2026-11-11: "dont let it idle this long". From 13:57 the bot
+        napped in 30-minute steps with all 37 open map/mode pairs benched
+        for 12 h after the morning's losses - each of which already had its
+        change on main (every loss is reviewed and altered). A retry plays
+        the game again with that change; a loss earns rounds of XP, an idle
+        half hour earns nothing."""
+        reasons = self._bench_reasons()
+        benches = self._benches()
+        now = time.time()
+        ready = []
+        for i, c in enumerate(cands):
+            key = f"{c.map}|{c.mode}"
+            if (c.map, c.mode) in self.bad or key not in benches:
+                continue
+            r = reasons.get(key) or {}
+            why = str(r.get("why", "defeat"))
+            if why not in RETRYABLE_BENCHES:
+                continue
+            since = r.get("since") or (benches[key] - LOSS_BENCH_HOURS * 3600)
+            if now - since >= BENCH_RETRY_AFTER_H * 3600:
+                ready.append((since, i, c))
+        # the loss longest ago first, so the retries go round the benched
+        # games instead of replaying the planner's favourite every hour
+        return min(ready, key=lambda t: (t[0], t[1]))[2] if ready else None
 
     def benched(self, map_name, mode):
         return f"{map_name}|{mode}" in self._benches() or (map_name, mode) in self.bad
@@ -2174,8 +2225,15 @@ class Bot:
             else:
                 log.warning("safe mode: no confident game left - playing the normal medal order")
             log.info("%s", safety.status())
+        retry = None
+        if cands and all(self.benched(c.map, c.mode) for c in cands):
+            retry = self._retry_benched(cands)
+            if retry is not None:
+                log.warning("every open medal is benched - playing %s/%s again (lost over %g h ago, "
+                            "its change is in) rather than idling", retry.map, retry.mode,
+                            BENCH_RETRY_AFTER_H)
         for c in cands:
-            if self.benched(c.map, c.mode):
+            if self.benched(c.map, c.mode) and c is not retry:
                 continue
             if getattr(c, "tier", None) == "LAST":   # every tiered game is benched or used up
                 log.warning("last resort: no open medal clears its bar - playing the surest, "
@@ -2186,6 +2244,8 @@ class Bot:
                          c.s.achievement, c.p)
                 phase = "ACH"
             from .planner import next_game  # noqa: F401  (same scoring as next_game)
+            if c is retry:
+                phase = "RETRY"
             _show_choice(c, phase, (o for o in cands if o is not c and not self.benched(o.map, o.mode)))
             mi = MODES[c.mode]
             hero = (c.s.heroes or (None,))[0]
