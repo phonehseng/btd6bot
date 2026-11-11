@@ -88,7 +88,7 @@ def test_pill_and_buttons_sit_between_cash_and_round():
     assert G.BUTTON_GAP == hud_controls.BUTTON_GAP
     # sizes scale with the screen's height
     big = G.Layout(2560, 1600)
-    assert big.px(G.PILL_H) == round(G.PILL_H * 1600 / 1200)
+    assert big.px(G.PILL_H) == round(G.PILL_H * 1600 / 1200 * G.UI_SCALE)
 
 
 # -- what they draw --------------------------------------------------------------------------

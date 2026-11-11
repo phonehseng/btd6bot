@@ -89,6 +89,9 @@ SUPERSAMPLE = 3              # rounded corners are drawn this much larger and sc
 
 # -- sizes in pixels on a BASE_HEIGHT tall screen (they scale with the screen) --------------
 BASE_HEIGHT = S.BASE_HEIGHT  # 1200
+# Every size below is drawn this much bigger (owner, 2026-11-11: "make everything
+# a little bigger"): fonts, padding, corners and heights all follow Layout.u.
+UI_SCALE = 1.2
 RADIUS = 14                  # corner radius of a card
 PILL_RADIUS = 18             # the pill is fully round at its ends
 SHADOW = 10                  # room round a panel for its shadow
@@ -105,9 +108,9 @@ PICK_H, PROGRESS_H = 222, 146     # the PICK card at most (it shrinks to what it
 MIN_PX = 8                   # no text smaller than this, however small the screen
 
 # -- placement (fractions of the screen) -----------------------------------------------------
-PILL_WIDTH = 0.215           # the pill's share of the screen width
-ROUNDS_WIDTH = 0.19          # the NEXT ROUNDS card
-DECISION_WIDTH = 0.29        # the DECISION card
+PILL_WIDTH = 0.25            # the pill's share of the screen width
+ROUNDS_WIDTH = 0.20          # the NEXT ROUNDS card
+DECISION_WIDTH = 0.30        # the DECISION card
 MENU_X0 = 0.86               # the menu cards' left edge: right of the map-select cards (which end at 0.846)
 MENU_TOP = 0.14              # ... below the menus' top-right buttons (cash, friends)
 BUTTON_PANEL_WIDTH = 270     # hud_controls.ButtonPanel's width (not scaled, as there)
@@ -317,7 +320,13 @@ class Card:
         if self._text is None:
             self._text = Image.new("RGBA", self.base.size, (0, 0, 0, 0))
             self._text_draw = ImageDraw.Draw(self._text)
-        self._text_draw.text(self.at(x, y), s, font=f, fill=ink(colour, alpha * self.opacity), anchor=anchor)
+        # Text is always fully opaque (owner, 2026-11-11): a dimmer line is the
+        # colour mixed toward the glass's tint instead of made see-through, so
+        # the hierarchy stays while the map never shows through the letters.
+        a = max(0.0, min(1.0, alpha * self.opacity))
+        base = rgb(colour) if isinstance(colour, str) else tuple(colour)[:3]
+        mixed = tuple(round(c * a + t * (1 - a)) for c, t in zip(base, TINT))
+        self._text_draw.text(self.at(x, y), s, font=f, fill=mixed + (255,), anchor=anchor)
         return f.getlength(s)
 
     def picture(self):
@@ -340,7 +349,7 @@ class Layout:
 
     def __init__(self, w, h):
         self.w, self.h = w, h
-        self.u = h / BASE_HEIGHT
+        self.u = h / BASE_HEIGHT * UI_SCALE
 
     def px(self, n):
         """A size given at BASE_HEIGHT, in whole pixels on this screen."""
