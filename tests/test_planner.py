@@ -1145,6 +1145,30 @@ def test_last_resort_plays_multi_life_medals_before_one_life():
     assert one_life == sorted(one_life), [(c.map, c.mode, round(c.p, 2)) for c in last[:5]]
 
 
+def test_last_resort_plays_the_maps_own_build_before_general_ones():
+    """Under every bar, a map/mode's own build (strategies/maps) goes before
+    the general builds for the same map/mode, however their p compare: Last
+    Resort Medium (model ceiling 0.1, every build near p=0.03) went to
+    obyn_druid_poplust on 2026-11-10 and was lost at round 16, while its own
+    build, rated 1.7+ offline in rounds 15-25, sat just under it with one old
+    loss. The map/modes keep their places in the queue."""
+    acc = AccountState()
+    for m in MAPS:
+        if m != "Last Resort":
+            acc.medals[m] = {k: True for k in MODES}     # only Last Resort is open
+    acc.medals["Last Resort"] = {k: True for k in MODES if k != "medium"}
+    general = P.StrategySpec(id="general", towers={"dart": (0, 0, 0)},
+                             modes=frozenset({"medium"}), base_success={"medium": 0.40})
+    own = P.StrategySpec(id="lastresort_test", towers={"dart": (0, 0, 0)},
+                         modes=frozenset({"medium"}), base_success={"medium": 0.02},
+                         maps=frozenset({"Last Resort"}))
+    phase, _reasons, cands = P.rank_games(acc, [general, own], below_bar=True)
+    last = [c for c in cands if c.tier == "LAST" and c.map == "Last Resort" and c.mode == "medium"]
+    assert phase == "LAST" and len(last) == 2, [(c.s.id, c.tier) for c in cands]
+    assert last[0].p < last[1].p, [(c.s.id, round(c.p, 3)) for c in last]   # the own build is less sure ...
+    assert last[0].s.id == "lastresort_test"                                # ... and still goes first
+
+
 # ------------------------------------------------------- paragon focus
 
 def _paragon_account() -> tuple[AccountState, dict]:
@@ -1263,6 +1287,7 @@ if __name__ == "__main__":
              "test_mm_estimates_and_observed_override", "test_xp_favours_expert_and_long_modes",
              "test_replays_never_chosen", "test_none_when_nothing_left",
              "test_last_resort_plays_multi_life_medals_before_one_life",
+             "test_last_resort_plays_the_maps_own_build_before_general_ones",
              "test_paragon_status_from_account_data", "test_paragon_focus_prefers_closest_tower",
              "test_invested_cash_follows_the_plan", "test_long_run_reaches_everything"]
     missing = {t.__name__ for t in tests} - set(order)   # a new test must not be skipped

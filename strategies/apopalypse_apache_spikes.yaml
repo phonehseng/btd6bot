@@ -146,11 +146,15 @@ plan:
   # (R30, 41 lives) and pink/green (R36, all the rest) walked out.
   - {do: place, id: sp1, kind: spike, role: exit, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary, Bloody Puddles]}
   - {do: upgrade, id: sp1, to: 2-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary, Bloody Puddles]}
-  - {do: upgrade, id: h1, to: 4-2-0}
+  # n2 and a1 (about $2.5k) come before the first Apache Dartship (~$19k):
+  # plan_first gives the plan all the cash, and Ravine (2026-11-10 20:17)
+  # bought nothing from round 28 to 38 while saving for it ($2.2k -> $17.6k),
+  # then round 38's whites, leads, zebras and pinks took all 89 lives left.
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.3, 1.0]}
   - {do: upgrade, id: n2, to: 1-0-1}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}
   - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: h1, to: 4-2-0}
   - {do: upgrade, id: h2, to: 4-2-0}
   - {do: upgrade, id: sp1, to: 4-0-2, not_maps: [Covered Garden, Geared, Flooded Valley, Sanctuary, Bloody Puddles]}
   - {do: place, id: h3, kind: heli, role: dps}

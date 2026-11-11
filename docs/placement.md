@@ -163,7 +163,12 @@ Two related cases behave differently:
   - Bloonarius Prime (prime rounds).
   - X Factor and Bloody Puddles (rotating spawns).
   - Ship Capture (5-round blocks).
-  - Last Resort.
+  - Last Resort (4-round cycle: big, medium, small loop, straight; all four share the top straight).
+  - Where an `AlternateRoundSplitter` hands a new path every round (roundsPerPath 0: every such map but
+    Erosion), placement values each track cell by the share of rounds that pass it
+    (`mapgeom.round_share`, `MapModel.track_weight`): on Last Resort the top straight counts 1.0 and each
+    loop 0.25. Before, the big loop's long bottom row pulled every short-range tower to the walkway beside
+    it, out of reach of three rounds in four (Medium lost at rounds 16 and 19 on 2026-11-10).
 
 ## Discrepancies with `btd6bot/towers.py` (not changed: .py files were off limits)
 

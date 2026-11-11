@@ -64,7 +64,12 @@ def _model_for(map_name):
 # 4: a tower that needs line of sight counts only the track it can see
 #    (placement.sight_blockers): Flooded Valley's dam hides the river from
 #    every land cell, yet ninjas were measured at 0.17 by range alone.
-FIT_VERSION = 4
+# 5: on maps whose routes take turns round by round, each track cell counts
+#    by the share of rounds that pass it (MapModel.round_share). Last Resort's
+#    ninjas measured 0.61 of the early track, nearly all of it on the three
+#    loops (a quarter of the rounds each), while the top straight every round
+#    runs along is out of their reach; weighted, 0.39.
+FIT_VERSION = 5
 
 # A water tower's entry also counts the towers of its kind that fit on the
 # map's water at once (room_for), up to this many: a plan placing more subs
@@ -192,10 +197,15 @@ def _coverage(model, kind, ok, rng, visible=None):
         reach = reach & visible
     early = track & (progress <= EARLY_SPAN)
     late = track & (progress >= 1.0 - EARLY_SPAN)
+    # each track cell counts by the share of rounds that pass it (MapModel.
+    # round_share; 1 everywhere on maps whose routes all run every round)
+    weight = model.round_share() if hasattr(model, "round_share") else None
+    if weight is None or weight.shape != track.shape:
+        weight = np.ones(track.shape, np.float32)
 
     def share(part):
-        n = int(part.sum())
-        return round(float((part & reach).sum()) / n, 3) if n else 1.0
+        n = float(weight[part].sum())
+        return round(float(weight[part & reach].sum()) / n, 3) if n else 1.0
     return {"early": share(early), "late": share(late)}
 
 

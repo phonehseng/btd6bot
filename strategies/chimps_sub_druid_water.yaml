@@ -35,7 +35,10 @@ plan:
   - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}
   - {do: upgrade, id: sb2, to: 2-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 7}
+  # a1 may stand by either sub or the camo dart: on Peninsula (2026-11-10
+  # 21:29) sb1 stood out on the water with no land within 7 cells, the step
+  # was given up, and round 30's nine leads took the one life
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: dr, to: 0-0-3}
   # A second camo-seeing dart on the other half of the track before round 33:
@@ -89,7 +92,7 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], near_radius: 7}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10}
   ceramic: [{do: upgrade, id: dr, to: 0-0-3}]
   rush:
     - {do: upgrade, id: bm1, to: 2-0-3}

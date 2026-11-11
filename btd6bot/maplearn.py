@@ -405,15 +405,42 @@ class MapModel:
         is mostly scenery - cliff edges, ridges, walls. On Peninsula the guess
         put a phantom stretch of track in the middle of the rock, and the
         whole $9,000 fast-track defence was built around it, out of reach of
-        the real lane (ABR, 2026-11-04: 99 lives lost in round 22)."""
+        the real lane (ABR, 2026-11-04: 99 lives lost in round 22).
+
+        On maps whose routes take turns round by round (Last Resort's 4-round
+        cycle) each cell is worth the share of rounds that pass it
+        (round_share), so ground beside the stretch every route shares wins
+        over ground beside one route's loop."""
         traced = self.track_mask().astype(np.float32)
         if getattr(self, "geometry_version", None) is not None and traced.sum() > 0:
-            return traced
+            share = self.round_share()
+            return traced if share is None else traced * share
         guess = self.track_guess()
         if traced.sum() < 60:
             return guess
         near = cv2.dilate(traced, np.ones((9, 9), np.uint8)) > 0
         return np.maximum(traced, guess * near * 0.8 + guess * (~near) * 0.4)
+
+    def round_share(self):
+        """Float grid: the share of the rounds whose bloons pass each cell
+        (mapgeom.round_share, from the map's geometry), or None where every
+        route carries every round, the map has no geometry file, or its grid
+        does not fit this model's.
+
+        The geometry draws each path one cell narrower than the track the
+        model keeps (track_mask blurs and closes the painted heat), so the
+        grid is widened by a cell; a track cell still outside every path
+        counts in full, as it did before."""
+        try:
+            from . import mapgeom      # (mapgeom imports this module)
+            grids = mapgeom.grids_for(self)
+        except Exception:  # a map-file problem must never stop placement
+            return None
+        share = (grids or {}).get("round_share")
+        if share is None or share.shape != self.heat.shape:
+            return None
+        share = cv2.dilate(share, np.ones((3, 3), np.uint8))
+        return np.where(share > 0, share, 1.0).astype(np.float32)
 
     def progress_full(self):
         """progress() extended to every cell from the nearest traced cell."""
@@ -493,7 +520,7 @@ class MapModel:
         cv2.circle(disk, (r, r), r, 1.0, -1)
         cover = cv2.filter2D(weight, -1, disk, borderType=cv2.BORDER_CONSTANT)
         # cannot stand on the track itself, nor where the scan found it blocked
-        on_track = cv2.dilate(mask.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+        on_track = cv2.dilate((mask > 0).astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
         cover[on_track] = -1
         if valid is not None:
             cover[~valid] = -1

@@ -62,6 +62,10 @@
   "Cargo|chimps": 0.3,
   "Workshop|impoppable": 0.3,
   "Workshop|chimps": 0.3,
+  "High Finance|impoppable": 0.3,
+  "High Finance|chimps": 0.3,
+  "Ship Capture|impoppable": 0.3,
+  "Ship Capture|chimps": 0.3,
   "Castle Revenge|half_cash": 0.06,
   "Pat's Pond|half_cash": 0.3,
   "#Ouch|double_hp": 0.3,
@@ -80,7 +84,7 @@
   "Glacial Trail|primary_only": 0.06,
   "Glacial Trail|deflation": 0.06,
   "Glacial Trail|military_only": 0.06,
-  "Glacial Trail|apopalypse": 0.06,
+  "Glacial Trail|apopalypse": 0.97,
   "Glacial Trail|magic_only": 0.06,
   "Glacial Trail|double_hp": 0.06,
   "Glacial Trail|half_cash": 0.06,
@@ -92,7 +96,8 @@
   "Last Resort|magic_only": 0.1,
   "Last Resort|half_cash": 0.1,
   "Last Resort|double_hp": 0.1,
-  "Last Resort|medium": 0.1,
+  "Last Resort|medium": 1.48,
+  "Ravine|apopalypse": 0.1,
   "Bloody Puddles|apopalypse": 0.1
  }
 }
