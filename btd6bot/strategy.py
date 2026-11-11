@@ -6341,6 +6341,34 @@ class Executor:
     # freed ground once one is bought (valid_spots(removed=...)).
     REMOVAL_MIN_CELLS = 4       # it must free at least this much legal ground for the tower
     REMOVAL_TRIES = 2           # attempts per obstacle before it is left alone for the game
+                                # (more when it has more points to click: _removal_tries)
+
+    def _removal_tries(self, r):
+        """How many failed attempts obstacle r gets before it is left alone
+        for the game: REMOVAL_TRIES, or one per click point when the map
+        gives it more of them (mapgeom.removables "click_fracs")."""
+        return max(self.REMOVAL_TRIES, len(r.get("click_fracs") or ()))
+
+    def _buy_removal(self, r):
+        """Click obstacle r and pay for its removal (Game.remove_obstacle).
+        True when it is gone - it is then listed in self.removed and the
+        steps given up for want of ground come back (_ground_cleared). A
+        failed attempt is counted, and the next one clicks the obstacle's
+        next point: the middle of its outline first, then the others the
+        map gives (mapgeom._other_click_points).
+
+        Mushroom Grotto Impoppable (2026-11-11, lost at round 93): both
+        attempts on the main mushroom clicked the middle of its outline,
+        the foot of the stalk, where the game opens no removal box."""
+        fails = self.removal_fails.get(r["id"], 0)
+        points = r.get("click_fracs") or [r["frac"]]
+        fx, fy = points[fails % len(points)]
+        if self.g.remove_obstacle(fx, fy, r["cost"], name=r["name"]):
+            self.removed.append(r["id"])
+            self._ground_cleared()
+            return True
+        self.removal_fails[r["id"]] = fails + 1
+        return False
 
     def _obstacles(self):
         """This map's obstacles that can be bought now, not yet removed.
@@ -6361,7 +6389,7 @@ class Executor:
             except Exception:       # a map-file problem must never cost a game
                 self._obstacle_list = []
         return [r for r in self._obstacle_list
-                if r["id"] not in self.removed and self.removal_fails.get(r["id"], 0) < self.REMOVAL_TRIES]
+                if r["id"] not in self.removed and self.removal_fails.get(r["id"], 0) < self._removal_tries(r)]
 
     def _named_obstacle(self, name):
         """The removable obstacle a `do: clear` step names (by the map file's
@@ -6390,17 +6418,12 @@ class Executor:
             return "skip"
         if r["id"] in self.removed:
             return "done"
-        if self.removal_fails.get(r["id"], 0) >= self.REMOVAL_TRIES:
+        if self.removal_fails.get(r["id"], 0) >= self._removal_tries(r):
             return "skip"
         if cash is None or cash < r["cost"]:
             return "wait"
         log.info("clearing obstacle %s ($%s) for the plan", r["name"], r["cost"])
-        if self.g.remove_obstacle(*r["frac"], r["cost"], name=r["name"]):
-            self.removed.append(r["id"])
-            self._ground_cleared()
-            return "bought"
-        self.removal_fails[r["id"]] = self.removal_fails.get(r["id"], 0) + 1
-        return "wait"
+        return "bought" if self._buy_removal(r) else "wait"
 
     def clear_obstacle(self, cash, kind):
         """Surplus spending: when the cash covers an obstacle's price and the
@@ -6430,12 +6453,7 @@ class Executor:
         if best is None or gain < self.REMOVAL_MIN_CELLS:
             return False
         log.info("clearing obstacle %s ($%s): frees %d legal cells for %s", best["name"], best["cost"], gain, kind)
-        if self.g.remove_obstacle(*best["frac"], best["cost"], name=best["name"]):
-            self.removed.append(best["id"])
-            self._ground_cleared()
-            return True
-        self.removal_fails[best["id"]] = self.removal_fails.get(best["id"], 0) + 1
-        return False
+        return self._buy_removal(best)
 
     # A plan placement waiting for an obstacle (_clear_for_place) looks again
     # this often (s): the cash for the removal comes in meanwhile.
@@ -6498,7 +6516,7 @@ class Executor:
             self._clear_search_tick = tick
             entry = self.clear_wait[key] = (gone, self._obstacle_for_place(kind, step))
         choice = entry[1]
-        if choice is None or self.removal_fails.get(choice["id"], 0) >= self.REMOVAL_TRIES:
+        if choice is None or self.removal_fails.get(choice["id"], 0) >= self._removal_tries(choice):
             self.clear_wait.pop(key, None)
             return None
         need = choice["cost"] + self.g.price(kind)
@@ -6512,12 +6530,9 @@ class Executor:
         log.info("clearing obstacle %s ($%s) for plan step %s: no ground for its %s without it",
                  choice["name"], choice["cost"], step.get("id"), kind)
         self.clear_wait.pop(key, None)
-        if self.g.remove_obstacle(*choice["frac"], choice["cost"], name=choice["name"]):
-            self.removed.append(choice["id"])
-            self._ground_cleared()
+        if self._buy_removal(choice):
             self._defer(step, key, 0)   # stays in line: placed at the next tick
             return "progress"
-        self.removal_fails[choice["id"]] = self.removal_fails.get(choice["id"], 0) + 1
         return self._defer(step, key, self.CLEAR_RETRY_S)
 
     def _obstacle_for_place(self, kind, step):

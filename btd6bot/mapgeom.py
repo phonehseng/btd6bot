@@ -1848,6 +1848,42 @@ def _centre(areas):
     return best
 
 
+def _other_click_points(areas, centre, scene_position):
+    """World points [x, z, height] to click when a click on an obstacle's
+    `centre` (_centre) opened no removal box, most promising first:
+
+      * the map file's own position of the obstacle's scene object, when it
+        lies within one outline's size of the centre (further away it is an
+        offset inside a parent object, not a place on the map);
+      * the points half-way from the centre to the outline's far, left,
+        right and near edge - far (greater z, higher on screen) first,
+        because an obstacle is drawn standing up from its outline.
+
+    Mushroom Grotto Impoppable (2026-11-11, loss case
+    20261111_111519_MushroomGrotto_impoppable): the main mushroom's outline
+    is a small patch at the foot of its stalk. Two clicks on the patch's
+    middle opened no box, the obstacle was left alone for the game, and the
+    845 legal cells under it - the only ground for a village, a Super Monkey
+    or an ace on this map - were never freed. The map file puts the scene
+    object 19 units further up, on the mushroom's cap."""
+    outline = max((a["polygons"][0] for a in areas if a.get("polygons") and len(a["polygons"][0]) >= 3),
+                  key=len, default=None)
+    if outline is None:
+        return []
+    p = np.asarray(outline, float)[:, :2]
+    (x0, z0), (x1, z1) = p.min(axis=0), p.max(axis=0)
+    cx, cz, height = centre[0], centre[1], (centre[2] if len(centre) > 2 else 0.0)
+    points = []
+    if scene_position is not None and len(scene_position) >= 2:
+        sx, sz = float(scene_position[0]), float(scene_position[1])
+        off = float(np.hypot(sx - cx, sz - cz))
+        if 1.0 < off <= max(x1 - x0, z1 - z0):
+            points.append([round(sx, 1), round(sz, 1), height])
+    for x, z in ((cx, (cz + z1) / 2), ((cx + x0) / 2, cz), ((cx + x1) / 2, cz), (cx, (cz + z0) / 2)):
+        points.append([round(float(x), 1), round(float(z), 1), height])
+    return points
+
+
 def removables(map_name, playfield=None):
     """The obstacles a player can pay to remove on a map, [] when none:
 
@@ -1858,7 +1894,9 @@ def removables(map_name, playfield=None):
                        deleted and what lies beneath shows) or a surface type
       position         world [x, z, height] of the middle of the obstacle
                        (where to click it); "frac" the same as screen
-                       fractions (fx, fy) when a playfield is given
+                       fractions (fx, fy) when a playfield is given, and
+                       "click_fracs" that point followed by the others to
+                       try when it opens no box (_other_click_points)
       polygons         its outline(s), world [x, z]
       blocks_sight     it is (part of) a line-of-sight blocker
       rounds, cash_reward  Three Mines 'Round's ore: mined for that many
@@ -1885,7 +1923,9 @@ def removables(map_name, playfield=None):
             "blocks_sight": any(a.get("blocks_sight") for a in own),
         }
         if proj is not None:
-            entry["frac"] = [round(float(v), 4) for v in proj.to_frac([entry["position"]])[0]]
+            points = [entry["position"]] + _other_click_points(own, entry["position"], r.get("position"))
+            fracs = [[round(float(v), 4) for v in f] for f in proj.to_frac(points)]
+            entry["frac"], entry["click_fracs"] = fracs[0], fracs
         if r.get("class") == "RoundRemoveable":
             entry.update(rounds=r.get("rounds"), cash_reward=r.get("cash_reward"))
         out.append(entry)
