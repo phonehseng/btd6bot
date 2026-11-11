@@ -5001,9 +5001,9 @@ class Executor:
         rounds far ahead stay forbidden. Unknown cash: kept as before.
 
         It also keeps nothing while a one-life game's round being played is
-        rated under 1 (_lost_as_it_stands): see there."""
+        rated under 1 and no higher than due_round (_lost_as_it_stands)."""
         keep = max(0.0, cost - self.income_until(due_round, rnd))
-        if weak_now and keep and self._lost_as_it_stands(rnd):
+        if weak_now and keep and self._lost_as_it_stands(rnd, due_round):
             self._note_lost_round_hold(what, due_round, rnd)
             return 0.0
         cash = getattr(self, "cash_seen", None)
@@ -5153,7 +5153,7 @@ class Executor:
         # too-dear rule there: releasing it let idle spending eat the cash
         # of Spillway ABR's Maim MOAB step (test_plan_blimp_step_keeps_its_cash).
         if weak and threat_answer and due_round is not None and due_round > rnd \
-                and self._lost_as_it_stands(rnd):
+                and self._lost_as_it_stands(rnd, due_round):
             self._note_lost_round_hold(what, due_round, rnd)
             return None
         if weak and threat_answer and self._near_hold_too_late(due_round, cost, rnd):
@@ -5171,26 +5171,37 @@ class Executor:
     # tower at full strength (the same line reinforce.py draws for a crisis).
     LOST_MARGIN = 1.0
 
-    def _lost_as_it_stands(self, rnd):
-        """Would the round being played end a one-life game as the defence
-        stands? True when the mode has one life and the damage model rates
-        round rnd itself under LOST_MARGIN. False with lives to spare (a
-        leak costs lives, not the game) and when the round cannot be rated.
+    def _lost_as_it_stands(self, rnd, due_round):
+        """Is the round being played the one that ends a one-life game,
+        rather than due_round, the round some cash is held for? True when
+        the mode has one life and the damage model rates round rnd under
+        LOST_MARGIN and no higher than due_round. False with lives to spare
+        (a leak costs lives, not the game) and when either round cannot be
+        rated.
 
-        A hold for a later round's answer is then worth nothing: no income
-        arrives before this round's bloons, and if they get through there
-        is no later round. Chutes Impoppable (2026-11-11, case
-        20261111_041712): round 98 was rated 0.29 and $26,389 was in hand.
-        The round-100 BAD answer ($31,200) was two rounds away and payable
-        once round 98's income came in, so neither the far-round rule nor
-        _near_hold_too_late let go of it: "idle with $26245: saving for bad
-        answer", while the plan's second Ground Zero ace ($19,200) waited,
-        and round 98 took the one life sixteen seconds in. Round 97 (0.81)
-        had held $20,080 of $25,355 the same way."""
-        if not (getattr(self, "rules", None) or {}).get("one_life") or rnd is None:
+        A hold for the later round's answer is then worth nothing: no
+        income arrives before this round's bloons, and if they get through
+        there is no later round. Chutes Impoppable (2026-11-11, case
+        20261111_041712): round 98 was rated 0.29, the weakest round left,
+        and $26,389 was in hand. The round-100 BAD answer ($31,200) was two
+        rounds away and payable once round 98's income came in, so neither
+        the far-round rule nor _near_hold_too_late let go of it: "idle with
+        $26245: saving for bad answer", while the plan's second Ground Zero
+        ace ($19,200) waited, and round 98 took the one life sixteen
+        seconds in.
+
+        The later round has to be rated at least as high, because the model
+        rates many rounds under 1 that hold: Spillway Impoppable (same
+        night, 04:18) passed rounds 34-39 rated 0.39-0.99 and lost to round
+        40's MOAB, rated 0.67. A hold for a round the model fears more than
+        the one being played stays as it was."""
+        if not (getattr(self, "rules", None) or {}).get("one_life") or rnd is None or due_round is None:
             return False
-        worst = self._rated("playing", rnd, lambda fc, towers: fc.worst(towers, [rnd]))
-        return worst is not None and worst[0] is not None and worst[0] < self.LOST_MARGIN
+        pair = self._rated(f"lost before round {due_round}", rnd,
+                           lambda fc, towers: (fc.margin(towers, rnd), fc.margin(towers, due_round)))
+        if not pair or pair[0] is None or pair[1] is None:
+            return False
+        return pair[0] < self.LOST_MARGIN and pair[0] <= pair[1]
 
     def _note_lost_round_hold(self, what, due_round, rnd):
         """Log, once per round and purchase, that _lost_as_it_stands let go
@@ -5198,8 +5209,9 @@ class Executor:
         note = ("lost-round-hold", what, rnd)
         if note not in self._notes():
             self.noted.add(note)
-            log.warning("round %d would end this one-life game as the defence stands: nothing is held "
-                        "for %s (round %d), the cash goes to this round", rnd, what, due_round)
+            log.warning("round %d would end this one-life game as the defence stands and is rated no "
+                        "higher than round %d: nothing is held for %s, the cash goes to this round",
+                        rnd, due_round, what)
 
     def _near_hold_too_late(self, due_round, cost, rnd):
         """Is a hold for a round at most FAR_ROUNDS away pointless for the

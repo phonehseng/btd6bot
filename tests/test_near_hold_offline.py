@@ -69,44 +69,59 @@ def test_unknown_cash_and_far_rounds_are_left_to_the_older_rules():
     assert not ex._near_hold_too_late(100, None, 98)
 
 
-def rated(ex, margin):
-    """Make the damage model rate the round being played at `margin`."""
-    ex._rated = lambda what, rnd, rate: (margin, rnd)
+def rated(ex, playing, due):
+    """Make the damage model rate the round being played at `playing` and
+    the round the cash is held for at `due`."""
+    ex._rated = lambda what, rnd, rate: (playing, due)
     return ex
 
 
 def test_the_chutes_case_holds_nothing_while_round_98_would_end_the_game():
     """Chutes Impoppable (2026-11-11, case 20261111_041712): $26,389 in hand
-    at round 98, rated 0.29; the $31,200 BAD answer was payable after the
-    round's income, so the cash was held in full and the round was lost."""
-    ex = rated(bare(cash=26_389.0), 0.29)
+    at round 98, rated 0.29 and the weakest round left; the $31,200 BAD
+    answer was payable after the round's income, so the cash was held in
+    full and the round was lost."""
+    ex = rated(bare(cash=26_389.0), 0.29, 0.5)
     assert ex._hold_for(100, 31_200.0, 98, "the bad answer", threat_answer=True) is None
     assert not ex.saving_for_threat and ex.held_cash == 0.0
     assert ("lost-round-hold", "the bad answer", 98) in ex.noted
 
 
 def test_a_far_hold_keeps_nothing_while_the_round_played_would_end_the_game():
-    """Round 97 of the same game (0.81): $20,080 of $25,355 was kept for
-    round 100's answer, three rounds away."""
-    ex = rated(bare(cash=25_355.0, income=3_700.0), 0.81)
+    """The same three rounds before the answer's round: the far-round rule
+    would keep what income cannot rebuild ($31,200 - 3 x $3,700)."""
+    ex = rated(bare(cash=25_355.0, income=3_700.0), 0.29, 0.5)
     assert ex._far_keep(31_200.0, 100, 97, True, "the bad answer") == 0.0
     assert ex._hold_for(100, 31_200.0, 97, "the bad answer", threat_answer=True) is None
     assert ex.held_cash == 0.0
 
 
+def test_a_later_round_the_model_fears_more_keeps_its_hold():
+    """Spillway Impoppable (2026-11-11 04:18): rounds 34-39 were rated
+    0.39-0.99 and all held; round 40's MOAB, rated 0.67, ended the game.
+    At round 38 (0.81) the hold for round 40's answer must stand."""
+    ex = rated(bare(cash=5_000.0, income=1_500.0), 0.81, 0.67)
+    assert not ex._lost_as_it_stands(38, 40)
+    assert ex._hold_for(40, 6_000.0, 38, "the moab answer", threat_answer=True) is False
+    assert ex.saving_for_threat
+
+
 def test_a_round_rated_to_hold_keeps_the_older_rules():
-    ex = rated(bare(cash=26_389.0), 1.2)       # weak (under 1.5) but not lost
+    ex = rated(bare(cash=26_389.0), 1.2, 1.3)       # weak (under 1.5) but not lost
     assert ex._hold_for(100, 31_200.0, 98, "the bad answer", threat_answer=True) is False
-    ex = rated(bare(cash=25_355.0, income=3_700.0), 1.2)
+    ex = rated(bare(cash=25_355.0, income=3_700.0), 1.2, 1.3)
     assert ex._far_keep(31_200.0, 100, 97, True, "the bad answer") == 31_200.0 - 3 * 3_700.0
 
 
-def test_lives_to_spare_keep_the_older_rules():
-    """With lives left a leak costs lives, not the game: the hold stands."""
-    ex = rated(bare(cash=26_389.0), 0.29)
+def test_lives_to_spare_and_unrated_rounds_keep_the_older_rules():
+    """With lives left a leak costs lives, not the game: the hold stands.
+    So it does when the model cannot rate one of the two rounds."""
+    ex = rated(bare(cash=26_389.0), 0.29, 0.5)
     ex.rules = {"lives": 100}
-    assert not ex._lost_as_it_stands(98)
+    assert not ex._lost_as_it_stands(98, 100)
     assert ex._hold_for(100, 31_200.0, 98, "the bad answer", threat_answer=True) is False
+    ex = rated(bare(cash=26_389.0), 0.29, None)
+    assert not ex._lost_as_it_stands(98, 100)
 
 
 if __name__ == "__main__":
