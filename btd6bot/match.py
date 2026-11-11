@@ -839,6 +839,7 @@ class Match:
                         self._mark("abilities")
                         self._abilities(last_round, dropped=True)
                 self._prev_lives_read = lives
+                self._report_stuck_round(f, rnd, last_round, now)
                 # rounds only move forward, one or two at a time
                 if rnd is not None and last_round is not None and last_round < rnd <= last_round + 2:
                     self.tracer.end_round()
@@ -980,6 +981,37 @@ class Match:
                 self._abilities(last_round)
             time.sleep(0.02)
         return self._finish("timeout", last_round)
+
+    # no round change for this long while the game runs: say what the
+    # round reader sees (at most once a STUCK_REPORT_EVERY)
+    STUCK_ROUND_S = 45.0
+    STUCK_REPORT_EVERY = 60.0
+
+    def _report_stuck_round(self, f, rnd, last_round, now):
+        """Log the round reader's raw texts and save the counter's crops when
+        the tracked round has not changed for STUCK_ROUND_S while a round is
+        being played. Water Park Impoppable (2026-11-11 02:26-02:28): the
+        tracked round stayed 88 for 79 s while the game played on to round
+        91 and lost, the counter in plain view (owner), and nothing showed
+        what the reader saw. Evidence only: it changes no decision."""
+        if not self._in_round or last_round is None:
+            return
+        if now - self._t_round_change < self.STUCK_ROUND_S:
+            return
+        if now - getattr(self, "_t_stuck_report", float("-inf")) < self.STUCK_REPORT_EVERY:
+            return
+        self._t_stuck_report = now
+        texts = getattr(self.g.hud, "last_round_texts", None)
+        log.warning("round %s unchanged for %.0f s while the game runs: the reader returns %s "
+                    "(raw texts %s)", last_round, now - self._t_round_change, rnd, texts)
+        try:
+            from .vision import crop, save
+            stamp = time.strftime("%Y%m%d_%H%M%S")
+            for name in ("round", "round_shifted"):
+                save(crop(f, self.g.hud.layout[name]), f"logs/round_stuck_{stamp}_{name}.png")
+            save(f, f"logs/round_stuck_{stamp}_frame.png")
+        except Exception:
+            log.exception("saving the stuck round's crops failed")
 
     # rounds longer than this are not the game's pace (a pause, a popup,
     # a round the bot held back) and are left out of the measured length

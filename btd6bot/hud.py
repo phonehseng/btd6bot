@@ -198,16 +198,36 @@ class Hud:
         return value
 
     def round(self, frame, shifted=None):
+        """The round counter ("89/100"), read at its place and at the place an
+        open upgrade panel shifts it to. A reading shaped like the counter
+        (round / the known total) wins over a bare run of digits from either
+        place: Water Park Impoppable (2026-11-11 02:26-02:27) kept round 88 for
+        79 s while the game played on to round 91 and lost, though the counter
+        was in plain view, and a digits-only parse from the wrong place is one
+        way that happens. The raw texts of the last call are kept in
+        self.last_round_texts for the stuck-round report (Match)."""
         regions = [self.layout["round"], self.layout["round_shifted"]]
         if shifted is not None:
             regions = [regions[1] if shifted else regions[0]]
+        texts, found = [], []
         for reg in regions:
             text, conf = rec_text(crop(frame, reg))
+            texts.append(text)
             value = self._parse_round(text)
             if value is not None:
-                self.last_round = value
-                return value
-        return None
+                found.append((self._counter_shaped(text), value))
+        self.last_round_texts = texts
+        if not found:
+            return None
+        found.sort(key=lambda sv: not sv[0])      # counter-shaped readings first
+        value = found[0][1]
+        self.last_round = value
+        return value
+
+    def _counter_shaped(self, text):
+        """Is `text` the counter's own shape, round / known total?"""
+        m = re.search(r"(\d+)[/|\\](\d+)", text.replace(" ", ""))
+        return bool(m and (self.total_rounds is None or int(m.group(2)) == self.total_rounds))
 
     def _parse_round(self, text):
         text = text.replace(" ", "")
