@@ -4714,7 +4714,9 @@ class Executor:
         next (two rounds ahead with one life, where it is not waited for even
         when the plan is not stuck; then, unless the plan's next step is itself blimp damage, the
         most blimp damage per dollar is bought; when the defence is far short,
-        RAMP_PANIC, even that step waits). When the plan's next step is itself blimp
+        RAMP_PANIC, even that step waits; with one life the plan also loses its
+        turn at once when its next step cannot be paid before round R,
+        _plan_step_out_of_reach). When the plan's next step is itself blimp
         damage that can be paid before round R, "plan_hold": the plan goes on
         and its cash is kept for it."""
         cls = max((g["bloon"] for g in TH.round_groups(self.round_set, R)
@@ -4770,7 +4772,8 @@ class Executor:
                 # the plan's next step is itself blimp damage it can pay for in
                 # time: keep the cash for it (Match's idle spending must not eat it)
                 return "plan_hold"
-            if rnd < last_call or not (one_life or self._plan_stuck(self.plan[self.idx])):
+            if (rnd < last_call or not (one_life or self._plan_stuck(self.plan[self.idx]))) \
+                    and not (one_life and self._plan_step_out_of_reach(self.plan[self.idx], money, R)):
                 return "plan"
             # The round before the blimps, still short, and the plan is stuck
             # (steps set aside, or its next placement already refused this
@@ -4798,6 +4801,39 @@ class Executor:
             if r == "wait":
                 return self._wait_total(opt.get("cost"))
         return "none"
+
+    def _plan_step_out_of_reach(self, st, money, R):
+        """Can plan step st not be bought before blimp round R? True when
+        its next purchase (_first_step_cost: the placement, or the next tier
+        of the upgrade) costs more than `money`, the cash in hand plus the
+        whole income of the rounds before R. With one life such a step loses
+        its turn to the blimp check at once (_answer_ramp), not only two
+        rounds before the blimps: waiting for it buys nothing before round R
+        whatever happens.
+
+        Party Parade Impoppable (2026-11-10 21:29, chimps_ninja_sun, case
+        20261110_214932): from round 70 the blimp check read round 75's
+        seven BFBs at 1.3x of the 2.5x wanted. The plan's next step was the
+        Sun Avatar (s1 -> 3-0-2, $24,000) with $5,157 in hand, out of reach
+        before round 79 by reinforce's own count, yet the ramp answered
+        "plan" through rounds 70-72. Reinforce spent those rounds' $17k on
+        Super Monkey tiers the damage model rated "0.63 -> 0.63" for rounds
+        76-79, and from round 73 two rounds of cash could add about 2,700 of
+        the 11,900 blimp HP still missing. Round 75 took the one life.
+
+        A step the executor cannot price (its tower is gone) is not counted
+        out of reach: the plan keeps its turn as before."""
+        try:
+            cost = self._first_step_cost(st)
+        except Exception:
+            return False
+        if cost is None or cost == float("inf"):
+            return False
+        if cost > money and ("ramp-plan-unreachable", R) not in self.noted:
+            self.noted.add(("ramp-plan-unreachable", R))
+            log.warning("blimp ramp round %d: plan step %s ($%d) cannot be paid before it ($%d) - "
+                        "the plan gives its turn to blimp damage", R, st, cost, money)
+        return cost > money
 
     def _plan_stuck(self, st):
         """Is the plan unlikely to deliver its next step soon? True when
