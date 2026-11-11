@@ -5,7 +5,8 @@ Usage: python tools/check.py [--jobs N]   (exit code 0 = safe to commit / reload
 The steps run side by side (by default half the CPU cores, so a game the
 bot is playing keeps the other half): one after another they now take over
 ten minutes, longer than an hourly caretaker run can wait for one command.
-The results are still printed in a fixed order.
+The results are still printed in a fixed order; the tests with wall-clock
+limits (CLOCKED) come last, each on its own.
 
 Each step runs at below-normal CPU priority with one math-library thread,
 so the live bot and the game come first. A run started at normal priority
@@ -28,6 +29,13 @@ ROOT = Path(__file__).resolve().parents[1]
 # 16 steps side by side that is hundreds of busy threads
 ONE_THREAD = {k: "1" for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "OPENCV_FOR_THREADS_NUM")}
 
+# Tests that hold the code to a wall-clock limit run after all the others,
+# one at a time. Beside fifteen other steps at below-normal priority the
+# reinforce look-budget test (a 6 s budget, a 1 s limit for a remembered
+# answer) failed on the clock alone in the runs of 2026-11-11 07:18-11:44,
+# while it passed every time it was run by itself on the same commit.
+CLOCKED = {"test_reinforce_budget_offline.py"}
+
 
 def run_step(cmd):
     """Run one check step; returns (name, passed, last lines of its output)."""
@@ -44,13 +52,21 @@ if __name__ == "__main__":
                     help="steps run at the same time (1 = one by one)")
     args = ap.parse_args()
     steps = [[sys.executable, "-c", "import btd6bot.runner, btd6bot.strategy as s; s.load_all()"]]
-    steps += [[sys.executable, str(t)] for t in sorted((ROOT / "tests").glob("test_*.py"))]
+    tests = sorted((ROOT / "tests").glob("test_*.py"))
+    steps += [[sys.executable, str(t)] for t in tests if t.name not in CLOCKED]
+    alone = [[sys.executable, str(t)] for t in tests if t.name in CLOCKED]
     failed = []
+
+    def report(name, ok, tail):
+        print(("PASS " if ok else "FAIL ") + name, flush=True)
+        if not ok:
+            failed.append(name)
+            print(tail)
+
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        for name, ok, tail in pool.map(run_step, steps):   # map keeps the step order
-            print(("PASS " if ok else "FAIL ") + name, flush=True)
-            if not ok:
-                failed.append(name)
-                print(tail)
+        for result in pool.map(run_step, steps):   # map keeps the step order
+            report(*result)
+    for cmd in alone:                              # the pool is empty by now
+        report(*run_step(cmd))
     print("ALL OK" if not failed else f"{len(failed)} FAILED: {failed}")
     sys.exit(1 if failed else 0)

@@ -22,9 +22,11 @@ Covers:
 Run: python tests/test_threats_offline.py"""
 import json
 import logging
+import os
 import random
 import sys
 import time
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -554,20 +556,39 @@ def test_every_strategy_pops_every_bloon_in_time():
     """Each general strategy, in each mode it lists, played with the game's own
     income (no Double Cash, no farms counted): no round may bring a bloon the
     defence cannot pop at that moment."""
-    strats = S.load_all()
-    gaps = []
-    for sid, s in sorted(strats.items()):
-        if s.get("achievement") or not s.get("bot_ready", True):
-            continue
-        # an optimized build is played as it was planned: its Fast Track
-        # start and Double Cash income (strategies/optimized, docs/optimizer.md)
-        scenario = (s.get("optimizer") or {}).get("scenario") if s.get("source") == "optimized" else None
-        for mode in s.get("modes", []):
-            if mode == "apopalypse":
-                continue
-            r = SIM.simulate(s, mode, ticks=8, scenario=scenario)
-            gaps += [(sid, mode, rnd, need, how) for rnd, need, how in r["gaps"]]
+    games = [(sid, mode) for sid, s in sorted(S.load_all().items())
+             if not s.get("achievement") and s.get("bot_ready", True)
+             for mode in s.get("modes", []) if mode != "apopalypse"]
+    # The games do not depend on each other and each takes seconds of the
+    # damage model: one after another they had grown to 25 minutes of one
+    # core (2026-11-11), longer than the rest of tools/check.py together.
+    with ProcessPoolExecutor(max_workers=GAME_WORKERS) as pool:
+        gaps = [gap for found in pool.map(_gaps_of_game, games, chunksize=4) for gap in found]
     assert not gaps, gaps[:10]
+
+
+# Worker processes for test_every_strategy_pops_every_bloon_in_time: a
+# quarter of the cores, so tools/check.py's other steps and the live bot
+# keep theirs.
+GAME_WORKERS = max(2, (os.cpu_count() or 4) // 4)
+_WORKER_STRATS = None       # a worker's own copy of strategy.load_all()
+
+
+def _gaps_of_game(game):
+    """[(strategy id, mode, round, bloon need, how)] for one simulated game
+    of strategy `sid` in `mode` - the rounds that bring a bloon the defence
+    cannot pop at that moment. Runs in a worker process, which loads the
+    strategies itself, once (_WORKER_STRATS)."""
+    global _WORKER_STRATS
+    if _WORKER_STRATS is None:
+        _WORKER_STRATS = S.load_all()
+    sid, mode = game
+    s = _WORKER_STRATS[sid]
+    # an optimized build is played as it was planned: its Fast Track
+    # start and Double Cash income (strategies/optimized, docs/optimizer.md)
+    scenario = (s.get("optimizer") or {}).get("scenario") if s.get("source") == "optimized" else None
+    r = SIM.simulate(s, mode, ticks=8, scenario=scenario)
+    return [(sid, mode, rnd, need, how) for rnd, need, how in r["gaps"]]
 
 
 def test_ramp_passes_over_an_answer_it_cannot_finish():
