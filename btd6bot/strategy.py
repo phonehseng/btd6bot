@@ -4572,7 +4572,23 @@ class Executor:
                 return R, load, ratio
             if first is None:
                 first = (R, load, ratio)      # held: reported only if no later round is short
+                if self._held_round_weak(R, rnd):
+                    return first              # it does not really hold: no looking past it
         return first
+
+    def _held_round_weak(self, R, rnd):
+        """True when blimp round R passes the blimp check but the damage model
+        rates it under 1 on the board as it stands - the round is weak for
+        reasons the blimp sum does not see (its non-blimp bloons, reach).
+
+        _ramp_due then reports R and does not look past it: a later short
+        round would draw the cash forward and leave R weaker still. Bazaar
+        Half Cash (build replay, 2026-11-10): from 358c86c the check skipped
+        held round 78 for the short rounds 79-80 and the ace bought for round
+        78 stayed at 3-0-0; round 78 fell from 0.53 to 0.39 in the model.
+        With no rating (no forecast) the round counts as holding, as before."""
+        rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
+        return bool(rated) and rated[0] is not None and rated[0] < 1.0
 
     def model_bar(self, ratio, bar):
         """The damage-model rating needed to overrule a blimp check that reads
