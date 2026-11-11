@@ -3822,6 +3822,27 @@ class Executor:
                       key=lambda p: -getattr(p, "spent", 0))
         return [p.tid for p in main[:3]]
 
+    def _radar_near_ids(self):
+        """Where a Radar Scanner village goes: beside the (up to) three
+        biggest towers that do not see camo on their own
+        (dps_model.detects_camo) - the towers its sight is for. When every
+        tower sees camo already, the biggest towers as for any village.
+
+        The biggest towers alone can be the wrong place: in the Logs ABR
+        replay of double_hp_sniper_sun the camo-lead answer came at round 27
+        with a ninja, a map-wide Night Vision sniper and a second ninja as
+        the three biggest - all three see camo - and the village went
+        between them, a third of the map from the dart and the alchemist it
+        was bought for. The dart (later a 5-2-0 Juggernaut under that
+        village's Primary Mentoring) stood outside it and round 63 was rated
+        0.63 instead of 2.5 (tests/test_abr_double_hp_sniper_sun_offline.py)."""
+        from . import dps_model as D
+        blind = sorted((p for p in self._towers()
+                        if p.kind in T.TOWERS and p.kind not in ("village", "farm")
+                        and not D.detects_camo(p.kind, tuple(p.tiers))),
+                       key=lambda p: -getattr(p, "spent", 0))
+        return [p.tid for p in blind[:3]] or self._near_ids()
+
     def _range_fn(self):
         """in_range(aura_tid, tid) for threats.covers: is tower `tid` inside the
         range of support tower `aura_tid`? Positions are read once per call
@@ -5312,10 +5333,8 @@ class Executor:
             if self.kind_allowed("village"):
                 village = next((p for p in self.g.towers.values() if p.kind == "village"), None)
                 if village is None:
-                    main = sorted((p for p in self.g.towers.values() if p.kind != "hero"),
-                                  key=lambda p: -p.spent)[:3]
                     steps.append({"do": "place", "kind": "village", "role": "support",
-                                  "near": [p.tid for p in main], "near_radius": 8})
+                                  "near": self._radar_near_ids(), "near_radius": 8})
                 else:
                     to = list(village.tiers)
                     to[1] = max(to[1], 2)
