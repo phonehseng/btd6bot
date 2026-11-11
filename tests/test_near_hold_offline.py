@@ -79,6 +79,16 @@ def test_a_likely_lost_round_holds_nothing_for_a_later_one():
     assert ("lost-first", "bad answer", 98) in ex.noted
 
 
+def test_likely_lost_comes_before_the_far_round_rule():
+    """Enchanted Glade Impoppable (2026-11-11): round 97, round 98 rated
+    0.43, round 100's bad answer three rounds ahead - the far-round rule
+    held $26,200 of $37,320 and the plan's Sun Avatar waited."""
+    ex = bare(cash=37_320.0, margin=0.43, income=8_000.0)
+    ex._far_keep = lambda cost, due, rnd, weak, what: 26_200.0
+    assert ex._hold_for(100, 37_320.0, 97, "bad answer", threat_answer=True) is None
+    assert ex.held_cash == 0.0 and not ex.saving_for_threat
+
+
 def test_likely_lost_needs_one_life_and_a_rating():
     ex = bare(cash=26_245.0, margin=0.29)
     ex.rules = {"lives": 100}

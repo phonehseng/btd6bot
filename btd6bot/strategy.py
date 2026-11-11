@@ -5251,6 +5251,18 @@ class Executor:
             self.firm_hold = True        # Match keeps reinforcing off it, even in a crisis round
             self.saving_for_threat = True
             return False
+        # before the far-round rule: Enchanted Glade Impoppable (2026-11-11,
+        # case 20261111_093749_EnchantedGlade_impoppable) held $26,200 of $37,320 for round 100 three
+        # rounds ahead while round 98 was rated 0.43, and the plan's $24,000
+        # Sun Avatar waited until the game was lost
+        if weak and threat_answer and self._likely_lost_first(due_round, rnd):
+            note = ("lost-first", what, rnd)
+            if note not in self._notes():
+                self.noted.add(note)
+                log.warning("round %d is rated likely lost with one life: nothing is held for %s "
+                            "(round %d) - it is worthless if this round ends the game; the cash "
+                            "goes to this round", rnd, what, due_round)
+            return None
         if cost is not None and due_round is not None and due_round - rnd > self.FAR_ROUNDS and weak:
             keep = self._far_keep(cost, due_round, rnd, True, what)
             self.held_cash = getattr(self, "held_cash", 0.0) + keep
@@ -5266,14 +5278,6 @@ class Executor:
         # is for the very rounds that make this one weak, and has its own
         # too-dear rule there: releasing it let idle spending eat the cash
         # of Spillway ABR's Maim MOAB step (test_plan_blimp_step_keeps_its_cash).
-        if weak and threat_answer and self._likely_lost_first(due_round, rnd):
-            note = ("lost-first", what, rnd)
-            if note not in self._notes():
-                self.noted.add(note)
-                log.warning("round %d is rated likely lost with one life: nothing is held for %s "
-                            "(round %d) - it is worthless if this round ends the game; the cash "
-                            "goes to this round", rnd, what, due_round)
-            return None
         if weak and threat_answer and self._near_hold_too_late(due_round, cost, rnd):
             note = ("near-too-late", what, rnd)
             if note not in self._notes():

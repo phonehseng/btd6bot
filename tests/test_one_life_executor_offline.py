@@ -140,8 +140,19 @@ def chutes(margin):
     return ex
 
 
-def test_a_weak_round_does_not_hold_all_the_cash_for_a_far_threat():
+def test_a_likely_lost_round_holds_nothing_for_a_far_threat():
+    """Rated under Executor.LIKELY_LOST (0.5): round 100's answer is worth
+    nothing if round 94 takes the one life, so nothing is held for it
+    (_likely_lost_first, which comes before the far-round rule)."""
     ex = chutes(0.25)
+    assert ex._threat_tick(27_000, 94) is None
+    assert not ex.saving_for_threat and ex.held_cash == 0.0
+
+
+def test_a_weak_round_does_not_hold_all_the_cash_for_a_far_threat():
+    """Weak but not likely lost (0.8): only the part income cannot rebuild
+    is held."""
+    ex = chutes(0.8)
     assert ex._threat_round("bad", 94) == 100
     assert ex._threat_tick(27_000, 94) is None              # the plan and reinforcing go on
     assert not ex.saving_for_threat                         # so Match lets reinforce.py spend
@@ -152,7 +163,7 @@ def test_a_weak_round_does_not_hold_all_the_cash_for_a_far_threat():
     # reinforcing spends what is not held: a purchase that lifts round 94
     toy = ToyEx()
     toy.held_cash = ex.held_cash
-    status = R.buy_best(toy, toy_forecast(0.25), 27_000, 94, 100)
+    status = R.buy_best(toy, toy_forecast(0.8), 27_000, 94, 100)
     assert status == "bought" and toy.bought, status
 
 
