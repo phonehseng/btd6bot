@@ -4077,6 +4077,47 @@ class Executor:
         return (grids or {}).get("blimp_track")
 
     ANSWER_COPIES = 3        # new towers of one kind an answer need may place (_new_tower_option)
+    # A finished copy must deal at least this share of what a new copy is
+    # credited with before the blimp check places another (_copy_speaks_against)
+    COPY_MIN_SHARE = 0.25
+
+    def _answer_copy_ids(self, need, kind):
+        """The ids of the towers of one kind placed for one answer need, in
+        the order _new_tower_option hands them out."""
+        base = f"ans_{need.replace('+', '_')}_{kind}"
+        return [base] + [f"{base}{n}" for n in range(2, self.ANSWER_COPIES + 1)]
+
+    def _copy_speaks_against(self, kind, tiers, credited, load, track, rng, reach):
+        """Do the towers the blimp check already placed say that another
+        `kind` at `tiers` is not worth buying? `credited` is the blimp damage
+        _dps_options gives a new one - on about 2.5 x its range of track,
+        since nobody knows its spot yet.
+
+        Yes when a copy standing has not reached those tiers (finishing it
+        is the same purchase without a second base price, and _dps_options
+        offers that upgrade whenever it adds damage in reach), or when a
+        copy that has them deals under COPY_MIN_SHARE of the credit from
+        where it stands: this map's spots do not give that kind the reach
+        the credit assumes.
+
+        Workshop Impoppable (2026-11-11 08:23, chimps_ninja_sun): the check
+        read round 40's MOAB at 0.0x from round 35. It placed three bombs
+        within seven seconds, each "toward new bomb 0-3-0", and upgraded
+        none - a bomb standing was rated by the track in its reach (next to
+        none on Workshop's belts), a new one by the usual credit, so the new
+        one always won. Two bare supers followed: $6,750 on five towers
+        without an upgrade, more than the Sticky Bomb the plan was $6,000
+        short of, and the MOAB took the one life."""
+        for tid in self._answer_copy_ids("blimps", kind):
+            p = self.g.towers.get(tid)
+            if p is None or p.kind != kind:
+                continue
+            if any(have < want for have, want in zip(p.tiers, tiers)):
+                return True
+            dealt = TH.blimp_capacity([(tid, kind, list(p.tiers))], load, track, rng, reach)
+            if dealt < self.COPY_MIN_SHARE * credited:
+                return True
+        return False
 
     def _new_tower_option(self, need, kind, cost, tiers):
         """An answer option that places a new tower and upgrades it.
@@ -4095,10 +4136,8 @@ class Executor:
         (the blimp check's best damage per dollar, each counted in full)
         until no legal ace spot was left on the map; past the limit the
         upgrades of the towers standing come next instead."""
-        base = f"ans_{need.replace('+', '_')}_{kind}"
         towers = getattr(getattr(self, "g", None), "towers", None) or {}
-        ids = [base] + [f"{base}{n}" for n in range(2, self.ANSWER_COPIES + 1)]
-        tid = next((t for t in ids if t not in towers), None)
+        tid = next((t for t in self._answer_copy_ids(need, kind) if t not in towers), None)
         if tid is None:
             return None
         place = {"do": "place", "id": tid, "kind": kind}
@@ -4687,7 +4726,8 @@ class Executor:
     def _dps_options(self, load):
         """Blimp damage to buy, most damage per dollar first: a placed tower
         upgraded to a crosspath listed in counters.json blimp_dps (on its plan
-        path), or a new tower at such a crosspath."""
+        path), or a new tower at such a crosspath - unless the towers this
+        check placed before speak against another one (_copy_speaks_against)."""
         fam = PRICE_FAMILY.get(self.mode, "hard")
         track, rng, reach = self._track_length(), self._range_units, self._reach_fn()
         table = TH.counters().get("blimp_dps") or {}
@@ -4720,7 +4760,9 @@ class Executor:
                     if any(a > c for a, c in zip(t, caps)) or (self.no_income and self._is_income(kind, list(t))):
                         continue
                     gain = TH.blimp_capacity([("__new__", kind, t)], load, track, rng)
-                    opt = self._new_tower_option("blimps", kind, T.total_cost(kind, t, fam), t) \
+                    if gain > 0 and self._copy_speaks_against(kind, t, gain, load, track, rng, reach):
+                        continue
+                    opt =self._new_tower_option("blimps", kind, T.total_cost(kind, t, fam), t) \
                         if gain > 0 else None
                     if opt is not None:
                         opt["gain"] = gain
