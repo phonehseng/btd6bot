@@ -185,7 +185,15 @@ plan:
   - {do: upgrade, id: sub1, to: 2-0-4}                                    # Armor Piercing Darts
   - {do: place, id: sub6, kind: sub, role: dps, at: [0.452, 0.266]}
   - {do: upgrade, id: sub6, to: 4-2-0}
-  - {do: upgrade, id: sni2, to: 4-2-0}                                    # Maim MOAB: round 80's ZOMG
+  # Radar Scanner at the right lane end, before the last sniper upgrade. Since
+  # 2026-11-10 the blimp check no longer skips a short blimp round behind a
+  # held one, so the cash after the plan goes to rounds 75-80's blimps and
+  # round 78's camo ceramics were left at 0.40 in the replay. With the
+  # village the replay rates round 78 0.53 and round 80 0.84 (was 0.66);
+  # the rounds lost live keep their ratings (35 1.03, 37 1.06, 40 1.15).
+  - {do: place, id: vil1, kind: village, role: support, at: [0.751, 0.675]}
+  - {do: upgrade, id: vil1, to: 0-2-0}
+  - {do: upgrade, id: sni2, to: 4-2-0}                                   # Maim MOAB: round 80's ZOMG
 panic:
   - {do: place, kind: sniper, role: dps, target: strong}
 answers:
