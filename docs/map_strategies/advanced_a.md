@@ -529,6 +529,7 @@ Builds:
   - Easy: worst round margin 2.51 (round 36) on the plan alone, 2.51 (round 36) with the fill; plan $9,230; threat simulation: no gaps; base-income test run bought 22/22 plan steps (all, as the test requires).
 - `lastresort_medium.yaml` (Medium), hero quincy; towers (highest tiers per kind): skywarden 1-0-0, sniper 4-5-0, desperado 3-2-0, druid 0-3-1.
   - Medium: worst round margin 2.20 (round 60) on the plan alone, 2.20 (round 60) with the fill; plan $105,230; threat simulation: no gaps; base-income test run bought 56/67 plan steps (only the Easy family must finish).
+  - Re-checked 2026-11-10 (tests/test_lastresort_builds_offline.py, executor replay on the learned map, Fast Track round 15, Double Cash): worst 1.38 (round 60) before, 1.48 after moving Maim MOAB and Elite Sniper earlier; rounds 15-25 at 1.65 or more. Spots the live game refused were moved. data/model_ceiling.json records 1.48.
 - Existing `lastresort_hard.yaml` (not edited): the file was removed from strategies/maps during this work (it rated 0.14 at round 27 in Hard before the model fixes).
 
 Not written:
