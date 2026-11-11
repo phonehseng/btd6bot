@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from btd6bot import strategy as S  # noqa: E402
 
 
-def bare(cash=23_320.0, weak=True, income=9_600.0):
+def bare(cash=23_320.0, weak=True, income=9_600.0, margin=1.1):
     """An Executor at round 98 of a CHIMPS game with `cash` in hand; each
     round brings `income`, and rounds 98-99 are rated weak or not."""
     ex = S.Executor.__new__(S.Executor)
@@ -24,6 +24,7 @@ def bare(cash=23_320.0, weak=True, income=9_600.0):
     ex.drop_rounds = []
     ex._ramp_due = lambda rnd: None
     ex.weak_now = lambda rnd: weak
+    ex.margin_now = lambda rnd: margin
     ex.lives_fell_lately = lambda rnd, rounds=None: False
     ex.income_until = lambda due_round, rnd: income * max(0, due_round - rnd)
     ex.saving_for_threat = ex.firm_hold = False
@@ -67,6 +68,26 @@ def test_unknown_cash_and_far_rounds_are_left_to_the_older_rules():
     assert not ex._near_hold_too_late(100, 34_560.0, 94)    # far: _far_keep decides
     assert not ex._near_hold_too_late(98, 34_560.0, 98)     # the round being played
     assert not ex._near_hold_too_late(100, None, 98)
+
+
+def test_a_likely_lost_round_holds_nothing_for_a_later_one():
+    """Chutes Impoppable (2026-11-11): round 98 rated 0.29, $26,245 held
+    for round 100's bad answer though the cash could have paid it."""
+    ex = bare(cash=26_245.0, margin=0.29, income=5_000.0)
+    assert ex._hold_for(100, 31_200.0, 98, "bad answer", threat_answer=True) is None
+    assert not ex.saving_for_threat and ex.held_cash == 0.0
+    assert ("lost-first", "bad answer", 98) in ex.noted
+
+
+def test_likely_lost_needs_one_life_and_a_rating():
+    ex = bare(cash=26_245.0, margin=0.29)
+    ex.rules = {"lives": 100}
+    assert not ex._likely_lost_first(100, 98)
+    ex = bare(cash=26_245.0, margin=None)
+    assert not ex._likely_lost_first(100, 98)
+    ex = bare(cash=26_245.0, margin=0.29)
+    assert not ex._likely_lost_first(98, 98)       # the round itself: the playing-hold rule
+    assert ex._hold_for(100, 31_200.0, 98, "blimp damage") is False   # blimp holds keep their cash
 
 
 if __name__ == "__main__":

@@ -5144,6 +5144,14 @@ class Executor:
         # is for the very rounds that make this one weak, and has its own
         # too-dear rule there: releasing it let idle spending eat the cash
         # of Spillway ABR's Maim MOAB step (test_plan_blimp_step_keeps_its_cash).
+        if weak and threat_answer and self._likely_lost_first(due_round, rnd):
+            note = ("lost-first", what, rnd)
+            if note not in self._notes():
+                self.noted.add(note)
+                log.warning("round %d is rated likely lost with one life: nothing is held for %s "
+                            "(round %d) - it is worthless if this round ends the game; the cash "
+                            "goes to this round", rnd, what, due_round)
+            return None
         if weak and threat_answer and self._near_hold_too_late(due_round, cost, rnd):
             note = ("near-too-late", what, rnd)
             if note not in self._notes():
@@ -5154,6 +5162,29 @@ class Executor:
             return None
         self.saving_for_threat = True
         return False
+
+    LIKELY_LOST = 0.5    # a damage-model margin under this: the round is probably lost
+
+    def _likely_lost_first(self, due_round, rnd):
+        """Is a hold for a later round pointless because a nearer one is
+        probably lost? True in a one-life mode when due_round is still ahead
+        and the damage model rates the round being played or the next one
+        (margin_now) under LIKELY_LOST: an answer for round 100 buys nothing
+        if round 98 takes the only life, so the cash goes to round 98.
+        Unrated rounds: False (the older rules decide).
+
+        Chutes Impoppable (2026-11-11, case 20261111_04*): round 98 was
+        rated 0.29 while all $26,245 was held "for the bad answer" of round
+        100 ($31,200) - the cash plus round 98's income could have paid it,
+        so _near_hold_too_late let the hold stand. Reinforcing saw $530,
+        the plan's ac2 2-4-0 ($19,200) waited, and round 98 was lost with
+        the money in the bank."""
+        if due_round is None or rnd is None or due_round <= rnd:
+            return False
+        if not (getattr(self, "rules", None) or {}).get("one_life"):
+            return False
+        m = self.margin_now(rnd)
+        return m is not None and m < self.LIKELY_LOST
 
     def _near_hold_too_late(self, due_round, cost, rnd):
         """Is a hold for a round at most FAR_ROUNDS away pointless for the
