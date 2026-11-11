@@ -13,7 +13,12 @@ planner:
   base_success: {medium: 0.9, hard: 0.8, half_cash: 0.62}
   # not Tricky Tracks (2026-11-09): Half Cash replays 59 rounds under 1 there
   # (tests/test_trickytracks_excluded_offline.py)
-  excluded_maps: [Tricky Tracks]
+  # not Last Resort (2026-11-10): Medium lost twice the same way, round 19 at
+  # 06:53 and round 16 at 19:22. The Fast Track start (round 15) sends its
+  # bloons along the top straight while this build stands on the bottom
+  # loop, out of reach (backlog item 72); round 16 was rated 0.06 and the
+  # game was gone in 1.2 minutes with $265 left.
+  excluded_maps: [Tricky Tracks, Last Resort]
 plan:
   - {do: place, id: d1, kind: druid, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: support, near: [d1], near_radius: 7}
