@@ -1112,7 +1112,7 @@ class Match:
         Cash still coming in counts as activity too: the last round's
         bloons are often still being popped during the hold, and what they
         pay can bring a purchase within reach. Mushroom Grotto Impoppable
-        (2026-11-11, case 20261111_1115*) held Play before round 93 (rated
+        (2026-11-11, case 20261111_111519_MushroomGrotto_impoppable) held Play before round 93 (rated
         0.69) with $47,526; "nothing $47,831 buys helps", the hold ended
         after 4 s idle at $48,520 - by then enough for the $48,000 n2
         2-0-5 that lifted round 93 to 1.45. It was bought 6 s into round 93
