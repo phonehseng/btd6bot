@@ -5961,7 +5961,7 @@ class Executor:
         spend before it."""
         return self.given_up_plan_cost() - (getattr(self, "yield_spent", 0) or 0)
 
-    def surplus(self, cash, rnd):
+    def surplus(self, cash, rnd, deadline=None):
         """Cash is piling up while the plan waits: buy damage anyway.
 
         1. next tier on an existing tower's own path (biggest investment first),
@@ -5972,7 +5972,19 @@ class Executor:
         that money is being saved for a bloon the defence cannot pop yet.
         Nor the cash a plan step is waiting for (plan_claim): what is left
         above its claim is spare, and in a crisis of the round being played
-        only a purchase that lifts that round may have it."""
+        only a purchase that lifts that round may have it.
+
+        Rating what lifts the round (_lifts_now) stops at `deadline` (a
+        time.monotonic(); default reinforce.LOOK_BUDGET_S from now), and
+        nothing is bought then. Each rating is up to six damage-model
+        margins: on X Factor Impoppable (2026-11-10, one life, round 85, 37
+        towers, 20 affordable upgrades none of which lifted the round) one
+        call asked 126 margins and took 105 s offline, and the live game
+        logged 24 loop stalls of 11-61 s "in surplus" from 17:13, the first
+        game after one-life surplus began asking _lifts_now (06317a3). The
+        forecast remembers its ratings (forecast._memo), so the next call
+        on the same board goes on where this one stopped and buys what it
+        would have bought."""
         self.now_round = rnd
         if cash is None or getattr(self, "saving_for_threat", False) or self.plan_first():
             return False
@@ -5997,6 +6009,8 @@ class Executor:
         # tower it levels up first - tower XP follows invested cash - and only
         # then into helpers, side paths or the opener.
         target = self.strat.get("xp_target") if isinstance(getattr(self, "strat", None), dict) else None
+        if deadline is None:
+            deadline = RF.look_deadline()
         # with no income the plan's crosspath caps would strand cash: the
         # leading path may go further (as reinforce.py does)
         for p, t, cost in self.upgrade_choices(first=target, past_plan=bool(self.rules.get("buy_all_upfront"))):
@@ -6004,6 +6018,9 @@ class Executor:
                 continue
             to = "-".join(map(str, t))
             step = {"do": "upgrade", "id": p.tid, "to": to}
+            if rated and RF._past(deadline):
+                self._surplus_out_of_time()
+                return False
             if rated and not self._lifts_now(step, cost, rnd):
                 continue
             with self.why("surplus", f"spare cash: {p.tid} -> {to}"):
@@ -6016,6 +6033,9 @@ class Executor:
             return True       # (an obstacle cleared lifts no round by itself)
         if main and cash >= self.g.price(main):
             step = {"do": "place", "kind": main, "role": "dps", "segment": [0.2, 1.0]}
+            if rated and RF._past(deadline):
+                self._surplus_out_of_time()
+                return False
             if rated and not self._lifts_now(step, self.g.price(main), rnd):
                 return False
             with self.why("surplus", f"spare cash: another {main}"):
@@ -6024,6 +6044,15 @@ class Executor:
                 log.info("surplus: placed another %s", main)
                 return True
         return False
+
+    def _surplus_out_of_time(self):
+        """Say, once a round, that surplus stopped rating at its deadline."""
+        note = ("surplus_budget", getattr(self, "now_round", None))
+        if note in self.noted:
+            return
+        self.noted.add(note)
+        log.info("surplus: the %.0f s budget ran out while rating what lifts round %s - "
+                 "going on at the next look", RF.LOOK_BUDGET_S, getattr(self, "now_round", None))
 
     # -- towers that aim at the mouse --------------------------------------
     # The Heli Pilot ("Follow Touch") and the Dartling Gunner aim at the mouse

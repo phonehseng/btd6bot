@@ -418,6 +418,15 @@ class Match:
         self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None),
                                       getattr(model, "sight", None),
                                       (getattr(model, "sight_height", None), getattr(model, "ground_height", None)))
+        # The executor asks the same model about the same boards (surplus's
+        # _lifts_now, the blimp check, margin_now): one forecast for both,
+        # so what one has rated the other does not rate again
+        # (forecast._memo). It built its own on first use before.
+        if getattr(executor, "forecast", None) is None:
+            try:
+                executor.forecast = self.forecast
+            except AttributeError:      # a test fake that takes no attributes
+                pass
         self._weak_round = None     # a round whose look-ahead is weak: reinforce (reinforce.py)
         self._t_reinforce = 0.0
         self._saving_until = 0.0    # reinforce saves for a dearer purchase until then
@@ -914,13 +923,18 @@ class Match:
                     # rated a crisis (Executor.plan_first_yields)
                     if weak and not self._plan_lets_reinforce(cash, last_round):
                         weak = False
+                    # one time budget for the model's choices of this pass,
+                    # reinforce's look and the surplus rating after it
+                    # (reinforce.LOOK_BUDGET_S): together they held the loop
+                    # up 16-77 s at a time on X Factor Impoppable (2026-11-10)
+                    spend_deadline = R.look_deadline()
                     if weak and not held and now - self._t_reinforce > REINFORCE_EVERY:
                         # the coming rounds look weak: the damage model picks
                         # what the spare cash buys (reinforce.py), the plan's
                         # own steps and patience keep their place before it
                         self._t_reinforce = now
                         self._mark("reinforce")
-                        bought = self._reinforce(cash, last_round)
+                        bought = self._reinforce(cash, last_round, deadline=spend_deadline)
                     # reinforce is saving for a purchase that holds the weakest
                     # round: the usual spending would eat that cash
                     if not bought and not (weak and now < self._saving_until):
@@ -928,7 +942,7 @@ class Match:
                         # bank only while the look-ahead is weak (plan_claim)
                         self.ex.lookahead_weak = weak
                         self._mark("surplus")
-                        bought = self.ex.surplus(cash, last_round)
+                        bought = self.ex.surplus(cash, last_round, deadline=spend_deadline)
                 if bought:
                     self._last_buy = now
                     if dropped:
@@ -1597,12 +1611,13 @@ class Match:
         yields = getattr(self.ex, "plan_first_yields", None)
         return bool(yields is not None and yields(cash, rnd, deep=deep))
 
-    def _reinforce(self, cash, rnd):
+    def _reinforce(self, cash, rnd, deadline=None):
         """One model-chosen purchase (reinforce.py). True when one was bought;
-        the weak state ends when nothing affordable helps any more."""
+        the weak state ends when nothing affordable helps any more.
+        deadline: when the look must be done (reinforce.best)."""
         try:
             r = R.buy_best(self.ex, self.forecast, cash, rnd, self.ex.rules.get("end_round", 80),
-                           lives=self._lives.confirmed)
+                           lives=self._lives.confirmed, deadline=deadline)
         except Exception:
             log.exception("reinforcing failed - back to the usual spending")
             self._weak_round = None
@@ -1612,6 +1627,14 @@ class Match:
         elif r in ("wait", "save"):
             # nothing the cash buys helps yet: look again once more cash came in
             self._t_reinforce = time.time() + REINFORCE_WAIT - REINFORCE_EVERY
+        elif r == "busy":
+            # the look ran out of its time budget before it could choose: the
+            # next pass of the loop looks again and goes on where this one
+            # stopped (the forecast remembers its ratings). Until then
+            # surplus() keeps off the cash the look is still choosing for.
+            self._t_reinforce = time.time() - REINFORCE_EVERY
+            self._saving_until = time.time() + REINFORCE_WAIT
+            return False
         # 'save': surplus() must not spend the cash either, until the next look
         self._saving_until = self._t_reinforce + REINFORCE_EVERY if r == "save" else 0.0
         return r == "bought"

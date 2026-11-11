@@ -73,6 +73,19 @@ MIN_LIFT = 0.01        # a purchase lifting the weakest round less than this doe
 # $13,990 as round 98 began, finished 30 s later - after the defeat. The
 # match loop is blocked while a look runs: no other purchase, no ability,
 # no Play. Looks earlier in a game take 1-3 s and never reach this.
+#
+# The budget covers the whole look, every stage that rates something, not
+# only grow(). X Factor Impoppable (2026-11-10 20:18-21:13, one life, 30-40
+# towers from round 80) logged 73 loop stalls of 16-48 s (~2,500 s of a
+# 55-minute game) and "the 6 s look budget ran out while rating growth
+# paths" 28 times: grow stopped at 6 s, but rating each purchase's leak,
+# then strongest() and plan_claim_in_crisis() re-rating every purchase at
+# the round in danger, ran on unbounded (offline, the round-85 board: 37 s,
+# of it grow 6 s, the leak ratings 10 s, plan_claim_in_crisis 16 s). Now
+# every such stage stops at the budget and the look answers "busy"
+# (LookBudget); the forecast remembers its answers per board
+# (forecast._memo), so the next look on the same board starts where this
+# one stopped, and the purchase chosen is the one an unbounded look picks.
 LOOK_BUDGET_S = 6.0
 
 
@@ -212,9 +225,70 @@ class Option:
 
 
 def _past(deadline):
-    """True once a look's time budget (LOOK_BUDGET_S, a time.monotonic()
-    deadline) has run out; never for deadline None (no budget)."""
-    return deadline is not None and time.monotonic() > deadline
+    """True once a look's time budget has run out: `deadline` is a
+    LookBudget (best) or a plain time.monotonic() deadline; never for None
+    (no budget)."""
+    if deadline is None:
+        return False
+    if isinstance(deadline, LookBudget):
+        return deadline.past()
+    return time.monotonic() > deadline
+
+
+def look_deadline(seconds=None):
+    """The time.monotonic() deadline of a look starting now: LOOK_BUDGET_S
+    (read when called, so tests may change it) or `seconds` from now."""
+    return time.monotonic() + (LOOK_BUDGET_S if seconds is None else seconds)
+
+
+class LookBudget:
+    """The time budget of one look (best): a time.monotonic() deadline, and
+    whether a stage was cut short by it (`cut`, the stage's name).
+
+    A look cut short does not buy from what it had rated (best answers
+    "busy"): the forecast remembers every rating (forecast._memo), so the
+    next look on the same board goes on where this one stopped, and the
+    purchase finally chosen is the one an unbounded look would choose.
+    Bought from a partial rating, it would depend on which stage ran out.
+
+    The budget never cuts a look that has not yet rated anything new
+    (forecast.computed has not moved since the look began): otherwise a
+    look whose budget was spent on the board's own ratings, or one started
+    with too little time, would never get further. Forecasts without the
+    count (test fakes) are cut at the deadline alone."""
+
+    def __init__(self, deadline, forecast=None):
+        self.deadline = deadline
+        self.forecast = forecast
+        self.start_count = getattr(forecast, "computed", None)
+        self.cut = None
+
+    def past(self):
+        if self.deadline is None or time.monotonic() <= self.deadline:
+            return False
+        count = getattr(self.forecast, "computed", None)
+        if self.start_count is not None and count == self.start_count:
+            return False            # nothing new rated yet: no progress, no cut
+        return True
+
+    def over(self, stage, done=None, total=None):
+        """past(), noted and said once a look: True when `stage` must stop."""
+        if not self.past():
+            return False
+        if self.cut is None:
+            self.cut = stage
+            rated = f" ({done} of {total} rated)" if total is not None else ""
+            log.info("reinforce: the %.0f s look budget ran out while %s%s - the next look goes on "
+                     "from there", LOOK_BUDGET_S, stage, rated)
+        return True
+
+
+def _over(deadline, stage, done=None, total=None):
+    """Has the look's budget run out in `stage` (LookBudget.over)? For a
+    plain deadline, _past."""
+    if isinstance(deadline, LookBudget):
+        return deadline.over(stage, done, total)
+    return _past(deadline)
 
 
 def lookahead_rounds(rnd, end_round, k=LOOKAHEAD):
@@ -363,7 +437,7 @@ def trim(out, k=MAX_OPTIONS):
     return out[:k - k // 2] + out[len(out) - k // 2:]
 
 
-def best(ex, forecast, cash, rnd, end_round, lives=None):
+def best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
     """("safe", None) when the look-ahead holds - nothing leaks at half
     strength, so every round's margin is at least TARGET_MARGIN - or cannot
     be rated; ("wait", None) when nothing the cash buys helps yet; ("save",
@@ -380,7 +454,15 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     lift is judged on the round being played too (lift). A plan step that
     cannot be paid before a round the game is at stake in (danger_round)
     holds nothing against a purchase that lifts that round
-    (plan_claim_in_crisis)."""
+    (plan_claim_in_crisis).
+
+    ("busy", None) when the look ran out of time first: `deadline` is the
+    time.monotonic() by which it must be done (default LOOK_BUDGET_S from
+    now), and every stage that rates many boards stops there - grow, the
+    purchases' leaks, strongest, new_kind_options, save_target (LookBudget).
+    The few ratings of the board as it stands are not cut; the forecast
+    remembers all of them, so the next look goes on from there."""
+    deadline = LookBudget(look_deadline() if deadline is None else deadline, forecast)
     rounds = lookahead_rounds(rnd, end_round)
     half = 1.0 / TARGET_MARGIN
     # only the rounds that leak at half strength can gain (and each skipped
@@ -414,15 +496,14 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     # per dollar (which kept buying the cheapest small step, see trim()).
     crisis = before is not None and before < 1.0
     pick = None
-    deadline = time.monotonic() + LOOK_BUDGET_S
     opts = options(ex, cash)
     radar = radar_option(ex, cash, worst)     # camo sight for the group (backlog #64)
     if radar is not None:
         opts.append(radar)
     tried = grow(ex, forecast, opts, cash, worst, deadline=deadline)
-    if _past(deadline):
-        log.info("reinforce: the %.0f s look budget ran out while rating growth paths - "
-                 "going with what was rated", LOOK_BUDGET_S)
+    if deadline.past():
+        deadline.over("rating growth paths")
+        return "busy", None
     unfinished = goal_option(ex, cash, rnd)
     if unfinished is not None:
         tried = [unfinished] + tried       # judged like any other purchase, by the whole path
@@ -430,7 +511,9 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     # too: worth(), clicktime.py
     budget_s = CT.time_left(ex, rnd, worst)
     now_board = board(ex)
-    for o in tried:
+    for done, o in enumerate(tried):
+        if deadline.over("rating the purchases' leaks", done, len(tried)):
+            return "busy", None
         leak = forecast.leaks(o.towers, rounds_rated, half)
         if leak is None:
             continue
@@ -441,7 +524,9 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
         if pick is None or value > pick[0]:
             pick = (value, o)
     if pick is None and crisis:
-        pick = strongest(forecast, tried, worst, before)
+        pick = strongest(forecast, tried, worst, before, deadline=deadline)
+        if deadline.cut:
+            return "busy", None
     now = crisis_now(forecast, ex, rnd)
     plan_wait = waiting_plan_step(ex, cash)
     if pick is not None and plan_wait is not None:
@@ -449,7 +534,9 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
         danger = danger_round(forecast, ex, rnd, lives=lives)
         lifts = None
         if danger is not None and payable_by(ex, cost, cash, danger, rnd) is False:
-            lifts = plan_claim_in_crisis(forecast, ex, tried, pick, danger)
+            lifts = plan_claim_in_crisis(forecast, ex, tried, pick, danger, deadline=deadline)
+            if deadline.cut:
+                return "busy", None
         if lifts is not None:
             # the step cannot come before the round the game is at stake in,
             # so it holds nothing against the purchase that lifts that round
@@ -476,7 +563,10 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     # case; the step's check runs first here so that it never flags them).
     if pick is None and crisis and cash >= BLIND_SPEND_CASH:
         pick = strongest(forecast, new_kind_options(ex, forecast, cash, worst, deadline=deadline),
-                         worst, before)
+                         worst, before, deadline=deadline)
+        if deadline.past():
+            deadline.over("rating tower kinds not on the board")
+            return "busy", None
         if pick:
             log.warning("reinforce: nothing standing can grow to help round %d (%.2f) - trying a "
                         "tower kind not on the board yet, %s", worst, before or 0.0, pick[1].what)
@@ -489,7 +579,9 @@ def best(ex, forecast, cash, rnd, end_round, lives=None):
     if crisis and (after is None or after < 1.0) and not dies_first(forecast, ex, rnd, worst, lives):
         # Nothing affordable stops the leak: spending now only delays the
         # purchase that would (see save_target).
-        target = save_target(forecast, ex, cash, rnd, worst)
+        target = save_target(forecast, ex, cash, rnd, worst, deadline=deadline)
+        if deadline.cut:
+            return "busy", None
         if (target is not None and now and pick is not None
                 and cash - pick[1].cost >= release(ex, target[0].cost, worst, rnd)):
             # the round being played is in trouble too, and income rebuilds
@@ -678,7 +770,7 @@ def floor_pick_outsaves(forecast, ex, step, cost, rnd, worst, crisis, pick):
     return True
 
 
-def plan_claim_in_crisis(forecast, ex, tried, pick, danger):
+def plan_claim_in_crisis(forecast, ex, tried, pick, danger, deadline=None):
     """The purchase to make while round `danger` (danger_round: rated under
     forecast.CRISIS_MARGIN, or lives fell) is at hand and the waiting plan
     step cannot be paid before it from the cash and the income until then
@@ -699,12 +791,14 @@ def plan_claim_in_crisis(forecast, ex, tried, pick, danger):
     0.27 - the cash stays for plan step". A step that cannot come before
     the round the game is at stake in is no defence for that round; the
     step keeps its claim outside such a round, and while income can still
-    deliver it in time (094f8de, 7919935)."""
+    deliver it in time (094f8de, 7919935).
+
+    deadline: the look's (best); strongest stops there."""
     before = forecast.margin(board(ex), danger)
     after = forecast.margin(pick[1].towers, danger)
     found = pick if after is not None and after - (before or 0.0) >= MIN_LIFT else None
     if found is None:
-        found = strongest(forecast, tried, danger, before)
+        found = strongest(forecast, tried, danger, before, deadline=deadline)
     if found is None:
         return None
     return found[0], found[1], before or 0.0, forecast.margin(found[1].towers, danger) or 0.0
@@ -756,7 +850,7 @@ def plan_option(ex, step, cost):
     return None
 
 
-def strongest(forecast, tried, worst, before):
+def strongest(forecast, tried, worst, before, deadline=None):
     """(value, Option) for the purchase that lifts round `worst`'s margin
     the most at full strength, or None when none lifts it at all.
 
@@ -764,9 +858,14 @@ def strongest(forecast, tried, worst, before):
     strength: once a round is far past saving at half strength (a ZOMG
     leaks whole either way), that count no longer moves. Infernal Double
     HP MOABs (2026-11-03) rated round 79 at 0.25 for ten rounds and sat on
-    up to $77,100 with "nothing buys helps" - then lost there."""
+    up to $77,100 with "nothing buys helps" - then lost there.
+
+    Past `deadline` (the look's, best) the purchases not rated yet are left
+    out: best() then answers "busy" and the next look rates them."""
     found = None
-    for o in tried:
+    for done, o in enumerate(tried):
+        if _over(deadline, f"rating purchases for round {worst}", done, len(tried)):
+            break
         m = forecast.margin(o.towers, worst)
         if m is not None and m > (before or 0.0) + 0.01 and (found is None or m > found[0]):
             found = (m, o)
@@ -829,6 +928,11 @@ def grow(ex, forecast, opts, cash, rnd, deadline=None):
         *rest, new = o.towers
         rated = []
         for tiers in grown(ex, new.kind, cash) | {(0, 0, 0)}:     # bare: when growing adds nothing
+            if rated and _past(deadline):
+                # a late margin costs 0.3-0.7 s and a placement has up to
+                # seven crosspaths: checked per placement only, a look ran
+                # 3-4 s past its budget (X Factor Impoppable, round 85)
+                break
             m = forecast.margin(rest + [SimpleNamespace(**{**vars(new), "tiers": tiers})], rnd)
             if m is not None:
                 rated.append((m, -T.total_cost(new.kind, tiers, family), tiers))
@@ -1115,7 +1219,7 @@ def dies_first(forecast, ex, rnd, worst, lives):
     return lost is not None and lost >= lives
 
 
-def save_target(forecast, ex, cash, rnd, worst):
+def save_target(forecast, ex, cash, rnd, worst, deadline=None):
     """(Option, margin after) for the cheapest purchase the cash cannot buy
     yet that gets round `worst` to margin 1 or better - or None.
 
@@ -1135,13 +1239,18 @@ def save_target(forecast, ex, cash, rnd, worst):
     (2026-11-06, case 20261106_183541) said "saving for upgrade su1 ->
     3-0-2 ($20000)" at round 49 with $7,006, bought nothing more, and lost
     all 142 lives in round 55 with $17,084 banked; Ancient Portal (r52,
-    $18,040) and Spring Spring (r60, $21,494) died the same way."""
+    $18,040) and Spring Spring (r60, $21,494) died the same way.
+
+    Past `deadline` (the look's, best) the search stops with None, and
+    best() answers "busy": the next look goes on from where this one
+    stopped."""
     if rnd is None or worst - rnd < SAVE_LEAD or cash <= 0:
         return None
     continuous = bool((getattr(ex, "rules", None) or {}).get("continuous"))
-    for o in options(ex, cash * SAVE_REACH):       # cheapest first
-        if o.cost <= cash:
-            continue
+    dearer = [o for o in options(ex, cash * SAVE_REACH) if o.cost > cash]     # cheapest first
+    for done, o in enumerate(dearer):
+        if _over(deadline, "looking for a purchase to save for", done, len(dearer)):
+            return None
         if continuous and payable_by(ex, o.cost, cash, rnd + CONTINUOUS_SAVE_ROUNDS, rnd) is False:
             continue        # too far off: the board would stand still for too many rounds
         m = forecast.margin(o.towers, worst)
@@ -1150,20 +1259,27 @@ def save_target(forecast, ex, cash, rnd, worst):
     return None
 
 
-def buy_best(ex, forecast, cash, rnd, end_round, lives=None):
+def buy_best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
     """Buy the best purchase (see best()). Returns 'bought', 'safe' (the
     look-ahead holds: stop), 'wait' (nothing affordable helps yet: more cash
-    may), 'save' (keep the cash for a dearer purchase that does help) or
-    'failed' (the purchase did not go through).
+    may), 'save' (keep the cash for a dearer purchase that does help),
+    'busy' (the look ran out of time: look again at once, it goes on where
+    it stopped) or 'failed' (the purchase did not go through).
 
     After a 'save', ex.save_goal is (cost, round) of the purchase being
     saved for - the match keeps the plan's own steps off that cash
-    (Executor.tick, reinforce_hold) - and None after any other answer."""
+    (Executor.tick, reinforce_hold) - and None after any other answer.
+
+    deadline: when the look must be done (best); default LOOK_BUDGET_S from
+    now. Match hands the same deadline to the surplus spending that may
+    follow in the same pass of its loop, so the pass as a whole keeps to it."""
     # part of the cash the executor keeps for a far threat (Executor._hold_for)
     held = getattr(ex, "held_cash", 0) or 0
     if held and cash is not None:
         cash = max(0, cash - held)
-    status, found = best(ex, forecast, cash, rnd, end_round, lives)
+    status, found = best(ex, forecast, cash, rnd, end_round, lives, deadline=deadline)
+    if status == "busy":
+        return status           # no answer yet: what the last look saved for still stands
     ex.save_goal = (found[0].cost, found[1]) if status == "save" else None
     if status != "buy":
         return status

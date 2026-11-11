@@ -369,13 +369,17 @@ def test_another_standing_kind_is_rated_grown_too():
     late = R.grow(ex, Counting(), R.options(ex, 6000), 6000, 45, deadline=time.monotonic() - 1)
     assert Counting.calls == 0, Counting.calls
     assert [o.what for o in late if o.what.startswith("another")] == ["another ninja"], late
-    # ... and the look still buys from what it could rate
+    # ... and a look out of time buys nothing from a partial rating: it
+    # answers "busy" and the next look (the forecast remembers its ratings)
+    # goes on to the purchase an unbounded look would choose
     saved = R.LOOK_BUDGET_S
     R.LOOK_BUDGET_S = -1.0
     try:
         status, found = R.best(ex, PerTier(), 6000, 40, 80, lives=100)
     finally:
         R.LOOK_BUDGET_S = saved
+    assert status == "busy" and found is None, (status, found)
+    status, found = R.best(ex, PerTier(), 6000, 40, 80, lives=100)
     assert status == "buy" and found[0].cost <= 6000, (status, found)
 
 

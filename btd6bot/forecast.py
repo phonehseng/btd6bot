@@ -23,16 +23,47 @@ would cost LETHAL_SHARE of the lives left is a crisis round as well
 
 Line of sight is not passed to the model here (it rates towers behind
 walls a little high); any failure turns the forecast off for the game.
+
+Every answer is remembered per board and round (_memo): the model is a pure
+function of the towers (kind, tiers, spot, placement round), the round and
+the strength or search depth asked for, and the same board is asked about
+again and again. One reinforce look on X Factor Impoppable (2026-11-10,
+round 85, 37 towers) asked 58 margins and 23 leak counts, many of them the
+same board and round (crisis_now and danger_round both rate the board at
+the round being played and the next; strongest and plan_claim_in_crisis
+re-rate the options), at 0.3-0.7 s each that late; and the looks repeat on
+an unchanged board every few seconds while the bank fills. Remembered, a
+repeated question costs nothing, so a look cut short by its time budget
+(reinforce.LOOK_BUDGET_S) picks up at the next one where it left off.
 """
 from __future__ import annotations
 
 import logging
+from collections import OrderedDict
 
 log = logging.getLogger("forecast")
 
 CRISIS_MARGIN = 0.5
 LETHAL_SHARE = 0.5            # a round expected to cost this share of the lives left is a crisis too
 REVERSE_SUFFIX = " reverse"   # map models of Reverse games are keyed "<map> reverse"
+# Answers remembered (_memo), least recently used dropped first. One look
+# asks about 60-150 (board, round) pairs; this keeps the last several looks'
+# boards, a few MB of keys on a 40-tower board.
+MEMO_SIZE = 4096
+STATIONS_MEMO_SIZE = 64       # model stations (dps_model.stations_for) kept per board
+
+
+def board_key(towers, phased=False):
+    """What the model's answer for `towers` depends on, as a hashable key:
+    each tower's id, kind, tiers and spot, in the order given, and with
+    `phased` (a map that freezes towers, _phases) its placement round.
+    Elsewhere the placement round is left out, so the executor's towers
+    (which carry one) and reinforce.board()'s copies (which do not) share
+    their answers."""
+    if phased:
+        return tuple((p.tid, p.kind, tuple(p.tiers), p.x, p.y, getattr(p, "placed_round", None))
+                     for p in towers)
+    return tuple((p.tid, p.kind, tuple(p.tiers), p.x, p.y) for p in towers)
 
 
 def lowest(margins):
@@ -56,6 +87,25 @@ class RoundForecast:
         self._sight_grid = sight_grid
         self._sight_heights = sight_heights
         self.off = not map_key
+        self._memo = OrderedDict()          # (what, board_key, round) -> answer
+        self._stations_memo = OrderedDict()  # board_key -> stations
+        # ratings the model actually ran (not answered from _memo): a look
+        # cut short by its budget is cut only once it has rated something
+        # new (reinforce.LookBudget), so the looks always get further
+        self.computed = 0
+
+    @staticmethod
+    def _remember(memo, key, value, size):
+        """Store `value` under `key` in an LRU `memo` of at most `size` entries."""
+        memo[key] = value
+        memo.move_to_end(key)
+        while len(memo) > size:
+            memo.popitem(last=False)
+
+    def _key(self, towers):
+        """board_key for this forecast's map: with placement rounds where
+        towers freeze (track uptime under 1, _phases)."""
+        return board_key(towers, phased=getattr(self.track, "uptime", 1.0) < 1.0)
 
     def _ready(self):
         """Load the track once; False when the forecast is off."""
@@ -72,7 +122,21 @@ class RoundForecast:
 
     def stations(self, towers):
         """The model's stations for `towers` (objects with tid, kind, tiers,
-        x, y in screen fractions; the hero is left out), or None."""
+        x, y in screen fractions; the hero is left out), or None.
+
+        Remembered per board (_stations_memo): building them took 50 ms a
+        call on a 37-tower board, 3 s of a 37 s look. Reusing them is safe:
+        dps_model._play sets every station's strength before it plays."""
+        key = board_key(towers)            # stations do not depend on placement rounds
+        if key in self._stations_memo:
+            self._stations_memo.move_to_end(key)
+            return self._stations_memo[key]
+        st = self._build_stations(towers)
+        self._remember(self._stations_memo, key, st, STATIONS_MEMO_SIZE)
+        return st
+
+    def _build_stations(self, towers):
+        """stations() without the memo."""
         from . import dps_model as D
         from . import towers as T
         placed = []
@@ -95,31 +159,59 @@ class RoundForecast:
         had nothing awake. Otherwise every round is rated with the whole
         defence at the average uptime (exact=False). Stations are [] when
         every tower is frozen, None when there is no tower at all."""
+        return [(stations(), rs, exact) for stations, rs, exact in self._phase_groups(towers, rounds)]
+
+    def _phase_groups(self, towers, rounds):
+        """_phases with each group's stations left to build: [(a function
+        returning the stations, rounds, exact)], so a group whose rounds
+        are all remembered (_rate) builds none."""
         from . import dps_model as D
         built = [p for p in towers if p.kind != "hero"]
         if (getattr(self.track, "uptime", 1.0) >= 1.0 or not built
                 or any(getattr(p, "placed_round", None) is None for p in built)):
-            return [(self.stations(towers), list(rounds), False)]
+            return [(lambda: self.stations(towers), list(rounds), False)]
         groups = {}
         for r in rounds:
             awake = tuple(p for p in built if not D.frozen_in(self.map_name, p.placed_round, r))
             groups.setdefault(tuple(p.tid for p in awake), (awake, []))[1].append(r)
-        return [((self.stations(list(awake)) or []) if awake else [], rs, True)
+        return [((lambda awake=awake: (self.stations(list(awake)) or []) if awake else []), rs, True)
                 for awake, rs in groups.values()]
 
-    def _rate(self, towers, rounds, rate):
+    def _rate(self, towers, rounds, rate, what=None):
         """{round: rate(stations, round)} over `rounds`, rating each round
-        with the towers awake in it (_phases); None without towers."""
+        with the towers awake in it (_phases); None without towers.
+
+        what: names the question (with its strength or search depth) so the
+        answer is remembered per board and round (_memo); None: not
+        remembered. The rounds come out in the order an unremembered call
+        rates them, whatever was remembered: best() takes the first of
+        equally bad rounds as the worst."""
+        key = self._key(towers) if what is not None else None
         out = {}
-        for st, rs, exact in self._phases(towers, rounds):
-            if st is None:
-                return None
+        for stations, rs, exact in self._phase_groups(towers, rounds):
+            known = {}
+            if key is not None:
+                for r in rs:
+                    if (what, key, r) in self._memo:
+                        self._memo.move_to_end((what, key, r))
+                        known[r] = self._memo[(what, key, r)]
+            st = None
+            if len(known) < len(rs):
+                st = stations()
+                if st is None:
+                    return None
             saved = self.track.uptime
             if exact:
                 self.track.uptime = 1.0     # the frozen towers are left out instead
             try:
                 for r in rs:
+                    if r in known:
+                        out[r] = known[r]
+                        continue
                     out[r] = rate(st, r)
+                    self.computed += 1
+                    if key is not None:
+                        self._remember(self._memo, (what, key, r), out[r], MEMO_SIZE)
             finally:
                 self.track.uptime = saved
         return out
@@ -135,7 +227,7 @@ class RoundForecast:
                 return None
             from . import dps_model as D
             return self._rate(towers, rounds, lambda st, r: D.round_margin(
-                st, self.mode, r, self.track, iterations=iterations))
+                st, self.mode, r, self.track, iterations=iterations), what=("margin", iterations))
         except Exception:   # a forecast must never cost a game
             log.exception("round forecast failed - off for the rest of this game")
             self.off = True
@@ -156,7 +248,7 @@ class RoundForecast:
                 return None
             from . import dps_model as D
             lost = self._rate(towers, rounds, lambda st, r: D.simulate_round(
-                st, self.mode, r, self.track, strength=strength).lives_lost)
+                st, self.mode, r, self.track, strength=strength).lives_lost, what=("leaks", strength))
             if lost is None:
                 return None
             return lost if per_round else sum(lost.values())
