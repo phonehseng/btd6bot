@@ -687,11 +687,35 @@ class Match:
             else:
                 step["segment"] = [0.05, 0.45]
             steps.append(step)
-        for kind in self.ex.CHEAP_OPENERS:
+        for kind in self._opener_kinds():
             if self.ex.kind_allowed(kind) and not (spec is not None and kind == spec["kind"]):
                 steps.append({"do": "place", "id": "starter", "kind": kind, "role": "dps",
                               "segment": [0.05, 0.45]})
         return steps
+
+    # With this many bloon paths left unguarded by the towers that stand, one
+    # more short-range opener cannot close them all: the sniper goes first.
+    SNIPER_FIRST_OPEN_LANES = 2
+
+    def _opener_kinds(self):
+        """The cheap openers in the order _place_starter tries them: the
+        executor's CHEAP_OPENERS, with the sniper in front when the towers
+        that stand leave SNIPER_FIRST_OPEN_LANES or more bloon paths open
+        (Executor.open_lanes).
+
+        Spillway Impoppable (2026-11-11): bloons come down four lanes and n1
+        guards the top-left one. At 04:18 the starter was a sniper, which
+        shoots into every lane from where it stands, and rounds 6-39 were
+        held; at 15:41 it was a sub in the left pool, in reach of one lane's
+        end, and round 7 was lost eight seconds in with bloons on three
+        lanes nothing could shoot at."""
+        kinds = list(self.ex.CHEAP_OPENERS)
+        open_lanes = getattr(self.ex, "open_lanes", None)
+        if "sniper" in kinds and open_lanes is not None \
+                and open_lanes() >= self.SNIPER_FIRST_OPEN_LANES:
+            kinds.remove("sniper")
+            kinds.insert(0, "sniper")
+        return kinds
 
     def _place_starter(self, rnd, tries=6, need_placed=False):
         """Only the hero is down and the plan's next tower is not affordable
@@ -702,13 +726,21 @@ class Match:
         ends the search."""
         for step in self._starter_steps():
             kind = step["kind"]
+            result = cash = None
             for _ in range(tries):     # each refused spot is blocked; try the next
+                cash = self.g.cash_stable()
                 with self.ex.why("starter", "opener before the plan is affordable"):
-                    done = self.ex.try_step(step, self.g.cash_stable(), rnd) == "done"
-                if done or (self.ex.defended() and not need_placed):
+                    result = self.ex.try_step(step, cash, rnd)
+                if result == "done" or (self.ex.defended() and not need_placed):
                     log.info("starter tower placed: %s", kind)
                     return True
                 time.sleep(0.3)
+            # Spillway Impoppable (2026-11-11 15:41): the dart, the boomerang
+            # and the sniper were passed over without a line in the log, and
+            # the recording shows none of them was ever picked up. The reason
+            # is written down so that the next such game names it.
+            log.info("starter %s not placed after %d tries: last answer '%s' (%s), cash read %s, "
+                     "price %s", kind, tries, result, self.g.fail_reason, cash, self.g.price(kind))
         return False
 
     def play(self, max_minutes=None):

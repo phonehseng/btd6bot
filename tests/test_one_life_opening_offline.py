@@ -81,6 +81,45 @@ def test_build_without_starter_keeps_the_entrance_openers():
     assert all(s["segment"] == [0.05, 0.45] and "at" not in s for s in steps)
 
 
+def test_sniper_first_when_two_lanes_stand_open():
+    """Spillway Impoppable (2026-11-11 15:41, lost in round 7): n1 guarded
+    one of four lanes and the starter was a sub in reach of one more. With
+    two or more bloon paths open the sniper is tried first; with one open
+    lane (Firing Range) the entrance order stays, and the dart goes to it."""
+    m = _priced_match("impoppable", ["ninja"])
+    m.ex.strat = {"id": "x"}
+    rest = [k for k in m.ex.CHEAP_OPENERS if k != "sniper"]
+    m.ex.open_lanes = lambda: 2
+    assert [s["kind"] for s in m._starter_steps()] == ["sniper"] + rest
+    m.ex.open_lanes = lambda: 1
+    assert [s["kind"] for s in m._starter_steps()] == list(m.ex.CHEAP_OPENERS)
+    # a mode without snipers keeps the others in their order
+    m = _priced_match("impoppable", ["ninja"], forbidden=("sniper",))
+    m.ex.strat = {"id": "x"}
+    m.ex.open_lanes = lambda: 3
+    assert [s["kind"] for s in m._starter_steps()] == rest
+
+
+def test_spillway_corner_ninja_leaves_two_paths_open():
+    """The real Spillway model with n1 where it stood in the lost game: two
+    of the five bloon paths get no cover. Skipped where the map is not
+    learned (the map files are not tracked)."""
+    import test_achievement_strats_offline as F
+    from btd6bot import layout as L
+    from btd6bot import strategy as S
+    from btd6bot.maplearn import MapModel
+    model = MapModel.load("Spillway", L.get(1920, 1200)["playfield"])
+    if not model.known():
+        return
+    plan = {"id": "t", "name": "t", "hero": None, "plan": []}
+    ex = S.Executor(F.FakeGame(), model, plan, "impoppable", F.full_account())
+    assert ex.open_lanes() == 0            # nothing stands yet
+    n1 = F.Placed("n1", "ninja", 0.238, 0.129)
+    n1.tiers = [1, 0, 1]
+    ex.g.towers = {"n1": n1}
+    assert ex.open_lanes() >= M.Match.SNIPER_FIRST_OPEN_LANES, ex.open_lanes()
+
+
 def test_build_names_its_starter_spot_and_kind():
     """Sulfur Springs CHIMPS (2026-11-07 18:43): the starter dart, refused at
     its entrance spot, went to (0.473, 0.871) and the game was lost in round

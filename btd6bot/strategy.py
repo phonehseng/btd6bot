@@ -1577,6 +1577,34 @@ class Executor:
         lane[np.isinf(lane)] = 0.0
         return lane
 
+    # A bloon path counts as open while the placed damage towers cover under
+    # this share of what they cover of the best-guarded path.
+    OPEN_LANE_SHARE = 0.1
+
+    def open_lanes(self):
+        """How many of the map's bloon paths the placed damage towers leave
+        unguarded (mean tower cover under OPEN_LANE_SHARE of the best-guarded
+        path's). 0 on maps without geometry, with a single path, or with no
+        tower standing yet.
+
+        Spillway Impoppable (2026-11-11 15:41, lost in round 7): bloons come
+        down four lanes, and n1 in the top-left corner covered three of the
+        five paths (0.18, 0.13, 0.18) and nothing of the other two."""
+        from . import mapgeom
+        cover = self._tower_cover()
+        try:
+            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed))
+        except Exception:
+            return 0
+        masks = (grids or {}).get("path_masks") or []
+        if len(masks) < 2 or any(mask.shape != cover.shape for mask in masks):
+            return 0
+        shares = [float(cover[mask].mean()) for mask in masks]
+        best = max(shares)
+        if best <= 0:
+            return 0
+        return sum(1 for share in shares if share < self.OPEN_LANE_SHARE * best)
+
     def _tower_cover(self):
         """The cover grid of the towers alone (see _covered).
 
