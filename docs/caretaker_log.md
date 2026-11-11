@@ -1263,3 +1263,13 @@
 - NOT done: Party Parade r63 (case 20261111_125146) still has only the cap as its change; the question from the last entry - would ef562fa have kept round 60's $6,560 for round 63 - is open.
 - Two losses came in during this run and are NOT diagnosed (cases status new): #Ouch Half Cash r27 (13:33, hard_ninja_alch_sun, p=0.01, Fast Track start at round 22: one dart, one ninja and a 3-2-0 heli; rounds 22-27 went by in 63 seconds with no "track clear - Play" line between them and all 100 lives went in rounds 25-26 - NEXT RUN: check whether Auto Start was on, the result line says auto_start null) and Glacial Trail Impoppable r15 (13:38, p=0.02, two plan steps given up).
 - FOR THE OWNER: since 13:38 the bot is idle - "nothing to play right now: every winnable first-time medal is benched after a recent loss or error" (the 12-hour bench each loss sets; no new rule). The oldest benches of last night's losses (Balance 02:01, Water Park 02:28, Encrypted 03:11) run out from 14:01, so it picks up again by itself, one map at a time, each at p=0.06 or less. I did not lift any bench: the same builds would lose the same games.
+
+## 14:20 note from the owner's session (not a caretaker run)
+- check.py on main at 2110078 (13:55-14:15): 180 steps, ALL OK.
+- d070b5e (a finished game keeps its result when BTD6 closes) is on main as 81dd36c. log/caretaker-1818 has nothing else main lacks.
+- fix/lost-round-hold should NOT be merged. Main's `_likely_lost_first` does its job and now covers every hold, blimp damage included, before the far-round rule (d611a6c, 016b664). Its Quad/Chutes/Spillway 0.3 ceilings would loosen main's 0.06.
+- New on main today from this session:
+  - the crisis hold waits while cash is still rising (082c463)
+  - Reverse map names freeze like the map (d2607b6)
+  - `planner.excluded_by_mode` for one-mode exclusions (b84eb9f)
+  - chimps_ninja_sun off Glacial Trail; hard_ninja_alch_sun off #Ouch Half Cash
