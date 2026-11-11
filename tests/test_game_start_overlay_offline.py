@@ -95,9 +95,11 @@ def test_the_mode_is_clicked_once_when_the_map_starts_loading():
 
     bot = R.Bot.__new__(R.Bot)
     bot.menus, bot.inp = menus, inp
-    bot.open_map = lambda name: True
+    bot.open_map = lambda name, mode=None, strategy=None: True
+    bot.strats = {}        # start() looks the plan's build up for the Fast Track toggle
     bot._close_mode_intro = lambda: None
-    plan = N(map="Sunken Columns", difficulty="hard", mode="double_hp", first_time=True, mode_key="double_hp")
+    plan = N(map="Sunken Columns", difficulty="hard", mode="double_hp", first_time=True, mode_key="double_hp",
+             strategy_id=None)
     assert bot.start(plan) is True
     assert inp.at == [R.MODE_BUTTON_POS["double_hp"]], inp.at
 

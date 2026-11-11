@@ -65,7 +65,8 @@ def start(load_s):
     clock = Clock()
     bot = runner.Bot.__new__(runner.Bot)
     bot.account = N(has_medal=lambda m, k: False)
-    bot.open_map = lambda name: True
+    bot.open_map = lambda name, mode=None, strategy=None: True
+    bot.strats = {}        # start() looks the plan's build up for the Fast Track toggle
     bot.menus = FakeMenus(clock, load_s)
     bot.inp = N(click=lambda x, y: None)
     bot._close_mode_intro = lambda: None
@@ -74,7 +75,7 @@ def start(load_s):
         bot.menus.intro_pressed = True
     bot._press_intro_play = press
     plan = N(map="Sanctuary", mode="apopalypse", mode_key="apopalypse", difficulty="hard",
-             first_time=False)
+             first_time=False, strategy_id=None)
     real = runner.time
     runner.time = clock
     try:
