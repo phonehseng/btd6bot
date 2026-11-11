@@ -91,6 +91,32 @@ def test_a_dollar_read_as_four_is_taken_off_against_recent_reads():
     assert fresh.cash() == 431477, "no recent reads: nothing to compare with"
 
 
+def test_a_lost_comma_is_read_against_recent_reads():
+    """Quad Deflation (2026-11-11 13:57): with an upgrade panel on the left
+    the counter sits over the white garden arch and the comma is lost. The
+    texts are the ones the recording of that game gives (rec_20261111_135700,
+    panel shut / panel open): the bomb's next tier answered "wait (cash)"
+    eight times with $31,380 in hand."""
+    hud = _ScriptedHud(["$31,550", "$31550", "$31,380", "$31380", "$31380", "$31165"])
+    assert hud.cash() == 31550
+    assert hud.cash() == 31550, "the same cash without its comma"
+    assert hud.cash() == 31550            # median of 31550, 31550, 31380
+    assert hud.cash() == 31380
+    assert hud.cash() == 31380
+    assert hud.cash() == 31380            # $31,165 after a purchase under that panel (median)
+
+
+def test_a_phantom_digit_is_still_turned_down():
+    """What the comma rule is for: '$650' with scenery read as one more
+    digit must not become $6,507, with or without recent reads."""
+    assert _ScriptedHud(["$6507"]).cash() is None, "no recent reads: nothing to compare with"
+    hud = _ScriptedHud(["$650", "$6507", "6507", "×3220"])
+    assert hud.cash() == 650
+    assert hud.cash() is None, "ten times the recent reads: a phantom digit"
+    assert hud.cash() is None, "no '$': scenery, not the counter"
+    assert hud.cash() is None, "the Double Cash badge read as text (panel open, crop not shifted)"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

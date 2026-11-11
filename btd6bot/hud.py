@@ -132,6 +132,12 @@ def trim_to_digits(img):
     return img[:, :min(img.shape[1], end + max(3, h // 6))]
 
 
+# A cash read without its comma is believed up to this many times the recent
+# reads (Hud._without_separator): cash does not double between two looks, and
+# a phantom digit - the misread this guards against - multiplies it by ten.
+_NO_SEPARATOR_GROWTH = 2
+
+
 class Hud:
     def __init__(self, layout):
         self.layout = layout
@@ -171,10 +177,36 @@ class Hud:
             # padded read is believed only when its prefix repeats a clean read
             value = next((v for v in cash_prefixes(text) if v in self._cash_reads), None)
         if value is None:
+            value = self._without_separator(text)
+        if value is None:
             return None   # unreadable or malformed this frame: the next one will do
         value = self._dollar_read_as_four(value)
         self._cash_reads = (self._cash_reads + [value])[-3:]
         return sorted(self._cash_reads)[(len(self._cash_reads) - 1) // 2]  # lower median
+
+    def _without_separator(self, text):
+        """The cash from a read whose comma was lost ('$31380'), or None.
+
+        Quad Deflation (2026-11-11 13:57): an upgrade panel on the left
+        pushes the counter over the white garden arch at the top of the map,
+        the white comma disappears into it and every read came back '$31380'.
+        parse_cash turns such text down - a phantom digit looks the same
+        ('$650' -> '$6507') - so the bot had no cash at all while that panel
+        was open: eight tries at the bomb's next tier answered "wait (cash)"
+        with $31,380 in hand, and the game was left before Play.
+
+        The two cases differ in size: a phantom digit makes the number about
+        ten times the cash, a lost comma leaves it as it was. The read is
+        therefore taken when it is the '$' and digits only and is no more than
+        ``_NO_SEPARATOR_GROWTH`` times the recent reads. Reading too little
+        only makes the bot wait, which is what turning the read down did.
+        Without recent reads nothing can be compared and it stays None."""
+        match = re.fullmatch(r"\$(\d{4,})", text.strip().replace(" ", ""))
+        if not match or not self._cash_reads:
+            return None
+        value = int(match.group(1))
+        ref = sorted(self._cash_reads)[(len(self._cash_reads) - 1) // 2]
+        return value if value <= ref * _NO_SEPARATOR_GROWTH else None
 
     def _dollar_read_as_four(self, value):
         """The cash with a '$' that OCR read as a leading '4' taken off.
