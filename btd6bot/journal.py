@@ -163,7 +163,8 @@ def start_game(map_name, mode, strategy_id, hero, rules, account=None, executor=
         "income": rules.get("income", True), "half_cash": bool(rules.get("half_cash")),
         "no_mk": bool(rules.get("no_mk")),
         "account_level": getattr(account, "player_level", None),
-        "double_cash": boosts.get("double_cash"), "fast_track": boosts.get("fast_track"),
+        "double_cash": boosts.get("double_cash"),
+        "fast_track": bool(boosts.get("fast_track")) and _fast_track_on_for(mode),
         "rules": rules,
     }
     path = JOURNAL_DIR / file_name(map_name, mode)
@@ -312,3 +313,12 @@ def cause_of_death(events, rnd, stats=None):
         return verdict("model_overrated", f"the model rated round {rnd} at {death_snap['margin']:.2f} "
                                           f"and it leaked")
     return verdict("unknown", "no journal evidence points at one cause")
+
+
+def _fast_track_on_for(mode):
+    """Was the Fast Track toggle on for a game in `mode` (boosts.fast_track_wanted)?"""
+    try:
+        from .boosts import fast_track_wanted
+        return fast_track_wanted(mode)
+    except Exception:
+        return True

@@ -52,16 +52,32 @@ def double_cash_applies(boosts, mode):
 # allows no boost at all.
 FAST_TRACK_START = {"easy": 10, "medium": 15, "hard": 22, "impoppable": 29}
 
+# Modes the bot plays with Fast Track switched off (runner sets the toggle
+# per game; the account still owns the boost). Impoppable (owner, 2026-11-10):
+# from the round-29 start a game has eleven rounds of income to buy a whole
+# MOAB answer, and 10 of Impoppable's 45 losses on record came on round 40
+# (Sunset Gulch, Workshop, Ship Capture twice and Midnight Mansion that day
+# alone). From round 6 the build grows into it.
+FAST_TRACK_OFF_MODES = frozenset({"impoppable"})
+
+
+def fast_track_wanted(mode):
+    """Should the Fast Track toggle be on for a game in `mode`?"""
+    return mode not in FAST_TRACK_OFF_MODES
+
 
 def fast_track_start(mode):
     """The round a game in `mode` begins at with Fast Track on, or None when
     Fast Track changes nothing there (the game forbids powers, the mode buys
-    everything up front, or the tier has no rounds to skip)."""
+    everything up front, the tier has no rounds to skip, or the bot plays the
+    mode with the toggle off: FAST_TRACK_OFF_MODES)."""
     from .account import MODES
     from .strategy import MODE_RULES
     rules = MODE_RULES.get(mode, {})
     info = MODES.get(mode)
     if info is None or rules.get("no_powers") or rules.get("buy_all_upfront"):
         return None
+    if not fast_track_wanted(mode):
+        return None            # played with the toggle off (FAST_TRACK_OFF_MODES)
     start = FAST_TRACK_START.get(info.reward_tier)
     return start if start is not None and start > info.start_round else None
