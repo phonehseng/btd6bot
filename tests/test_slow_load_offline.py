@@ -65,7 +65,7 @@ def start(load_s):
     clock = Clock()
     bot = runner.Bot.__new__(runner.Bot)
     bot.account = N(has_medal=lambda m, k: False)
-    bot.open_map = lambda name: True
+    bot.open_map = lambda name, mode=None: True
     bot.menus = FakeMenus(clock, load_s)
     bot.inp = N(click=lambda x, y: None)
     bot._close_mode_intro = lambda: None

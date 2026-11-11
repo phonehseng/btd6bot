@@ -66,16 +66,26 @@ def test_impossible_first_read_is_ignored():
 def test_a_fixed_lives_mode_never_believes_a_read_above_its_count():
     """Ancient Portal Impoppable (2026-11-05): the OCR read 11 for the one
     life in 29 of 65 reads. With one fixed life a read above 1 is a misread
-    and the last trusted count stands - even when the game opens with it."""
+    and the count stands - even when the game opens with it."""
     t = LivesTracker(1, fixed=True)
     assert t.max_lives == 1
-    assert feed(t, [11, 11, 11, 11, 11]) == 0 and t.confirmed is None
-    t.update(1)
-    assert t.confirmed == 1
+    assert feed(t, [11, 11, 11, 11, 11]) == 0 and t.confirmed == 1
     assert feed(t, [11, 1, 11, 11, 1, 11, 11, 11]) == 0 and t.confirmed == 1
-    assert t.update(0) == 0 and feed(t, [0, 0]) == 1, "the one life lost is still a leak"
     # modes that can gain lives keep their room for bonus lives
     assert LivesTracker(100).max_lives == 225 and LivesTracker(1).max_lives == 27
+
+
+def test_a_fixed_lives_mode_ignores_an_opening_zero():
+    """Castle Revenge Impoppable (2026-11-10 23:16): the first reads of the
+    one life were "0", the median confirmed 0, and a count only falls, so
+    the true 1 never came back. A one-life count is pinned to the start:
+    a real leak ends the game, and the defeat counts that life."""
+    t = LivesTracker(1, fixed=True)
+    assert t.confirmed == 1, "known before the first read"
+    assert feed(t, [0, 0, 0, 0, 0]) == 0 and t.confirmed == 1
+    assert feed(t, [1, 1, 1]) == 0 and t.confirmed == 1
+    # a mode that is not fixed still learns its count from the reads
+    assert LivesTracker(150).confirmed is None
 
 
 def test_rise_needs_reads_in_a_row():

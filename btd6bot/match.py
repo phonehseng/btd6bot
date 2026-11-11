@@ -174,6 +174,14 @@ class LivesTracker:
       Forest, Support Chinook, Energizer, Benjamin and Healthy Bananas farms
       take lives far past the start (the 1000-lives achievement), and a
       count stuck below the truth would hide every later leak.
+    * A `fixed` mode is pinned to its starting count and reads never move
+      it: with one life, any leak ends the game, so while the game is still
+      running the count can only be the start. Castle Revenge Impoppable
+      (2026-11-10 23:16) opened with five reads of "0" for the one life; the
+      median confirmed 0, and because a count only ever falls, the HUD's
+      true 1 could never lift it again - the bot played the game thinking
+      it had no lives left (fed as 0 into the crisis and reinforce rules).
+      The defeat's lost life is still counted by Match._count_last_lives.
     """
     RISE_LIMIT = 50
     RISE_VOTES = 4
@@ -183,8 +191,10 @@ class LivesTracker:
         self.reads = []                       # last 5 accepted reads
         self.start_lives = start_lives
         self.can_gain = False                 # the defence can add lives (see lives_gainers)
-        if start_lives and fixed:
+        self.fixed = bool(start_lives and fixed)
+        if self.fixed:
             self.max_lives = start_lives
+            self.confirmed = start_lives      # pinned: see the class docstring
         else:
             self.max_lives = 2 * start_lives + 25 if start_lives else None
         self._cand, self._votes = None, 0     # an upward correction being voted on
@@ -194,6 +204,8 @@ class LivesTracker:
 
     def update(self, read):
         """Feed one read (None = unreadable). Returns the lives lost (0 if none)."""
+        if self.fixed:
+            return 0       # a one-life count cannot change while the game runs
         if read is not None and self.max_lives and read > self.max_lives and not self.can_gain:
             read = None    # impossible for this mode, even as the very first read
         read = self._drop_phantom_digit(read)

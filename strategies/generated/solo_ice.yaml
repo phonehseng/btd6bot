@@ -48,6 +48,11 @@ modes: [easy, primary_only, medium, reverse]
 planner:
   towers: {dart: [4, 2, 4], ice: [2, 0, 4]}   # the crosspaths the build needs to be safe
   base_success: {easy: 0.82, primary_only: 0.84, medium: 0.76, reverse: 0.76}
+  # Flooded Valley: Primary Only lost round 23 (2026-11-10 22:33, case
+  # 20261110_223302): the dam hides the river from the land, no dart spot
+  # reached the track (d1's best legal cell saw 2 track cells, d2 and dc found
+  # none) and four ice monkeys alone were rated 0.06-0.50 from round 11.
+  excluded_maps: ["Flooded Valley"]
 plan:
   - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
