@@ -1361,7 +1361,9 @@ def boost_applies(boosts: Mapping[str, Any], mode: str) -> bool:
     from .strategy import MODE_RULES
     if double_cash_applies(boosts, mode):
         return True
-    return bool(boosts.get("fast_track")) and not MODE_RULES.get(mode, {}).get("no_powers")
+    from .boosts import fast_track_wanted
+    return (bool(boosts.get("fast_track")) and not MODE_RULES.get(mode, {}).get("no_powers")
+            and fast_track_wanted(mode))
 
 
 def _no_income(mode: str) -> bool:

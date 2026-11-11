@@ -689,16 +689,46 @@ class Bot:
 
     def _note_boosts(self):
         """On map select: read the Double Cash / Fast Track toggles and keep
-        them with the account (the planner's win chances depend on them)."""
+        what the account owns with it (the planner's win chances depend on
+        it). A boost once seen on stays owned: the bot itself switches Fast
+        Track off for some modes (_set_fast_track), and an Impoppable game
+        must not make the next Medium look like a game without Fast Track.
+        Returns the toggles as seen now."""
         from . import boosts
         seen = boosts.read(self.s.grab())
-        if seen != self.account.boosts:
-            log.info("boosts on this account: %s", ", ".join(k for k, v in seen.items() if v) or "none")
-            self.account.boosts = seen
+        owned = dict(self.account.boosts or {})
+        merged = {k: bool(seen.get(k) or owned.get(k)) for k in set(seen) | set(owned)}
+        if merged != owned:
+            log.info("boosts on this account: %s", ", ".join(k for k, v in merged.items() if v) or "none")
+            self.account.boosts = merged
             self.account.save()
+        return seen
 
-    def open_map(self, map_name):
-        """Main menu -> map select -> search -> map's difficulty screen."""
+    def _set_fast_track(self, mode, seen):
+        """Switch the Fast Track toggle on map select to what `mode` wants
+        (boosts.fast_track_wanted: off for Impoppable, on elsewhere) when the
+        account owns it. Clicks the box at most twice and re-reads it; a
+        toggle that will not change is logged and the game goes on as it is
+        (the match reads its real start round either way)."""
+        from . import boosts
+        if not (self.account.boosts or {}).get("fast_track"):
+            return
+        want = boosts.fast_track_wanted(mode)
+        for _ in range(2):
+            if seen.get("fast_track") == want:
+                return
+            fx, fy = boosts.TOGGLES["fast_track"]
+            self.inp.click(fx, fy)
+            time.sleep(0.6)
+            seen = boosts.read(self.s.grab())
+            log.info("Fast Track switched %s for %s", "on" if seen.get("fast_track") else "off", mode)
+        if seen.get("fast_track") != want:
+            log.warning("Fast Track toggle stayed %s for %s - playing as it is",
+                        "on" if seen.get("fast_track") else "off", mode)
+
+    def open_map(self, map_name, mode=None):
+        """Main menu -> map select -> search -> map's difficulty screen. With
+        `mode`, the Fast Track toggle is set for it on the way (_set_fast_track)."""
         set_state(f"opening map {map_name}")
         for attempt in range(4):
             self.inp.click(0.5, 0.88)  # PLAY
@@ -712,7 +742,9 @@ class Bot:
         else:
             log.warning("open_map: PLAY did not reach map select")
             return False
-        self._note_boosts()
+        seen = self._note_boosts()
+        if mode:
+            self._set_fast_track(mode, seen)
         self.inp.click(0.044, 0.154)  # search (magnifier)
         time.sleep(0.5)
         self.inp.click(0.52, 0.04)    # focus the search box
@@ -1021,7 +1053,7 @@ class Bot:
     def start(self, plan):
         # a first-time medal that the card shows as already earned: replan
         self.skip_known = (lambda m: plan.first_time and self.account.has_medal(m, plan.mode_key))
-        opened = self.open_map(plan.map)
+        opened = self.open_map(plan.map, plan.mode_key)
         if opened == "known":
             log.info("%s %s already earned on this save - replanning", plan.map, plan.mode_key)
             self.to_main_menu()
