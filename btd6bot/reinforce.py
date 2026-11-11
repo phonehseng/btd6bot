@@ -1411,12 +1411,46 @@ def save_target(forecast, ex, cash, rnd, worst, deadline=None):
     return None
 
 
+def no_lift(status, found):
+    """Does the look's answer (best) leave the weakest round where it is?
+    True for "wait" (nothing the cash buys helps, or the cash stays for the
+    plan) and for a "buy" whose purchase moves that round's rating by less
+    than MIN_LIFT - "0.06 -> 0.06", the dearest-upgrade last resort. Not for
+    "save": there the look found a dearer purchase that holds the round."""
+    if status == "wait":
+        return True
+    if status != "buy":
+        return False
+    _option, _worst, before, after = found
+    return (after or 0.0) - (before or 0.0) < MIN_LIFT
+
+
+def plan_step_behind(ex, cash, rnd):
+    """Let the plan buy a later step in place of a purchase that lifts
+    nothing (no_lift): Executor.buy_plan_step_behind, which does so only in
+    one-life games whose current plan step cannot be paid in time. True when
+    a step was bought; False also for executors without the method (test
+    fakes) and when the attempt fails - the look's own answer then stands."""
+    behind = getattr(ex, "buy_plan_step_behind", None)
+    if not callable(behind):
+        return False
+    try:
+        return bool(behind(cash, rnd))
+    except Exception:
+        log.exception("reinforce: buying a later plan step failed - the look's own answer stands")
+        return False
+
+
 def buy_best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
     """Buy the best purchase (see best()). Returns 'bought', 'safe' (the
     look-ahead holds: stop), 'wait' (nothing affordable helps yet: more cash
     may), 'save' (keep the cash for a dearer purchase that does help),
     'busy' (the look ran out of time: look again at once, it goes on where
     it stopped) or 'failed' (the purchase did not go through).
+
+    When the look's answer leaves the weakest round where it is (no_lift), a
+    one-life plan stalled on a step it cannot pay in time buys a later plan
+    step first (plan_step_behind): 'bought' then means that step.
 
     After a 'save', ex.save_goal is (cost, round) of the purchase being
     saved for - the match keeps the plan's own steps off that cash
@@ -1433,6 +1467,8 @@ def buy_best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
     if status == "busy":
         return status           # no answer yet: what the last look saved for still stands
     ex.save_goal = (found[0].cost, found[1]) if status == "save" else None
+    if no_lift(status, found) and plan_step_behind(ex, cash, rnd):
+        return "bought"
     if status != "buy":
         return status
     o, worst, before, after = found

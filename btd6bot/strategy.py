@@ -5760,6 +5760,104 @@ class Executor:
                f"(${cash:.0f} in hand, about {budget or 0:.0f} s to round {rounds[-1]})")
         return bundles[tid][0][0], why
 
+    # buy_plan_step_behind: at most this many later plan steps are tried in one
+    # call (a refused step costs clicks, and the round does not wait)
+    BEHIND_TRIES = 2
+
+    def plan_step_out_of_reach(self, cash, rnd):
+        """(step, cost, round) when the plan's current step waits for cash it
+        cannot get in time: it costs more than `cash`
+        (reinforce.waiting_plan_step) and cannot be paid before the weakest
+        round of the look-ahead (lookahead_worst; the next round when that
+        is the one being played) from `cash` and the income until then
+        (reinforce.payable_by False). None otherwise - also when the income
+        or the rating is unknown, as in reinforce.plan_keeps_claim, whose
+        "it holds no cash" is this same test."""
+        if cash is None or rnd is None:
+            return None
+        wait = RF.waiting_plan_step(self, cash)
+        if wait is None:
+            return None
+        worst = self.lookahead_worst(rnd)
+        if worst is None or worst[1] is None:
+            return None
+        due = max(worst[1], rnd + 1)      # the round being played: no income reaches it
+        step, cost = wait
+        if RF.payable_by(self, cost, cash, due, rnd) is not False:
+            return None
+        return step, cost, due
+
+    def buy_plan_step_behind(self, cash, rnd):
+        """With one life, buy the first later plan step the cash pays for
+        while the current step is out of reach (plan_step_out_of_reach).
+        True when one was bought.
+
+        Reinforce.buy_best asks this before it spends on a purchase the
+        damage model rates as lifting nothing, and when it found nothing to
+        buy at all. A purchase the model does rate as lifting the weakest
+        round still comes first: this only takes the place of spending the
+        model sees no use in, and of an idle bank.
+
+        Enchanted Glade Impoppable (2026-11-11, chimps_ninja_sun, case
+        20261111_093749, lost round 98): plan step 16, s1 -> 3-0-2 (the
+        $24,000 Sun Avatar), waited from about round 40 to the defeat. It
+        could never be paid before the weak round ahead, so it "held no
+        cash" 45 times and reinforce spent each round's income - 16 of its
+        65 purchases rated "0.06 -> 0.06" and the like. The fifteen plan
+        steps behind the Sun Avatar (the MIB village, both Ground Zero aces,
+        the exit spikes, the Sabotage ninja, the Eliminator bomb), most of
+        them cheaper than a round of reinforcing, were never reached. Mesa
+        Impoppable lost round 78 the same day behind the same step, 15 of 40
+        reinforce purchases moving nothing (backlog 75).
+
+        A later step qualifies when it is a placement or an upgrade that
+          * does not wait for a later round (its `round`),
+          * works on a tower that stands (an upgrade), or places one that
+            does not stand yet while the tower cap has room,
+          * does not wait behind a placement set aside
+            (_waits_for_set_aside_place), and
+          * costs at most `cash` now (_first_step_cost: the placement, or
+            the upgrade's next tier).
+        The plan keeps its order otherwise: the stalled step stays the
+        current one and is bought as soon as it can be, and the plan reaches
+        the step bought here later as "done" (or goes on with its tiers)."""
+        if not (getattr(self, "rules", None) or {}).get("one_life"):
+            return False
+        stalled = self.plan_step_out_of_reach(cash, rnd)
+        if stalled is None:
+            return False
+        step, cost, due = stalled
+        tries = 0
+        for j in range(self.idx + 1, len(self.plan)):
+            st = self.plan[j]
+            if st.get("do") not in ("place", "upgrade"):
+                continue
+            if st.get("round") and rnd < st["round"]:
+                continue
+            if self._waits_for_set_aside_place(st):
+                continue
+            standing = st.get("id") in self.g.towers
+            if (st["do"] == "upgrade") != standing or (st["do"] == "place" and self.at_tower_cap()):
+                continue
+            try:
+                price = self._first_step_cost(st)
+            except Exception:       # a step the executor cannot price is left to the plan
+                continue
+            if price is None or price > cash:
+                continue
+            with self.why("plan", f"plan step {j} while step {self.idx} is out of reach",
+                          step_idx=j, step=dict(st)):
+                r = self.try_step(st, cash, rnd)
+            if r in ("bought", "progress"):
+                log.warning("plan step %d %s ($%d) cannot be paid before round %d from $%d and the income "
+                            "until then - plan step %d %s ($%d) is bought meanwhile",
+                            self.idx, step, cost, due, cash, j, st, price)
+                return True
+            tries += 1
+            if tries >= self.BEHIND_TRIES:
+                break
+        return False
+
     def plan_exhausted(self):
         """True once the last tick found nothing left in the plan or fill."""
         return getattr(self, "waiting", None) == PLAN_EXHAUSTED
