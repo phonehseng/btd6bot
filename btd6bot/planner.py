@@ -549,6 +549,9 @@ class StrategySpec:
     hero_required: bool = False
     maps: frozenset[str] | None = None               # allowlist
     excluded_maps: frozenset[str] = frozenset()
+    # maps excluded in one mode only ({mode: maps}): the build stays a
+    # candidate there in every other mode (YAML planner.excluded_by_mode)
+    excluded_by_mode: dict[str, frozenset[str]] = field(default_factory=dict)
     categories: frozenset[str] | None = None         # allowed map categories
     # Tower XP split = cash invested per tower type; the runner passes the
     # YAML plan's cash (strategy.invested_cash). Default: an equal split.
@@ -610,6 +613,8 @@ class StrategySpec:
             hero_required=bool(get("hero_required", False)),
             maps=frozenset(canonical_map(m) for m in maps) if maps else None,
             excluded_maps=frozenset(canonical_map(m) for m in (get("excluded_maps") or ())),
+            excluded_by_mode={str(md): frozenset(canonical_map(m) for m in (ms or ()))
+                              for md, ms in dict(get("excluded_by_mode") or {}).items()},
             categories=frozenset(cats) if cats else None,
             cost_share=dict(get("cost_share")) if get("cost_share") else None,
             dps_kinds=tuple(canon_tower(k) for k in (get("dps_kinds") or ())),
@@ -878,7 +883,7 @@ def _strategy_fits(s: StrategySpec, map_name: str, category: str, mode: str) -> 
         return False
     if s.maps is not None and map_name not in s.maps:
         return False
-    if map_name in s.excluded_maps:
+    if map_name in s.excluded_maps or map_name in s.excluded_by_mode.get(mode, ()):
         return False
     if s.categories is not None and category not in s.categories:
         return False
