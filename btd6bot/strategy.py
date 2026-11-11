@@ -1195,6 +1195,7 @@ class Executor:
         # fit the map, the ground is not at fault (runner._note_placement)
         self.refused_dead_steps = set()
         self.deferred = []         # plan steps retried later instead (the hero)
+        self.pane_empty = {}       # step key -> open panes that left its tower no spot (_wait_for_next_pane)
         self.retry_at = {}         # step key -> time before which it is not retried
         self.hero_misses = 0       # times the hero ran out of accepted spots
         self.learned_blocks = 0
@@ -2436,11 +2437,16 @@ class Executor:
             return "wait"
         if kind in self.BUFFERS and not self._damage_towers():
             return self._defer(step, key, self.BUFFER_RETRY_S)   # nothing to buff yet
+        if self._pane_already_empty(key):
+            return self._defer(step, key, self.PANE_RETRY_S)   # same pane, same answer
         spots = self._spots_widening(kind, step)
         if not spots:
             # a plan tower with no ground is first given the ground under a
-            # removable obstacle, when the map sells one that helps
+            # removable obstacle, when the map sells one that helps; on a map
+            # with cycling panes it waits for the next pane's ground
             r = self._clear_for_place(step, key, kind, cash)
+            if r is None:
+                r = self._wait_for_next_pane(step, key, kind)
             return self._out_of_spots(step, key) if r is None else r
         fracs = [self.m.cell_to_frac(cx, cy) for cx, cy, _ in spots]
         tid = step.get("id") or self._new_tid(kind)
@@ -2462,6 +2468,7 @@ class Executor:
             # refusals count in a row: a fill or panic step that keeps finding
             # spots between refusals must not be given up
             self.step_spot_fails.pop(key, None)
+            getattr(self, "pane_empty", {}).pop(key, None)
             self._block(*self.m.frac_to_cell(p.x, p.y), 3)
             if step.get("target"):
                 self.g.target(p, step["target"])
@@ -2476,6 +2483,69 @@ class Executor:
         elif reason == "unverified":
             self._avoid_unverified(kind)
         return "wait"
+
+    # A plan placement with no spot under the open pane looks again this often
+    # (s): a pane stays open for a whole round, and the look is one screen read.
+    PANE_RETRY_S = 5.0
+
+    def _open_pane(self):
+        """(index of the pane open now, number of panes) on a map whose panes
+        open in turn (Covered Garden), judged as _pane_now judges it - by the
+        screen first. None on every other map."""
+        rnd = self._pane_round()
+        if rnd is None:
+            return None
+        from . import mapgeom
+        try:
+            cycle = mapgeom.grids_for(self.m)["panes"][0][0]
+            return mapgeom.pane_open(cycle, rnd), len(cycle["areas"])
+        except Exception:
+            return None
+
+    def _pane_already_empty(self, key):
+        """True when this step's spot search already came back empty under
+        the pane that is open now (_wait_for_next_pane): nothing is searched
+        again until another pane opens."""
+        tried = getattr(self, "pane_empty", {}).get(key)
+        if not tried:
+            return False
+        pane = self._open_pane()
+        return pane is not None and pane[0] in tried and len(tried) < pane[1]
+
+    def _wait_for_next_pane(self, step, key, kind):
+        """A plan placement found no spot at all on a map with cycling panes:
+        the step is set aside (self.deferred, the plan goes on) and tried
+        again under each of the other panes, one round apart. Returns None
+        when this is not a case for it, or when every pane has been tried -
+        the step is then given up as before.
+
+        Covered Garden Impoppable (2026-11-11 12:52, chimps_ninja_sun): only
+        a quarter of the garden takes towers in any one round. n1, the build's first ninja, had one click refused before
+        round 6 and was looked at again four seconds into the round, under
+        the next pane: "no spot found (677 legal cells ...)" and it was given
+        up for the game - under the pane of two rounds later the same search
+        has its best spots. The alchemist, named `near: [n1]`, then went to
+        the far side of the map beside a reinforce dart, the discount village
+        v1 (`near: [n1, a1]`) was given up the same way at round 26, the Sun
+        Avatar was never bought, and from round 66 on the model rated the
+        board 0.3-0.5 with purchases that moved it by 0.01.
+
+        Only the build's own towers wait: fills, answers and panic steps are
+        offered again every tick by whoever runs them, and the hero has its
+        own retry (_out_of_spots)."""
+        if kind == "hero" or step.get("id") not in self._plan_place_ids():
+            return None
+        pane = self._open_pane()
+        if pane is None:
+            return None
+        index, count = pane
+        tried = self.__dict__.setdefault("pane_empty", {}).setdefault(key, set())
+        tried.add(index)
+        if len(tried) >= count:
+            return None             # no pane has ground for it: given up
+        log.info("%s: no spot under pane %d - set aside until another pane opens (%d of %d panes tried)",
+                 step.get("id"), index, len(tried), count)
+        return self._defer(step, key, self.PANE_RETRY_S)
 
     def place_held_back(self, step):
         """True when a `place` step would be skipped without a single click:
