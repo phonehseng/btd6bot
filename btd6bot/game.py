@@ -94,6 +94,9 @@ class Game:
         # Modes that forbid selling (CHIMPS): sell() refuses before any click,
         # whatever asks for it (set by Match from Executor.no_sell).
         self.no_sell = False
+        # Kinds whose next tower the shop gives away ("Free" on the tile, see
+        # read_free_kinds); price() answers 0 for them until one is placed.
+        self.free_kinds = set()
 
     # -- observation --------------------------------------------------------
     def frame(self, max_age=0.05):
@@ -555,12 +558,41 @@ class Game:
     def price(self, kind):
         """What placing `kind` costs now: the learned price when there is one,
         held inside PRICE_BAND of the table, else the table price."""
+        if kind in self.free_kinds:
+            return 0        # the shop tile says "Free" (read_free_kinds)
         table = self.table_price(kind)
         seen = self.learned_cost.get((kind, 0, 0)) if kind != "hero" else None
         if not seen:
             return table
         lo, hi = self.PRICE_BAND
         return int(min(max(seen, lo * table), hi * table))
+
+    # The shop's price labels as the game opens it (scrolled to the top): two
+    # columns of tiles, the hero first and then the towers in towers.TOWERS
+    # order. Label centres in screen fractions, measured on the stills of
+    # three Impoppable games of 2026-11-11 (tests/fixtures/shop_free_*.jpg).
+    SHOP_LABELS = (0.86, 0.18, 1.0, 0.82)       # the five rows that are in view
+    SHOP_LABEL_X = (0.895, 0.961)               # left and right column
+    SHOP_LABEL_Y0, SHOP_LABEL_DY, SHOP_ROWS = 0.287, 0.125, 5
+
+    def read_free_kinds(self, f=None):
+        """Read which towers the shop gives away now and remember them in
+        free_kinds, so that price() asks nothing for them. Returns the set.
+
+        Monkey Knowledge gives the first Dart Monkey (Bonus Monkey!) and the
+        first Glue Gunner of a game for nothing; the tile then says "Free"
+        instead of a price. The bot never read the tiles: Dark Dungeons,
+        Flooded Valley and Muddy Puddles Impoppable (2026-11-11 16:50-17:08)
+        were each lost in round 6 or 7 with two towers down and the free
+        dart still in the shop. Not in CHIMPS (no knowledge there: the tile
+        shows the price and this reads nothing)."""
+        self.close_panels()     # an open upgrade panel may lie over the shop
+        words = self._vision().read(self.SHOP_LABELS, img=f)
+        self.free_kinds = free_kinds_in_shop(
+            words, self.SHOP_LABEL_X, self.SHOP_LABEL_Y0, self.SHOP_LABEL_DY, self.SHOP_ROWS)
+        if self.free_kinds:
+            log.info("the shop gives away: %s", ", ".join(sorted(self.free_kinds)))
+        return self.free_kinds
 
     # -- placing ----------------------------------------------------------------
     def place(self, tid, kind, fx, fy, check_valid=True, more_spots=()):
@@ -630,7 +662,10 @@ class Game:
                     return None
                 continue
             self.last_spot = (sx, sy)
-            return self._confirm(tid, kind, sx, sy, pre if pre is not None else before)
+            placed = self._confirm(tid, kind, sx, sy, pre if pre is not None else before)
+            if placed is not None:
+                self.free_kinds.discard(kind)   # only the first one is free
+            return placed
         self.cancel_hold()
         self.fail_reason = "spot"
         self._journal_place_failed(tid, kind)
@@ -1890,6 +1925,29 @@ def tier_pips(img):
     if on != [False] * (PIP_SLOTS - count) + [True] * count:
         return None
     return count
+
+
+def free_kinds_in_shop(words, columns, y0, dy, rows):
+    """The tower kinds whose shop tile is labelled "Free", from the OCR words
+    of the shop's price labels (vision.Word: text, x, y in screen fractions).
+
+    The tiles stand in two columns (label centres at `columns`), `rows` rows
+    from y0 down in steps of dy; tile 0 is the hero and the towers follow in
+    towers.TOWERS order (the game's own shop order). A word that is not
+    "free", or that lies outside the grid of labels, is ignored."""
+    kinds = list(T.TOWERS)
+    free = set()
+    for word in words:
+        if "".join(ch for ch in word.text.lower() if ch.isalpha()) != "free":
+            continue
+        col = min(range(len(columns)), key=lambda i: abs(word.x - columns[i]))
+        row = round((word.y - y0) / dy)
+        off_x = abs(word.x - columns[col]) > abs(columns[1] - columns[0]) / 2
+        tile = row * len(columns) + col
+        if off_x or not 0 <= row < rows or not 1 <= tile <= len(kinds):
+            continue        # tile 0 is the hero
+        free.add(kinds[tile - 1])
+    return free
 
 
 def price_row(text):

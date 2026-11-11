@@ -550,6 +550,7 @@ class Match:
             # one life and one tower: a second, cheap one from the change
             log.info("one-life opening with a single tower - adding a cheap opener beside it")
             self._place_starter(rnd, need_placed=True)
+        self._place_free_openers(rnd)
         # kept for the error play() raises when nothing went down: Tricky
         # Tracks Easy failed twice with no placement line at all, which points
         # at the cash reading rather than at the spots (108 valid offline)
@@ -742,6 +743,48 @@ class Match:
             log.info("starter %s not placed after %d tries: last answer '%s' (%s), cash read %s, "
                      "price %s", kind, tries, result, self.g.fail_reason, cash, self.g.price(kind))
         return False
+
+    def _place_free_openers(self, rnd, tries=3):
+        """Before the first Play of a one-life game: put down every cheap
+        opener the shop gives away (Game.read_free_kinds), on the entrance
+        part of the track like the starter. Returns the kinds placed.
+
+        Dark Dungeons, Flooded Valley and Muddy Puddles Impoppable
+        (2026-11-11 16:50, 17:02, 17:07): each game was lost in round 6 or 7
+        with n1 and one starter down, while the shop's Dart Monkey tile said
+        "Free" in every still (Bonus Monkey! knowledge) - a third tower that
+        costs nothing was left in the shop. The starter is bought first, so
+        the money kept back for it (_opener_reserve) is spent as before.
+
+        Only kinds of Executor.CHEAP_OPENERS are placed: a free Glue Gunner
+        pops nothing by itself. Not in games with lives to spare, with
+        `starter: none`, or in achievement builds, whose tower list is
+        exact."""
+        strat = getattr(self.ex, "strat", None)
+        if not self.ex.rules.get("one_life") or self._no_starter() \
+                or (isinstance(strat, dict) and strat.get("achievement")):
+            return []
+        read = getattr(self.g, "read_free_kinds", None)
+        free = read() if read is not None else ()
+        placed = []
+        for kind in self.ex.CHEAP_OPENERS:
+            if kind not in free or not self.ex.kind_allowed(kind):
+                continue
+            step = {"do": "place", "id": f"bonus_{kind}", "kind": kind, "role": "dps",
+                    "segment": [0.05, 0.45]}
+            result = None
+            for _ in range(tries):      # each refused spot is blocked; try the next
+                with self.ex.why("starter", "the shop gives this tower away"):
+                    result = self.ex.try_step(step, self.g.cash_stable(), rnd)
+                if result == "done":
+                    log.info("free opener placed: %s", kind)
+                    placed.append(kind)
+                    break
+                time.sleep(0.3)
+            else:
+                log.info("free %s not placed after %d tries: last answer '%s' (%s)",
+                         kind, tries, result, self.g.fail_reason)
+        return placed
 
     def play(self, max_minutes=None):
         if max_minutes is None:

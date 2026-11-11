@@ -149,6 +149,40 @@ def test_towers_on_melted_ice_are_rebuilt():
     assert ex.plan[5]["id"] == "w1"
 
 
+def test_a_sniper_stands_on_ground_that_outlasts_the_phase():
+    """Erosion Impoppable (2026-11-11, case 20261111_163453): the snipers
+    stood on Path3's ice and went with it after round 52. A tower that
+    pops wherever it stands is offered only ground that lasts the game; a
+    ninja keeps the phase's ice, the only ground beside the live path."""
+    geom = _erosion()
+    if geom is None:
+        return
+    from types import SimpleNamespace
+    from btd6bot import placement as PL
+    from btd6bot.strategy import Executor
+    m = mapgeom.apply(MapModel("Erosion", PF), geom)
+    mapgeom.repaint_track(m, geom, 40)
+    ex = SimpleNamespace(m=m, g=SimpleNamespace(towers={}, hero="obyn"), rules={"end_round": 100},
+                         ground_horizon=mapgeom.phase_end(geom, 40), land_only=False, removed=(),
+                         GLOBAL_BUT_LOCAL=Executor.GLOBAL_BUT_LOCAL,
+                         _pane_round=lambda: None, _pose_round=lambda: None,
+                         _off_panes=lambda kind, grid: grid)
+    ex._needs_no_reach = lambda kind: Executor._needs_no_reach(ex, kind)
+    assert ex.ground_horizon == 54
+    lasting = PL.valid_spots(m, "sniper", None, [], last_round=100)
+    melts = mapgeom.lost_ground(m, geom, 54, 55)
+    sniper = Executor._legal_cells(ex, "sniper")
+    assert sniper.any() and (sniper == lasting).all() and not (sniper & melts).any()
+    assert (Executor._legal_cells(ex, "ninja") & melts).any()
+    # with no lasting cell left, the sniper takes the phase's ice after all
+    real = PL.valid_spots
+    PL.valid_spots = lambda *a, **k: real(*a, **k) & (k.get("last_round") == 54)
+    try:
+        assert (Executor._legal_cells(ex, "sniper") & melts).any()
+    finally:
+        PL.valid_spots = real
+
+
 def test_reverse_model_uses_the_map_geometry():
     """Case 20261107_043112 (Erosion Reverse, solo_ace): the Reverse game's
     map model is keyed "Erosion reverse", and mapgeom found no geometry
@@ -297,4 +331,5 @@ if __name__ == "__main__":
     test_phase_end()
     test_phase_ground_reaches_the_live_path()
     test_towers_on_melted_ice_are_rebuilt()
+    test_a_sniper_stands_on_ground_that_outlasts_the_phase()
     print("ok")

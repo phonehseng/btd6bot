@@ -2944,17 +2944,32 @@ class Executor:
         current phase ends (ground_horizon): each phase's track is in reach
         only from ice that melts with it, and the towers lost then are put
         back beside the next path (ground_lost). The hero still asks for
-        ground that lasts the whole game: it is placed once."""
+        ground that lasts the whole game: it is placed once.
+
+        So does a tower that pops bloons wherever it stands
+        (_needs_no_reach: sniper, heli, mortar ...), while such ground is
+        left: it needs no ice beside the live path. Erosion Impoppable
+        (2026-11-11, case 20261111_163453): four snipers and the blimp
+        answer's sniper stood on the phase's ice and went with it after
+        round 52, with ten more towers; round 53 began with $409 and the
+        game was lost in round 54. Only with no lasting cell free does such
+        a tower take the phase's ground like the others."""
         from . import placement as PL
         placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
                   for p in self.g.towers.values()]
-        last = self.rules.get("end_round")
+        whole_game = self.rules.get("end_round")
+        horizons = [whole_game]
         if self.ground_horizon is not None and kind != "hero":
-            last = self.ground_horizon if last is None else min(last, self.ground_horizon)
-        grid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
-                              where={"land"} if self.land_only else None,
-                              last_round=last, now_round=self._pane_round(), pose_round=self._pose_round(),
-                              removed=tuple(self.removed))
+            phase = self.ground_horizon if whole_game is None else min(whole_game, self.ground_horizon)
+            horizons = [whole_game, phase] if self._needs_no_reach(kind) else [phase]
+        grid = None
+        for last in horizons:
+            grid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
+                                  where={"land"} if self.land_only else None,
+                                  last_round=last, now_round=self._pane_round(),
+                                  pose_round=self._pose_round(), removed=tuple(self.removed))
+            if grid is None or grid.any():
+                break
         return self._off_panes(kind, grid)
 
     def _off_panes(self, kind, grid):
