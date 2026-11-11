@@ -912,8 +912,19 @@ FREEZE_FIRST_OFFSET = 9
 
 def _freeze_cycle(map_name):
     """(rounds off, cycle length) of the map's tower freeze, (0, 1) where
-    towers never freeze. Takes the display name or the file key."""
-    key = "".join(c for c in str(map_name).lower() if c.isalnum())
+    towers never freeze. Takes the display name or the file key, with or
+    without the " reverse" of a Reverse game's map model: the ice is the
+    same either way. Glacial Trail Reverse (2026-11-11, loss case
+    20261111_080458_GlacialTrail_reverse) looked up "Glacial Trail reverse",
+    found no freeze, and forgot the frozen sp1 as "not on the map" - its
+    Spiked Mines, the round-40+ answer, was never bought."""
+    name = str(map_name)
+    if name.lower().endswith(" reverse"):
+        name = name[:-len(" reverse")]
+    key = "".join(c for c in name.lower() if c.isalnum())
+    if key.endswith("reverse") and key[:-len("reverse")] in {
+            "".join(c for c in m.lower() if c.isalnum()) for m in TOWER_FREEZE}:
+        key = key[:-len("reverse")]        # the file key of a Reverse model ("glacialtrailreverse")
     by_key = {"".join(c for c in m.lower() if c.isalnum()): v for m, v in TOWER_FREEZE.items()}
     return by_key.get(key, (0, 1))
 
