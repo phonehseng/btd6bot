@@ -72,7 +72,8 @@ def test_where_fast_track_games_begin():
     assert B.fast_track_start("easy") == 10 and B.fast_track_start("primary_only") == 10
     assert B.fast_track_start("medium") == 15 and B.fast_track_start("reverse") == 15
     assert B.fast_track_start("hard") == 22 and B.fast_track_start("abr") == 22
-    # Impoppable is played with the toggle off (owner, 2026-11-10: FAST_TRACK_OFF_MODES)
+    # Impoppable is played with the toggle off (owner, 2026-11-10:
+    # boosts.FAST_TRACK_OFF_MODES), so its games begin at round 6
     assert B.fast_track_start("impoppable") is None
     assert B.fast_track_start("chimps") is None       # the game allows no boost there
     assert B.fast_track_start("deflation") is None    # everything is bought before round 31

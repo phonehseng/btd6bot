@@ -610,6 +610,7 @@ def test_a_held_blimp_round_does_not_hide_a_short_one_behind_it():
     ex.blimp_ratio = lambda load: ratios[load["hp"]]
     ex.ramp_bar = lambda load: 1.4
     ex._model_holds = lambda *a: False
+    ex._held_round_weak = lambda R, rnd: False   # live, the model rated Spillway's round 79 at 1.35
     ex._ramp_lead_for = lambda R: 5
     ex._ramp_lead = lambda: 5
     due = ex._ramp_due(38)
@@ -617,6 +618,29 @@ def test_a_held_blimp_round_does_not_hide_a_short_one_behind_it():
     ratios[10000] = 1.6                     # both held: the first is reported, as before
     ex.noted.discard(("ramp", 40))
     assert ex._ramp_due(38)[0] == 39
+
+
+def test_a_held_blimp_round_the_model_calls_weak_is_not_looked_past():
+    """Bazaar Half Cash (build replay, 2026-11-10): looking past held round
+    78 to the short rounds 79-80 drew the cash forward and round 78 fell from
+    0.53 to 0.39 in the damage model. A held round the model rates under 1 is
+    reported and the check stops there."""
+    g, ex = executor({"plan": []}, towers=[("s1", "sniper", (2, 2, 0))], cash=5000)
+    ex._init_threats()
+    loads = {39: {"hp": 12000, "rounds": [39]}, 40: {"hp": 10000, "rounds": [40]}}
+    ratios = {12000: 2.2, 10000: 1.1}
+    ex.blimp_load = lambda R: loads.get(R)
+    ex.blimp_ratio = lambda load: ratios[load["hp"]]
+    ex.ramp_bar = lambda load: 1.4
+    ex._model_holds = lambda *a: False
+    ex._ramp_lead_for = lambda R: 5
+    ex._ramp_lead = lambda: 5
+    ex._held_round_weak = lambda R, rnd: R == 39
+    assert ex._ramp_due(38)[0] == 39
+    ex._rated = lambda what, rnd, rate: None    # no forecast: the held round counts as holding
+    del ex._held_round_weak
+    ex.noted.clear()
+    assert ex._ramp_due(38)[0] == 40
 
 
 def test_one_life_wants_a_wider_blimp_margin():

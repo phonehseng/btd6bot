@@ -75,8 +75,29 @@ def _check_plan(acc: AccountState, plan: P.GamePlan, strategies: dict) -> None:
         assert plan.hero in acc.unlocked_heroes
 
 
+# How many last-resort games (phase LAST: every open medal under every bar)
+# the simulation plays in a row before it stops. The live runner plays them
+# for ever rather than idle; the simulation stops once that many in a row
+# have not reopened a game above a bar, because from there on it only
+# measures the random luck of low-p games. 10 keeps the 6000-game run of
+# seed 11 near 3.5 minutes (25 took over 7) and still reaches 73 maps.
+LAST_RESORT_RUN = 10
+
+
 def simulate(n_games: int, seed: int = 1, verbose_first: int = 40
              ) -> tuple[AccountState, list[str]]:
+    """Play a fresh simulated account through the planner, the way the live
+    runner does: the tiered games first, and once none clears its bar the
+    surest game under every bar (rank_games(below_bar=True), as in
+    Runner.next_plan). Before 2026-11-11 the simulation stopped at the first
+    moment nothing cleared a bar, where the live bot goes on playing; an
+    early losing streak then ended whole runs (seed 2: 15 maps after 56
+    games, seed 5: 42 after 60) and test_long_run_reaches_everything
+    depended on which random path one seed took (seed 11: 70 maps before a
+    two-line ceiling change, 52 after it). For the loss-rate check the
+    games and losses up to the first last-resort game are kept in
+    acc.sim_before_last (None if the run never needed one): up to there the
+    run is exactly the old simulation, so the check keeps its meaning."""
     rng = random.Random(seed)
     acc = AccountState()
     acc.HISTORY_LIMIT = 10 ** 6  # keep the whole run for the order checks
@@ -84,11 +105,20 @@ def simulate(n_games: int, seed: int = 1, verbose_first: int = 40
     log: list[str] = []
     phase = None
     minutes_total = 0.0
+    last_run = 0                 # last-resort games in a row
+    acc.sim_before_last = None
     for g in range(n_games):
         _settle(acc, log)
-        plan = P.next_game(acc, strategies.values())
-        if plan is None:  # no winnable first-time medal left: the runner would idle
-            log.append(f"== nothing left to play after {g} games")
+        plan = P.next_game(acc, strategies.values(), below_bar=True)
+        last_run = last_run + 1 if plan is not None and plan.phase == "LAST" else 0
+        if last_run == 1 and acc.sim_before_last is None:
+            # the first moment nothing cleared a bar: where the old simulation stopped
+            acc.sim_before_last = {
+                "games": sum(st["wins"] + st["losses"] for st in acc.strategy_stats.values()),
+                "losses": sum(st["losses"] for st in acc.strategy_stats.values())}
+        if plan is None or last_run > LAST_RESORT_RUN:
+            log.append(f"== nothing left to play after {g} games"
+                       + (f" ({LAST_RESORT_RUN} last-resort games in a row)" if plan else ""))
             break
         assert not acc.has_medal(plan.map, plan.mode_key), f"replay planned: {plan.reason}"
         _check_plan(acc, plan, strategies)
@@ -304,9 +334,14 @@ def test_long_run_reaches_everything():
                 if c.first and c.ok and (c.map, c.mode) in left]
     assert not feasible, feasible[:10]
     # losses stay rare (reality = the planner's prior in this simulation)
-    games = sum(st["wins"] + st["losses"] for st in acc.strategy_stats.values())
-    losses = sum(st["losses"] for st in acc.strategy_stats.values())
-    assert losses / games < 0.2, (losses, games)
+    # while the planner still finds games above a bar: counted up to the
+    # first last-resort game, as before 2026-11-11. After it the run mixes in
+    # games under every bar and the medals they reopen at lower bars, so the
+    # whole run's rate (0.21 for seed 11) says nothing about the bars.
+    before = acc.sim_before_last or {
+        "games": sum(st["wins"] + st["losses"] for st in acc.strategy_stats.values()),
+        "losses": sum(st["losses"] for st in acc.strategy_stats.values())}
+    assert before["losses"] / before["games"] < 0.2, before
     # the tier order shows: Hard first (the default since the evening of
     # 2026-10-22) - most Hard medals before most Easy-family ones; with the
     # warm-up order it is the other way round

@@ -28,14 +28,13 @@
 #   54%, answers bought: ace, bomb
 #   primary_only: kept - no gaps, min blimp ratio 0.65, Glue Gunner share of the
 #   cash 58%, answers bought: bomb
-#   deflation: kept - no gaps, min blimp ratio 0.44, Glue Gunner share of the
-#   cash 54%, answers bought: ace
+#   deflation: dropped - blimp damage 0.34 < 0.40
 #   medium: kept - no gaps, min blimp ratio 0.86, Glue Gunner share of the cash
 #   64%, answers bought: ace, bomb
 #   reverse: kept - no gaps, min blimp ratio 0.86, Glue Gunner share of the cash
 #   64%, answers bought: ace, bomb
-#   apopalypse: dropped - blimp damage 0.06 < 1.00
-#   hard: dropped - blimp damage 0.59 < 1.00
+#   apopalypse: dropped - blimp damage 0.48 < 1.00
+#   hard: dropped - blimp damage 0.48 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -44,10 +43,10 @@
 id: solo_glue
 xp_target: glue   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, primary_only, deflation, medium, reverse]
+modes: [easy, primary_only, medium, reverse]
 planner:
   towers: {dart: [4, 2, 4], glue: [4, 2, 0]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.82, primary_only: 0.84, deflation: 0.83, medium: 0.76, reverse: 0.76}
+  base_success: {easy: 0.82, primary_only: 0.84, medium: 0.76, reverse: 0.76}
 plan:
   - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
