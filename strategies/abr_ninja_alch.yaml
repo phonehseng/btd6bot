@@ -7,6 +7,11 @@
 id: abr_ninja_alch
 hero: obyn
 modes: [abr]
+# Played from round 3 with Fast Track switched off (boosts.fast_track_wanted):
+# the plan grows one ninja and an alchemist with the income, and bought in one
+# go at the round-22 Fast Track start it went 2-8 (2026-11-11: Bloody Puddles
+# ABR lost on round 23 within a minute, Last Resort on round 28 with $405 left).
+fast_track: false
 planner:
   towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], village: [2, 0, 2], super: [3, 0, 2], spike: [2, 0, 4]}
   base_success: {abr: 0.75}

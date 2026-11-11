@@ -171,7 +171,7 @@ def economy(mode, boosts=None):
     Fast Track moves the start (fast_track_start) and Double Cash doubles
     every income where it pays (boosts.double_cash_applies)."""
     from btd6bot import strategy as S
-    from btd6bot.boosts import double_cash_applies
+    from btd6bot.boosts import double_cash_applies, fast_track_wanted
     rules = D.mode_rules(mode)
     mr = S.MODE_RULES.get(mode, {})
     econ = Economy(mode=mode, family=S.PRICE_FAMILY.get(mode, "medium"),
@@ -179,7 +179,9 @@ def economy(mode, boosts=None):
                    end_round=int(mr.get("end_round") or rules["end_round"] or 60),
                    start_cash=float(rules["start_cash"]), cash_mult=float(rules["cash"]))
     boosts = boosts or {}
-    if boosts.get("fast_track") and mode not in ("chimps", "deflation"):
+    # the runner switches the toggle off in boosts.FAST_TRACK_OFF_MODES, so
+    # those games are planned from the mode's own first round
+    if boosts.get("fast_track") and fast_track_wanted(mode) and mode not in ("chimps", "deflation"):
         econ.start_round, econ.start_cash = fast_track_start(econ, double_cash_applies(boosts, mode))
     elif mode == "deflation" and boosts.get("double_cash"):
         # logged: Deflation games on the account start with $40,400, double the $20,000

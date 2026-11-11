@@ -164,7 +164,8 @@ def start_game(map_name, mode, strategy_id, hero, rules, account=None, executor=
         "no_mk": bool(rules.get("no_mk")),
         "account_level": getattr(account, "player_level", None),
         "double_cash": boosts.get("double_cash"),
-        "fast_track": bool(boosts.get("fast_track")) and _fast_track_on_for(mode),
+        "fast_track": bool(boosts.get("fast_track")) and _fast_track_on_for(
+            mode, getattr(executor, "strat", None)),
         "rules": rules,
     }
     path = JOURNAL_DIR / file_name(map_name, mode)
@@ -315,10 +316,11 @@ def cause_of_death(events, rnd, stats=None):
     return verdict("unknown", "no journal evidence points at one cause")
 
 
-def _fast_track_on_for(mode):
-    """Was the Fast Track toggle on for a game in `mode` (boosts.fast_track_wanted)?"""
+def _fast_track_on_for(mode, strategy=None):
+    """Was the Fast Track toggle on for a game in `mode` with `strategy`
+    (boosts.fast_track_wanted)?"""
     try:
         from .boosts import fast_track_wanted
-        return fast_track_wanted(mode)
+        return fast_track_wanted(mode, strategy if isinstance(strategy, dict) else None)
     except Exception:
         return True

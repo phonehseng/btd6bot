@@ -67,6 +67,26 @@ def test_ownership_survives_the_toggle():
         boosts.read = real
 
 
+def test_a_build_written_for_round_3_switches_it_off():
+    """abr_ninja_alch says `fast_track: false` (2-8 with Fast Track on, 2026-11-11);
+    the round-22-tuned double_hp_sniper_sun keeps the toggle on in ABR."""
+    from btd6bot import strategy as S
+    strats = S.load_all()
+    assert strats["abr_ninja_alch"].get("fast_track") is False
+    assert boosts.fast_track_wanted("abr", strats["abr_ninja_alch"]) is False
+    assert boosts.fast_track_wanted("abr", strats["double_hp_sniper_sun"]) is True
+    assert boosts.fast_track_wanted("abr") is True
+    b, state, real = bot(on=True)
+    try:
+        R.time.sleep, sleep = (lambda s: None), R.time.sleep
+        b._set_fast_track("abr", {"fast_track": True}, strats["abr_ninja_alch"])
+        assert state["on"] is False and state["clicks"] == 1
+        b._set_fast_track("abr", {"fast_track": False}, strats["double_hp_sniper_sun"])
+        assert state["on"] is True and state["clicks"] == 2
+    finally:
+        boosts.read, R.time.sleep = real, sleep
+
+
 def test_impoppable_has_no_fast_track_start():
     assert boosts.fast_track_start("impoppable") is None
     assert boosts.fast_track_start("medium") == 15 and boosts.fast_track_start("hard") == 22
