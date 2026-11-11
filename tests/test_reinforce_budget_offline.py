@@ -173,24 +173,104 @@ def test_one_life_surplus_keeps_to_its_budget():
 def test_a_look_with_no_time_still_gets_there():
     """A look whose budget is gone before it starts still rates one new
     thing (LookBudget: no cut before progress), so the looks never stall
-    and end where an unbounded look does. Pat's Pond Hard, the weak board
-    of test_reinforce_offline."""
+    and - never made to settle - end where an unbounded look does. Made to
+    settle (MAX_BUSY_LOOKS), the same looks answer on pass MAX_BUSY_LOOKS + 1.
+    Pat's Pond Hard, the weak board of test_reinforce_offline."""
     if not D.available():
         return
     from test_reinforce_offline import Ex, forecast, weak_board
     ex = Ex(weak_board())
     want = _unbounded(lambda: _answer(*R.best(ex, forecast(ex), 5000, 40, 80)))
-    fc = forecast(ex)
-    saved = R.LOOK_BUDGET_S
-    R.LOOK_BUDGET_S = 0.0
+    saved = R.LOOK_BUDGET_S, R.MAX_BUSY_LOOKS
     try:
+        R.LOOK_BUDGET_S = 0.0
+        R.MAX_BUSY_LOOKS = 10 ** 6         # never settle: the memo alone gets there
+        fc = forecast(ex)
         for n in range(1, 400):
             got = _answer(*R.best(ex, fc, 5000, 40, 80))
             if got[0] != "busy":
                 break
+        assert n > 1 and got == want, (n, got, want)
+        R.MAX_BUSY_LOOKS = saved[1]
+        fc = forecast(ex)
+        for n in range(1, 400):
+            got = _answer(*R.best(ex, fc, 5000, 40, 80))
+            if got[0] != "busy":
+                break
+        assert n <= R.MAX_BUSY_LOOKS + 1 and got[0] in ("buy", "wait", "save"), (n, got)
     finally:
-        R.LOOK_BUDGET_S = saved
-    assert n > 1 and got == want, (n, got, want)
+        R.LOOK_BUDGET_S, R.MAX_BUSY_LOOKS = saved
+
+
+# Water Park Impoppable (2026-11-11 02:26:38, round 88; journal
+# logs/journal/20261111_020150_WaterPark_impoppable.jsonl, strategy
+# chimps_sub_druid_water): the board as the log's purchase lines leave it
+# (tools/rate_board.py board_from_log). From 02:26:47 to 02:27:54 ten looks
+# in a row answered "busy" (nine "while rating growth paths") while the bank
+# grew from $7,934 to $19,583, and none chose anything; the game was lost
+# on round 91.
+WP_MAP, WP_RND, WP_CASH, WP_INCOME_PER_PASS = "Water Park", 88, 7_934, 1_600
+WP_BOARD = [
+    ("sb1", "sub", "2-0-4", 0.676, 0.47), ("dr", "dart", "0-2-4", 0.216, 0.232),
+    ("sb2", "sub", "2-0-4", 0.291, 0.896), ("hero", "hero", "0-0-0", 0.083, 0.428),
+    ("druid1", "druid", "0-1-1", 0.355, 0.845), ("sub1", "sub", "0-2-1", 0.419, 0.913),
+    ("dart2", "dart", "2-0-5", 0.532, 0.589), ("a1", "alchemist", "4-2-0", 0.377, 0.47),
+    ("druid2", "druid", "2-0-4", 0.778, 0.649), ("druid3", "druid", "2-0-4", 0.617, 0.462),
+    ("dr2", "dart", "2-0-4", 0.489, 0.589), ("ans_blimps_ace", "ace", "3-2-0", 0.355, 0.394),
+    ("d3", "druid", "2-0-4", 0.745, 0.3), ("v1", "village", "2-3-0", 0.708, 0.913),
+    ("bm1", "bomb", "2-0-3", 0.676, 0.836), ("sp1", "spike", "2-0-5", 0.532, 0.428),
+    ("d4", "druid", "2-0-4", 0.585, 0.419), ("d5", "druid", "0-0-0", 0.473, 0.436),
+    ("d6", "druid", "0-0-0", 0.19, 0.726), ("ace1", "ace", "3-1-0", 0.478, 0.351),
+    ("druid5", "druid", "0-3-2", 0.82, 0.453), ("druid6", "druid", "0-3-2", 0.265, 0.462),
+    ("a2", "alchemist", "4-2-0", 0.558, 0.376), ("sub2", "sub", "2-0-4", 0.665, 0.172),
+    ("sub3", "sub", "2-0-4", 0.772, 0.394), ("spike1", "spike", "2-0-4", 0.088, 0.521),
+    ("spike2", "spike", "2-0-4", 0.623, 0.922), ("ans_blimps_sniper", "sniper", "5-0-0", 0.457, 0.274),
+]
+
+
+def water_park_setup(board=WP_BOARD, rnd=WP_RND, cash=WP_CASH):
+    """(executor, forecast) for a Water Park Impoppable board with the
+    plan used up, the forecast's track loaded."""
+    m = G.apply(MapModel(WP_MAP, LAYOUTS["16:10"]["playfield"]), G.load(WP_MAP))
+    g = SIM.CashGame("impoppable", "obyn", m)
+    g.cash = cash
+    g.round = rnd
+    ex = S.Executor(g, m, S.load_all()["chimps_sub_druid_water"], "impoppable", SIM.full_account())
+    for tid, kind, cross, x, y in board:
+        g.towers[tid] = SIM.Placed(tid, kind, x, y, tiers=[int(c) for c in cross.split("-")])
+    ex.purchased = len(g.towers)
+    ex.idx = len(ex.plan)
+    fc = RoundForecast(WP_MAP, "impoppable", getattr(m, "sight", None),
+                       (getattr(m, "sight_height", None), getattr(m, "ground_height", None)))
+    fc.margin(R.board(ex), rnd)
+    return ex, fc
+
+
+def test_a_late_look_finishes_while_the_bank_grows():
+    """Looks on the round-88 Water Park board, $1,600 more in the bank at
+    every pass, answer within MAX_BUSY_LOOKS + 1 passes, each within its
+    budget. Before, every pass rated the growth paths of its own cash (new
+    boards each time), and ten passes in a row offline answered "busy" as
+    in the live game."""
+    if not D.available():
+        return
+    ex, fc = water_park_setup()
+    cash, looks = WP_CASH, []
+    for _ in range(12):
+        t0 = time.monotonic()
+        status, found = R.best(ex, fc, cash, WP_RND, END, lives=1)
+        looks.append(time.monotonic() - t0)
+        assert looks[-1] <= R.LOOK_BUDGET_S + SLACK_S, looks
+        if status != "busy":
+            break
+        assert ex.look_pin.cash == WP_CASH, ex.look_pin       # the look keeps its cash
+        cash += WP_INCOME_PER_PASS
+    assert status == "buy", (status, looks)
+    assert len(looks) <= R.MAX_BUSY_LOOKS + 1, looks
+    assert found[0].cost <= WP_CASH, found[0]
+    assert ex.look_pin is None                                # done: the next look starts afresh
+    print(f"Water Park round 88: {found[0].what} after {len(looks)} passes "
+          f"({', '.join(f'{s:.1f}' for s in looks)} s)")
 
 
 if __name__ == "__main__":

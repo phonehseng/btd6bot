@@ -233,6 +233,24 @@ class RoundForecast:
             self.off = True
             return None
 
+    def remembered_margin(self, towers, rnd, iterations=9):
+        """The margin of round `rnd` for `towers` if an earlier question
+        already rated it (_memo), else None - without rating anything.
+
+        The last pass of a reinforce look that ran out of time on several
+        passes in a row (reinforce.MAX_BUSY_LOOKS) chooses from what those
+        passes rated instead of rating everything again: on Water Park
+        Impoppable (2026-11-11, round 88, 28 towers) a whole look rated 67
+        growth paths at ~0.7 s each, ten passes of 6 s, and the game was
+        lost before one finished."""
+        if rnd is None or self.off or self.track is None:
+            return None
+        key = (("margin", iterations), self._key(towers), rnd)
+        if key not in self._memo:
+            return None
+        self._memo.move_to_end(key)
+        return self._memo[key]
+
     def worst(self, towers, rounds, iterations=9):
         """(lowest margin, its round) over `rounds` for `towers`, or None."""
         return lowest(self.margins(towers, rounds, iterations))

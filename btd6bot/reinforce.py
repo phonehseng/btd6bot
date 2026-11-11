@@ -87,6 +87,23 @@ MIN_LIFT = 0.01        # a purchase lifting the weakest round less than this doe
 # (forecast._memo), so the next look on the same board starts where this
 # one stopped, and the purchase chosen is the one an unbounded look picks.
 LOOK_BUDGET_S = 6.0
+# Passes in a row a look may answer "busy" before its next pass chooses from
+# what has been rated (LookBudget.settle). Remembering the ratings did not
+# by itself make the looks converge. On Water Park Impoppable (2026-11-11
+# 02:26:47-02:27:54, round 88, 28 towers) ten passes in a row ran out "while
+# rating growth paths" and none chose anything while $7.9k-19.6k sat idle;
+# the game was lost on round 91. Two things kept it from finishing:
+#   * the bank grew between passes, and grow() rates each placement at the
+#     crosspath *the cash* can grow it into (grown) - every pass asked about
+#     new boards the forecast had never seen. The look's cash is now pinned
+#     while it is unfinished (LookPin), so every pass asks the same questions.
+#   * even with the cash pinned, the whole look is ~60 s of ratings on that
+#     board (67 growth-path margins at ~0.7 s each), ten passes of 6 s while
+#     the round goes on. So after MAX_BUSY_LOOKS busy passes the next one
+#     goes with what it has: the growth paths from what was rated, then the
+#     purchases' leaks for its own budget, choosing among those rated.
+# A look therefore answers on its (MAX_BUSY_LOOKS + 1)-th pass at the latest.
+MAX_BUSY_LOOKS = 3
 
 
 def crisis_now(forecast, ex, rnd, lives_dropped=None):
@@ -255,13 +272,26 @@ class LookBudget:
     (forecast.computed has not moved since the look began): otherwise a
     look whose budget was spent on the board's own ratings, or one started
     with too little time, would never get further. Forecasts without the
-    count (test fakes) are cut at the deadline alone."""
+    count (test fakes) are cut at the deadline alone.
 
-    def __init__(self, deadline, forecast=None):
+    settle: this is the last pass of a look that has been cut short
+    MAX_BUSY_LOOKS times. Its stages still stop at the deadline, but the
+    look then chooses from what it and the passes before it rated instead
+    of answering "busy" (cuts() is False), and the growth paths come only
+    from ratings already made (memo_only): they were the stage that ate
+    every earlier pass."""
+
+    def __init__(self, deadline, forecast=None, settle=False):
         self.deadline = deadline
         self.forecast = forecast
         self.start_count = getattr(forecast, "computed", None)
         self.cut = None
+        self.settle = settle
+
+    def cuts(self):
+        """Does the stage that just ran make the look answer "busy"? True
+        when a stage was cut short, except on a settling pass."""
+        return self.cut is not None and not self.settle
 
     def past(self):
         if self.deadline is None or time.monotonic() <= self.deadline:
@@ -278,9 +308,79 @@ class LookBudget:
         if self.cut is None:
             self.cut = stage
             rated = f" ({done} of {total} rated)" if total is not None else ""
-            log.info("reinforce: the %.0f s look budget ran out while %s%s - the next look goes on "
-                     "from there", LOOK_BUDGET_S, stage, rated)
+            then = ("choosing from what is rated (the look's last pass)" if self.settle
+                    else "the next look goes on from there")
+            log.info("reinforce: the %.0f s look budget ran out while %s%s - %s",
+                     LOOK_BUDGET_S, stage, rated, then)
         return True
+
+
+def _memo_only(deadline):
+    """Rate growth paths only from what is remembered (LookBudget.settle)?"""
+    return isinstance(deadline, LookBudget) and deadline.settle
+
+
+def _margin(forecast, towers, rnd, deadline):
+    """forecast.margin(towers, rnd) - or, on a settling pass (_memo_only),
+    only a margin already rated (None when there is none). Forecasts that
+    cannot answer from memory (test fakes) are asked as usual."""
+    if _memo_only(deadline):
+        known = getattr(forecast, "remembered_margin", None)
+        if callable(known):
+            return known(towers, rnd)
+    return forecast.margin(towers, rnd)
+
+
+@dataclass
+class LookPin:
+    """A look that has not finished yet (best answered "busy"): the board it
+    is about (forecast.board_key of the towers, the game's last round, the
+    lives), the cash it rates with, and how many passes answered "busy".
+
+    The cash is pinned because grow() and options() depend on it: what the
+    cash can grow a placement into, which upgrades it affords. Rated afresh
+    with each pass's (higher) cash, the look kept asking about boards the
+    forecast had never seen, so remembering its ratings saved nothing
+    (Water Park Impoppable, 2026-11-11 round 88: cash $7.9k -> $19.6k over
+    ten busy passes). The pinned cash is never more than the bank: a lower
+    reading lowers it (a misread or a purchase made elsewhere), and a
+    purchase changes the board, which starts a new look.
+
+    The round being played is left out of the key on purpose: a round
+    change must not restart the count, or a look that spans rounds would
+    never settle (the rounds rated shift, the growth paths do not).
+
+    `at` is when its last pass ran (time.monotonic()): a look not gone on
+    with for PIN_STALE_S (the look-ahead turned safe, or the plan took the
+    turns) is dropped, so a later look does not rate an old, smaller bank."""
+    key: tuple
+    cash: float
+    busy: int = 0
+    at: float = field(default_factory=time.monotonic)
+
+
+PIN_STALE_S = 30.0     # an unfinished look not gone on with for this long starts afresh
+
+
+def look_pin(ex, cash, end_round, lives):
+    """The LookPin for the look starting now on `ex`'s board: the unfinished
+    one (ex.look_pin) when it is about the same board and recent, its cash
+    lowered to `cash` if the bank holds less, else a new one with `cash`."""
+    from .forecast import board_key        # here: forecast is optional for test fakes
+    key = (board_key(board(ex)), end_round, lives)
+    pin = getattr(ex, "look_pin", None)
+    now = time.monotonic()
+    if (not isinstance(pin, LookPin) or pin.key != key or cash is None or pin.cash is None
+            or now - pin.at > PIN_STALE_S):
+        pin = LookPin(key, cash)
+    elif cash < pin.cash:
+        pin.cash = cash
+    pin.at = now
+    try:
+        ex.look_pin = pin
+    except AttributeError:                  # an executor fake without attributes
+        pass
+    return pin
 
 
 def _over(deadline, stage, done=None, total=None):
@@ -461,8 +561,28 @@ def best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
     now), and every stage that rates many boards stops there - grow, the
     purchases' leaks, strongest, new_kind_options, save_target (LookBudget).
     The few ratings of the board as it stands are not cut; the forecast
-    remembers all of them, so the next look goes on from there."""
-    deadline = LookBudget(look_deadline() if deadline is None else deadline, forecast)
+    remembers all of them, so the next look goes on from there. While a
+    look is unfinished its cash stays pinned (LookPin), and after
+    MAX_BUSY_LOOKS busy passes the next one chooses from what has been
+    rated (LookBudget.settle) - so every look answers within a few passes,
+    however fast the bank grows."""
+    pin = look_pin(ex, cash, end_round, lives)
+    settle = pin.busy >= MAX_BUSY_LOOKS
+    if settle:
+        log.info("reinforce: the look at $%d has been cut short %d times - this pass chooses from "
+                 "what is rated", pin.cash, pin.busy)
+    budget = LookBudget(look_deadline() if deadline is None else deadline, forecast, settle=settle)
+    status, found = _look(ex, forecast, cash if pin.cash is None else pin.cash, rnd, end_round,
+                          lives, budget)
+    if status == "busy":
+        pin.busy += 1
+    elif getattr(ex, "look_pin", None) is pin:
+        ex.look_pin = None                  # done: the next look starts afresh
+    return status, found
+
+
+def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
+    """best() for the look's (pinned) `cash` and its LookBudget `deadline`."""
     rounds = lookahead_rounds(rnd, end_round)
     half = 1.0 / TARGET_MARGIN
     # only the rounds that leak at half strength can gain (and each skipped
@@ -501,8 +621,7 @@ def best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
     if radar is not None:
         opts.append(radar)
     tried = grow(ex, forecast, opts, cash, worst, deadline=deadline)
-    if deadline.past():
-        deadline.over("rating growth paths")
+    if not deadline.settle and deadline.over("rating growth paths"):
         return "busy", None
     unfinished = goal_option(ex, cash, rnd)
     if unfinished is not None:
@@ -513,7 +632,9 @@ def best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
     now_board = board(ex)
     for done, o in enumerate(tried):
         if deadline.over("rating the purchases' leaks", done, len(tried)):
-            return "busy", None
+            if not deadline.settle:
+                return "busy", None
+            break           # the last pass: the pick is the best of those rated
         leak = forecast.leaks(o.towers, rounds_rated, half)
         if leak is None:
             continue
@@ -525,7 +646,7 @@ def best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
             pick = (value, o)
     if pick is None and crisis:
         pick = strongest(forecast, tried, worst, before, deadline=deadline)
-        if deadline.cut:
+        if deadline.cuts():
             return "busy", None
     now = crisis_now(forecast, ex, rnd)
     plan_wait = waiting_plan_step(ex, cash)
@@ -535,7 +656,7 @@ def best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
         lifts = None
         if danger is not None and payable_by(ex, cost, cash, danger, rnd) is False:
             lifts = plan_claim_in_crisis(forecast, ex, tried, pick, danger, deadline=deadline)
-            if deadline.cut:
+            if deadline.cuts():
                 return "busy", None
         if lifts is not None:
             # the step cannot come before the round the game is at stake in,
@@ -564,8 +685,7 @@ def best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
     if pick is None and crisis and cash >= BLIND_SPEND_CASH:
         pick = strongest(forecast, new_kind_options(ex, forecast, cash, worst, deadline=deadline),
                          worst, before, deadline=deadline)
-        if deadline.past():
-            deadline.over("rating tower kinds not on the board")
+        if deadline.over("rating tower kinds not on the board") and not deadline.settle:
             return "busy", None
         if pick:
             log.warning("reinforce: nothing standing can grow to help round %d (%.2f) - trying a "
@@ -580,7 +700,7 @@ def best(ex, forecast, cash, rnd, end_round, lives=None, deadline=None):
         # Nothing affordable stops the leak: spending now only delays the
         # purchase that would (see save_target).
         target = save_target(forecast, ex, cash, rnd, worst, deadline=deadline)
-        if deadline.cut:
+        if deadline.cuts():
             return "busy", None
         if (target is not None and now and pick is not None
                 and cash - pick[1].cost >= release(ex, target[0].cost, worst, rnd)):
@@ -861,12 +981,17 @@ def strongest(forecast, tried, worst, before, deadline=None):
     up to $77,100 with "nothing buys helps" - then lost there.
 
     Past `deadline` (the look's, best) the purchases not rated yet are left
-    out: best() then answers "busy" and the next look rates them."""
+    out: best() then answers "busy" and the next look rates them. On a
+    settling pass (LookBudget.settle) the rest are still judged by the
+    margins already rated - most were, as growth paths."""
     found = None
     for done, o in enumerate(tried):
         if _over(deadline, f"rating purchases for round {worst}", done, len(tried)):
-            break
-        m = forecast.margin(o.towers, worst)
+            if not _memo_only(deadline):
+                break
+            m = _margin(forecast, o.towers, worst, deadline)
+        else:
+            m = forecast.margin(o.towers, worst)
         if m is not None and m > (before or 0.0) + 0.01 and (found is None or m > found[0]):
             found = (m, o)
     return found
@@ -916,11 +1041,18 @@ def grow(ex, forecast, opts, cash, rnd, deadline=None):
     each as "another sniper (to grow to 1-2-0)", and none was ever grown -
     the standing ones' single tiers were rated one tier at a time against
     a placement rated at its whole future - and round 40's MOAB took the
-    125 lives left."""
+    125 lives left.
+
+    On a settling pass (LookBudget.settle) every crosspath is judged by the
+    margin already rated for it, and those never rated are left out; a
+    placement none of whose crosspaths was rated stays bare, and one whose
+    standing towers' growth could not be judged is not offered at all (it
+    would buy a new tower while the standing ones wait, as on Spillway)."""
     family = _price_family(ex)
+    memo_only = _memo_only(deadline)
     out = []
     for o in opts:
-        if o.step.get("do") != "place" or _past(deadline):
+        if o.step.get("do") != "place" or (_past(deadline) and not memo_only):
             # past the look's time budget a placement stays rated bare: the
             # look goes on with what it has rather than block the game
             out.append(o)
@@ -928,12 +1060,12 @@ def grow(ex, forecast, opts, cash, rnd, deadline=None):
         *rest, new = o.towers
         rated = []
         for tiers in grown(ex, new.kind, cash) | {(0, 0, 0)}:     # bare: when growing adds nothing
-            if rated and _past(deadline):
+            if rated and _past(deadline) and not memo_only:
                 # a late margin costs 0.3-0.7 s and a placement has up to
                 # seven crosspaths: checked per placement only, a look ran
                 # 3-4 s past its budget (X Factor Impoppable, round 85)
                 break
-            m = forecast.margin(rest + [SimpleNamespace(**{**vars(new), "tiers": tiers})], rnd)
+            m = _margin(forecast, rest + [SimpleNamespace(**{**vars(new), "tiers": tiers})], rnd, deadline)
             if m is not None:
                 rated.append((m, -T.total_cost(new.kind, tiers, family), tiers))
         if rated:
@@ -941,6 +1073,8 @@ def grow(ex, forecast, opts, cash, rnd, deadline=None):
             if any(tiers):
                 standing = grow_standing(ex, forecast, rest, new.kind, tiers, m, cash, rnd, family,
                                          deadline=deadline)
+                if standing is UNJUDGED:
+                    continue
                 if standing is not None:
                     out.append(standing)
                     continue
@@ -970,18 +1104,31 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family, de
     the rest follow the same way once it stands.
 
     Past the look's `deadline` (LOOK_BUDGET_S) the crosspaths still unrated
-    are skipped once one has been found."""
+    are skipped once one has been found, and no further standing tower is
+    tried: UNJUDGED then (the look answers "busy" anyway). Only the
+    crosspaths of one tower used to be bounded, so a kind with several
+    towers behind and none reaching `margin` was rated whole - on Water
+    Park Impoppable (2026-11-11, round 88: two bare druids behind 2-0-4)
+    a look ran 13-14 s of its 6 s budget. On a settling pass
+    (LookBudget.settle) only the margins already rated count, and UNJUDGED
+    means that a standing tower could not be judged from them."""
     want = sum(tiers)
     behind = sorted((t for t in rest if t.kind == kind and sum(t.tiers) < want), key=lambda t: -sum(t.tiers))
-    for t in behind:
+    memo_only = _memo_only(deadline)
+    unrated = False
+    for i, t in enumerate(behind):
+        if i and _past(deadline) and not memo_only:
+            return UNJUDGED
         best = None
         for target, first in grown_from(ex, kind, tuple(t.tiers), cash, tower=t).items():
-            if best is not None and _past(deadline):
+            if best is not None and _past(deadline) and not memo_only:
                 break
             if first is None:
                 continue
             after = [SimpleNamespace(**{**vars(x), "tiers": target}) if x.tid == t.tid else x for x in rest]
-            m = forecast.margin(after, rnd)
+            m = _margin(forecast, after, rnd, deadline)
+            if m is None and memo_only:
+                unrated = True
             if m is None or m < margin:
                 continue
             cost = T.total_cost(kind, target, family) - T.total_cost(kind, tuple(t.tiers), family)
@@ -993,7 +1140,12 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family, de
             return Option(f"upgrade {t.tid} -> {code} (to grow to {whole})", -neg_cost,
                           {"do": "upgrade", "id": t.tid, "to": code}, after,
                           goal={"do": "upgrade", "id": t.tid, "to": whole})
-    return None
+    return UNJUDGED if unrated else None
+
+
+# grow_standing's answer when a standing tower behind could not be judged
+# within the look's budget, or from what was rated (a settling pass)
+UNJUDGED = object()
 
 
 def _tiers(code):

@@ -4055,9 +4055,31 @@ class Executor:
             return None
         return (grids or {}).get("blimp_track")
 
+    ANSWER_COPIES = 3        # new towers of one kind an answer need may place (_new_tower_option)
+
     def _new_tower_option(self, need, kind, cost, tiers):
-        """An answer option that places a new tower and upgrades it."""
-        tid = f"ans_{need.replace('+', '_')}_{kind}"
+        """An answer option that places a new tower and upgrades it.
+
+        Its id is ans_<need>_<kind>, numbered from 2 when a tower of that
+        id already stands. A taken id made the placement answer "done"
+        without a click (_try_place), so a second tower of a kind was never
+        bought for a need: Water Park Impoppable (2026-11-11, round 84)
+        held $33,782 while the blimp check read round 84 at 0.7x of 2.5x,
+        and its pick, "new ace 4-0-0", was ans_blimps_ace - the ace placed
+        for an earlier blimp round. The ramp bought nothing that round.
+
+        At most ANSWER_COPIES towers of a kind are placed for one need;
+        past that there is no option (None). Numbered without a limit, the
+        same round-84 board took nine fresh 3-0-0 aces in a row offline
+        (the blimp check's best damage per dollar, each counted in full)
+        until no legal ace spot was left on the map; past the limit the
+        upgrades of the towers standing come next instead."""
+        base = f"ans_{need.replace('+', '_')}_{kind}"
+        towers = getattr(getattr(self, "g", None), "towers", None) or {}
+        ids = [base] + [f"{base}{n}" for n in range(2, self.ANSWER_COPIES + 1)]
+        tid = next((t for t in ids if t not in towers), None)
+        if tid is None:
+            return None
         place = {"do": "place", "id": tid, "kind": kind}
         if kind == "village":
             place.update(role="support", near=self._near_ids(), near_radius=8)
@@ -4111,8 +4133,9 @@ class Executor:
                     cost = T.total_cost(kind, tuple(t), fam)
                     if best is None or cost < best[0]:
                         best = (cost, t)
-                if best is not None:
-                    opts.append(self._new_tower_option(need, kind, *best))
+                opt = self._new_tower_option(need, kind, *best) if best is not None else None
+                if opt is not None:
+                    opts.append(opt)
         opts.sort(key=lambda o: o["cost"])
         if len(self.opt_cache) > 64:
             self.opt_cache.clear()
@@ -4660,8 +4683,9 @@ class Executor:
                     if any(a > c for a, c in zip(t, caps)) or (self.no_income and self._is_income(kind, list(t))):
                         continue
                     gain = TH.blimp_capacity([("__new__", kind, t)], load, track, rng)
-                    if gain > 0:
-                        opt = self._new_tower_option("blimps", kind, T.total_cost(kind, t, fam), t)
+                    opt = self._new_tower_option("blimps", kind, T.total_cost(kind, t, fam), t) \
+                        if gain > 0 else None
+                    if opt is not None:
                         opt["gain"] = gain
                         opts.append(opt)
         opts.sort(key=lambda o: -o["gain"] / max(o["cost"], 1))
@@ -5357,7 +5381,69 @@ class Executor:
                 r = self.try_step(st, cash, rnd)
             if r in ("bought", "progress"):
                 return True
+        if ability_wait is None and self._idle_blimp_damage(cash, rnd):
+            return True
         self.waiting = ability_wait or PLAN_EXHAUSTED
+        return False
+
+    def _idle_blimp_damage(self, cash, rnd):
+        """With one life, once the plan and the fill are used up, put idle
+        cash into blimp damage for the first blimp round within MAX_LEAD
+        that the blimp check reads short of its bar (ramp_bar) - whatever
+        the damage model says about that round. True when one step was
+        bought.
+
+        `cash` is what tick() may spend: what a far threat holds (held_cash)
+        and what reinforce is saving for (reinforce_hold) are already off
+        it, so this is the cash the next rounds do not need.
+
+        The damage model may overrule the blimp check (_model_holds) and
+        the ramp looks only _ramp_lead() rounds ahead; late in one-life
+        games the model overrated blimp rounds again and again. Water Park
+        Impoppable (2026-11-11, chimps_sub_druid_water): rounds 84-87 began
+        with $33,782 / $40,501 / $47,132 / $47,640 while the check read the
+        blimp rounds ahead at 0.4-1.1x of 2.5x and the model rated them
+        2.1-3.75 (round 86's rating overruled the check). Little was
+        bought until round 87, when the ramp put $41k into a sniper 5-0-0
+        too late; round 88's 8 BFBs, 18 MOABs and 2 ZOMGs, then rounds
+        89-91, ended the game. With the plan done there is nothing else the
+        idle cash is kept for.
+
+        The purchase is chosen as the ramp chooses (_answer_ramp), among
+        those the cash pays for in full: the cheapest that closes the
+        round's whole shortfall, else the most blimp damage per dollar
+        among those adding at least a tenth of it (_dps_options). Nothing
+        smaller is bought - the cash stays for reinforce and surplus."""
+        if not (self.rules or {}).get("one_life") or self.no_answers or not TH.available():
+            return False
+        if rnd is None or cash is None or cash <= 0:
+            return False
+        if not hasattr(self, "calendar"):
+            self._init_threats()
+        found = None
+        for R in range(max(rnd, self.window[0]), min(rnd + self.MAX_LEAD, self.window[1]) + 1):
+            load = self.blimp_load(R)
+            if not load:
+                continue
+            ratio = self.blimp_ratio(load)
+            if ratio < self.ramp_bar(load):
+                found = (R, load, ratio)
+                break
+        if found is None:
+            return False
+        R, load, ratio = found
+        short = (self.ramp_bar(load) - ratio) * load["hp"]
+        opts = [o for o in self._dps_options(load) if o["cost"] <= cash]
+        closing = sorted((o for o in opts if o["gain"] >= short), key=lambda o: o["cost"])
+        for opt in closing or [o for o in opts if o["gain"] >= 0.1 * short]:
+            why = f"idle cash: blimp damage for round {R} ratio {ratio:.1f}"
+            with self.why("ramp", why, option=opt["desc"]):
+                r = self.try_step(dict(opt["steps"][0]), cash, rnd)
+            if r in ("bought", "progress"):
+                log.warning("idle cash, plan done: round %d's blimps read %.1fx of the %.1fx wanted - "
+                            "bought toward %s ($%d)", R, ratio, self.ramp_bar(load), opt["desc"],
+                            opt["cost"])
+                return True
         return False
 
     def _only_free_steps_left(self):
