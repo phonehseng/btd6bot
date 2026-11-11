@@ -915,7 +915,7 @@ def _freeze_cycle(map_name):
     towers never freeze. Takes the display name or the file key, with or
     without the " reverse" of a Reverse game's map model: the ice is the
     same either way. Glacial Trail Reverse (2026-11-11, loss case
-    20261111_0804*_GlacialTrail*_reverse) looked up "Glacial Trail reverse",
+    20261111_080458_GlacialTrail_reverse) looked up "Glacial Trail reverse",
     found no freeze, and forgot the frozen sp1 as "not on the map" - its
     Spiked Mines, the round-40+ answer, was never bought."""
     name = str(map_name)
