@@ -24,8 +24,10 @@ Offline checks:
     of the plan and the cash curve above is the one it really follows;
   * chimps_ninja_sun loads bot-ready, covers every threat of Hard,
     Impoppable and CHIMPS with one plan, and keeps the late rework: no extra
-    Sun Avatar, Perma-Spike, MOAB damage; in Impoppable (Double Cash, Fast
-    Track) the whole plan is bought by round 90;
+    Sun Avatar; a Ground Zero ace and a MOAB Eliminator (the round-100 BAD
+    answer) in the plan, the blimp classes of rounds 80-100 answered by them;
+    in Impoppable (Double Cash, Fast Track) the whole plan is bought by
+    round 90;
   * chimps_sub_druid_water covers CHIMPS (it once had no 'rush' answer);
   * every strategies/optimized/*chimps*.yaml is bot-ready with a worst model
     margin of at least strategy.OPTIMIZED_SAFE_MARGIN, no sell step, no
@@ -58,6 +60,8 @@ ONE_LIFE_LOOKAHEAD = 6
 MOAB_ANSWER_BY = FIRST_MOAB - ONE_LIFE_LOOKAHEAD   # the MOAB answer is the plan's step, not a forced one
 STICKY_BY = FIRST_MOAB - 1  # Sticky Bomb affordable after round 39: it stands for the round-40 MOAB
 MIB_BY = 76                # MIB village before the super ceramics of round 81
+LATE_ACE_BY = 85           # chimps_ninja_sun's Ground Zero ace before the R86-98 blimp rounds
+BAD_ANSWER_BY = {t: r for r, t in S.THREATS}["bad"] - ONE_LIFE_LOOKAHEAD   # round 94
 BANK_SHARE_R95 = 0.90      # the whole plan within 90% of the cash earned by round 95
 
 
@@ -105,7 +109,8 @@ def plan_timeline(strat, mode, boosts=None):
 
     out, spent = [], 0.0
     rnd, bank = econ.start_round - 1, econ.start_cash    # rnd: the last round paid into the bank
-    for st in strat["plan"]:
+    # a step with `modes: [...]` is played only in those modes (Executor._step_allowed)
+    for st in [st for st in strat["plan"] if mode in (st.get("modes") or [mode])]:
         cost = 0.0
         if st["do"] == "place":
             if st["kind"] == "hero":
@@ -189,11 +194,14 @@ def test_chimps_plans_fit_the_chimps_cash_curve():
         moab = strat["answers"]["moab"][0]
         assert first_round(tl, moab["id"], moab["to"]) <= MOAB_ANSWER_BY, (sid, moab)
         assert mib_round(strat, tl) <= MIB_BY, (sid, mib_round(strat, tl))
-    # Perma-Spike in time to stockpile spikes for rounds 95-98 and the round-100 BAD
     tl = plan_timeline(STRATS["chimps_ninja_sun"], "chimps")
     # the real MOAB damage stands for the first MOAB
     assert first_round(tl, "n2", "2-0-4") <= STICKY_BY, first_round(tl, "n2", "2-0-4")
-    assert first_round(tl, "sp1", "2-0-5") <= 90, first_round(tl, "sp1", "2-0-5")
+    # the late blimp damage (2026-11-10 rework): the Ground Zero ace before the
+    # R90s, and the MOAB Eliminator - the R100 BAD answer - by the round the
+    # executor would start forcing a BAD answer in (100 - ONE_LIFE_LOOKAHEAD)
+    assert first_round(tl, "ac1", "2-4-0") <= LATE_ACE_BY, first_round(tl, "ac1", "2-4-0")
+    assert first_round(tl, "b1", "0-5-0") <= BAD_ANSWER_BY, first_round(tl, "b1", "0-5-0")
 
 
 def test_chimps_ninja_sun_is_ready_in_every_mode():
@@ -212,21 +220,31 @@ def test_chimps_ninja_sun_is_ready_in_every_mode():
 
 
 def test_late_game_is_moab_damage_not_extra_sun_avatars():
-    """The R96-98 losses: a 3-0-2 Sun Avatar has no MOAB bonus, so the late
-    money goes to Perma-Spike, Bloon Sabotage, MOAB Assassin and Maim MOAB.
-    One Sun Avatar stays for the super ceramics from round 81."""
+    """The R86-98 losses: a 3-0-2 Sun Avatar has no MOAB bonus, so the late
+    money goes to blimp damage. Since the 2026-11-10 rework that is a Bloon
+    Sabotage ninja, a MOAB Assassin bomb grown to MOAB Eliminator (the BAD
+    answer) and a Ground Zero ace - the damage model rated a $32,400
+    Perma-Spike and four Maim MOAB snipers at almost nothing for rounds
+    90-100 (strategies/chimps_ninja_sun.yaml header). One Sun Avatar stays
+    for the super ceramics from round 81."""
     strat = STRATS["chimps_ninja_sun"]
     final = {}
-    for st in strat["plan"]:
+    # the CHIMPS plan (Impoppable adds steps of its own: `modes: [impoppable]`)
+    for st in [st for st in strat["plan"] if "chimps" in (st.get("modes") or ["chimps"])]:
         if st["do"] == "place" and st.get("id") and st["kind"] != "hero":
             final[st["id"]] = (st["kind"], (0, 0, 0))
         elif st["do"] == "upgrade" and st.get("id") in final:
             final[st["id"]] = (final[st["id"]][0], tuple(S.parse_cross(st["to"])))
     builds = set(final.values())
     assert sum(1 for k, _ in final.values() if k == "super") == 1
-    for need in (("spike", (2, 0, 5)), ("ninja", (0, 4, 2)), ("bomb", (2, 4, 0)),
-                 ("sniper", (4, 0, 2)), ("ninja", (2, 0, 4)), ("village", (2, 3, 0))):
+    for need in (("spike", (2, 0, 4)), ("ninja", (0, 4, 0)), ("bomb", (0, 5, 0)),
+                 ("ace", (2, 4, 0)), ("ninja", (2, 0, 4)), ("village", (2, 3, 0))):
         assert need in builds, need
+    # the late blimp classes are answered by the late damage, not by the
+    # round-39 Sticky Bomb that stands long before them
+    assert strat["answers"]["zomg"][0] == {"do": "upgrade", "id": "ac1", "to": "2-4-0"}
+    for cls in ("ddt", "bad"):
+        assert strat["answers"][cls][0] == {"do": "upgrade", "id": "b1", "to": "0-5-0"}, cls
     # Flash Bomb answers the first MOABs (affordable by R34), Sticky Bomb follows
     assert strat["answers"]["moab"] == [{"do": "upgrade", "id": "n2", "to": "2-0-3"}]
     assert strat["answers"]["bfb"] == [{"do": "upgrade", "id": "n2", "to": "2-0-4"}]
@@ -282,7 +300,8 @@ def test_no_answer_is_forced_ahead_of_the_chimps_plan():
 
 def test_impoppable_plan_fits_the_boosted_bank():
     """chimps_ninja_sun in Impoppable (Double Cash + Fast Track, as every one
-    of its games so far): Perma-Spike and the MOAB damage well before R95."""
+    of its games so far): the late MOAB damage (Ground Zero, MOAB
+    Eliminator) well before R95."""
     boosts = {"double_cash": True, "fast_track": True}
     tl = plan_timeline(STRATS["chimps_ninja_sun"], "impoppable", boosts)
     assert tl[-1][2] <= 90, tl[-1][2]
