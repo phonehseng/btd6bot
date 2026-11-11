@@ -1285,9 +1285,9 @@ def prior_win_probability(account: AccountState, s: StrategySpec, map_name: str,
         # was lost by three general builds in turn, each of them rated 0.8-0.9
         # untested there because only its own record counted
         lost = map_mode_losses(account).get((canonical_map(map_name), mode), 0)
-        p *= max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR ** lost)
+        p *= map_loss_factor(mode, lost)
     p = no_income_cap(p, s, mode)
-    p = ceiling_cap(p, map_name, mode)
+    p = ceiling_cap(p, map_name, mode, account)
     return min(0.98, max(0.01, p))
 
 
@@ -1324,18 +1324,93 @@ def no_income_cap(p: float, s: StrategySpec, mode: str) -> float:
     return p
 
 
-def ceiling_cap(p: float, map_name: str, mode: str) -> float:
+def ceiling_cap(p: float, map_name: str, mode: str, account: AccountState | None = None) -> float:
     """Cap ``p`` for a map/mode where no build the map research found holds.
 
     The cap is CEILING_P_CAP scaled by how far the ceiling falls short of
     CEILING_PLAYABLE, so among such games (played only as a last resort) the
     nearly-holding ones come first: Mesa Primary Only (ceiling 0.8) before
     Last Resort Primary Only (0.09) before Muddy Puddles Deflation (0.06).
-    Only a win on record raises the posterior above it (win_probability)."""
+    Only a win on record raises the posterior above it (win_probability).
+
+    With ``account`` the cap is measured instead of assumed: the account's
+    record in games under a ceiling of the same band and life class
+    (:func:`ceiling_band_cap`), shrunk towards that formula."""
     ceiling = model_ceiling(map_name, mode)
     if ceiling is None or ceiling >= CEILING_PLAYABLE:
         return p
-    return min(p, CEILING_P_CAP * max(0.0, ceiling) / CEILING_PLAYABLE)
+    if account is not None:
+        return min(p, ceiling_band_cap(account, ceiling, mode))
+    return min(p, _formula_ceiling_cap(ceiling))
+
+
+def _formula_ceiling_cap(ceiling: float) -> float:
+    """The assumed cap for a ceiling under CEILING_PLAYABLE (ceiling_cap)."""
+    return CEILING_P_CAP * max(0.0, ceiling) / CEILING_PLAYABLE
+
+
+# The measured ceiling cap (ceiling_band_cap) pools the account's games by
+# the model ceiling of their map/mode in bands under CEILING_PLAYABLE: under
+# HOPELESS_CEILING, then from there and from each of these edges up.
+CEILING_BAND_EDGES = (0.5, 1.0)
+# pseudo-games of the formula cap (_formula_ceiling_cap) in each band's record
+CEILING_BAND_PRIOR_GAMES = 4.0
+
+
+def _ceiling_band(ceiling: float) -> int:
+    """The band holding ``ceiling``: 0 under HOPELESS_CEILING, then one more
+    for it and for each CEILING_BAND_EDGES edge the ceiling reaches."""
+    return sum(ceiling >= lo for lo in (HOPELESS_CEILING, *CEILING_BAND_EDGES))
+
+
+def _one_life(mode: str) -> bool:
+    from .strategy import MODE_RULES
+    return bool(MODE_RULES.get(mode, {}).get("one_life"))
+
+
+def _ceiling_band_record(account: AccountState) -> dict[tuple[bool, int], tuple[int, int]]:
+    """{(one-life mode, band): (games, wins)} over the account's game history
+    on map/modes whose model ceiling is under CEILING_PLAYABLE, rebuilt when
+    a game was added."""
+    history = [h for h in getattr(account, "history", None) or [] if isinstance(h, Mapping)]
+    key = (len(history), str(history[-1].get("t")) if history else "")
+    cached = getattr(account, "_ceiling_band_record", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    out: dict[tuple[bool, int], list[int]] = {}
+    for h in history:
+        mode = h.get("mode")
+        if mode not in MODES or not h.get("map"):
+            continue
+        ceiling = model_ceiling(str(h["map"]), mode)
+        if ceiling is None or ceiling >= CEILING_PLAYABLE:
+            continue
+        rec = out.setdefault((_one_life(mode), _ceiling_band(ceiling)), [0, 0])
+        rec[0] += 1
+        rec[1] += bool(h.get("won"))
+    record = {k: (g, w) for k, (g, w) in out.items()}
+    try:
+        account._ceiling_band_record = (key, record)
+    except AttributeError:
+        pass
+    return record
+
+
+def ceiling_band_cap(account: AccountState, ceiling: float, mode: str) -> float:
+    """The cap for a game under model ceiling ``ceiling`` (< CEILING_PLAYABLE),
+    measured on the account's own games in the same band and life class.
+
+    The formula cap (_formula_ceiling_cap) was a guess, and the record
+    showed it far too low where a leak only costs lives: up to 2026-11-11,
+    multi-life games under a ceiling of 0.5-1.5 were won 39 times in 70
+    (56%, as often as games under no ceiling at all, 60%) while rated 0.2-0.3;
+    in one-life modes a ceiling under 0.2 was won once in 43 games. So the
+    band's record (games, wins) is shrunk towards the formula cap of this
+    ceiling with CEILING_BAND_PRIOR_GAMES pseudo-games; a band with no games
+    keeps the formula, and within a band a higher ceiling still ranks first."""
+    games, wins = _ceiling_band_record(account).get((_one_life(mode), _ceiling_band(ceiling)), (0, 0))
+    k = CEILING_BAND_PRIOR_GAMES
+    return (wins + k * _formula_ceiling_cap(ceiling)) / (games + k)
 
 
 # Every loss on a (map, mode), by any strategy, scales the prior of the
@@ -1346,6 +1421,27 @@ def ceiling_cap(p: float, map_name: str, mode: str) -> float:
 # under the safe-mode bar (0.85).
 MAP_LOSS_FACTOR = 0.7
 MAP_LOSS_FLOOR = 0.3
+
+# ... but in a mode with lives to spare only the first loss says that much.
+# Up to 2026-11-11 (logs/results.jsonl, first-time medals only), multi-life
+# map/modes were won 75% of the time at the first try, 50% after one loss,
+# then 45%, 52% and 33% after two, three and four or more: the first loss
+# halved the chance like MAP_LOSS_FACTOR says, the later ones barely moved
+# it, while 0.7^n went on to 0.49, 0.34 and 0.30. Each loss after the first
+# counts this factor there instead (0.7 x 0.9^(n-1): 0.63, 0.57, 0.51 of the
+# first-try chance). One-life modes keep 0.7^n, which their record matches
+# (35%, 23%, 30%, then 1 win in 23 games after three losses).
+MAP_LOSS_REPEAT_FACTOR = 0.9
+
+
+def map_loss_factor(mode: str, losses: int) -> float:
+    """How much ``losses`` lost games on a map/mode, by any build, lower a
+    general build's prior there (MAP_LOSS_FACTOR, MAP_LOSS_REPEAT_FACTOR),
+    never under MAP_LOSS_FLOOR."""
+    if losses <= 0:
+        return 1.0
+    repeat = MAP_LOSS_FACTOR if _one_life(mode) else MAP_LOSS_REPEAT_FACTOR
+    return max(MAP_LOSS_FLOOR, MAP_LOSS_FACTOR * repeat ** (losses - 1))
 
 # No-income modes (Deflation: the whole defence is bought before Play) give a
 # general build no way to recover. Its prior there is capped at its record:
@@ -1693,7 +1789,7 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
         # Resort Primary Only (ceiling 0.33) was capped at 0.5, then x1.38 for
         # how primary_only plays on expert maps, played at p=0.69 and lost at
         # round 20 (2026-11-04)
-        prior = max(0.01, ceiling_cap(prior, map_name, mode))
+        prior = max(0.01, ceiling_cap(prior, map_name, mode, account))
         # nor over the no-income cap: Ravine Deflation (solo_dartling, never
         # played there) was capped at 0.76, lifted by how the build does in
         # Deflation on beginner maps to p=0.93, played as a "confident" game
