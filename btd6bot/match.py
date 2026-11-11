@@ -27,6 +27,7 @@ EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
 CRISIS_HOLD_S = 20.0       # longest wait per round
 CRISIS_HOLD_IDLE_S = 4.0   # ... ended early once this long passes without a purchase
 CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
+CRISIS_HOLD_CASH_RISE = 200  # cash up this much since the last rise restarts the idle allowance
 # The game lights the Play button again as soon as a round's last bloon has
 # been sent, while its bloons are still on the track; pressing it sends the
 # next round on top of them. With one life, Play waits until the bloon watch
@@ -432,6 +433,7 @@ class Match:
         self._saving_until = 0.0    # reinforce saves for a dearer purchase until then
         self._crisis_round = None
         self._crisis_hold = {}      # round -> time Play started waiting, or False (no hold)
+        self._crisis_cash = None     # (round, cash at the last rise, when it rose) during a crisis hold
         self._clear_hold = {}       # round -> [time Play started waiting, empty looks], or False
         self._idle_seen = False     # the Play button was seen idle between rounds
         # how far along the route the bloons really get (bloonwatch.py; observe only)
@@ -1107,6 +1109,17 @@ class Match:
         moment the last one ended - Spillway Medium (2026-11-03) went into
         round 40 with $2,329 and lost all 150 lives to its first MOAB.
 
+        Cash still coming in counts as activity too: the last round's
+        bloons are often still being popped during the hold, and what they
+        pay can bring a purchase within reach. Mushroom Grotto Impoppable
+        (2026-11-11, case 20261111_1115*) held Play before round 93 (rated
+        0.69) with $47,526; "nothing $47,831 buys helps", the hold ended
+        after 4 s idle at $48,520 - by then enough for the $48,000 n2
+        2-0-5 that lifted round 93 to 1.45. It was bought 6 s into round 93
+        and the game was lost 4 s later. The idle allowance now restarts
+        each time cash rises by CRISIS_HOLD_CASH_RISE; CRISIS_HOLD_S still
+        caps the hold.
+
         Only when the game's Auto Start is off (the Play button goes idle
         between rounds) and never under continuous sends."""
         if rnd is None or cash is None or self.ex.rules.get("continuous"):
@@ -1123,6 +1136,7 @@ class Match:
                 self._crisis_hold[rnd] = False
                 return False
             self._crisis_hold[rnd] = now
+            self._crisis_cash = (rnd, cash, None)  # no rise yet; a rise restarts the idle allowance
             self._weak_round = rnd        # reinforce.py picks what to buy during the hold
             self._t_reinforce = 0.0
             log.warning("holding Play: the damage model rates the coming round at %.2f - "
@@ -1131,7 +1145,13 @@ class Match:
             return True
         if since is False:
             return False
-        if now - since > CRISIS_HOLD_S or now - max(since, self._last_buy) > CRISIS_HOLD_IDLE_S:
+        rise = getattr(self, "_crisis_cash", None)
+        if rise is None or rise[0] != rnd or cash < rise[1]:
+            self._crisis_cash = (rnd, cash, None)           # (round, cash at the last rise, when)
+        elif cash >= rise[1] + CRISIS_HOLD_CASH_RISE:
+            self._crisis_cash = (rnd, cash, now)            # cash still coming in: wait on
+        last_rise = self._crisis_cash[2] or since
+        if now - since > CRISIS_HOLD_S or now - max(since, self._last_buy, last_rise) > CRISIS_HOLD_IDLE_S:
             log.info("holding Play over after %.0f s ($%d left)", now - since, cash)
             self._crisis_hold[rnd] = False
             return False

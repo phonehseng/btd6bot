@@ -55,6 +55,19 @@ def test_lets_go_once_purchases_stop():
     assert not m._hold_for_crisis(40, 2329)            # and stays released this round
 
 
+def test_rising_cash_keeps_the_hold_going():
+    """Mushroom Grotto Impoppable (2026-11-11): the last round's pops kept
+    paying during the hold; with no purchase for 4 s the hold ended just as
+    the cash reached the purchase that would have saved round 93."""
+    m = bare_match(0.48)
+    assert m._hold_for_crisis(93, 47_526)
+    m._crisis_hold[93] -= M.CRISIS_HOLD_IDLE_S + 1     # nothing bought for a while ...
+    assert m._hold_for_crisis(93, 48_520)              # ... but the cash went up: wait on
+    assert m._hold_for_crisis(93, 48_520)              # the rise was just now
+    m._crisis_cash = (93, 48_520, time.time() - M.CRISIS_HOLD_IDLE_S - 1)
+    assert not m._hold_for_crisis(93, 48_530)          # flat cash, idle again: Play
+
+
 def test_never_holds_longer_than_the_cap():
     m = bare_match(0.48)
     assert m._hold_for_crisis(40, 2329)
