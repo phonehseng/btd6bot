@@ -47,6 +47,9 @@ def test_stuck_round_is_reported_once_a_minute():
         assert len(logs) == 1
         m._report_stuck_round(frame, 88, 88, 80.0)
         assert len(logs) == 1, "at most once a STUCK_REPORT_EVERY"
+        m._t_stuck_report = float("-inf")
+        m._report_stuck_round(frame, 89, 88, 200.0)
+        assert len(logs) == 1, "the reader sees the next round: a long round, not stuck (2026-11-11 03:31)"
     finally:
         M.log.warning, V.save = real, real_save
 

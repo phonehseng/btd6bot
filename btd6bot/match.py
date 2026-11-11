@@ -996,6 +996,8 @@ class Match:
         what the reader saw. Evidence only: it changes no decision."""
         if not self._in_round or last_round is None:
             return
+        if rnd is not None and rnd != last_round:
+            return      # the reader sees a new round: a long round ending, not a stuck reader
         if now - self._t_round_change < self.STUCK_ROUND_S:
             return
         if now - getattr(self, "_t_stuck_report", float("-inf")) < self.STUCK_REPORT_EVERY:
