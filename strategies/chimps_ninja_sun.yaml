@@ -12,22 +12,71 @@
 # covers the tier 1-3 buys that follow; the
 # R63 rush answered by n1 4-0-2 (Bloonjitsu); ONE 3-0-2 Sun Avatar for
 # the R81+ super ceramics; a 2-3-0 MIB Village by ~R70 (camo and every damage
-# type for the towers near it); an exit Spike Factory 2-0-4 (DDT leaks)
-# -> 2-0-5 Perma-Spike by ~R88, so its spikes stockpile for R95-98 and the
-# R100 BAD.
-# Late money goes to blimp damage, not more Sun Avatars: a 3-0-2 Sun Avatar
-# deals ~100 single-target dps with no MOAB bonus (data/game_model/attacks.json),
-# and R98 is 8 ZOMG + 30 fortified BFB (100,640 top-layer HP in 30 s). So: a
-# Bloon Sabotage ninja 0-4-2 and a MOAB Assassin bomb 2-4-0 before the R80
-# ZOMG (abilities saved for blimp rounds), then Perma-Spike, then Maim MOAB
-# snipers 4-0-2.
-# Super Monkey's bottom path stops at tier 3 on this account: no Dark Champion.
+# type for the towers near it); an exit Spike Factory 2-0-4 (DDT leaks).
+#
+# Rounds 90-100 (reworked 2026-11-10, branch chimps-late)
+# -------------------------------------------------------
+# Why: about 26 wins / 33 losses in Impoppable, and the late losses ran out
+# of MOAB-class damage: Balance R86, Cargo R94, Chutes R96 (twice),
+# Encrypted R98, Bloonarius Prime R98, High Finance R98 (2026-11-10: R98's
+# 30 fortified BFBs + 8 ZOMGs, the blimp check at 0.3x of the 2.5x
+# one-life bar). Loss cases: ~/.btd6bot_cache/losses/*_impoppable.
+# What the damage model (the forecast every live decision uses) said about
+# the old late plan on the replayed Chutes Impoppable board of round 90:
+#   * the $32,400 Perma-Spike (sp1 2-0-5) lifted R90-100 by 0.00-0.05 (the
+#     model counts 30 s of stockpile; the Chutes loss case rated it +0.00
+#     live too), yet it was the plan's biggest late buy;
+#   * four Maim MOAB snipers 4-0-2 (~$50k of fill) lifted the worst round
+#     by 0.03, the extra 2-4-0 bombs by 0.02;
+#   * one Ground Zero ace 2-4-0 ($20.8k) lifted the worst round (R98) from
+#     0.15 to 0.35 and R94 from 0.23 to 0.68: the most blimp damage per
+#     dollar of anything the account owns. Also tried on that board:
+#     Spectre ace 2-0-4 0.35 for $31k, Apache Dartship heli 4-0-2 0.29,
+#     Sun Temple 0.26 for $108k, Tech Terror 0.23, Cripple MOAB 0.16,
+#     MOAB Eliminator 0.16; Embrittlement, MOAB Glue and another Sabotage
+#     stay at 0.15 (slows, stuns and abilities are not in the model - they
+#     only help live);
+#   * Ground Zero + MOAB Eliminator together: worst 0.40, R95 0.53, R100 0.94.
+#   * Where the aces stand matters as much: their sharp darts and pineapples
+#     pop the lead, black and camo DDTs only with the MIB village's damage
+#     types. Placed after the bomb and the Sabotage ninja, both aces landed
+#     across the map on Chutes and rated almost nothing; next to v2 they
+#     took that board's worst round from 0.25 to 0.59. So the aces' spots
+#     are taken right after the MIB village.
+#   * Perma-Spike is map-dependent: nothing on Chutes, but on the Encrypted
+#     R94 board it took R95 (30 DDTs, 50 MOABs, 500 purples, 250 leads) from
+#     0.41 to 0.71 - its spikes catch DDTs at the exit.
+# So from ~R70: the aces' spots by the MIB village, an exit Spike Factory
+# 2-0-4, a Bloon Sabotage ninja 0-4-0 (its slow is fired at the start of R95
+# and R99 by abilities.py), a MOAB Assassin bomb, a Ground Zero ace (ac1; in
+# Impoppable a second one, ac2), then the bomb to 0-5-0 MOAB Eliminator -
+# the R100 BAD answer (Assassinate on a 10 s cooldown, abilities.py) in
+# place of Perma-Spike; Impoppable then buys Perma-Spike as well. In CHIMPS
+# the plan stays within 90% of the cash earned by R95
+# (tests/test_chimps_builds_offline.py), which is why ac2 and Perma-Spike
+# are Impoppable-only (`modes: [impoppable]`), n4 stops at 0-4-0 and b1's
+# top tiers wait for the fill. The fill (Impoppable's Double Cash pays for
+# it) buys more of what the model rated best: a third Ground Zero ace, exit
+# spikes 2-0-4, an Apache Prime heli, then one Maim MOAB sniper (stuns, not
+# modelled) and, in CHIMPS, Perma-Spike last.
+# Sources for the late picks:
+#   bloonswiki, "MOAB Eliminator (BTD6)": an easy round-100 solution in CHIMPS
+#     https://www.bloonswiki.com/MOAB_Eliminator_(BTD6)
+#   bloon.games, "Best strategies to beat CHIMPS mode": a Sabotage ninja for R95/R99
+#     https://bloon.games/best-strategies-to-beat-chimps-mode-in-btd6/
+#   RandyZ524, CHIMPS tier list by path (r/btd6): R98 is Perma-Spike's hardest round
+#     https://www.reddit.com/r/btd6/comments/eefaum/comprehensive_tier_list_for_chimps_by_path
+#   theclick.gg, round 98 guide: after the blimp HP, the super ceramics out of
+#     the BFBs are the second wall (area damage: Ground Zero's bombs)
+#     https://www.theclick.gg/?p=104021
+# Super Monkey's bottom path stops at tier 3 on this account (no Dark
+# Champion) and the Ninja at tier 4 (no Grand Saboteur, no Master Bomber).
 id: chimps_ninja_sun
 hero: obyn
 modes: [hard, impoppable, chimps]
 planner:
   towers: {ninja: [4, 4, 4], alchemist: [4, 2, 0], village: [2, 3, 2], super: [3, 0, 2], spike: [2, 0, 5],
-           bomb: [2, 4, 0], sniper: [4, 0, 2]}
+           bomb: [2, 5, 0], ace: [2, 4, 0], heli: [5, 0, 2], sniper: [4, 0, 2]}
   # chimps stays at 0.4: the re-timed plan has no CHIMPS evidence yet
   base_success: {hard: 0.9, impoppable: 0.5, chimps: 0.4}
   # not Tricky Tracks (2026-11-09): Impoppable replays 66 rounds under 1 there
@@ -61,29 +110,73 @@ plan:
   # MIB: camo and every damage type for the towers near it, by ~R70
   - {do: place, id: v2, kind: village, role: support, near: [s1], near_radius: 7}
   - {do: upgrade, id: v2, to: 2-3-0}
+  # The Ground Zero aces' spots, taken first ($865 each): their sharp darts
+  # and pineapples pop the lead, black and camo DDTs only with the MIB
+  # village's damage types. Placed after the bomb and the Sabotage ninja,
+  # the Chutes replay found no ace spot within 15 cells of v2 and put both
+  # aces across the map, where the model rated them at almost nothing;
+  # moved next to v2 the same two aces took the board's worst R90-100
+  # round from 0.25 to 0.59.
+  - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7}
+  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, modes: [impoppable]}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
-  # blimp abilities: Bloon Sabotage (slows every blimp) and MOAB Assassin
+  # blimp abilities: Bloon Sabotage (slows every blimp; abilities.py fires
+  # it at the start of R95 and R99) and MOAB Assassin. n4 stops at 0-4-0:
+  # its Seeking Shuriken / Caltrops tiers rated nothing late, and the $810
+  # keeps the CHIMPS plan inside its bank share
   - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8}
-  - {do: upgrade, id: n4, to: 0-4-2}
+  - {do: upgrade, id: n4, to: 0-4-0}
   - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7}
-  - {do: upgrade, id: b1, to: 2-4-0}
-  # Perma-Spike by ~R88: spikes stockpile for R95-98 and the R100 BAD
-  - {do: upgrade, id: sp1, to: 2-0-5}
-  # Maim MOAB with what is left (global range; MIB lends it camo for DDTs)
-  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 7}
-  - {do: upgrade, id: sn1, to: 4-0-2}
-  - {do: target, id: sn1, mode: strong}
+  - {do: upgrade, id: b1, to: 0-4-0}
+  # Ground Zero (~R83 in CHIMPS): the best blimp damage per dollar in the
+  # model (Chutes R90 board: worst of R90-100 0.15 -> 0.35 for $20.8k), and
+  # its pineapples are area damage for R98's super ceramics
+  - {do: upgrade, id: ac1, to: 2-4-0}
+  # Impoppable only: a second Ground Zero before the Eliminator (two aces
+  # took the Chutes board's R98 to 0.51). Its $19,200 tier is bought in a
+  # round or two of Double Cash income, while the $31,200 Eliminator alone
+  # was put off round after round for whatever lifted the next weak round
+  # (the Chutes replay bought it at R97). CHIMPS has no room for it: there
+  # the plan must stay within 90% of the cash earned by R95.
+  - {do: upgrade, id: ac2, to: 2-4-0, modes: [impoppable]}
+  # MOAB Eliminator (~R92 in CHIMPS): the R100 BAD answer in place of the
+  # $32,400 Perma-Spike the model rated at +0.00; with the ace the Chutes
+  # board's worst R90-100 round goes 0.15 -> 0.40
+  - {do: upgrade, id: b1, to: 0-5-0}
+  # Impoppable only: Perma-Spike after all. It rated nothing on Chutes, but
+  # on the replayed Encrypted R94 board (aces and Eliminator standing) it
+  # took R95 (30 DDTs, 50 MOABs, 500 purples, 250 leads; the worst round
+  # there) from 0.41 to 0.71 and the worst of R90-100 from 0.41 to 0.56:
+  # its spikes catch the DDTs at the exit. CHIMPS cannot pay it inside the
+  # plan's bank share (its fill still ends with it).
+  - {do: upgrade, id: sp1, to: 2-0-5, modes: [impoppable]}
 fill:
   # surplus (Impoppable's Double Cash pays for most of it): Stronger
-  # Stimulant for the core, then more blimp damage
+  # Stimulant for the core, then the late blimp damage the model rated best
+  # per dollar. A fill step that waits for cash lets the next ones buy, so
+  # the dear tier 5s come last.
   - {do: upgrade, id: a1, to: 4-2-0}
-  - {do: place, kind: sniper, role: support, near: [v2], near_radius: 9, max: 4}
-  - {do: upgrade, kind: sniper, to: 4-0-2}
-  - {do: place, kind: bomb, role: support, near: [v2], near_radius: 9, max: 3}
-  - {do: upgrade, kind: bomb, to: 2-4-0}
+  # more Ground Zero aces, three in all (two aces 2-4-0 took Chutes R98 to 0.51)
+  - {do: place, kind: ace, role: support, near: [v2], near_radius: 9, max: 3}
+  - {do: upgrade, kind: ace, to: 2-4-0}
+  # the Eliminator's top tiers (bigger, heavier bombs for the ceramics)
+  - {do: upgrade, id: b1, to: 2-5-0}
+  # exit spikes: they hold what leaks at the end (without any spikes the
+  # Chutes board rated R100 0.11 instead of 0.52)
   - {do: place, kind: spike, role: exit, max: 3}
   - {do: upgrade, kind: spike, to: 2-0-4}
+  # Apache Prime heli (Chutes R98 0.15 -> 0.68 alone; $75k at Hard prices)
+  - {do: place, id: h1, kind: heli, role: support, near: [v2], near_radius: 9}
+  - {do: upgrade, id: h1, to: 4-0-2}
+  - {do: upgrade, id: h1, to: 5-0-2}
+  # one Maim MOAB sniper: its stun on BFBs and ZOMGs is not in the model
+  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 9}
+  - {do: upgrade, id: sn1, to: 4-0-2}
+  - {do: target, id: sn1, mode: strong}
+  # Perma-Spike last (Impoppable has it in the plan): its stockpile still
+  # helps R95 and R100 live
+  - {do: upgrade, id: sp1, to: 2-0-5}
 panic:
   - {do: place, kind: ninja, role: exit}
   - {do: place, kind: spike, role: exit}
@@ -95,8 +188,19 @@ answers:
   moab: [{do: upgrade, id: n2, to: 2-0-3}]
   bfb: [{do: upgrade, id: n2, to: 2-0-4}]
   rush: [{do: upgrade, id: n1, to: 4-0-2}]
-  zomg: [{do: upgrade, id: n2, to: 2-0-4}]
-  ddt: [{do: upgrade, id: n2, to: 2-0-4}]
+  # The blimp ramp (Executor._answer_ramp) buys the round's own answer first
+  # when the blimp check is short. The old zomg/ddt answer (n2 2-0-4) has
+  # stood since R39, so from R80 the ramp fell through to whatever reinforce
+  # rated; each late class now points at the late damage instead.
+  # ZOMG rounds (80-98): the Ground Zero ace
+  zomg:
+    - {do: upgrade, id: ac1, to: 2-4-0}
+    - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7}
+  # DDT rounds (90-99): MOAB Eliminator by the MIB village (camo, lead, black)
+  ddt:
+    - {do: upgrade, id: b1, to: 0-5-0}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7}
+  # R100 BAD: MOAB Eliminator (was Perma-Spike)
   bad:
-    - {do: upgrade, id: sp1, to: 2-0-5}
-    - {do: place, id: sp1, kind: spike, role: exit}
+    - {do: upgrade, id: b1, to: 0-5-0}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7}
