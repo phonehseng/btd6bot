@@ -1693,9 +1693,38 @@ def win_probability(account: AccountState, s: StrategySpec, map_name: str, mode:
         # and lost at round 52 with the damage model rating round 60 at 0.29
         # (2026-11-04)
         prior = no_income_cap(prior, s, mode)
+    prior = freeze_cap(prior, s, map_name)
     w, l = build_record(account, s, map_name, mode)
     k = cfg.prior_strength
     return (prior * k + w) / (k + w + l), w + l
+
+
+# A general build on a map that freezes towers (dps_model.TOWER_FREEZE:
+# Glacial Trail, every tower but the Ice Monkey frozen two rounds in ten,
+# counted from its placement round) is held to this p.
+FREEZE_GENERAL_P = 0.2
+
+
+def freeze_cap(p: float, s: StrategySpec, map_name: str) -> float:
+    """p capped at FREEZE_GENERAL_P for a build that is not the map's own on
+    a map that freezes towers; the map's own builds (and achievement plans)
+    keep theirs.
+
+    General builds buy their opening in one round, so on Glacial Trail the
+    whole defence freezes at once (rounds p+9, p+10: R31 for a Hard start at
+    22, R19/R29 for Easy from 10), and every general build has lost there.
+    Glacial Trail Reverse (2026-11-10 19:52): solo_ace, rated p=0.98 by its
+    record elsewhere and Double Cash, was played over glacialtrail_medium
+    (which covers Reverse and won Medium an hour before) and lost round 34.
+    Modes without a map build are still played - after the rest."""
+    try:
+        from . import dps_model as D
+        freezes = D.tower_uptime(map_name) < 1.0
+    except Exception:
+        return p
+    if freezes and not is_own_map_build(s, map_name) and not s.achievement:
+        return min(p, FREEZE_GENERAL_P)
+    return p
 
 
 def build_record(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> tuple[int, int]:
