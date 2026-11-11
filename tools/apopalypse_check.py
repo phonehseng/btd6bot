@@ -58,6 +58,23 @@ gives each round after the start S seconds of clicking, each purchase
 costing what it costs live, and --old-clicks buys as the bot did before
 clicktime.py (one tier a tick, in plan order) for comparing the two.
 
+The freeze. On a map that freezes towers (dps_model.TOWER_FREEZE: Glacial
+Trail, two rounds in ten from each tower's placement round) the damage
+model's default is the average uptime (every tower at 80%), which hides the
+round a whole opening freezes together (apopalypse_apache_spikes, Glacial
+Trail 2026-11-10: everything bought at round 15, 102 lives lost in rounds
+24-25, the game on 33). There each round is rated instead with only the
+towers awake in it, at full strength (frozen_boards): a tower's placement
+round is taken as the first round it stands on a board and as the one
+before (bought during the previous round), the worse of the two counts, as
+tests/test_glacialtrail_builds_offline.py does for the standard rounds - but
+a tower of the start board was bought in the setup, with the start round on
+the HUD, so its placement round is exact (the lost game above: setup at 15,
+lives lost in 24-25, none in 23). The window's second round is rated with
+the first round's awake towers; its own window rates it with its own.
+The same rating found that loss offline: apopalypse_apache_spikes rates
+0.06 at round 24 on Glacial Trail.
+
 Not modelled (on the safe side unless noted): the hero, abilities, Monkey
 Knowledge; the end-of-round bonus is assumed paid every round although the
 game pays it only once a round is fully popped (a board that holds at 2.0
@@ -258,30 +275,62 @@ class RoundCheck:
         return min(self.worst, self.sampled)
 
 
+def frozen_boards(map_name, round_boards, rnd):
+    """The boards round `rnd` is rated with: [the whole board] on a map
+    without a freeze; on one with a freeze (dps_model.TOWER_FREEZE) the
+    board's towers awake in `rnd`, once taking each tower's placement round
+    as its first board round and once as the round before (see the module
+    docstring, "The freeze"). The hero is kept (it is not rated anyway)."""
+    board = round_boards[rnd]
+    off, _ = D._freeze_cycle(map_name)
+    if not off:
+        return [board]
+    first = {}
+    for r in sorted(round_boards):
+        for tid in round_boards[r]:
+            first.setdefault(tid, r)
+    start = min(round_boards)
+    out = []
+    for shift in (0, 1):
+        # a tower on the first board was bought before the start round
+        # began, with that round on the HUD: no round before it to count
+        awake = {tid: t for tid, t in board.items()
+                 if t[0] == "hero" or not D.frozen_in(map_name, first[tid] - (shift if first[tid] > start else 0), rnd)}
+        if awake not in out:
+            out.append(awake)
+    return out
+
+
 def check_boards(map_name, round_boards, drift=0.0, samples=SAMPLES, seed=0, rounds=None):
-    """[RoundCheck] for every round of round_boards (or `rounds`)."""
+    """[RoundCheck] for every round of round_boards (or `rounds`); on a map
+    that freezes towers each round with only its awake towers (frozen_boards)."""
     rater = Rater(map_name, drift)
+    if D._freeze_cycle(map_name)[0]:
+        rater.track.uptime = 1.0        # the frozen towers are left out instead
     rng = random.Random(seed)
     out = []
     for rnd in sorted(round_boards):
         if rounds is not None and rnd not in rounds:
             continue
-        board = round_boards[rnd]
-        st = rater.stations(board)
         window = [r for r in range(rnd, rnd + WINDOW)]
-        built = [rater.worst_rounds(board, st, r) for r in window]
-        worst, worst_rounds = math.inf, None
-        for name in HARDNESS:
-            rounds_ = [b[name] for b in built]
-            m = rater.margin(st, rounds_)
-            if m < worst:
-                worst, worst_rounds = m, rounds_
-        sampled, below = math.inf, 0
-        for _ in range(samples):
-            m = rater.margin(st, [A.random_round(r, rng) for r in window])
-            sampled = min(sampled, m)
-            below += m < GATE_MARGIN
-        out.append(RoundCheck(rnd, len(board), round(worst, 2), round(sampled, 2), below,
+        worst, worst_rounds, sampled, below = math.inf, None, math.inf, 0
+        for board in frozen_boards(map_name, round_boards, rnd):
+            if not any(t[0] != "hero" for t in board.values()):
+                worst, sampled, below = 1.0 / D.MARGIN_HI, 1.0 / D.MARGIN_HI, samples
+                worst_rounds = [[]]
+                continue
+            st = rater.stations(board)
+            built = [rater.worst_rounds(board, st, r) for r in window]
+            for name in HARDNESS:
+                rounds_ = [b[name] for b in built]
+                m = rater.margin(st, rounds_)
+                if m < worst:
+                    worst, worst_rounds = m, rounds_
+            for _ in range(samples):
+                m = rater.margin(st, [A.random_round(r, rng) for r in window])
+                sampled = min(sampled, m)
+                below += m < GATE_MARGIN
+        out.append(RoundCheck(rnd, len(round_boards[rnd]), round(worst, 2), round(sampled, 2), below,
                               [g.name for g in worst_rounds[0][:3]]))
     return out
 

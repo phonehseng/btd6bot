@@ -47,6 +47,18 @@ two druids, placed in four phases: h1 at round 22 (frozen rounds 0-2 mod
 10), h2 and dr1 at 25 (3-5), sp1 at 26 (4-6: awake for the MOAB rounds
 40, 43 and 47), dr2 and a1 at 28-38 (6-8). When written ABR worst 2.35
 (R31), then R35 2.40, R58 2.57, R22 2.59.
+
+Apopalypse (strategies/maps/glacialtrail_apopalypse.yaml) is rated with
+tools/apopalypse_check.py instead (random rounds, sent back to back, on a
+poor game's income), which leaves each round's frozen towers out the same
+way (apopalypse_check.frozen_boards). apopalypse_apache_spikes lost there
+on round 33 (2026-11-10 20:12) after its whole round-15 opening froze in
+rounds 24-25; the check rates it 0.06 at round 24. The map build places
+helis at 15 and 18, the spike at 21 and rushes it to Spiked Mines, a third
+heli and a druid after: when written worst 0.97 at round 33 (every tower
+awake: the cash, not the freeze), then R59 1.11, R41 1.16. Apopalypse has
+no fixed first MOAB round (its MOAB groups come from 41), so the round-40
+check is not asked of it.
 Run: python tests/test_glacialtrail_builds_offline.py"""
 import logging
 import math
@@ -59,6 +71,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
+import apopalypse_check as AC               # noqa: E402
 import optimize_builds as O                 # noqa: E402
 import simulate_threats as SIM              # noqa: E402
 from btd6bot import dps_model as D          # noqa: E402
@@ -70,6 +83,9 @@ MAP = "Glacial Trail"
 FIRST_MOAB = {t: r for r, t in S.THREATS}["moab"]      # round 40
 BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (account.boosts)
 GENERAL = "primary_core"                               # lost Medium at R40 on 2026-11-09
+GENERAL_APOPALYPSE = "apopalypse_apache_spikes"        # lost Apopalypse at R33 on 2026-11-10
+APOPALYPSE = "apopalypse"
+APOP_SAMPLES = 6                                       # random windows per round (the constructed ones decide here)
 # build -> [(mode, the worst round rating allowed)]
 # 2026-11-10: a druid's vine now grabs one bloon, not a 4-unit blast of a
 # packed group (tests/test_druid_vine_one_bloon_offline.py); the two
@@ -78,15 +94,25 @@ GENERAL = "primary_core"                               # lost Medium at R40 on 2
 BUILDS = {
     "glacialtrail_medium": [("easy", 2.0), ("medium", 1.3), ("reverse", 1.3)],
     "glacialtrail_abr": [("abr", 1.6)],     # 1.70 at R34 once the druid vine takes one bloon a grab (2026-11-10)
+    # 0.97 at R33 when written (2026-11-10): every tower awake, the spike at
+    # 3-0-0 with its $9,500 Spiked Mines tier bought during that round - a
+    # poor game's cash by round 33 ($23.3k) pays two 3-2-0 helis and a 3-0-0
+    # spike, not more. 2.0 and even 1.0 are out of reach on that cash, so
+    # the floor is the measured worst less a little.
+    "glacialtrail_apopalypse": [(APOPALYPSE, 0.95)],
 }
 # build -> its spike factories (ABR: Floor4 only - the game refused a spike on Floor2)
-SPIKES = {"glacialtrail_medium": ("sp1", "sp2"), "glacialtrail_abr": ("sp1",)}
+SPIKES = {"glacialtrail_medium": ("sp1", "sp2"), "glacialtrail_abr": ("sp1",), "glacialtrail_apopalypse": ("sp1",)}
 MOAB_ANSWER = "sp1"
 
 
 @lru_cache(maxsize=None)
 def _replay(build, mode):
-    """(simulate result, {round: board}) on the economy the account plays `mode` with."""
+    """(simulate result, {round: board}) on the economy the account plays `mode` with
+    (Apopalypse: apopalypse_check.boards, a poor game's income)."""
+    if mode == APOPALYPSE:
+        boards, r = AC.boards(S.load_all()[build], MAP)
+        return r, boards
     econ = O.economy(mode, BOOSTS)
     scenario = {"start_round": econ.start_round, "start_cash": econ.start_cash,
                 "income_multiplier": econ.cash_mult}
@@ -114,8 +140,11 @@ def _first_rounds(boards):
 
 def _margins(build, mode):
     """{round: margin} of the replayed boards, each tower frozen by its
-    placement round (the worse of the board's first round and the one before)."""
+    placement round (the worse of the board's first round and the one before).
+    Apopalypse: the worst of apopalypse_check's windows for each round."""
     _, boards = _replay(build, mode)
+    if mode == APOPALYPSE:
+        return {c.rnd: c.margin for c in AC.check_boards(MAP, boards, samples=APOP_SAMPLES)}
     first = _first_rounds(boards)
     fc = _forecast(mode)
     out = {}
@@ -142,6 +171,8 @@ def test_spikes_reach_the_track_from_their_spots():
 def test_moab_answer_is_awake_in_round_40():
     for build, modes in BUILDS.items():
         for mode, _ in modes:
+            if mode == APOPALYPSE:
+                continue        # random rounds: no fixed first MOAB (see the docstring)
             _, boards = _replay(build, mode)
             first = _first_rounds(boards)[MOAB_ANSWER]
             kind, tiers, _, _ = boards[FIRST_MOAB][MOAB_ANSWER]
@@ -181,6 +212,13 @@ def test_medium_build_beats_the_general_build():
     general = _margins(GENERAL, "medium")
     own = _margins("glacialtrail_medium", "medium")
     assert min(general.values()) < 0.5
+    assert min(own.values()) > 4 * min(general.values())
+
+
+def test_apopalypse_build_beats_the_general_build():
+    general = _margins(GENERAL_APOPALYPSE, APOPALYPSE)
+    own = _margins("glacialtrail_apopalypse", APOPALYPSE)
+    assert min(general.values()) < 0.5        # 0.06 at R24 when written: its opening frozen together
     assert min(own.values()) > 4 * min(general.values())
 
 
