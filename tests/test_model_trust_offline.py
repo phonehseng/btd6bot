@@ -38,7 +38,7 @@ class FixedForecast(F.RoundForecast):
     def margins(self, towers, rounds, iterations=9):
         # the parent's scaling, around a fixed raw rating
         rated = {r: self.raw for r in rounds}
-        return rated if self.trust >= 1.0 else {r: m * self.trust for r, m in rated.items()}
+        return rated if self.trust == 1.0 else {r: m * self.trust for r, m in rated.items()}
 
     def leaks(self, towers, rounds, strength, per_round=False):
         self.asked_strength = strength * self.trust
@@ -118,6 +118,76 @@ def test_match_hook_rerates_after_the_leak():
     s2._margins = {24: 0.6}
     M.Match._distrust_model(s2, 24, 10)
     assert s2.forecast.trust == 1.0 and s2.rerated == []
+
+
+def test_clean_weak_rounds_raise_trust_slowly():
+    """X Factor Impoppable (2026-11-10): rounds rated 0.09-0.98 all held with
+    nothing leaking. Each clean round raises the trust by at most
+    TRUST_STEP, up to TRUST_CEILING, so a run of them lifts a 0.46 round
+    over 0.9 - reinforce stops starving the plan - but never past the cap."""
+    f = F.RoundForecast("X Factor", "impoppable")
+    assert f.observe_clean(0.46, 0, depth=0.0)
+    assert abs(f.trust - F.TRUST_STEP) < 1e-9, "one round moves it one step"
+    for _ in range(20):
+        f.observe_clean(0.46 * f.trust, 0, depth=0.1)   # what the bot is told
+    assert abs(f.trust - F.TRUST_CEILING) < 1e-9
+    assert 0.46 * f.trust > 0.9
+
+
+def test_clean_rounds_never_lift_past_what_was_held():
+    """A round rated 0.9 that held only shows the defence had 1/0.9 of the
+    model's strength - the trust stops there, not at the step."""
+    f = F.RoundForecast("X Factor", "impoppable")
+    assert f.observe_clean(0.9, 0)
+    assert abs(f.trust - F.HELD_MARGIN / 0.9) < 1e-9
+
+
+def test_no_evidence_no_change():
+    f = F.RoundForecast("X Factor", "impoppable")
+    assert not f.observe_clean(None, 0), "an unrated round says nothing"
+    assert not f.observe_clean(1.4, 0), "a round rated safe that held is expected"
+    assert not f.observe_clean(0.5, 1), "lives lost: not a clean hold"
+    assert not f.observe_clean(0.5, 0, depth=0.9), "bloons came close to the exit"
+    assert f.trust == 1.0
+
+
+def test_a_leak_takes_back_the_raised_trust():
+    """Once the defence leaks again - even in a round rated under 1 - the
+    extra trust is gone and the model's own rating stands."""
+    f = F.RoundForecast("X Factor", "impoppable")
+    f.observe_clean(0.5, 0)
+    assert f.trust > 1.0
+    assert f.observe_leak(0.7, 1)
+    assert f.trust == 1.0
+    # and a leak in a round told safe under raised trust falls below 1
+    f.trust = 2.0
+    assert f.observe_leak(1.2, 1)
+    assert abs(f.trust - F.LEAKED_MARGIN * 2.0 / 1.2) < 1e-9
+
+
+def test_real_margins_scale_up_too():
+    f = F.RoundForecast("X Factor", "impoppable")
+    f._ready = lambda: True
+    f._rate = lambda towers, rounds, rate: {r: 0.4 for r in rounds}
+    f.trust = 2.0
+    assert all(abs(m - 0.8) < 1e-9 for m in f.margins([], [87, 88]).values())
+
+
+def test_match_hook_trusts_more_after_a_clean_round():
+    class Shell:
+        _margins = {87: 0.46}
+        _round_lost = 0
+        depths = [{"deepest": 0.0, "deep_share": 0.0, "looks": 1}]
+        forecast = F.RoundForecast("X Factor", "impoppable")
+
+    s = Shell()
+    M.Match._trust_model_more(s, 87)
+    assert s.forecast.trust > 1.0
+    s2 = Shell()
+    s2.forecast = F.RoundForecast("X Factor", "impoppable")
+    s2._round_lost = 1
+    M.Match._trust_model_more(s2, 87)
+    assert s2.forecast.trust == 1.0
 
 
 if __name__ == "__main__":

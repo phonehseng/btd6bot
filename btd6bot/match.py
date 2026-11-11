@@ -840,6 +840,7 @@ class Match:
                     if self.stats["rounds"] % 5 == 0:
                         self.m.save()
                     self._watch_round_end(last_round)
+                    self._trust_model_more(last_round)
                     for done in range(last_round, rnd):     # rounds completed: XP paid
                         self.tower_xp.round_end(done, list(self.g.towers.values()))
                     self._follow_ground(last_round, rnd)
@@ -1500,6 +1501,33 @@ class Match:
         except Exception:
             log.exception("re-rating after the leak failed - carrying on")
         self._t_reinforce = 0.0
+
+    def _trust_model_more(self, rnd):
+        """Round `rnd` just ended. If the damage model had rated it under 1
+        and it cost no lives (the bloons never got near the exit), the model
+        underrates this defence, and the forecast trusts it a little more
+        (RoundForecast.observe_clean) - so reinforce stops buying for rounds
+        the defence keeps holding and the plan's big steps get their cash
+        (X Factor Impoppable, 2026-11-10: 30 clean rounds rated 0.09-0.98,
+        173 reinforce buys, the Sun Avatar starved from round 43 to 90)."""
+        observe = getattr(self.forecast, "observe_clean", None)
+        if observe is None or rnd is None:
+            return
+        margin = self._margins.get(rnd)
+        last = self.depths[-1] if getattr(self, "depths", None) else None
+        depth = last.get("deepest") if last and last.get("round", rnd) == rnd else None
+        before = getattr(self.forecast, "trust", 1.0)
+        try:
+            if not observe(margin, self._round_lost, depth):
+                return
+        except Exception:      # bookkeeping must never cost a game
+            log.exception("model trust update failed - carrying on")
+            return
+        trust = self.forecast.trust
+        log.info("round %d was rated %.2f and held with no lives lost: the damage model is trusted at "
+                 "%.2f (was %.2f) of its strength", rnd, margin, trust, before)
+        journal.current().event("model_trust", rnd=rnd, margin=round(margin, 3), lost=0,
+                                trust=round(trust, 3))
 
     def _journal_leak(self, rnd, lost, lives_after, inferred=False):
         """A leak, tied to what the round brings: its bloon groups with their

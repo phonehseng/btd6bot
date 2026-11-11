@@ -47,6 +47,13 @@ REVERSE_SUFFIX = " reverse"   # map models of Reverse games are keyed "<map> rev
 # m leaves the defence trusted at LEAKED_MARGIN / m of what the model says.
 LEAKED_MARGIN = 0.9
 TRUST_FLOOR = 0.05            # never trust the defence at less than this share
+# A round the model rated under 1 that cost no lives held at least this
+# much of what it needed (observe_clean); the trust rises toward
+# HELD_MARGIN / rating by at most TRUST_STEP per round, up to TRUST_CEILING.
+HELD_MARGIN = 1.0
+TRUST_STEP = 1.2
+TRUST_CEILING = 2.0
+CLEAN_DEPTH = 0.6             # bloons past this share of the route: not a clean hold
 
 
 def lowest(margins):
@@ -83,11 +90,44 @@ class RoundForecast:
         nothing about the model. True when the trust went down."""
         # `margin` is what the bot was told (the raw rating times the trust
         # already in force): under 1 the leak was foreseen, nothing new
-        if margin is None or not lost or margin < 1.0:
+        if margin is None or not lost:
+            return False
+        if margin < 1.0:
+            # foreseen - but trust raised by clean rounds (observe_clean)
+            # is spent: the model's own rating stands again
+            if self.trust > 1.0:
+                self.trust = 1.0
+                return True
             return False
         raw = margin / self.trust      # the new trust is taken against the raw rating
         trust = max(TRUST_FLOOR, LEAKED_MARGIN / raw)
         if trust >= self.trust:
+            return False
+        self.trust = trust
+        return True
+
+    def observe_clean(self, margin, lost, depth=None):
+        """The other way round: a round rated `margin` under 1 (the model
+        says it leaks) cost no lives, and the bloons got at most `depth` of
+        the way along the route (None: not watched). The model underrates
+        this defence on this map, so trust it a little more: up to
+        HELD_MARGIN / margin of the raw rating, but never more than
+        TRUST_STEP times the trust before and never past TRUST_CEILING -
+        one clean round is evidence, not proof, and in a one-life game an
+        overrated defence is the costlier mistake. True when the trust rose.
+
+        Without it X Factor Impoppable (2026-11-10 20:18) rated 30 rounds
+        between 0.09 and 0.98, every one of them held with nothing leaking,
+        and reinforce answered each with small buys (173 of them) - the
+        plan's Sun Avatar step waited from round 43 to round 90 for cash
+        that never stayed, and round 90's DDTs found no MIB and no spikes."""
+        if margin is None or lost or margin >= 1.0:
+            return False
+        if depth is not None and depth > CLEAN_DEPTH:
+            return False                # the bloons came close: no evidence of slack
+        raw = margin / self.trust
+        trust = min(TRUST_CEILING, self.trust * TRUST_STEP, HELD_MARGIN / max(raw, 1e-6))
+        if trust <= self.trust:
             return False
         self.trust = trust
         return True
@@ -173,7 +213,7 @@ class RoundForecast:
             from . import dps_model as D
             rated = self._rate(towers, rounds, lambda st, r: D.round_margin(
                 st, self.mode, r, self.track, iterations=iterations))
-            if rated is None or self.trust >= 1.0:
+            if rated is None or self.trust == 1.0:
                 return rated
             return {r: m * self.trust for r, m in rated.items()}
         except Exception:   # a forecast must never cost a game
