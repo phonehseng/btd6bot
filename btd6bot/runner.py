@@ -704,16 +704,17 @@ class Bot:
             self.account.save()
         return seen
 
-    def _set_fast_track(self, mode, seen):
-        """Switch the Fast Track toggle on map select to what `mode` wants
-        (boosts.fast_track_wanted: off for Impoppable, on elsewhere) when the
+    def _set_fast_track(self, mode, seen, strategy=None):
+        """Switch the Fast Track toggle on map select to what `mode` and the
+        game's `strategy` want (boosts.fast_track_wanted: off for Impoppable
+        and for builds marked `fast_track: false`, on elsewhere) when the
         account owns it. Clicks the box at most twice and re-reads it; a
         toggle that will not change is logged and the game goes on as it is
         (the match reads its real start round either way)."""
         from . import boosts
         if not (self.account.boosts or {}).get("fast_track"):
             return
-        want = boosts.fast_track_wanted(mode)
+        want = boosts.fast_track_wanted(mode, strategy)
         for _ in range(2):
             if seen.get("fast_track") == want:
                 return
@@ -726,9 +727,10 @@ class Bot:
             log.warning("Fast Track toggle stayed %s for %s - playing as it is",
                         "on" if seen.get("fast_track") else "off", mode)
 
-    def open_map(self, map_name, mode=None):
+    def open_map(self, map_name, mode=None, strategy=None):
         """Main menu -> map select -> search -> map's difficulty screen. With
-        `mode`, the Fast Track toggle is set for it on the way (_set_fast_track)."""
+        `mode`, the Fast Track toggle is set for it (and the game's `strategy`
+        dict, when given) on the way (_set_fast_track)."""
         set_state(f"opening map {map_name}")
         for attempt in range(4):
             self.inp.click(0.5, 0.88)  # PLAY
@@ -744,7 +746,7 @@ class Bot:
             return False
         seen = self._note_boosts()
         if mode:
-            self._set_fast_track(mode, seen)
+            self._set_fast_track(mode, seen, strategy)
         self.inp.click(0.044, 0.154)  # search (magnifier)
         time.sleep(0.5)
         self.inp.click(0.52, 0.04)    # focus the search box
@@ -1053,7 +1055,7 @@ class Bot:
     def start(self, plan):
         # a first-time medal that the card shows as already earned: replan
         self.skip_known = (lambda m: plan.first_time and self.account.has_medal(m, plan.mode_key))
-        opened = self.open_map(plan.map, plan.mode_key)
+        opened = self.open_map(plan.map, plan.mode_key, (self.strats or {}).get(plan.strategy_id))
         if opened == "known":
             log.info("%s %s already earned on this save - replanning", plan.map, plan.mode_key)
             self.to_main_menu()

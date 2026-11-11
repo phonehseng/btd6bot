@@ -61,9 +61,20 @@ FAST_TRACK_START = {"easy": 10, "medium": 15, "hard": 22, "impoppable": 29}
 FAST_TRACK_OFF_MODES = frozenset({"impoppable"})
 
 
-def fast_track_wanted(mode):
-    """Should the Fast Track toggle be on for a game in `mode`?"""
-    return mode not in FAST_TRACK_OFF_MODES
+def fast_track_wanted(mode, strategy=None):
+    """Should the Fast Track toggle be on for a game in `mode` played with
+    `strategy` (a strategy dict, optional)?
+
+    Off in FAST_TRACK_OFF_MODES, and off for a build whose file says
+    `fast_track: false`: a plan written for the mode's own first round (a
+    tower or two that grow with the income) cannot be bought all at once
+    in the one round a Fast Track start gives. abr_ninja_alch was such a
+    build and went 2-8 with Fast Track on (2026-11-11: Bloody Puddles ABR
+    lost on round 23 after one minute, Last Resort on round 28), while the
+    builds tuned for the round-22 start (double_hp_sniper_sun) keep it."""
+    if mode in FAST_TRACK_OFF_MODES:
+        return False
+    return not (isinstance(strategy, dict) and strategy.get("fast_track") is False)
 
 
 def fast_track_start(mode):
