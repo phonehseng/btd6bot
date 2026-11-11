@@ -63,10 +63,12 @@ def parse_cash(text):
     four or more digits without separators, or groups that are not three
     digits long, are rejected instead of trusted."""
     t = _clean_cash_text(text)
-    # a comma read as a dash ('$2-873', '$3-127' on Tricky Tracks): the game
-    # never writes a dash in the cash, so one before exactly three last
-    # digits can only be the separator
-    t = re.sub(r"(?<=\d)-(?=\d{3}(?!\d))", ",", t)
+    # a comma read as a dash ('$2-873', '$3-127' on Tricky Tracks) or as a
+    # colon ('$28:810' on Quad, where an upgrade panel on the left puts the
+    # counter over the white garden arch): the game writes neither in the
+    # cash, so one between digits and before exactly three digits can only
+    # be the separator
+    t = re.sub(r"(?<=\d)[-:](?=\d{3}(?!\d))", ",", t)
     whole = re.sub(r"[^0-9,.]", "", t).strip(",.")   # drop stray symbols around the number
     if whole and _CASH_FORMAT.match(whole):
         return int(re.sub(r"[^0-9]", "", whole))

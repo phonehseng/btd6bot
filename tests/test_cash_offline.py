@@ -53,6 +53,19 @@ def test_trim_cuts_the_scenery_right_of_the_digits():
     assert trim_to_digits(blank) is blank          # no text: nothing to cut
 
 
+def test_colon_read_for_the_separator():
+    """Quad Deflation (2026-11-11 15:12, rec_20261111_151200): with the bomb's
+    panel on the left the counter sits over the white garden arch and its
+    comma was read as a colon in every frame. '$28:810' was no cash at all,
+    eight tries at the bomb's $340 tier answered "wait (cash)", $28,810
+    stayed unspent and the game was left before Play, rated 0.37."""
+    assert parse_cash("$28:810") == 28810
+    assert parse_cash("$29:025") == 29025
+    assert parse_cash("$28:810-") == 28810         # a stray mark after the digits
+    assert parse_cash("$28:8100") is None          # still padded: not trusted
+    assert parse_cash("12:30") is None             # not a thousands group
+
+
 class _ScriptedHud(Hud):
     """A Hud whose OCR returns scripted texts instead of reading a frame."""
 

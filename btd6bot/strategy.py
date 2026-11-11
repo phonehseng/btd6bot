@@ -1705,6 +1705,8 @@ class Executor:
         if room is not None:
             block = block | room
         covered = None if role == "support" else self._covered()
+        if role == "dps" and only is None and not step.get("at"):
+            seg = self._segment_in_reach(kind, seg, rc, placement, block, covered, valid)
         if role == "far":
             cover = -self.m.score_spots(rc, seg, self._occupied(), placement=placement,
                                         extra_block=block, valid=valid)
@@ -1794,6 +1796,43 @@ class Executor:
             if len(out) >= n:
                 break
         return out
+
+    # A step's progress window (`segment`) is kept only while some legal spot
+    # covers at least this share of what the best legal spot covers of the
+    # whole track; under it the window is out of the tower's reach.
+    SEGMENT_REACH_SHARE = 0.1
+
+    def _segment_in_reach(self, kind, seg, rc, placement, block, covered, valid):
+        """The step's progress window, or the whole track (0.0, 1.0) when no
+        legal spot reaches the window.
+
+        Firing Range Impoppable (2026-11-11, lost in round 6 at 03:18 and
+        again at 15:14): the track's first half is the three lanes along the
+        top, and the only ground - the field under the barbed wire - lies
+        more than a ninja's range below them. Every legal spot scored 0.0 for
+        n1's window [0.0, 0.5] and for the starter dart's [0.05, 0.45], and
+        with all scores alike the ranking said nothing: both towers went to
+        the left exit lane, and the bloons of the other path walked down the
+        right lane untouched. Scored on the whole track, the same starter
+        goes to the right lane, because the lane n1 guards counts as covered
+        (_lane_cover). (Backlog 22, first seen in case 20261104_035430.)"""
+        whole = (0.0, 1.0)
+        if tuple(seg) == whole:
+            return seg
+        occupied = self._occupied()
+
+        def best(segment):
+            cover = self.m.score_spots(rc, segment, occupied, placement=placement,
+                                       extra_block=block, covered=covered, valid=valid)
+            return float(cover.max())
+
+        best_whole = best(whole)
+        if best_whole <= 0 or best(seg) >= self.SEGMENT_REACH_SHARE * best_whole:
+            return seg
+        if not getattr(self, "_peeking", False):
+            log.info("%s: no legal spot reaches the track's %.0f-%.0f%% part - "
+                     "scoring the whole track", kind, 100 * seg[0], 100 * seg[1])
+        return whole
 
     def _experience_factor(self, kind, cx, cy, rc, lane):
         """The learned score multiplier of a spot (maplearn.spot_factor),
