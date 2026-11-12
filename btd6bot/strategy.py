@@ -5708,6 +5708,27 @@ class Executor:
                         "the rest goes to the nearer round", threat, due, reason, keep, cost)
         return True
 
+    def _plan_step_is_held_answer(self):
+        """Is the plan's next step itself a step of a threat answer the cash
+        is being held for (strategy `answers`)? Then the held cash is for this
+        very purchase and must not be kept from it.
+
+        Spillway Impoppable (2026-11-12 07:21, loss case 20261112_072317):
+        the plan waited on b1 0-5-0 ($31,200), the MOAB Eliminator that is
+        also the build's BAD answer; the BAD hold kept $12-20k back, the plan
+        step saw only the rest and logged "idle with $37123: plan step 29 b1
+        0-5-0 -> wait" for two rounds; it was bought only at round 98, which
+        took the life with the rounds before it rated 0.33-0.58."""
+        if self.idx >= len(self.plan or ()):
+            return False
+        step = self.plan[self.idx]
+        key = (step.get("do"), step.get("id"), step.get("to"))
+        for steps in (self.strat.get("answers") or {}).values():
+            for st in steps or ():
+                if (st.get("do"), st.get("id"), st.get("to")) == key:
+                    return True
+        return False
+
     def _far_keep(self, cost, due_round, rnd, weak_now, what):
         """What a hold for `what` (costing `cost`, needed by due_round, more
         than FAR_ROUNDS away) keeps back: the part of its cost the income
@@ -6081,7 +6102,7 @@ class Executor:
             r = None
         if r is not None:
             return r
-        if self.held_cash:
+        if self.held_cash and not self._plan_step_is_held_answer():
             # what the plan may spend: the cash less what a far threat keeps
             cash = max(0, cash - self.held_cash)
         hold = getattr(self, "reinforce_hold", 0) or 0
