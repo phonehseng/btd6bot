@@ -71,7 +71,13 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 #     the replay rates R34 0.44, R36 1.01, R37 0.85, R40 0.90: frags and
 #     Shrapnel Shot no longer count hits on the bloon their carrier struck
 #     (tests/test_thrown_off_pieces_offline.py), which brings the replay
-#     closer to the live loss.
+#     closer to the live loss. Since 2026-11-11 worst R47 0.27, R78 0.38
+#     (checked at 0.25): the build's three Abyss Dwellers were counted with
+#     all eight tentacles striking every 0.15 s all round; each strikes
+#     once per rise, inside its own eighth of the circle
+#     (tests/test_dps_model_offline.py). The game of 2026-11-09 that won
+#     the medal leaked in rounds 38, 39 and 41 and in no round after, so
+#     the replay now under-rates rounds 47 and 78 of this build.
 #   Bloonarius Prime: worst R30 0.46 (Razor Rotors stands from R30); R22
 #     2.04, R25 2.28, R26 1.89, R40 2.99 (general: worst 0.06; R22 0.43,
 #     R25 0.41, R26 0.76, R40 2.33)
@@ -80,10 +86,7 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 #     7.91, R31 2.38 (general: worst R28 0.64; R27 0.82, R31 0.92)
 CASES = {
     "Bazaar": ("bazaar_half_cash", 0.5, (35, 37, 40), 1.0),
-    # 0.35: the damage model stopped counting all eight of Abyss Dweller's
-    # tentacles (dps_model._tentacle_share, 2026-11-11), and R78 went 0.4x ->
-    # 0.38; the medal was won on 2026-11-09 and the build is not played again.
-    "Ship Capture": ("shipcapture_half_cash", 0.35, (34, 36, 37, 40), 0.4),
+    "Ship Capture": ("shipcapture_half_cash", 0.25, (34, 36, 37, 40), 0.4),
     "Bloonarius Prime": ("bloonariusprime_half_cash", 0.4, (22, 25, 26, 40), 1.5),
     "Enchanted Glade": ("enchantedglade_half_cash", 0.7, (26, 27, 28, 31), 1.0),
 }
