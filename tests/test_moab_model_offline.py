@@ -124,10 +124,16 @@ def test_unbounded_attacks_are_classified():
     assert not D.profile("boomerang", (5, 0, 0)).is_global
     assert D.profile("boomerang", (5, 0, 0)).own_radius == 30.0    # OrbitingGlaive projectile radius
     assert not D.profile("ninja", (0, 0, 5)).is_global
-    # still map-wide: snipers (isGlobalRange), an ace's pineapples and a
-    # heli's missiles (flying), mortars (aimed at a point)
-    for kind, tiers in (("sniper", (0, 0, 0)), ("ace", (0, 1, 0)), ("heli", (0, 0, 3)), ("mortar", (0, 0, 0))):
+    # still map-wide: snipers (isGlobalRange), a heli's missiles (flying),
+    # mortars (aimed at a point)
+    for kind, tiers in (("sniper", (0, 0, 0)), ("heli", (0, 0, 3)), ("mortar", (0, 0, 0))):
         assert D.profile(kind, tiers).is_global, kind
+    # An ace's pineapples used to count as map-wide too. They fall under the
+    # plane wherever it flies (FallToGroundModel), so since 2026-11-12 they
+    # are "drop" sources along its flight circle (docs/model_audit_military.md
+    # M1; tests/test_ace_bombs_under_plane_offline.py), and the ace is local.
+    assert not D.profile("ace", (0, 1, 0)).is_global
+    assert {s.placement for s in D.profile("ace", (0, 1, 0)).sources} == {"air", "drop"}
     sticky = next(a for a in D.crosspath("ninja", (0, 0, 5))["attacks"] if a["name"] == "StickyBombAttack")
     assert sticky["unbounded"] == "tower"
     assert all(s.placement != "global" for s in D.profile("ninja", (0, 0, 5)).sources)

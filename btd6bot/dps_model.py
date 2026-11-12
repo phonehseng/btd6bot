@@ -259,7 +259,8 @@ class Source:
                 projectiles that re-hit), at least 1
     placement   "aimed" (fired at targets in range), "track" (laid on the
                 track and waiting: spikes), "global" (anywhere on the
-                map), "air" (from a plane circling the tower)
+                map), "air" (from a plane circling the tower), "drop"
+                (dropped under a plane circling the tower: see blast)
     radial      fired all around rather than at a target (tacks, a plane's
                 darts): only the share of directions that cross the lane hits
     travel      how far a radial projectile flies (for that share)
@@ -277,6 +278,13 @@ class Source:
                 (see _hit_rate)
     carrier     (damage, immune, bonus) of the projectile that throws an
                 off_struck piece off, or None
+    blast       for placement "drop" (a bomb that falls from a plane where
+                the plane is: Monkey Ace pineapples, Bomber Ace): the radius
+                of its explosion, which decides how near the track it must
+                fall to hit anything (see _drop_parts)
+    over_track_only  a "drop" weapon the game fires only while its plane is
+                over the track (CheckAirUnitOverTrackModel, the export's
+                "over_track_only": Bomber Ace and Ground Zero)
     """
     name: str
     shots: float
@@ -302,6 +310,9 @@ class Source:
     camo_shared: bool = False
     off_struck: bool = False
     carrier: tuple = None
+    blast: float = 0.0
+    over_track_only: bool = False
+    cooldown: float = 0.0      # "drop": seconds between the weapon's volleys
 
     def can_hit(self, lay):
         """Can this source damage this layer at all?"""
@@ -335,6 +346,7 @@ class Profile:
     income: float = 0.0              # cash per round it makes itself
     pattern_radius: float = 0.0      # a plane's flight circle (Monkey Ace)
     own_radius: float = 0.0          # circle swept around the tower itself (Glaive Lord's glaives)
+    flight_speed: float = 0.0        # a plane's speed along its flight circle (air_unit.speed)
 
 
 # The bloon properties a damage type can be unable to pop (Layer.immune).
@@ -500,6 +512,9 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             camo_shared=bool(attack.get("camo_shared")) and not camo,
             off_struck=carrier is not None,
             carrier=carrier,
+            blast=(p.get("radius") or 0.0) if placement == "drop" else 0.0,
+            over_track_only=placement == "drop" and bool(attack.get("over_track_only")),
+            cooldown=attack.get("cooldown", 0.0) if placement == "drop" else 0.0,
         ))
     pierce = max(1.0, p.get("pierce", 1.0))
     if "CollideOnlyWithTargetModel" in (p.get("other") or ()):
@@ -631,6 +646,26 @@ def _sector_shares(a):
     return min(1.0, max(sector, TRACK_ARC_DEG) / 360.0), sector / 360.0
 
 
+def _drops_under_plane(a, w):
+    """Does weapon w of attack a drop its bombs under a circling plane?
+
+    Monkey Ace pineapples (0-1-x, 0-2-x) and Bomber Ace / Ground Zero bombs
+    (0-3-x and up) are an AttackAirUnitModel with no range check: the export
+    marks them "unbounded": "map", and the model used to read that as
+    "anywhere on the map". In the game the bomb falls to the ground under
+    the plane (FallToGroundModel) and explodes there, and the Bomber Ace
+    weapon only fires while the plane is over the track
+    (CheckAirUnitOverTrackModel, the export's "over_track_only";
+    fandom:Bomber_Ace, fandom:Exploding_Pineapple). Read as map-wide, the
+    bombs made up 91% of a 2-3-0 ace's rating and Ground Zero's 15-damage,
+    40-pierce bombs made a 2-4-0 look like a whole-map carry
+    (docs/model_audit_military.md, M1). The plane's darts circle the
+    tower (pattern_radius) and keep their "air" reading."""
+    p = w.get("projectile") or {}
+    return bool(a.get("air") and not a.get("pattern_radius")
+                and (w.get("over_track_only") or "FallToGroundModel" in (p.get("other") or ())))
+
+
 def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=False, tower_range=None):
     """Add an attack's damage sources (per weapon) to out.
     follows: the tower is a helicopter that flies to the bloons (global reach).
@@ -654,13 +689,20 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
         camo_chain = a.get("camo", False)
     weapons = a.get("weapons", [])
     trigger_rate = _trigger_rates(weapons)
+    attack_placement, attack = placement, a
     for i, w in enumerate(weapons):
+        placement, a = attack_placement, attack
+        if _drops_under_plane(a, w):
+            placement = "drop"
+            a = dict(a, over_track_only=bool(w.get("over_track_only")))
         rate = w.get("rate", 1.0)
         if w.get("triggered"):
             if i not in trigger_rate:
                 continue      # nothing fires it: its own rate is only a readiness check
             rate = trigger_rate[i]
         rate = max(rate, w.get("rate_min", 0.0), 1e-3)
+        if placement == "drop":
+            a = dict(a, cooldown=rate)      # for the over-track volleys (_drop_share)
         shots = multiplier * w.get("count", 1.0) * w.get("burst", 1.0) / rate
         p = w.get("projectile")
         life = (p or {}).get("lifespan") or 0.0
@@ -735,11 +777,18 @@ def profile(kind, tiers):
     pattern = max((a.get("pattern_radius") or 0.0 for a in entry.get("attacks", [])), default=0.0)
     own = max((a.get("own_radius") or 0.0 for a in entry.get("attacks", []) if a.get("unbounded") == "self"),
               default=0.0)
+    # The export calls an ace with pineapples or Bomber Ace bombs map-wide
+    # ("global") only because of those bombs' "unbounded": "map"; they fall
+    # under the plane (_drops_under_plane), so the ace itself is not map-wide.
+    map_wide = [a for a in entry.get("attacks", []) if a.get("unbounded") == "map"]
+    is_global = bool(entry.get("global")) and not (
+        map_wide and all(_drops_under_plane(a, w) for a in map_wide for w in a.get("weapons", [])))
     return Profile(kind=kind, tiers=tuple(int(t) for t in tiers_code(tiers)), range=entry.get("range", 0.0),
-                   is_global=bool(entry.get("global")), sources=sources, aim_bound=aim_bound and not sources,
+                   is_global=is_global, sources=sources, aim_bound=aim_bound and not sources,
                    buffs=list(entry.get("buffs", [])) + _potion_buffs(entry),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
-                   pattern_radius=pattern, own_radius=own)
+                   pattern_radius=pattern, own_radius=own,
+                   flight_speed=float((entry.get("air_unit") or {}).get("speed") or 0.0))
 
 
 # ===========================================================================
@@ -1129,6 +1178,19 @@ class Track:
         return float(f[0]), float(f[1])
 
     # -- zones ---------------------------------------------------------------------
+    def near_track(self, pts, radius):
+        """Bool per (x, z) point of `pts`: lies within `radius` of a hittable
+        stretch of some route (see Track: tunnels and off-screen parts do
+        not count)."""
+        hit = getattr(self, "_hittable_xz", None)
+        if hit is None:
+            hit = self._hittable_xz = np.concatenate([p["xyz"][p["hittable"], :2] for p in self.paths])
+        pts = np.asarray(pts, float).reshape(-1, 2)
+        if not len(hit) or not len(pts):
+            return np.zeros(len(pts), bool)
+        d2 = ((pts[:, None, 0] - hit[None, :, 0]) ** 2 + (pts[:, None, 1] - hit[None, :, 1]) ** 2).min(axis=1)
+        return d2 <= radius * radius
+
     def total_length(self):
         """Hittable length of each path (world units)."""
         return [float(np.sum(np.diff(p["dist"])[p["hittable"][:-1]])) for p in self.paths]
@@ -1835,6 +1897,18 @@ def buff_covers(supporter, t, radius):
     return math.hypot(supporter.x - t.x, supporter.z - t.z) <= radius
 
 
+def _joined(main, parts):
+    """`main` with `parts` added to its Station.parts; the first of the parts
+    stands in for a missing main (None when there is nothing at all)."""
+    parts = [s for s in parts if s is not None]
+    if main is None:
+        if not parts:
+            return None
+        main, parts = parts[0], parts[1:]
+    main.parts = list(main.parts) + parts
+    return main
+
+
 def station_for(t, placed, track, sight=None, strict=False):
     """The Station of one Placed tower, or None when it does no damage or
     reaches no track. strict: STRICT_OWN_REACH towers reach only their own
@@ -1843,11 +1917,24 @@ def station_for(t, placed, track, sight=None, strict=False):
     centre stands inside the supporter's buff radius (buff_covers) and the
     buff's filters let its kind through (buff_reaches). sight(x, z, pts) ->
     visible mask, used for towers that need line of sight
-    (placement.needs_sight)."""
-    from .placement import needs_sight
+    (placement.needs_sight).
+
+    Bombs dropped under a plane (placement "drop": pineapples, Bomber Ace)
+    are stations of their own along the flight circle (_drop_parts)."""
     p = profile(t.kind, t.tiers)
     if p is None:
         return None
+    main = _station_for(t, placed, track, sight, strict)
+    if not any(s.placement == "drop" for s in p.sources):
+        return main
+    camo_paths = None if main is None else main.camo_paths
+    drops = [s for s in _buffed_sources(p, _buffs_at(t, placed)[0]) if s.placement == "drop"]
+    return _joined(main, _drop_parts(t, drops, p, track, camo_paths))
+
+
+def _buffs_at(t, placed):
+    """(support buffs that reach tower t, range multiplier) from the other
+    towers in `placed` (see station_for)."""
     buffs_here = []
     range_mult = 1.0
     for o in placed:
@@ -1862,7 +1949,17 @@ def station_for(t, placed, track, sight=None, strict=False):
                     range_mult = max(range_mult, 1.0 + b["value"])
                 else:
                     buffs_here.append(b)
-    sources = _buffed_sources(p, buffs_here)
+    return buffs_here, range_mult
+
+
+def _station_for(t, placed, track, sight=None, strict=False):
+    """station_for without the "drop" sources."""
+    from .placement import needs_sight
+    p = profile(t.kind, t.tiers)
+    if p is None:
+        return None
+    buffs_here, range_mult = _buffs_at(t, placed)
+    sources = [s for s in _buffed_sources(p, buffs_here) if s.placement != "drop"]
     if not sources:
         return None
     camo_paths = None
@@ -1927,6 +2024,98 @@ def station_for(t, placed, track, sight=None, strict=False):
             main.parts = [part]
         return main
     return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent)
+
+
+# How far from a route's centre line a plane still counts as "over the
+# track" for CheckAirUnitOverTrackModel (Bomber Ace). The maps' own track
+# areas (data/map_geometry, areas of type "track") are narrow strips around
+# the bloon path: the median distance from the path to their edge measured
+# 2.4 (Cubism) to 9.1 (Dark Path), about 5 on most maps (Monkey Meadow 5.0,
+# Logs 4.4, Bazaar 4.3, Peninsula 4.9, Skates 5.3; 2026-11-12).
+OVER_TRACK_HALF_WIDTH = 5.0
+
+
+def _flight_circle(t, radius):
+    """(x, z) points every TRACK_STEP along the circle a plane flies around
+    tower t (the model's flight pattern: Profile.pattern_radius)."""
+    n = max(24, int(math.ceil(2.0 * math.pi * radius / TRACK_STEP)))
+    ang = np.arange(n) * (2.0 * math.pi / n)
+    return np.stack([t.x + radius * np.cos(ang), t.z + radius * np.sin(ang)], axis=1)
+
+
+def _runs(flags):
+    """Lengths (in points) of the runs of True in a circular bool array."""
+    flags = np.asarray(flags, bool)
+    if flags.all():
+        return [len(flags)]
+    start = int(np.argmin(flags))           # begin at a False point, so no run wraps round
+    rolled = np.roll(flags, -start)
+    runs, n = [], 0
+    for f in rolled:
+        if f:
+            n += 1
+        elif n:
+            runs.append(n)
+            n = 0
+    if n:
+        runs.append(n)
+    return runs
+
+
+def _drop_share(src, circle, track, speed):
+    """(share of its full rate a "drop" source keeps, bool mask of the circle
+    points its bombs fall from) for a plane flying `circle` at `speed`.
+
+    Pineapples fall wherever the plane is: a bomb counts when it falls
+    within its blast radius of the track, so the share is the part of the
+    circle that close to it.
+
+    A Bomber Ace fires only while the plane is over the track
+    (src.over_track_only). Its weapon still waits `cooldown` seconds between
+    volleys, so it does not fire for the share of TIME spent over the track:
+    each pass over the track (a run of circle points within
+    OVER_TRACK_HALF_WIDTH of it) gets one volley when the plane arrives
+    (the weapon has reloaded during the flight in between), plus one more
+    for every cooldown the pass lasts. The share is those volleys per lap
+    against the lap time over the cooldown (one volley per cooldown when
+    the whole circle lies on the track). A circle of radius 40 at speed 60
+    takes 4.2 s; crossing one straight lane twice gives 2 volleys a lap
+    against 3.5 at full rate."""
+    if src.over_track_only:
+        over = track.near_track(circle, OVER_TRACK_HALF_WIDTH)
+        step = float(np.hypot(*(circle[1] - circle[0])))      # flight between two circle points
+        lap = step * len(circle) / speed if speed > 0 else 0.0
+        if lap <= 0.0 or src.cooldown <= 0.0:
+            return float(over.mean()), over      # no speed known: the share of time over the track
+        volleys = sum(1 + math.floor(n * step / speed / src.cooldown) for n in _runs(over))
+        return min(1.0, volleys * src.cooldown / lap), over
+    near = track.near_track(circle, max(src.blast, OVER_TRACK_HALF_WIDTH))
+    return float(near.mean()), near
+
+
+def _drop_parts(t, drops, p, track, camo_paths):
+    """Stations for the "drop" sources of tower t (profile p): one per kind
+    of drop (over-track or not, blast radius), each covering the track
+    within the blast radius of the circle points its bombs fall from, with
+    the sources' rate cut to the share that falls there (_drop_share)."""
+    radius = p.pattern_radius or p.range
+    circle = _flight_circle(t, radius)
+    groups = {}
+    for s in drops:
+        groups.setdefault((s.over_track_only, s.blast, s.cooldown), []).append(s)
+    out = []
+    for group in groups.values():
+        share, falls = _drop_share(group[0], circle, track, p.flight_speed)
+        if share <= 0.0 or not falls.any():
+            continue
+        blast = max(group[0].blast, OVER_TRACK_HALF_WIDTH)
+        discs = tuple((float(x), float(z), blast) for x, z in circle[falls])
+        sources = [Source(**{**s.__dict__, "shots": s.shots * share, "shots_single": s.shots_single * share})
+                   for s in group]
+        st = _make_station(t, sources, False, 0.0, track, None, camo_paths, discs)
+        if st is not None:
+            out.append(st)
+    return out
 
 
 def intel_lent_circles(t, placed):
