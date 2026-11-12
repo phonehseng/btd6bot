@@ -55,6 +55,25 @@ def test_support_damage_tower_goes_where_it_reaches_the_track():
     assert all(cx >= NearVillageModel.W // 2 for cx, _, _ in spots), spots
 
 
+def test_support_damage_tower_gets_no_spot_when_no_legal_cell_reaches_the_track():
+    # Covered Garden Impoppable (2026-11-11, case 20261111_194816): under the
+    # one open pane no legal cell reached the track, the reach floor was
+    # therefore unknown, and "placing by role only" stood the Super Monkey
+    # where it reached 0 track cells ($13,280 with its upgrades).
+    original, sight = PL.valid_spots, PL.needs_sight
+    PL.valid_spots = lambda *a, **k: np.ones((NearVillageModel.H, NearVillageModel.W), bool)
+    PL.needs_sight = lambda *a: False      # no walls on the fake map
+    try:
+        ex = executor()
+        ex._reach_cache = {"super": np.zeros((NearVillageModel.H, NearVillageModel.W), np.float32)}
+        by_role = {"do": "place", "id": "su1", "kind": "super", "role": "support"}
+        assert ex.pick_spots("super", by_role, n=3) == []
+        # every later stage (wider circle, by role, as a damage tower) too
+        assert ex._spots_widening("super", dict(by_role, near=["v1"])) == []
+    finally:
+        PL.valid_spots, PL.needs_sight = original, sight
+
+
 def test_a_sold_tower_is_never_bought_back_in_the_same_place():
     # Glacial Trail Medium: a camo-answer Mermonkey sold for reaching no track
     # was placed again on the same spot within the round

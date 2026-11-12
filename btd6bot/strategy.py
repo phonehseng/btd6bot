@@ -1787,6 +1787,22 @@ class Executor:
             # Super Monkey "near v1" reached 0 track cells and was sold and
             # bought again every round from 69 to 75 ($16k-$30k idle each time)
             floor = self._reach_floor(kind, valid, self.SELL_REACH_SHARE)
+            best = self._best_legal_reach(kind, valid)
+            if best is not None and best < 1.0 and exact is None:
+                # No legal cell reaches the track, so there is no floor to
+                # hold a spot against (_reach_floor answers None) and any
+                # cell would pass. Covered Garden Impoppable (2026-11-11,
+                # loss case 20261111_194816): with one pane open the Super
+                # Monkey "near v1" had 32 legal cells, none in reach of the
+                # track; "placing by role only" put it in the corner at
+                # (9,11), where it reached 0 track cells, and the plan then
+                # spent $10,440 on its upgrades while rounds 55-63 were
+                # rated 0.25-0.52. Like a dps step, it gets no spot: the
+                # step waits for ground that reaches (another pane) or is
+                # given up, and the cash goes to towers that pop.
+                log.info("%s: no legal spot reaches the track (%d legal cells) - none offered "
+                         "for a support step either", kind, int(valid.sum()))
+                return []
         else:
             floor = None
         if step.get("at") and len(out) < n:
@@ -1992,6 +2008,12 @@ class Executor:
     # Failed selections in a row after which a tower is taken to be absent.
     MAX_SELECT_FAILS = 2
     PLATFORM_SELECT_SPARE = 2   # ... more for a tower riding a moving platform
+    # Freezing maps (_freeze_clash): a new tower is held back while less than
+    # this share of the defence's cash would be awake in a round it is frozen ...
+    FREEZE_AWAKE_SHARE = 0.5
+    # ... but only a tower that costs less than this share of the cash already
+    # standing: an opening cannot wait for its second tower, a built defence can.
+    FREEZE_HOLD_PRICE_SHARE = 0.25
 
     @staticmethod
     def _step_key(step):
@@ -2473,6 +2495,75 @@ class Executor:
         else:
             self.g.hold_panel = None
 
+    def _awake_share(self, placed_round):
+        """The smallest share of the standing defence's cash that is awake in
+        a round a tower placed in `placed_round` would first be frozen in
+        (the hero is left out, as in the forecast's phases). 1.0 on a map
+        without a freeze or with no tower standing."""
+        from . import dps_model as D
+        name = getattr(self.m, "name", "")
+        off, cycle = D._freeze_cycle(name)
+        built = [p for p in self.g.towers.values()
+                 if p.kind != "hero" and getattr(p, "placed_round", None) is not None]
+        total = sum(max(getattr(p, "spent", 0) or 0, 1) for p in built)
+        if not off or not total:
+            return 1.0
+        first = placed_round + D.FREEZE_FIRST_OFFSET
+        return min(sum(max(getattr(p, "spent", 0) or 0, 1) for p in built
+                       if not D.frozen_in(name, p.placed_round, r)) / total
+                   for r in range(first, first + off))
+
+    def _freeze_clash(self, step, kind, price):
+        """True while placing this tower should wait a round or two, because
+        bought now it would sit in ice together with most of the defence.
+
+        On a freezing map (dps_model.TOWER_FREEZE) every tower is frozen for
+        two rounds in ten, counted from the round it was bought in. Glacial
+        Trail Reverse (2026-11-11, loss case 20261111_172115): the Spike
+        Factory and the first druid were bought in round 15 (frozen 44-45),
+        the second druid in 17 (frozen 46-47). The heli's turn came in round
+        36, which froze it in 45-46: round 45 was left to one Druid of the
+        Jungle, was rated 0.06 from round 36 on, and lost all 142 lives. The
+        Medium game won with the same build the day before (2026-11-10 19:43)
+        happened to reach the heli in round 37 - frozen 46-47, round 45 rated
+        1.41.
+
+        So the tower waits when
+          * less than FREEZE_AWAKE_SHARE of the cash in the standing towers
+            would be awake in one of its frozen rounds,
+          * one of the next rounds (as many as the freeze lasts) does better,
+          * and it is a small part of the defence (FREEZE_HOLD_PRICE_SHARE):
+            a Fast Track opening is still bought together, as its build
+            planned it.
+        A step is held for as many rounds as the freeze lasts at most."""
+        rnd = getattr(self, "now_round", None)
+        if rnd is None or kind == "hero":
+            return False
+        from . import dps_model as D
+        off, _ = D._freeze_cycle(getattr(self.m, "name", ""))
+        if not off:
+            return False
+        standing = sum(getattr(p, "spent", 0) or 0 for p in self.g.towers.values() if p.kind != "hero")
+        if price >= self.FREEZE_HOLD_PRICE_SHARE * standing:
+            return False
+        held = self.__dict__.setdefault("_freeze_held", {})   # step -> the round its hold began
+        key = step.get("id") or kind
+        waited = rnd - held.get(key, rnd)
+        if waited >= off:
+            return False          # it has waited as long as a freeze lasts
+        now = self._awake_share(rnd)
+        if now >= self.FREEZE_AWAKE_SHARE:
+            return False
+        better = max(self._awake_share(rnd + k) for k in range(1, off - waited + 1))
+        if better <= now:
+            return False
+        held.setdefault(key, rnd)
+        if self.__dict__.get("_freeze_said") != (key, rnd):
+            self._freeze_said = (key, rnd)
+            log.info("%s: bought in round %d it would be frozen while only %.0f%% of the defence's cash "
+                     "is awake - held for a later round (%.0f%% then)", key, rnd, 100 * now, 100 * better)
+        return True
+
     def _try_place(self, step, cash):
         """One attempt at a `place` step (see try_step for the results)."""
         kind = step["kind"]
@@ -2502,6 +2593,8 @@ class Executor:
         if cash is None or cash < price:
             self.wait_cost = price
             return "wait"
+        if self._freeze_clash(step, kind, price):
+            return "wait"         # a round or two later it freezes apart from the others
         if kind in self.BUFFERS and not self._damage_towers():
             return self._defer(step, key, self.BUFFER_RETRY_S)   # nothing to buff yet
         if self._pane_already_empty(key):
@@ -4237,6 +4330,9 @@ class Executor:
         return (grids or {}).get("blimp_track")
 
     ANSWER_COPIES = 3        # new towers of one kind an answer need may place (_new_tower_option)
+    # The least a blimp-ramp purchase that does not close the shortfall must
+    # add, as a share of the blimp HP still missing (_answer_ramp)
+    RAMP_MIN_GAIN_SHARE = 0.1
     # A finished copy must deal at least this share of what a new copy is
     # credited with before the blimp check places another (_copy_speaks_against)
     COPY_MIN_SHARE = 0.25
@@ -5009,12 +5105,34 @@ class Executor:
             return "plan"     # the build's plan is its blimp ramp (plan_first)
         # Only buys that matter: the cheapest one closing the whole shortfall,
         # else the most damage per dollar among those adding at least a tenth of
-        # it. If nothing fits, save for the cheapest that closes it.
+        # it (RAMP_MIN_GAIN_SHARE). If nothing fits, save for the cheapest that
+        # closes it, else buy the cheapest option that is worth its price
+        # (_worth_ramping) - and when none is, buy nothing here.
+        #
+        # Workshop Impoppable (2026-11-11 17:30, chimps_ninja_sun, loss case
+        # 20261111_173206): round 40's MOAB needed 496 more blimp HP in reach
+        # and no option gave over 51 of it (the MOAB's own stretch of track is
+        # 21 units long, and a tower standing reaches about 3 of them). The
+        # fallback then was "the cheapest option of all": a bomb, a $2,946
+        # Super Monkey, a dart, an alchemist, a boomerang, an ace and an
+        # engineer were placed in rounds 37-39, each of another kind (so
+        # _copy_speaks_against had nothing to say), none upgraded - $5,724
+        # that left the reading at 0.1x, while the damage model had its own
+        # purchases for round 40 waiting. That cash now stays with the plan
+        # and with reinforce.
         opts = self._dps_options(load)
         closing = sorted((o for o in opts if o["gain"] >= short), key=lambda o: o["cost"])
-        fits = [o for o in closing if o["cost"] <= money] or \
-            [o for o in opts if o["cost"] <= money and o["gain"] >= 0.1 * short]
-        for opt in fits or (closing or sorted(opts, key=lambda o: o["cost"]))[:1]:
+        fits = [o for o in closing if o["cost"] <= money] or             [o for o in opts if o["cost"] <= money and o["gain"] >= self.RAMP_MIN_GAIN_SHARE * short]
+        rest = closing or sorted((o for o in opts if self._worth_ramping(o, money, short)),
+                                 key=lambda o: o["cost"])
+        if not fits and not rest and opts and ("ramp-nothing-matters", R) not in self.noted:
+            self.noted.add(("ramp-nothing-matters", R))
+            best = max(opts, key=lambda o: o["gain"] / max(o["cost"], 1))
+            log.warning("blimp ramp round %d (%.1fx): %.0f blimp HP are missing and the best purchase "
+                        "per dollar (%s, $%d) adds %.0f - all the cash before that round would not "
+                        "add a tenth at that rate, so nothing is bought for it here",
+                        R, ratio, short, best["desc"], best["cost"], best["gain"])
+        for opt in fits or rest[:1]:
             with self.why("ramp", why, option=opt["desc"]):
                 r = self.try_step(dict(opt["steps"][0]), cash, rnd)
             if r in ("bought", "progress"):
@@ -5024,6 +5142,22 @@ class Executor:
             if r == "wait":
                 return self._wait_total(opt.get("cost"))
         return "none"
+
+    def _worth_ramping(self, opt, money, short):
+        """Is a blimp-damage option that neither closes the shortfall nor
+        adds a tenth of it by itself still worth starting? Yes when all the
+        cash that comes before the blimp round (`money`), spent at this
+        option's damage per dollar, would add RAMP_MIN_GAIN_SHARE of the
+        blimp HP missing (`short`).
+
+        Water Park Impoppable round 84 (tests/test_idle_blimp_damage_offline):
+        47,263 HP missing, $33,782 in hand; a 3-0-0 ace adds 3,502 for $3,360
+        - 7% by itself, but ten of its kind of purchase are affordable: worth
+        it. Workshop Impoppable round 40 (2026-11-11 17:30): 496 HP missing,
+        about $5,500 before the round; a 0-3-0 bomb adds 16 for $2,430 - the
+        whole cash at that rate adds 36, under the 50 that would be a tenth:
+        not worth it."""
+        return opt["gain"] / max(opt["cost"], 1) * money >= self.RAMP_MIN_GAIN_SHARE * short
 
     def _plan_step_out_of_reach(self, st, money, R):
         """Can plan step st not be bought before blimp round R? True when

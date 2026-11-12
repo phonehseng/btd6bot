@@ -16,6 +16,17 @@ was worth nothing in reach and a fresh bomb always looked better.
 Now the towers the check placed are heard first (_copy_speaks_against): no
 new copy while one of them is below the tiers wanted, and none when a
 finished copy deals under a quarter of the credit from where it stands.
+
+The same map, the same day, 17:30 (loss case 20261111_173206_Workshop_
+impoppable): with one bomb standing the check went on to a $2,946 Super
+Monkey, a dart, an alchemist, a boomerang, an ace and an engineer - a new
+kind each time, none upgraded, $5,724 in three rounds, and the reading stayed
+at 0.1x. No option added a tenth of the 496 blimp HP missing, and the check
+then took "the cheapest option of all". Now the cheapest option is only
+taken when it is worth its price (Executor._worth_ramping: all the cash that
+comes before the round, spent at its damage per dollar, adds a tenth of what
+is missing); here none is, and nothing is bought
+(test_nothing_is_bought_when_nothing_matters).
 Run: python tests/test_blimp_answer_copies_offline.py"""
 import sys
 from pathlib import Path
@@ -105,6 +116,35 @@ def test_an_unfinished_copy_speaks_against_and_a_finished_one_in_reach_does_not(
     assert ex._copy_speaks_against("bomb", (0, 3, 0), credit, load, track, rng, out_of_reach)
     # a kind the check has not placed yet is never spoken against
     assert not ex._copy_speaks_against("ace", (3, 0, 0), credit, load, track, rng, out_of_reach)
+
+
+# the bomb the 17:30 game placed first, and the cash it then spent on a bare super
+LIVE_BOMB = ("ans_blimps_bomb", "bomb", "0-0-0", 0.810, 0.649)
+SUPER_CASH, SUPER_ROUND = 3000, 38
+
+
+def test_nothing_is_bought_when_nothing_matters():
+    """Round 38, one bomb standing, $3,000 in hand: live the check placed a
+    bare super. No option adds a tenth of what is missing, so nothing is
+    bought and the cash is left to the plan and to reinforce."""
+    if not TH.available():
+        return
+    ex = _executor(BOARD + [LIVE_BOMB])
+    ex.g.cash = ex.cash_seen = SUPER_CASH
+    ex.idx = len(ex.plan)           # the plan has no say here: only the check's own pick is asked
+    load = ex.blimp_load(BLIMP_ROUND)
+    ratio = ex.blimp_ratio(load)
+    short = (ex.ramp_bar(load) - ratio) * load["hp"]
+    money = SUPER_CASH + sum(TH.round_cash(ex.round_set, r) * ex.income_mult
+                             for r in range(SUPER_ROUND, BLIMP_ROUND))
+    opts = ex._dps_options(load)
+    assert opts, "the check still has options to weigh"
+    assert all(o["gain"] < short for o in opts), "none closes the shortfall"
+    assert not any(ex._worth_ramping(o, money, short) for o in opts), "none is worth its price"
+    assert ex._worth_ramping({"gain": 3502.0, "cost": 3360}, 33_782, 47_263),         "Water Park round 84: an ace adding 7% for a tenth of the cash is"
+    before = dict(ex.g.towers)
+    assert ex._answer_ramp(BLIMP_ROUND, load, ratio, SUPER_CASH, SUPER_ROUND) == "none"
+    assert ex.g.towers == before and ex.g.cash == SUPER_CASH, "no tower placed, no cash spent"
 
 
 def test_a_first_copy_is_still_offered():
