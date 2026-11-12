@@ -50,11 +50,13 @@ damage, children included).
 Deliberate simplifications (each is on the safe side unless noted):
     * Monkey Knowledge and alchemist brews are not counted (they only
       help); heroes (HERO_RATING), abilities at their uptime
-      (ABILITY_RATING) and slows, stuns, knockback and damage-taken
-      debuffs (STATUS_RATING) are, each read cautiously
+      (ABILITY_RATING), slows, stuns, knockback and damage-taken
+      debuffs (STATUS_RATING) and mechanics the export misses
+      (UNEXPORTED_RATING) are, each read cautiously
       (docs/model_fix_plan.md phase 2);
-    * towers aimed by hand (Mortar's target point, Dartling's cursor) do
-      nothing (the bot cannot aim them);
+    * towers aimed by hand fire at an aim point: a Dartling at the busiest
+      track (where the bot parks the cursor), a Mortar only where a plan
+      gives it a reticle (AIM_POINT_RATING);
     * overlapping zones are worked one after another along the route
       (total capacity is right, who pops first is approximate);
     * projectiles never miss and towers never waste shots on the same
@@ -109,6 +111,15 @@ ROUNDS_FILE = ROOT / "data" / "rounds.json"
 # AUC 0.805 -> 0.818; rounds at or above 2.0 that leaked 0.52% -> 0.53%
 # (1.75: 0.61%, 2.25: 0.51%), while the held rounds under 2.0 fell from
 # 58.9% to 48.6% - the same bar asks for less needless defence. Both stay.
+#
+# Re-checked after phase 2b (status effects on, item 12, Maelstrom reach,
+# aim points, the Ace's flight) on the boards of 713 journals (544 leaked
+# rounds, 7,487 held sampled): AUC 0.814 -> 0.813; rounds at or above 2.0
+# that leaked 0.54% -> 0.54% (1.5: 0.67% -> 0.67%); median margin of the
+# leaked rounds 0.58 -> 0.75, of the held 1.87 -> 2.02; held rounds under
+# 2.0 52.8% -> 48.8%. Status effects alone: AUC 0.814, 0.54% at 2.0. Three
+# parts that moved leaked rounds over the bar are switched off
+# (STATUS_GROUP_CAP, GLAIVE_BOUNCE_RATING, ACE_CIRCLE_RADIUS). Both stay.
 TOWER_EFFICIENCY = 1.0
 
 # --- modelling constants (assumptions, documented in docs/optimizer.md) -----
@@ -2979,6 +2990,9 @@ def _lots(mode, rnd, track):
 # up once per job, and only for lots the station can hurt (_Server.enter).
 # Twelve Quad Impoppable rounds (late game, 30+ towers) rate about 1.2x
 # the time they take with it off.
+# Calibrated on the journals' boards against status effects off: AUC
+# 0.814 -> 0.814, rounds at or above 2.0 that leaked 0.54% -> 0.54% (1.5:
+# 0.67% -> 0.66%), held rounds under 2.0 52.8% -> 49.3%.
 STATUS_RATING = True
 # A stun, slow or push is shared among the bloons in a zone - the packing
 # rho says how many. A burst is packed a quarter of a width apart, so rho
