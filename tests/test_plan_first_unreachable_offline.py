@@ -115,12 +115,17 @@ def test_the_bloons_must_have_got_deep_too():
     bloons past 90% of the route: the model's pessimism alone does not let
     the plan's cash go."""
     gate = Match._plan_lets_reinforce
-    assert gate(match(moon_landing(58), [{"round": 57, "deepest": 0.84}]), 6_649, 58) is False
-    assert gate(match(moon_landing(58), []), 6_649, 58) is False                # no bloon watch
-    assert gate(match(moon_landing(58), [{"round": 57, "deepest": None}]), 6_649, 58) is False
-    assert gate(match(moon_landing(58), [{"round": 57, "deepest": 0.90}]), 6_649, 58) is True
+    # a weak round above the floor (0.30): shallow bloons keep the cash
+    weak = (0.30, 59)
+    assert gate(match(moon_landing(58, weak=weak), [{"round": 57, "deepest": 0.84}]), 6_649, 58) is False
+    assert gate(match(moon_landing(58, weak=weak), []), 6_649, 58) is False                # no bloon watch
+    assert gate(match(moon_landing(58, weak=weak), [{"round": 57, "deepest": None}]), 6_649, 58) is False
+    assert gate(match(moon_landing(58, weak=weak), [{"round": 57, "deepest": 0.90}]), 6_649, 58) is True
+    # the next round rated at the floor (Moon Landing's 0.10 for round 59, the round it was
+    # lost in): one life lets the cash go without the depth (Midnight Mansion 2026-11-12)
+    assert gate(match(moon_landing(58), [{"round": 57, "deepest": 0.84}]), 6_649, 58) is True
     # shallow bloons in CHIMPS and an unreachable step: the plan keeps the cash, nothing logged
-    ex = moon_landing(58)
+    ex = moon_landing(58, weak=weak)
     gate(match(ex, [{"round": 57, "deepest": 0.5}]), 6_649, 58)
     assert not any(n[0] == "plan-first-yields" for n in ex.noted)
 
@@ -306,6 +311,7 @@ class PlanFirstToy(ToyEx):
     _only_free_steps_left = S.Executor._only_free_steps_left
     lookahead_worst = S.Executor.lookahead_worst
     near_worst = S.Executor.near_worst
+    YIELD_FLOOR = S.Executor.YIELD_FLOOR
     _rated = S.Executor._rated
     _forecast = S.Executor._forecast
     _board_key = S.Executor._board_key

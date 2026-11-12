@@ -38,6 +38,29 @@ def test_the_near_weak_round_is_found():
     assert ex.near_worst(61, S.Executor.YIELD_ROUNDS) == (0.59, 63)
 
 
+
+
+def test_one_life_floor_next_round_yields_without_depth():
+    """Midnight Mansion Impoppable (2026-11-12 00:36): round 63 rated 0.06
+    from round 60, shallow bloons, $18,123 held for a $38,400 step."""
+    from btd6bot import reinforce as RF
+    ex = _ex()
+    ex.rules = {"end_round": 100, "one_life": True}
+    ex.plan_first = lambda: True
+    ex.noted = set()
+    ex._notes = lambda: ex.noted
+    ex.given_up_credit = lambda: 0
+    ex.near_worst = lambda rnd, h: (0.06, 63)
+    old_wait, old_pay = RF.waiting_plan_step, RF.payable_by
+    RF.waiting_plan_step = lambda e, cash: ({"do": "upgrade", "id": "sn1", "to": "5-2-0"}, 38400)
+    RF.payable_by = lambda e, cost, cash, by, rnd: False
+    try:
+        assert ex.plan_first_yields(18123, 62, deep=False), "the floor round is next: the cash may go"
+        assert not ex.plan_first_yields(18123, 60, deep=False), "three rounds off: it waits for the depth"
+    finally:
+        RF.waiting_plan_step, RF.payable_by = old_wait, old_pay
+
 if __name__ == "__main__":
     test_the_near_weak_round_is_found()
+    test_one_life_floor_next_round_yields_without_depth()
     print("all tests passed")

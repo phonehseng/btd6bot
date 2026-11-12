@@ -6620,7 +6620,16 @@ class Executor:
         if margin >= self.YIELD_MARGIN or weak - rnd > horizon:
             return False
         credit = 0
-        if not deep and (rules.get("one_life") or margin > self.YIELD_FLOOR):
+        # One life: a round rated at the floor counts without the depth only
+        # when it is the next one - it may kill in one go, as Midnight Mansion
+        # Impoppable's round 63 did (2026-11-12 00:36, loss case
+        # 20261112_003659: rated 0.06 from round 60, the bloons of rounds 60-61
+        # at 73-79%, $8-18k held for sn1 5-2-0 at $38,400, nothing bought).
+        # Floor ratings are often survived (235 of 251 such rounds in the
+        # one-life journals, mostly on Erosion and Midnight Mansion, whose
+        # ratings were too low), so further-off ones still wait for the depth.
+        floor_next = bool(rules.get("one_life")) and margin <= self.YIELD_FLOOR and weak - rnd <= 1
+        if not deep and not floor_next and (rules.get("one_life") or margin > self.YIELD_FLOOR):
             # shallow bloons: only a floor rating in a mode with lives counts -
             # or cash the plan meant to spend on steps it had to give up
             credit = self.given_up_credit()
