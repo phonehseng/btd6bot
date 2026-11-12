@@ -3117,12 +3117,29 @@ class Executor:
 
     def _reach(self, kind):
         """Grid: how many track cells a `kind` tower centred on each cell has
-        in range (computed once per kind and game)."""
+        in range (computed once per kind and game).
+
+        On a map whose routes take turns round by round a cell counts as the
+        share of the rounds that pass it (MapModel.round_share), the weight
+        the spots are scored with (MapModel.track_weight). Counted alike,
+        the reach floor threw the best spot away: on Last Resort a ninja
+        beside the big loop has 282 track cells in range, all of them used
+        one round in four, and the one legal patch left beside the top
+        straight that every route runs along has 126 - under the floor of
+        126.9 (MIN_REACH_SHARE), "its range only grazes the track", although
+        it is the best-scored spot on the map. So no general
+        build stood a short-range tower there, and every game lost on that
+        map ended on a small-loop or straight round (2026-11-12 11:13 and
+        11:17, cases 20261112_111354_LastResort_primary_only and
+        20261112_111733_LastResort_abr: rounds 32 and 27-28)."""
         cache = self.__dict__.setdefault("_reach_cache", {})
         if kind not in cache:
             import cv2
             cnt = getattr(self.m, "t_cnt", None)
             track = (cnt > 0).astype(np.float32) if isinstance(cnt, np.ndarray) else None
+            share = self._round_share_grid(track)
+            if share is not None:
+                track = track * share
             if track is None:
                 cache[kind] = None
             else:
@@ -3131,6 +3148,22 @@ class Executor:
                 cv2.circle(disc, (r, r), r, 1.0, -1)
                 cache[kind] = cv2.filter2D(track, -1, disc, borderType=cv2.BORDER_CONSTANT)
         return cache[kind]
+
+    def _round_share_grid(self, track):
+        """The map's round shares (MapModel.round_share: for each cell the
+        share of the rounds whose bloons pass it) when they fit the `track`
+        grid, else None - every route carries every round, the model has no
+        geometry (test models), or there is no track grid to weight."""
+        if track is None:
+            return None
+        share_of = getattr(self.m, "round_share", None)
+        try:
+            share = share_of() if share_of else None
+        except Exception:      # a map-file problem must never stop placement
+            return None
+        if not isinstance(share, np.ndarray) or share.shape != track.shape:
+            return None
+        return share
 
     def _best_legal_reach(self, kind, valid):
         """Track cells the best legal cell for a `kind` tower reaches, or
