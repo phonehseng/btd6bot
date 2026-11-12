@@ -1078,7 +1078,14 @@ class Match:
                         self._mark("surplus")
                         bought = self.ex.surplus(cash, last_round, deadline=spend_deadline)
                 if bought:
-                    self._last_buy = now
+                    # when the purchase went through, not when this pass began:
+                    # a pass with a failed placement, a reinforce look and a
+                    # surplus buy took 16 s on Erosion Impoppable (2026-11-12
+                    # 10:56, loss case 20261112_105806), and stamped with the
+                    # pass's start the buy at its end already counted as 16 s
+                    # idle to the crisis hold (_hold_for_crisis), which let
+                    # Play go with $22,040 before a round rated 0.11
+                    self._last_buy = time.time()
                     if dropped:
                         self.stats["panic"] += 1
                     t_hud = 0  # re-read cash right away after spending
@@ -1313,8 +1320,22 @@ class Match:
         elif cash >= rise[1] + CRISIS_HOLD_CASH_RISE:
             self._crisis_cash = (rnd, cash, now)            # cash still coming in: wait on
         last_rise = self._crisis_cash[2] or since
-        cap = CRISIS_HOLD_REBUILD_S if self._rebuilding() else CRISIS_HOLD_S
-        if now - since > cap or now - max(since, self._last_buy, last_rise) > CRISIS_HOLD_IDLE_S:
+        # The usual cap counts from the end of a rebuild seen in this hold,
+        # not from the hold's start. Erosion Impoppable (2026-11-12 10:56,
+        # loss case 20261112_105806): the ice took 17 towers as round 71
+        # began, the rebuild held Play for 98 s, and the moment its last
+        # steps were bought or given up the 20 s cap - long past since the
+        # hold began - let Play go with $22,040 in hand and round 72 rated
+        # 0.11. Reinforce never had a look at the refund; round 72 was lost.
+        seen = getattr(self, "_rebuild_seen", None)
+        if seen is None or seen[0] != rnd:
+            seen = self._rebuild_seen = (rnd, None)
+        if self._rebuilding():
+            self._rebuild_seen = (rnd, now)
+            over_cap = now - since > CRISIS_HOLD_REBUILD_S
+        else:
+            over_cap = now - max(since, seen[1] or since) > CRISIS_HOLD_S
+        if over_cap or now - max(since, self._last_buy, last_rise) > CRISIS_HOLD_IDLE_S:
             log.info("holding Play over after %.0f s ($%d left)", now - since, cash)
             self._crisis_hold[rnd] = False
             return False

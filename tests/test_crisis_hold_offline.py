@@ -107,6 +107,26 @@ def test_a_rebuild_after_the_map_took_the_defence_is_given_longer():
     assert not m._hold_for_crisis(54, 19_062)
 
 
+def test_the_usual_cap_counts_from_the_end_of_the_rebuild():
+    """Erosion Impoppable (2026-11-12 10:56, loss case 20261112_105806):
+    the rebuild after round 71's ice break held Play for 98 s; when its
+    last steps were bought or given up, the 20 s cap counted from the
+    hold's start let Play go at once with $22,040 and round 72 rated 0.11.
+    Now reinforce gets the usual CRISIS_HOLD_S after the rebuild ends."""
+    m = bare_match(0.11)
+    pending = [True]
+    m.ex.rebuild_pending = lambda: pending[0]
+    assert m._hold_for_crisis(72, 7_157)
+    m._crisis_hold[72] -= 90                           # 90 s into the rebuild
+    m._last_buy = time.time()
+    assert m._hold_for_crisis(72, 22_040)              # still rebuilding
+    pending[0] = False                                 # the rebuild is done
+    assert m._hold_for_crisis(72, 22_040), "the refund gets its own look"
+    m._rebuild_seen = (72, time.time() - M.CRISIS_HOLD_S - 1)
+    m._last_buy = time.time()
+    assert not m._hold_for_crisis(72, 22_040)          # and the usual cap after it
+
+
 def test_the_executor_reports_a_rebuild_until_its_steps_are_behind_the_plan():
     """Executor.rebuild_pending: the steps ground_lost queued again count
     while they are ahead of the plan's index, whatever became of them."""
