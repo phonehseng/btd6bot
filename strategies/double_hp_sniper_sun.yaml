@@ -37,6 +37,26 @@ planner:
   # the 2026-11-08 ABR replay rates its rounds 40+ at 0.06-0.3 even with the
   # earlier sniper, so a fixed opening would still not carry it.
   excluded_maps: [Tricky Tracks, Water Park, Mesa, Workshop, "#Ouch", "Pat's Pond", Sunken Columns, Bloody Puddles]
+  # Last Resort ABR only (its Hard medal is won, Double HP there is untried):
+  # lost on round 27 (2026-11-10 02:42) and round 28 (2026-11-12 11:17), both
+  # within 2.5 minutes of the round-22 Fast Track start and both with all 100
+  # lives gone in two rounds. In the second game the whole opening was on the
+  # board (two ninjas, alchemist, a 2-2-0 sniper) plus two more snipers and a
+  # village the reinforcement bought; the model rated rounds 27 and 28 at
+  # 2.07 and 2.92, round 27's yellow and green rush took 52 lives and round
+  # 28's six regrow leads the other 48 (case 20261112_111733_LastResort_abr).
+  # Rounds 27 and 28 are a small-loop and a straight round: the bloons never
+  # leave the top of the map, and the ninjas and the alchemist stood by the
+  # big loop's bottom row (Executor._reach now counts a track cell as the
+  # share of rounds that use it, so the first ninja takes the patch beside
+  # the top straight). That patch holds two towers at most; the rest of
+  # this build's short-range towers still stand out of reach there.
+  # The offline replay on the learned map (tools/simulate_threats.py --map
+  # "Last Resort" <build> abr) gives this build a worst blimp ratio of 0.43
+  # with 21 answers bought off the plan, military_heli_sniper 0.8 with 14;
+  # the heli build won all three of its games on this map (Easy, Reverse,
+  # Military Only), and abr_ninja_alch now plays from round 3.
+  excluded_by_mode: {abr: [Last Resort]}
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
