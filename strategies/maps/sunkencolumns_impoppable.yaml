@@ -19,18 +19,18 @@ planner:
   maps: [Sunken Columns]
 plan:
   - {do: place, id: sb1, kind: sub, role: dps, segment: [0.0, 0.6], at: [0.569, 0.385]}
-  - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.5], at: [0.045, 0.215]}
+  - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.5], at: [0.815, 0.215]}
   - {do: upgrade, id: sb1, to: 1-0-1}
   - {do: place, id: sb2, kind: sub, role: dps, segment: [0.3, 1.0], at: [0.612, 0.385]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}
   - {do: upgrade, id: sb2, to: 2-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.569, 0.521]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.623, 0.487]}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: dr, to: 0-0-3}
   - {do: upgrade, id: sb1, to: 2-0-3}
-  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0], at: [0.815, 0.215]}
+  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0], at: [0.045, 0.215]}
   - {do: upgrade, id: dr2, to: 0-0-2}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: sb1, to: 2-0-4}
@@ -39,22 +39,22 @@ plan:
   - {do: place, id: d1, kind: druid, role: dps, segment: [0.2, 0.8], at: [0.259, 0.334]}
   - {do: place, id: d2, kind: druid, role: support, near: [d1], near_radius: 6, at: [0.302, 0.351]}
   - {do: place, id: d3, kind: druid, role: support, near: [d1], near_radius: 6, at: [0.248, 0.402]}
-  - {do: place, id: v1, kind: village, role: support, near: [d1, d2, d3], near_radius: 7, at: [0.302, 0.436]}
+  - {do: place, id: v1, kind: village, role: support, near: [d1, d2, d3], near_radius: 7, at: [0.27, 0.487]}
   - {do: upgrade, id: v1, to: 2-2-0}
   - {do: upgrade, id: d1, to: 2-0-4}
   - {do: upgrade, id: d2, to: 2-0-4}
   - {do: upgrade, id: d3, to: 2-0-4}
-  - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7, at: [0.248, 0.47]}
+  - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7, at: [0.302, 0.419]}
   - {do: upgrade, id: bm1, to: 2-0-3}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
   - {do: upgrade, id: a1, to: 4-2-0}
   - {do: place, id: d4, kind: druid, role: support, near: [d1, d2], near_radius: 7, at: [0.345, 0.385]}
   - {do: place, id: d5, kind: druid, role: support, near: [d1, d2], near_radius: 7, at: [0.206, 0.385]}
-  - {do: place, id: d6, kind: druid, role: support, near: [d1, d2], near_radius: 7, at: [0.355, 0.453]}
+  - {do: place, id: d6, kind: druid, role: support, near: [d1, d2], near_radius: 7, at: [0.345, 0.453]}
   - {do: upgrade, kind: druid, to: 2-0-4}
   - {do: upgrade, id: v1, to: 2-3-0}
-  - {do: place, id: a2, kind: alchemist, role: support, near: [d4, d5], near_radius: 6, at: [0.206, 0.453]}
+  - {do: place, id: a2, kind: alchemist, role: support, near: [d4, d5], near_radius: 6, at: [0.227, 0.453]}
   - {do: upgrade, id: a2, to: 4-2-0}
   - {do: upgrade, id: sp1, to: 2-0-5}
 fill:
@@ -70,12 +70,12 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.569, 0.521]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.623, 0.487]}
   ceramic:
     - {do: upgrade, id: dr, to: 0-0-3}
   rush:
     - {do: upgrade, id: bm1, to: 2-0-3}
-    - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7, at: [0.248, 0.47]}
+    - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7, at: [0.302, 0.419]}
   moab:
     - {do: upgrade, id: sb1, to: 2-0-3}
   bfb:
