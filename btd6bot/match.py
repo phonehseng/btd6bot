@@ -437,9 +437,12 @@ class Match:
         self._in_round = False
         self._played_round = None   # the round last seen running (_follow_round_end)
         # the damage model's view of each round as it starts (forecast.py)
+        # (the hero is rated at its estimated level: forecast.hero_level)
         self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None),
                                       getattr(model, "sight", None),
-                                      (getattr(model, "sight_height", None), getattr(model, "ground_height", None)))
+                                      (getattr(model, "sight_height", None), getattr(model, "ground_height", None)),
+                                      hero=getattr(game, "hero", None),
+                                      knowledge=xp_knowledge(account, getattr(executor, "rules", None)))
         # The executor asks the same model about the same boards (surplus's
         # _lifts_now, the blimp check, margin_now): one forecast for both,
         # so what one has rated the other does not rate again

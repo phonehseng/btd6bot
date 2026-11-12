@@ -53,15 +53,23 @@ def test_rainbows_whole_rate_is_vine_plus_bramble_chip():
     chip = D._hit_rate(bramble, lay, RHO, st.zones[0]) * bramble.damage   # 5.77 HP/s
     expected = grabs + chip / D.rbe("Rainbow")
     got = _whole_per_s(st, "Rainbow")
-    # the vine also takes its share of the layers inside (subtree): ~8% more
-    assert abs(got - expected) < 0.1 * expected, (got, expected)
-    assert 0.45 < got < 0.6, got                                      # was 6.15
+    # The brambles also chip the layers inside, which come packed twice as
+    # tight with each split: since a bramble's pierce comes back every 0.3 s
+    # (docs/model_fix_plan.md item 11) they land more hits there than on
+    # the rainbow itself - ~0.9 against the ~0.55 of one load of pierce.
+    # The vine grabs a rainbow every 3.36 s at most (its digest, item 13).
+    assert expected < got < 1.6 * expected, (got, expected)
+    assert 0.45 < got < 1.0, got                                      # was 6.15
 
 
 def test_leads_and_zebras_are_no_longer_free():
+    """Far from the 6.15 of the overflow bug. Above the vine's own 0.3-0.35
+    grabs a second (its digest, item 13), because a bramble's pierce comes
+    back every 0.3 s (item 11): with the bramble read as one load of pierce
+    this was 0.61 / 0.67."""
     st = _vine_station()
     for bloon in ("Lead", "Zebra"):
-        assert _whole_per_s(st, bloon) < 1.0, bloon                   # were 6.15 each
+        assert _whole_per_s(st, bloon) < 2.0, bloon                   # were 6.15 each
 
 
 def test_reds_still_pop_at_the_full_hit_rate():

@@ -215,7 +215,10 @@ def test_emergency_skips_never():
     keys = pl.decide(0.0, 90, True, lives_dropped=True)
     names = {n for _, n, _ in pl.last_fired}
     assert "hero:Sacrificial Totem" not in names
-    assert keys == [1, 2]
+    # the game unlocks the Totem at level 7 and MOAB Hex at 10 (attacks.json
+    # hero abilities; it was the other way round in towers.HEROES): the
+    # Totem holds key 2 and is skipped
+    assert keys == [1, 3]
 
 
 def test_tower_ability_slots_order():

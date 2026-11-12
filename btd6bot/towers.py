@@ -670,64 +670,74 @@ def _hero(name, cost, placement, rng, unlock, abilities, notes=""):
     }
 
 
+# Ability levels and cooldowns (cooldown_s at the unlock level, game seconds
+# at 1x) are the game model's: attacks.json "heroes" -> level -> "abilities"
+# (tools/export_attacks.py); tests/test_hero_rating_offline.py keeps them in
+# step. 14 cooldowns and the levels of Ezili's and Rosalia's abilities were
+# wrong before (docs/model_audit_support_heroes.md H-CD). Abilities the bot
+# has no use for are listed too ('never'): hotkeys follow the unlock order,
+# so a missing one shifts every later key.
 HEROES: dict[str, dict] = {
     "quincy": _hero("Quincy", 540, "land", 50, "free (starting hero)", [  # range ?
-        _ab(3, "Rapid Shot", 60, "on_cooldown"),  # cd ?
-        _ab(10, "Storm of Arrows", 60, "on_cooldown"),  # cd ?
+        _ab(3, "Rapid Shot", 60, "on_cooldown"),
+        _ab(10, "Storm of Arrows", 70, "on_cooldown"),
     ]),
     "gwendolin": _hero("Gwendolin", 725, "land", 40, "free at player level 14", [  # ? range/unlock
-        _ab(3, "Cocktail of Fire", 20, "on_cooldown"),  # cd ?
-        _ab(10, "Firestorm", 60, "on_cooldown"),  # cd ?
+        _ab(3, "Cocktail of Fire", 30, "on_cooldown"),
+        _ab(10, "Firestorm", 60, "on_cooldown"),
     ]),
     "striker_jones": _hero("Striker Jones", 700, "land", 50, "free at player level 21", [  # ?
-        _ab(3, "Concussive Shell", 15, "on_cooldown"),  # cd ?
-        _ab(10, "Artillery Command", 60, "on_cooldown"),  # cd ?
-    ], "buffs bomb/mortar; gives them camo detection"),
+        _ab(3, "Concussive Shell", 16, "on_cooldown"),
+        _ab(7, "Target Focus", 45, "never"),            # what it targets is not modelled
+        _ab(10, "Artillery Command", 80, "on_cooldown"),
+    ], "buffs bomb/mortar"),
     "obyn": _hero("Obyn Greenfoot", 650, "land", 40, "free at player level 28", [  # ?
-        _ab(3, "Brambles", 15, "on_cooldown"),  # cd ?
-        _ab(10, "Wall of Trees", 90, "on_cooldown"),  # cd ?
+        _ab(3, "Brambles", 30, "on_cooldown"),
+        _ab(10, "Wall of Trees", 90, "on_cooldown"),
     ], "buffs magic towers"),
     "rosalia": _hero("Rosalia", 875, "land", 40, "Monkey Money (~4,500 MM)", [  # ? names/cd
-        _ab(3, "Kinetic Charge", 40, "on_cooldown"),  # ?
-        _ab(10, "Reposition", None, "never"),  # ? movement ability
+        _ab(3, "Scatter Missile", 45, "on_cooldown"),
+        _ab(7, "Flight Boost", 45, "never"),            # moves her: not modelled
+        _ab(10, "Kinetic Charge", 75, "on_cooldown"),
     ]),
     "churchill": _hero("Captain Churchill", 2000, "land", 52, "2,500 MM", [  # ? range/MM
-        _ab(3, "Armor Piercing Shells", 60, "moab"),  # cd ?
-        _ab(10, "MOAB Barrage", 60, "moab"),  # cd ?
+        _ab(3, "Armor Piercing Shells", 30, "moab"),
+        _ab(10, "MOAB Barrage", 60, "moab"),
     ]),
     "benjamin": _hero("Benjamin", 1200, "land", 40, "~5,000 MM", [  # ?
-        _ab(3, "Biohack", 45, "on_cooldown"),  # cd ?
-        _ab(10, "Syphon Funding", 60, "on_cooldown"),  # cd ?
+        _ab(3, "Biohack", 30, "on_cooldown"),
+        _ab(10, "Syphon Funding", 65, "on_cooldown"),
     ], "passive income each round"),
     "pat_fusty": _hero("Pat Fusty", 800, "land", 30, "~2,000 MM", [  # ?
-        _ab(3, "Rallying Roar", 45, "on_cooldown"),  # cd ?
-        _ab(10, "Big Squeeze", 45, "moab"),  # cd ?
+        _ab(3, "Rallying Roar", 45, "on_cooldown"),
+        _ab(10, "Big Squeeze", 20, "moab"),
     ]),
     "ezili": _hero("Ezili", 550, "land", 52, "~2,500 MM", [  # ?
-        _ab(3, "Heartstopper", 20, "on_cooldown"),  # cd ?
-        _ab(7, "MOAB Hex", 30, "moab"),  # ?
-        _ab(10, "Sacrificial Totem", 60, "never"),  # costs lives
+        _ab(3, "Heartstopper", 45, "on_cooldown"),
+        _ab(7, "Sacrificial Totem", 90, "never"),      # costs lives
+        _ab(10, "MOAB Hex", 60, "moab"),
     ]),
     "adora": _hero("Adora", 1000, "land", 50, "~5,000 MM", [  # ?
-        _ab(3, "Long Arm of Light", 35, "on_cooldown"),  # cd ?
-        _ab(7, "Blood Sacrifice", 45, "never"),  # sacrifices towers
-        _ab(10, "Ball of Light", 90, "on_cooldown"),  # cd ?
+        _ab(3, "Long Arm of Light", 45, "on_cooldown"),
+        _ab(7, "Blood Sacrifice", 30, "never"),  # sacrifices towers
+        _ab(10, "Ball of Light", 60, "on_cooldown"),
     ]),
     "admiral_brickell": _hero("Admiral Brickell", 900, "water", 60, "~4,500 MM", [  # ?
-        _ab(3, "Naval Tactics", 60, "on_cooldown"),  # cd ?
-        _ab(10, "MEGA Mine", 90, "moab"),  # cd ?
+        _ab(3, "Naval Tactics", 50, "on_cooldown"),
+        _ab(7, "Blast Chain", 45, "never"),             # not modelled
+        _ab(10, "MEGA Mine", 60, "moab"),
     ], "water placement only"),
     "etienne": _hero("Etienne", 650, "land", 60, "~3,500 MM", [  # ?
-        _ab(3, "Drone Swarm", 35, "on_cooldown"),  # cd ?
-        _ab(10, "UCAV", 60, "on_cooldown"),  # cd ?
-    ], "camo for all towers from ~L8? (Etienne zone control)"),  # ?
+        _ab(3, "Drone Swarm", 70, "on_cooldown"),
+        _ab(10, "UCAV", 90, "on_cooldown"),
+    ], "camo for all towers on screen from L8 (the UAV)"),
     "sauda": _hero("Sauda", 600, "land", 25, "~3,500 MM", [  # ?
-        _ab(3, "Leaping Sword", 20, "on_cooldown"),  # cd ?
-        _ab(10, "Sword Charge", 45, "on_cooldown"),  # cd ?
+        _ab(3, "Leaping Sword", 30, "on_cooldown"),
+        _ab(10, "Sword Charge", 45, "on_cooldown"),
     ], "place right next to the track"),
     "psi": _hero("Psi", 1000, "land", None, "~3,500 MM", [  # ? (map-wide range)
-        _ab(3, "Psychic Blast", 15, "on_cooldown"),  # cd ?
-        _ab(10, "Psionic Scream", 60, "on_cooldown"),  # cd ?
+        _ab(3, "Psychic Blast", 45, "on_cooldown"),
+        _ab(10, "Psionic Scream", 60, "on_cooldown"),
     ]),
     "geraldo": _hero("Geraldo", 750, "land", 40, "~7,000 MM", [],  # range/MM ?
                      "no activated abilities; shop items must be bought/placed manually"),
@@ -736,8 +746,8 @@ HEROES: dict[str, dict] = {
     ], "mana-based spellbook UI; not supported by simple hotkey use"),
     "silas": _hero("Silas", 850, "land", 45, "~7,000 MM", [  # range/MM ?
         _ab(3, "Frostbite", 30, "on_cooldown"),
-        _ab(7, "Frozen Cascade", 60, "on_cooldown"),  # cd ?
-        _ab(10, "Frozen Burial", 90, "on_cooldown"),  # cd ?
+        _ab(7, "Frozen Cascade", 60, "on_cooldown"),
+        _ab(10, "Frozen Burial", 90, "on_cooldown"),
     ], "v50; buffs Ice Monkeys / Coldchain Skywardens"),
     "dan_dmonke": _hero("Dan D'Monke", 650, "land", 40, "7,000 MM", [  # range ?
         _ab(3, "Transformation", None, "never"),  # switches form
