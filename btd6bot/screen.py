@@ -1,5 +1,6 @@
 """Locating the BTD6 window and capturing its client area."""
 import ctypes
+import functools
 import time
 
 import mss
@@ -47,6 +48,42 @@ class Screen:
             return True
         # Unity can own more than one top-level window; compare processes.
         return win32process.GetWindowThreadProcessId(fg)[1] == self._pid()
+
+    # Points of the client area sampled for a window lying over the game
+    # (fractions of its width and height), and how many must be covered.
+    OBSCURED_GRID = (0.15, 0.5, 0.85)
+    OBSCURED_MIN_POINTS = 2
+
+    def obscured_by(self):
+        """The title of a window from another program that lies over the game,
+        or None when the game is visible.
+
+        BTD6 can be the foreground window while another program's window sits
+        on top of it (an always-on-top app window). The bot then plays blind
+        on that part of the map: Luminous Cove CHIMPS (2026-11-12 16:04,
+        loss case 20261112_160448) was lost at round 8 with the Claude app's
+        window over the right third of the game - is_foreground() was True.
+
+        Windows of python processes are not counted: the bot's own HUD
+        windows lie over the game on purpose (click-through overlays)."""
+        try:
+            own = self._pid()
+            covered = []
+            for fy in self.OBSCURED_GRID:
+                for fx in self.OBSCURED_GRID:
+                    hwnd = win32gui.WindowFromPoint(self.to_px(fx, fy))
+                    if not hwnd:
+                        continue
+                    root = win32gui.GetAncestor(hwnd, 2)        # GA_ROOT
+                    pid = win32process.GetWindowThreadProcessId(root)[1]
+                    if pid == own or _is_python(pid):
+                        continue
+                    covered.append(root)
+            if len(covered) < self.OBSCURED_MIN_POINTS:
+                return None
+            return win32gui.GetWindowText(covered[0]) or "another window"
+        except Exception:
+            return None          # never pause on a failed check
 
     def _pid(self):
         return win32process.GetWindowThreadProcessId(self.hwnd)[1]
@@ -139,3 +176,18 @@ class Screen:
     def _grab_screen(self):
         mon = {"left": self.left, "top": self.top, "width": self.width, "height": self.height}
         return np.asarray(self._sct.grab(mon))[:, :, :3]
+
+
+@functools.lru_cache(maxsize=256)
+def _is_python(pid):
+    """Is process `pid` a Python interpreter (the bot, its HUD, its tools)?
+    Cached: Input.guard asks before every input."""
+    try:
+        h = win32api.OpenProcess(0x1000, False, pid)     # PROCESS_QUERY_LIMITED_INFORMATION
+        try:
+            name = win32process.GetModuleFileNameEx(h, 0)
+        finally:
+            win32api.CloseHandle(h)
+        return name.lower().endswith(("python.exe", "pythonw.exe"))
+    except Exception:
+        return False
