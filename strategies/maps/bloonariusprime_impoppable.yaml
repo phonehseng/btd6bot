@@ -49,15 +49,15 @@ plan:
   - {do: upgrade, id: mer501, to: 2-1-0}
   - {do: place, id: eng502, kind: engineer, role: support, at: [0.216, 0.146]}
   - {do: place, id: eng503, kind: engineer, role: support, at: [0.174, 0.129]}
-  - {do: place, id: eng504, kind: engineer, role: support, at: [0.088, 0.095]}
+  - {do: place, id: eng504, kind: engineer, role: support, at: [0.243, 0.095]}
   - {do: upgrade, id: a1, to: 2-1-0}
   - {do: place, id: des505, kind: desperado, role: support, at: [0.152, 0.368]}
   - {do: place, id: des506, kind: desperado, role: support, at: [0.195, 0.436]}
-  - {do: place, id: sni507, kind: sniper, role: support, at: [0.206, 0.078]}
+  - {do: place, id: sni507, kind: sniper, role: support, at: [0.291, 0.095]}
   - {do: upgrade, id: des505, to: 0-1-0}
   - {do: upgrade, id: sni507, to: 0-2-0}
   - {do: upgrade, id: sni507, to: 0-2-1}
-  - {do: place, id: sni508, kind: sniper, role: support, at: [0.248, 0.078]}
+  - {do: place, id: sni508, kind: sniper, role: support, at: [0.329, 0.129]}
   - {do: upgrade, id: sni507, to: 0-2-2}
   - {do: upgrade, id: sni508, to: 0-2-0}
   - {do: upgrade, id: sni508, to: 0-2-1}
@@ -75,7 +75,7 @@ plan:
   - {do: upgrade, id: sky516, to: 1-0-0}
   - {do: upgrade, id: sky515, to: 1-0-0}
   - {do: upgrade, id: sky510, to: 1-0-0}
-  - {do: place, id: sni517, kind: sniper, role: support, at: [0.291, 0.078]}
+  - {do: place, id: sni517, kind: sniper, role: support, at: [0.366, 0.121]}
   - {do: upgrade, id: sni517, to: 0-2-0}
   - {do: upgrade, id: sni517, to: 0-2-1}
   - {do: upgrade, id: sky513, to: 1-0-0}

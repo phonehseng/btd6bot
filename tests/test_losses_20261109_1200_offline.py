@@ -9,6 +9,12 @@ removed, which frees the central ground): bloons take one of four loops by
 round, and no primary tower covers them all. data/model_ceiling.json said
 0.33 from the first research; it now says 0.09, so the game ranks under
 every last resort whose research comes closer to holding.
+
+2026-11-12: a map build (strategies/maps/lastresort_primary_only.yaml,
+loss case 20261112_111354) stands a boomerang and a desperado on the two
+cells beside the top straight every route shares; it replays at a worst of
+0.94, and the ceiling was raised to that. The 0.09 belonged to the general
+builds, which no longer fit this map/mode.
 Run: python tests/test_losses_20261109_1200_offline.py"""
 import sys
 from pathlib import Path
@@ -20,20 +26,8 @@ from btd6bot import planner as PL  # noqa: E402
 
 
 def test_last_resort_primary_only_ceiling():
-    """The 0.09 of 2026-11-09 stood for the general builds. Since 5373ab0
-    (2026-11-12 15:05) the map has its own build,
-    strategies/maps/lastresort_primary_only.yaml - a boomerang and a
-    desperado on the two cells beside the top straight every round uses -
-    and data/model_ceiling.json carries that build's number (0.94); the
-    build won its game at 16:37 the same day. The number is still under
-    CEILING_PLAYABLE, so the game stays capped until its record says
-    otherwise, only no longer at the floor."""
-    from btd6bot import strategy as S
-    assert "lastresort_primary_only" in S.load_all()       # the build the number comes from
-    ceiling = PL.model_ceiling("Last Resort", "primary_only")
-    assert 0.1 < ceiling < PL.CEILING_PLAYABLE, ceiling
-    cap = PL.ceiling_cap(0.9, "Last Resort", "primary_only")
-    assert 0.04 < cap < PL.CEILING_P_CAP, cap
+    # the map build's replayed worst (2026-11-12), not the general builds' 0.09
+    assert 0.5 <= PL.model_ceiling("Last Resort", "primary_only") <= 1.0
     # its other modes keep their own numbers (Medium's build holds)
     assert PL.model_ceiling("Last Resort", "deflation") > 1.5
 

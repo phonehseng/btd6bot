@@ -1,0 +1,102 @@
+# Enchanted Glade, impoppable: Firing Range's plan with an exact spot per tower and plan_first.
+#
+# UNTESTED: written by tools/pin_spots.py, never played as it stands. The plan
+# is firingrange_impoppable's (v2 near ac1, see below); each tower's `at` is the best legal spot for its kind on this map
+# (the geometry minus the spots the live game refused), and a tower with `near`
+# stands at the legal spot closest to the towers it names. plan_first: the
+# plan's late answers are bought before any off-plan reinforce buy (on
+# 2026-11-11 such buys outweighed the plan's own towers on these maps and its
+# MOAB Eliminator / Perma-Spike were still waiting when the game was lost).
+# base_success is the map builds' lowest (0.5); the record sets it from here.
+#
+# Enchanted Glade round 95 (2026-11-12, loss 20261112_055921; rounds 98 and 63 on 2026-11-11, round 47
+# on 2026-11-04, all chimps_ninja_sun): the plan's Ground Zero (ac1 2-4-0, $19,200) was due from
+# round 75 and never bought - for twenty rounds off-plan reinforce buys spent the cash it was
+# waiting for (dart5 5-0-1 at $18,247 in round 83), the blimp check read 0.3-0.8x from round 87
+# and the game ended with $20,029 in hand. The villages found no spot by the towers they serve,
+# the Sun Avatar stood by them on the bottom-right island reaching 55 track cells of the 462 its
+# best cell has, and both aces landed across the map from the MIB village ("no spot near the towers
+# it supports"), so their darts could not touch a lead, black or camo DDT. This is Firing Range's winning plan (2026-11-12 01:18)
+# with plan_first and every tower pinned: the core and the Sun Avatar on the right-hand island by
+# the track, and the MIB village v2 on the top-left island beside the aces' runways (v2 is pinned
+# near ac1, not near s1, because no ace fits near the Sun Avatar) - both aces, the bomb, the heli
+# and the sniper stand inside its range.
+id: enchantedglade_impoppable
+map: Enchanted Glade
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
+modes: [impoppable]
+planner:
+  towers: {ninja: [4, 4, 4], alchemist: [4, 2, 0], village: [2, 3, 2], super: [3, 0, 2], spike: [2, 0, 5], bomb: [2, 5, 0], ace: [2, 4, 0], heli: [5, 0, 2], sniper: [4, 0, 2]}
+  maps: [Enchanted Glade]
+  base_success: {impoppable: 0.5}
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.655, 0.334]}
+  - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.441, 0.794]}
+  - {do: upgrade, id: n2, to: 2-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.687, 0.385]}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7, at: [0.751, 0.351]}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7, at: [0.687, 0.487]}
+  - {do: upgrade, id: s1, to: 3-0-2}
+  - {do: place, id: v2, kind: village, role: support, near: [ac1], near_radius: 7, at: [0.131, 0.198]}
+  - {do: upgrade, id: v2, to: 2-3-0}
+  - {do: place, id: ac1, kind: ace, role: support, at: [0.216, 0.112]}
+  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, at: [0.216, 0.232]}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8, at: [0.697, 0.334]}
+  - {do: upgrade, id: n4, to: 0-4-0}
+  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.099, 0.112]}
+  - {do: upgrade, id: b1, to: 0-4-0}
+  - {do: upgrade, id: ac1, to: 2-4-0}
+  - {do: upgrade, id: ac2, to: 2-4-0}
+  - {do: upgrade, id: b1, to: 0-5-0}
+  - {do: upgrade, id: sp1, to: 2-0-5}
+fill:
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, kind: ace, role: support, near: [v2], near_radius: 9, max: 3}
+  - {do: upgrade, kind: ace, to: 2-4-0}
+  - {do: upgrade, id: b1, to: 2-5-0}
+  - {do: place, kind: spike, role: exit, max: 3}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+  - {do: place, id: h1, kind: heli, role: support, near: [v2], near_radius: 9, at: [0.056, 0.181]}
+  - {do: upgrade, id: h1, to: 4-0-2}
+  - {do: upgrade, id: h1, to: 5-0-2}
+  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 9, at: [0.136, 0.112]}
+  - {do: upgrade, id: sn1, to: 4-0-2}
+  - {do: target, id: sn1, mode: strong}
+  - {do: upgrade, id: sp1, to: 2-0-5}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.687, 0.385]}
+  ceramic:
+    - {do: upgrade, id: n1, to: 3-0-2}
+  moab:
+    - {do: upgrade, id: n2, to: 2-0-3}
+  bfb:
+    - {do: upgrade, id: n2, to: 2-0-4}
+  rush:
+    - {do: upgrade, id: n1, to: 4-0-2}
+  zomg:
+    - {do: upgrade, id: ac1, to: 2-4-0}
+    - {do: place, id: ac1, kind: ace, role: support, at: [0.216, 0.112]}
+  ddt:
+    - {do: upgrade, id: b1, to: 0-5-0}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.099, 0.112]}
+  bad:
+    - {do: upgrade, id: b1, to: 0-5-0}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.099, 0.112]}

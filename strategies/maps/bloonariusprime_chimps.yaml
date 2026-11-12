@@ -94,7 +94,7 @@ plan:
   - {do: upgrade, id: a1, to: 3-2-0}                                            # R45
   - {do: upgrade, id: ac1, to: 2-0-4}                                           # R56 Spectre
   - {do: upgrade, id: ac1, to: 2-0-5}                                           # R89 Flying Fortress
-  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.206, 0.078]}  # added: a spike factory at the exit; its Perma-Spike is a fill step (see above)
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.206, 0.138]}  # added: a spike factory at the exit; its Perma-Spike is a fill step (see above)
 fill:
   - {do: upgrade, id: p1, to: 2-0-4}                                            # Deadly Spikes, if the cash comes
   - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike

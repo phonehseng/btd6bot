@@ -52,8 +52,9 @@ def test_one_two_tree_opened_plots_take_towers():
     early = ex._legal_cells("dart")
     ex.now_round = 80
     late = ex._legal_cells("dart")
-    assert early.sum() == 1869, early.sum()
-    assert late.sum() == 3187, late.sum()
+    # 75 cells fewer each since 98cc437: they lie under the lives and cash bar
+    assert early.sum() == 1794, early.sum()
+    assert late.sum() == 3112, late.sum()
     assert not (early & ~late).any(), "ground open in round 1 stays open"
 
 
@@ -79,7 +80,8 @@ def test_erosion_buffer_reaches_towers_on_phase_ice():
     ex.now_round, ex.ground_horizon = 1, mapgeom.phase_end(mapgeom.load("Erosion"), 1)
     lasting = PL.valid_spots(m, "village", last_round=80)
     phase = ex._legal_cells("village")
-    assert lasting.sum() == 85 and phase.sum() == 3114, (lasting.sum(), phase.sum())
+    # 36 phase-ice cells fewer since 98cc437: they lie under the lives and cash bar
+    assert lasting.sum() == 85 and phase.sum() == 3078, (lasting.sum(), phase.sum())
     # the phase cell farthest from every lasting village cell
     far = cv2.distanceTransform((~lasting).astype(np.uint8), cv2.DIST_L2, 5)
     far[~ex._legal_cells("ninja")] = 0

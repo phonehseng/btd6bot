@@ -131,7 +131,7 @@ plan:
   - {do: upgrade, id: sub519, to: 2-1-0}
   - {do: upgrade, id: sub519, to: 2-3-0}
   - {do: upgrade, id: mer505, to: 2-1-0}
-  - {do: place, id: sub520, kind: sub, role: support, at: [0.12, 0.095]}
+  - {do: place, id: sub520, kind: sub, role: support, at: [0.115, 0.112]}
   - {do: upgrade, id: sub520, to: 0-3-0}
   - {do: upgrade, id: sub520, to: 2-3-0}
   - {do: place, id: sub521, kind: sub, role: support, at: [0.163, 0.658]}

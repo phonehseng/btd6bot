@@ -42,6 +42,12 @@ out of reach of the track and of every tower on the water. The lead answer is
 the first buccaneer of the late game now (Hot Shot), bought in the
 alchemist's place; the alchemist and a dart that saw no track are gone.
 
+Enchanted Glade got one after its fourth general-build loss (20261112_055921,
+round 95: Ground Zero put off for twenty rounds by off-plan buys, both aces
+across the map from the MIB village); there the MIB village is pinned beside
+the aces' runways, and test_enchanted_glade_aces_stand_by_the_mib_village
+holds the build to that.
+
 Run: python tests/test_impoppable_map_builds_offline.py"""
 import sys
 from pathlib import Path
@@ -60,7 +66,7 @@ from btd6bot.account import AccountState  # noqa: E402
 MAPS = {"quad": "Quad", "coveredgarden": "Covered Garden", "sunkencolumns": "Sunken Columns",
         "bloonariusprime": "Bloonarius Prime", "peninsula": "Peninsula", "firingrange": "Firing Range",
         "midnightmansion": "Midnight Mansion", "sunsetgulch": "Sunset Gulch", "mesa": "Mesa",
-        "spillway": "Spillway", "muddypuddles": "Muddy Puddles"}
+        "spillway": "Spillway", "muddypuddles": "Muddy Puddles", "enchantedglade": "Enchanted Glade"}
 
 
 def _build(map_id):
@@ -173,12 +179,14 @@ def test_covered_garden_stands_off_the_panes():
 
 def test_the_moab_answer_comes_before_the_alchemist():
     """Mesa lost at round 40 with the blimp check at 0.4-0.9: n2's Sticky
-    Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan.
-    Mesa itself is no longer one of them: its two games of 2026-11-12 ended
-    at rounds 38 and 28, before any blimp, on the route that plan left
-    bare (test_mesa_opens_on_both_routes)."""
-    for map_id in ("sunsetgulch", "coveredgarden", "quad", "bloonariusprime", "firingrange", "midnightmansion",
-                   "spillway"):
+    Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan -
+    but Quad's and Mesa's: there a1 comes first, as the lead popper by round
+    28 (loss review 2026-11-12 13:20: n2's Flash Bomb was counted as lead
+    cover). Mesa's late plan (2026-11-12, from round 27) buys its MOAB damage
+    elsewhere first: the damage model rates round 40 at 0.91 that way and at
+    0.31 with the Sticky Bomb moved ahead of it."""
+    for map_id in ("sunsetgulch", "coveredgarden", "bloonariusprime", "firingrange", "midnightmansion",
+                   "spillway", "enchantedglade"):
         _, d = _build(map_id)
         order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
         # Covered Garden's late-game plan (2026-11-12) buys no alchemist at all
@@ -299,6 +307,23 @@ def test_sunken_columns_opens_with_towers_that_see_the_route():
     assert math.dist(at["a1"], at["dr"]) <= pin_spots.buffer_range("alchemist") - 10, "the brew reaches dr with room to spare"
 
 
+def test_enchanted_glade_aces_stand_by_the_mib_village():
+    """Enchanted Glade (loss 20261112_055921): the MIB village stood on the
+    bottom-right island and both aces across the map, so their darts could
+    not pop a DDT. In its own build the late blimp damage - both Ground
+    Zero aces and the Eliminator bomb - is pinned inside the range of v2,
+    the village that becomes MIB, and the plan owns the cash for them."""
+    import math
+    _, d = _build("enchantedglade")
+    pinner = pin_spots.Pinner("Enchanted Glade", "impoppable")
+    at = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place" and st.get("at")}
+    assert ("upgrade", "v2", "2-3-0") in [(st["do"], st.get("id"), st.get("to")) for st in d["plan"]]
+    mib = pinner.world(pinner.model.frac_to_cell(*at["v2"]))
+    for tid in ("ac1", "ac2", "b1"):
+        tower = pinner.world(pinner.model.frac_to_cell(*at[tid]))
+        assert math.dist(tower, mib) <= pin_spots.buffer_range("village"), (tid, at[tid])
+
+
 def test_peninsula_pops_round_28_leads_from_the_water():
     """Peninsula (2026-11-12, cases 20261112_090153 and 20261112_141254):
     round 28's leads ended two games. The lead answer was an alchemist on
@@ -325,17 +350,16 @@ def test_peninsula_pops_round_28_leads_from_the_water():
 def test_mesa_opens_on_both_routes():
     """Mesa (2026-11-12, cases 20261112_100238 and 20261112_162905): every
     round's bloons split over two routes, and no ninja cell has both in
-    range. The plan's opening (n1, n2, a1) stood on the first route only;
-    the second was bare until the late game, and the one-life games ended
-    there at rounds 38 and 28 (round 28's leads; a yellow of theirs took
-    the life). Now, as the damage model sees the towers:
+    range. The plan's opening ninjas stood on the first route only; the
+    second was bare until round 27 at the earliest, and the one-life games
+    ended there at rounds 38 and 28 (round 28's leads; a yellow out of
+    them took the life). Now, as the damage model sees the towers:
       * the second tower the plan buys is a ninja with the second route in
         range, bought before the hero;
-      * the alchemist is within its brew's reach of that ninja, so the
-        acid dip lets it pop lead;
-      * the towers bought before round 28 pop lead by themselves, and
-        among them one on each route has a way to (the dipped ninja on
-        the second, a bomb on the first)."""
+      * the alchemist is within its brew's reach of that ninja and has
+        Acidic Mixture Dip (2-0-0) before round 28, so the ninja pops lead;
+      * the towers bought before round 28 pop lead by themselves, and a
+        bomb among them has the first route in range."""
     import math
     from types import SimpleNamespace
     from btd6bot import strategy as S

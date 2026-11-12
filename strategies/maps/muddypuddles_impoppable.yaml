@@ -143,17 +143,17 @@ plan:
   - {do: place, id: buc509, kind: buccaneer, role: support, at: [0.11, 0.385]}
   - {do: upgrade, id: buc509, to: 0-2-1}
   - {do: upgrade, id: buc509, to: 0-3-1}
-  - {do: place, id: sni510, kind: sniper, role: support, at: [0.045, 0.078]}
+  - {do: place, id: sni510, kind: sniper, role: support, at: [0.045, 0.112]}
   - {do: upgrade, id: sni510, to: 1-2-0}
-  - {do: place, id: sni511, kind: sniper, role: support, at: [0.088, 0.078]}
+  - {do: place, id: sni511, kind: sniper, role: support, at: [0.077, 0.129]}
   - {do: upgrade, id: sni511, to: 1-2-0}
-  - {do: place, id: sni512, kind: sniper, role: support, at: [0.184, 0.078]}
+  - {do: place, id: sni512, kind: sniper, role: support, at: [0.184, 0.095]}
   - {do: upgrade, id: sni512, to: 1-2-0}
   - {do: place, id: tac513, kind: tack, role: support, at: [0.687, 0.845]}
   - {do: upgrade, id: tac513, to: 1-2-0}
   - {do: upgrade, id: eng524, to: 3-0-0}
   - {do: upgrade, id: eng524, to: 3-1-0}
-  - {do: place, id: sni514, kind: sniper, role: support, at: [0.227, 0.078]}
+  - {do: place, id: sni514, kind: sniper, role: support, at: [0.227, 0.095]}
   - {do: upgrade, id: sni514, to: 1-2-0}
   - {do: upgrade, id: tac513, to: 2-2-0}
   - {do: upgrade, id: tac506, to: 2-3-0}
