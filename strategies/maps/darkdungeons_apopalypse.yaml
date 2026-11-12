@@ -1,0 +1,101 @@
+# Dark Dungeons, Apopalypse: two Heli Pilots at 3-2-0 before anything else,
+# a Druid and a Flash Bomb ninja for the middle room, a third heli, then the
+# helis grown to Apache Dartship one by one and the first to Apache Prime.
+#
+# Why: apopalypse_apache_spikes lost Dark Dungeons Apopalypse twice, on round
+# 35 (2026-11-10) and on round 17 (2026-11-12 12:00, case
+# 20261112_120344_DarkDungeons_apopalypse): 150 lives in the first 35 s. The
+# general opening bought, while the bloons already ran, an opener dart (its
+# first spot refused), ninja n1 1-0-1 in the left room and only then the heli
+# (placed 17 s in, 3-2-0 at 34 s). The stills show the left and right lanes
+# full of blues, pinks and purples with nothing in the right room but the
+# $200 dart (lives 150 -> 110 -> 90 -> 37 -> 0 over rounds 15-17; the defeat
+# screen lists purple -22, blue -28, red -5). The build's own header rated
+# this map 0.43 on rounds 15-30, its worst start of any map it plays; today's
+# model gives it 0.43 at round 16 again (tools/apopalypse_check.py). The cause
+# is the build, not the clicks: Dark Dungeons has three walled lanes at once
+# (left, middle, right; darkdungeons_medium.yaml has the map facts) and
+# rounds 15-20 of Apopalypse throw 35-42 pinks plus regrow yellows at them.
+#
+# What carries it (the check's rater, constructed worst windows, one board
+# held fixed; screen of 26 tower kinds, one per lane, and of heli boards):
+#   * no short-range tower holds a room alone past round 16: every triple of
+#     a kind (one per lane: dart, tack, bomb, boomerang, druid, ice, glue,
+#     wizard, engineer, spike, dartling, ninja 2-0-2 and 4-0-2) rates 0.06
+#     from round 20 (the camo groups); ninja 2-0-3 x3 ($12.3k) 1.08-1.11 on
+#     16-20, then 0.13-0.63; sniper 1-2-0 x3 0.48 then 0.06-0.21.
+#   * one heli 3-2-0 ($5,150) rates 1.07-1.20 on 16-20; two of them 2.04-2.28
+#     ($10.3k), with a Druid 0-3-1 in the middle room 1.34 for one heli.
+#   * Apache Dartship is the late game: one 4-2-0 and two 3-2-0 helis rate
+#     1.18-3.12 on 25-55; Apache Prime (5-2-0) on h1 with two 3-2-0 helis
+#     2.99-5.91. The snipers-per-room build that won Military Only here
+#     (darkdungeons_military_only) rates 0.06 on rounds 18-21 and 0.43-0.71
+#     on 41-60 in Apopalypse: no MOAB damage worth its cost.
+# Helis fly (Pursuit, no sight needed) and are the only towers that reach all
+# three rooms; the walls hide every lane from the other rooms.
+#
+# Order (each variant checked whole with apopalypse_check, no samples):
+#   heli-only (h1, h2, h3 and their Apaches)       worst 0.51 R33
+#   + druid 0-3-1 before h1's Apache                worst 0.44 R35
+#   + a second druid (left room)                    worst 0.44 R35
+#   + h3 3-2-0 before h1's Apache                   worst 0.66 R35
+#   + ninja 2-0-3 (middle room) before the Apache   worst 0.72 R35
+#   + both (this build)                             worst 0.75 R51
+# Rounds 33-38 (camo ceramics, ten at a time) are the ones the cheap towers
+# fix: the third heli and the Flash Bomb ninja stand before the $20,000
+# Apache tier, which a poor game pays only around round 41.
+#
+# Spots: h1 (0.067, 0.402), h2 (0.077, 0.896) and h3 (0.067, 0.215) are the
+# heli pads the learned map allows (optimize_builds.MapSetup.ranked_spots;
+# none refused live); dr1 (0.377, 0.624) and n1 (0.419, 0.624) in the middle
+# room, where darkdungeons_medium's n1 stood without being moved by the
+# replay; the hero (0.163, 0.709) where Quincy stood on 2026-11-10 (Military
+# Only). The executor still puts its $200 opener dart first (Executor.
+# _with_opener: the mode's rules start at round 1), a few seconds.
+#
+# Evidence: tools/apopalypse_check.py 2026-11-12 (learned map from the live
+# checkout, Fast Track R15, Double Cash, poor-game income, constructed worst
+# windows, no drift: no villages or alchemists), worst per stretch of rounds,
+# this build | apopalypse_apache_spikes:
+#   rounds 15-30 1.07 (R16) | 0.43 (R16)
+#   rounds 31-40 0.97 (R35)
+#   rounds 41-50 0.89 (R43)
+#   rounds 51-60 0.75 (R51)
+# With 8 random windows per round as well: worst 0.72 (R43, sampled; the
+# constructed window there 0.89); with --click-budget 4: 0.75 (R51).
+# Plan 13/16 by round 60 (h2's and h3's Apaches and Apache Prime are a rich
+# game's). Under the 2.0 bar: the best measured, not a safe build. The check
+# is pessimistic (no hero, no abilities; the general build held rounds 15-33
+# live on Bloody Puddles where it rates 0.38).
+# Test: tests/test_apopalypse_mapbuilds_offline.py.
+#
+# Status: written 2026-11-12, not played yet.
+id: darkdungeons_apopalypse
+map: Dark Dungeons
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [apopalypse]
+planner:
+  towers: {heli: [5, 2, 0], druid: [0, 3, 1], ninja: [2, 0, 3]}
+  base_success: {apopalypse: 0.6}
+  maps: [Dark Dungeons]
+plan:
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.067, 0.402]}      # setup R15: the first heli at once
+  - {do: upgrade, id: h1, to: 3-2-0}                                     # Pursuit, IFR (camo R19), Razor Rotors (lead)
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.077, 0.896]}      # ~R17: two helis hold 16-20 at 2.0
+  - {do: upgrade, id: h2, to: 3-2-0}
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.377, 0.624]}    # middle room
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.419, 0.624]}     # middle room: camo ceramics R33-38
+  - {do: upgrade, id: n1, to: 2-0-3}                                     # Flash Bomb
+  - {do: place, id: h3, kind: heli, role: dps, at: [0.067, 0.215]}
+  - {do: upgrade, id: h3, to: 3-2-0}
+  - {do: upgrade, id: h1, to: 4-2-0}                                     # Apache Dartship ~R41: the MOAB rounds
+  - {do: upgrade, id: h2, to: 4-2-0}
+  - {do: upgrade, id: h3, to: 4-2-0}
+  - {do: upgrade, id: h1, to: 5-2-0}                                     # Apache Prime: a rich game only
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.163, 0.709]}
+answers:
+  lead: [{do: upgrade, id: h1, to: 3-2-0}]
+  camo: [{do: upgrade, id: h1, to: 3-2-0}]
+  moab: [{do: upgrade, id: h1, to: 4-2-0}]

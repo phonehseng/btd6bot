@@ -1,0 +1,92 @@
+# Bloody Puddles, Apopalypse: four Heli Pilots at 3-2-0 and two Druids
+# before the first $20,000 Apache Dartship tier, then Apaches one by one.
+#
+# Why: apopalypse_apache_spikes lost Bloody Puddles Apopalypse at rounds 33
+# (2026-11-10) and 41 (2026-11-12 11:17, case 20261112_112348_BloodyPuddles_
+# apopalypse); apopalypse_ninja_sniper lost it at 23, 45 and 47. In the 11:17
+# game the opening held rounds 15-33 without a leak (two 3-2-0 helis, ninjas
+# 2-0-2 and 1-0-1, alchemist 2-0-0), and then the plan bought nothing from
+# round 25 to 40: plan_first kept the whole bank for h1's Apache tier ($20,000;
+# the spikes are skipped on this map), $1.1k -> $19.2k, while one standing heli
+# pair chased bloons in the left lanes. The stills show both helis over the
+# left lanes at round 38 and at round 41, with round 41's blacks and zebras
+# walking down a right lane nothing stood by. Round 34 (160 yellows and 6
+# zebras, "rush") took 92 lives with $10,856 in hand; round 41 (60 blacks, 60
+# zebras) the last 41, a round after the Apache was finally bought.
+#
+# Map facts (bloodypuddles_medium.yaml has the sources): five short vertical
+# lanes and six routes; each round two lanes spawn and the pair changes
+# round by round. Small ponds between the lanes; the jeep in the middle
+# blocks sight and space (never bought here).
+#
+# What carries it (the check's rater, constructed worst windows, one board
+# held fixed): two 3-2-0 helis rate 1.92-3.59 on rounds 15-22 ($10.3k); with
+# two druids (0-3-1, 1-3-0) 3.02-4.51; the druids alone floor at 0.06 from
+# round 18 (no camo). From round 34 two 3-2-0 helis and the druids rate
+# 0.49-0.58, three helis 0.71-0.95, four 0.91-1.26 - and one Apache in place
+# of the extra helis 1.51-3.12. Each Apache tier is the best buy once paid
+# for, but a poor game pays the first one only around round 41, so the
+# rounds before it need the cheap helis. Ninjas 2-0-3 (camo, Flash Bomb)
+# added nothing here (worst 0.43 with one or two of them: they delay the
+# Apache); the druids-and-snipers build that won Medium and Reverse here
+# (bloodypuddles_medium) rates 0.34-0.49 on rounds 42-60 in Apopalypse.
+#
+# Order (each variant checked whole with apopalypse_check, no samples):
+#   h1, h2, druids, h1's Apache, h3, ...          worst 0.40 R35
+#   ... h3 3-2-0 before h1's Apache                worst 0.59 R35
+#   ... + h4 3-2-0 before h1's Apache (this build) worst 0.55 R44; R33-41
+#       0.78-1.27 against 0.59-0.95 without h4 (the stretch the live game
+#       was lost in)
+#
+# Spots: h1 (0.516, 0.487) and h2 (0.516, 0.351) where the 11:17 game's helis
+# stood; h3 (0.238, 0.862) and h4 (0.655, 0.794) heli pads the learned map
+# allows (optimize_builds.MapSetup.ranked_spots); dr1 (0.377, 0.845) and dr2
+# (0.462, 0.181) bloodypuddles_medium's dr1 and dr4 (won Medium and Reverse);
+# the hero (0.216, 0.419) where it stood on 2026-11-12.
+#
+# Evidence: tools/apopalypse_check.py 2026-11-12 (learned map from the live
+# checkout, Fast Track R15, Double Cash, poor-game income, constructed worst
+# windows, no drift: no villages or alchemists), worst per stretch of rounds:
+#   rounds 15-30 0.96 (R17)    apopalypse_apache_spikes: 0.38 (R16)
+#   rounds 31-40 0.78 (R35)
+#   rounds 41-50 0.55 (R44)
+#   rounds 51-60 0.77 (R51)
+# With 8 random windows per round as well: still 0.55 (R44, constructed);
+# with --click-budget 4: 0.55 (R44).
+# Plan 15/18 by round 60. Under the 2.0 bar: the best measured, not a safe
+# build. The check is pessimistic: the general build held rounds 15-33 live
+# without a leak where it rates 0.38.
+# Test: tests/test_apopalypse_mapbuilds_offline.py.
+#
+# Status: written 2026-11-12, not played yet.
+id: bloodypuddles_apopalypse
+map: Bloody Puddles
+hero: obyn
+plan_first: true      # the plan owns the cash (Executor.plan_first); its order puts the cheap helis first
+modes: [apopalypse]
+planner:
+  towers: {heli: [5, 2, 0], druid: [1, 3, 1]}
+  base_success: {apopalypse: 0.6}
+  maps: [Bloody Puddles]
+plan:
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.516, 0.487]}      # setup R15
+  - {do: upgrade, id: h1, to: 3-2-0}                                     # Pursuit, IFR (camo), Razor Rotors (lead)
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.516, 0.351]}
+  - {do: upgrade, id: h2, to: 3-2-0}
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.377, 0.845]}
+  - {do: upgrade, id: dr1, to: 0-3-1}
+  - {do: place, id: dr2, kind: druid, role: dps, at: [0.462, 0.181]}
+  - {do: upgrade, id: dr2, to: 1-3-0}
+  - {do: place, id: h3, kind: heli, role: dps, at: [0.238, 0.862]}      # three, then four helis for rounds 30-41
+  - {do: upgrade, id: h3, to: 3-2-0}
+  - {do: place, id: h4, kind: heli, role: dps, at: [0.655, 0.794]}
+  - {do: upgrade, id: h4, to: 3-2-0}
+  - {do: upgrade, id: h1, to: 4-2-0}                                     # Apache Dartship ~R42: the MOAB rounds
+  - {do: upgrade, id: h2, to: 4-2-0}
+  - {do: upgrade, id: h3, to: 4-2-0}
+  - {do: upgrade, id: h1, to: 5-2-0}                                     # Apache Prime: a rich game only
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.216, 0.419]}
+answers:
+  lead: [{do: upgrade, id: h1, to: 3-2-0}]
+  camo: [{do: upgrade, id: h1, to: 3-2-0}]
+  moab: [{do: upgrade, id: h1, to: 4-2-0}]
