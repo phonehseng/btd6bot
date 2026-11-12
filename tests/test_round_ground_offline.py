@@ -68,6 +68,29 @@ def test_erosion_subs_get_melted_water():
     assert ex._legal_cells("sub").sum() == 2865
 
 
+def test_erosion_buffer_reaches_towers_on_phase_ice():
+    """A ninja on the round-1 phase's ice, out of a village's reach from
+    any cell that lasts the whole game: the village still finds a spot."""
+    import cv2
+    m = model("Erosion")
+    if m is None:
+        return
+    ex = executor(m)
+    ex.now_round, ex.ground_horizon = 1, mapgeom.phase_end(mapgeom.load("Erosion"), 1)
+    lasting = PL.valid_spots(m, "village", last_round=80)
+    phase = ex._legal_cells("village")
+    assert lasting.sum() == 85 and phase.sum() == 3114, (lasting.sum(), phase.sum())
+    # the phase cell farthest from every lasting village cell
+    far = cv2.distanceTransform((~lasting).astype(np.uint8), cv2.DIST_L2, 5)
+    far[~ex._legal_cells("ninja")] = 0
+    y, x = np.unravel_index(int(far.argmax()), far.shape)
+    assert far[y, x] > 2 * ex._range_cells("village"), "no ice beyond a village's reach"
+    fx, fy = m.cell_to_frac(int(x), int(y))
+    ex.g.towers = {"n1": F.Placed("n1", "ninja", fx, fy)}
+    spots = ex._buff_spots("village")
+    assert spots, "no village spot beside the ninja on phase ice"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

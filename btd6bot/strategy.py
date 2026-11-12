@@ -2872,15 +2872,18 @@ class Executor:
         that spot first as long as a buffer there reaches a damage tower:
         Castle Revenge Hard's alchemists and Dark Castle's village have
         exact spots but no `near`, and were moved to wherever the most
-        towers happened to stand."""
-        from . import placement as PL
+        towers happened to stand.
+
+        The ground is _legal_cells', so a buffer stands where the damage
+        towers may stand this round, down to the current path phase's ice
+        (ground_horizon). Erosion (audit 2026-11-12): asked for ground that
+        lasts the whole game (80 rounds), a village had 85 cells, against
+        3,114 for the round-1 phase; the damage
+        towers stand on the phase's ice, far out of a buffer's reach from
+        those few cells."""
         if not self._damage_towers():
             return []
-        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
-                  for p in self.g.towers.values()]
-        valid = PL.valid_spots(self.m, kind, None, placed, where={"land"} if self.land_only else None,
-                               now_round=self._ground_round(), removed=tuple(self.removed),
-                               pose_round=self._pose_round())
+        valid = self._legal_cells(kind)
         if valid is None:
             return []
         # the researched spot and its neighbours first, where they buff something
