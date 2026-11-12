@@ -1494,6 +1494,11 @@ BLAZING_SUN = {"every": 50.0, "spread": 0.0, "total": 600.0, "per_s": 50.0}
 # and the round was lost). Neither is credited at 5-x-x until a game shows
 # how far they reach.
 GLAIVE_BOUNCE = {3: 60.0, 4: 180.0}
+# Off after calibration: with the bounce, three leaked Primary Only rounds
+# of 3-0-2 Glaive Ricochet boards moved over the 2.0 bar (Last Resort R18,
+# Erosion R18 and R36, 36-107 lives lost) and none under. The bounce goes
+# only as far as the next bloon, which the extra 60 units overstate.
+GLAIVE_BOUNCE_RATING = False
 
 
 def _made(name, shots, pierce, damage, **kw):
@@ -1593,7 +1598,7 @@ def _unexported(kind, tiers, entry, sources):
                                  immune=frozenset({"purple"}), camo=gun.camo, reach=0.0,
                                  dot_total=fire["total"], dot_rate=fire["per_s"], dot_one_bloon=True,
                                  zone_radius=gun.zone_radius))
-    if kind == "boomerang" and top in GLAIVE_BOUNCE:
+    if kind == "boomerang" and top in GLAIVE_BOUNCE and GLAIVE_BOUNCE_RATING:
         out = []
         for s in sources:
             if s.ability or not s.name.startswith("Attack>"):

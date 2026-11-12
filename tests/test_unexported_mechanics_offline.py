@@ -199,16 +199,22 @@ def test_blazing_sun_fire():
 
 def test_glaives_ricochet_further():
     """Glaive Ricochet and M.O.A.R. Glaives bounce 60 / 180 units further
-    than the throw (primary F5). Glaive Lord's bounce and seeking are not
-    credited: either over-rated the Quiet Street loss case
-    (tests/test_moab_model_offline.py)."""
+    than the throw (primary F5); off by default (GLAIVE_BOUNCE_RATING) after
+    calibration. Glaive Lord's bounce and seeking are never credited: either
+    over-rated the Quiet Street loss case (tests/test_moab_model_offline.py)."""
+    assert not D.GLAIVE_BOUNCE_RATING
     throw = D.crosspath("boomerang", "000")["range"]
-    for tiers, bounce in (((3, 0, 0), 60.0), ((4, 0, 0), 180.0), ((5, 0, 0), 0.0)):
-        glaive = _source("boomerang", tiers, "Attack>Projectile")
-        assert glaive.zone_radius == throw + bounce and glaive.placement == "aimed", tiers
-    tr = D.Track("Monkey Meadow")
-    off, on = _gain([D.Placed("b", "boomerang", (4, 0, 0), *_beside(tr))], "hard", 40, tr)
-    assert on >= 2.0 * off, (off, on)
+    assert _source("boomerang", (4, 0, 0), "Attack>Projectile").zone_radius == throw
+    saved = D.GLAIVE_BOUNCE_RATING
+    try:
+        D.GLAIVE_BOUNCE_RATING = True
+        D.profile.cache_clear()
+        for tiers, bounce in (((3, 0, 0), 60.0), ((4, 0, 0), 180.0), ((5, 0, 0), 0.0)):
+            glaive = _source("boomerang", tiers, "Attack>Projectile")
+            assert glaive.zone_radius == throw + bounce and glaive.placement == "aimed", tiers
+    finally:
+        D.GLAIVE_BOUNCE_RATING = saved
+        D.profile.cache_clear()
 
 
 if __name__ == "__main__":
