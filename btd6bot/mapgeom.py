@@ -454,15 +454,22 @@ def path_masks(geom, proj, skip=()):
 
 def _boss_paths(geom):
     """Ids of the paths only boss bloons take (a splitter's overrideBossPath
-    or a path it tags "Boss"). No boss comes in the bot's games."""
+    or a path it tags "Boss"). No boss comes in the bot's games.
+
+    A boss override that a MoabOnlySplitter also names as the MOAB-class
+    lane is left in: every blimp rides it (Sunset Gulch's bridge, loss case
+    20261112_122752_SunsetGulch_impoppable; dps_model._is_boss_path)."""
     out = set()
-    for s in (geom.get("mechanics") or {}).get("splitters") or []:
+    splitters = (geom.get("mechanics") or {}).get("splitters") or []
+    for s in splitters:
         if s.get("overrideBossPath") is not None:
             out.add(s["overrideBossPath"])
         for p, tag in zip(s.get("paths") or [], s.get("tagOnlyPath") or []):
             if tag == "Boss":
                 out.add(p)
-    return out
+    moab_lanes = {p for s in splitters if s.get("type") == "MoabOnlySplitter"
+                  for p, f in zip(s.get("paths") or [], s.get("moabOnlyPath") or []) if f}
+    return out - moab_lanes
 
 
 def path_round_shares(geom):

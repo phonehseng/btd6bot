@@ -67,6 +67,14 @@ def test_boss_only_paths_stay_out():
     assert all(2297 not in r["paths"] for r in routes), routes
 
 
+def test_mapgeom_boss_paths_leave_the_moab_lane():
+    """mapgeom._boss_paths agrees: the bridge is not boss-only, PathBoss is."""
+    from btd6bot import mapgeom as G
+    boss = G._boss_paths(_geom("sunsetgulch"))
+    assert 1264 not in boss, boss
+    assert 2297 in G._boss_paths(_geom("ancientportal"))
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
