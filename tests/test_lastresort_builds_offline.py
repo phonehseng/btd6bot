@@ -47,8 +47,12 @@ MODE = "medium"
 BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (account.boosts)
 BUILD = "lastresort_medium"
 GENERAL = "hard_ninja_alch_sniper"                     # lost round 19 on 2026-11-10 06:55
-MIN_MARGIN = 1.45       # data/model_ceiling.json records this build's worst (1.48) for Last Resort|medium
-EARLY_MARGIN = 1.6      # rounds 15-25
+# 1.45 until 2026-11-12 (data/model_ceiling.json recorded this build's worst,
+# 1.48, for Last Resort|medium). Phase 1 of docs/model_fix_plan.md (the
+# damage model's over-credits) rates round 60 (a BFB) 1.35 with the build
+# unchanged; held a little under that.
+MIN_MARGIN = 1.3
+EARLY_MARGIN = 1.5      # rounds 15-25 (1.6 until phase 1 of docs/model_fix_plan.md: round 15 now 1.54)
 OPENING = range(15, 26)
 
 

@@ -86,6 +86,19 @@ ROUNDS_FILE = ROOT / "data" / "rounds.json"
 # lost lives 5.4% of the time, 2.0 and above 0.5%, 6.0 and above never), so
 # the safety bar is set in the optimizer (SAFETY_MARGIN) rather than by
 # shrinking towers.
+#
+# Re-checked 2026-11-12 after phase 1 of docs/model_fix_plan.md (the
+# over-credits: Bomber Ace bombs, instakill overflow, alternative shots,
+# per-attack reach, the dip, Spiked Mines). The boards of 690 journals
+# (logs/journal, round events; 526 rounds that leaked, 7,185 of ~27,000
+# that held) were rated with the code before and after: separation of
+# leaked from held rounds (AUC) 0.797 -> 0.805; rounds at or above 2.0 that
+# leaked anyway 0.57% -> 0.53% (11 leaked rounds moved under 2.0, none
+# over); the median margin moved x0.98 (a quarter of the rounds x0.89 or
+# less: boards with Druid of the Jungle, Bomber Aces, submerged subs).
+# The new model reaches the old 2.0's leak rate at about 1.7-1.8, but the
+# two bands' uncertainty overlaps (0.38-0.74% at 2.0), so SAFETY_MARGIN
+# stays 2.0 and this stays 1.0.
 TOWER_EFFICIENCY = 1.0
 
 # --- modelling constants (assumptions, documented in docs/optimizer.md) -----

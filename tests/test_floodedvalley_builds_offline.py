@@ -54,8 +54,13 @@ MAP = "Flooded Valley"
 BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (account.boosts)
 GENERAL = ("hard_glaive_lord", "abr")                  # lost ABR at R22 on 2026-11-09
 # build -> [(mode, the worst round rating allowed)]
+# floodedvalley_abr was held to 2.0 until 2026-11-12. Phase 1 of
+# docs/model_fix_plan.md (the damage model's over-credits: submerged subs
+# throw no darts, Airburst bursts once, Buccaneer rear shots need track
+# behind the boat) rates its worst round 1.66 (round 40; 1.68 at 63). The
+# build is unchanged; it is held a little under today's number.
 BUILDS = {
-    "floodedvalley_abr": [("abr", 2.0)],
+    "floodedvalley_abr": [("abr", 1.6)],
 }
 # builds whose spots are checked (Apopalypse is rated by tools/apopalypse_check.py,
 # minutes per run: its numbers are in the build's header)

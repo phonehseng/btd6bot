@@ -55,13 +55,20 @@ GENERAL = "hard_ninja_alch_sun"                        # lost Workshop Medium at
 # that answer round 40's MOAB with the tiers they must have by then
 _SPIKES_DART_BOMB = {"sp1": ("spike", (2, 0, 4)), "sp2": ("spike", (2, 0, 4)),
                      "d1": ("dart", (2, 0, 4)), "bm1": ("bomb", (0, 3, 2))}
+# Worst-round floors were 2.0 / 1.2 / 1.2 / 1.2 until 2026-11-12. Phase 1 of
+# docs/model_fix_plan.md (the damage model's over-credits: Frag Bombs hit
+# once per frag, Spiked Mines explode once, Recursive Cluster replaces every
+# second bomb) rates the same builds' worst rounds 1.70 (medium, R34), 1.10
+# (primary only, R28), 0.95 (Double HP, R75) and 0.90 (ABR, R22); round 40
+# still holds. The floors are today's numbers less a little; the builds are
+# for the optimizer to redo.
 BUILDS = {
-    "workshop_medium": ("medium", 2.0, 2.0, _SPIKES_DART_BOMB),
-    "workshop_primary_only": ("primary_only", 1.2, 2.5,
+    "workshop_medium": ("medium", 1.6, 2.0, _SPIKES_DART_BOMB),
+    "workshop_primary_only": ("primary_only", 1.05, 2.5,
                               {"d2": ("dart", (2, 0, 4)), "d5": ("dart", (2, 0, 4)),
                                "bm1": ("bomb", (0, 3, 2)), "d1": ("dart", (0, 2, 4))}),
-    "workshop_double_hp": ("double_hp", 1.2, 1.4, _SPIKES_DART_BOMB),
-    "workshop_abr": ("abr", 1.2, 1.4, _SPIKES_DART_BOMB),
+    "workshop_double_hp": ("double_hp", 0.9, 1.4, _SPIKES_DART_BOMB),
+    "workshop_abr": ("abr", 0.85, 1.4, _SPIKES_DART_BOMB),
 }
 
 

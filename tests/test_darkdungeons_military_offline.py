@@ -52,6 +52,13 @@ FLOOR = 1.0
 # least they may rate: a little under today's 0.70 / 0.67 (aces on their own
 # circle) and 0.73 / 0.81 (map-wide aces).
 KNOWN_SHORT = {40: 0.65, 60: 0.62}
+# Phase 1 of docs/model_fix_plan.md (2026-11-12) rates the build lower: its
+# Bomber Aces' bombs fall under the plane only while it is over the track
+# (no longer on the whole map), its buccaneers' rear shots need track behind
+# them, and the map-wide reading of the aces is now the same as the strict
+# one. Rounds 50-54 and 60 rate 0.84, 0.74, 0.98, 0.91 and 0.52 (the build's
+# one live game was lost in round 50); they are held a little under that.
+KNOWN_SHORT.update({50: 0.8, 52: 0.7, 53: 0.93, 54: 0.87, 60: 0.48})
 
 _SETUP = {}
 

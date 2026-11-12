@@ -77,7 +77,11 @@ SAFE = O.SAFETY_MARGIN
 #   * the repaired build under the refusals is worth nearly what the played
 #     build was on the spots it was planned for (REPAIR_KEEPS).
 HOLDS = 1.0
-REPAIR_KEEPS = 0.9
+# 0.9 until 2026-11-12. Since phase 1 of docs/model_fix_plan.md a
+# Buccaneer's rear shot counts only where the boat has track behind it, so
+# moving the boats off their planned spots costs a little more: 1.23 against
+# 1.48 (0.83).
+REPAIR_KEEPS = 0.8
 # The map's learned refused layers as that game left them (data/maps/
 # lotusisland.npz, written 17:11:50): the refusals of earlier Lotus Island
 # games plus the four spots this one was refused.
