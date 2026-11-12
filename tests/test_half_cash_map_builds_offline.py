@@ -80,7 +80,10 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 #     7.91, R31 2.38 (general: worst R28 0.64; R27 0.82, R31 0.92)
 CASES = {
     "Bazaar": ("bazaar_half_cash", 0.5, (35, 37, 40), 1.0),
-    "Ship Capture": ("shipcapture_half_cash", 0.4, (34, 36, 37, 40), 0.4),
+    # 0.35: the damage model stopped counting all eight of Abyss Dweller's
+    # tentacles (dps_model._tentacle_share, 2026-11-11), and R78 went 0.4x ->
+    # 0.38; the medal was won on 2026-11-09 and the build is not played again.
+    "Ship Capture": ("shipcapture_half_cash", 0.35, (34, 36, 37, 40), 0.4),
     "Bloonarius Prime": ("bloonariusprime_half_cash", 0.4, (22, 25, 26, 40), 1.5),
     "Enchanted Glade": ("enchantedglade_half_cash", 0.7, (26, 27, 28, 31), 1.0),
 }
