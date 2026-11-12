@@ -6023,7 +6023,9 @@ class Executor:
         if p is not None:
             after = [SimpleNamespace(**{**vars(t), "tiers": tiers}) if t.tid == tid else t for t in now]
         else:
-            after = now + [SimpleNamespace(tid=tid, kind=kind, tiers=tiers, x=spot[0], y=spot[1])]
+            # placed this round: on Glacial Trail it freezes on its own phase (reinforce.new_tower)
+            after = now + [SimpleNamespace(tid=tid, kind=kind, tiers=tiers, x=spot[0], y=spot[1],
+                                           placed_round=getattr(self, "now_round", None))]
         return after, cost, CT.board_seconds(self, now, after)
 
     def _quicker_step(self, cash, rnd):

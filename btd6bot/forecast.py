@@ -57,9 +57,9 @@ def board_key(towers, phased=False):
     """What the model's answer for `towers` depends on, as a hashable key:
     each tower's id, kind, tiers and spot, in the order given, and with
     `phased` (a map that freezes towers, _phases) its placement round.
-    Elsewhere the placement round is left out, so the executor's towers
-    (which carry one) and reinforce.board()'s copies (which do not) share
-    their answers."""
+    Elsewhere the placement round is left out, so towers whose placement
+    round is not known (older records, test fakes) and those that carry
+    one share their answers. (reinforce.board() copies it.)"""
     if phased:
         return tuple((p.tid, p.kind, tuple(p.tiers), p.x, p.y, getattr(p, "placed_round", None))
                      for p in towers)
