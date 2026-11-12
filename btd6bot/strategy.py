@@ -2053,6 +2053,20 @@ class Executor:
             return self._pane_now()
         return None
 
+    def _ground_round(self):
+        """The round to judge a new tower's ground by: on maps whose panes
+        open in turn (Covered Garden) the round whose pane the screen shows
+        (_pane_round), elsewhere the bot's own round (None before the first
+        round is read: then every change of the game is planned for).
+
+        Ground that opens or melts by this round takes towers. Until
+        2026-11-12 only Covered Garden passed a round: One Two Tree's opened
+        land plots were never used (dart cells 1,869 in round 1 and 3,187
+        by round 80 with the round) and neither was Erosion's water from
+        melted ice (sub cells 302 against 2,865 by round 40)."""
+        pane = self._pane_round()
+        return pane if pane is not None else getattr(self, "now_round", None)
+
     # How long one reading of the open pane off the screen is trusted (s):
     # long enough for the clicks of one pick-up, short of a round change.
     PANE_READ_S = 0.5
@@ -2865,7 +2879,7 @@ class Executor:
         placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
                   for p in self.g.towers.values()]
         valid = PL.valid_spots(self.m, kind, None, placed, where={"land"} if self.land_only else None,
-                               now_round=self._pane_round(), removed=tuple(self.removed),
+                               now_round=self._ground_round(), removed=tuple(self.removed),
                                pose_round=self._pose_round())
         if valid is None:
             return []
@@ -3076,7 +3090,7 @@ class Executor:
         for last in horizons:
             grid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                                   where={"land"} if self.land_only else None,
-                                  last_round=last, now_round=self._pane_round(),
+                                  last_round=last, now_round=self._ground_round(),
                                   pose_round=self._pose_round(), removed=tuple(self.removed))
             if grid is None or grid.any():
                 break
