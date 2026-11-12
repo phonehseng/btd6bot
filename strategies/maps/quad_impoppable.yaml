@@ -18,6 +18,10 @@
 # Flying Fortress (ace 2-0-5 by round 88; 2-0-4 by round 55). Etienne is the hero: his map-wide camo (level 8) lets the
 # towers hit the camo DDTs of rounds 95 and 99, which the Obyn build leaked.
 # The plan before it rated under 1.0 in 49 of rounds 40-100. The hero stands where the late game was rated with it, off every pin.
+#
+# Loss review 2026-11-12 13:20: no lead popper stood by round 28 (the threat check counted
+# n2's Flash Bomb as lead cover); a1 and its 2-0-0 now come before n2 2-0-4, and the
+# reviewer's replay rates rounds 28 and 30 at 1.0 or more, rounds 36-100 unchanged.
 id: quad_impoppable
 map: Quad
 hero: etienne
@@ -35,9 +39,9 @@ plan:
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.623, 0.504]}
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
-  - {do: upgrade, id: n2, to: 2-0-4}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.238, 0.317]}
   - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n2, to: 2-0-4}
   - {do: upgrade, id: n1, to: 3-0-2}
   # rounds 35-100: bought by tools/optimize_builds.py's greedy on the damage model,
   # saving for the carry (`*_carry*`) by its round
@@ -182,7 +186,7 @@ plan:
   - {do: upgrade, id: bom536, to: 0-2-4}
   - {do: upgrade, id: buc518, to: 0-4-1}
   - {do: upgrade, id: bom538, to: 0-3-2}
-  - {do: place, id: sni545, kind: sniper, role: support, at: [0.024, 0.078]}
+  - {do: place, id: sni545, kind: sniper, role: support, at: [0.067, 0.121]}
   - {do: upgrade, id: sni545, to: 1-2-0}
   - {do: upgrade, id: buc516, to: 0-4-1}
   - {do: upgrade, id: tac513, to: 2-4-0}
@@ -219,13 +223,13 @@ plan:
   - {do: upgrade, id: nin534, to: 0-0-4}
   - {do: upgrade, id: nin534, to: 1-0-4}
   - {do: upgrade, id: tac548, to: 3-2-0}
-  - {do: place, id: sni549, kind: sniper, role: support, at: [0.067, 0.078]}
+  - {do: place, id: sni549, kind: sniper, role: support, at: [0.11, 0.146]}
   - {do: upgrade, id: sni549, to: 1-2-0}
-  - {do: place, id: sni550, kind: sniper, role: support, at: [0.11, 0.078]}
+  - {do: place, id: sni550, kind: sniper, role: support, at: [0.136, 0.181]}
   - {do: upgrade, id: sni550, to: 1-2-0}
   - {do: upgrade, id: sni550, to: 3-2-0}
   - {do: upgrade, id: sky506, to: 1-0-0}
-  - {do: place, id: sni551, kind: sniper, role: support, at: [0.152, 0.078]}
+  - {do: place, id: sni551, kind: sniper, role: support, at: [0.179, 0.121]}
   - {do: upgrade, id: sni551, to: 0-2-0}
 fill: []
 panic:

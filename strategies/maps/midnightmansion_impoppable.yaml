@@ -20,9 +20,13 @@
 # round 40 to blimps (2026-11-11); with it first the threat simulation's round 40 blimp
 # check rose from 0.12 to 0.73 there and from 0.13 to 0.92 on Sunset Gulch.
 # No legal spot was found for: b1, sn2 (left to the executor).
+# Loss review 2026-11-12: the starter is pinned (the reviewer's cell (0.419, 0.649) is not legal
+# in today's map file; this is the nearest one). The hero stays unpinned: every one of its 56
+# legal cells overlaps a plan tower's pin. No plan rates 1.0 or more on rounds 75-85 here.
 id: midnightmansion_impoppable
 map: Midnight Mansion
 hero: obyn
+starter: {kind: sniper, at: [0.216, 0.845]}   # the opener's dart as a sniper, pinned clear of the plan (loss review 2026-11-12)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:

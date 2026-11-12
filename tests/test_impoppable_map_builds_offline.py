@@ -161,8 +161,10 @@ def test_covered_garden_stands_off_the_panes():
 
 def test_the_moab_answer_comes_before_the_alchemist():
     """Mesa lost at round 40 with the blimp check at 0.4-0.9: n2's Sticky
-    Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan."""
-    for map_id in ("mesa", "sunsetgulch", "coveredgarden", "quad", "bloonariusprime", "firingrange", "midnightmansion",
+    Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan -
+    but Quad's: there a1 comes first, as its lead popper by round 28 (loss
+    review 2026-11-12 13:20: n2's Flash Bomb was counted as lead cover)."""
+    for map_id in ("mesa", "sunsetgulch", "coveredgarden", "bloonariusprime", "firingrange", "midnightmansion",
                    "spillway"):
         _, d = _build(map_id)
         order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]

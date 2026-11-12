@@ -15,6 +15,11 @@
 # holds 30-40 spots, the land almost none, so no single land carry fits). Etienne is the hero: his map-wide camo (level 8) lets the
 # towers hit the camo DDTs of rounds 95 and 99, which the Obyn build leaked.
 # The plan before it rated under 1.0 in most of rounds 45-100. The hero stands where the late game was rated with it, off every pin.
+#
+# Loss review 2026-11-12: a1 could stand nowhere within reach of an attacker (66-87 units
+# away; the brew reaches 45). buc501 (Hot Shot 0-2-0) takes its place in the plan as the
+# lead popper and lead answer, and dr2, which reached no track, is gone; the reviewer's
+# replay rates rounds 17-40 at 1.0 or more.
 id: peninsula_impoppable
 map: Peninsula
 hero: etienne
@@ -33,17 +38,13 @@ plan:
   - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}
   - {do: upgrade, id: sb2, to: 2-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.441, 0.3]}
-  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: place, id: buc501, kind: buccaneer, role: support, at: [0.687, 0.334]}   # Hot Shot: pops lead where a1 stood out of every attacker's reach
+  - {do: upgrade, id: buc501, to: 0-2-0}
   - {do: upgrade, id: dr, to: 0-0-3}
   - {do: upgrade, id: sb1, to: 2-0-3}
-  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0], at: [0.419, 0.095]}
-  - {do: upgrade, id: dr2, to: 0-0-2}
-  - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: sb1, to: 2-0-4}
   # rounds 35-100: bought by tools/optimize_builds.py's greedy on the damage model,
   # saving for the carry (`*_carry*`) by its round
-  - {do: place, id: buc501, kind: buccaneer, role: support, at: [0.687, 0.334]}
   - {do: upgrade, id: buc501, to: 0-2-1}
   - {do: upgrade, id: dr, to: 1-0-3}
   - {do: upgrade, id: buc501, to: 0-3-1}
@@ -126,7 +127,7 @@ plan:
   - {do: upgrade, id: sub519, to: 2-1-0}
   - {do: upgrade, id: sub519, to: 2-3-0}
   - {do: upgrade, id: mer505, to: 2-1-0}
-  - {do: place, id: sub520, kind: sub, role: support, at: [0.12, 0.095]}
+  - {do: place, id: sub520, kind: sub, role: support, at: [0.115, 0.112]}
   - {do: upgrade, id: sub520, to: 0-3-0}
   - {do: upgrade, id: sub520, to: 2-3-0}
   - {do: place, id: sub521, kind: sub, role: support, at: [0.163, 0.658]}
@@ -152,8 +153,8 @@ panic:
   - {do: place, kind: druid, role: exit}
 answers:
   lead:
-    - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.441, 0.3]}
+    - {do: upgrade, id: buc501, to: 0-2-0}
+    - {do: place, id: buc501, kind: buccaneer, role: support, at: [0.687, 0.334]}
   ceramic:
     - {do: upgrade, id: dr, to: 0-0-3}
   rush:
