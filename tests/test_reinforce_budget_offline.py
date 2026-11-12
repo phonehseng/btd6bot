@@ -162,11 +162,16 @@ def test_one_life_surplus_keeps_to_its_budget():
         assert calls[-1] <= R.LOOK_BUDGET_S + SLACK_S, calls
         if bought or calls[-1] < 0.5:
             break
-    assert len(calls) > 1 and calls[-1] < 0.5, calls
+    # it ends with a purchase or with a fast, fully remembered call; with
+    # the phase-1 damage model (2026-11-12) the look finishes and buys inside
+    # its 5th-6th pass (1.2-3.4 s), each pass still within the budget
+    assert len(calls) > 1 and (bought or calls[-1] < 0.5), calls
     # once everything is rated an unbounded call answers the same at once
-    t0 = time.monotonic()
-    assert _unbounded(lambda: ex.surplus(CASH, RND)) == bought
-    assert time.monotonic() - t0 < 1.0
+    # (only when the looks bought nothing: a purchase changes the board)
+    if not bought:
+        t0 = time.monotonic()
+        assert _unbounded(lambda: ex.surplus(CASH, RND)) == bought
+        assert time.monotonic() - t0 < 1.0
     print(f"surplus calls {', '.join(f'{s:.1f}' for s in calls)} s")
 
 
