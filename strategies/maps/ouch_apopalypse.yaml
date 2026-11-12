@@ -1,0 +1,92 @@
+# #Ouch, Apopalypse: seven buccaneers in the central pond (the spots of
+# ouch_medium, which won Medium, Military Only and Reverse to round 60) and one
+# sub, grown to Monkey Pirates, Destroyers and an Aircraft Carrier for the
+# MOAB rounds.
+#
+# Why: apopalypse_ninja_sniper lost #Ouch Apopalypse four times (rounds 47,
+# 49, 51 and 54) and apopalypse_apache_spikes once (round 48). The last game
+# (2026-11-12 11:37, case 20261112_114515_Ouch_apopalypse; the bot logged
+# round 47, the defeat screen says 54) held all 150 lives to round 52 and then
+# lost them all to MOABs in rounds 53-54 (stills end_030-031: lives 150 ->
+# 20 -> 0, a MOAB leaving the left edge). Its board then was three Ninja
+# 4-0-2/2-0-4, Sniper 3-2-0, 2-2-0 and 0-2-4, Crossbow Master and a
+# 0-3-2 dart: single-target damage tied to one corner of four separate lanes.
+# The model rated its round 54 at 0.62 before the game got there, and
+# tools/apopalypse_check.py rates that build 0.17 on this map (worst round 29).
+#
+# Map facts (ouch_medium.yaml has the sources): four short lanes, two vertical
+# and two horizontal, all active every round, with no sight blockers. The only
+# water is the central pond and it touches all four: a buccaneer there (range
+# 60-71) reaches every lane, a land tower in a corner two at most. With the
+# seven boats down, the pond has one legal sub cell left (0.478, 0.572).
+#
+# Tower by tower, on merit: buccaneers carry it (they reach all four lanes;
+# 0-2-2 pops camo leads, Monkey Pirates hooks MOABs, Destroyer and Aircraft
+# Carrier are the late damage). The sub's Ballistic Missile (2-3-0) adds MOAB
+# damage from the last pond cell. Ninjas, snipers, darts and the alchemist
+# are the losing build. Helis and aces on the land spots of ouch_medium reach
+# two lanes each; the medium build's own order (boats, eight snipers, three
+# helis, four aces) rates 0.23 here (round 24). Admiral Brickell would buff
+# the boats but places only on water, and the pond is full; Quincy, the
+# cheapest land hero, comes after the second Monkey Pirates.
+#
+# Evidence: tools/apopalypse_check.py ouch_apopalypse --maps-dir <live
+# data/maps> --no-drift --samples 6 --click-budget 4 -v (2026-11-12, the
+# damage model as of that afternoon: learned live map, Fast Track R15 $6,057,
+# Double Cash, poor-game income, a round of clicking per round): worst 1.11
+# at round 17 (constructed: 40 pinks and a purple), R16 1.33, R25-26 1.41-
+# 1.43, R18-24 1.59-2.57; from round 27 on 1.98 or more, the MOAB rounds
+# 44-60 at 2.02-3.12 (R54 2.71). Random windows 1.92 or more everywhere.
+# Plan 27/28 by round 60 (Pirate Lord waits); b5 and b7 one cell off their
+# spot. Under the 2.0 gate in rounds 16-26, where the cash of a poor game
+# buys no more boats, but far above the general builds: apopalypse_ninja_
+# sniper 0.17 (round 29) and every round 15-60 under 2; apopalypse_apache_
+# spikes 0.42-0.67 in its own header. Tried and worse: ouch_medium's own
+# order 0.23 (R24); all boats 2-0-0 first (b3 can then never take 0-2-2: no
+# camo-lead popper, 0.06 from round 36); five boats in the setup (R15 1.59,
+# R18 1.45); the same build without the sub and b1's Aircraft Carrier 1.87
+# at round 60.
+# Status: written 2026-11-12, not played yet. Test:
+# tests/test_ouch_apopalypse_offline.py.
+id: ouch_apopalypse
+map: "#Ouch"
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [apopalypse]
+planner:
+  towers: {buccaneer: [4, 5, 2], sub: [2, 3, 0]}
+  base_success: {apopalypse: 0.5}
+  maps: ["#Ouch"]
+plan:
+  - {do: place, id: b3, kind: buccaneer, role: dps, at: [0.473, 0.453]}          # reaches all 4 lanes
+  - {do: place, id: b4, kind: buccaneer, role: dps, at: [0.452, 0.521]}          # reaches all 4 lanes
+  - {do: place, id: b6, kind: buccaneer, role: dps, at: [0.409, 0.487]}          # reaches all 4 lanes
+  - {do: place, id: b7, kind: buccaneer, role: dps, at: [0.419, 0.572]}          # reaches all 4 lanes
+  - {do: upgrade, id: b3, to: 0-2-2}                                             # Hot Shot + Crow's Nest: camo leads
+  - {do: upgrade, id: b4, to: 2-0-2}                                             # camo
+  - {do: upgrade, id: b6, to: 2-2-0}
+  - {do: upgrade, id: b7, to: 0-2-2}                                             # second camo-lead popper
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.505, 0.521]}          # lanes 2, 3, 4
+  - {do: upgrade, id: b1, to: 2-2-0}
+  - {do: place, id: b2, kind: buccaneer, role: dps, at: [0.377, 0.436]}          # lanes 1, 2, 4
+  - {do: upgrade, id: b2, to: 2-0-2}
+  - {do: place, id: b5, kind: buccaneer, role: dps, at: [0.377, 0.538]}          # lanes 1, 2, 4
+  - {do: upgrade, id: b5, to: 2-2-0}
+  - {do: upgrade, id: b3, to: 0-4-2}                                             # Monkey Pirates (~R30)
+  - {do: upgrade, id: b7, to: 0-4-2}                                             # Monkey Pirates (~R36)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.59, 0.487]}              # ouch_medium's hero spot
+  - {do: upgrade, id: b6, to: 3-2-0}                                             # Destroyer
+  - {do: upgrade, id: b1, to: 3-2-0}
+  - {do: upgrade, id: b4, to: 3-0-2}
+  - {do: upgrade, id: b5, to: 3-2-0}
+  - {do: upgrade, id: b2, to: 3-0-2}
+  - {do: upgrade, id: b6, to: 4-2-0}                                             # Aircraft Carrier (~R47)
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.478, 0.572]}               # the pond's last legal sub cell
+  - {do: upgrade, id: sb1, to: 2-3-0}                                            # Ballistic Missile
+  - {do: upgrade, id: b1, to: 4-2-0}
+  - {do: upgrade, id: b3, to: 0-5-2}                                             # Pirate Lord: a rich game only
+answers:
+  lead: [{do: upgrade, id: b3, to: 0-2-2}]
+  camo: [{do: upgrade, id: b4, to: 2-0-2}]
+  moab: [{do: upgrade, id: b3, to: 0-4-2}]
+  bfb: [{do: upgrade, id: b6, to: 4-2-0}]
