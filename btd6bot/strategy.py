@@ -1930,8 +1930,24 @@ class Executor:
             out.append(self.m.frac_to_cell(*self._at_now(at)))
         return out
 
+    @staticmethod
+    def _widened(p, target):
+        """The target crosspath with the tiers p already has on other paths
+        kept, when the game allows both together (legal_cross); else the
+        target as written.
+
+        A plan step "b1 to 0-5-0" whose bomb had been given a $300 top tier
+        by reinforce (1-4-0) used to read as "the tower went another way":
+        the step was skipped for good. Firing Range Impoppable (2026-11-11
+        20:27, loss case 20261111_202920): that skip lost the $31,200 MOAB
+        Eliminator, the build's DDT answer, and round 95's DDTs took the
+        life. 1-4-0 can still become 1-5-0, so the step now aims there."""
+        merged = tuple(max(c, t) for c, t in zip(p.tiers, target))
+        return merged if legal_cross(merged) else tuple(target)
+
     def _next_path(self, p, target):
         """Cheapest next tier that moves p toward target crosspath."""
+        target = self._widened(p, target)
         if any(c > t for c, t in zip(p.tiers, target)):
             return None  # tower already went another way; target unreachable
         best = None
@@ -1960,6 +1976,7 @@ class Executor:
         each passed over that way at the start of a round, the plan then
         counted as done, plan_first let go, and reinforce spent $37k on
         snipers with the Glaive Lord nearly paid for. Such a step waits."""
+        target = self._widened(p, target)
         if any(c > t for c, t in zip(p.tiers, target)):
             return False
         now = time.time()
@@ -5125,6 +5142,18 @@ class Executor:
         fits = [o for o in closing if o["cost"] <= money] or             [o for o in opts if o["cost"] <= money and o["gain"] >= self.RAMP_MIN_GAIN_SHARE * short]
         rest = closing or sorted((o for o in opts if self._worth_ramping(o, money, short)),
                                  key=lambda o: o["cost"])
+        if not fits and not rest and opts:
+            best = max(opts, key=lambda o: o["gain"] / max(o["cost"], 1))
+            if self._idle_cash_buys(best, cash, rnd, R):
+                # The cash has piled up for this one buy and nothing else
+                # uses it: the most blimp damage per dollar beats nothing.
+                # Sunken Columns Impoppable (2026-11-11 21:30, loss case
+                # 20261111_213224): round 96 and 98 were rated 0.4x and 0.2x,
+                # the best purchase was a bomb to 0-5-0 ($31,200) with $34-36k
+                # in hand, and "nothing matters" left it unbought while the
+                # hold dribbled the cash into sub tiers; round 98 took the life
+                # with $35,730 in the bank.
+                fits = [best]
         if not fits and not rest and opts and ("ramp-nothing-matters", R) not in self.noted:
             self.noted.add(("ramp-nothing-matters", R))
             best = max(opts, key=lambda o: o["gain"] / max(o["cost"], 1))
@@ -5142,6 +5171,20 @@ class Executor:
             if r == "wait":
                 return self._wait_total(opt.get("cost"))
         return "none"
+
+    # A buy is "what the cash piled up for" when it takes at least this share
+    # of the cash in hand: one decisive purchase, not a drip of small ones
+    # (the Workshop case in _answer_ramp: six new kinds, $5,724, no effect).
+    IDLE_BUY_CASH_SHARE = 0.5
+
+    def _idle_cash_buys(self, opt, cash, rnd, R):
+        """Should the ramp buy `opt` (its most blimp damage per dollar) although
+        it adds under a tenth of what is missing? Yes when the blimp round is
+        at most two rounds off (nothing left to save for), the cash in hand
+        pays for it now, and it takes at least IDLE_BUY_CASH_SHARE of that
+        cash - a single big upgrade the bank was built for."""
+        cost = opt.get("cost") or 0
+        return R - rnd <= 2 and 0 < cost <= cash and cost >= self.IDLE_BUY_CASH_SHARE * cash
 
     def _worth_ramping(self, opt, money, short):
         """Is a blimp-damage option that neither closes the shortfall nor

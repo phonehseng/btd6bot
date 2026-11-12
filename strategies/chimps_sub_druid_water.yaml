@@ -14,6 +14,11 @@ planner:
   towers: {sub: [2, 0, 4], dart: [0, 2, 4], alchemist: [4, 2, 0], druid: [2, 0, 4], village: [2, 3, 0], spike: [2, 0, 5],
            bomb: [2, 0, 3]}
   base_success: {hard: 0.9, impoppable: 0.6, chimps: 0.5}
+  # Erosion Impoppable (2026-11-11 20:49, loss case 20261111_204940): the
+  # map destroyed the ground under its towers at rounds 17 and 34 (8 plan
+  # steps queued again), the model rated every round from 7 at 0.06, and
+  # round 54 took the life. Its towers need ground Erosion keeps taking.
+  excluded_by_mode: {impoppable: [Erosion]}
   maps: [Logs, Resort, Lotus Island, Spa Pits, "Pat's Pond", Peninsula, Off The Coast, Cargo,
          Sunken Columns, Dark Castle, Bloody Puddles,
          Water Park, Downstream, Streambed, Spice Islands, Ravine, Sanctuary, Ship Capture,
