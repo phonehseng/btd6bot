@@ -1,0 +1,109 @@
+# Luminous Cove, CHIMPS: metaldevil's Admiral Brickell + Carrier Flagship +
+# Crossbow Master + Spirit of the Forest guide, step by step with
+# plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Luminous Cove had no CHIMPS build. Every Beginner CHIMPS map was won by
+# following a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Luminous Cove, Strategy 1). Land here reaches
+# one lane only (the bot's land plan lost round 49 on Hard); the heart pond
+# is the only spot that reaches both alternating lanes.
+#
+# Guide: metaldevil (https://www.youtube.com/watch?v=O65H67unAwA, v45.3),
+# written round by round in the description (confidence:
+# video-description, transcribed in docs/map_strategies.md).
+# Hero: Admiral Brickell (R12, in the water).
+# Core towers: Buccaneer 5-2-0 (Carrier Flagship), Dart 2-0-5 (Crossbow
+# Master), Druid 1-5-0 (Spirit of the Forest), Village 4-2-0, Alchemist
+# 4-2-0, Glue 0-2-4, Sniper 4-0-2, Ice 4-0-2.
+# Placements, in the guide's words: the dart closer to the darker bottom
+# path, the boat in the heart pond (both lanes), Brickell in the water by
+# it, the glue as high into the corner as possible, the village next to the
+# glue covering the dart, the alchemist next to the boat. Land is only the
+# bottom strip, so the land towers share it.
+#
+# Adapted, and why:
+#   * the druid's R49 1-4-0 (Jungle's Bounty) is an income tier the bot never
+#     buys in CHIMPS; the druid goes 1-3-0 -> 1-5-0 at the guide's R71 step.
+#   * Brickell's R98-100 Mega Mine is aimed by hand in the guide; the bot
+#     cannot aim, so it is left out.
+#   * the bot's coverage check needs a BAD answer from its own tables
+#     (strategy.ANSWERS); the guide's sniper (4-0-2 at R94) goes on to
+#     Cripple MOAB (5-0-2) in place of Brickell's hand-aimed Mega Mines.
+#     That costs $34.6k the guide spent on its last steps: the R97 ice
+#     (4-0-2) is left out, and the R91 and R96 glue tiers and the R95
+#     Primary Mentoring are fill steps, bought if the cash comes.
+#   * the sniper is placed with Full Metal Jacket before round 84: in the
+#     replay the Crossbow Master did not pop round 90's camo DDTs by the
+#     bot's tables and the executor bought a sniper for them.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 26/26 bought, threat gaps: none, off-plan answer buys:
+# none. Each step stands from: x1 placed R6, b1 placed R6, b1 1-0-0 R8, hero
+# placed R13, b1 2-0-0 R14, x1 0-0-3 R18, x1 2-0-3 R19, b1 2-2-0 R24, x1 2-0-4
+# R30, b1 3-2-0 R36, g1 placed R36, v1 placed R38, v1 1-2-0 R40, v1 2-2-0 R41,
+# b1 4-2-0 R47, d1 placed R48, d1 1-3-0 R49, d1 1-5-0 R72, s1 placed R72, s1
+# 1-0-0 R72, b1 5-2-0 R82, x1 2-0-5 R88, a1 placed R88, a1 4-2-0 R90, s1 4-0-2
+# R94, s1 5-0-2 R100. Damage model margins on those boards (it counts no hero
+# and no ability, and under-rates map-wide towers): 40 4.32, 63 8.09, 76
+# 16.00, 81 3.15, 90 0.49, 95 0.21, 98 1.06, 100 1.87.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: luminouscove_chimps
+map: Luminous Cove
+hero: admiral_brickell
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {dart: [2, 0, 5], buccaneer: [5, 2, 0], glue: [0, 2, 4], village: [4, 2, 0], druid: [1, 5, 0], alchemist: [4, 2, 0], sniper: [5, 0, 2]}
+  revised: "2026-11-12T12:00"
+  maps: [Luminous Cove]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.623, 0.845]}              # R6 dart closer to the darker bottom path
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.47]}           # R6 the heart pond: both lanes
+  - {do: upgrade, id: b1, to: 1-0-0}                                            # R7
+  - {do: place, id: hero, kind: hero, role: dps, near: [b1], at: [0.387, 0.453]}  # R12 Brickell, in the heart pond
+  - {do: upgrade, id: b1, to: 2-0-0}                                            # R13
+  - {do: upgrade, id: x1, to: 0-0-3}                                            # R14-18 Crossbow (Enhanced Eyesight: camo)
+  - {do: upgrade, id: x1, to: 2-0-3}                                            # R19
+  - {do: upgrade, id: b1, to: 2-2-0}                                            # R23 Hot Shot: lead
+  - {do: upgrade, id: x1, to: 2-0-4}                                            # R29 Sharp Shooter
+  - {do: upgrade, id: b1, to: 3-2-0}                                            # R35 Destroyer
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.131, 0.777]}              # R35 glue as high into the corner as possible
+  - {do: place, id: v1, kind: village, role: support, near: [g1, x1], at: [0.27, 0.896]}  # before R40, next to the glue, covering the dart
+  - {do: upgrade, id: v1, to: 1-2-0}                                            # Radar Scanner
+  - {do: upgrade, id: v1, to: 2-2-0}                                            # R40 Jungle Drums
+  - {do: upgrade, id: b1, to: 4-2-0}                                            # R48 Aircraft Carrier
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.27, 0.811]}              # R48
+  - {do: upgrade, id: d1, to: 1-3-0}                                            # R48 (R49's 1-4-0 is an income tier the bot skips)
+  - {do: upgrade, id: d1, to: 1-5-0}                                            # R71 Spirit of the Forest
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, near: [v1], at: [0.227, 0.93]}  # the guide's R94 sniper, placed early in the Radar's reach (see above)
+  - {do: upgrade, id: s1, to: 1-0-0}                                            # Full Metal Jacket: with the Radar, round 90's DDTs
+  - {do: upgrade, id: b1, to: 5-2-0}                                            # R81 Carrier Flagship
+  - {do: upgrade, id: x1, to: 2-0-5}                                            # R85 Crossbow Master
+  - {do: place, id: a1, kind: alchemist, role: support, near: [b1], at: [0.601, 0.794]}  # R88 next to the boat
+  - {do: upgrade, id: a1, to: 4-2-0}                                            # R88 Stronger Stimulant
+  - {do: upgrade, id: s1, to: 4-0-2}                                            # R94 Maim MOAB
+  - {do: upgrade, id: s1, to: 5-0-2}                                            # added: Cripple MOAB, round 100's BAD (see above)
+fill:
+  - {do: upgrade, id: g1, to: 0-2-3}                                            # the guide's R91 glue, if the cash comes
+  - {do: upgrade, id: g1, to: 0-2-4}                                            # the guide's R96 Relentless Glue
+  - {do: upgrade, id: v1, to: 4-2-0}                                            # the guide's R95 Primary Mentoring
+answers:
+  camo: [{do: upgrade, id: x1, to: 0-0-3}]
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  ceramic: [{do: upgrade, id: x1, to: 2-0-4}]
+  moab: [{do: upgrade, id: x1, to: 2-0-4}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 1-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 1-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}]
+  rush: [{do: upgrade, id: d1, to: 1-3-0}]
+  zomg: [{do: upgrade, id: d1, to: 1-5-0}]
+  ddt: [{do: upgrade, id: x1, to: 2-0-5}]
+  bad: [{do: upgrade, id: s1, to: 5-0-2}]

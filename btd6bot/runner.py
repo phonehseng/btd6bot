@@ -632,6 +632,10 @@ class Bot:
         self.inp = Input(self.s)
         self.lay = L.get(self.s.width, self.s.height)
         self.account = AccountState.load(account_path or current_path())
+        # status effects in the damage model: too slow for the live time
+        # budgets yet (dps_model.LIVE_STATUS_RATING); offline tools keep them
+        from . import dps_model
+        dps_model.STATUS_RATING = dps_model.LIVE_STATUS_RATING
         self.menus = Menus(self.s, self.inp)
         self.strats = load_all()
         self.failures = 0

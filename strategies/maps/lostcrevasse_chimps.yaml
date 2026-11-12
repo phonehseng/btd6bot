@@ -422,6 +422,11 @@
 #   (1.19 / 0.58), R99 1.09 (1.15 / 0.78), R100 2.43 (2.80 / 1.51).
 # The 01:00 build the same way: R92 0.99, R93 1.45, R94 0.73, R95 0.66,
 # R98 0.68, R99 0.93 split. Round 95 stays the open problem on this map.
+#
+# 2026-11-12: PARKED for lostcrevasse_chimps_guide, the map's published no-ability
+# guide build (docs/chimps_map_guides.md). This file stays as the record of
+# its games; base_success 0.05 keeps the planner, and a NEXT line without a
+# named strategy, on the guide build.
 id: lostcrevasse_chimps
 map: Lost Crevasse
 hero: quincy
@@ -431,7 +436,7 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [2, 2, 0], boomerang: [5, 0, 2], sniper: [5, 2, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], dart: [2, 0, 4], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
-  base_success: {chimps: 0.5}
+  base_success: {chimps: 0.05}   # parked 2026-11-12 for the guide build
   maps: [Lost Crevasse]
   revised: "2026-11-08T02:00"
 plan:

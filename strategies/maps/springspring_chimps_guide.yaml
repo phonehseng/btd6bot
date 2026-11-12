@@ -1,0 +1,109 @@
+# Spring Spring, CHIMPS: CrimsonPlanet's no-micro Etienne + Carrier Flagship
+# + Arctic Knight + Pre-emptive Strike guide, with BloonBeast's Perma-Spike
+# at the exit, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next. The
+# bot's own Flagship builds (springspring_chimps, parked) lost round 9 once
+# and round 95 or 99 six times: camo regrow purples and leads, 30 camo DDTs
+# and fortified MOABs leaked at the exit. Every real guide adds an exit or
+# stall tower; this one follows the guide that suits the bot
+# (docs/chimps_map_guides.md, Spring Spring, Strategy 1) and takes the
+# Perma-Spike from Strategy 2.
+#
+# Guide: CrimsonPlanet, "Spring Spring CHIMPS - No Micro & Abilities"
+# (https://www.youtube.com/watch?v=8oRUiaBFsHY, v53.2), the order written in
+# the description, no rounds (confidence: video-description, ordered steps).
+# Hero: Etienne (his drone shares camo detection).
+# Core towers: Sub 0-5-0 (Pre-emptive Strike: passive missiles at each blimp
+# spawn), Mermonkey 4-0-1 (Arctic Knight), Buccaneer 5-2-0 (Carrier
+# Flagship), Ice 4-2-0 (Embrittlement; Super Brittle 5-2-0 if the cash
+# comes), Village 2-3-0 (MIB), Spike Factory 2-0-5 (Perma-Spike).
+# Perma-Spike source: BloonBeast, "no abilities, 62K cash spare"
+# (https://www.youtube.com/watch?v=q2qD9oYfOjw, towers only) and bloonswiki
+# (Perma-Spike at the bottom right of the island just above the exit, on
+# Smart; the bot keeps the default targeting: Smart needs a calibrated
+# point).
+# Placements: towers do best at the right end of the big island and in the
+# water at the exit, where both lanes meet (wiki): the sub, the boat and the
+# Mermonkey in the exit water, Etienne, the ice and the village at the
+# island's right end, the spike factory above the exit.
+#
+# Adapted, and why:
+#   * the bot's coverage check needs ceramic, MOAB-class, DDT and BAD answers
+#     from its own tables (strategy.ANSWERS); none of the guide's towers is
+#     in them. The Perma-Spike answers all of them, and it is the exit
+#     leak-stopper the old builds lacked (every round-95 loss leaked there).
+#   * Both cost too much together: the guide's towers and the Perma-Spike
+#     come to about $189k against $179k paid by round 100. The ice stops at
+#     Embrittlement (4-2-0); Super Brittle is a fill step if the cash comes.
+#   * a Glaive Ricochet boomerang (3-0-2) for round 63: the bot's tables
+#     list none of the guide's towers as a rush answer.
+#   * the guide's optional towers (Alchemist 0-3-0, Glue, Mermonkey 5-0-1,
+#     which is locked at tier 4 on this account) are left out.
+#   * Etienne's drone is not counted by the bot as camo, so the village's
+#     Radar (0-2-0) is bought before the Destroyer (round 37's camo zebras), ahead of the
+#     guide's end-of-plan 2-3-0.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 22/22 bought, threat gaps: none, off-plan answer buys: 6.
+# Each step stands from: sb1 placed R6, m1 placed R7, hero placed R10, b1
+# placed R12, b1 2-0-0 R15, b1 2-2-0 R20, m1 0-0-1 R19, v1 placed R25, v1
+# 0-2-0 R32, b1 3-2-0 R37, m1 4-0-1 R42, b1 5-2-0 R62, r1 placed R62, r1 3-0-2
+# R63, sb1 0-5-0 R83, i1 placed R83, i1 4-2-0 R84, v1 2-3-0 R86, p1 placed
+# R86, p1 2-0-3 R88, p1 2-0-4 R89, p1 2-0-5 R97. Damage model margins on those
+# boards (it counts no hero and no ability, and under-rates map-wide towers):
+# 40 1.24, 63 12.88, 76 9.72, 81 4.00, 90 2.43, 95 0.38, 98 0.64, 100 1.94.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: springspring_chimps_guide
+map: Spring Spring
+hero: etienne
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {sub: [0, 5, 0], mermonkey: [4, 0, 1], buccaneer: [5, 2, 0], ice: [5, 2, 0], village: [2, 3, 0], spike: [2, 0, 5], boomerang: [3, 0, 2]}
+  revised: "2026-11-12T12:00"
+  maps: [Spring Spring]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.751, 0.572]}              # the exit water, where both lanes meet
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.804, 0.572]}         # by the sub
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.633, 0.538]}            # Etienne, the island's right end
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.761, 0.658]}         # the exit water, by the sub
+  - {do: upgrade, id: b1, to: 2-0-0}
+  - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
+  - {do: upgrade, id: m1, to: 0-0-1}                                            # camo for round 24 (the executor's own pick)
+  - {do: place, id: v1, kind: village, role: support, near: [b1, sb1], at: [0.676, 0.726]}  # added early: Radar for the camo (see above)
+  - {do: upgrade, id: v1, to: 0-2-0}                                            # Radar Scanner
+  - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
+  - {do: upgrade, id: m1, to: 4-0-1}                                            # Arctic Knight
+  - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.644, 0.811]}  # added: Glaive Ricochet for round 63
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: sb1, to: 0-5-0}                                           # Pre-emptive Strike
+  - {do: place, id: i1, kind: ice, role: dps, near: [v1], at: [0.601, 0.606]}
+  - {do: upgrade, id: i1, to: 4-2-0}                                            # Embrittlement
+  - {do: upgrade, id: v1, to: 2-3-0}                                            # MIB
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.601, 0.487]}             # Perma-Spike above the exit
+  - {do: upgrade, id: p1, to: 2-0-3}
+  - {do: upgrade, id: p1, to: 2-0-4}                                            # Deadly Spikes
+  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+fill:
+  - {do: upgrade, id: i1, to: 5-2-0}                                            # the guide's Super Brittle, if the cash comes
+answers:
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  camo: [{do: upgrade, id: m1, to: 0-0-1}, {do: upgrade, id: v1, to: 0-2-0}]
+  ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
+  moab: [{do: upgrade, id: b1, to: 3-2-0}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 0-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 0-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 5-2-0}]
+  zomg: [{do: upgrade, id: sb1, to: 0-5-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  ddt: [{do: upgrade, id: v1, to: 2-3-0}]
+  bad: [{do: upgrade, id: p1, to: 2-0-5}]

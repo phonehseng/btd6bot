@@ -1,0 +1,121 @@
+# Quiet Street, CHIMPS: Maxalph's no-ability sniper wall with an Inferno Ring
+# tack, step by step with plan_first, plus Quincy.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Quiet Street had no CHIMPS build. Every Beginner CHIMPS map was won by
+# following a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Quiet Street, Strategy 1: fully passive,
+# Strong/First targeting only). Bloons come from both ends of the
+# sidewalks, so map-wide snipers suit it.
+#
+# Guide: Maxalph, no hero and no abilities
+# (https://www.youtube.com/watch?v=lwkCrJI-7DE, about 4 years old, ~v29-31:
+# OLD, balance has changed since), written round by round in the
+# description (confidence: verified-written-steps).
+# Hero: none in the guide; Quincy is added after the opening snipers, as
+# the doc recommends (Febh's no-micro Quincy run, video only).
+# Core towers: seven snipers (Sniper A to Elite Sniper 0-5-2, Sniper B to
+# Maim MOAB 4-2-0, the rest 0-2-2 / 0-3-2), Tack 5-0-2 (Inferno Ring),
+# three Alchemists (4-0-1, 4-2-0, 4-0-1), two Villages (2-0-2, 4-2-0),
+# Spike Factory 3-2-0, Glue 0-2-3 (on Strong).
+# Placements: the guide gives none. The snipers stand where the bot's sight
+# model sees the most of the sidewalks and the road (cars and walls block
+# sight); the tack where the lanes meet; the villages and alchemists by the
+# snipers.
+#
+# Adapted, and why:
+#   * Sniper A's 0-4-2 (R48) and the R94/R96 0-4-2 snipers are Supply Drop,
+#     an income tier the bot never buys in CHIMPS: A goes straight to Elite
+#     Sniper (0-5-2) at the guide's R58 step, and the two late snipers stay
+#     0-3-2.
+#   * the bot's coverage check needs a BAD answer from its own tables
+#     (strategy.ANSWERS): Sniper B goes on to Cripple MOAB (5-2-0) last. Its
+#     $34.6k does not fit with the guide's last two buys, so the R94
+#     alchemist (4-0-1) and the R97 glue (0-2-3) are fill steps, bought
+#     only if cash is left.
+#   * the guide's letters name its snipers loosely; here A-D are the four
+#     opening snipers, E the R50 one, and the R72 "a sniper 0-3-2" is C.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 36/36 bought, threat gaps: none, off-plan answer buys:
+# none. Each step stands from: x1 placed R6, sa placed R6, sb placed R8, sc
+# placed R10, sd placed R12, hero placed R14, t1 placed R15, t1 2-0-2 R18, t1
+# 3-0-2 R22, sa 0-2-1 R25, sa 0-2-2 R27, sb 1-2-0 R30, sa 0-3-2 R35, a1 placed
+# R35, a1 3-0-0 R40, sb 2-2-0 R37, sc 0-2-2 R42, v1 placed R42, v1 2-0-2 R45,
+# sb 3-2-0 R39, sd 0-3-2 R48, se placed R48, se 0-2-2 R49, sa 0-5-2 R64, a1
+# 4-0-1 R66, p1 placed R67, p1 3-2-0 R71, t1 4-0-2 R61, sb 4-2-0 R58, sc 0-3-2
+# R73, t1 5-0-2 R86, v2 placed R87, v2 4-2-0 R90, a2 placed R91, a2 4-2-0 R93,
+# sb 5-2-0 R99. Damage model margins on those boards (it counts no hero and no
+# ability, and under-rates map-wide towers): 40 2.62, 63 0.49, 76 0.75, 81
+# 0.40, 90 1.53, 95 0.33, 98 0.46, 100 1.11.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: quietstreet_chimps
+map: Quiet Street
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {dart: [0, 0, 0], sniper: [5, 5, 2], tack: [5, 0, 2], alchemist: [4, 2, 1], village: [4, 2, 2], spike: [3, 2, 0], glue: [0, 2, 3]}
+  revised: "2026-11-12T12:00"
+  maps: [Quiet Street]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.302, 0.351]}              # R6
+  - {do: place, id: sa, kind: sniper, role: dps, target: strong, at: [0.751, 0.351]}  # R6 Sniper A, Strong
+  - {do: place, id: sb, kind: sniper, role: dps, target: strong, at: [0.751, 0.675]}  # R8 Sniper B, Strong
+  - {do: place, id: sc, kind: sniper, role: dps, target: strong, at: [0.719, 0.317]}  # R10 Sniper C, Strong
+  - {do: place, id: sd, kind: sniper, role: dps, target: strong, at: [0.74, 0.726]}  # R11 Sniper D, Strong
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.675]}            # added: Quincy (see above)
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.206, 0.351]}              # R16
+  - {do: upgrade, id: t1, to: 2-0-2}                                            # R16
+  - {do: upgrade, id: t1, to: 3-0-2}                                            # R18 Hot Shots: lead
+  - {do: upgrade, id: sa, to: 0-2-1}                                            # R22 Night Vision: camo
+  - {do: upgrade, id: sa, to: 0-2-2}                                            # R24
+  - {do: upgrade, id: sb, to: 1-2-0}                                            # R27 Full Metal Jacket
+  - {do: upgrade, id: sa, to: 0-3-2}                                            # R35 Semi-Automatic
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sa, sb], at: [0.761, 0.419]}  # R38
+  - {do: upgrade, id: a1, to: 3-0-0}                                            # R38
+  - {do: upgrade, id: sb, to: 2-2-0}                                            # R38
+  - {do: upgrade, id: sc, to: 0-2-2}                                            # R40 on First
+  - {do: place, id: v1, kind: village, role: support, near: [sa, sb, sc], at: [0.783, 0.283]}
+  - {do: upgrade, id: v1, to: 2-0-2}                                            # R43
+  - {do: upgrade, id: sb, to: 3-2-0}                                            # R49 Deadly Precision
+  - {do: upgrade, id: sd, to: 0-3-2}                                            # R50
+  - {do: place, id: se, kind: sniper, role: dps, target: first, at: [0.783, 0.692]}  # R50 Sniper E, First
+  - {do: upgrade, id: se, to: 0-2-2}                                            # R50
+  - {do: upgrade, id: sa, to: 0-5-2}                                            # R58 Elite Sniper (R48's 0-4-2 is an income tier the bot skips)
+  - {do: upgrade, id: a1, to: 4-0-1}                                            # R63 Stronger Stimulant
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.248, 0.351]}             # R63
+  - {do: upgrade, id: p1, to: 3-2-0}                                            # R63 Spiked Balls
+  - {do: upgrade, id: t1, to: 4-0-2}                                            # R65 Ring of Fire
+  - {do: upgrade, id: sb, to: 4-2-0}                                            # R72 Maim MOAB
+  - {do: upgrade, id: sc, to: 0-3-2}                                            # R72
+  - {do: upgrade, id: t1, to: 5-0-2}                                            # R85 Inferno Ring
+  - {do: place, id: v2, kind: village, role: support, near: [t1, sb], at: [0.302, 0.266]}
+  - {do: upgrade, id: v2, to: 4-2-0}                                            # R89 Radar, Primary Mentoring
+  - {do: place, id: a2, kind: alchemist, role: support, near: [t1], at: [0.248, 0.283]}
+  - {do: upgrade, id: a2, to: 4-2-0}                                            # R91
+  - {do: upgrade, id: sb, to: 5-2-0}                                            # added: Cripple MOAB, round 100's BAD
+fill:
+  - {do: place, id: a3, kind: alchemist, role: support, near: [sa], at: [0.783, 0.368]}  # the guide's R94 alchemist, if the cash comes
+  - {do: upgrade, id: a3, to: 4-0-1}
+  - {do: place, id: g1, kind: glue, role: dps, target: strong, at: [0.238, 0.675]}  # the guide's R97 glue, on Strong
+  - {do: upgrade, id: g1, to: 0-2-3}
+answers:
+  camo: [{do: upgrade, id: sa, to: 0-2-1}]
+  lead: [{do: upgrade, id: t1, to: 3-0-2}]
+  ceramic: [{do: upgrade, id: sb, to: 2-2-0}]
+  moab: [{do: upgrade, id: sb, to: 3-2-0}]
+  camo_ceramic: [{do: upgrade, id: sb, to: 3-2-0}]
+  camo_lead: [{do: upgrade, id: sb, to: 3-2-0}]
+  bfb: [{do: upgrade, id: sb, to: 4-2-0}]
+  rush: [{do: upgrade, id: t1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: sb, to: 4-2-0}]
+  ddt: [{do: upgrade, id: sb, to: 4-2-0}]
+  bad: [{do: upgrade, id: sb, to: 5-2-0}]

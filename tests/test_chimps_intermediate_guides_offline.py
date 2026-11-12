@@ -1,0 +1,207 @@
+"""CHIMPS guide builds for the Intermediate maps (2026-11-12).
+
+Every Beginner CHIMPS map was won by a build that follows a published guide
+step by step with exact spots and `plan_first`. docs/chimps_map_guides.md
+picked the best-sourced no-ability guide for each Intermediate map without
+a CHIMPS medal; strategies/maps/<map>_chimps.yaml follows it (on the five
+maps whose own generic Flagship builds lost many times,
+<map>_chimps_guide.yaml, and the old build is parked). tools/pin_spots.py
+pinned every tower on a cell of the live learned map the game never
+refused, inside the area the guide names in words.
+
+Checked here, for each build:
+  * it is a plan_first CHIMPS build for its one map, marked UNTESTED at the
+    map builds' lowest base_success, and its header names the guide, the
+    source URL, the hero and the core towers;
+  * every tower of the plan and the fill has a spot, legal on the map's
+    geometry in plan order and never refused in the live learned map;
+  * no upgrade asks for a tier the account cannot buy (the locked tiers of
+    docs/chimps_map_guides.md) or an income tier CHIMPS skips;
+  * the threat simulation on the learned map (tools/simulate_threats.py,
+    CHIMPS cash: $650 at round 6, then only the rounds' own income) finds
+    no threat gap through round 100 and buys the whole plan;
+  * the plan is affordable by round 100 on the CHIMPS cash curve
+    (tests/test_chimps_builds_offline.plan_timeline);
+  * on the maps with an older, lost CHIMPS build, the guide build rates
+    above it in the planner, so a NEXT line without a strategy picks it.
+
+Not covered: Encrypted and Chutes have no written guide (the doc found
+only videos and wiki notes), so no build is written for them.
+
+Run: python tests/test_chimps_intermediate_guides_offline.py (no game)."""
+import logging
+import sys
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tests"))
+
+import pin_spots  # noqa: E402
+import simulate_threats as SIM  # noqa: E402
+import test_chimps_builds_offline as TC  # noqa: E402
+import test_map_hints_offline as TM  # noqa: E402
+from btd6bot import maplearn as ML  # noqa: E402
+from btd6bot import strategy as S  # noqa: E402
+
+logging.getLogger().setLevel(logging.ERROR)
+
+# build id -> map
+BUILDS = {
+    "lostcrevasse_chimps_guide": "Lost Crevasse",
+    "sulfursprings_chimps_guide": "Sulfur Springs",
+    "springspring_chimps_guide": "Spring Spring",
+    "moonlanding_chimps_guide": "Moon Landing",
+    "rake_chimps_guide": "Rake",
+    "luminouscove_chimps": "Luminous Cove",
+    "ancientportal_chimps": "Ancient Portal",
+    "haunted_chimps": "Haunted",
+    "firingrange_chimps": "Firing Range",
+    "waterpark_chimps": "Water Park",
+    "coveredgarden_chimps": "Covered Garden",
+    "bloonariusprime_chimps": "Bloonarius Prime",
+    "bazaar_chimps": "Bazaar",
+    "polyphemus_chimps": "Polyphemus",
+    "quietstreet_chimps": "Quiet Street",
+    "balance_chimps": "Balance",
+}
+# the generic builds these guide builds replace (lost many times live)
+PARKED = {"lostcrevasse_chimps": "lostcrevasse_chimps_guide",
+          "sulfursprings_chimps": "sulfursprings_chimps_guide",
+          "springspring_chimps": "springspring_chimps_guide",
+          "moonlanding_chimps": "moonlanding_chimps_guide",
+          "rake_chimps": "rake_chimps_guide"}
+# tiers the main account cannot buy (docs/chimps_map_guides.md, "Account
+# constraints"): [top, middle, bottom] caps; every other tower is 5-5-5
+CAPS = {"mortar": (5, 5, 0), "village": (4, 5, 5), "mermonkey": (4, 4, 4),
+        "dartling": (5, 4, 5), "super": (5, 5, 3), "skywarden": (4, 3, 3)}
+
+
+def _load(sid):
+    path = ROOT / "strategies" / "maps" / f"{sid}.yaml"
+    return path.read_text(encoding="utf-8"), yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def _capped_account():
+    """A fully unlocked account with the main account's tier caps."""
+    acct = SIM.full_account()
+    for kind, cap in CAPS.items():
+        acct.unlocked_upgrades[kind] = list(cap)
+    return acct
+
+
+def test_each_build_is_an_untested_plan_first_guide_build():
+    for sid, name in BUILDS.items():
+        text, d = _load(sid)
+        assert d["id"] == sid and d["map"] == name and d["modes"] == ["chimps"], sid
+        assert d["plan_first"] is True, sid
+        assert d["planner"]["base_success"] == {"chimps": pin_spots.UNTESTED_SUCCESS}, sid
+        assert d["planner"]["maps"] == [name], sid
+        for word in ("UNTESTED", "Guide:", "https://", "Hero:", "Core towers:", "Adapted"):
+            assert word in text, (sid, word)
+        assert any(st["do"] == "place" and st["kind"] == "hero" for st in d["plan"]), (sid, "no hero")
+
+
+def test_every_tower_is_pinned_legal_and_never_refused():
+    ML.DATA = pin_spots.live_maps_dir()
+    for sid, name in BUILDS.items():
+        _, d = _load(sid)
+        steps = d["plan"] + (d.get("fill") or [])
+        spots = []
+        for st in steps:
+            if st["do"] == "clear":
+                spots.append(("clear", st.get("obstacle"), None))
+            if st["do"] != "place" or st.get("role") == "exit":
+                continue
+            assert st.get("at"), (sid, st.get("id"), "no spot")
+            hero = d["hero"] if st["kind"] == "hero" else None
+            spots.append((st["kind"], hero, tuple(st["at"])))
+        assert not TM.illegal_spots(name, spots, 100), (sid, TM.illegal_spots(name, spots, 100))
+        model = pin_spots.Pinner(name, "chimps").model     # the live learned map
+        for kind, hero, at in spots:
+            if kind == "clear":
+                continue
+            cell = model.frac_to_cell(*at)
+            assert pin_spots.never_refused(model, kind, cell, hero), (sid, kind, at)
+
+
+def test_no_locked_or_income_tier():
+    for sid in BUILDS:
+        _, d = _load(sid)
+        kinds = {st["id"]: st["kind"] for st in d["plan"] + (d.get("fill") or []) if st["do"] == "place"}
+        for st in d["plan"] + (d.get("fill") or []):
+            if st["do"] != "upgrade":
+                continue
+            kind = kinds[st["id"]]
+            tiers = S.parse_cross(st["to"])
+            cap = CAPS.get(kind, (5, 5, 5))
+            assert all(t <= c for t, c in zip(tiers, cap)), (sid, st)
+            # CHIMPS skips a plan step that ends on an income tier
+            # (Executor._step_allowed): 0-4-x snipers, 1-4-0 druids
+            assert not any((kind, p, tiers[p - 1]) in S.INCOME_UPGRADES for p in (1, 2, 3)), (sid, st)
+
+
+def test_threat_simulation_has_no_gaps_and_buys_the_plan():
+    ML.DATA = pin_spots.live_maps_dir()
+    acct = _capped_account()
+    for sid in BUILDS:
+        _, d = _load(sid)
+        r = SIM.simulate(dict(d, bot_ready=True), "chimps", d["map"], real_map=True, learned=True,
+                         account=acct)
+        assert not r["gaps"], (sid, r["gaps"][:3])
+        done, total = (int(x) for x in r["plan_done"].split("/"))
+        assert done == total, (sid, r["plan_done"])
+
+
+def test_plan_is_affordable_by_round_100():
+    for sid in BUILDS:
+        _, d = _load(sid)
+        timeline = TC.plan_timeline(d, "chimps")
+        assert timeline[-1][2] <= 100, (sid, timeline[-1][1], timeline[-1][2])
+
+
+def test_guide_builds_rank_above_the_parked_builds():
+    from btd6bot import planner as P
+    from btd6bot.account import AccountState
+    from btd6bot.runner import planner_specs
+    strats = S.load_all()
+    specs = {s.id: s for s in planner_specs({k: strats[k] for k in list(PARKED) + list(PARKED.values())},
+                                            _account_for_planner(AccountState))}
+    for old, new in PARKED.items():
+        assert strats[old]["planner"]["base_success"]["chimps"] <= TM.PARKED_SUCCESS, old
+        name = strats[new]["map"]
+        acct = _account_for_planner(AccountState)
+        p_old = P.win_probability(acct, specs[old], name, "chimps")[0]
+        p_new = P.win_probability(acct, specs[new], name, "chimps")[0]
+        assert p_new > p_old, (new, p_new, old, p_old)
+
+
+def _account_for_planner(cls):
+    """A fresh account that owns every tower and hero, with the main
+    account's tier caps (no games, no medals)."""
+    acct = cls()
+    full = _capped_account()
+    acct.unlocked_towers = set(full.unlocked_towers)
+    acct.unlocked_heroes = set(full.unlocked_heroes)
+    acct.unlocked_upgrades = dict(full.unlocked_upgrades)
+    return acct
+
+
+if __name__ == "__main__":
+    import inspect
+    fails = 0
+    for fname, fn in list(globals().items()):
+        if fname.startswith("test_") and inspect.isfunction(fn):
+            try:
+                fn()
+                print("ok  ", fname)
+            except Exception as e:  # noqa: BLE001 - report every failure, then fail the run
+                fails += 1
+                import traceback
+                traceback.print_exc()
+                print("FAIL", fname, repr(e)[:600])
+    print("all passed" if not fails else f"{fails} failed")
+    sys.exit(1 if fails else 0)

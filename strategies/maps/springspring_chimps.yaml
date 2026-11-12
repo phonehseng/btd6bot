@@ -455,6 +455,11 @@
 # (candidates from the 05:40 research: MIB + Tack Zone/Super Brittle at the
 # exit, a Perma-Spike net, or a map guide's exact build); base_success
 # drops to 0.05 so the planner does not pick it meanwhile.
+#
+# 2026-11-12: PARKED for springspring_chimps_guide, the map's published no-ability
+# guide build (docs/chimps_map_guides.md). This file stays as the record of
+# its games; base_success 0.05 keeps the planner, and a NEXT line without a
+# named strategy, on the guide build.
 id: springspring_chimps
 map: Spring Spring
 hero: quincy
