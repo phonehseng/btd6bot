@@ -15,7 +15,7 @@
 # the description, no rounds (confidence: video-description, ordered steps).
 # Hero: Etienne (his drone shares camo detection).
 # Core towers: Sub 0-5-0 (Pre-emptive Strike: passive missiles at each blimp
-# spawn), Mermonkey 4-0-1 (Arctic Knight), Buccaneer 5-2-0 (Carrier
+# spawn), Mermonkey 4-0-1 (the guide names Arctic Knight: see Adapted), Buccaneer 5-2-0 (Carrier
 # Flagship), Ice 4-2-0 (Embrittlement; Super Brittle 5-2-0 if the cash
 # comes), Village 2-3-0 (MIB), Spike Factory 2-0-5 (Perma-Spike).
 # Perma-Spike source: BloonBeast, "no abilities, 62K cash spare"
@@ -40,20 +40,48 @@
 #     list none of the guide's towers as a rush answer.
 #   * the guide's optional towers (Alchemist 0-3-0, Glue, Mermonkey 5-0-1,
 #     which is locked at tier 4 on this account) are left out.
-#   * Etienne's drone is not counted by the bot as camo, so the village's
-#     Radar (0-2-0) is bought before the Destroyer (round 37's camo zebras), ahead of the
-#     guide's end-of-plan 2-3-0.
+#   * Etienne's drone is not counted by the bot as camo (the damage model
+#     gives him camo only with the level-8 UAV, about round 40 in CHIMPS),
+#     so the village's Radar is bought before the Destroyer, ahead of the
+#     guide's end-of-plan 2-3-0: rounds 33 (camo yellows and reds), 36
+#     (camo regrow greens) and 37 (camo whites) need it. The Arctic Knight
+#     path cannot help there: Riptide Champion and Arctic Knight do cold
+#     damage, which pops no white (game model, Mermonkey-030/040 "not
+#     White/Purple").
+#   * the Radar comes with Bigger Radius (1-2-0, range 40 -> 48, game model
+#     MonkeyVillage-020/120): no land lies within 40 units of the exit
+#     water. Loss 2026-11-12 (case 20261112_155459, round 37): b1 stood
+#     39.9 units from v1, inside a 40-unit Radar by 0.1 unit, so the model
+#     rated round 37 1.23 with b1 seeing camo and 0.63 without; sb1 at 44
+#     units never had it. At 48 both have it with room to spare.
+#   * b1 stands where the game took it, 0.778,0.658: the guide spot
+#     0.761,0.658 beside sb1 was refused (2026-11-12 15:47:11, "the game
+#     keeps towers apart") and the bot moved it 6 units on.
+#   * m1 4-0-1 is Abyssal Warrior (top path), not the Arctic Knight the
+#     guide names: Arctic Knight is the MIDDLE path, 0-4-1 (game model,
+#     Mermonkey-040). Kept on purpose (2026-11-12): the damage model holds
+#     rounds 47-59 with 4-0-1 and rates them 0.5-0.87 with 0-4-1 (cold
+#     damage: no white or purple, Mermonkey-040 "not White/Purple"), and
+#     the dearer 0-4-1 ($11.3k against $6.9k) pushes the Flagship from
+#     round 61 to 65, with rounds 60-65 at 0.21-0.49. Unverified which one
+#     CrimsonPlanet's "4-0-1" meant; the owner may switch to 0-4-1.
 #
 # Offline replay (tools/simulate_threats.py on the live learned map with the
 # live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
-# and bonuses): plan 22/22 bought, threat gaps: none, off-plan answer buys: 6.
+# and bonuses): plan 23/23 bought, threat gaps: none, off-plan answer buys:
+# none (before 2026-11-12: 7, an ace for the blimps at rounds 97-100).
 # Each step stands from: sb1 placed R6, m1 placed R7, hero placed R10, b1
-# placed R12, b1 2-0-0 R15, b1 2-2-0 R20, m1 0-0-1 R19, v1 placed R25, v1
-# 0-2-0 R32, b1 3-2-0 R37, m1 4-0-1 R42, b1 5-2-0 R62, r1 placed R62, r1 3-0-2
-# R63, sb1 0-5-0 R83, i1 placed R83, i1 4-2-0 R84, v1 2-3-0 R86, p1 placed
-# R86, p1 2-0-3 R88, p1 2-0-4 R89, p1 2-0-5 R97. Damage model margins on those
-# boards (it counts no hero and no ability, and under-rates map-wide towers):
-# 40 1.24, 63 12.88, 76 9.72, 81 4.00, 90 2.43, 95 0.38, 98 0.64, 100 1.94.
+# placed R12, b1 2-0-0 R15, b1 2-2-0 R20, m1 0-0-1 R20, v1 placed R25, v1
+# 0-2-0 and 1-2-0 R32, b1 3-2-0 R37, m1 4-0-1 R42, b1 5-2-0 R62, r1 placed
+# R63, r1 3-0-2 R64, sb1 0-5-0 R83, i1 placed R83, i1 4-2-0 R84, v1 2-3-0
+# R86, p1 placed R86, p1 2-0-3 R88, p1 2-0-4 R89, p1 2-0-5 R97.
+# optimize_builds.replay_plan (hero at its estimated level), rounds 30-45:
+# 30 3.02, 31 1.19, 32 0.97, 33 4.36, 34 0.61, 35 0.68, 36 0.81, 37 2.92,
+# 38 2.18, 39 1.68, 40 0.71, 41 2.09, 42 3.26, 43 1.40, 44 3.26, 45 1.63;
+# later 63 14.67, 76 11.07, 81 4.32, 90 6.10, 95 1.96, 98 1.28, 100 3.75.
+# Rounds 34-36 (before the Destroyer) are the thin ones: reinforce may buy
+# for them, and no longer onto a path the plan needs (reinforce.
+# keeps_plan_open).
 #
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
@@ -76,14 +104,15 @@ plan:
   - {do: place, id: sb1, kind: sub, role: dps, at: [0.751, 0.572]}              # the exit water, where both lanes meet
   - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.804, 0.572]}         # by the sub
   - {do: place, id: hero, kind: hero, role: dps, at: [0.633, 0.538]}            # Etienne, the island's right end
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.761, 0.658]}         # the exit water, by the sub
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.778, 0.658]}         # the exit water, by the sub (where the game took it, see above)
   - {do: upgrade, id: b1, to: 2-0-0}
   - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
   - {do: upgrade, id: m1, to: 0-0-1}                                            # camo for round 24 (the executor's own pick)
   - {do: place, id: v1, kind: village, role: support, near: [b1, sb1], at: [0.676, 0.726]}  # added early: Radar for the camo (see above)
   - {do: upgrade, id: v1, to: 0-2-0}                                            # Radar Scanner
+  - {do: upgrade, id: v1, to: 1-2-0}                                            # Bigger Radius: the Radar reaches b1 and sb1 (see above)
   - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
-  - {do: upgrade, id: m1, to: 4-0-1}                                            # Arctic Knight
+  - {do: upgrade, id: m1, to: 4-0-1}                                            # Abyssal Warrior, NOT the guide's Arctic Knight (see above)
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.644, 0.811]}  # added: Glaive Ricochet for round 63
   - {do: upgrade, id: r1, to: 3-0-2}
@@ -99,11 +128,11 @@ fill:
   - {do: upgrade, id: i1, to: 5-2-0}                                            # the guide's Super Brittle, if the cash comes
 answers:
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
-  camo: [{do: upgrade, id: m1, to: 0-0-1}, {do: upgrade, id: v1, to: 0-2-0}]
+  camo: [{do: upgrade, id: m1, to: 0-0-1}, {do: upgrade, id: v1, to: 1-2-0}]
   ceramic: [{do: upgrade, id: b1, to: 3-2-0}]
   moab: [{do: upgrade, id: b1, to: 3-2-0}]
-  camo_ceramic: [{do: upgrade, id: v1, to: 0-2-0}]
-  camo_lead: [{do: upgrade, id: v1, to: 0-2-0}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 1-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 1-2-0}]
   bfb: [{do: upgrade, id: b1, to: 5-2-0}]
   zomg: [{do: upgrade, id: sb1, to: 0-5-0}]
   rush: [{do: upgrade, id: r1, to: 3-0-2}]
