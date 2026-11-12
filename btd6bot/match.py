@@ -425,12 +425,13 @@ class Match:
         self._last_wait_log = 0.0
         self._t_bananas = 0.0      # last pass over the farms' bananas
         self._t_park = 0.0         # last cursor park (PARK_EVERY)
-        self._park = None          # where the cursor rests: the busiest track (screen fractions)
+        self._park = None          # (heat grid, where the cursor rests on it: the busiest track)
         self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
         # a plan's `do: ability` step takes its hotkey guesses and the hero's
         # placement round from the same planner (Executor._try_ability)
         executor.abil = self.abil
         self._in_round = False
+        self._played_round = None   # the round last seen running (_follow_round_end)
         # the damage model's view of each round as it starts (forecast.py)
         self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None),
                                       getattr(model, "sight", None),
@@ -979,6 +980,7 @@ class Match:
                 self.ex.reinforce_hold = self._reinforce_hold(last_round, dropped)
                 self._mark("plan tick")
                 self.ex.play_running = self._in_round
+                self._follow_round_end(last_round)
                 self._follow_platforms(last_round)
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
                 if getattr(self.g, "unconfirmed_streak", 0) >= 2 or self.g.screen_lost:
@@ -1403,7 +1405,40 @@ class Match:
         if self._carried is None or old_round is None:
             return
         try:
+            before = getattr(self._carried, "turned_to", None)
             self._carried.round_advanced(old_round, new_round, self.g.towers)
+            self._gears_turned(before)
+        except Exception:
+            log.exception("moving towers with the ground failed - carrying on")
+
+    def _gears_turned(self, before):
+        """Tell the executor when the gears turned (Executor.gears_turned):
+        what it judged on gear ground holds no more."""
+        if getattr(self._carried, "rotors", None) and getattr(self._carried, "turned_to", None) != before:
+            turned = getattr(self.ex, "gears_turned", None)
+            if turned is not None:
+                turned()
+
+    def _follow_round_end(self, rnd):
+        """Turn the gears (Geared) as soon as the round `rnd` that was being
+        played is seen over (the Play button is back, Match._in_round), not
+        when the bot next reads the round counter: a side panel over the HUD
+        keeps the bot's round one behind the screen between rounds, and a
+        tower bought in that gap was turned one turn too many when the round
+        was read (audit 2026-11-12). Not in continuous modes, where the Play
+        button never comes back between rounds."""
+        if self._carried is None or not getattr(self._carried, "rotors", None) or rnd is None:
+            return
+        if self._in_round:
+            self._played_round = rnd
+            return
+        if getattr(self, "_played_round", None) != rnd:
+            return          # round rnd has not been seen running: nothing ended
+        self._played_round = None
+        try:
+            before = self._carried.turned_to
+            self._carried.round_ended(rnd, self.g.towers)
+            self._gears_turned(before)
         except Exception:
             log.exception("moving towers with the ground failed - carrying on")
 
@@ -1610,7 +1645,11 @@ class Match:
             return
         try:
             towers = list(self.g.towers.values())
-            plan = hudstate.plan_ahead(getattr(self.ex, "plan", None) or [], getattr(self.ex, "idx", 0))
+            # Sanctuary: a planned spot rides its platform (Executor._at_now),
+            # so the ghost is drawn where the bot will click
+            carry = getattr(self.ex, "_at_now", None)
+            plan = hudstate.plan_ahead(getattr(self.ex, "plan", None) or [], getattr(self.ex, "idx", 0),
+                                       carry=carry)
             kinds = {p.kind for p in towers} | {s["kind"] for s in plan if s.get("kind")}
             new = kinds - set(self._hud_sizes)
             if new:      # looked up once per kind; None for a kind the game data lacks
@@ -1621,7 +1660,16 @@ class Match:
             # bot's round lags it by one between rounds, and the HUD's green
             # ground followed the stale round (owner, 2026-11-12).
             pane_round = self.ex._pane_round() if hasattr(self.ex, "_pane_round") else None
+            # The ground as the bot's placement judges it (Executor._legal_cells):
+            # the round (One Two Tree's opened plots, Erosion's melts), the
+            # platforms' pose (Sanctuary) and the phase horizon (Erosion's
+            # ground need only last the phase). The field layer drew the
+            # whole-game ground without them (audit 2026-11-12).
+            now_round = self.ex._ground_round() if hasattr(self.ex, "_ground_round") else None
+            pose_round = self.ex._pose_round() if hasattr(self.ex, "_pose_round") else None
             hudstate.update(round=rnd, cash=cash, lives=self._lives.confirmed, pane_round=pane_round,
+                            now_round=now_round, pose_round=pose_round,
+                            ground_horizon=getattr(self.ex, "ground_horizon", None),
                             waiting=getattr(self.ex, "waiting", None),
                             save_goal=list(goal) if goal else None, plan=plan,
                             towers=[[p.tid, p.kind, p.crosspath, round(p.x, 4), round(p.y, 4)] for p in towers],
@@ -1975,19 +2023,24 @@ class Match:
     def _park_point(self):
         """Screen spot over the busiest stretch of track: the track cell with
         the most track around it (a bend or a stretch where lanes meet), so
-        a tower aiming at the cursor fires into the thick of the bloons."""
-        if self._park is None:
+        a tower aiming at the cursor fires into the thick of the bloons.
+
+        Kept with the heat grid it was found on, and found again once the
+        model's track is a new grid: mapgeom.repaint_track paints a new
+        one when Erosion's bloons change path, and the Dartlings and helis
+        kept aiming at the old path all game (audit 2026-11-12)."""
+        heat = getattr(self.m, "heat", None)
+        if self._park is None or self._park[0] is not heat:
             import cv2
             import numpy as np
-            heat = getattr(self.m, "heat", None)
             if heat is None or not (heat > 0).any():
                 return None
             track = (heat > 0).astype(np.float32)
             dens = cv2.boxFilter(track, -1, (PARK_WINDOW, PARK_WINDOW))
             dens[track == 0] = 0
             y, x = np.unravel_index(int(np.argmax(dens)), dens.shape)
-            self._park = self.m.cell_to_frac(int(x), int(y))
-        return self._park
+            self._park = (heat, self.m.cell_to_frac(int(x), int(y)))
+        return self._park[1]
 
     def _park_cursor(self, now):
         """Rest the cursor on the busiest track while something follows it

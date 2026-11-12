@@ -2250,6 +2250,19 @@ class Bot:
         retry = None
         if cands and all(self.benched(c.map, c.mode) for c in cands):
             retry = self._retry_benched(cands)
+            if retry is None:
+                # None of these benches may be retried (or none yet): look
+                # again with the last resorts that struck out. At 01:56 on
+                # 2026-11-12 the list held only three Deflation medals,
+                # benched for two days as "rated 0.06, left 2x", and the bot
+                # napped although 14 lost games were due for their retry.
+                # A loss due for its retry goes first (its change is in);
+                # with none due, a struck-out game that is not benched is
+                # still played rather than napping.
+                _, _, wider = rank_games(self.account, specs, below_bar=True, struck_too=True)
+                if len(wider) > len(cands):
+                    retry = self._retry_benched(wider)
+                    cands = [retry] if retry is not None else wider
             if retry is not None:
                 log.warning("every open medal is benched - playing %s/%s again (lost over %g h ago, "
                             "its change is in) rather than idling", retry.map, retry.mode,

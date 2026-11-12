@@ -97,6 +97,9 @@ class CarriedTowers:
         self.proj = proj
         self.name = name
         self.riders = {}    # tower id -> (id() of its Placed object, rotor or None)
+        # the HUD round whose gear turns the remembered spots are in (None:
+        # not known yet, the first round_advanced call says)
+        self.turned_to = None
         # moving platforms: a stand-in model for mapgeom (name, playfield),
         # or None on maps without them
         self.platforms = platforms
@@ -161,13 +164,26 @@ class CarriedTowers:
         """The HUD round went from old_round to new_round: turn the rotors
         that turned meanwhile and move the towers on them. Towers placed
         since the last call are first matched to the ground they were placed
-        on (before this turn). Returns the ids of the towers moved."""
-        if old_round is None or new_round is None or new_round <= old_round:
+        on (before this turn). Returns the ids of the towers moved.
+
+        The turns are counted from the round the spots are already turned
+        to (turned_to), not from old_round: the match turns the gears as
+        soon as it sees a round end (round_ended), while the bot's round
+        still lags the screen by one, and a tower bought in that gap stood
+        on the turned gear already - counting from the bot's round turned
+        it once more (audit 2026-11-12). A round going back (a reset after
+        a misread) turns the gears back by the turns it had counted."""
+        if old_round is None or new_round is None:
             return []
+        start = old_round if self.turned_to is None else self.turned_to
         self._adopt(towers)
+        self.turned_to = new_round
+        if new_round == start:
+            return []
         moved = []
         for r in self.rotors:
-            k = r.turns_between(old_round, new_round)
+            k = (r.turns_between(start, new_round) if new_round > start
+                 else -r.turns_between(new_round, start))
             if not k:
                 continue
             r.turns += k
@@ -183,6 +199,16 @@ class CarriedTowers:
         if moved:
             log.info("round %d: %s carried round by the gears", new_round, ", ".join(moved))
         return moved
+
+    def round_ended(self, rnd, towers):
+        """Round `rnd` was seen ending on screen (the Play button is back)
+        before the bot read the next round number: the gears have turned for
+        round rnd + 1 already (they turn after each round, as the HUD round
+        steps on), so the spots are turned now, and a tower placed before
+        the bot reads rnd + 1 is known to stand on the turned gear."""
+        if rnd is None or (self.turned_to is not None and self.turned_to > rnd):
+            return []
+        return self.round_advanced(rnd, rnd + 1, towers)
 
     def follow_platforms(self, pose_round, towers):
         """The platforms stand as in round pose_round (the last round
