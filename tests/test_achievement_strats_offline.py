@@ -306,7 +306,13 @@ def test_default_panic_respects_constraints():
     ex = S.Executor(FakeGame(), FakeModel(), dict(base, constraints={"allowed_towers": ["sniper", "dart"]}),
                     "easy", acct)
     assert [s["kind"] for s in ex.panic_steps] == ["dart"]
+    # PANIC_KINDS now holds every land tower that pops on its own (heli too:
+    # docs/tower_exclusions_audit.md item 12), so a Heli-only build panics with a heli
     ex = S.Executor(FakeGame(), FakeModel(), dict(base, constraints={"allowed_towers": ["heli"]}),
+                    "easy", acct)
+    assert [s["kind"] for s in ex.panic_steps] == ["heli"]
+    # a Glue Gunner pops nothing by itself: never a panic tower
+    ex = S.Executor(FakeGame(), FakeModel(), dict(base, constraints={"allowed_towers": ["glue"]}),
                     "easy", acct)
     assert ex.panic_steps == []  # nothing allowed -> no panic rather than a forbidden tower
     ex = S.Executor(FakeGame(), FakeModel(), dict(base), "military_only", acct)
