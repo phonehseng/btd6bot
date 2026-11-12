@@ -16,6 +16,8 @@ back, so it can never drift from its sources:
                crosscheck:    disagreements with data/game_model (when present)
   counters.json model_towers: attacks and blimp damage the hand facts lack,
                               from the game model (derive_model_towers)
+                model_answers: strength-threat answers the damage model adds to
+                              strategy.ANSWERS (derive_model_answers)
                 counters:     per signature, every tower and the minimal
                               crosspath at which it handles it on its own,
                               and what support (radar / MIB) adds
@@ -292,6 +294,111 @@ def crosscheck_towers():
             "game_says_yes_we_did_not_claim": trim(cautious)}
 
 
+# ---------------------------------------------------------------------------
+# Strength answers (ceramic, MOAB ... BAD, the rush) from the damage model
+# ---------------------------------------------------------------------------
+# strategy.ANSWERS lists, by hand, which (tower, path, tier) answers each
+# strength threat. Glue, Desperado, Alchemist, Mortar, Mermonkey, Skywarden,
+# Engineer and Beast Handler were never accepted for any of them, Ice and
+# Dartling only for the rush, so runner.py dropped every mode where a build
+# carried by one of them had no listed tower too
+# (docs/tower_exclusions_audit.md item 3). The damage model now rates every
+# crosspath, so this part adds (never removes) the paths the model says are
+# as strong as the hand-listed answers:
+#
+#   * strength = dps_model's own per-tower yardstick (optimize_builds
+#     Evaluator.capacity): the health one tower at its best spot of a
+#     reference map takes off the threat's bloon while it crosses the
+#     tower's reach (best route), abilities at their uptime;
+#   * the bar = the MEDIAN strength of the hand-listed answers for that
+#     threat (those the model rates above zero): half of them are weaker,
+#     so an added path is at least as strong as a typical listed one;
+#   * a path is added at the lowest tier (one path, the others at 0) that
+#     reaches the bar, for every (tower, path) the hand table does not list.
+#
+# What the model cannot see stays out: income towers (farm) and paths a
+# tower's targeting needs first (ONLY_PATH: a Heli is rated as flying to the
+# bloons, which only Pursuit, 2-x-x, does; gen_builds.CURSOR_FIX).
+# Camo, lead and the other properties are checked apart, as before
+# (coverage's signatures; NEEDS_CAMO for the DDT).
+STRENGTH_BLOON = {"ceramic": "Ceramic", "rush": "Ceramic", "moab": "Moab", "bfb": "Bfb",
+                  "zomg": "Zomg", "ddt": "Ddt", "bad": "Bad"}
+# Monkey Meadow: one long lane; Pat's Pond for the water towers it lacks.
+ANSWER_MAPS = ("Monkey Meadow", "Pat's Pond")
+ANSWER_MODE = "medium"
+# (path, lowest tier) a tower's targeting needs: the Heli is rated as
+# flying to the bloons, which only Pursuit (2-x-x) does
+ONLY_PATH = {"heli": (1, 2)}
+
+
+def _path_tiers(path, tier):
+    t = [0, 0, 0]
+    if path:
+        t[path - 1] = tier
+    return tuple(t)
+
+
+def derive_model_answers():
+    """{"bars": {threat: strength}, "answers": {threat: [[kind, path, tier]]}}
+    (see above); {} when the game model is missing."""
+    import statistics
+    from btd6bot import dps_model as D
+    from btd6bot import strategy as S
+    from btd6bot import towers as T
+    if not D.available():
+        return {}
+    sys.path.insert(0, str(ROOT / "tools"))
+    import optimize_builds as O
+
+    setups = {}
+
+    def setup_for(kind):
+        for m in ANSWER_MAPS:
+            if m not in setups:
+                setups[m] = O.MapSetup(m, ANSWER_MODE)
+            if setups[m].spots(kind):
+                return setups[m]
+        return None
+
+    rated = {}
+
+    def strength(kind, tiers, threat):
+        key = (kind, tiers, threat)
+        if key not in rated:
+            setup = setup_for(kind)
+            value = 0.0
+            if setup is not None:
+                ev = O.Evaluator(setup, ANSWER_MODE)
+                tower = O.Tower("t", kind, setup.spots(kind)[0], tiers)
+                value = ev.capacity(ev.station_of(tower, [tower]), STRENGTH_BLOON[threat])
+            rated[key] = value
+        return rated[key]
+
+    bars, answers = {}, {}
+    for threat in STRENGTH_BLOON:
+        hand = S.HAND_ANSWERS[threat]
+        listed = {(k, p) for k, p, _ in hand} | {(k, q) for k, p, _ in hand if p == 0 for q in (1, 2, 3)}
+        values = [v for v in (strength(k, _path_tiers(p, t), threat) for k, p, t in hand) if v > 0]
+        if not values:
+            continue
+        bar = statistics.median(values)
+        bars[threat] = round(bar, 1)
+        found = []
+        for kind in T.TOWERS:
+            if kind in S.INCOME_TOWERS:
+                continue
+            for path in (1, 2, 3):
+                need_path, lowest = ONLY_PATH.get(kind, (path, 1))
+                if (kind, path) in listed or need_path != path:
+                    continue
+                tier = next((t for t in range(lowest, 6) if strength(kind, _path_tiers(path, t), threat) >= bar),
+                            None)
+                if tier is not None:
+                    found.append([kind, path, tier])
+        answers[threat] = found
+    return {"bars": bars, "answers": answers}
+
+
 def build():
     """(new bloons.json dict, new counters.json dict)."""
     bl = json.loads((DATA / "bloons.json").read_text(encoding="utf-8"))
@@ -308,6 +415,11 @@ def build():
                                "btd6bot/dps_model.py, for the towers whose hand facts above lack "
                                "attacks or a blimp_dps row (btd6bot/threats.py model_facts). "
                                "Abilities and damage-free sources are left out.")
+    co["model_answers"] = derive_model_answers()
+    co["model_answers_note"] = ("Derived by tools/build_bloon_kb.py: (tower, path, tier) answers to "
+                                "the strength threats that strategy.ANSWERS does not list by hand, "
+                                "where the damage model rates one tower at least as strong as the "
+                                "median hand-listed answer (bars). strategy.py adds them to ANSWERS.")
     # the parts below read the file through threats.py: let them see the
     # derived facts just made, not the ones on disk
     saved = TH.counters

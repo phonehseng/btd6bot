@@ -204,7 +204,56 @@ def _answers_from_game_model():
         ANSWERS["lead"] = list(lead)
 
 
+# The hand-written table as written above, before the game model and the
+# damage model add to it (tools/build_bloon_kb.py measures its new answers
+# against these).
+HAND_ANSWERS = {t: list(v) for t, v in ANSWERS.items()}
+
+
+def _answers_from_damage_model():
+    """Add the strength-threat answers the damage model found
+    (counters.json "model_answers", derived by tools/build_bloon_kb.py):
+    (tower, path, tier) where one tower is at least as strong against the
+    threat's bloon as the median hand-listed answer. The hand table never
+    accepted Glue, Desperado, Alchemist, Mermonkey, Skywarden, Engineer or
+    Beast Handler for any strength threat, nor Ice and Dartling beyond the
+    rush, so coverage() dropped every mode a build carried by them played
+    without another listed tower (docs/tower_exclusions_audit.md item 3).
+    Entries are only ever added, after the hand ones; the hand table stays
+    whole when the data is missing."""
+    try:
+        found = (TH.counters().get("model_answers") or {}).get("answers") or {}
+    except Exception as e:     # a broken data file must not stop the bot
+        log.warning("damage-model answers unavailable: %r", e)
+        return
+    for threat, entries in found.items():
+        if threat not in ANSWERS:
+            continue
+        have = set(ANSWERS[threat])
+        for kind, path, tier in entries:
+            entry = (kind, int(path), int(tier))
+            if kind in T.TOWERS and entry not in have:
+                ANSWERS[threat].append(entry)
+                have.add(entry)
+
+
 _answers_from_game_model()
+_answers_from_damage_model()
+
+
+def buyable_answers(threat):
+    """The (tower, path, tier) answers the executor upgrades a standing tower
+    toward by itself (Executor._generic_answer): for a strength threat only
+    the hand-listed ones. The damage model's answers count wherever a build
+    already has them (coverage, has_answer, the generators' and optimizer's
+    answer steps), but the executor does not start buying toward one on
+    its own: on Ascent Easy that took the plan's cash for a 4-0-0 Skywarden
+    before the plan's own MOAB answer, and the plan ended three steps short.
+    Camo and lead (from the game model) and purple are bought as before."""
+    hand = HAND_ANSWERS.get(threat)
+    if hand is None or threat in ("camo", "lead"):
+        return ANSWERS.get(threat, [])
+    return [a for a in ANSWERS.get(threat, []) if a in hand]
 
 # Prices: CHIMPS is a Hard mode in the game (x1.08), not Impoppable (x1.2);
 # MODE_FAMILY keeps it with Impoppable for difficulty order (min_difficulty).
@@ -5982,7 +6031,7 @@ class Executor:
                         steps.append({"do": "upgrade", "id": village.tid, "to": "-".join(map(str, to))})
             threat = "camo"  # and/or upgrade camo towers to tier 3+
         for p in self.g.towers.values():
-            for kind, path, tier in ANSWERS.get(threat, []):
+            for kind, path, tier in buyable_answers(threat):
                 if p.kind != kind or not path:
                     continue
                 to = list(p.tiers)
