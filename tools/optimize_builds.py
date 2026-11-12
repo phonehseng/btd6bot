@@ -382,21 +382,9 @@ class MapSetup:
     def sight(self, x, z, pts):
         """Visible mask of world points pts (N x 3) from a tower at (x, z):
         no sight-blocking cell of the MapModel on the straight line between
-        (dps_model.sight_test, shared with the live forecast).
-
-        The blockers' heights and the ground's go in as well, as the live
-        forecast passes them (match.py): a tower on raised ground sees over
-        blockers no higher than it. Without them every tower on Sunken
-        Columns' column tops counted as blind behind the columns it stands
-        on: the best dart spot of the map "saw" 18 units of a 640-unit
-        route, the entrance row where four live games had opened saw none,
-        and tools/pin_spots.py pinned the Impoppable build's first towers,
-        two subs, down in a pool, where the walls do hide the route - round
-        6 took the one life twice (cases 20261112_012149 and
-        20261112_093331)."""
+        (dps_model.sight_test, shared with the live forecast)."""
         if not hasattr(self, "_sight"):
-            heights = (getattr(self.model, "sight_height", None), getattr(self.model, "ground_height", None))
-            self._sight = D.sight_test(self.model.sight, self.track, heights=heights)
+            self._sight = D.sight_test(self.model.sight, self.track)
         if self._sight is None:
             return np.ones(len(pts), bool)
         return self._sight(x, z, pts)

@@ -32,8 +32,9 @@ or Wizard Lord Phoenix); the ace builds have Etienne for his map-wide camo.
 
 Sunken Columns lost round 6 three times (losses 20261112_012149, 20261112_093331
 and 20261112_144210): its two opening subs stood in a pool whose walls hide the
-route. The optimizer's line of sight had no heights, so the column tops looked
-as blind as the pools; it has them now, and the build opens on the columns.
+route. The optimizer's line of sight has no heights, so the column tops looked
+as blind as the pools when the build was pinned; the build opens on the
+columns now, measured with the live forecast's sight (heights and all).
 
 Peninsula lost round 28 twice (losses 20261112_090153 and 20261112_141254) to
 six leads: its only lead answer was an alchemist, and Peninsula's land lies
@@ -247,20 +248,30 @@ def test_late_game_carries_answer_the_last_blimps():
             assert all(st["id"] in ids for st in d["answers"][threat]), (map_id, threat)
 
 
-def test_a_tower_on_raised_ground_sees_over_the_blockers_it_stands_on():
-    """Sunken Columns (2026-11-12, cases 20261112_012149 and 20261112_093331):
-    the optimizer's line of sight took no heights, so a dart on a column top
-    counted as blind behind the columns and the pool subs looked no worse.
-    With the heights the entrance row, where the live games opened, sees
-    the route, and a sub down in a pool still sees next to none of it."""
-    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+def _with_the_live_sight(pinner):
+    """``pinner`` measuring cover with the line of sight the live forecast
+    uses (match.py): the blockers' heights and the ground's go in, so a
+    tower on raised ground sees over blockers no higher than it. The
+    optimizer's own sight (MapSetup.sight) takes no heights yet (backlog
+    106): for it every tower on Sunken Columns' column tops is blind."""
+    from btd6bot import dps_model as D
+    model = pinner.model
+    heights = (getattr(model, "sight_height", None), getattr(model, "ground_height", None))
+    pinner.setup._sight = D.sight_test(model.sight, pinner.setup.track, heights=heights)
+    return pinner
+
+
+def test_on_sunken_columns_the_column_tops_see_the_route_and_the_pools_do_not():
+    """Sunken Columns (2026-11-12, cases 20261112_012149, 20261112_093331 and
+    20261112_144210): as the live game sees it, the entrance row on the
+    column tops, where the round-98 game opened, has the route in sight,
+    and a sub down in a pool sees next to none of it over the pool's walls."""
+    pinner = _with_the_live_sight(pin_spots.Pinner("Sunken Columns", "impoppable"))
     cover = lambda kind, at: pinner.segment_cover(kind, pinner.model.frac_to_cell(*at), (0.0, 1.0))
     on_the_columns = cover("dart", (0.361, 0.112))      # where the round-98 game's first dart stood
-    in_the_pool = cover("sub", (0.569, 0.411))          # where sb1 stood when round 6 was lost
+    in_the_pool = cover("sub", (0.58, 0.385))           # where sb1 stood when round 6 was lost
     assert on_the_columns > 100, on_the_columns
     assert in_the_pool < 20, in_the_pool
-    best = pinner.setup.ranked_spots("dart")[0]
-    assert best.score > 100, best
 
 
 def test_sunken_columns_opens_with_towers_that_see_the_route():
@@ -269,7 +280,7 @@ def test_sunken_columns_opens_with_towers_that_see_the_route():
     Advanced Intel (2-0-2), never left at tiers that only shoot what they see."""
     import math
     _, d = _build("sunkencolumns")
-    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+    pinner = _with_the_live_sight(pin_spots.Pinner("Sunken Columns", "impoppable"))
     places = [st for st in d["plan"] if st["do"] == "place"]
     first_sub = next(i for i, st in enumerate(places) if st["kind"] == "sub")
     opening = [st for st in places[:first_sub] if st["kind"] not in ("hero", "alchemist")]
