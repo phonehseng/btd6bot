@@ -65,7 +65,14 @@ planner:
   # not Sanctuary (2026-11-11): lost rounds 40 and 45 here (all 150 lives at
   # round 45 though the model rated it 2.13), and apopalypse_apache_spikes
   # already excludes it after its round-51 loss
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Flooded Valley, Erosion, Sanctuary]
+  # #Ouch: four losses (rounds 47, 49, 51 and 54 - the last 2026-11-12
+  # 11:37, case 20261112_114515_Ouch_apopalypse: all 150 lives held to round
+  # 52, then MOABs in rounds 53-54 walked past three ninjas and three snipers
+  # with $20k in hand). Its four short lanes are reached together only from
+  # the central pond; apopalypse_check rates this build 0.17 there (every
+  # round under 2) against 1.11 for the pond build strategies/maps/
+  # ouch_apopalypse.yaml (2.02-3.12 in the MOAB rounds 44-60).
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Flooded Valley, Erosion, Sanctuary, "#Ouch"]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an

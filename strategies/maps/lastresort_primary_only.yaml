@@ -1,0 +1,97 @@
+# Last Resort, Primary Only: the two towers the top straight allows are a
+# Turbo Charge boomerang (0-4-2, Red Hot Rangs for lead) and a desperado grown
+# to 5-2-0 (camo, and the MOAB damage of round 40); a Crossbow Master dart on
+# the right column and a 0-2-4 bomb on the big loop's bottom row take the loop
+# rounds.
+#
+# Why: Last Resort Primary Only was lost four times by general builds -
+# solo_bomb (round 20), primary_core (15), primary_glaive_dart (20) and
+# solo_desperado (round 32, 2026-11-12 11:07, case
+# 20261112_111354_LastResort_primary_only). Every route of the map's 4-round
+# cycle runs along the top straight (round mod 4 = 1 big loop, 2 medium loop,
+# 3 small loop, 0 straight across, data/map_geometry/lastresort.json), and
+# every one of the 15 games lost on the map ended on a small-loop or straight
+# round. In the 11:07 game every tower stood by the loops (darts at 0.216 and
+# 0.628, 0.675, four desperados inside the big loop) and the hero alone held
+# the patch beside the straight; round 32 (straight: 15 blacks, 20 whites,
+# 10 purples) took the last 144 lives. b6787fc (Executor._reach by round
+# share) lets a general build's first short-range tower take that patch, but
+# the patch holds two towers, so a general build still cannot fill it with
+# the right two.
+#
+# Map facts (learned live map, optimize_builds.MapSetup.ranked_spots, each
+# track cell weighted by the share of rounds that pass it):
+#   * Only two cells reach the top straight: the top of the left strip,
+#     (0.024, 0.249) and (0.045, 0.317). Further down the strip (0.035-0.045,
+#     0.36-0.50, where snipers stood live) a tower adds nothing on a straight
+#     round (rated: +0.00 on rounds 20-40 for a desperado or boomerang there).
+#   * Camo on the straight rounds (24, 36) must come from one of those two
+#     towers: of the primary towers only the desperado sees it (the board
+#     without it rates 0.06 there).
+#   * Two cells above the frozen pool, (0.676, 0.146) and (0.66, 0.24), also
+#     reach the straight in the map file, but no tower has ever been placed
+#     there live, so the plan does not count on them (the blimp ramp may).
+#
+# Board screen (fixed final boards, dart 0-2-4 right column and bomb 0-2-4
+# loop on each; rounds 32 / 36 / 40, all straight rounds):
+#   boomerang 0-2-4 + desperado 3-2-0 (patch)    1.98 / 0.49 / 0.16
+#   boomerang 0-2-4 + desperado 4-2-0            3.33 / 0.82 / 0.29
+#   bomb 2-4-0 (MOAB Assassin) + desperado 4-2-0 1.94 / 0.67 / 0.81
+#   boomerang 0-4-2 + desperado 4-2-0            7.42 / 1.53 / 0.61
+#   boomerang 0-2-4 + desperado 5-2-0           16.0  / 2.20 / 1.35
+#   boomerang 0-2-5 + desperado 4-2-0           16.0  / 2.33 / 2.65 (MOAB Domination, not affordable)
+# The 5-2-0 desperado ($21k at Easy prices) is what the late straight rounds
+# need; a poor game pays it only on round 39, so the boomerang is 0-4-2
+# (round 36: 1.49 against 0-2-4's 0.83).
+#
+# Evidence: executor-faithful replay 2026-11-12 (simulate_threats.simulate on
+# the learned live map, Fast Track start R10 with $3,832, Double Cash), each
+# round's start board rated by the live forecast on its own route; worst:
+#   this build      R40 0.94, R36 1.49, R15 1.94, R34 2.74, every other round 2.8+
+#   solo_desperado  R28 0.06, R40 0.54, R27 0.75, R15 0.79 (the build that lost)
+# Variants: boomerang 0-2-4 R36 0.83 (R40 2.09); the bomb and the dart's
+# last tier after the 5-2-0 R34 1.38 (5-2-0 still on round 39); Benjamin
+# first R40 0.59 (the replay does not count his income). Round 40 (one MOAB
+# on the straight) is still under 1.0: the best measured, not a safe build,
+# so data/model_ceiling.json records 0.94 for Last Resort Primary Only.
+#
+# Spots: r1 (0.024, 0.249) where the replay puts it (heroes stood at 0.024,
+# 0.283 and a ninja at 0.029, 0.266 live); x1 (0.045, 0.317) beside the
+# skywarden (0.04, 0.325) and super (0.029, 0.334) taken live; d1 (0.783,
+# 0.436) and the hero (0.601, 0.607) where a dart and heroes stood live;
+# b2 (0.612, 0.675) on the bottom row where ninjas and heroes stood.
+# The hero is bought last: the patch is the map's best ground and the
+# model does not rate heroes. Test: tests/test_lastresort_primary_offline.py.
+#
+# Status: written 2026-11-12, not played yet.
+id: lastresort_primary_only
+map: Last Resort
+hero: quincy
+plan_first: true      # the plan owns the cash: the 5-2-0 desperado is the round-40 answer
+modes: [primary_only]
+planner:
+  towers: {boomerang: [0, 4, 2], desperado: [5, 2, 0], dart: [0, 2, 4], bomb: [0, 2, 4]}
+  base_success: {primary_only: 0.5}
+  maps: [Last Resort]
+plan:
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.024, 0.249]}    # top straight patch
+  - {do: upgrade, id: r1, to: 0-2-2}                                        # Red Hot Rangs: lead
+  - {do: place, id: x1, kind: desperado, role: dps, at: [0.045, 0.317]}    # top straight patch: camo
+  - {do: upgrade, id: x1, to: 2-2-0}
+  - {do: place, id: d1, kind: dart, role: dps, at: [0.783, 0.436]}         # right column: loop rounds
+  - {do: upgrade, id: d1, to: 0-2-3}
+  - {do: upgrade, id: r1, to: 0-4-2}                                        # Turbo Charge: round 36
+  - {do: upgrade, id: x1, to: 3-2-0}
+  - {do: upgrade, id: d1, to: 0-2-4}
+  - {do: place, id: b2, kind: bomb, role: dps, at: [0.612, 0.675]}         # big loop's bottom row
+  - {do: upgrade, id: b2, to: 0-2-4}
+  - {do: upgrade, id: x1, to: 4-2-0}
+  - {do: upgrade, id: x1, to: 5-2-0}                                        # round 40's MOAB on the straight
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.601, 0.607]}
+fill:
+  - {do: place, kind: bomb, role: dps, max: 3}
+  - {do: upgrade, kind: bomb, to: 0-2-4}
+answers:
+  lead: [{do: upgrade, id: r1, to: 0-2-2}]
+  camo: [{do: place, id: x1, kind: desperado, role: dps, at: [0.045, 0.317]}]
+  moab: [{do: upgrade, id: x1, to: 5-2-0}]

@@ -125,7 +125,16 @@ planner:
   # the garden has only two strips of rose beds and path, too narrow for a
   # heli pad (all 72 legal heli cells are on panes), and a pane refuses
   # towers whenever it is shut - the opening never got its helis down.
-  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary, "#Ouch", Covered Garden]
+  # Dark Dungeons (lost round 35 on 2026-11-10 and round 17 on 2026-11-12,
+  # case 20261112_120344_DarkDungeons_apopalypse: dart, ninja and hero came
+  # before the one heli while three lanes ran) and Bloody Puddles (lost
+  # rounds 33 and 41, case 20261112_112348_BloodyPuddles_apopalypse: nothing
+  # bought from round 25 to 40 while the bank waited for the $20,000 Apache
+  # tier) have map builds now: strategies/maps/darkdungeons_apopalypse.yaml
+  # and bloodypuddles_apopalypse.yaml (helis first, more 3-2-0 helis before
+  # the first Apache; check worst 0.75 and 0.55 against this build's 0.43
+  # and 0.38).
+  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary, "#Ouch", Covered Garden, Dark Dungeons, Bloody Puddles]
 plan_first: true
 # Bloody Puddles has six lanes, three leaving at the top and three at the
 # bottom: one exit spike covers one of them (2026-11-10, sp1 at the Path2

@@ -62,6 +62,14 @@ planner:
   # twenty blues alone took 52 lives - the towers barely reach the track
   # there (the map's placement problem, backlog 72; 1 win in 13 games).
   excluded_maps: [Water Park, Muddy Puddles, Bloody Puddles, Dark Dungeons, Midnight Mansion, Sunset Gulch, Workshop, Peninsula, Erosion, Glacial Trail, Flooded Valley, Last Resort]
+  # Ravine Magic Only: lost five times at rounds 38-40 (the last 2026-11-12
+  # 11:31, case 20261112_113751_Ravine_magic_only: 57 lives on round 36's
+  # pinks, the last 43 on round 38). A round runs down one entrance and both
+  # of its forks; this build's ninjas and wizard cluster where one fork
+  # passes, so the other fork of each entrance had nothing (the replay rates
+  # it 0.06 at rounds 40, 60 and 80). strategies/maps/ravine_magic_only.yaml
+  # places a group beside every fork and plays the medal instead.
+  excluded_by_mode: {magic_only: [Ravine]}
   base_success: {medium: 0.92, hard: 0.85, magic_only: 0.85}
   # no `revised` stamp: the R40 check is unchanged offline (0.89x), so the six
   # losses keep counting against these maps until live wins say otherwise
