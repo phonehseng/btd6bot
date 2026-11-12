@@ -2993,7 +2993,15 @@ def _lots(mode, rnd, track):
 # Calibrated on the journals' boards against status effects off: AUC
 # 0.814 -> 0.814, rounds at or above 2.0 that leaked 0.54% -> 0.54% (1.5:
 # 0.67% -> 0.66%), held rounds under 2.0 52.8% -> 49.3%.
+#
+# The live bot turns it OFF (runner.Bot, LIVE_STATUS_RATING): on a big late
+# board a rating still takes about 1.45x as long, and a reinforce look then
+# no longer fits its time budget (tests/test_reinforce_budget_offline.py
+# "busy" after 7.9 s); a look cut short buys the wrong thing in a crisis.
+# Offline (build design, the optimizer, calibration) time does not matter,
+# so builds are chosen with Ice, Glue, stuns and pushes counted.
 STATUS_RATING = True
+LIVE_STATUS_RATING = False
 # A stun, slow or push is shared among the bloons in a zone - the packing
 # rho says how many. A burst is packed a quarter of a width apart, so rho
 # reads a lone MOAB as one of ~28 in a sniper's zone; True shares the hits
