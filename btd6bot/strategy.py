@@ -178,8 +178,16 @@ ANSWERS = {
              ("boomerang", 1, 5), ("druid", 2, 4), ("ninja", 3, 4)],
     "ddt": [("sniper", 1, 4), ("bomb", 2, 4), ("heli", 1, 4), ("super", 1, 3), ("spike", 3, 4),
             ("ninja", 3, 4), ("boomerang", 1, 4), ("dart", 3, 4)],
-    "bad": [("super", 1, 4), ("bomb", 2, 5), ("sniper", 1, 5), ("ninja", 3, 5), ("spike", 3, 5)],
+    # spike 5-x-x Super Mines and ace x-x-5 Flying Fortress: the damage model
+    # (phase 2, 2026-11-12) rates one Super Mines alone at 2-9 on Impoppable
+    # rounds 95-100 on Sunset Gulch, Sunken Columns and Bloonarius Prime, and
+    # a Flying Fortress (with Etienne's camo) at 2.4-10 on Firing Range; the
+    # late-game Impoppable map builds carry one of them (an answer to the
+    # BAD answers the ZOMGs inside it too).
+    "bad": [("super", 1, 4), ("bomb", 2, 5), ("sniper", 1, 5), ("ninja", 3, 5), ("spike", 3, 5), ("spike", 1, 5),
+            ("ace", 3, 5)],
 }
+ANSWERS["zomg"] += [a for a in ANSWERS["bad"] if a not in ANSWERS["zomg"]]
 
 
 def _answers_from_game_model():
