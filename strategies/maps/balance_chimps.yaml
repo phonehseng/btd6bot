@@ -49,8 +49,9 @@ id: balance_chimps
 map: Balance
 hero: sauda
 hero_opens: true      # the hero alone holds the opening (Executor.defended)
-starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
-                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+# starter: kept (2026-11-12 17:45): this guide can afford one damage tower at
+# round 6, and Ancient Portal CHIMPS lost round 6 in 9 s with its sub alone
+# once `starter: none` was set; the generic starter is that second tower.
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
