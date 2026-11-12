@@ -419,7 +419,7 @@ def to_yaml(d, sid, unpinned):
     ]
     if d.get("notes"):
         lines.append("#")
-        lines += [f"# {ln}" for ln in d["notes"]]
+        lines += [(f"# {ln}" if ln else "#") for ln in d["notes"]]
     if unpinned:
         lines.append(f"# No legal spot was found for: {', '.join(unpinned)} (left to the executor).")
     lines += [f"id: {d['id']}", f"map: {_flow(d['map'])}", f"hero: {d['hero']}",
