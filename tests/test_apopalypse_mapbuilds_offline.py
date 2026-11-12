@@ -62,8 +62,29 @@ def test_the_first_heli_is_bought_to_3_2_0_before_anything_else():
         plan = _plan(sid)
         assert plan[0] == {"do": "place", "id": "h1", "kind": "heli", "role": "dps", "at": plan[0]["at"]}, sid
         assert plan[1] == {"do": "upgrade", "id": "h1", "to": "3-2-0"}, sid
-        # the second heli follows at once (two 3-2-0 helis: 2.04+ on rounds 15-20)
-        assert plan[2]["kind"] == "heli" and plan[3] == {"do": "upgrade", "id": plan[2]["id"], "to": "3-2-0"}, sid
+        # then the second heli (two 3-2-0 helis: 2.04+ on rounds 15-20); on
+        # Bloody Puddles Obyn and a 2-0-2 ninja on the right lanes come first
+        # (see test_bloody_puddles_opens_with_the_hero_and_a_right_lane_ninja)
+        rest = plan[2:]
+        if sid == "bloodypuddles_apopalypse":
+            rest = rest[3:]
+        assert rest[0]["kind"] == "heli" and rest[1] == {"do": "upgrade", "id": rest[0]["id"], "to": "3-2-0"}, sid
+
+
+def test_bloody_puddles_opens_with_the_hero_and_a_right_lane_ninja():
+    """Bloody Puddles 2026-11-12 16:49 (case 20261112_165343, this build's
+    first game): with both helis first and the hero last, Obyn never stood,
+    nothing stayed by the right lanes while the Pursuit helis chased the left
+    ones, and the game leaked from round 17 (33 lives) to its end on round 25
+    (reds, zebras, whites). The 11:17 game on the same map opened with a
+    ninja at (0.6225, 0.6831), the first 3-2-0 heli and Obyn, lost 13 lives
+    on rounds 15-16 and then held to round 33. That opening is now this
+    build's, after h1's 3-2-0."""
+    plan = _plan("bloodypuddles_apopalypse")
+    assert plan[2]["kind"] == "hero", plan[2]
+    assert plan[3]["kind"] == "ninja" and plan[3]["at"] == [0.623, 0.683], plan[3]
+    assert plan[4] == {"do": "upgrade", "id": plan[3]["id"], "to": "2-0-2"}, plan[4]
+    assert sum(1 for st in plan if st.get("kind") == "hero") == 1
 
 
 def test_cheap_helis_stand_before_the_first_apache_tier():
