@@ -286,7 +286,12 @@ def test_map_strategy_spots_are_legal():
 # darkpath_easy (Dark Path Easy won): since an upgrade step keeps tiers a
 # threat answer bought on another path (Executor._widened, 2026-11-11) its
 # m1/de1 steps run where they used to be skipped, and the plan is 40/42 at R40.
-PLAN_SHORT_OK = {"darkpath_easy"}
+# lastresort_primary_only (case 20261112_111354_LastResort_primary_only): its
+# last tiers are a 5-2-0 desperado ($21k), round 40's MOAB answer on the
+# straight, which only the account's Double Cash pays by round 39; at base
+# income the plan is 11/14 at R40 with no threat gap (tests/
+# test_lastresort_primary_offline.py replays it on the account's economy).
+PLAN_SHORT_OK = {"darkpath_easy", "lastresort_primary_only"}
 
 
 def test_map_strategies_pass_the_threat_simulation():
