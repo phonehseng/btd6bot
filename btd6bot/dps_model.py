@@ -336,6 +336,9 @@ class Source:
     pierce_cost: dict = field(default_factory=dict)   # extra pierce per hit, by bloon tag (_pierce_cost)
     rear_fov: float = 0.0      # a Buccaneer's second shot behind the boat: degrees of its target cone
     spray: float = 0.0         # an aimed volley's fan in degrees (see the class docstring)
+    refresh: float = 0.0       # a lingering patch whose pierce comes back every `refresh` s (_patch_hits)
+    life: float = 0.0          # ... and how long it lies there
+    patch_radius: float = 0.0  # ... and its radius
     zone_radius: float = None  # its own attack's reach around the tower (_zone_radius); None = the tower's
     zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
     dot_immune: frozenset = frozenset()   # bloon properties its damage over time cannot hurt
@@ -517,6 +520,45 @@ def _single_hits(p):
     return 1.0
 
 
+# Lingering patches whose pierce comes back (docs/model_fix_plan.md item 11,
+# docs/model_audit_magic.md finding 4): Wall of Fire (10 pierce every
+# 0.15 s for 4.5 s), the Druid of the Jungle's brambles (20 pierce every
+# 0.3 s for 4.5 s), Mortar Blooncineration's wall, the Mermonkey's trance.
+# A patch got one load of pierce and a fixed count of hits: Wall of Fire 10
+# where the game gives it up to 300 in a dense stream, a bramble 15 even on
+# a lone bloon that crosses its 2-unit circle in three ticks. False reads
+# them as before.
+#
+# Calibrated against item 10: AUC 0.817 -> 0.818, rounds at or above 2.0
+# that leaked 0.52% -> 0.53% (0.53% at the matched cut): neutral.
+REFRESH_RATING = True
+
+
+def _refresh_of(p):
+    """Seconds between pierce refreshes of a patch that lies still (static
+    or instant, with RefreshPierceModel: the export's "pierce_refresh"), 0
+    for any other projectile or with REFRESH_RATING off."""
+    if not REFRESH_RATING or p.get("motion") not in ("static", "instant"):
+        return 0.0
+    return float(p.get("pierce_refresh") or 0.0) if p.get("lifespan") else 0.0
+
+
+def _patch_hits(src, lay, rho):
+    """Hits one lingering patch lands over its life (Source.refresh): its
+    pierce every refresh, pierce x life / refresh in all, but no more than
+    the bloons that cross it while it lies there (1 + rho x (v x life +
+    its width)) times the ticks each spends inside ((width) / v / refresh,
+    at least 1, at most life / refresh), width = 2 x (patch radius + bloon
+    radius). A bloon of base speed v (the layer's: the mode's speed factor
+    is not known here) crossing a 15-unit Wall of Fire takes about ten
+    ticks; a dense stream fills its 300 hits."""
+    v = max(lay.speed, 1e-3)
+    width = 2.0 * (src.patch_radius + lay.radius)
+    ticks = max(1.0, min(src.life / src.refresh, math.ceil(width / v / src.refresh)))
+    passing = 1.0 + rho * (v * src.life + width)
+    return min(src.pierce * src.life / src.refresh, passing * ticks)
+
+
 def _thrown_off(spawn):
     """Is this spawn a piece thrown off where its carrier struck a bloon,
     flying away from it (Shrapnel, Frag), rather than a blast centred on the
@@ -685,6 +727,9 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             pierce_cost=_pierce_cost(p),
             rear_fov=float(attack.get("rear_fov") or 0.0),
             spray=float(attack.get("spray") or 0.0) if depth == 0 else 0.0,
+            refresh=_refresh_of(p),
+            life=float(p.get("lifespan") or 0.0),
+            patch_radius=float(p.get("radius") or 0.0),
             zone_radius=attack.get("zone_radius"),
             zone_fixed=bool(attack.get("zone_fixed")),
             grip_rate=float(p.get("grip_rate") or 0.0),
@@ -2109,7 +2154,9 @@ def _hit_rate(src, lay, rho, zone):
         # the first hit is always made
         cost = sum(c for tag, c in src.pierce_cost.items() if tag == "" or tag in lay.tags)
         pierce = max(1.0, pierce / (1.0 + cost))
-    if src.off_struck:
+    if src.refresh and src.life > 0.0:
+        per_shot = _patch_hits(src, lay, rho) * pierce / max(src.pierce, 1e-9)
+    elif src.off_struck:
         per_shot = min(pierce, met)
     else:
         per_shot = min(pierce, max(met, src.single_hits))
