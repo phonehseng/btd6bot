@@ -2659,10 +2659,17 @@ def _lots(mode, rnd, track):
 # (_ControlBoard), the delays of a route are summed once (_Delays), looked
 # up once per job, and only for lots the station can hurt (_Server.enter).
 # Twelve Quad Impoppable rounds (late game, 30+ towers) rate about 1.2x
-# the time they take with it off. A slow, stun or push is shared among the
-# bloons in a zone, but never among more than the lot's group (Lot.group):
-# a lone MOAB is stunned as one bloon.
+# the time they take with it off.
 STATUS_RATING = True
+# A stun, slow or push is shared among the bloons in a zone - the packing
+# rho says how many. A burst is packed a quarter of a width apart, so rho
+# reads a lone MOAB as one of ~28 in a sniper's zone; True shares the hits
+# among at most the lot's own group (Lot.group) instead. It is the honest
+# count, but on the journals' boards it moved 10 leaked rounds over the 2.0
+# bar (Maim MOAB snipers and Flash Bomb ninjas on Impoppable R93-R98, lost
+# by one life; phase 2b calibration) and none under: off until the stun's
+# reading of a blimp layer is checked against a game.
+STATUS_GROUP_CAP = False
 MAX_HOLD = 2.0 / 3.0         # a stun keeps a bloon at most this share of its time in the zone (x3 time)
 MAX_STALL = 1.0              # all delays add at most this many times the lot's undelayed time on its route
 MIN_DELAY_S = 0.05           # delays shorter than this are left out (they only cost time to play)
@@ -2898,7 +2905,7 @@ def _per_bloon_at_one(st, src, lay, rho, path, group=None):
     if src.ability_use == "moab" and not lay.moab:
         hits = 0.0             # pressed in blimp rounds, for the blimps (abilities.py)
     n = rho * zone.length
-    if group is not None:
+    if group is not None and STATUS_GROUP_CAP:
         n = min(n, group)
     n = max(1.0, n)
     return hits / n, zone.length / max(lay.speed, 1e-6)

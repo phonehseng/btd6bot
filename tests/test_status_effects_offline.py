@@ -259,16 +259,23 @@ def test_glue_board_holds_longer():
 def test_maim_moab_on_a_moab_round():
     """Maim MOAB (sniper 4-0-0) on hard round 40 (one MOAB): stunned 3 s
     of every 1.59 s, the MOAB stands in the boomerang's and dart's reach
-    for longer. A lone MOAB is one bloon to stun, not the ~28 a burst's
-    packing would say (Lot.group). Pinned: the stun is worth at least 15%
-    on top of the sniper's own damage."""
+    for longer. By default its hits are shared among the ~28 bloons a
+    burst's packing puts in the sniper's zone, so the stun adds little;
+    counted as the one MOAB it is (STATUS_GROUP_CAP, off by default after
+    calibration) it is worth at least 15% on top of the sniper's damage."""
     tr = D.Track("Monkey Meadow")
     base = [D.Placed("b", "boomerang", (0, 2, 4), *_beside_track(tr, at=0.5)),
             D.Placed("d", "dart", (0, 2, 4), *_beside_track(tr, offset=-15.0, at=0.6))]
     sniper = [D.Placed("s", "sniper", (4, 0, 0), *_beside_track(tr, at=0.4))]
     alone, both, off = _margins(base, sniper, "hard", 40, tr)
-    assert both >= 1.15 * off, (both, off)
-    assert both > alone
+    assert both >= off and both > alone
+    saved = D.STATUS_GROUP_CAP
+    try:
+        D.STATUS_GROUP_CAP = True
+        alone, capped, off = _margins(base, sniper, "hard", 40, tr)
+    finally:
+        D.STATUS_GROUP_CAP = saved
+    assert capped >= 1.15 * off, (capped, off)
 
 
 def test_monarch_of_storms_blows_ddts_back():
