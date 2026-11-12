@@ -332,6 +332,8 @@ class Source:
     zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
     dot_immune: frozenset = frozenset()   # bloon properties its damage over time cannot hurt
                                # (0 = not such a shot; _rear_copies)
+    ability: str = ""          # the ability it belongs to, credited at its uptime ("" = the tower's
+                               # own attack; _ability_attacks)
     grip_rate: float = 0.0     # a hit that holds its bloon and deals this much a second (Psi: _psi_grip)
 
     def can_hit(self, lay):
@@ -368,6 +370,7 @@ class Profile:
     own_radius: float = 0.0          # circle swept around the tower itself (Glaive Lord's glaives)
     flight_speed: float = 0.0        # a plane's speed along its flight circle (air_unit.speed)
     fire_rate: float = 0.0           # weapon shots a second of its own attacks (an Alchemist dip's budget)
+    boosts: list = field(default_factory=list)   # its abilities' boosts to its own attacks (_ability_boosts)
 
 
 # The bloon properties a damage type can be unable to pop (Layer.immune).
@@ -1055,6 +1058,194 @@ def _subtower_buffs(entry):
     return out
 
 
+# ===========================================================================
+# Abilities, credited by their uptime
+# ===========================================================================
+
+# The bot presses the abilities it may blindly press on cooldown, and the
+# MOAB ones in blimp rounds (abilities.py), so their effect is part of the
+# defence (docs/model_fix_plan.md item 8; docs/model_audit_primary.md F2,
+# military M10, support V4/S2). Each pressed ability counts at its uptime,
+# min(1, duration / cooldown): MOAB Eliminator's 4,500-damage missile once
+# every 10 s, Super Maelstrom's blades 9 s in 20, Call to Arms' x1.5 attack
+# speed and pierce 15 s in 45 (+42% on average for a pierce-bound tower),
+# Homeland Defense's x2 20 s in 45 (+133%). Abilities the bot never presses
+# blind ('never' in abilities.TOWER_ABILITIES and towers.HEROES: First
+# Strike, Overclock, Blood Sacrifice) count nothing. The average reading
+# is the cautious one: the bot also saves nothing for a heavy round.
+# Two more cautious rules came out of the calibration: an ability adds only
+# to layers its tower can hit without it (_own_attack_hits), and an
+# ability's map-wide blast meets only the bloons on the track (_bloons_met).
+# False leaves every ability out again.
+#
+# Calibrated on the same rounds as the heroes (item 7): AUC 0.815 -> 0.813,
+# rounds at or above 2.0 that leaked 0.52% -> 0.54% (0.53% at the cut that
+# rejects as many held rounds as 2.0 did before), held rounds under 2.0
+# 56.7% -> 54.6%: no clear change either way, so it stays on. Before the two
+# rules, three Ground Zero aces rated a lost Quad Impoppable round 16.0.
+ABILITY_RATING = True
+
+# Uses of abilities.TOWER_ABILITIES / towers.HEROES that the bot presses
+# without a target click.
+PRESSED_USES = ("on_cooldown", "moab")
+
+
+def _squash(text):
+    return "".join(c for c in str(text or "").lower() if c.isalnum())
+
+
+@lru_cache(maxsize=None)
+def _tower_ability_uses():
+    """{(tower kind, exported ability name): the bot's use of it} for every
+    tower ability of abilities.TOWER_ABILITIES.
+
+    The export names an ability by the game's display name ("Assassinate
+    MOAB", "Sabotage") and the bot by the upgrade that brings it ("MOAB
+    Assassin", "Bloon Sabotage"). They are matched on the one-path
+    crosspath of that upgrade: the ability that appears at that tier and
+    not one below (by name where the names agree, else the only new one,
+    else the one with the bot's cooldown). An ability that replaces one the
+    bot knows on a higher tier of the same path, under a name the bot does
+    not list, keeps its button and so its use: Perma Charge (0-5-0) is
+    pressed as the Turbo Charge it replaces."""
+    from .abilities import TOWER_ABILITIES, TOWER_ABILITY_AT
+    out = {}
+    towers = attacks().get("towers") or {}
+    for kind, entry in towers.items():
+        cps = entry.get("crosspaths") or {}
+        for path in (1, 2, 3):
+            before, last = set(), None
+            for tier in range(1, 6):
+                code = ["0", "0", "0"]
+                code[path - 1] = str(tier)
+                here = cps.get("".join(code), {}).get("abilities") or []
+                new = [a for a in here if _squash(a.get("name")) not in before and not a.get("interval")]
+                before = {_squash(a.get("name")) for a in here}
+                name = TOWER_ABILITY_AT.get((kind, path, tier))
+                if name is None:
+                    if last is not None and len(new) == 1:
+                        out[(kind, new[0].get("name"))] = last        # the button stays
+                    continue
+                same = [a for a in new if _squash(name) in (_squash(a.get("name")), _squash(a.get("upgrade")))
+                        or _squash(a.get("name")) in _squash(name)]
+                pick = same[0] if same else new[0] if len(new) == 1 else next(
+                    (a for a in new if a.get("cooldown") == TOWER_ABILITIES[name][0]), None)
+                if pick is not None:
+                    out[(kind, pick.get("name"))] = last = TOWER_ABILITIES[name][1]
+    return out
+
+
+def _hero_ability_use(hero, name):
+    """The bot's use of a hero ability (towers.HEROES), matched by name; None
+    when the bot does not list it."""
+    from .towers import HEROES
+    for ab in (HEROES.get(hero) or {}).get("abilities", []):
+        mine, theirs = _squash(ab["name"]), _squash(name)
+        if mine and (mine in theirs or theirs in mine or mine[:8] == theirs[:8]):
+            return ab.get("use")
+    return None
+
+
+def _pressed_abilities(kind, tiers, entry):
+    """The exported abilities of a tower crosspath or hero level that the bot
+    uses: pressed blind (PRESSED_USES) or cast by the tower itself on an
+    interval (Carpet of Spikes' Spike Storm every 15 s). [] when
+    ABILITY_RATING is off."""
+    if not ABILITY_RATING:
+        return []
+    hero = hero_of(kind)
+    out = []
+    for ab in entry.get("abilities") or []:
+        if ab.get("interval"):
+            out.append(ab)
+            continue
+        use = (_hero_ability_use(hero, ab.get("name")) if hero is not None
+               else _tower_ability_uses().get((kind, ab.get("name"))))
+        if use in PRESSED_USES:
+            out.append(ab)
+    return out
+
+
+@lru_cache(maxsize=None)
+def _own_attack_hits(kind, tiers, lay):
+    """Can one of the tower's own attacks (no ability) damage this layer?
+
+    An ability is credited only on layers its tower can hit without it. Its
+    uptime is an average, and on a layer nothing else of the tower touches
+    the average decides alone: Obyn's Brambles (100 pierce of track thorns
+    every 30 s) were the only camo answer of a Ship Capture Half Cash board
+    and lifted round 24 from the floor to 2.77, a round that lost lives
+    (calibration of item 8). The cautious reading: an ability adds strength,
+    not a capability the bot would rely on between presses."""
+    p = profile(kind, tiers)
+    return p is not None and any(s.can_hit(lay) for s in p.sources if not s.ability)
+
+
+def _uptime(ab, duration):
+    """Share of the time an ability's effect of `duration` seconds is up
+    when it is pressed on every cooldown (or cast on every interval)."""
+    every = ab.get("interval") or ab.get("cooldown") or 0.0
+    if every <= 0.0 or not duration:
+        return 0.0
+    return min(1.0, float(duration) / float(every))
+
+
+def _ability_attacks(ab):
+    """The attacks of an ability as attacks that fire at their average rate:
+    every weapon fires as many volleys per cooldown as it does while the
+    ability is up - one for a one-shot ability (MOAB Eliminator: one missile
+    every 10 s), duration / rate for one that keeps firing (Super
+    Maelstrom: 9 s / 0.045 s = 200 volleys every 20 s; Spike Storm: 2 s /
+    0.04 s = 50 piles per attack, 200 in all)."""
+    every = ab.get("interval") or ab.get("cooldown") or 0.0
+    if every <= 0.0:
+        return []
+    out = []
+    for a in ab.get("attacks") or []:
+        weapons = []
+        for w in a.get("weapons", []):
+            rate = max(w.get("rate", 1.0), w.get("rate_min", 0.0), 1e-3)
+            duration = a.get("duration") or 0.0
+            volleys = 1.0 if (a.get("one_shot") or duration <= rate) else duration / rate
+            weapons.append({k: v for k, v in w.items() if k != "rate_min"} | {"rate": every / volleys})
+        out.append(dict(a, weapons=weapons))
+    return out
+
+
+def _ability_buffs(ab):
+    """Timed buffs of an ability to other towers (Call to Arms, Homeland
+    Defense, Absolute Zero's Ice Monkey speed), as buffs that cover their
+    uptime share of the buffed towers' shots (Source shares, see
+    _buffed_sources); one "group" per ability, as the game does not let a
+    second press stack on an active buff."""
+    out = []
+    for b in ab.get("buffs") or []:
+        share = _uptime(ab, b.get("duration"))
+        if share > 0.0:
+            out.append(dict(b, share=share, group=_squash(ab.get("name")), ability=True))
+    return out
+
+
+def _ability_boosts(ab, entry, kind):
+    """Boosts of an ability to the tower's own attacks: TurboModel (Turbo
+    Charge: weapon rate x0.2 and +1 damage for 10 s of 45) and DamageUp
+    (Perma Charge: +10 damage for 15 s of 45), and its timed buffs where
+    they reach the tower itself (Absolute Zero speeds up its own Ice
+    Monkey). [{"share", "rate", "damage_add"}]."""
+    out = []
+    own = ab.get("self") or {}
+    share = _uptime(ab, own.get("duration"))
+    if share > 0.0:
+        out.append({"share": share, "rate": own.get("rate") or 1.0, "damage_add": own.get("damage_add") or 0.0})
+    game_id = ((attacks().get("towers") or {}).get(kind) or {}).get("game_id")
+    for b in ab.get("buffs") or []:
+        if b.get("kind") == "rate" and b.get("towers") and game_id in b["towers"]:
+            share = _uptime(ab, b.get("duration"))
+            if share > 0.0:
+                out.append({"share": share, "rate": b.get("value") or 1.0, "damage_add": 0.0})
+    return out
+
+
 @lru_cache(maxsize=None)
 def profile(kind, tiers):
     """Profile of a tower crosspath, or of a hero at a level (kind
@@ -1090,9 +1281,26 @@ def profile(kind, tiers):
     map_wide = [a for a in entry.get("attacks", []) if a.get("unbounded") == "map"]
     is_global = bool(entry.get("global")) and not (
         map_wide and all(_drops_under_plane(a, w) for a in map_wide for w in a.get("weapons", [])))
+    pressed = _pressed_abilities(kind, tiers, entry)
+    for ab in pressed:
+        # the ability's attacks and the towers it makes, at their uptime;
+        # marked (Source.ability) so a board whose abilities the bot does
+        # not press can leave them out (station_for: pressed)
+        extra = []
+        for a in _ability_attacks(ab):
+            _flatten_attack(dict(a, **_zone_radius(a, entry)), extra, tower_range=entry.get("range"))
+        for made in ab.get("towers") or ():
+            share = _uptime(ab, made.get("duration"))
+            for a in made.get("attacks", []):
+                _flatten_attack(a, extra, multiplier=share, tower_range=made.get("range"))
+        for s in extra:
+            s.ability = ab.get("name") or "ability"
+        sources += extra
     return Profile(kind=kind, tiers=tiers, range=entry.get("range", 0.0),
                    is_global=is_global, sources=sources, aim_bound=aim_bound and not sources,
-                   buffs=list(entry.get("buffs", [])) + _subtower_buffs(entry) + _potion_buffs(entry),
+                   buffs=list(entry.get("buffs", [])) + _subtower_buffs(entry) + _potion_buffs(entry)
+                   + [b for ab in pressed for b in _ability_buffs(ab)],
+                   boosts=[b for ab in pressed for b in _ability_boosts(ab, entry, kind)],
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
                    pattern_radius=pattern, own_radius=own,
                    flight_speed=float((entry.get("air_unit") or {}).get("speed") or 0.0),
@@ -1743,7 +1951,21 @@ def _bloons_met(src, rho, zone):
         return 1.0 + rho * (zone.length if zone is not None else 0.0)
     if math.isinf(src.reach):                  # waits on the track (spikes): all that pass
         return math.inf
+    if src.ability and src.reach >= MAP_BLAST_REACH and zone is not None:
+        # an ability's blast that covers the whole map (Ground Zero's
+        # 9,999,999-unit explosion) meets the bloons on the covered track,
+        # not rho times its 20,000,000-unit "reach": uncapped, three Ground
+        # Zero aces' one bomb each 35 s destroyed 57 whole bloons a second
+        # each and rated Quad Impoppable's round 93 16.0 (calibration of
+        # item 8, docs/model_fix_plan.md; the round lost a life). Towers'
+        # own attacks keep the phase-1 reading.
+        return 1.0 + rho * zone.length
     return 1.0 + rho * src.reach
+
+
+# A projectile reach (Source.reach) at least this long is a map-wide blast
+# (_bloons_met).
+MAP_BLAST_REACH = 1000.0
 
 
 def _hit_rate(src, lay, rho, zone):
@@ -1828,6 +2050,8 @@ class _Rates:
         for src in self.station.sources:
             if not src.can_hit(lay):
                 continue
+            if src.ability and not _own_attack_hits(self.station.kind, self.station.tiers, lay):
+                continue     # an ability adds to what its tower can hit, no more (_own_attack_hits)
             if lay.camo and src.camo_shared and camo_paths is not None and path not in camo_paths:
                 continue     # Advanced Intel sees camo only where a detector reaches
             hits = _hit_rate(src, lay, rho, zone)
@@ -2209,23 +2433,61 @@ def _buffed_sources(p, buffs_here):
 
     A buff with a "share" under 1 (an Alchemist's dip, _dip_share) covers
     only that share of the tower's shots: each source is split into a
-    dipped copy at that share of its rate and a plain one at the rest."""
-    dips = [b for b in buffs_here if b.get("share", 1.0) < 1.0]
-    steady = [b for b in buffs_here if b.get("share", 1.0) >= 1.0]
-    share = min(1.0, sum(b["share"] for b in dips))
-    if dips and share >= 1.0:
-        steady, dips = steady + dips, []
-    out = []
-    for s in p.sources:
-        full = _with_buffs(s, steady)
-        if not dips or share <= 0.0:
-            out.append(full)
-            continue
-        dipped = _with_buffs(full, dips)
-        out.append(Source(**{**full.__dict__, "shots": full.shots * (1.0 - share),
-                             "shots_single": full.shots_single * (1.0 - share)}))
-        out.append(Source(**{**dipped.__dict__, "name": dipped.name + " (dipped)", "shots": dipped.shots * share,
-                             "shots_single": dipped.shots_single * share}))
+    dipped copy at that share of its rate and a plain one at the rest.
+    Several dips add their shares. An ability's timed buff (its "group":
+    Call to Arms, _ability_buffs) is a share of its own: a source is split
+    once per group, at the group's largest share (the game lets no second
+    press stack on an active one), with all of that group's buffs on the
+    buffed copy - Call to Arms' rate and pierce together."""
+    groups = {}
+    steady = []
+    for b in buffs_here:
+        if b.get("share", 1.0) >= 1.0:
+            steady.append(b)
+        else:
+            groups.setdefault(b.get("group", "dip"), []).append(b)
+    splits = []
+    for name, bs in groups.items():
+        share = min(1.0, sum(b["share"] for b in bs)) if name == "dip" else max(b["share"] for b in bs)
+        if share >= 1.0:
+            steady += bs
+        elif share > 0.0:
+            splits.append((name, share, bs))
+    out = [_with_buffs(s, steady) for s in p.sources]
+    for name, share, bs in splits:
+        tag = " (dipped)" if name == "dip" else f" ({name})"
+        nxt = []
+        for full in out:
+            buffed = _with_buffs(full, bs)
+            nxt.append(Source(**{**full.__dict__, "shots": full.shots * (1.0 - share),
+                                 "shots_single": full.shots_single * (1.0 - share)}))
+            nxt.append(Source(**{**buffed.__dict__, "name": buffed.name + tag, "shots": buffed.shots * share,
+                                 "shots_single": buffed.shots_single * share}))
+        out = nxt
+    return out
+
+
+def _boosted_sources(sources, boosts):
+    """sources with a tower's own ability boosts (Profile.boosts: Turbo
+    Charge, Perma Charge, Absolute Zero on its own Ice Monkey) at their
+    uptime: each of the tower's own attacks is split into a boosted copy at
+    the boost's share of its shots - weapon rate x "rate" (a shorter
+    interval: more shots), "damage_add" more per hit - and a plain one at
+    the rest."""
+    out = list(sources)
+    for b in boosts:
+        share, rate, add = b["share"], max(b.get("rate") or 1.0, 1e-3), b.get("damage_add") or 0.0
+        nxt = []
+        for s in out:
+            if s.ability:
+                nxt.append(s)
+                continue
+            nxt.append(Source(**{**s.__dict__, "shots": s.shots * (1.0 - share),
+                                 "shots_single": s.shots_single * (1.0 - share)}))
+            nxt.append(Source(**{**s.__dict__, "name": s.name + " (boosted)",
+                                 "shots": s.shots * share / rate, "shots_single": s.shots_single * share / rate,
+                                 "damage": s.damage + (add if s.damage > 0.0 else 0.0)}))
+        out = nxt
     return out
 
 
@@ -2239,6 +2501,8 @@ def _with_buffs(s, buffs):
             single /= b["value"]
         elif b["kind"] == "pierce" and b.get("value"):
             pierce += b["value"]
+        elif b["kind"] == "pierce_mult" and b.get("value"):
+            pierce *= b["value"]                # Call to Arms: +50% pierce
         elif b["kind"] == "camo":
             camo = True
         elif b["kind"] == "damage_type":
@@ -2280,9 +2544,10 @@ def detects_camo(kind, tiers):
     """Does a tower crosspath see camo bloons on its own - some aimed
     source of its profile targets them (the game's camo detection)? Spikes
     laid on the track pop camo bloons without seeing them and do not count:
-    an Advanced Intel sub shares what a tower *targets*."""
+    an Advanced Intel sub shares what a tower *targets*. Nor do its
+    abilities (Source.ability): they are up part of the time only."""
     p = profile(kind, tiers)
-    return bool(p) and any(s.camo and s.placement != "track" for s in p.sources)
+    return bool(p) and any(s.camo and s.placement != "track" and not s.ability for s in p.sources)
 
 
 @lru_cache(maxsize=None)
@@ -2342,7 +2607,7 @@ def _joined(main, parts):
     return main
 
 
-def station_for(t, placed, track, sight=None, strict=False):
+def station_for(t, placed, track, sight=None, strict=False, pressed=True):
     """The Station of one Placed tower, or None when it does no damage or
     reaches no track. strict: STRICT_OWN_REACH towers reach only their own
     circle, not the whole map. Support buffs of the other towers in `placed`
@@ -2353,15 +2618,21 @@ def station_for(t, placed, track, sight=None, strict=False):
     (placement.needs_sight).
 
     Bombs dropped under a plane (placement "drop": pineapples, Bomber Ace)
-    are stations of their own along the flight circle (_drop_parts)."""
+    are stations of their own along the flight circle (_drop_parts).
+
+    pressed: the bot presses abilities on this board. False when a
+    destructive hero ability may be unlocked (abilities.DESTRUCTIVE_
+    ABILITIES: with Adora at level 7 or more the bot presses no hotkey at
+    all) - then no ability counts (Source.ability, Profile.boosts and the
+    ability buffs of the supporters)."""
     p = profile(t.kind, t.tiers)
     if p is None:
         return None
-    main = _station_for(t, placed, track, sight, strict)
+    main = _station_for(t, placed, track, sight, strict, pressed)
     if not any(s.placement == "drop" for s in p.sources):
         return main
     camo_paths = None if main is None else main.camo_paths
-    drops = [s for s in _buffed_sources(p, _buffs_at(t, placed)[0]) if s.placement == "drop"]
+    drops = [s for s in _buffed_sources(p, _buffs_at(t, placed, pressed)[0]) if s.placement == "drop"]
     return _joined(main, _drop_parts(t, drops, p, track, camo_paths))
 
 
@@ -2382,7 +2653,7 @@ class RangeBuff:
         return radius * self.mult + self.add
 
 
-def _buffs_at(t, placed):
+def _buffs_at(t, placed, pressed=True):
     """(support buffs that reach tower t, RangeBuff) from the other towers
     in `placed` (see station_for)."""
     buffs_here = []
@@ -2393,6 +2664,8 @@ def _buffs_at(t, placed):
             continue
         for b in q.buffs:
             if not buff_reaches(b, t.kind, t.tiers):
+                continue
+            if b.get("ability") and not pressed:
                 continue
             if b.get("global") or buff_covers(o, t, b.get("radius") or q.range):
                 if b["kind"] == "range" and b.get("value"):
@@ -2406,14 +2679,16 @@ def _buffs_at(t, placed):
     return buffs_here, RangeBuff(mult, add)
 
 
-def _station_for(t, placed, track, sight=None, strict=False):
+def _station_for(t, placed, track, sight=None, strict=False, pressed=True):
     """station_for without the "drop" sources."""
     from .placement import needs_sight
     p = profile(t.kind, t.tiers)
     if p is None:
         return None
-    buffs_here, range_mult = _buffs_at(t, placed)
-    sources = [s for s in _buffed_sources(p, buffs_here) if s.placement != "drop"]
+    buffs_here, range_mult = _buffs_at(t, placed, pressed)
+    sources = [s for s in _buffed_sources(p, buffs_here) if s.placement != "drop" and (pressed or not s.ability)]
+    if pressed and p.boosts:
+        sources = _boosted_sources(sources, p.boosts)
     sources = [s for s in _rear_copies(sources, t, range_mult(p.range), track)
                if s.shots > 0.0 or not s.rear_fov]
     if not sources:
@@ -2634,7 +2909,7 @@ def intel_lent_circles(t, placed):
         if o.kind in INTEL_KINDS:
             out.append((o.x, o.z, q.range))
             continue
-        if q.is_global or any(s.placement == "global" for s in q.sources):
+        if q.is_global or any(s.placement == "global" for s in q.sources if not s.ability):
             continue
         out.append((o.x, o.z, max((q.pattern_radius or 0.0) + q.range, q.own_radius)))
     return tuple(out)
@@ -2677,7 +2952,7 @@ def _reach_paths(t, track, sight=None):
     if p is None:
         return frozenset()
     radius = max((p.pattern_radius or 0.0) + p.range, p.own_radius)
-    is_global = p.is_global or any(s.placement == "global" for s in p.sources)
+    is_global = p.is_global or any(s.placement == "global" for s in p.sources if not s.ability)
     sees = needs_sight(t.kind) and (not is_global or t.kind in MAP_WIDE_NEEDS_SIGHT)
     zones = track.zones(t.x, t.z, None if is_global else radius,
                         sight=sight if (sight is not None and sees) else None)
@@ -2721,9 +2996,9 @@ def sight_test(grid, track, samples=12, heights=None):
     return sight
 
 
-def stations_for(placed, track, sight=None, strict=False):
+def stations_for(placed, track, sight=None, strict=False, pressed=True):
     """Stations for a list of Placed towers on a Track (see station_for)."""
-    return [st for st in (station_for(t, placed, track, sight, strict) for t in placed) if st is not None]
+    return [st for st in (station_for(t, placed, track, sight, strict, pressed) for t in placed) if st is not None]
 
 
 def evaluate(placed, mode, rounds, track, sight=None, margins=False):

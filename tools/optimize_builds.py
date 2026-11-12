@@ -199,6 +199,16 @@ def economy(mode, boosts=None):
     return econ
 
 
+def hero_tiers_at(hero, map_name, mode, account, placed_round, rnd):
+    """The hero Tower's tiers in round `rnd`: (level, optimistic level) -
+    the level it is rated at (hero_level_at) and the level the bot's
+    ability planner may already assume (abilities.HERO_XP_OPTIMISM), which
+    decides whether it presses anything (Evaluator.pressed)."""
+    from btd6bot.abilities import HERO_XP_OPTIMISM, estimate_hero_level
+    return (hero_level_at(hero, map_name, mode, account, placed_round, rnd),
+            estimate_hero_level(hero, placed_round, rnd, HERO_XP_OPTIMISM))
+
+
 def hero_level_at(hero, map_name, mode, account, placed_round, rnd):
     """The level the bot's estimate gives `hero` in round `rnd`, placed in
     `placed_round` (abilities.estimate_hero_level, with the map's and the
@@ -612,22 +622,36 @@ class Evaluator:
         mk = self.model_kind(t)
         return None if mk is None else D.Placed(t.tid, mk[0], mk[1], t.spot.x, t.spot.z)
 
+    def pressed(self, towers):
+        """Does the bot press abilities with this board's hero? Not once a
+        destructive hero ability may be unlocked: the hero Tower's tiers are
+        (level, optimistic level) (Optimizer._level_hero), and from Adora's
+        level 7 on the bot presses no hotkey (abilities.presses_blind)."""
+        from btd6bot.abilities import DESTRUCTIVE_ABILITIES
+        hero = next((t for t in towers if t.kind == "hero"), None)
+        if hero is None or not self.hero or len(hero.tiers) < 2:
+            return True
+        return not any(ab["name"] in DESTRUCTIVE_ABILITIES and ab["level"] <= hero.tiers[1]
+                       for ab in T.HEROES.get(self.hero, {}).get("abilities", []))
+
     def station_of(self, tower, towers):
         """The station of one tower standing among `towers` (None when it
         does no damage or reaches no track). It depends only on the tower
-        and the supporters on the map (villages, a buffing hero), so it is
-        cached by (kind, crosspath, cell, supporters)."""
+        and the supporters on the map (villages, a buffing hero), and on
+        whether the bot presses abilities with this hero (pressed), so it is
+        cached by (kind, crosspath, cell, supporters, pressed)."""
         me = self.placed(tower)
         if me is None:
             return None
+        pressed = self.pressed(towers)
         board = [b for b in (self.placed(t) for t in towers) if b is not None]
         supporters = tuple(sorted((b.kind, b.tiers, t.spot.cell) for b, t in
                                   ((self.placed(t), t) for t in towers) if b is not None
                                   and (D.profile(b.kind, b.tiers) is not None and D.profile(b.kind, b.tiers).buffs)))
-        key = (me.kind, me.tiers, tower.spot.cell, supporters or None)
+        key = (me.kind, me.tiers, tower.spot.cell, supporters or None, pressed)
         st = self._stations.get(key)
         if st is None:
-            st = D.station_for(me, board, self.setup.track, sight=self.setup.sight) or False
+            st = D.station_for(me, board, self.setup.track, sight=self.setup.sight, pressed=pressed) or False
             self._stations[key] = st
         return st or None
 
@@ -874,8 +898,8 @@ class Optimizer:
         out = []
         for t in towers:
             if t.kind == "hero":
-                lv = hero_level_at(self.hero, self.map_name, self.mode, self.account, placed_round, rnd)
-                t = Tower(t.tid, t.kind, t.spot, (lv,), t.spent)
+                t = Tower(t.tid, t.kind, t.spot,
+                          hero_tiers_at(self.hero, self.map_name, self.mode, self.account, placed_round, rnd), t.spent)
             out.append(t)
         return out
 
@@ -1417,8 +1441,8 @@ def replay_plan(plan, rounds=None, account=None):
         if "hero" in towers:
             # the hero's level in this round (hero_level_at, as the live forecast estimates it)
             h = towers["hero"]
-            towers["hero"] = Tower(h.tid, h.kind, h.spot, (hero_level_at(hero, plan["map"], mode, account,
-                                                                        placed["hero"], rnd),), h.spent)
+            towers["hero"] = Tower(h.tid, h.kind, h.spot,
+                                   hero_tiers_at(hero, plan["map"], mode, account, placed["hero"], rnd), h.spent)
         while i < len(steps):
             step = steps[i]
             if step["do"] == "place" and step["kind"] == "hero":
@@ -1444,7 +1468,7 @@ def replay_plan(plan, rounds=None, account=None):
                 if spot is not None:
                     placed["hero"] = rnd
                     towers["hero"] = Tower("hero", "hero", spot,
-                                           (hero_level_at(hero, plan["map"], mode, account, rnd, rnd),), cost)
+                                           hero_tiers_at(hero, plan["map"], mode, account, rnd, rnd), cost)
             elif step["do"] == "upgrade":
                 t = towers[step["id"]]
                 towers[step["id"]] = Tower(t.tid, t.kind, t.spot, tuple(int(c) for c in str(step["to"]).split("-")),

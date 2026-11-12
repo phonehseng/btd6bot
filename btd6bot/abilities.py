@@ -234,6 +234,20 @@ BLIMP_LEAD_S = 1.0            # ROUND_START fires this many game seconds before 
 DESTRUCTIVE_ABILITIES = {"Blood Sacrifice"}
 
 
+def presses_blind(hero, placed_round, rnd):
+    """Does the AbilityPlanner press any hotkey in round `rnd` with this
+    hero placed in `placed_round`? False once a DESTRUCTIVE_ABILITIES
+    ability may be unlocked (the optimistic level estimate, as
+    AbilityPlanner.destructive_possible reads it): from then on nothing is
+    pressed, tower abilities included. The damage model credits abilities
+    only on boards where it is True (dps_model.station_for: pressed)."""
+    if not hero or placed_round is None or rnd is None:
+        return True
+    level = estimate_hero_level(hero, placed_round, rnd, HERO_XP_OPTIMISM)
+    return not any(ab["name"] in DESTRUCTIVE_ABILITIES and ab["level"] <= level
+                   for ab in T.HEROES.get(hero, {}).get("abilities", []))
+
+
 def _tower_ability_index():
     """(kind, path 1..3, tier 1..5) -> upgrade name, for TOWER_ABILITIES."""
     out = {}
