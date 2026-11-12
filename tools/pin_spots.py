@@ -209,20 +209,55 @@ class Pinner:
         most = max(self.legal_cells(k) for k in kinds)
         return self.legal_cells(kind) < most * SCARCE_SHARE
 
-    def candidates(self, kind, ok):
+    def segment_cover(self, kind, cell, segment):
+        """Route length (world units, all routes) inside ``kind``'s range
+        from ``cell`` and within ``segment`` - the share of each route from
+        its entrance, (0.0, 0.5) its first half - that it can see."""
+        import numpy as np
+        from btd6bot import dps_model as D
+        prof = D.profile(kind, (0, 0, 0))
+        if prof is None or prof.is_global:
+            return 0.0
+        x, z = self.world(cell)
+        lo, hi = segment
+        sight = self.setup.sight_for(kind)
+        total = 0.0
+        for path in self.setup.track.paths:
+            xyz, dist, length = path["xyz"], path["dist"], path["length"]
+            progress = dist / length if length else dist * 0
+            if self.setup.track.reverse:
+                progress = 1.0 - progress
+            inside = path["hittable"] & (progress >= lo) & (progress <= hi) &                 (((xyz[:, 0] - x) ** 2 + (xyz[:, 1] - z) ** 2) <= prof.range ** 2)
+            if sight is not None and inside.any():
+                idx = np.nonzero(inside)[0]
+                inside[idx[~sight(x, z, xyz[inside])]] = False
+            total += float(np.sum(np.diff(dist)[inside[:-1]]))
+        return total
+
+    def candidates(self, kind, ok, segment=None):
         """Cells (cx, cy) for ``kind``, best first, none of them refused for
         it (never_refused): its free ranked spots (reaching the track), the
         spots nearly as good as the best (PROVEN_SCORE_SHARE) where the kind
         already stood in a live game first, then every legal cell on a
-        CELL_STRIDE grid, proven cells first. A buffer (village, alchemist:
+        CELL_STRIDE grid, proven cells first. With ``segment`` the ranked
+        spots are scored by the route they cover inside it. A buffer (village, alchemist:
         Executor.BUFFERS) lends to the towers around it, not to the track,
         so it gets the legal cells alone (pin ranks them by room)."""
         proven = proven_cells(self.model, kind)
-        spots = [] if kind in S.Executor.BUFFERS else             [sp for sp in self.setup.ranked_spots(kind) if ok[sp.cell[1], sp.cell[0]]]
+        spots = [] if kind in S.Executor.BUFFERS else             [(sp.cell, sp.score) for sp in self.setup.ranked_spots(kind) if ok[sp.cell[1], sp.cell[0]]]
+        if spots and segment and tuple(segment) != (0.0, 1.0):
+            # the step covers its part of the route (`segment`), as the
+            # executor weighs it: Mesa (2026-11-12) lost round 9 with its
+            # first ninja pinned by whole-route cover at the far end
+            on_part = [(c, self.segment_cover(kind, c, segment)) for c, _ in spots]
+            on_part = sorted((t for t in on_part if t[1] > 0), key=lambda t: -t[1])
+            # none reaches that part (Midnight Mansion's first half): any part
+            # of the route, as the executor relaxes the segment too
+            spots = on_part or spots
         if spots:
-            bar = spots[0].score * PROVEN_SCORE_SHARE
-            spots.sort(key=lambda sp: not (sp.score >= bar and proven[sp.cell[1], sp.cell[0]]))
-        ranked = [sp.cell for sp in spots]
+            bar = spots[0][1] * PROVEN_SCORE_SHARE
+            spots.sort(key=lambda t: not (t[1] >= bar and proven[t[0][1], t[0][0]]))
+        ranked = [c for c, _ in spots]
         ys, xs = ok.nonzero()
         grid = [(int(x), int(y)) for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0]
         grid.sort(key=lambda c: not proven[c[1], c[0]])     # stable: proven cells first
@@ -260,7 +295,7 @@ class Pinner:
         return sum(1 for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0
                    and math.dist(self.world((int(x), int(y))), here) <= rng)
 
-    def pin(self, tid, kind, near=(), near_radius=NEAR_RADIUS):
+    def pin(self, tid, kind, near=(), near_radius=NEAR_RADIUS, segment=None):
         """The `at` [fx, fy] for tower ``tid`` (None when no legal spot).
 
         With ``near``: the best candidate that works with every tower named
@@ -272,7 +307,7 @@ class Pinner:
         ok = self.legal(kind)
         if ok is None:
             return None
-        cands = self.candidates(kind, ok)
+        cands = self.candidates(kind, ok, segment)
         refs = [(self.kinds[r], self.cells[r]) for r in near if r in self.cells]
         if refs:
             inside = [c for c in cands if all(self.reach(kind, c, k, r, near_radius) for k, r in refs)]
@@ -327,7 +362,8 @@ def pinned_strategy(sid, map_name, mode):
     order += [st for st in wanted if st not in order]
     spots = {}
     for st in order:
-        at = pinner.pin(st["id"], st["kind"], st.get("near") or (), st.get("near_radius", NEAR_RADIUS))
+        at = pinner.pin(st["id"], st["kind"], st.get("near") or (), st.get("near_radius", NEAR_RADIUS),
+                        segment=st.get("segment") if st.get("role", "dps") == "dps" else None)
         if at is None:
             unpinned.append(st["id"])
         else:

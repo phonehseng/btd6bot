@@ -162,6 +162,39 @@ def test_the_moab_answer_comes_before_the_alchemist():
         assert order.index(("upgrade", "n2", "2-0-4")) < order.index(("place", "a1", "None")), map_id
 
 
+def test_sunken_columns_answers_round_59_camo_lead():
+    """Round 59's camo lead bloons: bm1 (a bomb pops lead) is bought right
+    after the radar village v1 reaches 2-2-0, stands in its range, and is
+    the build's camo_lead answer. It used to come at round 61, and the
+    threat simulation found round 59 uncovered."""
+    import math
+    _, d = _build("sunkencolumns")
+    order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
+    radar = order.index(("upgrade", "v1", "2-2-0"))
+    assert order[radar + 1] == ("place", "bm1", "None"), order[radar + 1]
+    assert any(st.get("id") == "bm1" for st in d["answers"]["camo_lead"])
+    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+    at = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place" and st.get("at")}
+    bm1, v1 = (pinner.world(pinner.model.frac_to_cell(*at[t])) for t in ("bm1", "v1"))
+    assert math.dist(bm1, v1) <= pin_spots.buffer_range("village")
+
+
+def test_a_tower_is_pinned_on_its_part_of_the_route():
+    """Mesa (2026-11-12): n1, `segment: [0.0, 0.5]`, was pinned by its cover
+    of the whole route at the far end, and the one-life game was lost at
+    round 9. Its pin covers more of the first half than that spot does."""
+    pinner = pin_spots.Pinner("Mesa", "impoppable")
+    first = pinner.pin("a", "ninja", segment=(0.0, 0.5))
+    pinner.placed.pop()
+    anywhere = pinner.pin("b", "ninja")
+    pinner.placed.pop()
+    cover = lambda at: pinner.segment_cover("ninja", pinner.model.frac_to_cell(*at), (0.0, 0.5))
+    assert cover(first) > cover(anywhere), (first, anywhere)
+    _, d = _build("mesa")
+    n1 = next(st for st in d["plan"] if st.get("id") == "n1")
+    assert n1["at"] == first
+
+
 def test_a_buffer_takes_the_cell_with_room_round_it():
     """Pinner.pin gives a village the cell with the most legal room inside
     its range among the candidates it weighs."""
