@@ -1,0 +1,104 @@
+# Bazaar, CHIMPS: OneEyedDeacon's Rosalia + Flying Fortress guide, step by
+# step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Bazaar had no CHIMPS build. Every Beginner CHIMPS map was won by following
+# a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Bazaar, Strategy 1). The two short lanes
+# alternate by round and the stalls block sight; the middle strip sees both.
+#
+# Guide: OneEyedDeacon (https://www.youtube.com/watch?v=nyw0_VLPl38, v49.3),
+# written round by round in the description (confidence:
+# verified-written-steps). Hero: Rosalia (R14, on the left).
+# Core towers: Ace 2-0-5 (Flying Fortress), three Darts and a Boomerang
+# (opening, two of them on Strong), Druid 1-3-0, Sniper 0-2-2, Village
+# 2-2-0, Alchemist 3-2-0.
+# Placements, in the guide's words: the darts right, middle (Strong) and
+# left of the middle strip, the boomerang on Strong left of the middle
+# dart, the druid right of it, the sniper lined up with the top row,
+# Rosalia on the left.
+#
+# Adapted, and why:
+#   * Rosalia's abilities (R22, R25, both at R40) are pressed at round start
+#     in the guide; the bot's ability planner presses them on the blimp
+#     rounds by itself, not at those rounds.
+#   * the bot's coverage check needs ceramic, BFB, ZOMG, DDT and BAD answers
+#     from its own tables (strategy.ANSWERS); none of the guide's towers is
+#     in them. The guide spends the whole CHIMPS bank on the Flying
+#     Fortress (about $97k alone), so nothing that answers them fits in
+#     the plan: it ends with a bare spike factory at the exit (leak
+#     cleanup), and its Deadly Spikes / Perma-Spike are fill steps,
+#     bought only if cash is left. The DDT and BAD answers the executor
+#     pulls forward are the guide's own Flying Fortress.
+#   * the guide's Flying Fortress round (R88-89) cannot be met with CHIMPS
+#     cash at Hard prices: Spectre ($25,270) and Flying Fortress ($97,200)
+#     on top of the rest come to about $144k, which the rounds pay by
+#     round 94 (by round 88: $129k). The plan keeps the guide's order;
+#     the Fortress stands from round 95 in the replay.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 22/22 bought, threat gaps: none, off-plan answer buys: 4.
+# Each step stands from: x1 placed R6, x2 placed R6, x3 placed R6, r1 placed
+# R8, d1 placed R11, hero placed R14, d1 0-1-0 R15, s1 placed R17, s1 0-2-0
+# R20, d1 0-3-0 R27, d1 1-3-0 R27, s1 0-2-2 R29, v1 placed R32, v1 0-2-0 R36,
+# ac1 placed R37, ac1 2-0-3 R40, a1 placed R42, a1 3-2-0 R44, v1 2-2-0 R45,
+# ac1 2-0-4 R58, ac1 2-0-5 R95, p1 placed R95. Damage model margins on those
+# boards (it counts no hero and no ability, and under-rates map-wide towers):
+# 40 0.42, 63 1.59, 76 1.24, 81 0.82, 90 0.06, 95 0.06, 98 1.37, 100 0.06.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: bazaar_chimps
+map: Bazaar
+hero: rosalia
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {dart: [0, 0, 0], boomerang: [0, 0, 0], druid: [1, 3, 0], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
+  revised: "2026-11-12T12:00"
+  maps: [Bazaar]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.719, 0.504]}              # R6 the middle strip, right
+  - {do: place, id: x2, kind: dart, role: dps, target: strong, at: [0.74, 0.555]}  # R6 the middle, on Strong
+  - {do: place, id: x3, kind: dart, role: dps, at: [0.131, 0.487]}              # R6 the middle strip, left
+  - {do: place, id: r1, kind: boomerang, role: dps, target: strong, near: [x2], at: [0.74, 0.624]}  # R8 on Strong, left of the middle dart
+  - {do: place, id: d1, kind: druid, role: dps, near: [x2], at: [0.751, 0.47]}  # R11 right of the middle dart
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.195, 0.845]}            # R14 Rosalia, on the left
+  - {do: upgrade, id: d1, to: 0-1-0}                                            # R15
+  - {do: place, id: s1, kind: sniper, role: dps, at: [0.11, 0.538]}             # R17 lined up with the top row
+  - {do: upgrade, id: s1, to: 0-2-0}                                            # R18-20 Night Vision, Shrapnel: camo
+  - {do: upgrade, id: d1, to: 0-3-0}                                            # R26
+  - {do: upgrade, id: d1, to: 1-3-0}                                            # R27 Hard Thorns: lead
+  - {do: upgrade, id: s1, to: 0-2-2}                                            # R28-29
+  - {do: place, id: v1, kind: village, role: support, near: [d1, x2], at: [0.687, 0.845]}
+  - {do: upgrade, id: v1, to: 0-2-0}                                            # R36 Radar Scanner
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.131, 0.845]}              # R40
+  - {do: upgrade, id: ac1, to: 2-0-3}                                           # R40
+  - {do: place, id: a1, kind: alchemist, role: support, near: [ac1, d1], at: [0.751, 0.402]}  # R42
+  - {do: upgrade, id: a1, to: 3-2-0}                                            # R42-43
+  - {do: upgrade, id: v1, to: 2-2-0}                                            # R45 Jungle Drums
+  - {do: upgrade, id: ac1, to: 2-0-4}                                           # R56 Spectre
+  - {do: upgrade, id: ac1, to: 2-0-5}                                           # R88 Flying Fortress
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.195, 0.181]}             # added: a spike factory at the exit; its Perma-Spike is a fill step (see above)
+fill:
+  - {do: upgrade, id: p1, to: 2-0-4}                                            # Deadly Spikes, if the cash comes
+  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-2-0}]
+  lead: [{do: upgrade, id: d1, to: 1-3-0}]
+  ceramic: [{do: upgrade, id: ac1, to: 2-0-3}]
+  moab: [{do: upgrade, id: ac1, to: 2-0-3}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 0-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 0-2-0}]
+  bfb: [{do: upgrade, id: ac1, to: 2-0-4}]
+  rush: [{do: upgrade, id: d1, to: 1-3-0}]
+  zomg: [{do: upgrade, id: ac1, to: 2-0-5}]
+  ddt: [{do: upgrade, id: ac1, to: 2-0-5}]
+  bad: [{do: upgrade, id: ac1, to: 2-0-5}]

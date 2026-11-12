@@ -1,0 +1,90 @@
+# Balance, CHIMPS: BTD6 BluePrint's "Lazy Inferno Ring + Super Brittle (5
+# stops)" Sauda guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Balance had no CHIMPS build. Every Beginner CHIMPS map was won by
+# following a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Balance, Strategy 1: four towers, five stops,
+# no abilities, no locked tiers, written rounds).
+#
+# Guide: BTD6 BluePrint (https://www.youtube.com/watch?v=apOdpf5OR7M, about
+# 2 months old, v5x), written round by round in the description; the
+# author says these are the latest safe rounds (confidence:
+# video-description, written round steps).
+# Hero: Sauda, top middle of the central loop, R6.
+# Core towers: Tack 5-0-2 (Inferno Ring), Ice 5-2-0 (Super Brittle),
+# Alchemist 4-2-0 (Stronger Stimulant).
+# Placements: the guide puts Sauda and the tack at the top middle of the
+# central loop, the ice in the middle and the alchemist next to the tack.
+# The bot's map data refuses most of the central plots (docs/
+# map_strategies/intermediate_a.md, gap 6): the tack on the one legal
+# central plot rated 0.06 in the damage model from round 8 on. All eight
+# sub-paths pass both edge ends of the map, so the cluster stands at the
+# right end instead, on the cell where the damage model rates the tack
+# best (rounds 13/22/28: 0.96/0.39/1.04 for a 3-0-2 alone), Sauda, the ice
+# and the alchemist beside it. This is a different spot from the guide's,
+# so the guide's round timings may not hold (UNVERIFIED).
+#
+# Adapted, and why:
+#   * the bot's coverage check needs camo, ceramic-camo, DDT and BAD answers
+#     from its own tables (strategy.ANSWERS) that the guide's towers lack.
+#     The guide's four towers leave about $80k of the CHIMPS bank unspent,
+#     which pays for a Cripple MOAB sniper: Night Vision before round 24's
+#     camo, Maim MOAB before the BFBs, Cripple MOAB for round 100.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 15/15 bought, threat gaps: none, off-plan answer buys:
+# 14. Each step stands from: hero placed R6, t1 placed R8, t1 3-0-2 R14, s1
+# placed R16, s1 0-1-0 R17, s1 2-1-0 R23, t1 4-0-2 R33, i1 placed R35, i1
+# 4-2-0 R39, s1 4-1-0 R46, t1 5-0-2 R73, i1 5-2-0 R82, a1 placed R83, a1 4-2-0
+# R84, s1 5-1-0 R95. Damage model margins on those boards (it counts no hero
+# and no ability, and under-rates map-wide towers): 40 0.48, 63 0.06, 76 0.73,
+# 81 1.22, 90 0.06, 95 0.06, 98 0.18, 100 0.11.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: balance_chimps
+map: Balance
+hero: sauda
+hero_opens: true      # the hero alone holds the opening (Executor.defended)
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {tack: [5, 0, 2], ice: [5, 2, 0], alchemist: [4, 2, 0], sniper: [5, 1, 0]}
+  revised: "2026-11-12T12:00"
+  maps: [Balance]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.751, 0.641]}            # R6 Sauda: the right end, where every sub-path passes (see above)
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.772, 0.453]}              # by Sauda: the damage model's best tack cell
+  - {do: upgrade, id: t1, to: 3-0-2}                                            # by R15 Hot Shots: lead
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.345, 0.504]}  # added: the Cripple MOAB sniper (see above)
+  - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo
+  - {do: upgrade, id: s1, to: 2-1-0}                                            # Large Calibre
+  - {do: upgrade, id: t1, to: 4-0-2}                                            # by R37 Ring of Fire
+  - {do: place, id: i1, kind: ice, role: dps, near: [t1], at: [0.751, 0.385]}   # by R37, by the tack (the middle is refused)
+  - {do: upgrade, id: i1, to: 4-2-0}                                            # by R37 Embrittlement
+  - {do: upgrade, id: s1, to: 4-1-0}                                            # added: Maim MOAB
+  - {do: upgrade, id: t1, to: 5-0-2}                                            # by R66 Inferno Ring
+  - {do: upgrade, id: i1, to: 5-2-0}                                            # by R90 Super Brittle
+  - {do: place, id: a1, kind: alchemist, role: support, near: [t1], at: [0.729, 0.283]}  # by R90, next to the tack
+  - {do: upgrade, id: a1, to: 4-2-0}                                            # by R90 Stronger Stimulant
+  - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: t1, to: 3-0-2}]
+  ceramic: [{do: upgrade, id: t1, to: 3-0-2}]
+  moab: [{do: upgrade, id: t1, to: 4-0-2}]
+  camo_ceramic: [{do: upgrade, id: s1, to: 2-1-0}]
+  camo_lead: [{do: upgrade, id: s1, to: 2-1-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-1-0}]
+  rush: [{do: upgrade, id: t1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: t1, to: 5-0-2}]
+  ddt: [{do: upgrade, id: s1, to: 4-1-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]

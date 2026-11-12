@@ -402,6 +402,11 @@
 # reads the spike factories as reaching no track (heights, see 21:00); the
 # flat view is the one the videos support. Round 98 stays under 1 and round
 # 95 thin: this map still needs a stronger late game.
+#
+# 2026-11-12: PARKED for sulfursprings_chimps_guide, the map's published no-ability
+# guide build (docs/chimps_map_guides.md). This file stays as the record of
+# its games; base_success 0.05 keeps the planner, and a NEXT line without a
+# named strategy, on the guide build.
 id: sulfursprings_chimps
 map: Sulfur Springs
 hero: quincy
@@ -411,7 +416,7 @@ modes: [chimps]
 planner:
   towers: {buccaneer: [5, 2, 0], village: [2, 3, 0], boomerang: [3, 0, 2], sniper: [5, 2, 0], dart: [0, 2, 4], spike: [4, 2, 0]}
   # not gated on the damage model: played live to learn (see above)
-  base_success: {chimps: 0.5}
+  base_success: {chimps: 0.05}   # parked 2026-11-12 for the guide build
   maps: [Sulfur Springs]
   revised: "2026-11-08T03:00"
 plan:

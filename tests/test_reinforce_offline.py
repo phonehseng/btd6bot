@@ -558,6 +558,46 @@ def test_a_plan_step_out_of_reach_before_the_round_in_danger_holds_nothing():
     assert status == "buy" and found[0].cost == 300, (status, found)
 
 
+def test_with_one_life_a_pick_that_lifts_nothing_does_not_eat_the_step():
+    """Enchanted Glade Impoppable (2026-11-12, loss case 20261112_055921):
+    the judged round was always the next one, so Ground Zero ($19,200)
+    could never be paid before it and held no cash; purchases rated
+    "0.62 -> 0.62" took the bank round after round until round 95 was lost
+    with $20,029 in hand. With one life such a pick does not outbid the
+    waiting step; with lives to spare it still does (Quiet Street)."""
+    class Planned(ToyEx):
+        def __init__(self, rules):
+            super().__init__()
+            self.rules = rules
+            self.plan, self.idx = [{"do": "upgrade", "id": "s1", "to": "0-1-0"}], 0
+
+        def _first_step_cost(self, step):
+            return 12_000
+
+        def _next_path(self, p, target):
+            return (2, 12_000)
+
+        def income_until(self, due_round, rnd):
+            return 500.0 * max(0, due_round - rnd)
+
+    class Flat(ToyForecast):
+        def margin(self, towers, rnd):
+            return 0.2
+
+        def leaks(self, towers, rounds, scale, per_round=False):
+            lost = {r: 100.0 - 10 * sum(t.tiers[0] for t in towers) for r in rounds}
+            return lost if per_round else sum(lost.values())
+    ex = Planned({"one_life": True})
+    assert R.payable_by(ex, 12_000, 5000, 40, 40) is False
+    assert R.best(ex, Flat(), 5000, 40, 80, lives=1) == ("wait", None)
+    # lives to spare: the lives the pick saves count, it is bought
+    status, found = R.best(Planned({}), Flat(), 5000, 40, 80, lives=100)
+    assert status == "buy" and found[0].cost == 300, (status, found)
+    # one life, and a pick that lifts the round: bought as before
+    status, found = R.best(Planned({"one_life": True}), ToyForecast(), 600, 37, 80, lives=1)
+    assert status == "buy", (status, found)
+
+
 def test_a_blocked_path_is_not_grown():
     # High Finance Magic Monkeys Only (2026-11-05): wizard2's paths 1 and 3
     # were capped (four clicks without effect each), yet the grown ladder

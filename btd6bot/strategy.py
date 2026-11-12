@@ -178,8 +178,16 @@ ANSWERS = {
              ("boomerang", 1, 5), ("druid", 2, 4), ("ninja", 3, 4)],
     "ddt": [("sniper", 1, 4), ("bomb", 2, 4), ("heli", 1, 4), ("super", 1, 3), ("spike", 3, 4),
             ("ninja", 3, 4), ("boomerang", 1, 4), ("dart", 3, 4)],
-    "bad": [("super", 1, 4), ("bomb", 2, 5), ("sniper", 1, 5), ("ninja", 3, 5), ("spike", 3, 5)],
+    # spike 5-x-x Super Mines and ace x-x-5 Flying Fortress: the damage model
+    # (phase 2, 2026-11-12) rates one Super Mines alone at 2-9 on Impoppable
+    # rounds 95-100 on Sunset Gulch, Sunken Columns and Bloonarius Prime, and
+    # a Flying Fortress (with Etienne's camo) at 2.4-10 on Firing Range; the
+    # late-game Impoppable map builds carry one of them (an answer to the
+    # BAD answers the ZOMGs inside it too).
+    "bad": [("super", 1, 4), ("bomb", 2, 5), ("sniper", 1, 5), ("ninja", 3, 5), ("spike", 3, 5), ("spike", 1, 5),
+            ("ace", 3, 5)],
 }
+ANSWERS["zomg"] += [a for a in ANSWERS["bad"] if a not in ANSWERS["zomg"]]
 
 
 def _answers_from_game_model():
@@ -1528,6 +1536,11 @@ class Executor:
                 return
         except Exception:
             pass
+        near = self._tower_in_the_way(kind, cx, cy)
+        if near is not None:
+            log.info("spot (%d,%d) refused beside %s - not learned (the game keeps towers apart; "
+                     "the ground may be fine on an empty map)", cx, cy, near)
+            return
         layers = self._refusal_layers(kind)
         for layer in layers:
             refuse(layer, cx, cy)
@@ -1539,6 +1552,37 @@ class Executor:
             # be wrong as a whole: redo that scan next visit
             log.warning("map scan disagrees with the game too often - rescanning next visit")
             self.m.scan.pop(cls, None)
+
+    # Extra room, in world units, on top of the two footprints: the probe's
+    # spot and the tower's centre are read off the screen and can be a few
+    # units out.
+    TOWER_GAP_SLACK = 3.0
+
+    def _tower_in_the_way(self, kind, cx, cy):
+        """The id of a standing tower whose footprint may be why the game
+        refused `kind` at cell (cx, cy), else None.
+
+        The game keeps towers' footprints apart, so a spot beside one of the
+        bot's own towers is refused although the ground is fine. Such a
+        refusal used to be learned for the map, for every later game, where
+        that tower does not stand: the 2026-11-12 pin audit found 673
+        refused cells in the 4x4 blocks where a tower later stood, 39% of
+        Sunset Gulch's land refused, and the Impoppable map builds' pinned
+        spots refused one after another during the day."""
+        from . import placement as PL
+        try:
+            hero = self.g.hero
+            upc = PL.units_per_cell(self.m)
+            own = PL.footprint_radius(kind, hero if kind == "hero" else None)
+            for p in self.g.towers.values():
+                theirs = PL.footprint_radius(p.kind, hero if p.kind == "hero" else None)
+                px, py = self.m.frac_to_cell(p.x, p.y)
+                dist = ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5 * upc
+                if dist <= own + theirs + self.TOWER_GAP_SLACK:
+                    return p.tid
+        except Exception:
+            return None
+        return None
 
     def _refusal_layers(self, kind):
         """The MapModel.refused layers a refusal of `kind` is learned in: an
@@ -1876,6 +1920,11 @@ class Executor:
         if role == "exit":
             seg = (0.65, 1.0)
         only = self._blimp_lane() if step.get("lane") == "blimp" and role != "support" else None
+        if only is None and step.get("for_round") is not None and role != "support":
+            # a purchase for one weak round on a map whose rounds take turns
+            # on the paths: only the track that round's bloons ride counts
+            # (reinforce.options, Muddy Puddles loss case 20261112_121231)
+            only = self._round_lane(step["for_round"])
         if only is not None:
             # the blimps' own route is already a part of the track: the
             # progress window would cut it further (Workshop's chute route
@@ -1918,8 +1967,9 @@ class Executor:
         if only is not None and not cands:
             # no legal cell reaches the blimps' route: the whole track is
             # still better than setting the answer aside
-            log.info("%s: no legal spot reaches the blimp route - scoring the whole track", kind)
-            return self.pick_spots(kind, {k: v for k, v in step.items() if k != "lane"}, n)
+            log.info("%s: no legal spot reaches the %s - scoring the whole track", kind,
+                     "blimp route" if step.get("lane") == "blimp" else f"track of round {step.get('for_round')}")
+            return self.pick_spots(kind, {k: v for k, v in step.items() if k not in ("lane", "for_round")}, n)
         if valid is not None and role not in ("support", "far") and PL.needs_sight(kind, hero):
             # count only the track this spot can actually see past walls/blockers
             weight = (self.m.spot_weight(seg, covered) if only is None
@@ -3268,12 +3318,29 @@ class Executor:
 
     def _reach(self, kind):
         """Grid: how many track cells a `kind` tower centred on each cell has
-        in range (computed once per kind and game)."""
+        in range (computed once per kind and game).
+
+        On a map whose routes take turns round by round a cell counts as the
+        share of the rounds that pass it (MapModel.round_share), the weight
+        the spots are scored with (MapModel.track_weight). Counted alike,
+        the reach floor threw the best spot away: on Last Resort a ninja
+        beside the big loop has 282 track cells in range, all of them used
+        one round in four, and the one legal patch left beside the top
+        straight that every route runs along has 126 - under the floor of
+        126.9 (MIN_REACH_SHARE), "its range only grazes the track", although
+        it is the best-scored spot on the map. So no general
+        build stood a short-range tower there, and every game lost on that
+        map ended on a small-loop or straight round (2026-11-12 11:13 and
+        11:17, cases 20261112_111354_LastResort_primary_only and
+        20261112_111733_LastResort_abr: rounds 32 and 27-28)."""
         cache = self.__dict__.setdefault("_reach_cache", {})
         if kind not in cache:
             import cv2
             cnt = getattr(self.m, "t_cnt", None)
             track = (cnt > 0).astype(np.float32) if isinstance(cnt, np.ndarray) else None
+            share = self._round_share_grid(track)
+            if share is not None:
+                track = track * share
             if track is None:
                 cache[kind] = None
             else:
@@ -3282,6 +3349,22 @@ class Executor:
                 cv2.circle(disc, (r, r), r, 1.0, -1)
                 cache[kind] = cv2.filter2D(track, -1, disc, borderType=cv2.BORDER_CONSTANT)
         return cache[kind]
+
+    def _round_share_grid(self, track):
+        """The map's round shares (MapModel.round_share: for each cell the
+        share of the rounds whose bloons pass it) when they fit the `track`
+        grid, else None - every route carries every round, the model has no
+        geometry (test models), or there is no track grid to weight."""
+        if track is None:
+            return None
+        share_of = getattr(self.m, "round_share", None)
+        try:
+            share = share_of() if share_of else None
+        except Exception:      # a map-file problem must never stop placement
+            return None
+        if not isinstance(share, np.ndarray) or share.shape != track.shape:
+            return None
+        return share
 
     def _best_legal_reach(self, kind, valid):
         """Track cells the best legal cell for a `kind` tower reaches, or
@@ -4359,7 +4442,8 @@ class Executor:
         self.cash_seen = 0
         self.targets, self.kind_targets = self._upgrade_targets(self.strat)
         self.track_len = None
-        # income the threat calendar plans with (Double Cash and farms left out)
+        # income the threat calendar plans with (Double Cash left out; the
+        # board's own income - Benjamin, farms - is added by round_income)
         self.income_mult = 0.0 if self.rules.get("income") is False else (
             0.5 if self.rules.get("half_cash") else 1.0)
 
@@ -4617,7 +4701,7 @@ class Executor:
             return least
         income, k = 0.0, 0
         for r in range(due_round - 1, max(rnd, self.window[0]) - 1, -1):
-            income += TH.round_cash(self.round_set, r) * self.income_mult
+            income += self.round_income(r)
             k += 1
             if income >= short * self.LEAD_MARGIN:
                 break
@@ -4670,6 +4754,17 @@ class Executor:
             return True
         sig = TH.sig_from_name(need)
         return sig is not None and "blimp" in sig
+
+    def _round_lane(self, rnd):
+        """Bool grid of the track round `rnd`'s bloons ride on a map whose
+        rounds take turns on its paths (mapgeom.round_lane), or None when
+        the round may use every path or the map has no geometry."""
+        from . import mapgeom
+        try:
+            return mapgeom.round_lane(self.m, rnd)
+        except Exception:                      # geometry is a help, never a must
+            log.debug("round lane: no geometry", exc_info=True)
+            return None
 
     def _blimp_lane(self):
         """Bool grid of the track blimps ride on this map (mapgeom.blimp_track),
@@ -5006,6 +5101,39 @@ class Executor:
         is counted (as in _lead_rounds)."""
         return self.cash_seen + self.income_until(due_round, rnd)
 
+    def round_income(self, r):
+        """Cash round r is counted on to bring: the round set's cash times
+        income_mult, plus what the board pays besides pops
+        (economy.board_income under this mode's rules: Benjamin's Cyber
+        Cash at his estimated level in round r, farms, Merchantmen). The
+        board is taken as it stands now; the hero's level is the estimate
+        only (never a panel read, which would click). Nothing extra in
+        CHIMPS and Deflation."""
+        cash = TH.round_cash(self.round_set, r) * self.income_mult
+        towers = list(getattr(getattr(self, "g", None), "towers", {}).values())
+        if not towers:
+            return cash
+        from .economy import board_income
+        hero = getattr(self.g, "hero", None) if any(t.kind == "hero" for t in towers) else None
+        level = self._hero_level_estimate(r) if hero else None
+        try:
+            return cash + board_income(towers, getattr(self, "rules", None), hero, level)
+        except Exception:        # never let a projection end a game
+            log.exception("board income failed - counting the round's own cash only")
+            return cash
+
+    def _hero_level_estimate(self, rnd):
+        """The placed hero's level in round rnd by the estimate alone (the
+        estimate branch of _hero_level_now), or None."""
+        from .abilities import estimate_hero_level, hero_xp_multiplier
+        from .match import xp_knowledge
+        placed = getattr(getattr(self, "abil", None), "hero_round", None) or getattr(self, "hero_round", None)
+        if placed is None or rnd is None:
+            return None
+        factor = hero_xp_multiplier(getattr(getattr(self, "m", None), "name", None),
+                                    xp_knowledge(getattr(self, "account", None), getattr(self, "rules", None)))
+        return estimate_hero_level(getattr(self.g, "hero", None), placed, rnd, factor)
+
     def income_until(self, due_round, rnd):
         """The income counted on between round rnd and the start of due_round:
         the round set's cash for those rounds, times income_mult, of which
@@ -5018,7 +5146,7 @@ class Executor:
             if not TH.available() or not hasattr(self, "mode"):
                 return 0.0
             self._init_threats()
-        income = sum(TH.round_cash(self.round_set, r) * self.income_mult for r in range(rnd, due_round))
+        income = sum(self.round_income(r) for r in range(rnd, due_round))
         return income / self.LEAD_MARGIN
 
     # -- the damage model's view, for the executor's own decisions -------------------
@@ -5460,8 +5588,7 @@ class Executor:
         why = f"blimp ramp round {R} ratio {ratio:.1f}"
         own = [st for st in (self.strat.get("answers") or {}).get(cls) or () if self._step_allowed(st)]
         # what can be paid before round R: cash now + the rounds in between
-        money = self.cash_seen + sum(TH.round_cash(self.round_set, r) * self.income_mult
-                                     for r in range(rnd, R))
+        money = self.cash_seen + sum(self.round_income(r) for r in range(rnd, R))
         total = self._steps_cost(own, f"the {cls} answer") if own else None
         if total is not None and total > money:
             # The strategy's own answer cannot be finished before the blimps:
@@ -5825,6 +5952,27 @@ class Executor:
             log.warning("threat %s (round %d) waits: %s first - holding only $%d of its $%.0f, "
                         "the rest goes to the nearer round", threat, due, reason, keep, cost)
         return True
+
+    def _plan_step_is_held_answer(self):
+        """Is the plan's next step itself a step of a threat answer the cash
+        is being held for (strategy `answers`)? Then the held cash is for this
+        very purchase and must not be kept from it.
+
+        Spillway Impoppable (2026-11-12 07:21, loss case 20261112_072317):
+        the plan waited on b1 0-5-0 ($31,200), the MOAB Eliminator that is
+        also the build's BAD answer; the BAD hold kept $12-20k back, the plan
+        step saw only the rest and logged "idle with $37123: plan step 29 b1
+        0-5-0 -> wait" for two rounds; it was bought only at round 98, which
+        took the life with the rounds before it rated 0.33-0.58."""
+        if self.idx >= len(self.plan or ()):
+            return False
+        step = self.plan[self.idx]
+        key = (step.get("do"), step.get("id"), step.get("to"))
+        for steps in (self.strat.get("answers") or {}).values():
+            for st in steps or ():
+                if (st.get("do"), st.get("id"), st.get("to")) == key:
+                    return True
+        return False
 
     def _far_keep(self, cost, due_round, rnd, weak_now, what):
         """What a hold for `what` (costing `cost`, needed by due_round, more
@@ -6199,7 +6347,7 @@ class Executor:
             r = None
         if r is not None:
             return r
-        if self.held_cash:
+        if self.held_cash and not self._plan_step_is_held_answer():
             # what the plan may spend: the cash less what a far threat keeps
             cash = max(0, cash - self.held_cash)
         hold = getattr(self, "reinforce_hold", 0) or 0
@@ -7150,13 +7298,68 @@ class Executor:
     # while the bot is idle (Match._park_cursor).
     HELI_PURSUIT_TIER = 2
 
+    # Fixed aim points for the towers that shoot at a spot rather than at
+    # bloons (docs/model_fix_plan.md item 14): a Mortar's reticle, and a
+    # Dartling set to Locked. Both go to the densest track point, the one
+    # the cursor is parked on (match.densest_track_point), so the model can
+    # credit them at one known point. OFF until checked in game, because
+    # neither flow has been seen live:
+    #   MORTAR_AIM: that a placed Mortar's panel shows "Set Target" in the
+    #     targeting row, and that clicking it and then the map moves the
+    #     reticle there (Game.set_target_point; frames in logs/aim_*.png);
+    #     also whether a new Mortar has a default reticle at all.
+    #   DARTLING_LOCK: that a Dartling's targeting cycles to "Locked" with
+    #     the targeting arrows, and whether Locked then takes its point from
+    #     a Set Target button (as the Mortar's) or from where the cursor was.
+    #     The default after placement (Follow Touch per this code, Locked at
+    #     the map centre per a Fandom version note) is also unconfirmed.
+    MORTAR_AIM = False
+    DARTLING_LOCK = False
+
+    def _aim_point(self):
+        """The fixed aim point for a Mortar or a locked Dartling: the
+        densest track point (match.densest_track_point), or None."""
+        from .match import densest_track_point
+        try:
+            return densest_track_point(self.m)
+        except Exception:
+            log.exception("aim point failed")
+            return None
+
+    def _aim_fixed(self, p):
+        """Give a Mortar its reticle, or lock a Dartling on the aim point,
+        once per tower (MORTAR_AIM / DARTLING_LOCK). p.aim becomes "point",
+        or "failed point" so it is not tried on every upgrade."""
+        if getattr(p, "aim", None) in ("point", "failed point"):
+            return
+        point = self._aim_point()
+        if point is None:
+            return
+        try:
+            ok = True
+            if p.kind == "dartling":
+                ok = self.g.target(p, "lock")
+            ok = ok and self.g.set_target_point(p, *point)
+        except Exception:          # aiming is a nicety: never cost a game over it
+            log.exception("setting %s's aim point failed", p.tid)
+            ok = False
+        p.aim = "point" if ok else "failed point"
+        (log.info if ok else log.warning)("%s aim point %s: %s", p.tid, point, "set" if ok else "not set")
+
     def _explicit_target(self, p):
         """Does the plan set this tower's targeting itself?"""
         return any(st.get("do") == "target" and st.get("id") == p.tid for st in self.plan + self.fill)
 
     def _aim(self, p):
-        """Set a heli's targeting so it stops following the mouse."""
-        if p.kind != "heli" or self._explicit_target(p):
+        """Set a heli's targeting so it stops following the mouse; give a
+        Mortar or a Dartling its fixed aim point when MORTAR_AIM /
+        DARTLING_LOCK are on."""
+        if self._explicit_target(p):
+            return
+        if (p.kind == "mortar" and self.MORTAR_AIM) or (p.kind == "dartling" and self.DARTLING_LOCK):
+            self._aim_fixed(p)
+            return
+        if p.kind != "heli":
             return
         want = "pursuit" if p.tiers[0] >= self.HELI_PURSUIT_TIER else "lock"
         if getattr(p, "aim", None) in (want, "failed " + want):

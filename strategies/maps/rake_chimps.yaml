@@ -189,6 +189,11 @@
 # 0.871) below the bottom U, d3 (0.446, 0.581) in the centre - every dart on
 # both lanes, lane totals 158 / 155 units against 127 / 135 (measured on the
 # map's bloon paths, base dart range 32). Not played; replaced at 21:00.
+#
+# 2026-11-12: PARKED for rake_chimps_guide, the map's published no-ability
+# guide build (docs/chimps_map_guides.md). This file stays as the record of
+# its games; base_success 0.05 keeps the planner, and a NEXT line without a
+# named strategy, on the guide build.
 id: rake_chimps
 map: Rake
 hero: quincy
@@ -198,7 +203,7 @@ starter: {kind: desperado, at: [0.639, 0.402]}   # the second opener Match adds 
 planner:
   towers: {desperado: [0, 0, 0], buccaneer: [5, 2, 0], village: [4, 2, 0], boomerang: [5, 0, 2], sniper: [5, 1, 0]}
   # not gated on the damage model: played live to learn (see above)
-  base_success: {chimps: 0.5}
+  base_success: {chimps: 0.05}   # parked 2026-11-12 for the guide build
   maps: [Rake]
   revised: "2026-11-07T21:00"
 plan:

@@ -1,0 +1,103 @@
+# Sulfur Springs, CHIMPS: HyperF3's v56 Obyn + Archmage wizard + Carrier
+# Flagship guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next. The
+# bot's own generic Flagship build (sulfursprings_chimps, now parked) lost
+# this map at rounds 9, 40 and 95 again and again. Every Beginner CHIMPS map
+# was won by following a published guide step by step with exact spots and
+# plan_first, so this build does the same (docs/chimps_map_guides.md, Sulfur
+# Springs, Strategy 1: the newest written build, no abilities, ended with
+# $44,689 spare).
+#
+# Guide: HyperF3 (https://www.youtube.com/watch?v=vm5zTKXFyAc, v56), the
+# order written in the description, no rounds (confidence:
+# verified-written-steps, order only). Hero: Obyn (second purchase).
+# Core towers: Wizard 5-0-2, Buccaneer 5-0-2 (Carrier Flagship), Glue 0-2-5
+# (Super Glue); the author says the Alchemist 4-2-0 "probably isn't even
+# necessary". The doc names the wizard "Wizard Lord Phoenix", but the
+# written crosspaths (2-0-0, 2-0-2, 3-0-2, 4-0-2, 5-0-2) are the top path:
+# Arcane Spike, then Archmage. This build follows the crosspaths.
+# Placements: the guide puts the boat in the springs. The bot's map data has
+# no placeable water in the central spring (data/map_geometry: only the west
+# pool and a small north-east pool are water), so the boat stands at the
+# nearest legal equivalent, the west pool's east tip by the loop. The
+# Flagship's planes are map-wide. The wizard and Obyn stand on the best
+# wizard cells by the loop, Obyn beside the wizard to buff it (Obyn's
+# Nature's Ward buffs magic towers in range).
+#
+# Adapted, and why:
+#   * the bot's coverage check needs ceramic, MOAB-class, DDT, BAD and rush
+#     answers from its own tables (strategy.ANSWERS); no tower of the guide
+#     is in them. The guide's $44.7k spare pays for a Cripple MOAB sniper
+#     (Night Vision, then Deadly Precision before round 38, Maim MOAB, then
+#     Cripple MOAB last) and a Glaive Ricochet boomerang (3-0-2) for round
+#     63. The alchemist, "probably not necessary", is dropped for them.
+#   * a bare Bomb Shooter before round 28: by the bot's tables nothing of
+#     the guide's pops lead before the boat's Aircraft Carrier (Obyn does
+#     live, but the bot does not count heroes), and in the replay the
+#     executor bought this bomb for round 28's leads; it is in the plan so
+#     it stands where it is pinned.
+#   * Buccaneer x-x-3 (Merchantman) is never reached: the guide stops the
+#     boat's bottom path at 2 (Crow's Nest: camo).
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 22/22 bought, threat gaps: none, off-plan answer buys: 4.
+# Each step stands from: w1 placed R6, hero placed R8, w1 2-0-0 R11, b1 placed
+# R13, w1 2-0-2 R16, x1 placed R17, b1 2-0-2 R22, w1 3-0-2 R28, s1 placed R28,
+# s1 2-1-0 R33, s1 3-1-0 R36, b1 3-0-2 R39, b1 4-0-2 R46, w1 4-0-2 R50, s1
+# 4-1-0 R54, r1 placed R54, r1 3-0-2 R55, w1 5-0-2 R75, b1 5-0-2 R83, g1
+# placed R83, g1 0-2-5 R94, s1 5-1-0 R100. Damage model margins on those
+# boards (it counts no hero and no ability, and under-rates map-wide towers):
+# 40 1.56, 63 1.76, 76 1.70, 81 1.27, 90 2.33, 95 0.47, 98 0.35, 100 0.45.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: sulfursprings_chimps_guide
+map: Sulfur Springs
+hero: obyn
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {wizard: [5, 0, 2], buccaneer: [5, 0, 2], glue: [0, 2, 5], sniper: [5, 1, 0], boomerang: [3, 0, 2], bomb: [0, 0, 0]}
+  revised: "2026-11-12T12:00"
+  maps: [Sulfur Springs]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.334, 0.112]}            # the guide's first tower
+  - {do: place, id: hero, kind: hero, role: dps, near: [w1], at: [0.291, 0.129]}  # Obyn, beside the wizard
+  - {do: upgrade, id: w1, to: 2-0-0}                                            # Arcane Blast
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.402]}         # the springs in the guide: the west pool's tip here (see above)
+  - {do: upgrade, id: w1, to: 2-0-2}                                            # Monkey Sense: camo
+  - {do: place, id: x1, kind: bomb, role: dps, at: [0.259, 0.078]}              # added: round 28's leads (see above): the north rim cell the damage model rates best for them
+  - {do: upgrade, id: b1, to: 2-0-2}                                            # Crow's Nest: camo
+  - {do: upgrade, id: w1, to: 3-0-2}                                            # Arcane Mastery
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.238, 0.129]}  # added: the Cripple MOAB sniper (see above)
+  - {do: upgrade, id: s1, to: 2-1-0}                                            # Night Vision, Large Calibre: ceramics
+  - {do: upgrade, id: s1, to: 3-1-0}                                            # Deadly Precision: round 40's MOAB
+  - {do: upgrade, id: b1, to: 3-0-2}                                            # Destroyer
+  - {do: upgrade, id: b1, to: 4-0-2}                                            # Aircraft Carrier
+  - {do: upgrade, id: w1, to: 4-0-2}                                            # Arcane Spike
+  - {do: upgrade, id: s1, to: 4-1-0}                                            # added: Maim MOAB, before round 60's BFB
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.623, 0.555]}         # added: Glaive Ricochet for round 63
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: w1, to: 5-0-2}                                            # Archmage
+  - {do: upgrade, id: b1, to: 5-0-2}                                            # Carrier Flagship
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.206, 0.146]}
+  - {do: upgrade, id: g1, to: 0-2-5}                                            # Super Glue
+  - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
+answers:
+  camo: [{do: upgrade, id: w1, to: 2-0-2}]
+  lead: [{do: place, id: x1, kind: bomb, role: dps, at: [0.259, 0.078]}]
+  ceramic: [{do: upgrade, id: s1, to: 2-1-0}]
+  moab: [{do: upgrade, id: s1, to: 3-1-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: s1, to: 4-1-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]

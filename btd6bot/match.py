@@ -31,6 +31,9 @@ CRISIS_HOLD_S = 20.0       # longest wait per round
 # their upgrades a few minutes
 CRISIS_HOLD_REBUILD_S = 180.0
 CRISIS_HOLD_IDLE_S = 4.0   # ... ended early once this long passes without a purchase
+# ... and while reinforce's look is still choosing (it ran out of its time
+# budget and goes on where it stopped), the hold waits for it up to this long
+CRISIS_HOLD_BUSY_S = 45.0
 CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
 CRISIS_HOLD_CASH_RISE = 200  # cash up this much since the last rise restarts the idle allowance
 # Cash lying idle while the plan waits is spent only above this (Match.spend_floor):
@@ -67,6 +70,29 @@ BANANA_EVERY = 2.0   # seconds between passes over the bananas around farms
 PARK_EVERY = 1.5     # seconds between checks of where the cursor rests
 PARK_WINDOW = 15     # grid cells: the track density is measured over this square
 PARK_SLACK = 12      # pixels: closer than this to the spot, the cursor stays put
+
+
+def densest_track_point(m, window=None):
+    """Screen fraction (x, y) of the track cell with the most track in the
+    `window`-cell square around it (default PARK_WINDOW): a bend, or a
+    stretch where lanes meet. None without a painted track (m.heat).
+
+    The cursor-park point of Match._park_point, and the fixed aim point the
+    executor gives a Mortar or a locked Dartling (Executor._aim_point), so
+    every aimed tower fires into the same thick of the bloons."""
+    import cv2
+    import numpy as np
+    heat = getattr(m, "heat", None)
+    if heat is None or not (heat > 0).any():
+        return None
+    size = window or PARK_WINDOW
+    track = (heat > 0).astype(np.float32)
+    dens = cv2.boxFilter(track, -1, (size, size))
+    dens[track == 0] = 0
+    y, x = np.unravel_index(int(np.argmax(dens)), dens.shape)
+    return m.cell_to_frac(int(x), int(y))
+
+
 # No-income modes (Deflation) buy the whole defence before Play and can never
 # add to it, so the damage model can judge the finished build before a single
 # bloon is out. Calibrated on the 26 logged Deflation games whose first
@@ -1055,7 +1081,14 @@ class Match:
                         self._mark("surplus")
                         bought = self.ex.surplus(cash, last_round, deadline=spend_deadline)
                 if bought:
-                    self._last_buy = now
+                    # when the purchase went through, not when this pass began:
+                    # a pass with a failed placement, a reinforce look and a
+                    # surplus buy took 16 s on Erosion Impoppable (2026-11-12
+                    # 10:56, loss case 20261112_105806), and stamped with the
+                    # pass's start the buy at its end already counted as 16 s
+                    # idle to the crisis hold (_hold_for_crisis), which let
+                    # Play go with $22,040 before a round rated 0.11
+                    self._last_buy = time.time()
                     if dropped:
                         self.stats["panic"] += 1
                     t_hud = 0  # re-read cash right away after spending
@@ -1290,8 +1323,30 @@ class Match:
         elif cash >= rise[1] + CRISIS_HOLD_CASH_RISE:
             self._crisis_cash = (rnd, cash, now)            # cash still coming in: wait on
         last_rise = self._crisis_cash[2] or since
-        cap = CRISIS_HOLD_REBUILD_S if self._rebuilding() else CRISIS_HOLD_S
-        if now - since > cap or now - max(since, self._last_buy, last_rise) > CRISIS_HOLD_IDLE_S:
+        # The usual cap counts from the end of a rebuild seen in this hold,
+        # not from the hold's start. Erosion Impoppable (2026-11-12 10:56,
+        # loss case 20261112_105806): the ice took 17 towers as round 71
+        # began, the rebuild held Play for 98 s, and the moment its last
+        # steps were bought or given up the 20 s cap - long past since the
+        # hold began - let Play go with $22,040 in hand and round 72 rated
+        # 0.11. Reinforce never had a look at the refund; round 72 was lost.
+        seen = getattr(self, "_rebuild_seen", None)
+        if seen is None or seen[0] != rnd:
+            seen = self._rebuild_seen = (rnd, None)
+        # A look that ran out of its budget is still choosing, not idle.
+        # Enchanted Glade Impoppable (2026-11-12 10:25, loss case
+        # 20261112_102751): round 63 rated 0.31 with $17,885 in hand; two
+        # looks rated 1 and 7 of 20 purchases before their 6 s ran out, the
+        # 4 s idle allowance ended the hold after 16 s, and round 63's 122
+        # ceramics took the life while the third look was at 14 of 20.
+        busy = getattr(self, "_look_busy", 0.0)
+        choosing = now - busy <= CRISIS_HOLD_IDLE_S
+        if self._rebuilding():
+            self._rebuild_seen = (rnd, now)
+            over_cap = now - since > CRISIS_HOLD_REBUILD_S
+        else:
+            over_cap = now - max(since, seen[1] or since) > (CRISIS_HOLD_BUSY_S if choosing else CRISIS_HOLD_S)
+        if over_cap or now - max(since, self._last_buy, last_rise, busy) > CRISIS_HOLD_IDLE_S:
             log.info("holding Play over after %.0f s ($%d left)", now - since, cash)
             self._crisis_hold[rnd] = False
             return False
@@ -1896,6 +1951,7 @@ class Match:
             # surplus() keeps off the cash the look is still choosing for.
             self._t_reinforce = time.time() - REINFORCE_EVERY
             self._saving_until = time.time() + REINFORCE_WAIT
+            self._look_busy = time.time()     # the crisis hold waits for the look (_hold_for_crisis)
             return False
         # 'save': surplus() must not spend the cash either, until the next look
         self._saving_until = self._t_reinforce + REINFORCE_EVERY if r == "save" else 0.0
@@ -2018,6 +2074,11 @@ class Match:
                         if t["category"] == cat and k not in T.GIFT_BOX_TOWERS:
                             self.account.unlocked_towers.add(k)
                     self.account.save()
+        elif st == "save_choice":
+            # "Choose which save" (This Device / On the Cloud): keep the
+            # local save, never the cloud one (Peninsula Impoppable,
+            # 2026-11-12, where it passed for reward cards)
+            self.menus.handle_save_choice()
         elif st in ("collection_event", "reward_cards", "insta_reward"):
             # free reward screens: Alpine Run Impoppable's round-100 win put an
             # "INSTA MONKEY!" card up, and with no case here the loop read it
@@ -2060,25 +2121,22 @@ class Match:
         kept aiming at the old path all game (audit 2026-11-12)."""
         heat = getattr(self.m, "heat", None)
         if self._park is None or self._park[0] is not heat:
-            import cv2
-            import numpy as np
-            if heat is None or not (heat > 0).any():
+            point = densest_track_point(self.m)
+            if point is None:
                 return None
-            track = (heat > 0).astype(np.float32)
-            dens = cv2.boxFilter(track, -1, (PARK_WINDOW, PARK_WINDOW))
-            dens[track == 0] = 0
-            y, x = np.unravel_index(int(np.argmax(dens)), dens.shape)
-            self._park = (heat, self.m.cell_to_frac(int(x), int(y)))
+            self._park = (heat, point)
         return self._park[1]
 
     def _park_cursor(self, now):
         """Rest the cursor on the busiest track while something follows it
-        (a Dartling Gunner, or a heli whose targeting is not set yet)."""
+        (a Dartling Gunner not locked on a point, or a heli whose targeting
+        is not set yet)."""
         if now - self._t_park < PARK_EVERY:
             return
         self._t_park = now
         towers = self.g.towers.values()
-        if not any(p.kind == "dartling" or (p.kind == "heli" and getattr(p, "aim", None) not in ("lock", "pursuit"))
+        if not any((p.kind == "dartling" and getattr(p, "aim", None) != "point")
+                   or (p.kind == "heli" and getattr(p, "aim", None) not in ("lock", "pursuit"))
                    for p in towers):
             return
         spot = self._park_point()

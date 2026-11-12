@@ -58,7 +58,7 @@ class StandIn:
         safe = hero == StandIn.good
         xp = {"dart": 100, "tack": 300}.get(target, 0) + (5 if reserve else 0)
         towers = [N(kind=target or "dart")]
-        return N(unsafe=[] if safe else [40], margins={40: 2.5 if safe else 0.5}, seconds=0.0,
+        return N(unsafe=[] if safe else [40], margins={40: 2.5 if safe else 0.5}, seconds=0.0, board_cash=0.0,
                  towers=towers, hero=hero, xp=xp)
 
 
@@ -95,6 +95,9 @@ def test_the_sweep_keeps_the_hero_that_makes_the_plan_safe():
     # heroes=1: no sweep at all
     plan, runs = _sweep(account, heroes=1)
     assert len(runs) == 4 and plan.hero == "quincy"
+    # an explicit list: exactly those heroes, each with every target and spot rule
+    plan, runs = _sweep(account, heroes=["quincy", "obyn"])
+    assert len(runs) == 8 and {h for _, _, h in runs} == {"quincy", "obyn"} and plan.hero == "obyn"
 
 
 def test_without_an_equipped_candidate_the_best_on_merit_goes_first():

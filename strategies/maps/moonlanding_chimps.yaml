@@ -256,6 +256,11 @@
 # same round-99 blimp answer sniper. Doubt: round 60's BFB (1.18) now
 # meets Full Auto Rifle, not Elite Defender; rounds 77-100 rate 0.22-0.87
 # as before (the damage model is pessimistic late; unplayed live).
+#
+# 2026-11-12: PARKED for moonlanding_chimps_guide, the map's published no-ability
+# guide build (docs/chimps_map_guides.md). This file stays as the record of
+# its games; base_success 0.05 keeps the planner, and a NEXT line without a
+# named strategy, on the guide build.
 id: moonlanding_chimps
 map: Moon Landing
 hero: quincy
@@ -265,7 +270,7 @@ starter: {kind: desperado, at: [0.633, 0.726]}   # the second opener Match adds 
 planner:
   towers: {desperado: [0, 0, 0], dart: [0, 0, 0], sniper: [5, 2, 5], druid: [2, 5, 0], wizard: [5, 0, 2], village: [2, 0, 2], boomerang: [3, 0, 2]}
   # not gated on the damage model: played live to learn (see above)
-  base_success: {chimps: 0.5}
+  base_success: {chimps: 0.05}   # parked 2026-11-12 for the guide build
   maps: [Moon Landing]
   revised: "2026-11-09T01:00"
 plan:

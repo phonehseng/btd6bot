@@ -595,12 +595,44 @@ def model_doubt(kind, tiers, towers=()):
     return ""
 
 
-def upgrade_cost(kind, tiers_from, tiers_to, family):
+def upgrade_cost(kind, tiers_from, tiers_to, family, discount=0.0):
+    """Price of the tiers from tiers_from to tiers_to; `discount` (a Monkey
+    Village's, economy.discount_at) comes off tiers 1-3 (economy.discounted)."""
+    from btd6bot.economy import discounted
     cost = 0.0
     for path in range(3):
         for tier in range(tiers_from[path] + 1, tiers_to[path] + 1):
-            cost += T.upgrade_cost(kind, path + 1, tier, family)
+            cost += discounted(T.upgrade_cost(kind, path + 1, tier, family), tier, discount)
     return cost
+
+
+def spot_discount(spot, towers, own=None):
+    """The best Monkey Village discount at `spot` from the villages among
+    `towers` (economy.discount_at); a village does not discount itself
+    (`own`: the tower being priced). 0 without a spot."""
+    from btd6bot.economy import discount_at
+    if spot is None:
+        return 0.0
+    villages = [t for t in towers if t.kind == "village" and t.spot is not None and t is not own
+                and t.spot is not spot]
+    return discount_at(spot.x, spot.z, villages)
+
+
+def place_cost(kind, tiers, family, spot, towers):
+    """Price of placing `kind` at `spot` and buying `tiers` at once, with
+    the discount of the villages already standing there."""
+    from btd6bot.economy import discounted
+    off = spot_discount(spot, towers)
+    return discounted(T.tower_cost(kind, family), 0, off) + upgrade_cost(kind, (0, 0, 0), tiers, family, off)
+
+
+def board_cash(mode, towers, hero=None, hero_level=None):
+    """Cash the board pays per round besides the round's own cash
+    (economy.board_income under the mode's rules): Benjamin's Cyber Cash at
+    `hero_level`, farms, Merchantmen. 0 in CHIMPS and Deflation."""
+    from btd6bot import strategy as S
+    from btd6bot.economy import board_income
+    return board_income(towers, S.MODE_RULES.get(mode, {}), hero, hero_level)
 
 
 class Evaluator:
@@ -633,16 +665,15 @@ class Evaluator:
         return None if mk is None else D.Placed(t.tid, mk[0], mk[1], t.spot.x, t.spot.z)
 
     def pressed(self, towers):
-        """Does the bot press abilities with this board's hero? Not once a
-        destructive hero ability may be unlocked: the hero Tower's tiers are
-        (level, optimistic level) (Optimizer._level_hero), and from Adora's
-        level 7 on the bot presses no hotkey (abilities.presses_blind)."""
-        from btd6bot.abilities import DESTRUCTIVE_ABILITIES
+        """Does the bot press abilities with this board's hero? Yes: with
+        Adora the planner holds only the keys Blood Sacrifice may sit on
+        and presses the rest (abilities.presses_blind, AbilityPlanner.
+        unsafe_keys). Kept as a method so the station cache keys on it."""
+        from btd6bot.abilities import presses_blind
         hero = next((t for t in towers if t.kind == "hero"), None)
-        if hero is None or not self.hero or len(hero.tiers) < 2:
+        if hero is None or not self.hero:
             return True
-        return not any(ab["name"] in DESTRUCTIVE_ABILITIES and ab["level"] <= hero.tiers[1]
-                       for ab in T.HEROES.get(self.hero, {}).get("abilities", []))
+        return presses_blind(self.hero, None, None)
 
     def station_of(self, tower, towers):
         """The station of one tower standing among `towers` (None when it
@@ -735,6 +766,7 @@ class Plan:
     seconds: float = 0.0
     econ: Economy | None = None
     boosts: dict = field(default_factory=dict)
+    board_cash: float = 0.0          # cash the board paid besides the rounds' own (Optimizer.board_income)
 
 
 class Optimizer:
@@ -752,6 +784,20 @@ class Optimizer:
         self.ev = Evaluator(self.setup, mode, hero)
         self.weights = xp_weights(account)
         self.kinds = self._kinds()
+        self.hero_at = None       # the round the hero was bought (run), for its income
+
+    def board_income(self, towers, rnd):
+        """Cash the board pays at the end of round `rnd` besides the
+        round's own (board_cash), with the hero at its estimated level
+        (hero_level_at) once it is bought."""
+        level = (hero_level_at(self.hero, self.map_name, self.mode, self.account, self.hero_at, rnd)
+                 if self.hero_at is not None else None)
+        return board_cash(self.mode, towers, self.hero if self.hero_at is not None else None, level)
+
+    def round_cash(self, towers, rnd):
+        """All the cash round `rnd` brings: the mode's (Economy.income) and
+        the board's (board_income)."""
+        return self.econ.income(rnd) + self.board_income(towers, rnd)
 
     def _kinds(self):
         """Tower kinds this mode and account allow and the model can use."""
@@ -807,16 +853,16 @@ class Optimizer:
             spot = self.setup.free_spot(kind, towers)
             if spot is None:
                 continue
-            base = T.tower_cost(kind, fam)
-            if base > cash:
+            if place_cost(kind, (0, 0, 0), fam, spot, towers) > cash:
                 continue
             for tiers in _bundles(cap, MAX_PLACE_TIERS):
-                cost = base + upgrade_cost(kind, (0, 0, 0), tiers, fam)
+                cost = place_cost(kind, tiers, fam, spot, towers)
                 if cost <= cash and D.profile(kind, tiers) is not None and self.allowed(kind, tiers, spot, towers):
                     out.append(Action(kind=kind, tiers=tiers, cost=cost, spot=spot))
         for t in towers:
             if t.kind == "hero":
                 continue
+            off = spot_discount(t.spot, towers, own=t)
             cap = unlocked_tiers(self.account, t.kind)
             for path in range(3):
                 for step in range(1, MAX_UPGRADE_STEP + 1):
@@ -825,7 +871,7 @@ class Optimizer:
                     new = tuple(new)
                     if new[path] > cap[path] or not legal(new) or D.profile(t.kind, new) is None:
                         break
-                    cost = upgrade_cost(t.kind, t.tiers, new, fam)
+                    cost = upgrade_cost(t.kind, t.tiers, new, fam, off)
                     if cost > cash:
                         break
                     if not self.allowed(t.kind, new, t.spot, towers):
@@ -857,6 +903,7 @@ class Optimizer:
         hero_cost = T.hero_cost(self.hero, econ.family)
         hero_placed = False
         hero_round = None
+        self.hero_at = None
         last = econ.end_round
         # without income (Deflation) every round is paid from the start cash:
         # plan for all of them at once
@@ -874,6 +921,7 @@ class Optimizer:
             if not hero_placed and towers and cash >= hero_cost:
                 cash -= hero_cost
                 hero_placed = True
+                self.hero_at = rnd
                 spot = self.setup.hero_spot(self.hero, towers) if D.HERO_RATING else None
                 if spot is not None:
                     hero_round = rnd
@@ -892,7 +940,9 @@ class Optimizer:
             if self.target and not any(v > 0 for v in self.ev.leak(towers, ahead).values()):
                 towers, cash, n = self._spend_surplus(plan, towers, cash, n, rnd, ahead)
             plan.share_by_round[rnd] = _shares(towers)
-            cash += econ.income(rnd)
+            board = self.board_income(towers, rnd)
+            plan.board_cash += board
+            cash += econ.income(rnd) + board
         plan.towers = towers
         rounds = list(range(econ.start_round, last + 1))
         plan.margins = self._timeline_margins(plan, rounds)
@@ -928,7 +978,7 @@ class Optimizer:
             if not bad:
                 return towers, cash, n
             first = min(bad)
-            budget = cash + sum(self.econ.income(r) for r in range(rnd, first))
+            budget = cash + sum(self.round_cash(towers, r) for r in range(rnd, first))
             base = sum(v / (1 + (r - rnd)) for r, v in bad.items())
             best = best_now = None
             best_score = best_now_score = 0.0
@@ -1000,7 +1050,7 @@ class Optimizer:
                 new = tuple(new)
                 if new == t.tiers:
                     continue
-                cost = upgrade_cost(kind, t.tiers, new, fam)
+                cost = upgrade_cost(kind, t.tiers, new, fam, spot_discount(t.spot, towers, own=t))
                 if (legal(new) and D.profile(kind, new) is not None and cost <= cash
                         and self.allowed(kind, new, t.spot, towers)):
                     out.append(Action(kind=kind, tiers=new, cost=cost, tid=t.tid))
@@ -1008,7 +1058,7 @@ class Optimizer:
             if spot is None:
                 continue
             tiers = tuple(tier if path and i == path - 1 else 0 for i in range(3))
-            cost = T.tower_cost(kind, fam) + upgrade_cost(kind, (0, 0, 0), tiers, fam)
+            cost = place_cost(kind, tiers, fam, spot, towers)
             if cost <= cash and D.profile(kind, tiers) is not None and self.allowed(kind, tiers, spot, towers):
                 out.append(Action(kind=kind, tiers=tiers, cost=cost, spot=spot))
         return out
@@ -1206,6 +1256,8 @@ def plan_yaml(plan, setup, weights, xp):
         f"# Safety: every round pops without a leak with all towers at 1/{SAFETY_MARGIN:g} of their modelled",
         f"# strength (dps_model), except: {', '.join(str(r) for r in plan.unsafe) or 'none'}.",
         f"# Lowest margins: {', '.join(f'R{r} {m:.2f}' for r, m in weak)} (worst {worst:.2f}).",
+        f"# Cash the board paid besides the rounds' own (hero income, farms; economy.board_income): "
+        f"${plan.board_cash:,.0f}.",
         "# Cash by tower kind at the end: " + ", ".join(
             f"{k} ${v:,.0f} ({v / total:.0%})" for k, v in sorted(plan.spent_by_kind.items(), key=lambda kv: -kv[1])),
         f"# XP: XP target {plan.target or 'none'}; the game gives {xp['game_xp']:,} tower XP in about "
@@ -1358,21 +1410,42 @@ def _plan_key(plan, xp):
     return (len(plan.unsafe) == 0, -len(plan.unsafe), worst if plan.unsafe else 0.0, xp["valued_xp_per_hour"])
 
 
+def hero_cash(hero, map_name, mode, account=None, placed_round=None, end_round=None):
+    """The cash `hero` pays over a game of `mode` (economy.hero_income at
+    its estimated level each round, hero_level_at, under the mode's rules),
+    placed in `placed_round` (default: the mode's first round) and counted
+    to `end_round` (default: the mode's last). 0 for heroes without income
+    and in CHIMPS / Deflation. A yardstick for comparing heroes; the plans
+    themselves count it round by round (Optimizer.board_income)."""
+    econ = economy(mode)
+    first = placed_round or econ.start_round
+    last = end_round or econ.end_round
+    return sum(board_cash(mode, (), hero, hero_level_at(hero, map_name, mode, account, first, r))
+               for r in range(first, last + 1))
+
+
 def optimize(map_name, mode, target=None, account=None, write=True, candidates=3, base=False, heroes=None):
     """Best plan for a map/mode: one optimization per XP target candidate
     (or the given target), keeping the safe plan with the most value-weighted
     XP per hour (else the one with the fewest unsafe rounds).
     base: plan without the account's boosts (Fast Track, Double Cash).
 
-    Heroes are compared on merit in a second stage: the XP target and spot
-    rule that won with the first hero (the equipped one if it is a
-    candidate, else the best on merit) are optimized again with every other
-    hero_candidates hero, and the best plan by the same rule wins. A sweep
-    of every hero for every target would cost about eighteen times as long
-    (an optimization takes 1-3 minutes); the target is mostly a matter of
-    tower XP, the hero mostly of safety.
-    heroes: how many candidates the sweep tries, best on merit first (None:
-    all of them; 1: only the first hero)."""
+    Heroes are compared on merit (docs/tower_exclusions_audit.md item 1).
+    heroes:
+      * None or a number N: the XP target and spot rule are chosen with the
+        first hero (the equipped one if it is a candidate, else the best on
+        merit), then every other hero_candidates hero (or only the N best on
+        merit, N counting the first) is optimized on that target, and the
+        best plan by the same rule wins. A sweep of every hero for every
+        target would cost about eighteen times as long (an optimization
+        takes 1-3 minutes); the target is mostly a matter of tower XP, the
+        hero mostly of safety.
+      * a list of hero ids: exactly those, each with every target and spot
+        rule.
+    Each plan counts its hero's income (Benjamin's Cyber Cash) round by
+    round, so in Impoppable and the other income modes Benjamin is weighed
+    against a damage hero by the same key: safety first, then valued XP per
+    hour, which his cash raises through the surplus spent on the XP target."""
     weights = xp_weights(account)
     boosts = {} if base or account is None else dict(getattr(account, "boosts", {}) or {})
     if mode == "chimps":
@@ -1380,9 +1453,13 @@ def optimize(map_name, mode, target=None, account=None, write=True, candidates=3
         # both): the written plan must not claim to need them, or the
         # planner would hold it back from an account without them (needs_boosts)
         boosts = {}
-    pool = hero_candidates(account, MapSetup(map_name, mode)) or ["quincy"]
-    equipped = getattr(account, "selected_hero", None) if account is not None else None
-    first = equipped if equipped in pool else pool[0]
+    if isinstance(heroes, (list, tuple)):
+        pool = [h for h in heroes if h in T.HEROES] or ["quincy"]
+        first, sweep = None, False
+    else:
+        pool = hero_candidates(account, MapSetup(map_name, mode)) or ["quincy"]
+        equipped = getattr(account, "selected_hero", None) if account is not None else None
+        first, sweep = (equipped if equipped in pool else pool[0]), True
     targets = [target] if target else target_candidates(map_name, mode, weights, account, candidates) or [None]
     best = None
 
@@ -1393,9 +1470,10 @@ def optimize(map_name, mode, target=None, account=None, write=True, candidates=3
         xp = xp_report(plan, weights)
         key = _plan_key(plan, xp)
         worst = min(plan.margins.values()) if plan.margins else 0.0
-        log.info("%s %s target %s, %s spots, hero %s: unsafe %s, worst margin %.2f, valued XP/h %s (%.0f s)",
-                 map_name, mode, tgt, "all" if reserve else f"best {SPOTS_PER_KIND}", hero, plan.unsafe,
-                 worst, xp["valued_xp_per_hour"], plan.seconds)
+        log.info("%s %s hero %s target %s, %s spots: unsafe %s, worst margin %.2f, valued XP/h %s, "
+                 "board cash $%.0f (%.0f s)", map_name, mode, hero, tgt,
+                 "all" if reserve else f"best {SPOTS_PER_KIND}", plan.unsafe,
+                 worst, xp["valued_xp_per_hour"], plan.board_cash, plan.seconds)
         if best is None or key > best[0]:
             best = (key, plan, opt.setup, xp, tgt, reserve)
 
@@ -1403,15 +1481,16 @@ def optimize(map_name, mode, target=None, account=None, write=True, candidates=3
     # kind, or only its best few - Cargo Magic Only needed the first, Dark
     # Dungeons Deflation (2026-11-11) held at 1.56 with the second and at
     # 0.55 with the first
-    for tgt in targets:
-        for reserve in (True, False):
-            consider(tgt, reserve, first)
-    if D.HERO_RATING:
+    for hero in ([first] if sweep else pool):
+        for tgt in targets:
+            for reserve in (True, False):
+                consider(tgt, reserve, hero)
+    if sweep and D.HERO_RATING:
         # the hero sweep: the model rates every hero at its level by round
         # (dps_model.HERO_RATING), so each is tried with the winning target
         _, _, _, _, tgt, reserve = best
         others = [h for h in pool if h != first]
-        for hero in others[:None if heroes is None else max(0, heroes - 1)]:
+        for hero in others[:None if heroes is None else max(0, int(heroes) - 1)]:
             consider(tgt, reserve, hero)
     _, plan, setup, xp, _, _ = best
     text = plan_yaml(plan, setup, weights, xp)
@@ -1492,6 +1571,7 @@ def replay_plan(plan, rounds=None, account=None):
     ev = Evaluator(setup, mode, hero)
     towers, cash, i = {}, econ.start_cash, 0
     placed = {}             # tower id -> the round it was bought before
+    hero_bought = None      # the round the hero was bought, for its income
     steps = plan.get("plan") or []
     margins = {}
     for rnd in range(econ.start_round, econ.end_round + 1):
@@ -1505,18 +1585,21 @@ def replay_plan(plan, rounds=None, account=None):
             if step["do"] == "place" and step["kind"] == "hero":
                 cost = T.hero_cost(plan.get("hero") or "quincy", econ.family)
             elif step["do"] == "place":
-                cost = T.tower_cost(step["kind"], econ.family)
+                spot = setup.cell_spot(setup.model.frac_to_cell(*step["at"]))
+                cost = place_cost(step["kind"], (0, 0, 0), econ.family, spot, list(towers.values()))
             elif step["do"] == "upgrade":
                 t = towers[step["id"]]
-                cost = upgrade_cost(t.kind, t.tiers, tuple(int(c) for c in str(step["to"]).split("-")), econ.family)
+                cost = upgrade_cost(t.kind, t.tiers, tuple(int(c) for c in str(step["to"]).split("-")), econ.family,
+                                    spot_discount(t.spot, list(towers.values()), own=t))
             else:
                 cost = 0.0
             if cost > cash:
                 break
             cash -= cost
+            if step["do"] == "place" and step["kind"] == "hero":
+                hero_bought = rnd
             if step["do"] == "place" and step["kind"] != "hero":
-                cell = setup.model.frac_to_cell(*step["at"])
-                towers[step["id"]] = Tower(step["id"], step["kind"], setup.cell_spot(cell), (0, 0, 0), cost)
+                towers[step["id"]] = Tower(step["id"], step["kind"], spot, (0, 0, 0), cost)
                 placed[step["id"]] = rnd
             elif step["do"] == "place" and D.HERO_RATING:
                 # the hero, at its planned spot or where the model would stand it
@@ -1533,7 +1616,10 @@ def replay_plan(plan, rounds=None, account=None):
             i += 1
         if rounds is None or rnd in rounds:
             margins[rnd] = round(_awake_margin(ev, setup, plan["map"], mode, rnd, list(towers.values()), placed), 2)
-        cash += econ.income(rnd)
+        level = (hero_level_at(hero, plan["map"], mode, account, hero_bought, rnd)
+                 if hero_bought is not None else None)
+        cash += econ.income(rnd) + board_cash(mode, list(towers.values()),
+                                              hero if hero_bought is not None else None, level)
     return margins
 
 
@@ -1585,30 +1671,40 @@ def _replayed_towers(plan, setup):
     econ.start_cash = float(sc.get("start_cash", econ.start_cash))
     econ.cash_mult = float(sc.get("income_multiplier", econ.cash_mult))
     towers, cash = {}, econ.start_cash
+    hero = plan.get("hero") or "quincy"
+    hero_bought = None
     steps = list(plan.get("plan") or [])
     for rnd in range(econ.start_round, econ.end_round + 1):
         while steps:
             step = steps[0]
-            if step["do"] == "place":
-                cost = (T.hero_cost(plan.get("hero") or "quincy", econ.family) if step["kind"] == "hero"
-                        else T.tower_cost(step["kind"], econ.family))
+            spot = None
+            if step["do"] == "place" and step["kind"] == "hero":
+                cost = T.hero_cost(hero, econ.family)
+            elif step["do"] == "place":
+                spot = setup.cell_spot(setup.model.frac_to_cell(*step["at"]))
+                cost = place_cost(step["kind"], (0, 0, 0), econ.family, spot, list(towers.values()))
             elif step["do"] == "upgrade":
                 t = towers[step["id"]]
-                cost = upgrade_cost(t.kind, t.tiers, parse_cross(step["to"]), econ.family)
+                cost = upgrade_cost(t.kind, t.tiers, parse_cross(step["to"]), econ.family,
+                                    spot_discount(t.spot, list(towers.values()), own=t))
             else:
                 cost = 0.0
             if cost > cash:
                 break
             cash -= cost
+            if step["do"] == "place" and step["kind"] == "hero":
+                hero_bought = rnd
             if step["do"] == "place" and step["kind"] != "hero":
-                spot = setup.cell_spot(setup.model.frac_to_cell(*step["at"]))
                 towers[step["id"]] = Tower(step["id"], step["kind"], spot, (0, 0, 0), cost)
             elif step["do"] == "upgrade":
                 t = towers[step["id"]]
                 towers[step["id"]] = Tower(t.tid, t.kind, t.spot, parse_cross(step["to"]), t.spent + cost)
             steps.pop(0)
         if rnd < econ.end_round:
-            cash += econ.income(rnd)
+            level = (hero_level_at(hero, plan["map"], mode, None, hero_bought, rnd)
+                     if hero_bought is not None else None)
+            cash += econ.income(rnd) + board_cash(mode, list(towers.values()),
+                                                  hero if hero_bought is not None else None, level)
     return list(towers.values()), cash
 
 
@@ -1969,14 +2065,19 @@ def lower_priority():
         log.warning("could not lower the priority: %s", e)
 
 
+def _heroes_arg(text):
+    """--heroes: None, a number (sweep that many best on merit) or hero ids."""
+    if not text:
+        return None
+    return int(text) if text.strip().isdigit() else [h.strip() for h in text.split(",") if h.strip()]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("map", nargs="?")
     ap.add_argument("mode", nargs="?")
     ap.add_argument("--target", help="XP target tower (default: try the most valuable few)")
     ap.add_argument("--candidates", type=int, default=3, help="XP targets tried per map/mode")
-    ap.add_argument("--heroes", type=int, default=None,
-                    help="heroes the sweep tries, best on merit first (default: every owned one)")
     ap.add_argument("--calibrate", action="store_true")
     ap.add_argument("--check", metavar="FILE", help="re-check a written plan (replayed as the executor buys)")
     ap.add_argument("--restate", metavar="FILE", nargs="+",
@@ -1986,6 +2087,9 @@ def main():
     ap.add_argument("--summary", action="store_true", help="rewrite the plan table in docs/optimizer.md")
     ap.add_argument("--no-account", action="store_true", help="plan for a fully unlocked account without boosts")
     ap.add_argument("--base", action="store_true", help="plan without Fast Track / Double Cash")
+    ap.add_argument("--heroes", help="a number N: sweep the N best heroes on merit; or hero ids, comma "
+                                     "separated, e.g. quincy,benjamin for an income mode (default: every "
+                                     "owned hero, best on merit)")
     ap.add_argument("--maps", help="only these maps (comma separated) of the default runs")
     ap.add_argument("--chimps", action="store_true", help="run CHIMPS on CHIMPS_MAPS instead of the default runs")
     ap.add_argument("--nice", action="store_true", help="run at below-normal priority (beside the live bot)")
@@ -2032,7 +2136,7 @@ def main():
     for map_name, mode in runs:
         try:
             plan, xp, path = optimize(map_name, mode, target=a.target, account=account, candidates=a.candidates,
-                                      base=a.base, heroes=a.heroes)
+                                      base=a.base, heroes=_heroes_arg(a.heroes))
         except ValueError as e:
             print(f"{map_name} {mode}: skipped ({e})")
             continue

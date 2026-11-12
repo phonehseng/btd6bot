@@ -632,6 +632,10 @@ class Bot:
         self.inp = Input(self.s)
         self.lay = L.get(self.s.width, self.s.height)
         self.account = AccountState.load(account_path or current_path())
+        # status effects in the damage model: too slow for the live time
+        # budgets yet (dps_model.LIVE_STATUS_RATING); offline tools keep them
+        from . import dps_model
+        dps_model.STATUS_RATING = dps_model.LIVE_STATUS_RATING
         self.menus = Menus(self.s, self.inp)
         self.strats = load_all()
         self.failures = 0
@@ -679,6 +683,10 @@ class Bot:
                         "profile", "overwrite", "account", "monkeys_menu", "legends"):
                 self.inp.click(0.044, 0.055)  # back arrow
                 time.sleep(0.4)
+            elif st == "save_choice":
+                # keep the local save, never the cloud one (menus.handle_save_choice)
+                self.menus.handle_save_choice()
+                time.sleep(0.6)
             elif st in ("collection_event", "reward_cards", "insta_reward"):
                 self.menus.handle_collection_event()
             elif st == "level_up":

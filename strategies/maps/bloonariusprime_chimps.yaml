@@ -1,0 +1,112 @@
+# Bloonarius Prime, CHIMPS: OneEyedDeacon's Rosalia + Flying Fortress
+# guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Bloonarius Prime had no CHIMPS build. Every Beginner CHIMPS map was won by
+# following a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Bloonarius Prime, Strategy 1). The lanes
+# alternate (prime rounds take the short right lane), so global aircraft or
+# snipers that see both lanes are what hold it.
+#
+# Guide: OneEyedDeacon (https://www.youtube.com/watch?v=mLpg86Zc7Rs, v49.3),
+# written round by round in the description (confidence:
+# verified-written-steps). Hero: Rosalia (R14, on top, room for a village
+# above her).
+# Core towers: Ace 2-0-5 (Flying Fortress), three Darts (one on Strong), a
+# Sub, Sniper 0-2-2, Druid 1-3-0, Village 2-2-0, Alchemist 3-2-0.
+# Placements, in the guide's words: dart 1 on Strong at the left top
+# intersection, dart 2 between the tracks at the bottom, the sub on the
+# right splitting the two halves of the right lane, dart 3 at the bottom-left
+# intersection, the sniper on Strong at the bottom, the druid on the right,
+# Rosalia on top with the village above her.
+#
+# Adapted, and why:
+#   * Rosalia's moves between the lanes (R19, R20), her grenade swap and
+#     her timed abilities cannot be done by the bot; its ability planner
+#     presses her abilities on the blimp rounds by itself.
+#   * the village line reads 0-0-2 (R35) then 0-2-0 and 2-2-0 (R42-43); a
+#     village cannot be 2-2-2, so it is read as 2-2-0.
+#   * the bot's coverage check needs ceramic, BFB, ZOMG, DDT and BAD answers
+#     from its own tables (strategy.ANSWERS); none of the guide's towers is
+#     in them. The guide spends the whole CHIMPS bank on the Flying
+#     Fortress (about $97k alone), so nothing that answers them fits in
+#     the plan: it ends with a bare spike factory at the exit (leak
+#     cleanup), and its Deadly Spikes / Perma-Spike are fill steps,
+#     bought only if cash is left. The DDT and BAD answers the executor
+#     pulls forward are the guide's own Flying Fortress.
+#   * the guide's Flying Fortress round (R88-89) cannot be met with CHIMPS
+#     cash at Hard prices: Spectre ($25,270) and Flying Fortress ($97,200)
+#     on top of the rest come to about $144k, which the rounds pay by
+#     round 94 (by round 88: $129k). The plan keeps the guide's order;
+#     the Fortress stands from round 95 in the replay.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 25/25 bought, threat gaps: none, off-plan answer buys:
+# 14. Each step stands from: x1 placed R6, x2 placed R6, sb1 placed R7, x3
+# placed R8, s1 placed R10, hero placed R14, d1 placed R16, d1 0-1-0 R17, d1
+# 0-3-0 R25, s1 0-1-0 R19, d1 1-3-0 R25, s1 0-1-2 R28, s1 0-2-2 R29, v1 placed
+# R32, ac1 placed R34, ac1 0-0-2 R37, ac1 0-0-3 R39, ac1 2-0-3 R39, v1 0-2-0
+# R40, v1 2-2-0 R42, a1 placed R42, a1 3-2-0 R45, ac1 2-0-4 R57, ac1 2-0-5
+# R95, p1 placed R95. Damage model margins on those boards (it counts no hero
+# and no ability, and under-rates map-wide towers): 40 1.00, 63 1.94, 76 1.56,
+# 81 1.00, 90 0.06, 95 2.71, 98 1.74, 100 2.89.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: bloonariusprime_chimps
+map: Bloonarius Prime
+hero: rosalia
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {dart: [0, 0, 0], sub: [0, 0, 0], sniper: [0, 2, 2], druid: [1, 3, 0], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
+  revised: "2026-11-12T12:00"
+  maps: [Bloonarius Prime]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.174, 0.181]}  # R6 on Strong, the left top intersection
+  - {do: place, id: x2, kind: dart, role: dps, at: [0.088, 0.198]}              # R6 between the tracks at the bottom
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.655, 0.504]}              # R7 the right, splitting the right lane's halves
+  - {do: place, id: x3, kind: dart, role: dps, at: [0.163, 0.129]}              # R8 the bottom-left intersection
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.441, 0.078]}  # R10 on Strong, at the bottom
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.088, 0.129]}            # R14 Rosalia, on top
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.633, 0.76]}              # R16 on the right
+  - {do: upgrade, id: d1, to: 0-1-0}                                            # R17
+  - {do: upgrade, id: d1, to: 0-3-0}                                            # R22
+  - {do: upgrade, id: s1, to: 0-1-0}                                            # R24 Night Vision: camo
+  - {do: upgrade, id: d1, to: 1-3-0}                                            # R25 Hard Thorns: lead
+  - {do: upgrade, id: s1, to: 0-1-2}                                            # R27-28
+  - {do: upgrade, id: s1, to: 0-2-2}                                            # R29 on First
+  - {do: place, id: v1, kind: village, role: support, near: [hero], at: [0.099, 0.283]}  # R35 above Rosalia
+  - {do: place, id: ac1, kind: ace, role: dps, near: [v1], at: [0.142, 0.368]}  # R36
+  - {do: upgrade, id: ac1, to: 0-0-2}                                           # R36
+  - {do: upgrade, id: ac1, to: 0-0-3}                                           # R38
+  - {do: upgrade, id: ac1, to: 2-0-3}                                           # R39
+  - {do: upgrade, id: v1, to: 0-2-0}                                            # R42 Radar Scanner
+  - {do: upgrade, id: v1, to: 2-2-0}                                            # R43 Jungle Drums
+  - {do: place, id: a1, kind: alchemist, role: support, near: [ac1], at: [0.206, 0.215]}  # R44
+  - {do: upgrade, id: a1, to: 3-2-0}                                            # R45
+  - {do: upgrade, id: ac1, to: 2-0-4}                                           # R56 Spectre
+  - {do: upgrade, id: ac1, to: 2-0-5}                                           # R89 Flying Fortress
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.206, 0.078]}  # added: a spike factory at the exit; its Perma-Spike is a fill step (see above)
+fill:
+  - {do: upgrade, id: p1, to: 2-0-4}                                            # Deadly Spikes, if the cash comes
+  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: d1, to: 1-3-0}]
+  ceramic: [{do: upgrade, id: ac1, to: 2-0-3}]
+  moab: [{do: upgrade, id: ac1, to: 2-0-3}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 0-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 0-2-0}]
+  bfb: [{do: upgrade, id: ac1, to: 2-0-4}]
+  rush: [{do: upgrade, id: d1, to: 1-3-0}]
+  zomg: [{do: upgrade, id: ac1, to: 2-0-5}]
+  ddt: [{do: upgrade, id: ac1, to: 2-0-5}]
+  bad: [{do: upgrade, id: ac1, to: 2-0-5}]

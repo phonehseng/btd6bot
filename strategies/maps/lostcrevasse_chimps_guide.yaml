@@ -1,0 +1,112 @@
+# Lost Crevasse, CHIMPS: OneEyedDeacon's no-ability Sauda + Tack Zone + Spirit
+# of the Forest guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next. The
+# bot's own Carrier Flagship builds (lostcrevasse_chimps, now parked) lost
+# this map many times, from round 8 to round 95. Every Beginner CHIMPS map
+# was won by following a published guide step by step with exact spots and
+# plan_first, so this build does the same (docs/chimps_map_guides.md, Lost
+# Crevasse, Strategy 1).
+#
+# Guide: OneEyedDeacon, "Lost Crevasse CHIMPS - NO ABILITIES and NO MICRO"
+# (https://www.youtube.com/watch?v=yjRUMBRZOss, v53.2), written round by
+# round in the video description (confidence: verified-written-steps).
+# Hero: Sauda, at the top middle as high as possible (both lanes' entrance).
+# Core towers: Tack 2-0-5 (The Tack Zone), Druid 1-5-0 (Spirit of the
+# Forest), Sniper 0-2-2, Ice 5-2-0 (Super Brittle), Alchemist 4-2-0, Glue
+# 0-2-4, two villages (2-0-2 and 0-3-2: Radar, then MIB).
+# Placements, in the guide's words: tack right of Sauda, druid behind her,
+# ice left of her, the sniper next to the crystal, village 1 left behind the
+# druid, village 2 on the right, the alchemist by the tack, the glue next to
+# the druid. The spots are pinned (tools/pin_spots.py, `area` boxes) on cells
+# of the live learned map the game never refused.
+#
+# Adapted, and why:
+#   * the druid's R51 1-4-0 (Jungle's Bounty) is an income tier the bot never
+#     buys in CHIMPS; the druid goes 1-3-0 -> 1-5-0 at the guide's R83 step;
+#   * the bot's coverage check needs a ceramic, DDT and BAD answer from its
+#     own tables (strategy.ANSWERS), and no tower of the guide is in them.
+#     The cheapest that answers all three is a MOAB Eliminator bomb (0-5-0,
+#     ~$34k) with the guide's MIB village. The guide spends the whole CHIMPS
+#     bank, so the bomb takes the place of the guide's three last luxuries:
+#     R97 Super Glue (glue stays 0-2-4 Relentless), R99 Primary Mentoring and
+#     R46 Primary Training (village 1 stays 2-0-2). MIB is bought last.
+#   * no Primary Expertise or other locked tier is used.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 37/37 bought, threat gaps: none, off-plan answer buys:
+# none. Each step stands from: hero placed R6, t1 placed R8, s1 placed R10, d1
+# placed R12, d1 0-1-0 R13, d1 0-2-0 R15, d1 0-3-0 R19, d1 1-3-0 R22, s1 0-0-1
+# R23, s1 0-1-1 R23, s1 0-1-2 R25, s1 0-2-2 R27, v1 placed R30, v1 0-0-2 R32,
+# v2 placed R35, v2 0-0-2 R37, t1 2-0-3 R36, t1 2-0-4 R40, v1 2-0-2 R42, a1
+# placed R42, a1 3-2-0 R44, v2 0-2-2 R46, i1 placed R46, i1 4-1-0 R49, a1
+# 4-2-0 R50, t1 2-0-5 R60, g1 placed R60, g1 0-1-3 R64, g1 0-2-3 R64, g1 0-2-4
+# R66, d1 1-5-0 R83, i1 5-2-0 R93, b1 placed R93, b1 0-2-0 R93, b1 0-4-0 R95,
+# b1 0-5-0 R99, v2 0-3-2 during R100. Damage model margins on those boards (it
+# counts no hero and no ability, and under-rates map-wide towers): 40 0.68, 63
+# 0.30, 76 0.77, 81 0.07, 90 0.06, 95 0.06, 98 0.06, 100 0.06.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: lostcrevasse_chimps_guide
+map: Lost Crevasse
+hero: sauda
+hero_opens: true      # the hero alone holds the opening (Executor.defended)
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {tack: [2, 0, 5], druid: [1, 5, 0], sniper: [0, 2, 2], village: [2, 3, 2], alchemist: [4, 2, 0], ice: [5, 2, 0], glue: [0, 2, 4], bomb: [0, 5, 0]}
+  revised: "2026-11-12T12:00"
+  maps: [Lost Crevasse]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.452, 0.146]}            # R6 Sauda, top middle, as high as possible
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.548, 0.198]}              # R8 tack right of Sauda
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.569, 0.3]}  # R10 sniper next to the crystal
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.419, 0.215]}             # R12 druid behind Sauda
+  - {do: upgrade, id: d1, to: 0-1-0}                                            # R13
+  - {do: upgrade, id: d1, to: 0-2-0}                                            # R15
+  - {do: upgrade, id: d1, to: 0-3-0}                                            # R19
+  - {do: upgrade, id: d1, to: 1-3-0}                                            # R20 Hard Thorns: lead
+  - {do: upgrade, id: s1, to: 0-0-1}                                            # R22
+  - {do: upgrade, id: s1, to: 0-1-1}                                            # R23 Night Vision: round 24's camo
+  - {do: upgrade, id: s1, to: 0-1-2}                                            # R25
+  - {do: upgrade, id: s1, to: 0-2-2}                                            # R27 Shrapnel Shot
+  - {do: place, id: v1, kind: village, role: support, near: [d1, hero], at: [0.419, 0.3]}  # R32 village 1, left, behind the druid
+  - {do: upgrade, id: v1, to: 0-0-2}                                            # R32 Monkey Commerce
+  - {do: place, id: v2, kind: village, role: support, near: [t1, s1], at: [0.526, 0.266]}  # R36 village 2, right
+  - {do: upgrade, id: v2, to: 0-0-2}                                            # R36
+  - {do: upgrade, id: t1, to: 2-0-3}                                            # R37
+  - {do: upgrade, id: t1, to: 2-0-4}                                            # R39 Overdrive: round 40's MOAB
+  - {do: upgrade, id: v1, to: 2-0-2}                                            # R40 Jungle Drums
+  - {do: place, id: a1, kind: alchemist, role: support, near: [t1], at: [0.558, 0.351]}  # R43 alchemist by the tack
+  - {do: upgrade, id: a1, to: 3-2-0}                                            # R43
+  - {do: upgrade, id: v2, to: 0-2-2}                                            # R45 Radar Scanner: camo for the cluster
+  - {do: place, id: i1, kind: ice, role: dps, at: [0.377, 0.164]}               # R48 ice left of Sauda
+  - {do: upgrade, id: i1, to: 4-1-0}                                            # R48 Embrittlement
+  - {do: upgrade, id: a1, to: 4-2-0}                                            # R49 Stronger Stimulant
+  - {do: upgrade, id: t1, to: 2-0-5}                                            # R63 The Tack Zone
+  - {do: place, id: g1, kind: glue, role: dps, target: strong, near: [d1], at: [0.377, 0.232]}  # R65 glue next to the druid, on Strong
+  - {do: upgrade, id: g1, to: 0-1-3}                                            # R65
+  - {do: upgrade, id: g1, to: 0-2-3}                                            # R66
+  - {do: upgrade, id: g1, to: 0-2-4}                                            # R68 Relentless Glue
+  - {do: upgrade, id: d1, to: 1-5-0}                                            # R83 Spirit of the Forest (R51's 1-4-0 is an income tier the bot skips)
+  - {do: upgrade, id: i1, to: 5-2-0}                                            # R92 Super Brittle
+  - {do: place, id: b1, kind: bomb, role: dps, near: [v1], at: [0.366, 0.3]}    # added: round 100's BAD (see header), by Sauda in Jungle Drums range
+  - {do: upgrade, id: b1, to: 0-2-0}
+  - {do: upgrade, id: b1, to: 0-4-0}                                            # MOAB Assassin
+  - {do: upgrade, id: b1, to: 0-5-0}                                            # MOAB Eliminator, in place of the guide's R97 Super Glue and R99 Primary Mentoring
+  - {do: upgrade, id: v2, to: 0-3-2}                                            # R99 MIB (the guide's): camo, lead and black for every tower by it (DDTs)
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-1}]
+  lead: [{do: upgrade, id: d1, to: 1-3-0}]
+  moab: [{do: upgrade, id: t1, to: 2-0-4}]
+  rush: [{do: upgrade, id: t1, to: 2-0-4}]
+  ddt: [{do: upgrade, id: v2, to: 0-2-2}]
+  bad: [{do: upgrade, id: b1, to: 0-5-0}]

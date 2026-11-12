@@ -1,0 +1,109 @@
+# Haunted, CHIMPS: BeatbloonsBob's no-ability Sauda + sub + Carrier Flagship
+# + Bloon Solver + Archmage guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Haunted had no CHIMPS build. Every Beginner CHIMPS map was won by following
+# a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Haunted, Strategy 1: fully written, no
+# abilities, every tier unlocked).
+#
+# Guide: BeatbloonsBob, "No abilities or micro"
+# (https://www.youtube.com/watch?v=LJuBp-nHYno, about 8 months old), the
+# order written in the description, one round anchor (the village before
+# round 59) (confidence: video-description, ordered steps).
+# Hero: Sauda (the 4th purchase).
+# Core towers: Sub 2-0-4, Buccaneer 5-2-0 (Carrier Flagship, on Strong),
+# two Darts 0-0-3, Village 4-2-0, Mermonkey 4-2-0, Alchemist 4-0-1, Glue
+# 5-2-0 (The Bloon Solver), Wizard 5-2-0 (Archmage), Glue 0-2-4 (on
+# Strong); see below for the last two.
+# Placements: the sub, the boat and the Mermonkey in the central pond,
+# which reaches both overlapping lanes; the first dart on Strong by the
+# pond, the second dart on the left side; Sauda where both lanes run side
+# by side.
+#
+# Adapted, and why:
+#   * the bot's coverage check needs BFB, ZOMG, DDT, BAD and rush answers
+#     from its own tables (strategy.ANSWERS); none of the guide's towers is
+#     in them. A Cripple MOAB sniper (Night Vision, Maim MOAB, Cripple MOAB)
+#     answers all but rush, and a Glaive Ricochet boomerang (3-0-2) answers
+#     round 63's rush. They cost about $48k and the guide spends nearly
+#     everything, so the guide's two last steps make room: the wizard
+#     stops at Arcane Spike (4-2-0, not Archmage) and the second glue
+#     (0-2-4, on Strong) is left out.
+#   * the boat and its Hot Shot come before the sub's 2-0-2: in the replay
+#     nothing popped round 28's leads in time and the executor bought a
+#     bomb for them.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 30/30 bought, threat gaps: none, off-plan answer buys: 3.
+# Each step stands from: x1 placed R6, sb1 placed R6, sb1 0-0-1 R9, hero
+# placed R11, b1 placed R14, b1 2-2-0 R22, sb1 2-0-2 R28, sb1 2-0-4 R36, b1
+# 3-2-0 R39, x1 0-0-3 R32, x2 placed R39, x2 0-0-3 R40, b1 4-2-0 R46, v1
+# placed R47, v1 2-2-0 R49, m1 placed R50, m1 4-2-0 R51, r1 placed R52, r1
+# 3-0-2 R53, b1 5-2-0 R70, v1 4-2-0 R72, a1 placed R72, a1 4-0-1 R75, g1
+# placed R75, g1 5-2-0 R84, s1 placed R84, s1 4-1-0 R87, w1 placed R87, w1
+# 4-2-0 R93, s1 5-1-0 R99. Damage model margins on those boards (it counts no
+# hero and no ability, and under-rates map-wide towers): 40 4.09, 63 4.18, 76
+# 10.60, 81 4.97, 90 1.68, 95 0.31, 98 0.68, 100 2.54.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: haunted_chimps
+map: Haunted
+hero: sauda
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {dart: [0, 0, 3], sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], mermonkey: [4, 2, 0], alchemist: [4, 0, 1], glue: [5, 2, 0], wizard: [4, 2, 0], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
+  revised: "2026-11-12T12:00"
+  maps: [Haunted]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.558, 0.692]}  # on Strong, by the pond
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.43, 0.521]}               # the central pond: both lanes
+  - {do: upgrade, id: sb1, to: 0-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.302, 0.692]}            # Sauda, by the overlapping lanes
+  - {do: place, id: b1, kind: buccaneer, role: dps, target: strong, at: [0.419, 0.658]}  # the central pond, on Strong
+  - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
+  - {do: upgrade, id: sb1, to: 2-0-2}                                           # Advanced Intel
+  - {do: upgrade, id: sb1, to: 2-0-4}                                           # Armor Piercing Darts
+  - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
+  - {do: upgrade, id: x1, to: 0-0-3}                                            # Crossbow
+  - {do: place, id: x2, kind: dart, role: dps, at: [0.077, 0.709]}              # the second dart, on the left side
+  - {do: upgrade, id: x2, to: 0-0-3}
+  - {do: upgrade, id: b1, to: 4-2-0}                                            # Aircraft Carrier
+  - {do: place, id: v1, kind: village, role: support, near: [b1, sb1], at: [0.291, 0.589]}  # before round 59
+  - {do: upgrade, id: v1, to: 2-2-0}                                            # Radar Scanner, Jungle Drums
+  - {do: place, id: m1, kind: mermonkey, role: dps, near: [v1], at: [0.302, 0.436]}
+  - {do: upgrade, id: m1, to: 4-2-0}
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.227, 0.675]}  # added: Glaive Ricochet for round 63
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
+  - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
+  - {do: place, id: a1, kind: alchemist, role: support, near: [b1, sb1], at: [0.558, 0.589]}
+  - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.59, 0.658]}
+  - {do: upgrade, id: g1, to: 5-2-0}                                            # The Bloon Solver
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.302, 0.504]}  # added: the bot's BFB-to-BAD answer (see above)
+  - {do: upgrade, id: s1, to: 4-1-0}                                            # Night Vision, Maim MOAB
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.729, 0.709]}
+  - {do: upgrade, id: w1, to: 4-2-0}                                            # Arcane Spike
+  - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
+answers:
+  lead: [{do: upgrade, id: b1, to: 2-2-0}]
+  camo: [{do: upgrade, id: x1, to: 0-0-3}]
+  ceramic: [{do: upgrade, id: x1, to: 0-0-3}]
+  moab: [{do: upgrade, id: sb1, to: 2-0-4}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 2-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 2-2-0}]
+  bfb: [{do: upgrade, id: b1, to: 4-2-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: s1, to: 4-1-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]

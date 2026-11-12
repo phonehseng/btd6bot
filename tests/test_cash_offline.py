@@ -130,6 +130,18 @@ def test_a_phantom_digit_is_still_turned_down():
     assert hud.cash() is None, "the Double Cash badge read as text (panel open, crop not shifted)"
 
 
+def test_a_letter_between_digits_is_not_dropped():
+    """Spillway Impoppable (2026-11-12 12:05, loss case 20261112_120735):
+    the recording's counter '$440' read '$4HO）' about one frame in ten, and
+    dropping the H made it $40 - the sniper, dart and boomerang openers all
+    answered "wait" with $440 in hand. Such a read is turned down, so the
+    median of the clean reads around it stands."""
+    assert parse_cash("$4HO）") is None
+    assert parse_cash("$440）") == 440             # the bracket after it is still stray
+    hud = _ScriptedHud(["$440）", "$4HO）", "$440）"])
+    assert [hud.cash(), hud.cash(), hud.cash()] == [440, None, 440]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

@@ -21,60 +21,119 @@
 # snipers (global range, any pane-free cell) and late sinks so the bank never idles.
 # The MOAB answer (n2 2-0-3, 2-0-4) comes before the alchemist, as on Mesa, and a Maim
 # MOAB sniper (global range) follows n1 4-0-2: the strips reach little of the track.
+#
+# Late game (2026-11-12, damage model phase 2, Double Cash, no Fast Track): from round 30 the
+# steps are tools/optimize_builds.py's greedy on the phase-2 model, saving for one carry: a
+# Wizard Lord Phoenix (wizard 0-5-2 by round 75; 0-4-2 by round 50), the best carry the
+# pane-free ground holds. Etienne is the hero: his map-wide camo (level 8) lets the
+# towers hit the camo DDTs of rounds 95 and 99, which the Obyn build leaked. The plan before it rated under 1.0 in 49 of rounds 40-100. The hero stands where the late game was rated with it, off every pin.
 id: coveredgarden_impoppable
 map: Covered Garden
-hero: obyn
+hero: etienne
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:
-  towers: {ninja: [4, 4, 4], alchemist: [4, 2, 0], village: [2, 3, 0], super: [3, 0, 2], spike: [2, 0, 5], bomb: [2, 5, 0], ace: [2, 5, 0], sniper: [5, 2, 2]}
+  towers: {ninja: [4, 0, 4], wizard: [5, 5, 2], skywarden: [4, 0, 1], desperado: [5, 1, 0], sniper: [4, 5, 0]}
   base_success: {impoppable: 0.5}
   maps: [Covered Garden]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.056, 0.743]}
   - {do: upgrade, id: n1, to: 1-0-1}
-  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6], at: [0.067, 0.606]}
   - {do: upgrade, id: n1, to: 2-0-1}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.826, 0.334]}
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
-  - {do: upgrade, id: n2, to: 2-0-4}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.067, 0.572]}
-  - {do: upgrade, id: a1, to: 2-0-0}
+  # rounds 30-100: bought by tools/optimize_builds.py's greedy on the damage model,
+  # saving for the carry (`*_carry*`) by its round
+  - {do: place, id: wiz_carry1, kind: wizard, role: support, at: [0.056, 0.811]}
+  - {do: place, id: sky501, kind: skywarden, role: support, at: [0.815, 0.487]}
+  - {do: place, id: wiz502, kind: wizard, role: support, at: [0.056, 0.538]}
+  - {do: upgrade, id: wiz502, to: 1-2-0}
+  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.815, 0.555]}
+  - {do: place, id: sky504, kind: skywarden, role: support, at: [0.826, 0.232]}
+  - {do: place, id: sky505, kind: skywarden, role: support, at: [0.826, 0.606]}
+  - {do: upgrade, id: sky505, to: 1-0-0}
+  - {do: upgrade, id: n1, to: 3-0-1}
+  - {do: upgrade, id: sky501, to: 1-0-0}
   - {do: upgrade, id: n1, to: 3-0-2}
-  - {do: upgrade, id: a1, to: 3-2-0}
-  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7, at: [0.045, 0.504]}
-  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: upgrade, id: sky501, to: 2-0-0}
+  - {do: upgrade, id: sky505, to: 2-0-0}
+  - {do: upgrade, id: sky503, to: 2-0-0}
+  - {do: upgrade, id: wiz502, to: 2-2-0}
+  - {do: upgrade, id: wiz502, to: 3-2-0}
+  - {do: place, id: des506, kind: desperado, role: support, at: [0.035, 0.879]}
+  - {do: upgrade, id: des506, to: 0-1-0}
+  - {do: place, id: des507, kind: desperado, role: support, at: [0.035, 0.453]}
+  - {do: upgrade, id: des507, to: 0-1-0}
+  - {do: upgrade, id: sky504, to: 1-0-0}
+  - {do: upgrade, id: sky501, to: 2-0-1}
+  - {do: upgrade, id: sky503, to: 2-0-1}
+  - {do: place, id: sni508, kind: sniper, role: support, at: [0.035, 0.095]}
+  - {do: upgrade, id: sni508, to: 1-2-0}
+  - {do: upgrade, id: sky505, to: 2-0-1}
+  - {do: place, id: sni509, kind: sniper, role: support, at: [0.045, 0.146]}
+  - {do: upgrade, id: sni509, to: 1-2-0}
+  - {do: place, id: sni510, kind: sniper, role: support, at: [0.815, 0.181]}
+  - {do: upgrade, id: sky504, to: 1-0-1}
   - {do: upgrade, id: n1, to: 4-0-2}
-  - {do: place, id: sn1, kind: sniper, role: support, near: [v1], near_radius: 9, at: [0.045, 0.334]}
-  - {do: upgrade, id: sn1, to: 4-0-2}
-  - {do: target, id: sn1, mode: strong}
-  - {do: place, id: b1, kind: bomb, role: support, near: [v1], near_radius: 8, at: [0.045, 0.402]}
-  - {do: upgrade, id: b1, to: 0-4-0}
-  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 9, at: [0.045, 0.249]}
-  - {do: upgrade, id: s1, to: 3-0-2}
-  - {do: upgrade, id: v1, to: 2-3-0}
-  - {do: place, id: sp1, kind: spike, role: dps, at: [0.045, 0.112]}
-  - {do: upgrade, id: sp1, to: 2-0-4}
-  - {do: place, id: n4, kind: ninja, role: support, near: [v1], near_radius: 9, at: [0.035, 0.589]}
-  - {do: upgrade, id: n4, to: 0-4-0}
-  - {do: place, id: ac1, kind: ace, role: support, at: [0.045, 0.828]}
-  - {do: upgrade, id: ac1, to: 2-4-0}
-  - {do: upgrade, id: b1, to: 0-5-0}
-  - {do: upgrade, id: sp1, to: 2-0-5}
-fill:
-  - {do: upgrade, id: a1, to: 4-2-0}
-  - {do: upgrade, id: b1, to: 2-5-0}
-  - {do: upgrade, id: sn1, to: 5-0-2}
-  - {do: place, kind: sniper, role: dps, max: 6}
-  - {do: upgrade, kind: sniper, to: 4-2-0}
-  - {do: upgrade, id: ac1, to: 2-5-0}
+  - {do: upgrade, id: sni510, to: 0-2-0}
+  - {do: place, id: sni511, kind: sniper, role: support, at: [0.035, 0.215]}
+  - {do: upgrade, id: sni511, to: 1-2-0}
+  - {do: upgrade, id: sni510, to: 1-2-0}
+  - {do: place, id: sni512, kind: sniper, role: support, at: [0.056, 0.283]}
+  - {do: upgrade, id: sni512, to: 0-1-0}
+  - {do: upgrade, id: des507, to: 3-1-0}
+  - {do: upgrade, id: sni512, to: 0-2-0}
+  - {do: upgrade, id: sni512, to: 1-2-0}
+  - {do: place, id: sni513, kind: sniper, role: support, at: [0.045, 0.334]}
+  - {do: upgrade, id: sni513, to: 0-1-0}
+  - {do: upgrade, id: sni513, to: 0-2-0}
+  - {do: upgrade, id: sni513, to: 1-2-0}
+  - {do: upgrade, id: sky501, to: 4-0-1}
+  - {do: place, id: sni514, kind: sniper, role: support, at: [0.035, 0.385]}
+  - {do: upgrade, id: sni514, to: 0-1-0}
+  - {do: upgrade, id: sni514, to: 0-2-0}
+  - {do: upgrade, id: sni514, to: 1-2-0}
+  - {do: place, id: sni515, kind: sniper, role: support, at: [0.067, 0.402]}
+  - {do: upgrade, id: sni515, to: 1-2-0}
+  - {do: upgrade, id: des506, to: 3-1-0}
+  - {do: upgrade, id: sni514, to: 3-2-0}
+  - {do: upgrade, id: sni510, to: 1-3-0}
+  - {do: upgrade, id: sni515, to: 1-3-0}
+  - {do: upgrade, id: sni515, to: 2-3-0}
+  - {do: upgrade, id: wiz_carry1, to: 0-4-2}
+  - {do: upgrade, id: sky503, to: 4-0-1}
+  - {do: upgrade, id: sni509, to: 3-2-0}
+  - {do: upgrade, id: sni513, to: 3-2-0}
+  - {do: upgrade, id: sky504, to: 4-0-1}
+  - {do: upgrade, id: des506, to: 4-1-0}
+  - {do: upgrade, id: sni510, to: 2-3-0}
+  - {do: upgrade, id: wiz_carry1, to: 0-5-2}
+  - {do: upgrade, id: des506, to: 5-1-0}
+  - {do: upgrade, id: des507, to: 4-1-0}
+  - {do: upgrade, id: sky505, to: 4-0-1}
+  - {do: upgrade, id: wiz502, to: 4-2-0}
+  - {do: upgrade, id: sni512, to: 3-2-0}
+  - {do: upgrade, id: sni511, to: 3-2-0}
+  - {do: upgrade, id: sni508, to: 3-2-0}
+  - {do: upgrade, id: wiz502, to: 5-2-0}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: sni510, to: 2-4-0}
+  - {do: upgrade, id: sni510, to: 2-5-0}
+  - {do: upgrade, id: sni515, to: 2-4-0}
+  - {do: upgrade, id: sni514, to: 4-2-0}
+  - {do: upgrade, id: sni512, to: 4-2-0}
+  - {do: upgrade, id: sni509, to: 4-2-0}
+  - {do: upgrade, id: sni508, to: 4-2-0}
+  - {do: upgrade, id: sni513, to: 4-2-0}
+fill: []
 panic:
   - {do: place, kind: ninja, role: exit}
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.067, 0.572]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.067, 0.606]}
   ceramic:
     - {do: upgrade, id: n1, to: 3-0-2}
   moab:
@@ -84,11 +143,11 @@ answers:
   rush:
     - {do: upgrade, id: n1, to: 4-0-2}
   zomg:
-    - {do: upgrade, id: ac1, to: 2-4-0}
-    - {do: place, id: ac1, kind: ace, role: support, at: [0.045, 0.828]}
+    - {do: upgrade, id: n2, to: 2-0-4}
+    - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.826, 0.334]}
   ddt:
-    - {do: upgrade, id: b1, to: 0-5-0}
-    - {do: place, id: b1, kind: bomb, role: support, near: [v1], near_radius: 8, at: [0.045, 0.402]}
+    - {do: upgrade, id: n2, to: 2-0-4}
+    - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.826, 0.334]}
   bad:
-    - {do: upgrade, id: b1, to: 0-5-0}
-    - {do: place, id: b1, kind: bomb, role: support, near: [v1], near_radius: 8, at: [0.045, 0.402]}
+    - {do: upgrade, id: snb, to: 5-0-2}   # Cripple MOAB: no bomb fits the pane-free ground any more
+    - {do: place, id: snb, kind: sniper, role: support, at: [0.815, 0.777]}

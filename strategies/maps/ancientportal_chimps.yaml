@@ -1,0 +1,114 @@
+# Ancient Portal, CHIMPS: BeatbloonsBob's "No RNG" Quincy + sub + Archmage +
+# Bloon Solver + Perma-Spike guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Ancient Portal had no CHIMPS build. Every Beginner CHIMPS map was won by
+# following a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Ancient Portal, Strategy 1: no abilities, no
+# aiming, every upgrade within the account's caps).
+#
+# Guide: BeatbloonsBob, "No RNG" (https://www.youtube.com/watch?v=RtSL6RUWAO4,
+# about 9 months old, ~v54-55), the order written in the description, no
+# rounds and no spots (confidence: verified-written-steps, order only).
+# Hero: Quincy.
+# Core towers: Sub 2-0-4 (Armor Piercing Darts), Alchemist 4-0-1 (on
+# Strong), Wizard 5-2-0, Glue 5-2-0 (The Bloon Solver), Village 4-2-0,
+# Spike Factory 2-0-5 (Perma-Spike, on Smart in the guide).
+# The doc names the wizard "Wizard Lord Phoenix", but the written crosspaths
+# (4-2-0, then 5-2-0) are the top path: Arcane Spike, then Archmage. This
+# build follows the crosspaths.
+# Placements: the sub in the pond (it reaches about half of the default
+# right lane); the portal is never realigned, so every tower watches the
+# right lane; the alchemist and village by the sub and wizard; the glue at
+# the spiral; the Perma-Spike at the exit.
+#
+# Adapted, and why:
+#   * Quincy's place in the order is not given; he comes second, once the
+#     $650 start has paid for the sub.
+#   * a Glaive Ricochet boomerang (3-0-2) for round 63: none of the guide's
+#     towers is a rush answer in the bot's tables (strategy.ANSWERS).
+#   * a bare ninja before round 24: by the bot's tables nothing of the
+#     guide's sees camo before the village's Radar Scanner, and the replay
+#     bought this ninja for it. It is in the plan so it stands where pinned.
+#   * the spare cash at the end goes to a Maim MOAB sniper (fill), not to
+#     the executor's own blimp buys.
+#   * the Perma-Spike keeps the default targeting: Smart needs a calibrated
+#     point the bot does not have.
+#   * the hero pedestals and the charged totems are not used.
+#   * First forced game (2026-11-12 12:30, lost round 22 to 16 whites, every
+#     round from 8 rated under 1.0): the alchemist ($1,223 with its tiers,
+#     rounds 18-20) came before sb1's Triple Guns, and its pinned spot
+#     (0.58, 0.828) stood below the sub. Triple Guns now come before the
+#     alchemist (its spot does reach sb1: pin_spots picks about the same).
+#     The ninja's pin (0.687, 0.521) was refused live; it now stands at
+#     (0.717, 0.563), legal and clear of the boomerang and sniper pins.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 25/25 bought, threat gaps: none, off-plan answer buys: 7.
+# Each step stands from: sb1 placed R6, hero placed R8, sb1 2-0-1 R14, n1
+# placed R15, a1 placed R17, a1 2-0-0 R20, sb1 2-0-3 R28, a1 3-0-1 R33, sb1
+# 2-0-4 R36, w1 placed R37, w1 4-2-0 R48, v1 placed R48, v1 2-0-0 R49, g1
+# placed R49, g1 4-2-0 R55, v1 3-2-0 R50, r1 placed R55, r1 3-0-2 R55, g1
+# 5-2-0 R70, w1 5-2-0 R82, v1 4-2-0 R83, a1 4-0-1 R84, p1 placed R84, p1 2-0-4
+# R85, p1 2-0-5 R95. Damage model margins on those boards (it counts no hero
+# and no ability, and under-rates map-wide towers): 40 2.57, 63 5.30, 76 9.11,
+# 81 2.86, 90 3.26, 95 0.96, 98 1.26, 100 4.56.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: ancientportal_chimps
+map: Ancient Portal
+hero: quincy
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {sub: [2, 0, 4], alchemist: [4, 0, 1], wizard: [5, 2, 0], village: [4, 2, 0], glue: [5, 2, 0], spike: [2, 0, 5], boomerang: [3, 0, 2], ninja: [0, 0, 0]}
+  revised: "2026-11-12T12:00"
+  maps: [Ancient Portal]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.623, 0.658]}              # the pond
+  - {do: place, id: hero, kind: hero, role: dps, near: [sb1], at: [0.516, 0.658]}  # Quincy
+  - {do: upgrade, id: sb1, to: 2-0-1}
+  - {do: place, id: n1, kind: ninja, role: dps, near: [sb1], at: [0.717, 0.563]}  # added: round 24's camo (see above)
+  - {do: upgrade, id: sb1, to: 2-0-3}                                           # damage before the buff (2026-11-12 loss, round 22)
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], target: strong, at: [0.58, 0.828]}  # on Strong (in buff range of sb1)
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: a1, to: 3-0-1}
+  - {do: upgrade, id: sb1, to: 2-0-4}                                           # Armor Piercing Darts
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.601, 0.198]}
+  - {do: upgrade, id: w1, to: 4-2-0}                                            # Arcane Spike
+  - {do: place, id: v1, kind: village, role: support, near: [w1, sb1], at: [0.612, 0.436]}
+  - {do: upgrade, id: v1, to: 2-0-0}                                            # Jungle Drums
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.612, 0.283]}
+  - {do: upgrade, id: g1, to: 4-2-0}                                            # Bloon Liquefier
+  - {do: upgrade, id: v1, to: 3-2-0}                                            # Radar Scanner, Primary Training
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.665, 0.453]}  # added: Glaive Ricochet for round 63
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: g1, to: 5-2-0}                                            # The Bloon Solver
+  - {do: upgrade, id: w1, to: 5-2-0}                                            # Archmage
+  - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
+  - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.772, 0.896]}  # Perma-Spike at the exit
+  - {do: upgrade, id: p1, to: 2-0-4}
+  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+fill:
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.719, 0.504]}  # spare cash: a Maim MOAB sniper
+  - {do: upgrade, id: s1, to: 4-1-0}
+answers:
+  camo: [{do: place, id: n1, kind: ninja, role: dps, at: [0.717, 0.563]}]
+  ceramic: [{do: upgrade, id: sb1, to: 2-0-4}]
+  moab: [{do: upgrade, id: w1, to: 4-2-0}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 3-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 3-2-0}]
+  bfb: [{do: upgrade, id: g1, to: 4-2-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  zomg: [{do: upgrade, id: g1, to: 5-2-0}]
+  ddt: [{do: upgrade, id: p1, to: 2-0-4}]
+  bad: [{do: upgrade, id: p1, to: 2-0-5}]

@@ -1,0 +1,90 @@
+# Polyphemus, CHIMPS: the bloon.games Obyn + Monarch of Storms + Elite
+# Defender + Perma-Spike guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Polyphemus had no CHIMPS build. Every Beginner CHIMPS map was won by
+# following a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Polyphemus, Strategy 1: no aiming, no
+# abilities, no selling).
+#
+# Guide: bloon.games, "How to Beat CHIMPS on Polyphemus"
+# (https://bloon.games/how-to-beat-chimps-on-polyphemus/, video PZ-FQyXy8Lo,
+# BTD6 Master, v~45-48), the order written on the page, no rounds
+# (confidence: verified-written-steps, order only). Hero: Obyn Greenfoot
+# (third purchase; he boosts the druid).
+# Core towers: Druid 5-0-2 (Monarch of Storms), Sniper 0-2-5 (Elite
+# Defender), Village 2-0-2, Alchemist 4-2-0, Spike Factory 2-0-5
+# (Perma-Spike, before round 96).
+# Placements: the guide names only the alchemist next to the sniper. Every
+# tower stands on land, never in the eye: the eye shuts on rounds ending in
+# 5 and disables its towers (the doc's advice for the bot). The druid takes
+# the land cell that covers the most of the two lanes, Obyn beside it, the
+# village by the druid and the sniper; the Perma-Spike stands where the
+# lanes leave. Both lanes run at once in opposite directions and do not
+# share an exit, so the Perma-Spike covers one exit (UNVERIFIED which one
+# matters more).
+#
+# Adapted, and why:
+#   * a Glaive Ricochet boomerang (3-0-2) for round 63: none of the guide's
+#     towers is a rush answer in the bot's tables (strategy.ANSWERS).
+#   * the trees ($500 each) are not bought: the guide does not use them.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 19/19 bought, threat gaps: none, off-plan answer buys:
+# 16. Each step stands from: d1 placed R6, s1 placed R7, hero placed R11, v1
+# placed R16, v1 0-0-2 R22, s1 0-2-2 R28, s1 0-2-3 R34, s1 0-2-4 R39, v1 2-0-2
+# R40, a1 placed R40, a1 4-2-0 R45, s1 0-2-5 R52, r1 placed R52, r1 3-0-2 R53,
+# d1 4-0-2 R58, d1 5-0-2 R85, p1 placed R85, p1 2-0-4 R86, p1 2-0-5 R97.
+# Damage model margins on those boards (it counts no hero and no ability, and
+# under-rates map-wide towers): 40 2.48, 63 0.71, 76 0.76, 81 0.39, 90 3.79,
+# 95 0.75, 98 0.63, 100 0.89.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: polyphemus_chimps
+map: Polyphemus
+hero: obyn
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {druid: [5, 0, 2], sniper: [0, 2, 5], village: [2, 0, 2], alchemist: [4, 2, 0], spike: [2, 0, 5], boomerang: [3, 0, 2]}
+  revised: "2026-11-12T12:00"
+  maps: [Polyphemus]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.323, 0.334]}             # the guide's first tower
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.484, 0.249]}
+  - {do: place, id: hero, kind: hero, role: dps, near: [d1], at: [0.366, 0.317]}  # Obyn, by the druid
+  - {do: place, id: v1, kind: village, role: support, near: [d1, s1], at: [0.43, 0.351]}
+  - {do: upgrade, id: v1, to: 0-0-2}                                            # Monkey Commerce
+  - {do: upgrade, id: s1, to: 0-2-2}                                            # Night Vision, Shrapnel Shot: camo
+  - {do: upgrade, id: s1, to: 0-2-3}                                            # Semi-Automatic
+  - {do: upgrade, id: s1, to: 0-2-4}                                            # Full Auto Rifle, before round 40
+  - {do: upgrade, id: v1, to: 2-0-2}                                            # Jungle Drums, before round 40
+  - {do: place, id: a1, kind: alchemist, role: support, near: [s1], at: [0.558, 0.402]}  # next to the sniper
+  - {do: upgrade, id: a1, to: 4-2-0}                                            # Stronger Stimulant
+  - {do: upgrade, id: s1, to: 0-2-5}                                            # Elite Defender
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.516, 0.3]}  # added: Glaive Ricochet for round 63
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: d1, to: 4-0-2}                                            # Ball Lightning, then save
+  - {do: upgrade, id: d1, to: 5-0-2}                                            # Superstorm
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.751, 0.777]}  # before round 96, at an exit
+  - {do: upgrade, id: p1, to: 2-0-4}
+  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-2-2}]
+  ceramic: [{do: upgrade, id: s1, to: 0-2-4}]
+  moab: [{do: upgrade, id: s1, to: 0-2-4}]
+  camo_ceramic: [{do: upgrade, id: s1, to: 0-2-4}]
+  camo_lead: [{do: upgrade, id: s1, to: 0-2-4}]
+  bfb: [{do: upgrade, id: s1, to: 0-2-5}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  zomg: [{do: upgrade, id: d1, to: 4-0-2}]
+  ddt: [{do: upgrade, id: p1, to: 2-0-4}]
+  bad: [{do: upgrade, id: p1, to: 2-0-5}]

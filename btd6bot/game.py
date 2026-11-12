@@ -1501,6 +1501,48 @@ class Game:
         finally:
             self.deselect(p)
 
+    # -- a fixed aim point (Mortar reticle, locked Dartling) -----------------------
+    # NOT VERIFIED LIVE (strategy.MORTAR_AIM / DARTLING_LOCK are off until it
+    # is): a Mortar's panel is believed to show a "Set Target" button where
+    # other towers show their targeting row (layout "target_text"); pressing it
+    # and then clicking the map is believed to move the reticle there. The
+    # flow below only clicks the button when its label reads "target", and
+    # every step leaves a frame in logs/ (AIM_CAPTURE) to check it against.
+    AIM_CAPTURE = "logs/aim_{tid}_{step}.png"
+    AIM_ARM_S = 0.4            # after the Set Target click, before the map click
+
+    def set_target_point(self, p, fx, fy):
+        """Give tower p the fixed aim point (fx, fy) (screen fractions) with
+        its panel's Set Target button. True when the button was found and
+        both clicks were made; nothing is clicked on the map unless the
+        button's label read "target" first."""
+        from .vision import norm
+        if not self.screen_ok():
+            return False
+        if self.is_holding():
+            self.cancel_hold()           # a map click while holding would place a tower
+        if not self.select(p):
+            return False
+        try:
+            pan = self.panel(p)
+            x0, y0, x1, y1 = pan["target_text"]
+            f = self.fresh()
+            self._capture(f, self.AIM_CAPTURE.format(tid=p.tid, step="panel"))
+            words = norm(" ".join(w.text for w in self._vision().read(region=(x0, y0 - 0.012, x1, y1 + 0.012), img=f)))
+            if "target" not in words:
+                log.info("%s: no Set Target button read on its panel (%r) - aim left as it was", p.tid, words)
+                return False
+            self.inp.click((x0 + x1) / 2, (y0 + y1) / 2)
+            time.sleep(self.AIM_ARM_S)
+            self._capture(self.fresh(), self.AIM_CAPTURE.format(tid=p.tid, step="armed"))
+            self.inp.click(fx, fy)
+            time.sleep(0.3)
+            self._capture(self.fresh(), self.AIM_CAPTURE.format(tid=p.tid, step="set"))
+            log.info("%s: aim point set to (%.3f, %.3f) - check logs/aim_%s_*.png", p.tid, fx, fy, p.tid)
+            return True
+        finally:
+            self.close_panels()
+
     def sell(self, p):
         """Sell tower p; True once its Sell button was clicked. Refused, with
         no click at all, in a mode that forbids selling (CHIMPS): the game
