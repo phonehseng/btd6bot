@@ -238,19 +238,32 @@ def test_tower_ability_slots_order():
     assert hk["hero:Armor Piercing Shells"] == 1
 
 
-def test_tower_abilities_stack_and_never_skipped():
+def test_tower_abilities_stack_and_first_strike_waits_for_blimps():
+    """Two MOAB Assassins share a slot. First Strike (it picks the strongest
+    bloon itself: BLIMP_TARGETED) is held until the round's first blimp has
+    been out BLIMP_ON_TRACK_S, then pressed; never in a round without
+    blimps."""
     pl = A.AbilityPlanner("quincy", MODE_RULES["medium"])
     towers = [P("bomb1", "bomb", [0, 4, 0]), P("bomb2", "bomb", [0, 4, 0]),
               P("sub1", "sub", [0, 4, 0])]
-    pl.update_towers(towers, 45)
-    slots = pl.hotkeys(45)
+    rnd = 50                                    # a MOAB round with a blimp
+    pl.update_towers(towers, rnd)
+    slots = pl.hotkeys(rnd)
     assert [n for _, n, *_ in slots] in (["MOAB Assassin", "First Strike Capability"],
                                          ["First Strike Capability", "MOAB Assassin"])
-    pl.decide(0, 45, True)
-    keys = pl.decide(5, 45, True)
     fs = next(k for k, n, *_ in slots if n == "First Strike Capability")
-    assert fs not in keys
-    assert keys == [next(k for k, n, *_ in slots if n == "MOAB Assassin")]
+    first = A.first_blimp_s("standard", rnd)
+    assert first is not None
+    pl.decide(0, rnd, True)
+    early = pl.decide((first + A.BLIMP_ON_TRACK_S) / pl.speed - 0.5, rnd, True)
+    assert fs not in early
+    late = pl.decide((first + A.BLIMP_ON_TRACK_S) / pl.speed + 0.5, rnd, True)
+    assert fs in late, (late, slots)
+    # a round without blimps: not pressed, however long it runs
+    quiet = next(r for r in range(41, 100) if A.first_blimp_s("standard", r) is None)
+    pl2 = A.AbilityPlanner("quincy", MODE_RULES["medium"])
+    pl2.update_towers([P("sub1", "sub", [0, 4, 0])], quiet)
+    assert not any(pl2.decide(float(t), quiet, True) for t in range(0, 120))
 
 
 def test_round_start_detected_by_round_change():

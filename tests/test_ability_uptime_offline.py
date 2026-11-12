@@ -121,12 +121,13 @@ def test_ball_of_light():
 
 
 def test_abilities_the_bot_never_presses_count_nothing():
-    """First Strike (click-targeted), Overclock and Ultraboost (a tower to
-    pick) are 'never' in abilities.TOWER_ABILITIES; Blood Sacrifice in
-    towers.HEROES."""
-    assert not _ability("sub", (0, 4, 0)) and not _ability("sub", (0, 5, 0))
+    """Overclock and Ultraboost (a tower to pick) are 'never' in
+    abilities.TOWER_ABILITIES; Blood Sacrifice in towers.HEROES. First
+    Strike picks its own target (TargetStrongModel) and is pressed in blimp
+    rounds, so it counts."""
     assert not D.profile("engineer", (0, 4, 0)).boosts and not _ability("engineer", (0, 4, 0))
-    assert A.TOWER_ABILITIES["First Strike Capability"][1] == "never"
+    assert A.TOWER_ABILITIES["First Strike Capability"][1] == "moab"
+    assert _ability("sub", (0, 4, 0)) and _ability("sub", (0, 5, 0))
 
 
 def test_adora_board_keeps_its_abilities():

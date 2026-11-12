@@ -181,7 +181,11 @@ TOWER_ABILITIES = {
     "Glue Strike": (40, "on_cooldown"),
     "Glue Storm": (40, "on_cooldown"),
     "Supply Drop": (90, "on_cooldown"),
-    "First Strike Capability": (60, "never"),      # click-targeted
+    # Not click-targeted: the game model's ability attack picks its own
+    # target with TargetStrongModel (the strongest bloon on screen), as MOAB
+    # Assassin's picks with TargetMoabModel; no TargetSelectedPointModel.
+    # Pressed in blimp rounds once the blimps are out (BLIMP_TARGETED).
+    "First Strike Capability": (60, "moab"),
     "Monkey Pirates": (45, "moab"),
     "Pirate Lord": (30, "moab"),
     "Ground Zero": (35, "on_cooldown"),
@@ -224,6 +228,15 @@ TOWER_ABILITIES = {
 # lost to in rounds 95 and 99 (2026-11-07/08).
 ROUND_START = {"Bloon Sabotage"}
 BLIMP_LEAD_S = 1.0            # ROUND_START fires this many game seconds before the first blimp
+
+# 'moab' abilities that hit the strongest bloon on screen once, wherever it
+# is: First Strike's 10,000-damage missile (20,000 at 0-5-0). Pressed 3 s
+# into a MOAB round, as the others are, it would often land on a ceramic:
+# round 95's blimps come only 30.8 game seconds in. So they wait until the
+# round's first blimp has been on the track BLIMP_ON_TRACK_S game seconds,
+# and are not pressed in a round without blimps. A leak still fires them.
+BLIMP_TARGETED = {"First Strike Capability"}
+BLIMP_ON_TRACK_S = 2.0
 
 # Abilities that, once pressed, wait for a click on a tower and then destroy
 # it: Adora's Blood Sacrifice (level 7) turns the clicked tower into hero XP.
@@ -648,6 +661,16 @@ class AbilityPlanner:
             return True
         return (now - self.round_start) * self.speed >= first - BLIMP_LEAD_S
 
+    def _blimps_on_track(self, now, rnd):
+        """Has the current round's first blimp been out BLIMP_ON_TRACK_S
+        game seconds? False in a round without blimps (BLIMP_TARGETED)."""
+        if self.round_start is None or rnd is None:
+            return False
+        first = first_blimp_s(TH.set_for_mode(_mode_of(self.rules)), rnd)
+        if first is None:
+            return False
+        return (now - self.round_start) * self.speed >= first + BLIMP_ON_TRACK_S
+
     def _due(self, slot, cooldown):
         if slot.last_press is None:
             return True
@@ -685,6 +708,10 @@ class AbilityPlanner:
                 continue
             if lives_dropped:
                 reason = "emergency"
+            elif crisis_now and name in BLIMP_TARGETED:
+                if not self._blimps_on_track(now, rnd):
+                    continue
+                reason = "crisis round"
             elif crisis_now and (name not in ROUND_START or blimps_here):
                 reason = "crisis round"
             elif crisis_now:
@@ -697,6 +724,10 @@ class AbilityPlanner:
                 if not is_slow_round(rnd, self.rules) or not blimps_here:
                     continue
                 reason = "heavy round"
+            elif use == "moab" and name in BLIMP_TARGETED:
+                if not is_moab_round(rnd, self.rules) or not self._blimps_on_track(now, rnd):
+                    continue
+                reason = "blimps out"
             elif use == "moab":
                 if not is_moab_round(rnd, self.rules) or self.round_start is None \
                         or now - self.round_start < MOAB_DELAY_S:
