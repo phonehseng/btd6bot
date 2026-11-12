@@ -129,12 +129,13 @@ def test_abilities_the_bot_never_presses_count_nothing():
     assert A.TOWER_ABILITIES["First Strike Capability"][1] == "never"
 
 
-def test_destructive_hero_stops_every_press():
-    """With Adora at level 7 or more (the optimistic estimate) the bot
-    presses no hotkey at all (abilities.DESTRUCTIVE_ABILITIES): no ability
-    counts on her board, a tower's neither."""
+def test_adora_board_keeps_its_abilities():
+    """Adora's Blood Sacrifice (abilities.DESTRUCTIVE_ABILITIES) no longer
+    stops every press: the planner holds only the keys it may sit on
+    (AbilityPlanner.unsafe_keys), so a tower's ability still counts on her
+    board after her level 7, as before it."""
     assert A.presses_blind("adora", 6, 10)
-    assert not A.presses_blind("adora", 1, 60)
+    assert A.presses_blind("adora", 1, 60)
     assert A.presses_blind("quincy", 1, 100)
     from btd6bot.forecast import RoundForecast
     fc = RoundForecast("Monkey Meadow", "chimps", hero="adora")
@@ -146,7 +147,7 @@ def test_destructive_hero_stops_every_press():
     early = [st for st in fc.stations_in([tack, adora], 10) if st.tid == "t"]
     late = [st for st in fc.stations_in([tack, adora], 80) if st.tid == "t"]
     assert any(s.ability for st in early for s in st.sources + [x for p in st.parts for x in p.sources])
-    assert not any(s.ability for st in late for s in st.sources + [x for p in st.parts for x in p.sources])
+    assert any(s.ability for st in late for s in st.sources + [x for p in st.parts for x in p.sources])
 
 
 def test_abilities_can_be_switched_off():

@@ -214,7 +214,10 @@ def test_without_a_panel_read_the_level_is_estimated_from_the_placement_round():
 
 # -- the ability planner ---------------------------------------------------------------
 
-def test_no_presses_once_blood_sacrifice_may_be_unlocked():
+def test_blood_sacrifice_key_is_never_pressed_but_the_others_are():
+    """Once Blood Sacrifice may be unlocked the planner holds its key only
+    (AbilityPlanner.unsafe_keys); Long Arm of Light and the tower's Rocket
+    Storm still fire, in emergencies and crisis rounds too."""
     pl = A.AbilityPlanner("adora", MODE_RULES_HARD)
     hero = N(tid="hero", kind="hero", tiers=[0, 0, 0])
     dart = N(tid="d1", kind="dartling", tiers=[0, 4, 0])      # Rocket Storm, on cooldown
@@ -226,8 +229,12 @@ def test_no_presses_once_blood_sacrifice_may_be_unlocked():
     assert pl.destructive_possible(72) is None
     rnd = next(r for r in range(70, 100) if pl.destructive_possible(r))
     pl.update_towers([hero, dart], rnd)
+    unsafe = pl.unsafe_keys(rnd)
+    assert unsafe
+    pressed = set()
     for i in range(120):
-        assert pl.decide(2000.0 + i, rnd, True, lives_dropped=(i % 7 == 0), crisis=True) == []
+        pressed |= set(pl.decide(2000.0 + i, rnd, True, lives_dropped=(i % 7 == 0), crisis=True))
+    assert pressed and not pressed & unsafe, (pressed, unsafe)
 
 
 def test_the_assumed_hotkey_order_matched_the_live_bar():

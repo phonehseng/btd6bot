@@ -623,16 +623,15 @@ class Evaluator:
         return None if mk is None else D.Placed(t.tid, mk[0], mk[1], t.spot.x, t.spot.z)
 
     def pressed(self, towers):
-        """Does the bot press abilities with this board's hero? Not once a
-        destructive hero ability may be unlocked: the hero Tower's tiers are
-        (level, optimistic level) (Optimizer._level_hero), and from Adora's
-        level 7 on the bot presses no hotkey (abilities.presses_blind)."""
-        from btd6bot.abilities import DESTRUCTIVE_ABILITIES
+        """Does the bot press abilities with this board's hero? Yes: with
+        Adora the planner holds only the keys Blood Sacrifice may sit on
+        and presses the rest (abilities.presses_blind, AbilityPlanner.
+        unsafe_keys). Kept as a method so the station cache keys on it."""
+        from btd6bot.abilities import presses_blind
         hero = next((t for t in towers if t.kind == "hero"), None)
-        if hero is None or not self.hero or len(hero.tiers) < 2:
+        if hero is None or not self.hero:
             return True
-        return not any(ab["name"] in DESTRUCTIVE_ABILITIES and ab["level"] <= hero.tiers[1]
-                       for ab in T.HEROES.get(self.hero, {}).get("abilities", []))
+        return presses_blind(self.hero, None, None)
 
     def station_of(self, tower, towers):
         """The station of one tower standing among `towers` (None when it
