@@ -31,6 +31,9 @@ CRISIS_HOLD_S = 20.0       # longest wait per round
 # their upgrades a few minutes
 CRISIS_HOLD_REBUILD_S = 180.0
 CRISIS_HOLD_IDLE_S = 4.0   # ... ended early once this long passes without a purchase
+# ... and while reinforce's look is still choosing (it ran out of its time
+# budget and goes on where it stopped), the hold waits for it up to this long
+CRISIS_HOLD_BUSY_S = 45.0
 CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
 CRISIS_HOLD_CASH_RISE = 200  # cash up this much since the last rise restarts the idle allowance
 # Cash lying idle while the plan waits is spent only above this (Match.spend_floor):
@@ -1330,12 +1333,20 @@ class Match:
         seen = getattr(self, "_rebuild_seen", None)
         if seen is None or seen[0] != rnd:
             seen = self._rebuild_seen = (rnd, None)
+        # A look that ran out of its budget is still choosing, not idle.
+        # Enchanted Glade Impoppable (2026-11-12 10:25, loss case
+        # 20261112_102751): round 63 rated 0.31 with $17,885 in hand; two
+        # looks rated 1 and 7 of 20 purchases before their 6 s ran out, the
+        # 4 s idle allowance ended the hold after 16 s, and round 63's 122
+        # ceramics took the life while the third look was at 14 of 20.
+        busy = getattr(self, "_look_busy", 0.0)
+        choosing = now - busy <= CRISIS_HOLD_IDLE_S
         if self._rebuilding():
             self._rebuild_seen = (rnd, now)
             over_cap = now - since > CRISIS_HOLD_REBUILD_S
         else:
-            over_cap = now - max(since, seen[1] or since) > CRISIS_HOLD_S
-        if over_cap or now - max(since, self._last_buy, last_rise) > CRISIS_HOLD_IDLE_S:
+            over_cap = now - max(since, seen[1] or since) > (CRISIS_HOLD_BUSY_S if choosing else CRISIS_HOLD_S)
+        if over_cap or now - max(since, self._last_buy, last_rise, busy) > CRISIS_HOLD_IDLE_S:
             log.info("holding Play over after %.0f s ($%d left)", now - since, cash)
             self._crisis_hold[rnd] = False
             return False
@@ -1940,6 +1951,7 @@ class Match:
             # surplus() keeps off the cash the look is still choosing for.
             self._t_reinforce = time.time() - REINFORCE_EVERY
             self._saving_until = time.time() + REINFORCE_WAIT
+            self._look_busy = time.time()     # the crisis hold waits for the look (_hold_for_crisis)
             return False
         # 'save': surplus() must not spend the cash either, until the next look
         self._saving_until = self._t_reinforce + REINFORCE_EVERY if r == "save" else 0.0

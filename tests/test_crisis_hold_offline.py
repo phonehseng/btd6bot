@@ -127,6 +127,29 @@ def test_the_usual_cap_counts_from_the_end_of_the_rebuild():
     assert not m._hold_for_crisis(72, 22_040)          # and the usual cap after it
 
 
+def test_a_look_still_choosing_keeps_the_hold():
+    """Enchanted Glade Impoppable (2026-11-12 10:25, loss case
+    20261112_102751): round 63 rated 0.31, $17,885 in hand; two reinforce
+    looks ran out of their 6 s budget (1 and 7 of 20 rated) and the 4 s
+    idle allowance ended the hold after 16 s. A look that is still choosing
+    keeps the hold, up to CRISIS_HOLD_BUSY_S."""
+    m = bare_match(0.31)
+    assert m._hold_for_crisis(63, 17_885)
+    m._crisis_hold[63] -= 16
+    m._look_busy = time.time()                         # the look went on past its budget
+    assert m._hold_for_crisis(63, 17_885)
+    m._crisis_hold[63] -= M.CRISIS_HOLD_S              # past the usual cap, still choosing
+    assert m._hold_for_crisis(63, 17_885)
+    m._look_busy = time.time() - M.CRISIS_HOLD_IDLE_S - 1
+    assert not m._hold_for_crisis(63, 17_885)          # the look chose nothing: Play
+
+    m = bare_match(0.31)
+    assert m._hold_for_crisis(63, 17_885)
+    m._crisis_hold[63] -= M.CRISIS_HOLD_BUSY_S + 1
+    m._look_busy = time.time()
+    assert not m._hold_for_crisis(63, 17_885)          # the longer cap is a cap too
+
+
 def test_the_executor_reports_a_rebuild_until_its_steps_are_behind_the_plan():
     """Executor.rebuild_pending: the steps ground_lost queued again count
     while they are ahead of the plan's index, whatever became of them."""
