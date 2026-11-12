@@ -24,6 +24,11 @@ reinforce buys; no MOAB answer by round 40). Spillway got one after
 chimps_ninja_sun's round 98 (loss 20261112_041202: ten off-plan towers, the
 exit spike factory given up, blimp check 0.2-0.8x from round 91).
 
+Sunken Columns lost round 6 a second time (loss 20261112_093331): its two
+opening subs stood in a pool whose walls hide the route. The optimizer's line
+of sight had no heights, so the column tops looked as blind as the pools; it
+has them now, and the build opens on the columns.
+
 Run: python tests/test_impoppable_map_builds_offline.py"""
 import sys
 from pathlib import Path
@@ -181,6 +186,44 @@ def test_sunken_columns_answers_round_59_camo_lead():
     at = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place" and st.get("at")}
     bm1, v1 = (pinner.world(pinner.model.frac_to_cell(*at[t])) for t in ("bm1", "v1"))
     assert math.dist(bm1, v1) <= pin_spots.buffer_range("village")
+
+
+def test_a_tower_on_raised_ground_sees_over_the_blockers_it_stands_on():
+    """Sunken Columns (2026-11-12, cases 20261112_012149 and 20261112_093331):
+    the optimizer's line of sight took no heights, so a dart on a column top
+    counted as blind behind the columns and the pool subs looked no worse.
+    With the heights the entrance row, where the live games opened, sees
+    the route, and a sub down in a pool still sees next to none of it."""
+    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+    cover = lambda kind, at: pinner.segment_cover(kind, pinner.model.frac_to_cell(*at), (0.0, 1.0))
+    on_the_columns = cover("dart", (0.361, 0.112))      # where the round-98 game's first dart stood
+    in_the_pool = cover("sub", (0.569, 0.411))          # where sb1 stood when round 6 was lost
+    assert on_the_columns > 100, on_the_columns
+    assert in_the_pool < 20, in_the_pool
+    best = pinner.setup.ranked_spots("dart")[0]
+    assert best.score > 100, best
+
+
+def test_sunken_columns_opens_with_towers_that_see_the_route():
+    """Its opening - every tower bought before the first sub - stands on the
+    column tops and sees the route; the subs are bought straight to
+    Advanced Intel (2-0-2), never left at tiers that only shoot what they see."""
+    import math
+    _, d = _build("sunkencolumns")
+    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+    places = [st for st in d["plan"] if st["do"] == "place"]
+    first_sub = next(i for i, st in enumerate(places) if st["kind"] == "sub")
+    opening = [st for st in places[:first_sub] if st["kind"] not in ("hero", "alchemist")]
+    assert [st["id"] for st in places[:2]] == ["dr", "hero"], places[:2]
+    assert len(opening) >= 2, opening
+    for st in opening:
+        cell = pinner.model.frac_to_cell(*st["at"])
+        assert pinner.segment_cover(st["kind"], cell, (0.0, 1.0)) > 100, st
+    for sub in ("sb1", "sb2"):
+        first = next(st["to"] for st in d["plan"] if st["do"] == "upgrade" and st.get("id") == sub)
+        assert first == "2-0-2", (sub, first)
+    at = {st["id"]: pinner.world(pinner.model.frac_to_cell(*st["at"])) for st in places if st.get("at")}
+    assert math.dist(at["a1"], at["dr"]) <= pin_spots.buffer_range("alchemist") - 10, "the brew reaches dr with room to spare"
 
 
 def test_a_tower_is_pinned_on_its_part_of_the_route():
