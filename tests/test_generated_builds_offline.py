@@ -120,7 +120,8 @@ def test_files_match_the_generator():
     The water map list is left out: it follows data/map_fit.json, which
     mapfit refreshes on its own (test_water_builds_only_where_they_reach)."""
     for kind, s in generated().items():
-        want = G._assemble(kind, s["modes"]).strategy(s["modes"], s["planner"]["base_success"])
+        extra = (s.get("generator") or {}).get("hard_extra", 0)   # the Hard reinforcement
+        want = G._assemble(kind, s["modes"], extra).strategy(s["modes"], s["planner"]["base_success"])
         for key in ("plan", "fill", "panic", "answers", "hero"):
             assert s.get(key) == want.get(key), (kind, key)
         assert s["planner"]["towers"] == want["planner"]["towers"], kind

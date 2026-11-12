@@ -167,7 +167,20 @@ MIN_RATIO = {"easy": S.Executor.RAMP_PANIC, "medium": S.Executor.RAMP_PANIC,
 # Win-chance priors of a generated build, per difficulty: below every
 # hand-tested strategy of the same difficulty (Easy 0.94-0.98, Medium
 # 0.90-0.95, Hard 0.85-0.88), because no generated build has been played yet.
-BASE_CEILING = {"easy": 0.92, "medium": 0.86, "hard": 0.80}
+#
+# Hard used to start at 0.80, under the planner's paragon bar
+# (planner.Config.paragon_min_p, 0.85): no generated Hard build could ever
+# be a paragon game (docs/tower_exclusions_audit.md item 9). It now starts
+# at that bar, which is still the bottom of the hand-tested Hard range, and
+# only a build that passed Hard cleanly gets there (base_success takes off
+# helpers, a support build and blimp damage short of the executor's bar).
+# The planner trusts no untested Hard prior above 0.85 anyway
+# (runner.planner_specs) and calibrates it from games. The Impoppable
+# family (one life, to round 100) starts one hand-tested step lower: the
+# gap between the Medium and Hard ranges above.
+HAND_STEP = 0.05
+BASE_CEILING = {"easy": 0.92, "medium": 0.86, "hard": P.DEFAULT_CONFIG.paragon_min_p}
+BASE_CEILING["impoppable"] = round(BASE_CEILING["hard"] - HAND_STEP, 2)
 # A mode in which the tower being levelled ends with less than a fifth of the
 # cash spent is no XP game for it (the planner reads the share from the plan,
 # which would overstate it), so the mode is dropped. A fifth of a Medium game
@@ -492,6 +505,7 @@ class Build:
     maps: list | None = None
     uses_income: bool = False
     hero: str = HERO                               # pick_hero, set by _assemble
+    extra: int = 0                                 # Hard reinforcement copies (generate)
 
     def place(self, tid, kind, why=None, **kw):
         st = {"do": "place", "id": tid, "kind": kind, **kw}
@@ -522,6 +536,8 @@ class Build:
              "modes": list(modes)}
         if self.uses_income:
             d["uses_income"] = True
+        if self.extra:
+            d["generator"] = {"hard_extra": self.extra}   # tests/test_generated_builds_offline.py
         planner = {"towers": {k: list(v) for k, v in self.core.items()},
                    "base_success": dict(base or {m: BASE_FLOOR for m in modes})}
         if self.maps is not None:
@@ -694,8 +710,14 @@ def _helper_options(threat, b, exclude, allowed_cats, water_only, used_ids=()):
     sig = TH.sig_from_name(threat) if threat in PROPERTY else None
     out = []
     for kind in T.TOWERS:
-        if kind in exclude or kind in S.INCOME_TOWERS or needs_aim(kind) or kind in T.GIFT_BOX_TOWERS:
-            continue          # gift-box towers come last to an account: no helper may need one
+        # Gift-box towers (Desperado, Mermonkey, Skywarden, Beast Handler,
+        # Dartling) were never helpers: "they may be locked". The executor
+        # skips a step whose tower the account lacks and goes on to the next
+        # answer, as for any locked tower, and the live account has all of
+        # them (docs/tower_exclusions_audit.md item 9). A tower that must be
+        # aimed (the Dartling) is still no helper.
+        if kind in exclude or kind in S.INCOME_TOWERS or needs_aim(kind):
+            continue
         if allowed_cats is not None and category(kind) not in allowed_cats:
             continue
         if placement(kind) == "water" and not water_only:
@@ -880,8 +902,10 @@ def _lacking(p_main, p_other):
     return props
 
 
-def build_carry(kind):
+def build_carry(kind, extra=0):
     """A solo build: copies of the tower on its main and complement lines.
+    extra: more main-line copies than the Medium budget sizes it for (the
+    Hard reinforcement, see generate).
 
     Order of the plan, with the reason for each part:
       * two copies at their cheap first tiers (rounds 1-20);
@@ -902,7 +926,7 @@ def build_carry(kind):
     fix = property_fix(kind, comp, lacking) if lacking else None
     n_comp = (2 if lacking else 1) if comp else 0
     comp_cost = n_comp * (pc.cost if pc else 0)
-    n_main = _copies(pm.cost, PLAN_BUDGET * 0.75 - comp_cost)
+    n_main = _copies(pm.cost, PLAN_BUDGET * 0.75 - comp_cost) + extra
     if placement(kind) == "water":
         b.maps = water_maps(kind)
 
@@ -972,9 +996,11 @@ def build_carry(kind):
     return b
 
 
-def build_support(kind):
+def build_support(kind, extra=0):
     """A support/income/aimed tower: a compact defence of the best carry that
-    may stand beside it, then the tower itself, and the surplus into it."""
+    may stand beside it, then the tower itself, and the surplus into it.
+    extra: more copies of the tower itself when it has blimp damage of its
+    own, else more defence copies (the Hard reinforcement, see generate)."""
     b = Build(kind)
     dkind = defence_for(kind)
     dmain = main_line(dkind)
@@ -1018,6 +1044,12 @@ def build_support(kind):
     # the tower being levelled must outnumber the defence in the plan.
     n_def = 2 + (1 if dcomp else 0)
     n_k = max(n_k, n_def + 1 - (1 if comp else 0))
+    extra_def = 0
+    if extra and pk.blimp > 0 and not needs_aim(kind):
+        n_k += extra
+    else:
+        extra_def = extra
+        n_k = max(n_k, n_def + extra_def + 1 - (1 if comp else 0))   # still outnumbers the defence
     kids = [f"x{i + 1}" for i in range(n_k)]
 
     def place_k(i, why=None):
@@ -1057,6 +1089,11 @@ def build_support(kind):
             b.place("dc", dkind, f"defence complement {cross(dcomp.work)}", role="dps", segment=[0.0, 0.7])
         b.upgrade("dc", dcomp.work)
     b.upgrade("d2", dmain.work)
+    for i in range(extra_def):
+        tid = f"d{3 + i}"
+        b.place(tid, dkind, "Hard: more defence blimp damage" if i == 0 else None, role="dps",
+                segment=list(SEGMENTS[(i + 1) % len(SEGMENTS)]))
+        b.upgrade(tid, dmain.work)
     for i in range(1, n_k):
         place_k(i)
         b.upgrade(kids[i], line.work)
@@ -1226,7 +1263,15 @@ def pick_hero(b):
 # ---------------------------------------------------------------------------
 
 def candidate_modes(kind):
-    """Modes worth trying, in the order the YAML lists them."""
+    """Modes worth trying, in the order the YAML lists them: every mode the
+    game has, the category-only ones for the tower's own category, and
+    CHIMPS only for a tower that is not income (it forbids income towers).
+
+    Double HP, Half Cash, ABR, Impoppable and CHIMPS were never tried
+    (docs/tower_exclusions_audit.md item 9); each is now kept wherever the
+    build passes the same checks (judge: coverage, the offline threat
+    simulation, and for the Hard and Impoppable families blimp damage of
+    the build's own)."""
     modes = ["easy"]
     if category(kind) == "primary":
         modes.append("primary_only")
@@ -1236,7 +1281,17 @@ def candidate_modes(kind):
     modes += ["reverse", "apopalypse", "hard"]
     if category(kind) == "magic":
         modes.append("magic_only")
+    modes += ["double_hp", "half_cash", "abr", "impoppable"]
+    if kind not in S.INCOME_TOWERS:
+        modes.append("chimps")
     return modes
+
+
+def needs_own_damage(mode):
+    """Must the build hold this mode's blimps with its own damage, no
+    helper bought for the blimp ramp? Every mode of the Hard and Impoppable
+    families (judge), and Apopalypse (random rounds, no breaks)."""
+    return mode_family(mode) in ("hard", "impoppable") or mode == "apopalypse"
 
 
 def for_mode(strat, mode):
@@ -1341,7 +1396,7 @@ def judge(b, strat, mode, defence_only=None):
     bought = {tid for r in runs for tid in r["build"] if tid.startswith(("ans_", "h_"))}
     helper_kinds = sorted({_tid_kind(t, kinds) or "?" for t in bought} - {kind})
     blimp_helpers = any(t.startswith("ans_blimps") for t in bought)
-    if fam == "hard" or mode == "apopalypse":
+    if needs_own_damage(mode):
         # "has the damage": also without the helpers the build lists for blimp
         # classes (bought because strategy.ANSWERS does not list the tower for
         # that class, not for damage), and without the executor buying any
@@ -1360,10 +1415,11 @@ def judge(b, strat, mode, defence_only=None):
     need = MIN_RATIO[fam if fam in MIN_RATIO else "hard"]
     if mode == "apopalypse":
         need = MIN_RATIO["hard"]     # random rounds to 100, no breaks: Hard's bar
+    # (the Impoppable family, one life to round 100, takes Hard's bar too)
     v = Verdict(mode, True, "ok", ratio, share, tuple(helper_kinds), plan_done)
     if ratio is not None and ratio < need:
         v.ok, v.why = False, f"blimp damage {ratio:.2f} < {need:.2f}"
-    elif (fam in ("hard",) or mode == "apopalypse") and blimp_helpers:
+    elif needs_own_damage(mode) and blimp_helpers:
         v.ok, v.why = False, "the executor had to buy blimp damage from other towers"
     elif share < MIN_SHARE:
         v.ok, v.why = False, f"{name(kind)} gets only {share:.0%} of the cash: no XP game for it"
@@ -1376,13 +1432,13 @@ def base_success(v, carry=True):
     tower kind the executor had to buy, less SUPPORT_PENALTY for a support
     build, and less when blimp damage is short of the executor's 'enough' bar."""
     fam = mode_family(v.mode)
-    p = BASE_CEILING.get(fam, BASE_CEILING["hard"])
+    p = BASE_CEILING.get(fam, BASE_CEILING["impoppable"])
     p -= HELPER_PENALTY * len(v.helpers)
     if not carry:
         p -= SUPPORT_PENALTY
     if v.ratio is not None and v.ratio < S.Executor.RAMP_OK:
         p -= 0.05 * (1.0 - v.ratio / S.Executor.RAMP_OK)
-    return round(max(BASE_FLOOR, min(BASE_CEILING.get(fam, 0.8), p)), 2)
+    return round(max(BASE_FLOOR, min(BASE_CEILING.get(fam, BASE_CEILING["impoppable"]), p)), 2)
 
 
 def defence_only_strategy(b, strat):
@@ -1415,9 +1471,11 @@ class Result:
     base: dict
 
 
-def _assemble(kind, modes):
-    """The build with helpers for the strength threats of these modes' rounds."""
-    b = build_carry(kind) if is_carry(kind) else build_support(kind)
+def _assemble(kind, modes, extra=0):
+    """The build with helpers for the strength threats of these modes' rounds
+    (extra: the Hard reinforcement's added copies, see generate)."""
+    b = build_carry(kind, extra) if is_carry(kind) else build_support(kind, extra)
+    b.extra = extra
     restricted = [m for m in modes if m in S.MODE_TOWER_FILTER]
     allowed = {S.MODE_TOWER_FILTER[m] for m in restricted} if restricted else None
     last = max(S.MODE_RULES[m]["end_round"] for m in modes)
@@ -1434,8 +1492,8 @@ def _assemble(kind, modes):
     return b
 
 
-def _judge_all(kind, modes):
-    b = _assemble(kind, modes)
+def _judge_all(kind, modes, extra=0):
+    b = _assemble(kind, modes, extra)
     strat = b.strategy(modes)
     defence = defence_only_strategy(b, strat) if needs_aim(kind) else None
     verdicts = [judge(b, strat, m, defence) for m in modes]
@@ -1450,16 +1508,17 @@ def _judge_all(kind, modes):
     return b, verdicts
 
 
-def generate(kind):
-    """Build, simulate every candidate mode, keep the ones that pass. The
-    build is then made again for the kept modes only (no helpers for threats
-    that come after their last round) and checked again, until it is stable."""
-    candidates = candidate_modes(kind)
-    b, verdicts = _judge_all(kind, candidates)
+def _resolve(kind, candidates, extra=0):
+    """Simulate every candidate mode and keep the ones that pass; the build
+    is then made again for the kept modes only (no helpers for threats that
+    come after their last round) and checked again, until it is stable.
+    Returns (build, kept modes, {mode: verdict} kept, {mode: verdict} dropped)."""
+    b, verdicts = _judge_all(kind, candidates, extra)
     dropped = {v.mode: v for v in verdicts if not v.ok}
     kept = [v.mode for v in verdicts if v.ok]
+    kept_v = {}
     while kept:
-        b, again = _judge_all(kind, kept)
+        b, again = _judge_all(kind, kept, extra)
         newly = [v for v in again if not v.ok]
         dropped.update({v.mode: v for v in newly})
         kept_v = {v.mode: v for v in again if v.ok}
@@ -1467,7 +1526,50 @@ def generate(kind):
         if not newly:
             break
     if not kept:
-        b = _assemble(kind, candidates)
+        b = _assemble(kind, candidates, extra)
+    return b, kept, kept_v, dropped
+
+
+# Hard reinforcement. Most solo builds failed Hard on their own blimp damage
+# (docs/builds.md: only ace, bomb, heli and sniper had a Hard build), because
+# the plan is sized for a Medium game. A Hard game pays for more: when Hard
+# fails on blimp damage, the build is made again with up to HARD_EXTRA_MAX
+# more copies of its blimp damage (build_carry / build_support `extra`), and
+# the first that passes Hard is kept - if it also keeps every mode the plain
+# build passed. docs/tower_exclusions_audit.md item 9.
+HARD_EXTRA_MAX = 4
+BLIMP_SHORT = ("blimp damage", "the executor had to buy blimp damage", "without its blimp helpers")
+
+
+def _hard_extra(kind, candidates):
+    """The fewest extra copies (1..HARD_EXTRA_MAX) with which the build
+    passes Hard, or 0 when none does or Hard fails for another reason."""
+    for extra in range(1, HARD_EXTRA_MAX + 1):
+        b = _assemble(kind, candidates, extra)
+        strat = b.strategy(candidates)
+        v = judge(b, strat, "hard", defence_only_strategy(b, strat) if needs_aim(kind) else None)
+        if v.ok:
+            return extra
+        if not v.why.startswith(BLIMP_SHORT):
+            return 0          # a gap or a share more copies cannot fix
+    return 0
+
+
+def generate(kind):
+    """Build, simulate every candidate mode and keep the ones that pass
+    (_resolve); when Hard fails on blimp damage, try the Hard reinforcement
+    (_hard_extra) and keep it if it passes Hard without losing a mode."""
+    candidates = candidate_modes(kind)
+    b, kept, kept_v, dropped = _resolve(kind, candidates)
+    if "hard" in candidates and "hard" not in kept and dropped["hard"].why.startswith(BLIMP_SHORT):
+        extra = _hard_extra(kind, candidates)
+        if extra:
+            hb, hkept, hkept_v, hdropped = _resolve(kind, candidates, extra)
+            if "hard" in hkept and set(kept) <= set(hkept):
+                b, kept, kept_v, dropped = hb, hkept, hkept_v, hdropped
+                b.notes.append(f"Hard reinforcement: {extra} more cop{'y' if extra == 1 else 'ies'} of the "
+                               f"build's blimp damage than a Medium game needs, so Hard passes on the "
+                               f"build's own damage.")
     final = [dropped[m] if m in dropped else kept_v[m] for m in candidates]
     base = {m: base_success(kept_v[m], is_carry(kind)) for m in kept}
     return Result(kind, is_carry(kind), b, b.strategy(kept, base), final, kept, base)
@@ -1576,6 +1678,8 @@ def to_yaml(r):
     lines.append(f"modes: {_fmt(d['modes'])}")
     if d.get("uses_income"):
         lines.append("uses_income: true   # never CHIMPS")
+    if d.get("generator"):
+        lines.append(f"generator: {_fmt(d['generator'])}   # Hard reinforcement (gen_builds.generate)")
     lines.append("planner:")
     lines.append(f"  towers: {_fmt(d['planner']['towers'])}   # the crosspaths the build needs to be safe")
     lines.append(f"  base_success: {_fmt(d['planner']['base_success'])}")
