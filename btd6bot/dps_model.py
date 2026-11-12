@@ -279,6 +279,10 @@ class Source:
                 (dropped under a plane circling the tower: see blast)
     radial      fired all around rather than at a target (tacks, a plane's
                 darts): only the share of directions that cross the lane hits
+    spray       degrees an aimed volley fans over (Triple Shot 30, Sun
+                Avatar 30, thorns 25; 0 = not a spray): all of it flies at the
+                target, and only a volley wider than the track's spread
+                around the tower loses the part that misses (_hit_rate)
     travel      how far a radial projectile flies (for that share)
     bank        seconds of production a "track" source can stockpile
     lasts_rounds  its projectiles outlive the round (Long Life Spikes): the
@@ -331,6 +335,7 @@ class Source:
     cooldown: float = 0.0      # "drop": seconds between the weapon's volleys
     pierce_cost: dict = field(default_factory=dict)   # extra pierce per hit, by bloon tag (_pierce_cost)
     rear_fov: float = 0.0      # a Buccaneer's second shot behind the boat: degrees of its target cone
+    spray: float = 0.0         # an aimed volley's fan in degrees (see the class docstring)
     zone_radius: float = None  # its own attack's reach around the tower (_zone_radius); None = the tower's
     zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
     dot_immune: frozenset = frozenset()   # bloon properties its damage over time cannot hurt
@@ -679,6 +684,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             cooldown=attack.get("cooldown", 0.0) if placement == "drop" else 0.0,
             pierce_cost=_pierce_cost(p),
             rear_fov=float(attack.get("rear_fov") or 0.0),
+            spray=float(attack.get("spray") or 0.0) if depth == 0 else 0.0,
             zone_radius=attack.get("zone_radius"),
             zone_fixed=bool(attack.get("zone_fixed")),
             grip_rate=float(p.get("grip_rate") or 0.0),
@@ -834,6 +840,35 @@ def _drops_under_plane(a, w):
                 and (w.get("over_track_only") or "FallToGroundModel" in (p.get("other") or ())))
 
 
+# Aimed sprays read as aimed (docs/model_fix_plan.md item 10): a volley is
+# fired all around only when its fan is at least RADIAL_SPRAY_DEG (a Tack
+# Shooter's ring is 360). Triple Shot (30), Sun Avatar (30), Bloonjitsu
+# (45), Grandmaster (72), the Druid's thorns (25) and the Desperado's
+# shotgun (35) fan out from the shot at their target, and were cut to the
+# share of all directions that cross the lane - about 40% beside a straight
+# track (docs/model_audit_magic.md finding 3, primary F8). False reads every
+# volley of 3 or more as before.
+#
+# Calibrated against item 9: AUC 0.814 -> 0.817, rounds at or above 2.0
+# that leaked 0.52% -> 0.52%, held rounds under 2.0 51.2% -> 49.4%.
+SPRAY_RATING = True
+RADIAL_SPRAY_DEG = 180.0
+
+
+def _spray(w, p, placement, a):
+    """(radial, attack) for weapon w firing projectile p: whether its volley
+    is fired all around, and the attack with "spray" set to the fan of an
+    aimed volley (Source.spray). Without the export's "spray" (or with
+    SPRAY_RATING off) a volley of 3 or more is radial, as before."""
+    moving = (p or {}).get("motion") in ("straight", "path") and placement != "track"
+    fan = w.get("spray")
+    if not SPRAY_RATING or fan is None:
+        return w.get("count", 1.0) >= 3 and moving, dict(a, spray=0.0)
+    if fan >= RADIAL_SPRAY_DEG:
+        return moving and w.get("count", 1.0) >= 2, dict(a, spray=0.0)
+    return False, dict(a, spray=float(fan) if moving and w.get("count", 1.0) >= 2 else 0.0)
+
+
 def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=False, tower_range=None):
     """Add an attack's damage sources (per weapon) to out.
     follows: the tower is a helicopter that flies to the bloons (global reach).
@@ -878,7 +913,7 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
             # only so many of its projectiles may exist at once
             shots = min(shots, multiplier * w["projectile_limit"] / life)
         cap = w.get("max_subtowers") or MAX_SUBTOWERS
-        radial = w.get("count", 1.0) >= 3 and (p or {}).get("motion") in ("straight", "path") and placement != "track"
+        radial, a = _spray(w, p, placement, a)
         travel = ((p or {}).get("speed") or 0.0) * ((p or {}).get("lifespan") or 0.0)
         if w.get("crit") and p and p.get("damage"):
             # one shot in `every` does crit damage instead: average it in
@@ -2062,6 +2097,10 @@ def _hit_rate(src, lay, rho, zone):
     shots = src.shots_single if sparse else src.shots
     if src.radial:
         shots *= zone.angular if zone is not None else 1.0
+    elif src.spray and zone is not None:
+        # an aimed fan of src.spray degrees: the track spans zone.angular of
+        # the circle around the tower; a fan wider than that loses the rest
+        shots *= min(1.0, zone.angular * 360.0 / src.spray)
     if src.placement == "air":
         shots *= AIR_PATTERN_EFFICIENCY
     pierce = src.pierce
@@ -3326,7 +3365,7 @@ def _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths,
     is_global, else within reach_radius and the `lent` circles (None when
     that reaches no track)."""
     from .placement import needs_sight
-    travel = max((s.travel for s in sources if s.radial), default=0.0)
+    travel = max((s.travel for s in sources if s.radial or s.spray), default=0.0)
     # Snipers reach the whole map but still need line of sight; the other
     # map-wide towers (planes, helis, mortars, Advanced Intel subs) do not.
     # Skipping the sight test for snipers let the optimizer line them up in
