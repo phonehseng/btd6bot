@@ -47,8 +47,8 @@
 # placed R54, w1 0-2-4 R58, w1 0-2-5 R75, w2 placed R75, w2 4-2-0 R80, w2
 # 5-2-0 R88, a1 placed R88, a1 4-0-1 R91, p1 placed R92, p1 2-0-4 R93, p1
 # 2-0-5 R99. Damage model margins on those boards (it counts no hero and no
-# ability, and under-rates map-wide towers): 40 4.09, 63 1.20, 76 1.33, 81
-# 1.06, 90 0.62, 95 0.22, 98 0.41, 100 1.59.
+# ability, and under-rates map-wide towers): 40 4.09, 63 1.22, 76 1.48, 81
+# 1.63, 90 3.19, 95 0.84, 98 0.56, 100 2.04.
 #
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
@@ -67,7 +67,7 @@ planner:
   base_success: {chimps: 0.5}
 plan:
   - {do: place, id: x1, kind: dart, role: dps, target: close, segment: [0.0, 0.3], at: [0.58, 0.845]}  # first crater, on Close
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.441, 0.181]}  # as high as you can: the top-middle plateau
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.441, 0.198]}  # as high as you can: the top-middle plateau
   - {do: place, id: x2, kind: dart, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.59, 0.896]}
   - {do: upgrade, id: x1, to: 0-1-0}
   - {do: upgrade, id: x2, to: 0-1-0}
@@ -80,10 +80,10 @@ plan:
   - {do: upgrade, id: h1, to: 2-0-0}                                            # Pursuit from here
   - {do: upgrade, id: h1, to: 3-0-2}                                            # Razor Rotors: round 38-40's ceramics and MOAB
   - {do: upgrade, id: s1, to: 0-2-4}                                            # Full Auto Rifle
-  - {do: place, id: v1, kind: village, role: support, near: [s1], at: [0.462, 0.095]}
+  - {do: place, id: v1, kind: village, role: support, near: [s1], at: [0.505, 0.198]}
   - {do: upgrade, id: v1, to: 2-2-0}                                            # Radar Scanner, Jungle Drums
   - {do: upgrade, id: s1, to: 0-2-5}                                            # Elite Defender
-  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.516, 0.198]}  # added: Glaive Ricochet for round 63
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.473, 0.129]}  # added: Glaive Ricochet for round 63
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.441, 0.351]}
   - {do: upgrade, id: w1, to: 0-2-4}                                            # Necromancer

@@ -45,7 +45,7 @@
 # placed R75, g1 5-2-0 R84, s1 placed R84, s1 4-1-0 R87, w1 placed R87, w1
 # 4-2-0 R93, s1 5-1-0 R99. Damage model margins on those boards (it counts no
 # hero and no ability, and under-rates map-wide towers): 40 4.09, 63 4.18, 76
-# 10.60, 81 4.97, 90 1.66, 95 0.31, 98 0.68, 100 2.54.
+# 10.60, 81 4.97, 90 1.68, 95 0.31, 98 0.68, 100 2.54.
 #
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
@@ -88,7 +88,7 @@ plan:
   - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
   - {do: place, id: g1, kind: glue, role: dps, at: [0.59, 0.658]}
   - {do: upgrade, id: g1, to: 5-2-0}                                            # The Bloon Solver
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.067, 0.129]}  # added: the bot's BFB-to-BAD answer (see above)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.302, 0.504]}  # added: the bot's BFB-to-BAD answer (see above)
   - {do: upgrade, id: s1, to: 4-1-0}                                            # Night Vision, Maim MOAB
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.729, 0.709]}
   - {do: upgrade, id: w1, to: 4-2-0}                                            # Arcane Spike

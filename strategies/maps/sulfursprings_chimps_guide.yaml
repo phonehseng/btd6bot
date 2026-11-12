@@ -75,7 +75,7 @@ plan:
   - {do: place, id: x1, kind: bomb, role: dps, at: [0.259, 0.078]}              # added: round 28's leads (see above): the north rim cell the damage model rates best for them
   - {do: upgrade, id: b1, to: 2-0-2}                                            # Crow's Nest: camo
   - {do: upgrade, id: w1, to: 3-0-2}                                            # Arcane Mastery
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.163, 0.146]}  # added: the Cripple MOAB sniper (see above)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.238, 0.129]}  # added: the Cripple MOAB sniper (see above)
   - {do: upgrade, id: s1, to: 2-1-0}                                            # Night Vision, Large Calibre: ceramics
   - {do: upgrade, id: s1, to: 3-1-0}                                            # Deadly Precision: round 40's MOAB
   - {do: upgrade, id: b1, to: 3-0-2}                                            # Destroyer
@@ -86,7 +86,7 @@ plan:
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: w1, to: 5-0-2}                                            # Archmage
   - {do: upgrade, id: b1, to: 5-0-2}                                            # Carrier Flagship
-  - {do: place, id: g1, kind: glue, role: dps, at: [0.238, 0.129]}
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.206, 0.146]}
   - {do: upgrade, id: g1, to: 0-2-5}                                            # Super Glue
   - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
 answers:

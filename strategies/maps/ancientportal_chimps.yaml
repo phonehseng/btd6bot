@@ -90,7 +90,7 @@ plan:
   - {do: upgrade, id: p1, to: 2-0-4}
   - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
 fill:
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.12, 0.078]}  # spare cash: a Maim MOAB sniper
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.719, 0.504]}  # spare cash: a Maim MOAB sniper
   - {do: upgrade, id: s1, to: 4-1-0}
 answers:
   camo: [{do: place, id: n1, kind: ninja, role: dps, at: [0.687, 0.521]}]

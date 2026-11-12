@@ -35,6 +35,9 @@ plan or the fill places an `at` spot:
     nearly as good (PROVEN_SCORE_SHARE of the best) one where a tower of
     that kind has already stood in a live game (MapModel.spot_stats, or
     accepted_mask) comes first;
+  * a global tower (a sniper), which the optimizer ranks no spots for,
+    takes the cell from which it sees the most route through the map's
+    sight blockers (the guides' "where it sees both lanes");
   * a tower with `near` (support, or a tower that must stand in a village's
     range) takes the best of those spots within its `near_radius` of the
     towers it names (any legal cell when its kind has no ranked spots), or
@@ -42,9 +45,8 @@ plan or the fill places an `at` spot:
   * a step may say where the guide puts the tower, in words turned into a
     box of screen fractions: `area: [x0, y0, x1, y1]` (a draft-only key,
     left out of the written file). Candidates inside the box come first,
-    in their usual order (a global tower or a buffer, which rank no spots,
-    take the one nearest the box's centre); with none inside, the one
-    nearest the box. The Intermediate CHIMPS guide builds (2026-11-12) use
+    in their usual order (a buffer, which ranks no spots, takes the one
+    nearest the box's centre); with none inside, the one nearest the box. The Intermediate CHIMPS guide builds (2026-11-12) use
     it for "Sauda at the top middle, as high as possible", "the sniper next
     to the crystal", "the boat in the springs";
   * the hero keeps the executor's own choice unless its step has an
@@ -240,12 +242,14 @@ class Pinner:
     def segment_cover(self, kind, cell, segment):
         """Route length (world units, all routes) inside ``kind``'s range
         from ``cell`` and within ``segment`` - the share of each route from
-        its entrance, (0.0, 0.5) its first half - that it can see."""
+        its entrance, (0.0, 0.5) its first half - that it can see. A global
+        tower (a sniper) has no range limit: only its sight counts."""
         import numpy as np
         from btd6bot import dps_model as D
         prof = D.profile(kind, (0, 0, 0))
-        if prof is None or prof.is_global:
+        if prof is None:
             return 0.0
+        reach = math.inf if prof.is_global else prof.range
         x, z = self.world(cell)
         lo, hi = segment
         sight = self.setup.sight_for(kind)
@@ -255,7 +259,7 @@ class Pinner:
             progress = dist / length if length else dist * 0
             if self.setup.track.reverse:
                 progress = 1.0 - progress
-            inside = path["hittable"] & (progress >= lo) & (progress <= hi) &                 (((xyz[:, 0] - x) ** 2 + (xyz[:, 1] - z) ** 2) <= prof.range ** 2)
+            inside = path["hittable"] & (progress >= lo) & (progress <= hi) &                 (((xyz[:, 0] - x) ** 2 + (xyz[:, 1] - z) ** 2) <= reach ** 2)
             if sight is not None and inside.any():
                 idx = np.nonzero(inside)[0]
                 inside[idx[~sight(x, z, xyz[inside])]] = False
@@ -279,6 +283,16 @@ class Pinner:
             scored = [(c, self.segment_cover(HERO_PROXY, c, segment or (0.0, 1.0))) for c in cells]
             scored.sort(key=lambda t: -t[1])
             return [c for c, _ in scored if never_refused(self.model, kind, c, hero)]
+        if self._global(kind):
+            # a global tower ranks no spots (optimize_builds: every cell
+            # scores 0); its cells are ranked by the route it can see from
+            # them (the walls and blockers of the sight model), as the
+            # guides say: "where it sees both lanes", "as high as you can"
+            ys, xs = ok.nonzero()
+            cells = [(int(x), int(y)) for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0]
+            scored = [(c, self.segment_cover(kind, c, segment or (0.0, 1.0))) for c in cells]
+            scored.sort(key=lambda t: -t[1])
+            return [c for c, _ in scored if never_refused(self.model, kind, c)]
         proven = proven_cells(self.model, kind)
         spots = [] if kind in S.Executor.BUFFERS else             [(sp.cell, sp.score) for sp in self.setup.ranked_spots(kind) if ok[sp.cell[1], sp.cell[0]]]
         if spots and segment and tuple(segment) != (0.0, 1.0):
@@ -331,6 +345,15 @@ class Pinner:
         return sum(1 for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0
                    and math.dist(self.world((int(x), int(y))), here) <= rng)
 
+    @staticmethod
+    def _global(kind):
+        """Does ``kind`` shoot map-wide (a sniper)?"""
+        if kind == "hero" or kind in S.Executor.BUFFERS:
+            return False
+        from btd6bot import dps_model as D
+        prof = D.profile(kind, (0, 0, 0))
+        return prof is not None and bool(prof.is_global)
+
     def _inside(self, cell, area):
         """Is ``cell`` inside ``area`` (x0, y0, x1, y1 screen fractions)?"""
         fx, fy = self.model.cell_to_frac(*cell)
@@ -339,9 +362,9 @@ class Pinner:
     def in_area(self, cands, area, kind):
         """``cands`` with those inside ``area`` (x0, y0, x1, y1 screen
         fractions) first. Inside the box the usual order stands, except for
-        a kind that ranks no spots (a global tower, a buffer: their order is
-        the grid's), which goes nearest the box's centre first; with none
-        inside, the candidate nearest the box comes first."""
+        a buffer (its order is the grid's), which goes nearest the box's
+        centre first; with none inside, the candidate nearest the box comes
+        first."""
         if not area or not cands:
             return cands
         x0, y0, x1, y1 = area
@@ -349,12 +372,7 @@ class Pinner:
         frac = {c: self.model.cell_to_frac(*c) for c in cands}
         inside = [c for c in cands if x0 <= frac[c][0] <= x1 and y0 <= frac[c][1] <= y1]
         if inside:
-            unranked = kind in S.Executor.BUFFERS
-            if kind != "hero" and not unranked:
-                from btd6bot import dps_model as D
-                prof = D.profile(kind, (0, 0, 0))
-                unranked = prof is not None and prof.is_global
-            if unranked:
+            if kind in S.Executor.BUFFERS:
                 inside.sort(key=lambda c: math.dist(frac[c], mid))
             taken = set(inside)
             return inside + [c for c in cands if c not in taken]

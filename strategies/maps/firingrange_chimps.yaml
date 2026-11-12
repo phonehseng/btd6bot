@@ -61,7 +61,7 @@ plan:
   - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.74, 0.606]}  # on Strong
   - {do: upgrade, id: sb1, to: 1-0-1}
   - {do: place, id: hero, kind: hero, role: dps, at: [0.74, 0.675]}             # Psi
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.452, 0.743]}  # added: the bottom grass (see above)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.409, 0.93]}  # added: the bottom grass (see above)
   - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo on both lanes
   - {do: upgrade, id: s1, to: 1-1-0}                                            # Full Metal Jacket: round 28's leads
   - {do: upgrade, id: sb1, to: 2-0-2}                                           # Advanced Intel

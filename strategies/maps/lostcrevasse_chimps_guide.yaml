@@ -66,7 +66,7 @@ planner:
 plan:
   - {do: place, id: hero, kind: hero, role: dps, at: [0.452, 0.146]}            # R6 Sauda, top middle, as high as possible
   - {do: place, id: t1, kind: tack, role: dps, at: [0.548, 0.198]}              # R8 tack right of Sauda
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.59, 0.249]}  # R10 sniper next to the crystal
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.569, 0.3]}  # R10 sniper next to the crystal
   - {do: place, id: d1, kind: druid, role: dps, at: [0.419, 0.215]}             # R12 druid behind Sauda
   - {do: upgrade, id: d1, to: 0-1-0}                                            # R13
   - {do: upgrade, id: d1, to: 0-2-0}                                            # R15
@@ -78,12 +78,12 @@ plan:
   - {do: upgrade, id: s1, to: 0-2-2}                                            # R27 Shrapnel Shot
   - {do: place, id: v1, kind: village, role: support, near: [d1, hero], at: [0.419, 0.3]}  # R32 village 1, left, behind the druid
   - {do: upgrade, id: v1, to: 0-0-2}                                            # R32 Monkey Commerce
-  - {do: place, id: v2, kind: village, role: support, near: [t1, s1], at: [0.548, 0.3]}  # R36 village 2, right
+  - {do: place, id: v2, kind: village, role: support, near: [t1, s1], at: [0.526, 0.266]}  # R36 village 2, right
   - {do: upgrade, id: v2, to: 0-0-2}                                            # R36
   - {do: upgrade, id: t1, to: 2-0-3}                                            # R37
   - {do: upgrade, id: t1, to: 2-0-4}                                            # R39 Overdrive: round 40's MOAB
   - {do: upgrade, id: v1, to: 2-0-2}                                            # R40 Jungle Drums
-  - {do: place, id: a1, kind: alchemist, role: support, near: [t1], at: [0.569, 0.368]}  # R43 alchemist by the tack
+  - {do: place, id: a1, kind: alchemist, role: support, near: [t1], at: [0.558, 0.351]}  # R43 alchemist by the tack
   - {do: upgrade, id: a1, to: 3-2-0}                                            # R43
   - {do: upgrade, id: v2, to: 0-2-2}                                            # R45 Radar Scanner: camo for the cluster
   - {do: place, id: i1, kind: ice, role: dps, at: [0.377, 0.164]}               # R48 ice left of Sauda

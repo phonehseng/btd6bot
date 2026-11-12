@@ -77,7 +77,7 @@ plan:
   - {do: upgrade, id: r1, to: 0-0-2}                                            # R8
   - {do: upgrade, id: r1, to: 0-1-2}                                            # R9
   - {do: upgrade, id: r1, to: 0-2-2}                                            # R11
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.419, 0.146]}  # R12 on Strong, left of the slide's bottom circle
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.112]}  # R12 on Strong, left of the slide's bottom circle
   - {do: place, id: hero, kind: hero, role: dps, at: [0.729, 0.283]}            # R16 Rosalia by the slide
   - {do: upgrade, id: s1, to: 0-0-1}                                            # R18
   - {do: upgrade, id: s1, to: 0-0-2}                                            # R20
