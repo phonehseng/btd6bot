@@ -17,8 +17,10 @@ CHIMPS guides, removable obstacles, BTD6 Index records) is in
    splitters.
 2. **Towers.** The tower kinds come from the guides (sources per map below and in
    each file's header), filtered by the mode (`MODE_TOWER_FILTER`) and the bot's
-   rules (no mortar or dartling; desperado, mermonkey and skywarden allowed since
-   their hotkeys were verified; no snipers on the maps whose walls block sight).
+   rules (no snipers on the maps whose walls block sight; desperado, mermonkey and
+   skywarden allowed since their hotkeys were verified). These builds were also
+   made without mortar or dartling; a rebuild leaves out only the mortar, until
+   its target point can be set (docs/tower_exclusions_audit.md item 2).
    One finding drove many builds: **Druid of the Jungle (druid 0-3-0)** - the game
    data gives its vines map-wide reach and they destroy a whole non-MOAB bloon per
    grab; the CHIMPS guides for Workshop, Ravine and Dark Castle use it early. On the

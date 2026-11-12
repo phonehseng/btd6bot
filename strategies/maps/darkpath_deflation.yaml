@@ -11,8 +11,9 @@
 # Build: chosen round by round with the game's own numbers
 # (btd6bot/dps_model.py through tools/optimize_builds.py) from the towers the
 # guides below use on this map, the towers the account needs XP for, and cheap
-# helpers the bot places by hotkey (no Heli, Mortar, Dartling or Beast
-# Handler: they need aiming or hand-set targeting). It uses spike, desperado,
+# helpers the bot places by hotkey (this build was made without Heli, Mortar,
+# Dartling or Beast Handler; a rebuild leaves out only the Mortar:
+# docs/tower_exclusions_audit.md item 2). It uses spike, desperado,
 # mermonkey, super, skywarden, alchemist. Each purchase is the cheapest that
 # keeps the coming rounds popping at 2.5x the strength they need. Spare cash
 # goes into the Desperado, whose XP the account needs most.
