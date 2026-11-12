@@ -360,6 +360,10 @@ class Source:
                                # removes); read by _Controls
     ability_use: str = ""      # for an ability's source: the bot's use of it ("moab": pressed in
                                # blimp rounds only, see _Controls)
+    dot_one_bloon: bool = False  # its damage over time stays on the bloon it struck: one hit burns
+                               # at most that bloon's whole health (The Blazing Sun's fire)
+    preempt: bool = False      # Pre-emptive Strike's missile: `damage` once on every blimp that
+                               # enters the map (_play), no rate of its own
 
     def can_hit(self, lay):
         """Can this source damage this layer at all?"""
@@ -1387,6 +1391,220 @@ def _ability_boosts(ab, entry, kind):
     return out
 
 
+# ===========================================================================
+# Mechanics the export does not carry (docs/model_fix_plan.md item 12)
+# ===========================================================================
+#
+# Some of what makes a tier-4/5 upgrade strong hangs off behaviours that
+# tools/export_attacks.py never reads: tower-level models (Spirit of the
+# Forest's track vines, Wizard Lord Phoenix's bird, the Sub Commander and
+# Carrier Flagship auras), bloon behaviours (Ice Shards, Icicles, The
+# Blazing Sun's fire) and projectiles without damage (Bloon Master
+# Alchemist's shrink potion). Each is added here from the export where the
+# export has the numbers, and from the audits otherwise; every number names
+# its source. Where an audit gives a range, the low end is taken. False
+# leaves every one of them out (the model as before phase 2b).
+UNEXPORTED_RATING = True
+
+# Spirit of the Forest (druid x-5-x): vines cover the whole track and tick
+# every 0.5 s with infinite pierce: 4 damage within 50 units of the druid,
+# 3 within 100, 2 beyond; 30 / 15 / 10 to Ceramics and MOAB-class. They see
+# camo; lead needs 1-x-x (docs/model_audit_magic.md finding 5,
+# fandom:Spirit_of_the_Forest).
+SPIRIT_VINE_TICKS_PER_S = 2.0
+SPIRIT_VINE_BANDS = ((None, 2.0, 10.0), (100.0, 3.0, 15.0), (50.0, 4.0, 30.0))   # (radius, damage, ceramic/MOAB)
+# Prince of Darkness (wizard 0-0-5): graveyard scaling (magic finding 6).
+# A full graveyard gives the bolt +10 and the undead 13 damage, pierce 2-11
+# (mean 6.5), 1-4 bloons a summon and up to x2 speed; the graveyard is
+# taken half full, all game long (it fills from round ~40 on).
+POD_BOLT_EXTRA = 5.0
+POD_UNDEAD = {"damage": 8.0, "pierce": 6.5, "per_summon": 2.5, "rate": 1.5}
+# Wizard Lord Phoenix (wizard x-5-x): a permanent phoenix circles the map
+# centre, flame 20 damage, 50 pierce, every 0.1 s (magic finding 7,
+# fandom:Wizard_Lord_Phoenix). Read like a circling plane's darts
+# (AIR_PATTERN_EFFICIENCY), map-wide.
+PHOENIX = {"rate": 0.1, "pierce": 50.0, "damage": 20.0}
+# Comanche Defense / Commander (heli x-x-4 / x-x-5): mini-Comanches with a
+# spray of 3 darts every 0.228 s, 3 damage, 4 pierce (military M6). x-x-5
+# keeps 3 for good; x-x-4 calls 1, 2, 3 for 15 s each once a round, read as
+# half a mini-heli on average [EST, low].
+MINI_COMANCHE = {"rate": 0.228, "count": 3.0, "pierce": 4.0, "damage": 3.0}
+MINI_COMANCHES = {4: 0.5, 5: 3.0}
+# Pre-emptive Strike (sub x-5-x): one 750-damage missile at every blimp
+# that enters the map, BADs included in the game but read without them here
+# (military M10, bw:Pre-emptive_Strike_(BTD6)). Applied in _play.
+PREEMPT_DAMAGE = 750.0
+# Sub Commander (sub x-x-5): +4 pierce and x2 damage to every Sub in its
+# 42 radius, itself included; Carrier Flagship (buccaneer 5-x-x): attack
+# cooldown -15% (the wikis say 15-20%) for water towers and Aces on screen
+# (military M11).
+SUB_COMMANDER = {"radius": 42.0, "pierce": 4.0, "damage_mult": 2.0}
+FLAGSHIP_RATE = 0.85
+FLAGSHIP_TOWERS = ("sub", "buccaneer", "ace")
+# Ice Shards (ice 3-x-x / 4-x-x: 3 shards of 2 damage, 3 pierce; 5-x-x: 6
+# of 5) and Icicles (ice x-x-4 / x-x-5: 3 damage, 3 pierce) come off frozen
+# bloons (primary F6, fandom:Ice_Shards_(BTD6), fandom:Icicles). How many
+# frozen bloons a pulse leaves to be popped is not in the data: two per
+# freeze shot [EST], far under the 40 a pulse can freeze.
+FROZEN_POPPED_PER_SHOT = 2.0
+ICE_SHARDS = {3: (3.0, 2.0), 4: (3.0, 2.0), 5: (6.0, 5.0)}   # top tier -> (shards, damage)
+SHARD_PIERCE = 3.0
+ICICLE = {"pierce": 3.0, "damage": 3.0}
+# The Blazing Sun (desperado 5-x-x): every 50th shot sets its target ablaze,
+# 75 damage per 1.5 s for 12 s (600), spreading to 8 bloons nearby (primary
+# F6, the v50 notes in fandom:Desperado). Purple bloons are left out, and
+# so is the spread: with it, one ignition a second burned ~4,000 health a
+# second off a dense round, several times the gun itself, where the audit
+# puts the fire at about +50% [EST]; the target alone gives about that.
+BLAZING_SUN = {"every": 50.0, "spread": 0.0, "total": 600.0, "per_s": 50.0}
+# Glaive Ricochet (3-x-x) and M.O.A.R. Glaives (4-x-x) bounce up to 60 /
+# 180 units from the glaive, so their throw reaches that much further
+# (primary F5). Glaive Lord (5-x-x) keeps the bounce, and its glaives also
+# "seek to the closest bloon within infinite range"
+# (fandom:Glaive_Lord_(BTD6)); but read map-wide at the audit's 0.5 [EST]
+# one Glaive Lord lifted Quiet Street Impoppable round 98 from 0.32 to 0.87,
+# and with the bounce alone to 1.20 - the loss case that made its orbit
+# local (tests/test_moab_model_offline.py: map-wide it read 0.18 -> 1.63
+# and the round was lost). Neither is credited at 5-x-x until a game shows
+# how far they reach.
+GLAIVE_BOUNCE = {3: 60.0, 4: 180.0}
+
+
+def _made(name, shots, pierce, damage, **kw):
+    """A Source the export does not carry, with plain defaults."""
+    base = dict(name=name, shots=shots, shots_single=shots, pierce=pierce, damage=damage,
+                immune=frozenset(), bonus={}, camo=False, only_tags=frozenset(), excluded_tags=frozenset(),
+                reach=0.0)
+    base.update(kw)
+    return Source(**base)
+
+
+def _game_ids(kinds):
+    towers = attacks().get("towers") or {}
+    return [towers[k]["game_id"] for k in kinds if k in towers]
+
+
+def _unexported(kind, tiers, entry, sources):
+    """(sources, extra buffs) of a tower crosspath with the mechanics above
+    added: sources is the profile's list, changed or added to."""
+    if not UNEXPORTED_RATING or hero_of(kind) is not None or len(tiers) != 3:
+        return sources, []
+    top, mid, bot = tiers
+    buffs = []
+    if kind == "druid" and mid == 5:
+        immune = frozenset() if top >= 1 else frozenset({"lead"})
+        for radius, dmg, big in SPIRIT_VINE_BANDS:
+            # each band adds to the ones outside it: 2 everywhere, +1 within
+            # 100, +1 more within 50 (and 10 / +5 / +15 to Ceramics and blimps)
+            outer = {None: (0.0, 0.0), 100.0: (2.0, 10.0), 50.0: (3.0, 15.0)}[radius]
+            add, add_big = dmg - outer[0], big - outer[1]
+            sources.append(_made(
+                f"Spirit vines{'' if radius is None else f' within {radius:.0f}'}", SPIRIT_VINE_TICKS_PER_S,
+                1e9, add, immune=immune, camo=True, zone_wide=True,
+                bonus={tag: {"mult": 1.0, "add": add_big - add} for tag in ("Ceramic", "Moabs")},
+                placement="global" if radius is None else "aimed",
+                zone_radius=radius, zone_fixed=radius is not None))
+    if kind == "wizard" and bot == 5:
+        out = []
+        for s in sources:
+            if s.ability:
+                out.append(s)
+            elif "Necromancer>Projectile" in s.name and "Moab" not in s.name:
+                k = POD_UNDEAD["per_summon"] * POD_UNDEAD["rate"]
+                out.append(Source(**{**s.__dict__, "shots": s.shots * k, "shots_single": s.shots_single * k,
+                                     "pierce": POD_UNDEAD["pierce"], "damage": POD_UNDEAD["damage"]}))
+            elif s.name == "Attack>BaseProjectile":
+                out.append(Source(**{**s.__dict__, "damage": s.damage + POD_BOLT_EXTRA}))
+            else:
+                out.append(s)
+        sources = out
+    if kind == "wizard" and mid == 5:
+        like = next((s for s in sources if s.ability and s.pierce == PHOENIX["pierce"]), None)
+        shots = AIR_PATTERN_EFFICIENCY / PHOENIX["rate"]
+        sources.append(_made("Wizard Lord Phoenix", shots, PHOENIX["pierce"], PHOENIX["damage"],
+                             immune=like.immune if like else frozenset({"purple"}),
+                             reach=like.reach if like else 0.0, placement="global"))
+    if kind == "heli" and bot in MINI_COMANCHES:
+        darts = next((s for s in sources if not s.ability and s.damage > 0.0), None)
+        if darts is not None:
+            n = MINI_COMANCHES[bot] * MINI_COMANCHE["count"] / MINI_COMANCHE["rate"]
+            sources.append(Source(**{**darts.__dict__, "name": "Mini-Comanche darts", "shots": n,
+                                     "shots_single": n, "pierce": MINI_COMANCHE["pierce"],
+                                     "damage": MINI_COMANCHE["damage"]}))
+    if kind == "sub" and mid == 5:
+        sources.append(_made("Pre-emptive Strike missile", 0.0, 1.0, PREEMPT_DAMAGE, camo=True,
+                             only_tags=frozenset({"Moabs"}), excluded_tags=frozenset({"Bad"}),
+                             placement="global", preempt=True))
+    if kind == "sub" and bot == 5:
+        towers = _game_ids(("sub",))
+        buffs += [{"kind": "damage_mult", "value": SUB_COMMANDER["damage_mult"], "radius": SUB_COMMANDER["radius"],
+                   "towers": towers, "self": True, "key": "sub_commander_damage"},
+                  {"kind": "pierce", "value": SUB_COMMANDER["pierce"], "radius": SUB_COMMANDER["radius"],
+                   "towers": towers, "self": True, "key": "sub_commander_pierce"}]
+    if kind == "buccaneer" and top == 5:
+        buffs.append({"kind": "rate", "value": FLAGSHIP_RATE, "global": True, "towers": _game_ids(FLAGSHIP_TOWERS),
+                      "self": True, "key": "carrier_flagship"})
+    if kind == "alchemist":
+        sources += _shrink_potion(entry)
+    if kind == "ice":
+        freeze = next((s for s in sources if not s.ability and "freeze" in s.effects), None)
+        if freeze is not None:
+            n = freeze.shots * FROZEN_POPPED_PER_SHOT
+            if top in ICE_SHARDS:
+                count, dmg = ICE_SHARDS[top]
+                sources.append(Source(**{**freeze.__dict__, "name": "Ice Shards", "shots": n * count,
+                                         "shots_single": n * count, "pierce": SHARD_PIERCE, "damage": dmg,
+                                         "effects": {}, "zone_wide": False, "bonus": {}}))
+            if bot >= 4:
+                sources.append(Source(**{**freeze.__dict__, "name": "Icicles", "shots": n, "shots_single": n,
+                                         "pierce": ICICLE["pierce"], "damage": ICICLE["damage"],
+                                         "effects": {}, "zone_wide": False, "bonus": {}}))
+    if kind == "desperado" and top == 5:
+        gun = max((s for s in sources if not s.ability and s.damage > 0.0), key=lambda s: s.shots, default=None)
+        if gun is not None:
+            fire = BLAZING_SUN
+            sources.append(_made("The Blazing Sun fire", gun.shots / fire["every"], 1.0 + fire["spread"], 0.0,
+                                 immune=frozenset({"purple"}), camo=gun.camo, reach=0.0,
+                                 dot_total=fire["total"], dot_rate=fire["per_s"], dot_one_bloon=True,
+                                 zone_radius=gun.zone_radius))
+    if kind == "boomerang" and top in GLAIVE_BOUNCE:
+        out = []
+        for s in sources:
+            if s.ability or not s.name.startswith("Attack>"):
+                out.append(s)
+            elif s.zone_radius is not None:
+                out.append(Source(**{**s.__dict__, "zone_radius": s.zone_radius + GLAIVE_BOUNCE[top]}))
+            else:
+                out.append(s)
+        sources = out
+    return sources, buffs
+
+
+def _shrink_potion(entry):
+    """Bloon Master Alchemist's shrink potion (alchemist x-x-5), from the
+    export's "ShrinkPotion" attack: every `rate` s a splash of 200 pierce
+    turns the strongest blimps on screen (not BADs) into Red Bloons
+    (MorphBloonModel), MOAB / BFB / DDT / ZOMG costing 19 / 49 / 49 / 99
+    pierce more (magic finding 8). Read as a hit that destroys the whole
+    blimp (its damage is the blimp's), map-wide. The export's 10 s is kept
+    (the wiki says 7.5 s)."""
+    out = []
+    for a in entry.get("attacks", []):
+        if a.get("name") != "ShrinkPotion":
+            continue
+        for w in a.get("weapons", []):
+            splash = next((sp["projectile"] for sp in (w.get("projectile") or {}).get("spawn") or ()
+                           if "MorphBloonModel" in (sp["projectile"].get("other") or ())), None)
+            if splash is None:
+                continue
+            out.append(_made("Bloon Master shrink potion", 1.0 / max(w.get("rate", 10.0), 1e-3),
+                             float(splash.get("pierce") or 1.0), 9999999.0, only_tags=frozenset({"Moabs"}),
+                             excluded_tags=frozenset(a.get("excluded_tags") or ()) | frozenset({"Bad"}),
+                             reach=2.0 * float(splash.get("radius") or 0.0), placement="global",
+                             pierce_cost=_pierce_cost(splash)))
+    return out
+
+
 @lru_cache(maxsize=None)
 def profile(kind, tiers):
     """Profile of a tower crosspath, or of a hero at a level (kind
@@ -1440,10 +1658,11 @@ def profile(kind, tiers):
             s.ability = ab.get("name") or "ability"
             s.ability_use = "interval" if ab.get("interval") else use
         sources += extra
+    sources, unexported_buffs = _unexported(kind, tiers, entry, sources)
     return Profile(kind=kind, tiers=tiers, range=entry.get("range", 0.0),
                    is_global=is_global, sources=sources, aim_bound=aim_bound and not sources,
                    buffs=list(entry.get("buffs", [])) + _subtower_buffs(entry) + _potion_buffs(entry)
-                   + [b for ab in pressed for b in _ability_buffs(ab)],
+                   + [b for ab in pressed for b in _ability_buffs(ab)] + unexported_buffs,
                    boosts=[b for ab in pressed for b in _ability_boosts(ab, entry, kind)],
                    zones=list(entry.get("zones") or []),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
@@ -1950,6 +2169,7 @@ class Lot:
     speed_mult: float = 1.0
     moab_hp: float = 1.0
     group: float = None
+    free: float = 0.0      # damage already dealt before the first station (Pre-emptive Strike: _play)
 
 
 class _Delays(tuple):
@@ -2347,7 +2567,8 @@ class _Rates:
                 # all; no more than the bloons in the zone, each burning at
                 # dot_rate per second
                 in_zone = max(1.0, rho * zone.length)
-                hp_rate += min(hits * src.dot_total, in_zone * src.dot_rate)
+                total = min(src.dot_total, whole) if src.dot_one_bloon else src.dot_total
+                hp_rate += min(hits * total, in_zone * src.dot_rate)
         if hp_rate <= 0.0:
             return None
         ordinary = hp_rate - kill_rate
@@ -2507,7 +2728,7 @@ class _Server:
             return None
         segs = self.segs(lot)
         release = lot.t0 + zone.entry / lot.speed + (segs.delay_at(zone.entry) if segs else 0.0)
-        return self.job(lot, zone, release, zone.entry, 0.0, segs, r)
+        return self.job(lot, zone, release, zone.entry, lot.free, segs, r)
 
     def segs(self, lot):
         """The delays on this lot's route (_Controls.segments), () without.
@@ -2572,7 +2793,7 @@ class _Server:
         done = 1.0 if job.work <= 0.0 else max(0.0, 1.0 - job.remaining / job.work)
         if done < 1.0 - 1e-9:
             self.out.append(Lot(lot.path, lot.t0, lot.bloon, lot.count * (1.0 - done), lot.rho, lot.speed,
-                                lot.speed_mult, lot.moab_hp, lot.group))
+                                lot.speed_mult, lot.moab_hp, lot.group, lot.free))
         if done <= 1e-9:
             return
         self.last_pop = max(self.last_pop, t)
@@ -3013,7 +3234,13 @@ def _influence_terms(board, station, lay, path, rho):
     if lay.camo:
         plain = _decamo(lay)
         for st, src in board.decamo:
-            if st is station or not st.covers(path) or not _Controls._reaches(src, plain):
+            # a tower's own Shimmer counts for its own bolts too: an Archmage
+            # (wizard 5-x-x) or Shimmer (x-x-3) has no camo sight of its own,
+            # strips the camo off what is in its range and shoots it
+            # (docs/model_audit_magic.md finding 7, fandom:Shimmer)
+            if not (UNEXPORTED_RATING or st is not station):
+                continue
+            if not st.covers(path) or not _Controls._reaches(src, plain):
                 continue
             if st.zones[path].entry > hi:
                 continue          # strips camo only after this zone
@@ -3045,6 +3272,24 @@ def with_parts(stations):
     return out
 
 
+def _preempted(lots, stations, strength):
+    """The lots with Pre-emptive Strike's missile (Source.preempt) dealt to
+    every blimp as it enters the map: `free` damage its first station's job
+    starts from (and passes on to its children what is left over). Only the
+    lots that spawn get it, not the blimps that come out of others; BADs
+    never (the model leaves them out to be safe)."""
+    damage = sum(s.damage for st in stations for s in st.sources if s.preempt) * strength
+    if damage <= 0.0:
+        return lots
+    out = []
+    for lot in lots:
+        lay = layer(lot.bloon, lot.moab_hp)
+        if lay.moab and not _is_bad(lay) and lot.free == 0.0:
+            lot = Lot(**{**lot.__dict__, "free": damage})
+        out.append(lot)
+    return out
+
+
 def _play(stations, track, lots, strength, board=None):
     """One scenario of one round: lots flow through the stations in track
     order; what is left after the last one leaks. board: the stations'
@@ -3055,6 +3300,7 @@ def _play(stations, track, lots, strength, board=None):
     # towers frozen part of the time (Glacial Trail) attack at that share
     strength *= getattr(track, "uptime", 1.0)
     every = sorted(with_parts(stations), key=lambda s: s.order)
+    lots = _preempted(lots, every, strength)
     controls = None
     if STATUS_RATING:
         controls = _Controls(every, track, strength, board)
@@ -3227,9 +3473,14 @@ def _boosted_sources(sources, boosts):
 
 def _with_buffs(s, buffs):
     """Source s with these support buffs applied (see _buffed_sources)."""
-    shots, single, pierce, camo = s.shots, s.shots_single, s.pierce, s.camo
+    shots, single, pierce, camo, damage = s.shots, s.shots_single, s.pierce, s.camo, s.damage
     immune, bonus = s.immune, dict(s.bonus)
     for b in buffs:
+        if b["kind"] == "damage_mult" and b.get("value"):
+            damage *= b["value"]                # Sub Commander: x2 damage
+            bonus = {tag: {"mult": v.get("mult", 1.0), "add": v.get("add", 0.0) * b["value"]}
+                     for tag, v in bonus.items()}
+            continue
         if b["kind"] == "rate" and b.get("value"):
             shots /= b["value"]
             single /= b["value"]
@@ -3246,7 +3497,7 @@ def _with_buffs(s, buffs):
                 cur = bonus.get(tag, {"mult": 1.0, "add": 0.0})
                 bonus[tag] = {"mult": cur.get("mult", 1.0), "add": cur.get("add", 0.0) + extra.get("add", 0.0)}
     return Source(**{**s.__dict__, "shots": shots, "shots_single": single, "pierce": pierce, "camo": camo,
-                     "immune": immune, "bonus": bonus})
+                     "immune": immune, "bonus": bonus, "damage": damage})
 
 
 MAP_WIDE_NEEDS_SIGHT = ("sniper",)
@@ -3392,16 +3643,23 @@ def _buffs_at(t, placed, pressed=True):
     in `placed` (see station_for)."""
     buffs_here = []
     mult, add = 1.0, 0.0
+    keys = set()
     for o in placed:
-        q = profile(o.kind, o.tiers) if o.tid != t.tid else None
+        q = profile(o.kind, o.tiers)
         if q is None:
             continue
         for b in q.buffs:
+            if o.tid == t.tid and not b.get("self"):
+                continue      # a tower's buffs are for the others, unless the game says itself too
+            if b.get("key") and b["key"] in keys:
+                continue      # the game does not stack two of the same aura (two Sub Commanders)
             if not buff_reaches(b, t.kind, t.tiers):
                 continue
             if b.get("ability") and not pressed:
                 continue
             if b.get("global") or buff_covers(o, t, b.get("radius") or q.range):
+                if b.get("key"):
+                    keys.add(b["key"])
                 if b["kind"] == "range" and b.get("value"):
                     mult = max(mult, 1.0 + b["value"])
                 elif b["kind"] == "range" and b.get("additive"):
