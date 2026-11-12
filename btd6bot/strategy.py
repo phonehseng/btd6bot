@@ -7032,13 +7032,68 @@ class Executor:
     # while the bot is idle (Match._park_cursor).
     HELI_PURSUIT_TIER = 2
 
+    # Fixed aim points for the towers that shoot at a spot rather than at
+    # bloons (docs/model_fix_plan.md item 14): a Mortar's reticle, and a
+    # Dartling set to Locked. Both go to the densest track point, the one
+    # the cursor is parked on (match.densest_track_point), so the model can
+    # credit them at one known point. OFF until checked in game, because
+    # neither flow has been seen live:
+    #   MORTAR_AIM: that a placed Mortar's panel shows "Set Target" in the
+    #     targeting row, and that clicking it and then the map moves the
+    #     reticle there (Game.set_target_point; frames in logs/aim_*.png);
+    #     also whether a new Mortar has a default reticle at all.
+    #   DARTLING_LOCK: that a Dartling's targeting cycles to "Locked" with
+    #     the targeting arrows, and whether Locked then takes its point from
+    #     a Set Target button (as the Mortar's) or from where the cursor was.
+    #     The default after placement (Follow Touch per this code, Locked at
+    #     the map centre per a Fandom version note) is also unconfirmed.
+    MORTAR_AIM = False
+    DARTLING_LOCK = False
+
+    def _aim_point(self):
+        """The fixed aim point for a Mortar or a locked Dartling: the
+        densest track point (match.densest_track_point), or None."""
+        from .match import densest_track_point
+        try:
+            return densest_track_point(self.m)
+        except Exception:
+            log.exception("aim point failed")
+            return None
+
+    def _aim_fixed(self, p):
+        """Give a Mortar its reticle, or lock a Dartling on the aim point,
+        once per tower (MORTAR_AIM / DARTLING_LOCK). p.aim becomes "point",
+        or "failed point" so it is not tried on every upgrade."""
+        if getattr(p, "aim", None) in ("point", "failed point"):
+            return
+        point = self._aim_point()
+        if point is None:
+            return
+        try:
+            ok = True
+            if p.kind == "dartling":
+                ok = self.g.target(p, "lock")
+            ok = ok and self.g.set_target_point(p, *point)
+        except Exception:          # aiming is a nicety: never cost a game over it
+            log.exception("setting %s's aim point failed", p.tid)
+            ok = False
+        p.aim = "point" if ok else "failed point"
+        (log.info if ok else log.warning)("%s aim point %s: %s", p.tid, point, "set" if ok else "not set")
+
     def _explicit_target(self, p):
         """Does the plan set this tower's targeting itself?"""
         return any(st.get("do") == "target" and st.get("id") == p.tid for st in self.plan + self.fill)
 
     def _aim(self, p):
-        """Set a heli's targeting so it stops following the mouse."""
-        if p.kind != "heli" or self._explicit_target(p):
+        """Set a heli's targeting so it stops following the mouse; give a
+        Mortar or a Dartling its fixed aim point when MORTAR_AIM /
+        DARTLING_LOCK are on."""
+        if self._explicit_target(p):
+            return
+        if (p.kind == "mortar" and self.MORTAR_AIM) or (p.kind == "dartling" and self.DARTLING_LOCK):
+            self._aim_fixed(p)
+            return
+        if p.kind != "heli":
             return
         want = "pursuit" if p.tiers[0] >= self.HELI_PURSUIT_TIER else "lock"
         if getattr(p, "aim", None) in (want, "failed " + want):

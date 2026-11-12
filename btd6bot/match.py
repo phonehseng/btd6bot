@@ -67,6 +67,29 @@ BANANA_EVERY = 2.0   # seconds between passes over the bananas around farms
 PARK_EVERY = 1.5     # seconds between checks of where the cursor rests
 PARK_WINDOW = 15     # grid cells: the track density is measured over this square
 PARK_SLACK = 12      # pixels: closer than this to the spot, the cursor stays put
+
+
+def densest_track_point(m, window=None):
+    """Screen fraction (x, y) of the track cell with the most track in the
+    `window`-cell square around it (default PARK_WINDOW): a bend, or a
+    stretch where lanes meet. None without a painted track (m.heat).
+
+    The cursor-park point of Match._park_point, and the fixed aim point the
+    executor gives a Mortar or a locked Dartling (Executor._aim_point), so
+    every aimed tower fires into the same thick of the bloons."""
+    import cv2
+    import numpy as np
+    heat = getattr(m, "heat", None)
+    if heat is None or not (heat > 0).any():
+        return None
+    size = window or PARK_WINDOW
+    track = (heat > 0).astype(np.float32)
+    dens = cv2.boxFilter(track, -1, (size, size))
+    dens[track == 0] = 0
+    y, x = np.unravel_index(int(np.argmax(dens)), dens.shape)
+    return m.cell_to_frac(int(x), int(y))
+
+
 # No-income modes (Deflation) buy the whole defence before Play and can never
 # add to it, so the damage model can judge the finished build before a single
 # bloon is out. Calibrated on the 26 logged Deflation games whose first
@@ -2060,25 +2083,22 @@ class Match:
         kept aiming at the old path all game (audit 2026-11-12)."""
         heat = getattr(self.m, "heat", None)
         if self._park is None or self._park[0] is not heat:
-            import cv2
-            import numpy as np
-            if heat is None or not (heat > 0).any():
+            point = densest_track_point(self.m)
+            if point is None:
                 return None
-            track = (heat > 0).astype(np.float32)
-            dens = cv2.boxFilter(track, -1, (PARK_WINDOW, PARK_WINDOW))
-            dens[track == 0] = 0
-            y, x = np.unravel_index(int(np.argmax(dens)), dens.shape)
-            self._park = (heat, self.m.cell_to_frac(int(x), int(y)))
+            self._park = (heat, point)
         return self._park[1]
 
     def _park_cursor(self, now):
         """Rest the cursor on the busiest track while something follows it
-        (a Dartling Gunner, or a heli whose targeting is not set yet)."""
+        (a Dartling Gunner not locked on a point, or a heli whose targeting
+        is not set yet)."""
         if now - self._t_park < PARK_EVERY:
             return
         self._t_park = now
         towers = self.g.towers.values()
-        if not any(p.kind == "dartling" or (p.kind == "heli" and getattr(p, "aim", None) not in ("lock", "pursuit"))
+        if not any((p.kind == "dartling" and getattr(p, "aim", None) != "point")
+                   or (p.kind == "heli" and getattr(p, "aim", None) not in ("lock", "pursuit"))
                    for p in towers):
             return
         spot = self._park_point()
