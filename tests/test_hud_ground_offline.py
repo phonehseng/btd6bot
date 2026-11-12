@@ -74,6 +74,15 @@ def test_layer_key_follows_the_ground_only_where_it_changes():
     assert F.FieldLayer.ground_of(snap) == {"now_round": 7, "pose_round": 6, "ground_horizon": 18}
 
 
+def test_plan_ahead_writes_carried_spots():
+    plan = [{"do": "place", "id": "s1", "kind": "sniper", "at": [0.5, 0.5]},
+            {"do": "upgrade", "id": "s1", "to": "1-0-0"}]
+    raw = hudstate.plan_ahead(plan, 0)
+    carried = hudstate.plan_ahead(plan, 0, carry=lambda at: (at[0] + 0.1, at[1] - 0.05))
+    assert raw[0]["at"] == [0.5, 0.5] and carried[0]["at"] == [0.6, 0.45]
+    assert plan[0]["at"] == [0.5, 0.5], "the plan itself is left alone"
+
+
 if __name__ == "__main__":
     try:
         for name, fn in list(globals().items()):

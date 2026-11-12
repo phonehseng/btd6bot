@@ -1609,7 +1609,11 @@ class Match:
             return
         try:
             towers = list(self.g.towers.values())
-            plan = hudstate.plan_ahead(getattr(self.ex, "plan", None) or [], getattr(self.ex, "idx", 0))
+            # Sanctuary: a planned spot rides its platform (Executor._at_now),
+            # so the ghost is drawn where the bot will click
+            carry = getattr(self.ex, "_at_now", None)
+            plan = hudstate.plan_ahead(getattr(self.ex, "plan", None) or [], getattr(self.ex, "idx", 0),
+                                       carry=carry)
             kinds = {p.kind for p in towers} | {s["kind"] for s in plan if s.get("kind")}
             new = kinds - set(self._hud_sizes)
             if new:      # looked up once per kind; None for a kind the game data lacks
