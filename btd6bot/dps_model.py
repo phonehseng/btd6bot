@@ -1083,14 +1083,29 @@ class Track:
     def heights(self):
         """Grid (as MapModel cells) of the height of the highest non-track
         area at each cell: a tower standing there is that high, which the
-        tilted camera shows HEIGHT_FACTOR x height further up the screen."""
+        tilted camera shows HEIGHT_FACTOR x height further up the screen.
+
+        Areas present at the start count, except unplaceable ones the map
+        removes by itself (mapgeom.dynamics().vanish): no tower stands on
+        one while it is there, so a tower in its outline was placed after
+        it went, on the ground below. One Two Tree's BlockerPlots stand 60
+        high and open during the game; counted, a tower on an opened plot
+        was read 60 high, about 33 units off on the screen (dynamic-map
+        audit 2026-11-12, item 14). Ground that vanishes but holds towers
+        while it lasts (Erosion's ice, 10 high) is kept: the towers on it
+        stand at its height, and only a sub put in the water after the
+        melt reads a few units high."""
         if self._heights is None:
             from . import mapgeom as G
             from .maplearn import GRID
             top = np.zeros((GRID[1], GRID[0]), np.float32)
             present = G.starting_areas(self.geom)
+            goes = set(G.dynamics(self.geom).vanish)
             for i, area in enumerate(self.geom.get("areas", [])):
-                if G._area_id(area, i) in present and area.get("type") != "track":
+                aid = G._area_id(area, i)
+                if area.get("type") == "unplaceable" and aid in goes:
+                    continue
+                if aid in present and area.get("type") != "track":
                     m = G._poly_mask(area["polygons"], self.proj)
                     top[m] = np.maximum(top[m], G.area_height(area))
             self._heights = top
