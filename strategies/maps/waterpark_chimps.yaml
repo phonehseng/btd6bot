@@ -1,0 +1,115 @@
+# Water Park, CHIMPS: OneEyedDeacon's Rosalia + Flying Fortress guide, step
+# by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Water Park had no CHIMPS build. Every Beginner CHIMPS map was won by
+# following a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Water Park, Strategy 1: the only written
+# guide found). The lanes alternate every round and the slide blocks sight,
+# so something must cover both: here the Flying Fortress ace.
+#
+# Guide: OneEyedDeacon (https://www.youtube.com/watch?v=dYsOxUMQV_g, v49.3),
+# written round by round in the description (confidence:
+# verified-written-steps). Hero: Rosalia (R16, by the slide).
+# Core towers: Ace 2-0-5 (Flying Fortress), Boomerang 0-2-2, Sniper 0-2-2,
+# Alchemist 3-2-0, Village 2-2-0, and the opening dart.
+# Placements, in the guide's words: the dart on the edge of the slide with
+# the boomerang next to it, the sniper on the left of the slide's bottom
+# circle, Rosalia by the slide, the ace next to Rosalia, the alchemist and
+# the village above it. The bot's map data has no placeable slide, so the
+# dart and the boomerang take the cells that see the most of both lanes.
+#
+# Adapted, and why:
+#   * Rosalia's timed abilities (R35, R85, R87: when the blimps break open)
+#     cannot be timed by the bot; its ability planner presses them on the
+#     blimp rounds by itself. The ace keeps its default circle: Centered
+#     Path needs a hand-placed centre.
+#   * the village line is inconsistent in the text (0-0-2 at R30, then
+#     2-0-0 and 2-2-0); it is read as 2-2-0 (docs/chimps_map_guides.md).
+#   * the bot's coverage check needs ceramic, BFB, ZOMG, DDT and BAD answers
+#     from its own tables (strategy.ANSWERS); none of the guide's towers is
+#     in them. The guide spends the whole CHIMPS bank on the Flying
+#     Fortress (about $97k alone), so nothing that answers them fits in
+#     the plan: it ends with a bare spike factory at the exit (leak
+#     cleanup), and its Deadly Spikes / Perma-Spike are fill steps,
+#     bought only if cash is left. The DDT and BAD answers the executor
+#     pulls forward are the guide's own Flying Fortress.
+#   * a Glaive Ricochet boomerang (3-0-2) for round 63: none of the
+#     guide's towers is a rush answer in the bot's tables.
+#   * the guide's Flying Fortress round (R88-89) cannot be met with CHIMPS
+#     cash at Hard prices: Spectre ($25,270) and Flying Fortress ($97,200)
+#     on top of the rest come to about $144k, which the rounds pay by
+#     round 94 (by round 88: $129k). The plan keeps the guide's order;
+#     the Fortress stands from round 95 in the replay.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 28/28 bought, threat gaps: none, off-plan answer buys:
+# 14. Each step stands from: x1 placed R6, r1 placed R6, r1 0-0-1 R7, r1 0-0-2
+# R8, r1 0-1-2 R9, r1 0-2-2 R11, s1 placed R12, hero placed R16, s1 0-0-1 R18,
+# s1 0-0-2 R21, s1 0-1-2 R21, s1 0-2-2 R23, v1 placed R27, v1 2-0-0 R32, ac1
+# placed R33, ac1 0-0-2 R36, ac1 0-0-3 R39, ac1 1-0-3 R39, ac1 2-0-3 R39, a1
+# placed R39, a1 3-0-0 R41, v1 2-2-0 R42, a1 3-2-0 R44, ac1 2-0-4 R56, r2
+# placed R56, r2 3-0-2 R57, ac1 2-0-5 R95, p1 placed R95. Damage model margins
+# on those boards (it counts no hero and no ability, and under-rates map-wide
+# towers): 40 0.33, 63 1.38, 76 1.65, 81 0.81, 90 0.06, 95 2.33, 98 2.04, 100
+# 3.51.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: waterpark_chimps
+map: Water Park
+hero: rosalia
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {dart: [0, 0, 0], boomerang: [3, 2, 2], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
+  revised: "2026-11-12T12:00"
+  maps: [Water Park]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.334, 0.828]}              # R6 dart on the edge of the slide
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [x1], at: [0.206, 0.726]}  # R6 boomerang next to it
+  - {do: upgrade, id: r1, to: 0-0-1}                                            # R7
+  - {do: upgrade, id: r1, to: 0-0-2}                                            # R8
+  - {do: upgrade, id: r1, to: 0-1-2}                                            # R9
+  - {do: upgrade, id: r1, to: 0-2-2}                                            # R11
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.112]}  # R12 on Strong, left of the slide's bottom circle
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.729, 0.283]}            # R16 Rosalia by the slide
+  - {do: upgrade, id: s1, to: 0-0-1}                                            # R18
+  - {do: upgrade, id: s1, to: 0-0-2}                                            # R20
+  - {do: upgrade, id: s1, to: 0-1-2}                                            # R21 Night Vision: camo
+  - {do: upgrade, id: s1, to: 0-2-2}                                            # R23 Shrapnel Shot
+  - {do: place, id: v1, kind: village, role: support, near: [hero], at: [0.826, 0.385]}  # R30
+  - {do: upgrade, id: v1, to: 2-0-0}                                            # R30-41 Jungle Drums (see above)
+  - {do: place, id: ac1, kind: ace, role: dps, near: [v1], at: [0.815, 0.538]}  # R32 next to Rosalia
+  - {do: upgrade, id: ac1, to: 0-0-2}                                           # R33
+  - {do: upgrade, id: ac1, to: 0-0-3}                                           # R35 Neva-Miss Targeting
+  - {do: upgrade, id: ac1, to: 1-0-3}                                           # R36
+  - {do: upgrade, id: ac1, to: 2-0-3}                                           # R37
+  - {do: place, id: a1, kind: alchemist, role: support, near: [ac1, v1], at: [0.804, 0.317]}  # R38
+  - {do: upgrade, id: a1, to: 3-0-0}                                            # R39
+  - {do: upgrade, id: v1, to: 2-2-0}                                            # R42 Radar Scanner
+  - {do: upgrade, id: a1, to: 3-2-0}                                            # R43
+  - {do: upgrade, id: ac1, to: 2-0-4}                                           # R55 Spectre
+  - {do: place, id: r2, kind: boomerang, role: dps, near: [v1], at: [0.804, 0.215]}  # added: Glaive Ricochet for round 63
+  - {do: upgrade, id: r2, to: 3-0-2}
+  - {do: upgrade, id: ac1, to: 2-0-5}                                           # R88 Flying Fortress
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.708, 0.862]}  # added: a spike factory at the exit; its Perma-Spike is a fill step (see above)
+fill:
+  - {do: upgrade, id: p1, to: 2-0-4}                                            # Deadly Spikes, if the cash comes
+  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-2}]
+  ceramic: [{do: upgrade, id: ac1, to: 2-0-3}]
+  moab: [{do: upgrade, id: ac1, to: 2-0-3}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 2-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 2-2-0}]
+  bfb: [{do: upgrade, id: ac1, to: 2-0-4}]
+  rush: [{do: upgrade, id: r2, to: 3-0-2}]
+  zomg: [{do: upgrade, id: ac1, to: 2-0-5}]
+  ddt: [{do: upgrade, id: ac1, to: 2-0-5}]
+  bad: [{do: upgrade, id: ac1, to: 2-0-5}]

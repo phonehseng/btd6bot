@@ -1,0 +1,110 @@
+# Moon Landing, CHIMPS: BeatbloonsBob's no-ability Obyn + Elite Defender +
+# Prince of Darkness + Archmage guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next. The
+# bot's own builds (moonlanding_chimps, parked) lost round 7 twice: three
+# darts or two desperados alone covered 13% of the track, and the crater
+# walls hide the rest from land towers. The proven guides open with darts
+# too, but add a sniper on the high ground at once
+# (docs/chimps_map_guides.md, Moon Landing, Strategy 1).
+#
+# Guide: BeatbloonsBob, "Moon Landing CHIMPS - No abilities or micro"
+# (https://www.youtube.com/watch?v=cSmSH9JAgBQ, about 9 months old, $50k
+# spare), the order written in the description, no rounds (confidence:
+# video-description, ordered steps). Hero: Obyn (the 6th purchase).
+# Core towers: Sniper 0-2-5 (Elite Defender), Heli 3-0-2, Village 2-2-0,
+# Wizard 0-2-5 (Prince of Darkness), Wizard 5-2-0 (Archmage), Alchemist
+# 4-0-1; Spike Factory 2-0-5 (Perma-Spike), the guide's optional last tower.
+# Placements, in the guide's words: the first dart on Close at the first
+# crater, the sniper "as high as you can" - the top-middle plateau, where
+# the bot's sight model sees the most track for a sniper (46%), two more
+# darts by the first; the Archmage in the middle, from where it sees into
+# every crater (fandom); the Perma-Spike at the exit.
+#
+# Adapted, and why:
+#   * the Perma-Spike, optional in the guide, is in the plan: the bot's
+#     coverage check needs BFB, ZOMG, DDT and BAD answers from its own
+#     tables (strategy.ANSWERS), and it is the only tower here in them.
+#   * a Glaive Ricochet boomerang (3-0-2) for round 63: none of the guide's
+#     towers is a rush answer in the bot's tables.
+#   * a bare Bomb Shooter by the first crater before round 28: by the bot's
+#     tables nothing of the guide pops lead until the heli's Razor Rotors
+#     (Obyn does live, but the bot does not count heroes), and in the
+#     replay the executor bought this bomb for round 28's leads; it is in
+#     the plan so it stands where it is pinned.
+#   * the heli keeps the bot's default mode (Pursuit from its 2-x-x tier);
+#     the guide does not say which mode it used (UNVERIFIED). The Prince of
+#     Darkness keeps the default targeting ("same targeting location as me"
+#     is unstated).
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 30/30 bought, threat gaps: none, off-plan answer buys: 2.
+# Each step stands from: x1 placed R6, s1 placed R6, x2 placed R7, x1 0-1-0
+# R8, x2 0-1-0 R9, x3 placed R10, hero placed R13, s1 0-1-0 R14, s1 0-2-2 R19,
+# b1 placed R21, h1 placed R27, h1 2-0-0 R30, h1 3-0-2 R35, s1 0-2-4 R41, v1
+# placed R42, v1 2-2-0 R46, s1 0-2-5 R52, r1 placed R53, r1 3-0-2 R54, w1
+# placed R54, w1 0-2-4 R58, w1 0-2-5 R75, w2 placed R75, w2 4-2-0 R80, w2
+# 5-2-0 R88, a1 placed R88, a1 4-0-1 R91, p1 placed R92, p1 2-0-4 R93, p1
+# 2-0-5 R99. Damage model margins on those boards (it counts no hero and no
+# ability, and under-rates map-wide towers): 40 4.09, 63 1.22, 76 1.48, 81
+# 1.63, 90 3.19, 95 0.84, 98 0.56, 100 2.04.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: moonlanding_chimps_guide
+map: Moon Landing
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {dart: [0, 1, 0], sniper: [0, 2, 5], heli: [3, 0, 2], village: [2, 2, 0], wizard: [5, 2, 5], alchemist: [4, 0, 1], spike: [2, 0, 5], boomerang: [3, 0, 2], bomb: [0, 0, 0]}
+  revised: "2026-11-12T12:00"
+  maps: [Moon Landing]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: x1, kind: dart, role: dps, target: close, segment: [0.0, 0.3], at: [0.58, 0.845]}  # first crater, on Close
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.441, 0.198]}  # as high as you can: the top-middle plateau
+  - {do: place, id: x2, kind: dart, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.59, 0.896]}
+  - {do: upgrade, id: x1, to: 0-1-0}
+  - {do: upgrade, id: x2, to: 0-1-0}
+  - {do: place, id: x3, kind: dart, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.569, 0.794]}  # the guide's third dart
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.537, 0.504]}            # Obyn, the central plateau
+  - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo
+  - {do: upgrade, id: s1, to: 0-2-2}                                            # Shrapnel Shot
+  - {do: place, id: b1, kind: bomb, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.623, 0.828]}  # added: round 28's leads (see above)
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.099, 0.385]}
+  - {do: upgrade, id: h1, to: 2-0-0}                                            # Pursuit from here
+  - {do: upgrade, id: h1, to: 3-0-2}                                            # Razor Rotors: round 38-40's ceramics and MOAB
+  - {do: upgrade, id: s1, to: 0-2-4}                                            # Full Auto Rifle
+  - {do: place, id: v1, kind: village, role: support, near: [s1], at: [0.505, 0.198]}
+  - {do: upgrade, id: v1, to: 2-2-0}                                            # Radar Scanner, Jungle Drums
+  - {do: upgrade, id: s1, to: 0-2-5}                                            # Elite Defender
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.473, 0.129]}  # added: Glaive Ricochet for round 63
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.441, 0.351]}
+  - {do: upgrade, id: w1, to: 0-2-4}                                            # Necromancer
+  - {do: upgrade, id: w1, to: 0-2-5}                                            # Prince of Darkness
+  - {do: place, id: w2, kind: wizard, role: dps, at: [0.484, 0.368]}            # the middle: sees into every crater
+  - {do: upgrade, id: w2, to: 4-2-0}                                            # Arcane Spike
+  - {do: upgrade, id: w2, to: 5-2-0}                                            # Archmage
+  - {do: place, id: a1, kind: alchemist, role: support, near: [w2, w1], at: [0.419, 0.47]}
+  - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.195, 0.504]}  # the guide's optional Perma-Spike, at the exit
+  - {do: upgrade, id: p1, to: 2-0-4}                                            # Deadly Spikes
+  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: place, id: b1, kind: bomb, role: dps, at: [0.623, 0.828]}]
+  ceramic: [{do: upgrade, id: h1, to: 3-0-2}]
+  moab: [{do: upgrade, id: h1, to: 3-0-2}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 2-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 2-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 0-2-5}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  zomg: [{do: upgrade, id: w2, to: 5-2-0}]
+  ddt: [{do: upgrade, id: p1, to: 2-0-4}]
+  bad: [{do: upgrade, id: p1, to: 2-0-5}]
