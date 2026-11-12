@@ -374,6 +374,11 @@ def _village_keystones():
 VILLAGE_KEYSTONES = _village_keystones()
 
 # Towers tried, in order, for the implicit panic step (when a strategy lists none).
+# The hand list comes first; every other tower that pops bloons on its own
+# from 0-0-0 follows, cheapest first (_more_kinds, added below once the
+# threat data is loaded). A game whose rules or constraints allowed none of
+# the eight had no panic tower but the dart (docs/tower_exclusions_audit.md
+# item 12).
 PANIC_KINDS = ["tack", "dart", "sniper", "ninja", "wizard", "boomerang", "engineer", "spike"]
 
 # -- achievement constraints ----------------------------------------------------------
@@ -523,8 +528,64 @@ def reachable_tier(account, kind, path0):
 
 
 # Camo backups, best first: (kind, crosspath) giving strong camo help.
+# The hand list comes first; then, for every other tower, its cheapest
+# crosspath that strong_camo counts (a camo answer at tier 3 or more),
+# cheapest first (_camo_backups_from_data). The six were the only ones
+# tried, so a mode or constraint that allowed none of them had no backup
+# (docs/tower_exclusions_audit.md item 12).
 CAMO_BACKUPS = [("village", "0-2-0"), ("dart", "0-2-3"), ("sniper", "3-2-0"),
                 ("ninja", "3-0-0"), ("wizard", "0-0-3"), ("sub", "3-0-0")]
+
+
+def pops_on_its_own(kind):
+    """Does a bare tower of this kind (0-0-0) pop bloons by itself? The game
+    model's verdict (threats.gm_can: it pops some property), else the hand
+    facts' attacks. A Glue Gunner, a village or a farm do not."""
+    if kind not in T.TOWERS or kind in INCOME_TOWERS or TH.tower_facts(kind).get("needs_aim"):
+        return False
+    verdicts = [TH.gm_can(kind, (0, 0, 0), prop) for prop in ("black", "white", "purple", "lead")]
+    if any(v is not None for v in verdicts):
+        return any(verdicts)
+    return bool(TH.attacks(kind, (0, 0, 0)))
+
+
+def _more_kinds(hand, max_price=None):
+    """The towers that pop on their own and stand on land (not on water
+    only), not in `hand`, cheapest first; with max_price, only those whose
+    Medium price is at most that."""
+    out = [k for k in T.TOWERS if k not in hand and pops_on_its_own(k)
+           and (T.TOWERS[k].get("placement") or "land") != "water"
+           and (max_price is None or T.tower_cost(k) <= max_price)]
+    return sorted(out, key=lambda k: (T.tower_cost(k), k))
+
+
+def _camo_backups_from_data():
+    """(kind, crosspath) for every tower not in CAMO_BACKUPS: its cheapest
+    legal crosspath with a tier of 3 or more at which ANSWERS["camo"] (the
+    game model's camo detection) counts it - what strong_camo needs from a
+    tower - cheapest first. Not for towers that must be aimed, income
+    towers or water-only towers (the map is unknown)."""
+    listed = {k for k, _ in CAMO_BACKUPS}
+    out = []
+    for kind in T.TOWERS:
+        if kind in listed or kind in INCOME_TOWERS or TH.tower_facts(kind).get("needs_aim") \
+                or (T.TOWERS[kind].get("placement") or "land") == "water":
+            continue
+        best = None
+        for tiers in TH.all_crosspaths():
+            if max(tiers) < 3:
+                continue
+            if any(k == kind and (path == 0 or tiers[path - 1] >= tier) for k, path, tier in ANSWERS["camo"]):
+                cost = T.total_cost(kind, tiers)
+                if best is None or cost < best[0]:
+                    best = (cost, tiers)
+        if best is not None:
+            out.append((best[0], kind, "-".join(map(str, best[1]))))
+    return [(kind, cross) for _, kind, cross in sorted(out)]
+
+
+PANIC_KINDS += _more_kinds(PANIC_KINDS)
+CAMO_BACKUPS += _camo_backups_from_data()
 
 
 def camo_backup(strat, account=None, mode=None):
@@ -617,10 +678,35 @@ def coverage(strat, mode, account=None):
     return (not missing), missing
 
 
+def _water_fits(strat, kind):
+    """Does this water tower reach the track on every map the strategy is
+    for? Only for a strategy pinned to maps (planner.maps, or its `map`),
+    each with a data/map_fit.json fit for the tower of at least the
+    planner's FULL_FIT on its early or late side. Unknown maps: no."""
+    maps = (strat.get("planner") or {}).get("maps") or ([strat["map"]] if strat.get("map") else None)
+    if not maps:
+        return False
+    try:
+        from . import mapfit
+        from .planner import FULL_FIT
+        fits = mapfit.load()
+    except Exception:          # no fit data: the map is as good as unknown
+        return False
+    for m in maps:
+        fit = ((fits.get(m) or {}).get("towers") or {}).get(kind)
+        if not fit or max(fit.get("early", 0), fit.get("late", 0)) < FULL_FIT:
+            return False
+    return True
+
+
 def _answer_kinds(strat, mode, account=None):
     """[(kind, caps)] towers the Executor could buy as an answer in this mode:
     the mode's category, the strategy's constraints, the account's unlocks;
-    no income towers, no towers that must be aimed, no water towers."""
+    no income towers, no towers that must be aimed. Water towers only for a
+    strategy pinned to maps where they reach the track (_water_fits): all
+    water towers were left out "as the map is unknown", which held against
+    subs and buccaneers on the very maps built for them
+    (docs/tower_exclusions_audit.md item 12)."""
     c = constraints(strat)
     only = MODE_TOWER_FILTER.get(mode)
     out = []
@@ -630,7 +716,9 @@ def _answer_kinds(strat, mode, account=None):
         if (c.get("allowed_towers") is not None and kind not in c["allowed_towers"]) \
                 or kind in (c.get("forbidden_towers") or ()):
             continue
-        if (facts.get("placement") or "land") == "water" or TH.tower_facts(kind).get("needs_aim"):
+        if TH.tower_facts(kind).get("needs_aim"):
+            continue
+        if (facts.get("placement") or "land") == "water" and not _water_fits(strat, kind):
             continue
         if account is not None and kind not in account.unlocked_towers:
             continue
@@ -1279,7 +1367,15 @@ class Executor:
             return True
         return _hero_fits(getattr(self.g, "hero", None), c)
 
-    CHEAP_OPENERS = ("dart", "tack", "boomerang", "sniper", "sub", "wizard")
+    # Towers that hold rounds 1-5 cheaply: a plan that opens with one gets no
+    # dart prepended (_with_opener), and a one-life game tries them in this
+    # order for its starter (Match._starter_steps). The hand six come first,
+    # then every other tower that pops on its own and costs no more than the
+    # dearest of them, cheapest first: Desperado, Mermonkey, Skywarden,
+    # Beast Handler and Engineer got hotkeys and were never added
+    # (docs/tower_exclusions_audit.md item 12).
+    HAND_OPENERS = ("dart", "tack", "boomerang", "sniper", "sub", "wizard")
+    CHEAP_OPENERS = HAND_OPENERS + tuple(_more_kinds(HAND_OPENERS, max(T.tower_cost(k) for k in HAND_OPENERS)))
 
     def _with_opener(self, plan):
         """Rounds 1-5 leak when a plan opens with one slow/expensive tower (seen:
