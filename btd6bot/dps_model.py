@@ -315,6 +315,8 @@ class Source:
     cooldown: float = 0.0      # "drop": seconds between the weapon's volleys
     pierce_cost: dict = field(default_factory=dict)   # extra pierce per hit, by bloon tag (_pierce_cost)
     rear_fov: float = 0.0      # a Buccaneer's second shot behind the boat: degrees of its target cone
+    zone_radius: float = None  # its own attack's reach around the tower (_zone_radius); None = the tower's
+    zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
                                # (0 = not such a shot; _rear_copies)
 
     def can_hit(self, lay):
@@ -564,6 +566,8 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             cooldown=attack.get("cooldown", 0.0) if placement == "drop" else 0.0,
             pierce_cost=_pierce_cost(p),
             rear_fov=float(attack.get("rear_fov") or 0.0),
+            zone_radius=attack.get("zone_radius"),
+            zone_fixed=bool(attack.get("zone_fixed")),
         ))
     pierce = max(1.0, _impact_pierce(p) / (1.0 + _pierce_cost(p).get("", 0.0)))
     if "CollideOnlyWithTargetModel" in (p.get("other") or ()):
@@ -829,6 +833,29 @@ def _pulse_at_tower(a, entry):
     return dict(a, unbounded="self", own_radius=radius)
 
 
+def _zone_radius(a, entry):
+    """{"zone_radius", "zone_fixed"} for a tower's own attack a: the circle
+    around the tower that attack works in, when it is not the tower's range.
+
+    A station used to give every source of a tower the tower's largest
+    reach. Glaive Lord's orbiting glaives (a 30-unit circle, "unbuffable
+    range": fandom:Glaive_Lord_(BTD6)) were credited over the 43-unit throw
+    circle, and a Desperado's 40-unit pistol over its 80-unit rifle circle
+    (docs/model_audit_primary.md F4). Now each attack keeps its own radius:
+    its range, or for an attack that sweeps the tower's own spot ("self")
+    its projectiles' radius, which range buffs do not change. Attacks of a
+    plane (pattern) and map-wide ones keep the tower's reach (None)."""
+    if a.get("pattern_radius") or a.get("air"):
+        return {}
+    if a.get("unbounded") == "self":
+        radius = a.get("own_radius") or 0.0
+        return {"zone_radius": radius, "zone_fixed": True} if radius > 0.0 else {}
+    radius = _attack_range(a, entry.get("range"))
+    if 0.0 < radius < 1000.0:
+        return {"zone_radius": radius}
+    return {}
+
+
 SUBMERGED_PREFIX = "SubmergedAttack"
 
 
@@ -861,7 +888,7 @@ def profile(kind, tiers):
         if a.get("targeting") in ("point", "cursor") and any(
                 (w.get("projectile") or {}) for w in a.get("weapons", [])):
             aim_bound = True
-        _flatten_attack(a, sources, follows=follows, tower_range=entry.get("range"))
+        _flatten_attack(dict(a, **_zone_radius(a, entry)), sources, follows=follows, tower_range=entry.get("range"))
     income = (entry.get("income") or {})
     pattern = max((a.get("pattern_radius") or 0.0 for a in entry.get("attacks", [])), default=0.0)
     own = max((a.get("own_radius") or 0.0 for a in entry.get("attacks", []) if a.get("unbounded") == "self"),
@@ -2194,14 +2221,35 @@ def _station_for(t, placed, track, sight=None, strict=False):
     local = [s for s in sources if s.placement != "global"]
     if is_global and glob and local:
         main = _make_station(t, glob, True, reach_radius, track, sight, camo_paths)
-        part = _make_station(t, local, False, reach_radius, track, sight, camo_paths,
-                             intel_lent_circles(t, placed) if t.kind in INTEL_KINDS else ())
-        if main is None:
-            return part
-        if part is not None:
-            main.parts = [part]
-        return main
-    return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent)
+        if t.kind in INTEL_KINDS:
+            parts = [_make_station(t, local, False, reach_radius, track, sight, camo_paths,
+                                   intel_lent_circles(t, placed))]
+        else:
+            parts = _local_stations(t, local, p, range_mult, track, sight, camo_paths)
+        return _joined(main, parts)
+    if is_global or lent:
+        return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent)
+    return _joined(None, _local_stations(t, sources, p, range_mult, track, sight, camo_paths))
+
+
+def _local_stations(t, sources, p, range_mult, track, sight, camo_paths):
+    """Stations for a tower's local sources, one per reach (_zone_radius):
+    sources of the same reach share one station (one server), as all of a
+    tower's sources used to. A source without a reach of its own works in
+    the tower's: its range (with range buffs), or a plane's flight pattern
+    plus its range."""
+    base = (p.pattern_radius or 0.0) + p.range * range_mult
+    groups = {}
+    for s in sources:
+        if s.zone_radius is None:
+            radius = base
+        elif s.zone_fixed:
+            radius = s.zone_radius
+        else:
+            radius = s.zone_radius * range_mult
+        groups.setdefault(round(radius, 1), []).append(s)
+    return [_make_station(t, group, False, radius, track, sight, camo_paths)
+            for radius, group in sorted(groups.items(), reverse=True)]
 
 
 # How far from a route's centre line a plane still counts as "over the
