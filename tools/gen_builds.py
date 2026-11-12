@@ -47,6 +47,9 @@ How a build is made
    (and Apopalypse) also needs the damage to come from the build itself.
    base_success comes from the same results and stays below the hand-tested
    strategies of the same difficulty: the planner calibrates it from games.
+6. Hero. Every land hero the damage model rates is tried with the build on
+   a reference map, and the build names the one it rates best with
+   (pick_hero).
 
 Usage:
     python tools/gen_builds.py              # rewrite every build + docs/builds.md, print a report
@@ -82,17 +85,22 @@ def _load_tool(name):
     """Another script of tools/ as a module (tools/ is not a package)."""
     spec = importlib.util.spec_from_file_location(f"_gen_{name}", ROOT / "tools" / f"{name}.py")
     mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod     # dataclasses look their module up there (optimize_builds)
     spec.loader.exec_module(mod)
     return mod
 
 
 SIM = _load_tool("simulate_threats")
+OPT = _load_tool("optimize_builds")
 
 OUT_DIR = S.STRAT_DIR / "generated"
 DOC = ROOT / "docs" / "builds.md"
 DOC_START, DOC_END = "<!-- builds:start -->", "<!-- builds:end -->"
 STD = "standard"
-HERO = "quincy"      # owned by every account and placed on land: the bot never lacks him
+# The hero a build names when pick_hero cannot choose (no damage model
+# data): owned by every account and placed on land. It used to be every
+# build's hero (docs/tower_exclusions_audit.md item 1).
+HERO = "quincy"
 
 # ---------------------------------------------------------------------------
 # Money: what the game pays (data/rounds.json, base rates, no Double Cash)
@@ -483,6 +491,7 @@ class Build:
     history: dict = field(default_factory=dict)    # tower id -> tiers after each plan step
     maps: list | None = None
     uses_income: bool = False
+    hero: str = HERO                               # pick_hero, set by _assemble
 
     def place(self, tid, kind, why=None, **kw):
         st = {"do": "place", "id": tid, "kind": kind, **kw}
@@ -509,7 +518,7 @@ class Build:
 
     def strategy(self, modes=(), base=None):
         """The build as a strategy dict (what load_all would read)."""
-        d = {"id": f"solo_{self.kind}", "xp_target": self.kind, "hero": HERO,
+        d = {"id": f"solo_{self.kind}", "xp_target": self.kind, "hero": self.hero,
              "modes": list(modes)}
         if self.uses_income:
             d["uses_income"] = True
@@ -1088,6 +1097,131 @@ def build_support(kind):
 
 
 # ---------------------------------------------------------------------------
+# The hero, on merit
+# ---------------------------------------------------------------------------
+# Every build used to name Quincy (docs/tower_exclusions_audit.md item 1).
+# Now each build is rated in the damage model with every hero the model can
+# rate, and the best one is named: the build's plan is bought on a
+# reference map as a Medium game pays for it, round by round, with the hero
+# at its place in the plan, at its own price and at its level by round. The
+# score is the mean log2(margin) over the sample rounds, as
+# tools/rank_heroes.py scores a hero alone. A hero's price and its buffs to
+# the build's own towers (Obyn's to magic towers, Etienne's camo) count this
+# way, which a ranking of heroes alone cannot see.
+#
+# A generated build plays on any map, so only heroes that stand on land are
+# tried. Corvus has no profile (dps_model.UNRATED_HEROES); Geraldo is rated
+# on his own attack (the game model exports no shop, and the bot cannot use
+# it). An account that lacks the named hero gets the best owned one
+# (strategy.hero_for).
+HERO_MAP = "Monkey Meadow"
+HERO_MODE = "medium"
+HERO_ROUNDS = tuple(range(8, 81, 8))
+
+
+def hero_candidates():
+    """Land heroes the damage model can rate, best on merit first."""
+    from btd6bot import dps_model as D
+    return [h for h in T.hero_merit_order()
+            if h not in D.UNRATED_HEROES and (T.HEROES[h].get("placement") or "land") == "land"
+            and D.profile(D.hero_kind(h), (1,)) is not None]
+
+
+def _step_cost(step, standing):
+    """Medium price of a place or upgrade step (the hero's is priced apart).
+    standing: {tower id: (kind, tiers)} before the step."""
+    if step["do"] == "place":
+        return T.tower_cost(step["kind"])
+    kind, have = standing[step["id"]]
+    want = S.parse_cross(step["to"])
+    return sum(T.upgrade_cost(kind, path + 1, tier) for path in range(3)
+               for tier in range(have[path] + 1, want[path] + 1))
+
+
+def boards_by_round(plan, hero, rounds):
+    """({round: [(id, kind, tiers)]}, {id: round placed}): the plan's steps
+    bought in order, each once the cash a Medium game has paid by the start
+    of that round (income) covers it, the hero at its own price."""
+    standing, placed, boards = {}, {}, {}
+    spent, i = 0.0, 0
+    for rnd in range(1, max(rounds) + 1):
+        budget = income(rnd - 1) if rnd > 1 else START_CASH
+        while i < len(plan):
+            st = plan[i]
+            if st["do"] == "place":
+                cost = T.hero_cost(hero) if st["kind"] == "hero" else _step_cost(st, standing)
+            elif st["do"] == "upgrade" and st.get("id") in standing:
+                cost = _step_cost(st, standing)
+            else:
+                i += 1              # nothing to buy (an upgrade of a tower not placed)
+                continue
+            if spent + cost > budget:
+                break
+            spent += cost
+            if st["do"] == "place":
+                standing[st["id"]] = (st["kind"], (0, 0, 0))
+                placed[st["id"]] = rnd
+            else:
+                kind, have = standing[st["id"]]
+                standing[st["id"]] = (kind, tuple(max(a, b) for a, b in zip(have, S.parse_cross(st["to"]))))
+            i += 1
+        if rnd in rounds:
+            boards[rnd] = [(tid, kind, tiers) for tid, (kind, tiers) in standing.items()]
+    return boards, placed
+
+
+def rate_hero(plan, hero, setup):
+    """Mean log2(margin) of the plan with this hero over HERO_ROUNDS on the
+    reference map (setup: optimize_builds.MapSetup of HERO_MAP). A round
+    with nothing standing scores the model's floor."""
+    import math
+    from btd6bot import dps_model as D
+    boards, placed = boards_by_round(plan, hero, HERO_ROUNDS)
+    ev = OPT.Evaluator(setup, HERO_MODE, hero)
+    spots, taken, logs = {}, [], []
+    for rnd in HERO_ROUNDS:
+        towers = []
+        for tid, kind, tiers in boards[rnd]:
+            if tid not in spots:            # each tower keeps the spot it was given first
+                spots[tid] = (setup.hero_spot(hero, taken) if kind == "hero"
+                              else setup.free_spot(kind, taken))
+                if spots[tid] is not None:
+                    taken.append(OPT.Tower(tid, kind, spots[tid], (0, 0, 0)))
+            if spots[tid] is None:
+                continue
+            if kind == "hero":
+                tiers = OPT.hero_tiers_at(hero, HERO_MAP, HERO_MODE, None, placed[tid], rnd)
+            towers.append(OPT.Tower(tid, kind, spots[tid], tiers))
+        margin = ev.margins(towers, [rnd])[rnd] if towers else D.MARGIN_LO
+        logs.append(math.log2(min(max(margin, D.MARGIN_LO), D.MARGIN_HI)))
+    return sum(logs) / len(logs)
+
+
+_HERO_PICKS = {}
+
+
+def pick_hero(b):
+    """The hero the build rates best with (rate_hero); HERO when the damage
+    model is missing. A tie goes to the hero ranked higher on merit.
+    Remembered by the plan's steps: generate() assembles a build several
+    times, and the hero does not change the steps."""
+    from btd6bot import dps_model as D
+    if not D.available() or not D.HERO_RATING:
+        return HERO
+    plan = [dict(st) for st, _ in b.plan]
+    key = repr(plan)
+    if key not in _HERO_PICKS:
+        setup = OPT.MapSetup(HERO_MAP, HERO_MODE)
+        best = None
+        for hero in hero_candidates():
+            score = rate_hero(plan, hero, setup)
+            if best is None or score > best[0] + 1e-9:
+                best = (score, hero)
+        _HERO_PICKS[key] = best[1] if best else HERO
+    return _HERO_PICKS[key]
+
+
+# ---------------------------------------------------------------------------
 # Candidate modes and validation
 # ---------------------------------------------------------------------------
 
@@ -1293,6 +1427,10 @@ def _assemble(kind, modes):
         b.notes.append("Answers, tried in order when a threat is due and the defence has none: the "
                        "tower's own path first, then a helper (for accounts whose own tiers are "
                        "still locked): " + "; ".join(notes))
+    b.hero = pick_hero(b)
+    if b.hero != HERO:
+        b.notes.append(f"Hero {b.hero}: of every land hero the damage model rates, the build rates best "
+                       f"with it on {HERO_MAP} ({HERO_MODE}); see gen_builds.pick_hero.")
     return b
 
 
