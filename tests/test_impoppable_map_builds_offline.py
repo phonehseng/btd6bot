@@ -30,6 +30,16 @@ keep their plans up to round 30-35 and then take tools/optimize_builds.py's
 greedy purchases, saving for one tier-5 carry (Super Mines, Flying Fortress
 or Wizard Lord Phoenix); the ace builds have Etienne for his map-wide camo.
 
+Sunken Columns lost round 6 a second time (loss 20261112_093331): its two
+opening subs stood in a pool whose walls hide the route. The optimizer's line
+of sight had no heights, so the column tops looked as blind as the pools; it
+has them now, and the build opens on the columns.
+Enchanted Glade got one after its fourth general-build loss (20261112_055921,
+round 95: Ground Zero put off for twenty rounds by off-plan buys, both aces
+across the map from the MIB village); there the MIB village is pinned beside
+the aces' runways, and test_enchanted_glade_aces_stand_by_the_mib_village
+holds the build to that.
+
 Run: python tests/test_impoppable_map_builds_offline.py"""
 import sys
 from pathlib import Path
@@ -48,7 +58,7 @@ from btd6bot.account import AccountState  # noqa: E402
 MAPS = {"quad": "Quad", "coveredgarden": "Covered Garden", "sunkencolumns": "Sunken Columns",
         "bloonariusprime": "Bloonarius Prime", "peninsula": "Peninsula", "firingrange": "Firing Range",
         "midnightmansion": "Midnight Mansion", "sunsetgulch": "Sunset Gulch", "mesa": "Mesa",
-        "spillway": "Spillway", "muddypuddles": "Muddy Puddles"}
+        "spillway": "Spillway", "muddypuddles": "Muddy Puddles", "enchantedglade": "Enchanted Glade"}
 
 
 def _build(map_id):
@@ -162,10 +172,13 @@ def test_covered_garden_stands_off_the_panes():
 def test_the_moab_answer_comes_before_the_alchemist():
     """Mesa lost at round 40 with the blimp check at 0.4-0.9: n2's Sticky
     Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan -
-    but Quad's: there a1 comes first, as its lead popper by round 28 (loss
-    review 2026-11-12 13:20: n2's Flash Bomb was counted as lead cover)."""
-    for map_id in ("mesa", "sunsetgulch", "coveredgarden", "bloonariusprime", "firingrange", "midnightmansion",
-                   "spillway"):
+    but Quad's and Mesa's: there a1 comes first, as the lead popper by round
+    28 (loss review 2026-11-12 13:20: n2's Flash Bomb was counted as lead
+    cover). Mesa's late plan (2026-11-12, from round 27) buys its MOAB damage
+    elsewhere first: the damage model rates round 40 at 0.91 that way and at
+    0.31 with the Sticky Bomb moved ahead of it."""
+    for map_id in ("sunsetgulch", "coveredgarden", "bloonariusprime", "firingrange", "midnightmansion",
+                   "spillway", "enchantedglade"):
         _, d = _build(map_id)
         order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
         # Covered Garden's late-game plan (2026-11-12) buys no alchemist at all
@@ -236,6 +249,61 @@ def test_late_game_carries_answer_the_last_blimps():
                 assert [st["kind"] for st in d["answers"][threat] if st["do"] == "place"] == ["sniper"]
                 continue
             assert all(st["id"] in ids for st in d["answers"][threat]), (map_id, threat)
+
+
+def test_a_tower_on_raised_ground_sees_over_the_blockers_it_stands_on():
+    """Sunken Columns (2026-11-12, cases 20261112_012149 and 20261112_093331):
+    the optimizer's line of sight took no heights, so a dart on a column top
+    counted as blind behind the columns and the pool subs looked no worse.
+    With the heights the entrance row, where the live games opened, sees
+    the route, and a sub down in a pool still sees next to none of it."""
+    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+    cover = lambda kind, at: pinner.segment_cover(kind, pinner.model.frac_to_cell(*at), (0.0, 1.0))
+    on_the_columns = cover("dart", (0.361, 0.112))      # where the round-98 game's first dart stood
+    in_the_pool = cover("sub", (0.569, 0.411))          # where sb1 stood when round 6 was lost
+    assert on_the_columns > 100, on_the_columns
+    assert in_the_pool < 20, in_the_pool
+    best = pinner.setup.ranked_spots("dart")[0]
+    assert best.score > 100, best
+
+
+def test_sunken_columns_opens_with_towers_that_see_the_route():
+    """Its opening - every tower bought before the first sub - stands on the
+    column tops and sees the route; the subs are bought straight to
+    Advanced Intel (2-0-2), never left at tiers that only shoot what they see."""
+    import math
+    _, d = _build("sunkencolumns")
+    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+    places = [st for st in d["plan"] if st["do"] == "place"]
+    first_sub = next(i for i, st in enumerate(places) if st["kind"] == "sub")
+    opening = [st for st in places[:first_sub] if st["kind"] not in ("hero", "alchemist")]
+    assert [st["id"] for st in places[:2]] == ["dr", "hero"], places[:2]
+    assert len(opening) >= 2, opening
+    for st in opening:
+        cell = pinner.model.frac_to_cell(*st["at"])
+        assert pinner.segment_cover(st["kind"], cell, (0.0, 1.0)) > 100, st
+    for sub in ("sb1", "sb2"):
+        first = next(st["to"] for st in d["plan"] if st["do"] == "upgrade" and st.get("id") == sub)
+        assert first == "2-0-2", (sub, first)
+    at = {st["id"]: pinner.world(pinner.model.frac_to_cell(*st["at"])) for st in places if st.get("at")}
+    assert math.dist(at["a1"], at["dr"]) <= pin_spots.buffer_range("alchemist") - 10, "the brew reaches dr with room to spare"
+
+
+def test_enchanted_glade_aces_stand_by_the_mib_village():
+    """Enchanted Glade (loss 20261112_055921): the MIB village stood on the
+    bottom-right island and both aces across the map, so their darts could
+    not pop a DDT. In its own build the late blimp damage - both Ground
+    Zero aces and the Eliminator bomb - is pinned inside the range of v2,
+    the village that becomes MIB, and the plan owns the cash for them."""
+    import math
+    _, d = _build("enchantedglade")
+    pinner = pin_spots.Pinner("Enchanted Glade", "impoppable")
+    at = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place" and st.get("at")}
+    assert ("upgrade", "v2", "2-3-0") in [(st["do"], st.get("id"), st.get("to")) for st in d["plan"]]
+    mib = pinner.world(pinner.model.frac_to_cell(*at["v2"]))
+    for tid in ("ac1", "ac2", "b1"):
+        tower = pinner.world(pinner.model.frac_to_cell(*at[tid]))
+        assert math.dist(tower, mib) <= pin_spots.buffer_range("village"), (tid, at[tid])
 
 
 def test_a_tower_is_pinned_on_its_part_of_the_route():

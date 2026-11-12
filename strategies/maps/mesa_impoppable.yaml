@@ -14,20 +14,21 @@
 # Here plan_first keeps the cash for the plan, and the MOAB answer comes first: n2 to
 # 2-0-3 and 2-0-4 (Sticky Bomb) before the alchemist and n1 3-0-2.
 #
-# Late game (2026-11-12, damage model phase 2, Double Cash, no Fast Track): from round 35 the
-# steps are tools/optimize_builds.py's greedy on the phase-2 model, saving for one carry: a
-# Flying Fortress (ace 2-0-5 by round 88; 2-0-4 by round 55). Etienne is the hero: his map-wide camo (level 8) lets the
-# towers hit the camo DDTs of rounds 95 and 99, which the Obyn build leaked. The plan
-# before it rated under 1.0 in 49 of rounds 40-100. Rounds 35-39 stay at the model's floor:
-# the opening's ninjas leave part of the route uncovered (camo reds/yellows, pinks leak) and
-# the optimizer cannot buy that cover in time even from round 25. The hero stands where the late game was rated with it, off every pin.
+#
+# Late game (2026-11-12, damage model with the blimp-lane fix): from round 27 the steps are
+# tools/optimize_builds.py's greedy on the current model, saving for three towers by their
+# rounds: a1, the acid lead popper (1-0-0 by round 28, re-pinned to [0.441, 0.436]); ninja n3 on
+# Mesa's second route (the loss review: the opening covered about 1% of it; 2-0-2 by round 32,
+# 4-0-2 by round 36, at [0.51, 0.428]); and a Flying Fortress (ace 2-0-5 by round 88). Etienne
+# is the hero (map-wide camo). Replayed as the executor buys: 0.23 at worst over rounds 27-100,
+# 11 rounds under 1.0 (27-35, 37, 38, 40; none at the 0.06 floor any more). The hero stands where the late game was rated with it, off every pin.
 id: mesa_impoppable
 map: Mesa
 hero: etienne
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:
-  towers: {ninja: [3, 0, 4], alchemist: [2, 2, 0], ace: [4, 1, 5], skywarden: [4, 1, 1], wizard: [4, 2, 0], engineer: [3, 2, 0], druid: [1, 4, 1], tack: [2, 4, 0], dart: [2, 3, 5], heli: [3, 0, 2], mermonkey: [2, 1, 0], bomb: [0, 2, 4], beast_handler: [0, 0, 0]}
+  towers: {ninja: [4, 0, 4], alchemist: [2, 2, 0], ace: [2, 0, 5], skywarden: [1, 2, 1], desperado: [3, 1, 0], engineer: [4, 2, 1], sniper: [3, 3, 4], druid: [1, 4, 1], heli: [3, 0, 2], dart: [2, 0, 4], wizard: [3, 4, 0], bomb: [0, 2, 4], mermonkey: [2, 2, 0], ice: [0, 0, 0]}
   base_success: {impoppable: 0.5}
   maps: [Mesa]
 plan:
@@ -38,162 +39,177 @@ plan:
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.58, 0.266]}
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
-  - {do: upgrade, id: n2, to: 2-0-4}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.142, 0.436]}
-  - {do: upgrade, id: a1, to: 2-0-0}
-  - {do: upgrade, id: n1, to: 3-0-2}
-  # rounds 35-100: bought by tools/optimize_builds.py's greedy on the damage model,
+  # rounds 27-100: bought by tools/optimize_builds.py's greedy on the damage model,
   # saving for the carry (`*_carry*`) by its round
-  - {do: place, id: ace_carry1, kind: ace, role: support, at: [0.697, 0.112]}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.441, 0.436]}
+  - {do: place, id: n3, kind: ninja, role: support, at: [0.51, 0.428]}
+  - {do: place, id: ace_carry3, kind: ace, role: support, at: [0.697, 0.112]}
+  - {do: upgrade, id: a1, to: 1-0-0}
   - {do: place, id: sky501, kind: skywarden, role: support, at: [0.174, 0.76]}
   - {do: place, id: sky502, kind: skywarden, role: support, at: [0.163, 0.709]}
-  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.206, 0.743]}
-  - {do: place, id: sky504, kind: skywarden, role: support, at: [0.152, 0.845]}
-  - {do: place, id: sky505, kind: skywarden, role: support, at: [0.633, 0.249]}
-  - {do: place, id: sky506, kind: skywarden, role: support, at: [0.633, 0.095]}
-  - {do: upgrade, id: sky501, to: 0-0-1}
-  - {do: place, id: sky507, kind: skywarden, role: support, at: [0.045, 0.743]}
-  - {do: place, id: sky508, kind: skywarden, role: support, at: [0.772, 0.181]}
-  - {do: place, id: wiz509, kind: wizard, role: support, at: [0.323, 0.249]}
-  - {do: place, id: eng510, kind: engineer, role: support, at: [0.11, 0.47]}
-  - {do: upgrade, id: sky506, to: 1-0-0}
-  - {do: upgrade, id: sky503, to: 1-0-0}
-  - {do: upgrade, id: eng510, to: 1-0-0}
+  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.184, 0.453]}
+  - {do: place, id: sky504, kind: skywarden, role: support, at: [0.206, 0.402]}
+  - {do: place, id: des505, kind: desperado, role: support, at: [0.58, 0.351]}
+  - {do: place, id: sky506, kind: skywarden, role: support, at: [0.238, 0.385]}
+  - {do: place, id: sky507, kind: skywarden, role: support, at: [0.494, 0.521]}
+  - {do: upgrade, id: sky507, to: 0-2-0}
+  - {do: place, id: sky508, kind: skywarden, role: support, at: [0.206, 0.743]}
+  - {do: place, id: des509, kind: desperado, role: support, at: [0.687, 0.641]}
   - {do: upgrade, id: sky504, to: 1-0-0}
-  - {do: upgrade, id: eng510, to: 2-0-0}
-  - {do: upgrade, id: sky505, to: 1-0-0}
-  - {do: place, id: dru511, kind: druid, role: support, at: [0.024, 0.811]}
-  - {do: upgrade, id: dru511, to: 1-0-0}
+  - {do: place, id: sky510, kind: skywarden, role: support, at: [0.216, 0.334]}
+  - {do: place, id: eng511, kind: engineer, role: support, at: [0.419, 0.164]}
+  - {do: upgrade, id: des509, to: 0-1-0}
+  - {do: upgrade, id: n3, to: 2-0-2}
+  - {do: place, id: sni512, kind: sniper, role: support, at: [0.323, 0.078]}
+  - {do: upgrade, id: sky501, to: 1-0-0}
+  - {do: place, id: eng513, kind: engineer, role: support, at: [0.452, 0.112]}
+  - {do: upgrade, id: des505, to: 0-1-0}
   - {do: upgrade, id: sky508, to: 1-0-0}
-  - {do: upgrade, id: eng510, to: 3-0-0}
-  - {do: upgrade, id: eng510, to: 3-1-0}
-  - {do: upgrade, id: dru511, to: 1-0-1}
-  - {do: upgrade, id: sky501, to: 1-0-1}
-  - {do: place, id: tac512, kind: tack, role: support, at: [0.804, 0.129]}
-  - {do: upgrade, id: tac512, to: 1-2-0}
-  - {do: upgrade, id: sky507, to: 1-0-0}
+  - {do: upgrade, id: n3, to: 4-0-2}
+  - {do: place, id: dru514, kind: druid, role: support, at: [0.398, 0.436]}
+  - {do: upgrade, id: dru514, to: 1-0-0}
+  - {do: upgrade, id: sni512, to: 1-0-0}
+  - {do: upgrade, id: sni512, to: 1-0-1}
+  - {do: upgrade, id: dru514, to: 1-0-1}
+  - {do: place, id: eng515, kind: engineer, role: support, at: [0.644, 0.112]}
+  - {do: place, id: eng516, kind: engineer, role: support, at: [0.131, 0.47]}
+  - {do: upgrade, id: sky510, to: 1-0-0}
   - {do: upgrade, id: sky502, to: 1-0-0}
-  - {do: place, id: dar513, kind: dart, role: support, at: [0.067, 0.675]}
-  - {do: place, id: hel514, kind: heli, role: support, at: [0.248, 0.334]}
-  - {do: upgrade, id: hel514, to: 0-0-2}
-  - {do: upgrade, id: hel514, to: 1-0-2}
-  - {do: upgrade, id: hel514, to: 3-0-2}
-  - {do: place, id: wiz515, kind: wizard, role: support, at: [0.11, 0.845]}
-  - {do: upgrade, id: tac512, to: 2-2-0}
-  - {do: place, id: dar516, kind: dart, role: support, at: [0.281, 0.658]}
-  - {do: place, id: mer517, kind: mermonkey, role: support, at: [0.355, 0.198]}
-  - {do: upgrade, id: dar513, to: 1-0-0}
-  - {do: place, id: dru518, kind: druid, role: support, at: [0.826, 0.181]}
-  - {do: upgrade, id: dru518, to: 0-3-0}
-  - {do: upgrade, id: dru518, to: 0-3-1}
-  - {do: place, id: dru519, kind: druid, role: support, at: [0.633, 0.351]}
-  - {do: upgrade, id: dru519, to: 0-3-0}
-  - {do: upgrade, id: dru519, to: 0-3-1}
-  - {do: upgrade, id: sky507, to: 1-0-1}
-  - {do: place, id: dru520, kind: druid, role: support, at: [0.494, 0.078]}
-  - {do: upgrade, id: dru520, to: 0-3-0}
-  - {do: upgrade, id: dru520, to: 0-3-1}
-  - {do: place, id: dru521, kind: druid, role: support, at: [0.355, 0.129]}
-  - {do: upgrade, id: dru521, to: 0-3-0}
-  - {do: upgrade, id: dru521, to: 0-3-1}
-  - {do: upgrade, id: sky504, to: 1-0-1}
+  - {do: upgrade, id: sky503, to: 1-0-0}
+  - {do: upgrade, id: sky506, to: 1-0-0}
+  - {do: upgrade, id: eng511, to: 1-0-0}
+  - {do: place, id: des517, kind: desperado, role: support, at: [0.708, 0.317]}
+  - {do: place, id: hel518, kind: heli, role: support, at: [0.302, 0.232]}
+  - {do: upgrade, id: hel518, to: 0-0-2}
+  - {do: upgrade, id: hel518, to: 1-0-2}
+  - {do: upgrade, id: hel518, to: 3-0-2}
+  - {do: place, id: dar519, kind: dart, role: support, at: [0.441, 0.334]}
+  - {do: upgrade, id: dar519, to: 0-0-1}
+  - {do: upgrade, id: eng511, to: 2-0-0}
+  - {do: upgrade, id: eng511, to: 2-1-0}
+  - {do: upgrade, id: dar519, to: 1-0-1}
+  - {do: place, id: hel520, kind: heli, role: support, at: [0.815, 0.164]}
+  - {do: upgrade, id: hel520, to: 1-0-0}
+  - {do: upgrade, id: hel520, to: 3-0-0}
+  - {do: place, id: dar521, kind: dart, role: support, at: [0.612, 0.385]}
+  - {do: upgrade, id: dar521, to: 1-0-0}
+  - {do: upgrade, id: dar521, to: 1-0-1}
+  - {do: upgrade, id: hel520, to: 3-0-2}
   - {do: place, id: hel522, kind: heli, role: support, at: [0.281, 0.896]}
+  - {do: upgrade, id: eng511, to: 3-1-0}
   - {do: upgrade, id: hel522, to: 1-0-0}
-  - {do: upgrade, id: hel522, to: 3-0-0}
+  - {do: upgrade, id: hel522, to: 1-0-2}
+  - {do: upgrade, id: sky502, to: 1-0-1}
+  - {do: upgrade, id: eng516, to: 3-0-0}
+  - {do: upgrade, id: eng516, to: 3-0-1}
+  - {do: place, id: sni523, kind: sniper, role: support, at: [0.366, 0.078]}
+  - {do: place, id: sni524, kind: sniper, role: support, at: [0.409, 0.078]}
+  - {do: upgrade, id: sni524, to: 1-2-0}
+  - {do: place, id: sni525, kind: sniper, role: support, at: [0.494, 0.078]}
+  - {do: upgrade, id: sni525, to: 1-2-0}
+  - {do: upgrade, id: dar521, to: 1-0-2}
+  - {do: upgrade, id: sky504, to: 1-0-1}
   - {do: upgrade, id: hel522, to: 3-0-2}
-  - {do: place, id: dru523, kind: druid, role: support, at: [0.59, 0.368]}
-  - {do: upgrade, id: dru523, to: 0-3-0}
-  - {do: upgrade, id: dru523, to: 0-3-1}
-  - {do: place, id: wiz524, kind: wizard, role: support, at: [0.099, 0.913]}
-  - {do: upgrade, id: mer517, to: 0-1-0}
-  - {do: upgrade, id: ace_carry1, to: 2-0-4}
-  - {do: place, id: dru525, kind: druid, role: support, at: [0.398, 0.129]}
-  - {do: upgrade, id: dru525, to: 0-3-0}
-  - {do: place, id: ace526, kind: ace, role: support, at: [0.783, 0.624]}
-  - {do: upgrade, id: ace526, to: 3-0-0}
-  - {do: place, id: dru527, kind: druid, role: support, at: [0.452, 0.078]}
+  - {do: place, id: dru526, kind: druid, role: support, at: [0.281, 0.334]}
+  - {do: upgrade, id: dru526, to: 0-3-0}
+  - {do: upgrade, id: dru526, to: 0-3-1}
+  - {do: place, id: dru527, kind: druid, role: support, at: [0.056, 0.709]}
   - {do: upgrade, id: dru527, to: 0-3-0}
-  - {do: upgrade, id: dru525, to: 0-3-1}
+  - {do: upgrade, id: sni512, to: 1-0-2}
+  - {do: upgrade, id: dar521, to: 1-0-3}
   - {do: upgrade, id: dru527, to: 0-3-1}
-  - {do: place, id: alc528, kind: alchemist, role: support, at: [0.184, 0.453]}
-  - {do: place, id: alc529, kind: alchemist, role: support, at: [0.195, 0.402]}
-  - {do: place, id: bom530, kind: bomb, role: support, at: [0.077, 0.419]}
-  - {do: upgrade, id: bom530, to: 0-0-3}
-  - {do: upgrade, id: sky505, to: 1-0-1}
-  - {do: upgrade, id: tac512, to: 2-3-0}
-  - {do: upgrade, id: wiz515, to: 0-2-0}
-  - {do: upgrade, id: wiz515, to: 1-2-0}
-  - {do: upgrade, id: wiz509, to: 0-2-0}
-  - {do: upgrade, id: wiz509, to: 1-2-0}
-  - {do: upgrade, id: wiz524, to: 0-2-0}
-  - {do: upgrade, id: wiz524, to: 1-2-0}
-  - {do: upgrade, id: alc528, to: 0-1-0}
-  - {do: upgrade, id: alc529, to: 0-1-0}
-  - {do: place, id: tac531, kind: tack, role: support, at: [0.601, 0.112]}
-  - {do: upgrade, id: tac531, to: 0-3-0}
-  - {do: upgrade, id: tac531, to: 1-3-0}
-  - {do: upgrade, id: tac531, to: 2-3-0}
-  - {do: upgrade, id: wiz515, to: 3-2-0}
-  - {do: place, id: alc532, kind: alchemist, role: support, at: [0.452, 0.436]}
-  - {do: place, id: alc533, kind: alchemist, role: support, at: [0.377, 0.436]}
-  - {do: place, id: alc534, kind: alchemist, role: support, at: [0.473, 0.129]}
-  - {do: place, id: alc535, kind: alchemist, role: support, at: [0.184, 0.351]}
-  - {do: place, id: alc536, kind: alchemist, role: support, at: [0.441, 0.334]}
-  - {do: upgrade, id: alc535, to: 0-1-0}
-  - {do: upgrade, id: wiz524, to: 3-2-0}
-  - {do: place, id: dar537, kind: dart, role: support, at: [0.259, 0.709]}
-  - {do: upgrade, id: dar537, to: 0-0-3}
-  - {do: upgrade, id: alc528, to: 1-1-0}
-  - {do: upgrade, id: alc529, to: 1-1-0}
-  - {do: upgrade, id: dar537, to: 0-2-3}
-  - {do: upgrade, id: wiz509, to: 3-2-0}
-  - {do: upgrade, id: mer517, to: 2-1-0}
-  - {do: place, id: tac538, kind: tack, role: support, at: [0.836, 0.112]}
-  - {do: upgrade, id: tac538, to: 0-3-0}
-  - {do: upgrade, id: tac538, to: 1-3-0}
-  - {do: upgrade, id: tac538, to: 2-3-0}
-  - {do: upgrade, id: dar513, to: 1-3-0}
-  - {do: upgrade, id: dar537, to: 0-2-4}
-  - {do: upgrade, id: dar516, to: 0-3-0}
-  - {do: upgrade, id: dar516, to: 2-3-0}
-  - {do: upgrade, id: tac512, to: 2-4-0}
-  - {do: upgrade, id: ace526, to: 3-1-0}
-  - {do: upgrade, id: bom530, to: 0-1-3}
-  - {do: upgrade, id: eng510, to: 3-2-0}
-  - {do: upgrade, id: ace526, to: 4-1-0}
-  - {do: upgrade, id: bom530, to: 0-2-3}
-  - {do: upgrade, id: tac538, to: 2-4-0}
-  - {do: upgrade, id: tac531, to: 2-4-0}
-  - {do: place, id: dar539, kind: dart, role: support, at: [0.024, 0.879]}
-  - {do: upgrade, id: dar513, to: 2-3-0}
-  - {do: upgrade, id: alc534, to: 0-2-0}
-  - {do: upgrade, id: alc529, to: 1-2-0}
-  - {do: place, id: bea540, kind: beast_handler, role: support, at: [0.494, 0.504]}
-  - {do: upgrade, id: ace_carry1, to: 2-0-5}
-  - {do: upgrade, id: dru518, to: 0-4-1}
-  - {do: upgrade, id: alc535, to: 0-2-0}
-  - {do: upgrade, id: alc535, to: 1-2-0}
-  - {do: upgrade, id: dru523, to: 0-4-1}
-  - {do: upgrade, id: dru525, to: 0-4-1}
-  - {do: upgrade, id: dru527, to: 0-4-1}
-  - {do: upgrade, id: sky504, to: 4-0-1}
-  - {do: upgrade, id: bom530, to: 0-2-4}
-  - {do: upgrade, id: alc535, to: 2-2-0}
-  - {do: upgrade, id: alc534, to: 1-2-0}
-  - {do: upgrade, id: wiz515, to: 4-2-0}
-  - {do: upgrade, id: alc532, to: 0-2-0}
-  - {do: upgrade, id: alc533, to: 0-2-0}
-  - {do: upgrade, id: alc533, to: 2-2-0}
-  - {do: upgrade, id: alc532, to: 1-2-0}
-  - {do: upgrade, id: sky506, to: 1-1-0}
-  - {do: upgrade, id: dar537, to: 0-2-5}
-  - {do: upgrade, id: alc528, to: 1-2-0}
-  - {do: upgrade, id: a1, to: 2-2-0}
-  - {do: upgrade, id: alc536, to: 0-2-0}
-  - {do: upgrade, id: alc536, to: 2-2-0}
-  - {do: upgrade, id: dar539, to: 0-3-0}
-  - {do: upgrade, id: dar539, to: 1-3-0}
-  - {do: upgrade, id: dar539, to: 2-3-0}
+  - {do: upgrade, id: dar521, to: 1-0-4}
+  - {do: upgrade, id: n1, to: 3-0-1}
+  - {do: upgrade, id: sni525, to: 1-3-0}
+  - {do: place, id: dru528, kind: druid, role: support, at: [0.655, 0.249]}
+  - {do: upgrade, id: dru528, to: 0-3-0}
+  - {do: place, id: sni529, kind: sniper, role: support, at: [0.58, 0.078]}
+  - {do: upgrade, id: sni529, to: 1-2-0}
+  - {do: place, id: sni530, kind: sniper, role: support, at: [0.238, 0.095]}
+  - {do: upgrade, id: sni530, to: 1-2-0}
+  - {do: place, id: sni531, kind: sniper, role: support, at: [0.281, 0.095]}
+  - {do: upgrade, id: sni531, to: 1-2-0}
+  - {do: upgrade, id: dar521, to: 2-0-4}
+  - {do: upgrade, id: dru528, to: 0-3-1}
+  - {do: upgrade, id: ace_carry3, to: 2-0-4}
+  - {do: place, id: dru532, kind: druid, role: support, at: [0.024, 0.811]}
+  - {do: upgrade, id: dru532, to: 0-3-0}
+  - {do: upgrade, id: dru532, to: 0-3-1}
+  - {do: place, id: dru533, kind: druid, role: support, at: [0.58, 0.743]}
+  - {do: upgrade, id: dru533, to: 0-3-0}
+  - {do: upgrade, id: dru533, to: 0-3-1}
+  - {do: place, id: wiz534, kind: wizard, role: support, at: [0.377, 0.181]}
+  - {do: upgrade, id: wiz534, to: 1-2-0}
+  - {do: place, id: wiz535, kind: wizard, role: support, at: [0.174, 0.368]}
+  - {do: upgrade, id: wiz535, to: 1-2-0}
+  - {do: place, id: wiz536, kind: wizard, role: support, at: [0.152, 0.828]}
+  - {do: upgrade, id: wiz536, to: 1-2-0}
+  - {do: place, id: wiz537, kind: wizard, role: support, at: [0.11, 0.845]}
+  - {do: upgrade, id: wiz537, to: 1-2-0}
+  - {do: place, id: dru538, kind: druid, role: support, at: [0.815, 0.572]}
+  - {do: upgrade, id: dru538, to: 0-3-0}
+  - {do: upgrade, id: dru538, to: 0-3-1}
+  - {do: place, id: dru539, kind: druid, role: support, at: [0.569, 0.811]}
+  - {do: upgrade, id: dru539, to: 0-3-0}
+  - {do: upgrade, id: dru539, to: 0-3-1}
+  - {do: upgrade, id: sni523, to: 0-2-0}
+  - {do: upgrade, id: sni523, to: 0-2-1}
+  - {do: upgrade, id: sni530, to: 1-3-0}
+  - {do: place, id: sni540, kind: sniper, role: support, at: [0.313, 0.129]}
+  - {do: upgrade, id: sni540, to: 1-2-0}
+  - {do: upgrade, id: sni531, to: 1-3-0}
+  - {do: upgrade, id: sni540, to: 1-3-0}
+  - {do: upgrade, id: sni523, to: 0-2-2}
+  - {do: upgrade, id: eng511, to: 3-2-0}
+  - {do: upgrade, id: wiz536, to: 3-2-0}
+  - {do: place, id: bom541, kind: bomb, role: support, at: [0.281, 0.675]}
+  - {do: upgrade, id: bom541, to: 0-0-3}
+  - {do: upgrade, id: bom541, to: 0-1-3}
+  - {do: upgrade, id: bom541, to: 0-2-3}
+  - {do: place, id: wiz542, kind: wizard, role: support, at: [0.088, 0.453]}
+  - {do: upgrade, id: wiz542, to: 1-2-0}
+  - {do: upgrade, id: sky506, to: 1-0-1}
+  - {do: upgrade, id: sky507, to: 1-2-0}
+  - {do: upgrade, id: ace_carry3, to: 2-0-5}
+  - {do: place, id: alc543, kind: alchemist, role: support, at: [0.537, 0.368]}
+  - {do: upgrade, id: alc543, to: 0-2-0}
+  - {do: upgrade, id: sni523, to: 0-2-3}
+  - {do: upgrade, id: wiz535, to: 1-3-0}
+  - {do: upgrade, id: alc543, to: 1-2-0}
+  - {do: upgrade, id: wiz534, to: 3-2-0}
+  - {do: upgrade, id: wiz535, to: 1-4-0}
+  - {do: upgrade, id: wiz537, to: 1-3-0}
+  - {do: upgrade, id: sni523, to: 0-2-4}
+  - {do: upgrade, id: wiz542, to: 1-3-0}
+  - {do: upgrade, id: wiz542, to: 1-4-0}
+  - {do: upgrade, id: wiz537, to: 1-4-0}
+  - {do: place, id: alc544, kind: alchemist, role: support, at: [0.152, 0.419]}
+  - {do: upgrade, id: alc544, to: 0-2-0}
+  - {do: upgrade, id: alc544, to: 2-2-0}
+  - {do: place, id: mer545, kind: mermonkey, role: support, at: [0.761, 0.624]}
+  - {do: upgrade, id: dar519, to: 1-0-4}
+  - {do: upgrade, id: bom541, to: 0-2-4}
+  - {do: upgrade, id: eng515, to: 4-0-0}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: eng513, to: 4-0-0}
+  - {do: upgrade, id: eng513, to: 4-1-0}
+  - {do: upgrade, id: eng513, to: 4-2-0}
+  - {do: upgrade, id: eng515, to: 4-2-0}
+  - {do: upgrade, id: sni512, to: 3-0-2}
+  - {do: upgrade, id: sni529, to: 2-2-0}
+  - {do: place, id: des546, kind: desperado, role: support, at: [0.248, 0.283]}
+  - {do: upgrade, id: mer545, to: 0-1-0}
+  - {do: upgrade, id: mer545, to: 0-2-0}
+  - {do: upgrade, id: sky510, to: 1-0-1}
+  - {do: upgrade, id: dru533, to: 0-4-1}
+  - {do: upgrade, id: dru539, to: 0-4-1}
+  - {do: upgrade, id: dru538, to: 0-4-1}
+  - {do: upgrade, id: mer545, to: 2-2-0}
+  - {do: place, id: des547, kind: desperado, role: support, at: [0.184, 0.283]}
+  - {do: place, id: des548, kind: desperado, role: support, at: [0.142, 0.317]}
+  - {do: place, id: ice549, kind: ice, role: support, at: [0.088, 0.913]}
+  - {do: upgrade, id: des509, to: 3-1-0}
+  - {do: upgrade, id: des517, to: 3-0-0}
 fill: []
 panic:
   - {do: place, kind: ninja, role: exit}
@@ -201,9 +217,7 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.142, 0.436]}
-  ceramic:
-    - {do: upgrade, id: n1, to: 3-0-2}
+    - {do: place, id: a1, kind: alchemist, role: support, at: [0.441, 0.436]}
   moab:
     - {do: upgrade, id: n2, to: 2-0-3}
   bfb:
@@ -215,5 +229,5 @@ answers:
     - {do: upgrade, id: n2, to: 2-0-4}
     - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.58, 0.266]}
   bad:
-    - {do: upgrade, id: ace_carry1, to: 2-0-5}
-    - {do: place, id: ace_carry1, kind: ace, role: support, at: [0.697, 0.112]}
+    - {do: upgrade, id: ace_carry3, to: 2-0-5}
+    - {do: place, id: ace_carry3, kind: ace, role: support, at: [0.697, 0.112]}
