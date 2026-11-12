@@ -26,6 +26,10 @@ EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
 # purchases are still being made (Match._hold_for_crisis): the break between
 # rounds is free time to spend in.
 CRISIS_HOLD_S = 20.0       # longest wait per round
+# ... and while the defence is being put back after the map took it
+# (Executor.rebuild_pending): a purchase takes 2-3 s, a dozen towers with
+# their upgrades a few minutes
+CRISIS_HOLD_REBUILD_S = 180.0
 CRISIS_HOLD_IDLE_S = 4.0   # ... ended early once this long passes without a purchase
 CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
 CRISIS_HOLD_CASH_RISE = 200  # cash up this much since the last rise restarts the idle allowance
@@ -1242,6 +1246,16 @@ class Match:
         each time cash rises by CRISIS_HOLD_CASH_RISE; CRISIS_HOLD_S still
         caps the hold.
 
+        The cap is CRISIS_HOLD_REBUILD_S while the defence is being rebuilt
+        after the map destroyed its ground (_rebuilding). Erosion Deflation
+        (2026-11-12, case 20261112_042248_Erosion_deflation): the ice went
+        as round 53 began, with all 15 towers; the game refunded $19,000
+        and the bot bought one thing every two seconds. Play was held
+        before round 54, rated 0.19, and let go after 21 s with $19,062
+        unspent - ten purchases into a rebuild of more than a hundred - and
+        round 54 took all 200 lives in nine seconds. The idle allowance
+        still ends the hold as soon as the buying stops.
+
         Only when the game's Auto Start is off (the Play button goes idle
         between rounds) and never under continuous sends."""
         if rnd is None or cash is None or self.ex.rules.get("continuous"):
@@ -1273,11 +1287,23 @@ class Match:
         elif cash >= rise[1] + CRISIS_HOLD_CASH_RISE:
             self._crisis_cash = (rnd, cash, now)            # cash still coming in: wait on
         last_rise = self._crisis_cash[2] or since
-        if now - since > CRISIS_HOLD_S or now - max(since, self._last_buy, last_rise) > CRISIS_HOLD_IDLE_S:
+        cap = CRISIS_HOLD_REBUILD_S if self._rebuilding() else CRISIS_HOLD_S
+        if now - since > cap or now - max(since, self._last_buy, last_rise) > CRISIS_HOLD_IDLE_S:
             log.info("holding Play over after %.0f s ($%d left)", now - since, cash)
             self._crisis_hold[rnd] = False
             return False
         return True
+
+    def _rebuilding(self):
+        """Is the executor still putting back towers the map destroyed
+        (Executor.rebuild_pending)? False for an executor without that
+        method, and when asking fails: the hold then keeps its usual cap."""
+        pending = getattr(self.ex, "rebuild_pending", None)
+        try:
+            return bool(pending and pending())
+        except Exception:
+            log.exception("asking the executor about its rebuild failed - carrying on")
+            return False
 
     def _hold_for_clear(self, rnd, f, now):
         """Keep Play waiting, in a one-life game, while bloons of the round

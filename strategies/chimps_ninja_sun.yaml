@@ -93,7 +93,17 @@ planner:
   # life 30 s into the game, both times (loss case
   # 20261111_213425_FloodedValley_impoppable). The map needs a water build
   # on the right-hand river, like floodedvalley_abr (backlog 92).
-  excluded_maps: [Tricky Tracks, Glacial Trail, Flooded Valley]
+  # not Workshop (Impoppable 2026-11-10 18:11, 2026-11-11 08:31 and 17:32, all
+  # round 40; 2026-11-12 05:21, round 57, loss case
+  # 20261112_052113_Workshop_impoppable): its MOAB-class bloons drop down a
+  # chute after round 39 and ride only the belt's last stretch, and towers
+  # placed by role and segment do not stand there - the blimp check read
+  # "21 units of track ... 0.0x" at round 40 and 0.2x in rounds 52-57, the
+  # rounds were rated 0.33-0.37 from round 50 on. Workshop's medals came
+  # from its own builds (strategies/maps/workshop_*.yaml: towers above the
+  # belt at the chute and in the exit pocket); Impoppable needs one too
+  # (backlog 98, tests/test_workshop_excluded_offline.py).
+  excluded_maps: [Tricky Tracks, Glacial Trail, Flooded Valley, Workshop]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: upgrade, id: n1, to: 1-0-1}

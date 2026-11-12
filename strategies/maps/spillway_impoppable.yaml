@@ -1,0 +1,96 @@
+# Spillway, impoppable: spillway_draft with an exact spot per tower and plan_first.
+#
+# UNTESTED: written by tools/pin_spots.py, never played as it stands. The plan
+# is spillway_draft's; each tower's `at` is the best legal spot for its kind on this map
+# (the geometry minus the spots the live game refused), and a tower with `near`
+# stands at the legal spot closest to the towers it names. plan_first: the
+# plan's late answers are bought before any off-plan reinforce buy (on
+# 2026-11-11 such buys outweighed the plan's own towers on these maps and its
+# MOAB Eliminator / Perma-Spike were still waiting when the game was lost).
+# base_success is the map builds' lowest (0.5); the record sets it from here.
+#
+# Spillway round 98 (2026-11-12, loss 20261112_041202): chimps_ninja_sun, placed by
+# role, had no legal spot in n1's and n2's parts of the track, bought ten cheap off-plan
+# towers by round 30 and gave up the exit spike factory; from round 91 the blimp check
+# read 0.2-0.8x and the Eliminator ($31,200) could not be paid before the DDTs. This is
+# Firing Range's winning plan (2026-11-12 01:18) on Spillway's own spots: the MOAB
+# answer (n2 2-0-3, 2-0-4) before the alchemist, plan_first, every tower pinned.
+id: spillway_impoppable
+map: Spillway
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
+modes: [impoppable]
+planner:
+  towers: {ninja: [4, 4, 4], alchemist: [4, 2, 0], village: [2, 3, 2], super: [3, 0, 2], spike: [2, 0, 5], bomb: [2, 5, 0], ace: [2, 4, 0], heli: [5, 0, 2], sniper: [4, 0, 2]}
+  base_success: {impoppable: 0.5}
+  maps: [Spillway]
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.238, 0.129]}
+  - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.291, 0.811]}
+  - {do: upgrade, id: n2, to: 2-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.184, 0.3]}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7, at: [0.131, 0.249]}
+  - {do: upgrade, id: v1, to: 2-0-2}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7, at: [0.184, 0.385]}
+  - {do: upgrade, id: s1, to: 3-0-2}
+  - {do: place, id: v2, kind: village, role: support, near: [s1], near_radius: 7, at: [0.131, 0.538]}
+  - {do: upgrade, id: v2, to: 2-3-0}
+  - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.195, 0.675]}
+  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, at: [0.195, 0.555]}
+  - {do: place, id: sp1, kind: spike, role: exit}
+  - {do: upgrade, id: sp1, to: 2-0-4}
+  - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8, at: [0.11, 0.368]}
+  - {do: upgrade, id: n4, to: 0-4-0}
+  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.131, 0.709]}
+  - {do: upgrade, id: b1, to: 0-4-0}
+  - {do: upgrade, id: ac1, to: 2-4-0}
+  - {do: upgrade, id: ac2, to: 2-4-0}
+  - {do: upgrade, id: b1, to: 0-5-0}
+  - {do: upgrade, id: sp1, to: 2-0-5}
+fill:
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, kind: ace, role: support, near: [v2], near_radius: 9, max: 3}
+  - {do: upgrade, kind: ace, to: 2-4-0}
+  - {do: upgrade, id: b1, to: 2-5-0}
+  - {do: place, kind: spike, role: exit, max: 3}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+  - {do: place, id: h1, kind: heli, role: support, near: [v2], near_radius: 9, at: [0.088, 0.641]}
+  - {do: upgrade, id: h1, to: 4-0-2}
+  - {do: upgrade, id: h1, to: 5-0-2}
+  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 9, at: [0.152, 0.453]}
+  - {do: upgrade, id: sn1, to: 4-0-2}
+  - {do: target, id: sn1, mode: strong}
+  - {do: upgrade, id: sp1, to: 2-0-5}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.184, 0.3]}
+  ceramic:
+    - {do: upgrade, id: n1, to: 3-0-2}
+  moab:
+    - {do: upgrade, id: n2, to: 2-0-3}
+  bfb:
+    - {do: upgrade, id: n2, to: 2-0-4}
+  rush:
+    - {do: upgrade, id: n1, to: 4-0-2}
+  zomg:
+    - {do: upgrade, id: ac1, to: 2-4-0}
+    - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.195, 0.675]}
+  ddt:
+    - {do: upgrade, id: b1, to: 0-5-0}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.131, 0.709]}
+  bad:
+    - {do: upgrade, id: b1, to: 0-5-0}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.131, 0.709]}

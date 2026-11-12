@@ -1844,20 +1844,33 @@ class Executor:
         # (nor for a blimp answer: the probe looks at all of the track)
         probe = (self._probe_spot(kind, valid) if role in ("dps", "exit") and far is None
                  and only is None else None)
-        if probe is not None:
+        reserved = self._reserved_cells(step, kind)
+
+        def kept_free(cx, cy, spots):
+            """Is (cx, cy) inside the gap of a spot a later step needs?"""
+            return any((cx - rx) ** 2 + (cy - ry) ** 2 < gap ** 2 for rx, ry, gap in spots)
+
+        if probe is not None and not kept_free(probe[0], probe[1], reserved):
             out.append(probe)       # tried first; a refusal costs ~0.1 s and is learned
-        reserved = self._reserved_cells(step)
-        for cx, cy, score in ranked:
-            if (kind, cx, cy) in self.failed_spots:
-                continue
-            if floor is not None and self._reach(kind)[cy, cx] < floor:
-                continue  # its range only grazes the track (see MIN_REACH_SHARE)
-            if any((cx - rx) ** 2 + (cy - ry) ** 2 < RESERVED_CELLS ** 2 for rx, ry in reserved):
-                continue  # a later step of the build places a tower right here
-            if any((cx - ox) ** 2 + (cy - oy) ** 2 < 9 for ox, oy, _ in out):
-                continue
-            out.append((cx, cy, score))
-            if len(out) >= n:
+        # The later steps' spots are kept free by a whole footprint; only on
+        # a board where that leaves this tower no spot at all does the flat
+        # RESERVED_CELLS distance of old apply (a one-life opener that is
+        # not placed loses the game at once).
+        flat = [(rx, ry, RESERVED_CELLS) for rx, ry, _ in reserved]
+        for spots in (reserved, flat):
+            for cx, cy, score in ranked:
+                if (kind, cx, cy) in self.failed_spots:
+                    continue
+                if floor is not None and self._reach(kind)[cy, cx] < floor:
+                    continue  # its range only grazes the track (see MIN_REACH_SHARE)
+                if kept_free(cx, cy, spots):
+                    continue  # a later step of the build places a tower right here
+                if any((cx - ox) ** 2 + (cy - oy) ** 2 < 9 for ox, oy, _ in out):
+                    continue
+                out.append((cx, cy, score))
+                if len(out) >= n:
+                    break
+            if out or not reserved:
                 break
         return out
 
@@ -1933,20 +1946,41 @@ class Executor:
         guarded = min(1.0, float(cells.mean()) / self.LANE_COVER_WEIGHT)
         return 1.0 + (f - 1.0) * (1.0 - guarded)
 
-    def _reserved_cells(self, step):
-        """Cells of the exact spots (`at`) the build's later place steps
-        still need. A tower placed by role must leave them free: on Ravine
-        Easy the hero, placed by role, sat beside two planned bomb spots,
-        and those bombs went to the far side of the map."""
+    def _reserved_cells(self, step, kind=None):
+        """(cx, cy, gap) for each exact spot (`at`) the build's later place
+        steps still need: the spot's cell and how many cells a `kind` tower
+        placed now must keep from it. A tower placed by role must leave
+        them free: on Ravine Easy the hero, placed by role, sat beside two
+        planned bomb spots, and those bombs went to the far side of the map.
+
+        The gap is the two footprints side by side (the game's own radii,
+        placement.footprint_radius), and never under RESERVED_CELLS. With
+        RESERVED_CELLS alone a big tower's spot was not kept: on Sunset
+        Gulch Impoppable (2026-11-12, case 20261112_050436) the one-life
+        opener's tack and the free dart stood 4.1 and 4.5 cells from s1's
+        spot - outside the 4 reserved cells, inside a Super Monkey's
+        footprint. s1 found "nothing legal within 15 cells of its spot",
+        went by role to the exit, where it did not pop one bloon in 53
+        rounds ($13,440), and the game was lost to round 88's blimps."""
+        from . import placement as PL
         out = []
         strat = getattr(self, "strat", None) or {}
+        try:
+            upc = PL.units_per_cell(self.m)
+            own = PL.footprint_radius(kind, self.g.hero if kind == "hero" else None) if kind else 0.0
+        except Exception:    # a map model without a playfield (test fakes): the plain distance
+            upc, own = None, 0.0
         for st in list(getattr(self, "plan", None) or []) + list(strat.get("fill") or []):
             at = st.get("at")
             if st.get("do") != "place" or not at or st is step or st.get("id") == step.get("id"):
                 continue
             if st.get("id") in self.g.towers:
                 continue    # placed already
-            out.append(self.m.frac_to_cell(*self._at_now(at)))
+            gap = RESERVED_CELLS
+            if upc and st.get("kind"):
+                theirs = PL.footprint_radius(st["kind"], self.g.hero if st["kind"] == "hero" else None)
+                gap = max(gap, (own + theirs) / upc)
+            out.append((*self.m.frac_to_cell(*self._at_now(at)), gap))
         return out
 
     @staticmethod
@@ -4056,10 +4090,22 @@ class Executor:
         redo = [dict(s) for s in self.plan[:self.idx]
                 if s.get("id") in gone and s.get("do") in ("place", "upgrade")]
         self.plan[self.idx:self.idx] = redo
+        self._rebuild_steps = redo      # see rebuild_pending
         log.warning("the map destroyed the ground under %s - forgotten; %d plan steps queued "
                     "again to rebuild them", ", ".join(gone), len(redo))
         self.track_changed()
         return gone
+
+    def rebuild_pending(self):
+        """True while plan steps queued again by ground_lost are still ahead
+        in the plan: the map took the defence and it is not back up yet.
+        The match keeps Play waiting longer for such a rebuild
+        (Match._hold_for_crisis). A step that was bought, given up or set
+        aside is behind the plan's index and no longer counts."""
+        ahead = self.plan[self.idx:]
+        left = [s for s in getattr(self, "_rebuild_steps", ()) if any(s is q for q in ahead)]
+        self._rebuild_steps = left
+        return bool(left)
 
     def _recheck_doubtful(self):
         """When no verified tower is left (defended() False) but one of them is
