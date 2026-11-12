@@ -351,6 +351,7 @@ class Spot:
     fx: float            # screen fractions of the 1920x1200 window
     fy: float
     score: float         # covered route length (world units, all routes summed)
+    until: int | None = None   # last round the ground holds a tower (Erosion's ice); None: the whole game
 
 
 # --learned: plan on the map's learned file (data/maps/<map>.npz), so the
@@ -377,6 +378,92 @@ class MapSetup:
         self.model = MapModel.load(map_name, playfield) if USE_LEARNED else MapModel(map_name, playfield)
         G.apply(self.model, self.track.geom)
         self._spots = {}
+        # Maps whose ground changes with long path phases (Erosion): each
+        # phase's track is in reach only from ice that melts when the phase
+        # ends, and the game destroys the towers standing on it then
+        # (mapgeom.phase_end, lost_ground). set_round() picks the ground
+        # that lasts to the end of the current phase; spots carry that
+        # round as `until`, and towers past it count for nothing.
+        from btd6bot import strategy as S
+        self.end_round = int((S.MODE_RULES.get(mode) or {}).get("end_round")
+                             or D.mode_rules(mode).get("end_round") or 100)
+        self.phased = G.phase_end(self.track.geom, 1) is not None
+        self.now = self.horizon = None
+
+    def set_round(self, rnd):
+        """Plan the spots for round `rnd` (maps with path phases only): the
+        ground there now that lasts until the phase ends. The ranking is
+        redone when a new phase starts."""
+        if not self.phased:
+            return
+        from btd6bot import mapgeom as G
+        horizon = G.phase_end(self.track.geom, rnd) or self.end_round
+        if horizon != self.horizon:
+            self.now, self.horizon = rnd, min(horizon, self.end_round)
+            self._spots.clear()
+            self._melts = {}
+
+    def live_routes(self):
+        """Indices of the routes bloons take from the planning round to the
+        phase's end (all of them on maps without phases)."""
+        if not self.phased or self.now is None:
+            return None
+        live = set()
+        for rnd in range(self.now, self.horizon + 1):
+            for k in self.track.scenarios_in(rnd):
+                live.update(self.track.scenarios[k])
+        return live
+
+    def phase_ends(self, rnd):
+        """The rounds, from `rnd`'s phase on, at which a phase ends (and its
+        ice melts), before the game's last round."""
+        from btd6bot import mapgeom as G
+        ends, r = [], rnd
+        while r <= self.end_round:
+            e = G.phase_end(self.track.geom, r)
+            if e is None or e >= self.end_round:
+                break
+            ends.append(e)
+            r = e + 1
+        return ends
+
+    def melt_grid(self, kind, rnd):
+        """Grid [cy, cx] of the last round a tower of `kind` bought in round
+        `rnd` keeps its ground: the latest phase end it still stands at,
+        0 where it lasts the whole game (-1: no ground there now)."""
+        key = (kind, rnd)
+        if key in getattr(self, "_melts", {}):
+            return self._melts[key]
+        from btd6bot import placement as P
+        grid = np.full(self.model.heat.shape, -1, np.int32)
+        for e in self.phase_ends(rnd):          # earliest first: later ends overwrite
+            ok = P.valid_spots(self.model, kind, now_round=rnd, last_round=e)
+            if ok is not None:
+                grid[ok] = e
+        lasting = P.valid_spots(self.model, kind, now_round=rnd, last_round=self.end_round)
+        if lasting is not None:
+            grid[lasting] = 0
+        self.__dict__.setdefault("_melts", {})[key] = grid
+        return grid
+
+    def spot_until(self, cell, kind, rnd):
+        """The last round a tower of `kind` placed at `cell` in round `rnd`
+        keeps its ground: None when the ground lasts the whole game, else
+        the end of the last phase its ice survives (mapgeom.phase_end)."""
+        if not self.phased:
+            return None
+        v = int(self.melt_grid(kind, rnd)[cell[1], cell[0]])
+        if v == 0:
+            return None
+        if v < 0:   # not legal now: say it goes at this phase's end
+            from btd6bot import mapgeom as G
+            return min(G.phase_end(self.track.geom, rnd) or self.end_round, self.end_round)
+        return v
+
+    @staticmethod
+    def alive(towers, rnd):
+        """The towers still standing in round `rnd` (Spot.until)."""
+        return [t for t in towers if t.spot.until is None or rnd <= t.spot.until]
 
     # -- line of sight ---------------------------------------------------------
     def sight(self, x, z, pts):
@@ -430,9 +517,14 @@ class MapSetup:
         if kind in self._spots:
             return self._spots[kind]
         from btd6bot import placement as P
-        ok = P.valid_spots(self.model, kind)
+        if self.phased and self.now is not None:
+            ok = P.valid_spots(self.model, kind, now_round=self.now, last_round=self.horizon)
+            lasting = P.valid_spots(self.model, kind, now_round=self.now, last_round=self.end_round)
+        else:
+            ok, lasting = P.valid_spots(self.model, kind), None
         if USE_PANES and ok is not None:
             ok = ok | self.pane_spots(kind)
+        live = self.live_routes()
         out = []
         if ok is not None and ok.any():
             rows, cols = np.nonzero(ok)
@@ -444,11 +536,15 @@ class MapSetup:
             scored = []
             for r, c in zip(rows, cols):
                 sp = self.cell_spot((int(c), int(r)))
+                if lasting is not None and not lasting[r, c]:
+                    # on ice: it stands until the last phase end its ice survives
+                    melt = int(self.melt_grid(kind, self.now)[r, c])
+                    sp.until = melt if melt > 0 else self.horizon
                 if radius is None:
                     sp.score = 0.0
                 else:
                     zones = self.track.zones(sp.x, sp.z, radius, sight=sight)
-                    sp.score = sum(z.length for z in zones if z)
+                    sp.score = sum(z.length for i, z in enumerate(zones) if z and (live is None or i in live))
                     if sp.score <= 0:
                         continue
                 scored.append(sp)
@@ -691,9 +787,11 @@ class Evaluator:
         return [st for st in (self.station_of(t, towers) for t in towers) if st is not None]
 
     def results(self, towers, rounds, margin=SAFETY_MARGIN):
-        """{round: RoundResult} with every tower at 1/margin strength."""
-        st = self.stations(towers)
-        return {r: D.simulate_round(st, self.mode, r, self.setup.track, strength=1.0 / margin) for r in rounds}
+        """{round: RoundResult} with every tower at 1/margin strength - the
+        towers still standing in that round (MapSetup.alive: on Erosion the
+        ones on melted ice are gone)."""
+        return {r: D.simulate_round(self.stations(self.setup.alive(towers, r)), self.mode, r, self.setup.track,
+                                    strength=1.0 / margin) for r in rounds}
 
     def leak(self, towers, rounds, margin=SAFETY_MARGIN):
         """{round: leaked health} with every tower at 1/margin strength."""
@@ -720,12 +818,12 @@ class Evaluator:
         return best
 
     def margins(self, towers, rounds):
-        st = self.stations(towers)
-        return {r: D.round_margin(st, self.mode, r, self.setup.track) for r in rounds}
+        return {r: D.round_margin(self.stations(self.setup.alive(towers, r)), self.mode, r, self.setup.track)
+                for r in rounds}
 
     def end_times(self, towers, rounds):
-        st = self.stations(towers)
-        return {r: D.simulate_round(st, self.mode, r, self.setup.track).end_time for r in rounds}
+        return {r: D.simulate_round(self.stations(self.setup.alive(towers, r)), self.mode, r,
+                                    self.setup.track).end_time for r in rounds}
 
 
 # ===========================================================================
@@ -899,6 +997,10 @@ class Optimizer:
         # plan for all of them at once
         no_income = econ.cash_mult == 0
         for rnd in range(econ.start_round, last + 1):
+            # Erosion: this phase's ground, and the towers whose ice melted
+            # at the last phase's end are gone (the game destroys them)
+            self.setup.set_round(rnd)
+            towers = self.setup.alive(towers, rnd)
             if hero_round is not None:
                 # the hero's level in this round: the window is rated with it
                 # (the lowest of the window - it only grows)
@@ -1124,7 +1226,8 @@ class Optimizer:
             plan.steps.append(Step(rnd, best, tid, "XP: surplus into the target tower", cash))
 
     def _quick_margin(self, towers, rnd):
-        return D.round_margin(self.ev.stations(towers), self.mode, rnd, self.setup.track, iterations=5)
+        return D.round_margin(self.ev.stations(self.setup.alive(towers, rnd)), self.mode, rnd, self.setup.track,
+                              iterations=5)
 
     def _tid(self, action, n):
         if action.tid is not None:
@@ -1148,6 +1251,7 @@ class Optimizer:
                     towers = towers + [Tower("hero", "hero", s.action.spot, (1,), s.action.cost)]
             if hero_round is not None:
                 towers = self._level_hero(towers, hero_round, r)
+            towers = self.setup.alive(towers, r)       # Erosion: the towers on melted ice are gone
             out[r] = round(D.round_margin(self.ev.stations(towers), self.mode, r, self.setup.track), 2)
         return out
 
@@ -1523,6 +1627,8 @@ def replay_plan(plan, rounds=None, account=None):
             elif step["do"] == "place":
                 spot = setup.cell_spot(setup.model.frac_to_cell(*step["at"]))
                 cost = place_cost(step["kind"], (0, 0, 0), econ.family, spot, list(towers.values()))
+            elif step["do"] == "upgrade" and step["id"] not in towers:
+                cost = 0.0            # its tower stood on ice that has melted (Erosion): nothing to buy
             elif step["do"] == "upgrade":
                 t = towers[step["id"]]
                 cost = upgrade_cost(t.kind, t.tiers, tuple(int(c) for c in str(step["to"]).split("-")), econ.family,
@@ -1535,6 +1641,8 @@ def replay_plan(plan, rounds=None, account=None):
             if step["do"] == "place" and step["kind"] == "hero":
                 hero_bought = rnd
             if step["do"] == "place" and step["kind"] != "hero":
+                # on Erosion's ice the tower lasts to the end of the phase it was bought in
+                spot.until = setup.spot_until(spot.cell, step["kind"], rnd)
                 towers[step["id"]] = Tower(step["id"], step["kind"], spot, (0, 0, 0), cost)
                 placed[step["id"]] = rnd
             elif step["do"] == "place" and D.HERO_RATING:
@@ -1545,11 +1653,13 @@ def replay_plan(plan, rounds=None, account=None):
                     placed["hero"] = rnd
                     towers["hero"] = Tower("hero", "hero", spot,
                                            hero_tiers_at(hero, plan["map"], mode, account, rnd, rnd), cost)
-            elif step["do"] == "upgrade":
+            elif step["do"] == "upgrade" and step["id"] in towers:
                 t = towers[step["id"]]
                 towers[step["id"]] = Tower(t.tid, t.kind, t.spot, tuple(int(c) for c in str(step["to"]).split("-")),
                                            t.spent + cost)
             i += 1
+        # the towers on ice that melted at a phase's end are gone (Erosion)
+        towers = {tid: t for tid, t in towers.items() if t.spot.until is None or rnd <= t.spot.until}
         if rounds is None or rnd in rounds:
             margins[rnd] = round(_awake_margin(ev, setup, plan["map"], mode, rnd, list(towers.values()), placed), 2)
         level = (hero_level_at(hero, plan["map"], mode, account, hero_bought, rnd)
