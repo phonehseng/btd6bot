@@ -46,8 +46,8 @@ data/game_model/attacks.json:
 
 TOWER = {"range", "global", "attacks": [ATTACK], "subtowers": [...],
          "buffs": [...], "income": {...}, "zones": [...], "air_unit": {...}}
-ATTACK = {"name", "range", "camo", "camo_shared", "targets", "targeting",
-          "unbounded", "own_radius", "weapons": [WEAPON]}
+ATTACK = {"name", "range", "camo", "camo_shared", "targets", "sector",
+          "targeting", "unbounded", "own_radius", "weapons": [WEAPON]}
 WEAPON = {"name", "rate", "count", "burst", "projectile": PROJECTILE, ...}
 PROJECTILE = {"name", "pierce", "radius", "camo", "hits", "motion", "speed",
               "lifespan", "damage": {"amount", "immune", "type"},
@@ -88,7 +88,9 @@ log = logging.getLogger("export_attacks")
 
 ROOT = TOOLS.parent
 OUT_FILE = dsm.OUT_DIR / "attacks.json"
-EXPORT_VERSION = 2   # 2: "camo_shared" on an attack whose camo filter defers to the shared range
+EXPORT_VERSION = 3   # 2: "camo_shared" on an attack whose camo filter defers to the shared range
+                     # 3: "once" on an interval spawn that emits a single time, "sector" on an
+                     #    attack that only targets inside part of the circle (Abyss Dweller)
 
 # Bloon properties (BloonProperties flags) that damage types are immune to,
 # in the five names of normal play; "Immune"/"Glass" are event mechanics.
@@ -548,6 +550,11 @@ class AttackExporter:
             entry["every"] = num(b.get("intervalFrames")) / self.fps
             if b.get("onlyIfHasTarget"):
                 entry["needs_target"] = True
+            if b.get("onlyEmitOnce"):
+                # one emission, `every` seconds after the carrier appears, and
+                # no more however long the carrier lives (an Abyss Dweller's
+                # tentacle rises, strikes once and sinks)
+                entry["once"] = True
         elif t == "CreateProjectileOnExhaustPierceModel":
             entry["on"] = "pierce"
             entry["pierce_step"] = num(b.get("pierceInterval"), 1.0)
@@ -651,6 +658,12 @@ class AttackExporter:
             detection covers (Advanced Intel: the intel filter of
             bloon_filter on a map-wide tower);
         targets: only_tags / excluded_tags of the attack's own filter;
+        sector: degrees of the circle around the tower this attack may pick
+            targets in, when that sector does not turn with the tower
+            (FilterTargetAngleModel fieldOfView with ignoreTowerRotation;
+            absent = all round). The Abyss Dweller's eight tentacles are
+            eight attacks of 45 degrees each, side by side: a bloon is in
+            reach of one of them at a time;
         targeting: how it picks targets by default (the first match wins) -
             "normal" (it has first/last/close/strong modes, also their
             camo-priority and shared-range variants), "track" (onto the
@@ -670,6 +683,11 @@ class AttackExporter:
         attack_filters = [f for b in behaviors if self.view.is_a(b, "AttackFilterModel")
                           for f in objs(b.get("filters"))]
         flt = self.bloon_filter(attack_filters)
+        # only a sector fixed on the map (ignoreTowerRotation): one that turns
+        # with its unit - the forward cone of an Aircraft Carrier's plane -
+        # sweeps the whole circle as the unit turns
+        sectors = [num(f.get("fieldOfView")) for f in attack_filters
+                   if f.type == "FilterTargetAngleModel" and f.get("ignoreTowerRotation")]
         suppliers = {b.type for b in behaviors + objs(a.get("targetProvider"))}
         # The default target mode decides: bloon targeting (first/last/close/
         # strong, also their camo-priority and shared-range variants) wins,
@@ -703,6 +721,7 @@ class AttackExporter:
             "camo_shared": (flt.get("camo_shared") and tower_global) or None,
             "only_tags": flt["only_tags"],
             "excluded_tags": flt["excluded_tags"],
+            "sector": min((s for s in sectors if 0.0 < s < 360.0), default=None),
             "targeting": targeting,
             "air": a.type == "AttackAirUnitModel" or None,
             "pattern_radius": min(patterns) if patterns else None,
