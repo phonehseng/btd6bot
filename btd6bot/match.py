@@ -1616,7 +1616,11 @@ class Match:
                 found = hudstate.tower_sizes(new)
                 self._hud_sizes.update({k: found.get(k) for k in new})
             goal = getattr(self.ex, "save_goal", None)
-            hudstate.update(round=rnd, cash=cash, lives=self._lives.confirmed,
+            # Covered Garden: the round whose pane the screen shows open. The
+            # bot's round lags it by one between rounds, and the HUD's green
+            # ground followed the stale round (owner, 2026-11-12).
+            pane_round = self.ex._pane_round() if hasattr(self.ex, "_pane_round") else None
+            hudstate.update(round=rnd, cash=cash, lives=self._lives.confirmed, pane_round=pane_round,
                             waiting=getattr(self.ex, "waiting", None),
                             save_goal=list(goal) if goal else None, plan=plan,
                             towers=[[p.tid, p.kind, p.crosspath, round(p.x, 4), round(p.y, 4)] for p in towers],
