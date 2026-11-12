@@ -14,7 +14,9 @@ back, so it can never drift from its sources:
                threat_rounds: per mode, the first round each signature
                               (camo, lead, camo+lead, zebra, ddt ...) is needed
                crosscheck:    disagreements with data/game_model (when present)
-  counters.json counters:     per signature, every tower and the minimal
+  counters.json model_towers: attacks and blimp damage the hand facts lack,
+                              from the game model (derive_model_towers)
+                counters:     per signature, every tower and the minimal
                               crosspath at which it handles it on its own,
                               and what support (radar / MIB) adds
 
@@ -138,6 +140,89 @@ def _t(cross):
     return tuple(int(c) for c in cross.split("-"))
 
 
+# ---------------------------------------------------------------------------
+# Facts the hand entries lack, derived from the game model
+# ---------------------------------------------------------------------------
+# counters.json had no attack facts for the Desperado, Mermonkey, Skywarden,
+# Beast Handler and Glue Gunner ("no reliable facts - never counted"), and
+# no blimp damage figure for those or for the Ice Monkey and Dartling. So
+# they could never answer a bloon with two immunities at once (zebra, DDT:
+# threats._hit needs one attack that pops both), counted as zero blimp
+# damage in the executor's blimp ramp, and got a "support" build in
+# gen_builds (docs/tower_exclusions_audit.md item 5). The game model has all
+# of them, and btd6bot/dps_model.py turns it into damage sources; this part
+# reads those sources for every tower whose hand facts are missing.
+#
+# Conservative on purpose: an ability counts for nothing (it fires only part
+# of the time), a source that does no damage (a glue that only slows) pops
+# nothing, and the blimp figure is one target's: the shots that reach it,
+# plus its strongest damage over time once (a coat of glue does not stack).
+
+def _hurts_blimps(src, moab):
+    """Can this damage source hit MOAB-class bloons (camo and immunities
+    aside: those are part of the signature)?"""
+    if src.only_tags and not (src.only_tags & moab.tags):
+        return False
+    return not (src.excluded_tags & moab.tags)
+
+
+def _own_damage_sources(D, kind, tiers):
+    """The crosspath's damage sources (dps_model.profile) that do damage
+    and are not an ability's; [] when the model has no such crosspath."""
+    prof = D.profile(kind, tiers)
+    if prof is None:
+        return []
+    return [s for s in prof.sources if not s.ability and (s.damage > 0 or s.dot_total > 0 or s.dot_rate > 0)]
+
+
+def derive_model_towers():
+    """{tower: {"attacks": [...], "blimp_dps": [[cross, dps], ...]}} for the
+    towers whose hand facts in counters.json lack them (see above):
+
+    attacks    (only for a tower with no counted hand attack) one entry per
+               distinct (cannot_pop, blimp) pair of its damage sources, with
+               every crosspath where such a source exists;
+    blimp_dps  (only for a tower with no hand blimp_dps row) one row per
+               crosspath that hurts MOAB-class bloons: shots per second at a
+               lone target x damage to a MOAB, plus the strongest damage
+               over time per second.
+    Empty when the game model is missing."""
+    from btd6bot import dps_model as D
+    if not D.available():
+        return {}
+    co = TH.counters()
+    moab = D.layer("Moab")
+    out = {}
+    for kind, facts in (co.get("towers") or {}).items():
+        need_attacks = not any(TH._counted(a) for a in facts.get("attacks") or ())
+        need_blimp = kind not in (co.get("blimp_dps") or {})
+        if not (need_attacks or need_blimp):
+            continue
+        groups, rows = {}, []
+        for t in TH.all_crosspaths():
+            cross = "-".join(map(str, t))
+            sources = _own_damage_sources(D, kind, t)
+            for s in sources:
+                key = (tuple(sorted(s.immune)), _hurts_blimps(s, moab))
+                groups.setdefault(key, []).append(cross)
+            onto = [s for s in sources if _hurts_blimps(s, moab)]
+            dps = sum(s.shots_single * s.damage_vs(moab) for s in onto) + max((s.dot_rate for s in onto), default=0.0)
+            if dps > 0:
+                rows.append([cross, round(dps, 1)])
+        entry = {}
+        if need_attacks and groups:
+            entry["attacks"] = [
+                {"type": "model", "cannot_pop": list(immune), "blimp": blimp,
+                 "crosspaths": sorted(set(crosses), key=lambda c: (sum(_t(c)), c)),
+                 "confidence": "game_model", "what": "derived from the game model (dps_model sources)"}
+                for (immune, blimp), crosses in sorted(groups.items())]
+        if need_blimp and rows:
+            entry["blimp_dps"] = rows
+        if entry:
+            out[kind] = entry
+    return out
+
+
 def crosscheck():
     """Compare the hand-entered bloon facts with data/game_model/bloons.json
     (decoded from the game by tools/decode_sim_model.py): layer HP, speed
@@ -218,8 +303,22 @@ def build():
                              "'ddt' = blimp+camo+lead+black.")
     bl["crosscheck"] = crosscheck()
     co = json.loads((DATA / "counters.json").read_text(encoding="utf-8"))
-    co["counters"] = derive_counters()
-    co["crosscheck"] = crosscheck_towers()
+    co["model_towers"] = derive_model_towers()
+    co["model_towers_note"] = ("Derived by tools/build_bloon_kb.py from the game model through "
+                               "btd6bot/dps_model.py, for the towers whose hand facts above lack "
+                               "attacks or a blimp_dps row (btd6bot/threats.py model_facts). "
+                               "Abilities and damage-free sources are left out.")
+    # the parts below read the file through threats.py: let them see the
+    # derived facts just made, not the ones on disk
+    saved = TH.counters
+    TH.counters = lambda: co
+    TH.clear_caches()
+    try:
+        co["counters"] = derive_counters()
+        co["crosscheck"] = crosscheck_towers()
+    finally:
+        TH.counters = saved
+        TH.clear_caches()
     co["counters_note"] = ("Derived by tools/build_bloon_kb.py from damage_types + towers "
                            "(only facts the bot counts). Minimal crosspaths; any crosspath "
                            "on the way above them works too unless an attack is replaced "
