@@ -4870,8 +4870,9 @@ class Executor:
         from the map model's track cells; None for a tower not placed yet, or
         when the model has no usable track (then threats uses 2.5 x range)."""
         now = time.time()
+        rnd = getattr(self, "now_round", None)
         cached = getattr(self, "_mask_cache", None)
-        if cached is None or now - cached[0] > self.TRACK_MASK_TTL_S:
+        if cached is None or now - cached[0] > self.TRACK_MASK_TTL_S or cached[2] != rnd:
             mask = None
             try:
                 f = getattr(self.m, "track_mask", None)
@@ -4880,13 +4881,13 @@ class Executor:
                 mask = None
             if mask is not None and int(mask.sum()) < 30:
                 mask = None
-            cached = self._mask_cache = (now, mask)
-        mask = cached[1]
+            live = self._live_track_cells(mask) if mask is not None else None
+            cached = self._mask_cache = (now, mask, rnd, live)
+        mask, total = cached[1], cached[3]
         if mask is None:
             return None
-        total = float(mask.sum())
         ys, xs = np.nonzero(mask)
-        per_cell = self._track_length() / total      # fraction of the track per cell
+        per_cell = self._track_length() / total      # world units of track per cell
 
         def reach(tid, kind):
             p = self.g.towers.get(tid)
@@ -4896,6 +4897,42 @@ class Executor:
             r = self._range_cells(kind)
             return float(((xs - cx) ** 2 + (ys - cy) ** 2 <= r * r).sum()) * per_cell
         return reach
+
+    def _live_track_cells(self, mask):
+        """How many cells of the track mask stand for the paths bloons take
+        in the round being played: the cells _reach_fn spreads one path's
+        length (_track_length) over.
+
+        During a path phase's lead-in (mapgeom.PHASE_LEAD) the track is
+        painted for the next phase's path as well. Spread over both, a cell
+        counted half its length, and every tower's blimp reach was halved
+        in Erosion rounds 14-18, 32-36, 50-54 and 68-72, so blimp damage
+        the defence had was bought again (audit 2026-11-12). The mask is
+        scaled by the share of the painted paths' cells (mapgeom.path_masks,
+        drawn alike for both) that the round's own paths take. Outside a
+        lead-in, or without geometry, every cell of the mask counts."""
+        total = int(mask.sum())
+        rnd = getattr(self, "now_round", None)
+        if rnd is None:
+            return total
+        from . import mapgeom
+        try:
+            geom = mapgeom.load(self.m.name)
+            if not geom:
+                return total
+            painted = mapgeom.idle_phase_paths(geom, rnd)
+            now = mapgeom.idle_phase_paths(geom, rnd, lead=0)
+            if now == painted:
+                return total
+            proj = mapgeom.Projection(self.m.playfield)
+            live = mapgeom.path_masks(geom, proj, now)
+            drawn = mapgeom.path_masks(geom, proj, painted)
+        except Exception:      # geometry is optional: never let it stop a game
+            return total
+        if not live or not drawn:
+            return total
+        share = np.logical_or.reduce(live).sum() / max(1, np.logical_or.reduce(drawn).sum())
+        return max(30, int(round(total * min(1.0, float(share)))))
 
     def blimp_ratio(self, load, towers=None):
         """Blimp damage the defence deals in reach / blimp HP the round brings."""
