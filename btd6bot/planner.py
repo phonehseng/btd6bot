@@ -2210,6 +2210,25 @@ HOPELESS_CEILING = 0.2
 HOPELESS_LOSSES = 3
 
 
+def first_trial(account: AccountState, s: StrategySpec, map_name: str, mode: str) -> bool:
+    """May build ``s`` be played once as a last resort on a hopeless
+    map/mode? Only a map's own build (is_own_map_build) with no game of its
+    own there yet: one game is its record, after which hopeless() decides
+    again.
+
+    Why: the losses that make a map/mode hopeless were the general builds'.
+    On 2026-11-11 chimps_ninja_sun reached rounds 93-98 on Quad, Covered
+    Garden, Sunken Columns and Bloonarius Prime Impoppable with most of its
+    cash in off-plan buys and its plan steps given up on refused spots;
+    their own builds (strategies/maps/*_impoppable.yaml: exact spots,
+    plan_first) are a different game, and without a first game nothing
+    would ever tell how they do."""
+    if not is_own_map_build(s, map_name):
+        return False
+    wins, losses = build_map_record(account, s.id, map_name, mode)
+    return wins + losses == 0
+
+
 def hopeless(account: AccountState, map_name: str, mode: str) -> bool:
     """Is ``map_name`` / ``mode`` hopeless for a last resort (see
     HOPELESS_CEILING)? Never once it has been won."""
@@ -2926,7 +2945,7 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
         open_rest = [c for c in scored
                      if c.tier is None and c.mode != "chimps" and not c.s.achievement]
         rest = [c for c in open_rest if not struck_out(account, c.s.id, c.map, c.mode)
-                and not hopeless(account, c.map, c.mode)]
+                and (not hopeless(account, c.map, c.mode) or first_trial(account, c.s, c.map, c.mode))]
         if not rest:
             # Every last resort has struck out: play them anyway rather
             # than idle (owner rule, 2026-11-03).

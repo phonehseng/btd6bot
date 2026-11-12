@@ -1,0 +1,80 @@
+# Midnight Mansion, impoppable: midnightmansion_draft with an exact spot per tower and plan_first.
+#
+# UNTESTED: written by tools/pin_spots.py, never played as it stands. The plan
+# is midnightmansion_draft's; each tower's `at` is the best legal spot for its kind on this map
+# (the geometry minus the spots the live game refused), and a tower with `near`
+# stands at the legal spot closest to the towers it names. plan_first: the
+# plan's late answers are bought before any off-plan reinforce buy (on
+# 2026-11-11 such buys outweighed the plan's own towers on these maps and its
+# MOAB Eliminator / Perma-Spike were still waiting when the game was lost).
+# base_success is the map builds' lowest (0.5); the record sets it from here.
+#
+# Midnight Mansion has no legal cell for a Monkey Village, Super Monkey, Ace, Heli or
+# spike factory (placement.valid_spots, every one of them 0 cells), so chimps_ninja_sun's
+# villages, Sun Avatar, Ground Zero aces and Perma-Spike cannot stand; its plan ran out
+# at round 59 (2026-11-11) with $34k of plan towers built. This plan keeps its ninja and
+# alchemist core and takes the late game to towers that fit: a Night Vision sniper line
+# (4-2-0 Maim MOAB for the camo DDTs, 5-2-0 Cripple MOAB for the BAD), Bloon Sabotage
+# and a MOAB Eliminator bomb.
+id: midnightmansion_impoppable
+map: Midnight Mansion
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
+modes: [impoppable]
+planner:
+  towers: {ninja: [4, 4, 4], alchemist: [3, 2, 0], sniper: [5, 2, 0], bomb: [0, 5, 0]}
+  base_success: {impoppable: 0.5}
+  maps: [Midnight Mansion]
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.227, 0.862]}
+  - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.633, 0.862]}
+  - {do: upgrade, id: n2, to: 2-0-2}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.216, 0.504]}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: place, id: sn1, kind: sniper, role: dps, at: [0.238, 0.146]}
+  - {do: upgrade, id: sn1, to: 2-2-0}
+  - {do: target, id: sn1, mode: strong}
+  - {do: upgrade, id: sn1, to: 4-2-0}
+  - {do: place, id: n4, kind: ninja, role: support, near: [a1], near_radius: 8, at: [0.216, 0.419]}
+  - {do: upgrade, id: n4, to: 0-4-0}
+  - {do: place, id: b1, kind: bomb, role: support, near: [a1], near_radius: 8, at: [0.216, 0.334]}
+  - {do: upgrade, id: b1, to: 0-4-0}
+  - {do: place, id: sn2, kind: sniper, role: dps, at: [0.281, 0.146]}
+  - {do: upgrade, id: sn2, to: 4-2-0}
+  - {do: target, id: sn2, mode: strong}
+  - {do: upgrade, id: sn1, to: 5-2-0}
+  - {do: upgrade, id: b1, to: 0-5-0}
+fill:
+  - {do: place, kind: sniper, role: dps, max: 5}
+  - {do: upgrade, kind: sniper, to: 4-2-0}
+panic:
+  - {do: place, kind: ninja, role: exit}
+answers:
+  lead:
+    - {do: upgrade, id: a1, to: 1-0-0}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.216, 0.504]}
+  ceramic:
+    - {do: upgrade, id: n1, to: 3-0-2}
+  moab:
+    - {do: upgrade, id: n2, to: 2-0-3}
+  bfb:
+    - {do: upgrade, id: n2, to: 2-0-4}
+  rush:
+    - {do: upgrade, id: n1, to: 4-0-2}
+  zomg:
+    - {do: upgrade, id: sn1, to: 4-2-0}
+    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.238, 0.146]}
+  ddt:
+    - {do: upgrade, id: sn1, to: 4-2-0}
+    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.238, 0.146]}
+  bad:
+    - {do: upgrade, id: sn1, to: 5-2-0}
+    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.238, 0.146]}
