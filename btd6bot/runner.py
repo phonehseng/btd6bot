@@ -73,7 +73,9 @@ MEDAL_AUDIT_GAP = 3600
 # (run_forever.ps1) kills a bot whose logs/bot.log and logs/state.txt have not
 # changed for 10 minutes, so long waits refresh the status this often.
 IDLE_STATUS_EVERY = 120
-IDLE_POLL = 5                          # seconds between checks for PAUSE / new code while waiting
+IDLE_NAP_S = 1800                      # nap when the planner has nothing to play (Bot.idle_seconds)
+IDLE_NAP_MIN_S = 60                    # ... at least this long, however soon a retry is due
+IDLE_POLL = 5                        # seconds between checks for PAUSE / new code while waiting
 # Consecutive game-loop errors, kept on disk so a restart does not reset them
 ERROR_FILE = ROOT_DIR / "logs" / "error_streak.json"
 ERROR_STREAK_WAIT = 3                  # the same error this many games in a row = a bot bug
@@ -1442,8 +1444,11 @@ class Bot:
                 self._achievement_tasks_if_due()
                 plan = self.next_plan()
                 if plan is None:
-                    log.error("planner has nothing to play - waiting 30 min (benches expire, XP grows)")
-                    self._idle(1800, "idle: nothing to play", code_stamp)
+                    nap = self.idle_seconds()
+                    log.error("planner has nothing to play - waiting %.0f min (%s)", nap / 60,
+                              "benches expire, XP grows" if nap >= IDLE_NAP_S
+                              else "until a benched loss is due for its retry")
+                    self._idle(nap, "idle: nothing to play", code_stamp)
                     continue
                 if self._audit_black_bordered_pick(plan):
                     continue    # medals changed: plan again from the corrected notes
@@ -1687,7 +1692,7 @@ class Bot:
         reasons = self._bench_reasons()
         benches = self._benches()
         now = time.time()
-        ready = []
+        ready, due = [], []
         for i, c in enumerate(cands):
             key = f"{c.map}|{c.mode}"
             if (c.map, c.mode) in self.bad or key not in benches:
@@ -1699,9 +1704,25 @@ class Bot:
             since = r.get("since") or (benches[key] - LOSS_BENCH_HOURS * 3600)
             if now - since >= BENCH_RETRY_AFTER_H * 3600:
                 ready.append((since, i, c))
+            else:
+                due.append(since + BENCH_RETRY_AFTER_H * 3600 - now)
+        # With none ready yet: how long until the first one is, for run()'s
+        # nap (idle_seconds). On 2026-11-11 22:25 the bot napped its fixed
+        # 30 minutes although two lost games came up for their retry 11 and
+        # 20 minutes into it.
+        self._retry_due_in = min(due) if due and not ready else None
         # the loss longest ago first, so the retries go round the benched
         # games instead of replaying the planner's favourite every hour
         return min(ready, key=lambda t: (t[0], t[1]))[2] if ready else None
+
+    def idle_seconds(self):
+        """How long run() naps when the planner has nothing to play:
+        IDLE_NAP_S, or less when a benched loss comes up for its retry
+        sooner (_retry_benched) - never under IDLE_NAP_MIN_S."""
+        due = getattr(self, "_retry_due_in", None)
+        if due is None:
+            return IDLE_NAP_S
+        return max(IDLE_NAP_MIN_S, min(IDLE_NAP_S, due + 1))
 
     def benched(self, map_name, mode):
         return f"{map_name}|{mode}" in self._benches() or (map_name, mode) in self.bad
@@ -2176,6 +2197,7 @@ class Bot:
         from . import safety
         from .planner import EASY_FAMILY, MEDIUM_FAMILY
         specs = planner_specs(self.strats, self.account)
+        self._retry_due_in = None     # set again by _retry_benched when it finds none ready
         pick = self.owners_pick(specs)
         if pick is not None:
             return pick

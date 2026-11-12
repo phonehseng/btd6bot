@@ -85,7 +85,15 @@ planner:
   # round 6 froze together on round 15 (dps_model.frozen_in: 15-16, 25-26,
   # 35-36) and round 15 took the one life. A one-life build there needs its
   # towers bought in groups rounds apart, as glacialtrail_medium does.
-  excluded_maps: [Tricky Tracks, Glacial Trail]
+  # not Flooded Valley (2026-11-11 17:03 and 21:32, Impoppable): the dam
+  # blocks sight and no legal land cell lets a ninja, dart or tack reach the
+  # track (tests/test_floodedvalley_builds_offline.py). n1 stood where it
+  # reached 56 track cells of the 229 a refused spot would have given, the
+  # dart and tack openers found no spot at all, and round 6 took the one
+  # life 30 s into the game, both times (loss case
+  # 20261111_213425_FloodedValley_impoppable). The map needs a water build
+  # on the right-hand river, like floodedvalley_abr (backlog 92).
+  excluded_maps: [Tricky Tracks, Glacial Trail, Flooded Valley]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: upgrade, id: n1, to: 1-0-1}

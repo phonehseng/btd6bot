@@ -161,6 +161,14 @@ def test_abr_build_beats_the_general_build_that_lost():
     assert min(own.values()) > 4 * min(general.values())
 
 
+def test_the_general_land_build_is_kept_off_the_map():
+    # chimps_ninja_sun lost Impoppable here twice on 2026-11-11, both in
+    # round 6, half a minute into the game: its ninja, dart and tack are
+    # land towers (see test_no_land_tower_sees_the_track)
+    planner = S.load_all()["chimps_ninja_sun"]["planner"]
+    assert MAP in planner["excluded_maps"]
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.ERROR)
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
