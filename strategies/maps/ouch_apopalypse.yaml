@@ -29,6 +29,9 @@
 # helis, four aces) rates 0.23 here (round 24). Admiral Brickell would buff
 # the boats but places only on water, and the pond is full; Quincy, the
 # cheapest land hero, comes after the second Monkey Pirates.
+# A Sniper Monkey 4-2-0 (Maim MOAB, map-wide) comes after the second Aircraft
+# Carrier: it stuns BFBs on any lane, and strategy.coverage's static tables
+# (which list no buccaneer for ceramics or BFBs) need a tower they know.
 #
 # Evidence: tools/apopalypse_check.py ouch_apopalypse --maps-dir <live
 # data/maps> --no-drift --samples 6 --click-budget 4 -v (2026-11-12, the
@@ -37,10 +40,10 @@
 # at round 17 (constructed: 40 pinks and a purple), R16 1.33, R25-26 1.41-
 # 1.43, R18-24 1.59-2.57; from round 27 on 1.98 or more, the MOAB rounds
 # 44-60 at 2.02-3.12 (R54 2.71). Random windows 1.92 or more everywhere.
-# Plan 27/28 by round 60 (Pirate Lord waits); b5 and b7 one cell off their
-# spot. Under the 2.0 gate in rounds 16-26, where the cash of a poor game
-# buys no more boats, but far above the general builds: apopalypse_ninja_
-# sniper 0.17 (round 29) and every round 15-60 under 2; apopalypse_apache_
+# Plan 29/30 by round 60 (Pirate Lord waits; s1 reaches Maim MOAB by 60, R54
+# 2.77, R57 2.71); b5 and b7 one cell off their spot. Under the 2.0 gate
+# in rounds 16-26, where the cash of a poor game buys no more boats, but
+# far above the general builds: apopalypse_ninja_sniper 0.17 (round 29) and every round 15-60 under 2; apopalypse_apache_
 # spikes 0.42-0.67 in its own header. Tried and worse: ouch_medium's own
 # order 0.23 (R24); all boats 2-0-0 first (b3 can then never take 0-2-2: no
 # camo-lead popper, 0.06 from round 36); five boats in the setup (R15 1.59,
@@ -54,7 +57,7 @@ hero: quincy
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [apopalypse]
 planner:
-  towers: {buccaneer: [4, 5, 2], sub: [2, 3, 0]}
+  towers: {buccaneer: [4, 5, 2], sub: [2, 3, 0], sniper: [4, 2, 0]}
   base_success: {apopalypse: 0.5}
   maps: ["#Ouch"]
 plan:
@@ -84,6 +87,8 @@ plan:
   - {do: place, id: sb1, kind: sub, role: dps, at: [0.478, 0.572]}               # the pond's last legal sub cell
   - {do: upgrade, id: sb1, to: 2-3-0}                                            # Ballistic Missile
   - {do: upgrade, id: b1, to: 4-2-0}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.024, 0.129]}  # ouch_medium's map-wide sniper spot
+  - {do: upgrade, id: s1, to: 4-2-0}                                             # Maim MOAB: stuns the BFBs (~R58)
   - {do: upgrade, id: b3, to: 0-5-2}                                             # Pirate Lord: a rich game only
 answers:
   lead: [{do: upgrade, id: b3, to: 0-2-2}]
