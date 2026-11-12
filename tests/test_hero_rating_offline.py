@@ -153,9 +153,11 @@ def test_psi_is_an_instakill_over_time():
         hp, carry, killed, _ = rates.get("Moab", 1.0, rho, 0)
         assert math.isclose(hp * (1.0 + carry / D.layer("Moab").hp), 600.0 / (0.85 + 15.0), rel_tol=1e-6)
         assert killed == 0.0
-    # no MOABs before level 14, no ceramics before 7
-    assert not any(src.can_hit(D.layer("Moab")) for src in D.profile(D.hero_kind("psi"), (13,)).sources)
-    assert not any(src.can_hit(D.layer("Ceramic")) for src in D.profile(D.hero_kind("psi"), (6,)).sources)
+    # no MOABs before level 14, no ceramics before 7 (the grips; Psychic
+    # Blast's stun is no damage)
+    grips = lambda lv: [x for x in D.profile(D.hero_kind("psi"), (lv,)).sources if x.grip_rate]
+    assert not any(src.can_hit(D.layer("Moab")) for src in grips(13))
+    assert not any(src.can_hit(D.layer("Ceramic")) for src in grips(6))
 
 
 # ---------------------------------------------------------------------------

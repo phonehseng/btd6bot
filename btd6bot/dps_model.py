@@ -48,8 +48,11 @@ is left after the last station leaks and costs lives (the game's leak
 damage, children included).
 
 Deliberate simplifications (each is on the safe side unless noted):
-    * heroes, abilities, Monkey Knowledge, alchemist brews and
-      slows/freezes/knockback are not counted (they only help);
+    * Monkey Knowledge and alchemist brews are not counted (they only
+      help); heroes (HERO_RATING), abilities at their uptime
+      (ABILITY_RATING) and slows, stuns, knockback and damage-taken
+      debuffs (STATUS_RATING) are, each read cautiously
+      (docs/model_fix_plan.md phase 2);
     * towers aimed by hand (Mortar's target point, Dartling's cursor) do
       nothing (the bot cannot aim them);
     * overlapping zones are worked one after another along the route
@@ -335,6 +338,11 @@ class Source:
     ability: str = ""          # the ability it belongs to, credited at its uptime ("" = the tower's
                                # own attack; _ability_attacks)
     grip_rate: float = 0.0     # a hit that holds its bloon and deals this much a second (Psi: _psi_grip)
+    effects: dict = field(default_factory=dict)   # what a hit does besides damage (the export's
+                               # "effects": stun, slow, freeze, maim, pushback, blowback, debuff,
+                               # removes); read by _Controls
+    ability_use: str = ""      # for an ability's source: the bot's use of it ("moab": pressed in
+                               # blimp rounds only, see _Controls)
 
     def can_hit(self, lay):
         """Can this source damage this layer at all?"""
@@ -371,6 +379,7 @@ class Profile:
     flight_speed: float = 0.0        # a plane's speed along its flight circle (air_unit.speed)
     fire_rate: float = 0.0           # weapon shots a second of its own attacks (an Alchemist dip's budget)
     boosts: list = field(default_factory=list)   # its abilities' boosts to its own attacks (_ability_boosts)
+    zones: list = field(default_factory=list)    # slow zones around it (the export's "zones": Arctic Wind)
 
 
 # The bloon properties a damage type can be unable to pop (Layer.immune).
@@ -575,6 +584,23 @@ def _pierce_cost(p):
     return {k: float(v) for k, v in (p.get("extra_pierce_cost") or {}).items() if v}
 
 
+# The effects of a hit that hold bloons back (_Controls). "removes" (camo)
+# and "debuff" act on the damage of other towers instead.
+CONTROL_EFFECTS = ("stun", "slow", "freeze", "maim", "pushback", "blowback", "debuff", "removes")
+
+
+def _controls_of(p):
+    """Does projectile p do something to bloons the model counts besides
+    damage (CONTROL_EFFECTS)? A glue projectile does no damage and was no
+    source at all: every Glue Gunner below 0-0-5 was worth nothing
+    (docs/model_audit_primary.md F1)."""
+    if not STATUS_RATING:
+        return False
+    eff = p.get("effects") or {}
+    return any(k in eff for k in CONTROL_EFFECTS) and not (
+        set(eff) <= {"removes"} and "camo" not in (eff.get("removes") or ()))
+
+
 def _psi_grip(p):
     """Psi's grip (the export's "psi": PsiEffectModel) as an instakill.
 
@@ -611,7 +637,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
         p = _psi_grip(p)
     camo = camo_chain and p.get("camo", False)
     attack_range = attack.get("range", 0.0)
-    if (p.get("damage") or p.get("dot")) and not p.get("hits_nothing"):
+    if (p.get("damage") or p.get("dot") or _controls_of(p)) and not p.get("hits_nothing"):
         # a damage source: direct damage, damage over time (corrosive glue,
         # burns), or both; a DoT-only projectile does 0 on the hit itself
         dot = p.get("dot") or {}
@@ -656,6 +682,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             zone_radius=attack.get("zone_radius"),
             zone_fixed=bool(attack.get("zone_fixed")),
             grip_rate=float(p.get("grip_rate") or 0.0),
+            effects=dict(p.get("effects") or {}),
         ))
     pierce = max(1.0, _impact_pierce(p) / (1.0 + _pierce_cost(p).get("", 0.0)))
     if "CollideOnlyWithTargetModel" in (p.get("other") or ()):
@@ -1293,14 +1320,18 @@ def profile(kind, tiers):
             share = _uptime(ab, made.get("duration"))
             for a in made.get("attacks", []):
                 _flatten_attack(a, extra, multiplier=share, tower_range=made.get("range"))
+        use = (_hero_ability_use(hero_of(kind), ab.get("name")) if hero_of(kind) is not None
+               else _tower_ability_uses().get((kind, ab.get("name")))) or ""
         for s in extra:
             s.ability = ab.get("name") or "ability"
+            s.ability_use = "interval" if ab.get("interval") else use
         sources += extra
     return Profile(kind=kind, tiers=tiers, range=entry.get("range", 0.0),
                    is_global=is_global, sources=sources, aim_bound=aim_bound and not sources,
                    buffs=list(entry.get("buffs", [])) + _subtower_buffs(entry) + _potion_buffs(entry)
                    + [b for ab in pressed for b in _ability_buffs(ab)],
                    boosts=[b for ab in pressed for b in _ability_boosts(ab, entry, kind)],
+                   zones=list(entry.get("zones") or []),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
                    pattern_radius=pattern, own_radius=own,
                    flight_speed=float((entry.get("air_unit") or {}).get("speed") or 0.0),
@@ -1801,6 +1832,41 @@ class Lot:
     moab_hp: float = 1.0
 
 
+def _delay_at(segs, x):
+    """Seconds a lot has lost by distance x to the controls on its route:
+    segs = ((a, b, seconds), ...), each spread evenly over [a, b]."""
+    d = 0.0
+    for a, b, sec in segs:
+        if x >= b:
+            d += sec
+        elif x > a:
+            d += sec * (x - a) / (b - a)
+    return d
+
+
+def _time_at(lot, segs, x):
+    """When the lot is at distance x of its route (t0 is its time at 0
+    without delays, Lot)."""
+    return lot.t0 + x / lot.speed + (_delay_at(segs, x) if segs else 0.0)
+
+
+def _pos_at(lot, segs, t):
+    """Distance along its route the lot has reached at time t (the inverse
+    of _time_at; piecewise linear between the segments' ends)."""
+    if not segs:
+        return (t - lot.t0) * lot.speed
+    marks = sorted({0.0} | {a for a, _, _ in segs} | {b for _, b, _ in segs})
+    prev_x, prev_t = 0.0, _time_at(lot, segs, 0.0)
+    if t <= prev_t:
+        return (t - lot.t0) * lot.speed
+    for x in marks[1:]:
+        tx = _time_at(lot, segs, x)
+        if tx >= t:
+            return prev_x + (x - prev_x) * (t - prev_t) / max(tx - prev_t, 1e-12)
+        prev_x, prev_t = x, tx
+    return prev_x + (t - prev_t) * lot.speed
+
+
 @lru_cache(maxsize=None)
 def _round_groups(set_name, rnd):
     rs = _json(str(ROUND_SETS))
@@ -1937,6 +2003,11 @@ class Station:
     # the same tower's local sources as a station of their own, when its
     # other sources reach the whole map (station_for); played with it
     parts: list = field(default_factory=list)
+    # slow zones around the tower (Profile.zones: Arctic Wind's 40% slow)
+    slow_zones: list = field(default_factory=list)
+    # damage-taken debuffs and camo removal from other towers that reach
+    # this one's zones, set by _Controls before a round is played
+    influence: object = None
 
     def covers(self, path):
         return path < len(self.zones) and self.zones[path] is not None and self.zones[path].length > 0
@@ -2047,15 +2118,29 @@ class _Rates:
         whole = rbe(bloon_id, moab_hp)
         hp_rate = overflow = kill_rate = kill_carry = 0.0
         camo_paths = self.station.camo_paths
+        infl = self.station.influence
+        bonus, seen = infl.on(lay, path, rho) if infl is not None else (0.0, 0.0)
+        plain = None
         for src in self.station.sources:
+            share = 1.0
             if not src.can_hit(lay):
-                continue
+                # camo bloons another tower stripped of their camo upstream
+                # (Embrittlement, Shimmer: _Influence) are hit as plain ones
+                if not (seen > 0.0 and lay.camo and not src.camo):
+                    continue
+                if plain is None:
+                    plain = _decamo(lay)
+                if not src.can_hit(plain):
+                    continue
+                share = seen
             if src.ability and not _own_attack_hits(self.station.kind, self.station.tiers, lay):
                 continue     # an ability adds to what its tower can hit, no more (_own_attack_hits)
             if lay.camo and src.camo_shared and camo_paths is not None and path not in camo_paths:
                 continue     # Advanced Intel sees camo only where a detector reaches
-            hits = _hit_rate(src, lay, rho, zone)
+            hits = _hit_rate(src, lay, rho, zone) * share
             d = src.damage_vs(lay)
+            if bonus and d > 0.0:
+                d += bonus           # a debuffed bloon takes more from every hit (_Influence)
             if src.grip_rate:
                 # a grip holds its bloon for (what it deals) / grip_rate
                 # seconds, and the attack waits for it before its cooldown
@@ -2185,8 +2270,9 @@ class _Server:
     zone it builds stock, up to bank_seconds of production, starting from
     bank_start left over from the last round, and spends it instantly."""
 
-    def __init__(self, station, out):
+    def __init__(self, station, out, controls=None):
         self.st = station
+        self.controls = controls       # _Controls: delays on the lots' routes (None: no status effects)
         self.rates = _Rates(station)
         self.out = out                 # lots handed on to the next station
         self.pending, self.active = [], []
@@ -2201,7 +2287,12 @@ class _Server:
             return None
         hp_rate, overflow, killed, _ = r
         lay = layer(lot.bloon, lot.moab_hp)
-        deadline = release + max(0.0, zone.entry + zone.length - pos) / lot.speed
+        end = zone.entry + zone.length
+        segs = self.segs(lot)
+        if segs:
+            deadline = release + max(0.0, _time_at(lot, segs, max(end, pos)) - _time_at(lot, segs, pos))
+        else:
+            deadline = release + max(0.0, end - pos) / lot.speed
         prio = 0 if (self.st.strong and lay.moab) else 1
         if not lay.moab and lay.hp <= SMALL_LAYER_HP:
             per_bloon, passed = self.rates.subtree(lot.bloon, lot.moab_hp, lot.rho, lot.path, free)
@@ -2212,6 +2303,19 @@ class _Server:
         work = lot.count * need / hp_rate
         return _Job(release, deadline, work, work, lot, zone, pos, carry, prio,
                     killed=killed if need > 0.0 else 0.0)
+
+    def segs(self, lot):
+        """The delays on this lot's route (_Controls.segments), () without.
+        Kept on the lot for this play (lots are shared between plays of a
+        margin search, each with its own controls)."""
+        if self.controls is None:
+            return ()
+        held = lot.__dict__.get("_segs")
+        if held is not None and held[0] is self.controls:
+            return held[1]
+        segs = self.controls.segments(lot)
+        lot.__dict__["_segs"] = (self.controls, segs)
+        return segs
 
     def push(self, job):
         self.seq += 1
@@ -2249,6 +2353,15 @@ class _Server:
                 heapq.heappop(self.active)
                 self.finish(job, t)
 
+    def born(self, lot, pos):
+        """A lot that appears at distance pos (children of a popped bloon,
+        made with t0 = t - pos / speed): its t0 moved back by the delays its
+        own route has before pos, so that _time_at(lot, pos) is t."""
+        segs = self.segs(lot)
+        if segs:
+            lot.t0 -= _delay_at(segs, pos)
+        return lot
+
     def finish(self, job, t):
         """The job is done or its bloons left the zone at time t: what was
         not popped goes on; the popped bloons' children appear here."""
@@ -2262,22 +2375,26 @@ class _Server:
         self.last_pop = max(self.last_pop, t)
         popped = lot.count * done
         end = job.zone.entry + job.zone.length
-        pos = min(end, job.pos + lot.speed * (t - job.release))
+        segs = self.segs(lot)
+        if segs:
+            pos = min(end, max(job.pos, _pos_at(lot, segs, t)))
+        else:
+            pos = min(end, job.pos + lot.speed * (t - job.release))
         if job.passed is not None:
             # a small bloon's whole tree was worked at once: hand on the layers
             # this station cannot pop, from where the bloon was popped
             for child, k in job.passed:
                 speed = layer(child, lot.moab_hp).speed * lot.speed_mult
-                self.out.append(Lot(lot.path, t - pos / speed, child, popped * k, lot.rho * k, speed,
-                                    lot.speed_mult, lot.moab_hp))
+                self.out.append(self.born(Lot(lot.path, t - pos / speed, child, popped * k, lot.rho * k, speed,
+                                              lot.speed_mult, lot.moab_hp), pos))
             return
         lay = layer(lot.bloon, lot.moab_hp)
         kids = sum(k for _, k in lay.children) or 1
         popped *= 1.0 - job.killed          # destroyed whole: no children
         for child, k in lay.children:
             speed = layer(child, lot.moab_hp).speed * lot.speed_mult
-            child_lot = Lot(lot.path, t - pos / speed, child, popped * k, lot.rho * k, speed,
-                            lot.speed_mult, lot.moab_hp)
+            child_lot = self.born(Lot(lot.path, t - pos / speed, child, popped * k, lot.rho * k, speed,
+                                      lot.speed_mult, lot.moab_hp), pos)
             child_job = self.job(child_lot, job.zone, t, pos, job.carry / kids)
             if child_job is None or child_job.deadline <= t + 1e-9:
                 self.out.append(child_lot)
@@ -2298,6 +2415,288 @@ def _lots(mode, rnd, track):
                       for sc in track.scenarios_in(rnd)
                       for turn in round_turns(mode, rnd, track, sc)]
     return cache[key]
+
+
+# ===========================================================================
+# Status effects: time added on the track, damage-taken debuffs, decamo
+# ===========================================================================
+
+# Stuns, slows, freezes and knockback hold bloons back, and a slowed bloon
+# spends longer in every tower's reach - the way the model already counts
+# time in range (docs/model_fix_plan.md item 9; docs/model_audit_primary.md
+# F1, military M3, magic finding 13). Each controlling tower adds a delay
+# to the lots it can touch, spread over the stretch of route where it
+# holds them: a stun of s seconds per hit at h hits a second on the n
+# bloons of its zone holds each for a share u = h / n * s of the time
+# there (Maim MOAB's 3 s per 1.59 s keeps a lone MOAB held for good, a
+# BFB's 1.5 s 94% of the time: fandom:Maim_MOAB); a slow to m for L s
+# costs a bloon it hits L * (1 - m) s; a push of d units costs d / v.
+# Debuffs make every hit on a debuffed bloon count more: Cripple MOAB +5
+# (bw:Cripple_MOAB_(BTD6)), Embrittlement +1, Super Brittle +4, Glue
+# Strike +2, at their uptime on the bloons of the debuffer's zone, for the
+# towers whose zones overlap it; Embrittlement's and Shimmer's camo removal
+# lets towers further on hit the share it touched as plain bloons.
+# Conservative on purpose: a stun holds a bloon at most MAX_HOLD of the time
+# in its zone, all delays together add at most MAX_STALL x the lot's own
+# time on the track, BADs ignore every control the game does not let
+# through (a "Bad" slow modifier, Cripple's BAD duration), effects do not
+# carry into a popped bloon's children, and frozen bloons stay hittable by
+# sharp towers; a slow reaches blimps only with a MOAB modifier or none at
+# all (_moab_slowable). False plays every round as before.
+#
+# Calibrated on the same rounds, against items 7-8: AUC 0.813 -> 0.814,
+# rounds at or above 2.0 that leaked 0.54% -> 0.52% (0.53% at the matched
+# cut), held rounds under 2.0 54.6% -> 51.2%; at or above 1.0 0.81% ->
+# 0.88% (0.84% matched): neutral at the safety bar, so it stays on. The
+# median margin of held rounds rose 1.81 -> 1.94, of leaked ones 0.55 ->
+# 0.69.
+STATUS_RATING = True
+MAX_HOLD = 2.0 / 3.0         # a stun keeps a bloon at most this share of its time in the zone (x3 time)
+MAX_STALL = 1.0              # all delays add at most this many times the lot's undelayed time on its route
+MIN_DELAY_S = 0.05           # delays shorter than this are left out (they only cost time to play)
+MAIM_KEYS = {"Moab": "moabDuration", "Bfb": "bfbDuration", "Zomg": "zomgDuration", "Ddt": "ddtDuration",
+             "Bad": "badDuration"}
+
+
+def _decamo(lay):
+    """The layer as a bloon stripped of its camo."""
+    return Layer(**{**lay.__dict__, "camo": False})
+
+
+def _is_bad(lay):
+    return "Bad" in lay.tags
+
+
+def _control_applies(eff, kind, lay):
+    """Does effect `kind` of a hit's effects reach a bloon of this layer?
+    The effect's own filters (only_tags / excluded_tags), MOAB-class only
+    where the game lets it (a freeze needs "moabs"; a slow on MOAB-class
+    needs a MOAB slow modifier (_moab_slowable); a BAD needs a "Bad" one)."""
+    e = eff.get(kind) or {}
+    if isinstance(e, dict):
+        if e.get("only_tags") and not (set(e["only_tags"]) & lay.tags):
+            return False
+        if set(e.get("excluded_tags") or ()) & lay.tags:
+            return False
+    mods = eff.get("slow_modifier") or {}
+    if kind == "maim":
+        key = next((MAIM_KEYS[t] for t in MAIM_KEYS if t in lay.tags), None)
+        return key is not None and (e.get(key) or 0.0) > 0.0
+    if kind == "freeze":
+        return (not lay.moab or bool(e.get("moabs"))) and not _is_bad(lay)
+    if kind in ("stun", "slow"):
+        # a BAD ignores slows and stuns unless the effect names it (Bloon
+        # Sabotage's and MOAB Glue's "Bad" modifier)
+        if _is_bad(lay):
+            return "Bad" in mods
+        return kind == "stun" or not lay.moab or _moab_slowable(eff)
+    if kind == "debuff" and "slow" in eff and lay.moab:
+        return _moab_slowable(eff)          # Glue Strike's +2 is for glued bloons
+    if kind == "pushback":
+        tag = e.get("tag") or ""
+        return not _is_bad(lay) and (not tag or tag in lay.tags)
+    if kind == "blowback":
+        return not _is_bad(lay) and (not lay.moab or bool(e.get("moabs")))
+    return True
+
+
+def _moab_slowable(eff):
+    """Does a slow reach MOAB-class bloons? Only with a "Moabs" slow
+    modifier other than 1 (MOAB Glue's x2.5: the 37.5% blimp slow,
+    fandom:MOAB_Glue), or with no "Moabs" entry at all (Bloon Sabotage's
+    wave-wide slow). Every glue carries "Moabs": 1.0, and a glue without
+    MOAB Glue glues no blimp - read as a slow, two glues (one with Glue
+    Storm) rated a Peninsula Primary Only round 40 at 3.29 that lost 60
+    lives (calibration of item 9)."""
+    mods = eff.get("slow_modifier") or {}
+    return "Moabs" not in mods or float(mods["Moabs"]) != 1.0
+
+
+def _slow_factor(eff, lay):
+    """Speed multiplier of a slow on this layer (its slow modifier for the
+    layer's tags: MOAB Glue x2.5 -> 37.5% on MOAB-class)."""
+    m = float((eff.get("slow") or {}).get("multiplier", 1.0))
+    for tag, mod in (eff.get("slow_modifier") or {}).items():
+        if tag in lay.tags:
+            m *= float(mod)
+    return min(1.0, max(0.0, m))
+
+
+class _Influence:
+    """Damage-taken debuffs and camo removal that reach one station from
+    the debuffing towers whose zones overlap its own (set by _Controls)."""
+
+    def __init__(self, ctl, station):
+        self.ctl, self.station = ctl, station
+        self.cache = {}
+
+    def on(self, lay, path, rho):
+        """(extra damage per hit, share of camo bloons seen as plain) on this
+        layer at this packing."""
+        key = (lay.id, path, round(math.log2(max(rho, 1e-4)) * 2))
+        if key not in self.cache:
+            self.cache[key] = self.ctl.influence(self.station, lay, path, rho)
+        return self.cache[key]
+
+
+class _Controls:
+    """The status effects of a board for one play of a round: which stations
+    hold bloons back, which debuff them, which strip camo; and per lot the
+    delays on its route (segments)."""
+
+    def __init__(self, stations, track, strength):
+        self.track, self.strength = track, strength
+        self.holders = []          # (station, source) with a stun / slow / freeze / maim / push
+        self.debuffers = []        # (station, source) with a debuff or Cripple's damage_add
+        self.decamo = []           # (station, source) that removes camo
+        self.zoned = [st for st in stations if st.slow_zones]
+        for st in stations:
+            for src in st.sources:
+                eff = src.effects
+                if not eff:
+                    continue
+                if any(k in eff for k in ("stun", "slow", "freeze", "maim", "pushback", "blowback")):
+                    self.holders.append((st, src))
+                if "debuff" in eff or (eff.get("maim") or {}).get("damage_add"):
+                    self.debuffers.append((st, src))
+                if "camo" in (eff.get("removes") or ()):
+                    self.decamo.append((st, src))
+        self.active = bool(self.holders or self.debuffers or self.decamo or self.zoned)
+        self.cache = {}
+        if self.debuffers or self.decamo:
+            for st in stations:
+                st.influence = _Influence(self, st)
+
+    @staticmethod
+    def _reaches(src, lay):
+        """Can this controlling source touch the layer at all (camo, tags,
+        damage type - a slow rides on its projectile's hit)?"""
+        return src.can_hit(lay) or (not src.immune and not src.damage and src.can_hit(
+            Layer(**{**lay.__dict__, "immune": frozenset()})))
+
+    def _per_bloon(self, st, src, lay, rho, path):
+        """(hits a second on one bloon of the zone, seconds a bloon spends
+        in the zone) for a controlling source of station st."""
+        zone = st.zones[path]
+        hits = _hit_rate(src, lay, rho, zone) * self.strength
+        if src.ability_use == "moab" and not lay.moab:
+            hits = 0.0             # pressed in blimp rounds, for the blimps (abilities.py)
+        n = max(1.0, rho * zone.length)
+        return hits / n, zone.length / max(lay.speed, 1e-6)
+
+    def segments(self, lot):
+        """((a, b, seconds), ...) of delays on this lot's route, cached by
+        bloon, route and packing."""
+        key = (lot.bloon, lot.moab_hp, lot.path, round(math.log2(max(lot.rho, 1e-4)) * 2),
+               round(lot.speed, 2))
+        hit = self.cache.get(key)
+        if hit is None:
+            hit = self.cache[key] = self._segments(lot)
+        return hit
+
+    def _segments(self, lot):
+        lay = layer(lot.bloon, lot.moab_hp)
+        lay = Layer(**{**lay.__dict__, "speed": lot.speed})
+        path = lot.path
+        out = []
+        for st, src in self.holders:
+            if not st.covers(path) or not self._reaches(src, lay):
+                continue
+            zone = st.zones[path]
+            per, stay = self._per_bloon(st, src, lay, lot.rho, path)
+            if per <= 0.0:
+                continue
+            eff = src.effects
+            delay = 0.0
+            hold = 0.0
+            for kind in ("stun", "freeze"):
+                if kind in eff and _control_applies(eff, kind, lay):
+                    hold += float(eff[kind].get("lifespan") or 0.0)
+            if "maim" in eff and _control_applies(eff, "maim", lay):
+                key = next(MAIM_KEYS[t] for t in MAIM_KEYS if t in lay.tags)
+                hold += float(eff["maim"].get(key) or 0.0)
+            if hold > 0.0:
+                u = min(MAX_HOLD, per * hold)
+                delay += stay * u / (1.0 - u)
+            if "slow" in eff and _control_applies(eff, "slow", lay):
+                m = _slow_factor(eff, lay)
+                life = min(float(eff["slow"].get("lifespan") or 0.0), 60.0)
+                delay += min(1.0, per * stay) * life * (1.0 - m)
+            touches = min(1.0, per * stay) if (per * stay) < 1.0 else per * stay
+            for kind, dist in (("pushback", lambda e: float(e.get("amount") or 0.0)),
+                               ("blowback", lambda e: float(e.get("chance") or 1.0) * 0.5 * (
+                                   float(e.get("distance_min") or 0.0) + float(e.get("distance_max") or 0.0)))):
+                if kind in eff and _control_applies(eff, kind, lay):
+                    if _is_bad(lay):
+                        continue
+                    d = dist(eff[kind]) * (0.5 if "Zomg" in lay.tags else 1.0)
+                    delay += touches * d / max(lot.speed, 1e-6)
+            if delay > 0.0:
+                a = zone.entry
+                b = zone.entry + max(zone.length, TRACK_STEP)
+                out.append((a, b, delay))
+        for st in self.zoned:
+            if not st.covers(path):
+                continue
+            zone = st.zones[path]
+            for z in st.slow_zones:
+                if set(z.get("excluded_tags") or ()) & lay.tags:
+                    continue
+                if z.get("only_tags") and not (set(z["only_tags"]) & lay.tags):
+                    continue
+                scale = max(float(z.get("speed_scale") or 1.0), 0.05)
+                delay = zone.length / max(lot.speed, 1e-6) * (1.0 / scale - 1.0)
+                out.append((zone.entry, zone.entry + max(zone.length, TRACK_STEP), delay))
+        merged = {}
+        for a, b, d in out:                 # one segment per stretch (towers side by side)
+            merged[(a, b)] = merged.get((a, b), 0.0) + d
+        out = [(a, b, d) for (a, b), d in merged.items() if d >= MIN_DELAY_S]
+        if not out:
+            return ()
+        cap = MAX_STALL * self.track.paths[path]["length"] / max(lot.speed, 1e-6)
+        total = sum(d for _, _, d in out)
+        if total > cap:
+            out = [(a, b, d * cap / total) for a, b, d in out]
+        return tuple(sorted(out))
+
+    def influence(self, station, lay, path, rho):
+        """(extra damage per hit, decamo share) that reaches `station`'s zone
+        on `path` for bloons of this layer (see _Influence)."""
+        zone = station.zones[path] if path < len(station.zones) else None
+        if zone is None:
+            return 0.0, 0.0
+        lo, hi = zone.entry, zone.entry + zone.length
+        bonus = 0.0
+        for st, src in self.debuffers:
+            if st is station or not st.covers(path) or not self._reaches(src, lay):
+                continue
+            eff = src.effects
+            z = st.zones[path]
+            if "debuff" in eff:
+                add, life = float(eff["debuff"].get("add") or 0.0), float(eff["debuff"].get("lifespan") or 0.0)
+                if not _control_applies(eff, "debuff", lay):
+                    continue
+            elif _control_applies(eff, "maim", lay):
+                add = float(eff["maim"]["damage_add"])
+                life = float(eff["maim"].get(next(MAIM_KEYS[t] for t in MAIM_KEYS if t in lay.tags)) or 0.0)
+            else:
+                continue
+            reach = z.entry + z.length + life * lay.speed
+            if hi < z.entry or lo > reach:
+                continue          # the debuffed bloons never stand in this zone
+            per, _ = self._per_bloon(st, src, lay, rho, path)
+            bonus += add * min(1.0, per * life)
+        seen = 0.0
+        if lay.camo:
+            for st, src in self.decamo:
+                if st is station or not st.covers(path) or not self._reaches(src, _decamo(lay)):
+                    continue
+                z = st.zones[path]
+                if z.entry > hi:
+                    continue          # strips camo only after this zone
+                per, stay = self._per_bloon(st, src, _decamo(lay), rho, path)
+                seen = max(seen, min(1.0, per * stay))
+        return bonus, seen
 
 
 def simulate_round(stations, mode, rnd, track, strength=1.0):
@@ -2329,10 +2728,14 @@ def _play(stations, track, lots, strength):
     end_time = 0.0
     # towers frozen part of the time (Glacial Trail) attack at that share
     strength *= getattr(track, "uptime", 1.0)
-    for st in sorted(with_parts(stations), key=lambda s: s.order):
+    every = sorted(with_parts(stations), key=lambda s: s.order)
+    controls = _Controls(every, track, strength) if STATUS_RATING else None
+    if controls is not None and not controls.active:
+        controls = None
+    for st in every:
         st.strength = strength
         out = []
-        server = _Server(st, out)
+        server = _Server(st, out, controls)
         for lot in lots:
             if lot.count <= 1e-9:
                 continue
@@ -2340,7 +2743,7 @@ def _play(stations, track, lots, strength):
                 out.append(lot)
                 continue
             z = st.zones[lot.path]
-            job = server.job(lot, z, lot.t0 + z.entry / lot.speed, z.entry, 0.0)
+            job = server.job(lot, z, _time_at(lot, server.segs(lot), z.entry), z.entry, 0.0)
             if job is None:
                 out.append(lot)             # cannot touch this layer: passes untouched
             else:
@@ -2356,7 +2759,10 @@ def _play(stations, track, lots, strength):
         leaked[lot.bloon] = leaked.get(lot.bloon, 0.0) + lot.count
         lives += lot.count * layer(lot.bloon, lot.moab_hp).leak
         leak_rbe += lot.count * rbe(lot.bloon, lot.moab_hp)
-        end_time = max(end_time, lot.t0 + path_len[lot.path] / lot.speed)
+        segs = controls.segments(lot) if controls is not None else ()
+        end_time = max(end_time, _time_at(lot, segs, path_len[lot.path]))
+    for st in every:
+        st.influence = None
     return RoundResult(leaked=leaked, lives_lost=lives, leaked_rbe=leak_rbe, end_time=end_time)
 
 
@@ -2938,9 +3344,12 @@ def _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths,
     # single-target towers (sniper bullets) are set to "strong" targeting by
     # the plans: they shoot MOAB-class bloons first
     strong = any(s.reach == 0.0 for s in sources)
+    prof = profile(t.kind, t.tiers)
+    slow_zones = [z for z in (prof.zones if prof is not None else []) if z.get("kind") == "slow"
+                  and z.get("follows_range") and z.get("speed_scale", 1.0) < 1.0] if STATUS_RATING else []
     return Station(tid=t.tid, kind=t.kind, tiers=tuple(t.tiers), zones=zones, sources=sources,
                    order=order, banked=banked, bank_seconds=bank, bank_start=start, strong=strong,
-                   camo_paths=camo_paths)
+                   camo_paths=camo_paths, slow_zones=slow_zones)
 
 
 def _reach_paths(t, track, sight=None):
