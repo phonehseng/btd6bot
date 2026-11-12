@@ -2074,6 +2074,11 @@ class Match:
                         if t["category"] == cat and k not in T.GIFT_BOX_TOWERS:
                             self.account.unlocked_towers.add(k)
                     self.account.save()
+        elif st == "save_choice":
+            # "Choose which save" (This Device / On the Cloud): keep the
+            # local save, never the cloud one (Peninsula Impoppable,
+            # 2026-11-12, where it passed for reward cards)
+            self.menus.handle_save_choice()
         elif st in ("collection_event", "reward_cards", "insta_reward"):
             # free reward screens: Alpine Run Impoppable's round-100 win put an
             # "INSTA MONKEY!" card up, and with no case here the loop read it

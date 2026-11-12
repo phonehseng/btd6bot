@@ -184,6 +184,7 @@ def classify(words, screen_name="unknown"):
       "notify_prompt" the "be notified when your chest is ready" question
       "rewards"       the Daily Reward screen (days, Today, Claimed)
       "countdown"     the countdown text on any other screen
+      "save_choice"   the game's "Choose which save" dialog
       "main_menu", "insta_reward", "reward_cards", "collection_event", a
       popup with a button ("popup"), or "unknown".
     The main menu wins over everything: its own numbers (XP "1,830/4,250",
@@ -192,6 +193,8 @@ def classify(words, screen_name="unknown"):
     the profile button)."""
     if screen_name == "main_menu":
         return "main_menu"
+    if screen_name == "save_choice":
+        return "save_choice"
     if shop_like(words):
         return "shop"
     norms = [norm(w.text) for w in words]
@@ -382,6 +385,10 @@ class DailyChest:
                 seen_rewards = True
                 log.info("daily chest: Insta Monkey reward - closing its panel")
                 self.inp.click(0.5, 0.5)
+            elif kind == "save_choice":
+                # keep the local save, never the cloud one; click nothing if unsure
+                if not self.menus.handle_save_choice():
+                    return self._bail("a 'Choose which save' dialog without a certain This Device button", words)
             elif kind in ("reward_cards", "collection_event"):
                 seen_rewards = True
                 self.menus.handle_collection_event()
