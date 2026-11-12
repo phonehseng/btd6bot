@@ -317,6 +317,7 @@ class Source:
     rear_fov: float = 0.0      # a Buccaneer's second shot behind the boat: degrees of its target cone
     zone_radius: float = None  # its own attack's reach around the tower (_zone_radius); None = the tower's
     zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
+    dot_immune: frozenset = frozenset()   # bloon properties its damage over time cannot hurt
                                # (0 = not such a shot; _rear_copies)
 
     def can_hit(self, lay):
@@ -578,7 +579,15 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             shots=shots, shots_single=shots_single,
             pierce=_impact_pierce(p),
             damage=hit.get("amount", 0.0),
-            immune=_immune_set(hit) & (_immune_set(dot) if dot else _immune_set(hit)),
+            # The hit's damage type decides what the projectile can touch; a
+            # DoT-only projectile (corrosive glue) uses the DoT's. The burn is
+            # applied only by a hit that damages, and has immunities of its
+            # own (dot_immune). Intersecting the two let Spiked Mines (an
+            # explosion immune to black, a burn immune to purple) damage
+            # black bloons and DDTs on R95 and R99
+            # (docs/model_audit_support_heroes.md S5, fandom:Spiked_Mines).
+            immune=_immune_set(hit),
+            dot_immune=_immune_set(dot) if dot else frozenset(),
             bonus=p.get("bonus") or {},
             camo=camo,
             only_tags=frozenset(p.get("only_tags", [])) | frozenset(attack.get("only_tags", []))
@@ -1682,7 +1691,7 @@ class _Rates:
                 kill_carry += rate * (whole - lay.hp)
             else:
                 overflow += rate * max(0.0, d - lay.hp)
-            if src.dot_total:
+            if src.dot_total and not (src.dot_immune & lay.immune):
                 # damage over time: every hit poisons a bloon for dot_total in
                 # all; no more than the bloons in the zone, each burning at
                 # dot_rate per second
