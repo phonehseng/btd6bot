@@ -173,8 +173,11 @@ def test_covered_garden_stands_off_the_panes():
 
 def test_the_moab_answer_comes_before_the_alchemist():
     """Mesa lost at round 40 with the blimp check at 0.4-0.9: n2's Sticky
-    Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan."""
-    for map_id in ("mesa", "sunsetgulch", "coveredgarden", "quad", "bloonariusprime", "firingrange", "midnightmansion",
+    Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan.
+    Mesa itself is no longer one of them: its two games of 2026-11-12 ended
+    at rounds 38 and 28, before any blimp, on the route that plan left
+    bare (test_mesa_opens_on_both_routes)."""
+    for map_id in ("sunsetgulch", "coveredgarden", "quad", "bloonariusprime", "firingrange", "midnightmansion",
                    "spillway"):
         _, d = _build(map_id)
         order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
@@ -317,6 +320,54 @@ def test_peninsula_pops_round_28_leads_from_the_water():
             assert cover(st) > 0, st
     # the plateau holds no alchemist cell that could ever work: keep the kind out of the build
     assert all(st.get("kind") != "alchemist" for st in d["plan"]), "an alchemist reaches nothing on Peninsula"
+
+
+def test_mesa_opens_on_both_routes():
+    """Mesa (2026-11-12, cases 20261112_100238 and 20261112_162905): every
+    round's bloons split over two routes, and no ninja cell has both in
+    range. The plan's opening (n1, n2, a1) stood on the first route only;
+    the second was bare until the late game, and the one-life games ended
+    there at rounds 38 and 28 (round 28's leads; a yellow of theirs took
+    the life). Now, as the damage model sees the towers:
+      * the second tower the plan buys is a ninja with the second route in
+        range, bought before the hero;
+      * the alchemist is within its brew's reach of that ninja, so the
+        acid dip lets it pop lead;
+      * the towers bought before round 28 pop lead by themselves, and
+        among them one on each route has a way to (the dipped ninja on
+        the second, a bomb on the first)."""
+    import math
+    from types import SimpleNamespace
+    from btd6bot import strategy as S
+    from btd6bot.forecast import RoundForecast
+    _, d = _build("mesa")
+    forecast = RoundForecast("Mesa", "impoppable")
+    assert forecast._ready()
+
+    def route_units(st):
+        """Route in the tower's range on each of the two routes (world units)."""
+        tower = SimpleNamespace(tid=st["id"], kind=st["kind"], tiers=(0, 0, 0), x=st["at"][0], y=st["at"][1])
+        stations = forecast.stations([tower])
+        return [0.0 if z is None else z.length for z in stations[0].zones] if stations else [0.0, 0.0]
+
+    places = [st for st in d["plan"] if st["do"] == "place"]
+    first, second = places[0], places[1]
+    assert (first["id"], second["id"], second["kind"]) == ("n1", "n3", "ninja"), places[:2]
+    assert route_units(first)[0] > 50 and route_units(second)[1] > 50, (route_units(first), route_units(second))
+    hero = next(i for i, st in enumerate(d["plan"]) if st.get("kind") == "hero")
+    assert d["plan"].index(second) < hero, "the second route's ninja comes before the hero"
+
+    pinner = pin_spots.Pinner("Mesa", "impoppable")
+    at = {st["id"]: pinner.world(pinner.model.frac_to_cell(*st["at"])) for st in places}
+    assert math.dist(at["a1"], at["n3"]) <= pin_spots.buffer_range("alchemist"), "the brew reaches n3"
+
+    early = _bought_before(d, 28)
+    _, missing = S.coverage(dict(d, plan=early, answers={}), "impoppable")
+    assert "lead" not in missing, missing
+    bought = {(st["do"], st["id"], st.get("to")) for st in early}
+    assert ("upgrade", "a1", "2-0-0") in bought, "Acidic Mixture Dip stands before round 28"
+    bomb = next(st for st in early if st["do"] == "place" and st["kind"] == "bomb")
+    assert route_units(bomb)[0] > 30, route_units(bomb)
 
 
 def test_a_tower_is_pinned_on_its_part_of_the_route():

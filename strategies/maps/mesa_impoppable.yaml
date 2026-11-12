@@ -21,26 +21,62 @@
 # before it rated under 1.0 in 49 of rounds 40-100. Rounds 35-39 stay at the model's floor:
 # the opening's ninjas leave part of the route uncovered (camo reds/yellows, pinks leak) and
 # the optimizer cannot buy that cover in time even from round 25. The hero stands where the late game was rated with it, off every pin.
+#
+# Opening on both routes (2026-11-12, losses 20261112_100238 round 38 and 20261112_162905
+# round 28): Mesa's bloons split over two routes every round and no ninja cell has both in
+# range. n1, n2 and a1 all stood on the first route; replayed as the executor buys (Double
+# Cash, the live forecast's model, no hero counted) the plan rated 0.06 on every round from
+# 6 to 38, and the live games got that far on off-plan crisis buys alone. Round 28 was lost
+# with $6,000 being saved for the Sticky Bomb: its six leads met one Flash Bomb ninja, and a
+# yellow out of them took the life. What changed:
+#   * n3, a second ninja, is the second purchase, on the cell with the most of the second
+#     route in range, and grows beside n1 to 4-0-2 (rounds 35-39);
+#   * a1 moved next to n3 (its brew did not reach a tower where it stood), and the late
+#     game's bomb beside the first route is bought with it: round 28's leads rate 1.51;
+#   * the late game's Razor Rotors heli is bought before the Sticky Bomb: round 40's MOAB
+#     rates 0.06 with the Sticky Bomb alone and 0.82 with the heli (0.71 before);
+#   * alc532 took a1's old cell, bea540 moved three cells off n3.
+# Rounds under 1.0 in that replay: all 34 of rounds 6-39 before, 15 now (round 6, which
+# the replay's $650 opens with one ninja, and after it 0.44 at worst, round 15); rounds
+# 40-100: 19 before, 15 now. Still under 1.0 and open: rounds 9-10, 13-16, 18-19, 21,
+# 26-27, 29, 31, 34, round 40 (0.82), rounds 47, 51, 53, 56, 59, 67, 70 and 74 (0.23-0.79;
+# 0.06 before), and rounds 78, 90, 93, 95, 99 and 100, at the floor as before. The steps after the opening are the optimizer's of 11:50,
+# rated then with the old opening: run its greedy again from this one.
 id: mesa_impoppable
 map: Mesa
 hero: etienne
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:
-  towers: {ninja: [3, 0, 4], alchemist: [2, 2, 0], ace: [4, 1, 5], skywarden: [4, 1, 1], wizard: [4, 2, 0], engineer: [3, 2, 0], druid: [1, 4, 1], tack: [2, 4, 0], dart: [2, 3, 5], heli: [3, 0, 2], mermonkey: [2, 1, 0], bomb: [0, 2, 4], beast_handler: [0, 0, 0]}
+  towers: {ninja: [4, 0, 4], alchemist: [2, 2, 0], ace: [4, 1, 5], skywarden: [4, 1, 1], wizard: [4, 2, 0], engineer: [3, 2, 0], druid: [1, 4, 1], tack: [2, 4, 0], dart: [2, 3, 5], heli: [3, 0, 2], mermonkey: [2, 1, 0], bomb: [0, 2, 4], beast_handler: [0, 0, 0]}
   base_success: {impoppable: 0.5}
   maps: [Mesa]
 plan:
+  # the opening: one ninja per route (n1 on the first, n3 on the second), grown side by side
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.12, 0.777]}
+  - {do: place, id: n3, kind: ninja, role: dps, at: [0.505, 0.453]}             # the second route: 84 units of it in range
   - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: upgrade, id: n3, to: 1-0-1}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6], at: [0.601, 0.521]}
   - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: upgrade, id: n3, to: 2-0-1}
+  - {do: upgrade, id: n3, to: 2-0-2}
+  - {do: upgrade, id: n1, to: 2-0-2}
+  # round 28's leads, three a route: the acid dip for n3, a bomb beside n1's route
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n3], near_radius: 6, at: [0.441, 0.436]}
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: place, id: bom530, kind: bomb, role: support, at: [0.077, 0.419]}
+  - {do: upgrade, id: n3, to: 3-0-2}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.58, 0.266]}
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
-  - {do: upgrade, id: n2, to: 2-0-4}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.142, 0.436]}
-  - {do: upgrade, id: a1, to: 2-0-0}
+  # the late game's Razor Rotors heli, brought forward: round 40's MOAB hangs on it in the model, not on the Sticky Bomb
+  - {do: place, id: hel514, kind: heli, role: support, at: [0.248, 0.334]}
+  - {do: upgrade, id: hel514, to: 0-0-2}
+  - {do: upgrade, id: hel514, to: 1-0-2}
+  - {do: upgrade, id: hel514, to: 3-0-2}
+  - {do: upgrade, id: n3, to: 4-0-2}                                            # rounds 35-39 on the second route
+  - {do: upgrade, id: n2, to: 2-0-4}                                            # Sticky Bomb: round 40's MOAB
   - {do: upgrade, id: n1, to: 3-0-2}
   # rounds 35-100: bought by tools/optimize_builds.py's greedy on the damage model,
   # saving for the carry (`*_carry*`) by its round
@@ -74,10 +110,6 @@ plan:
   - {do: upgrade, id: sky507, to: 1-0-0}
   - {do: upgrade, id: sky502, to: 1-0-0}
   - {do: place, id: dar513, kind: dart, role: support, at: [0.067, 0.675]}
-  - {do: place, id: hel514, kind: heli, role: support, at: [0.248, 0.334]}
-  - {do: upgrade, id: hel514, to: 0-0-2}
-  - {do: upgrade, id: hel514, to: 1-0-2}
-  - {do: upgrade, id: hel514, to: 3-0-2}
   - {do: place, id: wiz515, kind: wizard, role: support, at: [0.11, 0.845]}
   - {do: upgrade, id: tac512, to: 2-2-0}
   - {do: place, id: dar516, kind: dart, role: support, at: [0.281, 0.658]}
@@ -117,7 +149,6 @@ plan:
   - {do: upgrade, id: dru527, to: 0-3-1}
   - {do: place, id: alc528, kind: alchemist, role: support, at: [0.184, 0.453]}
   - {do: place, id: alc529, kind: alchemist, role: support, at: [0.195, 0.402]}
-  - {do: place, id: bom530, kind: bomb, role: support, at: [0.077, 0.419]}
   - {do: upgrade, id: bom530, to: 0-0-3}
   - {do: upgrade, id: sky505, to: 1-0-1}
   - {do: upgrade, id: tac512, to: 2-3-0}
@@ -134,7 +165,7 @@ plan:
   - {do: upgrade, id: tac531, to: 1-3-0}
   - {do: upgrade, id: tac531, to: 2-3-0}
   - {do: upgrade, id: wiz515, to: 3-2-0}
-  - {do: place, id: alc532, kind: alchemist, role: support, at: [0.452, 0.436]}
+  - {do: place, id: alc532, kind: alchemist, role: support, at: [0.142, 0.436]}   # a1's old cell: a1 now stands on its first one
   - {do: place, id: alc533, kind: alchemist, role: support, at: [0.377, 0.436]}
   - {do: place, id: alc534, kind: alchemist, role: support, at: [0.473, 0.129]}
   - {do: place, id: alc535, kind: alchemist, role: support, at: [0.184, 0.351]}
@@ -168,7 +199,7 @@ plan:
   - {do: upgrade, id: dar513, to: 2-3-0}
   - {do: upgrade, id: alc534, to: 0-2-0}
   - {do: upgrade, id: alc529, to: 1-2-0}
-  - {do: place, id: bea540, kind: beast_handler, role: support, at: [0.494, 0.504]}
+  - {do: place, id: bea540, kind: beast_handler, role: support, at: [0.478, 0.504]}   # three cells left of its first pin, clear of n3
   - {do: upgrade, id: ace_carry1, to: 2-0-5}
   - {do: upgrade, id: dru518, to: 0-4-1}
   - {do: upgrade, id: alc535, to: 0-2-0}
@@ -201,7 +232,7 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.142, 0.436]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n3], near_radius: 6, at: [0.441, 0.436]}
   ceramic:
     - {do: upgrade, id: n1, to: 3-0-2}
   moab:
