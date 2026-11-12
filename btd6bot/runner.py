@@ -82,7 +82,8 @@ ERROR_STREAK_WAIT = 3                  # the same error this many games in a row
 ERROR_BENCH_AFTER = 2                  # failures of one map/mode before it is benched
 # A no-income build left before Play (match.WeakBuild) is benched for a day;
 # the same unchanged build left again doubles that, up to a week. The model's
-# verdict on an unchanged build does not change from one day to the next:
+# verdict on an unchanged build does not change from one day to the next
+# unless the model itself is edited (WEAK_VERDICT_MODULES below):
 # Cargo (0.63), Quad (0.06), Castle Revenge (0.32-0.42) and Party Parade
 # (0.06) Deflation were each opened, built and left on three days of
 # 2026-11-06..10, about six minutes of play time per visit.
@@ -93,6 +94,16 @@ BENCH_RETRY_AFTER_H = 1.0
 LOSS_BENCH_HOURS = 12                  # how long a lost game sits out
 RETRYABLE_BENCHES = frozenset({"defeat", "loss", "unfinished game"})
 WEAK_BENCH_MAX_HOURS = 7 * 24
+# The modules the verdict before Play is computed by (match.too_weak_to_start
+# reads forecast.worst, which plays the rounds in dps_model on gamemodel's
+# numbers). An edit to any of them may change the verdict on an unchanged
+# build (model_fingerprint, Bot._lift_outdated_weak_benches).
+WEAK_VERDICT_MODULES = ("dps_model.py", "forecast.py", "gamemodel.py")
+# ... but a weak bench sits at least this long before a changed model lifts
+# it, so a day of model edits does not open, build and leave the same map
+# after every one of them (about three minutes a visit).
+WEAK_RECHECK_AFTER_H = 6.0
+WEAK_BENCH_MARK = " rated "            # in the `why` of a bench set by _left_before_play
 
 
 def build_fingerprint(strat):
@@ -104,18 +115,68 @@ def build_fingerprint(strat):
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:12]
 
 
-def weak_bench_hours(previous, strategy_id, fingerprint):
+def model_fingerprint(folder=None):
+    """A short hash of the damage model's code (WEAK_VERDICT_MODULES in
+    `folder`, the btd6bot package by default). Any edit to the model changes
+    it; a module that cannot be read counts as empty."""
+    import hashlib
+    from pathlib import Path
+    folder = Path(folder) if folder else Path(__file__).resolve().parent
+    digest = hashlib.sha1()
+    for name in WEAK_VERDICT_MODULES:
+        try:
+            digest.update((folder / name).read_bytes())
+        except OSError:
+            pass
+    return digest.hexdigest()[:12]
+
+
+def weak_bench_hours(previous, strategy_id, fingerprint, model=None):
     """How long to bench a map/mode whose build was just left before Play,
     and the record to keep for next time.
 
     `previous` is the record kept from the last time this map/mode was left
-    (None if never). Left again with the same, unchanged build, the bench
-    doubles (24 h, 48 h, 96 h, then a week); another strategy or an edited
-    build starts again at a day, so a fixed build is tried the next day."""
-    same = (previous or {}).get("build") == [strategy_id, fingerprint]
+    (None if never). Left again with the same, unchanged build under the
+    same damage model (`model`, a model_fingerprint), the bench doubles
+    (24 h, 48 h, 96 h, then a week); another strategy, an edited build or an
+    edited model starts again at a day, so a fix is tried the next day."""
+    previous = previous or {}
+    same = previous.get("build") == [strategy_id, fingerprint] and previous.get("model") == model
     n = previous["n"] + 1 if same else 1
     hours = min(WEAK_BENCH_HOURS * 2 ** (n - 1), WEAK_BENCH_MAX_HOURS)
-    return hours, {"n": n, "build": [strategy_id, fingerprint]}
+    return hours, {"n": n, "build": [strategy_id, fingerprint], "model": model}
+
+
+def outdated_weak_benches(records, reasons, benches, model, now):
+    """The benched map/modes ("Map|mode" keys) whose weak-build verdict came
+    from a damage model that has been edited since.
+
+    Why: on 2026-11-11 11:19 `solo_dart` on Party Parade Deflation was left
+    before Play, "round 31 rated 0.06". The model was corrected that evening
+    (a lone blimp takes one lane, each round rated on its own paths), and at
+    01:50 the same unchanged build rated 1.20 and won without losing a life.
+    Erosion, Dark Dungeons and Midnight Mansion Deflation, left at the same
+    0.06 at 17:05-17:15, stayed benched for two days on the old verdict - at
+    01:56 they were all the planner had, and the bot napped for an hour.
+
+    records: <account>.weak.json ({key: {n, build, model}}; a record from
+             before the model was noted has no "model" and counts as old).
+    reasons: the bench reasons ({key: {why, since}}).
+    benches: the running benches ({key: end time}).
+    model:   model_fingerprint() of the code this bot runs.
+    A bench is named only when it is the weak-build one (WEAK_BENCH_MARK in
+    its reason - a later defeat's bench is left alone) and has sat for
+    WEAK_RECHECK_AFTER_H."""
+    out = []
+    for key, rec in records.items():
+        reason = reasons.get(key) or {}
+        if key not in benches or WEAK_BENCH_MARK not in str(reason.get("why", "")):
+            continue
+        if rec.get("model") == model:
+            continue
+        if now - (reason.get("since") or 0) >= WEAK_RECHECK_AFTER_H * 3600:
+            out.append(key)
+    return sorted(out)
 
 
 def _read_stamp(path):
@@ -1390,6 +1451,7 @@ class Bot:
                 log.error("changed code does not import - staying on the running version")
                 code_stamp = _code_stamp()
             self._reload_batch_builds()
+            self._lift_outdated_weak_benches()
             if not self.wait_until_offline():
                 continue
             if self.failures >= 8:
@@ -1553,7 +1615,8 @@ class Bot:
             records = {}
         key = f"{plan.map}|{plan.mode_key}"
         hours, records[key] = weak_bench_hours(
-            records.get(key), plan.strategy_id, build_fingerprint(self.strats.get(plan.strategy_id)))
+            records.get(key), plan.strategy_id, build_fingerprint(self.strats.get(plan.strategy_id)),
+            model=model_fingerprint())
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(records, indent=1), encoding="utf-8")
@@ -1665,6 +1728,37 @@ class Bot:
         except OSError:
             pass
         log.warning("benched %s %s for %gh (%s)", map_name, mode, hours, why)
+
+    def _lift_outdated_weak_benches(self):
+        """Between games: end the weak-build benches whose verdict an edited
+        damage model may have changed (outdated_weak_benches), so the build
+        is rated again on the map - left once more before Play if it is still
+        weak, with nothing lost. Returns the keys set free.
+
+        The weak record forgets the old verdict too, so a second leave counts
+        as the first under the new model (a day, not a doubled bench)."""
+        import json
+        try:
+            records = json.loads(self._weak_file().read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return []
+        benches = self._benches()
+        free = outdated_weak_benches(records, self._bench_reasons(), benches,
+                                     model_fingerprint(), time.time())
+        if not free:
+            return []
+        for key in free:
+            benches.pop(key, None)
+            records.pop(key, None)
+        try:
+            self._bench_file().write_text(json.dumps(benches), encoding="utf-8")
+            self._weak_file().write_text(json.dumps(records, indent=1), encoding="utf-8")
+        except OSError:
+            log.exception("could not lift the outdated weak-build benches")
+            return []
+        log.warning("the damage model changed since these builds were left before Play - "
+                    "bench lifted, rated again on the map: %s", ", ".join(free))
+        return free
 
     def _bench_why_file(self):
         """Why and since when each bench was set ({key: {why, since}})."""
@@ -2250,6 +2344,19 @@ class Bot:
         retry = None
         if cands and all(self.benched(c.map, c.mode) for c in cands):
             retry = self._retry_benched(cands)
+            if retry is None:
+                # None of these benches may be retried (or none yet): look
+                # again with the last resorts that struck out. At 01:56 on
+                # 2026-11-12 the list held only three Deflation medals,
+                # benched for two days as "rated 0.06, left 2x", and the bot
+                # napped although 14 lost games were due for their retry.
+                # A loss due for its retry goes first (its change is in);
+                # with none due, a struck-out game that is not benched is
+                # still played rather than napping.
+                _, _, wider = rank_games(self.account, specs, below_bar=True, struck_too=True)
+                if len(wider) > len(cands):
+                    retry = self._retry_benched(wider)
+                    cands = [retry] if retry is not None else wider
             if retry is not None:
                 log.warning("every open medal is benched - playing %s/%s again (lost over %g h ago, "
                             "its change is in) rather than idling", retry.map, retry.mode,

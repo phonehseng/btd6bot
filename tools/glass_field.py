@@ -194,6 +194,7 @@ class FieldSource:
         self._models = {}           # (name, mtime) -> MapModel (the newest one only)
         self._geoms = {}            # map name -> geometry dict or None
         self._panes = {}            # map name -> has panes that open in turn
+        self._moving = {}           # map name -> its ground changes during a game (_moving_ground)
 
     # -- the learned model ------------------------------------------------------------------
     def model_path(self, name):
@@ -252,16 +253,49 @@ class FieldSource:
         return self._geoms[name]
 
     # -- per round ----------------------------------------------------------------------------
-    def phase_key(self, map_name, rnd, pane_round=None):
+    def phase_key(self, map_name, rnd, pane_round=None, ground=None):
         """What decides the paths' statuses and the ground at round `rnd`:
         the idle paths, the path this round, the round itself only on maps
-        whose panes open in turn (Covered Garden). Equal keys, equal views."""
+        whose panes open in turn (Covered Garden), and on maps whose ground
+        changes in the game the bot's ground (see ground_args). Equal keys,
+        equal views."""
         from btd6bot import mapgeom
         geom = self.geometry(map_name)
         if geom is None:
             return None
         panes = (pane_round or rnd) if self._has_panes(map_name) else None
-        return (mapgeom.idle_phase_paths(geom, rnd), mapgeom.paths_this_round(geom, rnd), panes)
+        moving = self.ground_args(map_name, rnd, pane_round, ground) if self._moving_ground(map_name) else None
+        return (mapgeom.idle_phase_paths(geom, rnd), mapgeom.paths_this_round(geom, rnd), panes, moving)
+
+    def ground_args(self, map_name, rnd, pane_round=None, ground=None):
+        """(now_round, pose_round, horizon) to build the ground with, as the
+        bot's placement does (Executor._legal_cells): the round the bot judges
+        ground by, from hud.json - on pane maps the pane the screen shows
+        first - the platforms' pose, and the last round new ground must last
+        (Erosion: the phase's end). Without them the layer drew the whole-
+        game ground: Sanctuary in its opening layout, about 114 cells on
+        Erosion, none of One Two Tree's opened plots (audit 2026-11-12)."""
+        ground = ground or {}
+        now = ground.get("now_round")
+        if self._has_panes(map_name):
+            now = pane_round or now or rnd
+        return now, ground.get("pose_round"), ground.get("ground_horizon")
+
+    def _moving_ground(self, map_name):
+        """Does the map's ground change during a game (mapgeom.dynamics:
+        panes, areas that come or go, moving platforms) or follow path
+        phases? Only there the bot's round and pose change the ground."""
+        if map_name not in self._moving:
+            from btd6bot import mapgeom
+            geom = self.geometry(map_name)
+            try:
+                dyn = mapgeom.dynamics(geom) if geom is not None else None
+                self._moving[map_name] = bool(dyn is not None and (
+                    dyn.panes or dyn.appear or dyn.vanish or dyn.movers
+                    or mapgeom.phase_end(geom, 1) is not None))
+            except Exception:
+                self._moving[map_name] = False
+        return self._moving[map_name]
 
     def _has_panes(self, map_name):
         """Does the map have panes that open in turn (mapgeom.dynamics)? Its
@@ -275,7 +309,7 @@ class FieldSource:
                 self._panes[map_name] = False
         return self._panes[map_name]
 
-    def view(self, map_name, mode=None, rnd=None, end_round=None, pane_round=None):
+    def view(self, map_name, mode=None, rnd=None, end_round=None, pane_round=None, ground=None):
         """The FieldView of `map_name` (a Reverse game's model is the map's
         own, its paths run backwards) at round `rnd` of a game ending at
         `end_round`; None when nothing is known about the map."""
@@ -284,6 +318,8 @@ class FieldSource:
         # pane changes as a round ends; the round counter is read later), and
         # the green ground then showed the pane that had just shut - while the
         # bot was buying. Without it, the round as before.
+        # ground: the bot's now_round, pose_round and ground_horizon from
+        # hud.json (ground_args).
         reverse = is_reverse(mode)
         name = map_name + " reverse" if reverse and self.stamp(map_name + " reverse") is not None else map_name
         model = self.model(name)
@@ -292,7 +328,7 @@ class FieldSource:
         geom = self.geometry(map_name)
         from btd6bot.maplearn import GRID
         view = FieldView(map=map_name, grid=GRID, playfield=tuple(model.playfield))
-        self._ground(view, model, pane_round or rnd, end_round, geom)
+        self._ground(view, model, end_round, geom, self.ground_args(map_name, rnd, pane_round, ground))
         if geom is not None:
             view.paths = path_lines(geom, model.playfield, rnd, reverse)
         if not view.paths:
@@ -301,14 +337,15 @@ class FieldSource:
                 view.track = np.clip(weight / weight.max(), 0, 1).astype(np.float32)
         return view
 
-    def _ground(self, view, model, rnd, end_round, geom):
+    def _ground(self, view, model, end_round, geom, args):
         """Legal land and water as the bot's placement sees them, and the
-        learned refusals on ground the map itself allows."""
+        learned refusals on ground the map itself allows. args: ground_args."""
         from btd6bot import placement as PL
-        pane_round = rnd if geom is not None and self._has_panes(view.map) else None
+        now, pose, horizon = args if geom is not None else (None, None, None)
+        last = end_round if horizon is None else horizon if end_round is None else min(end_round, horizon)
         try:
-            land = PL.valid_spots(model, SMALL_LAND_TOWER, last_round=end_round, now_round=pane_round)
-            water = PL.valid_spots(model, WATER_TOWER, last_round=end_round, now_round=pane_round)
+            land = PL.valid_spots(model, SMALL_LAND_TOWER, last_round=last, now_round=now, pose_round=pose)
+            water = PL.valid_spots(model, WATER_TOWER, last_round=last, now_round=now, pose_round=pose)
         except Exception:
             land = water = None
         if land is None:            # no geometry: the placement scan as the bot keeps it
@@ -562,6 +599,11 @@ class FieldLayer:
         it on screen (hud.json "pane_round"); None when the bot did not say."""
         return getattr(snap, "pane_round", None)
 
+    @staticmethod
+    def ground_of(snap):
+        """The bot's ground facts from hud.json (FieldSource.ground_args)."""
+        return {k: getattr(snap, k, None) for k in ("now_round", "pose_round", "ground_horizon")}
+
     def key(self, snap, game_rect):
         """A small tuple that changes when the picture would; None when there
         is nothing to show (no map, nothing known about it)."""
@@ -574,7 +616,7 @@ class FieldLayer:
                 name = map_name + " reverse" if is_reverse(mode) else map_name
                 stamps = (self.source.stamp(name), self.source.stamp(map_name))
                 if any(s is not None for s in stamps) or self.source.geometry(map_name) is not None:
-                    phase = self.source.phase_key(map_name, rnd, self.pane_round_of(snap))
+                    phase = self.source.phase_key(map_name, rnd, self.pane_round_of(snap), self.ground_of(snap))
                     key = (map_name, mode, end, phase, stamps, tuple(game_rect))
             except Exception:
                 key = None
@@ -603,7 +645,7 @@ class FieldLayer:
         map_name, mode, rnd, end = self.game_of(snap)
         if not map_name or not game_rect:
             return None
-        view = self.source.view(map_name, mode, rnd, end, self.pane_round_of(snap))
+        view = self.source.view(map_name, mode, rnd, end, self.pane_round_of(snap), self.ground_of(snap))
         if view is None:
             return None
         rect = tuple(game_rect)

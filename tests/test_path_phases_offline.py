@@ -165,7 +165,7 @@ def test_a_sniper_stands_on_ground_that_outlasts_the_phase():
     ex = SimpleNamespace(m=m, g=SimpleNamespace(towers={}, hero="obyn"), rules={"end_round": 100},
                          ground_horizon=mapgeom.phase_end(geom, 40), land_only=False, removed=(),
                          GLOBAL_BUT_LOCAL=Executor.GLOBAL_BUT_LOCAL,
-                         _pane_round=lambda: None, _pose_round=lambda: None,
+                         _pane_round=lambda: None, _ground_round=lambda: None, _pose_round=lambda: None,
                          _off_panes=lambda kind, grid: grid)
     ex._needs_no_reach = lambda kind: Executor._needs_no_reach(ex, kind)
     assert ex.ground_horizon == 54

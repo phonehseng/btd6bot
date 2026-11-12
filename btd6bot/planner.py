@@ -2861,7 +2861,7 @@ def _achievement_values(c: _Cand, goals: Mapping[str, AchievementGoal],
 def rank_games(account: AccountState, available_strategies: Iterable[Any] | None = None, *,
                config: PlannerConfig | None = None, playable_maps: Iterable[str] | None = None,
                achievements: tuple[Sequence[Mapping[str, Any]] | None, Mapping[str, Any] | None]
-               | None = None, below_bar: bool = False,
+               | None = None, below_bar: bool = False, struck_too: bool = False,
                ) -> tuple[str, list[str], list[_Cand]]:
     """The candidates the bot may play, best first, plus the phase (top tier,
     or "NONE") and reasons for the log.
@@ -2874,6 +2874,11 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
     "LAST", surest first) after the tiered ones, so a caller that must not
     idle (the runner) still has a game when every tiered one is benched or
     used up; the phase is then "LAST" instead of "NONE".
+
+    ``struck_too`` (with ``below_bar``): the last resorts that have struck
+    out or are hopeless follow the others instead of being left out. The
+    runner asks for them when every game of the shorter list is benched and
+    none of those benches is one it may retry (see ``Bot.next_plan``).
 
     ``achievements``: (catalog, live state); default: loaded from the paths
     in the config (data/achievements.json, data/achievements_state.json)."""
@@ -2973,11 +2978,22 @@ def rank_games(account: AccountState, available_strategies: Iterable[Any] | None
         # Multi-life before one-life, then map/modes some build can still
         # win before the ones every build has lost (map_struck_out), then
         # the surest.
-        struck_maps = {(c.map, c.mode) for c in rest if map_struck_out(account, c.map, c.mode)}
-        rest.sort(key=lambda c: (not MODE_RULES.get(c.mode, {}).get("one_life"),
-                                 (c.map, c.mode) not in struck_maps,
-                                 c.p, c.ease, c.score), reverse=True)
-        rest = _own_builds_first(rest)
+        struck_maps = {(c.map, c.mode) for c in open_rest if map_struck_out(account, c.map, c.mode)}
+
+        def surest_first(group: list[_Cand]) -> list[_Cand]:
+            group.sort(key=lambda c: (not MODE_RULES.get(c.mode, {}).get("one_life"),
+                                      (c.map, c.mode) not in struck_maps,
+                                      c.p, c.ease, c.score), reverse=True)
+            return _own_builds_first(group)
+
+        kept = {id(c) for c in rest}
+        rest = surest_first(rest)
+        if struck_too:
+            # 2026-11-12 01:56: three Deflation medals were the only last
+            # resorts not struck out, each benched for two days because its
+            # plan was rated too low to start - and the bot napped with 61
+            # medals open, the struck-out ones never offered.
+            rest += surest_first([c for c in open_rest if id(c) not in kept])
         for c in rest:
             c.tier = "LAST"
             c.notes.append("last resort: under every bar, played rather than idling")
