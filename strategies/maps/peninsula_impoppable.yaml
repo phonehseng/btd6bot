@@ -27,7 +27,7 @@ plan:
   - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}
   - {do: upgrade, id: sb2, to: 2-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.452, 0.3]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.441, 0.3]}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: dr, to: 0-0-3}
   - {do: upgrade, id: sb1, to: 2-0-3}
@@ -71,7 +71,7 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.452, 0.3]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.441, 0.3]}
   ceramic:
     - {do: upgrade, id: dr, to: 0-0-3}
   rush:

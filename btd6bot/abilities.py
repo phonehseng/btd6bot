@@ -22,7 +22,10 @@ ability is missing or still cooling down does nothing in BTD6):
   (two MOAB Assassins) share one slot.  A tier-5 ability replacing a tier-4
   one is treated as a new slot at the end.  If this ordering is wrong the
   worst case is pressing a different ability; abilities that must never fire
-  blindly (targeting / debt / sacrifice) are only a risk through that.
+  blindly (targeting / debt) are only a risk through that. A destructive
+  one (Blood Sacrifice) is not left to the guess: every key it may hold,
+  given how unsure the hero's level and the tower abilities' order are, is
+  never pressed (AbilityPlanner.unsafe_keys).
 * **Cooldowns** (``cooldown_s``, upper bounds: MK and hero levels shorten
   them) are in game seconds at 1x.  The bot always plays at 2x, so a cooldown
   elapses in ``cooldown_s / speed`` real seconds.  Cooldowns are assumed to
@@ -178,7 +181,11 @@ TOWER_ABILITIES = {
     "Glue Strike": (40, "on_cooldown"),
     "Glue Storm": (40, "on_cooldown"),
     "Supply Drop": (90, "on_cooldown"),
-    "First Strike Capability": (60, "never"),      # click-targeted
+    # Not click-targeted: the game model's ability attack picks its own
+    # target with TargetStrongModel (the strongest bloon on screen), as MOAB
+    # Assassin's picks with TargetMoabModel; no TargetSelectedPointModel.
+    # Pressed in blimp rounds once the blimps are out (BLIMP_TARGETED).
+    "First Strike Capability": (60, "moab"),
     "Monkey Pirates": (45, "moab"),
     "Pirate Lord": (30, "moab"),
     "Ground Zero": (35, "on_cooldown"),
@@ -222,30 +229,75 @@ TOWER_ABILITIES = {
 ROUND_START = {"Bloon Sabotage"}
 BLIMP_LEAD_S = 1.0            # ROUND_START fires this many game seconds before the first blimp
 
+# 'moab' abilities that hit the strongest bloon on screen once, wherever it
+# is: First Strike's 10,000-damage missile (20,000 at 0-5-0). Pressed 3 s
+# into a MOAB round, as the others are, it would often land on a ceramic:
+# round 95's blimps come only 30.8 game seconds in. So they wait until the
+# round's first blimp has been on the track BLIMP_ON_TRACK_S game seconds,
+# and are not pressed in a round without blimps. A leak still fires them.
+BLIMP_TARGETED = {"First Strike Capability"}
+BLIMP_ON_TRACK_S = 2.0
+
 # Abilities that, once pressed, wait for a click on a tower and then destroy
 # it: Adora's Blood Sacrifice (level 7) turns the clicked tower into hero XP.
-# The planner never presses them (they are 'never' in towers.HEROES), and
-# while one may be on the board it presses NOTHING: the hotkey order is only
-# assumed (see the module docstring), so a press meant for The Long Arm of
-# Light could arm Blood Sacrifice instead, and the bot's next click on a
-# tower - to upgrade it - would sacrifice it. Only a plan's own `do: ability`
-# step (strategy.Executor._try_ability) presses one, and it then clicks the
-# tower it means to destroy itself (Game.targeted_ability).
+# The planner never presses them ('never' in towers.HEROES), and it never
+# presses a key that MIGHT be one of them either: the bar's order is only
+# known up to the uncertainty of the hero's level and of when each tower
+# ability came (AbilityPlanner.unsafe_keys), and a press meant for The Long
+# Arm of Light that armed Blood Sacrifice would let the bot's next click on a
+# tower - to upgrade it - sacrifice that tower. Every key outside that window
+# is pressed as usual, so Adora's Long Arm of Light (level 3) and Ball of
+# Light (level 10) fire, which they did not while the planner went silent
+# from level 7 on. Only a plan's own `do: ability` step (strategy.Executor.
+# _try_ability) presses a destructive ability, and it then clicks the tower
+# it means to destroy itself (Game.targeted_ability).
 DESTRUCTIVE_ABILITIES = {"Blood Sacrifice"}
+
+# The level window used to place a destructive ability on the bar. It must
+# contain the hero's true level, so it is wider than the window the planner
+# presses by (HERO_XP_OPTIMISM / HERO_XP_PESSIMISM): the largest real XP
+# factor is an Expert map (x1.3) with every hero XP Monkey Knowledge
+# (x1.2474), about 1.62 (hero_xp_multiplier); 2.0 leaves a margin over that.
+# The low side is the planner's own 0.8: no map or knowledge gives a hero
+# less than the base XP.
+SLOT_XP_OPTIMISM = 2.0
+SLOT_XP_PESSIMISM = HERO_XP_PESSIMISM
+# A tower ability and a hero level-up recorded this many rounds apart or
+# closer are taken as of unknown order (the round reading between rounds may
+# lag the game by one, and a level arrives with the round-end XP).
+ORDER_MARGIN_ROUNDS = 1
 
 
 def presses_blind(hero, placed_round, rnd):
-    """Does the AbilityPlanner press any hotkey in round `rnd` with this
-    hero placed in `placed_round`? False once a DESTRUCTIVE_ABILITIES
-    ability may be unlocked (the optimistic level estimate, as
-    AbilityPlanner.destructive_possible reads it): from then on nothing is
-    pressed, tower abilities included. The damage model credits abilities
-    only on boards where it is True (dps_model.station_for: pressed)."""
-    if not hero or placed_round is None or rnd is None:
-        return True
-    level = estimate_hero_level(hero, placed_round, rnd, HERO_XP_OPTIMISM)
-    return not any(ab["name"] in DESTRUCTIVE_ABILITIES and ab["level"] <= level
-                   for ab in T.HEROES.get(hero, {}).get("abilities", []))
+    """Does the AbilityPlanner press hotkeys in round `rnd` with this hero
+    placed in `placed_round`? Always True now: with a destructive hero
+    ability (DESTRUCTIVE_ABILITIES) on the bar the planner still presses
+    every key that cannot be it, and only holds the keys in its uncertain
+    window (AbilityPlanner.unsafe_keys) - on a board without tower abilities
+    bought around the hero's level 7, that is Blood Sacrifice's own key. The
+    damage model credits abilities only on boards where it is True
+    (dps_model.station_for: pressed). Kept as a function so the model asks
+    one place."""
+    return True
+
+
+def exported_ability_count(kind, tiers):
+    """How many abilities the game model lists for tower `kind` with these
+    path tiers (attacks.json "abilities" of its crosspath), or None without
+    the export. It can be more than tower_abilities() knows: the export has
+    Support Chinook's Redeploy, Dark Knight's Darkshift, the Desperado's
+    and Mermonkey's abilities and a few that may be hidden passives (Bomb
+    Blitz, Retaliation). Their bar slots are not certain, so the planner
+    counts them as maybe-slots when it places a destructive ability."""
+    from . import gamemodel
+    towers = (gamemodel._table("attacks") or {}).get("towers")
+    if not towers:
+        return None
+    code = "".join(str(int(t or 0)) for t in (tiers or ()))
+    combo = ((towers.get(kind) or {}).get("crosspaths") or {}).get(code)
+    if combo is None:
+        return None
+    return len(combo.get("abilities") or [])
 
 
 def _tower_ability_index():
@@ -278,6 +330,7 @@ def tower_abilities(kind, tiers):
 
 # -- hero level -----------------------------------------------------------------
 
+@lru_cache(maxsize=4096)
 def hero_xp(placed_round, current_round):
     """XP from the rounds completed since placement (XP is paid at round end;
     the hero earns the round it was placed in)."""
@@ -301,6 +354,7 @@ def estimate_hero_level(hero, placed_round, current_round, factor=1.0):
     return level_for_hero_xp(hero_xp(placed_round, current_round) * factor, hero)
 
 
+@lru_cache(maxsize=4096)
 def unlock_round(hero, placed_round, level, factor=1.0, horizon=200):
     """First round during which the hero is estimated to have ``level``."""
     if placed_round is None:
@@ -368,6 +422,10 @@ class AbilityPlanner:
         self.slots = {}                 # ability name -> _Slot (currently on the board)
         self._tower_seen = {}           # ability name -> (acquired round, game_t, seq)
         self._tower_count = {}          # ability name -> towers on the board that have it
+        self._holders = {}              # ability name -> tids of the towers that have it
+        self._first_ab = {}             # tid -> round it first had any ability
+        self._last_ab = {}              # tid -> (its tiers, round they last changed) while it has one
+        self._extra = {}                # tid -> abilities the export lists beyond TOWER_ABILITIES
         self._seq = 0
         self.game_t = 0.0               # in-round game seconds elapsed
         self._prev_now = None
@@ -378,16 +436,43 @@ class AbilityPlanner:
 
     # -- board state ------------------------------------------------------------
     def update_towers(self, towers, rnd):
-        """towers: objects with .tid, .kind ('hero' or a tower id) and .tiers."""
+        """towers: objects with .tid, .kind ('hero' or a tower id) and .tiers.
+
+        Besides the assumed bar (hotkeys) this keeps what unsafe_keys needs
+        to bound it: per tower with an ability, the round it first had one
+        and the round its tiers last changed (an upgrade may keep the
+        ability's slot or give it a new one at the end: the game replaces
+        the tower's model, and which it does was never seen), and the
+        abilities the game export lists on top of TOWER_ABILITIES
+        (exported_ability_count), which may hold slots."""
+        here = rnd if rnd is not None else 0
         names = {}
+        holders = {}
         has_hero = False
+        seen_tids = set()
         for p in towers:
             if p.kind == "hero":
                 has_hero = True
                 continue
-            for n in tower_abilities(p.kind, p.tiers):
+            mine = tower_abilities(p.kind, p.tiers)
+            for n in mine:
                 names[n] = names.get(n, 0) + 1
+                holders.setdefault(n, set()).add(p.tid)
+            extra = max(0, (exported_ability_count(p.kind, p.tiers or ()) or 0) - len(mine))
+            if mine or extra:
+                seen_tids.add(p.tid)
+                self._first_ab.setdefault(p.tid, here)
+                tiers = tuple(p.tiers or ())
+                if self._last_ab.get(p.tid, (None,))[0] != tiers:
+                    self._last_ab[p.tid] = (tiers, here)
+                self._extra[p.tid] = extra
+        for tid in list(self._first_ab):
+            if tid not in seen_tids:
+                self._first_ab.pop(tid, None)
+                self._last_ab.pop(tid, None)
+                self._extra.pop(tid, None)
         self._tower_count = names
+        self._holders = holders
         if has_hero and self.hero_round is None:
             self.hero_round = rnd if rnd is not None else self.rules.get("start_round", 1)
         if not has_hero:
@@ -395,7 +480,7 @@ class AbilityPlanner:
         for n in names:
             if n not in self._tower_seen:
                 self._seq += 1
-                self._tower_seen[n] = (rnd if rnd is not None else 0, self.game_t, self._seq)
+                self._tower_seen[n] = (here, self.game_t, self._seq)
         for n in list(self._tower_seen):
             if n not in names:
                 del self._tower_seen[n]  # sold: a later re-buy is a new slot
@@ -418,12 +503,99 @@ class AbilityPlanner:
 
     def destructive_possible(self, rnd):
         """Name of a DESTRUCTIVE_ABILITIES hero ability that may be unlocked
-        now (optimistic level estimate), or None."""
-        for _, name, _, _, _ in self._hero_abilities(rnd):
-            plain = name.split(":", 1)[1]
-            if plain in DESTRUCTIVE_ABILITIES:
-                return plain
+        now (the wide SLOT_XP_OPTIMISM estimate), or None."""
+        if self.hero_round is None or rnd is None:
+            return None
+        lvl = estimate_hero_level(self.hero, self.hero_round, rnd, SLOT_XP_OPTIMISM)
+        for ab in T.HEROES.get(self.hero, {}).get("abilities", []):
+            if ab["name"] in DESTRUCTIVE_ABILITIES and ab["level"] <= lvl:
+                return ab["name"]
         return None
+
+    # -- where a destructive ability can sit on the bar ------------------------
+    def _bar_bounds(self, rnd):
+        """Every slot the bar may hold now, as dicts with
+          name     the ability ("hero:..." for the hero's),
+          level    the hero level that unlocks it (None for a tower's),
+          n        (fewest, most) slots it takes: (1, 1) for one that is
+                   certainly there, (0, 1) for a hero ability that may not
+                   be unlocked yet, (0, k) for k export-only abilities,
+          rounds   (earliest, latest) round it can have come to the bar
+                   (latest None: not certainly there yet).
+        Hero levels use the wide SLOT_XP_* window, so the true level is
+        inside it."""
+        out = []
+        if self.hero_round is not None and rnd is not None:
+            lo = estimate_hero_level(self.hero, self.hero_round, rnd, SLOT_XP_PESSIMISM)
+            hi = estimate_hero_level(self.hero, self.hero_round, rnd, SLOT_XP_OPTIMISM)
+            for ab in T.HEROES.get(self.hero, {}).get("abilities", []):
+                if hi < ab["level"]:
+                    continue
+                certain = lo >= ab["level"]
+                first = unlock_round(self.hero, self.hero_round, ab["level"], SLOT_XP_OPTIMISM)
+                last = (unlock_round(self.hero, self.hero_round, ab["level"], SLOT_XP_PESSIMISM)
+                        if certain else None)
+                out.append({"name": "hero:" + ab["name"], "level": ab["level"],
+                            "n": (1 if certain else 0, 1),
+                            "rounds": (first if first is not None else rnd, last)})
+        for n, (r, _, _) in self._tower_seen.items():
+            tids = [t for t in self._holders.get(n, ()) if t in self._first_ab]
+            lo = min([self._first_ab[t] for t in tids] + [r])
+            hi = max([self._last_ab[t][1] for t in tids] + [r])
+            out.append({"name": n, "level": None, "n": (1, 1), "rounds": (lo, hi)})
+        for tid, k in self._extra.items():
+            if k:
+                out.append({"name": f"export:{tid}", "level": None, "n": (0, k),
+                            "rounds": (self._first_ab[tid], self._last_ab[tid][1])})
+        return out
+
+    @staticmethod
+    def _before(a, b):
+        """(certainly, possibly): does slot a come before slot b on the bar?
+        Two hero abilities go by level; otherwise by the round each came,
+        and rounds within ORDER_MARGIN_ROUNDS of each other are unknown."""
+        if a["level"] is not None and b["level"] is not None:
+            return a["level"] < b["level"], a["level"] < b["level"]
+        a_lo, a_hi = a["rounds"]
+        b_lo, b_hi = b["rounds"]
+        certainly = a_hi is not None and a_hi + ORDER_MARGIN_ROUNDS < b_lo
+        possibly = b_hi is None or a_lo <= b_hi + ORDER_MARGIN_ROUNDS
+        return certainly, possibly
+
+    def slot_window(self, name, rnd):
+        """(lowest, highest) hotkey hero ability `name` (its plain name) can
+        have now, or None when it cannot be unlocked yet. Counted from
+        _bar_bounds: one more than the slots that certainly / possibly
+        come before it."""
+        bar = self._bar_bounds(rnd)
+        me = next((e for e in bar if e["name"] == "hero:" + name), None)
+        if me is None:
+            return None
+        lo = hi = 1
+        for e in bar:
+            if e is me:
+                continue
+            certainly, possibly = self._before(e, me)
+            if certainly:
+                lo += e["n"][0]
+            if possibly:
+                hi += e["n"][1]
+        return lo, hi
+
+    def unsafe_keys(self, rnd):
+        """Hotkeys that may hold a DESTRUCTIVE_ABILITIES ability now: the
+        planner never presses these. Empty without such a hero ability.
+        Example (tests/test_adora_slots_offline.py): Adora alone on the bar,
+        or with tower abilities bought well before or after her level 7,
+        holds key 2 only - Long Arm of Light is key 1, Ball of Light key 3."""
+        keys = set()
+        for ab in T.HEROES.get(self.hero, {}).get("abilities", []):
+            if ab["name"] not in DESTRUCTIVE_ABILITIES:
+                continue
+            window = self.slot_window(ab["name"], rnd)
+            if window:
+                keys.update(range(window[0], window[1] + 1))
+        return keys
 
     def key_candidates(self, name, rnd):
         """Hotkeys to try, in order, for hero ability `name` (its plain name,
@@ -489,6 +661,16 @@ class AbilityPlanner:
             return True
         return (now - self.round_start) * self.speed >= first - BLIMP_LEAD_S
 
+    def _blimps_on_track(self, now, rnd):
+        """Has the current round's first blimp been out BLIMP_ON_TRACK_S
+        game seconds? False in a round without blimps (BLIMP_TARGETED)."""
+        if self.round_start is None or rnd is None:
+            return False
+        first = first_blimp_s(TH.set_for_mode(_mode_of(self.rules)), rnd)
+        if first is None:
+            return False
+        return (now - self.round_start) * self.speed >= first + BLIMP_ON_TRACK_S
+
     def _due(self, slot, cooldown):
         if slot.last_press is None:
             return True
@@ -515,21 +697,21 @@ class AbilityPlanner:
         blimps_here = self._blimps_here(now, rnd)
         fired = []
         live = {}
-        guard = self.destructive_possible(rnd)
-        if guard:
-            # any key could be the one that arms it (DESTRUCTIVE_ABILITIES)
-            if not getattr(self, "_guard_logged", False):
-                self._guard_logged = True
-                log.info("abilities: no hotkey presses from round %s on - %s may be unlocked "
-                         "and a wrong guess of its key would arm it", rnd, guard)
-            self.last_fired = []
-            return []
+        unsafe = self.unsafe_keys(rnd)
+        if unsafe and getattr(self, "_unsafe_logged", None) != (rnd, tuple(sorted(unsafe))):
+            self._unsafe_logged = (rnd, tuple(sorted(unsafe)))
+            log.info("abilities: round %s - keys %s are held: %s may sit there "
+                     "(DESTRUCTIVE_ABILITIES)", rnd, sorted(unsafe), self.destructive_possible(rnd))
         for key, name, use, cd, certain in self.hotkeys(rnd):
             slot = live[name] = self.slots.get(name) or _Slot(name)
-            if use == "never":
+            if use == "never" or key in unsafe:
                 continue
             if lives_dropped:
                 reason = "emergency"
+            elif crisis_now and name in BLIMP_TARGETED:
+                if not self._blimps_on_track(now, rnd):
+                    continue
+                reason = "crisis round"
             elif crisis_now and (name not in ROUND_START or blimps_here):
                 reason = "crisis round"
             elif crisis_now:
@@ -542,6 +724,10 @@ class AbilityPlanner:
                 if not is_slow_round(rnd, self.rules) or not blimps_here:
                     continue
                 reason = "heavy round"
+            elif use == "moab" and name in BLIMP_TARGETED:
+                if not is_moab_round(rnd, self.rules) or not self._blimps_on_track(now, rnd):
+                    continue
+                reason = "blimps out"
             elif use == "moab":
                 if not is_moab_round(rnd, self.rules) or self.round_start is None \
                         or now - self.round_start < MOAB_DELAY_S:

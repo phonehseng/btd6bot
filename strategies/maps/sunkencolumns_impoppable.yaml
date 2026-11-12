@@ -23,10 +23,10 @@ planner:
   base_success: {impoppable: 0.5}
   maps: [Sunken Columns]
 plan:
-  - {do: place, id: sb1, kind: sub, role: dps, segment: [0.0, 0.6], at: [0.569, 0.385]}
+  - {do: place, id: sb1, kind: sub, role: dps, segment: [0.0, 0.6], at: [0.58, 0.385]}
   - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.5], at: [0.815, 0.215]}
   - {do: upgrade, id: sb1, to: 1-0-1}
-  - {do: place, id: sb2, kind: sub, role: dps, segment: [0.3, 1.0], at: [0.612, 0.385]}
+  - {do: place, id: sb2, kind: sub, role: dps, segment: [0.3, 1.0], at: [0.366, 0.624]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}

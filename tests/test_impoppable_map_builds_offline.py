@@ -186,14 +186,19 @@ def test_sunken_columns_answers_round_59_camo_lead():
 def test_a_tower_is_pinned_on_its_part_of_the_route():
     """Mesa (2026-11-12): n1, `segment: [0.0, 0.5]`, was pinned by its cover
     of the whole route at the far end, and the one-life game was lost at
-    round 9. Its pin covers more of the first half than that spot does."""
+    round 9. Its pin covers at least as much of the first half as the
+    whole-route pin does, and is among the best for that half (with the
+    refusals learned by 2026-11-12 13:00 the two pins are the same cell)."""
     pinner = pin_spots.Pinner("Mesa", "impoppable")
     first = pinner.pin("a", "ninja", segment=(0.0, 0.5))
     pinner.placed.pop()
     anywhere = pinner.pin("b", "ninja")
     pinner.placed.pop()
     cover = lambda at: pinner.segment_cover("ninja", pinner.model.frac_to_cell(*at), (0.0, 0.5))
-    assert cover(first) > cover(anywhere), (first, anywhere)
+    assert cover(first) >= cover(anywhere), (first, anywhere)
+    ranked = pinner.candidates("ninja", pinner.legal("ninja"), segment=(0.0, 0.5))
+    best = max(pinner.segment_cover("ninja", c, (0.0, 0.5)) for c in ranked)
+    assert cover(first) >= pin_spots.PROVEN_SCORE_SHARE * best, (cover(first), best)
     _, d = _build("mesa")
     n1 = next(st for st in d["plan"] if st.get("id") == "n1")
     assert n1["at"] == first
