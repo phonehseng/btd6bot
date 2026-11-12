@@ -34,7 +34,16 @@ ONE_THREAD = {k: "1" for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_N
 # reinforce look-budget test (a 6 s budget, a 1 s limit for a remembered
 # answer) failed on the clock alone in the runs of 2026-11-11 07:18-11:44,
 # while it passed every time it was run by itself on the same commit.
-CLOCKED = {"test_reinforce_budget_offline.py"}
+# The same happened on 2026-11-12, with two or three check runs of other
+# sessions on the machine at once, to the three other tests that time
+# themselves: the glass HUD's field picture (1.5 s for a map's first
+# picture: failed in both checks of the 07:18 caretaker run and at 12:16),
+# the glass HUD's widgets (40 ms for a redraw: the 07:18 run) and the wait
+# between games (a 1 s limit: the 10:05 run).
+# Each passed when run by itself, and no caretaker fix of that morning
+# could be merged because the check never ended "ALL OK".
+CLOCKED = {"test_reinforce_budget_offline.py", "test_glass_field_offline.py",
+           "test_glass_hud_offline.py", "test_between_games_offline.py"}
 
 
 def run_step(cmd):

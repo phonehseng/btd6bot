@@ -1385,6 +1385,11 @@ class Executor:
                 return
         except Exception:
             pass
+        near = self._tower_in_the_way(kind, cx, cy)
+        if near is not None:
+            log.info("spot (%d,%d) refused beside %s - not learned (the game keeps towers apart; "
+                     "the ground may be fine on an empty map)", cx, cy, near)
+            return
         layers = self._refusal_layers(kind)
         for layer in layers:
             refuse(layer, cx, cy)
@@ -1396,6 +1401,37 @@ class Executor:
             # be wrong as a whole: redo that scan next visit
             log.warning("map scan disagrees with the game too often - rescanning next visit")
             self.m.scan.pop(cls, None)
+
+    # Extra room, in world units, on top of the two footprints: the probe's
+    # spot and the tower's centre are read off the screen and can be a few
+    # units out.
+    TOWER_GAP_SLACK = 3.0
+
+    def _tower_in_the_way(self, kind, cx, cy):
+        """The id of a standing tower whose footprint may be why the game
+        refused `kind` at cell (cx, cy), else None.
+
+        The game keeps towers' footprints apart, so a spot beside one of the
+        bot's own towers is refused although the ground is fine. Such a
+        refusal used to be learned for the map, for every later game, where
+        that tower does not stand: the 2026-11-12 pin audit found 673
+        refused cells in the 4x4 blocks where a tower later stood, 39% of
+        Sunset Gulch's land refused, and the Impoppable map builds' pinned
+        spots refused one after another during the day."""
+        from . import placement as PL
+        try:
+            hero = self.g.hero
+            upc = PL.units_per_cell(self.m)
+            own = PL.footprint_radius(kind, hero if kind == "hero" else None)
+            for p in self.g.towers.values():
+                theirs = PL.footprint_radius(p.kind, hero if p.kind == "hero" else None)
+                px, py = self.m.frac_to_cell(p.x, p.y)
+                dist = ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5 * upc
+                if dist <= own + theirs + self.TOWER_GAP_SLACK:
+                    return p.tid
+        except Exception:
+            return None
+        return None
 
     def _refusal_layers(self, kind):
         """The MapModel.refused layers a refusal of `kind` is learned in: an
@@ -1733,6 +1769,11 @@ class Executor:
         if role == "exit":
             seg = (0.65, 1.0)
         only = self._blimp_lane() if step.get("lane") == "blimp" and role != "support" else None
+        if only is None and step.get("for_round") is not None and role != "support":
+            # a purchase for one weak round on a map whose rounds take turns
+            # on the paths: only the track that round's bloons ride counts
+            # (reinforce.options, Muddy Puddles loss case 20261112_121231)
+            only = self._round_lane(step["for_round"])
         if only is not None:
             # the blimps' own route is already a part of the track: the
             # progress window would cut it further (Workshop's chute route
@@ -1775,8 +1816,9 @@ class Executor:
         if only is not None and not cands:
             # no legal cell reaches the blimps' route: the whole track is
             # still better than setting the answer aside
-            log.info("%s: no legal spot reaches the blimp route - scoring the whole track", kind)
-            return self.pick_spots(kind, {k: v for k, v in step.items() if k != "lane"}, n)
+            log.info("%s: no legal spot reaches the %s - scoring the whole track", kind,
+                     "blimp route" if step.get("lane") == "blimp" else f"track of round {step.get('for_round')}")
+            return self.pick_spots(kind, {k: v for k, v in step.items() if k not in ("lane", "for_round")}, n)
         if valid is not None and role not in ("support", "far") and PL.needs_sight(kind, hero):
             # count only the track this spot can actually see past walls/blockers
             weight = (self.m.spot_weight(seg, covered) if only is None
@@ -3125,12 +3167,29 @@ class Executor:
 
     def _reach(self, kind):
         """Grid: how many track cells a `kind` tower centred on each cell has
-        in range (computed once per kind and game)."""
+        in range (computed once per kind and game).
+
+        On a map whose routes take turns round by round a cell counts as the
+        share of the rounds that pass it (MapModel.round_share), the weight
+        the spots are scored with (MapModel.track_weight). Counted alike,
+        the reach floor threw the best spot away: on Last Resort a ninja
+        beside the big loop has 282 track cells in range, all of them used
+        one round in four, and the one legal patch left beside the top
+        straight that every route runs along has 126 - under the floor of
+        126.9 (MIN_REACH_SHARE), "its range only grazes the track", although
+        it is the best-scored spot on the map. So no general
+        build stood a short-range tower there, and every game lost on that
+        map ended on a small-loop or straight round (2026-11-12 11:13 and
+        11:17, cases 20261112_111354_LastResort_primary_only and
+        20261112_111733_LastResort_abr: rounds 32 and 27-28)."""
         cache = self.__dict__.setdefault("_reach_cache", {})
         if kind not in cache:
             import cv2
             cnt = getattr(self.m, "t_cnt", None)
             track = (cnt > 0).astype(np.float32) if isinstance(cnt, np.ndarray) else None
+            share = self._round_share_grid(track)
+            if share is not None:
+                track = track * share
             if track is None:
                 cache[kind] = None
             else:
@@ -3139,6 +3198,22 @@ class Executor:
                 cv2.circle(disc, (r, r), r, 1.0, -1)
                 cache[kind] = cv2.filter2D(track, -1, disc, borderType=cv2.BORDER_CONSTANT)
         return cache[kind]
+
+    def _round_share_grid(self, track):
+        """The map's round shares (MapModel.round_share: for each cell the
+        share of the rounds whose bloons pass it) when they fit the `track`
+        grid, else None - every route carries every round, the model has no
+        geometry (test models), or there is no track grid to weight."""
+        if track is None:
+            return None
+        share_of = getattr(self.m, "round_share", None)
+        try:
+            share = share_of() if share_of else None
+        except Exception:      # a map-file problem must never stop placement
+            return None
+        if not isinstance(share, np.ndarray) or share.shape != track.shape:
+            return None
+        return share
 
     def _best_legal_reach(self, kind, valid):
         """Track cells the best legal cell for a `kind` tower reaches, or
@@ -4528,6 +4603,17 @@ class Executor:
             return True
         sig = TH.sig_from_name(need)
         return sig is not None and "blimp" in sig
+
+    def _round_lane(self, rnd):
+        """Bool grid of the track round `rnd`'s bloons ride on a map whose
+        rounds take turns on its paths (mapgeom.round_lane), or None when
+        the round may use every path or the map has no geometry."""
+        from . import mapgeom
+        try:
+            return mapgeom.round_lane(self.m, rnd)
+        except Exception:                      # geometry is a help, never a must
+            log.debug("round lane: no geometry", exc_info=True)
+            return None
 
     def _blimp_lane(self):
         """Bool grid of the track blimps ride on this map (mapgeom.blimp_track),

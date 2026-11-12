@@ -53,6 +53,8 @@
 id: bazaar_chimps
 map: Bazaar
 hero: rosalia
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:

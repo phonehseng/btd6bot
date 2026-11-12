@@ -47,6 +47,8 @@
 id: firingrange_chimps
 map: Firing Range
 hero: psi
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
@@ -76,12 +78,15 @@ plan:
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: upgrade, id: s1, to: 4-1-0}                                            # added: Maim MOAB
+  - {do: place, id: s2, kind: sniper, role: dps, target: strong, at: [0.379, 0.916]}  # a second Maim MOAB: round 93's BFBs cross the upper lane out of the cluster's reach
+  - {do: upgrade, id: s2, to: 4-1-0}
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
   - {do: place, id: i1, kind: ice, role: dps, at: [0.74, 0.777]}
+  - {do: upgrade, id: s1, to: 5-1-0}                                            # Cripple MOAB before Super Brittle and the Tack Zone (2026-11-12: lost round 93 twice, Cripple never bought by then)
   - {do: upgrade, id: i1, to: 5-2-0}                                            # Super Brittle
+fill:                 # bought with what is left: the Tack Zone at the exit gave way to Cripple MOAB and a second Maim MOAB sniper (2026-11-12)
   - {do: place, id: t1, kind: tack, role: dps, at: [0.74, 0.845]}
   - {do: upgrade, id: t1, to: 2-0-5}                                            # The Tack Zone
-  - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: s1, to: 1-1-0}]
