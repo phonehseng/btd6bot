@@ -431,13 +431,22 @@ def new_tower(ex, tid, kind, fx, fy):
                            placed_round=getattr(ex, "now_round", None))
 
 
-def options(ex, cash, kinds=None):
+def options(ex, cash, kinds=None, weak=None):
     """Every purchase the cash allows (see the module docstring), cheapest
     first, at most MAX_OPTIONS.
 
     kinds: the tower kinds offered as "another <kind>" - by default the
     damage kinds standing plus the plan's main kind. With an explicit list
-    only those placements are offered, and no upgrades (new_kind_options)."""
+    only those placements are offered, and no upgrades (new_kind_options).
+
+    weak: the round the look judges purchases on. On a map whose rounds take
+    turns on its paths (Executor._round_lane) each kind is offered a second
+    time, at the spot best for the track that round's bloons ride. The usual
+    spot follows the map's round-share weighting, which favours the paths
+    most rounds use: Muddy Puddles Impoppable (2026-11-12, loss case
+    20261112_121231) rated "another dart" in the middle lanes 0.59 -> 0.59
+    for round 13, which runs down the left lane, kept the cash for the hero,
+    and lost round 13 there."""
     now = board(ex)
     out = []
     if kinds is None:
@@ -466,12 +475,19 @@ def options(ex, cash, kinds=None):
             held_back = getattr(ex, "place_held_back", None)
             if held_back is not None and held_back(step):
                 continue
-            spots = _rating_spots(ex, kind, step)
-            if not spots:
-                continue
-            fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
-            new = new_tower(ex, f"_new_{kind}", kind, fx, fy)
-            out.append(Option(f"another {kind}", cost, step, now + [new]))
+            steps = [(f"another {kind}", step)]
+            lane = getattr(ex, "_round_lane", None)
+            if weak is not None and callable(lane) and lane(weak) is not None:
+                steps.append((f"another {kind} for round {weak}'s path", {**step, "for_round": weak}))
+            seen = set()
+            for what, st in steps:
+                spots = _rating_spots(ex, kind, st)
+                if not spots or (spots[0][0], spots[0][1]) in seen:
+                    continue      # no spot, or the same spot as the usual one
+                seen.add((spots[0][0], spots[0][1]))
+                fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
+                new = new_tower(ex, f"_new_{kind}", kind, fx, fy)
+                out.append(Option(what, cost, st, now + [new]))
     out.sort(key=lambda o: o.cost)
     return trim(out)
 
@@ -633,7 +649,7 @@ def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
     # per dollar (which kept buying the cheapest small step, see trim()).
     crisis = before is not None and before < 1.0
     pick = None
-    opts = options(ex, cash)
+    opts = options(ex, cash, weak=worst)
     radar = radar_option(ex, cash, worst)     # camo sight for the group (backlog #64)
     if radar is not None:
         opts.append(radar)
@@ -853,8 +869,26 @@ def plan_keeps_claim(forecast, ex, step, cost, cash, rnd, worst, crisis, pick, m
          under MIN_LIFT never outbids it, and a step the model cannot rate
          (tower gone, no spot) keeps the old MIN_LIFT bar.
     A judged round at the margin floor moves no margin whatever is bought,
-    so there the lives saved decide instead (floor_pick_outsaves)."""
+    so there the lives saved decide instead (floor_pick_outsaves).
+
+    One exception to rule 1: with one life (rules `one_life`) a pick that
+    moves the judged round by less than MIN_LIFT does not outbid the step,
+    reachable or not (unless the round is at the floor and the pick saves
+    more there, as above). Lives saved at half strength mean nothing with
+    one life left - only lifting the round does. Enchanted Glade Impoppable
+    (2026-11-12, loss case 20261112_055921): the judged round was always the
+    next one, so Ground Zero (ac1 2-4-0, $19,200) "cannot be paid before
+    round N - it holds no cash" from round 75 to 95, and $2-7k purchases
+    rated "0.81 -> 0.81", "0.62 -> 0.62" and "0.63 -> 0.63" took the bank
+    every round; round 95 was lost with $20,029 in hand."""
     if payable_by(ex, cost, cash, worst, rnd) is False:
+        one_life = bool((getattr(ex, "rules", None) or {}).get("one_life"))
+        if one_life and moved < MIN_LIFT and not floor_pick_outsaves(forecast, ex, step, cost, rnd, worst,
+                                                                      crisis, pick):
+            log.info("reinforce: plan step %s ($%d) cannot be paid before round %d from $%d, but with one "
+                     "life %s moves that round only %+.2f - the cash stays for the step",
+                     step, cost, worst, cash, pick.what, moved)
+            return True
         log.info("reinforce: plan step %s ($%d) cannot be paid before round %d from $%d and the income "
                  "until then - it holds no cash", step, cost, worst, cash)
         return False
@@ -1028,7 +1062,7 @@ def new_kind_options(ex, forecast, cash, rnd, deadline=None):
     standing = {p.kind for p in ex.g.towers.values()}
     kinds = [k for k in T.TOWERS if k not in standing and k not in NOT_DAMAGE
              and k != "hero" and ex.kind_allowed(k)]
-    return grow(ex, forecast, options(ex, cash, kinds=kinds), cash, rnd, deadline=deadline)
+    return grow(ex, forecast, options(ex, cash, kinds=kinds, weak=rnd), cash, rnd, deadline=deadline)
 
 
 def grow(ex, forecast, opts, cash, rnd, deadline=None):
@@ -1416,7 +1450,7 @@ def save_target(forecast, ex, cash, rnd, worst, deadline=None):
     if rnd is None or worst - rnd < SAVE_LEAD or cash <= 0:
         return None
     continuous = bool((getattr(ex, "rules", None) or {}).get("continuous"))
-    dearer = [o for o in options(ex, cash * SAVE_REACH) if o.cost > cash]     # cheapest first
+    dearer = [o for o in options(ex, cash * SAVE_REACH, weak=worst) if o.cost > cash]     # cheapest first
     for done, o in enumerate(dearer):
         if _over(deadline, "looking for a purchase to save for", done, len(dearer)):
             return None

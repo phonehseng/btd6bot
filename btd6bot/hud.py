@@ -70,7 +70,13 @@ def parse_cash(text):
     # be the separator
     t = re.sub(r"(?<=\d)[-:](?=\d{3}(?!\d))", ",", t)
     whole = re.sub(r"[^0-9,.]", "", t).strip(",.")   # drop stray symbols around the number
-    if whole and _CASH_FORMAT.match(whole):
+    # A letter BETWEEN digits is a misread digit, not a stray symbol: Spillway
+    # Impoppable (2026-11-12 12:05, loss case 20261112_120735) read '$440' as
+    # '$4HO', which became 40 once the H was dropped. Every cheap opener then
+    # answered "wait" with $440 in hand, and the sniper the map needs first
+    # was passed over. Such a read is not trusted as a whole number.
+    misread = re.search(r"\d[^0-9,.]+[0-9]", t)
+    if whole and not misread and _CASH_FORMAT.match(whole):
         return int(re.sub(r"[^0-9]", "", whole))
     # Scenery right of the counter read as more characters (Tricky Tracks'
     # Halloween graffiti: '$3,700' -> '$3.700-00元'): the number ends at the

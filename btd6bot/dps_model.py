@@ -1801,11 +1801,28 @@ class Zone:
 JOIN_DISTANCE = 6.0   # world units: a path starting this close to another's end continues it
 
 
+def _moab_only_paths(splitters):
+    """Path ids a MoabOnlySplitter sends MOAB-class bloons down."""
+    return {p for s in splitters if s.get("type") == "MoabOnlySplitter"
+            for p, f in zip(s.get("paths") or [], s.get("moabOnlyPath") or []) if f}
+
+
 def _is_boss_path(path, splitters):
-    """Paths only boss bloons take (no bosses in the modes the bot plays)."""
+    """Paths only boss bloons take (no bosses in the modes the bot plays).
+
+    A splitter's overrideBossPath sends bosses down a path, but when a
+    MoabOnlySplitter also flags that path as the MOAB-class lane, every MOAB,
+    BFB, ZOMG and DDT takes it too, so it is not boss-only. Sunset Gulch's
+    bridge (PathSpecial) is both: read as boss-only, the model rated its
+    blimps on the long canyon road past every tower, 1.51 for round 58, and
+    the five MOABs crossed the 390-unit bridge and ended the game (loss case
+    20261112_122752_SunsetGulch_impoppable). Cargo, Quarry and Castle
+    Revenge carry the same pairing."""
     pid = path.get("id")
     if "boss" in str(path.get("name", "")).lower():
         return True
+    if pid in _moab_only_paths(splitters):
+        return False
     for s in splitters:
         if s.get("overrideBossPath") == pid:
             return True

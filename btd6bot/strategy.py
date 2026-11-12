@@ -1385,6 +1385,11 @@ class Executor:
                 return
         except Exception:
             pass
+        near = self._tower_in_the_way(kind, cx, cy)
+        if near is not None:
+            log.info("spot (%d,%d) refused beside %s - not learned (the game keeps towers apart; "
+                     "the ground may be fine on an empty map)", cx, cy, near)
+            return
         layers = self._refusal_layers(kind)
         for layer in layers:
             refuse(layer, cx, cy)
@@ -1396,6 +1401,37 @@ class Executor:
             # be wrong as a whole: redo that scan next visit
             log.warning("map scan disagrees with the game too often - rescanning next visit")
             self.m.scan.pop(cls, None)
+
+    # Extra room, in world units, on top of the two footprints: the probe's
+    # spot and the tower's centre are read off the screen and can be a few
+    # units out.
+    TOWER_GAP_SLACK = 3.0
+
+    def _tower_in_the_way(self, kind, cx, cy):
+        """The id of a standing tower whose footprint may be why the game
+        refused `kind` at cell (cx, cy), else None.
+
+        The game keeps towers' footprints apart, so a spot beside one of the
+        bot's own towers is refused although the ground is fine. Such a
+        refusal used to be learned for the map, for every later game, where
+        that tower does not stand: the 2026-11-12 pin audit found 673
+        refused cells in the 4x4 blocks where a tower later stood, 39% of
+        Sunset Gulch's land refused, and the Impoppable map builds' pinned
+        spots refused one after another during the day."""
+        from . import placement as PL
+        try:
+            hero = self.g.hero
+            upc = PL.units_per_cell(self.m)
+            own = PL.footprint_radius(kind, hero if kind == "hero" else None)
+            for p in self.g.towers.values():
+                theirs = PL.footprint_radius(p.kind, hero if p.kind == "hero" else None)
+                px, py = self.m.frac_to_cell(p.x, p.y)
+                dist = ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5 * upc
+                if dist <= own + theirs + self.TOWER_GAP_SLACK:
+                    return p.tid
+        except Exception:
+            return None
+        return None
 
     def _refusal_layers(self, kind):
         """The MapModel.refused layers a refusal of `kind` is learned in: an
@@ -1733,6 +1769,11 @@ class Executor:
         if role == "exit":
             seg = (0.65, 1.0)
         only = self._blimp_lane() if step.get("lane") == "blimp" and role != "support" else None
+        if only is None and step.get("for_round") is not None and role != "support":
+            # a purchase for one weak round on a map whose rounds take turns
+            # on the paths: only the track that round's bloons ride counts
+            # (reinforce.options, Muddy Puddles loss case 20261112_121231)
+            only = self._round_lane(step["for_round"])
         if only is not None:
             # the blimps' own route is already a part of the track: the
             # progress window would cut it further (Workshop's chute route
@@ -1775,8 +1816,9 @@ class Executor:
         if only is not None and not cands:
             # no legal cell reaches the blimps' route: the whole track is
             # still better than setting the answer aside
-            log.info("%s: no legal spot reaches the blimp route - scoring the whole track", kind)
-            return self.pick_spots(kind, {k: v for k, v in step.items() if k != "lane"}, n)
+            log.info("%s: no legal spot reaches the %s - scoring the whole track", kind,
+                     "blimp route" if step.get("lane") == "blimp" else f"track of round {step.get('for_round')}")
+            return self.pick_spots(kind, {k: v for k, v in step.items() if k not in ("lane", "for_round")}, n)
         if valid is not None and role not in ("support", "far") and PL.needs_sight(kind, hero):
             # count only the track this spot can actually see past walls/blockers
             weight = (self.m.spot_weight(seg, covered) if only is None
@@ -4528,6 +4570,17 @@ class Executor:
             return True
         sig = TH.sig_from_name(need)
         return sig is not None and "blimp" in sig
+
+    def _round_lane(self, rnd):
+        """Bool grid of the track round `rnd`'s bloons ride on a map whose
+        rounds take turns on its paths (mapgeom.round_lane), or None when
+        the round may use every path or the map has no geometry."""
+        from . import mapgeom
+        try:
+            return mapgeom.round_lane(self.m, rnd)
+        except Exception:                      # geometry is a help, never a must
+            log.debug("round lane: no geometry", exc_info=True)
+            return None
 
     def _blimp_lane(self):
         """Bool grid of the track blimps ride on this map (mapgeom.blimp_track),

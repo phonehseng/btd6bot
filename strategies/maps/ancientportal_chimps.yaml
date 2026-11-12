@@ -35,6 +35,13 @@
 #   * the Perma-Spike keeps the default targeting: Smart needs a calibrated
 #     point the bot does not have.
 #   * the hero pedestals and the charged totems are not used.
+#   * First forced game (2026-11-12 12:30, lost round 22 to 16 whites, every
+#     round from 8 rated under 1.0): the alchemist ($1,223 with its tiers,
+#     rounds 18-20) came before sb1's Triple Guns, and its pinned spot
+#     (0.58, 0.828) stood below the sub. Triple Guns now come before the
+#     alchemist (its spot does reach sb1: pin_spots picks about the same).
+#     The ninja's pin (0.687, 0.521) was refused live; it now stands at
+#     (0.717, 0.563), legal and clear of the boomerang and sniper pins.
 #
 # Offline replay (tools/simulate_threats.py on the live learned map with the
 # live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
@@ -54,6 +61,8 @@
 id: ancientportal_chimps
 map: Ancient Portal
 hero: quincy
+starter: none         # the guide's own opening is the opener: no extra dart (2026-11-12, Firing Range and Ancient Portal
+                      # lost rounds 9 and 22 with a $215 starter the guide never bought; Sulfur Springs 2026-11-07 the same)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
@@ -67,10 +76,10 @@ plan:
   - {do: place, id: sb1, kind: sub, role: dps, at: [0.623, 0.658]}              # the pond
   - {do: place, id: hero, kind: hero, role: dps, near: [sb1], at: [0.516, 0.658]}  # Quincy
   - {do: upgrade, id: sb1, to: 2-0-1}
-  - {do: place, id: n1, kind: ninja, role: dps, near: [sb1], at: [0.687, 0.521]}  # added: round 24's camo (see above)
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], target: strong, at: [0.58, 0.828]}  # on Strong
+  - {do: place, id: n1, kind: ninja, role: dps, near: [sb1], at: [0.717, 0.563]}  # added: round 24's camo (see above)
+  - {do: upgrade, id: sb1, to: 2-0-3}                                           # damage before the buff (2026-11-12 loss, round 22)
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], target: strong, at: [0.58, 0.828]}  # on Strong (in buff range of sb1)
   - {do: upgrade, id: a1, to: 2-0-0}
-  - {do: upgrade, id: sb1, to: 2-0-3}
   - {do: upgrade, id: a1, to: 3-0-1}
   - {do: upgrade, id: sb1, to: 2-0-4}                                           # Armor Piercing Darts
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.601, 0.198]}
@@ -93,7 +102,7 @@ fill:
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.719, 0.504]}  # spare cash: a Maim MOAB sniper
   - {do: upgrade, id: s1, to: 4-1-0}
 answers:
-  camo: [{do: place, id: n1, kind: ninja, role: dps, at: [0.687, 0.521]}]
+  camo: [{do: place, id: n1, kind: ninja, role: dps, at: [0.717, 0.563]}]
   ceramic: [{do: upgrade, id: sb1, to: 2-0-4}]
   moab: [{do: upgrade, id: w1, to: 4-2-0}]
   camo_ceramic: [{do: upgrade, id: v1, to: 3-2-0}]
