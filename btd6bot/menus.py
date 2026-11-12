@@ -23,8 +23,14 @@ CLOUD_SAVE_LABEL = "onthecloud"
 USE_BUTTON = "use"
 # The USE button sits under its card's label: measured on game_008.jpg, the
 # label at y 0.398 and its USE at y 0.619, both at the same x (0.404 and
-# 0.594 for the two cards, which stand 0.19 apart).
-USE_BELOW_LABEL = (0.05, 0.40)    # USE is this far below its label (min, max)
+# 0.594 for the two cards, which stand 0.19 apart). That still caught the
+# dialog while it was still growing into place. Fully open it fills the
+# screen (losses/20261112_143317_MidnightMansion_impoppable/frames/
+# end_029.jpg, 14:31 the same day): the labels at y 0.304, the USE buttons
+# at y 0.728 - 0.424 below, more than the 0.40 allowed at first, so the
+# open dialog was known and nothing on it was pressed. The cards stand 0.36
+# apart there, so the sideways limit still tells the two buttons apart.
+USE_BELOW_LABEL = (0.05, 0.50)    # USE is this far below its label (min, max)
 USE_UNDER_LABEL_DX = 0.06         # and at most this far to either side
 
 # screen -> list of keyword groups; all groups must match (any word within a group)
