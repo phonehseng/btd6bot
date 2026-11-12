@@ -20,9 +20,20 @@ from btd6bot import planner as PL  # noqa: E402
 
 
 def test_last_resort_primary_only_ceiling():
-    assert PL.model_ceiling("Last Resort", "primary_only") <= 0.1
-    # capped well under the 0.11 it was picked at
-    assert PL.ceiling_cap(0.9, "Last Resort", "primary_only") < 0.04
+    """The 0.09 of 2026-11-09 stood for the general builds. Since 5373ab0
+    (2026-11-12 15:05) the map has its own build,
+    strategies/maps/lastresort_primary_only.yaml - a boomerang and a
+    desperado on the two cells beside the top straight every round uses -
+    and data/model_ceiling.json carries that build's number (0.94); the
+    build won its game at 16:37 the same day. The number is still under
+    CEILING_PLAYABLE, so the game stays capped until its record says
+    otherwise, only no longer at the floor."""
+    from btd6bot import strategy as S
+    assert "lastresort_primary_only" in S.load_all()       # the build the number comes from
+    ceiling = PL.model_ceiling("Last Resort", "primary_only")
+    assert 0.1 < ceiling < PL.CEILING_PLAYABLE, ceiling
+    cap = PL.ceiling_cap(0.9, "Last Resort", "primary_only")
+    assert 0.04 < cap < PL.CEILING_P_CAP, cap
     # its other modes keep their own numbers (Medium's build holds)
     assert PL.model_ceiling("Last Resort", "deflation") > 1.5
 
