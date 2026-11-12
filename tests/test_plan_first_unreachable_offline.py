@@ -305,6 +305,7 @@ class PlanFirstToy(ToyEx):
     # plan_first asks this since 10eddc4 (free `do: ability` steps hold no cash)
     _only_free_steps_left = S.Executor._only_free_steps_left
     lookahead_worst = S.Executor.lookahead_worst
+    near_worst = S.Executor.near_worst
     _rated = S.Executor._rated
     _forecast = S.Executor._forecast
     _board_key = S.Executor._board_key

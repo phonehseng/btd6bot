@@ -4776,6 +4776,22 @@ class Executor:
         rounds = RF.lookahead_rounds(rnd, end)
         return self._rated("ahead", rnd, lambda fc, towers: fc.worst(towers, rounds))
 
+    def near_worst(self, rnd, horizon):
+        """(margin, round) for the weakest of rounds rnd..rnd+horizon of
+        reinforce.py's look-ahead, or None.
+
+        lookahead_worst names the weakest round of the whole look-ahead,
+        which may lie past a rule's horizon while a nearer round is weak too:
+        Quad Impoppable (2026-11-12 00:13, loss case 20261112_001344) rated
+        round 63's ceramic rush 0.59 and round 70 0.46; plan_first_yields
+        looked only at round 70, nine rounds off, and kept $7,167 for the
+        Ground Zero ac1 2-4-0 ($19,200) while round 63 took the life."""
+        end = (getattr(self, "rules", None) or {}).get("end_round", 80)
+        rounds = [r for r in RF.lookahead_rounds(rnd, end) if r - rnd <= horizon]
+        if not rounds:
+            return None
+        return self._rated(("near", horizon), rnd, lambda fc, towers: fc.worst(towers, rounds))
+
     def weak_now(self, rnd):
         """Is the round being played (or the next one) in danger? True when
         the damage model rates either under reinforce.WEAK_MARGIN, or the
@@ -6594,12 +6610,13 @@ class Executor:
         wait = RF.waiting_plan_step(self, cash)
         if wait is None:
             return False
-        worst = self.lookahead_worst(rnd)
+        continuous = bool(rules.get("continuous"))
+        horizon = self.CONTINUOUS_YIELD_ROUNDS if continuous else self.YIELD_ROUNDS
+        # the weakest round within reach of the rule, not of the whole look-ahead
+        worst = self.near_worst(rnd, horizon)
         if worst is None or worst[0] is None or worst[1] is None:
             return False
         margin, weak = worst
-        continuous = bool(rules.get("continuous"))
-        horizon = self.CONTINUOUS_YIELD_ROUNDS if continuous else self.YIELD_ROUNDS
         if margin >= self.YIELD_MARGIN or weak - rnd > horizon:
             return False
         credit = 0
