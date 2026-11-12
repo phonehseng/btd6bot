@@ -97,6 +97,13 @@ SURPLUS_WINDOW = 8       # rounds ahead that must be safe before money goes to X
 XP_PREFERENCE = 2.0      # an action on the XP target may be this much less cost-efficient
 SPOTS_PER_KIND = 8       # best spots shown per tower kind (diverse: no two overlapping)
 SPOTS_RESERVE = 40       # ... and how far down the ranking free_spot() may look when those are taken
+# Towers of one kind a plan may place. Until 2026-11-03 a kind had only its
+# SPOTS_PER_KIND spots, which also capped its copies; once free_spot looked
+# further (SPOTS_RESERVE), the greedy bought what was cheapest per leak: Dark
+# Dungeons Deflation (2026-11-11) opened with 34 bare $175 Skywardens, spent
+# all $40,000 on 54 towers and leaked from round 34 (worst margin 0.06),
+# while the plan written on 2026-10-22 (8 Skywardens) still held at 1.78.
+MAX_PER_KIND = SPOTS_PER_KIND
 SPOT_STRIDE = 2          # grid cells between candidate spots (the grid is 160 x 108)
 MAX_PLACE_TIERS = 3      # a new tower may come with up to this many tiers at once
 MAX_UPGRADE_STEP = 5     # an upgrade action buys up to this many tiers of one path at once
@@ -333,6 +340,7 @@ USE_PANES = False
 
 
 class MapSetup:
+    reserve = True   # free_spot may look past the best SPOTS_PER_KIND spots (see there)
     """Geometry of one map for one mode: the evaluator's Track, the bot's
     MapModel grids (placement, line of sight) and candidate spots per kind."""
 
@@ -441,11 +449,15 @@ class MapSetup:
         then: before 2026-11-03 it stopped, and on Cargo Magic Only no Druid,
         Alchemist, Wizard or Ninja could be placed after round 13 - the only
         Lead answer left was a $7,560 Super Monkey, so rounds 28-45 were
-        rated 0.06 and the mode looked unwinnable (backlog 13)."""
+        rated 0.06 and the mode looked unwinnable (backlog 13).
+
+        With ``reserve`` False only the SPOTS_PER_KIND best spots are used,
+        as before: the cheap towers the greedy then buys at the farther spots
+        can cost more than they bring (optimize tries both)."""
         from btd6bot import placement as P
         upc = P.units_per_cell(self.model)
         r = P.footprint_radius(kind) / upc
-        for sp in self.ranked_spots(kind):
+        for sp in (self.ranked_spots(kind) if self.reserve else self.spots(kind)):
             if all((sp.cell[0] - t.spot.cell[0]) ** 2 + (sp.cell[1] - t.spot.cell[1]) ** 2
                    >= (r + P.footprint_radius(t.kind) / upc) ** 2 for t in towers):
                 return sp
@@ -623,12 +635,14 @@ class Plan:
 class Optimizer:
     """One greedy optimization of one map, mode and XP target (see run())."""
 
-    def __init__(self, map_name, mode, target=None, account=None, hero="quincy", boosts=None):
+    def __init__(self, map_name, mode, target=None, account=None, hero="quincy", boosts=None, reserve=True):
         self.map_name, self.mode, self.target = map_name, mode, target
+        self.reserve = reserve
         self.account = account
         self.boosts = dict(boosts or {})
         self.econ = economy(mode, self.boosts)
         self.setup = MapSetup(map_name, mode)
+        self.setup.reserve = reserve
         self.ev = Evaluator(self.setup, mode)
         self.hero = hero
         self.weights = xp_weights(account)
@@ -674,11 +688,17 @@ class Optimizer:
                 return False
         return True
 
+    def room_for(self, kind, towers):
+        """May one more tower of ``kind`` be placed (MAX_PER_KIND)?"""
+        return sum(t.kind == kind for t in towers) < MAX_PER_KIND
+
     def actions(self, towers, cash):
         fam = self.econ.family
         out = []
         for kind in self.kinds:
             cap = unlocked_tiers(self.account, kind)
+            if not self.room_for(kind, towers):
+                continue
             spot = self.setup.free_spot(kind, towers)
             if spot is None:
                 continue
@@ -857,7 +877,7 @@ class Optimizer:
                 if (legal(new) and D.profile(kind, new) is not None and cost <= cash
                         and self.allowed(kind, new, t.spot, towers)):
                     out.append(Action(kind=kind, tiers=new, cost=cost, tid=t.tid))
-            spot = self.setup.free_spot(kind, towers)
+            spot = self.setup.free_spot(kind, towers) if self.room_for(kind, towers) else None
             if spot is None:
                 continue
             tiers = tuple(tier if path and i == path - 1 else 0 for i in range(3))
@@ -1194,15 +1214,24 @@ def optimize(map_name, mode, target=None, account=None, write=True, candidates=3
         hero = "quincy"
     targets = [target] if target else target_candidates(map_name, mode, weights, account, candidates) or [None]
     best = None
+    # each target with both spot rules (MapSetup.free_spot): every spot of a
+    # kind, or only its best few - Cargo Magic Only needed the first, Dark
+    # Dungeons Deflation (2026-11-11) held at 1.56 with the second and at
+    # 0.55 with the first
     for tgt in targets:
-        opt = Optimizer(map_name, mode, target=tgt, account=account, hero=hero, boosts=boosts)
-        plan = opt.run()
-        xp = xp_report(plan, weights)
-        key = (len(plan.unsafe) == 0, -len(plan.unsafe), xp["valued_xp_per_hour"])
-        log.info("%s %s target %s: unsafe %s, worst margin %.2f, valued XP/h %s (%.0f s)", map_name, mode, tgt,
-                 plan.unsafe, min(plan.margins.values()), xp["valued_xp_per_hour"], plan.seconds)
-        if best is None or key > best[0]:
-            best = (key, plan, opt.setup, xp)
+        for reserve in (True, False):
+            opt = Optimizer(map_name, mode, target=tgt, account=account, hero=hero, boosts=boosts,
+                            reserve=reserve)
+            plan = opt.run()
+            xp = xp_report(plan, weights)
+            worst = min(plan.margins.values()) if plan.margins else 0.0
+            key = (len(plan.unsafe) == 0, -len(plan.unsafe), worst if plan.unsafe else 0.0,
+                   xp["valued_xp_per_hour"])
+            log.info("%s %s target %s, %s spots: unsafe %s, worst margin %.2f, valued XP/h %s (%.0f s)",
+                     map_name, mode, tgt, "all" if reserve else f"best {SPOTS_PER_KIND}", plan.unsafe,
+                     worst, xp["valued_xp_per_hour"], plan.seconds)
+            if best is None or key > best[0]:
+                best = (key, plan, opt.setup, xp)
     _, plan, setup, xp = best
     text = plan_yaml(plan, setup, weights, xp)
     if not any(t.kind != "hero" for t in plan.towers):

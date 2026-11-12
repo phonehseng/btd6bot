@@ -104,6 +104,23 @@ def test_a_written_plan_gets_its_answers():
     assert all(st["id"] in placed for st in plan["plan"] if st["do"] == "upgrade")
 
 
+
+def test_no_more_than_max_per_kind_towers_of_a_kind():
+    """Dark Dungeons Deflation (2026-11-11): with no limit the greedy opened
+    with 34 bare Skywardens and leaked from round 34. A kind with
+    MAX_PER_KIND towers standing is offered upgrades only, by the search and
+    by the threat answers."""
+    opt = _optimizer()
+    kind = "skywarden" if "skywarden" in opt.kinds else opt.kinds[0]
+    towers = []
+    for i in range(O.MAX_PER_KIND):
+        towers.append(O.Tower(f"t{i}", kind, opt.setup.free_spot(kind, towers), (0, 0, 0), 0.0))
+    places = [a for a in opt.actions(towers, 1e6) if a.tid is None]
+    assert places and not any(a.kind == kind for a in places)
+    assert any(a.kind == kind for a in opt.actions(towers, 1e6) if a.tid is not None)
+    assert opt.room_for(kind, towers[:-1]) and not opt.room_for(kind, towers)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

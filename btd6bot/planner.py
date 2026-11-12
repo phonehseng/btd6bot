@@ -1478,8 +1478,22 @@ def build_family(s: StrategySpec) -> str | None:
     build that stands alone. The generated solo XP builds (one per tower,
     ``xp_target`` set) come from one generator with one plan shape - a main
     line of one tower kind plus helpers - so how they do in a kind of game
-    says something about every member."""
+    says something about every member.
+
+    The builds of tools/optimize_builds.py (ids OPTIMIZED_PREFIX + map +
+    mode) carry an ``xp_target`` too, but they are a family of their own:
+    one greedy search on the damage model, which the solo builds' record
+    says nothing about. Quad Deflation (2026-11-11 20:51) was played with
+    opt_quad_deflation at p=0.76, carried by the solo builds' Deflation
+    record, and lost at round 60 with all 200 lives; the optimizer's builds
+    had then won 3 of 5 games."""
+    if s.id.startswith(OPTIMIZED_PREFIX):
+        return "optimized"
     return "solo" if s.xp_target else None
+
+
+# id prefix of the builds tools/optimize_builds.py writes (plan_yaml)
+OPTIMIZED_PREFIX = "opt_"
 
 
 def map_mode_losses(account: AccountState) -> dict[tuple[str, str], int]:

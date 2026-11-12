@@ -110,6 +110,19 @@ def test_map_losses_after_the_first_count_less_with_lives_to_spare():
     assert f("half_cash", 3) > f("impoppable", 3)
 
 
+def test_optimizer_builds_are_a_family_of_their_own():
+    """opt_quad_deflation (2026-11-11) was rated by the generated solo builds'
+    Deflation record and lost at round 60: the optimizer's builds are their
+    own calibration family now."""
+    from btd6bot.planner import StrategySpec
+    opt = StrategySpec.from_any({"id": PL.OPTIMIZED_PREFIX + "quad_deflation", "towers": {}, "modes": ["deflation"],
+                                 "base_success": {"deflation": 0.88}, "xp_target": "ice", "maps": ["Quad"]})
+    solo = StrategySpec.from_any({"id": "solo_dart", "towers": {}, "modes": ["deflation"],
+                                  "base_success": {"deflation": 0.8}, "xp_target": "dart"})
+    assert PL.build_family(opt) == "optimized"
+    assert PL.build_family(solo) == "solo"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
