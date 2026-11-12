@@ -776,8 +776,9 @@ def _is_boss_path(path, splitters):
     return False
 
 
-def map_routes(geom):
-    """How bloons cross the map: (routes, scenarios).
+def map_routes(geom, with_keys=False):
+    """How bloons cross the map: (routes, scenarios), and with `with_keys`
+    (routes, scenarios, keys).
 
     routes: [{"paths": [path ids in order], "moab": None | True | False}]
         a route is the sequence of paths one bloon follows from its spawn to
@@ -786,10 +787,14 @@ def map_routes(geom):
     scenarios: [[route indices]] - each round uses ONE scenario. Maps whose
         spawn alternates by round (Luminous Cove, Enchanted Glade, Last
         Resort: AlternateRoundSplitter) have one scenario per alternative;
-        the evaluator plays every round in every scenario and keeps the
-        worst. Within a scenario bloons are shared evenly by the routes
+        the evaluator plays each round in the scenarios it really uses
+        (Track.scenarios_in; every one when the round is unknown) and
+        keeps the worst. Within a scenario bloons are shared evenly by the routes
         open to their class (Party Parade's two lanes, Castle Revenge's
         four gates).
+    keys: [path id or None] per scenario - the alternative path it was made
+        for (None: the map has one scenario), so Track.scenarios_in can
+        tell which scenarios a round really uses.
 
     Read from the map's own data (mapgeom / gamefiles splitters):
       * paths bloons can take without the player (mapgeom.bloon_paths),
@@ -822,7 +827,7 @@ def map_routes(geom):
     if referenced & set(paths):
         paths = {pid: p for pid, p in paths.items() if pid in referenced}
     if not paths:
-        return [], []
+        return ([], [], []) if with_keys else ([], [])
     names = {p.get("name"): pid for pid, p in paths.items()}
     ends = {pid: np.asarray(p["points"][-1][:2], float) for pid, p in paths.items()}
     starts_xy = {pid: np.asarray(p["points"][0][:2], float) for pid, p in paths.items()}
@@ -912,17 +917,18 @@ def map_routes(geom):
         alt_paths = [p for s in toggles[:1] for p in s.get("paths") or [] if p in paths]
         if len(alt_paths) < 2:
             alt_paths = []
+    scenarios, keys = [], []
     if alt_paths:
-        scenarios = []
         for p in dict.fromkeys(alt_paths):
             idx = [i for i, r in enumerate(routes) if p in r["paths"]]
             if idx:
                 scenarios.append(idx)
+                keys.append(p)
         others = [i for i, r in enumerate(routes) if not any(p in r["paths"] for p in alt_paths)]
-        scenarios = [sorted(set(s) | set(others)) for s in scenarios] or [list(range(len(routes)))]
-    else:
-        scenarios = [list(range(len(routes)))]
-    return routes, scenarios
+        scenarios = [sorted(set(s) | set(others)) for s in scenarios]
+    if not scenarios:
+        scenarios, keys = [list(range(len(routes)))], [None]
+    return (routes, scenarios, keys) if with_keys else (routes, scenarios)
 
 
 # Maps whose towers are switched off for part of the game: (rounds off,
@@ -1007,7 +1013,7 @@ class Track:
         self.playfield = LAYOUTS["16:10"]["playfield"]
         self.proj = G.Projection(self.playfield)
         by_id = {p["id"]: p for p in self.geom.get("paths", [])}
-        routes, self.scenarios = map_routes(self.geom)
+        routes, self.scenarios, self.scenario_paths = map_routes(self.geom, with_keys=True)
         self.paths = []
         for route in routes:
             samples, hittable = [], []
@@ -1047,6 +1053,31 @@ class Track:
         or not) take; all of the scenario's routes if none is reserved."""
         open_ = [i for i in self.scenarios[scenario] if self.paths[i]["moab"] in (None, moab)]
         return open_ or list(self.scenarios[scenario])
+
+    def scenarios_in(self, rnd):
+        """Indices of the scenarios round `rnd` really uses: those whose
+        alternative path carries bloons that round (mapgeom.
+        live_alternatives - Erosion's phase path, with the next one from
+        PHASE_LEAD rounds before it starts; the path of the round on maps
+        that alternate every round; Bloonarius Prime's prime lane on prime
+        rounds). Every scenario when the round is unknown or the map does
+        not say.
+
+        Rated against all of them, a round was as weak as the worst path
+        it never takes: two 2-0-2 ninjas beside Erosion's Path1 rated
+        round 5 at the 0.0625 floor and 5.97 on Path1 alone, so every
+        Erosion round read as a crisis (panic and reinforce spending,
+        Deflation's too_weak_to_start); Last Resort rated each round
+        against all four loops of its 4-round cycle."""
+        every = list(range(len(self.scenarios)))
+        if len(every) < 2:
+            return every
+        from . import mapgeom as G
+        live = G.live_alternatives(self.geom, rnd)
+        if not live:
+            return every
+        used = [k for k, p in enumerate(self.scenario_paths) if p is None or p in live]
+        return used or every
 
     # -- screen <-> world -------------------------------------------------------
     def heights(self):
@@ -1552,22 +1583,23 @@ class _Server:
 
 def _lots(mode, rnd, track):
     """The lot lists round `rnd` is played with, remembered on the track
-    (lots are never changed in place): one per scenario of the track
-    (alternating spawns) and, within it, one per turn of a blimp too few to
-    share between the lanes (round_turns)."""
+    (lots are never changed in place): one per scenario the round really
+    uses (Track.scenarios_in: alternating spawns, Erosion's phases,
+    Bloonarius Prime's prime rounds) and, within it, one per turn of a
+    blimp too few to share between the lanes (round_turns)."""
     cache = track.__dict__.setdefault("_lot_cache", {})
     key = (mode, rnd)
     if key not in cache:
         cache[key] = [round_lots(mode, rnd, track, sc, turn)
-                      for sc in range(len(track.scenarios))
+                      for sc in track.scenarios_in(rnd)
                       for turn in round_turns(mode, rnd, track, sc)]
     return cache[key]
 
 
 def simulate_round(stations, mode, rnd, track, strength=1.0):
     """Play round `rnd` against the stations (see the module docstring) in
-    every scenario of the track and every turn of its blimps (_lots) and
-    return the worst. strength scales every station's output (margin
+    every scenario of the track the round uses and every turn of its
+    blimps (_lots) and return the worst. strength scales every station's output (margin
     search)."""
     worst = None
     for lots in _lots(mode, rnd, track):
@@ -1644,7 +1676,8 @@ def round_margin(stations, mode, rnd, track, lo=MARGIN_LO, hi=MARGIN_HI, iterati
     """The safety margin of round rnd: the factor by which every tower could
     be weaker and the round still pop without a leak (2.0 = holds at half
     strength; below 1.0 = leaks at full strength). Bisection on strength,
-    worst over the track's scenarios and the turns of its blimps (_lots)."""
+    worst over the track's scenarios this round uses and the turns of its
+    blimps (_lots)."""
     return lots_margin(stations, track, _lots(mode, rnd, track), lo, hi, iterations)
 
 

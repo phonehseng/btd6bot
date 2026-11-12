@@ -199,6 +199,54 @@ def test_routes_follow_the_maps_splitters():
     assert len(pond.paths) == 2 and len(pond.scenarios) == 1
 
 
+def _scenario_names(track, rnd):
+    """The route names of the scenarios round `rnd` is rated against."""
+    return sorted(track.paths[i]["name"] for k in track.scenarios_in(rnd) for i in track.scenarios[k])
+
+
+def test_a_round_is_rated_only_on_the_paths_it_uses():
+    """Track.scenarios_in: Erosion's 18-round phases (the next phase's path
+    counts from PHASE_LEAD rounds before it starts), the 4-round cycle of
+    Last Resort and Bloonarius Prime's prime rounds."""
+    from btd6bot import mapgeom as G
+    erosion = D.Track("Erosion")
+    assert _scenario_names(erosion, 5) == ["Path1"]
+    lead = 19 - G.PHASE_LEAD                               # Path2 takes over at round 19
+    assert _scenario_names(erosion, lead - 1) == ["Path1"]
+    assert _scenario_names(erosion, lead) == ["Path1", "Path2"]
+    assert _scenario_names(erosion, 19) == ["Path2"]
+    assert _scenario_names(erosion, 100) == ["Path6"]      # the last phase lasts for good
+    assert len(erosion.scenarios_in(None)) == 6            # round unknown: every phase
+    last = D.Track("Last Resort")                          # 1 big loop, 2 medium, 3 small, 0 straight
+    assert [_scenario_names(last, r) for r in (1, 2, 3, 4, 15)] == \
+        [["Path1"], ["Path2"], ["Path3"], ["Path4"], ["Path3"]]
+    prime = D.Track("Bloonarius Prime")
+    standard = _scenario_names(prime, 1)
+    assert standard == ["PathStandard"]
+    for rnd in (2, 3, 5, 7, 97):
+        assert _scenario_names(prime, rnd) != standard and len(prime.scenarios_in(rnd)) == 1, rnd
+    for rnd in (4, 6, 9, 98):
+        assert _scenario_names(prime, rnd) == standard, rnd
+    assert D.Track("Monkey Meadow").scenarios_in(5) == [0]
+
+
+def test_erosion_rates_path1_defence_on_path1_rounds():
+    """Two 2-0-2 ninjas beside Erosion's Path1 (on land a ninja may stand on
+    at round 5). Rated against all six phase paths, round 5 was at the
+    0.0625 floor (dynamic-map audit 2026-11-12: 0.0625 over all scenarios,
+    5.97 on Path1 alone). Path1 carries rounds 1-18 only, so round 5 rates
+    well above the floor, and a round of Path2's phase - which no ninja
+    reaches - still rates at the floor."""
+    tr = D.Track("Erosion")
+    placed = []
+    for i, (fx, fy) in enumerate(((0.14, 0.809), (0.129, 0.827))):
+        x, z, _ = tr.frac_to_world(fx, fy)
+        placed.append(D.Placed(f"n{i}", "ninja", (2, 0, 2), x, z))
+    st = D.stations_for(placed, tr)
+    assert D.round_margin(st, "medium", 5, tr) > 2.0
+    assert D.at_floor(D.round_margin(st, "medium", 25, tr))
+
+
 def test_screen_world_round_trip():
     tr = D.Track("Monkey Meadow")
     for fx, fy in ((0.2, 0.3), (0.5, 0.5), (0.7, 0.8)):
