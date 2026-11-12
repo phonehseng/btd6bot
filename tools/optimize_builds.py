@@ -112,8 +112,10 @@ SPOT_STRIDE = 2          # grid cells between candidate spots (the grid is 160 x
 MAX_PLACE_TIERS = 3      # a new tower may come with up to this many tiers at once
 MAX_UPGRADE_STEP = 5     # an upgrade action buys up to this many tiers of one path at once
 NEVER_KINDS = {"mortar", "dartling"}   # aimed by hand: they do nothing for the bot (dps_model)
-# ... and towers the bot cannot pick up: it places by hotkey, and Desperado,
-# Mermonkey and Skywarden have none bound by default (docs/backlog.md)
+# ... and towers the bot cannot pick up: it places by hotkey. A guard only
+# today: Desperado, Mermonkey and Skywarden, which had none by default, were
+# bound in game on 2026-10-22 (towers.py), so this excludes nothing
+# (docs/tower_exclusions_audit.md item 13).
 NEVER_KINDS |= {k for k, t in T.TOWERS.items() if not t.get("hotkey")}
 INCOME_KINDS = {"farm"}  # banana farms: only as an XP target (their cash is not modelled)
 SHORTLIST = 16           # actions simulated per purchase (the rest are ranked out by a quick yardstick)
