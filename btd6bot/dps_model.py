@@ -1084,9 +1084,27 @@ def _zone_radius(a, entry):
         radius = a.get("own_radius") or 0.0
         return {"zone_radius": radius, "zone_fixed": True} if radius > 0.0 else {}
     radius = _attack_range(a, entry.get("range"))
+    radius = min(radius, _radial_travel(a))
     if 0.0 < radius < 1000.0:
         return {"zone_radius": radius}
     return {}
+
+
+def _radial_travel(a):
+    """How far the blades of an attack that sprays all around fly (speed x
+    lifespan of a straight projectile, spray of 180 degrees or more), or inf.
+
+    Blade and Super Maelstrom have "Full Map Range" (range 999) but are a
+    rotating spray from the tack itself: 4 blades every 0.045 s at 150 units
+    a second for 2 s (fandom:Super_Maelstrom; the export agrees), so they
+    reach 300 units of it. Credited over 999 they swept every track of the
+    map (re-check of phase 2's x2.67, docs/model_fix_plan.md phase 2b C)."""
+    out = math.inf
+    for w in a.get("weapons", []):
+        p = w.get("projectile") or {}
+        if (w.get("spray") or 0.0) >= 180.0 and p.get("motion") == "straight" and p.get("speed")                 and p.get("lifespan") and not p.get("spawn"):
+            out = min(out, float(p["speed"]) * float(p["lifespan"]))
+    return out
 
 
 SUBMERGED_PREFIX = "SubmergedAttack"
