@@ -136,14 +136,18 @@ CHIMPS_MAPS = ["Alpine Run", "Park Path", "Hedge", "End Of The Road", "Winter Pa
                "Candy Falls", "Frozen Over"]
 CHIMPS_RUNS = [(m, "chimps") for m in CHIMPS_MAPS]
 
-# Known damage-model errors (backlog: village Primary buffs, Glaive Lord and
-# Master Bomber counted map-wide; fixed in a parallel change to
-# btd6bot/dps_model.py). Until that lands, CHIMPS plans - one leak loses the
-# game - must not lean on them: model_doubt() rejects these tiers there.
-CHIMPS_MODEL_DOUBTS = {
-    "boomerang": (0, 5),   # Glaive Lord (5-x-x): its orbiting glaives counted map-wide
-    "ninja": (2, 5),       # Master Bomber (x-x-5): its stun bombs counted map-wide
-}
+# Known damage-model errors that CHIMPS plans - one leak loses the game -
+# must not lean on: model_doubt() rejects these tiers there. Empty now.
+#
+# Glaive Lord (5-x-x boomerang) and Master Bomber (x-x-5 ninja) were refused
+# here from commit 2c0e5fc (2026-11-05) because the model counted their
+# orbiting glaives and stun bombs map-wide. Commit d2800f8 ("each attack
+# works in its own reach") fixed that: the glaives now work only inside
+# their orbit (dps_model Source.zone_radius 34.5, zone_fixed) and the bombs
+# inside the ninja's own range. docs/tower_exclusions_audit.md item 10 found
+# the refusal stale, so both are rated on merit again
+# (tests/test_chimps_builds_offline.py pins the reach).
+CHIMPS_MODEL_DOUBTS = {}
 VILLAGE_PRIMARY_PATH = (0, 3)   # Primary Training+ (3-x-x): its buffs reach non-Primary towers too
 MODEL_DOUBT_MODES = {"chimps"}
 
