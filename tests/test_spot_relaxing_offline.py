@@ -79,6 +79,8 @@ def _buff_executor(damage_at):
     ex.land_only = False
     ex.removed = []
     ex._pane_round = lambda: 10
+    ex._pose_round = lambda: None
+    ex.rules, ex.ground_horizon = {}, None     # _buff_spots takes _legal_cells' ground
     ex._range_cells = lambda kind: 5
     ex.m = SimpleNamespace(frac_to_cell=lambda fx, fy: (fx * 40, fy * 40))
     towers = {f"s{i}": SimpleNamespace(kind="sniper", x=cx / 40, y=cy / 40)

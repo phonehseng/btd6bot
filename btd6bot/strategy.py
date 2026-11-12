@@ -1368,6 +1368,13 @@ class Executor:
                 log.info("spot (%d,%d) on platform ground refused - not learned (the platform "
                          "stands elsewhere this round)", cx, cy)
                 return
+            # Ground a gear turns over (Geared) changes with each turn: a
+            # refusal there, learned, would bar the cell in every pose for
+            # every later game (audit 2026-11-12: gear ground eroded).
+            ground = mapgeom.rotor_ground(self.m)
+            if ground is not None and 0 <= cy < ground.shape[0] and 0 <= cx < ground.shape[1]                     and ground[cy, cx]:
+                log.info("spot (%d,%d) on a gear refused - not learned (the gear turns)", cx, cy)
+                return
         except Exception:
             pass
         layers = self._refusal_layers(kind)
@@ -1551,6 +1558,20 @@ class Executor:
     # balanced lanes keep the plain per-cell ranking.
     LANE_COVER_WEIGHT = 0.5
 
+    def _lane_grids(self):
+        """The map's grids as the lane code reads them: with the bloon paths
+        of the round being played only (mapgeom.grids_for with now_round
+        leaves the idle phase paths out of path_masks, as the match's
+        repaint_track leaves them out of the track).
+
+        Without the round all six of Erosion's phase paths counted as lanes,
+        five of them empty for the first 13 rounds, so open_lanes() >= 2
+        held on every board and the match opened with a sniper every game
+        (audit 2026-11-12)."""
+        from . import mapgeom
+        return mapgeom.grids_for(self.m, removed=tuple(self.removed),
+                                 now_round=getattr(self, "now_round", None))
+
     def _lane_cover(self, cover):
         """Grid: for each track cell, how well its bloon path is defended
         against the best-defended path (mean tower cover over the path's
@@ -1559,9 +1580,8 @@ class Executor:
         lane too. On Firing Range both paths share the top rows and split
         into the left and right lanes. None on maps without geometry, with a
         single path, or with no cover yet (it would change nothing)."""
-        from . import mapgeom
         try:
-            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed))
+            grids = self._lane_grids()
         except Exception:
             return None
         masks = (grids or {}).get("path_masks") or []
@@ -1590,10 +1610,9 @@ class Executor:
         Spillway Impoppable (2026-11-11 15:41, lost in round 7): bloons come
         down four lanes, and n1 in the top-left corner covered three of the
         five paths (0.18, 0.13, 0.18) and nothing of the other two."""
-        from . import mapgeom
         cover = self._tower_cover()
         try:
-            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed))
+            grids = self._lane_grids()
         except Exception:
             return 0
         masks = (grids or {}).get("path_masks") or []
@@ -1754,7 +1773,8 @@ class Executor:
             # count only the track this spot can actually see past walls/blockers
             weight = (self.m.spot_weight(seg, covered) if only is None
                       else self.m.spot_weight(seg, covered, only))
-            cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight)) for cx, cy, _ in cands]
+            sight = self._round_sight()
+            cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight, sight)) for cx, cy, _ in cands]
         edge = self._edge_band()
         lane = None if covered is None else self._lane_cover(self._tower_cover())
         ranked = sorted(((cx, cy, sc * self._experience_factor(kind, cx, cy, rc, lane)
@@ -1893,7 +1913,6 @@ class Executor:
         and not at all on the best-guarded lane (lane cover LANE_COVER_
         WEIGHT). A penalty (a spot where this tower barely pops) always
         counts in full: that is about the spot, not the lane."""
-        from . import mapgeom
         from .maplearn import spot_factor
         f = spot_factor(self.m, kind, cx, cy)
         if f <= 1.0 or lane is None:
@@ -1901,7 +1920,7 @@ class Executor:
         # the spot's lane: mean lane cover over the bloon-path cells in its
         # range (the path masks _lane_cover used; the learned track heat is
         # wider and would count lane-less cells as unguarded)
-        masks = mapgeom.grids_for(self.m, removed=tuple(self.removed))["path_masks"]
+        masks = self._lane_grids()["path_masks"]
         on_path = np.logical_or.reduce(masks)
         H, W = lane.shape
         y0, y1 = max(0, int(cy - rc)), min(H, int(cy + rc) + 1)
@@ -2053,6 +2072,39 @@ class Executor:
             return self._pane_now()
         return None
 
+    def _ground_round(self):
+        """The round to judge a new tower's ground by: on maps whose panes
+        open in turn (Covered Garden) the round whose pane the screen shows
+        (_pane_round), elsewhere the bot's own round (None before the first
+        round is read: then every change of the game is planned for).
+
+        Ground that opens or melts by this round takes towers. Until
+        2026-11-12 only Covered Garden passed a round: One Two Tree's opened
+        land plots were never used (dart cells 1,869 in round 1 and 3,187
+        by round 80 with the round) and neither was Erosion's water from
+        melted ice (sub cells 302 against 2,865 by round 40)."""
+        pane = self._pane_round()
+        return pane if pane is not None else getattr(self, "now_round", None)
+
+    def _round_sight(self):
+        """(blockers, heights) of line of sight in the round being played,
+        from mapgeom.grids_for with the round (_ground_round): blockers gone
+        by now - One Two Tree's opened plots, Cargo's centre trucks after
+        the first MOAB - no longer hide the track. None (the model's
+        whole-game grids) before the first round or without geometry."""
+        rnd = self._ground_round()
+        if rnd is None:
+            return None
+        from . import mapgeom
+        try:
+            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed), now_round=rnd,
+                                      pose_round=self._pose_round())
+        except Exception:      # geometry is optional: never let it stop a game
+            return None
+        if not grids or grids["sight"].shape != getattr(self.m.sight, "shape", None):
+            return None
+        return grids["sight"], grids["sight_height"]
+
     # How long one reading of the open pane off the screen is trusted (s):
     # long enough for the clicks of one pick-up, short of a round change.
     PANE_READ_S = 0.5
@@ -2166,7 +2218,26 @@ class Executor:
         own footprints come from their current spots, carried by the
         match: carried.CarriedTowers.)"""
         from . import mapgeom
-        ground = mapgeom.platform_ground(self.m)
+        self._ground_moved(mapgeom.platform_ground(self.m))
+
+    def gears_turned(self):
+        """Geared's gears turned (the match calls this after carried.
+        CarriedTowers turned the towers' spots): spots refused or avoided
+        on gear ground were judged in the old pose, so they are tried
+        again, and the footprints are blocked where the towers stand now.
+        Before, `blocked` and `failed_spots` kept every old judgement, and
+        the gear ground left for new towers shrank all game (audit
+        2026-11-12)."""
+        from . import mapgeom
+        try:
+            self._ground_moved(mapgeom.rotor_ground(self.m))
+        except Exception:
+            log.exception("forgetting refusals on the gears failed - carrying on")
+
+    def _ground_moved(self, ground):
+        """Forget the refusals and blocks judged on `ground` (bool grid of
+        moving ground, None: nothing to do) and block each tower's footprint
+        where it stands now."""
         if ground is None:
             return
         h, w = ground.shape
@@ -2858,15 +2929,18 @@ class Executor:
         that spot first as long as a buffer there reaches a damage tower:
         Castle Revenge Hard's alchemists and Dark Castle's village have
         exact spots but no `near`, and were moved to wherever the most
-        towers happened to stand."""
-        from . import placement as PL
+        towers happened to stand.
+
+        The ground is _legal_cells', so a buffer stands where the damage
+        towers may stand this round, down to the current path phase's ice
+        (ground_horizon). Erosion (audit 2026-11-12): asked for ground that
+        lasts the whole game (80 rounds), a village had 85 cells, against
+        3,114 for the round-1 phase; the damage
+        towers stand on the phase's ice, far out of a buffer's reach from
+        those few cells."""
         if not self._damage_towers():
             return []
-        placed = [(*self.m.frac_to_cell(p.x, p.y), p.kind, self.g.hero if p.kind == "hero" else None)
-                  for p in self.g.towers.values()]
-        valid = PL.valid_spots(self.m, kind, None, placed, where={"land"} if self.land_only else None,
-                               now_round=self._pane_round(), removed=tuple(self.removed),
-                               pose_round=self._pose_round())
+        valid = self._legal_cells(kind)
         if valid is None:
             return []
         # the researched spot and its neighbours first, where they buff something
@@ -3076,7 +3150,7 @@ class Executor:
         for last in horizons:
             grid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                                   where={"land"} if self.land_only else None,
-                                  last_round=last, now_round=self._pane_round(),
+                                  last_round=last, now_round=self._ground_round(),
                                   pose_round=self._pose_round(), removed=tuple(self.removed))
             if grid is None or grid.any():
                 break
@@ -3272,6 +3346,8 @@ class Executor:
             if rnd - p.placed_round < self.POP_GRACE_ROUNDS or (getattr(p, "pops", 0) or 0) > 0:
                 continue                    # too new to judge, or proven to pop: no more clicks
             if getattr(p, "pops_round", -1) < rnd - 2:
+                if not self._reachable(p):
+                    continue                # under a shut pane: read in its own pane's round
                 if self.g.select(p):        # its panel shows the pop count (Game._read_pops)
                     self.g.deselect(p)
                     p.pops_round = rnd
@@ -3336,7 +3412,14 @@ class Executor:
         camo-answer Mermonkey within the same round.
 
         reason: why sell_useless sells it, for the log and the journal.
-        Returns False without selling while _sale_blocked(rnd)."""
+        Returns False without selling while _sale_blocked(rnd), or while a
+        shut pane covers p (Covered Garden, _reachable): the click would hit
+        the glass. The spot is avoided only once the sale went through: a
+        sale that never happened left the spot barred for a tower that still
+        stood on it (audit 2026-11-12)."""
+        if not self._reachable(p):
+            log.info("keeping %s (%s) for now although %s: a shut pane covers it", p.tid, p.kind, reason)
+            return False
         blocked = self._sale_blocked(rnd)
         if blocked:
             log.info("keeping %s (%s, $%d spent) although %s: %s", p.tid, p.kind,
@@ -3345,9 +3428,11 @@ class Executor:
             return False
         log.warning("selling %s (%s, $%d spent): %s", p.tid, p.kind, getattr(p, "spent", 0), reason)
         self._sold_round = rnd
-        self._avoid_spot(p)
         with self.why("sell_useless", reason, tower=p.tid, spent=getattr(p, "spent", 0)):
-            return bool(self.g.sell(p))
+            sold = bool(self.g.sell(p))
+        if sold:
+            self._avoid_spot(p)
+        return sold
 
     def _avoid_spot(self, p):
         """Keep p's kind off its spot (and SOLD_SPOT_CELLS around it) for the
@@ -3913,10 +3998,18 @@ class Executor:
 
         A tower on a moving platform (Sanctuary) gets PLATFORM_SELECT_SPARE
         more tries: its spot follows the platform (carried.py), but a click
-        in the second the platforms slide at a round's start misses."""
+        in the second the platforms slide at a round's start misses.
+
+        Nor a tower on ground a cycling pane covers (Covered Garden), while
+        its pane is shut (_reachable): a click there hits the glass. Audit
+        2026-11-12: the pop-count read, sell_useless and _recheck_doubtful
+        clicked such towers, and two failures forgot a standing tower and
+        queued its purchase again."""
         melt = getattr(self, "melt_check", None)   # Match._melt_check: ground melted early
         if melt is not None and p.kind != "hero" and melt(p):
             return True
+        if not self._reachable(p):
+            return False   # Covered Garden: the glass over it, not its absence, failed the click
         limit = self.MAX_SELECT_FAILS + (self.PLATFORM_SELECT_SPARE if self._on_platform(p) else 0)
         if p.kind == "hero" or getattr(p, "select_fails", 0) < limit:
             return False
@@ -3977,6 +4070,13 @@ class Executor:
             return
         for p in list(self.g.towers.values()):
             if p.kind != "hero" and not getattr(p, "verified", True):
+                if not self._reachable(p):
+                    # its failed select was a click on shut glass (Covered
+                    # Garden): that proves nothing, and no round would start
+                    # to open the pane while it stays doubtful
+                    log.info("%s (%s) stands under a shut pane - counted as standing", p.tid, p.kind)
+                    p.verified = True
+                    continue
                 if self.g.select(p):
                     self.g.deselect(p)
                 else:
@@ -4839,8 +4939,9 @@ class Executor:
         from the map model's track cells; None for a tower not placed yet, or
         when the model has no usable track (then threats uses 2.5 x range)."""
         now = time.time()
+        rnd = getattr(self, "now_round", None)
         cached = getattr(self, "_mask_cache", None)
-        if cached is None or now - cached[0] > self.TRACK_MASK_TTL_S:
+        if cached is None or now - cached[0] > self.TRACK_MASK_TTL_S or cached[2] != rnd:
             mask = None
             try:
                 f = getattr(self.m, "track_mask", None)
@@ -4849,13 +4950,13 @@ class Executor:
                 mask = None
             if mask is not None and int(mask.sum()) < 30:
                 mask = None
-            cached = self._mask_cache = (now, mask)
-        mask = cached[1]
+            live = self._live_track_cells(mask) if mask is not None else None
+            cached = self._mask_cache = (now, mask, rnd, live)
+        mask, total = cached[1], cached[3]
         if mask is None:
             return None
-        total = float(mask.sum())
         ys, xs = np.nonzero(mask)
-        per_cell = self._track_length() / total      # fraction of the track per cell
+        per_cell = self._track_length() / total      # world units of track per cell
 
         def reach(tid, kind):
             p = self.g.towers.get(tid)
@@ -4865,6 +4966,42 @@ class Executor:
             r = self._range_cells(kind)
             return float(((xs - cx) ** 2 + (ys - cy) ** 2 <= r * r).sum()) * per_cell
         return reach
+
+    def _live_track_cells(self, mask):
+        """How many cells of the track mask stand for the paths bloons take
+        in the round being played: the cells _reach_fn spreads one path's
+        length (_track_length) over.
+
+        During a path phase's lead-in (mapgeom.PHASE_LEAD) the track is
+        painted for the next phase's path as well. Spread over both, a cell
+        counted half its length, and every tower's blimp reach was halved
+        in Erosion rounds 14-18, 32-36, 50-54 and 68-72, so blimp damage
+        the defence had was bought again (audit 2026-11-12). The mask is
+        scaled by the share of the painted paths' cells (mapgeom.path_masks,
+        drawn alike for both) that the round's own paths take. Outside a
+        lead-in, or without geometry, every cell of the mask counts."""
+        total = int(mask.sum())
+        rnd = getattr(self, "now_round", None)
+        if rnd is None:
+            return total
+        from . import mapgeom
+        try:
+            geom = mapgeom.load(self.m.name)
+            if not geom:
+                return total
+            painted = mapgeom.idle_phase_paths(geom, rnd)
+            now = mapgeom.idle_phase_paths(geom, rnd, lead=0)
+            if now == painted:
+                return total
+            proj = mapgeom.Projection(self.m.playfield)
+            live = mapgeom.path_masks(geom, proj, now)
+            drawn = mapgeom.path_masks(geom, proj, painted)
+        except Exception:      # geometry is optional: never let it stop a game
+            return total
+        if not live or not drawn:
+            return total
+        share = np.logical_or.reduce(live).sum() / max(1, np.logical_or.reduce(drawn).sum())
+        return max(30, int(round(total * min(1.0, float(share)))))
 
     def blimp_ratio(self, load, towers=None):
         """Blimp damage the defence deals in reach / blimp HP the round brings."""

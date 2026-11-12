@@ -87,12 +87,26 @@ class HudState:
             pass     # the HUD reading the file at that moment, a locked file: the next write comes
 
 
-def plan_ahead(plan, idx, n=PLAN_AHEAD):
+def plan_ahead(plan, idx, n=PLAN_AHEAD, carry=None):
     """The next `n` place/upgrade steps of an executor's plan from step
-    `idx`, cut to what the HUD draws: do, id, kind, to, at."""
+    `idx`, cut to what the HUD draws: do, id, kind, to, at.
+
+    carry: at -> (x, y), where a build's exact spot is now (Executor._at_now).
+    On Sanctuary the spots ride the moving platforms; the ghosts were drawn
+    at the raw spot, in the scene's pose, while the bot clicked the carried
+    one (audit 2026-11-12)."""
     keep = ("do", "id", "kind", "to", "at")
     steps = [s for s in plan[idx:] if s.get("do") in ("place", "upgrade")]
-    return [{k: s[k] for k in keep if s.get(k) is not None} for s in steps[:n]]
+    out = [{k: s[k] for k in keep if s.get(k) is not None} for s in steps[:n]]
+    if carry is not None:
+        for s in out:
+            at = s.get("at")
+            if at and len(at) == 2:
+                try:
+                    s["at"] = [round(float(v), 4) for v in carry(at)]
+                except Exception:
+                    pass        # the raw spot, as before
+    return out
 
 
 def tower_sizes(kinds):

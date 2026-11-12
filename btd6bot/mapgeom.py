@@ -1038,7 +1038,11 @@ def dynamics(geom, sold=(), now_round=None, last_round=None, pose_round=None):
                 yield act
 
     def can_fire(event):
-        """(fires, automatic, first round, recurring) for an active event."""
+        """(fires, automatic, first round, recurring, fired by) for an
+        active event. `fired by`: the round by which an event that fires on
+        any one of its triggers has certainly fired, from its triggers with
+        a fixed round, when another trigger may fire it sooner (None
+        otherwise)."""
         results = []
         for t in event.get("triggers", []):
             if t.get("type") == "RemoveableSoldTrigger" and t.get("removeable") in dyn.sold:
@@ -1047,33 +1051,42 @@ def dynamics(geom, sold=(), now_round=None, last_round=None, pose_round=None):
             auto, first, recurring = _trigger_timing(t)
             results.append((auto, auto, first, recurring))
         if not results:
-            return False, False, None, False
+            return False, False, None, False, None
         ok = [r for r in results if r[0]]
         if event.get("all_triggers"):
             if len(ok) < len(results):
-                return False, False, None, False
+                return False, False, None, False, None
             firsts = [r[2] for r in ok if r[2] is not None]
-            return True, True, max(firsts) if firsts else None, any(r[3] for r in ok)
+            return True, True, max(firsts) if firsts else None, any(r[3] for r in ok), None
         if not ok:
-            return False, False, None, False
+            return False, False, None, False, None
         firsts = [r[2] for r in ok]
         first = None if None in firsts else min(firsts)
-        return True, True, first, all(r[3] for r in ok)
+        fixed = [r[2] for r in ok if r[2] is not None and not r[3]]
+        fired_by = min(fixed) if first is None and fixed else None
+        return True, True, first, all(r[3] for r in ok), fired_by
 
     changed = True
     while changed:   # events switch other events on and sell obstacles: repeat until stable
         changed = False
         for eid in sorted(active - set(dyn.fired)):
             event = events[eid]
-            fires, auto, first, recurring = can_fire(event)
+            fires, auto, first, recurring, fired_by = can_fire(event)
             if not fires:
                 continue
             if eid in activated_at:
                 first = activated_at[eid] if first is None else max(first, activated_at[eid] or 0)
             sold_trigger = any(t.get("type") == "RemoveableSoldTrigger" and t.get("removeable") in dyn.sold
                                for t in event.get("triggers", []))
+            # A one-time event "after round 39 or at the first MOAB spawn"
+            # (Cargo's centre trucks, Quarry's MOAB track) may fire at any
+            # time, but has surely fired by round 40: from then on the
+            # ground it frees is free and the sight it opens is open. It
+            # stayed a "may" all game before (audit 2026-11-12), so Cargo's
+            # trucks blocked sight to the end.
+            due = first if first is not None else fired_by
             certain = (first == 0 and not recurring) or sold_trigger or (
-                now_round is not None and first is not None and first <= now_round
+                now_round is not None and due is not None and due <= now_round
                 and event.get("one_time") and not recurring)
             if last_round is not None and first is not None and first > last_round and not sold_trigger:
                 continue   # after the game is over
@@ -1502,6 +1515,7 @@ def grids_for(model, removed=(), now_round=None, last_round=None, pose_round=Non
                           for c in dyn.panes]
         grids["platforms"] = _platform_info(geom, proj)
         grids["platform_ground"] = _platform_ground(grids["platforms"], proj)
+        grids["rotor_ground"] = _rotor_ground(dyn, areas_by_id, proj)
         grids["pose_round"] = pose_round
         grids["steady"] = {}
         _GRIDS_CACHE[key] = grids
@@ -1546,6 +1560,32 @@ def _platform_ground(platforms, proj):
             for pose in plat["mover"]["state_poses"].values():
                 out |= _poly_mask(_pose_polygons(area["polygons"], pose), proj)
     return out
+
+
+def _rotor_ground(dyn, areas_by_id, proj):
+    """Bool grid of the cells turning ground (RotateAreaAction: Geared's
+    gears) covers in any of its poses, or None on maps without it."""
+    out = None
+    for mover in dyn.movers:
+        if mover["type"] != "RotateAreaAction":
+            continue
+        for aid in mover["areas"]:
+            area = areas_by_id.get(aid)
+            if area is None or area["type"] in SOLID_TYPES:
+                continue   # a turning obstacle carries no towers
+            here = _poly_mask(area["polygons"], proj)
+            for pose in mover["poses"]:
+                here |= _poly_mask(_pose_polygons(area["polygons"], pose), proj)
+            out = here if out is None else out | here
+    return out
+
+
+def rotor_ground(model):
+    """Bool grid of the cells Geared's gears cover at some time, or None on
+    maps without turning ground. A refusal there, or a spot judged there,
+    holds only for the gear's pose at that moment."""
+    grids = grids_for(model)
+    return grids.get("rotor_ground") if grids else None
 
 
 def platform_ground(model):

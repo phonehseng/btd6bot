@@ -322,21 +322,32 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
     return valid
 
 
-def sight_blockers(model, cx, cy):
+def sight_blockers(model, cx, cy, sight=None):
     """Bool grid of the cells that block sight for a tower standing at cell
     (cx, cy). A blocker hides bloons only from towers below it: a tower on
     raised ground (Sunken Columns' column tops, Mesa's plateaus) sees over
     blockers as high as its own ground. Falls back to every blocker when the
-    map's heights are unknown."""
-    heights, ground = getattr(model, "sight_height", None), getattr(model, "ground_height", None)
+    map's heights are unknown.
+
+    sight: (blockers, heights) standing in for the model's whole-game
+    model.sight / model.sight_height, e.g. the round's own from
+    mapgeom.grids_for(now_round) (see visible_cover)."""
+    blockers, heights = (model.sight, getattr(model, "sight_height", None)) if sight is None else sight
+    ground = getattr(model, "ground_height", None)
     if heights is None or ground is None:
-        return model.sight
+        return blockers
     return heights > ground[cy, cx] + HEIGHT_TIE
 
 
-def visible_cover(model, cx, cy, range_cells, weight):
+def visible_cover(model, cx, cy, range_cells, weight, sight=None):
     """Sum of track weight within range of (cx, cy) that is in line of sight
-    (no sight-blocking cell, see sight_blockers, on the straight line between)."""
+    (no sight-blocking cell, see sight_blockers, on the straight line between).
+
+    sight: (blockers, heights) of the round being played, when the caller
+    knows them (Executor._round_sight); the model's own grids hold every
+    blocker that stands at any time of the game. One Two Tree's 23 blocker
+    plots, opened as the game goes, and Cargo's centre trucks, gone at the
+    first MOAB, blocked sight in them to the end (audit 2026-11-12)."""
     hh, ww = weight.shape
     r = int(np.ceil(range_cells))
     y0, y1 = max(0, cy - r), min(hh, cy + r + 1)
@@ -347,9 +358,10 @@ def visible_cover(model, cx, cy, range_cells, weight):
     if not inside.any():
         return 0.0
     tx, ty = xx[inside].astype(np.float32), yy[inside].astype(np.float32)
-    if model.sight is None or not model.sight.any():
+    blockers = model.sight if sight is None else sight[0]
+    if blockers is None or not blockers.any():
         return float(sub[inside].sum())
-    sight = sight_blockers(model, cx, cy)
+    sight = sight_blockers(model, cx, cy, sight)
     # sample points strictly between the tower and each target cell
     t = np.linspace(0.1, 0.9, SIGHT_SAMPLES, dtype=np.float32)[:, None]
     px = np.clip(np.rint(cx + (tx - cx) * t), 0, ww - 1).astype(np.int32)
