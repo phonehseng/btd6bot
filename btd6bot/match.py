@@ -1620,7 +1620,16 @@ class Match:
             # bot's round lags it by one between rounds, and the HUD's green
             # ground followed the stale round (owner, 2026-11-12).
             pane_round = self.ex._pane_round() if hasattr(self.ex, "_pane_round") else None
+            # The ground as the bot's placement judges it (Executor._legal_cells):
+            # the round (One Two Tree's opened plots, Erosion's melts), the
+            # platforms' pose (Sanctuary) and the phase horizon (Erosion's
+            # ground need only last the phase). The field layer drew the
+            # whole-game ground without them (audit 2026-11-12).
+            now_round = self.ex._ground_round() if hasattr(self.ex, "_ground_round") else None
+            pose_round = self.ex._pose_round() if hasattr(self.ex, "_pose_round") else None
             hudstate.update(round=rnd, cash=cash, lives=self._lives.confirmed, pane_round=pane_round,
+                            now_round=now_round, pose_round=pose_round,
+                            ground_horizon=getattr(self.ex, "ground_horizon", None),
                             waiting=getattr(self.ex, "waiting", None),
                             save_goal=list(goal) if goal else None, plan=plan,
                             towers=[[p.tid, p.kind, p.crosspath, round(p.x, 4), round(p.y, 4)] for p in towers],
