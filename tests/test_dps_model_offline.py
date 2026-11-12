@@ -267,6 +267,75 @@ def test_camo_needs_detection():
     assert not any("Camo" in b for b in res.leaked)
 
 
+# ---------------------------------------------------------------------------
+# Quad Deflation, 2026-11-11: round 60 rated 4.22 and 8.18, the BFB untouched
+# (loss cases 20261111_164906 and 20261111_210232)
+# ---------------------------------------------------------------------------
+
+def _on_one_bfb(profile):
+    """Damage a second the model lets a tower do to one lone BFB."""
+    bfb = D.layer("Bfb")
+    return sum(s.shots_single * s.damage_vs(bfb) * s.single_hits for s in profile.sources if s.can_hit(bfb))
+
+
+def test_tentacles_strike_once_and_in_their_own_sector():
+    """The Abyss Dweller's eight tentacles are eight attacks, each fixed on
+    its own 45 degrees of the circle, each striking once per rise (every 3 s,
+    8 damage). Read as striking every 0.15 s all round, one Abyss Dweller
+    did about 150 damage a second to a BFB in the model."""
+    abyss = D.attacks()["towers"]["mermonkey"]["crosspaths"]["300"]
+    tentacles = [a for a in abyss["attacks"] if a["name"].startswith("AttackTentacle")]
+    assert len(tentacles) == 8
+    assert all(a["sector"] == 45.0 for a in tentacles)                 # eight sectors make the circle
+    for a in tentacles:
+        spawn, = a["weapons"][0]["projectile"]["spawn"]
+        assert spawn["on"] == "interval" and spawn["once"]
+    trident = next(a for a in abyss["attacks"] if a["name"] == "Attack")
+    assert "sector" not in trident                                      # the trident aims all round
+    for tiers in ((3, 0, 0), (3, 0, 1), (3, 2, 0)):
+        # the trident (4 damage every 0.66 s) plus one tentacle's strikes
+        assert 6.0 < _on_one_bfb(D.profile("mermonkey", tiers)) < 12.0, tiers
+    assert _on_one_bfb(D.profile("mermonkey", (4, 0, 0))) > _on_one_bfb(D.profile("mermonkey", (3, 0, 0)))
+
+
+def test_a_turning_cone_is_not_a_fixed_sector():
+    """An Aircraft Carrier's planes fire inside a cone ahead of them; the
+    cone turns with the plane, so it is no sector of the map and the model's
+    share for circling planes (AIR_PATTERN_EFFICIENCY) stays as it was."""
+    for code in ("400", "420", "500"):
+        carrier = D.attacks()["towers"]["buccaneer"]["crosspaths"][code]
+        assert '"sector"' not in json.dumps(carrier), code
+
+
+def test_a_lone_blimp_takes_one_lane_whole():
+    """Quad has four lanes open at once. Round 60's one BFB goes down one of
+    them whole; which one is not known, so each lane gets its turn."""
+    quad = D.Track("Quad")
+    lanes = quad.routes_for(0, True)
+    assert len(lanes) == 4
+    assert D.round_turns("deflation", 60, quad) == (0, 1, 2, 3)
+    shared = [lot for lot in D.round_lots("deflation", 60, quad) if lot.bloon == "Bfb"]
+    assert len(shared) == 4 and all(math.isclose(lot.count, 0.25) for lot in shared)   # the old reading
+    taken = []
+    for turn in D.round_turns("deflation", 60, quad):
+        bfb, = [lot for lot in D.round_lots("deflation", 60, quad, turn=turn) if lot.bloon == "Bfb"]
+        assert math.isclose(bfb.count, 1.0)
+        taken.append(bfb.path)
+    assert sorted(taken) == sorted(lanes)
+    # bloons that come in numbers are shared as before, whatever the turn
+    for turn in (None, 0, 3):
+        zebras = [lot for lot in D.round_lots("deflation", 57, quad, turn=turn) if not D.layer(lot.bloon).moab]
+        assert zebras and len({lot.path for lot in zebras}) == 4
+    # one lane, nothing to take turns on
+    assert D.round_turns("deflation", 60, D.Track("Monkey Meadow")) == (None,)
+    # a board is never rated better for it
+    x, z = _best_spot(quad, 40)
+    board = D.stations_for([D.Placed(f"b{i}", "bomb", (0, 3, 0), x + 6 * i, z) for i in range(3)], quad)
+    for rnd in (40, 60):
+        even = D.lots_margin(board, quad, [D.round_lots("deflation", rnd, quad)])
+        assert D.round_margin(board, "deflation", rnd, quad) <= even + 1e-9
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in tests:

@@ -95,6 +95,8 @@ CONTACTS_PER_CARRIER = 2.0  # bloons a carrier projectile touches in a crowd (sp
 TRAVEL_OVERLAP = 0.35       # share of a flying projectile's path that runs along the lane
 MAX_SUBTOWERS = 6           # sub-towers alive at once (sentries, ...) when the model gives no cap
 AIR_PATTERN_EFFICIENCY = 0.4  # share of a circling plane's radial darts that cross the lane
+TRACK_ARC_DEG = 180.0       # most of the circle around a tower a track beside it can cover (a straight
+                            # line seen from a point off it spans less than half a turn): _sector_shares
 LEAK_LIVES_EPS = 0.5        # fluid model: less than half a life lost counts as no leak
 CARRIED_STOCK_SECONDS = 30.0  # spikes that outlive the round: production of this long is still lying there
 SMALL_LAYER_HP = 4.0        # layers with at most this health (all but ceramics and MOAB-class) are worked
@@ -515,6 +517,12 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
         on = s.get("on")
         if on == "contact":
             k, k1 = contacts * n * s.get("chance", 1.0), contacts_single * n * s.get("chance", 1.0)
+        elif on == "interval" and s.get("once"):
+            # emitted a single time, `every` seconds after the carrier appears
+            # (CreateProjectileOnIntervalModel.onlyEmitOnce): an Abyss
+            # Dweller's tentacle strikes once per rise, not once per 0.15 s of
+            # the 1-1.5 s it stays up
+            k = k1 = n
         elif on == "interval":
             k = k1 = n * (life / s["every"] if life and s.get("every") else 1.0)
         elif on == "pierce":
@@ -599,6 +607,30 @@ def _attack_range(a, tower_range):
     return a.get("range", 0.0)
 
 
+def _sector_shares(a):
+    """(crowd, single): the share of its shots an attack fires when it may
+    only pick targets inside a sector of the circle around its tower (the
+    export's "sector", in degrees; (1, 1) without one).
+
+    single - one lone bloon walking past is inside a sector of s degrees for
+    s / 360 of its way through the range, and the attack has nothing to shoot
+    at for the rest.
+    crowd - with bloons all along the track, the attack fires whenever its
+    sector holds a piece of track. Seen from a tower beside it the track
+    covers at most TRACK_ARC_DEG of the circle, so of a ring of such attacks
+    that share is busy at once.
+
+    The Abyss Dweller (Mermonkey 3-x-x) is the case: eight tentacle attacks
+    of 45 degrees each. Counted all round, with every tentacle striking the
+    same bloon, three of them were rated at about 450 damage a second against
+    a BFB; Quad Deflation (2026-11-11, case 20261111_210232) relied on them,
+    was rated 8.18 for round 60 and its BFB crossed untouched."""
+    sector = a.get("sector")
+    if not sector or sector >= 360.0:
+        return 1.0, 1.0
+    return min(1.0, max(sector, TRACK_ARC_DEG) / 360.0), sector / 360.0
+
+
 def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=False, tower_range=None):
     """Add an attack's damage sources (per weapon) to out.
     follows: the tower is a helicopter that flies to the bloons (global reach).
@@ -607,6 +639,7 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
     if targeting in ("point", "cursor"):
         return
     a = dict(a, range=_attack_range(a, tower_range))
+    share_crowd, share_single = _sector_shares(a)
     if targeting in ("track", "random"):
         placement = "track"
         camo_chain = True                 # thrown onto the track: sees nothing, hits what passes
@@ -642,15 +675,16 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
             c = w["crit"]
             extra = (c["damage"] - p["damage"]["amount"]) / max(c["every"], 1.0)
             p = dict(p, damage=dict(p["damage"], amount=p["damage"]["amount"] + max(0.0, extra)))
-        _flatten_projectile(p, shots, shots, a, camo_chain and parent_camo, placement, radial, travel, out, depth,
+        crowd, single = shots * share_crowd, shots * share_single
+        _flatten_projectile(p, crowd, single, a, camo_chain and parent_camo, placement, radial, travel, out, depth,
                             subtower_cap=cap)
         if w.get("alternate"):
             alt = w["alternate"]
             k = alt.get("count", 1.0) / max(alt.get("every", 1.0), 1.0)
-            _flatten_projectile(alt["projectile"], shots * k, shots * k, a, camo_chain, placement, radial, travel,
+            _flatten_projectile(alt["projectile"], crowd * k, single * k, a, camo_chain, placement, radial, travel,
                                 out, depth)
         if w.get("extra_projectile"):
-            _flatten_projectile(w["extra_projectile"], shots, shots, a, camo_chain, placement, radial, travel,
+            _flatten_projectile(w["extra_projectile"], crowd, single, a, camo_chain, placement, radial, travel,
                                 out, depth)
 
 
@@ -1129,21 +1163,59 @@ def _round_extra(set_name, rnd):
     return float(rd.get("speed_mult") or 1.0), float(rd.get("blimp_hp_mult") or 1.0)
 
 
-def round_lots(mode, rnd, track, scenario=0):
+def round_lots(mode, rnd, track, scenario=0, turn=None):
     """The lots of round `rnd` in `mode`, on the routes of one scenario of
-    the track: each group is shared evenly by the routes its class takes."""
+    the track: each group is shared evenly by the routes its class takes
+    (turn: see groups_lots)."""
     set_name = "abr" if mode == "abr" else "standard"
     speed_ramp, hp_ramp = _round_extra(set_name, rnd)
     return groups_lots(mode, _round_groups(set_name, rnd), track, scenario, rnd=rnd,
-                       speed_ramp=speed_ramp, hp_ramp=hp_ramp)
+                       speed_ramp=speed_ramp, hp_ramp=hp_ramp, turn=turn)
 
 
-def groups_lots(mode, groups, track, scenario=0, rnd=None, speed_ramp=1.0, hp_ramp=1.0):
+def _undivided(top, count, routes):
+    """Does a spawn group go down its routes as whole bloons rather than as
+    an even share? True for blimps that are fewer than the routes open to
+    them: one BFB on a map with four lanes takes one lane, whole.
+
+    Sharing it evenly put a quarter of a BFB (175 health and one MOAB) on
+    each lane of Quad, so the towers beside every lane were each rated
+    against a quarter of the blimp that really passes one of them. Quad
+    Deflation (2026-11-11, cases 20261111_164906 and 20261111_210232) was
+    rated 4.22 and 8.18 for round 60; both times the BFB went in at the left
+    gate and out at the top one with hardly a scratch. Smaller bloons come
+    in numbers, and for them the even share is what the lanes see."""
+    return top.moab and 1 < len(routes) and count < len(routes)
+
+
+def round_turns(mode, rnd, track, scenario=0):
+    """The `turn` values round `rnd` has to be played with (groups_lots):
+    one per route when the round has a blimp group that is not shared
+    (_undivided) - which lane the game sends it down is not known, so every
+    lane gets its turn and the worst counts - and (None,) otherwise."""
+    set_name = "abr" if mode == "abr" else "standard"
+    most = 0
+    for g in _round_groups(set_name, rnd):
+        bid = g.get("id") or g["bloon"].capitalize()
+        if bid not in bloon_table():
+            continue
+        top = layer(bid)
+        routes = track.routes_for(scenario, top.moab)
+        if _undivided(top, float(g["count"]), routes):
+            most = max(most, len(routes))
+    return tuple(range(most)) if most else (None,)
+
+
+def groups_lots(mode, groups, track, scenario=0, rnd=None, speed_ramp=1.0, hp_ramp=1.0, turn=None):
     """The lots of any list of spawn groups ({"id" or "bloon", "count",
     "start_s", "end_s"}, the shape of data/game_data/round_sets.json) in
     `mode`: round_lots for a standard round, btd6bot/apopalypse.py for the
     random rounds of Apopalypse. rnd: the round, for one-round health
-    changes (Easy's round-40 MOAB); speed_ramp / hp_ramp: freeplay ramps."""
+    changes (Easy's round-40 MOAB); speed_ramp / hp_ramp: freeplay ramps.
+
+    turn: None shares every group evenly by its routes. A number sends the
+    blimps of a group too small to share (_undivided) down the routes whole,
+    one each, starting with route number `turn` of those open to them."""
     rules = mode_rules(mode)
     duration = max((g.get("end_s", 0.0) for g in groups), default=0.0)
     lots = []
@@ -1171,6 +1243,12 @@ def groups_lots(mode, groups, track, scenario=0, rnd=None, speed_ramp=1.0, hp_ra
         k = max(1, min(LOTS_PER_GROUP, int(count)))
         routes = track.routes_for(scenario, top.moab)
         n = len(routes)
+        if turn is not None and _undivided(top, count, routes):
+            whole = max(1, int(round(count)))
+            for j in range(whole):
+                lots.append(Lot(path=routes[(turn + j) % n], t0=start + span * (j + 0.5) / whole, bloon=bid,
+                                count=count / whole, rho=rho, speed=speed, speed_mult=speed_mult, moab_hp=moab_hp))
+            continue
         for route in routes:
             for i in range(k):
                 t = start + span * (i + 0.5) / k
@@ -1472,22 +1550,28 @@ class _Server:
                 self.push(child_job)
 
 
-def _lots(mode, rnd, track, scenario):
-    """round_lots, remembered on the track (lots are never changed in place)."""
+def _lots(mode, rnd, track):
+    """The lot lists round `rnd` is played with, remembered on the track
+    (lots are never changed in place): one per scenario of the track
+    (alternating spawns) and, within it, one per turn of a blimp too few to
+    share between the lanes (round_turns)."""
     cache = track.__dict__.setdefault("_lot_cache", {})
-    key = (mode, rnd, scenario)
+    key = (mode, rnd)
     if key not in cache:
-        cache[key] = round_lots(mode, rnd, track, scenario)
+        cache[key] = [round_lots(mode, rnd, track, sc, turn)
+                      for sc in range(len(track.scenarios))
+                      for turn in round_turns(mode, rnd, track, sc)]
     return cache[key]
 
 
 def simulate_round(stations, mode, rnd, track, strength=1.0):
     """Play round `rnd` against the stations (see the module docstring) in
-    every scenario of the track (alternating spawns) and return the worst.
-    strength scales every station's output (margin search)."""
+    every scenario of the track and every turn of its blimps (_lots) and
+    return the worst. strength scales every station's output (margin
+    search)."""
     worst = None
-    for sc in range(len(track.scenarios)):
-        res = _play(stations, track, _lots(mode, rnd, track, sc), strength)
+    for lots in _lots(mode, rnd, track):
+        res = _play(stations, track, lots, strength)
         if worst is None or (res.lives_lost, res.end_time) > (worst.lives_lost, worst.end_time):
             worst = res
     return worst
@@ -1560,9 +1644,8 @@ def round_margin(stations, mode, rnd, track, lo=MARGIN_LO, hi=MARGIN_HI, iterati
     """The safety margin of round rnd: the factor by which every tower could
     be weaker and the round still pop without a leak (2.0 = holds at half
     strength; below 1.0 = leaks at full strength). Bisection on strength,
-    worst over the track's scenarios."""
-    return lots_margin(stations, track, [_lots(mode, rnd, track, sc) for sc in range(len(track.scenarios))],
-                       lo, hi, iterations)
+    worst over the track's scenarios and the turns of its blimps (_lots)."""
+    return lots_margin(stations, track, _lots(mode, rnd, track), lo, hi, iterations)
 
 
 def lots_margin(stations, track, lots_by_scenario, lo=MARGIN_LO, hi=MARGIN_HI, iterations=9):
