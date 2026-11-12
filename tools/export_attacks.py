@@ -29,8 +29,11 @@ stored as deltas, each combination is its own complete model. Under it:
       RateSupportModel, RangeSupportModel, ...   buffs to other towers (villages)
       PerRoundCashBonusTowerModel, BankModel ... income
 
-Abilities (AbilityModel subtrees) are left out: the stats here are what a
-tower does on its own, all the time.
+Abilities (AbilityModel subtrees) are exported apart, under "abilities":
+the stats of the attacks are what a tower does on its own, all the time,
+and each ability says what it adds while it is up (cooldown, duration, its
+attacks, buffs and self-boosts). btd6bot/dps_model.py credits the ones the
+bot presses by their uptime (docs/model_fix_plan.md, item 8).
 
 Output
 ------
@@ -45,7 +48,11 @@ data/game_model/attacks.json:
     "heroes"    {bot hero id: {"game_id", "levels": {"1": TOWER, ...}}}
 
 TOWER = {"range", "global", "attacks": [ATTACK], "subtowers": [...],
-         "buffs": [...], "income": {...}, "zones": [...], "air_unit": {...}}
+         "buffs": [...], "income": {...}, "zones": [...], "air_unit": {...},
+         "abilities": [ABILITY]}
+ABILITY = {"name", "upgrade", "cooldown", "interval", "attacks": [ATTACK
+           with "duration", "one_shot"], "buffs": [...], "self": {...},
+           "towers": [TOWER with "duration"]}
 ATTACK = {"name", "range", "camo", "camo_shared", "targets", "sector",
           "targeting", "unbounded", "own_radius", "weapons": [WEAPON]}
 WEAPON = {"name", "rate", "count", "burst", "projectile": PROJECTILE, ...}
@@ -88,11 +95,14 @@ log = logging.getLogger("export_attacks")
 
 ROOT = TOOLS.parent
 OUT_FILE = dsm.OUT_DIR / "attacks.json"
-EXPORT_VERSION = 4   # 2: "camo_shared" on an attack whose camo filter defers to the shared range
+EXPORT_VERSION = 5   # 2: "camo_shared" on an attack whose camo filter defers to the shared range
                      # 3: "once" on an interval spawn that emits a single time, "sector" on an
                      #    attack that only targets inside part of the circle (Abyss Dweller)
                      # 4: "target_fov" on a weapon that needs a target in a cone (a Buccaneer's
                      #    rear shot), "potion" (shots / lifespan) on an Alchemist potion
+                     # 5: "abilities" per tower; "spray" (degrees) on a weapon whose emission
+                     #    fans out; "psi", "digest", "debuff" and the maim's "damage_add" on
+                     #    projectiles; "one_at_a_time" on a weapon; Obyn's Druid range buff
 
 # Bloon properties (BloonProperties flags) that damage types are immune to,
 # in the five names of normal play; "Immune"/"Glass" are event mechanics.
@@ -370,7 +380,9 @@ class AttackExporter:
         out = {}
         for b in objs(behaviors):
             t = b.type
-            if t in ("SlowModel", "SlowForBloonModel"):
+            if t in ("SlowModel", "SlowForBloonModel", "SlowMinusAbilityDurationModel"):
+                # (SlowMinusAbilityDurationModel: Bloon Sabotage's wave-wide
+                # 50% slow, 15 s; Grand Saboteur 30 s)
                 key = "stun" if num(b.get("multiplier"), 1.0) == 0.0 else "slow"
                 out[key] = clean({"multiplier": num(b.get("multiplier"), 1.0), "lifespan": num(b.get("lifespan")),
                                   "layers": b.get("layers"), "only_tags": [b["bloonTag"]] if b.get("bloonTag") else None})
@@ -385,6 +397,16 @@ class AttackExporter:
             elif t == "SlowMaimMoabModel":
                 out["maim"] = {k: num(b.get(k)) for k in ("moabDuration", "bfbDuration", "zomgDuration",
                                                           "ddtDuration", "badDuration")}
+                if num(b.get("bloonPerHitDamageAddition")):
+                    # Cripple MOAB: a crippled blimp takes this much more
+                    # damage from every hit (bw:Cripple_MOAB_(BTD6): +5)
+                    out["maim"]["damage_add"] = num(b.get("bloonPerHitDamageAddition"))
+            elif t == "AddBonusDamagePerHitToBloonModel":
+                # Embrittlement / Super Brittle / Glue Strike: a hit bloon
+                # takes `add` more damage from every hit for `lifespan` s
+                # (fandom:Embrittlement +1, fandom:Super_Brittle +4)
+                out["debuff"] = clean({"add": num(b.get("perHitDamageAddition")), "lifespan": num(b.get("lifespan")),
+                                       "layers": b.get("layers")})
             elif t == "KnockbackModel":
                 out["knockback"] = {"lifespan": num(b.get("lifespan")), "moab": num(b.get("moabMultiplier"))}
             elif t == "WindModel":
@@ -402,6 +424,20 @@ class AttackExporter:
         return out
 
     # -- projectiles -------------------------------------------------------------
+    @staticmethod
+    def spray_angle(emission):
+        """Degrees an emission fans its projectiles over (ArcEmissionModel,
+        RandomArcEmissionModel, RandomEmissionModel "angle"), or None for
+        emissions that do not fan out. 360 is a Tack Shooter's ring; Triple
+        Shot is 30, Sun Avatar 30, Bloonjitsu 45, Grandmaster 72, the
+        Druid's thorns 25 and the Desperado's shotgun 35: aimed sprays at
+        one target, not all-around fire (docs/model_audit_magic.md finding 3,
+        primary F8)."""
+        for e in objs(emission):
+            if e.type in ("ArcEmissionModel", "RandomArcEmissionModel", "RandomEmissionModel")                     and num(e.get("angle")) > 0:
+                return num(e.get("angle"))
+        return None
+
     def emission_count(self, emission):
         """Projectiles one emission fires: ArcEmissionModel.Count,
         RandomEmissionModel.count, EmissionWithOffsetsModel.projectileCount,
@@ -518,10 +554,24 @@ class AttackExporter:
                 typed = [v for k, v in b.items() if k.endswith("Tower") and isinstance(v, dsm.Obj)]
                 for tower in typed:
                     subtowers.append({**self.tower(tower, depth + 1), "share": round(1.0 / len(typed), 4)})
+            elif t == "PsiEffectModel":
+                # Psi's grip: the bloon it holds takes damagePerTick every
+                # tickRate seconds until it is gone or maxDuration ends - the
+                # "instakill over time" the projectile's 0-damage DamageModel
+                # does not show (fandom:Psi_(BTD6))
+                out["psi"] = {"per_tick": num(b.get("damagePerTick")), "tick": num(b.get("tickRate"), 1.0),
+                              "max_duration": num(b.get("maxDuration"))}
+            elif t == "JungleVineEffectModel":
+                # Druid of the Jungle: seconds the vine holds a bloon after it
+                # is popped (destroyAfterPopTime), the fixed part of its digest
+                # time (fandom:Druid_of_the_Jungle)
+                out["digest"] = num(b.get("destroyAfterPopTime"))
             elif t.startswith(("DamageModifier", "BloonTagDamageOverride")) or t in (
-                    "SlowModel", "SlowForBloonModel", "SlowModifierForTagModel", "FreezeModel",
+                    "SlowModel", "SlowForBloonModel", "SlowMinusAbilityDurationModel", "SlowModifierForTagModel",
+                    "FreezeModel",
                     "SlowMaimMoabModel", "KnockbackModel", "WindModel", "PushBackModel",
-                    "RemoveBloonModifiersModel", "CashModel", "FreezeModifierForTagsModel"):
+                    "RemoveBloonModifiersModel", "CashModel", "FreezeModifierForTagsModel",
+                    "AddBonusDamagePerHitToBloonModel"):
                 pass   # read by bonuses() / effects() below
             elif not t.startswith(dsm.COSMETIC) and not any(c in t for c in dsm.COSMETIC) and t not in QUIET_TYPES:
                 self.uninterpreted[t] += 1
@@ -603,6 +653,7 @@ class AttackExporter:
         out = {"name": short_name(w), "rate": num(w.get("rate")),
                "count": self.emission_count(w.get("emission"))}
         emission = w.get("emission")
+        out["spray"] = self.spray_angle(emission)
         if isinstance(emission, dsm.Obj):
             if emission.type == "EmissionOverTimeModel":
                 out["over_time"] = num(emission.get("timeBetween")) * out["count"]
@@ -635,6 +686,10 @@ class AttackExporter:
                 out["over_track_only"] = True
             elif b.type == "FilterTargetAngleFilterModel":
                 out["target_fov"] = num(b.get("fieldOfView"))
+            elif b.type == "JungleVineLimitProjectileModel":
+                # one vine (or `limit` vines) holding a bloon at a time: the
+                # next grab waits until the last one is digested
+                out["one_at_a_time"] = num(b.get("limit"), 1.0)
         p = w.get("projectile")
         out["projectile"] = self.projectile(p, depth) if isinstance(p, dsm.Obj) else None
         return clean(out)
@@ -788,6 +843,14 @@ class AttackExporter:
         out = []
         for b in behaviors:
             t = b.type
+            if t == "ObynGlobalSupportModel" and num(b.get("dotjRangeMultiplier")):
+                # Obyn level 5: every Druid of the Jungle (x-3-x and up) on
+                # screen gets +40% range (fandom:Obyn_Greenfoot_(BTD6)). The
+                # model names the upgrade only by its field ("dotj..."), so
+                # the crosspath filter is written here: middle path tier 3+.
+                out.append({"kind": "range", "value": num(b["dotjRangeMultiplier"]), "global": True,
+                            "towers": ["Druid"], "min_tiers": [0, 3, 0]})
+                continue
             kind = {"RateSupportModel": "rate", "RangeSupportModel": "range", "PierceSupportModel": "pierce",
                     "PiercePercentageSupportModel": "pierce_percent", "DamageSupportModel": "damage",
                     "VisibilitySupportModel": "camo", "DamageTypeSupportModel": "damage_type",
@@ -846,6 +909,74 @@ class AttackExporter:
                                   "excluded_tags": flt["excluded_tags"], "only_tags": flt["only_tags"]}))
         return out
 
+    # -- abilities -------------------------------------------------------------------
+    def ability(self, ab, depth=0, interval=None):
+        """One AbilityModel: what it adds while it is up.
+
+        name / upgrade: the game's display name and the upgrade that added
+            it (the bot's abilities.TOWER_ABILITIES keys are upgrade names);
+        cooldown: seconds between presses; interval: for an ability the
+            tower fires by itself (ActivateAbilityAfterIntervalModel: Carpet
+            of Spikes' Spike Storm every 15 s), the seconds between casts;
+        attacks: ActivateAttackModel attacks, each with "duration" (the
+            seconds it keeps firing) and "one_shot" (it fires once per press:
+            MOAB Eliminator's 4,500-damage missile);
+        buffs: timed buffs to towers - CallToArmsModel (Call to Arms x1.5,
+            Homeland Defense x2 attack speed and pierce to every tower) and
+            ActivateRateSupportZoneModel (Absolute Zero's x1.5 Ice Monkey
+            speed), each with its "duration";
+        self: a boost to the tower's own attacks - TurboModel (Turbo
+            Charge, Rapid Shot: weapon rate x "rate", +"damage_add") and
+            DamageUpModel (Perma Charge: +"damage_add") for "duration" s;
+        towers: towers it creates for a while (AbilityCreateTowerModel:
+            Adora's Ball of Light), with their "duration"."""
+        out = {"name": ab.get("displayName"), "upgrade": ab.get("addedViaUpgrade"),
+               "cooldown": num(ab.get("cooldown")), "interval": interval}
+        attacks, buffs, towers, own = [], [], [], {}
+        for b in objs(ab.get("behaviors")):
+            t = b.type
+            if t == "ActivateAttackModel":
+                for a in objs(b.get("attacks")):
+                    if self.view.is_a(a, "AttackModel"):
+                        attacks.append(dict(self.attack(a, depth + 1), duration=num(b.get("lifespan")),
+                                            one_shot=bool(b.get("isOneShot"))))
+            elif t == "CallToArmsModel":
+                m, life = num(b.get("multiplier"), 1.0), num(b.get("lifespan"))
+                if m > 0:
+                    buffs.append({"kind": "rate", "value": 1.0 / m, "duration": life, "global": True})
+                    buffs.append({"kind": "pierce_mult", "value": m, "duration": life, "global": True})
+            elif t == "ActivateRateSupportZoneModel":
+                ids = [i for f in objs(b.get("filters")) if f.type == "FilterInBaseTowerIdModel"
+                       for i in (f.get("baseIds") or []) if isinstance(i, str)]
+                rng = num(b.get("range"))
+                buffs.append(clean({"kind": "rate", "value": num(b.get("rateModifier"), 1.0),
+                                    "duration": num(b.get("lifespan")),
+                                    "global": bool(b.get("isGlobal")) or rng >= UNBOUNDED_RANGE,
+                                    "radius": rng if 0 < rng < UNBOUNDED_RANGE else None,
+                                    "towers": ids or None}))
+            elif t == "TurboModel":
+                own = clean({"rate": num(b.get("multiplier"), 1.0), "damage_add": num(b.get("extraDamage")) or None,
+                             "duration": num(b.get("lifespan"))})
+            elif t == "DamageUpModel":
+                own = clean({"damage_add": num(b.get("additionalDamage")),
+                             "duration": num(b.get("lifespanFrames")) / self.fps})
+            elif t == "AbilityCreateTowerModel" and isinstance(b.get("towerModel"), dsm.Obj) and depth < MAX_DEPTH:
+                made = self.tower(b["towerModel"], depth + 1)
+                towers.append(dict(made, duration=made.get("lifespan") or num(b.get("lifespan")) or None))
+        out.update({"attacks": attacks, "buffs": buffs, "self": own, "towers": towers})
+        return clean(out)
+
+    def abilities(self, t):
+        """The abilities of a TowerModel (see ability()): the pressed ones
+        and those it casts by itself on an interval."""
+        out = []
+        for b in objs(t.get("behaviors")):
+            if self.view.is_a(b, "AbilityModel"):
+                out.append(self.ability(b))
+            elif b.type == "ActivateAbilityAfterIntervalModel" and isinstance(b.get("abilityModel"), dsm.Obj):
+                out.append(self.ability(b["abilityModel"], interval=num(b.get("interval")) or None))
+        return out
+
     def tower(self, t, depth=0):
         """One TowerModel (a crosspath, a hero level or a sub-tower)."""
         behaviors = [b for b in objs(t.get("behaviors"))
@@ -874,6 +1005,7 @@ class AttackExporter:
             "air_unit": air,
             "lifespan": (num(expire.get("lifespan")) if expire and num(expire.get("lifespan")) < 1e6 else None),
             "expires_on_round_end": bool(expire and expire.get("expireOnRoundComplete")),
+            "abilities": self.abilities(t) if depth == 0 else None,
         })
 
 
