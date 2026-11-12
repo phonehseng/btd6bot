@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from btd6bot import dps_model as D  # noqa: E402
 
-D.STATUS_RATING = True        # off by default (its docstring): these tests are about it
+D.STATUS_RATING = True        # on by default; these tests are about it
 
 
 def _beside_track(track, offset=15.0, at=0.5):
@@ -204,6 +204,95 @@ def test_time_along_the_route():
         t = D._time_at(lot, segs, x)
         assert math.isclose(D._pos_at(lot, segs, t), x, abs_tol=1e-6)
     assert math.isclose(D._time_at(lot, segs, 300.0), 5.0 + 30.0 + 35.0)
+
+
+def _margins(base, extra, mode, rnd, track):
+    """(base alone, base + extra, base + extra with status effects off)."""
+    saved = D.STATUS_RATING
+    try:
+        D.STATUS_RATING = True
+        alone = D.round_margin(D.stations_for(base, track), mode, rnd, track)
+        both = D.round_margin(D.stations_for(base + extra, track), mode, rnd, track)
+        D.STATUS_RATING = False
+        off = D.round_margin(D.stations_for(base + extra, track), mode, rnd, track)
+    finally:
+        D.STATUS_RATING = saved
+    return alone, both, off
+
+
+def _damage_board(track):
+    return [D.Placed("d", "dart", (0, 0, 2), *_beside_track(track, at=0.5)),
+            D.Placed("t", "tack", (2, 0, 0), *_beside_track(track, offset=-15.0, at=0.55))]
+
+
+def test_status_effects_are_on_by_default():
+    """Item 9 is on by default once it is fast enough
+    (docs/model_fix_plan.md phase 2b, item A)."""
+    import re
+    assert re.search(r"^STATUS_RATING = True$", Path(D.__file__).read_text(encoding="utf-8"), re.M)
+
+
+def test_ice_board_holds_longer():
+    """An Enhanced Freeze (ice 0-2-0) and a Permafrost (2-0-0) in front of
+    a dart and a tack: frozen and slowed bloons stay longer in the damage
+    towers' reach. Pinned: with the ice the round holds at least 1.5x the
+    board without it, and the ice's control is worth more than its own
+    damage (status effects off)."""
+    tr = D.Track("Monkey Meadow")
+    ice = [D.Placed("i", "ice", (0, 2, 0), *_beside_track(tr, at=0.45)),
+           D.Placed("i2", "ice", (2, 0, 0), *_beside_track(tr, offset=-15.0, at=0.47))]
+    alone, both, off = _margins(_damage_board(tr), ice, "medium", 20, tr)
+    assert both >= 1.5 * alone, (alone, both)
+    assert both >= 1.3 * off, (both, off)
+
+
+def test_glue_board_holds_longer():
+    """A Glue Hose (glue 0-0-2) does no damage; its 50% slow alone lets the
+    dart and tack behind it hold round 20 with a far wider margin."""
+    tr = D.Track("Monkey Meadow")
+    glue = [D.Placed("g", "glue", (0, 0, 2), *_beside_track(tr, at=0.45))]
+    alone, both, off = _margins(_damage_board(tr), glue, "medium", 20, tr)
+    assert math.isclose(off, alone, rel_tol=1e-6)          # no damage of its own
+    assert both >= 1.5 * alone, (alone, both)
+
+
+def test_maim_moab_on_a_moab_round():
+    """Maim MOAB (sniper 4-0-0) on hard round 40 (one MOAB): stunned 3 s
+    of every 1.59 s, the MOAB stands in the boomerang's and dart's reach
+    for longer. A lone MOAB is one bloon to stun, not the ~28 a burst's
+    packing would say (Lot.group). Pinned: the stun is worth at least 15%
+    on top of the sniper's own damage."""
+    tr = D.Track("Monkey Meadow")
+    base = [D.Placed("b", "boomerang", (0, 2, 4), *_beside_track(tr, at=0.5)),
+            D.Placed("d", "dart", (0, 2, 4), *_beside_track(tr, offset=-15.0, at=0.6))]
+    sniper = [D.Placed("s", "sniper", (4, 0, 0), *_beside_track(tr, at=0.4))]
+    alone, both, off = _margins(base, sniper, "hard", 40, tr)
+    assert both >= 1.15 * off, (both, off)
+    assert both > alone
+
+
+def test_monarch_of_storms_blows_ddts_back():
+    """Monarch of Storms (druid 5-0-0): its tornado (100 damage, 200
+    pierce, MOAB / BFB / DDT / ZOMG pierce cost 2 / 8 / 6 / 32) blows
+    blimps back 100-400 units (capped at 400 since v56, ZOMGs half as far,
+    BADs never: docs/tower_research_2026-11.md). Blown back, a bloon walks
+    track it crossed already; that is credited as time, not as more track
+    in reach. Pinned on hard round 90 (three camo DDTs and fortified
+    leads): the druid gives the sniper board a clear margin, and most of it
+    is the blowback (status effects off it is far less)."""
+    tr = D.Track("Monkey Meadow")
+    base = [D.Placed("s1", "sniper", (0, 2, 5), *_beside_track(tr, at=0.5)),
+            D.Placed("s2", "sniper", (4, 2, 0), *_beside_track(tr, at=0.3)),
+            D.Placed("s3", "sniper", (2, 0, 5), *_beside_track(tr, offset=-15.0, at=0.7)),
+            D.Placed("v", "village", (2, 2, 0), *_beside_track(tr, offset=30.0, at=0.6))]
+    druid = [D.Placed("dr", "druid", (5, 0, 0), *_beside_track(tr, at=0.45))]
+    alone, both, off = _margins(base, druid, "hard", 90, tr)
+    assert alone < 1.0 and both >= 2.0, (alone, both)
+    assert both >= 1.5 * off, (both, off)
+    eff = next(s for s in D.profile("druid", (5, 0, 0)).sources if "blowback" in s.effects).effects
+    assert D._control_applies(eff, "blowback", D.layer("Ddt"))
+    assert not D._control_applies(eff, "blowback", D.layer("Bad"))
+    assert eff["blowback"]["distance_max"] == 400.0
 
 
 if __name__ == "__main__":
