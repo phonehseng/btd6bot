@@ -3300,6 +3300,8 @@ class Executor:
             if rnd - p.placed_round < self.POP_GRACE_ROUNDS or (getattr(p, "pops", 0) or 0) > 0:
                 continue                    # too new to judge, or proven to pop: no more clicks
             if getattr(p, "pops_round", -1) < rnd - 2:
+                if not self._reachable(p):
+                    continue                # under a shut pane: read in its own pane's round
                 if self.g.select(p):        # its panel shows the pop count (Game._read_pops)
                     self.g.deselect(p)
                     p.pops_round = rnd
@@ -3364,7 +3366,14 @@ class Executor:
         camo-answer Mermonkey within the same round.
 
         reason: why sell_useless sells it, for the log and the journal.
-        Returns False without selling while _sale_blocked(rnd)."""
+        Returns False without selling while _sale_blocked(rnd), or while a
+        shut pane covers p (Covered Garden, _reachable): the click would hit
+        the glass. The spot is avoided only once the sale went through: a
+        sale that never happened left the spot barred for a tower that still
+        stood on it (audit 2026-11-12)."""
+        if not self._reachable(p):
+            log.info("keeping %s (%s) for now although %s: a shut pane covers it", p.tid, p.kind, reason)
+            return False
         blocked = self._sale_blocked(rnd)
         if blocked:
             log.info("keeping %s (%s, $%d spent) although %s: %s", p.tid, p.kind,
@@ -3373,9 +3382,11 @@ class Executor:
             return False
         log.warning("selling %s (%s, $%d spent): %s", p.tid, p.kind, getattr(p, "spent", 0), reason)
         self._sold_round = rnd
-        self._avoid_spot(p)
         with self.why("sell_useless", reason, tower=p.tid, spent=getattr(p, "spent", 0)):
-            return bool(self.g.sell(p))
+            sold = bool(self.g.sell(p))
+        if sold:
+            self._avoid_spot(p)
+        return sold
 
     def _avoid_spot(self, p):
         """Keep p's kind off its spot (and SOLD_SPOT_CELLS around it) for the
@@ -3941,10 +3952,18 @@ class Executor:
 
         A tower on a moving platform (Sanctuary) gets PLATFORM_SELECT_SPARE
         more tries: its spot follows the platform (carried.py), but a click
-        in the second the platforms slide at a round's start misses."""
+        in the second the platforms slide at a round's start misses.
+
+        Nor a tower on ground a cycling pane covers (Covered Garden), while
+        its pane is shut (_reachable): a click there hits the glass. Audit
+        2026-11-12: the pop-count read, sell_useless and _recheck_doubtful
+        clicked such towers, and two failures forgot a standing tower and
+        queued its purchase again."""
         melt = getattr(self, "melt_check", None)   # Match._melt_check: ground melted early
         if melt is not None and p.kind != "hero" and melt(p):
             return True
+        if not self._reachable(p):
+            return False   # Covered Garden: the glass over it, not its absence, failed the click
         limit = self.MAX_SELECT_FAILS + (self.PLATFORM_SELECT_SPARE if self._on_platform(p) else 0)
         if p.kind == "hero" or getattr(p, "select_fails", 0) < limit:
             return False
@@ -4005,6 +4024,13 @@ class Executor:
             return
         for p in list(self.g.towers.values()):
             if p.kind != "hero" and not getattr(p, "verified", True):
+                if not self._reachable(p):
+                    # its failed select was a click on shut glass (Covered
+                    # Garden): that proves nothing, and no round would start
+                    # to open the pane while it stays doubtful
+                    log.info("%s (%s) stands under a shut pane - counted as standing", p.tid, p.kind)
+                    p.verified = True
+                    continue
                 if self.g.select(p):
                     self.g.deselect(p)
                 else:
