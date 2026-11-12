@@ -4739,8 +4739,15 @@ class Executor:
         return fc
 
     def _board_key(self):
-        """What the forecast's answers depend on: every tower and its tiers."""
-        return tuple(sorted((p.tid, p.kind, tuple(p.tiers)) for p in self.g.towers.values()))
+        """What the forecast's answers depend on: every tower, its tiers, its
+        spot and its placement round.
+
+        Kind and tiers alone kept a rating after the board changed under it:
+        Sanctuary's platforms carry towers to new spots, and a Glacial Trail
+        tower sold and bought again in the same spot freezes on its new
+        placement round (dynamic-map audit 2026-11-12, item 19)."""
+        return tuple(sorted((p.tid, p.kind, tuple(p.tiers), p.x, p.y, getattr(p, "placed_round", None))
+                            for p in self.g.towers.values()))
 
     def _rated(self, what, rnd, rate):
         """rate(forecast, towers), cached per round and board (one rating of a
