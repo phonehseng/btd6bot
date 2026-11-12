@@ -99,6 +99,18 @@ plan:
   - {do: upgrade, id: h1, to: 3-2-0, modes: [medium, reverse]}
   - {do: upgrade, id: sp2, to: 4-2-0, modes: [medium, reverse]}                     # Spiked Mines
   - {do: upgrade, id: h1, to: 4-2-0, modes: [medium, reverse]}                      # Apache Dartship
+  # A second Apache in another freeze phase. Reverse, 2026-11-11 21:36 (loss
+  # case 20261111_214534_GlacialTrail_reverse): h1 was placed in round 37 and
+  # dr2 in 17, so both sat in ice in rounds 56-57; round 57's four MOABs met
+  # only sp1's mines and dr1, one MOAB leaked whole and took the 142 lives
+  # left - with $55,103 in the bank, the plan having ended in round 44.
+  # Placed in rounds 42-46 (the cash comes in 45 once h1's Dartship is paid)
+  # h2 freezes in 51-56 at the latest and is awake in 57; its Dartship is
+  # paid by round 50. The spot is on the right hill's legal heli ground in
+  # the map file, 11 cells from h1 and from dr2 - not yet tried live.
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.708, 0.181], round: 42, modes: [medium, reverse]}
+  - {do: upgrade, id: h2, to: 3-2-0, modes: [medium, reverse]}
+  - {do: upgrade, id: h2, to: 4-2-0, modes: [medium, reverse]}                      # Apache Dartship
 fill:
   - {do: upgrade, kind: spike, to: 3-2-0}
   - {do: upgrade, kind: spike, to: 4-2-0}
