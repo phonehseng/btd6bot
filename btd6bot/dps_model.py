@@ -68,7 +68,6 @@ from __future__ import annotations
 import heapq
 import json
 import math
-import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -717,28 +716,6 @@ def _pulse_at_tower(a, entry):
     return dict(a, unbounded="self", own_radius=radius)
 
 
-TENTACLE_ATTACK = re.compile(r"Tentacle\d+$")
-# How many of a ring of tentacles one bloon passes close enough to be hit by:
-# a track crossing the ring meets it once on the way in and once on the way out.
-TENTACLES_IN_REACH = 2.0
-
-
-def _tentacle_share(attacks):
-    """Share of each tentacle attack's slams the model counts.
-
-    The Mermonkey's Abyss Dweller (3-x-x and up) exports eight attacks,
-    AttackTentacle1..8, each a full-rate attack in the tower's range. In the
-    game they are eight tentacles standing in a ring around the tower, each
-    slamming only the bloons beside it, so a bloon on the track meets about
-    TENTACLES_IN_REACH of them, not all eight. Counting all eight at full
-    rate made three 3-0-1 Mermonkeys the backbone of Quad Deflation
-    (2026-11-11 20:50, loss case 20261111_210232_Quad_deflation): the model
-    rated round 60's BFB 8.72 (1.07 without the Mermonkeys) and it took all
-    200 lives. Returns 1.0 for a tower without tentacles."""
-    n = sum(1 for a in attacks if TENTACLE_ATTACK.search(a.get("name", "")))
-    return min(1.0, TENTACLES_IN_REACH / n) if n else 1.0
-
-
 @lru_cache(maxsize=None)
 def profile(kind, tiers):
     """Profile of a tower crosspath (None when the game has no such model)."""
@@ -749,13 +726,11 @@ def profile(kind, tiers):
     aim_bound = False
     follows = (entry.get("air_unit") or {}).get("movement") == "follows"
     entry = dict(entry, attacks=[_pulse_at_tower(a, entry) for a in entry.get("attacks", [])])
-    tentacle_share = _tentacle_share(entry["attacks"])
     for a in entry.get("attacks", []):
         if a.get("targeting") in ("point", "cursor") and any(
                 (w.get("projectile") or {}) for w in a.get("weapons", [])):
             aim_bound = True
-        share = tentacle_share if TENTACLE_ATTACK.search(a.get("name", "")) else 1.0
-        _flatten_attack(a, sources, multiplier=share, follows=follows, tower_range=entry.get("range"))
+        _flatten_attack(a, sources, follows=follows, tower_range=entry.get("range"))
     income = (entry.get("income") or {})
     pattern = max((a.get("pattern_radius") or 0.0 for a in entry.get("attacks", [])), default=0.0)
     own = max((a.get("own_radius") or 0.0 for a in entry.get("attacks", []) if a.get("unbounded") == "self"),
