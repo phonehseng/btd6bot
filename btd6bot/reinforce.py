@@ -869,8 +869,26 @@ def plan_keeps_claim(forecast, ex, step, cost, cash, rnd, worst, crisis, pick, m
          under MIN_LIFT never outbids it, and a step the model cannot rate
          (tower gone, no spot) keeps the old MIN_LIFT bar.
     A judged round at the margin floor moves no margin whatever is bought,
-    so there the lives saved decide instead (floor_pick_outsaves)."""
+    so there the lives saved decide instead (floor_pick_outsaves).
+
+    One exception to rule 1: with one life (rules `one_life`) a pick that
+    moves the judged round by less than MIN_LIFT does not outbid the step,
+    reachable or not (unless the round is at the floor and the pick saves
+    more there, as above). Lives saved at half strength mean nothing with
+    one life left - only lifting the round does. Enchanted Glade Impoppable
+    (2026-11-12, loss case 20261112_055921): the judged round was always the
+    next one, so Ground Zero (ac1 2-4-0, $19,200) "cannot be paid before
+    round N - it holds no cash" from round 75 to 95, and $2-7k purchases
+    rated "0.81 -> 0.81", "0.62 -> 0.62" and "0.63 -> 0.63" took the bank
+    every round; round 95 was lost with $20,029 in hand."""
     if payable_by(ex, cost, cash, worst, rnd) is False:
+        one_life = bool((getattr(ex, "rules", None) or {}).get("one_life"))
+        if one_life and moved < MIN_LIFT and not floor_pick_outsaves(forecast, ex, step, cost, rnd, worst,
+                                                                      crisis, pick):
+            log.info("reinforce: plan step %s ($%d) cannot be paid before round %d from $%d, but with one "
+                     "life %s moves that round only %+.2f - the cash stays for the step",
+                     step, cost, worst, cash, pick.what, moved)
+            return True
         log.info("reinforce: plan step %s ($%d) cannot be paid before round %d from $%d and the income "
                  "until then - it holds no cash", step, cost, worst, cash)
         return False
