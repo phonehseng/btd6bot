@@ -121,20 +121,22 @@ def test_ball_of_light():
 
 
 def test_abilities_the_bot_never_presses_count_nothing():
-    """First Strike (click-targeted), Overclock and Ultraboost (a tower to
-    pick) are 'never' in abilities.TOWER_ABILITIES; Blood Sacrifice in
-    towers.HEROES."""
-    assert not _ability("sub", (0, 4, 0)) and not _ability("sub", (0, 5, 0))
+    """Overclock and Ultraboost (a tower to pick) are 'never' in
+    abilities.TOWER_ABILITIES; Blood Sacrifice in towers.HEROES. First
+    Strike picks its own target (TargetStrongModel) and is pressed in blimp
+    rounds, so it counts."""
     assert not D.profile("engineer", (0, 4, 0)).boosts and not _ability("engineer", (0, 4, 0))
-    assert A.TOWER_ABILITIES["First Strike Capability"][1] == "never"
+    assert A.TOWER_ABILITIES["First Strike Capability"][1] == "moab"
+    assert _ability("sub", (0, 4, 0)) and _ability("sub", (0, 5, 0))
 
 
-def test_destructive_hero_stops_every_press():
-    """With Adora at level 7 or more (the optimistic estimate) the bot
-    presses no hotkey at all (abilities.DESTRUCTIVE_ABILITIES): no ability
-    counts on her board, a tower's neither."""
+def test_adora_board_keeps_its_abilities():
+    """Adora's Blood Sacrifice (abilities.DESTRUCTIVE_ABILITIES) no longer
+    stops every press: the planner holds only the keys it may sit on
+    (AbilityPlanner.unsafe_keys), so a tower's ability still counts on her
+    board after her level 7, as before it."""
     assert A.presses_blind("adora", 6, 10)
-    assert not A.presses_blind("adora", 1, 60)
+    assert A.presses_blind("adora", 1, 60)
     assert A.presses_blind("quincy", 1, 100)
     from btd6bot.forecast import RoundForecast
     fc = RoundForecast("Monkey Meadow", "chimps", hero="adora")
@@ -146,7 +148,7 @@ def test_destructive_hero_stops_every_press():
     early = [st for st in fc.stations_in([tack, adora], 10) if st.tid == "t"]
     late = [st for st in fc.stations_in([tack, adora], 80) if st.tid == "t"]
     assert any(s.ability for st in early for s in st.sources + [x for p in st.parts for x in p.sources])
-    assert not any(s.ability for st in late for s in st.sources + [x for p in st.parts for x in p.sources])
+    assert any(s.ability for st in late for s in st.sources + [x for p in st.parts for x in p.sources])
 
 
 def test_abilities_can_be_switched_off():
