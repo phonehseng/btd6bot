@@ -60,7 +60,7 @@ from btd6bot.account import AccountState  # noqa: E402
 MAPS = {"quad": "Quad", "coveredgarden": "Covered Garden", "sunkencolumns": "Sunken Columns",
         "bloonariusprime": "Bloonarius Prime", "peninsula": "Peninsula", "firingrange": "Firing Range",
         "midnightmansion": "Midnight Mansion", "sunsetgulch": "Sunset Gulch", "mesa": "Mesa",
-        "spillway": "Spillway"}
+        "spillway": "Spillway", "muddypuddles": "Muddy Puddles"}
 
 
 def _build(map_id):
@@ -233,7 +233,7 @@ def test_late_game_carries_answer_the_last_blimps():
     is never sent after a second one."""
     from btd6bot import strategy as S
     for map_id in ("sunkencolumns", "sunsetgulch", "firingrange", "quad", "bloonariusprime", "mesa",
-                   "coveredgarden"):
+                   "coveredgarden", "muddypuddles"):
         _, d = _build(map_id)
         ids = {st["id"] for st in d["plan"] if st.get("id")}
         carry = [st for st in d["plan"] if st["do"] == "upgrade" and "carry" in st["id"] and "5" in st["to"]]
