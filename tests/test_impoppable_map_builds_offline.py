@@ -20,7 +20,9 @@ Also 2026-11-12: Covered Garden (loss 20261112_014133, round 63) had its late
 answers' towers under the cycling panes and its supports without room by
 their village; it now has its own plan on the pane-free ground. Sunset Gulch
 and Mesa got map builds after their general-build losses (ground used up by
-reinforce buys; no MOAB answer by round 40).
+reinforce buys; no MOAB answer by round 40). Spillway got one after
+chimps_ninja_sun's round 98 (loss 20261112_041202: ten off-plan towers, the
+exit spike factory given up, blimp check 0.2-0.8x from round 91).
 
 Run: python tests/test_impoppable_map_builds_offline.py"""
 import sys
@@ -39,7 +41,8 @@ from btd6bot.account import AccountState  # noqa: E402
 
 MAPS = {"quad": "Quad", "coveredgarden": "Covered Garden", "sunkencolumns": "Sunken Columns",
         "bloonariusprime": "Bloonarius Prime", "peninsula": "Peninsula", "firingrange": "Firing Range",
-        "midnightmansion": "Midnight Mansion", "sunsetgulch": "Sunset Gulch", "mesa": "Mesa"}
+        "midnightmansion": "Midnight Mansion", "sunsetgulch": "Sunset Gulch", "mesa": "Mesa",
+        "spillway": "Spillway"}
 
 
 def _build(map_id):
@@ -156,7 +159,8 @@ def test_covered_garden_stands_off_the_panes():
 def test_the_moab_answer_comes_before_the_alchemist():
     """Mesa lost at round 40 with the blimp check at 0.4-0.9: n2's Sticky
     Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan."""
-    for map_id in ("mesa", "sunsetgulch", "coveredgarden", "quad", "bloonariusprime", "firingrange", "midnightmansion"):
+    for map_id in ("mesa", "sunsetgulch", "coveredgarden", "quad", "bloonariusprime", "firingrange", "midnightmansion",
+                   "spillway"):
         _, d = _build(map_id)
         order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
         assert order.index(("upgrade", "n2", "2-0-4")) < order.index(("place", "a1", "None")), map_id
