@@ -499,8 +499,14 @@ MK_TREE_ENTRY: dict[str, list[str]] = {
     "powers": ["Bigger Camo Trap", "Just One More", "Cheaper Lakes"],
 }
 
-# Hero preference when a strategy does not name one.
-HERO_PRIORITY = ["obyn", "striker_jones", "gwendolin", "quincy"]
+def hero_priority() -> list[str]:
+    """Hero preference when a strategy does not name one: every hero best
+    first on merit, land heroes before water ones, the fresh-account heroes
+    after the ranked ones (towers.hero_fallback_order). It replaced the
+    fixed list of the four free heroes (docs/tower_exclusions_audit.md
+    item 1). towers is imported here, lazily, like elsewhere in this module."""
+    from .towers import hero_fallback_order
+    return list(hero_fallback_order())
 
 # ---------------------------------------------------------------------------
 # Strategies
@@ -1027,7 +1033,7 @@ def _water_towers_have_no_spot(s: StrategySpec, map_name: str) -> bool:
 
 
 def _pick_hero(s: StrategySpec, account: AccountState) -> str | None:
-    for h in list(s.heroes) + HERO_PRIORITY:
+    for h in list(s.heroes) + hero_priority():
         if h in account.unlocked_heroes:
             return h
     return None

@@ -1023,7 +1023,13 @@ def achievement_strategies(strats, cards=None):
             if s.get("achievement") and s.get("bot_ready") and _norm(s["achievement"]) not in done}
 
 
-HERO_FALLBACK = ["obyn", "striker_jones", "gwendolin", "quincy"]
+# Heroes tried, in order, when a strategy's own hero is not owned or not
+# allowed: every hero best first on merit (towers.hero_merit_order, ranked in
+# the damage model by tools/rank_heroes.py; water heroes after land ones),
+# the four fresh-account heroes (towers.FRESH_ACCOUNT_HEROES, once the whole
+# list) after them, Corvus last.
+# docs/tower_exclusions_audit.md item 1.
+HERO_FALLBACK = list(T.hero_fallback_order())
 
 
 def _hero_fits(h, c):
