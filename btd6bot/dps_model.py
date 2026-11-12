@@ -2569,10 +2569,16 @@ def _lots(mode, rnd, track):
 # Calibrated on the same rounds, against items 7-8: AUC 0.813 -> 0.814,
 # rounds at or above 2.0 that leaked 0.54% -> 0.52% (0.53% at the matched
 # cut), held rounds under 2.0 54.6% -> 51.2%; at or above 1.0 0.81% ->
-# 0.88% (0.84% matched): neutral at the safety bar, so it stays on. The
-# median margin of held rounds rose 1.81 -> 1.94, of leaked ones 0.55 ->
-# 0.69.
-STATUS_RATING = True
+# 0.88% (0.84% matched): neutral at the safety bar. The median margin of
+# held rounds rose 1.81 -> 1.94, of leaked ones 0.55 -> 0.69.
+#
+# OFF for now: the lots' delays make a rating about twice as slow (Quad
+# Impoppable round 93, 12 rounds: 2.7 s against 1.4 s), and a late
+# reinforce look no longer fits its time budget
+# (tests/test_reinforce_budget_offline.py: Water Park round 88 "busy" after
+# 6 s). Calibration showed no gain at the 2.0 bar to pay for that; switch it
+# on once _Controls is faster.
+STATUS_RATING = False
 MAX_HOLD = 2.0 / 3.0         # a stun keeps a bloon at most this share of its time in the zone (x3 time)
 MAX_STALL = 1.0              # all delays add at most this many times the lot's undelayed time on its route
 MIN_DELAY_S = 0.05           # delays shorter than this are left out (they only cost time to play)

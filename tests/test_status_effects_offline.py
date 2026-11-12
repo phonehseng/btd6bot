@@ -18,6 +18,8 @@ sys.path.insert(0, str(ROOT))
 
 from btd6bot import dps_model as D  # noqa: E402
 
+D.STATUS_RATING = True        # off by default (its docstring): these tests are about it
+
 
 def _beside_track(track, offset=15.0, at=0.5):
     pts = track.paths[0]["xyz"]
