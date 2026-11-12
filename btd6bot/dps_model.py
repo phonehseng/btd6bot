@@ -401,6 +401,9 @@ class Profile:
     fire_rate: float = 0.0           # weapon shots a second of its own attacks (an Alchemist dip's budget)
     boosts: list = field(default_factory=list)   # its abilities' boosts to its own attacks (_ability_boosts)
     zones: list = field(default_factory=list)    # slow zones around it (the export's "zones": Arctic Wind)
+    aim: str = ""                    # its attacks fire at a point the player sets: "point" (Mortar's
+                                     # reticle) or "cursor" (Dartling); see AIM_POINT_RATING
+    aim_radius: float = 0.0          # Mortar: deviation + blast radius around its point
 
 
 # The bloon properties a damage type can be unable to pop (Layer.immune).
@@ -953,11 +956,14 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
     follows: the tower is a helicopter that flies to the bloons (global reach).
     tower_range: the owning tower's range (see _attack_range)."""
     targeting = a.get("targeting", "normal")
-    if targeting in ("point", "cursor"):
+    if targeting in ("point", "cursor") and not AIM_POINT_RATING:
         return
     a = dict(a, range=_attack_range(a, tower_range))
     share_crowd, share_single = _sector_shares(a)
-    if targeting in ("track", "random"):
+    if targeting in ("point", "cursor"):
+        placement = "point"               # fired at a set point: _point_station
+        camo_chain = a.get("camo", False)
+    elif targeting in ("track", "random"):
         placement = "track"
         camo_chain = True                 # thrown onto the track: sees nothing, hits what passes
     elif a.get("air") and a.get("pattern_radius"):
@@ -1643,10 +1649,12 @@ def profile(kind, tiers):
     aim_bound = False
     follows = (entry.get("air_unit") or {}).get("movement") == "follows"
     entry = dict(entry, attacks=[_pulse_at_tower(a, entry) for a in _surfaced_or_submerged(entry)])
+    aim = ""
     for a in entry.get("attacks", []):
         if a.get("targeting") in ("point", "cursor") and any(
                 (w.get("projectile") or {}) for w in a.get("weapons", [])):
             aim_bound = True
+            aim = aim or a["targeting"]
         _flatten_attack(dict(a, **_zone_radius(a, entry)), sources, follows=follows, tower_range=entry.get("range"))
     income = (entry.get("income") or {})
     pattern = max((a.get("pattern_radius") or 0.0 for a in entry.get("attacks", [])), default=0.0)
@@ -1678,13 +1686,14 @@ def profile(kind, tiers):
         sources += extra
     sources, unexported_buffs = _unexported(kind, tiers, entry, sources)
     return Profile(kind=kind, tiers=tiers, range=entry.get("range", 0.0),
-                   is_global=is_global, sources=sources, aim_bound=aim_bound and not sources,
+                   is_global=is_global, sources=sources, aim_bound=aim_bound,
                    buffs=list(entry.get("buffs", [])) + _subtower_buffs(entry) + _potion_buffs(entry)
                    + [b for ab in pressed for b in _ability_buffs(ab)] + unexported_buffs,
                    boosts=[b for ab in pressed for b in _ability_boosts(ab, entry, kind)],
                    zones=list(entry.get("zones") or []),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
                    pattern_radius=pattern, own_radius=own,
+                   aim=aim, aim_radius=_mortar_aim_radius(entry, tiers) if aim == "point" else 0.0,
                    flight_speed=float((entry.get("air_unit") or {}).get("speed") or 0.0),
                    fire_rate=sum(w.get("burst", 1.0) / max(w.get("rate", 1.0), w.get("rate_min", 0.0), 1e-3)
                                  for a in entry.get("attacks", []) for w in a.get("weapons", [])
@@ -3415,12 +3424,15 @@ def lots_margin(stations, track, lots_by_scenario, lo=MARGIN_LO, hi=MARGIN_HI, i
 
 @dataclass
 class Placed:
-    """A tower of a plan: kind, crosspath, world position."""
+    """A tower of a plan: kind, crosspath, world position; aim: the world
+    point (x, z) a Mortar or Dartling fires at, None for the model's own
+    choice (aim_point, AIM_POINT_RATING)."""
     tid: str
     kind: str
     tiers: tuple
     x: float
     z: float
+    aim: tuple = None
 
 
 def _buffed_sources(p, buffs_here):
@@ -3632,11 +3644,16 @@ def station_for(t, placed, track, sight=None, strict=False, pressed=True):
     if p is None:
         return None
     main = _station_for(t, placed, track, sight, strict, pressed)
-    if not any(s.placement == "drop" for s in p.sources):
+    if not any(s.placement in ("drop", "point") for s in p.sources):
         return main
     camo_paths = None if main is None else main.camo_paths
-    drops = [s for s in _buffed_sources(p, _buffs_at(t, placed, pressed)[0]) if s.placement == "drop"]
-    return _joined(main, _drop_parts(t, drops, p, track, camo_paths))
+    buffed = _buffed_sources(p, _buffs_at(t, placed, pressed)[0])
+    drops = [s for s in buffed if s.placement == "drop"]
+    parts = _drop_parts(t, drops, p, track, camo_paths) if drops else []
+    pointed = [s for s in buffed if s.placement == "point" and (pressed or not s.ability)]
+    if pointed:
+        parts = parts + [_point_station(t, pointed, p, track, camo_paths)]
+    return _joined(main, [x for x in parts if x is not None])
 
 
 @dataclass(frozen=True)
@@ -3696,7 +3713,8 @@ def _station_for(t, placed, track, sight=None, strict=False, pressed=True):
     if p is None:
         return None
     buffs_here, range_mult = _buffs_at(t, placed, pressed)
-    sources = [s for s in _buffed_sources(p, buffs_here) if s.placement != "drop" and (pressed or not s.ability)]
+    sources = [s for s in _buffed_sources(p, buffs_here)
+               if s.placement not in ("drop", "point") and (pressed or not s.ability)]
     if pressed and p.boosts:
         sources = _boosted_sources(sources, p.boosts)
     sources = [s for s in _rear_copies(sources, t, range_mult(p.range), track)
@@ -3768,6 +3786,117 @@ def _station_for(t, placed, track, sight=None, strict=False, pressed=True):
     if is_global or lent:
         return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent)
     return _joined(None, _local_stations(t, sources, p, range_mult, track, sight, camo_paths))
+
+
+# ---------------------------------------------------------------------------
+# Towers that fire at a set point: Mortar and Dartling (item 14)
+# ---------------------------------------------------------------------------
+# A Mortar's shells land around a reticle the player sets; a Dartling fires
+# at the cursor (or a locked point). They used to be rated zero, as if the
+# bot could not aim them (docs/model_audit_military.md M2). The model now
+# rates them at an aim point: the tower's own (Placed.aim) or, when none is
+# given, the track point with the most track around it - the way
+# Match._park_point picks where the cursor rests for Dartlings.
+#
+# The bot parks the cursor there for Dartlings, so they are rated at it by
+# default. No code sets a Mortar's reticle yet: until the executor does,
+# a Mortar is rated only with an explicit aim (AIM_MORTARS_BY_DEFAULT
+# False), so the planner does not buy Mortars that would shoot at nothing.
+AIM_POINT_RATING = True
+AIM_MORTARS_BY_DEFAULT = False
+# Mortar shells land uniformly within 18 units of the reticle, 8 with
+# Increased Accuracy (x-x-1 and up) (fandom:Mortar_Monkey_(BTD6), military M2).
+MORTAR_DEVIATION = (18.0, 8.0)
+# A Dartling's darts fan +-11.5 degrees (the export's "spray": 23) about the
+# line to its aim: at distance d they cover d x tan(11.5 deg) to each side,
+# never less than this (a bloon's width either side of the line).
+DARTLING_MIN_AIM = 12.0
+
+
+def _mortar_deviation(tiers):
+    return MORTAR_DEVIATION[1] if len(tuple(tiers)) == 3 and tuple(tiers)[2] >= 1 else MORTAR_DEVIATION[0]
+
+
+def _mortar_aim_radius(entry, tiers):
+    """The track a Mortar can hit around its reticle: its shells' landing
+    spread plus the largest blast radius among what they spawn."""
+    blast = 0.0
+
+    def walk(p, depth=0):
+        nonlocal blast
+        if not p or depth > 6:
+            return
+        if p.get("damage"):
+            blast = max(blast, float(p.get("radius") or 0.0))
+        for sp in p.get("spawn") or ():
+            walk(sp.get("projectile"), depth + 1)
+
+    for a in entry.get("attacks", []):
+        if a.get("targeting") == "point":
+            for w in a.get("weapons", []):
+                walk(w.get("projectile"))
+    return _mortar_deviation(tiers) + blast
+
+
+def _deviation_share(blast, deviation):
+    """How much track a blast of radius `blast` covers on average when it
+    lands uniformly within `deviation` of a point on a straight track, as a
+    share of the 2 x blast it covers landing on the point: the mean chord
+    2 sqrt(blast^2 - y^2) over the offset y across the track (y spread like
+    one coordinate of a point uniform in the deviation disc)."""
+    if deviation <= 0.0 or blast <= 0.0:
+        return 1.0
+    n, total, weight = 64, 0.0, 0.0
+    for i in range(n):
+        y = (i + 0.5) / n * deviation
+        w = math.sqrt(max(0.0, deviation * deviation - y * y))     # density of the offset y
+        total += w * math.sqrt(max(0.0, blast * blast - y * y))
+        weight += w
+    return (total / weight) / blast if weight else 1.0
+
+
+def aim_point(track, radius):
+    """World (x, z) of the track point with the most track within `radius`
+    (a bend, or a stretch where lanes meet): where a Mortar or Dartling
+    fires into the thick of the bloons. Cached on the track per radius.
+    Routes that share a stretch count it once (points closer than
+    TRACK_STEP merged)."""
+    cache = track.__dict__.setdefault("_aim_cache", {})
+    key = round(radius, 1)
+    if key not in cache:
+        pts = np.concatenate([p["xyz"][p["hittable"], :2] for p in track.paths if p["hittable"].any()])
+        pts = np.unique(np.round(pts / TRACK_STEP), axis=0) * TRACK_STEP
+        cand = pts[::max(1, len(pts) // 600)]
+        d2 = ((cand[:, None, :] - pts[None, :, :]) ** 2).sum(axis=2)
+        best = int(np.argmax((d2 <= radius * radius).sum(axis=1)))
+        cache[key] = (float(cand[best, 0]), float(cand[best, 1]))
+    return cache[key]
+
+
+def _point_station(t, sources, p, track, camo_paths):
+    """The station of a tower's sources that fire at its aim point (Source
+    placement "point"), or None when it has no aim (a Mortar without one,
+    AIM_MORTARS_BY_DEFAULT) or the point is off the track.
+
+    Mortar: the track within deviation + blast of the reticle, each shell's
+    reach scaled by _deviation_share (shells that land off the track's
+    centre line cover less of it). Dartling: the track within the darts'
+    fan around the aim point; its darts and beams keep their own reach."""
+    if p.aim == "point":
+        aim = t.aim or (aim_point(track, p.aim_radius) if AIM_MORTARS_BY_DEFAULT else None)
+        if aim is None:
+            return None
+        radius = p.aim_radius
+        dev = _mortar_deviation(t.tiers)
+        sources = [Source(**{**s.__dict__, "reach": s.reach * _deviation_share(
+            max(s.reach / 2.0, 1e-6), dev)}) for s in sources]
+    else:
+        aim = t.aim or aim_point(track, DARTLING_MIN_AIM * 2.0)
+        spray = max((s.spray for s in sources), default=0.0) or 23.0
+        radius = max(DARTLING_MIN_AIM, math.hypot(aim[0] - t.x, aim[1] - t.z) * math.tan(math.radians(spray / 2.0)))
+    sources = [Source(**{**s.__dict__, "placement": "aimed", "spray": 0.0, "radial": False}) for s in sources]
+    at = Placed(t.tid, t.kind, tuple(t.tiers), float(aim[0]), float(aim[1]))
+    return _make_station(at, sources, False, radius, track, None, camo_paths)
 
 
 def _local_stations(t, sources, p, range_mult, track, sight, camo_paths):
