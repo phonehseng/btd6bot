@@ -362,6 +362,8 @@ class Source:
                                # blimp rounds only, see _Controls)
     dot_one_bloon: bool = False  # its damage over time stays on the bloon it struck: one hit burns
                                # at most that bloon's whole health (The Blazing Sun's fire)
+    near_plane: bool = False   # a map-wide source that works only near its plane's flight circle:
+                               # its rate is cut to that share of the track (_near_plane_share)
     preempt: bool = False      # Pre-emptive Strike's missile: `damage` once on every blimp that
                                # enters the map (_play), no rate of its own
 
@@ -1629,6 +1631,64 @@ def _shrink_potion(entry):
     return out
 
 
+# ---------------------------------------------------------------------------
+# The Monkey Ace's flight (docs/model_audit_military.md M8)
+# ---------------------------------------------------------------------------
+# The export's flight pattern (40) is the figure-eight's loop; the game's
+# default Circle has radius 80, and from x-x-2 (Centered Path, set by the
+# upgrade itself) the Ace circles the map centre - world (0, 0) - at radius
+# 90 (fandom:Monkey_Ace_(BTD6), fandom:Centered_Path). The Neva-Miss darts
+# (x-x-3 on, kept by Spectre and Flying Fortress) home in on bloons anywhere
+# and "practically never miss" (fandom:Neva-Miss_Targeting_(BTD6)): from
+# x-x-3 they are map-wide at their full rate, without the circling plane's
+# AIR_PATTERN_EFFICIENCY. What does not home keeps the flight's coverage:
+# bombs and pineapples (drops along the flight circle), the Spectre's
+# shells (they fire at the bloons near the plane: the share of the map's
+# track within the flight circle plus the Ace's range, _near_plane_share;
+# they stay in the darts' station, so the leads the shells open are left to
+# the darts as in the game) and the darts below x-x-3. The
+# Spectre's barrage darts reach the whole map (locked to First, infinite
+# range) as before, alternating with the shells (_flatten_attack).
+ACE_FLIGHT_RATING = True
+ACE_CIRCLE_RADIUS = 80.0
+ACE_CENTERED_RADIUS = 90.0
+MAP_CENTRE = (0.0, 0.0)
+
+
+def _ace_flight(kind, tiers, sources, pattern):
+    """(sources, flight radius) of a Monkey Ace crosspath read as above."""
+    if not ACE_FLIGHT_RATING or kind != "ace" or len(tuple(tiers)) != 3:
+        return sources, pattern
+    bot = tuple(tiers)[2]
+    out = []
+    for s in sources:
+        if s.placement == "air" and bot >= 3:
+            s = Source(**{**s.__dict__, "placement": "global", "radial": False, "spray": 0.0})
+        elif s.placement == "global" and s.name.startswith("Spectre") and not s.name.endswith("DartProjectile"):
+            s = Source(**{**s.__dict__, "near_plane": True})
+        out.append(s)
+    return out, (ACE_CENTERED_RADIUS if bot >= 2 else ACE_CIRCLE_RADIUS)
+
+
+def _near_plane_share(t, p, range_mult, track):
+    """Share of the map's track within the flight circle plus the range of
+    tower t's plane (Source.near_plane): where it flies decides how much of
+    a map's track its shells reach."""
+    fc = flight_centre(t)
+    near = track.zones(fc.x, fc.z, (p.pattern_radius or 0.0) + range_mult(p.range))
+    every = track.zones(t.x, t.z, None)
+    total = sum(z.length for z in every if z is not None)
+    return sum(z.length for z in near if z is not None) / total if total > 0.0 else 0.0
+
+
+def flight_centre(t):
+    """Where a tower's plane circles: the map centre for an Ace with
+    Centered Path (x-x-2 and up), else the tower itself."""
+    if ACE_FLIGHT_RATING and t.kind == "ace" and len(tuple(t.tiers)) == 3 and tuple(t.tiers)[2] >= 2:
+        return Placed(t.tid, t.kind, tuple(t.tiers), *MAP_CENTRE)
+    return t
+
+
 @lru_cache(maxsize=None)
 def profile(kind, tiers):
     """Profile of a tower crosspath, or of a hero at a level (kind
@@ -1685,6 +1745,7 @@ def profile(kind, tiers):
             s.ability_use = "interval" if ab.get("interval") else use
         sources += extra
     sources, unexported_buffs = _unexported(kind, tiers, entry, sources)
+    sources, pattern = _ace_flight(kind, tiers, sources, pattern)
     return Profile(kind=kind, tiers=tiers, range=entry.get("range", 0.0),
                    is_global=is_global, sources=sources, aim_bound=aim_bound,
                    buffs=list(entry.get("buffs", [])) + _subtower_buffs(entry) + _potion_buffs(entry)
@@ -3734,6 +3795,10 @@ def _station_for(t, placed, track, sight=None, strict=False, pressed=True):
         # catches separate lanes).
         camo_paths = frozenset().union(*(_reach_paths(o, track, sight) for o in detectors))
         sources = [Source(**{**s.__dict__, "camo": True}) if s.camo_shared else s for s in sources]
+    if any(s.near_plane for s in sources):
+        share = _near_plane_share(t, p, range_mult, track)
+        sources = [Source(**{**s.__dict__, "shots": s.shots * share, "shots_single": s.shots_single * share})
+                   if s.near_plane else s for s in sources]
     # all of a tower's sources share one station: its time is spent once
     reach_radius = range_mult(p.range)
     if p.pattern_radius:
@@ -3781,11 +3846,11 @@ def _station_for(t, placed, track, sight=None, strict=False, pressed=True):
             parts = [_make_station(t, local, False, reach_radius, track, sight, camo_paths,
                                    intel_lent_circles(t, placed))]
         else:
-            parts = _local_stations(t, local, p, range_mult, track, sight, camo_paths)
+            parts = _local_stations(flight_centre(t), local, p, range_mult, track, sight, camo_paths)
         return _joined(main, parts)
     if is_global or lent:
         return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent)
-    return _joined(None, _local_stations(t, sources, p, range_mult, track, sight, camo_paths))
+    return _joined(None, _local_stations(flight_centre(t), sources, p, range_mult, track, sight, camo_paths))
 
 
 # ---------------------------------------------------------------------------
@@ -3992,7 +4057,7 @@ def _drop_parts(t, drops, p, track, camo_paths):
     within the blast radius of the circle points its bombs fall from, with
     the sources' rate cut to the share that falls there (_drop_share)."""
     radius = p.pattern_radius or p.range
-    circle = _flight_circle(t, radius)
+    circle = _flight_circle(flight_centre(t), radius)
     groups = {}
     for s in drops:
         groups.setdefault((s.over_track_only, s.blast, s.cooldown), []).append(s)
