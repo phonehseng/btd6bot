@@ -1,5 +1,6 @@
 # Dark Dungeons, Apopalypse: two Heli Pilots at 3-2-0 before anything else,
-# a Druid and a Flash Bomb ninja for the middle room, a third heli, then the
+# a Druid and a Flash Bomb ninja for the middle room, a third and a fourth
+# heli, then the
 # helis grown to Apache Dartship one by one and the first to Apache Prime.
 #
 # Why: apopalypse_apache_spikes lost Dark Dungeons Apopalypse twice, on round
@@ -69,6 +70,17 @@
 # live on Bloody Puddles where it rates 0.38).
 # Test: tests/test_apopalypse_mapbuilds_offline.py.
 #
+# Fourth heli (2026-11-12, case 20261112_132035_DarkDungeons_apopalypse):
+# apopalypse_apache_spikes lost here again at 13:13, on round 35, with all
+# 150 lives until then. With plan_first its next step from round 30 was h1's
+# $20,000 Apache, and the bank grew $2.4k -> $10.2k by round 35 while round
+# 35 (25 whites, 30 blacks, 35 pinks, 5 rainbows) took 90 lives and the rest.
+# This build's own worst round in 31-40 was the same round 35 (0.97), and
+# it too waits for the Apache after h3. A fourth 3-2-0 heli ($5.15k) before
+# the first Apache tier, on the pad (0.542, 0.513) where helis stood in both
+# lost games: apopalypse_check (same settings) worst 0.84 (R53) against 0.75
+# (R51); rounds 31-40 1.04 (R35) against 0.97; h4 stands from round 34.
+#
 # Status: written 2026-11-12, not played yet.
 id: darkdungeons_apopalypse
 map: Dark Dungeons
@@ -90,6 +102,8 @@ plan:
   - {do: upgrade, id: n1, to: 2-0-3}                                     # Flash Bomb
   - {do: place, id: h3, kind: heli, role: dps, at: [0.067, 0.215]}
   - {do: upgrade, id: h3, to: 3-2-0}
+  - {do: place, id: h4, kind: heli, role: dps, at: [0.542, 0.513]}      # ~R34: the bank of the 13:13 loss, spent
+  - {do: upgrade, id: h4, to: 3-2-0}
   - {do: upgrade, id: h1, to: 4-2-0}                                     # Apache Dartship ~R41: the MOAB rounds
   - {do: upgrade, id: h2, to: 4-2-0}
   - {do: upgrade, id: h3, to: 4-2-0}

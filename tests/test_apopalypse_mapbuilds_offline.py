@@ -68,9 +68,11 @@ def test_the_first_heli_is_bought_to_3_2_0_before_anything_else():
 
 def test_cheap_helis_stand_before_the_first_apache_tier():
     """Bloody Puddles 2026-11-12: the bank waited 15 rounds for the $20,000
-    tier with two helis on the board. Every heli of the build is placed and
-    at 3-2-0 before the first Apache Dartship."""
-    for sid, want in (("darkdungeons_apopalypse", 3), ("bloodypuddles_apopalypse", 4)):
+    tier with two helis on the board, and Dark Dungeons 13:13 (case
+    20261112_132035_DarkDungeons_apopalypse) lost round 35 with $10.2k waiting
+    for it. Every heli of the build is placed and at 3-2-0 before the first
+    Apache Dartship (four on each map)."""
+    for sid, want in (("darkdungeons_apopalypse", 4), ("bloodypuddles_apopalypse", 4)):
         plan = _plan(sid)
         first_apache = next(i for i, st in enumerate(plan) if st.get("to") == APACHE)
         before = plan[:first_apache]
