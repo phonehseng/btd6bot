@@ -102,6 +102,12 @@ ROUNDS_FILE = ROOT / "data" / "rounds.json"
 # The new model reaches the old 2.0's leak rate at about 1.7-1.8, but the
 # two bands' uncertainty overlaps (0.38-0.74% at 2.0), so SAFETY_MARGIN
 # stays 2.0 and this stays 1.0.
+#
+# Re-checked after phase 2 part A (heroes, abilities, status effects,
+# sprays, pierce refresh, vine digest; items 7-11 and 13) on the same rounds:
+# AUC 0.805 -> 0.818; rounds at or above 2.0 that leaked 0.52% -> 0.53%
+# (1.75: 0.61%, 2.25: 0.51%), while the held rounds under 2.0 fell from
+# 58.9% to 48.6% - the same bar asks for less needless defence. Both stay.
 TOWER_EFFICIENCY = 1.0
 
 # --- modelling constants (assumptions, documented in docs/optimizer.md) -----
@@ -339,6 +345,8 @@ class Source:
     refresh: float = 0.0       # a lingering patch whose pierce comes back every `refresh` s (_patch_hits)
     life: float = 0.0          # ... and how long it lies there
     patch_radius: float = 0.0  # ... and its radius
+    digest: float = 0.0        # a vine that holds its bloon this long after the pop, and the time
+                               # to crush it on top (_digest_time); 0 = not a vine
     zone_radius: float = None  # its own attack's reach around the tower (_zone_radius); None = the tower's
     zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
     dot_immune: frozenset = frozenset()   # bloon properties its damage over time cannot hurt
@@ -559,6 +567,26 @@ def _patch_hits(src, lay, rho):
     return min(src.pierce * src.life / src.refresh, passing * ticks)
 
 
+# The Druid of the Jungle's vine holds one bloon at a time and grabs the
+# next only when it has digested the last: its cooldown is the larger of
+# its 2.6 s and 1.4 s + (sqrt(lives the bloon costs) + 1, + 2 for a lead)
+# / 4 - 4.2 s on a ceramic, 3.35 s on a lead or a rainbow
+# (fandom:Druid_of_the_Jungle; docs/model_fix_plan.md item 13,
+# docs/model_audit_magic.md finding 11). 1.4 s is the game model's
+# destroyAfterPopTime (the export's "digest"); the rest is the wiki's
+# formula. False grabs at the plain 2.6 s again.
+#
+# Calibrated against item 11: AUC 0.818 -> 0.818, rounds at or above 2.0
+# that leaked 0.53% -> 0.53% (few logged boards hold the druid).
+DIGEST_RATING = True
+
+
+def _digest_time(src, lay):
+    """Seconds a vine (Source.digest) is busy with one bloon of this layer."""
+    lead = 2.0 if "lead" in lay.immune else 0.0
+    return src.digest + (math.sqrt(max(lay.leak, 0.0)) + 1.0 + lead) / 4.0
+
+
 def _thrown_off(spawn):
     """Is this spawn a piece thrown off where its carrier struck a bloon,
     flying away from it (Shrapnel, Frag), rather than a blast centred on the
@@ -730,6 +758,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             refresh=_refresh_of(p),
             life=float(p.get("lifespan") or 0.0),
             patch_radius=float(p.get("radius") or 0.0),
+            digest=float(attack.get("digest") or 0.0),
             zone_radius=attack.get("zone_radius"),
             zone_fixed=bool(attack.get("zone_fixed")),
             grip_rate=float(p.get("grip_rate") or 0.0),
@@ -978,6 +1007,10 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
             # docs/model_audit_military.md M5).
             a = dict(a, rear_fov=w.get("target_fov") or 180.0)
         main_share = 1.0
+        if DIGEST_RATING and (p or {}).get("digest"):
+            # a Druid of the Jungle's vine: it and the brambles it leaves
+            # come no faster than it digests its bloon (_digest_time)
+            a = dict(a, digest=float(p["digest"]))
         if w.get("alternate"):
             # every `every`-th shot fires the alternate projectile INSTEAD of
             # the normal one: Recursive Cluster's "every second shot,
@@ -2224,6 +2257,9 @@ class _Rates:
             if lay.camo and src.camo_shared and camo_paths is not None and path not in camo_paths:
                 continue     # Advanced Intel sees camo only where a detector reaches
             hits = _hit_rate(src, lay, rho, zone) * share
+            if src.digest and src.shots > 0.0:
+                # one grab per digest at most (and the brambles with it)
+                hits *= min(1.0, 1.0 / (_digest_time(src, lay) * src.shots))
             d = src.damage_vs(lay)
             if bonus and d > 0.0:
                 d += bonus           # a debuffed bloon takes more from every hit (_Influence)
