@@ -4208,7 +4208,8 @@ class Executor:
         self.cash_seen = 0
         self.targets, self.kind_targets = self._upgrade_targets(self.strat)
         self.track_len = None
-        # income the threat calendar plans with (Double Cash and farms left out)
+        # income the threat calendar plans with (Double Cash left out; the
+        # board's own income - Benjamin, farms - is added by round_income)
         self.income_mult = 0.0 if self.rules.get("income") is False else (
             0.5 if self.rules.get("half_cash") else 1.0)
 
@@ -4466,7 +4467,7 @@ class Executor:
             return least
         income, k = 0.0, 0
         for r in range(due_round - 1, max(rnd, self.window[0]) - 1, -1):
-            income += TH.round_cash(self.round_set, r) * self.income_mult
+            income += self.round_income(r)
             k += 1
             if income >= short * self.LEAD_MARGIN:
                 break
@@ -4855,6 +4856,39 @@ class Executor:
         is counted (as in _lead_rounds)."""
         return self.cash_seen + self.income_until(due_round, rnd)
 
+    def round_income(self, r):
+        """Cash round r is counted on to bring: the round set's cash times
+        income_mult, plus what the board pays besides pops
+        (economy.board_income under this mode's rules: Benjamin's Cyber
+        Cash at his estimated level in round r, farms, Merchantmen). The
+        board is taken as it stands now; the hero's level is the estimate
+        only (never a panel read, which would click). Nothing extra in
+        CHIMPS and Deflation."""
+        cash = TH.round_cash(self.round_set, r) * self.income_mult
+        towers = list(getattr(getattr(self, "g", None), "towers", {}).values())
+        if not towers:
+            return cash
+        from .economy import board_income
+        hero = getattr(self.g, "hero", None) if any(t.kind == "hero" for t in towers) else None
+        level = self._hero_level_estimate(r) if hero else None
+        try:
+            return cash + board_income(towers, getattr(self, "rules", None), hero, level)
+        except Exception:        # never let a projection end a game
+            log.exception("board income failed - counting the round's own cash only")
+            return cash
+
+    def _hero_level_estimate(self, rnd):
+        """The placed hero's level in round rnd by the estimate alone (the
+        estimate branch of _hero_level_now), or None."""
+        from .abilities import estimate_hero_level, hero_xp_multiplier
+        from .match import xp_knowledge
+        placed = getattr(getattr(self, "abil", None), "hero_round", None) or getattr(self, "hero_round", None)
+        if placed is None or rnd is None:
+            return None
+        factor = hero_xp_multiplier(getattr(getattr(self, "m", None), "name", None),
+                                    xp_knowledge(getattr(self, "account", None), getattr(self, "rules", None)))
+        return estimate_hero_level(getattr(self.g, "hero", None), placed, rnd, factor)
+
     def income_until(self, due_round, rnd):
         """The income counted on between round rnd and the start of due_round:
         the round set's cash for those rounds, times income_mult, of which
@@ -4867,7 +4901,7 @@ class Executor:
             if not TH.available() or not hasattr(self, "mode"):
                 return 0.0
             self._init_threats()
-        income = sum(TH.round_cash(self.round_set, r) * self.income_mult for r in range(rnd, due_round))
+        income = sum(self.round_income(r) for r in range(rnd, due_round))
         return income / self.LEAD_MARGIN
 
     # -- the damage model's view, for the executor's own decisions -------------------
@@ -5309,8 +5343,7 @@ class Executor:
         why = f"blimp ramp round {R} ratio {ratio:.1f}"
         own = [st for st in (self.strat.get("answers") or {}).get(cls) or () if self._step_allowed(st)]
         # what can be paid before round R: cash now + the rounds in between
-        money = self.cash_seen + sum(TH.round_cash(self.round_set, r) * self.income_mult
-                                     for r in range(rnd, R))
+        money = self.cash_seen + sum(self.round_income(r) for r in range(rnd, R))
         total = self._steps_cost(own, f"the {cls} answer") if own else None
         if total is not None and total > money:
             # The strategy's own answer cannot be finished before the blimps:
