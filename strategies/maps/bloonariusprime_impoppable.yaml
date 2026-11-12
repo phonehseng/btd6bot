@@ -42,12 +42,12 @@ plan:
   - {do: place, id: v2, kind: village, role: support, near: [s1], near_radius: 7, at: [0.259, 0.095]}
   - {do: upgrade, id: v2, to: 2-3-0}
   - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.174, 0.095]}
-  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, at: [0.377, 0.095]}
+  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, at: [0.387, 0.095]}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
-  - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8, at: [0.313, 0.078]}
+  - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8, at: [0.281, 0.232]}
   - {do: upgrade, id: n4, to: 0-4-0}
-  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.291, 0.232]}
+  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.313, 0.078]}
   - {do: upgrade, id: b1, to: 0-4-0}
   - {do: upgrade, id: ac1, to: 2-4-0}
   - {do: upgrade, id: ac2, to: 2-4-0}
@@ -60,10 +60,10 @@ fill:
   - {do: upgrade, id: b1, to: 2-5-0}
   - {do: place, kind: spike, role: exit, max: 3}
   - {do: upgrade, kind: spike, to: 2-0-4}
-  - {do: place, id: h1, kind: heli, role: support, near: [v2], near_radius: 9, at: [0.452, 0.112]}
+  - {do: place, id: h1, kind: heli, role: support, near: [v2], near_radius: 9, at: [0.11, 0.317]}
   - {do: upgrade, id: h1, to: 4-0-2}
   - {do: upgrade, id: h1, to: 5-0-2}
-  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 9, at: [0.259, 0.266]}
+  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 9, at: [0.313, 0.249]}
   - {do: upgrade, id: sn1, to: 4-0-2}
   - {do: target, id: sn1, mode: strong}
   - {do: upgrade, id: sp1, to: 2-0-5}
@@ -87,7 +87,7 @@ answers:
     - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.174, 0.095]}
   ddt:
     - {do: upgrade, id: b1, to: 0-5-0}
-    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.291, 0.232]}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.313, 0.078]}
   bad:
     - {do: upgrade, id: b1, to: 0-5-0}
-    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.291, 0.232]}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.313, 0.078]}
