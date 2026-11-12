@@ -1453,17 +1453,37 @@ class _Rates:
         self.cache = {}
 
     def get(self, bloon_id, moab_hp, rho, path):
-        """(HP per second, mean overflow per pop) on this layer, or None when
-        no source of the station can damage it (immune, camo, MOAB filter)."""
+        """(HP per second, mean overflow per ordinary pop, share of pops that
+        destroy the whole bloon, mean overflow per pop of every kind) on this
+        layer, or None when no source of the station can damage it (immune,
+        camo, MOAB filter). See _compute."""
         key = (bloon_id, moab_hp, round(math.log2(max(rho, 1e-4)) * 2), path)
         if key not in self.cache:
             self.cache[key] = self._compute(bloon_id, moab_hp, rho, path)
         return self.cache[key]
 
     def _compute(self, bloon_id, moab_hp, rho, path):
+        """See get(). A station's pops are of two kinds.
+
+        Ordinary hits pass their damage beyond the layer's health on to the
+        children (DamageModel.distributeToChildren): a 3-damage tack pops a
+        lead and two more layers with one hit. That carry is averaged over
+        the station's ordinary pops.
+
+        A hit whose damage is at least the whole bloon's health (rbe) destroys
+        the bloon and everything inside it: Druid of the Jungle's vine
+        (9,999,999 damage). Such pops are kept apart as a share: their
+        bloons leave no children. Averaged in with the rest, the vine's
+        ~10,000,000 of overflow gave every 1-damage bramble pop beside it a
+        carry of ~625,000, so one 1-3-0 druid popped ~6 whole Rainbows or
+        Leads a second; the game gets ~0.4 (docs/model_audit_magic.md,
+        finding 1). The last value, for the layers inside a bloon (subtree),
+        averages every pop's carry, a whole-bloon hit counting what is left
+        inside the bloon (its expected damage to the children)."""
         zone = self.station.zones[path]
         lay = layer(bloon_id, moab_hp)
-        hp_rate = overflow = 0.0
+        whole = rbe(bloon_id, moab_hp)
+        hp_rate = overflow = kill_rate = kill_carry = 0.0
         camo_paths = self.station.camo_paths
         for src in self.station.sources:
             if not src.can_hit(lay):
@@ -1474,10 +1494,11 @@ class _Rates:
             d = src.damage_vs(lay)
             rate = hits * min(d, lay.hp)
             hp_rate += rate
-            # the game passes a hit's damage beyond a layer's health on to its
-            # children (DamageModel.distributeToChildren): a 3-damage tack pops
-            # a lead and two more layers with one hit
-            overflow += rate * max(0.0, d - lay.hp)
+            if lay.children and d >= whole:
+                kill_rate += rate          # destroys the whole bloon: no children, no carry
+                kill_carry += rate * (whole - lay.hp)
+            else:
+                overflow += rate * max(0.0, d - lay.hp)
             if src.dot_total:
                 # damage over time: every hit poisons a bloon for dot_total in
                 # all; no more than the bloons in the zone, each burning at
@@ -1486,7 +1507,10 @@ class _Rates:
                 hp_rate += min(hits * src.dot_total, in_zone * src.dot_rate)
         if hp_rate <= 0.0:
             return None
-        return hp_rate * self.station.strength * TOWER_EFFICIENCY, overflow / hp_rate
+        ordinary = hp_rate - kill_rate
+        carry = overflow / ordinary if ordinary > 0.0 else 0.0
+        return (hp_rate * self.station.strength * TOWER_EFFICIENCY, carry, kill_rate / hp_rate,
+                (overflow + kill_carry) / hp_rate)
 
     def subtree(self, bloon_id, moab_hp, rho, path, free):
         """(seconds of work per bloon, ((id, count), ...) handed on) to pop a
@@ -1496,28 +1520,56 @@ class _Rates:
         children instead of a job per layer, which keeps the simulation fast:
         the walk adds each layer's health (less the damage carried in from
         its parent) over the HP per second on it, and stops at layers the
-        station cannot damage, which are handed on to the next station."""
+        station cannot damage, which are handed on to the next station.
+
+        Hits that destroy the whole bloon it starts on (_compute) work beside
+        the walk: they take `kills` whole bloons a second, the ordinary hits
+        one bloon per walk, so the station gets through kills + 1 / walk
+        bloons a second. Inside the bloon every hit counts at its expected
+        carry (a bomb that destroys a whole Green carries its health on). A Druid of the Jungle 1-3-0 (vine every 2.6 s, brambles of 1
+        damage) gets 0.38 + 5.8 / 47 = 0.51 whole Rainbows a second, the
+        audit's "about 0.4" with the model's vine rate
+        (docs/model_audit_magic.md, finding 1; the vine's longer digest of
+        big bloons is not modelled)."""
         key = (bloon_id, moab_hp, round(math.log2(max(rho, 1e-4)) * 2), path, round(free, 1))
         hit = self.cache.get(("subtree",) + key)
         if hit is not None:
             return hit
+        top = self.get(bloon_id, moab_hp, rho, path)
+        kills = 0.0
+        if top is not None and max(0.0, layer(bloon_id, moab_hp).hp - free) > 0.0:
+            kills = top[0] * top[2] / layer(bloon_id, moab_hp).hp
         work, passed = 0.0, {}
         stack = [(bloon_id, 1.0, rho, free)]   # (id, bloons per top bloon, packing, damage carried in)
         while stack:
             bid, n, r, f = stack.pop()
             rate = self.get(bid, moab_hp, r, path)
-            if rate is None:
+            if rate is not None and bid == bloon_id and n == 1.0 and kills > 0.0:
+                hp, overflow = rate[0] * (1.0 - rate[2]), rate[1]    # the kills are counted apart
+            elif rate is not None:
+                hp, overflow = rate[0], rate[3]
+            else:
+                hp = overflow = 0.0
+            if hp <= 0.0:
                 passed[bid] = passed.get(bid, 0.0) + n
                 continue
-            hp_rate, overflow = rate
             lay = layer(bid, moab_hp)
             need = max(0.0, lay.hp - f)
             carry = max(0.0, f - lay.hp) + (overflow if need > 0.0 else 0.0)
-            work += n * need / hp_rate
+            work += n * need / hp
             kids = sum(k for _, k in lay.children) or 1
             for child, k in lay.children:
                 stack.append((child, n * k, r * k, carry / kids))
-        out = (work, tuple(sorted(passed.items())))
+        if kills > 0.0:
+            ordinary = 0.0 if bloon_id in passed else (1.0 / work if work > 0.0 else math.inf)
+            if math.isinf(ordinary):
+                out = (work, tuple(sorted(passed.items())))
+            else:
+                share = ordinary / (kills + ordinary)        # bloons the ordinary hits handle
+                passed = {} if bloon_id in passed else {k: v * share for k, v in passed.items()}
+                out = (1.0 / (kills + ordinary), tuple(sorted(passed.items())))
+        else:
+            out = (work, tuple(sorted(passed.items())))
         self.cache[("subtree",) + key] = out
         return out
 
@@ -1547,6 +1599,7 @@ class _Job:
     carry: float           # damage each popped bloon passes on to its children
     priority: int          # 0 first (MOAB-class at a "strong" station), then 1
     passed: tuple = None   # small layers: ((id, count per bloon), ...) handed on when popped
+    killed: float = 0.0    # share of the popped bloons destroyed whole (no children; _Rates._compute)
 
 
 class _Server:
@@ -1574,7 +1627,7 @@ class _Server:
         r = self.rates.get(lot.bloon, lot.moab_hp, lot.rho, lot.path)
         if r is None:
             return None
-        hp_rate, overflow = r
+        hp_rate, overflow, killed, _ = r
         lay = layer(lot.bloon, lot.moab_hp)
         deadline = release + max(0.0, zone.entry + zone.length - pos) / lot.speed
         prio = 0 if (self.st.strong and lay.moab) else 1
@@ -1585,7 +1638,8 @@ class _Server:
         need = max(0.0, lay.hp - free)               # health left after the carried damage
         carry = max(0.0, free - lay.hp) + (overflow if need > 0.0 else 0.0)
         work = lot.count * need / hp_rate
-        return _Job(release, deadline, work, work, lot, zone, pos, carry, prio)
+        return _Job(release, deadline, work, work, lot, zone, pos, carry, prio,
+                    killed=killed if need > 0.0 else 0.0)
 
     def push(self, job):
         self.seq += 1
@@ -1647,6 +1701,7 @@ class _Server:
             return
         lay = layer(lot.bloon, lot.moab_hp)
         kids = sum(k for _, k in lay.children) or 1
+        popped *= 1.0 - job.killed          # destroyed whole: no children
         for child, k in lay.children:
             speed = layer(child, lot.moab_hp).speed * lot.speed_mult
             child_lot = Lot(lot.path, t - pos / speed, child, popped * k, lot.rho * k, speed,
