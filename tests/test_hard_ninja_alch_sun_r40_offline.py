@@ -62,7 +62,8 @@ HALF_CASH_MAPS = ("Cargo", "Pat's Pond", "Quad", "Party Parade", "Chutes", "Anot
 # went down each. R40 since: Pat's Pond 1.46, Quad 1.22, Party Parade 1.13
 # (the single-lane maps as written). Party Parade still pops the round at
 # full strength, with less to spare than R40_MARGIN: its own floor.
-R40_FLOOR = {"Party Parade": 1.05}
+R40_FLOOR = {"Party Parade": 1.05, "Quad": 1.0}       # phase 1: Quad 1.03
+R37_FLOOR = {"Quad": 0.85}                             # phase 1: Quad 0.90
 # Double HP maps it lost, with the least round 40 may rate (R40 when
 # written: Castle Revenge 1.96, Tricky Tracks 1.24). Tricky Tracks rates 1.10
 # since 2026-11-11: the model sends round 40's one MOAB whole down either of
@@ -134,7 +135,7 @@ def test_half_cash_holds_rounds_37_and_40():
         m40 = _margin("half_cash", map_name, at40, FIRST_MOAB)
         m37 = _margin("half_cash", map_name, boards[R37], R37)
         assert m40 >= R40_FLOOR.get(map_name, R40_MARGIN), f"{map_name}: round 40 rated {m40:.2f}"
-        assert m37 >= R37_MARGIN, f"{map_name}: round 37 rated {m37:.2f}"
+        assert m37 >= R37_FLOOR.get(map_name, R37_MARGIN), f"{map_name}: round 37 rated {m37:.2f}"
 
 
 def test_double_hp_holds_round_40():
@@ -186,8 +187,19 @@ def test_half_cash_late_game_has_the_dartships():
 # Path 1.35. The floors below hold those numbers; the maps under 1.0 need
 # their own round-63 rework (Dark Castle lost round 63 live, 2026-11-09).
 R63 = 63
+# Phase 1 of docs/model_fix_plan.md (2026-11-12, the damage model's
+# over-credits) rates the same build lower (marked "phase 1" below, with
+# the numbers it measured; floors are those less a little). Most of the
+# drop is the Druids of the Jungle that stand for round 63: their brambles
+# no longer pop whole ceramics with the vine's overflow
+# (tests/test_overflow_instakill_offline.py). The build is unchanged; it is
+# for the optimizer to redo.
 R63_MARGIN = 1.0
-R63_FLOORS = {"Dark Castle": 0.7, "X Factor": 0.55, "Party Parade": 0.8}
+# phase 1: Dark Castle 0.40 (was held to 0.7), X Factor 0.27 (0.55), Party
+# Parade 0.48 (0.8), Cargo 0.69, Pat's Pond 0.58, Quad 0.54, Chutes 0.63
+# (1.0); Dark Path 1.06 still holds
+R63_FLOORS = {"Dark Castle": 0.37, "X Factor": 0.24, "Party Parade": 0.44, "Cargo": 0.65, "Pat's Pond": 0.54,
+              "Quad": 0.5, "Chutes": 0.58}
 R63_MAPS = ("Dark Castle", "X Factor", "Cargo", "Pat's Pond", "Quad", "Party Parade", "Chutes", "Dark Path")
 
 
@@ -228,8 +240,10 @@ def test_half_cash_holds_round_63():
 #   1.00 (R71), Pat's Pond 1.02 (R71), Quad 0.43 (R59), Party Parade 0.49
 #   (R71), Chutes 0.76 (R71).
 LATE_ROUNDS = range(59, 79)
-LATE_FLOORS = {"Mesa": 0.35, "X Factor": 0.35, "Dark Castle": 0.45, "Cargo": 0.85,
-               "Pat's Pond": 0.85, "Quad": 0.35, "Party Parade": 0.4, "Chutes": 0.65}
+# phase 1: X Factor 0.27 (was 0.35), Dark Castle 0.38 (0.45), Cargo 0.69
+# (0.85), Pat's Pond 0.58 (0.85), Chutes 0.63 (0.65); the others still hold
+LATE_FLOORS = {"Mesa": 0.35, "X Factor": 0.24, "Dark Castle": 0.35, "Cargo": 0.65,
+               "Pat's Pond": 0.54, "Quad": 0.35, "Party Parade": 0.4, "Chutes": 0.58}
 
 
 def test_half_cash_rounds_59_to_78_floors():
@@ -267,8 +281,10 @@ def test_half_cash_rounds_59_to_78_floors():
 # 0.52, Party Parade 0.56).
 R78 = 78
 DARTSHIP_BY_R78 = 76
-R78_FLOORS = {"Mesa": 0.85, "X Factor": 0.65, "Dark Castle": 0.55, "Moon Landing": 2.2, "Cargo": 0.9,
-              "Chutes": 0.75, "Quad": 0.5, "Party Parade": 0.5}
+# phase 1: Mesa 0.59 (was 0.85), X Factor 0.49 (0.65), Dark Castle 0.41
+# (0.55), Moon Landing 1.70 (2.2), Quad 0.43-0.48 (0.5); the others still hold
+R78_FLOORS = {"Mesa": 0.55, "X Factor": 0.45, "Dark Castle": 0.37, "Moon Landing": 1.6, "Cargo": 0.9,
+              "Chutes": 0.75, "Quad": 0.4, "Party Parade": 0.5}
 
 
 def test_half_cash_holds_round_78():

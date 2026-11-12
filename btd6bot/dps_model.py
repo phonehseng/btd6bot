@@ -86,6 +86,19 @@ ROUNDS_FILE = ROOT / "data" / "rounds.json"
 # lost lives 5.4% of the time, 2.0 and above 0.5%, 6.0 and above never), so
 # the safety bar is set in the optimizer (SAFETY_MARGIN) rather than by
 # shrinking towers.
+#
+# Re-checked 2026-11-12 after phase 1 of docs/model_fix_plan.md (the
+# over-credits: Bomber Ace bombs, instakill overflow, alternative shots,
+# per-attack reach, the dip, Spiked Mines). The boards of 690 journals
+# (logs/journal, round events; 526 rounds that leaked, 7,185 of ~27,000
+# that held) were rated with the code before and after: separation of
+# leaked from held rounds (AUC) 0.797 -> 0.805; rounds at or above 2.0 that
+# leaked anyway 0.57% -> 0.53% (11 leaked rounds moved under 2.0, none
+# over); the median margin moved x0.98 (a quarter of the rounds x0.89 or
+# less: boards with Druid of the Jungle, Bomber Aces, submerged subs).
+# The new model reaches the old 2.0's leak rate at about 1.7-1.8, but the
+# two bands' uncertainty overlaps (0.38-0.74% at 2.0), so SAFETY_MARGIN
+# stays 2.0 and this stays 1.0.
 TOWER_EFFICIENCY = 1.0
 
 # --- modelling constants (assumptions, documented in docs/optimizer.md) -----
@@ -259,7 +272,8 @@ class Source:
                 projectiles that re-hit), at least 1
     placement   "aimed" (fired at targets in range), "track" (laid on the
                 track and waiting: spikes), "global" (anywhere on the
-                map), "air" (from a plane circling the tower)
+                map), "air" (from a plane circling the tower), "drop"
+                (dropped under a plane circling the tower: see blast)
     radial      fired all around rather than at a target (tacks, a plane's
                 darts): only the share of directions that cross the lane hits
     travel      how far a radial projectile flies (for that share)
@@ -277,6 +291,13 @@ class Source:
                 (see _hit_rate)
     carrier     (damage, immune, bonus) of the projectile that throws an
                 off_struck piece off, or None
+    blast       for placement "drop" (a bomb that falls from a plane where
+                the plane is: Monkey Ace pineapples, Bomber Ace): the radius
+                of its explosion, which decides how near the track it must
+                fall to hit anything (see _drop_parts)
+    over_track_only  a "drop" weapon the game fires only while its plane is
+                over the track (CheckAirUnitOverTrackModel, the export's
+                "over_track_only": Bomber Ace and Ground Zero)
     """
     name: str
     shots: float
@@ -302,6 +323,15 @@ class Source:
     camo_shared: bool = False
     off_struck: bool = False
     carrier: tuple = None
+    blast: float = 0.0
+    over_track_only: bool = False
+    cooldown: float = 0.0      # "drop": seconds between the weapon's volleys
+    pierce_cost: dict = field(default_factory=dict)   # extra pierce per hit, by bloon tag (_pierce_cost)
+    rear_fov: float = 0.0      # a Buccaneer's second shot behind the boat: degrees of its target cone
+    zone_radius: float = None  # its own attack's reach around the tower (_zone_radius); None = the tower's
+    zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
+    dot_immune: frozenset = frozenset()   # bloon properties its damage over time cannot hurt
+                               # (0 = not such a shot; _rear_copies)
 
     def can_hit(self, lay):
         """Can this source damage this layer at all?"""
@@ -335,6 +365,8 @@ class Profile:
     income: float = 0.0              # cash per round it makes itself
     pattern_radius: float = 0.0      # a plane's flight circle (Monkey Ace)
     own_radius: float = 0.0          # circle swept around the tower itself (Glaive Lord's glaives)
+    flight_speed: float = 0.0        # a plane's speed along its flight circle (air_unit.speed)
+    fire_rate: float = 0.0           # weapon shots a second of its own attacks (an Alchemist dip's budget)
 
 
 # The bloon properties a damage type can be unable to pop (Layer.immune).
@@ -381,9 +413,42 @@ def _potion_buffs(entry):
             props = sorted({t.lower() for t in bonus if t.lower() in IMMUNITIES})
             if not props and not bonus:
                 continue
+            potion = p.get("potion") or {}
             out.append({"kind": "damage_type", "props": props, "bonus": bonus,
-                        "radius": a.get("range") or entry.get("range"), "name": marks[0]})
+                        "radius": a.get("range") or entry.get("range"), "name": marks[0],
+                        "shots": potion.get("shots"), "every": w.get("rate")})
     return out
+
+
+# A potion that lasts at least this many of the buffed tower's shots never
+# runs out: Permanent Brew's dip and brew carry 9,999,999.
+PERMANENT_POTION_SHOTS = 1e6
+
+
+def _dip_share(b, supporter, t, placed):
+    """Share of tower t's shots an Alchemist's Acidic Mixture Dip (potion
+    buff b of `supporter`) covers.
+
+    The dip is not a permanent aura: the Alchemist throws it at ONE tower
+    every `every` seconds (10 s) and it lasts `shots` of that tower's shots
+    (10, 12 at x-2-x: AcidicMixtureCheckModel.maxCount, the export's
+    "potion"; fandom:Acidic_Mixture_Dip). So an Alchemist dips shots / every
+    shots a second, shared by the attacking towers in its range, against t's
+    own shots a second (Profile.fire_rate). It is permanent only with
+    Permanent Brew (5-x-x: shots 9,999,999). Read as permanent, the dip let
+    a Bloonjitsu's 11.5 shots/s all pop lead where about one a second does
+    (docs/model_audit_magic.md, finding 2)."""
+    shots, every = b.get("shots"), b.get("every")
+    if not shots or shots >= PERMANENT_POTION_SHOTS or not every:
+        return 1.0
+    radius = b.get("radius") or 0.0
+    takers = [o for o in placed if o.tid != supporter.tid and o.kind != "alchemist"
+              and (profile(o.kind, o.tiers) or Profile("", (), 0.0, False, [])).sources
+              and buff_covers(supporter, o, radius)]
+    rate = profile(t.kind, t.tiers).fire_rate
+    if rate <= 0.0:
+        return 1.0
+    return min(1.0, shots / every / max(1, len(takers)) / rate)
 
 
 def _target_only(p):
@@ -462,6 +527,50 @@ def _left_at_spot(carrier, lay):
     return lay.hp <= damage < rbe(lay.id)
 
 
+def _impact_pierce(p):
+    """Pierce of projectile p for counting its hits.
+
+    An impact projectile - one that bursts when its pierce runs out (an
+    "exhaust" spawn) - is capped at its maxPierce (the export's
+    "max_pierce"): the Monkey Sub's Airburst dart has pierce 2 but maxPierce
+    1, and the wiki gives it "1 impact" before it splits
+    (fandom:Airburst_Darts; docs/model_audit_military.md M4). Other
+    projectiles keep their pierce: what maxPierce means for them (Glue
+    Gunner globs carry 4 / 1) is not confirmed."""
+    pierce = max(1.0, p.get("pierce", 1.0))
+    cap = p.get("max_pierce")
+    if cap and cap < pierce and any(s.get("on") == "exhaust" for s in p.get("spawn", [])):
+        pierce = max(1.0, cap)
+    return pierce
+
+
+def _alternative_spawns(spawns):
+    """The spawns of a projectile, with "expire" spawns left out where the
+    same projectile is also spawned on "exhaust".
+
+    The two are alternatives: a projectile either uses up its pierce
+    (exhaust: it hit) or lives out its lifespan (expire: it missed), never
+    both. The model assumes projectiles never miss, so the exhaust one
+    stands. Counting both credited every Monkey Sub Airburst dart with two
+    bursts of splits (88% of a 2-0-4's crowd rating: docs/model_audit_
+    military.md M4) and every Spiked Mine with two explosions
+    (docs/model_audit_support_heroes.md S5: "Upon lifespan expiry, create
+    two instances of Explosion. Upon pierce expiry, create one instance" -
+    on a busy round the mine is exhausted)."""
+    on_exhaust = {(sp.get("projectile") or {}).get("name") for sp in spawns if sp.get("on") == "exhaust"}
+    return [sp for sp in spawns
+            if not (sp.get("on") == "expire" and (sp.get("projectile") or {}).get("name") in on_exhaust)]
+
+
+def _pierce_cost(p):
+    """{bloon tag ("" = every bloon): extra pierce a hit on it uses up} of
+    projectile p (CollideExtraPierceReductionModel, the export's
+    "extra_pierce_cost"). Frag Bombs' frags have pierce 2 and cost 1 more
+    per hit: one hit each, as the wiki gives them "1 pierce"
+    (fandom:Frag_Bombs_(BTD6); docs/model_audit_primary.md F11)."""
+    return {k: float(v) for k, v in (p.get("extra_pierce_cost") or {}).items() if v}
+
+
 def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, radial, travel, out, depth=0,
                         subtower_cap=MAX_SUBTOWERS, carrier=None):
     """Add the damage sources of projectile p (and what it spawns) to out.
@@ -481,9 +590,17 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
         out.append(Source(
             name=f"{attack.get('name')}>{p.get('name')}",
             shots=shots, shots_single=shots_single,
-            pierce=max(1.0, p.get("pierce", 1.0)),
+            pierce=_impact_pierce(p),
             damage=hit.get("amount", 0.0),
-            immune=_immune_set(hit) & (_immune_set(dot) if dot else _immune_set(hit)),
+            # The hit's damage type decides what the projectile can touch; a
+            # DoT-only projectile (corrosive glue) uses the DoT's. The burn is
+            # applied only by a hit that damages, and has immunities of its
+            # own (dot_immune). Intersecting the two let Spiked Mines (an
+            # explosion immune to black, a burn immune to purple) damage
+            # black bloons and DDTs on R95 and R99
+            # (docs/model_audit_support_heroes.md S5, fandom:Spiked_Mines).
+            immune=_immune_set(hit),
+            dot_immune=_immune_set(dot) if dot else frozenset(),
             bonus=p.get("bonus") or {},
             camo=camo,
             only_tags=frozenset(p.get("only_tags", [])) | frozenset(attack.get("only_tags", []))
@@ -500,8 +617,15 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             camo_shared=bool(attack.get("camo_shared")) and not camo,
             off_struck=carrier is not None,
             carrier=carrier,
+            blast=(p.get("radius") or 0.0) if placement == "drop" else 0.0,
+            over_track_only=placement == "drop" and bool(attack.get("over_track_only")),
+            cooldown=attack.get("cooldown", 0.0) if placement == "drop" else 0.0,
+            pierce_cost=_pierce_cost(p),
+            rear_fov=float(attack.get("rear_fov") or 0.0),
+            zone_radius=attack.get("zone_radius"),
+            zone_fixed=bool(attack.get("zone_fixed")),
         ))
-    pierce = max(1.0, p.get("pierce", 1.0))
+    pierce = max(1.0, _impact_pierce(p) / (1.0 + _pierce_cost(p).get("", 0.0)))
     if "CollideOnlyWithTargetModel" in (p.get("other") or ()):
         # it touches the one bloon it grabbed: one contact, one spawn (a
         # vine's thorn patch), not CONTACTS_PER_CARRIER of its 9,999,999
@@ -511,7 +635,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
     contacts = min(pierce, CONTACTS_PER_CARRIER)
     contacts_single = min(pierce, _single_hits(p))
     life = p.get("lifespan") or 0.0
-    for s in p.get("spawn", []):
+    for s in _alternative_spawns(p.get("spawn", [])):
         n = s.get("count", 1.0)
         sub = s.get("projectile")
         on = s.get("on")
@@ -631,6 +755,26 @@ def _sector_shares(a):
     return min(1.0, max(sector, TRACK_ARC_DEG) / 360.0), sector / 360.0
 
 
+def _drops_under_plane(a, w):
+    """Does weapon w of attack a drop its bombs under a circling plane?
+
+    Monkey Ace pineapples (0-1-x, 0-2-x) and Bomber Ace / Ground Zero bombs
+    (0-3-x and up) are an AttackAirUnitModel with no range check: the export
+    marks them "unbounded": "map", and the model used to read that as
+    "anywhere on the map". In the game the bomb falls to the ground under
+    the plane (FallToGroundModel) and explodes there, and the Bomber Ace
+    weapon only fires while the plane is over the track
+    (CheckAirUnitOverTrackModel, the export's "over_track_only";
+    fandom:Bomber_Ace, fandom:Exploding_Pineapple). Read as map-wide, the
+    bombs made up 91% of a 2-3-0 ace's rating and Ground Zero's 15-damage,
+    40-pierce bombs made a 2-4-0 look like a whole-map carry
+    (docs/model_audit_military.md, M1). The plane's darts circle the
+    tower (pattern_radius) and keep their "air" reading."""
+    p = w.get("projectile") or {}
+    return bool(a.get("air") and not a.get("pattern_radius")
+                and (w.get("over_track_only") or "FallToGroundModel" in (p.get("other") or ())))
+
+
 def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=False, tower_range=None):
     """Add an attack's damage sources (per weapon) to out.
     follows: the tower is a helicopter that flies to the bloons (global reach).
@@ -654,13 +798,20 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
         camo_chain = a.get("camo", False)
     weapons = a.get("weapons", [])
     trigger_rate = _trigger_rates(weapons)
+    attack_placement, attack = placement, a
     for i, w in enumerate(weapons):
+        placement, a = attack_placement, attack
+        if _drops_under_plane(a, w):
+            placement = "drop"
+            a = dict(a, over_track_only=bool(w.get("over_track_only")))
         rate = w.get("rate", 1.0)
         if w.get("triggered"):
             if i not in trigger_rate:
                 continue      # nothing fires it: its own rate is only a readiness check
             rate = trigger_rate[i]
         rate = max(rate, w.get("rate_min", 0.0), 1e-3)
+        if placement == "drop":
+            a = dict(a, cooldown=rate)      # for the over-track volleys (_drop_share)
         shots = multiplier * w.get("count", 1.0) * w.get("burst", 1.0) / rate
         p = w.get("projectile")
         life = (p or {}).get("lifespan") or 0.0
@@ -676,11 +827,33 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
             extra = (c["damage"] - p["damage"]["amount"]) / max(c["every"], 1.0)
             p = dict(p, damage=dict(p["damage"], amount=p["damage"]["amount"] + max(0.0, extra)))
         crowd, single = shots * share_crowd, shots * share_single
-        _flatten_projectile(p, crowd, single, a, camo_chain and parent_camo, placement, radial, travel, out, depth,
-                            subtower_cap=cap)
+        if w.get("triggered"):
+            # A weapon fired by another one (FireWhenAlternateWeaponIsReady:
+            # every such weapon in the export is a Buccaneer's "Secondary"
+            # dart, grape shot or cannon) shoots a second copy at 180 degrees
+            # "if bloons are detected behind" (fandom:Grape_Shot_(BTD6),
+            # fandom:Destroyer_(BTD6)). It used to fire at its trigger's full
+            # rate; station_for now keeps it only where the boat's range
+            # holds track behind it as well, inside the cone its target must
+            # stand in (the export's "target_fov": 90 degrees; _rear_copies,
+            # docs/model_audit_military.md M5).
+            a = dict(a, rear_fov=w.get("target_fov") or 180.0)
+        main_share = 1.0
+        if w.get("alternate"):
+            # every `every`-th shot fires the alternate projectile INSTEAD of
+            # the normal one: Recursive Cluster's "every second shot,
+            # replaced with Recursive Bomb" (fandom:Recursive_Cluster), the
+            # Spectre's barrage that "alternates between launching Dart and
+            # Shell" (fandom:Spectre_(BTD6)), a Ninja's every-4th Flash Bomb.
+            # Both used to be counted at the normal shot's full rate
+            # (docs/model_audit_primary.md F9, military M8).
+            main_share = 1.0 - 1.0 / max(w["alternate"].get("every", 1.0), 1.0)
+        _flatten_projectile(p, crowd * main_share, single * main_share, a, camo_chain and parent_camo, placement,
+                            radial, travel, out, depth, subtower_cap=cap)
         if w.get("alternate"):
             alt = w["alternate"]
-            k = alt.get("count", 1.0) / max(alt.get("every", 1.0), 1.0)
+            # the replaced shots fire the alternate's own emission instead of the weapon's
+            k = alt.get("count", 1.0) / max(w.get("count", 1.0), 1.0) / max(alt.get("every", 1.0), 1.0)
             _flatten_projectile(alt["projectile"], crowd * k, single * k, a, camo_chain, placement, radial, travel,
                                 out, depth)
         if w.get("extra_projectile"):
@@ -716,6 +889,47 @@ def _pulse_at_tower(a, entry):
     return dict(a, unbounded="self", own_radius=radius)
 
 
+def _zone_radius(a, entry):
+    """{"zone_radius", "zone_fixed"} for a tower's own attack a: the circle
+    around the tower that attack works in, when it is not the tower's range.
+
+    A station used to give every source of a tower the tower's largest
+    reach. Glaive Lord's orbiting glaives (a 30-unit circle, "unbuffable
+    range": fandom:Glaive_Lord_(BTD6)) were credited over the 43-unit throw
+    circle, and a Desperado's 40-unit pistol over its 80-unit rifle circle
+    (docs/model_audit_primary.md F4). Now each attack keeps its own radius:
+    its range, or for an attack that sweeps the tower's own spot ("self")
+    its projectiles' radius, which range buffs do not change. Attacks of a
+    plane (pattern) and map-wide ones keep the tower's reach (None)."""
+    if a.get("pattern_radius") or a.get("air"):
+        return {}
+    if a.get("unbounded") == "self":
+        radius = a.get("own_radius") or 0.0
+        return {"zone_radius": radius, "zone_fixed": True} if radius > 0.0 else {}
+    radius = _attack_range(a, entry.get("range"))
+    if 0.0 < radius < 1000.0:
+        return {"zone_radius": radius}
+    return {}
+
+
+SUBMERGED_PREFIX = "SubmergedAttack"
+
+
+def _surfaced_or_submerged(entry):
+    """The attacks a tower uses as the bot plays it.
+
+    A Monkey Sub with Submerge and Support (3-x-x and up) has a submerged
+    attack (the export's "SubmergedAttack..." pulse) beside its darts.
+    Upgrading sets Submerge targeting by itself and the bot never changes
+    it, and "while set on Submerge targeting, it cannot attack with darts"
+    (fandom:Submerge_and_Support_(BTD6), fandom:Bloontonium_Reactor). The
+    darts were counted on top of the pulse (docs/model_audit_military.md
+    M12); now such a sub has only its submerged attacks."""
+    attacks = entry.get("attacks", [])
+    submerged = [a for a in attacks if str(a.get("name", "")).startswith(SUBMERGED_PREFIX)]
+    return submerged or attacks
+
+
 @lru_cache(maxsize=None)
 def profile(kind, tiers):
     """Profile of a tower crosspath (None when the game has no such model)."""
@@ -725,21 +939,31 @@ def profile(kind, tiers):
     sources = []
     aim_bound = False
     follows = (entry.get("air_unit") or {}).get("movement") == "follows"
-    entry = dict(entry, attacks=[_pulse_at_tower(a, entry) for a in entry.get("attacks", [])])
+    entry = dict(entry, attacks=[_pulse_at_tower(a, entry) for a in _surfaced_or_submerged(entry)])
     for a in entry.get("attacks", []):
         if a.get("targeting") in ("point", "cursor") and any(
                 (w.get("projectile") or {}) for w in a.get("weapons", [])):
             aim_bound = True
-        _flatten_attack(a, sources, follows=follows, tower_range=entry.get("range"))
+        _flatten_attack(dict(a, **_zone_radius(a, entry)), sources, follows=follows, tower_range=entry.get("range"))
     income = (entry.get("income") or {})
     pattern = max((a.get("pattern_radius") or 0.0 for a in entry.get("attacks", [])), default=0.0)
     own = max((a.get("own_radius") or 0.0 for a in entry.get("attacks", []) if a.get("unbounded") == "self"),
               default=0.0)
+    # The export calls an ace with pineapples or Bomber Ace bombs map-wide
+    # ("global") only because of those bombs' "unbounded": "map"; they fall
+    # under the plane (_drops_under_plane), so the ace itself is not map-wide.
+    map_wide = [a for a in entry.get("attacks", []) if a.get("unbounded") == "map"]
+    is_global = bool(entry.get("global")) and not (
+        map_wide and all(_drops_under_plane(a, w) for a in map_wide for w in a.get("weapons", [])))
     return Profile(kind=kind, tiers=tuple(int(t) for t in tiers_code(tiers)), range=entry.get("range", 0.0),
-                   is_global=bool(entry.get("global")), sources=sources, aim_bound=aim_bound and not sources,
+                   is_global=is_global, sources=sources, aim_bound=aim_bound and not sources,
                    buffs=list(entry.get("buffs", [])) + _potion_buffs(entry),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
-                   pattern_radius=pattern, own_radius=own)
+                   pattern_radius=pattern, own_radius=own,
+                   flight_speed=float((entry.get("air_unit") or {}).get("speed") or 0.0),
+                   fire_rate=sum(w.get("burst", 1.0) / max(w.get("rate", 1.0), w.get("rate_min", 0.0), 1e-3)
+                                 for a in entry.get("attacks", []) for w in a.get("weapons", [])
+                                 if not w.get("triggered") and w.get("projectile")))
 
 
 # ===========================================================================
@@ -1129,6 +1353,43 @@ class Track:
         return float(f[0]), float(f[1])
 
     # -- zones ---------------------------------------------------------------------
+    def near_track(self, pts, radius):
+        """Bool per (x, z) point of `pts`: lies within `radius` of a hittable
+        stretch of some route (see Track: tunnels and off-screen parts do
+        not count)."""
+        hit = getattr(self, "_hittable_xz", None)
+        if hit is None:
+            hit = self._hittable_xz = np.concatenate([p["xyz"][p["hittable"], :2] for p in self.paths])
+        pts = np.asarray(pts, float).reshape(-1, 2)
+        if not len(hit) or not len(pts):
+            return np.zeros(len(pts), bool)
+        d2 = ((pts[:, None, 0] - hit[None, :, 0]) ** 2 + (pts[:, None, 1] - hit[None, :, 1]) ** 2).min(axis=1)
+        return d2 <= radius * radius
+
+    def behind_share(self, x, z, radius, fov=180.0):
+        """Share of the hittable track within `radius` of (x, z) that has more
+        track on the far side of the tower: seen from the tower, some other
+        covered point lies inside the cone of `fov` degrees pointing straight
+        away from it (behind the tower when it faces that point). 0 when the
+        circle covers no track. Used for a Buccaneer's rear shot
+        (_rear_copies), with bloons all along the covered track."""
+        pts = np.concatenate([p["xyz"][p["hittable"], :2] for p in self.paths])
+        d2 = (pts[:, 0] - x) ** 2 + (pts[:, 1] - z) ** 2
+        pts = pts[d2 <= radius * radius]
+        if not len(pts):
+            return 0.0
+        bins = 72                                   # 5-degree sectors
+        ang = np.arctan2(pts[:, 1] - z, pts[:, 0] - x)
+        idx = ((ang + math.pi) / (2.0 * math.pi) * bins).astype(int) % bins
+        count = np.bincount(idx, minlength=bins)
+        occupied = count > 0
+        half_cone = int(round(fov / 2.0 / (360.0 / bins)))
+        behind = np.zeros(bins, bool)
+        for i in range(bins):
+            far = [(i + bins // 2 + k) % bins for k in range(-half_cone, half_cone + 1)]
+            behind[i] = occupied[far].any()
+        return float(count[behind].sum() / count.sum())
+
     def total_length(self):
         """Hittable length of each path (world units)."""
         return [float(np.sum(np.diff(p["dist"])[p["hittable"][:-1]])) for p in self.paths]
@@ -1375,10 +1636,16 @@ def _hit_rate(src, lay, rho, zone):
         shots *= zone.angular if zone is not None else 1.0
     if src.placement == "air":
         shots *= AIR_PATTERN_EFFICIENCY
+    pierce = src.pierce
+    if src.pierce_cost:
+        # every hit on this layer uses up 1 + its extra cost (_pierce_cost);
+        # the first hit is always made
+        cost = sum(c for tag, c in src.pierce_cost.items() if tag == "" or tag in lay.tags)
+        pierce = max(1.0, pierce / (1.0 + cost))
     if src.off_struck:
-        per_shot = min(src.pierce, met)
+        per_shot = min(pierce, met)
     else:
-        per_shot = min(src.pierce, max(met, src.single_hits))
+        per_shot = min(pierce, max(met, src.single_hits))
     return shots * per_shot
 
 
@@ -1391,17 +1658,37 @@ class _Rates:
         self.cache = {}
 
     def get(self, bloon_id, moab_hp, rho, path):
-        """(HP per second, mean overflow per pop) on this layer, or None when
-        no source of the station can damage it (immune, camo, MOAB filter)."""
+        """(HP per second, mean overflow per ordinary pop, share of pops that
+        destroy the whole bloon, mean overflow per pop of every kind) on this
+        layer, or None when no source of the station can damage it (immune,
+        camo, MOAB filter). See _compute."""
         key = (bloon_id, moab_hp, round(math.log2(max(rho, 1e-4)) * 2), path)
         if key not in self.cache:
             self.cache[key] = self._compute(bloon_id, moab_hp, rho, path)
         return self.cache[key]
 
     def _compute(self, bloon_id, moab_hp, rho, path):
+        """See get(). A station's pops are of two kinds.
+
+        Ordinary hits pass their damage beyond the layer's health on to the
+        children (DamageModel.distributeToChildren): a 3-damage tack pops a
+        lead and two more layers with one hit. That carry is averaged over
+        the station's ordinary pops.
+
+        A hit whose damage is at least the whole bloon's health (rbe) destroys
+        the bloon and everything inside it: Druid of the Jungle's vine
+        (9,999,999 damage). Such pops are kept apart as a share: their
+        bloons leave no children. Averaged in with the rest, the vine's
+        ~10,000,000 of overflow gave every 1-damage bramble pop beside it a
+        carry of ~625,000, so one 1-3-0 druid popped ~6 whole Rainbows or
+        Leads a second; the game gets ~0.4 (docs/model_audit_magic.md,
+        finding 1). The last value, for the layers inside a bloon (subtree),
+        averages every pop's carry, a whole-bloon hit counting what is left
+        inside the bloon (its expected damage to the children)."""
         zone = self.station.zones[path]
         lay = layer(bloon_id, moab_hp)
-        hp_rate = overflow = 0.0
+        whole = rbe(bloon_id, moab_hp)
+        hp_rate = overflow = kill_rate = kill_carry = 0.0
         camo_paths = self.station.camo_paths
         for src in self.station.sources:
             if not src.can_hit(lay):
@@ -1412,11 +1699,12 @@ class _Rates:
             d = src.damage_vs(lay)
             rate = hits * min(d, lay.hp)
             hp_rate += rate
-            # the game passes a hit's damage beyond a layer's health on to its
-            # children (DamageModel.distributeToChildren): a 3-damage tack pops
-            # a lead and two more layers with one hit
-            overflow += rate * max(0.0, d - lay.hp)
-            if src.dot_total:
+            if lay.children and d >= whole:
+                kill_rate += rate          # destroys the whole bloon: no children, no carry
+                kill_carry += rate * (whole - lay.hp)
+            else:
+                overflow += rate * max(0.0, d - lay.hp)
+            if src.dot_total and not (src.dot_immune & lay.immune):
                 # damage over time: every hit poisons a bloon for dot_total in
                 # all; no more than the bloons in the zone, each burning at
                 # dot_rate per second
@@ -1424,7 +1712,10 @@ class _Rates:
                 hp_rate += min(hits * src.dot_total, in_zone * src.dot_rate)
         if hp_rate <= 0.0:
             return None
-        return hp_rate * self.station.strength * TOWER_EFFICIENCY, overflow / hp_rate
+        ordinary = hp_rate - kill_rate
+        carry = overflow / ordinary if ordinary > 0.0 else 0.0
+        return (hp_rate * self.station.strength * TOWER_EFFICIENCY, carry, kill_rate / hp_rate,
+                (overflow + kill_carry) / hp_rate)
 
     def subtree(self, bloon_id, moab_hp, rho, path, free):
         """(seconds of work per bloon, ((id, count), ...) handed on) to pop a
@@ -1434,28 +1725,56 @@ class _Rates:
         children instead of a job per layer, which keeps the simulation fast:
         the walk adds each layer's health (less the damage carried in from
         its parent) over the HP per second on it, and stops at layers the
-        station cannot damage, which are handed on to the next station."""
+        station cannot damage, which are handed on to the next station.
+
+        Hits that destroy the whole bloon it starts on (_compute) work beside
+        the walk: they take `kills` whole bloons a second, the ordinary hits
+        one bloon per walk, so the station gets through kills + 1 / walk
+        bloons a second. Inside the bloon every hit counts at its expected
+        carry (a bomb that destroys a whole Green carries its health on). A Druid of the Jungle 1-3-0 (vine every 2.6 s, brambles of 1
+        damage) gets 0.38 + 5.8 / 47 = 0.51 whole Rainbows a second, the
+        audit's "about 0.4" with the model's vine rate
+        (docs/model_audit_magic.md, finding 1; the vine's longer digest of
+        big bloons is not modelled)."""
         key = (bloon_id, moab_hp, round(math.log2(max(rho, 1e-4)) * 2), path, round(free, 1))
         hit = self.cache.get(("subtree",) + key)
         if hit is not None:
             return hit
+        top = self.get(bloon_id, moab_hp, rho, path)
+        kills = 0.0
+        if top is not None and max(0.0, layer(bloon_id, moab_hp).hp - free) > 0.0:
+            kills = top[0] * top[2] / layer(bloon_id, moab_hp).hp
         work, passed = 0.0, {}
         stack = [(bloon_id, 1.0, rho, free)]   # (id, bloons per top bloon, packing, damage carried in)
         while stack:
             bid, n, r, f = stack.pop()
             rate = self.get(bid, moab_hp, r, path)
-            if rate is None:
+            if rate is not None and bid == bloon_id and n == 1.0 and kills > 0.0:
+                hp, overflow = rate[0] * (1.0 - rate[2]), rate[1]    # the kills are counted apart
+            elif rate is not None:
+                hp, overflow = rate[0], rate[3]
+            else:
+                hp = overflow = 0.0
+            if hp <= 0.0:
                 passed[bid] = passed.get(bid, 0.0) + n
                 continue
-            hp_rate, overflow = rate
             lay = layer(bid, moab_hp)
             need = max(0.0, lay.hp - f)
             carry = max(0.0, f - lay.hp) + (overflow if need > 0.0 else 0.0)
-            work += n * need / hp_rate
+            work += n * need / hp
             kids = sum(k for _, k in lay.children) or 1
             for child, k in lay.children:
                 stack.append((child, n * k, r * k, carry / kids))
-        out = (work, tuple(sorted(passed.items())))
+        if kills > 0.0:
+            ordinary = 0.0 if bloon_id in passed else (1.0 / work if work > 0.0 else math.inf)
+            if math.isinf(ordinary):
+                out = (work, tuple(sorted(passed.items())))
+            else:
+                share = ordinary / (kills + ordinary)        # bloons the ordinary hits handle
+                passed = {} if bloon_id in passed else {k: v * share for k, v in passed.items()}
+                out = (1.0 / (kills + ordinary), tuple(sorted(passed.items())))
+        else:
+            out = (work, tuple(sorted(passed.items())))
         self.cache[("subtree",) + key] = out
         return out
 
@@ -1485,6 +1804,7 @@ class _Job:
     carry: float           # damage each popped bloon passes on to its children
     priority: int          # 0 first (MOAB-class at a "strong" station), then 1
     passed: tuple = None   # small layers: ((id, count per bloon), ...) handed on when popped
+    killed: float = 0.0    # share of the popped bloons destroyed whole (no children; _Rates._compute)
 
 
 class _Server:
@@ -1512,7 +1832,7 @@ class _Server:
         r = self.rates.get(lot.bloon, lot.moab_hp, lot.rho, lot.path)
         if r is None:
             return None
-        hp_rate, overflow = r
+        hp_rate, overflow, killed, _ = r
         lay = layer(lot.bloon, lot.moab_hp)
         deadline = release + max(0.0, zone.entry + zone.length - pos) / lot.speed
         prio = 0 if (self.st.strong and lay.moab) else 1
@@ -1523,7 +1843,8 @@ class _Server:
         need = max(0.0, lay.hp - free)               # health left after the carried damage
         carry = max(0.0, free - lay.hp) + (overflow if need > 0.0 else 0.0)
         work = lot.count * need / hp_rate
-        return _Job(release, deadline, work, work, lot, zone, pos, carry, prio)
+        return _Job(release, deadline, work, work, lot, zone, pos, carry, prio,
+                    killed=killed if need > 0.0 else 0.0)
 
     def push(self, job):
         self.seq += 1
@@ -1585,6 +1906,7 @@ class _Server:
             return
         lay = layer(lot.bloon, lot.moab_hp)
         kids = sum(k for _, k in lay.children) or 1
+        popped *= 1.0 - job.killed          # destroyed whole: no children
         for child, k in lay.children:
             speed = layer(child, lot.moab_hp).speed * lot.speed_mult
             child_lot = Lot(lot.path, t - pos / speed, child, popped * k, lot.rho * k, speed,
@@ -1740,28 +2062,50 @@ def _buffed_sources(p, buffs_here):
     """A profile's sources with support buffs applied: rate, pierce, camo,
     and damage_type - a Monkey Intelligence Bureau village lets its towers
     pop every bloon, an Alchemist's dip (_potion_buffs) the properties it
-    names ("props") and adds its bonus damage per tag."""
+    names ("props") and adds its bonus damage per tag.
+
+    A buff with a "share" under 1 (an Alchemist's dip, _dip_share) covers
+    only that share of the tower's shots: each source is split into a
+    dipped copy at that share of its rate and a plain one at the rest."""
+    dips = [b for b in buffs_here if b.get("share", 1.0) < 1.0]
+    steady = [b for b in buffs_here if b.get("share", 1.0) >= 1.0]
+    share = min(1.0, sum(b["share"] for b in dips))
+    if dips and share >= 1.0:
+        steady, dips = steady + dips, []
     out = []
     for s in p.sources:
-        shots, single, pierce, camo = s.shots, s.shots_single, s.pierce, s.camo
-        immune, bonus = s.immune, dict(s.bonus)
-        for b in buffs_here:
-            if b["kind"] == "rate" and b.get("value"):
-                shots /= b["value"]
-                single /= b["value"]
-            elif b["kind"] == "pierce" and b.get("value"):
-                pierce += b["value"]
-            elif b["kind"] == "camo":
-                camo = True
-            elif b["kind"] == "damage_type":
-                props = b.get("props")
-                immune = immune - frozenset(props) if props else frozenset()
-                for tag, extra in (b.get("bonus") or {}).items():
-                    cur = bonus.get(tag, {"mult": 1.0, "add": 0.0})
-                    bonus[tag] = {"mult": cur.get("mult", 1.0), "add": cur.get("add", 0.0) + extra.get("add", 0.0)}
-        out.append(Source(**{**s.__dict__, "shots": shots, "shots_single": single, "pierce": pierce, "camo": camo,
-                            "immune": immune, "bonus": bonus}))
+        full = _with_buffs(s, steady)
+        if not dips or share <= 0.0:
+            out.append(full)
+            continue
+        dipped = _with_buffs(full, dips)
+        out.append(Source(**{**full.__dict__, "shots": full.shots * (1.0 - share),
+                             "shots_single": full.shots_single * (1.0 - share)}))
+        out.append(Source(**{**dipped.__dict__, "name": dipped.name + " (dipped)", "shots": dipped.shots * share,
+                             "shots_single": dipped.shots_single * share}))
     return out
+
+
+def _with_buffs(s, buffs):
+    """Source s with these support buffs applied (see _buffed_sources)."""
+    shots, single, pierce, camo = s.shots, s.shots_single, s.pierce, s.camo
+    immune, bonus = s.immune, dict(s.bonus)
+    for b in buffs:
+        if b["kind"] == "rate" and b.get("value"):
+            shots /= b["value"]
+            single /= b["value"]
+        elif b["kind"] == "pierce" and b.get("value"):
+            pierce += b["value"]
+        elif b["kind"] == "camo":
+            camo = True
+        elif b["kind"] == "damage_type":
+            props = b.get("props")
+            immune = immune - frozenset(props) if props else frozenset()
+            for tag, extra in (b.get("bonus") or {}).items():
+                cur = bonus.get(tag, {"mult": 1.0, "add": 0.0})
+                bonus[tag] = {"mult": cur.get("mult", 1.0), "add": cur.get("add", 0.0) + extra.get("add", 0.0)}
+    return Source(**{**s.__dict__, "shots": shots, "shots_single": single, "pierce": pierce, "camo": camo,
+                     "immune": immune, "bonus": bonus})
 
 
 MAP_WIDE_NEEDS_SIGHT = ("sniper",)
@@ -1835,6 +2179,18 @@ def buff_covers(supporter, t, radius):
     return math.hypot(supporter.x - t.x, supporter.z - t.z) <= radius
 
 
+def _joined(main, parts):
+    """`main` with `parts` added to its Station.parts; the first of the parts
+    stands in for a missing main (None when there is nothing at all)."""
+    parts = [s for s in parts if s is not None]
+    if main is None:
+        if not parts:
+            return None
+        main, parts = parts[0], parts[1:]
+    main.parts = list(main.parts) + parts
+    return main
+
+
 def station_for(t, placed, track, sight=None, strict=False):
     """The Station of one Placed tower, or None when it does no damage or
     reaches no track. strict: STRICT_OWN_REACH towers reach only their own
@@ -1843,11 +2199,24 @@ def station_for(t, placed, track, sight=None, strict=False):
     centre stands inside the supporter's buff radius (buff_covers) and the
     buff's filters let its kind through (buff_reaches). sight(x, z, pts) ->
     visible mask, used for towers that need line of sight
-    (placement.needs_sight)."""
-    from .placement import needs_sight
+    (placement.needs_sight).
+
+    Bombs dropped under a plane (placement "drop": pineapples, Bomber Ace)
+    are stations of their own along the flight circle (_drop_parts)."""
     p = profile(t.kind, t.tiers)
     if p is None:
         return None
+    main = _station_for(t, placed, track, sight, strict)
+    if not any(s.placement == "drop" for s in p.sources):
+        return main
+    camo_paths = None if main is None else main.camo_paths
+    drops = [s for s in _buffed_sources(p, _buffs_at(t, placed)[0]) if s.placement == "drop"]
+    return _joined(main, _drop_parts(t, drops, p, track, camo_paths))
+
+
+def _buffs_at(t, placed):
+    """(support buffs that reach tower t, range multiplier) from the other
+    towers in `placed` (see station_for)."""
     buffs_here = []
     range_mult = 1.0
     for o in placed:
@@ -1860,9 +2229,23 @@ def station_for(t, placed, track, sight=None, strict=False):
             if b.get("global") or buff_covers(o, t, b.get("radius") or q.range):
                 if b["kind"] == "range" and b.get("value"):
                     range_mult = max(range_mult, 1.0 + b["value"])
+                elif b.get("shots"):
+                    buffs_here.append(dict(b, share=_dip_share(b, o, t, placed)))
                 else:
                     buffs_here.append(b)
-    sources = _buffed_sources(p, buffs_here)
+    return buffs_here, range_mult
+
+
+def _station_for(t, placed, track, sight=None, strict=False):
+    """station_for without the "drop" sources."""
+    from .placement import needs_sight
+    p = profile(t.kind, t.tiers)
+    if p is None:
+        return None
+    buffs_here, range_mult = _buffs_at(t, placed)
+    sources = [s for s in _buffed_sources(p, buffs_here) if s.placement != "drop"]
+    sources = [s for s in _rear_copies(sources, t, p.range * range_mult, track)
+               if s.shots > 0.0 or not s.rear_fov]
     if not sources:
         return None
     camo_paths = None
@@ -1895,6 +2278,8 @@ def station_for(t, placed, track, sight=None, strict=False):
         lent = intel_lent_circles(t, placed)
         own = [s for s in sources if not s.camo_shared]
         shared = [s for s in sources if s.camo_shared]
+        if not shared:
+            lent = ()      # a submerged sub (_surfaced_or_submerged): its pulse works around it only
         if own and shared and lent:
             # the submerged pulse (_pulse_at_tower) works around the sub
             # only; the borrowed circles are for its darts
@@ -1919,14 +2304,148 @@ def station_for(t, placed, track, sight=None, strict=False):
     local = [s for s in sources if s.placement != "global"]
     if is_global and glob and local:
         main = _make_station(t, glob, True, reach_radius, track, sight, camo_paths)
-        part = _make_station(t, local, False, reach_radius, track, sight, camo_paths,
-                             intel_lent_circles(t, placed) if t.kind in INTEL_KINDS else ())
-        if main is None:
-            return part
-        if part is not None:
-            main.parts = [part]
-        return main
-    return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent)
+        if t.kind in INTEL_KINDS:
+            parts = [_make_station(t, local, False, reach_radius, track, sight, camo_paths,
+                                   intel_lent_circles(t, placed))]
+        else:
+            parts = _local_stations(t, local, p, range_mult, track, sight, camo_paths)
+        return _joined(main, parts)
+    if is_global or lent:
+        return _make_station(t, sources, is_global, reach_radius, track, sight, camo_paths, lent)
+    return _joined(None, _local_stations(t, sources, p, range_mult, track, sight, camo_paths))
+
+
+def _local_stations(t, sources, p, range_mult, track, sight, camo_paths):
+    """Stations for a tower's local sources, one per reach (_zone_radius):
+    sources of the same reach share one station (one server), as all of a
+    tower's sources used to. A source without a reach of its own works in
+    the tower's: its range (with range buffs), or a plane's flight pattern
+    plus its range."""
+    base = (p.pattern_radius or 0.0) + p.range * range_mult
+    groups = {}
+    for s in sources:
+        if s.zone_radius is None:
+            radius = base
+        elif s.zone_fixed:
+            radius = s.zone_radius
+        else:
+            radius = s.zone_radius * range_mult
+        groups.setdefault(round(radius, 1), []).append(s)
+    return [_make_station(t, group, False, radius, track, sight, camo_paths)
+            for radius, group in sorted(groups.items(), reverse=True)]
+
+
+# How far from a route's centre line a plane still counts as "over the
+# track" for CheckAirUnitOverTrackModel (Bomber Ace). The maps' own track
+# areas (data/map_geometry, areas of type "track") are narrow strips around
+# the bloon path: the median distance from the path to their edge measured
+# 2.4 (Cubism) to 9.1 (Dark Path), about 5 on most maps (Monkey Meadow 5.0,
+# Logs 4.4, Bazaar 4.3, Peninsula 4.9, Skates 5.3; 2026-11-12).
+OVER_TRACK_HALF_WIDTH = 5.0
+
+
+def _flight_circle(t, radius):
+    """(x, z) points every TRACK_STEP along the circle a plane flies around
+    tower t (the model's flight pattern: Profile.pattern_radius)."""
+    n = max(24, int(math.ceil(2.0 * math.pi * radius / TRACK_STEP)))
+    ang = np.arange(n) * (2.0 * math.pi / n)
+    return np.stack([t.x + radius * np.cos(ang), t.z + radius * np.sin(ang)], axis=1)
+
+
+def _runs(flags):
+    """Lengths (in points) of the runs of True in a circular bool array."""
+    flags = np.asarray(flags, bool)
+    if flags.all():
+        return [len(flags)]
+    start = int(np.argmin(flags))           # begin at a False point, so no run wraps round
+    rolled = np.roll(flags, -start)
+    runs, n = [], 0
+    for f in rolled:
+        if f:
+            n += 1
+        elif n:
+            runs.append(n)
+            n = 0
+    if n:
+        runs.append(n)
+    return runs
+
+
+def _drop_share(src, circle, track, speed):
+    """(share of its full rate a "drop" source keeps, bool mask of the circle
+    points its bombs fall from) for a plane flying `circle` at `speed`.
+
+    Pineapples fall wherever the plane is: a bomb counts when it falls
+    within its blast radius of the track, so the share is the part of the
+    circle that close to it.
+
+    A Bomber Ace fires only while the plane is over the track
+    (src.over_track_only). Its weapon still waits `cooldown` seconds between
+    volleys, so it does not fire for the share of TIME spent over the track:
+    each pass over the track (a run of circle points within
+    OVER_TRACK_HALF_WIDTH of it) gets one volley when the plane arrives
+    (the weapon has reloaded during the flight in between), plus one more
+    for every cooldown the pass lasts. The share is those volleys per lap
+    against the lap time over the cooldown (one volley per cooldown when
+    the whole circle lies on the track). A circle of radius 40 at speed 60
+    takes 4.2 s; crossing one straight lane twice gives 2 volleys a lap
+    against 3.5 at full rate."""
+    if src.over_track_only:
+        over = track.near_track(circle, OVER_TRACK_HALF_WIDTH)
+        step = float(np.hypot(*(circle[1] - circle[0])))      # flight between two circle points
+        lap = step * len(circle) / speed if speed > 0 else 0.0
+        if lap <= 0.0 or src.cooldown <= 0.0:
+            return float(over.mean()), over      # no speed known: the share of time over the track
+        volleys = sum(1 + math.floor(n * step / speed / src.cooldown) for n in _runs(over))
+        return min(1.0, volleys * src.cooldown / lap), over
+    near = track.near_track(circle, max(src.blast, OVER_TRACK_HALF_WIDTH))
+    return float(near.mean()), near
+
+
+def _drop_parts(t, drops, p, track, camo_paths):
+    """Stations for the "drop" sources of tower t (profile p): one per kind
+    of drop (over-track or not, blast radius), each covering the track
+    within the blast radius of the circle points its bombs fall from, with
+    the sources' rate cut to the share that falls there (_drop_share)."""
+    radius = p.pattern_radius or p.range
+    circle = _flight_circle(t, radius)
+    groups = {}
+    for s in drops:
+        groups.setdefault((s.over_track_only, s.blast, s.cooldown), []).append(s)
+    out = []
+    for group in groups.values():
+        share, falls = _drop_share(group[0], circle, track, p.flight_speed)
+        if share <= 0.0 or not falls.any():
+            continue
+        blast = max(group[0].blast, OVER_TRACK_HALF_WIDTH)
+        discs = tuple((float(x), float(z), blast) for x, z in circle[falls])
+        sources = [Source(**{**s.__dict__, "shots": s.shots * share, "shots_single": s.shots_single * share})
+                   for s in group]
+        st = _make_station(t, sources, False, 0.0, track, None, camo_paths, discs)
+        if st is not None:
+            out.append(st)
+    return out
+
+
+def _rear_copies(sources, t, radius, track):
+    """sources with each Buccaneer rear shot (Source.rear_fov) cut to the
+    share of the time a second target stands behind the boat: the share of
+    the covered track with more track in the cone straight behind the boat
+    (Track.behind_share; the game's FilterTargetAngleFilterModel, 90 degrees).
+    A boat on a shore with the lane on one side gets no rear shots; one
+    between two lanes keeps them (docs/model_audit_military.md M5: "Can
+    shoot a second copy of Dart at 180 degrees from first Dart if bloons
+    are detected behind", fandom:Grape_Shot_(BTD6))."""
+    shares = {}
+    out = []
+    for s in sources:
+        if s.rear_fov:
+            if s.rear_fov not in shares:
+                shares[s.rear_fov] = track.behind_share(t.x, t.z, radius, s.rear_fov)
+            share = shares[s.rear_fov]
+            s = Source(**{**s.__dict__, "shots": s.shots * share, "shots_single": s.shots_single * share})
+        out.append(s)
+    return out
 
 
 def intel_lent_circles(t, placed):

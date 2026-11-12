@@ -26,12 +26,19 @@ from btd6bot import dps_model as D  # noqa: E402
 
 def test_export_marks_advanced_intel_only():
     """The flag sits on the sub from Advanced Intel up, on nothing else."""
-    for tiers in ((2, 0, 0), (2, 0, 3), (3, 0, 2), (5, 2, 0)):
-        # the darts are shared-camo; from 3-x-x the submerge attack (which
-        # sees camo on its own) stands beside them
+    for tiers in ((2, 0, 0), (2, 0, 3)):
+        # the darts are shared-camo
         sources = D.profile("sub", tiers).sources
         assert any(s.camo_shared and not s.camo for s in sources), tiers
         assert not any(s.camo_shared and s.camo for s in sources), tiers
+    for tiers in ((3, 0, 2), (5, 2, 0)):
+        # The export still flags the darts from 3-x-x on, but a submerged sub
+        # throws no darts (dps_model._surfaced_or_submerged, 2026-11-12;
+        # docs/model_audit_military.md M12): only the submerged attack, which
+        # sees camo on its own, is a source.
+        darts = next(a for a in D.crosspath("sub", tiers)["attacks"] if a["name"] == "Attack")
+        assert darts.get("camo_shared"), tiers
+        assert not any(s.camo_shared for s in D.profile("sub", tiers).sources), tiers
     for tiers in ((0, 0, 0), (1, 0, 0), (0, 2, 0), (0, 0, 4)):
         assert not any(s.camo_shared for s in D.profile("sub", tiers).sources), tiers
     for kind in ("dart", "ninja", "sniper", "druid", "alchemist"):

@@ -88,9 +88,11 @@ log = logging.getLogger("export_attacks")
 
 ROOT = TOOLS.parent
 OUT_FILE = dsm.OUT_DIR / "attacks.json"
-EXPORT_VERSION = 3   # 2: "camo_shared" on an attack whose camo filter defers to the shared range
+EXPORT_VERSION = 4   # 2: "camo_shared" on an attack whose camo filter defers to the shared range
                      # 3: "once" on an interval spawn that emits a single time, "sector" on an
                      #    attack that only targets inside part of the circle (Abyss Dweller)
+                     # 4: "target_fov" on a weapon that needs a target in a cone (a Buccaneer's
+                     #    rear shot), "potion" (shots / lifespan) on an Alchemist potion
 
 # Bloon properties (BloonProperties flags) that damage types are immune to,
 # in the five names of normal play; "Immune"/"Glass" are event mechanics.
@@ -411,6 +413,19 @@ class AttackExporter:
                     return v
         return 1.0
 
+    def potion(self, b):
+        """An Alchemist potion thrown at another tower (Add<Potion>
+        ToProjectileModel: Acidic Mixture Dip, Berserker Brew): how long it
+        lasts on that tower. shots: the buffed tower's shots it lasts (the
+        *CheckModel's maxCount: 10 for the dip, 12 at x-2-x, 25 / 40 for the
+        brews; 9,999,999 with Permanent Brew); lifespan: seconds (brews;
+        -1 or absent = no time limit). The type itself stays listed in
+        "other", where dps_model looks for potions."""
+        shots = max((num(tb.get("maxCount")) for tb in objs(b.get("towerBehaviors"))
+                     if tb.type.endswith("CheckModel")), default=0.0)
+        life = num(b.get("lifespan"))
+        return clean({"shots": shots or None, "lifespan": life if life > 0 else None})
+
     def projectile(self, p, depth=0):
         """One ProjectileModel and everything it spawns (see the module
         docstring for the fields).
@@ -511,6 +526,8 @@ class AttackExporter:
             elif not t.startswith(dsm.COSMETIC) and not any(c in t for c in dsm.COSMETIC) and t not in QUIET_TYPES:
                 self.uninterpreted[t] += 1
                 out.setdefault("other", []).append(t)
+                if t.startswith("Add") and t.endswith("ToProjectileModel"):
+                    out["potion"] = self.potion(b)
         bonus, conditional = self.bonuses(behaviors)
         out.update({
             "motion": motion,
@@ -579,7 +596,10 @@ class AttackExporter:
         max_subtowers: SubTowerFilterModel cap on sub-towers alive;
         projectile_limit: LimitProjectileModel cap on its projectiles alive;
         over_track_only: CheckAirUnitOverTrackModel - fires only while its
-            aircraft is over the track."""
+            aircraft is over the track;
+        target_fov: FilterTargetAngleFilterModel - degrees of the circle
+            (around the direction it fires in) where it needs a target:
+            a Buccaneer's rear shot, 90 degrees behind the boat."""
         out = {"name": short_name(w), "rate": num(w.get("rate")),
                "count": self.emission_count(w.get("emission"))}
         emission = w.get("emission")
@@ -613,6 +633,8 @@ class AttackExporter:
                 out["projectile_limit"] = num(b.get("limit"))
             elif b.type == "CheckAirUnitOverTrackModel":
                 out["over_track_only"] = True
+            elif b.type == "FilterTargetAngleFilterModel":
+                out["target_fov"] = num(b.get("fieldOfView"))
         p = w.get("projectile")
         out["projectile"] = self.projectile(p, depth) if isinstance(p, dsm.Obj) else None
         return clean(out)

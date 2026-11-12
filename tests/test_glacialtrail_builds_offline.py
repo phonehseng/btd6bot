@@ -91,9 +91,17 @@ APOP_SAMPLES = 6                                       # random windows per roun
 # packed group (tests/test_druid_vine_one_bloon_offline.py); the two
 # druids count for less and Medium's worst is R36 1.37, Reverse's R36 1.34
 # (Easy R27 2.48). The floors hold those numbers.
+# Phase 1 of docs/model_fix_plan.md (2026-11-12: the damage model's
+# over-credits) rates the same builds lower: the Druid of the Jungle's
+# brambles no longer pop whole bloons with the vine's overflow, and Spiked
+# Mines explode once and cannot hurt black bloons. Worst rounds then:
+# medium easy 1.45 (R21, was held to 2.0), medium 0.81 and reverse 0.75
+# (R36, held to 1.3), ABR 1.02 (R45, held to 1.6). The builds are unchanged
+# (they are for the optimizer to redo); each floor is today's worst less a
+# little.
 BUILDS = {
-    "glacialtrail_medium": [("easy", 2.0), ("medium", 1.3), ("reverse", 1.3)],
-    "glacialtrail_abr": [("abr", 1.6)],     # 1.70 at R34 once the druid vine takes one bloon a grab (2026-11-10)
+    "glacialtrail_medium": [("easy", 1.4), ("medium", 0.77), ("reverse", 0.7)],
+    "glacialtrail_abr": [("abr", 0.97)],    # 1.70 at R34 once the druid vine takes one bloon a grab (2026-11-10)
     # 0.97 at R33 when written (2026-11-10): every tower awake, the spike at
     # 3-0-0 with its $9,500 Spiked Mines tier bought during that round - a
     # poor game's cash by round 33 ($23.3k) pays two 3-2-0 helis and a 3-0-0
