@@ -352,6 +352,7 @@ class Profile:
     pattern_radius: float = 0.0      # a plane's flight circle (Monkey Ace)
     own_radius: float = 0.0          # circle swept around the tower itself (Glaive Lord's glaives)
     flight_speed: float = 0.0        # a plane's speed along its flight circle (air_unit.speed)
+    fire_rate: float = 0.0           # weapon shots a second of its own attacks (an Alchemist dip's budget)
 
 
 # The bloon properties a damage type can be unable to pop (Layer.immune).
@@ -398,9 +399,42 @@ def _potion_buffs(entry):
             props = sorted({t.lower() for t in bonus if t.lower() in IMMUNITIES})
             if not props and not bonus:
                 continue
+            potion = p.get("potion") or {}
             out.append({"kind": "damage_type", "props": props, "bonus": bonus,
-                        "radius": a.get("range") or entry.get("range"), "name": marks[0]})
+                        "radius": a.get("range") or entry.get("range"), "name": marks[0],
+                        "shots": potion.get("shots"), "every": w.get("rate")})
     return out
+
+
+# A potion that lasts at least this many of the buffed tower's shots never
+# runs out: Permanent Brew's dip and brew carry 9,999,999.
+PERMANENT_POTION_SHOTS = 1e6
+
+
+def _dip_share(b, supporter, t, placed):
+    """Share of tower t's shots an Alchemist's Acidic Mixture Dip (potion
+    buff b of `supporter`) covers.
+
+    The dip is not a permanent aura: the Alchemist throws it at ONE tower
+    every `every` seconds (10 s) and it lasts `shots` of that tower's shots
+    (10, 12 at x-2-x: AcidicMixtureCheckModel.maxCount, the export's
+    "potion"; fandom:Acidic_Mixture_Dip). So an Alchemist dips shots / every
+    shots a second, shared by the attacking towers in its range, against t's
+    own shots a second (Profile.fire_rate). It is permanent only with
+    Permanent Brew (5-x-x: shots 9,999,999). Read as permanent, the dip let
+    a Bloonjitsu's 11.5 shots/s all pop lead where about one a second does
+    (docs/model_audit_magic.md, finding 2)."""
+    shots, every = b.get("shots"), b.get("every")
+    if not shots or shots >= PERMANENT_POTION_SHOTS or not every:
+        return 1.0
+    radius = b.get("radius") or 0.0
+    takers = [o for o in placed if o.tid != supporter.tid and o.kind != "alchemist"
+              and (profile(o.kind, o.tiers) or Profile("", (), 0.0, False, [])).sources
+              and buff_covers(supporter, o, radius)]
+    rate = profile(t.kind, t.tiers).fire_rate
+    if rate <= 0.0:
+        return 1.0
+    return min(1.0, shots / every / max(1, len(takers)) / rate)
 
 
 def _target_only(p):
@@ -904,7 +938,10 @@ def profile(kind, tiers):
                    buffs=list(entry.get("buffs", [])) + _potion_buffs(entry),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
                    pattern_radius=pattern, own_radius=own,
-                   flight_speed=float((entry.get("air_unit") or {}).get("speed") or 0.0))
+                   flight_speed=float((entry.get("air_unit") or {}).get("speed") or 0.0),
+                   fire_rate=sum(w.get("burst", 1.0) / max(w.get("rate", 1.0), w.get("rate_min", 0.0), 1e-3)
+                                 for a in entry.get("attacks", []) for w in a.get("weapons", [])
+                                 if not w.get("triggered") and w.get("projectile")))
 
 
 # ===========================================================================
@@ -2003,28 +2040,50 @@ def _buffed_sources(p, buffs_here):
     """A profile's sources with support buffs applied: rate, pierce, camo,
     and damage_type - a Monkey Intelligence Bureau village lets its towers
     pop every bloon, an Alchemist's dip (_potion_buffs) the properties it
-    names ("props") and adds its bonus damage per tag."""
+    names ("props") and adds its bonus damage per tag.
+
+    A buff with a "share" under 1 (an Alchemist's dip, _dip_share) covers
+    only that share of the tower's shots: each source is split into a
+    dipped copy at that share of its rate and a plain one at the rest."""
+    dips = [b for b in buffs_here if b.get("share", 1.0) < 1.0]
+    steady = [b for b in buffs_here if b.get("share", 1.0) >= 1.0]
+    share = min(1.0, sum(b["share"] for b in dips))
+    if dips and share >= 1.0:
+        steady, dips = steady + dips, []
     out = []
     for s in p.sources:
-        shots, single, pierce, camo = s.shots, s.shots_single, s.pierce, s.camo
-        immune, bonus = s.immune, dict(s.bonus)
-        for b in buffs_here:
-            if b["kind"] == "rate" and b.get("value"):
-                shots /= b["value"]
-                single /= b["value"]
-            elif b["kind"] == "pierce" and b.get("value"):
-                pierce += b["value"]
-            elif b["kind"] == "camo":
-                camo = True
-            elif b["kind"] == "damage_type":
-                props = b.get("props")
-                immune = immune - frozenset(props) if props else frozenset()
-                for tag, extra in (b.get("bonus") or {}).items():
-                    cur = bonus.get(tag, {"mult": 1.0, "add": 0.0})
-                    bonus[tag] = {"mult": cur.get("mult", 1.0), "add": cur.get("add", 0.0) + extra.get("add", 0.0)}
-        out.append(Source(**{**s.__dict__, "shots": shots, "shots_single": single, "pierce": pierce, "camo": camo,
-                            "immune": immune, "bonus": bonus}))
+        full = _with_buffs(s, steady)
+        if not dips or share <= 0.0:
+            out.append(full)
+            continue
+        dipped = _with_buffs(full, dips)
+        out.append(Source(**{**full.__dict__, "shots": full.shots * (1.0 - share),
+                             "shots_single": full.shots_single * (1.0 - share)}))
+        out.append(Source(**{**dipped.__dict__, "name": dipped.name + " (dipped)", "shots": dipped.shots * share,
+                             "shots_single": dipped.shots_single * share}))
     return out
+
+
+def _with_buffs(s, buffs):
+    """Source s with these support buffs applied (see _buffed_sources)."""
+    shots, single, pierce, camo = s.shots, s.shots_single, s.pierce, s.camo
+    immune, bonus = s.immune, dict(s.bonus)
+    for b in buffs:
+        if b["kind"] == "rate" and b.get("value"):
+            shots /= b["value"]
+            single /= b["value"]
+        elif b["kind"] == "pierce" and b.get("value"):
+            pierce += b["value"]
+        elif b["kind"] == "camo":
+            camo = True
+        elif b["kind"] == "damage_type":
+            props = b.get("props")
+            immune = immune - frozenset(props) if props else frozenset()
+            for tag, extra in (b.get("bonus") or {}).items():
+                cur = bonus.get(tag, {"mult": 1.0, "add": 0.0})
+                bonus[tag] = {"mult": cur.get("mult", 1.0), "add": cur.get("add", 0.0) + extra.get("add", 0.0)}
+    return Source(**{**s.__dict__, "shots": shots, "shots_single": single, "pierce": pierce, "camo": camo,
+                     "immune": immune, "bonus": bonus})
 
 
 MAP_WIDE_NEEDS_SIGHT = ("sniper",)
@@ -2148,6 +2207,8 @@ def _buffs_at(t, placed):
             if b.get("global") or buff_covers(o, t, b.get("radius") or q.range):
                 if b["kind"] == "range" and b.get("value"):
                     range_mult = max(range_mult, 1.0 + b["value"])
+                elif b.get("shots"):
+                    buffs_here.append(dict(b, share=_dip_share(b, o, t, placed)))
                 else:
                     buffs_here.append(b)
     return buffs_here, range_mult
