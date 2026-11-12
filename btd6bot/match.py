@@ -1404,9 +1404,19 @@ class Match:
         if self._carried is None or old_round is None:
             return
         try:
+            before = getattr(self._carried, "turned_to", None)
             self._carried.round_advanced(old_round, new_round, self.g.towers)
+            self._gears_turned(before)
         except Exception:
             log.exception("moving towers with the ground failed - carrying on")
+
+    def _gears_turned(self, before):
+        """Tell the executor when the gears turned (Executor.gears_turned):
+        what it judged on gear ground holds no more."""
+        if getattr(self._carried, "rotors", None) and getattr(self._carried, "turned_to", None) != before:
+            turned = getattr(self.ex, "gears_turned", None)
+            if turned is not None:
+                turned()
 
     def _follow_round_end(self, rnd):
         """Turn the gears (Geared) as soon as the round `rnd` that was being
@@ -1425,7 +1435,9 @@ class Match:
             return          # round rnd has not been seen running: nothing ended
         self._played_round = None
         try:
+            before = self._carried.turned_to
             self._carried.round_ended(rnd, self.g.towers)
+            self._gears_turned(before)
         except Exception:
             log.exception("moving towers with the ground failed - carrying on")
 

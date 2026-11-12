@@ -1430,6 +1430,7 @@ def grids_for(model, removed=(), now_round=None, last_round=None, pose_round=Non
                           for c in dyn.panes]
         grids["platforms"] = _platform_info(geom, proj)
         grids["platform_ground"] = _platform_ground(grids["platforms"], proj)
+        grids["rotor_ground"] = _rotor_ground(dyn, areas_by_id, proj)
         grids["pose_round"] = pose_round
         grids["steady"] = {}
         _GRIDS_CACHE[key] = grids
@@ -1474,6 +1475,32 @@ def _platform_ground(platforms, proj):
             for pose in plat["mover"]["state_poses"].values():
                 out |= _poly_mask(_pose_polygons(area["polygons"], pose), proj)
     return out
+
+
+def _rotor_ground(dyn, areas_by_id, proj):
+    """Bool grid of the cells turning ground (RotateAreaAction: Geared's
+    gears) covers in any of its poses, or None on maps without it."""
+    out = None
+    for mover in dyn.movers:
+        if mover["type"] != "RotateAreaAction":
+            continue
+        for aid in mover["areas"]:
+            area = areas_by_id.get(aid)
+            if area is None or area["type"] in SOLID_TYPES:
+                continue   # a turning obstacle carries no towers
+            here = _poly_mask(area["polygons"], proj)
+            for pose in mover["poses"]:
+                here |= _poly_mask(_pose_polygons(area["polygons"], pose), proj)
+            out = here if out is None else out | here
+    return out
+
+
+def rotor_ground(model):
+    """Bool grid of the cells Geared's gears cover at some time, or None on
+    maps without turning ground. A refusal there, or a spot judged there,
+    holds only for the gear's pose at that moment."""
+    grids = grids_for(model)
+    return grids.get("rotor_ground") if grids else None
 
 
 def platform_ground(model):

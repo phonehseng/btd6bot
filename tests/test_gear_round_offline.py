@@ -8,6 +8,10 @@ CarriedTowers turned its remembered spot once more when the round was read;
 a round going back after a misread never turned the gears back. The match
 now turns the gears when it sees the round end (the Play button is back),
 and CarriedTowers counts turns from the round its spots are turned to.
+Item 21: `blocked` and `failed_spots` were never moved when the gears
+turned, and refusals on gear ground were learned for good, so the gear
+ground left for towers shrank all game. Executor.gears_turned forgets what
+was judged on gear ground, and _learn_blocked leaves gear ground alone.
 Offline: the real Geared geometry, fake towers.
 Run: python tests/test_gear_round_offline.py"""
 import math
@@ -72,6 +76,7 @@ def test_match_turns_the_gears_when_the_play_button_comes_back():
     a = Placed("a", "ace", *_spot(c, big, 0.0, 60.0))
     m = M.Match.__new__(M.Match)
     m._carried, m.g, m._played_round = c, SimpleNamespace(towers={"a": a}), None
+    m.ex = SimpleNamespace(gears_turned=lambda: None)
     c.round_advanced(2, 3, m.g.towers)                 # 45 degrees, round 3 read
     m._in_round = False
     m._follow_round_end(3)                             # before Play: nothing ended
@@ -83,6 +88,60 @@ def test_match_turns_the_gears_when_the_play_button_comes_back():
     assert abs(_angle(c, big, a) - 90.0) < 0.5 and c.turned_to == 4
     m._follow_round_end(3)                             # once only
     assert abs(_angle(c, big, a) - 90.0) < 0.5
+
+
+def _executor():
+    import numpy as np
+    import test_achievement_strats_offline as F
+    from btd6bot import layout as L, strategy as S
+    from btd6bot.maplearn import MapModel
+    geom = mapgeom.load("Geared")
+    m = mapgeom.apply(MapModel("Geared", L.get(1920, 1200)["playfield"]), geom)
+    m.refused = {}
+    ex = S.Executor(F.FakeGame(), m, {"id": "t", "name": "t", "hero": None, "plan": []},
+                    "medium", F.full_account())
+    gear = mapgeom.rotor_ground(m)
+    ys, xs = np.nonzero(gear)
+    on = (int(xs[len(xs) // 2]), int(ys[len(ys) // 2]))
+    ys, xs = np.nonzero(~gear)          # (all of Geared's land is gear ground)
+    off = (int(xs[len(xs) // 2]), int(ys[len(ys) // 2]))
+    return ex, m, gear, on, off
+
+
+def test_gear_turn_forgets_what_was_judged_on_the_gears():
+    if mapgeom.load("Geared") is None:
+        return
+    ex, m, gear, on, off = _executor()
+    ex.failed_spots |= {("dart", *on), ("dart", *off)}
+    ex.blocked[on[1], on[0]] = ex.blocked[off[1], off[0]] = True
+    ex.gears_turned()
+    assert ex.failed_spots == {("dart", *off)}
+    assert not ex.blocked[on[1], on[0]] and ex.blocked[off[1], off[0]]
+
+
+def test_refusals_on_gear_ground_are_not_learned():
+    if mapgeom.load("Geared") is None:
+        return
+    ex, m, gear, on, off = _executor()
+    learned = []
+    m.refuse = lambda layer, cx, cy: learned.append((cx, cy))
+    ex._learn_blocked("dart", *on)
+    assert learned == []
+    ex._learn_blocked("dart", *off)
+    assert learned and learned[0] == off
+
+
+def test_match_tells_the_executor_when_the_gears_turn():
+    c = _carrier()
+    if c is None:
+        return
+    calls = []
+    m = M.Match.__new__(M.Match)
+    m._carried, m.g = c, SimpleNamespace(towers={})
+    m.ex = SimpleNamespace(gears_turned=lambda: calls.append(1))
+    m._follow_ground(3, 4)
+    m._follow_ground(4, 4)
+    assert calls == [1]
 
 
 if __name__ == "__main__":

@@ -1368,6 +1368,13 @@ class Executor:
                 log.info("spot (%d,%d) on platform ground refused - not learned (the platform "
                          "stands elsewhere this round)", cx, cy)
                 return
+            # Ground a gear turns over (Geared) changes with each turn: a
+            # refusal there, learned, would bar the cell in every pose for
+            # every later game (audit 2026-11-12: gear ground eroded).
+            ground = mapgeom.rotor_ground(self.m)
+            if ground is not None and 0 <= cy < ground.shape[0] and 0 <= cx < ground.shape[1]                     and ground[cy, cx]:
+                log.info("spot (%d,%d) on a gear refused - not learned (the gear turns)", cx, cy)
+                return
         except Exception:
             pass
         layers = self._refusal_layers(kind)
@@ -2211,7 +2218,26 @@ class Executor:
         own footprints come from their current spots, carried by the
         match: carried.CarriedTowers.)"""
         from . import mapgeom
-        ground = mapgeom.platform_ground(self.m)
+        self._ground_moved(mapgeom.platform_ground(self.m))
+
+    def gears_turned(self):
+        """Geared's gears turned (the match calls this after carried.
+        CarriedTowers turned the towers' spots): spots refused or avoided
+        on gear ground were judged in the old pose, so they are tried
+        again, and the footprints are blocked where the towers stand now.
+        Before, `blocked` and `failed_spots` kept every old judgement, and
+        the gear ground left for new towers shrank all game (audit
+        2026-11-12)."""
+        from . import mapgeom
+        try:
+            self._ground_moved(mapgeom.rotor_ground(self.m))
+        except Exception:
+            log.exception("forgetting refusals on the gears failed - carrying on")
+
+    def _ground_moved(self, ground):
+        """Forget the refusals and blocks judged on `ground` (bool grid of
+        moving ground, None: nothing to do) and block each tower's footprint
+        where it stands now."""
         if ground is None:
             return
         h, w = ground.shape
