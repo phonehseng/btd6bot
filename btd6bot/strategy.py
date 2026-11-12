@@ -1791,7 +1791,7 @@ class Executor:
         from . import placement as PL
         hero = self.g.hero if kind == "hero" else None
         valid = self._legal_cells(kind)
-        block = self._keep_off_scarce(kind, valid, self._blocked_for(kind))
+        block = self._keep_in_aim_reach(kind, valid, self._keep_off_scarce(kind, valid, self._blocked_for(kind)))
         far = self._far_from_at(step, block.shape)
         if far is not None:
             # a step with a researched spot falls back to cells round that
@@ -3394,6 +3394,52 @@ class Executor:
                      "short-range towers still need", kind, int((valid & scarce).sum()))
         return block | scarce
 
+    # A Dartling Gunner fires along the line to the cursor, which rests on the
+    # densest track point (match.densest_track_point), and its darts fly only
+    # so far (their reach in the damage model's profile, 162 units). A
+    # Dartling stands within this share of that reach of the point, so its
+    # fan still covers the track there. Last Resort Deflation (2026-11-12,
+    # case 20261112_164934): x2 stood 174 units from the point, popped
+    # nothing in 13 rounds, and its $2,860 went with the game.
+    DARTLING_AIM_SHARE = 0.75
+
+    def _dart_reach(self, kind):
+        """How far a `kind` tower's shots fly (world units, the longest
+        source reach of its base tiers in the damage model), or None."""
+        from . import dps_model as D
+        try:
+            prof = D.profile(kind, (0, 0, 0))
+        except Exception:  # the model's data missing must not stop placement
+            return None
+        reaches = [s.reach for s in (prof.sources if prof is not None else ()) if s.reach]
+        return max(reaches) if reaches else None
+
+    def _keep_in_aim_reach(self, kind, valid, block):
+        """`block` with the cells farther from the cursor's resting point
+        than DARTLING_AIM_SHARE of the darts' reach added, for a Dartling
+        that aims at the cursor (as long as that leaves a legal cell);
+        `block` itself for every other tower."""
+        if kind != "dartling" or valid is None:
+            return block
+        from . import placement as PL
+        from .match import densest_track_point
+        reach = self._dart_reach(kind)
+        point = densest_track_point(self.m)
+        if not reach or point is None:
+            return block
+        px, py = self.m.frac_to_cell(*point)
+        ys, xs = np.mgrid[0:block.shape[0], 0:block.shape[1]]
+        limit = reach * self.DARTLING_AIM_SHARE / PL.units_per_cell(self.m)    # in cells
+        far = (xs - px) ** 2 + (ys - py) ** 2 > limit * limit
+        if not (valid & ~block & ~far).any():
+            return block
+        logged = self.__dict__.setdefault("_aim_logged", set())
+        if kind not in logged:
+            logged.add(kind)
+            log.info("%s: kept within %.0f units of the aim point %.3f,%.3f (its darts fly %.0f)",
+                     kind, reach * self.DARTLING_AIM_SHARE, point[0], point[1], reach)
+        return block | far
+
     def _reaches_nothing(self, kind):
         """True when no legal cell for a new `kind` tower has the track in
         range now: an answer is then better bought as a kind that fits (a
@@ -3976,7 +4022,7 @@ class Executor:
             return []
         # cells are walked top row first, so without this a sniper takes the
         # scarce ground near the top of the map (Cargo's pier corner)
-        block = self._keep_off_scarce(kind, valid, self._blocked_for(kind))
+        block = self._keep_in_aim_reach(kind, valid, self._keep_off_scarce(kind, valid, self._blocked_for(kind)))
         ys, xs = np.nonzero(valid)
         out = []
         for cx, cy in zip(xs.tolist(), ys.tolist()):
