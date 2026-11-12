@@ -313,6 +313,9 @@ class Source:
     blast: float = 0.0
     over_track_only: bool = False
     cooldown: float = 0.0      # "drop": seconds between the weapon's volleys
+    pierce_cost: dict = field(default_factory=dict)   # extra pierce per hit, by bloon tag (_pierce_cost)
+    rear_fov: float = 0.0      # a Buccaneer's second shot behind the boat: degrees of its target cone
+                               # (0 = not such a shot; _rear_copies)
 
     def can_hit(self, lay):
         """Can this source damage this layer at all?"""
@@ -474,6 +477,50 @@ def _left_at_spot(carrier, lay):
     return lay.hp <= damage < rbe(lay.id)
 
 
+def _impact_pierce(p):
+    """Pierce of projectile p for counting its hits.
+
+    An impact projectile - one that bursts when its pierce runs out (an
+    "exhaust" spawn) - is capped at its maxPierce (the export's
+    "max_pierce"): the Monkey Sub's Airburst dart has pierce 2 but maxPierce
+    1, and the wiki gives it "1 impact" before it splits
+    (fandom:Airburst_Darts; docs/model_audit_military.md M4). Other
+    projectiles keep their pierce: what maxPierce means for them (Glue
+    Gunner globs carry 4 / 1) is not confirmed."""
+    pierce = max(1.0, p.get("pierce", 1.0))
+    cap = p.get("max_pierce")
+    if cap and cap < pierce and any(s.get("on") == "exhaust" for s in p.get("spawn", [])):
+        pierce = max(1.0, cap)
+    return pierce
+
+
+def _alternative_spawns(spawns):
+    """The spawns of a projectile, with "expire" spawns left out where the
+    same projectile is also spawned on "exhaust".
+
+    The two are alternatives: a projectile either uses up its pierce
+    (exhaust: it hit) or lives out its lifespan (expire: it missed), never
+    both. The model assumes projectiles never miss, so the exhaust one
+    stands. Counting both credited every Monkey Sub Airburst dart with two
+    bursts of splits (88% of a 2-0-4's crowd rating: docs/model_audit_
+    military.md M4) and every Spiked Mine with two explosions
+    (docs/model_audit_support_heroes.md S5: "Upon lifespan expiry, create
+    two instances of Explosion. Upon pierce expiry, create one instance" -
+    on a busy round the mine is exhausted)."""
+    on_exhaust = {(sp.get("projectile") or {}).get("name") for sp in spawns if sp.get("on") == "exhaust"}
+    return [sp for sp in spawns
+            if not (sp.get("on") == "expire" and (sp.get("projectile") or {}).get("name") in on_exhaust)]
+
+
+def _pierce_cost(p):
+    """{bloon tag ("" = every bloon): extra pierce a hit on it uses up} of
+    projectile p (CollideExtraPierceReductionModel, the export's
+    "extra_pierce_cost"). Frag Bombs' frags have pierce 2 and cost 1 more
+    per hit: one hit each, as the wiki gives them "1 pierce"
+    (fandom:Frag_Bombs_(BTD6); docs/model_audit_primary.md F11)."""
+    return {k: float(v) for k, v in (p.get("extra_pierce_cost") or {}).items() if v}
+
+
 def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, radial, travel, out, depth=0,
                         subtower_cap=MAX_SUBTOWERS, carrier=None):
     """Add the damage sources of projectile p (and what it spawns) to out.
@@ -493,7 +540,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
         out.append(Source(
             name=f"{attack.get('name')}>{p.get('name')}",
             shots=shots, shots_single=shots_single,
-            pierce=max(1.0, p.get("pierce", 1.0)),
+            pierce=_impact_pierce(p),
             damage=hit.get("amount", 0.0),
             immune=_immune_set(hit) & (_immune_set(dot) if dot else _immune_set(hit)),
             bonus=p.get("bonus") or {},
@@ -515,8 +562,10 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             blast=(p.get("radius") or 0.0) if placement == "drop" else 0.0,
             over_track_only=placement == "drop" and bool(attack.get("over_track_only")),
             cooldown=attack.get("cooldown", 0.0) if placement == "drop" else 0.0,
+            pierce_cost=_pierce_cost(p),
+            rear_fov=float(attack.get("rear_fov") or 0.0),
         ))
-    pierce = max(1.0, p.get("pierce", 1.0))
+    pierce = max(1.0, _impact_pierce(p) / (1.0 + _pierce_cost(p).get("", 0.0)))
     if "CollideOnlyWithTargetModel" in (p.get("other") or ()):
         # it touches the one bloon it grabbed: one contact, one spawn (a
         # vine's thorn patch), not CONTACTS_PER_CARRIER of its 9,999,999
@@ -526,7 +575,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
     contacts = min(pierce, CONTACTS_PER_CARRIER)
     contacts_single = min(pierce, _single_hits(p))
     life = p.get("lifespan") or 0.0
-    for s in p.get("spawn", []):
+    for s in _alternative_spawns(p.get("spawn", [])):
         n = s.get("count", 1.0)
         sub = s.get("projectile")
         on = s.get("on")
@@ -718,11 +767,33 @@ def _flatten_attack(a, out, multiplier=1.0, depth=0, parent_camo=True, follows=F
             extra = (c["damage"] - p["damage"]["amount"]) / max(c["every"], 1.0)
             p = dict(p, damage=dict(p["damage"], amount=p["damage"]["amount"] + max(0.0, extra)))
         crowd, single = shots * share_crowd, shots * share_single
-        _flatten_projectile(p, crowd, single, a, camo_chain and parent_camo, placement, radial, travel, out, depth,
-                            subtower_cap=cap)
+        if w.get("triggered"):
+            # A weapon fired by another one (FireWhenAlternateWeaponIsReady:
+            # every such weapon in the export is a Buccaneer's "Secondary"
+            # dart, grape shot or cannon) shoots a second copy at 180 degrees
+            # "if bloons are detected behind" (fandom:Grape_Shot_(BTD6),
+            # fandom:Destroyer_(BTD6)). It used to fire at its trigger's full
+            # rate; station_for now keeps it only where the boat's range
+            # holds track behind it as well, inside the cone its target must
+            # stand in (the export's "target_fov": 90 degrees; _rear_copies,
+            # docs/model_audit_military.md M5).
+            a = dict(a, rear_fov=w.get("target_fov") or 180.0)
+        main_share = 1.0
+        if w.get("alternate"):
+            # every `every`-th shot fires the alternate projectile INSTEAD of
+            # the normal one: Recursive Cluster's "every second shot,
+            # replaced with Recursive Bomb" (fandom:Recursive_Cluster), the
+            # Spectre's barrage that "alternates between launching Dart and
+            # Shell" (fandom:Spectre_(BTD6)), a Ninja's every-4th Flash Bomb.
+            # Both used to be counted at the normal shot's full rate
+            # (docs/model_audit_primary.md F9, military M8).
+            main_share = 1.0 - 1.0 / max(w["alternate"].get("every", 1.0), 1.0)
+        _flatten_projectile(p, crowd * main_share, single * main_share, a, camo_chain and parent_camo, placement,
+                            radial, travel, out, depth, subtower_cap=cap)
         if w.get("alternate"):
             alt = w["alternate"]
-            k = alt.get("count", 1.0) / max(alt.get("every", 1.0), 1.0)
+            # the replaced shots fire the alternate's own emission instead of the weapon's
+            k = alt.get("count", 1.0) / max(w.get("count", 1.0), 1.0) / max(alt.get("every", 1.0), 1.0)
             _flatten_projectile(alt["projectile"], crowd * k, single * k, a, camo_chain, placement, radial, travel,
                                 out, depth)
         if w.get("extra_projectile"):
@@ -758,6 +829,24 @@ def _pulse_at_tower(a, entry):
     return dict(a, unbounded="self", own_radius=radius)
 
 
+SUBMERGED_PREFIX = "SubmergedAttack"
+
+
+def _surfaced_or_submerged(entry):
+    """The attacks a tower uses as the bot plays it.
+
+    A Monkey Sub with Submerge and Support (3-x-x and up) has a submerged
+    attack (the export's "SubmergedAttack..." pulse) beside its darts.
+    Upgrading sets Submerge targeting by itself and the bot never changes
+    it, and "while set on Submerge targeting, it cannot attack with darts"
+    (fandom:Submerge_and_Support_(BTD6), fandom:Bloontonium_Reactor). The
+    darts were counted on top of the pulse (docs/model_audit_military.md
+    M12); now such a sub has only its submerged attacks."""
+    attacks = entry.get("attacks", [])
+    submerged = [a for a in attacks if str(a.get("name", "")).startswith(SUBMERGED_PREFIX)]
+    return submerged or attacks
+
+
 @lru_cache(maxsize=None)
 def profile(kind, tiers):
     """Profile of a tower crosspath (None when the game has no such model)."""
@@ -767,7 +856,7 @@ def profile(kind, tiers):
     sources = []
     aim_bound = False
     follows = (entry.get("air_unit") or {}).get("movement") == "follows"
-    entry = dict(entry, attacks=[_pulse_at_tower(a, entry) for a in entry.get("attacks", [])])
+    entry = dict(entry, attacks=[_pulse_at_tower(a, entry) for a in _surfaced_or_submerged(entry)])
     for a in entry.get("attacks", []):
         if a.get("targeting") in ("point", "cursor") and any(
                 (w.get("projectile") or {}) for w in a.get("weapons", [])):
@@ -1191,6 +1280,30 @@ class Track:
         d2 = ((pts[:, None, 0] - hit[None, :, 0]) ** 2 + (pts[:, None, 1] - hit[None, :, 1]) ** 2).min(axis=1)
         return d2 <= radius * radius
 
+    def behind_share(self, x, z, radius, fov=180.0):
+        """Share of the hittable track within `radius` of (x, z) that has more
+        track on the far side of the tower: seen from the tower, some other
+        covered point lies inside the cone of `fov` degrees pointing straight
+        away from it (behind the tower when it faces that point). 0 when the
+        circle covers no track. Used for a Buccaneer's rear shot
+        (_rear_copies), with bloons all along the covered track."""
+        pts = np.concatenate([p["xyz"][p["hittable"], :2] for p in self.paths])
+        d2 = (pts[:, 0] - x) ** 2 + (pts[:, 1] - z) ** 2
+        pts = pts[d2 <= radius * radius]
+        if not len(pts):
+            return 0.0
+        bins = 72                                   # 5-degree sectors
+        ang = np.arctan2(pts[:, 1] - z, pts[:, 0] - x)
+        idx = ((ang + math.pi) / (2.0 * math.pi) * bins).astype(int) % bins
+        count = np.bincount(idx, minlength=bins)
+        occupied = count > 0
+        half_cone = int(round(fov / 2.0 / (360.0 / bins)))
+        behind = np.zeros(bins, bool)
+        for i in range(bins):
+            far = [(i + bins // 2 + k) % bins for k in range(-half_cone, half_cone + 1)]
+            behind[i] = occupied[far].any()
+        return float(count[behind].sum() / count.sum())
+
     def total_length(self):
         """Hittable length of each path (world units)."""
         return [float(np.sum(np.diff(p["dist"])[p["hittable"][:-1]])) for p in self.paths]
@@ -1437,10 +1550,16 @@ def _hit_rate(src, lay, rho, zone):
         shots *= zone.angular if zone is not None else 1.0
     if src.placement == "air":
         shots *= AIR_PATTERN_EFFICIENCY
+    pierce = src.pierce
+    if src.pierce_cost:
+        # every hit on this layer uses up 1 + its extra cost (_pierce_cost);
+        # the first hit is always made
+        cost = sum(c for tag, c in src.pierce_cost.items() if tag == "" or tag in lay.tags)
+        pierce = max(1.0, pierce / (1.0 + cost))
     if src.off_struck:
-        per_shot = min(src.pierce, met)
+        per_shot = min(pierce, met)
     else:
-        per_shot = min(src.pierce, max(met, src.single_hits))
+        per_shot = min(pierce, max(met, src.single_hits))
     return shots * per_shot
 
 
@@ -2015,6 +2134,8 @@ def _station_for(t, placed, track, sight=None, strict=False):
         return None
     buffs_here, range_mult = _buffs_at(t, placed)
     sources = [s for s in _buffed_sources(p, buffs_here) if s.placement != "drop"]
+    sources = [s for s in _rear_copies(sources, t, p.range * range_mult, track)
+               if s.shots > 0.0 or not s.rear_fov]
     if not sources:
         return None
     camo_paths = None
@@ -2047,6 +2168,8 @@ def _station_for(t, placed, track, sight=None, strict=False):
         lent = intel_lent_circles(t, placed)
         own = [s for s in sources if not s.camo_shared]
         shared = [s for s in sources if s.camo_shared]
+        if not shared:
+            lent = ()      # a submerged sub (_surfaced_or_submerged): its pulse works around it only
         if own and shared and lent:
             # the submerged pulse (_pulse_at_tower) works around the sub
             # only; the borrowed circles are for its darts
@@ -2170,6 +2293,27 @@ def _drop_parts(t, drops, p, track, camo_paths):
         st = _make_station(t, sources, False, 0.0, track, None, camo_paths, discs)
         if st is not None:
             out.append(st)
+    return out
+
+
+def _rear_copies(sources, t, radius, track):
+    """sources with each Buccaneer rear shot (Source.rear_fov) cut to the
+    share of the time a second target stands behind the boat: the share of
+    the covered track with more track in the cone straight behind the boat
+    (Track.behind_share; the game's FilterTargetAngleFilterModel, 90 degrees).
+    A boat on a shore with the lane on one side gets no rear shots; one
+    between two lanes keeps them (docs/model_audit_military.md M5: "Can
+    shoot a second copy of Dart at 180 degrees from first Dart if bloons
+    are detected behind", fandom:Grape_Shot_(BTD6))."""
+    shares = {}
+    out = []
+    for s in sources:
+        if s.rear_fov:
+            if s.rear_fov not in shares:
+                shares[s.rear_fov] = track.behind_share(t.x, t.z, radius, s.rear_fov)
+            share = shares[s.rear_fov]
+            s = Source(**{**s.__dict__, "shots": s.shots * share, "shots_single": s.shots_single * share})
+        out.append(s)
     return out
 
 
