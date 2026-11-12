@@ -54,6 +54,7 @@ Usage
     python tools/optimize_builds.py --chimps --maps "Alpine Run" --nice   # CHIMPS (see CHIMPS_RUNS)
     python tools/optimize_builds.py --calibrate          # model vs the bot's logged games
     python tools/optimize_builds.py --check FILE.yaml    # re-evaluate a written plan
+    python tools/optimize_builds.py --answer FILE.yaml   # add the threat answers coverage misses
 """
 from __future__ import annotations
 
@@ -233,11 +234,22 @@ def seconds_per_round(mode):
 # The account: what is unlocked and whose XP is worth most
 # ===========================================================================
 
+def _main_checkout():
+    """The main checkout this tree belongs to (itself outside a git worktree)."""
+    import subprocess
+    try:
+        common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                                cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+        return Path(common).parent
+    except (OSError, subprocess.CalledProcessError):
+        return ROOT
+
+
 def load_account():
     """The current account (data/current_account.txt), or None.
 
-    None too when that account's file is missing (a git worktree has no
-    copy of the live account): AccountState.load would hand back an empty
+    In a git worktree the live account file is read from the main checkout.
+    None when that account's file is missing there too: AccountState.load would hand back an empty
     account - no towers unlocked but the Dart Monkey, no upgrades - and every
     plan would be a row of bare darts."""
     try:
@@ -245,6 +257,9 @@ def load_account():
         from btd6bot.identity import account_path
         uid = (ROOT / "data" / "current_account.txt").read_text(encoding="utf-8").strip()
         path = account_path(uid)
+        if not Path(path).exists():
+            # a git worktree: the live account file is in the main checkout
+            path = _main_checkout() / "data" / "accounts" / f"{uid}.json"
         if not Path(path).exists():
             log.warning("account %s: %s not found - planning for a fully unlocked account", uid, path)
             return None
@@ -458,6 +473,12 @@ class Action:
     cost: float
     tid: str | None = None
     spot: Spot | None = None
+
+
+def threat_names():
+    """The threat names strategy.coverage checks (strategy.THREATS)."""
+    from btd6bot import strategy as S
+    return {t for _r, t in S.THREATS}
 
 
 def legal(tiers):
@@ -725,6 +746,9 @@ class Optimizer:
                 hero_placed = True
                 plan.steps.append(Step(rnd, Action("hero", (0, 0, 0), hero_cost), "hero",
                                        "hero: not counted by the model (extra safety)", cash))
+            # 1b. the threats of the window that the build has no answer for
+            # (strategy.coverage: the runner will not play a build without one)
+            towers, cash, n = self._answer_threats(plan, towers, cash, n, rnd, window)
             # 2. further rounds: buy ahead while affordable
             ahead = window if no_income else list(range(rnd, min(last, rnd + SURPLUS_WINDOW) + 1))
             towers, cash, n = self._make_safe(plan, towers, cash, n, rnd, ahead, must=False)
@@ -782,6 +806,91 @@ class Optimizer:
             cash -= best.cost
             plan.steps.append(Step(rnd, best, tid, f"secures round {first}" if first == rnd
                                    else f"ahead of round {first}", cash))
+
+    def as_strategy(self, plan):
+        """The plan so far as a strategy dict, as strategy.coverage reads one."""
+        steps = []
+        for st in plan.steps:
+            a = st.action
+            if a.kind == "hero":
+                continue
+            if a.tid is None:
+                steps.append({"do": "place", "id": st.tid, "kind": a.kind})
+            steps.append({"do": "upgrade", "id": st.tid, "to": "-".join(map(str, a.tiers))})
+        return {"id": f"opt_{map_id(self.map_name)}_{self.mode}", "map": self.map_name,
+                "modes": [self.mode], "plan": steps}
+
+    def missing_threats(self, plan, last_round):
+        """Threats (strategy.THREATS) due by ``last_round`` in this mode that
+        the plan's build does not answer by strategy.coverage's rules.
+        plan: a Plan, or a strategy dict (a written plan file)."""
+        from btd6bot import strategy as S
+        strat = plan if isinstance(plan, dict) else self.as_strategy(plan)
+        ok, missing = S.coverage(strat, self.mode, self.account)
+        if ok:
+            return []
+        shift = S.rules(self.mode).get("threat_shift", {})
+        due = {t for r, t in S.THREATS if shift.get(t, r) <= last_round}
+        return [t for t in missing if t in due and t in S.ANSWERS]
+
+    def answer_actions(self, towers, threat, cash):
+        """Affordable actions that make the build answer ``threat`` by one of
+        strategy.ANSWERS[threat] (kind, path, tier): upgrading a standing
+        tower of that kind to the tier, or placing a new one with it."""
+        from btd6bot import strategy as S
+        fam = self.econ.family
+        out = []
+        for kind, path, tier in S.ANSWERS[threat]:
+            if kind not in self.kinds:
+                continue
+            cap = unlocked_tiers(self.account, kind)
+            if path and cap[path - 1] < tier:
+                continue
+            for t in [t for t in towers if t.kind == kind]:
+                new = list(t.tiers)
+                if path:
+                    new[path - 1] = max(new[path - 1], tier)
+                new = tuple(new)
+                if new == t.tiers:
+                    continue
+                cost = upgrade_cost(kind, t.tiers, new, fam)
+                if (legal(new) and D.profile(kind, new) is not None and cost <= cash
+                        and self.allowed(kind, new, t.spot, towers)):
+                    out.append(Action(kind=kind, tiers=new, cost=cost, tid=t.tid))
+            spot = self.setup.free_spot(kind, towers)
+            if spot is None:
+                continue
+            tiers = tuple(tier if path and i == path - 1 else 0 for i in range(3))
+            cost = T.tower_cost(kind, fam) + upgrade_cost(kind, (0, 0, 0), tiers, fam)
+            if cost <= cash and D.profile(kind, tiers) is not None and self.allowed(kind, tiers, spot, towers):
+                out.append(Action(kind=kind, tiers=tiers, cost=cost, spot=spot))
+        return out
+
+    def _answer_threats(self, plan, towers, cash, n, rnd, window):
+        """Buy the cheapest answer to every threat of the coming ``window``
+        that the build cannot answer (missing_threats).
+
+        The damage model may rate a round safe without one - Dark Dungeons
+        and Quad Deflation (2026-10) held every BFB round at margin 2.0 with
+        lower-tier towers - but strategy.coverage, which the runner checks
+        before it plays any build, would then drop the build, and the open
+        medals it was made for stayed without a playable build. Buying the
+        answer makes the plan pass that check as it is; the margins are
+        measured afterwards with the answer standing (run)."""
+        for _ in range(len(threat_names())):
+            missing = self.missing_threats(plan, max(window))
+            if not missing:
+                break
+            threat = missing[0]
+            options = self.answer_actions(towers, threat, cash)
+            if not options:
+                break          # not affordable yet: tried again next round
+            best = min(options, key=lambda a: (a.cost, -self.preference(a)))
+            n, tid = self._tid(best, n)
+            towers = self.apply(towers, best, tid)
+            cash -= best.cost
+            plan.steps.append(Step(rnd, best, tid, f"answers {threat} (strategy.coverage)", cash))
+        return towers, cash, n
 
     def shortlist(self, towers, actions, bad, rnd):
         """The actions worth simulating: a quick yardstick (Evaluator.capacity:
@@ -1194,6 +1303,193 @@ def replay_plan(plan, rounds=None):
     return margins
 
 
+def parse_cross(text):
+    """A crosspath written "a-b-c" as a tuple of ints."""
+    return tuple(int(c) for c in str(text).split("-"))
+
+
+def _replayed_towers(plan, setup):
+    """(towers, cash left) once every step of a written plan is bought, in
+    order and as cash allows (as replay_plan buys them), by the end of its
+    last round; towers as Tower records."""
+    (mode,) = plan["modes"]
+    sc = (plan.get("optimizer") or {}).get("scenario") or {}
+    econ = economy(mode)
+    econ.start_round = int(sc.get("start_round", econ.start_round))
+    econ.start_cash = float(sc.get("start_cash", econ.start_cash))
+    econ.cash_mult = float(sc.get("income_multiplier", econ.cash_mult))
+    towers, cash = {}, econ.start_cash
+    steps = list(plan.get("plan") or [])
+    for rnd in range(econ.start_round, econ.end_round + 1):
+        while steps:
+            step = steps[0]
+            if step["do"] == "place":
+                cost = (T.hero_cost(plan.get("hero") or "quincy", econ.family) if step["kind"] == "hero"
+                        else T.tower_cost(step["kind"], econ.family))
+            elif step["do"] == "upgrade":
+                t = towers[step["id"]]
+                cost = upgrade_cost(t.kind, t.tiers, parse_cross(step["to"]), econ.family)
+            else:
+                cost = 0.0
+            if cost > cash:
+                break
+            cash -= cost
+            if step["do"] == "place" and step["kind"] != "hero":
+                spot = setup.cell_spot(setup.model.frac_to_cell(*step["at"]))
+                towers[step["id"]] = Tower(step["id"], step["kind"], spot, (0, 0, 0), cost)
+            elif step["do"] == "upgrade":
+                t = towers[step["id"]]
+                towers[step["id"]] = Tower(t.tid, t.kind, t.spot, parse_cross(step["to"]), t.spent + cost)
+            steps.pop(0)
+        if rnd < econ.end_round:
+            cash += econ.income(rnd)
+    return list(towers.values()), cash
+
+
+def _step_line(step, note=""):
+    """One plan step as a line of the YAML flow list."""
+    body = ", ".join(f"{k}: {json.dumps(v) if k == 'at' else v}" for k, v in step.items())
+    return f"  - {{{body}}}" + (f"   # {note}" if note else "")
+
+
+SURPLUS_NOTE = "XP: surplus into the target tower"   # Step.why of _spend_surplus purchases
+
+
+def _surplus_cut(lines):
+    """``lines`` without the last plan step bought as XP surplus (its
+    SURPLUS_NOTE comment) - and, when that step placed a tower, without the
+    later steps of that tower. None when the plan has no surplus step left."""
+    idx = [i for i, ln in enumerate(lines) if ln.startswith("  - {do:") and SURPLUS_NOTE in ln]
+    if not idx:
+        return None
+    i = idx[-1]
+    m = re.search(r"do: place, id: (\w+)", lines[i])
+    gone = m and m[1]
+    return [ln for k, ln in enumerate(lines)
+            if k != i and not (gone and k > i and re.search(rf"\bid: {gone}\b", ln))]
+
+
+def _add_answers(opt, plan, lines):
+    """Buy the cheapest answer to each unanswered threat with the cash the
+    written plan leaves. Returns (plan lines with the new steps, missing
+    after); missing is not empty when the cash ran out."""
+    import yaml
+    plan = yaml.safe_load("\n".join(lines))
+    towers, cash = _replayed_towers(plan, opt.setup)
+    end = opt.econ.end_round
+    extra, n = [], 0
+    for _ in range(len(threat_names())):
+        missing = opt.missing_threats(plan, end)
+        if not missing:
+            break
+        options = opt.answer_actions(towers, missing[0], cash)
+        if not options:
+            break
+        best = min(options, key=lambda a: a.cost)
+        if best.tid is None:
+            n += 1
+            tid = f"ans{n}"
+            new = [{"do": "place", "id": tid, "kind": best.kind,
+                    "at": [round(best.spot.fx, 3), round(best.spot.fy, 3)]}]
+            if any(best.tiers):
+                new.append({"do": "upgrade", "id": tid, "to": "-".join(map(str, best.tiers))})
+        else:
+            tid = best.tid
+            new = [{"do": "upgrade", "id": tid, "to": "-".join(map(str, best.tiers))}]
+        towers = opt.apply(towers, best, tid)
+        cash -= best.cost
+        plan["plan"] = list(plan.get("plan") or []) + new
+        for k, st in enumerate(new):
+            extra.append(_step_line(st, f"answers {missing[0]} (strategy.coverage), ${best.cost:,.0f} "
+                                        "from the cash the plan leaves" if k == 0 else ""))
+    cut = next((i for i, ln in enumerate(lines) if ln.startswith("fill:")), len(lines))
+    return lines[:cut] + extra + lines[cut:], opt.missing_threats(plan, end)
+
+
+def _shore_up(opt, plan, lines):
+    """In a mode without income (all the cash is there at the start), spend
+    what the written plan leaves on the optimizer's own safety purchases
+    (Optimizer._make_safe) until every round holds at SAFETY_MARGIN or the
+    cash runs out. Returns the plan lines with those steps added before
+    `fill:`. New towers get ids the plan does not use yet."""
+    towers, cash = _replayed_towers(plan, opt.setup)
+    tmp = Plan(opt.map_name, opt.mode, opt.target, opt.hero)
+    used = {str(st.get("id")) for st in plan.get("plan") or []}
+    n = len(used) + 100
+    while any(f"{k[:3]}{i}" in used for k in T.TOWERS for i in range(n + 1, n + 50)):
+        n += 100
+    rounds = list(range(opt.econ.start_round, opt.econ.end_round + 1))
+    opt._make_safe(tmp, towers, cash, n, opt.econ.start_round, rounds, must=False)
+    extra = []
+    for st in tmp.steps:
+        a = st.action
+        note = f"{st.why}, added by --answer from the cash the plan leaves, ${a.cost:,.0f}"
+        if a.tid is None:
+            extra.append(_step_line({"do": "place", "id": st.tid, "kind": a.kind,
+                                     "at": [round(a.spot.fx, 3), round(a.spot.fy, 3)]}, note))
+            if any(a.tiers):
+                extra.append(_step_line({"do": "upgrade", "id": st.tid, "to": "-".join(map(str, a.tiers))}))
+        else:
+            extra.append(_step_line({"do": "upgrade", "id": st.tid, "to": "-".join(map(str, a.tiers))}, note))
+    cut = next((i for i, ln in enumerate(lines) if ln.startswith("fill:")), len(lines))
+    return lines[:cut] + extra + lines[cut:]
+
+
+def answer_plan(path, account=None):
+    """Add to a written plan the cheapest answer (strategy.ANSWERS) to every
+    threat strategy.coverage finds unanswered, and re-check the margins
+    (replay_plan).
+
+    For plans written before the optimizer bought answers itself
+    (Optimizer._answer_threats): their towers held the damage model's
+    rounds, but the runner would not play them. The answers are bought
+    after the rest of the plan with the cash it leaves; when that is too
+    little, the plan's XP-surplus steps (SURPLUS_NOTE) are given back from
+    the last one until it is enough. The file is rewritten in place - the new
+    steps at the end of `plan:`, the replayed worst margin and unsafe rounds
+    in `optimizer:` - only when coverage then passes and the worst margin is
+    no lower than before (or at least SAFETY_MARGIN). In a mode without
+    income the cash still left then buys safety for the rounds under
+    SAFETY_MARGIN (_shore_up).
+    Returns (missing before, missing after, worst margin before, after)."""
+    import yaml
+    path = Path(path)
+    lines = path.read_text(encoding="utf-8").splitlines()
+    plan = yaml.safe_load("\n".join(lines))
+    (mode,) = plan["modes"]
+    sc = (plan.get("optimizer") or {}).get("scenario") or {}
+    boosts = {b.replace(" ", "_"): True for b in sc.get("boosts") or ()}
+    opt = Optimizer(plan["map"], mode, account=account, hero=plan.get("hero") or "quincy", boosts=boosts)
+    before = opt.missing_threats(plan, opt.econ.end_round)
+    margins = replay_plan(plan)
+    worst_before = min(margins.values()) if margins else 0.0
+    if not before:
+        return before, before, worst_before, worst_before
+    base = lines
+    while True:
+        new_lines, after = _add_answers(opt, plan, base)
+        if not after:
+            break
+        base = _surplus_cut(base)
+        if base is None:
+            return before, after, worst_before, worst_before
+    plan = yaml.safe_load("\n".join(new_lines))
+    margins = replay_plan(plan)
+    if opt.econ.cash_mult == 0 and margins and min(margins.values()) < SAFETY_MARGIN:
+        new_lines = _shore_up(opt, plan, new_lines)
+        plan = yaml.safe_load("\n".join(new_lines))
+        margins = replay_plan(plan)
+    worst = min(margins.values()) if margins else 0.0
+    if worst < min(worst_before, SAFETY_MARGIN):
+        return before, after, worst_before, worst
+    unsafe = [r for r, m in margins.items() if m < SAFETY_MARGIN]
+    new_lines = [f"  worst_margin: {worst:.2f}" if ln.startswith("  worst_margin:")
+                 else f"  unsafe_rounds: [{', '.join(map(str, unsafe))}]" if ln.startswith("  unsafe_rounds:")
+                 else ln for ln in new_lines]
+    path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+    return before, after, worst_before, worst
+
+
 def check_plan(path):
     """Print a written plan's margins as replayed by replay_plan()."""
     import yaml
@@ -1380,6 +1676,8 @@ def main():
     ap.add_argument("--candidates", type=int, default=3, help="XP targets tried per map/mode")
     ap.add_argument("--calibrate", action="store_true")
     ap.add_argument("--check", metavar="FILE", help="re-check a written plan (replayed as the executor buys)")
+    ap.add_argument("--answer", metavar="FILE", nargs="+",
+                    help="add the answers strategy.coverage misses to written plans, re-check them")
     ap.add_argument("--summary", action="store_true", help="rewrite the plan table in docs/optimizer.md")
     ap.add_argument("--no-account", action="store_true", help="plan for a fully unlocked account without boosts")
     ap.add_argument("--base", action="store_true", help="plan without Fast Track / Double Cash")
@@ -1404,6 +1702,14 @@ def main():
         return
     if a.check:
         check_plan(a.check)
+        return
+    if a.answer:
+        account = None if a.no_account else load_account()
+        for f in a.answer:
+            before, after, worst0, worst = answer_plan(f, account)
+            done = "rewritten" if before and not after and worst >= min(worst0, SAFETY_MARGIN) else "unchanged"
+            print(f"{f}: unanswered {before or 'none'} -> {after or 'none'}; "
+                  f"worst margin {worst0:.2f} -> {worst:.2f} ({done})")
         return
     if a.summary:
         print(summary_table() if not write_summary() else "docs/optimizer.md: plan table rewritten")

@@ -23,7 +23,7 @@ planner:
 optimizer:
   scenario: {start_round: 31, start_cash: 40000, income_multiplier: 0, boosts: [double cash, fast track]}
   safety_margin: 2.0
-  worst_margin: 2.86
+  worst_margin: 2.51
   unsafe_rounds: []
   minutes: 8.3
   target_xp_per_hour: 162241
@@ -91,8 +91,8 @@ plan:
   - {do: upgrade, id: ice24, to: 2-0-4}   # R31: $2,340, XP: surplus into the target tower; cash left $7,280
   - {do: place, id: ice25, kind: ice, role: dps, segment: [0.39, 0.47], at: [0.558, 0.811]}   # R31: $340, XP: surplus into the target tower; cash left $6,940
   - {do: upgrade, id: ice25, to: 0-0-4}   # R31: $4,255, XP: surplus into the target tower; cash left $2,685
-  - {do: upgrade, id: ice23, to: 2-0-4}   # R31: $2,340, XP: surplus into the target tower; cash left $345
-  - {do: upgrade, id: ice25, to: 1-0-4}   # R31: $130, XP: surplus into the target tower; cash left $215
+  - {do: place, id: ans1, kind: dart, at: [0.601, 0.3]}   # answers bfb (strategy.coverage), $2,650 from the cash the plan leaves
+  - {do: upgrade, id: ans1, to: 0-0-4}
 fill:
   - {do: upgrade, kind: ice, to: 2-0-4}   # surplus: the target's own path
   - {do: place, kind: ice, role: dps, max: 10}
