@@ -181,6 +181,32 @@ def test_moab_answer_is_awake_in_round_40():
                 assert not D.frozen_in(MAP, placed, FIRST_MOAB), (build, mode, placed)
 
 
+def test_an_apache_is_awake_for_round_57s_moabs():
+    """Reverse was lost on round 57 (2026-11-11 21:36, loss case
+    20261111_214534_GlacialTrail_reverse): h1, placed in round 37, and dr2
+    sat in ice, and one of the round's four MOABs leaked whole past sp1's
+    mines and dr1. The live game refuses sp2's spot, so the replay here
+    leaves sp2 out, as that game did; h2 must then be an Apache Dartship in
+    a phase that is awake in round 57, whichever of the two rounds the
+    game counts each tower's placement from."""
+    last_moab_round = 57
+    strat = dict(S.load_all()["glacialtrail_medium"])
+    strat["plan"] = [st for st in strat["plan"] if st.get("id") != "sp2"]
+    for mode in ("medium", "reverse"):
+        econ = O.economy(mode, BOOSTS)
+        scenario = {"start_round": econ.start_round, "start_cash": econ.start_cash,
+                    "income_multiplier": econ.cash_mult}
+        boards = {}
+        SIM.simulate(strat, mode, MAP, real_map=True, learned=True, scenario=scenario, boards=boards)
+        first = _first_rounds(boards)
+        apaches = [tid for tid, (kind, tiers, _, _) in boards[last_moab_round].items()
+                   if kind == "heli" and tiers[0] >= 4]
+        assert "h2" in apaches, (mode, boards[last_moab_round])
+        for shift in (0, 1):
+            awake = [tid for tid in apaches if not D.frozen_in(MAP, first[tid] - shift, last_moab_round)]
+            assert awake, (mode, shift, {tid: first[tid] for tid in apaches})
+
+
 def test_map_builds_hold_every_round():
     model = SIM.map_model(MAP, learned=True)
     for build, modes in BUILDS.items():

@@ -28,6 +28,9 @@ CRISIS_HOLD_S = 20.0       # longest wait per round
 CRISIS_HOLD_IDLE_S = 4.0   # ... ended early once this long passes without a purchase
 CRISIS_HOLD_MIN_CASH = 300  # less than this buys nothing that matters
 CRISIS_HOLD_CASH_RISE = 200  # cash up this much since the last rise restarts the idle allowance
+# Cash lying idle while the plan waits is spent only above this (Match.spend_floor):
+# smaller sums are what the plan's next step is being saved from.
+IDLE_SPEND_MIN_CASH = 800
 # The game lights the Play button again as soon as a round's last bloon has
 # been sent, while its bloons are still on the track; pressing it sends the
 # next round on top of them. With one life, Play waits until the bloon watch
@@ -1002,7 +1005,12 @@ class Match:
                 # (losses showed $3-6k idle during leaks) or in a round the
                 # damage model expects to leak.
                 patience = 0 if crisis else (12 if saving else 3)
-                if not bought and cash is not None and cash > 800 and now - self._last_buy > patience:
+                # Play held for a round rated a crisis (_hold_for_crisis) counts
+                # as one here: the hold exists to spend in
+                holding = bool(self._crisis_hold.get(last_round))
+                if (not bought and cash is not None
+                        and cash > self.spend_floor(weak, crisis or holding)
+                        and now - self._last_buy > patience):
                     # cash is piling up while the plan waits: say why, then spend it
                     if now - self._last_wait_log > 20:
                         self._last_wait_log = now
@@ -1027,7 +1035,10 @@ class Match:
                         bought = self._reinforce(cash, last_round, deadline=spend_deadline)
                     # reinforce is saving for a purchase that holds the weakest
                     # round: the usual spending would eat that cash
-                    if not bought and not (weak and now < self._saving_until):
+                    # (under IDLE_SPEND_MIN_CASH only the model's own choice
+                    # above spends: the usual spending keeps its floor)
+                    if (not bought and cash > IDLE_SPEND_MIN_CASH
+                            and not (weak and now < self._saving_until)):
                         # with lives to spare a waiting plan step claims the
                         # bank only while the look-ahead is weak (plan_claim)
                         self.ex.lookahead_weak = weak
@@ -1186,6 +1197,27 @@ class Match:
         except Exception as e:   # the check must never stop the game from going on
             log.warning("hold_round failed: %r", e)
             return False
+
+    @staticmethod
+    def spend_floor(weak, crisis):
+        """Cash above which idle money is spent while the plan waits.
+
+        Normally IDLE_SPEND_MIN_CASH. In a crisis round whose look-ahead is
+        weak it is CRISIS_HOLD_MIN_CASH, the sum Play is already held for,
+        and only the damage model's own choice (reinforce.py) spends below
+        the normal floor.
+
+        Muddy Puddles Impoppable (2026-11-11 21:35, case
+        20261111_213643_MuddyPuddles_impoppable): round 6 got 98% along the
+        route, Play was held "spending the $506 first" with round 7 rated
+        0.35 - and nothing was even looked at, because $506 was under the
+        $800 floor. The hold ended after 4 s and the one life went in
+        round 7 with the $506 unspent, while the plan waited for a hero.
+
+        weak: the round being played has a weak look-ahead (reinforce picks).
+        crisis: lives are falling, the model rates the round a crisis, or
+        Play is being held before one."""
+        return CRISIS_HOLD_MIN_CASH if (weak and crisis) else IDLE_SPEND_MIN_CASH
 
     def _hold_for_crisis(self, rnd, cash):
         """Keep Play waiting while the damage model expects the coming round
