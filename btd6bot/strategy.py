@@ -4159,8 +4159,44 @@ class Executor:
         return self._range_fn()(aura_tid, tid)
 
     def _covers(self, sig, poppers=None):
-        """threats.covers for the towers on the map: (ok, how / what is missing)."""
+        """threats.covers for the towers on the map: (ok, how / what is missing).
+
+        Only towers that reach the track count as poppers (_track_poppers);
+        support towers still lend their buffs to those in their range."""
+        reaching = self._track_poppers()
+        if reaching is not None:
+            poppers = reaching if poppers is None else set(poppers) & reaching
         return TH.covers(self._towers(), sig, self._range_fn(), poppers)
+
+    def _track_poppers(self):
+        """Ids of the towers whose own attacks reach the track, or None when
+        that cannot be told (no learned map, offline fixtures).
+
+        A tower that can pop a bloon but stands where no bloon passes is no
+        answer to it. Peninsula Impoppable (2026-11-12 00:18, loss case
+        20261112_001915): the only lead popper was an alchemist placed "where
+        it buffs the most towers", out of reach of the track; the threat check
+        still said "lead (round 28): covered by a1 (alchemist 0-0-0: acid)",
+        so no lead answer was bought, the damage model rated round 28 at 0.06
+        for five rounds, and its six leads took the life. Global and income
+        towers, spikes and towers on moving ground count as reaching."""
+        try:
+            towers = self._towers()
+            out = set()
+            for p in towers:
+                if p.kind in ("farm", "spike", "hero") or T.TOWERS.get(p.kind, {}).get("range") is None \
+                        or self._map_wide_now(p) or self._on_platform(p):
+                    out.add(p.tid)
+                    continue
+                reach = self._reach(p.kind)
+                if reach is None:
+                    return None
+                cx, cy = (int(round(v)) for v in self.m.frac_to_cell(p.x, p.y))
+                if 0 <= cy < reach.shape[0] and 0 <= cx < reach.shape[1] and reach[cy, cx] > 0:
+                    out.add(p.tid)
+            return out
+        except Exception:
+            return None
 
     def has_answer(self, threat):
         """Does the defence on the map answer this threat?"""
