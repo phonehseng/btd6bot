@@ -81,9 +81,9 @@ plan:
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
   - {do: place, id: i1, kind: ice, role: dps, at: [0.74, 0.777]}
   - {do: upgrade, id: i1, to: 5-2-0}                                            # Super Brittle
+  - {do: upgrade, id: s1, to: 5-1-0}                                            # Cripple MOAB before the Tack Zone (2026-11-12 game lost round 93's fortified BFBs on the upper lane, every tower on the right)
   - {do: place, id: t1, kind: tack, role: dps, at: [0.74, 0.845]}
   - {do: upgrade, id: t1, to: 2-0-5}                                            # The Tack Zone
-  - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: s1, to: 1-1-0}]
