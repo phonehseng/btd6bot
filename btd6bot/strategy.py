@@ -1766,7 +1766,8 @@ class Executor:
             # count only the track this spot can actually see past walls/blockers
             weight = (self.m.spot_weight(seg, covered) if only is None
                       else self.m.spot_weight(seg, covered, only))
-            cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight)) for cx, cy, _ in cands]
+            sight = self._round_sight()
+            cands = [(cx, cy, PL.visible_cover(self.m, cx, cy, rc, weight, sight)) for cx, cy, _ in cands]
         edge = self._edge_band()
         lane = None if covered is None else self._lane_cover(self._tower_cover())
         ranked = sorted(((cx, cy, sc * self._experience_factor(kind, cx, cy, rc, lane)
@@ -2077,6 +2078,25 @@ class Executor:
         melted ice (sub cells 302 against 2,865 by round 40)."""
         pane = self._pane_round()
         return pane if pane is not None else getattr(self, "now_round", None)
+
+    def _round_sight(self):
+        """(blockers, heights) of line of sight in the round being played,
+        from mapgeom.grids_for with the round (_ground_round): blockers gone
+        by now - One Two Tree's opened plots, Cargo's centre trucks after
+        the first MOAB - no longer hide the track. None (the model's
+        whole-game grids) before the first round or without geometry."""
+        rnd = self._ground_round()
+        if rnd is None:
+            return None
+        from . import mapgeom
+        try:
+            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed), now_round=rnd,
+                                      pose_round=self._pose_round())
+        except Exception:      # geometry is optional: never let it stop a game
+            return None
+        if not grids or grids["sight"].shape != getattr(self.m.sight, "shape", None):
+            return None
+        return grids["sight"], grids["sight_height"]
 
     # How long one reading of the open pane off the screen is trusted (s):
     # long enough for the clicks of one pick-up, short of a round change.
