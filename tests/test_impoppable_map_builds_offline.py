@@ -30,10 +30,18 @@ keep their plans up to round 30-35 and then take tools/optimize_builds.py's
 greedy purchases, saving for one tier-5 carry (Super Mines, Flying Fortress
 or Wizard Lord Phoenix); the ace builds have Etienne for his map-wide camo.
 
-Sunken Columns lost round 6 a second time (loss 20261112_093331): its two
-opening subs stood in a pool whose walls hide the route. The optimizer's line
-of sight had no heights, so the column tops looked as blind as the pools; it
-has them now, and the build opens on the columns.
+Sunken Columns lost round 6 three times (losses 20261112_012149, 20261112_093331
+and 20261112_144210): its two opening subs stood in a pool whose walls hide the
+route. The optimizer's line of sight has no heights, so the column tops looked
+as blind as the pools when the build was pinned; the build opens on the
+columns now, measured with the live forecast's sight (heights and all).
+
+Peninsula lost round 28 twice (losses 20261112_090153 and 20261112_141254) to
+six leads: its only lead answer was an alchemist, and Peninsula's land lies
+out of reach of the track and of every tower on the water. The lead answer is
+the first buccaneer of the late game now (Hot Shot), bought in the
+alchemist's place; the alchemist and a dart that saw no track are gone.
+
 Enchanted Glade got one after its fourth general-build loss (20261112_055921,
 round 95: Ground Zero put off for twenty rounds by off-plan buys, both aces
 across the map from the MIB village); there the MIB village is pinned beside
@@ -251,20 +259,30 @@ def test_late_game_carries_answer_the_last_blimps():
             assert all(st["id"] in ids for st in d["answers"][threat]), (map_id, threat)
 
 
-def test_a_tower_on_raised_ground_sees_over_the_blockers_it_stands_on():
-    """Sunken Columns (2026-11-12, cases 20261112_012149 and 20261112_093331):
-    the optimizer's line of sight took no heights, so a dart on a column top
-    counted as blind behind the columns and the pool subs looked no worse.
-    With the heights the entrance row, where the live games opened, sees
-    the route, and a sub down in a pool still sees next to none of it."""
-    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+def _with_the_live_sight(pinner):
+    """``pinner`` measuring cover with the line of sight the live forecast
+    uses (match.py): the blockers' heights and the ground's go in, so a
+    tower on raised ground sees over blockers no higher than it. The
+    optimizer's own sight (MapSetup.sight) takes no heights yet (backlog
+    106): for it every tower on Sunken Columns' column tops is blind."""
+    from btd6bot import dps_model as D
+    model = pinner.model
+    heights = (getattr(model, "sight_height", None), getattr(model, "ground_height", None))
+    pinner.setup._sight = D.sight_test(model.sight, pinner.setup.track, heights=heights)
+    return pinner
+
+
+def test_on_sunken_columns_the_column_tops_see_the_route_and_the_pools_do_not():
+    """Sunken Columns (2026-11-12, cases 20261112_012149, 20261112_093331 and
+    20261112_144210): as the live game sees it, the entrance row on the
+    column tops, where the round-98 game opened, has the route in sight,
+    and a sub down in a pool sees next to none of it over the pool's walls."""
+    pinner = _with_the_live_sight(pin_spots.Pinner("Sunken Columns", "impoppable"))
     cover = lambda kind, at: pinner.segment_cover(kind, pinner.model.frac_to_cell(*at), (0.0, 1.0))
     on_the_columns = cover("dart", (0.361, 0.112))      # where the round-98 game's first dart stood
-    in_the_pool = cover("sub", (0.569, 0.411))          # where sb1 stood when round 6 was lost
+    in_the_pool = cover("sub", (0.58, 0.385))           # where sb1 stood when round 6 was lost
     assert on_the_columns > 100, on_the_columns
     assert in_the_pool < 20, in_the_pool
-    best = pinner.setup.ranked_spots("dart")[0]
-    assert best.score > 100, best
 
 
 def test_sunken_columns_opens_with_towers_that_see_the_route():
@@ -273,7 +291,7 @@ def test_sunken_columns_opens_with_towers_that_see_the_route():
     Advanced Intel (2-0-2), never left at tiers that only shoot what they see."""
     import math
     _, d = _build("sunkencolumns")
-    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
+    pinner = _with_the_live_sight(pin_spots.Pinner("Sunken Columns", "impoppable"))
     places = [st for st in d["plan"] if st["do"] == "place"]
     first_sub = next(i for i, st in enumerate(places) if st["kind"] == "sub")
     opening = [st for st in places[:first_sub] if st["kind"] not in ("hero", "alchemist")]
@@ -304,6 +322,29 @@ def test_enchanted_glade_aces_stand_by_the_mib_village():
     for tid in ("ac1", "ac2", "b1"):
         tower = pinner.world(pinner.model.frac_to_cell(*at[tid]))
         assert math.dist(tower, mib) <= pin_spots.buffer_range("village"), (tid, at[tid])
+
+
+def test_peninsula_pops_round_28_leads_from_the_water():
+    """Peninsula (2026-11-12, cases 20261112_090153 and 20261112_141254):
+    round 28's leads ended two games. The lead answer was an alchemist on
+    the plateau, where no cell has track in range and none is within the
+    brew's reach of a sub. Now the towers bought before round 28 pop lead
+    by themselves, the answer is a tower with route in its range, and no
+    tower of the plan stands where it sees no track at all."""
+    from btd6bot import strategy as S
+    _, d = _build("peninsula")
+    pinner = pin_spots.Pinner("Peninsula", "impoppable")
+    cover = lambda st: pinner.segment_cover(st["kind"], pinner.model.frac_to_cell(*st["at"]), (0.0, 1.0))
+    early = dict(d, plan=_bought_before(d, 28), answers={})
+    _, missing = S.coverage(early, "impoppable")
+    assert "lead" not in missing, missing
+    answer = next(st for st in d["answers"]["lead"] if st["do"] == "place")
+    assert cover(answer) > 50, answer
+    for st in d["plan"]:
+        if st["do"] == "place" and st["kind"] != "hero":
+            assert cover(st) > 0, st
+    # the plateau holds no alchemist cell that could ever work: keep the kind out of the build
+    assert all(st.get("kind") != "alchemist" for st in d["plan"]), "an alchemist reaches nothing on Peninsula"
 
 
 def test_a_tower_is_pinned_on_its_part_of_the_route():

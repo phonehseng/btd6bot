@@ -25,6 +25,9 @@ STILL = FIX / "save_choice_peninsula.jpg"
 # where the two USE buttons are on the still (fractions of the window)
 THIS_DEVICE_USE = (0.404, 0.619)
 CLOUD_USE = (0.595, 0.619)
+# the dialog fully open, as it stood in Midnight Mansion Impoppable at 14:31
+OPEN_STILL = FIX / "save_choice_midnightmansion.jpg"
+OPEN_THIS_DEVICE_USE = (0.317, 0.728)
 
 
 class FakeInput:
@@ -49,6 +52,12 @@ def _still_words():
     if not hasattr(_still_words, "cache"):
         _still_words.cache = Vision(None).read((0, 0, 1, 1), img=cv2.imread(str(STILL)))
     return _still_words.cache
+
+
+def _open_words():
+    if not hasattr(_open_words, "cache"):
+        _open_words.cache = Vision(None).read((0, 0, 1, 1), img=cv2.imread(str(OPEN_STILL)))
+    return _open_words.cache
 
 
 def _dialog_words(local_x=0.404, cloud_x=0.594, uses=(0.404, 0.594), local_label="THIS DeVICe"):
@@ -93,6 +102,24 @@ def test_handle_save_choice_clicks_only_this_device():
     m = _menus(_still_words())
     assert m.handle_save_choice() is True
     assert len(m.inp.clicks) == 1 and _near(m.inp.clicks[0], THIS_DEVICE_USE), m.inp.clicks
+
+
+def test_the_fully_open_dialog_is_answered_too():
+    """The Peninsula still caught the dialog half grown. Fully open (Midnight
+    Mansion Impoppable, 2026-11-12 14:31, frames/end_029.jpg of loss
+    20261112_143317: seven seconds into round 63, the round that was lost)
+    it fills the screen under the title "CHOOSE A SAVED GAME" and its USE
+    buttons sit 0.424 below the labels - further than the first limit of
+    0.40, so the dialog was known and nothing on it was pressed."""
+    m = _menus(_open_words())
+    assert m.identify(read=False) == "save_choice"
+    button, why = m.this_device_button()
+    assert button is not None, why
+    assert _near((button.x, button.y), OPEN_THIS_DEVICE_USE), button
+    assert m.handle_save_choice() is True
+    assert len(m.inp.clicks) == 1 and _near(m.inp.clicks[0], OPEN_THIS_DEVICE_USE), m.inp.clicks
+    dark = (cv2.imread(str(OPEN_STILL)).astype(np.float32) * 0.5).astype(np.uint8)
+    assert m.reward_cards(dark) == []
 
 
 def test_layout_swapped_still_picks_this_device():

@@ -17,7 +17,11 @@ planner:
   base_success: {abr: 0.75}
   # not Tricky Tracks (2026-11-09): every general build lost its unbeaten
   # modes there and none replays as holding (tests/test_trickytracks_excluded_offline.py)
-  excluded_maps: [Tricky Tracks]
+  # not Pat's Pond (2026-11-12): lost there on rounds 40, 30 and 30 (case
+  # 20261112_113006_PatsPond_abr: round 30's camo leads, with one dipped
+  # ninja as the only lead answer); it replays to 0.06 (R10) from round 3,
+  # and the map build strategies/maps/patspond_abr.yaml to 1.26 (R40).
+  excluded_maps: [Tricky Tracks, "Pat's Pond"]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6}

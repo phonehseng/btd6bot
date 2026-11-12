@@ -16,17 +16,20 @@
 # towers hit the camo DDTs of rounds 95 and 99, which the Obyn build leaked.
 # The plan before it rated under 1.0 in most of rounds 45-100. The hero stands where the late game was rated with it, off every pin.
 #
-# Loss review 2026-11-12: a1 could stand nowhere within reach of an attacker (66-87 units
-# away; the brew reaches 45). buc501 (Hot Shot 0-2-0) takes its place in the plan as the
-# lead popper and lead answer, and dr2, which reached no track, is gone; the reviewer's
-# replay rates rounds 17-40 at 1.0 or more.
+# Round 28's six leads (2026-11-12, lost twice: cases 20261112_090153 and 20261112_141254):
+# the lead answer was an alchemist, but Peninsula's land is the plateau in the middle - no
+# cell of it has track in an alchemist's range, and the nearest is 78 units from a sub (the
+# brew reaches 45). a1 cost $2,250 and brewed for nothing; the model rated round 28 at 0.06
+# for nine rounds. The lead answer is buc501 now, the late game's first buccaneer, bought to
+# Hot Shot (0-2-0) where a1 used to be bought. a1 is gone, and so is dr2: its spot on the
+# plateau saw no track either.
 id: peninsula_impoppable
 map: Peninsula
 hero: etienne
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:
-  towers: {sub: [5, 3, 5], dart: [2, 0, 5], alchemist: [3, 2, 0], buccaneer: [2, 5, 1], mermonkey: [4, 2, 0]}
+  towers: {sub: [5, 3, 5], dart: [2, 0, 5], buccaneer: [2, 5, 1], mermonkey: [4, 2, 0]}
   base_success: {impoppable: 0.5}
   maps: [Peninsula]
 plan:
@@ -38,7 +41,8 @@ plan:
   - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}
   - {do: upgrade, id: sb2, to: 2-0-2}
-  - {do: place, id: buc501, kind: buccaneer, role: support, at: [0.687, 0.334]}   # Hot Shot: pops lead where a1 stood out of every attacker's reach
+  # the lead answer for round 28: Hot Shot on the first buccaneer of the late game
+  - {do: place, id: buc501, kind: buccaneer, role: support, at: [0.687, 0.334]}
   - {do: upgrade, id: buc501, to: 0-2-0}
   - {do: upgrade, id: dr, to: 0-0-3}
   - {do: upgrade, id: sb1, to: 2-0-3}
@@ -127,7 +131,7 @@ plan:
   - {do: upgrade, id: sub519, to: 2-1-0}
   - {do: upgrade, id: sub519, to: 2-3-0}
   - {do: upgrade, id: mer505, to: 2-1-0}
-  - {do: place, id: sub520, kind: sub, role: support, at: [0.115, 0.112]}
+  - {do: place, id: sub520, kind: sub, role: support, at: [0.12, 0.095]}
   - {do: upgrade, id: sub520, to: 0-3-0}
   - {do: upgrade, id: sub520, to: 2-3-0}
   - {do: place, id: sub521, kind: sub, role: support, at: [0.163, 0.658]}
