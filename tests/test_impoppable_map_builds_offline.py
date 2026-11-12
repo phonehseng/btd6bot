@@ -25,6 +25,7 @@ chimps_ninja_sun's round 98 (loss 20261112_041202: ten off-plan towers, the
 exit spike factory given up, blimp check 0.2-0.8x from round 91).
 
 Run: python tests/test_impoppable_map_builds_offline.py"""
+import math
 import sys
 from pathlib import Path
 
@@ -209,6 +210,53 @@ def test_a_buffer_takes_the_cell_with_room_round_it():
     assert pinner.pin("v1", "village") is not None
     pinner.placed.pop()     # its room as the pin weighed it, without itself
     assert pinner.room("village", pinner.cells["v1"]) == most
+
+
+def test_buffers_that_name_a_tower_are_its_lenders():
+    """pin_spots.lenders: which buffers will be pinned near each damage
+    tower. A buffer named by another buffer is left out (its own pin already
+    looks for room)."""
+    steps = [{"do": "place", "id": "n1", "kind": "ninja"},
+             {"do": "place", "id": "a1", "kind": "alchemist", "near": ["n1"]},
+             {"do": "place", "id": "v1", "kind": "village", "near": ["n1", "a1"]},
+             {"do": "place", "id": "s1", "kind": "super", "near": ["v1"]}]
+    assert pin_spots.lenders(steps) == {"n1": ["alchemist", "village"]}
+
+
+def test_a_lent_to_tower_leaves_its_buffer_a_cell_in_range():
+    """A tower pinned with `lends_to` stands where the buffer still has a
+    legal cell well inside its range (Pinner.buffer_fits), and the buffer
+    pinned after it takes such a cell."""
+    pinner = pin_spots.Pinner("Spillway", "impoppable")
+    assert pinner.pin("n1", "ninja", segment=(0.0, 0.5), lends_to=["alchemist"]) is not None
+    n1 = pinner.cells["n1"]
+    placed = pinner.placed.pop()            # buffer_fits places the tower itself
+    assert pinner.buffer_fits("ninja", n1, "alchemist")
+    pinner.placed.append(placed)
+    assert pinner.pin("a1", "alchemist", near=["n1"]) is not None
+    apart = math.dist(pinner.world(pinner.cells["a1"]), pinner.world(n1))
+    assert apart <= pin_spots.buffer_range("alchemist") - pinner.slack(), apart
+
+
+def test_spillways_alchemist_and_sun_avatar_stand_where_they_work():
+    """Spillway (loss 20261112_072317, round 98): the alchemist's cell was
+    refused and three cells aside its ninja was out of the brew's reach; the
+    Sun Avatar, pinned beside a village, saw half the route its kind can.
+    The build now keeps a1 BUFFER_SLACK_CELLS inside its range of n1 and
+    pins s1 by the route it sees."""
+    _, d = _build("spillway")
+    at = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place" and st.get("at")}
+    pinner = pin_spots.Pinner("Spillway", "impoppable")
+    cell = lambda tid: pinner.model.frac_to_cell(*at[tid])
+    apart = math.dist(pinner.world(cell("a1")), pinner.world(cell("n1")))
+    assert apart <= pin_spots.buffer_range("alchemist") - pinner.slack(), apart
+    s1 = next(st for st in d["plan"] if st.get("id") == "s1" and st["do"] == "place")
+    assert s1["role"] == "dps" and not s1.get("near")
+    best = max(sp.score for sp in pinner.setup.ranked_spots("super"))
+    seen = pinner.segment_cover("super", cell("s1"), (0.0, 1.0))
+    assert seen >= pin_spots.PROVEN_SCORE_SHARE * best, (seen, best)
+    # the camo village still holds the Sun Avatar and both aces' neighbourhood
+    assert math.dist(pinner.world(cell("v2")), pinner.world(cell("s1"))) <= pin_spots.buffer_range("village")
 
 
 def _spec(sid, maps=None):

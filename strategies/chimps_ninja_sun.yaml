@@ -103,7 +103,30 @@ planner:
   # from its own builds (strategies/maps/workshop_*.yaml: towers above the
   # belt at the chute and in the exit pocket); Impoppable needs one too
   # (backlog 98, tests/test_workshop_excluded_offline.py).
-  excluded_maps: [Tricky Tracks, Glacial Trail, Flooded Valley, Workshop]
+  # not Erosion (Impoppable, lost 2026-11-11 04:52 in round 40 and 16:34 in
+  # round 54; 2026-11-12 06:44 in round 40, loss case
+  # 20261112_064445_Erosion_impoppable): the ice melts under the towers
+  # every 18 rounds (in that game after rounds 16 and 34), the
+  # game sells them and the whole plan is bought again from its first step.
+  # All three games died within six rounds of a melt: the rebuilt board was
+  # rated 0.06 for rounds 35-36, and the first MOAB comes five rounds after
+  # the round-34 melt with Sticky Bomb (n2 2-0-4, $6,000) to buy a second
+  # time. With one life the build needs its damage on ground that lasts -
+  # the top-right glacier and the bottom-left water, as erosion_easy and
+  # erosion_military_only stand theirs (backlog 100,
+  # tests/test_chimps_ninja_sun_excluded_offline.py). Erosion Hard is
+  # already won.
+  # not Muddy Puddles (Impoppable, lost 2026-11-11 17:08 and 21:36 in round
+  # 7 and 23:26 in round 76; 2026-11-12 07:29 in round 22, loss case
+  # 20261112_072956_MuddyPuddles_impoppable): four short lanes, and one
+  # ninja beside one of them. In the round-22 game the bloons were 84-100%
+  # along the route in 11 of rounds 6-21, the model rated seven of rounds
+  # 7-21 under 1 (0.48-0.87), reinforce answered with three 0-0-0 snipers
+  # and two darts, the hero came in round 12 and n1 stood at 2-0-1 when
+  # round 22 was rated 0.45. The map's medals came from its own builds
+  # (strategies/maps/muddypuddles_*.yaml); Impoppable needs one too
+  # (backlog 101). Muddy Puddles Hard is already won.
+  excluded_maps: [Tricky Tracks, Glacial Trail, Flooded Valley, Workshop, Erosion, Muddy Puddles]
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: upgrade, id: n1, to: 1-0-1}

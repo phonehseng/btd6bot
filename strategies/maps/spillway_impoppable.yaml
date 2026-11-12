@@ -15,6 +15,21 @@
 # read 0.2-0.8x and the Eliminator ($31,200) could not be paid before the DDTs. This is
 # Firing Range's winning plan (2026-11-12 01:18) on Spillway's own spots: the MOAB
 # answer (n2 2-0-3, 2-0-4) before the alchemist, plan_first, every tower pinned.
+#
+# Round 98 again (2026-11-12 06:46, loss 20261112_072317, this build's first game):
+# the pins were not good enough, so they were made again.
+#   * s1, the Sun Avatar, was pinned as a support tower beside the discount village
+#     and saw 86 units of the route where the best Super Monkey spots see 170-178;
+#     four off-plan Super Monkeys were bought elsewhere meanwhile, and s1 3-0-2
+#     ($19,920) came in round 82, the Ground Zero ace in round 92, the Eliminator in
+#     round 98. s1 is now `role: dps` and takes a spot by the route it sees (161
+#     units); the camo village, aces, bomb, heli and sniper follow it.
+#   * a1's pinned cell was refused by the game; three cells aside n1 was out of the
+#     brew's reach, and $3,930 of brews lent to nothing until s1 stood. a1 now
+#     stands three cells inside its range of n1 (pin_spots.BUFFER_SLACK_CELLS).
+#   * ac1's pinned cell was refused too, its neighbour took ac2's room, and ac2 went
+#     across the map from the camo village. The refused cells are in the live map
+#     file now and are left out.
 id: spillway_impoppable
 map: Spillway
 hero: obyn
@@ -33,24 +48,24 @@ plan:
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
   - {do: upgrade, id: n2, to: 2-0-4}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.184, 0.3]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.302, 0.181]}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: n1, to: 3-0-2}
   - {do: upgrade, id: a1, to: 3-2-0}
-  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7, at: [0.131, 0.249]}
+  - {do: place, id: v1, kind: village, role: support, near: [n1, a1], near_radius: 7, at: [0.281, 0.095]}
   - {do: upgrade, id: v1, to: 2-0-2}
   - {do: upgrade, id: n1, to: 4-0-2}
-  - {do: place, id: s1, kind: super, role: support, near: [v1], near_radius: 7, at: [0.184, 0.385]}
+  - {do: place, id: s1, kind: super, role: dps, at: [0.163, 0.283]}
   - {do: upgrade, id: s1, to: 3-0-2}
-  - {do: place, id: v2, kind: village, role: support, near: [s1], near_radius: 7, at: [0.131, 0.538]}
+  - {do: place, id: v2, kind: village, role: support, near: [s1], near_radius: 7, at: [0.131, 0.419]}
   - {do: upgrade, id: v2, to: 2-3-0}
-  - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.195, 0.675]}
-  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, at: [0.195, 0.555]}
+  - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.195, 0.385]}
+  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, at: [0.174, 0.504]}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
-  - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8, at: [0.11, 0.368]}
+  - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8, at: [0.12, 0.334]}
   - {do: upgrade, id: n4, to: 0-4-0}
-  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.131, 0.709]}
+  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.099, 0.283]}
   - {do: upgrade, id: b1, to: 0-4-0}
   - {do: upgrade, id: ac1, to: 2-4-0}
   - {do: upgrade, id: ac2, to: 2-4-0}
@@ -63,10 +78,10 @@ fill:
   - {do: upgrade, id: b1, to: 2-5-0}
   - {do: place, kind: spike, role: exit, max: 3}
   - {do: upgrade, kind: spike, to: 2-0-4}
-  - {do: place, id: h1, kind: heli, role: support, near: [v2], near_radius: 9, at: [0.088, 0.641]}
+  - {do: place, id: h1, kind: heli, role: support, near: [v2], near_radius: 9, at: [0.12, 0.589]}
   - {do: upgrade, id: h1, to: 4-0-2}
   - {do: upgrade, id: h1, to: 5-0-2}
-  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 9, at: [0.152, 0.453]}
+  - {do: place, id: sn1, kind: sniper, role: support, near: [v2], near_radius: 9, at: [0.056, 0.283]}
   - {do: upgrade, id: sn1, to: 4-0-2}
   - {do: target, id: sn1, mode: strong}
   - {do: upgrade, id: sp1, to: 2-0-5}
@@ -76,7 +91,7 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.184, 0.3]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.302, 0.181]}
   ceramic:
     - {do: upgrade, id: n1, to: 3-0-2}
   moab:
@@ -87,10 +102,10 @@ answers:
     - {do: upgrade, id: n1, to: 4-0-2}
   zomg:
     - {do: upgrade, id: ac1, to: 2-4-0}
-    - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.195, 0.675]}
+    - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.195, 0.385]}
   ddt:
     - {do: upgrade, id: b1, to: 0-5-0}
-    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.131, 0.709]}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.099, 0.283]}
   bad:
     - {do: upgrade, id: b1, to: 0-5-0}
-    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.131, 0.709]}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.099, 0.283]}

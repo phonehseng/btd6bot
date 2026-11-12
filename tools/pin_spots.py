@@ -104,6 +104,15 @@ ROOM_KIND = "ninja"
 # A buffer's room is weighed for about this many of its candidates, spread
 # evenly over them (each count is a valid_spots call).
 BUFFER_TRIES = 40
+# A tower that a later buffer names in `near` is moved down its candidates,
+# at most this many, to the first with a legal cell for that buffer in range
+# (each look is a valid_spots call per buffer kind).
+LEND_TRIES = 40
+# A buffer is pinned this many grid cells inside its range of the towers it
+# lends to, while such a cell exists: when the game refuses the pinned cell
+# the executor steps aside, and on Spillway (2026-11-12) the alchemist's
+# three cells aside took the ninja it was pinned for out of the brew's reach.
+BUFFER_SLACK_CELLS = 3
 
 
 def buffer_range(kind):
@@ -270,14 +279,18 @@ class Pinner:
         sp = self.setup.cell_spot(cell)
         return sp.x, sp.z
 
-    def reach(self, kind, cell, other_kind, other_cell, near_radius):
+    def slack(self):
+        """BUFFER_SLACK_CELLS in world units (the width of that many cells)."""
+        return BUFFER_SLACK_CELLS * math.dist(self.world((0, 0)), self.world((1, 0)))
+
+    def reach(self, kind, cell, other_kind, other_cell, near_radius, slack=0.0):
         """True when two towers stand close enough to work together: inside
-        the buffer's range (buffer_range) when one of them is a village or
-        an alchemist, else within ``near_radius`` cells (the executor's own
-        `near` rule)."""
+        the buffer's range (buffer_range), less ``slack`` world units, when
+        one of them is a village or an alchemist, else within
+        ``near_radius`` cells (the executor's own `near` rule)."""
         rng = buffer_range(kind) or buffer_range(other_kind)
         if rng:
-            return math.dist(self.world(cell), self.world(other_cell)) <= rng
+            return math.dist(self.world(cell), self.world(other_cell)) <= rng - slack
         return math.dist(cell, other_cell) <= near_radius
 
     def room(self, kind, cell):
@@ -295,26 +308,63 @@ class Pinner:
         return sum(1 for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0
                    and math.dist(self.world((int(x), int(y))), here) <= rng)
 
-    def pin(self, tid, kind, near=(), near_radius=NEAR_RADIUS, segment=None):
+    def buffer_fits(self, kind, cell, buffer_kind):
+        """True when, with a tower of ``kind`` standing on ``cell``, a buffer
+        of ``buffer_kind`` still has a legal cell (never refused for it) that
+        holds ``cell`` inside its range with room to step aside (slack)."""
+        rng = buffer_range(buffer_kind)
+        free = self.legal_with(buffer_kind, [(cell[0], cell[1], kind, None)])
+        if free is None or not rng:
+            return False
+        rng -= self.slack()
+        here = self.world(cell)
+        ys, xs = free.nonzero()
+        return any(math.dist(self.world((int(x), int(y))), here) <= rng
+                   and never_refused(self.model, buffer_kind, (int(x), int(y)))
+                   for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0)
+
+    def legal_with(self, kind, extra):
+        """legal(kind) with the ``extra`` towers standing as well."""
+        ok = PL.valid_spots(self.model, kind, None, self.placed + list(extra), last_round=self.last_round)
+        return pane_free(self.model, ok)
+
+    def pin(self, tid, kind, near=(), near_radius=NEAR_RADIUS, segment=None, lends_to=()):
         """The `at` [fx, fy] for tower ``tid`` (None when no legal spot).
 
         With ``near``: the best candidate that works with every tower named
-        (reach), else the closest one - the executor too widens its radius
+        (reach; BUFFER_SLACK_CELLS inside a buffer's range while there is
+        one), else the closest one - the executor too widens its radius
         when nothing is free inside it. A buffer takes, among those, the
         cell with the most room for the towers it is to lend to (room):
         on Sunset Gulch (2026-11-12) the first legal cell left its Eliminator
-        78 units from the camo village (range 48)."""
+        78 units from the camo village (range 48).
+
+        ``lends_to``: the kinds of the buffers that name this tower in their
+        own `near` later in the build. The tower takes its best candidate
+        (of the first LEND_TRIES) that leaves each of them a legal cell with
+        the tower in range (buffer_fits), and keeps its best one when none
+        does. Spillway Impoppable (2026-11-12, loss 20261112_072317): n1 was
+        pinned on the best stretch of track, no alchemist cell lay within
+        the brew's range of it, and a1 - the closest legal cell - spent
+        $3,930 on brews with "nothing in its radius to buff"."""
         ok = self.legal(kind)
         if ok is None:
             return None
         cands = self.candidates(kind, ok, segment)
         refs = [(self.kinds[r], self.cells[r]) for r in near if r in self.cells]
         if refs:
+            # well inside every range first (slack), then just inside, then the closest
             inside = [c for c in cands if all(self.reach(kind, c, k, r, near_radius) for k, r in refs)]
-            cands = inside or sorted(cands, key=lambda c: sum(math.dist(c, r) for _, r in refs))[:1]
+            roomy = [c for c in inside if all(self.reach(kind, c, k, r, near_radius, self.slack()) for k, r in refs)]
+            cands = roomy or inside or sorted(cands, key=lambda c: sum(math.dist(c, r) for _, r in refs))[:1]
         if kind in S.Executor.BUFFERS and len(cands) > 1:
             step = max(1, len(cands) // BUFFER_TRIES)      # spread over all of them
             cands = sorted(cands[::step], key=lambda c: -self.room(kind, c))
+        elif lends_to:
+            roomy = next((c for c in cands[:LEND_TRIES]
+                          if all(self.buffer_fits(kind, c, b) for b in lends_to)), None)
+            if roomy is not None:
+                cands = [roomy]
         if not cands:
             return None
         cx, cy = cands[0]
@@ -333,6 +383,23 @@ def load_source(sid):
     if path.suffix in (".yaml", ".yml") and path.exists():
         return yaml.safe_load(path.read_text(encoding="utf-8"))
     return S.load_all()[sid]
+
+
+def lenders(place_steps):
+    """Tower id -> kinds of the buffers (village, alchemist) whose place
+    step names that tower in `near`, in build order. Only towers that are
+    not buffers themselves: a buffer's own spot is already chosen for the
+    room around it (Pinner.room)."""
+    kind_of = {st["id"]: st["kind"] for st in place_steps}
+    out = {}
+    for st in place_steps:
+        if st["kind"] not in S.Executor.BUFFERS:
+            continue
+        for tid in st.get("near") or ():
+            if tid in kind_of and kind_of[tid] not in S.Executor.BUFFERS \
+                    and st["kind"] not in out.setdefault(tid, []):
+                out[tid].append(st["kind"])
+    return out
 
 
 def pinned_strategy(sid, map_name, mode):
@@ -360,10 +427,12 @@ def pinned_strategy(sid, map_name, mode):
     kinds = {st["kind"] for st in wanted}
     order = [st for st in wanted if not st.get("near") and pinner.scarce(st["kind"], kinds)]
     order += [st for st in wanted if st not in order]
+    lends = lenders(wanted)
     spots = {}
     for st in order:
         at = pinner.pin(st["id"], st["kind"], st.get("near") or (), st.get("near_radius", NEAR_RADIUS),
-                        segment=st.get("segment") if st.get("role", "dps") == "dps" else None)
+                        segment=st.get("segment") if st.get("role", "dps") == "dps" else None,
+                        lends_to=lends.get(st["id"], ()))
         if at is None:
             unpinned.append(st["id"])
         else:
