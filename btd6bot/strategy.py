@@ -1551,6 +1551,20 @@ class Executor:
     # balanced lanes keep the plain per-cell ranking.
     LANE_COVER_WEIGHT = 0.5
 
+    def _lane_grids(self):
+        """The map's grids as the lane code reads them: with the bloon paths
+        of the round being played only (mapgeom.grids_for with now_round
+        leaves the idle phase paths out of path_masks, as the match's
+        repaint_track leaves them out of the track).
+
+        Without the round all six of Erosion's phase paths counted as lanes,
+        five of them empty for the first 13 rounds, so open_lanes() >= 2
+        held on every board and the match opened with a sniper every game
+        (audit 2026-11-12)."""
+        from . import mapgeom
+        return mapgeom.grids_for(self.m, removed=tuple(self.removed),
+                                 now_round=getattr(self, "now_round", None))
+
     def _lane_cover(self, cover):
         """Grid: for each track cell, how well its bloon path is defended
         against the best-defended path (mean tower cover over the path's
@@ -1559,9 +1573,8 @@ class Executor:
         lane too. On Firing Range both paths share the top rows and split
         into the left and right lanes. None on maps without geometry, with a
         single path, or with no cover yet (it would change nothing)."""
-        from . import mapgeom
         try:
-            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed))
+            grids = self._lane_grids()
         except Exception:
             return None
         masks = (grids or {}).get("path_masks") or []
@@ -1590,10 +1603,9 @@ class Executor:
         Spillway Impoppable (2026-11-11 15:41, lost in round 7): bloons come
         down four lanes, and n1 in the top-left corner covered three of the
         five paths (0.18, 0.13, 0.18) and nothing of the other two."""
-        from . import mapgeom
         cover = self._tower_cover()
         try:
-            grids = mapgeom.grids_for(self.m, removed=tuple(self.removed))
+            grids = self._lane_grids()
         except Exception:
             return 0
         masks = (grids or {}).get("path_masks") or []
@@ -1893,7 +1905,6 @@ class Executor:
         and not at all on the best-guarded lane (lane cover LANE_COVER_
         WEIGHT). A penalty (a spot where this tower barely pops) always
         counts in full: that is about the spot, not the lane."""
-        from . import mapgeom
         from .maplearn import spot_factor
         f = spot_factor(self.m, kind, cx, cy)
         if f <= 1.0 or lane is None:
@@ -1901,7 +1912,7 @@ class Executor:
         # the spot's lane: mean lane cover over the bloon-path cells in its
         # range (the path masks _lane_cover used; the learned track heat is
         # wider and would count lane-less cells as unguarded)
-        masks = mapgeom.grids_for(self.m, removed=tuple(self.removed))["path_masks"]
+        masks = self._lane_grids()["path_masks"]
         on_path = np.logical_or.reduce(masks)
         H, W = lane.shape
         y0, y1 = max(0, int(cy - rc)), min(H, int(cy + rc) + 1)

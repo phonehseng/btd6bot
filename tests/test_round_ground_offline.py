@@ -91,6 +91,19 @@ def test_erosion_buffer_reaches_towers_on_phase_ice():
     assert spots, "no village spot beside the ninja on phase ice"
 
 
+def test_erosion_counts_only_the_live_phase_path_as_a_lane():
+    m = model("Erosion")
+    if m is None:
+        return
+    ex = executor(m)
+    ex.now_round = 5
+    assert len(ex._lane_grids()["path_masks"]) == 1   # Path1 alone until round 13
+    ys, xs = np.nonzero(ex._legal_cells("ninja") & (ex._reach("ninja") > 0))
+    fx, fy = m.cell_to_frac(int(xs[0]), int(ys[0]))
+    ex.g.towers = {"n1": F.Placed("n1", "ninja", fx, fy)}
+    assert ex.open_lanes() == 0, ex.open_lanes()
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
