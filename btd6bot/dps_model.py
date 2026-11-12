@@ -1640,7 +1640,7 @@ def _shrink_potion(entry):
 # The Monkey Ace's flight (docs/model_audit_military.md M8)
 # ---------------------------------------------------------------------------
 # The export's flight pattern (40) is the figure-eight's loop; the game's
-# default Circle has radius 80, and from x-x-2 (Centered Path, set by the
+# default Circle has radius 80 (kept at 40 below: ACE_CIRCLE_RADIUS), and from x-x-2 (Centered Path, set by the
 # upgrade itself) the Ace circles the map centre - world (0, 0) - at radius
 # 90 (fandom:Monkey_Ace_(BTD6), fandom:Centered_Path). The Neva-Miss darts
 # (x-x-3 on, kept by Spectre and Flying Fortress) home in on bloons anywhere
@@ -1655,7 +1655,12 @@ def _shrink_potion(entry):
 # Spectre's barrage darts reach the whole map (locked to First, infinite
 # range) as before, alternating with the shells (_flatten_attack).
 ACE_FLIGHT_RATING = True
-ACE_CIRCLE_RADIUS = 80.0
+# Below x-x-2 the export's 40 is kept: read at the default Circle's 80 the
+# two Bomber Aces (1-3-0) of Quad Deflation round 60 (2026-11-11 20:51)
+# flew over far more track, the round rated 0.74 -> 2.59, and its BFB
+# leaked whole (200 lives). The bot may fly them as a figure-eight
+# (strategy.GLOBAL_BUT_LOCAL); until a game shows the circle, 40 stays.
+ACE_CIRCLE_RADIUS = None
 ACE_CENTERED_RADIUS = 90.0
 MAP_CENTRE = (0.0, 0.0)
 
@@ -1672,7 +1677,7 @@ def _ace_flight(kind, tiers, sources, pattern):
         elif s.placement == "global" and s.name.startswith("Spectre") and not s.name.endswith("DartProjectile"):
             s = Source(**{**s.__dict__, "near_plane": True})
         out.append(s)
-    return out, (ACE_CENTERED_RADIUS if bot >= 2 else ACE_CIRCLE_RADIUS)
+    return out, (ACE_CENTERED_RADIUS if bot >= 2 else (ACE_CIRCLE_RADIUS or pattern))
 
 
 def _near_plane_share(t, p, range_mult, track):

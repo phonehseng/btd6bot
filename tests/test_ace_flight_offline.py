@@ -6,8 +6,9 @@ Ace's darts home in on bloons anywhere: map-wide, full rate, no circling
 plane's x0.4. What does not home keeps the flight's coverage: the
 Spectre's shells (the share of the map's track near the flight circle),
 bombs and pineapples (along the circle), darts below x-x-3. The circle is
-80 around the runway, or 90 around the map centre from x-x-2 (Centered
-Path), so where the runway stands no longer matters from x-x-2.
+the export's 40 around the runway (the game's Circle is 80; kept at 40
+after a Bomber Ace calibration case), or 90 around the map centre from
+x-x-2 (Centered Path), so where the runway stands no longer matters then.
 
 All offline: no game, no game files.
 """
@@ -28,7 +29,7 @@ def test_neva_miss_darts_are_map_wide():
     for tiers, placement in (((0, 0, 2), "air"), ((0, 0, 3), "global"), ((2, 0, 4), "global")):
         darts = next(s for s in D.profile("ace", tiers).sources if s.name == "Attack>MainProjectile")
         assert darts.placement == placement, tiers
-    assert D.profile("ace", (0, 0, 0)).pattern_radius == D.ACE_CIRCLE_RADIUS
+    assert D.profile("ace", (0, 0, 0)).pattern_radius == (D.ACE_CIRCLE_RADIUS or 40.0)
     assert D.profile("ace", (0, 0, 2)).pattern_radius == D.ACE_CENTERED_RADIUS
 
 
