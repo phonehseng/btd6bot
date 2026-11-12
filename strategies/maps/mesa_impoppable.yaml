@@ -22,6 +22,21 @@
 # 4-0-2 by round 36, at [0.51, 0.428]); and a Flying Fortress (ace 2-0-5 by round 88). Etienne
 # is the hero (map-wide camo). Replayed as the executor buys: 0.23 at worst over rounds 27-100,
 # 11 rounds under 1.0 (27-35, 37, 38, 40; none at the 0.06 floor any more). The hero stands where the late game was rated with it, off every pin.
+#
+# Opening on both routes (2026-11-12 17:45, losses 20261112_100238 round 38 and
+# 20261112_162905 round 28): Mesa's bloons split over two routes every round and no ninja
+# cell has both in range. n1 and n2 both stand on the first route, and n3 came with the late
+# game, from round 27: replayed as the executor buys (Double Cash, the live forecast's
+# model, no hero counted) rounds 6-22 all rated 0.06, and the live games got through them on
+# off-plan crisis buys alone. Now n3 is the second purchase and grows beside n1 to 2-0-2;
+# the alchemist follows n2 and goes to Acidic Mixture Dip (2-0-0) so n3 pops lead, and the
+# late game's bomb (bom541, 68 units of the first route in range) is placed with it: round
+# 28's leads rate 1.49 (0.52 before), round 30's 1.49 (0.47). n2's Flash Bomb waits until
+# the Razor Rotors heli stands. In that replay, rounds under 1.0: 6-26: 20 before, 14 now
+# (round 6, which the replay's $650 opens with one ninja; after it 0.43 at worst, round
+# 15); 27-39: 10 before, 6 now (27, 29, 31, 32, 34 at 0.27, 35); 40-100: 6 before, 7 now
+# (round 47 at 0.96 joins 78, 90, 93, 95, 99 and 100). The late steps are still the
+# optimizer's, rated from the old opening: its greedy should run again from this one.
 id: mesa_impoppable
 map: Mesa
 hero: etienne
@@ -32,19 +47,25 @@ planner:
   base_success: {impoppable: 0.5}
   maps: [Mesa]
 plan:
+  # the opening: one ninja per route (n1 on the first, n3 on the second), grown side by side
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.12, 0.777]}
+  - {do: place, id: n3, kind: ninja, role: dps, at: [0.51, 0.428]}   # the second route: no cell has both in range
   - {do: upgrade, id: n1, to: 1-0-1}
+  - {do: upgrade, id: n3, to: 1-0-1}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6], at: [0.601, 0.521]}
   - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: upgrade, id: n3, to: 2-0-1}
+  - {do: upgrade, id: n3, to: 2-0-2}
   - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.58, 0.266]}
   - {do: upgrade, id: n2, to: 2-0-2}
-  - {do: upgrade, id: n2, to: 2-0-3}
+  # round 28's leads, three a route: the acid dip for n3, the late game's bomb beside the first route
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.441, 0.436]}
+  - {do: upgrade, id: a1, to: 1-0-0}
+  - {do: upgrade, id: a1, to: 2-0-0}   # Acidic Mixture Dip: n3 pops lead
+  - {do: place, id: bom541, kind: bomb, role: support, at: [0.281, 0.675]}
   # rounds 27-100: bought by tools/optimize_builds.py's greedy on the damage model,
   # saving for the carry (`*_carry*`) by its round
-  - {do: place, id: a1, kind: alchemist, role: support, at: [0.441, 0.436]}
-  - {do: place, id: n3, kind: ninja, role: support, at: [0.51, 0.428]}
   - {do: place, id: ace_carry3, kind: ace, role: support, at: [0.697, 0.112]}
-  - {do: upgrade, id: a1, to: 1-0-0}
   - {do: place, id: sky501, kind: skywarden, role: support, at: [0.174, 0.76]}
   - {do: place, id: sky502, kind: skywarden, role: support, at: [0.163, 0.709]}
   - {do: place, id: sky503, kind: skywarden, role: support, at: [0.184, 0.453]}
@@ -59,7 +80,6 @@ plan:
   - {do: place, id: sky510, kind: skywarden, role: support, at: [0.216, 0.334]}
   - {do: place, id: eng511, kind: engineer, role: support, at: [0.419, 0.164]}
   - {do: upgrade, id: des509, to: 0-1-0}
-  - {do: upgrade, id: n3, to: 2-0-2}
   - {do: place, id: sni512, kind: sniper, role: support, at: [0.323, 0.078]}
   - {do: upgrade, id: sky501, to: 1-0-0}
   - {do: place, id: eng513, kind: engineer, role: support, at: [0.452, 0.112]}
@@ -83,6 +103,7 @@ plan:
   - {do: upgrade, id: hel518, to: 0-0-2}
   - {do: upgrade, id: hel518, to: 1-0-2}
   - {do: upgrade, id: hel518, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}   # Flash Bomb, after the heli: straight after the opening its $2,700 took round 40 from 1.02 to 0.58
   - {do: place, id: dar519, kind: dart, role: support, at: [0.441, 0.334]}
   - {do: upgrade, id: dar519, to: 0-0-1}
   - {do: upgrade, id: eng511, to: 2-0-0}
@@ -162,7 +183,6 @@ plan:
   - {do: upgrade, id: sni523, to: 0-2-2}
   - {do: upgrade, id: eng511, to: 3-2-0}
   - {do: upgrade, id: wiz536, to: 3-2-0}
-  - {do: place, id: bom541, kind: bomb, role: support, at: [0.281, 0.675]}
   - {do: upgrade, id: bom541, to: 0-0-3}
   - {do: upgrade, id: bom541, to: 0-1-3}
   - {do: upgrade, id: bom541, to: 0-2-3}
