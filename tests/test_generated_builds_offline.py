@@ -120,8 +120,9 @@ def test_files_match_the_generator():
     The water map list is left out: it follows data/map_fit.json, which
     mapfit refreshes on its own (test_water_builds_only_where_they_reach)."""
     for kind, s in generated().items():
-        extra = (s.get("generator") or {}).get("hard_extra", 0)   # the Hard reinforcement
-        want = G._assemble(kind, s["modes"], extra).strategy(s["modes"], s["planner"]["base_success"])
+        gen = s.get("generator") or {}     # the Hard reinforcement, a carry rule the screen chose
+        want = G._assemble(kind, s["modes"], gen.get("hard_extra", 0), gen.get("carry"),
+                           s.get("hero")).strategy(s["modes"], s["planner"]["base_success"])
         for key in ("plan", "fill", "panic", "answers", "hero"):
             assert s.get(key) == want.get(key), (kind, key)
         assert s["planner"]["towers"] == want["planner"]["towers"], kind
@@ -134,7 +135,7 @@ def test_the_tower_gets_most_of_the_plan():
     as the game's XP split) goes mainly into the tower being levelled."""
     for kind, s in generated().items():
         share = G.plan_share(s, kind)
-        least = 0.85 if G.is_carry(kind) else 0.5
+        least = 0.85 if (s.get("generator") or {}).get("carry", G.is_carry(kind)) else 0.5
         assert share >= least, (kind, round(share, 2))
         assert max(S.invested_cash(s), key=S.invested_cash(s).get) == kind, kind
 

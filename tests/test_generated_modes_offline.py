@@ -80,7 +80,7 @@ def test_the_reinforcement_stops_at_the_first_count_that_passes():
     saved = G.judge, G._assemble
     tried = []
 
-    def fake_assemble(kind, modes, extra=0):
+    def fake_assemble(kind, modes, extra=0, carry=None, hero=None):
         tried.append(extra)
         b = G.Build(kind)
         b.extra = extra
@@ -97,6 +97,41 @@ def test_the_reinforcement_stops_at_the_first_count_that_passes():
     finally:
         G.judge, G._assemble = saved
 
+
+
+def test_extra_copies_come_before_the_tier_5s_and_do_not_raise_the_copy_cap():
+    """The extra copies stand before the tier 5 upgrades (at the very end a
+    Hard game never bought them), and the blimp answers' "another <kind>"
+    cap ignores them: counting them took the sub build's round-40 ratio
+    from 3.72 to 0.41."""
+    b = G.build_carry("sub", 2)
+    steps = [st for st, _ in b.plan]
+    first_hx = next(i for i, st in enumerate(steps) if str(st.get("id", "")).startswith("hx"))
+    tier5 = [i for i, st in enumerate(steps) if st.get("do") == "upgrade" and "5" in st.get("to", "")]
+    assert not tier5 or first_hx < tier5[0], (first_hx, tier5)
+    assert G._more_copies(b, "sub")["max"] == G._more_copies(G.build_carry("sub"), "sub")["max"]
+
+
+def test_the_merit_choice_stays_unless_the_other_is_stronger():
+    saved = G.screen, G.carry_from_model
+    calls = []
+
+    class B:
+        hero = "churchill"
+
+    def fake(kind, modes, carry=None, hero=None):
+        calls.append((carry, hero))
+        return (3 if hero == G.HERO else 2), 1.0, B()
+    G.screen, G.carry_from_model = fake, (lambda kind: True)
+    try:
+        assert G.choose_variant("tack", ["easy", "medium", "hard"]) == (None, G.HERO)
+        assert (False, None) in calls                      # the support rule was screened too
+        G.screen = lambda kind, modes, carry=None, hero=None: (3, 1.0, B())
+        assert G.choose_variant("tack", ["easy", "medium", "hard"]) == (None, None)   # a tie keeps merit
+    finally:
+        G.screen, G.carry_from_model = saved
+    assert G.carry_from_model("ice") == G.is_carry("ice")    # Ice has no hand blimp figure
+    assert not G.carry_from_model("sniper")                   # the sniper has one
 
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
