@@ -2554,18 +2554,21 @@ class Executor:
         """(level, "panel" | "estimate") for the placed hero: read off its
         panel when the game can (Game.hero_level), else estimated from the
         rounds since it was placed (abilities.estimate_hero_level, with the
-        account's Monkey Education XP bonus). (None, ...) when neither."""
+        map's difficulty and the account's Monkey Knowledge XP bonuses:
+        abilities.hero_xp_multiplier). (None, ...) when neither."""
         read = getattr(self.g, "hero_level", None)
         if callable(read):
             lvl = read(hero)
             if lvl is not None:
                 return lvl, "panel"
-        from .abilities import estimate_hero_level
-        from .towerxp import EDUCATION_MULT
+        from .abilities import estimate_hero_level, hero_xp_multiplier
+        from .match import xp_knowledge
         placed = getattr(self.abil, "hero_round", None) or getattr(self, "hero_round", None)
         if placed is None or rnd is None:
             return None, "unknown"
-        return estimate_hero_level(getattr(self.g, "hero", None), placed, rnd, EDUCATION_MULT), "estimate"
+        factor = hero_xp_multiplier(getattr(getattr(self, "m", None), "name", None),
+                                    xp_knowledge(getattr(self, "account", None), getattr(self, "rules", None)))
+        return estimate_hero_level(getattr(self.g, "hero", None), placed, rnd, factor), "estimate"
 
     def _ability_keys(self, name, rnd):
         """Hotkeys to try for hero ability `name`, best guess first
@@ -4833,8 +4836,11 @@ class Executor:
             if not name:
                 return None
             from .forecast import RoundForecast
+            from .match import xp_knowledge
             fc = RoundForecast(name, getattr(self, "mode", None), getattr(self.m, "sight", None),
-                               (getattr(self.m, "sight_height", None), getattr(self.m, "ground_height", None)))
+                               (getattr(self.m, "sight_height", None), getattr(self.m, "ground_height", None)),
+                               hero=getattr(getattr(self, "g", None), "hero", None),
+                               knowledge=xp_knowledge(getattr(self, "account", None), getattr(self, "rules", None)))
             self.forecast = fc
         return fc
 

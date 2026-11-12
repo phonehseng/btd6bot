@@ -332,6 +332,7 @@ class Source:
     zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
     dot_immune: frozenset = frozenset()   # bloon properties its damage over time cannot hurt
                                # (0 = not such a shot; _rear_copies)
+    grip_rate: float = 0.0     # a hit that holds its bloon and deals this much a second (Psi: _psi_grip)
 
     def can_hit(self, lay):
         """Can this source damage this layer at all?"""
@@ -571,6 +572,31 @@ def _pierce_cost(p):
     return {k: float(v) for k, v in (p.get("extra_pierce_cost") or {}).items() if v}
 
 
+def _psi_grip(p):
+    """Psi's grip (the export's "psi": PsiEffectModel) as an instakill.
+
+    Psi's projectile does no damage itself: it holds one bloon, which takes
+    per_tick every `tick` seconds until it is gone or max_duration ends - an
+    instakill that takes time, 0.15 s per layer of health from level 2, 4
+    damage per 0.1 s on MOAB-class from level 14 (fandom:Psi_(BTD6);
+    docs/model_audit_magic.md finding 16). So one grip destroys a whole
+    bloon of up to max_duration / tick x per_tick health (a hit of that
+    damage: _Rates._compute counts it as a whole-bloon kill), one grip per
+    attack at a time, the cooldown running once it ends; and a held bloon
+    loses no more than per_tick / tick a second (Source.grip_rate): a MOAB
+    loses 40 HP a second to one attack at level 14, not the 600 a grip can
+    deal over its 15 s. Read
+    as a 0-damage hit, Psi was worth nothing; read as damage over time on
+    every bloon at once, one Psi rated Erosion Reverse's rounds 18-22 near
+    15 where the game leaked (docs/model_fix_plan.md item 7 calibration)."""
+    g = p["psi"]
+    tick = max(float(g.get("tick") or 1.0), 1e-3)
+    per_tick = float(g.get("per_tick") or 0.0)
+    total = per_tick * max(1.0, math.floor(float(g.get("max_duration") or tick) / tick))
+    hit = p.get("damage") or {}
+    return dict(p, damage=dict(hit, amount=total), grip_rate=per_tick / tick)
+
+
 def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, radial, travel, out, depth=0,
                         subtower_cap=MAX_SUBTOWERS, carrier=None):
     """Add the damage sources of projectile p (and what it spawns) to out.
@@ -578,6 +604,8 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
     (_thrown_off; Source.carrier)."""
     if not p or depth > 8:
         return
+    if p.get("psi"):
+        p = _psi_grip(p)
     camo = camo_chain and p.get("camo", False)
     attack_range = attack.get("range", 0.0)
     if (p.get("damage") or p.get("dot")) and not p.get("hits_nothing"):
@@ -624,6 +652,7 @@ def _flatten_projectile(p, shots, shots_single, attack, camo_chain, placement, r
             rear_fov=float(attack.get("rear_fov") or 0.0),
             zone_radius=attack.get("zone_radius"),
             zone_fixed=bool(attack.get("zone_fixed")),
+            grip_rate=float(p.get("grip_rate") or 0.0),
         ))
     pierce = max(1.0, _impact_pierce(p) / (1.0 + _pierce_cost(p).get("", 0.0)))
     if "CollideOnlyWithTargetModel" in (p.get("other") or ()):
@@ -930,12 +959,118 @@ def _surfaced_or_submerged(entry):
     return submerged or attacks
 
 
+# ===========================================================================
+# Heroes
+# ===========================================================================
+
+# Heroes are rated (docs/model_fix_plan.md item 7, docs/model_audit_support_
+# heroes.md finding 1). Before, every consumer dropped the hero: the optimizer
+# paid $540-2,160 for it and counted nothing, so it never chose one by value,
+# and Etienne's map-wide camo or Obyn's Druid buffs were invisible. A hero is
+# a tower of kind "hero:<id>" whose tiers are (level,), at the level the
+# bot's own estimate gives for the round (abilities.estimate_hero_level);
+# forecast.py and tools/optimize_builds.py add it to the board. False leaves
+# every hero out again, as before phase 2.
+#
+# Calibrated on the same 7,735 journal rounds as phase 1 (526 leaked; the
+# hero at its estimated level, Monkey Education counted outside CHIMPS):
+# separation of leaked from held rounds (AUC) 0.805 -> 0.815, rounds at or
+# above 2.0 that leaked 0.52% -> 0.52%, at or above 1.5 0.63% -> 0.64%,
+# and held rounds under 2.0 58.9% -> 56.6% (the planner over-defends fewer
+# of them). Obyn boards rose a median x1.03, Quincy x1.01, Psi x1.15.
+HERO_RATING = True
+
+HERO_PREFIX = "hero:"
+
+# Heroes whose export cannot be rated as it stands. Corvus's mana spells
+# (Ancestral Might, Malevolence) are exported as permanent attacks, while in
+# the game they cost mana and drain it every second, and his permanent
+# Spirit is missing (fandom:Corvus; audit section 4.2): rated from the
+# export he would read as the strongest hero in the game. He stays out
+# until his spellbook is modelled.
+UNRATED_HEROES = {"corvus": "mana spells exported as permanent attacks; spellbook not modelled"}
+
+
+def hero_kind(hero):
+    """The model's tower kind of a hero ("obyn" -> "hero:obyn")."""
+    return HERO_PREFIX + str(hero)
+
+
+def hero_of(kind):
+    """The hero id of a hero kind ("hero:obyn" -> "obyn"), or None for a tower."""
+    return kind[len(HERO_PREFIX):] if isinstance(kind, str) and kind.startswith(HERO_PREFIX) else None
+
+
+def hero_entry(hero, level):
+    """The exported model of one hero level (attacks.json "heroes"), or None
+    (no such hero, or one of UNRATED_HEROES)."""
+    if hero in UNRATED_HEROES:
+        return None
+    levels = ((attacks().get("heroes") or {}).get(hero) or {}).get("levels") or {}
+    if not levels:
+        return None
+    top = max(int(k) for k in levels)
+    return levels.get(str(min(max(int(level), 1), top)))
+
+
+def _hero_weapons(entry):
+    """A hero level with Quincy's LongWeapon left out where a MainWeapon fires
+    beside it: since v57 the long shot is his Focus mode, an alternative to
+    the main arrow at the same rate, not a second arrow (fandom:Quincy_(BTD6);
+    docs/model_audit_primary.md section 4). Counted as well it doubled him."""
+    out = []
+    for a in entry.get("attacks", []):
+        names = {w.get("name") for w in a.get("weapons", [])}
+        if "MainWeapon" in names and "LongWeapon" in names:
+            a = dict(a, weapons=[w for w in a["weapons"] if w.get("name") != "LongWeapon"])
+        out.append(a)
+    return dict(entry, attacks=out)
+
+
+def _subtower_buffs(entry):
+    """Support buffs carried by the sub-towers a tower makes (its attacks'
+    projectiles' "subtowers"), as buffs of the tower itself.
+
+    Etienne's level-8 UAV is such a sub-tower: "all non-Paragon towers on
+    screen will now receive external camo detection" (fandom:Etienne_(BTD6))
+    is a camo buff with "global" on the UAV, and the tower's own buffs list
+    holds only a range buff. profile() read the tower's list alone, so the
+    map-wide camo was lost (docs/model_audit_support_heroes.md G1)."""
+    out = []
+
+    def walk(p, depth=0):
+        if not p or depth > 8:
+            return
+        for t in p.get("subtowers", []):
+            out.extend(t.get("buffs") or [])
+            for a in t.get("attacks", []):
+                for w in a.get("weapons", []):
+                    walk(w.get("projectile"), depth + 1)
+        for s in p.get("spawn", []):
+            walk(s.get("projectile"), depth + 1)
+
+    for a in entry.get("attacks", []):
+        for w in a.get("weapons", []):
+            walk(w.get("projectile"))
+    return out
+
+
 @lru_cache(maxsize=None)
 def profile(kind, tiers):
-    """Profile of a tower crosspath (None when the game has no such model)."""
-    entry = crosspath(kind, tiers)
-    if entry is None:
-        return None
+    """Profile of a tower crosspath, or of a hero at a level (kind
+    "hero:<id>", tiers (level,)); None when the game has no such model."""
+    hero = hero_of(kind)
+    if hero is not None:
+        entry = hero_entry(hero, tuple(tiers)[0] if tiers else 1)
+        if entry is None:
+            return None
+        entry = _hero_weapons(entry)
+        tiers = tuple(int(t) for t in tiers)
+    else:
+        entry = crosspath(kind, tiers)
+        if entry is None:
+            return None
+        tiers = tuple(int(t) for t in tiers_code(tiers))
     sources = []
     aim_bound = False
     follows = (entry.get("air_unit") or {}).get("movement") == "follows"
@@ -955,9 +1090,9 @@ def profile(kind, tiers):
     map_wide = [a for a in entry.get("attacks", []) if a.get("unbounded") == "map"]
     is_global = bool(entry.get("global")) and not (
         map_wide and all(_drops_under_plane(a, w) for a in map_wide for w in a.get("weapons", [])))
-    return Profile(kind=kind, tiers=tuple(int(t) for t in tiers_code(tiers)), range=entry.get("range", 0.0),
+    return Profile(kind=kind, tiers=tiers, range=entry.get("range", 0.0),
                    is_global=is_global, sources=sources, aim_bound=aim_bound and not sources,
-                   buffs=list(entry.get("buffs", [])) + _potion_buffs(entry),
+                   buffs=list(entry.get("buffs", [])) + _subtower_buffs(entry) + _potion_buffs(entry),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
                    pattern_radius=pattern, own_radius=own,
                    flight_speed=float((entry.get("air_unit") or {}).get("speed") or 0.0),
@@ -1697,6 +1832,14 @@ class _Rates:
                 continue     # Advanced Intel sees camo only where a detector reaches
             hits = _hit_rate(src, lay, rho, zone)
             d = src.damage_vs(lay)
+            if src.grip_rate:
+                # a grip holds its bloon for (what it deals) / grip_rate
+                # seconds, and the attack waits for it before its cooldown
+                # starts again: 1 / (cooldown + 0.15 s per layer of health)
+                # grips a second at level 2 (docs/model_audit_magic.md
+                # finding 16); and one grip per bloon in the zone (_psi_grip)
+                held = min(d, whole) / src.grip_rate
+                hits = min(hits / (1.0 + src.shots * held), max(1.0, rho * zone.length) / max(held, 1e-6))
             rate = hits * min(d, lay.hp)
             hp_rate += rate
             if lay.children and d >= whole:
@@ -2149,16 +2292,24 @@ def tower_set(kind):
     return (_json(str(GAME_MODEL / "towers.json")).get(kind) or {}).get("category")
 
 
-def buff_reaches(b, kind):
+def buff_reaches(b, kind, tiers=None):
     """Does support buff b (an attacks.json "buffs" entry) apply to a tower of
-    this kind? Its "sets" filter (Primary Training / Primary Mentoring:
-    Primary towers only) and "towers" filter (game tower ids) must let the
-    tower through; a buff without filters reaches every tower."""
+    this kind (and crosspath)? Its "sets" filter (Primary Training / Primary
+    Mentoring: Primary towers only), "towers" filter (game tower ids) and
+    "min_tiers" filter (Obyn's +40% range: Druids of the Jungle, x-3-x and
+    up) must let the tower through; a buff without filters reaches every
+    tower, heroes included. Set and tower filters never let a hero through
+    (its kind is "hero:<id>", in no tower set)."""
     if b.get("sets") and tower_set(kind) not in b["sets"]:
         return False
     if b.get("towers"):
         game_id = ((attacks().get("towers") or {}).get(kind) or {}).get("game_id")
         if game_id not in b["towers"]:
+            return False
+    if b.get("min_tiers"):
+        if tiers is None or hero_of(kind) is not None or len(tuple(tiers)) != len(b["min_tiers"]):
+            return False
+        if any(int(have) < int(need) for have, need in zip(tiers, b["min_tiers"])):
             return False
     return True
 
@@ -2214,26 +2365,45 @@ def station_for(t, placed, track, sight=None, strict=False):
     return _joined(main, _drop_parts(t, drops, p, track, camo_paths))
 
 
+@dataclass(frozen=True)
+class RangeBuff:
+    """The range buffs a tower gets from its supporters: its range becomes
+    range x mult + add. mult is the largest percentage buff (several are not
+    added up: the cautious reading of docs/model_audit_support_heroes.md G3);
+    add is the largest additive one - Primary Mentoring's +5, Obyn level
+    11's +5 to Magic towers, Silas's +5 to Ice Monkeys - which the game
+    applies after the multipliers ("Range buffs apply after all other range
+    multipliers", fandom:Obyn_Greenfoot_(BTD6)). The additive buffs used to
+    be dropped."""
+    mult: float = 1.0
+    add: float = 0.0
+
+    def __call__(self, radius):
+        return radius * self.mult + self.add
+
+
 def _buffs_at(t, placed):
-    """(support buffs that reach tower t, range multiplier) from the other
-    towers in `placed` (see station_for)."""
+    """(support buffs that reach tower t, RangeBuff) from the other towers
+    in `placed` (see station_for)."""
     buffs_here = []
-    range_mult = 1.0
+    mult, add = 1.0, 0.0
     for o in placed:
         q = profile(o.kind, o.tiers) if o.tid != t.tid else None
         if q is None:
             continue
         for b in q.buffs:
-            if not buff_reaches(b, t.kind):
+            if not buff_reaches(b, t.kind, t.tiers):
                 continue
             if b.get("global") or buff_covers(o, t, b.get("radius") or q.range):
                 if b["kind"] == "range" and b.get("value"):
-                    range_mult = max(range_mult, 1.0 + b["value"])
+                    mult = max(mult, 1.0 + b["value"])
+                elif b["kind"] == "range" and b.get("additive"):
+                    add = max(add, float(b["additive"]))
                 elif b.get("shots"):
                     buffs_here.append(dict(b, share=_dip_share(b, o, t, placed)))
                 else:
                     buffs_here.append(b)
-    return buffs_here, range_mult
+    return buffs_here, RangeBuff(mult, add)
 
 
 def _station_for(t, placed, track, sight=None, strict=False):
@@ -2244,7 +2414,7 @@ def _station_for(t, placed, track, sight=None, strict=False):
         return None
     buffs_here, range_mult = _buffs_at(t, placed)
     sources = [s for s in _buffed_sources(p, buffs_here) if s.placement != "drop"]
-    sources = [s for s in _rear_copies(sources, t, p.range * range_mult, track)
+    sources = [s for s in _rear_copies(sources, t, range_mult(p.range), track)
                if s.shots > 0.0 or not s.rear_fov]
     if not sources:
         return None
@@ -2262,9 +2432,9 @@ def _station_for(t, placed, track, sight=None, strict=False):
         camo_paths = frozenset().union(*(_reach_paths(o, track, sight) for o in detectors))
         sources = [Source(**{**s.__dict__, "camo": True}) if s.camo_shared else s for s in sources]
     # all of a tower's sources share one station: its time is spent once
-    reach_radius = p.range * range_mult
+    reach_radius = range_mult(p.range)
     if p.pattern_radius:
-        reach_radius = p.pattern_radius + p.range * range_mult
+        reach_radius = p.pattern_radius + range_mult(p.range)
     # orbiting glaives sweep their own circle, which may reach past the range
     reach_radius = max(reach_radius, p.own_radius)
     is_global = p.is_global or any(s.placement == "global" for s in sources)
@@ -2320,8 +2490,8 @@ def _local_stations(t, sources, p, range_mult, track, sight, camo_paths):
     sources of the same reach share one station (one server), as all of a
     tower's sources used to. A source without a reach of its own works in
     the tower's: its range (with range buffs), or a plane's flight pattern
-    plus its range."""
-    base = (p.pattern_radius or 0.0) + p.range * range_mult
+    plus its range. range_mult: the tower's RangeBuff."""
+    base = (p.pattern_radius or 0.0) + range_mult(p.range)
     groups = {}
     for s in sources:
         if s.zone_radius is None:
@@ -2329,7 +2499,7 @@ def _local_stations(t, sources, p, range_mult, track, sight, camo_paths):
         elif s.zone_fixed:
             radius = s.zone_radius
         else:
-            radius = s.zone_radius * range_mult
+            radius = range_mult(s.zone_radius)
         groups.setdefault(round(radius, 1), []).append(s)
     return [_make_station(t, group, False, radius, track, sight, camo_paths)
             for radius, group in sorted(groups.items(), reverse=True)]

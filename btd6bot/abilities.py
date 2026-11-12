@@ -117,18 +117,52 @@ HERO_LEVEL_XP = [0, 0]
 for _s in _LEVEL_STEP:
     HERO_LEVEL_XP.append(HERO_LEVEL_XP[-1] + _s)
 
-# Levelling-cost scale per hero (higher = levels slower).  # ? (from memory)
+# Levelling-cost scale per hero (higher = levels slower), the wiki's XP
+# ratios (fandom:Heroes_(BTD6), "Hero Leveling"; docs/model_audit_support_
+# heroes.md H-XP): 1.0 Quincy, Gwendolin, Striker, Obyn, Etienne, Geraldo;
+# 1.425 Ezili, Pat, Brickell, Sauda, Corvus, Rosalia, Dan; 1.5 Benjamin,
+# Psi, Silas; 1.71 Churchill, Adora. Corvus and Silas were swapped here.
 HERO_XP_SCALE = {
     "quincy": 1.0, "gwendolin": 1.0, "striker_jones": 1.0, "obyn": 1.0,
     "etienne": 1.0, "geraldo": 1.0,
     "ezili": 1.425, "pat_fusty": 1.425, "admiral_brickell": 1.425, "sauda": 1.425,
-    "rosalia": 1.425,  # ?
-    "benjamin": 1.5, "psi": 1.5, "corvus": 1.5,  # corvus ?
+    "rosalia": 1.425, "corvus": 1.425, "dan_dmonke": 1.425,
+    "benjamin": 1.5, "psi": 1.5, "silas": 1.5,
     "churchill": 1.71, "adora": 1.71,
-    "silas": 1.425, "dan_dmonke": 1.425,  # ?
 }
 
-# Activated tower abilities by upgrade name: (cooldown_s at 1x, use).  # ? cooldowns
+# Hero XP bonuses of Monkey Knowledge (fandom:Self_Taught_Heroes,
+# fandom:Heroes_(BTD6)): together x1.2474, the figure the wiki's levelling
+# table uses. Each counts only when the account owns it and the mode allows
+# Monkey Knowledge (match.xp_knowledge: not in CHIMPS).
+HERO_XP_KNOWLEDGE = {"Self Taught Heroes": 1.10, "Monkey Education": 1.08, "Monkeys Together Strong": 1.05}
+
+
+def hero_xp_multiplier(map_name=None, knowledge=()):
+    """The factor on the XP a hero earns per round: the map's difficulty
+    (+10% per difficulty above Beginner, account.CATEGORY_XP_MULT) times the
+    Monkey Knowledge bonuses in `knowledge` (HERO_XP_KNOWLEDGE). Before, the
+    level estimate counted Monkey Education alone, so on an Expert map the
+    bot thought its hero 1-3 levels lower than it was from round 60 on
+    (docs/model_audit_support_heroes.md H-XP)."""
+    from .account import CATEGORY_XP_MULT, MAPS, canonical_map
+    mult = 1.0
+    if map_name:
+        name = str(map_name)
+        if name.lower().endswith(" reverse"):
+            name = name[:-len(" reverse")]
+        try:
+            name = canonical_map(name)
+        except Exception:      # an unknown map name: no difficulty bonus
+            pass
+        mult *= CATEGORY_XP_MULT.get(MAPS.get(name), 1.0)
+    for k in knowledge or ():
+        mult *= HERO_XP_KNOWLEDGE.get(k, 1.0)
+    return mult
+
+# Activated tower abilities by upgrade name: (cooldown_s at 1x, use). The
+# cooldowns are the game model's (attacks.json "abilities" of the upgrade's
+# crosspath; tests/test_hero_rating_offline.py checks them).
 # Passive "abilities" (Bomb Blitz, Energizer) have no button and are left out.
 # 'never' = needs a target click, costs money/lives, or otherwise unsafe blind.
 TOWER_ABILITIES = {
@@ -140,37 +174,37 @@ TOWER_ABILITIES = {
     "Blade Maelstrom": (20, "on_cooldown"),
     "Super Maelstrom": (20, "on_cooldown"),
     "Snowstorm": (30, "on_cooldown"),
-    "Absolute Zero": (20, "on_cooldown"),
-    "Glue Strike": (30, "on_cooldown"),
-    "Glue Storm": (30, "on_cooldown"),
-    "Supply Drop": (60, "on_cooldown"),
+    "Absolute Zero": (25, "on_cooldown"),
+    "Glue Strike": (40, "on_cooldown"),
+    "Glue Storm": (40, "on_cooldown"),
+    "Supply Drop": (90, "on_cooldown"),
     "First Strike Capability": (60, "never"),      # click-targeted
-    "Monkey Pirates": (60, "moab"),
-    "Pirate Lord": (45, "moab"),
-    "Ground Zero": (45, "on_cooldown"),
-    "Tsar Bomba": (30, "on_cooldown"),
-    "Support Chinook": (60, "on_cooldown"),
-    "Special Poperations": (60, "never"),          # marine needs placing
+    "Monkey Pirates": (45, "moab"),
+    "Pirate Lord": (30, "moab"),
+    "Ground Zero": (35, "on_cooldown"),
+    "Tsar Bomba": (35, "on_cooldown"),
+    "Support Chinook": (90, "on_cooldown"),
+    "Special Poperations": (25, "never"),          # marine needs placing
     "Artillery Battery": (60, "on_cooldown"),
     "Pop and Awe": (60, "on_cooldown"),
-    "Rocket Storm": (40, "on_cooldown"),
-    "Summon Phoenix": (60, "on_cooldown"),
+    "Rocket Storm": (45, "on_cooldown"),
+    "Summon Phoenix": (45, "on_cooldown"),
     "Tech Terror": (45, "on_cooldown"),
-    "The Anti-Bloon": (45, "on_cooldown"),
-    "Legend of the Night": (60, "on_cooldown"),
+    "The Anti-Bloon": (30, "on_cooldown"),
+    "Legend of the Night": (180, "on_cooldown"),
     "Bloon Sabotage": (60, "moab"),               # slows the whole wave: see ROUND_START
     "Grand Saboteur": (60, "moab"),
     "Transforming Tonic": (60, "on_cooldown"),
-    "Total Transformation": (60, "on_cooldown"),
-    "Jungle's Bounty": (60, "on_cooldown"),
-    "IMF Loan": (90, "never"),                      # takes on debt
-    "Monkey-Nomics": (90, "on_cooldown"),
-    "Spike Storm": (60, "on_cooldown"),
-    "Carpet of Spikes": (60, "on_cooldown"),
+    "Total Transformation": (40, "on_cooldown"),
+    "Jungle's Bounty": (30, "on_cooldown"),          # its Vine Crush
+    "IMF Loan": (85, "never"),                      # takes on debt
+    "Monkey-Nomics": (60, "on_cooldown"),
+    "Spike Storm": (50, "on_cooldown"),
+    "Carpet of Spikes": (50, "on_cooldown"),
     "Call to Arms": (45, "on_cooldown"),
-    "Homeland Defense": (60, "on_cooldown"),
+    "Homeland Defense": (45, "on_cooldown"),
     "Overclock": (45, "never"),                     # needs a tower picked
-    "Ultraboost": (45, "never"),
+    "Ultraboost": (35, "never"),
 }
 
 # 'moab' abilities that act on every bloon of the wave, including those still

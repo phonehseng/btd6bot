@@ -199,6 +199,19 @@ def economy(mode, boosts=None):
     return econ
 
 
+def hero_level_at(hero, map_name, mode, account, placed_round, rnd):
+    """The level the bot's estimate gives `hero` in round `rnd`, placed in
+    `placed_round` (abilities.estimate_hero_level, with the map's and the
+    account's Monkey Knowledge XP bonuses; none of the knowledge in modes
+    that switch it off: CHIMPS). The same estimate the live forecast uses
+    (forecast.RoundForecast.hero_level)."""
+    from btd6bot import strategy as S
+    from btd6bot.abilities import estimate_hero_level, hero_xp_multiplier
+    knowledge = () if (S.MODE_RULES.get(mode) or {}).get("no_mk") else tuple(
+        getattr(account, "mk_unlocked", ()) or ())
+    return estimate_hero_level(hero, placed_round, rnd, hero_xp_multiplier(map_name, knowledge))
+
+
 def fast_track_start(econ, double_cash=True):
     """(round, cash) a Fast Track game starts with. The game skips the
     first quarter of the mode's rounds: start = start_round - 1 +
@@ -440,6 +453,42 @@ class MapSetup:
         self._spots[kind] = out
         return out
 
+    def hero_spot(self, hero, towers):
+        """The spot the hero is rated at: of the cells the hero may stand on
+        (placement.valid_spots for "hero"), the one whose circle of the
+        hero's range covers the most track and whose footprint overlaps no
+        placed tower; any free cell for a map-wide hero (Psi). None when
+        there is no room. The executor places a hero with no "at" by its own
+        rules; this is the model's stand-in for that spot when a plan does
+        not say (replay_plan)."""
+        from btd6bot import placement as P
+        key = ("hero", hero)
+        if key not in self._spots:
+            ok = P.valid_spots(self.model, "hero", hero)
+            prof = D.profile(D.hero_kind(hero), (1,))
+            radius = None if (prof is None or prof.is_global) else max(prof.range, 1.0)
+            scored = []
+            if ok is not None and ok.any():
+                rows, cols = np.nonzero(ok)
+                keep = (rows % SPOT_STRIDE == 0) & (cols % SPOT_STRIDE == 0)
+                for r, c in zip(rows[keep], cols[keep]):
+                    sp = self.cell_spot((int(c), int(r)))
+                    if radius is not None:
+                        sp.score = sum(z.length for z in self.track.zones(sp.x, sp.z, radius) if z)
+                        if sp.score <= 0:
+                            continue
+                    scored.append(sp)
+            scored.sort(key=lambda sp: sp.score, reverse=True)
+            self._spots[key] = scored[:SPOTS_RESERVE]
+        upc = P.units_per_cell(self.model)
+        r = P.footprint_radius("hero", hero) / upc
+        for sp in self._spots[key]:
+            if all((sp.cell[0] - t.spot.cell[0]) ** 2 + (sp.cell[1] - t.spot.cell[1]) ** 2
+                   >= (r + P.footprint_radius(t.kind if t.kind != "hero" else "dart") / upc) ** 2
+                   for t in towers):
+                return sp
+        return None
+
     def free_spot(self, kind, towers):
         """The best spot of a kind whose footprint does not overlap a placed tower.
 
@@ -535,28 +584,50 @@ def upgrade_cost(kind, tiers_from, tiers_to, family):
 
 
 class Evaluator:
-    """Runs dps_model on builds, with the stations of unchanged towers cached."""
+    """Runs dps_model on builds, with the stations of unchanged towers cached.
 
-    def __init__(self, setup, mode):
+    hero: the plan's hero id. Its Tower has kind "hero" and tiers (level,),
+    the level it has in the round being rated (hero_level); it is rated as
+    the model's tower "hero:<id>" (dps_model.HERO_RATING), so its own
+    attacks count and its buffs (Obyn's Druid pierce, camo and range,
+    Etienne's map-wide camo) reach the towers it covers."""
+
+    def __init__(self, setup, mode, hero=None):
         self.setup = setup
         self.mode = mode
+        self.hero = hero
         self._stations = {}
+
+    def model_kind(self, t):
+        """(kind, tiers) of a Tower as the damage model knows it, or None for
+        a hero that is not rated (none named, or heroes switched off)."""
+        if t.kind == "hero":
+            if not self.hero or not D.HERO_RATING or not t.tiers:
+                return None
+            return D.hero_kind(self.hero), tuple(t.tiers[:1])
+        return t.kind, t.tiers
+
+    def placed(self, t):
+        """The dps_model.Placed of a Tower, or None (model_kind)."""
+        mk = self.model_kind(t)
+        return None if mk is None else D.Placed(t.tid, mk[0], mk[1], t.spot.x, t.spot.z)
 
     def station_of(self, tower, towers):
         """The station of one tower standing among `towers` (None when it
         does no damage or reaches no track). It depends only on the tower
-        and the supporters on the map (villages), so it is cached by
-        (kind, crosspath, cell, supporters)."""
-        if tower.kind == "hero":
+        and the supporters on the map (villages, a buffing hero), so it is
+        cached by (kind, crosspath, cell, supporters)."""
+        me = self.placed(tower)
+        if me is None:
             return None
-        supporters = tuple(sorted((t.kind, t.tiers, t.spot.cell) for t in towers if t.kind != "hero"
-                                  and (D.profile(t.kind, t.tiers) is not None and D.profile(t.kind, t.tiers).buffs)))
-        key = (tower.kind, tower.tiers, tower.spot.cell, supporters or None)
+        board = [b for b in (self.placed(t) for t in towers) if b is not None]
+        supporters = tuple(sorted((b.kind, b.tiers, t.spot.cell) for b, t in
+                                  ((self.placed(t), t) for t in towers) if b is not None
+                                  and (D.profile(b.kind, b.tiers) is not None and D.profile(b.kind, b.tiers).buffs)))
+        key = (me.kind, me.tiers, tower.spot.cell, supporters or None)
         st = self._stations.get(key)
         if st is None:
-            placed = [D.Placed(t.tid, t.kind, t.tiers, t.spot.x, t.spot.z) for t in towers if t.kind != "hero"]
-            me = D.Placed(tower.tid, tower.kind, tower.tiers, tower.spot.x, tower.spot.z)
-            st = D.station_for(me, placed, self.setup.track, sight=self.setup.sight) or False
+            st = D.station_for(me, board, self.setup.track, sight=self.setup.sight) or False
             self._stations[key] = st
         return st or None
 
@@ -643,8 +714,8 @@ class Optimizer:
         self.econ = economy(mode, self.boosts)
         self.setup = MapSetup(map_name, mode)
         self.setup.reserve = reserve
-        self.ev = Evaluator(self.setup, mode)
         self.hero = hero
+        self.ev = Evaluator(self.setup, mode, hero)
         self.weights = xp_weights(account)
         self.kinds = self._kinds()
 
@@ -751,21 +822,32 @@ class Optimizer:
         towers, cash, n = [], econ.start_cash, 0
         hero_cost = T.hero_cost(self.hero, econ.family)
         hero_placed = False
+        hero_round = None
         last = econ.end_round
         # without income (Deflation) every round is paid from the start cash:
         # plan for all of them at once
         no_income = econ.cash_mult == 0
         for rnd in range(econ.start_round, last + 1):
+            if hero_round is not None:
+                # the hero's level in this round: the window is rated with it
+                # (the lowest of the window - it only grows)
+                towers = self._level_hero(towers, hero_round, rnd)
             # 1. safety for the next LOOKAHEAD rounds
             window = list(range(rnd, last + 1 if no_income else min(last, rnd + LOOKAHEAD) + 1))
             towers, cash, n = self._make_safe(plan, towers, cash, n, rnd, window, must=True)
-            # the hero once the first tower stands and it is affordable (its
-            # damage is not modelled: it only adds safety)
+            # the hero once the first tower stands and it is affordable,
+            # rated at its estimated level by round (dps_model.HERO_RATING)
             if not hero_placed and towers and cash >= hero_cost:
                 cash -= hero_cost
                 hero_placed = True
-                plan.steps.append(Step(rnd, Action("hero", (0, 0, 0), hero_cost), "hero",
-                                       "hero: not counted by the model (extra safety)", cash))
+                spot = self.setup.hero_spot(self.hero, towers) if D.HERO_RATING else None
+                if spot is not None:
+                    hero_round = rnd
+                    towers = self._level_hero(towers + [Tower("hero", "hero", spot, (1,), hero_cost)], rnd, rnd)
+                    why = "hero: rated at its estimated level"
+                else:
+                    why = "hero: not counted by the model (extra safety)"
+                plan.steps.append(Step(rnd, Action("hero", (0, 0, 0), hero_cost, spot=spot), "hero", why, cash))
             # 1b. the threats of the window that the build has no answer for
             # (strategy.coverage: the runner will not play a build without one)
             towers, cash, n = self._answer_threats(plan, towers, cash, n, rnd, window)
@@ -785,6 +867,17 @@ class Optimizer:
             plan.spent_by_kind[t.kind] = plan.spent_by_kind.get(t.kind, 0.0) + t.spent
         plan.seconds = time.time() - t0
         return plan
+
+    def _level_hero(self, towers, placed_round, rnd):
+        """towers with the hero's Tower at its level in round `rnd`
+        (hero_level_at); unchanged without a hero."""
+        out = []
+        for t in towers:
+            if t.kind == "hero":
+                lv = hero_level_at(self.hero, self.map_name, self.mode, self.account, placed_round, rnd)
+                t = Tower(t.tid, t.kind, t.spot, (lv,), t.spent)
+            out.append(t)
+        return out
 
     def _make_safe(self, plan, towers, cash, n, rnd, window, must):
         """Buy the best leak-per-dollar actions until the window is safe.
@@ -969,12 +1062,18 @@ class Optimizer:
         out = {}
         towers = []
         by_round = {}
+        hero_round = None
         for s in plan.steps:
             by_round.setdefault(s.rnd, []).append(s)
         for r in rounds:
             for s in by_round.get(r, []):
                 if s.action.kind != "hero":
                     towers = self.apply(towers, s.action, s.tid)
+                elif s.action.spot is not None:
+                    hero_round = r
+                    towers = towers + [Tower("hero", "hero", s.action.spot, (1,), s.action.cost)]
+            if hero_round is not None:
+                towers = self._level_hero(towers, hero_round, r)
             out[r] = round(D.round_margin(self.ev.stations(towers), self.mode, r, self.setup.track), 2)
         return out
 
@@ -1112,7 +1211,8 @@ def plan_yaml(plan, setup, weights, xp):
     for s in plan.steps:
         a = s.action
         if a.kind == "hero":
-            lines.append(f"  - {{do: place, id: hero, kind: hero, role: dps}}   # R{s.rnd}: ${a.cost:,.0f}; {s.why}")
+            at = f", at: [{a.spot.fx:.3f}, {a.spot.fy:.3f}]" if a.spot is not None else ""
+            lines.append(f"  - {{do: place, id: hero, kind: hero, role: dps{at}}}   # R{s.rnd}: ${a.cost:,.0f}; {s.why}")
             continue
         cross = "-".join(map(str, a.tiers))
         note = f"R{s.rnd}: ${a.cost:,.0f}, {s.why}; cash left ${s.cash_after:,.0f}"
@@ -1286,7 +1386,7 @@ def write_summary():
 # Re-checking a written plan
 # ===========================================================================
 
-def replay_plan(plan, rounds=None):
+def replay_plan(plan, rounds=None, account=None):
     """Play a plan's steps the way the executor does - in order, each as soon
     as the cash allows - on the economy recorded in its `optimizer.scenario`,
     and return {round: margin} with the towers standing when each round
@@ -1294,7 +1394,12 @@ def replay_plan(plan, rounds=None):
     optimizer's own bookkeeping). plan: the parsed YAML dict.
 
     On a map that freezes towers (dps_model.TOWER_FREEZE) each round is
-    rated with only the towers awake in it (_awake_margin)."""
+    rated with only the towers awake in it (_awake_margin).
+
+    The hero is rated at its estimated level in each round (hero_level_at;
+    account: whose Monkey Knowledge adds hero XP - None counts none, the
+    slower estimate), at the plan's "at" or, without one, at the spot
+    MapSetup.hero_spot gives it."""
     (mode,) = plan["modes"]
     sc = (plan.get("optimizer") or {}).get("scenario") or {}
     econ = economy(mode)
@@ -1302,12 +1407,18 @@ def replay_plan(plan, rounds=None):
     econ.start_cash = float(sc.get("start_cash", econ.start_cash))
     econ.cash_mult = float(sc.get("income_multiplier", econ.cash_mult))
     setup = MapSetup(plan["map"], mode)
-    ev = Evaluator(setup, mode)
+    hero = plan.get("hero") or "quincy"
+    ev = Evaluator(setup, mode, hero)
     towers, cash, i = {}, econ.start_cash, 0
     placed = {}             # tower id -> the round it was bought before
     steps = plan.get("plan") or []
     margins = {}
     for rnd in range(econ.start_round, econ.end_round + 1):
+        if "hero" in towers:
+            # the hero's level in this round (hero_level_at, as the live forecast estimates it)
+            h = towers["hero"]
+            towers["hero"] = Tower(h.tid, h.kind, h.spot, (hero_level_at(hero, plan["map"], mode, account,
+                                                                        placed["hero"], rnd),), h.spent)
         while i < len(steps):
             step = steps[i]
             if step["do"] == "place" and step["kind"] == "hero":
@@ -1326,6 +1437,14 @@ def replay_plan(plan, rounds=None):
                 cell = setup.model.frac_to_cell(*step["at"])
                 towers[step["id"]] = Tower(step["id"], step["kind"], setup.cell_spot(cell), (0, 0, 0), cost)
                 placed[step["id"]] = rnd
+            elif step["do"] == "place" and D.HERO_RATING:
+                # the hero, at its planned spot or where the model would stand it
+                spot = (setup.cell_spot(setup.model.frac_to_cell(*step["at"])) if step.get("at")
+                        else setup.hero_spot(hero, list(towers.values())))
+                if spot is not None:
+                    placed["hero"] = rnd
+                    towers["hero"] = Tower("hero", "hero", spot,
+                                           (hero_level_at(hero, plan["map"], mode, account, rnd, rnd),), cost)
             elif step["do"] == "upgrade":
                 t = towers[step["id"]]
                 towers[step["id"]] = Tower(t.tid, t.kind, t.spot, tuple(int(c) for c in str(step["to"]).split("-")),

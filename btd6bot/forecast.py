@@ -8,8 +8,12 @@ bloons are out and idle cash is spent at once (match.py).
 
 Calibrated on 2,104 logged rounds (docs/optimizer.md, section 3): rounds
 rated 0-0.5 lost lives 11.8% of the time, 0.5-1.0 2.8%, above 2.0 0.5%.
-The model is on the safe side (heroes and abilities are not counted), so
-only the lowest band counts as a crisis. Example: the Water Park Easy game
+The model is on the safe side, so only the lowest band counts as a crisis.
+
+The hero is rated with the towers (dps_model.HERO_RATING) at the level the
+bot's own estimate gives it in each round (abilities.estimate_hero_level,
+from its placement round, with the map's and Monkey Knowledge's XP
+bonuses); a hero whose placement round is not known is left out. Example: the Water Park Easy game
 lost on 2026-10-22 rated 0.29-0.45 at rounds 27-30, where it collapsed.
 
 A round rated between 0.5 and 1 leaks in the model too, only less often in
@@ -59,11 +63,11 @@ def board_key(towers, phased=False):
     `phased` (a map that freezes towers, _phases) its placement round.
     Elsewhere the placement round is left out, so towers whose placement
     round is not known (older records, test fakes) and those that carry
-    one share their answers. (reinforce.board() copies it.)"""
-    if phased:
-        return tuple((p.tid, p.kind, tuple(p.tiers), p.x, p.y, getattr(p, "placed_round", None))
-                     for p in towers)
-    return tuple((p.tid, p.kind, tuple(p.tiers), p.x, p.y) for p in towers)
+    one share their answers - except the hero's, whose level in a round
+    follows from it. (reinforce.board() copies it.)"""
+    return tuple((p.tid, p.kind, tuple(p.tiers), p.x, p.y, getattr(p, "placed_round", None))
+                 if phased or p.kind == "hero" else (p.tid, p.kind, tuple(p.tiers), p.x, p.y)
+                 for p in towers)
 
 
 def lowest(margins):
@@ -72,12 +76,15 @@ def lowest(margins):
 
 
 class RoundForecast:
-    def __init__(self, map_key, mode, sight_grid=None, sight_heights=None):
+    def __init__(self, map_key, mode, sight_grid=None, sight_heights=None, hero=None, knowledge=()):
         """sight_grid: the MapModel's line-of-sight blockers (MapModel.sight),
         so towers that need sight - snipers included - count only the track
         they can see; sight_heights: (MapModel.sight_height,
         MapModel.ground_height), so towers on raised ground see over
-        blockers no higher than it."""
+        blockers no higher than it; hero: the equipped hero's id, rated on
+        the board as the tower of kind "hero" (None: the hero is left out);
+        knowledge: the Monkey Knowledge that adds hero XP in this game
+        (match.xp_knowledge)."""
         reverse = bool(map_key) and map_key.endswith(REVERSE_SUFFIX)
         self.map_name = map_key[:-len(REVERSE_SUFFIX)] if reverse else map_key
         self.reverse = reverse
@@ -87,6 +94,9 @@ class RoundForecast:
         self._sight_grid = sight_grid
         self._sight_heights = sight_heights
         self.off = not map_key
+        self.hero = hero
+        self._knowledge = tuple(knowledge or ())
+        self._hero_xp = None                # XP factor, abilities.hero_xp_multiplier (on first use)
         self._memo = OrderedDict()          # (what, board_key, round) -> answer
         self._stations_memo = OrderedDict()  # board_key -> stations
         # ratings the model actually ran (not answered from _memo): a look
@@ -120,28 +130,55 @@ class RoundForecast:
             self.sight = D.sight_test(self._sight_grid, self.track, heights=self._sight_heights)
         return True
 
-    def stations(self, towers):
+    def hero_level(self, towers, rnd):
+        """The level the hero of `towers` (the one of kind "hero") is
+        estimated to have during round `rnd`, or None when it is not rated:
+        no hero on the board, none named (self.hero), its placement round
+        unknown, or heroes switched off (dps_model.HERO_RATING). The
+        estimate is the bot's own (abilities.estimate_hero_level: the XP of
+        the rounds completed since placement, the hero's XP ratio, the map's
+        and Monkey Knowledge's bonuses)."""
+        from . import dps_model as D
+        if not D.HERO_RATING or not self.hero or rnd is None:
+            return None
+        hero = next((p for p in towers if p.kind == "hero"), None)
+        placed = getattr(hero, "placed_round", None) if hero is not None else None
+        if placed is None:
+            return None
+        from .abilities import estimate_hero_level, hero_xp_multiplier
+        if self._hero_xp is None:
+            self._hero_xp = hero_xp_multiplier(self.map_name, self._knowledge)
+        return estimate_hero_level(self.hero, placed, rnd, self._hero_xp)
+
+    def stations(self, towers, hero_level=None):
         """The model's stations for `towers` (objects with tid, kind, tiers,
-        x, y in screen fractions; the hero is left out), or None.
+        x, y in screen fractions), the hero at `hero_level` (None: left
+        out), or None.
 
         Remembered per board (_stations_memo): building them took 50 ms a
         call on a 37-tower board, 3 s of a 37 s look. Reusing them is safe:
         dps_model._play sets every station's strength before it plays."""
-        key = board_key(towers)            # stations do not depend on placement rounds
+        key = (board_key(towers), hero_level)   # stations do not depend on placement rounds
         if key in self._stations_memo:
             self._stations_memo.move_to_end(key)
             return self._stations_memo[key]
-        st = self._build_stations(towers)
+        st = self._build_stations(towers, hero_level)
         self._remember(self._stations_memo, key, st, STATIONS_MEMO_SIZE)
         return st
 
-    def _build_stations(self, towers):
+    def _build_stations(self, towers, hero_level=None):
         """stations() without the memo."""
         from . import dps_model as D
         from . import towers as T
         placed = []
         for p in towers:
-            if p.kind == "hero" or p.kind not in T.TOWERS:
+            if p.kind == "hero":
+                if hero_level is None or not self.hero:
+                    continue
+                x, z, _ = self.track.frac_to_world(p.x, p.y)
+                placed.append(D.Placed(p.tid, D.hero_kind(self.hero), (int(hero_level),), x, z))
+                continue
+            if p.kind not in T.TOWERS:
                 continue
             x, z, _ = self.track.frac_to_world(p.x, p.y)
             placed.append(D.Placed(p.tid, p.kind, tuple(p.tiers), x, z))
@@ -164,18 +201,27 @@ class RoundForecast:
     def _phase_groups(self, towers, rounds):
         """_phases with each group's stations left to build: [(a function
         returning the stations, rounds, exact)], so a group whose rounds
-        are all remembered (_rate) builds none."""
+        are all remembered (_rate) builds none. Rounds are grouped by the
+        hero's level in them too (hero_level): its station changes as it
+        levels, and so do the towers it buffs."""
         from . import dps_model as D
         built = [p for p in towers if p.kind != "hero"]
+        hero = [p for p in towers if p.kind == "hero"]
         if (getattr(self.track, "uptime", 1.0) >= 1.0 or not built
                 or any(getattr(p, "placed_round", None) is None for p in built)):
-            return [(lambda: self.stations(towers), list(rounds), False)]
+            groups = {}
+            for r in rounds:
+                groups.setdefault(self.hero_level(towers, r), []).append(r)
+            return [((lambda lv=lv: self.stations(towers, lv)), rs, False) for lv, rs in groups.items()]
         groups = {}
         for r in rounds:
-            awake = tuple(p for p in built if not D.frozen_in(self.map_name, p.placed_round, r))
-            groups.setdefault(tuple(p.tid for p in awake), (awake, []))[1].append(r)
-        return [((lambda awake=awake: (self.stations(list(awake)) or []) if awake else []), rs, True)
-                for awake, rs in groups.values()]
+            awake = tuple(p for p in built + hero if getattr(p, "placed_round", None) is None
+                          or not D.frozen_in(self.map_name, p.placed_round, r))
+            lv = self.hero_level(towers, r) if any(p.kind == "hero" for p in awake) else None
+            groups.setdefault((tuple(p.tid for p in awake), lv), (awake, lv, []))[2].append(r)
+        return [((lambda awake=awake, lv=lv: (self.stations(list(awake), lv) or [])
+                  if any(p.kind != "hero" for p in awake) else []), rs, True)
+                for awake, lv, rs in groups.values()]
 
     def _rate(self, towers, rounds, rate, what=None):
         """{round: rate(stations, round)} over `rounds`, rating each round
