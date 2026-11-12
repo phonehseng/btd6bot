@@ -56,7 +56,18 @@ WEAK_MARGIN = 1.5      # worst look-ahead margin under this: reinforce
 TARGET_MARGIN = 2.0    # margin the defence is reinforced up to
 MIN_SAVED = 0.5        # lives (at half strength) a purchase must save to be worth it
 MAX_OPTIONS = 20       # purchases tried per call
-NOT_DAMAGE = ("village", "alchemist", "farm")
+# Kinds never offered as "another <kind>": a village only lends (radar_option
+# offers the one village that answers camo) and a farm only pays.
+#
+# The Alchemist was on this list too, but the damage model rates its acid
+# and its dips on the towers beside it (dps_model._potion_buffs, _dip_share),
+# so a forecast can tell when one more Alchemist lifts a weak round;
+# docs/tower_exclusions_audit.md item 11 found the exclusion stale. It is
+# still no "main damage tower" for radar_option (BUFFERS).
+NOT_DAMAGE = ("village", "farm")
+# Kinds whose value lies in the towers beside them: never the tower a Radar
+# Scanner is placed beside (radar_option).
+BUFFERS = NOT_DAMAGE + ("alchemist",)
 SAVE_LEAD = 2          # rounds of income needed before saving for a dearer purchase pays
 SAVE_REACH = 3.0       # ... and it may cost at most this many times the cash in hand
 CONTINUOUS_SAVE_ROUNDS = 2   # under continuous sends: payable from the income of this many rounds
@@ -521,7 +532,7 @@ def radar_option(ex, cash, rnd):
     if any(t.kind == kind and t.tiers[1] >= 2 for t in towers):
         return None                     # a Radar Scanner already stands
     family = _price_family(ex)
-    damage = [t for t in towers if t.kind != "hero" and t.kind not in NOT_DAMAGE and t.kind in T.TOWERS]
+    damage = [t for t in towers if t.kind != "hero" and t.kind not in BUFFERS and t.kind in T.TOWERS]
     if not damage:
         return None
     main = max(damage, key=lambda t: T.total_cost(t.kind, tuple(t.tiers), family))
