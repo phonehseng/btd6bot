@@ -27,8 +27,20 @@ def test_the_lost_water_park_rounds_are_crisis_rounds():
         return   # no attack export on this machine
     f = RoundForecast("Water Park", "easy")
     assert not f.is_crisis(f.margin(WATER_PARK_R28, 20))     # held comfortably
-    for rnd in (28, 29, 30):                                   # where it collapsed
+    # Where it collapsed. Water Park's two slides alternate every round
+    # (AlternateRoundSplitter, roundsPerPath 0: odd rounds take Path2, even
+    # rounds Path1, the rule read off Last Resort's frames). This board is
+    # weak on Path1 only: the even rounds 28 and 30 are crisis rounds, and
+    # odd round 29 rates 1.7 on Path2. It was a crisis here only while every
+    # round was rated on both slides at once (dynamic-map audit 2026-11-12,
+    # item 2); against Path1 it still would be.
+    for rnd in (28, 30):
         assert f.is_crisis(f.margin(WATER_PARK_R28, rnd)), rnd
+    assert not f.is_crisis(f.margin(WATER_PARK_R28, 29))
+    path1 = [k for k in range(len(f.track.scenarios))
+             if f.track.paths[f.track.scenarios[k][0]]["name"] == "Path1"]
+    lots = [D.round_lots("easy", 29, f.track, k) for k in path1]
+    assert f.is_crisis(D.lots_margin(f.stations(WATER_PARK_R28), f.track, lots))
 
 
 def test_no_answer_without_towers_map_or_round():
