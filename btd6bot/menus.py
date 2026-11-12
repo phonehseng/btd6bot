@@ -13,6 +13,20 @@ from .vision import Vision, norm
 
 log = logging.getLogger("menus")
 
+# Words of the "Choose which save" dialog (normalised by vision.norm). Any one
+# of them is enough: the title sits at the top edge and is often cut off or
+# misread, while the two card labels read cleanly
+# (losses/20261112_090153_Peninsula_impoppable/frames/game_008.jpg).
+SAVE_CHOICE_WORDS = ["choosewhichsave", "thisdevice", "onthecloud"]
+LOCAL_SAVE_LABEL = "thisdevice"
+CLOUD_SAVE_LABEL = "onthecloud"
+USE_BUTTON = "use"
+# The USE button sits under its card's label: measured on game_008.jpg, the
+# label at y 0.398 and its USE at y 0.619, both at the same x (0.404 and
+# 0.594 for the two cards, which stand 0.19 apart).
+USE_BELOW_LABEL = (0.05, 0.40)    # USE is this far below its label (min, max)
+USE_UNDER_LABEL_DX = 0.06         # and at most this far to either side
+
 # screen -> list of keyword groups; all groups must match (any word within a group)
 SCREENS = [
     # the game's own crash dialog: "ERROR - We've encountered an unexpected
@@ -20,6 +34,13 @@ SCREENS = [
     # the map's OnClickHandler). Over a match the HUD still shows, so it must
     # come before everything else, or the bot thinks it is playing.
     ("game_error", [["unexpectederror", "encounteredan", "contactsupport"], ["exit"]]),
+    # the game's "Choose which save" dialog: two blue cards, "This Device"
+    # and "On the Cloud", each with a USE button. On the dimmed match behind
+    # it, it read as reward cards and the bot clicked both USE buttons
+    # (Peninsula Impoppable, 2026-11-12 08:59). Using the cloud save could
+    # load an older save over the local progress, so it must be recognised
+    # before anything else that clicks (see Menus.handle_save_choice).
+    ("save_choice", [SAVE_CHOICE_WORDS]),
     # a mode's intro box whose only button is a green Play arrow with no text
     # (Apopalypse: "Ever increasing Bloon waves, no breaks at the end of each
     # round. How far can you get?"); it comes before the map loads, so the
@@ -276,6 +297,62 @@ class Menus:
                 return True
         return False
 
+    # -- "Choose which save" dialog -----------------------------------------------
+    # The game asks which save to keep when its local save and the cloud save
+    # differ: two blue cards, "This Device" (marked LATEST SAVE) and "On the
+    # Cloud", each with a USE button. The local save is the live one; using
+    # the cloud save could load an older save over the local progress. In
+    # Peninsula Impoppable on 2026-11-12 (losses/20261112_090153_Peninsula_
+    # impoppable, game.log 08:59:24-34) the dialog came up over the dimmed
+    # match, read as a crate's reward cards, and the bot clicked the USE
+    # buttons of both cards, This Device first. So: recognise the dialog by
+    # its words, press only This Device's USE, and press nothing when that
+    # button cannot be told apart for certain.
+    def save_choice_up(self, words=None):
+        """True when the "Choose which save" dialog shows in the OCR words."""
+        words = getattr(self, "words", []) if words is None else words
+        return any(k in norm(w.text) for w in words for k in SAVE_CHOICE_WORDS)
+
+    def this_device_button(self, words=None):
+        """The USE button of the "This Device" card, as (word, None), or
+        (None, why) when it cannot be told apart for certain. The button
+        must sit right under the one "This Device" label and be nearer to
+        it than to any "On the Cloud" label; anything less is no answer, so
+        the cloud's button can never be taken for it."""
+        words = getattr(self, "words", []) if words is None else words
+        local = [w for w in words if LOCAL_SAVE_LABEL in norm(w.text)]
+        cloud = [w for w in words if CLOUD_SAVE_LABEL in norm(w.text)]
+        if len(local) != 1:
+            return None, "%d 'This Device' labels read" % len(local)
+        label = local[0]
+        lo, hi = USE_BELOW_LABEL
+        under = [w for w in words if norm(w.text) == USE_BUTTON
+                 and lo <= w.y - label.y <= hi and abs(w.x - label.x) <= USE_UNDER_LABEL_DX]
+        if len(under) != 1:
+            return None, "%d USE buttons under 'This Device'" % len(under)
+        button = under[0]
+        for c in cloud:
+            if abs(button.x - c.x) <= max(abs(button.x - label.x), USE_UNDER_LABEL_DX):
+                return None, "the USE under 'This Device' is as near to 'On the Cloud'"
+        return button, None
+
+    def handle_save_choice(self):
+        """Keep the local save: press This Device's USE. Reads the screen
+        afresh first. Returns True when it clicked; False (and a warning,
+        no click at all) when the button is not certain."""
+        self.read()
+        if not self.save_choice_up():
+            return False
+        button, why = self.this_device_button()
+        if button is None:
+            log.warning("'Choose which save' dialog: %s - clicking nothing (never the cloud save)", why)
+            return False
+        log.warning("'Choose which save' dialog: keeping the local save - USE under 'This Device' at %.3f,%.3f",
+                    button.x, button.y)
+        self.inp.click(button.x, button.y)
+        time.sleep(1.5)
+        return True
+
     # -- level up / tower choice -------------------------------------------------
     def handle_level_up(self):
         self.inp.click(0.5, 0.5)
@@ -378,9 +455,20 @@ class Menus:
 
     def reward_cards(self, frame=None):
         """Centres (fx, fy) of the cards on a crate-opening screen, left to
-        right: blue tiles about a sixth of the screen high."""
+        right: blue tiles about a sixth of the screen high.
+
+        Never cards while the screen's words show the "Choose which save"
+        dialog or a USE button: that dialog's two blue cards over a dimmed
+        match passed for reward cards, and their centres are its USE buttons
+        (Peninsula Impoppable, 2026-11-12). Face-down reward cards carry no
+        text at all, and a crate opens from the menus, never over a match:
+        so the match HUD's ROUND counter rules cards out too, whatever blue
+        popup covers the match."""
         import cv2
         import numpy as np
+        words = getattr(self, "words", [])
+        if self.save_choice_up(words) or any(norm(w.text) in (USE_BUTTON, "round") for w in words):
+            return []
         if frame is None and getattr(self, "s", None) is None:
             return []                  # no screen (offline tests)
         f = frame if frame is not None else self.s.grab()
@@ -401,10 +489,18 @@ class Menus:
         self._event_backs = 0
         for _ in range(max_steps):
             st = self.identify()
+            if st == "save_choice":
+                # not reward cards: keep the local save, or click nothing
+                if not self.handle_save_choice():
+                    return False
+                continue
             if st == "insta_reward":
                 self.inp.click(0.5, 0.5)            # close the popup
                 time.sleep(1.2)
             elif st == "reward_cards":
+                if self.save_choice_up():
+                    log.warning("reward cards with the 'Choose which save' dialog up - not clicking")
+                    return False
                 cards = [c for c in self.reward_cards() if (round(c[0], 2), round(c[1], 2)) not in turned]
                 if not cards:
                     self.inp.click(0.5, 0.5)

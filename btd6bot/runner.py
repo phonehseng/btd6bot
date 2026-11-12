@@ -683,6 +683,10 @@ class Bot:
                         "profile", "overwrite", "account", "monkeys_menu", "legends"):
                 self.inp.click(0.044, 0.055)  # back arrow
                 time.sleep(0.4)
+            elif st == "save_choice":
+                # keep the local save, never the cloud one (menus.handle_save_choice)
+                self.menus.handle_save_choice()
+                time.sleep(0.6)
             elif st in ("collection_event", "reward_cards", "insta_reward"):
                 self.menus.handle_collection_event()
             elif st == "level_up":
