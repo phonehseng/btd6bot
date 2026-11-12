@@ -1,0 +1,102 @@
+# Rake, CHIMPS: BeatbloonsBob's Sauda + Tack Zone + Perma-Spike + Glaive
+# Lord + Super Brittle guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next. The
+# bot's own builds (rake_chimps, parked) lost rounds 6-7 twice with darts
+# and Quincy, then held the opening with two desperados and lost round 40:
+# the Destroyer popped the MOAB and its ceramics ran out of the bottom exit.
+# Both written guides open with two desperados and add early exit cleanup
+# before the blimps; this one is fully unlocked and has the Perma-Spike at
+# the exits (docs/chimps_map_guides.md, Rake, Strategy 2).
+#
+# Guide: BeatbloonsBob (https://www.youtube.com/watch?v=yIlrhysKjPg, about 4
+# months old), the order written in the description with one round anchor
+# (Spike 2-0-3 before round 28) (confidence: video-description, ordered
+# steps). Hero: Sauda (the 4th purchase).
+# Core towers: Tack 2-0-5 (The Tack Zone), Spike Factory 2-0-5
+# (Perma-Spike), Boomerang 5-0-2 (Glaive Lord), Ice 5-2-0 (Super Brittle),
+# Village 4-2-0, Alchemist 4-2-0 and 4-0-1, two Desperados (opening).
+# Placements, in the guide's and the wiki's words: the spike factory
+# slightly top-left of the centre of the enclosed space below-left of the
+# statue, which covers both exits (bloonswiki); the alchemist next to it,
+# clear of the desperado; the Glaive Lord at the centre; the tack and
+# Sauda at the lane crossing in the centre; the second alchemist below the
+# ice. The two desperados stand where the old build's desperados held
+# rounds 6-39 live (right of the bottom U, and the centre).
+#
+# Adapted, and why:
+#   * "same targeting as me" for the spike factory is unstated; the wiki
+#     says Smart, which needs a calibrated point the bot does not have, so
+#     it keeps the default targeting.
+#   * the spike factory takes White Hot Spikes (2-0-0) before its 0-0-2:
+#     it is the guide's only lead popper before round 28, and with 0-0-2
+#     first the replay bought an off-plan bomb for the leads.
+#   * the statue ($1,000) is not bought: neither guide uses it.
+#   * nothing else: every tier is unlocked, no ability is used, and the
+#     bot's coverage tables are met by the guide's own towers.
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 26/26 bought, threat gaps: none, off-plan answer buys:
+# none. Each step stands from: e1 placed R6, e2 placed R6, t1 placed R8, t1
+# 0-0-2 R10, hero placed R13, p1 placed R17, p1 2-0-0 R23, p1 2-0-2 R25, p1
+# 2-0-3 R28, a1 placed R30, a1 3-2-0 R36, i1 placed R36, r1 placed R36, r1
+# 4-0-2 R40, t1 1-0-4 R42, t1 2-0-4 R42, i1 4-2-0 R46, t1 2-0-5 R56, v1 placed
+# R57, v1 4-2-0 R62, a2 placed R62, a2 4-0-1 R66, a1 4-2-0 R67, r1 5-0-2 R82,
+# p1 2-0-5 R93, i1 5-2-0 R99. Damage model margins on those boards (it counts
+# no hero and no ability, and under-rates map-wide towers): 40 0.33, 63 0.25,
+# 76 0.25, 81 0.18, 90 1.00, 95 0.50, 98 0.26, 100 0.51.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: rake_chimps_guide
+map: Rake
+hero: sauda
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {desperado: [0, 0, 0], tack: [2, 0, 5], spike: [2, 0, 5], alchemist: [4, 2, 1], ice: [5, 2, 0], boomerang: [5, 0, 2], village: [4, 2, 0]}
+  revised: "2026-11-12T12:00"
+  maps: [Rake]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: e1, kind: desperado, role: dps, at: [0.676, 0.811]}         # right of the bottom U: both lanes' exits
+  - {do: place, id: e2, kind: desperado, role: dps, at: [0.43, 0.572]}          # the centre
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.548, 0.555]}              # the lane crossing in the centre
+  - {do: upgrade, id: t1, to: 0-0-2}
+  - {do: place, id: hero, kind: hero, role: dps, near: [t1], at: [0.505, 0.572]}  # Sauda, by the tack
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.505, 0.828]}             # top-left of the centre of the enclosed space: both exits
+  - {do: upgrade, id: p1, to: 2-0-0}                                            # White Hot Spikes first: round 28's leads (the guide buys 0-0-2 first)
+  - {do: upgrade, id: p1, to: 2-0-2}
+  - {do: upgrade, id: p1, to: 2-0-3}                                            # before round 28 (the guide's one round anchor)
+  - {do: place, id: a1, kind: alchemist, role: support, near: [p1], at: [0.484, 0.76]}  # next to the spike factory
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: place, id: i1, kind: ice, role: dps, at: [0.398, 0.606]}
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.377, 0.555]}         # the centre
+  - {do: upgrade, id: r1, to: 4-0-2}                                            # M.O.A.R Glaives
+  - {do: upgrade, id: t1, to: 1-0-4}                                            # Overdrive
+  - {do: upgrade, id: t1, to: 2-0-4}
+  - {do: upgrade, id: i1, to: 4-2-0}                                            # Embrittlement
+  - {do: upgrade, id: t1, to: 2-0-5}                                            # The Tack Zone
+  - {do: place, id: v1, kind: village, role: support, near: [t1, r1, i1], at: [0.355, 0.641]}
+  - {do: upgrade, id: v1, to: 4-2-0}                                            # Radar, Jungle Drums, Primary Mentoring
+  - {do: place, id: a2, kind: alchemist, role: support, near: [i1, t1], at: [0.516, 0.726]}  # below the ice
+  - {do: upgrade, id: a2, to: 4-0-1}
+  - {do: upgrade, id: a1, to: 4-2-0}                                            # Stronger Stimulant
+  - {do: upgrade, id: r1, to: 5-0-2}                                            # Glaive Lord
+  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+  - {do: upgrade, id: i1, to: 5-2-0}                                            # Super Brittle
+answers:
+  lead: [{do: upgrade, id: p1, to: 2-0-0}]
+  ceramic: [{do: upgrade, id: p1, to: 2-0-3}]
+  moab: [{do: upgrade, id: r1, to: 4-0-2}]
+  bfb: [{do: upgrade, id: r1, to: 4-0-2}]
+  rush: [{do: upgrade, id: r1, to: 4-0-2}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 4-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 4-2-0}]
+  zomg: [{do: upgrade, id: r1, to: 5-0-2}]
+  ddt: [{do: upgrade, id: v1, to: 4-2-0}]
+  bad: [{do: upgrade, id: p1, to: 2-0-5}]

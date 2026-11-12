@@ -1,0 +1,96 @@
+# Firing Range, CHIMPS: BeatbloonsBob's Psi + sub + Carrier Flagship + Super
+# Brittle + Tack Zone guide, step by step with plan_first.
+#
+# Why: the owner's goal is CHIMPS black borders, Intermediate maps next, and
+# Firing Range had no CHIMPS build. Every Beginner CHIMPS map was won by
+# following a published guide step by step with exact spots and plan_first
+# (docs/chimps_map_guides.md, Firing Range, Strategy 1: 13 steps, no
+# abilities, no removable, all unlocked).
+#
+# Guide: BeatbloonsBob (https://www.youtube.com/watch?v=_PM_WfS-nOc, about 8
+# months old, $60k spare), the order written in the description, no rounds
+# (confidence: video-description, ordered steps). Hero: Psi (the 4th
+# purchase), left passive.
+# Core towers: Sub 2-0-4, Buccaneer 5-2-0 (Carrier Flagship), Village
+# 4-2-0, Ice 5-2-0 (Super Brittle), Tack 2-0-5 (The Tack Zone), and a Dart
+# on Strong for the opening.
+# Placements: the sub and the boat in the water spot under the lanes (the
+# only water); the outpost ($1,000) is not bought, as in the guide; the
+# dart, the ice and the tack on the grass below the fence where the lanes
+# come down; the village by the water towers.
+#
+# Adapted, and why:
+#   * the bot's coverage check needs ceramic, BFB, ZOMG, DDT, BAD and rush
+#     answers from its own tables (strategy.ANSWERS); none of the guide's
+#     towers is in them. The guide's $60k spare pays for a Cripple MOAB
+#     sniper on the bottom grass (it sees about 84% of both lanes) and a
+#     Glaive Ricochet boomerang (3-0-2) for round 63. The sniper comes right
+#     after Psi with Night Vision and Full Metal Jacket: by the bot's tables
+#     nothing of the guide's sees round 24's camo or pops round 28's leads
+#     on both lanes (Psi does live, but the bot does not count heroes).
+#
+# Offline replay (tools/simulate_threats.py on the live learned map with the
+# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
+# and bonuses): plan 25/25 bought, threat gaps: none, off-plan answer buys:
+# 10. Each step stands from: sb1 placed R6, x1 placed R6, sb1 1-0-1 R9, hero
+# placed R14, s1 placed R16, s1 0-1-0 R17, s1 1-1-0 R18, sb1 2-0-2 R24, b1
+# placed R26, b1 2-2-0 R31, b1 3-2-0 R40, sb1 2-0-4 R38, v1 placed R42, v1
+# 2-2-0 R45, s1 2-1-0 R33, r1 placed R46, r1 3-0-2 R46, b1 5-2-0 R71, s1 4-1-0
+# R55, v1 4-2-0 R73, i1 placed R74, i1 5-2-0 R84, t1 placed R84, t1 2-0-5 R93,
+# s1 5-1-0 R99. Damage model margins on those boards (it counts no hero and no
+# ability, and under-rates map-wide towers): 40 2.68, 63 6.10, 76 15.16, 81
+# 5.97, 90 2.68, 95 0.41, 98 0.81, 100 2.57.
+#
+# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# like the Beginner guide builds before their first games (under the 0.80
+# CHIMPS bar: it plays when the NEXT file names it with "!force").
+id: firingrange_chimps
+map: Firing Range
+hero: psi
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [chimps]
+planner:
+  towers: {sub: [2, 0, 4], dart: [0, 0, 0], buccaneer: [5, 2, 0], village: [4, 2, 0], ice: [5, 2, 0], tack: [2, 0, 5], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
+  revised: "2026-11-12T12:00"
+  maps: [Firing Range]
+  # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
+  # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
+  base_success: {chimps: 0.5}
+plan:
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.687, 0.436]}              # the water spot
+  - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.74, 0.606]}  # on Strong
+  - {do: upgrade, id: sb1, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.74, 0.675]}             # Psi
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.409, 0.93]}  # added: the bottom grass (see above)
+  - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo on both lanes
+  - {do: upgrade, id: s1, to: 1-1-0}                                            # Full Metal Jacket: round 28's leads
+  - {do: upgrade, id: sb1, to: 2-0-2}                                           # Advanced Intel
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.729, 0.453]}         # the water spot
+  - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
+  - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
+  - {do: upgrade, id: sb1, to: 2-0-4}                                           # Armor Piercing Darts
+  - {do: place, id: v1, kind: village, role: support, near: [b1, sb1], at: [0.655, 0.572]}
+  - {do: upgrade, id: v1, to: 2-2-0}                                            # Radar Scanner, Jungle Drums
+  - {do: upgrade, id: s1, to: 2-1-0}                                            # Large Calibre: ceramics
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.676, 0.726]}  # added: Glaive Ricochet for round 63
+  - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
+  - {do: upgrade, id: s1, to: 4-1-0}                                            # added: Maim MOAB
+  - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
+  - {do: place, id: i1, kind: ice, role: dps, at: [0.74, 0.777]}
+  - {do: upgrade, id: i1, to: 5-2-0}                                            # Super Brittle
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.74, 0.845]}
+  - {do: upgrade, id: t1, to: 2-0-5}                                            # The Tack Zone
+  - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
+answers:
+  camo: [{do: upgrade, id: s1, to: 0-1-0}]
+  lead: [{do: upgrade, id: s1, to: 1-1-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-1-0}]
+  moab: [{do: upgrade, id: sb1, to: 2-0-4}]
+  camo_ceramic: [{do: upgrade, id: v1, to: 2-2-0}]
+  camo_lead: [{do: upgrade, id: v1, to: 2-2-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-1-0}]
+  rush: [{do: upgrade, id: r1, to: 3-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-1-0}]
+  ddt: [{do: upgrade, id: s1, to: 4-1-0}]
+  bad: [{do: upgrade, id: s1, to: 5-1-0}]

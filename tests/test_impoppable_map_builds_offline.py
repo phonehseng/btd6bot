@@ -24,6 +24,12 @@ reinforce buys; no MOAB answer by round 40). Spillway got one after
 chimps_ninja_sun's round 98 (loss 20261112_041202: ten off-plan towers, the
 exit spike factory given up, blimp check 0.2-0.8x from round 91).
 
+Late game (2026-11-12, damage model phase 2): Sunken Columns, Sunset Gulch,
+Firing Range, Quad, Bloonarius Prime, Mesa, Covered Garden and Peninsula
+keep their plans up to round 30-35 and then take tools/optimize_builds.py's
+greedy purchases, saving for one tier-5 carry (Super Mines, Flying Fortress
+or Wizard Lord Phoenix); the ace builds have Etienne for his map-wide camo.
+
 Run: python tests/test_impoppable_map_builds_offline.py"""
 import sys
 from pathlib import Path
@@ -141,19 +147,16 @@ def test_no_pinned_spot_is_refused_in_the_live_map_file():
 
 
 def test_covered_garden_stands_off_the_panes():
-    """Every pinned tower of the Covered Garden build is on ground no cycling
-    pane covers, and its Eliminator stands in the camo village's range."""
-    import math
+    """Every pinned tower of the Covered Garden build, its late-game carry
+    (the Wizard Lord Phoenix) among them, is on ground no cycling pane
+    covers."""
     from btd6bot import mapgeom as G
     _, d = _build("coveredgarden")
     pinner = pin_spots.Pinner("Covered Garden", "impoppable")
     steps = {st["id"]: st for st in d["plan"] + d.get("fill", []) if st["do"] == "place" and st.get("at")}
     for tid, st in steps.items():
         assert G.pane_at(pinner.model, *st["at"], None)[0] is None, (tid, st["at"])
-    for tid in ("b1", "sp1", "ac1", "n4", "v1"):
-        assert tid in steps, f"{tid} has a pinned spot"
-    b1, v1 = (pinner.world(pinner.model.frac_to_cell(*steps[t]["at"])) for t in ("b1", "v1"))
-    assert math.dist(b1, v1) <= pin_spots.buffer_range("village")
+    assert any(st["kind"] == "wizard" and "carry" in tid for tid, st in steps.items()), sorted(steps)
 
 
 def test_the_moab_answer_comes_before_the_alchemist():
@@ -163,24 +166,74 @@ def test_the_moab_answer_comes_before_the_alchemist():
                    "spillway"):
         _, d = _build(map_id)
         order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
-        assert order.index(("upgrade", "n2", "2-0-4")) < order.index(("place", "a1", "None")), map_id
+        # Covered Garden's late-game plan (2026-11-12) buys no alchemist at all
+        alchemist = order.index(("place", "a1", "None")) if ("place", "a1", "None") in order else len(order)
+        assert order.index(("upgrade", "n2", "2-0-4")) < alchemist, map_id
+
+
+def _bought_before(d, rnd):
+    """The plan steps the executor has bought before round ``rnd``: in
+    order, each once the cash allows, on Impoppable's income with the main
+    account's Double Cash (no Fast Track there), as the late game was
+    rated."""
+    import optimize_builds as O
+    from btd6bot import towers as T
+    econ = O.economy("impoppable", {"double_cash": True})
+    tiers, cash, out, steps = {}, econ.start_cash, [], list(d["plan"])
+    for r in range(econ.start_round, rnd):
+        while steps:
+            st = steps[0]
+            if st["do"] == "place":
+                cost = (T.hero_cost(d["hero"], econ.family) if st["kind"] == "hero"
+                        else T.tower_cost(st["kind"], econ.family))
+            elif st["do"] == "upgrade":
+                kind, have = tiers[st["id"]]
+                cost = O.upgrade_cost(kind, have, O.parse_cross(st["to"]), econ.family)
+            else:
+                cost = 0.0
+            if cost > cash:
+                break
+            cash -= cost
+            if st["do"] == "place":
+                tiers[st["id"]] = (st["kind"], (0, 0, 0))
+            elif st["do"] == "upgrade":
+                tiers[st["id"]] = (tiers[st["id"]][0], O.parse_cross(st["to"]))
+            out.append(steps.pop(0))
+        cash += econ.income(r)
+    return out
 
 
 def test_sunken_columns_answers_round_59_camo_lead():
-    """Round 59's camo lead bloons: bm1 (a bomb pops lead) is bought right
-    after the radar village v1 reaches 2-2-0, stands in its range, and is
-    the build's camo_lead answer. It used to come at round 61, and the
-    threat simulation found round 59 uncovered."""
-    import math
+    """Round 59's camo lead bloons (the threat simulation found round 59
+    uncovered on 2026-11-12): the towers the plan has bought before round
+    59 answer them by themselves, without the build's answers."""
+    from btd6bot import strategy as S
     _, d = _build("sunkencolumns")
-    order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
-    radar = order.index(("upgrade", "v1", "2-2-0"))
-    assert order[radar + 1] == ("place", "bm1", "None"), order[radar + 1]
-    assert any(st.get("id") == "bm1" for st in d["answers"]["camo_lead"])
-    pinner = pin_spots.Pinner("Sunken Columns", "impoppable")
-    at = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place" and st.get("at")}
-    bm1, v1 = (pinner.world(pinner.model.frac_to_cell(*at[t])) for t in ("bm1", "v1"))
-    assert math.dist(bm1, v1) <= pin_spots.buffer_range("village")
+    early = dict(d, plan=_bought_before(d, 59), answers={})
+    _, missing = S.coverage(early, "impoppable")
+    assert "camo_lead" not in missing, missing
+
+
+def test_late_game_carries_answer_the_last_blimps():
+    """The late-game rework (2026-11-12, damage model phase 2): each map's
+    plan carries one tier-5 tower, saved for by a stated round, and its
+    ZOMG and BAD answers name a tower the plan buys anyway, so the executor
+    is never sent after a second one."""
+    from btd6bot import strategy as S
+    for map_id in ("sunkencolumns", "sunsetgulch", "firingrange", "quad", "bloonariusprime", "mesa",
+                   "coveredgarden"):
+        _, d = _build(map_id)
+        ids = {st["id"] for st in d["plan"] if st.get("id")}
+        carry = [st for st in d["plan"] if st["do"] == "upgrade" and "carry" in st["id"] and "5" in st["to"]]
+        assert carry, map_id
+        assert S.coverage(d, "impoppable")[0], (map_id, S.coverage(d, "impoppable"))
+        for threat in ("zomg", "bad"):
+            if map_id == "coveredgarden" and threat == "bad":
+                # its carry (a Wizard Lord Phoenix) is no BAD answer and no
+                # bomb fits the pane-free ground: a Cripple MOAB sniper is
+                assert [st["kind"] for st in d["answers"][threat] if st["do"] == "place"] == ["sniper"]
+                continue
+            assert all(st["id"] in ids for st in d["answers"][threat]), (map_id, threat)
 
 
 def test_a_tower_is_pinned_on_its_part_of_the_route():

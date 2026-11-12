@@ -35,11 +35,27 @@ plan or the fill places an `at` spot:
     nearly as good (PROVEN_SCORE_SHARE of the best) one where a tower of
     that kind has already stood in a live game (MapModel.spot_stats, or
     accepted_mask) comes first;
+  * a global tower (a sniper), which the optimizer ranks no spots for,
+    takes the cell from which it sees the most route through the map's
+    sight blockers (the guides' "where it sees both lanes");
   * a tower with `near` (support, or a tower that must stand in a village's
     range) takes the best of those spots within its `near_radius` of the
     towers it names (any legal cell when its kind has no ranked spots), or
     the closest one when none is that near;
-  * the hero and `role: exit` towers keep the executor's own choice.
+  * a step may say where the guide puts the tower, in words turned into a
+    box of screen fractions: `area: [x0, y0, x1, y1]` (a draft-only key,
+    left out of the written file). Candidates inside the box come first,
+    in their usual order (a buffer, which ranks no spots, takes the one
+    nearest the box's centre); with none inside, the one nearest the box. The Intermediate CHIMPS guide builds (2026-11-12) use
+    it for "Sauda at the top middle, as high as possible", "the sniper next
+    to the crystal", "the boat in the springs";
+  * the hero keeps the executor's own choice unless its step has an
+    `area`: then it is pinned like a tower, on the cells the hero itself
+    may stand on, ranked by the route a dart-range tower sees from them
+    (HERO_PROXY: heroes have no damage profile);
+  * `role: exit` towers keep the executor's own choice;
+  * a `do: clear` step frees the obstacle's ground for the towers pinned
+    after it (such a plan is pinned in plan order).
 
 The written file (strategies/maps/<map id>_<mode>.yaml) is marked untested
 and gets the lowest base_success the map builds use (UNTESTED_SUCCESS); the
@@ -71,6 +87,8 @@ from btd6bot import strategy as S  # noqa: E402
 from btd6bot.account import canonical_map  # noqa: E402
 
 OUT_DIR = S.STRAT_DIR / "maps"
+# Step keys a draft may carry that the written file leaves out (see `area`).
+DRAFT_KEYS = ("area", "note")
 # The lowest declared success the map builds take (tests/test_map_hints_offline.py
 # keeps them within 0.5-0.85): an untested build, below every hand-tested one.
 UNTESTED_SUCCESS = 0.5
@@ -125,6 +143,11 @@ def refusal_layers(kind, hero=None):
     for surface in PL.surfaces(kind, hero):
         out |= {surface, PL.refusal_layer(surface, kind, hero)}
     return out
+
+
+# Heroes have no damage profile: a hero's cells are ranked by the route a
+# tower of this kind would see from them (Pinner.candidates).
+HERO_PROXY = "dart"
 
 
 def never_refused(model, kind, cell, hero=None):
@@ -190,12 +213,19 @@ class Pinner:
         self.placed = []              # (cx, cy, kind, hero) as placement.valid_spots takes them
         self.cells = {}               # tower id -> (cx, cy)
         self.kinds = {}               # tower id -> kind
+        self.removed = ()             # obstacles a `clear` step bought (placement.valid_spots)
 
-    def legal(self, kind):
-        """Bool grid [cy, cx] of cells where ``kind`` may stand now, off the
-        cycling panes (pane_free) while any such cell is left."""
-        ok = PL.valid_spots(self.model, kind, None, self.placed, last_round=self.last_round)
+    def legal(self, kind, hero=None):
+        """Bool grid [cy, cx] of cells where ``kind`` (``hero`` for the
+        hero) may stand now, off the cycling panes (pane_free) while any
+        such cell is left."""
+        ok = PL.valid_spots(self.model, kind, hero, self.placed, last_round=self.last_round,
+                            removed=self.removed)
         return pane_free(self.model, ok)
+
+    def clear(self, obstacle):
+        """A `do: clear` step: the obstacle's ground counts as free from here."""
+        self.removed = tuple(self.removed) + (obstacle,)
 
     def legal_cells(self, kind):
         """Legal cells for ``kind`` on the empty map, off the panes."""
@@ -212,12 +242,14 @@ class Pinner:
     def segment_cover(self, kind, cell, segment):
         """Route length (world units, all routes) inside ``kind``'s range
         from ``cell`` and within ``segment`` - the share of each route from
-        its entrance, (0.0, 0.5) its first half - that it can see."""
+        its entrance, (0.0, 0.5) its first half - that it can see. A global
+        tower (a sniper) has no range limit: only its sight counts."""
         import numpy as np
         from btd6bot import dps_model as D
         prof = D.profile(kind, (0, 0, 0))
-        if prof is None or prof.is_global:
+        if prof is None:
             return 0.0
+        reach = math.inf if prof.is_global else prof.range
         x, z = self.world(cell)
         lo, hi = segment
         sight = self.setup.sight_for(kind)
@@ -227,14 +259,14 @@ class Pinner:
             progress = dist / length if length else dist * 0
             if self.setup.track.reverse:
                 progress = 1.0 - progress
-            inside = path["hittable"] & (progress >= lo) & (progress <= hi) &                 (((xyz[:, 0] - x) ** 2 + (xyz[:, 1] - z) ** 2) <= prof.range ** 2)
+            inside = path["hittable"] & (progress >= lo) & (progress <= hi) &                 (((xyz[:, 0] - x) ** 2 + (xyz[:, 1] - z) ** 2) <= reach ** 2)
             if sight is not None and inside.any():
                 idx = np.nonzero(inside)[0]
                 inside[idx[~sight(x, z, xyz[inside])]] = False
             total += float(np.sum(np.diff(dist)[inside[:-1]]))
         return total
 
-    def candidates(self, kind, ok, segment=None):
+    def candidates(self, kind, ok, segment=None, hero=None):
         """Cells (cx, cy) for ``kind``, best first, none of them refused for
         it (never_refused): its free ranked spots (reaching the track), the
         spots nearly as good as the best (PROVEN_SCORE_SHARE) where the kind
@@ -243,6 +275,24 @@ class Pinner:
         spots are scored by the route they cover inside it. A buffer (village, alchemist:
         Executor.BUFFERS) lends to the towers around it, not to the track,
         so it gets the legal cells alone (pin ranks them by room)."""
+        if kind == "hero":
+            # no damage profile: the hero's cells ranked by the route a
+            # tower of HERO_PROXY's range sees from them
+            ys, xs = ok.nonzero()
+            cells = [(int(x), int(y)) for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0]
+            scored = [(c, self.segment_cover(HERO_PROXY, c, segment or (0.0, 1.0))) for c in cells]
+            scored.sort(key=lambda t: -t[1])
+            return [c for c, _ in scored if never_refused(self.model, kind, c, hero)]
+        if self._global(kind):
+            # a global tower ranks no spots (optimize_builds: every cell
+            # scores 0); its cells are ranked by the route it can see from
+            # them (the walls and blockers of the sight model), as the
+            # guides say: "where it sees both lanes", "as high as you can"
+            ys, xs = ok.nonzero()
+            cells = [(int(x), int(y)) for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0]
+            scored = [(c, self.segment_cover(kind, c, segment or (0.0, 1.0))) for c in cells]
+            scored.sort(key=lambda t: -t[1])
+            return [c for c, _ in scored if never_refused(self.model, kind, c)]
         proven = proven_cells(self.model, kind)
         spots = [] if kind in S.Executor.BUFFERS else             [(sp.cell, sp.score) for sp in self.setup.ranked_spots(kind) if ok[sp.cell[1], sp.cell[0]]]
         if spots and segment and tuple(segment) != (0.0, 1.0):
@@ -295,7 +345,44 @@ class Pinner:
         return sum(1 for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0
                    and math.dist(self.world((int(x), int(y))), here) <= rng)
 
-    def pin(self, tid, kind, near=(), near_radius=NEAR_RADIUS, segment=None):
+    @staticmethod
+    def _global(kind):
+        """Does ``kind`` shoot map-wide (a sniper)?"""
+        if kind == "hero" or kind in S.Executor.BUFFERS:
+            return False
+        from btd6bot import dps_model as D
+        prof = D.profile(kind, (0, 0, 0))
+        return prof is not None and bool(prof.is_global)
+
+    def _inside(self, cell, area):
+        """Is ``cell`` inside ``area`` (x0, y0, x1, y1 screen fractions)?"""
+        fx, fy = self.model.cell_to_frac(*cell)
+        return area[0] <= fx <= area[2] and area[1] <= fy <= area[3]
+
+    def in_area(self, cands, area, kind):
+        """``cands`` with those inside ``area`` (x0, y0, x1, y1 screen
+        fractions) first. Inside the box the usual order stands, except for
+        a buffer (its order is the grid's), which goes nearest the box's
+        centre first; with none inside, the candidate nearest the box comes
+        first."""
+        if not area or not cands:
+            return cands
+        x0, y0, x1, y1 = area
+        mid = ((x0 + x1) / 2, (y0 + y1) / 2)
+        frac = {c: self.model.cell_to_frac(*c) for c in cands}
+        inside = [c for c in cands if x0 <= frac[c][0] <= x1 and y0 <= frac[c][1] <= y1]
+        if inside:
+            if kind in S.Executor.BUFFERS:
+                inside.sort(key=lambda c: math.dist(frac[c], mid))
+            taken = set(inside)
+            return inside + [c for c in cands if c not in taken]
+
+        def gap(c):
+            fx, fy = frac[c]
+            return math.hypot(max(x0 - fx, 0, fx - x1), max(y0 - fy, 0, fy - y1))
+        return sorted(cands, key=gap)
+
+    def pin(self, tid, kind, near=(), near_radius=NEAR_RADIUS, segment=None, area=None, hero=None):
         """The `at` [fx, fy] for tower ``tid`` (None when no legal spot).
 
         With ``near``: the best candidate that works with every tower named
@@ -304,21 +391,24 @@ class Pinner:
         cell with the most room for the towers it is to lend to (room):
         on Sunset Gulch (2026-11-12) the first legal cell left its Eliminator
         78 units from the camo village (range 48)."""
-        ok = self.legal(kind)
+        ok = self.legal(kind, hero)
         if ok is None:
             return None
-        cands = self.candidates(kind, ok, segment)
+        cands = self.in_area(self.candidates(kind, ok, segment, hero), area, kind)
         refs = [(self.kinds[r], self.cells[r]) for r in near if r in self.cells]
         if refs:
             inside = [c for c in cands if all(self.reach(kind, c, k, r, near_radius) for k, r in refs)]
             cands = inside or sorted(cands, key=lambda c: sum(math.dist(c, r) for _, r in refs))[:1]
         if kind in S.Executor.BUFFERS and len(cands) > 1:
+            if area:
+                # the room decides only among the cells where the guide puts it
+                cands = [c for c in cands if self._inside(c, area)] or cands
             step = max(1, len(cands) // BUFFER_TRIES)      # spread over all of them
             cands = sorted(cands[::step], key=lambda c: -self.room(kind, c))
         if not cands:
             return None
         cx, cy = cands[0]
-        self.placed.append((cx, cy, kind, None))
+        self.placed.append((cx, cy, kind, hero))
         self.cells[tid] = (cx, cy)
         self.kinds[tid] = kind
         fx, fy = self.model.cell_to_frac(cx, cy)
@@ -344,10 +434,11 @@ def pinned_strategy(sid, map_name, mode):
     unpinned = []
 
     def pins_wanted(st):
-        """A step placing a named tower other than the hero or an exit tower
-        (those keep the executor's choice)."""
-        return (st.get("do") == "place" and st.get("kind") != "hero" and st.get("role") != "exit"
-                and bool(st.get("id")))
+        """A step placing a named tower other than an exit tower or the
+        hero (those keep the executor's choice); a hero step with an `area`
+        is pinned too."""
+        return (st.get("do") == "place" and st.get("role") != "exit" and bool(st.get("id"))
+                and (st.get("kind") != "hero" or bool(st.get("area"))))
 
     plan_steps = _for_mode(src.get("plan"), mode)
     # a fill tower with an id is pinned too, or the executor's choice for it
@@ -357,20 +448,33 @@ def pinned_strategy(sid, map_name, mode):
     # Scarce kinds first (pinner.scarce): Covered Garden's pane-free ground
     # holds one ace, and pinned in plan order the towers before it had taken
     # that room. The rest in plan order, each clear of those pinned before.
-    kinds = {st["kind"] for st in wanted}
-    order = [st for st in wanted if not st.get("near") and pinner.scarce(st["kind"], kinds)]
-    order += [st for st in wanted if st not in order]
+    if any(st.get("do") == "clear" for st in plan_steps):
+        # the ground a clear frees is there for the towers after it only
+        order = [st for st in plan_steps + fill_steps if pins_wanted(st) or st.get("do") == "clear"]
+    else:
+        kinds = {st["kind"] for st in wanted if st["kind"] != "hero"}
+        order = [st for st in wanted if not st.get("near") and st["kind"] != "hero"
+                 and pinner.scarce(st["kind"], kinds)]
+        order += [st for st in wanted if st not in order]
     spots = {}
     for st in order:
+        if st.get("do") == "clear":
+            pinner.clear(st.get("obstacle"))
+            continue
         at = pinner.pin(st["id"], st["kind"], st.get("near") or (), st.get("near_radius", NEAR_RADIUS),
-                        segment=st.get("segment") if st.get("role", "dps") == "dps" else None)
+                        segment=st.get("segment") if st.get("role", "dps") == "dps" else None,
+                        area=st.get("area"), hero=src.get("hero") if st["kind"] == "hero" else None)
         if at is None:
             unpinned.append(st["id"])
         else:
             spots[st["id"]] = at
-    plan = [dict(st, at=spots[st["id"]]) if pins_wanted(st) and st["id"] in spots else st for st in plan_steps]
-    fill = [dict(st, at=spots[st["id"]]) if pins_wanted(st) and st["id"] in spots else st
-            for st in fill_steps] or None
+
+    def written(st):
+        """The step as the file holds it: its pinned spot, no draft keys."""
+        out = {k: v for k, v in st.items() if k not in DRAFT_KEYS}
+        return dict(out, at=spots[st["id"]]) if pins_wanted(st) and st["id"] in spots else out
+    plan = [written(st) for st in plan_steps]
+    fill = [written(st) for st in fill_steps] or None
     planner = dict(src.get("planner") or {})
     planner.pop("excluded_maps", None)
     planner.pop("excluded_by_mode", None)
