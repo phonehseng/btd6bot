@@ -15,13 +15,21 @@
 # holds 30-40 spots, the land almost none, so no single land carry fits). Etienne is the hero: his map-wide camo (level 8) lets the
 # towers hit the camo DDTs of rounds 95 and 99, which the Obyn build leaked.
 # The plan before it rated under 1.0 in most of rounds 45-100. The hero stands where the late game was rated with it, off every pin.
+#
+# Round 28's six leads (2026-11-12, lost twice: cases 20261112_090153 and 20261112_141254):
+# the lead answer was an alchemist, but Peninsula's land is the plateau in the middle - no
+# cell of it has track in an alchemist's range, and the nearest is 78 units from a sub (the
+# brew reaches 45). a1 cost $2,250 and brewed for nothing; the model rated round 28 at 0.06
+# for nine rounds. The lead answer is buc501 now, the late game's first buccaneer, bought to
+# Hot Shot (0-2-0) where a1 used to be bought. a1 is gone, and so is dr2: its spot on the
+# plateau saw no track either.
 id: peninsula_impoppable
 map: Peninsula
 hero: etienne
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:
-  towers: {sub: [5, 3, 5], dart: [2, 0, 5], alchemist: [3, 2, 0], buccaneer: [2, 5, 1], mermonkey: [4, 2, 0]}
+  towers: {sub: [5, 3, 5], dart: [2, 0, 5], buccaneer: [2, 5, 1], mermonkey: [4, 2, 0]}
   base_success: {impoppable: 0.5}
   maps: [Peninsula]
 plan:
@@ -33,17 +41,14 @@ plan:
   - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}
   - {do: upgrade, id: sb2, to: 2-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.441, 0.3]}
-  - {do: upgrade, id: a1, to: 2-0-0}
+  # the lead answer for round 28: Hot Shot on the first buccaneer of the late game
+  - {do: place, id: buc501, kind: buccaneer, role: support, at: [0.687, 0.334]}
+  - {do: upgrade, id: buc501, to: 0-2-0}
   - {do: upgrade, id: dr, to: 0-0-3}
   - {do: upgrade, id: sb1, to: 2-0-3}
-  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0], at: [0.419, 0.095]}
-  - {do: upgrade, id: dr2, to: 0-0-2}
-  - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: sb1, to: 2-0-4}
   # rounds 35-100: bought by tools/optimize_builds.py's greedy on the damage model,
   # saving for the carry (`*_carry*`) by its round
-  - {do: place, id: buc501, kind: buccaneer, role: support, at: [0.687, 0.334]}
   - {do: upgrade, id: buc501, to: 0-2-1}
   - {do: upgrade, id: dr, to: 1-0-3}
   - {do: upgrade, id: buc501, to: 0-3-1}
@@ -152,8 +157,8 @@ panic:
   - {do: place, kind: druid, role: exit}
 answers:
   lead:
-    - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.441, 0.3]}
+    - {do: upgrade, id: buc501, to: 0-2-0}
+    - {do: place, id: buc501, kind: buccaneer, role: support, at: [0.687, 0.334]}
   ceramic:
     - {do: upgrade, id: dr, to: 0-0-3}
   rush:

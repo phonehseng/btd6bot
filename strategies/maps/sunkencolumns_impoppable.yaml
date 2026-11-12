@@ -19,6 +19,19 @@
 # Super Mines (spike 5-0-2 by round 88; Spiked Mines 4-0-2 by round 60) on the best spike spot,
 # held from round 35. The plan before it rated 0.06 at round 40 and under 1.0 in 49 of rounds
 # 35-100. The hero stands where the late game was rated with it, off every pin.
+#
+# The opening stands on the column tops (2026-11-12): the build used to open with two subs,
+# and a sub down in a pool sees none of the route over the pool's walls - round 6 took the
+# one life three times with both subs silent (cases 20261112_012149, 20261112_093331 and
+# 20261112_144210). Now the dart, Obyn and the alchemist open, as in the game that reached
+# round 98 here on 2026-11-11 with chimps_sub_druid_water. dr is set by hand on the spot it
+# stood on in that game, beside the entrance (119 units of route in range; its old pin saw
+# 47); a1 stands beside it, clear of the hero's pin, and dr2 on the exit row (126 units).
+# The subs come after the second dart and go straight to 2-0-2: the damage model counts on
+# Advanced Intel to let them shoot what the towers on the columns see. No live game has
+# shown that yet - if the subs stay silent at 2-0-2, take them out of this plan.
+# The late game was rated with the old opening: ace510 and spi512 moved off the new dr and
+# dr2 (the spike to a spot with little route in range), nothing else of it changed.
 id: sunkencolumns_impoppable
 map: Sunken Columns
 hero: obyn
@@ -29,20 +42,19 @@ planner:
   base_success: {impoppable: 0.5}
   maps: [Sunken Columns]
 plan:
-  - {do: place, id: sb1, kind: sub, role: dps, segment: [0.0, 0.6], at: [0.58, 0.385]}
-  - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.5], at: [0.815, 0.215]}
-  - {do: upgrade, id: sb1, to: 1-0-1}
-  - {do: place, id: sb2, kind: sub, role: dps, segment: [0.3, 1.0], at: [0.366, 0.624]}
+  - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.5], at: [0.361, 0.112]}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6], at: [0.43, 0.095]}
-  - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}
-  - {do: upgrade, id: sb2, to: 2-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.623, 0.487]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [dr], near_radius: 10, at: [0.387, 0.078]}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: dr, to: 0-0-3}
-  - {do: upgrade, id: sb1, to: 2-0-3}
-  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0], at: [0.045, 0.215]}
+  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0], at: [0.505, 0.879]}
   - {do: upgrade, id: dr2, to: 0-0-2}
+  - {do: place, id: sb1, kind: sub, role: dps, segment: [0.0, 0.6], at: [0.58, 0.385]}
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: place, id: sb2, kind: sub, role: dps, segment: [0.3, 1.0], at: [0.366, 0.624]}
+  - {do: upgrade, id: sb2, to: 2-0-2}
+  - {do: upgrade, id: sb1, to: 2-0-3}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: sb1, to: 2-0-4}
   # rounds 35-100: bought by tools/optimize_builds.py's greedy on the damage model,
@@ -74,13 +86,13 @@ plan:
   - {do: place, id: hel509, kind: heli, role: support, at: [0.152, 0.896]}
   - {do: upgrade, id: sky507, to: 1-0-0}
   - {do: upgrade, id: hel509, to: 1-0-0}
-  - {do: place, id: ace510, kind: ace, role: support, at: [0.377, 0.095]}
+  - {do: place, id: ace510, kind: ace, role: support, at: [0.323, 0.487]}
   - {do: upgrade, id: ace510, to: 0-2-0}
   - {do: upgrade, id: hel509, to: 1-0-2}
   - {do: upgrade, id: hel509, to: 3-0-2}
   - {do: place, id: spi511, kind: spike, role: support, at: [0.355, 0.913]}
   - {do: upgrade, id: spi511, to: 1-0-0}
-  - {do: place, id: spi512, kind: spike, role: support, at: [0.505, 0.913]}
+  - {do: place, id: spi512, kind: spike, role: support, at: [0.708, 0.521]}
   - {do: upgrade, id: spi512, to: 1-0-0}
   - {do: place, id: spi513, kind: spike, role: support, at: [0.494, 0.078]}
   - {do: upgrade, id: spi513, to: 1-0-0}
@@ -156,7 +168,7 @@ answers:
     - {do: place, id: v1, kind: village, role: support, at: [0.27, 0.487]}
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.623, 0.487]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [dr], near_radius: 10, at: [0.387, 0.078]}
   ceramic:
     - {do: upgrade, id: dr, to: 0-0-3}
   rush:
@@ -171,7 +183,7 @@ answers:
     - {do: place, id: spi_carry1, kind: spike, role: support, at: [0.387, 0.862]}
   ddt:
     - {do: upgrade, id: dr, to: 0-2-4}
-    - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.5], at: [0.815, 0.215]}
+    - {do: place, id: dr, kind: dart, role: dps, segment: [0.0, 0.5], at: [0.361, 0.112]}
   bad:
     - {do: upgrade, id: spi_carry1, to: 5-0-2}
     - {do: place, id: spi_carry1, kind: spike, role: support, at: [0.387, 0.862]}
