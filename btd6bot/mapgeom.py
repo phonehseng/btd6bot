@@ -611,6 +611,68 @@ def live_alternatives(geom, rnd, lead=PHASE_LEAD):
     return frozenset(out) if seen else None
 
 
+def round_track(geom, proj, rnd):
+    """Bool grid of the track round `rnd`'s bloons ride, or None when they
+    may ride all of it (no round-switching splitter, or every path live).
+
+    The paths live_alternatives hands the round, plus every path no
+    round-switching splitter lists (those carry every round); boss-only and
+    hidden paths are left out, as in path_masks.
+
+    Why: a purchase for one weak round was placed by the map's round-share
+    weighting, which favours the paths most rounds use. Muddy Puddles
+    Impoppable (2026-11-12 12:11, loss case 20261112_121231): round 13 runs
+    down Path1, the left lane, one round in six. Reinforce offered "another
+    dart" in the middle lanes, rated it 0.59 -> 0.59 for round 13, kept the
+    cash for the hero, and round 13's blues leaked on the left lane past
+    towers that stood between the other three."""
+    live = live_alternatives(geom, rnd)
+    if live is None:
+        return None
+    splitters = (geom.get("mechanics") or {}).get("splitters") or []
+    switching = {p for s in splitters
+                 if str(s.get("type", "")).startswith("AlternateRound") or s.get("type") == "RuleSplitter"
+                 for p in s.get("paths") or []}
+    boss = _boss_paths(geom)
+    w, h = GRID
+    mask = np.zeros((h, w), np.uint8)
+    left_out = False
+    for path in bloon_paths(geom):
+        pid = path.get("id")
+        if path.get("hidden") or len(path["points"]) < 2 or pid in boss:
+            continue
+        if pid in switching and pid not in live:
+            left_out = True
+            continue
+        cells = proj.to_cells(path["points"])
+        hidden = path.get("invulnerable", [])
+        for i in range(len(cells) - 1):
+            if _in_ranges(i, hidden) or _in_ranges(i + 1, hidden):
+                continue
+            p0 = tuple(int(round(v)) for v in cells[i])
+            p1 = tuple(int(round(v)) for v in cells[i + 1])
+            cv2.line(mask, p0, p1, 1, TRACK_THICKNESS)
+    return mask > 0 if left_out and mask.any() else None
+
+
+def round_lane(model, rnd):
+    """round_track for a map model (cached with its geometry), or None
+    without geometry or when round `rnd` may use every path."""
+    found = _geometry_file(model)
+    if found is None or rnd is None:
+        return None
+    path, stamp = found
+    key = ("round_lane", str(path), stamp, tuple(model.playfield), int(rnd))
+    if key not in _GRIDS_CACHE:
+        geom = _geometry_of(path, stamp)
+        if geom is None:
+            return None
+        if len(_GRIDS_CACHE) > 64:
+            _GRIDS_CACHE.clear()
+        _GRIDS_CACHE[key] = round_track(geom, Projection(model.playfield), rnd)
+    return _GRIDS_CACHE[key]
+
+
 def round_share(geom, proj, skip=()):
     """Float grid: on each cell where bloons can be hit (the cells
     path_masks marks), the share of the rounds whose bloons pass it, 0..1.

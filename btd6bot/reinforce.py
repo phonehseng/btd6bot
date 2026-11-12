@@ -431,13 +431,22 @@ def new_tower(ex, tid, kind, fx, fy):
                            placed_round=getattr(ex, "now_round", None))
 
 
-def options(ex, cash, kinds=None):
+def options(ex, cash, kinds=None, weak=None):
     """Every purchase the cash allows (see the module docstring), cheapest
     first, at most MAX_OPTIONS.
 
     kinds: the tower kinds offered as "another <kind>" - by default the
     damage kinds standing plus the plan's main kind. With an explicit list
-    only those placements are offered, and no upgrades (new_kind_options)."""
+    only those placements are offered, and no upgrades (new_kind_options).
+
+    weak: the round the look judges purchases on. On a map whose rounds take
+    turns on its paths (Executor._round_lane) each kind is offered a second
+    time, at the spot best for the track that round's bloons ride. The usual
+    spot follows the map's round-share weighting, which favours the paths
+    most rounds use: Muddy Puddles Impoppable (2026-11-12, loss case
+    20261112_121231) rated "another dart" in the middle lanes 0.59 -> 0.59
+    for round 13, which runs down the left lane, kept the cash for the hero,
+    and lost round 13 there."""
     now = board(ex)
     out = []
     if kinds is None:
@@ -466,12 +475,19 @@ def options(ex, cash, kinds=None):
             held_back = getattr(ex, "place_held_back", None)
             if held_back is not None and held_back(step):
                 continue
-            spots = _rating_spots(ex, kind, step)
-            if not spots:
-                continue
-            fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
-            new = new_tower(ex, f"_new_{kind}", kind, fx, fy)
-            out.append(Option(f"another {kind}", cost, step, now + [new]))
+            steps = [(f"another {kind}", step)]
+            lane = getattr(ex, "_round_lane", None)
+            if weak is not None and callable(lane) and lane(weak) is not None:
+                steps.append((f"another {kind} for round {weak}'s path", {**step, "for_round": weak}))
+            seen = set()
+            for what, st in steps:
+                spots = _rating_spots(ex, kind, st)
+                if not spots or (spots[0][0], spots[0][1]) in seen:
+                    continue      # no spot, or the same spot as the usual one
+                seen.add((spots[0][0], spots[0][1]))
+                fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
+                new = new_tower(ex, f"_new_{kind}", kind, fx, fy)
+                out.append(Option(what, cost, st, now + [new]))
     out.sort(key=lambda o: o.cost)
     return trim(out)
 
@@ -633,7 +649,7 @@ def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
     # per dollar (which kept buying the cheapest small step, see trim()).
     crisis = before is not None and before < 1.0
     pick = None
-    opts = options(ex, cash)
+    opts = options(ex, cash, weak=worst)
     radar = radar_option(ex, cash, worst)     # camo sight for the group (backlog #64)
     if radar is not None:
         opts.append(radar)
@@ -1028,7 +1044,7 @@ def new_kind_options(ex, forecast, cash, rnd, deadline=None):
     standing = {p.kind for p in ex.g.towers.values()}
     kinds = [k for k in T.TOWERS if k not in standing and k not in NOT_DAMAGE
              and k != "hero" and ex.kind_allowed(k)]
-    return grow(ex, forecast, options(ex, cash, kinds=kinds), cash, rnd, deadline=deadline)
+    return grow(ex, forecast, options(ex, cash, kinds=kinds, weak=rnd), cash, rnd, deadline=deadline)
 
 
 def grow(ex, forecast, opts, cash, rnd, deadline=None):
@@ -1416,7 +1432,7 @@ def save_target(forecast, ex, cash, rnd, worst, deadline=None):
     if rnd is None or worst - rnd < SAVE_LEAD or cash <= 0:
         return None
     continuous = bool((getattr(ex, "rules", None) or {}).get("continuous"))
-    dearer = [o for o in options(ex, cash * SAVE_REACH) if o.cost > cash]     # cheapest first
+    dearer = [o for o in options(ex, cash * SAVE_REACH, weak=worst) if o.cost > cash]     # cheapest first
     for done, o in enumerate(dearer):
         if _over(deadline, "looking for a purchase to save for", done, len(dearer)):
             return None
