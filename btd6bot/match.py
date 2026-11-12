@@ -18,6 +18,7 @@ from .carried import CarriedTowers
 
 REINFORCE_EVERY = 2.0   # seconds between model-chosen purchases (each choice takes ~1 s)
 PLAN_YIELD_DEPTH = 0.9  # bloons this far along the route last round: a plan_first step may yield (_plan_lets_reinforce)
+PLAN_YIELD_LOOKBACK = 2  # ... in either of the last this many rounds watched
 REINFORCE_WAIT = 8.0    # ... and after a look that found nothing affordable to help
 WATCH_EVERY = 0.2       # seconds between looks of the bloon watch during a round
 EMPTY_LOOK_GAP = 0.1    # seconds between looks at the empty map before round 1
@@ -1832,7 +1833,14 @@ class Match:
         if plan_first is None or not plan_first():
             return True
         depths = getattr(self, "depths", None)
-        deep = bool(depths) and (depths[-1].get("deepest") or 0.0) >= PLAN_YIELD_DEPTH
+        # Either of the last PLAN_YIELD_LOOKBACK rounds watched counts: one
+        # quieter round between two deep ones is no sign the danger passed.
+        # Bloonarius Prime Impoppable (2026-11-11 23:53, loss case
+        # 20261111_235352): round 36's bloons got 95% along, round 37's 79%,
+        # and round 38 (rated 0.42) began with $1,268 held for n1 4-0-2 and
+        # took the life.
+        deep = bool(depths) and any((d.get("deepest") or 0.0) >= PLAN_YIELD_DEPTH
+                                    for d in depths[-PLAN_YIELD_LOOKBACK:])
         yields = getattr(self.ex, "plan_first_yields", None)
         return bool(yields is not None and yields(cash, rnd, deep=deep))
 

@@ -519,6 +519,91 @@ def paths_this_round(geom, rnd):
     return frozenset(out)
 
 
+def _is_prime(n):
+    """Is n a prime number (2, 3, 5, 7, ...)?"""
+    return n > 1 and all(n % d for d in range(2, int(n ** 0.5) + 1))
+
+
+def rule_paths_this_round(geom, rnd):
+    """Path ids a RuleSplitter sends round `rnd`'s bloons along, or None
+    when the map has no RuleSplitter, rnd is unknown, or a rule is one this
+    function cannot read (then every path counts, the safe side).
+
+    A RuleSplitter lists its paths beside its rules (pathsRules, same
+    order) and one path more for rounds no rule takes. Bloonarius Prime:
+    paths [PathBoss, PathPrime1, PathStandard] for rules [RuleBossBloon,
+    RulePrimeNumberRound] - prime-numbered rounds (2, 3, 5, 7, ..., the
+    round the game shows; docs/map_strategies.md) take the short prime
+    lane, every other round the long standard one. Boss rules never fire:
+    no boss comes in the bot's games."""
+    if rnd is None:
+        return None
+    splitters = (geom.get("mechanics") or {}).get("splitters") or []
+    kinds = {s.get("id"): s.get("type") for s in splitters}
+    out, seen = set(), False
+    for s in splitters:
+        if s.get("type") != "RuleSplitter":
+            continue
+        seen = True
+        paths, rules = list(s.get("paths") or []), list(s.get("pathsRules") or [])
+        chosen = None
+        for path, rule in zip(paths, rules):
+            kind = kinds.get(rule)
+            if kind == "RuleBossBloon":
+                continue
+            if kind != "RulePrimeNumberRound":
+                return None                         # a rule not read here: every path may be used
+            if _is_prime(rnd):
+                chosen = path
+                break
+        if chosen is None and len(paths) > len(rules):
+            chosen = paths[len(rules)]              # the path for rounds no rule takes
+        if chosen is not None:
+            out.add(chosen)
+    return frozenset(out) if seen else None
+
+
+def live_alternatives(geom, rnd, lead=PHASE_LEAD):
+    """Path ids of the round-switching splitters that round `rnd`'s bloons
+    may take, or None when no such splitter says (no splitter, rnd unknown).
+    The damage model rates a round only against these (dps_model.Track.
+    scenarios_in); paths no such splitter lists carry every round.
+
+      * every-round alternation (Last Resort, Luminous Cove, Muddy
+        Puddles...): the one path paths_this_round hands the round;
+      * long phases (Erosion's 18-round blocks): every phase path in use in
+        rounds rnd .. rnd+lead, the same paths placement paints as track
+        (idle_phase_paths), so the next phase's path counts from PHASE_LEAD
+        rounds before it starts and its defence is rated, and bought, while
+        the old path still runs;
+      * a RuleSplitter (Bloonarius Prime's prime rounds):
+        rule_paths_this_round.
+
+    Why: rated against every phase path at once, two 2-0-2 ninjas beside
+    Erosion's Path1 rated round 5 at the 0.0625 floor (Path6 has no tower)
+    against 5.97 on Path1 alone, so every Erosion round looked like a
+    crisis (dynamic-map audit 2026-11-12, item 1)."""
+    if rnd is None:
+        return None
+    out, seen = set(), False
+    idle = idle_phase_paths(geom, rnd, lead)
+    for s in (geom.get("mechanics") or {}).get("splitters") or []:
+        if s.get("type") != "AlternateRoundSplitter":
+            continue
+        n, paths = int(s.get("roundsPerPath") or 1), list(s.get("paths") or [])
+        if len(paths) < 2:
+            continue
+        seen = True
+        out |= (paths_this_round(geom, rnd) if n < 2 else set(paths) - idle) & set(paths)
+    if any(s.get("type") == "RuleSplitter" for s in (geom.get("mechanics") or {}).get("splitters") or []):
+        rules = rule_paths_this_round(geom, rnd)
+        if rules is None:
+            return None                     # a rule not read: every path may be used
+        seen = True
+        out |= rules
+    return frozenset(out) if seen else None
+
+
 def round_share(geom, proj, skip=()):
     """Float grid: on each cell where bloons can be hit (the cells
     path_masks marks), the share of the rounds whose bloons pass it, 0..1.

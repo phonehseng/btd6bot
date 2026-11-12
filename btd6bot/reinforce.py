@@ -409,9 +409,26 @@ def _rating_spots(ex, kind, step):
 
 
 def board(ex):
-    """The towers standing, as plain records the forecast reads."""
-    return [SimpleNamespace(tid=p.tid, kind=p.kind, tiers=tuple(p.tiers), x=p.x, y=p.y)
+    """The towers standing, as plain records the forecast reads, each with
+    its placement round (None when not known).
+
+    The placement round is what tells forecast._phase_groups which towers
+    sit in ice in a round on Glacial Trail (dps_model.frozen_in). Without
+    it every record fell back to the average uptime, so reinforce rated
+    its purchases as if a defence bought in one round never froze all at
+    once (dynamic-map audit 2026-11-12, item 8; the Medium game of
+    2026-11-07 froze whole at round 25)."""
+    return [SimpleNamespace(tid=p.tid, kind=p.kind, tiers=tuple(p.tiers), x=p.x, y=p.y,
+                            placed_round=getattr(p, "placed_round", None))
             for p in ex.g.towers.values()]
+
+
+def new_tower(ex, tid, kind, fx, fy):
+    """The record of a tower a purchase would place at (fx, fy): bare, and
+    placed in the round being played (ex.now_round), so on Glacial Trail it
+    freezes on its own phase and not on the board's."""
+    return SimpleNamespace(tid=tid, kind=kind, tiers=(0, 0, 0), x=fx, y=fy,
+                           placed_round=getattr(ex, "now_round", None))
 
 
 def options(ex, cash, kinds=None):
@@ -453,7 +470,7 @@ def options(ex, cash, kinds=None):
             if not spots:
                 continue
             fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
-            new = SimpleNamespace(tid=f"_new_{kind}", kind=kind, tiers=(0, 0, 0), x=fx, y=fy)
+            new = new_tower(ex, f"_new_{kind}", kind, fx, fy)
             out.append(Option(f"another {kind}", cost, step, now + [new]))
     out.sort(key=lambda o: o.cost)
     return trim(out)
@@ -521,7 +538,7 @@ def radar_option(ex, cash, rnd):
     if not spots:
         return None
     fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
-    new = SimpleNamespace(tid=f"_new_{kind}", kind=kind, tiers=(0, 0, 0), x=fx, y=fy)
+    new = new_tower(ex, f"_new_{kind}", kind, fx, fy)
     return Option(f"another {kind} (camo sight for {main.tid})", cost, step, board(ex) + [new])
 
 
@@ -965,7 +982,7 @@ def plan_option(ex, step, cost):
         if not spots:
             return None
         fx, fy = ex.m.cell_to_frac(spots[0][0], spots[0][1])
-        new = SimpleNamespace(tid=step.get("id") or f"_plan_{kind}", kind=kind, tiers=(0, 0, 0), x=fx, y=fy)
+        new = new_tower(ex, step.get("id") or f"_plan_{kind}", kind, fx, fy)
         return Option(f"plan step place {kind}", cost, step, now + [new])
     return None
 

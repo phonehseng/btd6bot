@@ -4839,8 +4839,15 @@ class Executor:
         return fc
 
     def _board_key(self):
-        """What the forecast's answers depend on: every tower and its tiers."""
-        return tuple(sorted((p.tid, p.kind, tuple(p.tiers)) for p in self.g.towers.values()))
+        """What the forecast's answers depend on: every tower, its tiers, its
+        spot and its placement round.
+
+        Kind and tiers alone kept a rating after the board changed under it:
+        Sanctuary's platforms carry towers to new spots, and a Glacial Trail
+        tower sold and bought again in the same spot freezes on its new
+        placement round (dynamic-map audit 2026-11-12, item 19)."""
+        return tuple(sorted((p.tid, p.kind, tuple(p.tiers), p.x, p.y, getattr(p, "placed_round", None))
+                            for p in self.g.towers.values()))
 
     def _rated(self, what, rnd, rate):
         """rate(forecast, towers), cached per round and board (one rating of a
@@ -4875,6 +4882,22 @@ class Executor:
         end = (getattr(self, "rules", None) or {}).get("end_round", 80)
         rounds = RF.lookahead_rounds(rnd, end)
         return self._rated("ahead", rnd, lambda fc, towers: fc.worst(towers, rounds))
+
+    def near_worst(self, rnd, horizon):
+        """(margin, round) for the weakest of rounds rnd..rnd+horizon of
+        reinforce.py's look-ahead, or None.
+
+        lookahead_worst names the weakest round of the whole look-ahead,
+        which may lie past a rule's horizon while a nearer round is weak too:
+        Quad Impoppable (2026-11-12 00:13, loss case 20261112_001344) rated
+        round 63's ceramic rush 0.59 and round 70 0.46; plan_first_yields
+        looked only at round 70, nine rounds off, and kept $7,167 for the
+        Ground Zero ac1 2-4-0 ($19,200) while round 63 took the life."""
+        end = (getattr(self, "rules", None) or {}).get("end_round", 80)
+        rounds = [r for r in RF.lookahead_rounds(rnd, end) if r - rnd <= horizon]
+        if not rounds:
+            return None
+        return self._rated(("near", horizon), rnd, lambda fc, towers: fc.worst(towers, rounds))
 
     def weak_now(self, rnd):
         """Is the round being played (or the next one) in danger? True when
@@ -6160,7 +6183,9 @@ class Executor:
         if p is not None:
             after = [SimpleNamespace(**{**vars(t), "tiers": tiers}) if t.tid == tid else t for t in now]
         else:
-            after = now + [SimpleNamespace(tid=tid, kind=kind, tiers=tiers, x=spot[0], y=spot[1])]
+            # placed this round: on Glacial Trail it freezes on its own phase (reinforce.new_tower)
+            after = now + [SimpleNamespace(tid=tid, kind=kind, tiers=tiers, x=spot[0], y=spot[1],
+                                           placed_round=getattr(self, "now_round", None))]
         return after, cost, CT.board_seconds(self, now, after)
 
     def _quicker_step(self, cash, rnd):
@@ -6731,16 +6756,26 @@ class Executor:
         wait = RF.waiting_plan_step(self, cash)
         if wait is None:
             return False
-        worst = self.lookahead_worst(rnd)
+        continuous = bool(rules.get("continuous"))
+        horizon = self.CONTINUOUS_YIELD_ROUNDS if continuous else self.YIELD_ROUNDS
+        # the weakest round within reach of the rule, not of the whole look-ahead
+        worst = self.near_worst(rnd, horizon)
         if worst is None or worst[0] is None or worst[1] is None:
             return False
         margin, weak = worst
-        continuous = bool(rules.get("continuous"))
-        horizon = self.CONTINUOUS_YIELD_ROUNDS if continuous else self.YIELD_ROUNDS
         if margin >= self.YIELD_MARGIN or weak - rnd > horizon:
             return False
         credit = 0
-        if not deep and (rules.get("one_life") or margin > self.YIELD_FLOOR):
+        # One life: a round rated at the floor counts without the depth only
+        # when it is the next one - it may kill in one go, as Midnight Mansion
+        # Impoppable's round 63 did (2026-11-12 00:36, loss case
+        # 20261112_003659: rated 0.06 from round 60, the bloons of rounds 60-61
+        # at 73-79%, $8-18k held for sn1 5-2-0 at $38,400, nothing bought).
+        # Floor ratings are often survived (235 of 251 such rounds in the
+        # one-life journals, mostly on Erosion and Midnight Mansion, whose
+        # ratings were too low), so further-off ones still wait for the depth.
+        floor_next = bool(rules.get("one_life")) and margin <= self.YIELD_FLOOR and weak - rnd <= 1
+        if not deep and not floor_next and (rules.get("one_life") or margin > self.YIELD_FLOOR):
             # shallow bloons: only a floor rating in a mode with lives counts -
             # or cash the plan meant to spend on steps it had to give up
             credit = self.given_up_credit()
