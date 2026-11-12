@@ -16,6 +16,7 @@
 # alchemist core and takes the late game to towers that fit: a Night Vision sniper line
 # (4-2-0 Maim MOAB for the camo DDTs, 5-2-0 Cripple MOAB for the BAD), Bloon Sabotage
 # and a MOAB Eliminator bomb.
+# No legal spot was found for: sn2 (left to the executor).
 id: midnightmansion_impoppable
 map: Midnight Mansion
 hero: obyn
@@ -26,28 +27,28 @@ planner:
   base_success: {impoppable: 0.5}
   maps: [Midnight Mansion]
 plan:
-  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.227, 0.862]}
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.216, 0.845]}
   - {do: upgrade, id: n1, to: 1-0-1}
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
   - {do: upgrade, id: n1, to: 2-0-1}
-  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.633, 0.862]}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.644, 0.317]}
   - {do: upgrade, id: n2, to: 2-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.216, 0.504]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.216, 0.334]}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: n1, to: 3-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
   - {do: upgrade, id: n2, to: 2-0-4}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: n1, to: 4-0-2}
-  - {do: place, id: sn1, kind: sniper, role: dps, at: [0.238, 0.146]}
+  - {do: place, id: sn1, kind: sniper, role: dps, at: [0.59, 0.146]}
   - {do: upgrade, id: sn1, to: 2-2-0}
   - {do: target, id: sn1, mode: strong}
   - {do: upgrade, id: sn1, to: 4-2-0}
-  - {do: place, id: n4, kind: ninja, role: support, near: [a1], near_radius: 8, at: [0.216, 0.419]}
+  - {do: place, id: n4, kind: ninja, role: support, near: [a1], near_radius: 8, at: [0.484, 0.164]}
   - {do: upgrade, id: n4, to: 0-4-0}
-  - {do: place, id: b1, kind: bomb, role: support, near: [a1], near_radius: 8, at: [0.216, 0.334]}
+  - {do: place, id: b1, kind: bomb, role: support, near: [a1], near_radius: 8, at: [0.548, 0.164]}
   - {do: upgrade, id: b1, to: 0-4-0}
-  - {do: place, id: sn2, kind: sniper, role: dps, at: [0.281, 0.146]}
+  - {do: place, id: sn2, kind: sniper, role: dps}
   - {do: upgrade, id: sn2, to: 4-2-0}
   - {do: target, id: sn2, mode: strong}
   - {do: upgrade, id: sn1, to: 5-2-0}
@@ -60,7 +61,7 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.216, 0.504]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.216, 0.334]}
   ceramic:
     - {do: upgrade, id: n1, to: 3-0-2}
   moab:
@@ -71,10 +72,10 @@ answers:
     - {do: upgrade, id: n1, to: 4-0-2}
   zomg:
     - {do: upgrade, id: sn1, to: 4-2-0}
-    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.238, 0.146]}
+    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.59, 0.146]}
   ddt:
     - {do: upgrade, id: sn1, to: 4-2-0}
-    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.238, 0.146]}
+    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.59, 0.146]}
   bad:
     - {do: upgrade, id: sn1, to: 5-2-0}
-    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.238, 0.146]}
+    - {do: place, id: sn1, kind: sniper, role: dps, at: [0.59, 0.146]}

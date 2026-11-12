@@ -20,11 +20,20 @@ that mode), `fill`, `panic` and `answers`, and gives each placed tower of the
 plan an `at` spot:
 
   * spots come from the map's geometry with the spots the live game refused
-    left out (MapModel.load, as tools/optimize_builds.py --learned), legal for
-    the tower given the towers placed before it (placement.valid_spots) for
-    the whole game;
+    left out, legal for the tower given the towers placed before it
+    (placement.valid_spots) for the whole game. The refusals are read from
+    the LIVE map file, data/maps/<map>.npz in the main checkout: a
+    worktree's copy is the one git last saw and may hold none of them
+    (Sunken Columns 2026-11-12: the worktree's file had no refusals, the
+    live one 261 water cells refused for a sub, among them the pinned sb1
+    spot; the game turned it and six spots around it down, and the
+    one-life game was lost at round 6). A pinned cell is checked once more
+    against every refusal layer of its kind (never_refused);
   * a damage tower takes the best free spot the optimizer ranks for its kind
-    (most bloon route in range, line of sight counted);
+    (most bloon route in range, line of sight counted), and among the spots
+    nearly as good (PROVEN_SCORE_SHARE of the best) one where a tower of
+    that kind has already stood in a live game (MapModel.spot_stats, or
+    accepted_mask) comes first;
   * a tower with `near` (support, or a tower that must stand in a village's
     range) takes the best of those spots within its `near_radius` of the
     towers it names (any legal cell when its kind has no ranked spots), or
@@ -46,6 +55,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import subprocess
 import sys
 from pathlib import Path
 
@@ -54,6 +64,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
 import optimize_builds as O  # noqa: E402
+from btd6bot import maplearn as ML  # noqa: E402
 from btd6bot import placement as PL  # noqa: E402
 from btd6bot import strategy as S  # noqa: E402
 from btd6bot.account import canonical_map  # noqa: E402
@@ -66,6 +77,55 @@ UNTESTED_SUCCESS = 0.5
 CELL_STRIDE = 2
 # A `near` step's radius in cells when it names none (the executor's default).
 NEAR_RADIUS = 9
+# A ranked spot where the kind already stood in a live game goes first when
+# its score is at least this share of the best free ranked spot's.
+PROVEN_SCORE_SHARE = 0.8
+
+
+def live_maps_dir() -> Path:
+    """data/maps of the main checkout, where the live bot keeps what it
+    learned (refused and accepted spots, spot_stats). In a worktree the
+    tracked copy is stale; outside one this is the tree's own data/maps."""
+    try:
+        common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                                cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+        live = Path(common).parent / "data" / "maps"
+        return live if live.is_dir() else ML.DATA
+    except (OSError, subprocess.CalledProcessError):
+        return ML.DATA
+
+
+def refusal_layers(kind, hero=None):
+    """The MapModel.refused layers a spot for ``kind`` must be clear of:
+    each surface it may stand on and that surface's own layer for the kind
+    (placement.refusal_layer)."""
+    out = set()
+    for surface in PL.surfaces(kind, hero):
+        out |= {surface, PL.refusal_layer(surface, kind, hero)}
+    return out
+
+
+def never_refused(model, kind, cell, hero=None):
+    """True when no refusal layer of ``kind`` covers ``cell`` (cx, cy)."""
+    cx, cy = cell
+    return not any(model.refused_mask(layer)[cy, cx] for layer in refusal_layers(kind, hero))
+
+
+def proven_cells(model, kind):
+    """Cells where a tower of ``kind`` has stood in a live game: the
+    SPOT_BUCKET squares of its MapModel.spot_stats entries, plus the cells
+    the game accepted on its surfaces although the map file marks them
+    blocked (accepted_mask)."""
+    import numpy as np
+    grid = np.zeros(model.heat.shape, bool)
+    b = ML.SPOT_BUCKET
+    for key in model.spot_stats:
+        k, bx, by = key.split("|")
+        if k == kind:
+            grid[int(by) * b:(int(by) + 1) * b, int(bx) * b:(int(bx) + 1) * b] = True
+    for surface in PL.surfaces(kind):
+        grid |= model.accepted_mask(surface)
+    return grid
 
 
 def _for_mode(steps, mode):
@@ -82,8 +142,9 @@ def _for_mode(steps, mode):
 class Pinner:
     """Exact spots for one map and mode, in plan order."""
 
-    def __init__(self, map_name, mode, hero=None):
-        O.USE_LEARNED = True          # leave out the spots the live game refused
+    def __init__(self, map_name, mode, hero=None, maps_dir=None):
+        O.USE_LEARNED = True          # leave out the spots the live game refused ...
+        ML.DATA = Path(maps_dir) if maps_dir else live_maps_dir()   # ... as the live file holds them
         self.setup = O.MapSetup(map_name, mode)
         self.model = self.setup.model
         self.hero = hero

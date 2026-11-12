@@ -8,7 +8,7 @@
 # 2026-11-11 such buys outweighed the plan's own towers on these maps and its
 # MOAB Eliminator / Perma-Spike were still waiting when the game was lost).
 # base_success is the map builds' lowest (0.5); the record sets it from here.
-# No legal spot was found for: d4, d5, d6, a2 (left to the executor).
+# No legal spot was found for: v1, d4, d5, d6, a2 (left to the executor).
 id: peninsula_impoppable
 map: Peninsula
 hero: obyn
@@ -27,25 +27,25 @@ plan:
   - {do: upgrade, id: sb1, to: 2-0-2}
   - {do: upgrade, id: dr, to: 0-0-2}
   - {do: upgrade, id: sb2, to: 2-0-2}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.58, 0.777]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.452, 0.3]}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: dr, to: 0-0-3}
   - {do: upgrade, id: sb1, to: 2-0-3}
-  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0], at: [0.409, 0.078]}
+  - {do: place, id: dr2, kind: dart, role: dps, segment: [0.5, 1.0], at: [0.419, 0.095]}
   - {do: upgrade, id: dr2, to: 0-0-2}
   - {do: upgrade, id: a1, to: 3-2-0}
   - {do: upgrade, id: sb1, to: 2-0-4}
   - {do: upgrade, id: sb2, to: 2-0-4}
   - {do: upgrade, id: dr, to: 0-2-4}
-  - {do: place, id: d1, kind: druid, role: dps, segment: [0.2, 0.8], at: [0.452, 0.078]}
-  - {do: place, id: d2, kind: druid, role: support, near: [d1], near_radius: 6, at: [0.452, 0.146]}
-  - {do: place, id: d3, kind: druid, role: support, near: [d1], near_radius: 6, at: [0.409, 0.146]}
-  - {do: place, id: v1, kind: village, role: support, near: [d1, d2, d3], near_radius: 7, at: [0.441, 0.232]}
+  - {do: place, id: d1, kind: druid, role: dps, segment: [0.2, 0.8], at: [0.452, 0.129]}
+  - {do: place, id: d2, kind: druid, role: support, near: [d1], near_radius: 6, at: [0.452, 0.198]}
+  - {do: place, id: d3, kind: druid, role: support, near: [d1], near_radius: 6, at: [0.409, 0.164]}
+  - {do: place, id: v1, kind: village, role: support, near: [d1, d2, d3], near_radius: 7}
   - {do: upgrade, id: v1, to: 2-2-0}
   - {do: upgrade, id: d1, to: 2-0-4}
   - {do: upgrade, id: d2, to: 2-0-4}
   - {do: upgrade, id: d3, to: 2-0-4}
-  - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7, at: [0.409, 0.3]}
+  - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7, at: [0.409, 0.232]}
   - {do: upgrade, id: bm1, to: 2-0-3}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
@@ -71,12 +71,12 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.58, 0.777]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [sb1, sb2, dr], near_radius: 10, at: [0.452, 0.3]}
   ceramic:
     - {do: upgrade, id: dr, to: 0-0-3}
   rush:
     - {do: upgrade, id: bm1, to: 2-0-3}
-    - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7, at: [0.409, 0.3]}
+    - {do: place, id: bm1, kind: bomb, role: support, near: [d1, v1], near_radius: 7, at: [0.409, 0.232]}
   moab:
     - {do: upgrade, id: sb1, to: 2-0-3}
   bfb:

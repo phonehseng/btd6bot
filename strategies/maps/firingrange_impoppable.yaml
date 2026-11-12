@@ -37,13 +37,13 @@ plan:
   - {do: upgrade, id: s1, to: 3-0-2}
   - {do: place, id: v2, kind: village, role: support, near: [s1], near_radius: 7, at: [0.644, 0.606]}
   - {do: upgrade, id: v2, to: 2-3-0}
-  - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.58, 0.606]}
-  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, at: [0.612, 0.709]}
+  - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.58, 0.589]}
+  - {do: place, id: ac2, kind: ace, role: support, near: [v2], near_radius: 8, at: [0.601, 0.692]}
   - {do: place, id: sp1, kind: spike, role: exit}
   - {do: upgrade, id: sp1, to: 2-0-4}
   - {do: place, id: n4, kind: ninja, role: support, near: [v1, v2], near_radius: 8, at: [0.697, 0.76]}
   - {do: upgrade, id: n4, to: 0-4-0}
-  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.558, 0.692]}
+  - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.644, 0.76]}
   - {do: upgrade, id: b1, to: 0-4-0}
   - {do: upgrade, id: ac1, to: 2-4-0}
   - {do: upgrade, id: ac2, to: 2-4-0}
@@ -80,10 +80,10 @@ answers:
     - {do: upgrade, id: n1, to: 4-0-2}
   zomg:
     - {do: upgrade, id: ac1, to: 2-4-0}
-    - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.58, 0.606]}
+    - {do: place, id: ac1, kind: ace, role: support, near: [v2], near_radius: 7, at: [0.58, 0.589]}
   ddt:
     - {do: upgrade, id: b1, to: 0-5-0}
-    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.558, 0.692]}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.644, 0.76]}
   bad:
     - {do: upgrade, id: b1, to: 0-5-0}
-    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.558, 0.692]}
+    - {do: place, id: b1, kind: bomb, role: support, near: [v2], near_radius: 7, at: [0.644, 0.76]}
