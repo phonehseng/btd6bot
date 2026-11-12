@@ -1377,6 +1377,11 @@ class Executor:
                 return
         except Exception:
             pass
+        near = self._tower_in_the_way(kind, cx, cy)
+        if near is not None:
+            log.info("spot (%d,%d) refused beside %s - not learned (the game keeps towers apart; "
+                     "the ground may be fine on an empty map)", cx, cy, near)
+            return
         layers = self._refusal_layers(kind)
         for layer in layers:
             refuse(layer, cx, cy)
@@ -1388,6 +1393,37 @@ class Executor:
             # be wrong as a whole: redo that scan next visit
             log.warning("map scan disagrees with the game too often - rescanning next visit")
             self.m.scan.pop(cls, None)
+
+    # Extra room, in world units, on top of the two footprints: the probe's
+    # spot and the tower's centre are read off the screen and can be a few
+    # units out.
+    TOWER_GAP_SLACK = 3.0
+
+    def _tower_in_the_way(self, kind, cx, cy):
+        """The id of a standing tower whose footprint may be why the game
+        refused `kind` at cell (cx, cy), else None.
+
+        The game keeps towers' footprints apart, so a spot beside one of the
+        bot's own towers is refused although the ground is fine. Such a
+        refusal used to be learned for the map, for every later game, where
+        that tower does not stand: the 2026-11-12 pin audit found 673
+        refused cells in the 4x4 blocks where a tower later stood, 39% of
+        Sunset Gulch's land refused, and the Impoppable map builds' pinned
+        spots refused one after another during the day."""
+        from . import placement as PL
+        try:
+            hero = self.g.hero
+            upc = PL.units_per_cell(self.m)
+            own = PL.footprint_radius(kind, hero if kind == "hero" else None)
+            for p in self.g.towers.values():
+                theirs = PL.footprint_radius(p.kind, hero if p.kind == "hero" else None)
+                px, py = self.m.frac_to_cell(p.x, p.y)
+                dist = ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5 * upc
+                if dist <= own + theirs + self.TOWER_GAP_SLACK:
+                    return p.tid
+        except Exception:
+            return None
+        return None
 
     def _refusal_layers(self, kind):
         """The MapModel.refused layers a refusal of `kind` is learned in: an
