@@ -1,0 +1,94 @@
+# Ravine, Magic Monkeys Only (Hard rules, rounds to 80): a group of magic
+# towers beside each of the four forks, so whichever fork a round takes has
+# camo, lead and MOAB damage on it.
+#
+# Why: magic_obyn_ninja_wizard lost Ravine Magic Only five times at rounds
+# 38-40; the last game (2026-11-12 11:31, case 20261112_113751_Ravine_magic_
+# only) lost 57 lives on round 36's pinks and the last 43 on round 38 with
+# $2k in hand. Its journal blames a refused placement (a reinforce wizard at
+# round 38, "unverified"), but the board was already rated 0.17-0.64 from
+# round 33: the general build's ninjas, wizard and alchemist stood where one
+# fork of each entrance runs, and the stills show the bloons walking out
+# along the top-left fork with nothing in reach.
+#
+# Map facts (data/map_geometry, dps_model.Track): two entrances take turns by
+# round (Path1 on even rounds, Path2 on odd), and each forks in two; a round's
+# bloons run down both forks of its entrance at once (Track scenarios [2, 3]
+# and [0, 1]). Bridges and trees block sight. Legal cells (learned map,
+# placement.valid_spots) that reach each fork, track units in reach for a
+# 0-2-4 wizard [Path2-split2, Path2-split1, Path1-split2, Path1-split1]:
+#   L  (0.152, 0.641) area       [93, 0, 0, 111]   Path1-split1 (+ Path2-split2)
+#   A  (0.436, 0.24) / (0.532, 0.164) [111, 0, 100, 0]  Path1-split2 (+ P2-s2)
+#   M  (0.291, 0.768)            [105, 99, 50, 0]   both Path2 forks
+#   C  (0.687, 0.283) / (0.671, 0.359)  Path2-split1 (+ P2-s2)
+# The general build's spot (0.377, 0.743), which reached three forks, has been
+# refused live; only the small patch at M is left in the middle.
+#
+# Towers, on merit (magic only: ninja, wizard, alchemist, druid, super,
+# mermonkey; the river is too low for water towers): ninja 2-0-1 for camo at
+# L and A first, then 2-0-4 Sticky Bombs at both for the MOAB rounds; wizards
+# 0-2-4 (Necromancer: pops lead, reach 60, the most track per tower here) at
+# M, A and L; an alchemist 4-2-0 at L (acid for lead, Berserker Brew);
+# Super Monkeys 3-0-2 (Robo Monkey) where their bigger footprint fits; druids
+# 0-3-1 late. Obyn (+ magic pierce) stands at (0.601, 0.3), between A and C.
+# A druid or a ninja at C first, instead of the second ninja at A, rated
+# worse (0.11 at round 34): Path1's forks are the ones the old build lost.
+#
+# Evidence (2026-11-12, the executor-faithful replay simulate_threats.
+# simulate on the learned live map, Fast Track start R22 with $8,930, Double
+# Cash, each round's start board rated by the live forecast with today's
+# damage model): worst R80 0.25, R63 0.31, R61 0.32, R60 0.35, R34 0.37; R36
+# 0.75, R38 0.94, R40 0.80. magic_obyn_ninja_wizard on the same replay: R40,
+# R60 and R80 at the 0.06 floor, ten rounds under 0.17. Under the house
+# 2.0 still: the best measured for this medal, so base_success is low.
+# Test: tests/test_ravine_magic_offline.py.
+#
+# Status: written 2026-11-12, not played yet.
+id: ravine_magic_only
+map: Ravine
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys before it is done
+modes: [magic_only]
+planner:
+  towers: {ninja: [4, 0, 4], wizard: [0, 2, 4], alchemist: [4, 2, 0], super: [3, 0, 2], druid: [0, 3, 1]}
+  base_success: {magic_only: 0.5}
+  maps: [Ravine]
+plan:
+  - {do: place, id: nL, kind: ninja, role: dps, at: [0.152, 0.641]}       # L: Path1-split1, camo
+  - {do: upgrade, id: nL, to: 2-0-1}
+  - {do: place, id: nA, kind: ninja, role: dps, at: [0.436, 0.24]}        # A: Path1-split2, camo
+  - {do: upgrade, id: nA, to: 2-0-1}
+  - {do: place, id: wM, kind: wizard, role: dps, at: [0.291, 0.768]}      # M: both Path2 forks
+  - {do: upgrade, id: wM, to: 0-2-2}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.142, 0.692]}  # L: lead (acid)
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: place, id: wA, kind: wizard, role: dps, at: [0.532, 0.164]}      # A: lead on Path1-split2
+  - {do: upgrade, id: wA, to: 0-2-2}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.601, 0.3]}        # Obyn between A and C
+  - {do: place, id: dC, kind: druid, role: dps, at: [0.687, 0.283]}       # C: Path2-split1
+  - {do: upgrade, id: dC, to: 0-3-0}
+  - {do: upgrade, id: nA, to: 2-0-4}                                       # Sticky Bomb: R40's MOAB
+  - {do: upgrade, id: nL, to: 2-0-4}
+  - {do: upgrade, id: wA, to: 0-2-4}
+  - {do: place, id: wL, kind: wizard, role: dps, at: [0.195, 0.709]}      # L and Path2-split2
+  - {do: upgrade, id: wL, to: 0-2-4}
+  - {do: upgrade, id: wM, to: 0-2-4}
+  - {do: place, id: sA, kind: super, role: dps, at: [0.377, 0.155]}       # A
+  - {do: upgrade, id: sA, to: 2-0-2}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: place, id: sL, kind: super, role: dps, at: [0.158, 0.768]}       # L
+  - {do: upgrade, id: sL, to: 2-0-2}
+  - {do: upgrade, id: sA, to: 3-0-2}
+  - {do: upgrade, id: sL, to: 3-0-2}
+  - {do: upgrade, id: dC, to: 0-3-1}
+  - {do: place, id: nL2, kind: ninja, role: dps, at: [0.115, 0.802]}       # L
+  - {do: upgrade, id: nL2, to: 4-0-2}
+  - {do: place, id: dA, kind: druid, role: dps, at: [0.393, 0.232]}       # A
+  - {do: upgrade, id: dA, to: 0-3-1}
+  - {do: place, id: sC, kind: super, role: dps, at: [0.671, 0.359]}       # C
+  - {do: upgrade, id: sC, to: 3-0-2}
+answers:
+  # The default ceramic answer grew nL to 3-0-2 in the replay, which shuts
+  # out its Sticky Bomb (2-0-4): name the build's own.
+  ceramic: [{do: upgrade, id: nL, to: 2-0-4}]
+  moab: [{do: upgrade, id: nA, to: 2-0-4}]
