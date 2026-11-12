@@ -138,12 +138,15 @@ def test_every_dot_is_capped_at_the_layer_health():
 def test_one_attacks_pieces_share_one_glue():
     """The glob and its Splat carry the same damage over time: a bloon
     struck by both holds one glue, so they share one key; different burns
-    of one attack (a mortar's ordinary and MOAB burns) do not."""
+    of one attack (a mortar's ordinary and MOAB burns) do not, nor do a
+    Buccaneer's front and rear darts, which fly at different bloons."""
     glue = D.profile("glue", (4, 2, 0)).sources
     keys = {D._dot_key(s) for s in glue if s.dot_total}
     assert len(keys) == 1, keys
     mortar = [s for s in D.profile("mortar", (0, 0, 5)).sources if s.dot_total]
     assert len({D._dot_key(s) for s in mortar}) == len(mortar) > 1
+    darts = [s for s in D.profile("buccaneer", (0, 2, 5)).sources if s.dot_total]
+    assert len({D._dot_key(s) for s in darts}) == len(darts) == 2
 
 
 def _beside_xy(track, at=0.5):

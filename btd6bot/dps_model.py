@@ -2613,8 +2613,10 @@ def _dot_key(src):
     Splat it throws off, a Ray of Doom's first hit and its beam - put that
     one status on the same crowd, so only the piece that reaches the most
     bloons is credited (Rates._compute). Summed, a 4-2-0 glue's glob and
-    splat counted 42 glued bloons a second from 2.35 shots of pierce 6."""
-    return (src.name.split(">")[0], src.ability, src.dot_total, src.dot_rate)
+    splat counted 42 glued bloons a second from 2.35 shots of pierce 6.
+    A Buccaneer's rear dart (rear_fov) flies the other way, at other
+    bloons, and keeps its own key."""
+    return (src.name.split(">")[0], src.ability, src.dot_total, src.dot_rate, src.rear_fov)
 
 
 def _dot_hp_rate(src, hits, lay, rho, zone):
