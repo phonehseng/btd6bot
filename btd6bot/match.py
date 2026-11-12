@@ -424,7 +424,7 @@ class Match:
         self._last_wait_log = 0.0
         self._t_bananas = 0.0      # last pass over the farms' bananas
         self._t_park = 0.0         # last cursor park (PARK_EVERY)
-        self._park = None          # where the cursor rests: the busiest track (screen fractions)
+        self._park = None          # (heat grid, where the cursor rests on it: the busiest track)
         self.abil = AbilityPlanner(getattr(game, "hero", None), getattr(executor, "rules", None))
         # a plan's `do: ability` step takes its hotkey guesses and the hero's
         # placement round from the same planner (Executor._try_ability)
@@ -1967,19 +1967,24 @@ class Match:
     def _park_point(self):
         """Screen spot over the busiest stretch of track: the track cell with
         the most track around it (a bend or a stretch where lanes meet), so
-        a tower aiming at the cursor fires into the thick of the bloons."""
-        if self._park is None:
+        a tower aiming at the cursor fires into the thick of the bloons.
+
+        Kept with the heat grid it was found on, and found again once the
+        model's track is a new grid: mapgeom.repaint_track paints a new
+        one when Erosion's bloons change path, and the Dartlings and helis
+        kept aiming at the old path all game (audit 2026-11-12)."""
+        heat = getattr(self.m, "heat", None)
+        if self._park is None or self._park[0] is not heat:
             import cv2
             import numpy as np
-            heat = getattr(self.m, "heat", None)
             if heat is None or not (heat > 0).any():
                 return None
             track = (heat > 0).astype(np.float32)
             dens = cv2.boxFilter(track, -1, (PARK_WINDOW, PARK_WINDOW))
             dens[track == 0] = 0
             y, x = np.unravel_index(int(np.argmax(dens)), dens.shape)
-            self._park = self.m.cell_to_frac(int(x), int(y))
-        return self._park
+            self._park = (heat, self.m.cell_to_frac(int(x), int(y)))
+        return self._park[1]
 
     def _park_cursor(self, now):
         """Rest the cursor on the busiest track while something follows it
