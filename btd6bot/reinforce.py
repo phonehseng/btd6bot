@@ -1171,10 +1171,11 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family, de
         if i and _past(deadline) and not memo_only:
             return UNJUDGED
         best = None
+        cap = planned_cap(ex, t)
         for target, first in grown_from(ex, kind, tuple(t.tiers), cash, tower=t).items():
             if best is not None and _past(deadline) and not memo_only:
                 break
-            if first is None:
+            if first is None or not keeps_plan_open(target, cap):
                 continue
             after = [SimpleNamespace(**{**vars(x), "tiers": target}) if x.tid == t.tid else x for x in rest]
             m = _margin(forecast, after, rnd, deadline)
@@ -1192,6 +1193,36 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family, de
                           {"do": "upgrade", "id": t.tid, "to": code}, after,
                           goal={"do": "upgrade", "id": t.tid, "to": whole})
     return UNJUDGED if unrated else None
+
+
+def planned_cap(ex, tower):
+    """The crosspath the plan wants `tower` to end at (Executor._planned_cap),
+    or None when the plan never upgrades it or `ex` cannot say (test fakes)."""
+    f = getattr(ex, "_planned_cap", None)
+    if f is None:
+        return None
+    try:
+        return f(tower)
+    except Exception:       # a fake executor without a plan: no limit
+        return None
+
+
+def keeps_plan_open(target, cap):
+    """Can a tower grown to the crosspath `target` still be upgraded to the
+    plan's crosspath `cap`? The game lets a tower use two paths, only one of
+    them past tier 2, so the two crosspaths together must keep to that rule.
+    No `cap` (the plan never upgrades the tower): any target.
+
+    Spring Spring CHIMPS (2026-11-12, case 20261112_155459): the plan wants
+    sb1 at 0-5-0 (Pre-emptive Strike, the guide's round-95 answer). With
+    round 33 rated 0.23, reinforce grew it "to 2-0-1", the top and bottom
+    paths, and the middle path was shut for the rest of the game.
+    Executor.upgrade_choices already kept to the plan's crosspath; this
+    ladder (grown_from) did not."""
+    if cap is None:
+        return True
+    both = [max(a, b) for a, b in zip(target, cap)]
+    return sum(x > 0 for x in both) <= 2 and sum(x > 2 for x in both) <= 1
 
 
 # grow_standing's answer when a standing tower behind could not be judged
