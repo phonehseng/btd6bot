@@ -92,6 +92,15 @@ def test_impoppable_has_no_fast_track_start():
     assert boosts.fast_track_start("medium") == 15 and boosts.fast_track_start("hard") == 22
 
 
+
+
+def test_chimps_never_gets_fast_track():
+    """CHIMPS forbids every boost; the toggle was switched on for it on
+    2026-11-12 17:45 (Ancient Portal CHIMPS, lost 9 s after its first tower)."""
+    from btd6bot import boosts as B
+    assert not B.fast_track_wanted("chimps")
+    assert not B.fast_track_wanted("chimps", {"fast_track": True})
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
