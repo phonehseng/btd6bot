@@ -902,6 +902,18 @@ def _lacking(p_main, p_other):
     return props
 
 
+def _extra_copies(b, kind, line, n, segs, prefix="hx"):
+    """The Hard reinforcement (generate): n more copies of a line at its
+    working crosspath, at the END of the plan. Bought before the tier 4/5
+    upgrades they only delayed the late blimp power: on the sub build one
+    to four such copies took the Hard blimp ratio from 0.84 to 0.41-0.47."""
+    for i in range(n):
+        tid = f"{prefix}{i + 1}"
+        b.place(tid, kind, "Hard: more blimp damage than a Medium game needs" if i == 0 else None,
+                role="dps", segment=list(segs[(i + 2) % len(segs)]))
+        b.upgrade(tid, line.work)
+
+
 def build_carry(kind, extra=0):
     """A solo build: copies of the tower on its main and complement lines.
     extra: more main-line copies than the Medium budget sizes it for (the
@@ -926,7 +938,7 @@ def build_carry(kind, extra=0):
     fix = property_fix(kind, comp, lacking) if lacking else None
     n_comp = (2 if lacking else 1) if comp else 0
     comp_cost = n_comp * (pc.cost if pc else 0)
-    n_main = _copies(pm.cost, PLAN_BUDGET * 0.75 - comp_cost) + extra
+    n_main = _copies(pm.cost, PLAN_BUDGET * 0.75 - comp_cost)
     if placement(kind) == "water":
         b.maps = water_maps(kind)
 
@@ -981,6 +993,7 @@ def build_carry(kind, extra=0):
         _exit_spike(b)
     # -- late game: tier 4 and the tier 5s ----------------------------------------------
     _late_power(b, a, main, k, comp)
+    _extra_copies(b, kind, main, extra, segs)
 
     b.need(kind, main.work)
     if comp:
@@ -1044,12 +1057,9 @@ def build_support(kind, extra=0):
     # the tower being levelled must outnumber the defence in the plan.
     n_def = 2 + (1 if dcomp else 0)
     n_k = max(n_k, n_def + 1 - (1 if comp else 0))
-    extra_def = 0
-    if extra and pk.blimp > 0 and not needs_aim(kind):
-        n_k += extra
-    else:
-        extra_def = extra
-        n_k = max(n_k, n_def + extra_def + 1 - (1 if comp else 0))   # still outnumbers the defence
+    own_extra = extra if pk.blimp > 0 and not needs_aim(kind) else 0
+    extra_def = extra - own_extra
+    n_k = max(n_k, n_def + extra_def + 1 - (1 if comp else 0))   # still outnumbers the defence
     kids = [f"x{i + 1}" for i in range(n_k)]
 
     def place_k(i, why=None):
@@ -1089,11 +1099,6 @@ def build_support(kind, extra=0):
             b.place("dc", dkind, f"defence complement {cross(dcomp.work)}", role="dps", segment=[0.0, 0.7])
         b.upgrade("dc", dcomp.work)
     b.upgrade("d2", dmain.work)
-    for i in range(extra_def):
-        tid = f"d{3 + i}"
-        b.place(tid, dkind, "Hard: more defence blimp damage" if i == 0 else None, role="dps",
-                segment=list(SEGMENTS[(i + 1) % len(SEGMENTS)]))
-        b.upgrade(tid, dmain.work)
     for i in range(1, n_k):
         place_k(i)
         b.upgrade(kids[i], line.work)
@@ -1112,6 +1117,8 @@ def build_support(kind, extra=0):
         b.place("y1", kind, f"second {name(kind)} line: {cross(comp.work)}", **kw)
         b.upgrade("y1", comp.work)
     _late_power(b, kids, line, kc, comp)
+    _extra_copies(b, kind, line, own_extra, _segments_for(kind))
+    _extra_copies(b, dkind, dmain, extra_def, SEGMENTS, prefix="dx")
 
     b.need(dkind, dmain.work)
     if dcomp:
