@@ -284,7 +284,14 @@ spends surplus on the target.
 
 `python tools/optimize_builds.py --check FILE` replays a written plan the
 way the executor buys (in order, as soon as cash allows) on its recorded
-economy and prints its margins: an independent check of the file.
+economy and prints its margins: an independent check of the file. On a map
+that freezes towers (Glacial Trail) the replay rates each round with only
+the towers awake in it, by the round each was bought in; the optimizer's own
+search still rates every round at the map's average uptime (backlog 95).
+`--restate FILE ...` writes the replayed worst margin and unsafe rounds into
+the file's `optimizer:` block, for a plan whose numbers come from an older
+damage model: the runner reads those two lines to decide whether the plan
+may be played.
 
 ## 5. The plans
 
@@ -340,3 +347,4 @@ economy and prints its margins: an independent check of the file.
     python tools/optimize_builds.py --maps "Dark Path,Logs"
     python tools/optimize_builds.py --calibrate
     python tools/optimize_builds.py --check strategies/optimized/darkpath_hard.yaml
+    python tools/optimize_builds.py --restate strategies/optimized/glacialtrail_primary_only.yaml

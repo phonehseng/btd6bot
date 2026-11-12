@@ -107,8 +107,12 @@ plan:
   # Placed in rounds 42-46 (the cash comes in 45 once h1's Dartship is paid)
   # h2 freezes in 51-56 at the latest and is awake in 57; its Dartship is
   # paid by round 50. The spot is on the right hill's legal heli ground in
-  # the map file, 11 cells from h1 and from dr2 - not yet tried live.
-  - {do: place, id: h2, kind: heli, role: dps, at: [0.708, 0.181], round: 42, modes: [medium, reverse]}
+  # the map file with every other tower of the build standing (cell 128,11:
+  # 15 cells from h1, 18 from dr2) - not yet tried live. The first spot
+  # written for it, (0.708, 0.181), was legal only on the empty map: with
+  # dr0, dr2 and h1 placed it is too close to them
+  # (tests/test_map_hints_offline.py, test_map_strategy_spots_are_legal).
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.687, 0.138], round: 42, modes: [medium, reverse]}
   - {do: upgrade, id: h2, to: 3-2-0, modes: [medium, reverse]}
   - {do: upgrade, id: h2, to: 4-2-0, modes: [medium, reverse]}                      # Apache Dartship
 fill:
