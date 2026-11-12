@@ -37,6 +37,9 @@ What it does, per map and mode
    window) next to the usual `segment`, and comments with the numbers:
    round bought, cost, which round it secures, the margin per round, the
    predicted game length and XP per hour.
+5. Hero sweep (see `optimize`): the XP target is chosen with one hero, then
+   every other owned hero the model can rate is tried on that target, and
+   the safest plan (then the one with most XP per hour) wins.
 
 Calibration (`--calibrate`)
 ---------------------------
@@ -51,6 +54,7 @@ Usage
     python tools/optimize_builds.py                      # the default maps x modes (see DEFAULT_RUNS)
     python tools/optimize_builds.py "Dark Path" hard     # one map / mode
     python tools/optimize_builds.py "Dark Path" hard --target ninja
+    python tools/optimize_builds.py "Dark Path" hard --heroes 4   # sweep only the 4 best heroes on merit
     python tools/optimize_builds.py --chimps --maps "Alpine Run" --nice   # CHIMPS (see CHIMPS_RUNS)
     python tools/optimize_builds.py --calibrate          # model vs the bot's logged games
     python tools/optimize_builds.py --check FILE.yaml    # re-evaluate a written plan
@@ -1325,11 +1329,48 @@ def target_candidates(map_name, mode, weights, account, limit=3):
     return kinds[:limit]
 
 
-def optimize(map_name, mode, target=None, account=None, write=True, candidates=3, base=False):
+def hero_candidates(account, setup):
+    """Heroes the optimizer sweeps, best on merit first (towers.hero_merit_order):
+    owned by the account (every hero without one), rated by the damage model
+    (not Corvus: dps_model.UNRATED_HEROES), and with a spot on this map
+    (MapSetup.hero_spot: Admiral Brickell needs water).
+
+    The hero used to be the one equipped when the tool ran, or Quincy; that
+    hero was then played live, which kept it equipped, so the choice fed
+    itself (docs/tower_exclusions_audit.md item 1)."""
+    owned = getattr(account, "unlocked_heroes", None) if account is not None else None
+    out = []
+    for hero in T.hero_merit_order():
+        if hero in D.UNRATED_HEROES or (owned is not None and hero not in owned):
+            continue
+        if D.profile(D.hero_kind(hero), (1,)) is None or setup.hero_spot(hero, []) is None:
+            continue
+        out.append(hero)
+    return out
+
+
+def _plan_key(plan, xp):
+    """How optimize() compares plans: safe first, then fewer unsafe rounds,
+    then (for unsafe ones) the better worst margin, then valued XP per hour."""
+    worst = min(plan.margins.values()) if plan.margins else 0.0
+    return (len(plan.unsafe) == 0, -len(plan.unsafe), worst if plan.unsafe else 0.0, xp["valued_xp_per_hour"])
+
+
+def optimize(map_name, mode, target=None, account=None, write=True, candidates=3, base=False, heroes=None):
     """Best plan for a map/mode: one optimization per XP target candidate
     (or the given target), keeping the safe plan with the most value-weighted
     XP per hour (else the one with the fewest unsafe rounds).
-    base: plan without the account's boosts (Fast Track, Double Cash)."""
+    base: plan without the account's boosts (Fast Track, Double Cash).
+
+    Heroes are compared on merit in a second stage: the XP target and spot
+    rule that won with the first hero (the equipped one if it is a
+    candidate, else the best on merit) are optimized again with every other
+    hero_candidates hero, and the best plan by the same rule wins. A sweep
+    of every hero for every target would cost about eighteen times as long
+    (an optimization takes 1-3 minutes); the target is mostly a matter of
+    tower XP, the hero mostly of safety.
+    heroes: how many candidates the sweep tries, best on merit first (None:
+    all of them; 1: only the first hero)."""
     weights = xp_weights(account)
     boosts = {} if base or account is None else dict(getattr(account, "boosts", {}) or {})
     if mode == "chimps":
@@ -1337,30 +1378,40 @@ def optimize(map_name, mode, target=None, account=None, write=True, candidates=3
         # both): the written plan must not claim to need them, or the
         # planner would hold it back from an account without them (needs_boosts)
         boosts = {}
-    hero = (getattr(account, "selected_hero", None) or "quincy") if account else "quincy"
-    if hero not in T.HEROES:
-        hero = "quincy"
+    pool = hero_candidates(account, MapSetup(map_name, mode)) or ["quincy"]
+    equipped = getattr(account, "selected_hero", None) if account is not None else None
+    first = equipped if equipped in pool else pool[0]
     targets = [target] if target else target_candidates(map_name, mode, weights, account, candidates) or [None]
     best = None
+
+    def consider(tgt, reserve, hero):
+        nonlocal best
+        opt = Optimizer(map_name, mode, target=tgt, account=account, hero=hero, boosts=boosts, reserve=reserve)
+        plan = opt.run()
+        xp = xp_report(plan, weights)
+        key = _plan_key(plan, xp)
+        worst = min(plan.margins.values()) if plan.margins else 0.0
+        log.info("%s %s target %s, %s spots, hero %s: unsafe %s, worst margin %.2f, valued XP/h %s (%.0f s)",
+                 map_name, mode, tgt, "all" if reserve else f"best {SPOTS_PER_KIND}", hero, plan.unsafe,
+                 worst, xp["valued_xp_per_hour"], plan.seconds)
+        if best is None or key > best[0]:
+            best = (key, plan, opt.setup, xp, tgt, reserve)
+
     # each target with both spot rules (MapSetup.free_spot): every spot of a
     # kind, or only its best few - Cargo Magic Only needed the first, Dark
     # Dungeons Deflation (2026-11-11) held at 1.56 with the second and at
     # 0.55 with the first
     for tgt in targets:
         for reserve in (True, False):
-            opt = Optimizer(map_name, mode, target=tgt, account=account, hero=hero, boosts=boosts,
-                            reserve=reserve)
-            plan = opt.run()
-            xp = xp_report(plan, weights)
-            worst = min(plan.margins.values()) if plan.margins else 0.0
-            key = (len(plan.unsafe) == 0, -len(plan.unsafe), worst if plan.unsafe else 0.0,
-                   xp["valued_xp_per_hour"])
-            log.info("%s %s target %s, %s spots: unsafe %s, worst margin %.2f, valued XP/h %s (%.0f s)",
-                     map_name, mode, tgt, "all" if reserve else f"best {SPOTS_PER_KIND}", plan.unsafe,
-                     worst, xp["valued_xp_per_hour"], plan.seconds)
-            if best is None or key > best[0]:
-                best = (key, plan, opt.setup, xp)
-    _, plan, setup, xp = best
+            consider(tgt, reserve, first)
+    if D.HERO_RATING:
+        # the hero sweep: the model rates every hero at its level by round
+        # (dps_model.HERO_RATING), so each is tried with the winning target
+        _, _, _, _, tgt, reserve = best
+        others = [h for h in pool if h != first]
+        for hero in others[:None if heroes is None else max(0, heroes - 1)]:
+            consider(tgt, reserve, hero)
+    _, plan, setup, xp, _, _ = best
     text = plan_yaml(plan, setup, weights, xp)
     if not any(t.kind != "hero" for t in plan.towers):
         # nothing on this map/mode pops a round (Bloody Puddles Primary Only):
@@ -1922,6 +1973,8 @@ def main():
     ap.add_argument("mode", nargs="?")
     ap.add_argument("--target", help="XP target tower (default: try the most valuable few)")
     ap.add_argument("--candidates", type=int, default=3, help="XP targets tried per map/mode")
+    ap.add_argument("--heroes", type=int, default=None,
+                    help="heroes the sweep tries, best on merit first (default: every owned one)")
     ap.add_argument("--calibrate", action="store_true")
     ap.add_argument("--check", metavar="FILE", help="re-check a written plan (replayed as the executor buys)")
     ap.add_argument("--restate", metavar="FILE", nargs="+",
@@ -1977,7 +2030,7 @@ def main():
     for map_name, mode in runs:
         try:
             plan, xp, path = optimize(map_name, mode, target=a.target, account=account, candidates=a.candidates,
-                                      base=a.base)
+                                      base=a.base, heroes=a.heroes)
         except ValueError as e:
             print(f"{map_name} {mode}: skipped ({e})")
             continue
