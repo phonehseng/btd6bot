@@ -428,6 +428,7 @@ class Snapshot:
     in_game: bool = False
     game: dict = field(default_factory=dict)         # map, mode, strategy, hero, end_round
     round: int | None = None
+    pane_round: int | None = None   # the round Covered Garden's open pane belongs to, as the bot saw it on screen
     cash: int | None = None
     lives: int | None = None
     margins_ahead: list = field(default_factory=list)  # [(round, margin)] from hud.json
@@ -546,6 +547,7 @@ class Collector:
         last = view.last_round if view else {}
         snap.game = dict(hud.get("game") or (view.game if view else {}) or {})
         snap.round = hud.get("round", last.get("rnd"))
+        snap.pane_round = hud.get("pane_round")
         snap.cash = hud.get("cash", last.get("cash"))
         snap.lives = hud.get("lives", last.get("lives"))
         snap.margins_past = list(view.margins) if view else []

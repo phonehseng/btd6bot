@@ -252,7 +252,7 @@ class FieldSource:
         return self._geoms[name]
 
     # -- per round ----------------------------------------------------------------------------
-    def phase_key(self, map_name, rnd):
+    def phase_key(self, map_name, rnd, pane_round=None):
         """What decides the paths' statuses and the ground at round `rnd`:
         the idle paths, the path this round, the round itself only on maps
         whose panes open in turn (Covered Garden). Equal keys, equal views."""
@@ -260,7 +260,7 @@ class FieldSource:
         geom = self.geometry(map_name)
         if geom is None:
             return None
-        panes = rnd if self._has_panes(map_name) else None
+        panes = (pane_round or rnd) if self._has_panes(map_name) else None
         return (mapgeom.idle_phase_paths(geom, rnd), mapgeom.paths_this_round(geom, rnd), panes)
 
     def _has_panes(self, map_name):
@@ -275,10 +275,15 @@ class FieldSource:
                 self._panes[map_name] = False
         return self._panes[map_name]
 
-    def view(self, map_name, mode=None, rnd=None, end_round=None):
+    def view(self, map_name, mode=None, rnd=None, end_round=None, pane_round=None):
         """The FieldView of `map_name` (a Reverse game's model is the map's
         own, its paths run backwards) at round `rnd` of a game ending at
         `end_round`; None when nothing is known about the map."""
+        # pane_round: the round whose pane the bot saw open on screen. The
+        # bot's own round lags it by one between rounds (Covered Garden's
+        # pane changes as a round ends; the round counter is read later), and
+        # the green ground then showed the pane that had just shut - while the
+        # bot was buying. Without it, the round as before.
         reverse = is_reverse(mode)
         name = map_name + " reverse" if reverse and self.stamp(map_name + " reverse") is not None else map_name
         model = self.model(name)
@@ -287,7 +292,7 @@ class FieldSource:
         geom = self.geometry(map_name)
         from btd6bot.maplearn import GRID
         view = FieldView(map=map_name, grid=GRID, playfield=tuple(model.playfield))
-        self._ground(view, model, rnd, end_round, geom)
+        self._ground(view, model, pane_round or rnd, end_round, geom)
         if geom is not None:
             view.paths = path_lines(geom, model.playfield, rnd, reverse)
         if not view.paths:
@@ -551,6 +556,12 @@ class FieldLayer:
         g = snap.game or {}
         return g.get("map"), g.get("mode"), snap.round, g.get("end_round")
 
+    @staticmethod
+    def pane_round_of(snap):
+        """The round Covered Garden's open pane belongs to, as the bot saw
+        it on screen (hud.json "pane_round"); None when the bot did not say."""
+        return getattr(snap, "pane_round", None)
+
     def key(self, snap, game_rect):
         """A small tuple that changes when the picture would; None when there
         is nothing to show (no map, nothing known about it)."""
@@ -563,7 +574,8 @@ class FieldLayer:
                 name = map_name + " reverse" if is_reverse(mode) else map_name
                 stamps = (self.source.stamp(name), self.source.stamp(map_name))
                 if any(s is not None for s in stamps) or self.source.geometry(map_name) is not None:
-                    key = (map_name, mode, end, self.source.phase_key(map_name, rnd), stamps, tuple(game_rect))
+                    phase = self.source.phase_key(map_name, rnd, self.pane_round_of(snap))
+                    key = (map_name, mode, end, phase, stamps, tuple(game_rect))
             except Exception:
                 key = None
         self._key_memo = (snap, (game_rect, key))
@@ -591,7 +603,7 @@ class FieldLayer:
         map_name, mode, rnd, end = self.game_of(snap)
         if not map_name or not game_rect:
             return None
-        view = self.source.view(map_name, mode, rnd, end)
+        view = self.source.view(map_name, mode, rnd, end, self.pane_round_of(snap))
         if view is None:
             return None
         rect = tuple(game_rect)

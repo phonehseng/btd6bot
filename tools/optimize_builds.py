@@ -1291,7 +1291,10 @@ def replay_plan(plan, rounds=None):
     as the cash allows - on the economy recorded in its `optimizer.scenario`,
     and return {round: margin} with the towers standing when each round
     starts. An independent check of a written file (it does not use the
-    optimizer's own bookkeeping). plan: the parsed YAML dict."""
+    optimizer's own bookkeeping). plan: the parsed YAML dict.
+
+    On a map that freezes towers (dps_model.TOWER_FREEZE) each round is
+    rated with only the towers awake in it (_awake_margin)."""
     (mode,) = plan["modes"]
     sc = (plan.get("optimizer") or {}).get("scenario") or {}
     econ = economy(mode)
@@ -1301,6 +1304,7 @@ def replay_plan(plan, rounds=None):
     setup = MapSetup(plan["map"], mode)
     ev = Evaluator(setup, mode)
     towers, cash, i = {}, econ.start_cash, 0
+    placed = {}             # tower id -> the round it was bought before
     steps = plan.get("plan") or []
     margins = {}
     for rnd in range(econ.start_round, econ.end_round + 1):
@@ -1321,15 +1325,48 @@ def replay_plan(plan, rounds=None):
             if step["do"] == "place" and step["kind"] != "hero":
                 cell = setup.model.frac_to_cell(*step["at"])
                 towers[step["id"]] = Tower(step["id"], step["kind"], setup.cell_spot(cell), (0, 0, 0), cost)
+                placed[step["id"]] = rnd
             elif step["do"] == "upgrade":
                 t = towers[step["id"]]
                 towers[step["id"]] = Tower(t.tid, t.kind, t.spot, tuple(int(c) for c in str(step["to"]).split("-")),
                                            t.spent + cost)
             i += 1
         if rounds is None or rnd in rounds:
-            margins[rnd] = round(D.round_margin(ev.stations(list(towers.values())), mode, rnd, setup.track), 2)
+            margins[rnd] = round(_awake_margin(ev, setup, plan["map"], mode, rnd, list(towers.values()), placed), 2)
         cash += econ.income(rnd)
     return margins
+
+
+def _awake_margin(ev, setup, map_name, mode, rnd, towers, placed):
+    """The damage model's margin for round `rnd` with the towers that are
+    not frozen in it; on a map without a tower freeze simply the margin of
+    all of them.
+
+    Glacial Trail Primary Only (2026-11-11 22:55, loss case
+    20261111_230017_GlacialTrail_primary_only): the written plan bought both
+    tack shooters with the Fast Track cash of round 10, so both sat in ice in
+    rounds 19-20 and 29-30 (dps_model.frozen_in) and those three rounds took
+    all 200 lives. The file said "worst margin 2.20, unsafe rounds: none",
+    because every round was rated with the whole defence at the map's
+    average uptime (Track.uptime, 0.8); the live forecast, which knows each
+    tower's placement round, rated round 19 at 0.06 from round 11 on.
+
+    placed: {tower id: the round whose start board first held it}. The game
+    may count a tower bought between two rounds from either of them, so the
+    round is rated for both and the worse margin counts (as in
+    tests/test_glacialtrail_builds_offline.py). The awake towers are rated at
+    full strength - their frozen rounds are left out instead of averaged."""
+    if D.tower_uptime(map_name) >= 1.0 or not towers:
+        return D.round_margin(ev.stations(towers), mode, rnd, setup.track)
+    saved = setup.track.uptime
+    setup.track.uptime = 1.0
+    try:
+        return min(D.round_margin(ev.stations([t for t in towers
+                                               if not D.frozen_in(map_name, placed[t.tid] - shift, rnd)]),
+                                  mode, rnd, setup.track)
+                   for shift in (0, 1))
+    finally:
+        setup.track.uptime = saved
 
 
 def parse_cross(text):
@@ -1530,6 +1567,41 @@ def check_plan(path):
     return margins
 
 
+def restate_plan(path):
+    """Rewrite a written plan's `worst_margin` and `unsafe_rounds` with what
+    replay_plan() finds today, and leave its steps alone.
+
+    For a file whose numbers come from an older damage model: the runner
+    decides from these two lines whether the build may be played
+    (strategy._optimized_prior), so a plan the model no longer trusts stops
+    being played until the optimizer writes a better one. A dated comment
+    line above `id:` says the numbers were restated. Returns (the worst
+    margin written before, the worst margin now)."""
+    import yaml
+    path = Path(path)
+    lines = path.read_text(encoding="utf-8").splitlines()
+    plan = yaml.safe_load("\n".join(lines))
+    margins = replay_plan(plan)
+    worst = min(margins.values()) if margins else 0.0
+    unsafe = [r for r, m in margins.items() if m < SAFETY_MARGIN]
+    before = (plan.get("optimizer") or {}).get("worst_margin")
+    note = (f"# Restated {time.strftime('%Y-%m-%d')} by --restate: replayed on today's damage model the worst "
+            f"margin is {worst:.2f} (was {before}).")
+    out = []
+    for ln in lines:
+        if ln.startswith("# Restated "):
+            continue                    # an earlier restatement's note
+        if ln.startswith("id:"):
+            out.append(note)
+        if ln.startswith("  worst_margin:"):
+            ln = f"  worst_margin: {worst:.2f}"
+        elif ln.startswith("  unsafe_rounds:"):
+            ln = f"  unsafe_rounds: [{', '.join(map(str, unsafe))}]"
+        out.append(ln)
+    path.write_text("\n".join(out) + "\n", encoding="utf-8")
+    return before, worst
+
+
 # ===========================================================================
 # Calibration against the bot's own games
 # ===========================================================================
@@ -1705,6 +1777,8 @@ def main():
     ap.add_argument("--candidates", type=int, default=3, help="XP targets tried per map/mode")
     ap.add_argument("--calibrate", action="store_true")
     ap.add_argument("--check", metavar="FILE", help="re-check a written plan (replayed as the executor buys)")
+    ap.add_argument("--restate", metavar="FILE", nargs="+",
+                    help="rewrite written plans' worst margin and unsafe rounds as replayed today")
     ap.add_argument("--answer", metavar="FILE", nargs="+",
                     help="add the answers strategy.coverage misses to written plans, re-check them")
     ap.add_argument("--summary", action="store_true", help="rewrite the plan table in docs/optimizer.md")
@@ -1731,6 +1805,11 @@ def main():
         return
     if a.check:
         check_plan(a.check)
+        return
+    if a.restate:
+        for f in a.restate:
+            before, worst = restate_plan(f)
+            print(f"{f}: worst margin {before} -> {worst:.2f} (optimizer block rewritten)")
         return
     if a.answer:
         account = None if a.no_account else load_account()

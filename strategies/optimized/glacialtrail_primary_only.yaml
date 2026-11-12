@@ -12,6 +12,7 @@
 # Spots: `at` is the exact spot (screen fractions of the 1920x1200 window) the model evaluated;
 # `segment` the covered stretch of track, for the executor's own spot picking until `at` is wired.
 # The hero's damage is not modelled (extra safety).
+# Restated 2026-11-11 by --restate: replayed on today's damage model the worst margin is 0.06 (was 2.2).
 id: opt_glacialtrail_primary_only
 map: Glacial Trail
 modes: [primary_only]
@@ -23,8 +24,8 @@ planner:
 optimizer:
   scenario: {start_round: 10, start_cash: 3832, income_multiplier: 2, boosts: [double cash, fast track]}
   safety_margin: 2.0
-  worst_margin: 2.20
-  unsafe_rounds: []
+  worst_margin: 0.06
+  unsafe_rounds: [18, 19, 20, 28, 29, 30, 38, 39, 40]
   minutes: 5.0
   target_xp_per_hour: 0
   valued_xp_per_hour: 263340

@@ -14,13 +14,16 @@ rounds 15-39 with all 150 lives on 2026-10-27.
 
 Checked here with the executor-faithful replay (simulate_threats.simulate on
 the learned map, Fast Track start and Double Cash income as the account
-plays Medium), each round's start board rated by the live forecast on all
-four routes (the hero is not counted):
+plays Medium), each round's start board rated by the live forecast on the
+route of the 4-round cycle that round takes (dps_model.Track.scenarios_in;
+the hero is not counted):
   * no threat gaps, every tower on its `at` spot;
   * every round at MIN_MARGIN or more; rounds 15-25 (the Fast Track opening
     that the general builds lost) at EARLY_MARGIN or more. When written:
     worst 1.48 (round 60, a BFB on the straight), 1.65 (round 15), 2.54
-    (round 40, the MOAB that ended the 2026-10-27 game);
+    (round 40, the MOAB that ended the 2026-10-27 game). Rated on the
+    round's own route since 2026-11-12: round 60 is on the straight
+    either way (1.48), round 15 1.66;
   * the general build that lost round 19 replays under 1.0 in that opening.
 Run: python tests/test_lastresort_builds_offline.py"""
 import logging

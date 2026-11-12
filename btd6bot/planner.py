@@ -894,7 +894,27 @@ def _strategy_fits(s: StrategySpec, map_name: str, category: str, mode: str) -> 
         return False
     if _land_towers_have_no_spot(s, map_name):
         return False
+    if s.maps is None and _towers_freeze(map_name):
+        return False
     return True
+
+
+def _towers_freeze(map_name: str) -> bool:
+    """Does the map freeze towers in turn (dps_model.TOWER_FREEZE: Glacial
+    Trail)? Only a build written for the map fits it then.
+
+    A general build buys towers without timing them around the ice, so the
+    defence freezes together. On Glacial Trail general builds won 1 game of
+    11 (results.jsonl to 2026-11-12) and the map's own builds 4 of 9; once
+    glacialtrail_medium had lost Reverse three times the planner fell back
+    to military_heli_sniper, which lost round 25 in 2.5 minutes (2026-11-11
+    23:34, loss case 20261111_233448) with both its rounds rated at the
+    floor."""
+    try:
+        from .dps_model import tower_uptime
+        return tower_uptime(map_name) < 1.0
+    except Exception:
+        return False
 
 
 # A build whose towers stand nowhere on a map for at least this share of its
