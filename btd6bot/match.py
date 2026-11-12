@@ -430,6 +430,7 @@ class Match:
         # placement round from the same planner (Executor._try_ability)
         executor.abil = self.abil
         self._in_round = False
+        self._played_round = None   # the round last seen running (_follow_round_end)
         # the damage model's view of each round as it starts (forecast.py)
         self.forecast = RoundForecast(getattr(model, "name", None), getattr(executor, "mode", None),
                                       getattr(model, "sight", None),
@@ -978,6 +979,7 @@ class Match:
                 self.ex.reinforce_hold = self._reinforce_hold(last_round, dropped)
                 self._mark("plan tick")
                 self.ex.play_running = self._in_round
+                self._follow_round_end(last_round)
                 self._follow_platforms(last_round)
                 bought = self.ex.tick(cash, last_round, lives_dropped=dropped)
                 if getattr(self.g, "unconfirmed_streak", 0) >= 2 or self.g.screen_lost:
@@ -1403,6 +1405,27 @@ class Match:
             return
         try:
             self._carried.round_advanced(old_round, new_round, self.g.towers)
+        except Exception:
+            log.exception("moving towers with the ground failed - carrying on")
+
+    def _follow_round_end(self, rnd):
+        """Turn the gears (Geared) as soon as the round `rnd` that was being
+        played is seen over (the Play button is back, Match._in_round), not
+        when the bot next reads the round counter: a side panel over the HUD
+        keeps the bot's round one behind the screen between rounds, and a
+        tower bought in that gap was turned one turn too many when the round
+        was read (audit 2026-11-12). Not in continuous modes, where the Play
+        button never comes back between rounds."""
+        if self._carried is None or not getattr(self._carried, "rotors", None) or rnd is None:
+            return
+        if self._in_round:
+            self._played_round = rnd
+            return
+        if getattr(self, "_played_round", None) != rnd:
+            return          # round rnd has not been seen running: nothing ended
+        self._played_round = None
+        try:
+            self._carried.round_ended(rnd, self.g.towers)
         except Exception:
             log.exception("moving towers with the ground failed - carrying on")
 
