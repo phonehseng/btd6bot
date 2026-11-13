@@ -56,6 +56,18 @@ PAUSE_FILE = ROOT_DIR / "PAUSE"        # create it to park the bot at the main m
 # ends with "!force", e.g. "Alpine Run / chimps !force".
 NEXT_FILE = ROOT_DIR / "NEXT"
 FORCE_TAG = "!force"
+# One-life games that lost and are being fixed: one "Map / mode / strategy"
+# line each, e.g. "Firing Range / chimps / firingrange_chimps". Each line is
+# played (forced, as a NEXT line ending "!force") once per version of its
+# build - the build's loaded content plus the line itself - and not again
+# until that changes. In between the bot plays its usual medals instead of
+# replaying a game the model already expects to lose (owner, 2026-11-13:
+# "work on easier medals in between solutions while immediately going for
+# chimps when it updates"). A code fix that leaves the build alone is
+# retried by editing the line, e.g. appending " # rev 2". A beaten line is
+# skipped (never replay) and can be deleted.
+CHIMPS_WATCH_FILE = ROOT_DIR / "CHIMPS_WATCH"
+CHIMPS_WATCH_STATE = ROOT_DIR / "logs" / "chimps_watch_tried.json"
 from .status import STATE_FILE, set_state  # noqa: E402,F401
 
 
@@ -2207,10 +2219,6 @@ class Bot:
           purpose.
 
         The plan carries the computed p, which is also logged."""
-        from .planner import (GamePlan, _Calibration, _normalise_strategies, _strategy_available,
-                              _strategy_fits, p_threshold, win_probability)
-        from .account import MODES
-        from .strategy import rules
         try:
             line = NEXT_FILE.read_text(encoding="utf-8").strip()
         except OSError:
@@ -2219,6 +2227,15 @@ class Bot:
         force = line.lower().endswith(FORCE_TAG)
         if force:
             line = line[:-len(FORCE_TAG)].rstrip(" /")
+        return self._pick_from_line(line, specs, force)
+
+    def _pick_from_line(self, line, specs, force):
+        """owners_pick's checks and GamePlan for one "Map / mode [/ strategy]"
+        line (FORCE_TAG already stripped into `force`); None when refused."""
+        from .planner import (GamePlan, _Calibration, _normalise_strategies, _strategy_available,
+                              _strategy_fits, p_threshold, win_probability)
+        from .account import MODES
+        from .strategy import rules
         parts = [p.strip() for p in line.split("/")]
         if len(parts) < 2:
             log.warning("NEXT file ignored: expected 'Map / mode [/ strategy]', got %r", line)
@@ -2281,6 +2298,56 @@ class Bot:
                         expected_minutes=mi.minutes, expected_xp=0, expected_mm=0,
                         score=0.0, first_time=not beaten)
 
+    def _watch_fingerprint(self, line, sid):
+        """Version of a CHIMPS_WATCH line: a hash of the line and of its
+        strategy's loaded content (extends resolved), so an edited build or
+        an edited line counts as new."""
+        import hashlib
+        import json
+        body = json.dumps(self.strats.get(sid), sort_keys=True, default=str)
+        return hashlib.sha1((line + "\n" + body).encode("utf-8")).hexdigest()[:16]
+
+    def watched_chimps_pick(self, specs):
+        """The first CHIMPS_WATCH line whose build changed since it was last
+        tried, as a forced GamePlan; None when every line was tried as it
+        stands (the planner's medals are played meanwhile). The version is
+        recorded when the game is picked, so a loss is not replayed until
+        the build or the line changes."""
+        import json
+        try:
+            lines = CHIMPS_WATCH_FILE.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            return None
+        try:
+            tried = json.loads(CHIMPS_WATCH_STATE.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            tried = {}
+        for raw in lines:
+            line = raw.split("#", 1)[0].strip()
+            if not line:
+                continue
+            parts = [p.strip() for p in line.split("/")]
+            if len(parts) < 3:
+                log.warning("CHIMPS_WATCH line ignored: expected 'Map / mode / strategy', got %r", line)
+                continue
+            key = " / ".join(parts[:2]).lower()
+            fp = self._watch_fingerprint(raw.strip(), parts[2])
+            if tried.get(key) == fp:
+                continue
+            plan = self._pick_from_line(line, specs, force=True)
+            tried[key] = fp      # refused or picked: this version is done either way
+            try:
+                CHIMPS_WATCH_STATE.parent.mkdir(parents=True, exist_ok=True)
+                CHIMPS_WATCH_STATE.write_text(json.dumps(tried, indent=1), encoding="utf-8")
+            except OSError as e:
+                log.warning("CHIMPS_WATCH state not saved (%s) - the line may be played again", e)
+            if plan is not None:
+                log.info("CHIMPS_WATCH: %s changed since its last try - playing it now", line)
+                plan.reason = plan.reason.replace("the NEXT file", "CHIMPS_WATCH, its build changed")
+                plan.reasons = [plan.reason]
+                return plan
+        return None
+
     def _warn_auto_start(self, plan):
         """Warn when the last game saw BTD6's Auto Start on and `plan` is a
         one-life game: with Auto Start each round begins by itself, so the
@@ -2300,7 +2367,7 @@ class Bot:
         from .planner import EASY_FAMILY, MEDIUM_FAMILY
         specs = planner_specs(self.strats, self.account)
         self._retry_due_in = None     # set again by _retry_benched when it finds none ready
-        pick = self.owners_pick(specs)
+        pick = self.owners_pick(specs) or self.watched_chimps_pick(specs)
         if pick is not None:
             return pick
         # below_bar: after the tiered games come the open medals under every
