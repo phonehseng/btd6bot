@@ -141,6 +141,33 @@
 # (blimp check 0.13-0.45 either way), the Bloon Solver variant (eee79df)
 # brings the Eliminator at round 97 (0.04-0.21 for rounds 93-98).
 #
+# Two Sticky Bomb ninjas instead of the wizard (2026-11-13, loss case
+# 20261113_060245_Haunted_chimps: round 92, 50 fortified MOABs and 4 ZOMGs,
+# lost twelve seconds in with $12,451 unspent). The Eliminator was bought at
+# round 87 and the plan then saved five rounds for Cripple MOAB ($34,560,
+# out of reach before round 97) while the live forecast rated round 92 at
+# 0.93; plan_first buys nothing off the plan, so the cash stood idle. The
+# stills show the fortified MOABs streaming in at both bottom corners and
+# their ceramics over the stairs and out.
+#   Searched with optimize_builds.replay_plan (CHIMPS cash, live sight): 17
+# single purchases of up to $12k after the Eliminator, each on a legal,
+# never refused cell. Bombs, glue, tack, spikes, druid, ice, mortar, a
+# necromancer, the crossbow's and the boomerang's next tiers and the wizard
+# first all left round 93 at 0.71-0.87; a ninja with Sticky Bomb (2-0-4,
+# about $10.4k) was the one that moved the weak rounds. Of the 23 legal
+# ninja cells the model ranks, (0.612, 0.709) by the right-hand exit rates
+# best. It is bought after Maim MOAB and before the bomb, where it also
+# lifts rounds 84-91 (90: 1.18 -> 2.09). A second one stands at (0.174,
+# 0.692), the Eliminator's old cell beside the left-hand exit and in the
+# Radar, bought after the Eliminator in the rounds that used to save for
+# Cripple MOAB. The wizard (Arcane Spike, $15k, last since 2026-11-13)
+# makes room: with it first the same rounds rated 0.87 and 0.45.
+#   Margins, before -> after: 90 1.18 -> 2.09, 91 1.58 -> 1.74, 92 1.03 ->
+# 1.31, 93 0.71 -> 1.26, 94 0.97 -> 1.13, 95 0.40 -> 0.83, 96 0.84 -> 1.08,
+# 97 1.33 -> 1.41, 98 0.73 -> 0.85, 99 0.86 -> 0.71, 100 0.61 -> 1.03.
+# Rounds 95, 98 and 99 stay under 1.0, and Cripple MOAB now comes at round
+# 100 instead of 98 (tests/test_haunted_chimps_sticky_ninjas_offline.py).
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -152,8 +179,8 @@ starter: none         # the guide's own opening is the opener: no extra dart (20
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {dart: [0, 0, 3], sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], mermonkey: [4, 2, 0], alchemist: [4, 0, 1], bomb: [0, 5, 0], wizard: [4, 2, 0], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
-  revised: "2026-11-13T03:30"   # the Eliminator by the right-hand branch (see "The Eliminator on the right-hand branch")
+  towers: {dart: [0, 0, 3], sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], mermonkey: [4, 2, 0], alchemist: [4, 0, 1], bomb: [0, 5, 0], ninja: [2, 0, 4], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
+  revised: "2026-11-13T06:50"   # two Sticky Bomb ninjas instead of the wizard (see "Two Sticky Bomb ninjas")
   maps: [Haunted]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -186,15 +213,17 @@ plan:
   - {do: upgrade, id: s1, to: 1-1-0}                                              # Full Metal Jacket, Night Vision
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
-  - {do: place, id: a1, kind: alchemist, role: support, near: [s1, v1], at: [0.27, 0.521]}  # by the wizard, the sniper and the bomb (was 0.558, 0.589: in reach of no tower)
+  - {do: place, id: a1, kind: alchemist, role: support, near: [s1, v1], at: [0.27, 0.521]}  # by the sniper and the village (was 0.558, 0.589: in reach of no tower)
   - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
   - {do: upgrade, id: s1, to: 4-1-0}                                            # Night Vision, Maim MOAB
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.612, 0.709]}               # added: Sticky Bomb by the right-hand exit, before the bomb (rounds 84-96)
+  - {do: upgrade, id: n1, to: 2-0-4}                                              # Sticky Bomb
   - {do: place, id: e1, kind: bomb, role: dps, at: [0.558, 0.598]}                # added: the round 90-100 blimp answer, by the right-hand exit's branch (see "The Eliminator on the right-hand branch")
   - {do: upgrade, id: e1, to: 0-4-0}                                              # MOAB Assassin
   - {do: upgrade, id: e1, to: 0-5-0}                                              # MOAB Eliminator (round 88)
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.174, 0.692]}               # added: the second Sticky Bomb, by the left-hand exit, in the Radar; spends the rounds that saved for Cripple MOAB
+  - {do: upgrade, id: n2, to: 2-0-4}                                              # Sticky Bomb
   - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
-  - {do: place, id: w1, kind: wizard, role: dps, at: [0.238, 0.606]}            # in the Radar's range (was 0.729, 0.709)
-  - {do: upgrade, id: w1, to: 4-2-0}                                            # Arcane Spike
 answers:
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
   camo: [{do: upgrade, id: x1, to: 0-0-3}]

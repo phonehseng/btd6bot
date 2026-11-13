@@ -128,6 +128,17 @@ def test_each_build_is_an_untested_plan_first_guide_build():
         assert any(st["do"] == "place" and st["kind"] == "hero" for st in d["plan"]), (sid, "no hero")
 
 
+def _accepted_live(model, spot):
+    """Has the live game accepted a tower of this spot's surface on its cell
+    although the map file marks it blocked (MapModel.accepted_mask)? Never
+    for the hero, whose refusals are learned on their own layer."""
+    kind, hero, at = spot
+    if hero or kind == "clear":
+        return False
+    cx, cy = model.frac_to_cell(*at)
+    return any(model.accepted_mask(surface)[cy, cx] for surface in pin_spots.PL.surfaces(kind))
+
+
 def test_every_tower_is_pinned_legal_and_never_refused():
     ML.DATA = pin_spots.live_maps_dir()
     for sid, name in BUILDS.items():
@@ -142,13 +153,78 @@ def test_every_tower_is_pinned_legal_and_never_refused():
             assert st.get("at"), (sid, st.get("id"), "no spot")
             hero = d["hero"] if st["kind"] == "hero" else None
             spots.append((st["kind"], hero, tuple(st["at"])))
-        assert not TM.illegal_spots(name, spots, 100), (sid, TM.illegal_spots(name, spots, 100))
         model = pin_spots.Pinner(name, "chimps").model     # the live learned map
+        # The map file marks some ground blocked that the game takes: Bazaar's
+        # middle strip between the canals held a sniper in four games. A cell
+        # the game has accepted for the tower's surface is legal ground.
+        illegal = [spot for spot in TM.illegal_spots(name, spots, 100) if not _accepted_live(model, spot)]
+        assert not illegal, (sid, illegal)
         for kind, hero, at in spots:
             if kind == "clear":
                 continue
             cell = model.frac_to_cell(*at)
             assert pin_spots.never_refused(model, kind, cell, hero), (sid, kind, at)
+
+
+# pinned damage towers under the executor's reach floor in builds other
+# sessions are reworking (test_every_pinned_damage_tower_reaches_the_track):
+# build id -> {tower id: why it is left}
+REACH_KNOWN = {
+    "waterpark_chimps": {"r2": "50 of 84 cells (0.804, 0.215); the build is the caretaker's, reworked "
+                               "round by round since 2026-11-12"},
+}
+
+
+def _pinned_reach_misses(d):
+    """{tower id: (reach, floor)} of the build's pinned damage towers whose
+    spot reaches less track than the live executor asks of it
+    (Executor._at_in_reach: SELL_REACH_SHARE of the best legal cell's reach,
+    on the live learned map with an empty board). Such a spot is passed over
+    live and the tower stands wherever the executor's search puts it."""
+    model = SIM.map_model(d["map"], learned=True)
+    game = SIM.CashGame("hard", d.get("hero"), model)
+    game.cash, game.round = 650, 6
+    ex = S.Executor(game, model, d, "chimps", SIM.full_account())
+    out = {}
+    for st in d["plan"] + (d.get("fill") or []):
+        kind = st.get("kind")
+        if st["do"] != "place" or not st.get("at") or st.get("role") == "exit" \
+                or kind in S.Executor.BUFFERS or kind in ("farm", "spike", "hero"):
+            continue
+        valid = ex._legal_cells(kind)
+        floor = ex._reach_floor(kind, valid, ex.SELL_REACH_SHARE)
+        reach = ex._reach(kind)
+        if floor is None or reach is None:
+            continue
+        cx, cy = model.frac_to_cell(*st["at"])
+        if reach[cy, cx] < floor:
+            out[st["id"]] = (round(float(reach[cy, cx])), round(floor))
+    return out
+
+
+def test_every_pinned_damage_tower_reaches_the_track():
+    """No build pins a damage tower where the live executor's reach check
+    passes it over (Executor._at_in_reach). Sulfur Springs CHIMPS (case
+    20261113_085155, lost round 63): the hardening's coordinate search put
+    the wizard at (0.334, 0.112), 16 track cells under a floor of 37, the
+    Glaive Ricochet boomerang at (0.152, 0.521), 1 cell under 42, and the
+    glue at (0.206, 0.146), none under 128 - the damage model, which moves a
+    tower on the map's 51-high ground 28 units down the screen, rated those
+    spots high. Live the bot stood the wizard and the boomerang wherever its
+    own search found track, Obyn stayed beside the empty pin, and the plan's
+    ratings described a board that was never built."""
+    ML.DATA = pin_spots.live_maps_dir()
+    SIM._MAP_MODELS.clear()
+    bad = {}
+    for sid in BUILDS:
+        _, d = _load(sid)
+        miss = {tid: v for tid, v in _pinned_reach_misses(d).items() if tid not in REACH_KNOWN.get(sid, {})}
+        if miss:
+            bad[sid] = miss
+    assert not bad, bad
+    fixed = [(sid, tid) for sid, known in REACH_KNOWN.items() for tid in known
+             if tid not in _pinned_reach_misses(_load(sid)[1])]
+    assert not fixed, f"reach the track now, drop from REACH_KNOWN: {fixed}"
 
 
 def test_no_locked_or_income_tier():

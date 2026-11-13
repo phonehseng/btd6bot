@@ -107,6 +107,23 @@
 #   tools/simulate_threats: plan 27/27, no threat gaps; plan_timeline: the
 #   last step by round 96.
 #
+# Round 33, 2026-11-13 (case 20261113_074838, lost round 33: 13 camo yellows
+# and 20 camo reds): the hardening put b1 back at 0.761, 0.641, the game
+# refused it there as it had refused 0.761, 0.658 on 2026-11-12, and the bot
+# stood it at 0.778, 0.641 - outside the 40-unit Radar of v1. The plan bought
+# the Radar (0-2-0, $2,160) at round 32 and its Bigger Radius after it; round 33
+# started with $302, short of Bigger Radius, and was rated 0.21 from round 24
+# on. Replayed with b1 where the game takes it the old order gives exactly the
+# live 0.21. Now b1 is pinned there, Bigger Radius comes before the Radar (no
+# Radar that misses the boat), and Etienne after the Radar and the Destroyer.
+# optimize_builds.replay_plan, live sight, the game's b1 spot and the starter
+# dart the bot adds at round 6, before -> after:
+# round 27 0.81 -> 1.11, 33 0.21 -> 4.51, 37 0.73 -> 2.99; lower by more than
+# 0.05: 24 1.33 -> 1.20, 51 1.96 -> 1.85, 97 2.48 -> 2.40. Still under 1.0:
+# 34-36 (0.61-0.68) and 40 (0.51-0.53), as before. The ratings in "Hardened"
+# counted b1 on the refused cell; with the boat where it really stands most
+# rounds of 10-62 read 0.05-0.4 lower than they say.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -120,7 +137,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {sub: [0, 5, 0], mermonkey: [4, 0, 1], buccaneer: [5, 2, 0], ice: [5, 2, 0], village: [2, 3, 0], spike: [2, 0, 5], boomerang: [3, 0, 2]}
-  revised: "2026-11-13T06:00"   # hardened (see "Hardened")
+  revised: "2026-11-13T10:30"   # round 33 (see "Round 33")
   maps: [Spring Spring]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -129,18 +146,18 @@ plan:
   - {do: place, id: sb1, kind: sub, role: dps, at: [0.751, 0.572]}              # the exit water, where both lanes meet
   - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.783, 0.436]}         # by the sub (moved from 0.804, 0.572: hardening)
   - {do: place, id: ta1, kind: tack, role: dps, at: [0.655, 0.402]}               # opening search 2026-11-12
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.761, 0.641]}         # the exit water, by the sub (where the game took it, see above) (moved from 0.778, 0.658: hardening)
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.778, 0.641]}         # the exit water, by the sub: where the game took it (0.761 was refused twice, case 20261113_074838)
   - {do: upgrade, id: b1, to: 1-0-0}                                              # opening search 2026-11-12
   - {do: place, id: ta2, kind: tack, role: dps, at: [0.291, 0.811]}               # opening search 2026-11-12
   - {do: upgrade, id: b1, to: 2-0-0}
   - {do: upgrade, id: m1, to: 0-0-1}                                            # camo for round 24 (the executor's own pick)
   - {do: upgrade, id: b1, to: 2-1-0}                                              # opening search 2026-11-12
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.655, 0.334]}              # opening search 2026-11-12
   - {do: place, id: v1, kind: village, role: support, near: [b1, sb1], at: [0.676, 0.726]}  # added early: Radar for the camo (see above)
   - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
-  - {do: upgrade, id: v1, to: 0-2-0}                                            # Radar Scanner
-  - {do: upgrade, id: v1, to: 1-2-0}                                            # Bigger Radius: the Radar reaches b1 and sb1 (see above)
+  - {do: upgrade, id: v1, to: 1-0-0}                                            # Bigger Radius BEFORE the Radar: at 40 units the Radar misses b1 (case 20261113_074838)
+  - {do: upgrade, id: v1, to: 1-2-0}                                            # Radar Scanner, reaching b1 and sb1 at 48 units (see above)
   - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.655, 0.334]}              # opening search 2026-11-12; after the Radar and the Destroyer (case 20261113_074838)
   - {do: upgrade, id: m1, to: 4-0-1}                                            # Abyssal Warrior, NOT the guide's Arctic Knight (see above)
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.644, 0.811]}  # added: Glaive Ricochet for round 63
