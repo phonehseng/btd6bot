@@ -30,6 +30,8 @@
 #     on both lanes (Psi does live, but the bot does not count heroes).
 #   * the opening (rounds 6-30) is the bot's own, not the guide's (2026-11-12
 #     evening): see "Opening" below.
+#   * the guide's Super Brittle ice and Tack Zone are left out, Sub Commander
+#     (sub 2-0-5) takes their cash (2026-11-13): see "Late blimp damage".
 #
 # Opening (2026-11-12, loss case 20261112_193101: round 21 lost to its
 # yellows and pinks, rated 0.89, with $293 in hand):
@@ -117,6 +119,28 @@
 #     rounds; it is $100-200 short at round 65's start, so the live bot buys
 #     it a few seconds into round 65.
 #
+# Late blimp damage (2026-11-13, loss case 20261113_013939_FiringRange_chimps:
+# round 95 lost to its camo DDTs; the blimp check read 0.3-0.6x of the 2.5x
+# wanted from round 87 on). From round 85 to 94 the bot sat on $5,600-28,400
+# waiting for Super Brittle ($30,240), bought at round 94; the Tack Zone's
+# tiers took the rest. Neither adds blimp damage: from every legal cell they
+# reach 30-55 units of one lane (the fence), the blimp check counts an ice
+# monkey and a 2-0-5 tack for nothing, and the damage model moved round 95
+# 0.44 -> 0.44 with them. Both are out, and the bare ice with them (it only
+# held up the plan); their cash goes to Sub Commander (sb1 2-0-5, $27,000),
+# the water sub that reaches both lanes, after Cripple MOAB (Sub Commander
+# first cost rounds 85-91 their Cripple: blimp check 1.66 -> 0.47 at 85).
+# The plan is done by round 91; after it the bot's own blimp check spends.
+#   Blimp check (simulate_threats, learned map, CHIMPS cash), before -> after:
+#     92 0.52 -> 0.61, 93 0.64 -> 0.76, 94 0.26 -> 0.37, 95 0.43 -> 0.68,
+#     96 0.23 -> 0.35, 97 0.55 -> 0.91, 98 0.15 -> 0.26, 99 0.33 -> 0.52,
+#     100 0.59 -> 0.87 (85-91 unchanged); still under 2.5x: the guide's cash
+#     buys no more by round 100.
+#   Damage model (replay_plan, live sight), before -> after: 92 1.26 -> 1.58,
+#     94 1.49 -> 1.83, 95 0.82 -> 0.86, 96 1.46 -> 1.66, 97 1.70 -> 1.98,
+#     98 1.22 -> 1.34, 99 0.81 -> 0.81, 100 0.53 -> 0.94; rounds 6-91 within
+#     0.08 of before.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -128,8 +152,8 @@ starter: none         # the guide's own opening is the opener: no extra dart (20
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], ice: [5, 2, 0], tack: [2, 0, 5], sniper: [5, 2, 0], boomerang: [3, 0, 2]}
-  revised: "2026-11-13T01:30"   # hardened late game: Carrier and Tack Zone (see "Hardened"); opening of 20:20
+  towers: {sub: [2, 0, 5], buccaneer: [5, 2, 0], village: [4, 2, 0], sniper: [5, 2, 0], boomerang: [3, 0, 2]}
+  revised: "2026-11-13T03:30"   # Sub Commander instead of Super Brittle and the Tack Zone (see "Late blimp damage")
   maps: [Firing Range]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -161,12 +185,8 @@ plan:
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: upgrade, id: s1, to: 4-2-0}                                            # added: Maim MOAB
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
-  - {do: place, id: i1, kind: ice, role: dps, at: [0.74, 0.777]}
   - {do: upgrade, id: s1, to: 5-2-0}                                            # added: Cripple MOAB (kept: round 93 0.82 -> 1.22, 95 0.42 -> 0.82 with it, see above)
-  - {do: upgrade, id: i1, to: 5-2-0}                                            # Super Brittle
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.74, 0.845]}              # the guide's Tack Zone, in the plan again (was the fill)
-  - {do: upgrade, id: t1, to: 2-0-4}
-  - {do: upgrade, id: t1, to: 2-0-5}                                            # The Tack Zone
+  - {do: upgrade, id: sb1, to: 2-0-5}                                           # Sub Commander: the late blimp damage (see "Late blimp damage"; was Super Brittle and the Tack Zone)
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: s1, to: 1-2-0}]
