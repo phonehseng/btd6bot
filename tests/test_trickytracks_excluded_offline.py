@@ -83,6 +83,21 @@ def test_the_map_builds_are_untouched():
         assert specs[sid].maps == frozenset({MAP}) and not specs[sid].excluded_maps, sid
 
 
+
+def test_no_general_build_plays_dark_dungeons_apopalypse():
+    """Dark Dungeons Apopalypse (loss case 20261113_043704): every general
+    build lost there (apopalypse_apache_spikes rounds 17, 35, 39;
+    apopalypse_ninja_sniper rounds 33 and 32), and tools/apopalypse_check.py
+    rates the ninja/sniper build 0.06 at every round. Only the map's own
+    build (darkdungeons_apopalypse) is offered there."""
+    from btd6bot.account import AccountState
+    m = "Dark Dungeons"
+    category = AccountState().map_category(m)
+    fits = sorted(sid for sid, s in _specs().items()
+                  if not s.achievement and PL._strategy_fits(s, m, category, "apopalypse"))
+    assert fits == ["darkdungeons_apopalypse"], fits
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in tests:

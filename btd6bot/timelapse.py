@@ -216,9 +216,15 @@ def render(ffmpeg, game, history):
           f"subtitles=subs.srt:force_style='{H.SUBTITLE_STYLE}'")
     cmd = [str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0",
            "-i", lst.name, "-vf", vf, *H._encoder_args(ffmpeg), "-an", body.name]
-    # below-normal priority: the bot's screen reading comes first
+    # below-normal priority: the bot's screen reading comes first. And no
+    # window: the recorder runs under pythonw, which has no console, so
+    # Windows opens a new one for a console program started without this
+    # flag. That window came up in front of BTD6 for as long as the encode
+    # took (about 20 s after every CHIMPS game), and the bot pauses while the
+    # game is not the foreground window.
     done = subprocess.run(cmd, cwd=str(work), capture_output=True, text=True, timeout=FFMPEG_TIMEOUT,
-                          creationflags=getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0))
+                          creationflags=subprocess.CREATE_NO_WINDOW
+                          | getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0))
     if done.returncode != 0:
         log.warning("full run failed: %s", done.stderr[-300:])
         return None

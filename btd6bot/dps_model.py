@@ -3398,6 +3398,27 @@ def _lots(mode, rnd, track):
 # so builds are chosen with Ice, Glue, stuns and pushes counted.
 STATUS_RATING = True
 LIVE_STATUS_RATING = False
+# ... except in CHIMPS, where the live bot rates with status effects on
+# (live_status_rating). Firing Range CHIMPS (2026-11-13, loss case
+# 20261113_053533_FiringRange_chimps, backlog 111 (a)): the build was chosen
+# on replays with status effects on, which rated round 95 at 0.84-0.86 on the
+# lost board; the live forecast rated the same board 0.44, because the late
+# game's Maim MOAB and Cripple MOAB stuns counted for nothing. The board then
+# read as lost whatever was bought: Sub Commander moved round 95 0.44 -> 0.44
+# live, and from round 93 every reinforce look ended in "nothing $9,502 buys
+# helps round 95 (0.44)", where with the stuns counted a $7,345 Maim MOAB
+# path lifts it 0.84 -> 0.91. CHIMPS boards are small enough for the cost:
+# on the biggest one in the journals (Alpine Run, 33 towers, round 95) ten
+# margins take 2.2 s with them against 1.5 s without; the 37-tower Impoppable
+# boards the budget was set for stay as they were.
+LIVE_STATUS_MODES = ("chimps",)
+
+
+def live_status_rating(mode):
+    """STATUS_RATING for a live game of `mode` (a bot mode key, e.g.
+    "chimps"): on in LIVE_STATUS_MODES, LIVE_STATUS_RATING elsewhere. The
+    runner sets it before every game (runner.Bot.play)."""
+    return True if mode in LIVE_STATUS_MODES else LIVE_STATUS_RATING
 # A stun, slow or push is shared among the bloons in a zone - the packing
 # rho says how many. A burst is packed a quarter of a width apart, so rho
 # reads a lone MOAB as one of ~28 in a sniper's zone; True shares the hits
