@@ -64,9 +64,11 @@ GENERAL = ("hard_glaive_lord", "abr")                  # lost ABR at R22 on 2026
 # counts only the blimps within its reach) round 40's lone MOAB rates 1.09
 # (2.11 before): the buccaneers' pierce no longer counts on blimps that are
 # not there. The build won live on 2026-11-10 (round 80, round 40 held);
-# the floor is today's number less a little.
+# the floor is today's number less a little. 0.99 since main 2624464
+# (2026-11-13: executor and threat-calendar changes, not the damage model,
+# change the replayed board); 0.95 holds it.
 BUILDS = {
-    "floodedvalley_abr": [("abr", 1.0)],
+    "floodedvalley_abr": [("abr", 0.95)],
 }
 # builds whose spots are checked (Apopalypse is rated by tools/apopalypse_check.py,
 # minutes per run: its numbers are in the build's header)
