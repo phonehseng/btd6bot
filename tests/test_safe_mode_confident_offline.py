@@ -31,9 +31,10 @@ def plan_with(cands, safe=True):
     safety.active = lambda: safe
     safety.status = lambda: "SAFE MODE (test)"
     try:
-        # owners_pick: the NEXT file (d37f06d) - no owner's pick in this test
+        # owners_pick: the NEXT file (d37f06d); watched_chimps_pick: the
+        # CHIMPS_WATCH list (0705775) - neither picks a game in this test
         fake = NS(strats={}, account=None, benched=lambda m, mode: False,
-                  owners_pick=lambda specs: None)
+                  owners_pick=lambda specs: None, watched_chimps_pick=lambda specs: None)
         return runner.Bot.next_plan(fake)
     finally:
         runner.planner_specs, planner.rank_games, safety.active, safety.status = saved
