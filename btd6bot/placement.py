@@ -286,6 +286,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
     where = surfaces(kind, hero) & set(where) if where else surfaces(kind, hero)
     ok = np.zeros(model.heat.shape, bool)
     free = np.zeros(model.heat.shape, bool)   # ok minus the spots the game refused
+    proven = np.zeros(model.heat.shape, bool)  # cells the game has taken a tower's centre on
     # spots the game refused in earlier play are learned per surface and kept
     # outside the geometry grids (MapModel.refused), so subtract them here
     def refused(surface):
@@ -308,6 +309,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
             mermonkey_water, size_limit = alt["mermonkey_water"], alt["size_limit"]
     if "land" in where:
         land = (scan["land"] == 1) | accepted("land")
+        proven |= accepted("land")
         ok |= land
         free |= land & ~refused("land")
     if "water" in where:
@@ -315,6 +317,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
         if kind == "mermonkey" and mermonkey_water is not None:
             water |= mermonkey_water
         water = water | accepted("water")
+        proven |= accepted("water")
         ok |= water
         free |= water & ~refused("water")
     if size_limit is not None:
@@ -345,7 +348,21 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
     # learned refusals, each a 3x3 patch, made every cell of the map "too
     # close to a forbidden one" - no legal spot at all, and an Easy game
     # was lost with one sniper.)
-    valid = (dist >= radius) & free
+    roomy = dist >= radius
+    # A cell the game took a tower on although the map file marks it blocked
+    # (MapModel.accept, learned from a probe) is one allowed cell among
+    # blocked ones: the footprint check above throws it out again, so the
+    # bot never came back to a spot it had found. On 2026-11-12 the 13 maps
+    # with such cells held 32 of them and 1 was legal here; Ravine's middle
+    # spot, the only ground that reaches the lower half of the centre fork,
+    # had to be found by a new probe every game. The game has shown that a
+    # footprint fits there, so the cell stands without the check - for the
+    # small towers only: which tower was accepted is not kept, and a bigger
+    # footprint may not fit where a small one did (the same line
+    # refusal_layer draws for refusals).
+    if footprint_radius(kind, hero) <= SHARED_REFUSAL_RADIUS:
+        roomy = roomy | proven
+    valid = roomy & free
     # a tower under the HUD could be bought but never selected again
     if valid.shape == (GRID[1], GRID[0]):
         valid &= ~hud_cells(model)
