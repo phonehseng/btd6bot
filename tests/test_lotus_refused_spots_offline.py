@@ -76,7 +76,15 @@ SAFE = O.SAFETY_MARGIN
 #     (HOLDS) and under the live refusals it does not,
 #   * the repaired build under the refusals is worth nearly what the played
 #     build was on the spots it was planned for (REPAIR_KEEPS).
-HOLDS = 1.0
+#
+# 0.75 since 2026-11-12 (fix/glue-dot, dps_model._dot_hp_rate): a burn is
+# credited no more than the health of the layer it burns. The buccaneers'
+# Hot Shot grapes (4 burn damage) were credited 4 HP on 1-HP layers, and
+# the carrier planes' 24 burn on 10-HP ceramic shells: round 95 fell from
+# 2.11 to 1.04 for the played build on its planned spots, from 1.54 to 0.80
+# for the repair under the refusals, and from 0.46 to 0.19 for the played
+# build under them. The planned/refused gap is unchanged in kind.
+HOLDS = 0.75
 # 0.9 until 2026-11-12. Since phase 1 of docs/model_fix_plan.md a
 # Buccaneer's rear shot counts only where the boat has track behind it, so
 # moving the boats off their planned spots costs a little more: 1.23 against
