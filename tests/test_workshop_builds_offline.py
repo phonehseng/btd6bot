@@ -62,8 +62,11 @@ _SPIKES_DART_BOMB = {"sp1": ("spike", (2, 0, 4)), "sp2": ("spike", (2, 0, 4)),
 # (primary only, R28), 0.95 (Double HP, R75) and 0.90 (ABR, R22); round 40
 # still holds. The floors are today's numbers less a little; the builds are
 # for the optimizer to redo.
+# Medium's floor 1.5 (was 1.6) since 2026-11-12 (fix/glue-dot,
+# dps_model._dot_hp_rate): Spiked Mines' 30 burn damage is credited at most
+# the health of the layer it burns, and round 50 fell from 1.78 to 1.58.
 BUILDS = {
-    "workshop_medium": ("medium", 1.6, 2.0, _SPIKES_DART_BOMB),
+    "workshop_medium": ("medium", 1.5, 2.0, _SPIKES_DART_BOMB),
     "workshop_primary_only": ("primary_only", 1.05, 2.5,
                               {"d2": ("dart", (2, 0, 4)), "d5": ("dart", (2, 0, 4)),
                                "bm1": ("bomb", (0, 3, 2)), "d1": ("dart", (0, 2, 4))}),
