@@ -51,6 +51,29 @@
 # boards (it counts no hero and no ability, and under-rates map-wide towers):
 # 40 1.56, 63 1.76, 76 1.70, 81 1.27, 90 2.33, 95 0.47, 98 0.35, 100 0.45.
 #
+# Hardened (2026-11-13). Searched with tools/optimize_builds' Evaluator,
+# MapSetup and replay_plan, live sight on, status effects on, spots legal
+# (the test's map geometry, plan order) and never refused, CHIMPS cash
+# ($650 at round 6, then rounds only):
+#   * late game: a coordinate search over every tower's spot (replay of
+#     rounds 31-100) moved the boat a cell down (0.195, 0.453) and the
+#     boomerang to (0.152, 0.521). Same towers, tiers and order.
+#   * opening: the guide's wizard stays first, the sniper (the plan's
+#     Cripple MOAB tower) at round 6 beside it ($650: two damage towers,
+#     `starter: none` holds), then the boat with Double Shot before Obyn's
+#     third purchase; the wizard's 2-0-2 and 3-0-2 follow by round 30.
+#   Margins, before (the build of b83eeb0) -> after, live sight:
+#     rounds 6-30: under 1.2: 12 -> 6; worst 0.66 (round 7) -> 0.71 (round
+#       8); still under 1.2: 6 1.15, 7 0.95, 8 0.71, 15 1.09, 25 1.10, 30
+#       1.16;
+#     rounds 31-59: under 1.0: 4 -> 4; worst 0.69 (round 32) -> 0.79 (round
+#       37);
+#     rounds 60-100: under 1.0: 9 -> 9; worst 0.31 (round 99) -> 0.31 (round
+#       99); still under 1.0: 80 0.99, 92 0.92, 94 0.82, 95 0.52, 96 0.78, 97
+#       0.97, 98 0.58, 99 0.31, 100 0.72.
+#   tools/simulate_threats: plan 27/27, no threat gaps; plan_timeline: the
+#   last step by round 99.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -63,28 +86,33 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {wizard: [5, 0, 2], buccaneer: [5, 0, 2], glue: [0, 2, 5], sniper: [5, 1, 0], boomerang: [3, 0, 2], bomb: [0, 0, 0]}
-  revised: "2026-11-12T12:00"
+  revised: "2026-11-13T07:30"   # hardened (see "Hardened")
   maps: [Sulfur Springs]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.334, 0.112]}            # the guide's first tower
-  - {do: place, id: hero, kind: hero, role: dps, near: [w1], at: [0.291, 0.129]}  # Obyn, beside the wizard
-  - {do: upgrade, id: w1, to: 2-0-0}                                            # Arcane Blast
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.402]}         # the springs in the guide: the west pool's tip here (see above)
-  - {do: upgrade, id: w1, to: 2-0-2}                                            # Monkey Sense: camo
-  - {do: place, id: x1, kind: bomb, role: dps, at: [0.612, 0.615]}              # added: round 28's leads (see above): the north rim cell the damage model rates best for them
-  - {do: upgrade, id: b1, to: 2-0-2}                                            # Crow's Nest: camo
-  - {do: upgrade, id: w1, to: 3-0-2}                                            # Arcane Mastery
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.238, 0.129]}  # added: the Cripple MOAB sniper (see above)
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.453]}         # the springs in the guide: the west pool's tip here (see above) (moved from 0.195, 0.402: hardening)
+  - {do: place, id: hero, kind: hero, role: dps, near: [w1], at: [0.291, 0.129]}  # Obyn, beside the wizard
+  - {do: upgrade, id: b1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: b1, to: 2-0-0}                                              # opening search 2026-11-12
+  - {do: place, id: x1, kind: bomb, role: dps, at: [0.612, 0.615]}              # added: round 28's leads (see above): the north rim cell the damage model rates best for them
+  - {do: upgrade, id: w1, to: 0-0-1}                                              # opening search 2026-11-12
+  - {do: upgrade, id: s1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: b1, to: 2-0-1}                                              # opening search 2026-11-12
+  - {do: upgrade, id: b1, to: 2-0-2}                                            # Crow's Nest: camo
+  - {do: upgrade, id: w1, to: 2-0-1}                                              # Arcane Blast (crosspath of the opening)
+  - {do: upgrade, id: w1, to: 2-0-2}                                            # Monkey Sense: camo
+  - {do: upgrade, id: w1, to: 3-0-2}                                            # Arcane Mastery
   - {do: upgrade, id: s1, to: 2-1-0}                                            # Night Vision, Large Calibre: ceramics
   - {do: upgrade, id: s1, to: 3-1-0}                                            # Deadly Precision: round 40's MOAB
   - {do: upgrade, id: b1, to: 3-0-2}                                            # Destroyer
   - {do: upgrade, id: b1, to: 4-0-2}                                            # Aircraft Carrier
   - {do: upgrade, id: w1, to: 4-0-2}                                            # Arcane Spike
   - {do: upgrade, id: s1, to: 4-1-0}                                            # added: Maim MOAB, before round 60's BFB
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.623, 0.555]}         # added: Glaive Ricochet for round 63
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.152, 0.521]}         # added: Glaive Ricochet for round 63 (moved from 0.623, 0.555: hardening)
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: w1, to: 5-0-2}                                            # Archmage
   - {do: upgrade, id: b1, to: 5-0-2}                                            # Carrier Flagship
