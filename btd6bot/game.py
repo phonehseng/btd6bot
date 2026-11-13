@@ -4,6 +4,7 @@ Every action is verified from the screen (tower held? cash dropped? panel open?)
 rather than assumed, because a missed click silently ruins a run.
 """
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 
@@ -878,8 +879,8 @@ class Game:
         return False
 
     def path_costs(self, p, f=None):
-        """Per path: ("cash", n) | ("xp", n) for a locked tier | (None, None)
-        when the button shows no price (path closed or maxed, or unreadable)."""
+        """Per path: ("cash", n) | ("xp", n) for a locked tier | ("free", 0)
+        for a tier a village gives away | (None, None) when the button shows no price (path closed or maxed, or unreadable)."""
         f = f if f is not None else self.fresh()
         return [price_row(rec_text(crop(f, reg))[0]) for reg in self.panel(p)["cost_rows"]]
 
@@ -1453,6 +1454,14 @@ class Game:
                 and self.path_pips(p, path, f) == before_pips + 1):
             return "bought"
         same_price = self._next_tier_same_price(p, path)
+        if shown[0] == "free" and again == shown:
+            # The button said "Free" and still does: the click did not
+            # register, or the next tier is free as well (a village that
+            # frees two tiers). The word cannot tell which and a free tier
+            # moves no cash, so only pips that did not move say "same" - a
+            # hotkey pressed on a guess would take a second tier unseen.
+            unmoved = before_pips is not None and self.path_pips(p, path, f) == before_pips
+            return "same" if unmoved else "unknown"
         moved = shown[1] is not None and again[0] is not None and again != shown
         if shown[1] is not None and again[0] is not None:
             if again == shown and not same_price:
@@ -1992,9 +2001,15 @@ def free_kinds_in_shop(words, columns, y0, dy, rows):
     return free
 
 
+# What an upgrade button shows in place of a price when the tier costs nothing
+# (the OCR reads the game's lettering as "FRee"; compared in lower case).
+FREE_WORD = "free"
+
+
 def price_row(text):
     """What one upgrade button's price row says, from its OCR text: ("xp", n)
-    for a tier still locked behind tower XP, ("cash", n) for a price, and
+    for a tier still locked behind tower XP, ("cash", n) for a price,
+    ("free", 0) for a tier that costs nothing, and
     (None, None) when there is no price - the path is closed or maxed, or
     the read is unreadable.
 
@@ -2003,10 +2018,22 @@ def price_row(text):
     twice; each read let Game.upgrade click the closed button, the click
     counted as a purchase with no effect, four of them capped the path for
     the game, and reinforce kept asking for it (reinforce.grown_from). Read
-    as no price, the box goes the closed-path way (_path_closed)."""
+    as no price, the box goes the closed-path way (_path_closed).
+
+    One tier does cost nothing, and the button then says so in a word:
+    ("free", 0). Beside a Primary Mentoring village the tier-1 upgrades of
+    primary monkeys are free and their buttons read "Free" where the price
+    stands. Haunted CHIMPS (2026-11-13 00:58): the glue placed beside the
+    4-2-0 village showed "Free" on Glue Soak, the word read as no price,
+    the top path was closed for the game and The Bloon Solver, the build's
+    answer to the late blimp rounds, was never bought (lost at round 96).
+    The kind is its own, not "cash": a free button names no tier by its
+    price, so the tier corrections from prices leave it alone."""
     low = text.lower()
     if "xp" in low:
         return "xp", parse_int(low.replace("xp", ""))
+    if re.sub(r"[^a-z]", "", low) == FREE_WORD:
+        return "free", 0
     if looks_like_price(text):
         value = parse_int(text)
         if value != 0:

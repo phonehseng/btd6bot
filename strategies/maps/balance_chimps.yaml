@@ -42,6 +42,34 @@
 # and no ability, and under-rates map-wide towers): 40 0.48, 63 0.06, 76 0.73,
 # 81 1.22, 90 0.06, 95 0.06, 98 0.18, 100 0.11.
 #
+# Hardened (2026-11-13). Searched with tools/optimize_builds' Evaluator,
+# MapSetup and
+# replay_plan, live sight on, status effects on, spots legal (the test's
+# map geometry, plan order) and never refused, CHIMPS cash ($650 at round 6,
+# then rounds only):
+#   * opening: Sauda alone at round 6 rated 0.06 (nothing else stood).
+#     Round 6 now buys a druid and a dart ($645, both on every sub-path),
+#     the tack moves to the left end (0.067, 0.47) and gets its tiers early
+#     (3-0-2 by round 15), a spike factory (0.099, 0.641) and Sauda follow.
+#   * late game: the ice stood at the right end with 0 units of track in
+#     reach; a coordinate search over the spots moved it to (0.067, 0.589)
+#     by the tack, the alchemist to (0.024, 0.658), the druid to (0.088,
+#     0.419). A village (2-2-0) by the tack and the druid adds the camo
+#     the guide's three towers lack (round 51 0.30 -> 0.66, 78 0.13 -> 0.73,
+#     90 0.92 -> 1.06). The guide's towers, tiers and order otherwise stay.
+#   This build stays far under the bar in the model: the guide is "lazy"
+#   (four towers), and rounds 34-75 wait for the $54k Inferno Ring.
+#   Margins, before (the build of b794cba) -> after, live sight:
+#     rounds 6-30: under 1.2: 23 -> 5; worst 0.06 (round 6) -> 1.00 (round
+#       10); still under 1.2: 9 1.03, 10 1.00, 18 1.04, 21 1.08, 27 1.09;
+#     rounds 31-59: under 1.0: 29 -> 24; worst 0.06 (round 45) -> 0.39
+#       (round 54);
+#     rounds 60-100: under 1.0: 36 -> 31; worst 0.06 (round 62) -> 0.22
+#       (round 70); still under 1.0: 63 0.28, 65 0.26, 66 0.33, 67 0.34, 70
+#       0.22, 71 0.31, 72 0.32, 73 0.25, 74 0.35, 75 0.22, ....
+#   tools/simulate_threats: plan 25/25, no threat gaps; plan_timeline: the
+#   last step by round 95.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -55,26 +83,36 @@ hero_opens: true      # the hero alone holds the opening (Executor.defended)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {tack: [5, 0, 2], ice: [5, 2, 0], alchemist: [4, 2, 0], sniper: [5, 1, 0]}
-  revised: "2026-11-12T12:00"
+  towers: {tack: [5, 0, 2], village: [2, 2, 0], druid: [0, 0, 0], dart: [0, 0, 0], spike: [0, 0, 0], ice: [5, 2, 0], alchemist: [4, 2, 0], sniper: [5, 1, 0]}
+  revised: "2026-11-13T04:00"   # hardened (see "Hardened")
   maps: [Balance]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.751, 0.641]}            # R6 Sauda: the right end, where every sub-path passes (see above)
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.772, 0.453]}              # by Sauda: the damage model's best tack cell
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.088, 0.419]}              # opening search 2026-11-12 (moved from 0.772, 0.453: hardening)
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.505, 0.521]}               # opening search 2026-11-12
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.067, 0.47]}                 # opening search 2026-11-12
+  - {do: place, id: sp1, kind: spike, role: dps, at: [0.099, 0.641]}              # opening search 2026-11-12 (moved from 0.088, 0.658: hardening)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.772, 0.589]}              # opening search 2026-11-12
+  - {do: upgrade, id: t1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: t1, to: 2-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: t1, to: 3-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: t1, to: 3-0-1}                                              # opening search 2026-11-12
   - {do: upgrade, id: t1, to: 3-0-2}                                            # by R15 Hot Shots: lead
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.345, 0.504]}  # added: the Cripple MOAB sniper (see above)
   - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo
   - {do: upgrade, id: s1, to: 2-1-0}                                            # Large Calibre
   - {do: upgrade, id: t1, to: 4-0-2}                                            # by R37 Ring of Fire
-  - {do: place, id: i1, kind: ice, role: dps, near: [t1], at: [0.751, 0.385]}   # by R37, by the tack (the middle is refused)
+  - {do: place, id: i1, kind: ice, role: dps, near: [t1], at: [0.067, 0.589]}   # by R37, by the tack (the middle is refused) (moved from 0.751, 0.385: hardening)
   - {do: upgrade, id: i1, to: 4-2-0}                                            # by R37 Embrittlement
   - {do: upgrade, id: s1, to: 4-1-0}                                            # added: Maim MOAB
+  - {do: place, id: v1, kind: village, role: support, near: [t1, dr1], at: [0.067, 0.283]}  # added: a Radar for the tack and the druid (camo from round 51 on; see "Hardened")
+  - {do: upgrade, id: v1, to: 0-2-0}                                              # Radar Scanner
+  - {do: upgrade, id: v1, to: 2-2-0}                                              # Jungle Drums
   - {do: upgrade, id: t1, to: 5-0-2}                                            # by R66 Inferno Ring
   - {do: upgrade, id: i1, to: 5-2-0}                                            # by R90 Super Brittle
-  - {do: place, id: a1, kind: alchemist, role: support, near: [t1], at: [0.729, 0.283]}  # by R90, next to the tack
+  - {do: place, id: a1, kind: alchemist, role: support, near: [t1], at: [0.024, 0.658]}  # by R90, next to the tack (moved from 0.729, 0.283: hardening)
   - {do: upgrade, id: a1, to: 4-2-0}                                            # by R90 Stronger Stimulant
   - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
 answers:
