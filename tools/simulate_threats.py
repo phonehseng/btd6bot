@@ -300,8 +300,30 @@ def simulate(strat, mode, map_name="Monkey Meadow", water=False, ticks=10, accou
         g.cash = scenario.get("start_cash", g.cash)
         mult = scenario.get("income_multiplier", mult)
     total_in = g.cash
+    # maps with long path phases (Erosion): as the live match does
+    # (Match._repaint_for_round), new towers need ground only until the
+    # phase ends, and the towers on ground the map destroys are forgotten
+    phase_geom = None
+    if real is not None:
+        try:
+            from btd6bot import mapgeom
+            geom = mapgeom.load(map_name)
+            if geom and mapgeom.phase_end(geom, start) is not None:
+                phase_geom = geom
+        except Exception:
+            phase_geom = None
+    ground_seen = None
     for rnd in range(start, end + 1):
         g.round = rnd
+        if phase_geom is not None:
+            horizon = mapgeom.phase_end(phase_geom, rnd)
+            if horizon != getattr(ex, "ground_horizon", None):
+                ex.ground_horizon = horizon
+                ex.track_changed()
+            lost = mapgeom.lost_ground(model, phase_geom, ground_seen, rnd)
+            if lost is not None:
+                ex.ground_lost(lost)
+            ground_seen = rnd
         if click_budget and rnd > start:
             # continuous sends: the round starts with the board as it stands,
             # pays as it plays, and the bot buys while it does - as far as

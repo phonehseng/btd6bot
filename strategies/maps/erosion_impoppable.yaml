@@ -11,18 +11,26 @@
 # Pinned on the static ground the general build rated under 1.0 in 95 of rounds 6-100.
 # The optimizer now plans each phase on the ice that lasts until its end, counts a tower
 # only until its ice melts and buys the next phase's defence on the next phase's ice
-# (MapSetup.set_round, Spot.until), with Benjamin's Cyber Cash counted. Replayed as the
-# executor buys (Double Cash, no Fast Track): rounds 6-89 at 1.0 or more but for 34 (0.75),
-# 78 (0.52), 81 (0.98) and 87 (0.58); the last phase (rounds 90-100) is not held (0.06-0.54):
-# rebuilding every phase leaves too little for it, and no carry saved for from round 66-80
-# (Carrier Flagship, a tier-5 sub, Super Mines, Flying Fortress) changed that.
+# (MapSetup.set_round, Spot.until), with Benjamin's Cyber Cash counted; a tower that pops
+# bloons wherever it stands (sniper, heli) goes on ground that lasts, as the executor puts it.
+# rebuild_lost: false - the plan buys each phase's towers itself, so the executor does not
+# rebuild the melted ones at their old pins (Executor.ground_lost); a tower bought before its
+# pinned ground exists waits for it (Executor._wait_for_pinned_ground).
+#
+# Replayed as the executor buys (Double Cash, no Fast Track): rounds 6-89 at 1.0 or more but
+# for 34 (0.85), 73-78 (0.11-0.84), 81, 83, 87-88 (0.49-0.92); the last phase, rounds 90-100,
+# is not held (0.07-0.43) - rebuilding every phase leaves too little, and no carry saved for
+# from round 66-80 changed that. Its BAD answer is a Cripple MOAB sniper placed by the
+# executor. The threat simulation (with the phases, as the live match plays them) finds no
+# gap and one tower off its pin.
 id: erosion_impoppable
 map: Erosion
 hero: benjamin
+rebuild_lost: false   # the plan buys each phase's towers itself (optimize_builds plans the melts)
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:
-  towers: {buccaneer: [4, 3, 2], sub: [2, 4, 5], sniper: [2, 3, 4], skywarden: [4, 0, 2], ice: [2, 1, 4], mermonkey: [4, 2, 0]}
+  towers: {buccaneer: [4, 4, 2], sniper: [4, 2, 0], sub: [2, 4, 5], mermonkey: [3, 2, 0], ice: [0, 2, 4]}
   base_success: {impoppable: 0.5}
   maps: [Erosion]
 plan:
@@ -66,324 +74,280 @@ plan:
   - {do: upgrade, id: sky18, to: 1-0-0}   # R24: $165, secures round 24; cash left $268
   - {do: upgrade, id: sky13, to: 2-0-0}   # R24: $210, secures round 24; cash left $58
   - {do: upgrade, id: buc20, to: 0-0-1}   # R26: $240, ahead of round 27; cash left $822
-  - {do: place, id: alc21, kind: alchemist, role: dps, segment: [0.26, 0.51], at: [0.152, 0.351]}   # R26: $660, ahead of round 27; cash left $162
-  - {do: place, id: bom22, kind: bomb, role: dps, segment: [0.23, 0.44], at: [0.110, 0.283]}   # R27: $450, secures round 27; cash left $378
-  - {do: upgrade, id: sky15, to: 1-0-0}   # R27: $165, ahead of round 28; cash left $213
-  - {do: upgrade, id: sky16, to: 0-2-0}   # R28: $540, secures round 28; cash left $997
-  - {do: upgrade, id: buc20, to: 1-0-1}   # R28: $330, ahead of round 31; cash left $667
-  - {do: place, id: buc23, kind: buccaneer, role: dps, segment: [0.43, 0.98], at: [0.270, 0.760]}   # R28: $480, ahead of round 31; cash left $187
-  - {do: upgrade, id: buc23, to: 0-0-1}   # R29: $240, ahead of round 32; cash left $479
-  - {do: upgrade, id: sky17, to: 2-0-0}   # R30: $210, ahead of round 32; cash left $1,047
-  - {do: upgrade, id: sky14, to: 2-0-0}   # R30: $210, ahead of round 32; cash left $837
-  - {do: upgrade, id: sky18, to: 2-0-0}   # R30: $210, ahead of round 32; cash left $627
-  - {do: upgrade, id: sky19, to: 2-0-0}   # R30: $210, ahead of round 32; cash left $417
-  - {do: upgrade, id: sky15, to: 2-0-0}   # R30: $210, ahead of round 32; cash left $207
-  - {do: upgrade, id: des10, to: 0-1-0}   # R30: $180, ahead of round 32; cash left $27
-  - {do: upgrade, id: buc23, to: 1-0-1}   # R31: $330, ahead of round 32; cash left $371
-  - {do: upgrade, id: sky15, to: 2-0-1}   # R31: $180, ahead of round 32; cash left $191
-  - {do: upgrade, id: buc23, to: 2-0-1}   # R32: $510, secures round 32; cash left $755
-  - {do: upgrade, id: buc20, to: 2-0-1}   # R32: $510, ahead of round 33; cash left $245
-  - {do: upgrade, id: sky14, to: 2-0-1}   # R32: $180, ahead of round 33; cash left $65
-  - {do: place, id: eng24, kind: engineer, role: dps, segment: [0.48, 0.76], at: [0.313, 0.589]}   # R33: $420, secures round 33; cash left $899
-  - {do: place, id: nin25, kind: ninja, role: dps, segment: [0.2, 0.43], at: [0.088, 0.232]}   # R33: $480, secures round 33; cash left $419
-  - {do: place, id: mer26, kind: mermonkey, role: dps, segment: [0.2, 0.33], at: [0.045, 0.198]}   # R33: $360, secures round 33; cash left $59
-  - {do: place, id: mer27, kind: mermonkey, role: dps, segment: [0.46, 0.63], at: [0.398, 0.487]}   # R34: $360, secures round 34; cash left $109
-  - {do: place, id: buc28, kind: buccaneer, role: dps, segment: [0.19, 0.77], at: [0.088, 0.504]}   # R35: $720, secures round 35; cash left $1,213
-  - {do: upgrade, id: buc28, to: 0-0-1}
-  - {do: upgrade, id: buc28, to: 0-1-1}   # R35: $660, secures round 35; cash left $553
-  - {do: place, id: mer29, kind: mermonkey, role: dps, segment: [0.56, 0.74], at: [0.505, 0.641]}   # R35: $360, secures round 35; cash left $193
-  - {do: upgrade, id: buc28, to: 0-2-1}   # R36: $600, secures round 36; cash left $1,893
-  - {do: upgrade, id: buc28, to: 0-3-1}   # R36: $1,080, secures round 36; cash left $813
-  - {do: upgrade, id: bom22, to: 0-2-0}   # R36: $780, answers ceramic (strategy.coverage); cash left $33
-  - {do: place, id: sni30, kind: sniper, role: dps, at: [0.323, 0.078]}   # R37: $1,680, secures round 37; cash left $145
-  - {do: upgrade, id: sni30, to: 1-2-0}
-  - {do: target, id: sni30, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: place, id: sky31, kind: skywarden, role: dps, segment: [0.46, 0.75], at: [0.462, 0.504]}   # R38: $245, secures round 38; cash left $2,578
-  - {do: place, id: sky32, kind: skywarden, role: dps, segment: [0.39, 0.68], at: [0.398, 0.419]}   # R38: $245, secures round 38; cash left $2,333
-  - {do: place, id: sky33, kind: skywarden, role: dps, segment: [0.48, 0.78], at: [0.494, 0.521]}   # R38: $245, secures round 38; cash left $2,088
-  - {do: place, id: sky34, kind: skywarden, role: dps, segment: [0.54, 0.84], at: [0.558, 0.606]}   # R38: $245, secures round 38; cash left $1,843
-  - {do: upgrade, id: sky31, to: 1-0-0}   # R38: $165, secures round 38; cash left $1,678
-  - {do: place, id: sky35, kind: skywarden, role: dps, segment: [0.63, 0.94], at: [0.655, 0.726]}   # R38: $245, secures round 38; cash left $1,433
-  - {do: place, id: sky36, kind: skywarden, role: dps, segment: [0.58, 0.86], at: [0.580, 0.675]}   # R38: $245, secures round 38; cash left $1,188
-  - {do: place, id: sky37, kind: skywarden, role: dps, segment: [0.36, 0.64], at: [0.377, 0.368]}   # R38: $245, secures round 38; cash left $943
-  - {do: place, id: sky38, kind: skywarden, role: dps, segment: [0.31, 0.59], at: [0.291, 0.283]}   # R38: $245, secures round 38; cash left $698
-  - {do: place, id: buc39, kind: buccaneer, role: dps, segment: [0.3, 0.66], at: [0.248, 0.419]}   # R38: $480, secures round 38; cash left $218
-  - {do: upgrade, id: sky37, to: 1-0-0}   # R38: $165, secures round 38; cash left $53
-  - {do: upgrade, id: buc39, to: 0-2-0}   # R39: $1,260, secures round 39; cash left $1,347
-  - {do: upgrade, id: buc39, to: 0-2-1}   # R39: $240, ahead of round 40; cash left $1,107
-  - {do: upgrade, id: buc28, to: 0-3-2}   # R39: $420, ahead of round 40; cash left $687
-  - {do: place, id: buc40, kind: buccaneer, role: dps, segment: [0.33, 0.7], at: [0.281, 0.470]}   # R39: $480, ahead of round 40; cash left $207
-  - {do: upgrade, id: buc39, to: 0-3-1}   # R40: $1,080, secures round 40; cash left $2,645
-  - {do: place, id: sni41, kind: sniper, role: dps, at: [0.366, 0.078]}   # R40: $1,260, secures round 40; cash left $1,385
-  - {do: upgrade, id: sni41, to: 0-2-0}
-  - {do: target, id: sni41, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: buc40, to: 0-0-1}   # R40: $240, ahead of round 43; cash left $1,145
-  - {do: place, id: buc42, kind: buccaneer, role: dps, segment: [0.47, 0.83], at: [0.430, 0.675]}   # R40: $480, ahead of round 43; cash left $665
-  - {do: upgrade, id: buc39, to: 0-3-2}   # R40: $420, ahead of round 47; cash left $245
-  - {do: upgrade, id: buc40, to: 0-2-1}   # R41: $1,260, ahead of round 49; cash left $27
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.697, 0.078]}   # R42: $1,440; hero: rated at its estimated level
-  - {do: place, id: bom43, kind: bomb, role: dps, segment: [0.67, 0.98], at: [0.697, 0.777]}   # R42: $2,430, answers moab (strategy.coverage); cash left $519
-  - {do: upgrade, id: bom43, to: 0-3-0}
-  - {do: upgrade, id: bom43, to: 0-3-2}   # R43: $600, ahead of round 49; cash left $1,327
-  - {do: upgrade, id: buc40, to: 0-3-1}   # R43: $1,080, ahead of round 49; cash left $247
-  - {do: upgrade, id: buc40, to: 0-3-2}   # R44: $420, ahead of round 50; cash left $2,523
-  - {do: place, id: sni44, kind: sniper, role: dps, at: [0.409, 0.078]}   # R44: $1,680, ahead of round 50; cash left $843
-  - {do: upgrade, id: sni44, to: 1-2-0}
-  - {do: target, id: sni44, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: sni41, to: 0-2-1}   # R44: $540, ahead of round 50; cash left $303
-  - {do: upgrade, id: buc42, to: 0-0-1}   # R44: $240, ahead of round 50; cash left $63
-  - {do: upgrade, id: buc42, to: 0-2-1}   # R45: $1,260, ahead of round 50; cash left $1,531
-  - {do: upgrade, id: buc42, to: 0-3-1}   # R45: $1,080, ahead of round 50; cash left $451
-  - {do: upgrade, id: buc42, to: 0-3-2}   # R45: $420, ahead of round 50; cash left $31
-  - {do: place, id: buc45, kind: buccaneer, role: dps, segment: [0.52, 0.95], at: [0.505, 0.794]}   # R46: $1,560, ahead of round 50; cash left $3,455
-  - {do: upgrade, id: buc45, to: 2-0-1}
-  - {do: upgrade, id: sky38, to: 1-0-0}   # R46: $165, ahead of round 50; cash left $3,290
-  - {do: upgrade, id: sky34, to: 1-0-0}   # R46: $165, ahead of round 50; cash left $3,125
-  - {do: place, id: dru46, kind: druid, role: dps, at: [0.441, 0.436]}   # R46: $2,460, ahead of round 50; cash left $665
-  - {do: upgrade, id: dru46, to: 0-3-0}
-  - {do: target, id: dru46, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: dru46, to: 0-3-1}   # R46: $120, ahead of round 52; cash left $545
-  - {do: place, id: tac47, kind: tack, role: dps, segment: [0.53, 0.86], at: [0.601, 0.521]}   # R47: $1,360, ahead of round 52; cash left $757
-  - {do: upgrade, id: tac47, to: 0-3-0}
-  - {do: upgrade, id: tac47, to: 1-3-0}   # R47: $180, ahead of round 52; cash left $577
-  - {do: upgrade, id: tac47, to: 2-3-0}   # R47: $265, ahead of round 54; cash left $312
-  - {do: place, id: dru48, kind: druid, role: dps, at: [0.270, 0.232]}   # R48: $2,460, ahead of round 54; cash left $1,266
-  - {do: upgrade, id: dru48, to: 0-3-0}
-  - {do: target, id: dru48, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: sni41, to: 0-2-2}   # R49: $540, ahead of round 54; cash left $6,552
-  - {do: upgrade, id: dru48, to: 0-3-1}   # R49: $120, ahead of round 54; cash left $6,432
-  - {do: place, id: bom49, kind: bomb, role: dps, segment: [0.32, 0.64], at: [0.345, 0.317]}   # R49: $1,890, ahead of round 54; cash left $4,542
-  - {do: upgrade, id: bom49, to: 0-0-3}
-  - {do: place, id: sni50, kind: sniper, role: dps, at: [0.548, 0.078]}   # R49: $1,680, ahead of round 54; cash left $2,862
-  - {do: upgrade, id: sni50, to: 1-2-0}
-  - {do: target, id: sni50, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: sky32, to: 1-0-0}   # R49: $165, ahead of round 54; cash left $2,697
-  - {do: place, id: sub51, kind: sub, role: dps, at: [0.110, 0.249]}   # R49: $1,685, ahead of round 54; cash left $1,012
-  - {do: upgrade, id: sub51, to: 2-0-1}
-  - {do: upgrade, id: sub51, to: 2-0-2}   # R50: $1,200, ahead of round 54; cash left $9,468
-  - {do: upgrade, id: sub51, to: 2-0-3}   # R50: $1,320, ahead of round 54; cash left $8,148
-  - {do: upgrade, id: sub51, to: 2-0-4}   # R50: $3,000, ahead of round 54; cash left $5,148
-  - {do: place, id: sub52, kind: sub, role: dps, at: [0.558, 0.845]}   # R50: $1,685, ahead of round 54; cash left $3,463
-  - {do: upgrade, id: sub52, to: 2-0-1}
-  - {do: upgrade, id: sub52, to: 2-0-2}   # R50: $1,200, ahead of round 54; cash left $2,263
-  - {do: upgrade, id: sub52, to: 2-0-3}   # R50: $1,320, ahead of round 54; cash left $943
-  - {do: upgrade, id: sky32, to: 1-0-1}   # R51: $180, ahead of round 54; cash left $6,935
-  - {do: place, id: tac53, kind: tack, role: dps, segment: [0.7, 1.0], at: [0.751, 0.760]}   # R51: $1,360, ahead of round 54; cash left $5,575
-  - {do: upgrade, id: tac53, to: 0-3-0}
-  - {do: upgrade, id: tac53, to: 1-3-0}   # R51: $180, ahead of round 54; cash left $5,395
-  - {do: upgrade, id: sky33, to: 1-0-0}   # R51: $165, ahead of round 54; cash left $5,230
-  - {do: place, id: sni54, kind: sniper, role: dps, at: [0.590, 0.078]}   # R51: $1,680, ahead of round 55; cash left $3,550
-  - {do: upgrade, id: sni54, to: 1-2-0}
-  - {do: target, id: sni54, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: place, id: sky55, kind: skywarden, role: dps, segment: [0.52, 1.0], at: [0.655, 0.453]}   # R55: $410, secures round 55; cash left $15,332
-  - {do: upgrade, id: sky55, to: 1-0-0}
-  - {do: place, id: sky56, kind: skywarden, role: dps, segment: [0.55, 0.94], at: [0.676, 0.504]}   # R55: $410, secures round 55; cash left $14,922
-  - {do: upgrade, id: sky56, to: 1-0-0}
-  - {do: place, id: dru57, kind: druid, role: dps, at: [0.516, 0.266]}   # R55: $2,460, secures round 55; cash left $12,462
-  - {do: upgrade, id: dru57, to: 0-3-0}
-  - {do: target, id: dru57, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: dru57, to: 0-3-1}   # R55: $120, secures round 55; cash left $12,342
-  - {do: place, id: sky58, kind: skywarden, role: dps, segment: [0.52, 0.84], at: [0.623, 0.436]}   # R55: $245, secures round 55; cash left $12,097
-  - {do: place, id: wiz59, kind: wizard, role: dps, segment: [0.67, 0.95], at: [0.719, 0.538]}   # R55: $1,830, secures round 55; cash left $10,267
-  - {do: upgrade, id: wiz59, to: 1-2-0}
-  - {do: place, id: dru60, kind: druid, role: dps, at: [0.569, 0.351]}   # R55: $2,460, secures round 55; cash left $7,807
-  - {do: upgrade, id: dru60, to: 0-3-0}
-  - {do: target, id: dru60, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: dru60, to: 0-3-1}   # R55: $120, secures round 55; cash left $7,687
-  - {do: place, id: sky61, kind: skywarden, role: dps, segment: [0.38, 0.68], at: [0.473, 0.266]}   # R55: $245, ahead of round 58; cash left $7,442
-  - {do: place, id: sky62, kind: skywarden, role: dps, segment: [0.5, 0.86], at: [0.612, 0.385]}   # R55: $245, ahead of round 58; cash left $7,197
-  - {do: place, id: sky63, kind: skywarden, role: dps, segment: [0.55, 0.9], at: [0.644, 0.521]}   # R55: $245, ahead of round 58; cash left $6,952
-  - {do: place, id: sky64, kind: skywarden, role: dps, segment: [0.5, 0.84], at: [0.590, 0.453]}   # R55: $245, ahead of round 58; cash left $6,707
-  - {do: place, id: sky65, kind: skywarden, role: dps, segment: [0.37, 0.65], at: [0.462, 0.215]}   # R55: $245, ahead of round 58; cash left $6,462
-  - {do: upgrade, id: sub52, to: 2-0-4}   # R55: $3,000, ahead of round 58; cash left $3,462
-  - {do: upgrade, id: tac47, to: 2-4-0}   # R55: $3,240, ahead of round 61; cash left $222
-  - {do: upgrade, id: sky58, to: 1-0-0}   # R55: $165, ahead of round 61; cash left $57
-  - {do: place, id: dru66, kind: druid, role: dps, at: [0.761, 0.624]}   # R56: $2,460, ahead of round 61; cash left $2,703
-  - {do: upgrade, id: dru66, to: 0-3-0}
-  - {do: target, id: dru66, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: dru66, to: 0-3-1}   # R56: $120, ahead of round 61; cash left $2,583
-  - {do: upgrade, id: sky62, to: 1-0-0}   # R56: $165, ahead of round 61; cash left $2,418
-  - {do: place, id: sub67, kind: sub, role: dps, at: [0.729, 0.743]}   # R56: $1,685, ahead of round 61; cash left $733
-  - {do: upgrade, id: sub67, to: 2-1-0}
-  - {do: place, id: eng68, kind: engineer, role: dps, segment: [0.29, 0.68], at: [0.409, 0.181]}   # R57: $1,800, ahead of round 61; cash left $1,646
-  - {do: upgrade, id: eng68, to: 2-1-0}
-  - {do: upgrade, id: eng68, to: 3-1-0}   # R57: $690, ahead of round 61; cash left $956
-  - {do: upgrade, id: sky65, to: 1-0-0}   # R57: $165, ahead of round 61; cash left $791
-  - {do: upgrade, id: sky63, to: 1-0-0}   # R57: $165, ahead of round 61; cash left $626
-  - {do: place, id: dar69, kind: dart, role: dps, segment: [0.68, 1.0], at: [0.804, 0.641]}   # R58: $3,735, answers bfb (strategy.coverage); cash left $859
-  - {do: upgrade, id: dar69, to: 0-0-4}
-  - {do: upgrade, id: dar69, to: 0-1-4}   # R58: $120, ahead of round 63; cash left $739
-  - {do: upgrade, id: dar69, to: 0-2-4}   # R58: $225, ahead of round 63; cash left $514
-  - {do: place, id: dru70, kind: druid, role: dps, at: [0.526, 0.334]}   # R59: $2,460, ahead of round 63; cash left $2,900
-  - {do: upgrade, id: dru70, to: 0-3-0}
-  - {do: target, id: dru70, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: dru70, to: 0-3-1}   # R59: $120, ahead of round 63; cash left $2,780
-  - {do: place, id: sni71, kind: sniper, role: dps, at: [0.441, 0.112]}   # R59: $1,680, ahead of round 64; cash left $1,100
-  - {do: upgrade, id: sni71, to: 1-2-0}
-  - {do: target, id: sni71, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: place, id: wiz72, kind: wizard, role: dps, segment: [0.61, 0.95], at: [0.708, 0.470]}   # R60: $1,620, ahead of round 64; cash left $4,048
-  - {do: upgrade, id: wiz72, to: 0-2-0}
-  - {do: upgrade, id: wiz72, to: 1-2-0}   # R61: $210, ahead of round 69; cash left $5,933
-  - {do: place, id: dru73, kind: druid, role: dps, at: [0.794, 0.572]}   # R61: $2,460, ahead of round 69; cash left $3,473
-  - {do: upgrade, id: dru73, to: 0-3-0}
-  - {do: target, id: dru73, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: dru73, to: 0-3-1}   # R61: $120, ahead of round 69; cash left $3,353
-  - {do: place, id: dru74, kind: druid, role: dps, segment: [0.5, 0.81], at: [0.655, 0.266]}   # R61: $1,200, ahead of round 69; cash left $2,153
+  - {do: upgrade, id: buc20, to: 0-2-1}   # R27: $1,260, secures round 27; cash left $228
+  - {do: upgrade, id: sky16, to: 1-0-0}   # R27: $165, ahead of round 32; cash left $63
+  - {do: upgrade, id: sky16, to: 1-0-1}   # R28: $180, ahead of round 32; cash left $1,207
+  - {do: place, id: buc21, kind: buccaneer, role: dps, segment: [0.4, 1.0], at: [0.270, 0.760]}   # R28: $720, ahead of round 32; cash left $487
+  - {do: upgrade, id: buc21, to: 0-0-1}
+  - {do: place, id: buc22, kind: buccaneer, role: dps, segment: [0.19, 0.77], at: [0.088, 0.504]}   # R29: $720, ahead of round 33; cash left $299
+  - {do: upgrade, id: buc22, to: 0-0-1}
+  - {do: upgrade, id: buc20, to: 0-2-2}   # R30: $420, ahead of round 33; cash left $657
+  - {do: upgrade, id: sky17, to: 2-0-0}   # R30: $210, ahead of round 33; cash left $447
+  - {do: upgrade, id: sky14, to: 2-0-0}   # R30: $210, ahead of round 33; cash left $237
+  - {do: upgrade, id: sky16, to: 2-0-1}   # R30: $210, ahead of round 33; cash left $27
+  - {do: upgrade, id: sky15, to: 1-0-0}   # R31: $165, ahead of round 34; cash left $536
+  - {do: upgrade, id: buc22, to: 0-1-1}   # R32: $660, ahead of round 34; cash left $950
+  - {do: upgrade, id: buc21, to: 0-1-1}   # R32: $660, ahead of round 34; cash left $290
+  - {do: upgrade, id: buc21, to: 0-2-1}   # R33: $600, ahead of round 34; cash left $944
+  - {do: upgrade, id: buc22, to: 0-2-1}   # R33: $600, ahead of round 34; cash left $344
+  - {do: upgrade, id: sky18, to: 1-0-1}   # R33: $180, ahead of round 34; cash left $164
+  - {do: place, id: sni23, kind: sniper, role: dps, at: [0.697, 0.078]}   # R34: $420, secures round 34; cash left $154
+  - {do: target, id: sni23, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: buc20, to: 0-3-2}   # R35: $1,080, secures round 35; cash left $898
+  - {do: upgrade, id: buc22, to: 0-3-1}   # R36: $1,080, ahead of round 38; cash left $2,118
+  - {do: upgrade, id: buc21, to: 0-3-1}   # R36: $1,080, ahead of round 38; cash left $1,038
+  - {do: upgrade, id: sni23, to: 0-2-0}   # R36: $840, ahead of round 38; cash left $198
+  - {do: place, id: sky24, kind: skywarden, role: dps, segment: [0.46, 0.75], at: [0.462, 0.504]}   # R37: $245, ahead of round 39; cash left $1,745
+  - {do: place, id: sky25, kind: skywarden, role: dps, segment: [0.39, 0.68], at: [0.398, 0.419]}   # R37: $245, ahead of round 39; cash left $1,500
+  - {do: place, id: sky26, kind: skywarden, role: dps, segment: [0.41, 0.72], at: [0.430, 0.453]}   # R37: $245, ahead of round 39; cash left $1,255
+  - {do: place, id: sky27, kind: skywarden, role: dps, segment: [0.53, 0.8], at: [0.526, 0.589]}   # R37: $245, ahead of round 39; cash left $1,010
+  - {do: place, id: sky28, kind: skywarden, role: dps, segment: [0.48, 0.78], at: [0.494, 0.521]}   # R37: $245, ahead of round 39; cash left $765
+  - {do: place, id: sky29, kind: skywarden, role: dps, segment: [0.54, 0.84], at: [0.558, 0.606]}   # R37: $245, ahead of round 39; cash left $520
+  - {do: place, id: sky30, kind: skywarden, role: dps, segment: [0.63, 0.94], at: [0.655, 0.726]}   # R37: $245, ahead of round 39; cash left $275
+  - {do: place, id: sky31, kind: skywarden, role: dps, segment: [0.58, 0.86], at: [0.580, 0.675]}   # R37: $245, ahead of round 40; cash left $30
+  - {do: upgrade, id: sky28, to: 1-0-0}   # R38: $165, ahead of round 40; cash left $2,543
+  - {do: place, id: buc32, kind: buccaneer, role: dps, segment: [0.28, 0.71], at: [0.248, 0.419]}   # R38: $720, ahead of round 40; cash left $1,823
+  - {do: upgrade, id: buc32, to: 0-0-1}
+  - {do: upgrade, id: buc32, to: 0-1-1}   # R38: $660, ahead of round 40; cash left $1,163
+  - {do: upgrade, id: sni23, to: 1-2-0}   # R38: $420, ahead of round 40; cash left $743
+  - {do: place, id: buc33, kind: buccaneer, role: dps, segment: [0.33, 0.7], at: [0.281, 0.470]}   # R38: $480, ahead of round 40; cash left $263
+  - {do: upgrade, id: sky27, to: 0-0-1}   # R38: $180, ahead of round 40; cash left $83
+  - {do: upgrade, id: buc32, to: 0-3-1}   # R39: $1,680, ahead of round 40; cash left $957
+  - {do: upgrade, id: buc32, to: 0-3-2}   # R39: $420, ahead of round 40; cash left $537
+  - {do: upgrade, id: buc33, to: 0-3-0}   # R40: $2,340, secures round 40; cash left $1,715
+  - {do: upgrade, id: buc33, to: 0-3-1}   # R40: $240, secures round 40; cash left $1,475
+  - {do: place, id: buc34, kind: buccaneer, role: dps, segment: [0.45, 0.89], at: [0.430, 0.675]}   # R40: $1,380, secures round 40; cash left $95
+  - {do: upgrade, id: buc34, to: 0-1-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.826, 0.300]}   # R42: $1,440; hero: rated at its estimated level
+  - {do: place, id: spi35, kind: spike, role: dps, segment: [0.35, 0.53], at: [0.334, 0.317]}   # R42: $1,200, answers ceramic (strategy.coverage); cash left $2,859
+  - {do: upgrade, id: spi35, to: 0-0-3}   # R42: $2,220, answers moab (strategy.coverage); cash left $639
+  - {do: upgrade, id: buc33, to: 0-3-2}   # R43: $420, ahead of round 50; cash left $1,627
+  - {do: upgrade, id: sky26, to: 2-0-0}   # R43: $375, ahead of round 50; cash left $1,252
+  - {do: upgrade, id: buc34, to: 0-3-1}   # R44: $1,680, ahead of round 50; cash left $2,268
+  - {do: upgrade, id: buc34, to: 0-3-2}   # R44: $420, ahead of round 50; cash left $1,848
+  - {do: place, id: sni36, kind: sniper, role: dps, at: [0.804, 0.112]}   # R44: $1,260, ahead of round 50; cash left $588
+  - {do: upgrade, id: sni36, to: 0-2-0}
+  - {do: target, id: sni36, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: sni37, kind: sniper, role: dps, at: [0.836, 0.129]}   # R45: $1,680, ahead of round 50; cash left $1,636
+  - {do: upgrade, id: sni37, to: 1-2-0}
+  - {do: target, id: sni37, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: sni36, to: 1-2-0}   # R45: $420, ahead of round 50; cash left $1,216
+  - {do: place, id: sni38, kind: sniper, role: dps, at: [0.826, 0.181]}   # R46: $1,680, ahead of round 50; cash left $4,520
+  - {do: upgrade, id: sni38, to: 1-2-0}
+  - {do: target, id: sni38, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: place, id: buc39, kind: buccaneer, role: dps, segment: [0.52, 0.95], at: [0.505, 0.794]}   # R46: $1,560, ahead of round 50; cash left $2,960
+  - {do: upgrade, id: buc39, to: 2-0-1}
+  - {do: upgrade, id: sky25, to: 1-0-0}   # R46: $165, ahead of round 50; cash left $2,795
+  - {do: upgrade, id: sky27, to: 1-0-1}   # R46: $165, ahead of round 50; cash left $2,630
+  - {do: place, id: bom40, kind: bomb, role: dps, segment: [0.28, 0.59], at: [0.270, 0.249]}   # R46: $1,890, ahead of round 50; cash left $740
+  - {do: upgrade, id: bom40, to: 0-0-3}
+  - {do: place, id: wiz41, kind: wizard, role: dps, segment: [0.69, 0.94], at: [0.697, 0.777]}   # R47: $1,830, ahead of round 50; cash left $482
+  - {do: upgrade, id: wiz41, to: 1-2-0}
+  - {do: upgrade, id: sky31, to: 1-0-0}   # R47: $165, ahead of round 50; cash left $317
+  - {do: upgrade, id: bom40, to: 0-1-3}   # R47: $300, ahead of round 50; cash left $17
+  - {do: place, id: wiz42, kind: wizard, role: dps, segment: [0.28, 0.49], at: [0.227, 0.215]}   # R48: $1,830, ahead of round 50; cash left $1,601
+  - {do: upgrade, id: wiz42, to: 1-2-0}
+  - {do: upgrade, id: bom40, to: 0-2-3}   # R49: $480, ahead of round 50; cash left $6,947
+  - {do: place, id: wiz43, kind: wizard, role: dps, segment: [0.38, 0.61], at: [0.345, 0.385]}   # R49: $1,830, ahead of round 50; cash left $5,117
+  - {do: upgrade, id: wiz43, to: 1-2-0}
+  - {do: upgrade, id: wiz43, to: 3-2-0}   # R49: $2,280, ahead of round 52; cash left $2,837
+  - {do: place, id: tac44, kind: tack, role: dps, segment: [0.53, 0.86], at: [0.601, 0.521]}   # R49: $1,360, ahead of round 52; cash left $1,477
+  - {do: upgrade, id: tac44, to: 0-3-0}
+  - {do: upgrade, id: tac44, to: 1-3-0}   # R50: $180, ahead of round 52; cash left $10,953
+  - {do: upgrade, id: tac44, to: 2-3-0}   # R50: $265, ahead of round 52; cash left $10,688
+  - {do: place, id: wiz45, kind: wizard, role: dps, segment: [0.27, 0.5], at: [0.270, 0.181]}   # R50: $1,830, ahead of round 52; cash left $8,858
+  - {do: upgrade, id: wiz45, to: 1-2-0}
+  - {do: upgrade, id: tac44, to: 2-4-0}   # R50: $3,240, ahead of round 54; cash left $5,618
+  - {do: upgrade, id: buc32, to: 0-4-2}   # R50: $4,680, ahead of round 54; cash left $938
+  - {do: upgrade, id: sky30, to: 1-0-0}   # R51: $165, ahead of round 54; cash left $6,945
+  - {do: upgrade, id: buc33, to: 0-4-2}   # R51: $4,680, ahead of round 57; cash left $2,265
+  - {do: place, id: sni46, kind: sniper, role: dps, at: [0.836, 0.232]}   # R51: $1,680, ahead of round 58; cash left $585
+  - {do: upgrade, id: sni46, to: 1-2-0}
+  - {do: target, id: sni46, mode: strong}   # single-target: MOAB-class first (as modelled)
+  - {do: upgrade, id: buc39, to: 3-0-1}   # R53: $4,020, ahead of round 58; cash left $2,233
+  - {do: place, id: sub47, kind: sub, role: dps, at: [0.110, 0.249]}   # R53: $1,685, ahead of round 58; cash left $548
+  - {do: upgrade, id: sub47, to: 2-0-1}
+  - {do: upgrade, id: sub47, to: 2-0-2}   # R54: $1,200, ahead of round 58; cash left $1,337
+  - {do: place, id: sky48, kind: skywarden, role: dps, segment: [0.52, 1.0], at: [0.655, 0.453]}   # R55: $410, ahead of round 58; cash left $5,462
+  - {do: upgrade, id: sky48, to: 1-0-0}
+  - {do: place, id: sky49, kind: skywarden, role: dps, segment: [0.58, 0.89], at: [0.676, 0.504]}   # R55: $245, ahead of round 58; cash left $5,217
+  - {do: upgrade, id: sub47, to: 2-0-3}   # R55: $1,320, ahead of round 58; cash left $3,897
+  - {do: place, id: sky50, kind: skywarden, role: dps, segment: [0.52, 0.84], at: [0.623, 0.436]}   # R55: $245, ahead of round 58; cash left $3,652
+  - {do: upgrade, id: sky49, to: 1-0-0}   # R55: $165, ahead of round 58; cash left $3,487
+  - {do: place, id: sky51, kind: skywarden, role: dps, segment: [0.38, 0.68], at: [0.473, 0.266]}   # R55: $245, ahead of round 61; cash left $3,242
+  - {do: upgrade, id: sky50, to: 1-0-0}   # R55: $165, ahead of round 61; cash left $3,077
+  - {do: place, id: bom52, kind: bomb, role: dps, segment: [0.37, 0.8], at: [0.526, 0.300]}   # R55: $1,890, ahead of round 61; cash left $1,187
+  - {do: upgrade, id: bom52, to: 0-0-3}
+  - {do: place, id: sky53, kind: skywarden, role: dps, segment: [0.5, 0.86], at: [0.612, 0.385]}   # R55: $245, ahead of round 61; cash left $942
+  - {do: place, id: sky54, kind: skywarden, role: dps, segment: [0.64, 1.0], at: [0.719, 0.538]}   # R55: $245, ahead of round 61; cash left $697
+  - {do: place, id: sky55, kind: skywarden, role: dps, segment: [0.55, 0.9], at: [0.644, 0.521]}   # R55: $245, ahead of round 61; cash left $452
+  - {do: place, id: sky56, kind: skywarden, role: dps, segment: [0.6, 0.92], at: [0.687, 0.555]}   # R55: $245, ahead of round 61; cash left $207
+  - {do: upgrade, id: sky51, to: 0-0-1}   # R55: $180, ahead of round 61; cash left $27
+  - {do: upgrade, id: sky56, to: 1-0-0}   # R56: $165, ahead of round 61; cash left $4,968
+  - {do: place, id: dru57, kind: druid, role: dps, segment: [0.5, 0.73], at: [0.569, 0.351]}   # R56: $1,200, ahead of round 58; cash left $3,768
+  - {do: upgrade, id: dru57, to: 1-1-0}
+  - {do: place, id: dru58, kind: druid, role: dps, segment: [0.71, 0.9], at: [0.761, 0.624]}   # R56: $1,200, ahead of round 58; cash left $2,568
+  - {do: upgrade, id: dru58, to: 1-1-0}
+  - {do: place, id: dru59, kind: druid, role: dps, segment: [0.52, 0.72], at: [0.580, 0.419]}   # R56: $1,200, ahead of round 58; cash left $1,368
+  - {do: upgrade, id: dru59, to: 1-1-0}
+  - {do: place, id: dru60, kind: druid, role: dps, segment: [0.34, 0.62], at: [0.430, 0.198]}   # R56: $1,020, ahead of round 61; cash left $348
+  - {do: upgrade, id: dru60, to: 1-0-1}
+  - {do: place, id: eng61, kind: engineer, role: dps, segment: [0.56, 1.0], at: [0.708, 0.470]}   # R57: $1,320, ahead of round 61; cash left $1,741
+  - {do: upgrade, id: eng61, to: 1-1-0}
+  - {do: upgrade, id: eng61, to: 3-1-0}   # R57: $1,170, ahead of round 61; cash left $571
+  - {do: upgrade, id: sky54, to: 1-0-0}   # R58: $165, ahead of round 61; cash left $4,374
+  - {do: upgrade, id: dru57, to: 1-3-0}   # R58: $1,680, ahead of round 61; cash left $2,694
+  - {do: upgrade, id: bom52, to: 0-1-3}   # R58: $300, ahead of round 61; cash left $2,394
+  - {do: upgrade, id: sky51, to: 1-0-1}   # R58: $165, ahead of round 61; cash left $2,229
+  - {do: upgrade, id: bom52, to: 0-2-3}   # R58: $480, ahead of round 61; cash left $1,749
+  - {do: upgrade, id: eng61, to: 3-2-0}   # R58: $420, ahead of round 62; cash left $1,329
+  - {do: upgrade, id: sky48, to: 1-0-1}   # R58: $180, ahead of round 62; cash left $1,149
+  - {do: upgrade, id: sky55, to: 1-0-0}   # R58: $165, ahead of round 62; cash left $984
+  - {do: place, id: dru62, kind: druid, role: dps, segment: [0.72, 0.96], at: [0.804, 0.641]}   # R58: $900, ahead of round 62; cash left $84
+  - {do: upgrade, id: dru62, to: 0-1-1}
+  - {do: place, id: wiz63, kind: wizard, role: dps, segment: [0.73, 0.97], at: [0.794, 0.572]}   # R59: $1,830, ahead of round 62; cash left $3,100
+  - {do: upgrade, id: wiz63, to: 1-2-0}
+  - {do: upgrade, id: sub47, to: 2-0-4}   # R59: $3,000, ahead of round 62; cash left $100
+  - {do: upgrade, id: sky53, to: 1-0-0}   # R60: $165, ahead of round 62; cash left $4,503
+  - {do: place, id: dru64, kind: druid, role: dps, segment: [0.33, 0.54], at: [0.387, 0.164]}   # R60: $1,200, ahead of round 62; cash left $3,303
+  - {do: upgrade, id: dru64, to: 1-1-0}
+  - {do: place, id: eng65, kind: engineer, role: dps, segment: [0.74, 0.99], at: [0.815, 0.709]}   # R60: $420, ahead of round 62; cash left $2,883
+  - {do: place, id: dar66, kind: dart, role: dps, segment: [0.37, 0.61], at: [0.494, 0.215]}   # R60: $1,125, ahead of round 62; cash left $1,758
+  - {do: upgrade, id: dar66, to: 0-3-0}
+  - {do: upgrade, id: dar66, to: 0-3-1}   # R60: $105, ahead of round 62; cash left $1,653
+  - {do: place, id: eng67, kind: engineer, role: dps, segment: [0.44, 0.95], at: [0.655, 0.266]}   # R60: $1,320, ahead of round 62; cash left $333
+  - {do: upgrade, id: eng67, to: 1-1-0}
+  - {do: place, id: eng68, kind: engineer, role: dps, segment: [0.28, 0.51], at: [0.355, 0.112]}   # R61: $420, ahead of round 62; cash left $2,008
+  - {do: upgrade, id: eng68, to: 2-0-0}   # R61: $1,080, ahead of round 62; cash left $928
+  - {do: upgrade, id: eng68, to: 3-0-0}   # R61: $690, ahead of round 62; cash left $238
+  - {do: upgrade, id: eng68, to: 3-2-0}   # R62: $720, secures round 62; cash left $2,232
+  - {do: upgrade, id: eng67, to: 3-1-0}   # R62: $1,170, secures round 62; cash left $1,062
+  - {do: place, id: eng69, kind: engineer, role: dps, segment: [0.38, 0.91], at: [0.623, 0.198]}   # R62: $720, secures round 62; cash left $342
+  - {do: upgrade, id: eng69, to: 0-1-0}
+  - {do: upgrade, id: sky55, to: 1-1-0}   # R62: $210, secures round 62; cash left $132
+  - {do: upgrade, id: eng69, to: 2-1-0}   # R63: $1,080, secures round 63; cash left $2,075
+  - {do: upgrade, id: eng69, to: 3-1-0}   # R63: $690, secures round 63; cash left $1,385
+  - {do: place, id: tac70, kind: tack, role: dps, segment: [0.34, 0.59], at: [0.484, 0.146]}   # R63: $880, secures round 63; cash left $505
+  - {do: upgrade, id: tac70, to: 1-2-0}
+  - {do: place, id: mer71, kind: mermonkey, role: dps, segment: [0.75, 0.93], at: [0.751, 0.777]}   # R63: $360, secures round 63; cash left $145
+  - {do: upgrade, id: eng67, to: 3-2-0}   # R64: $420, secures round 64; cash left $5,627
+  - {do: upgrade, id: eng69, to: 3-2-0}   # R64: $420, secures round 64; cash left $5,207
+  - {do: upgrade, id: bom52, to: 0-2-4}   # R64: $3,000, secures round 64; cash left $2,207
+  - {do: upgrade, id: tac70, to: 1-3-0}   # R64: $660, ahead of round 68; cash left $1,547
+  - {do: upgrade, id: tac70, to: 2-3-0}   # R64: $265, ahead of round 68; cash left $1,282
+  - {do: upgrade, id: dar66, to: 0-3-2}   # R64: $240, ahead of round 68; cash left $1,042
+  - {do: place, id: wiz72, kind: wizard, role: dps, segment: [0.6, 0.92], at: [0.740, 0.351]}   # R65: $1,830, ahead of round 68; cash left $1,161
+  - {do: upgrade, id: wiz72, to: 1-2-0}
+  - {do: upgrade, id: dru62, to: 0-3-1}   # R66: $1,680, ahead of round 68; cash left $5,875
+  - {do: upgrade, id: dru58, to: 1-3-0}   # R66: $1,680, ahead of round 68; cash left $4,195
+  - {do: place, id: wiz73, kind: wizard, role: dps, segment: [0.45, 0.93], at: [0.697, 0.283]}   # R66: $1,620, ahead of round 68; cash left $2,575
+  - {do: upgrade, id: wiz73, to: 0-2-0}
+  - {do: upgrade, id: wiz73, to: 1-2-0}   # R66: $210, ahead of round 68; cash left $2,365
+  - {do: upgrade, id: dru64, to: 1-3-0}   # R66: $1,680, ahead of round 68; cash left $685
+  - {do: upgrade, id: wiz73, to: 2-2-0}   # R67: $540, ahead of round 68; cash left $2,403
+  - {do: place, id: dru74, kind: druid, role: dps, segment: [0.37, 0.62], at: [0.558, 0.078]}   # R67: $1,200, ahead of round 68; cash left $1,203
   - {do: upgrade, id: dru74, to: 1-1-0}
-  - {do: place, id: sni75, kind: sniper, role: dps, at: [0.804, 0.112]}   # R61: $1,800, ahead of round 69; cash left $353
-  - {do: upgrade, id: sni75, to: 0-2-1}
-  - {do: target, id: sni75, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: sky64, to: 1-0-0}   # R61: $165, ahead of round 69; cash left $188
-  - {do: upgrade, id: sky61, to: 1-0-0}   # R61: $165, ahead of round 69; cash left $23
-  - {do: upgrade, id: sni75, to: 0-2-2}   # R62: $540, ahead of round 70; cash left $2,197
-  - {do: place, id: sni76, kind: sniper, role: dps, at: [0.355, 0.129]}   # R62: $1,680, ahead of round 70; cash left $517
-  - {do: upgrade, id: sni76, to: 1-2-0}
-  - {do: target, id: sni76, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: upgrade, id: eng68, to: 3-2-0}   # R63: $420, ahead of round 70; cash left $3,120
-  - {do: upgrade, id: sub67, to: 2-3-0}   # R63: $1,980, ahead of round 70; cash left $1,140
-  - {do: upgrade, id: sni75, to: 0-2-3}   # R64: $3,240, ahead of round 70; cash left $3,802
-  - {do: upgrade, id: wiz59, to: 3-2-0}   # R64: $2,280, ahead of round 70; cash left $1,522
-  - {do: upgrade, id: sni75, to: 0-2-4}   # R66: $4,920, ahead of round 70; cash left $4,945
-  - {do: upgrade, id: dru74, to: 1-3-0}   # R66: $1,680, ahead of round 70; cash left $3,265
-  - {do: place, id: boo77, kind: boomerang, role: dps, segment: [0.59, 0.95], at: [0.740, 0.351]}   # R66: $2,390, ahead of round 70; cash left $875
-  - {do: upgrade, id: boo77, to: 0-3-0}
-  - {do: upgrade, id: boo77, to: 0-3-2}   # R66: $480, ahead of round 70; cash left $395
-  - {do: upgrade, id: sky55, to: 2-0-0}   # R67: $210, ahead of round 70; cash left $2,443
-  - {do: upgrade, id: sky62, to: 2-0-0}   # R67: $210, ahead of round 70; cash left $2,233
-  - {do: upgrade, id: sky56, to: 2-0-0}   # R67: $210, ahead of round 70; cash left $2,023
-  - {do: upgrade, id: sky58, to: 2-0-0}   # R67: $210, ahead of round 70; cash left $1,813
-  - {do: upgrade, id: sky63, to: 2-0-0}   # R67: $210, ahead of round 70; cash left $1,603
-  - {do: upgrade, id: sky64, to: 2-0-0}   # R67: $210, ahead of round 70; cash left $1,393
-  - {do: upgrade, id: sky61, to: 2-0-0}   # R67: $210, ahead of round 70; cash left $1,183
-  - {do: upgrade, id: sky65, to: 2-0-0}   # R67: $210, ahead of round 70; cash left $973
-  - {do: place, id: nin78, kind: ninja, role: dps, segment: [0.68, 1.0], at: [0.761, 0.521]}   # R67: $480, ahead of round 70; cash left $493
-  - {do: place, id: nin79, kind: ninja, role: dps, segment: [0.45, 0.8], at: [0.633, 0.215]}   # R67: $480, ahead of round 70; cash left $13
-  - {do: upgrade, id: sky61, to: 2-0-1}   # R68: $180, ahead of round 71; cash left $2,130
-  - {do: upgrade, id: wiz72, to: 3-2-0}   # R69: $2,280, ahead of round 71; cash left $1,656
-  - {do: place, id: wiz80, kind: wizard, role: dps, segment: [0.74, 0.99], at: [0.815, 0.709]}   # R70: $1,830, ahead of round 71; cash left $2,858
-  - {do: upgrade, id: wiz80, to: 1-2-0}
-  - {do: place, id: wiz81, kind: wizard, role: dps, segment: [0.45, 0.93], at: [0.697, 0.283]}   # R70: $1,830, ahead of round 71; cash left $1,028
-  - {do: upgrade, id: wiz81, to: 1-2-0}
-  - {do: place, id: wiz82, kind: wizard, role: dps, segment: [0.48, 0.99], at: [0.740, 0.283]}   # R71: $1,830, secures round 71; cash left $4,685
-  - {do: upgrade, id: wiz82, to: 1-2-0}
-  - {do: upgrade, id: wiz81, to: 1-3-0}   # R71: $3,960, secures round 71; cash left $725
-  - {do: place, id: tac83, kind: tack, role: dps, segment: [0.34, 0.59], at: [0.484, 0.146]}   # R71: $700, secures round 71; cash left $25
-  - {do: upgrade, id: tac83, to: 0-2-0}
-  - {do: upgrade, id: wiz82, to: 2-2-0}   # R72: $540, ahead of round 73; cash left $2,741
-  - {do: place, id: sky84, kind: skywarden, role: dps, segment: [0.51, 1.0], at: [0.826, 0.300]}   # R73: $410, secures round 73; cash left $5,589
-  - {do: upgrade, id: sky84, to: 1-0-0}
-  - {do: place, id: sky85, kind: skywarden, role: dps, segment: [0.37, 0.87], at: [0.612, 0.164]}   # R73: $410, secures round 73; cash left $5,179
-  - {do: upgrade, id: sky85, to: 1-0-0}
-  - {do: place, id: sni86, kind: sniper, role: dps, at: [0.836, 0.129]}   # R73: $1,680, secures round 73; cash left $3,499
-  - {do: upgrade, id: sni86, to: 1-2-0}
-  - {do: target, id: sni86, mode: strong}   # single-target: MOAB-class first (as modelled)
-  - {do: place, id: sky87, kind: skywarden, role: dps, segment: [0.49, 1.0], at: [0.826, 0.232]}   # R73: $410, secures round 73; cash left $3,089
-  - {do: upgrade, id: sky87, to: 1-0-0}
-  - {do: upgrade, id: wiz82, to: 3-2-0}   # R73: $1,740, secures round 73; cash left $1,349
-  - {do: place, id: alc88, kind: alchemist, role: dps, segment: [0.42, 0.9], at: [0.676, 0.215]}   # R73: $660, secures round 73; cash left $689
-  - {do: place, id: ice89, kind: ice, role: dps, segment: [0.36, 0.51], at: [0.484, 0.146]}   # R73: $660, secures round 73; cash left $29
-  - {do: upgrade, id: ice89, to: 1-0-0}
-  - {do: upgrade, id: alc88, to: 0-2-0}   # R74: $870, secures round 74; cash left $2,945
-  - {do: place, id: mer90, kind: mermonkey, role: dps, segment: [0.68, 0.91], at: [0.740, 0.487]}   # R74: $360, secures round 74; cash left $2,585
-  - {do: place, id: mer91, kind: mermonkey, role: dps, segment: [0.56, 0.77], at: [0.633, 0.385]}   # R74: $600, secures round 74; cash left $1,985
-  - {do: upgrade, id: mer91, to: 0-1-0}
-  - {do: upgrade, id: sky85, to: 1-0-1}   # R74: $180, secures round 74; cash left $1,805
-  - {do: upgrade, id: mer90, to: 0-1-0}   # R74: $240, secures round 74; cash left $1,565
-  - {do: place, id: mer92, kind: mermonkey, role: dps, segment: [0.64, 0.85], at: [0.697, 0.453]}   # R74: $1,050, secures round 74; cash left $515
-  - {do: upgrade, id: mer92, to: 1-2-0}
-  - {do: upgrade, id: mer92, to: 2-2-0}   # R74: $300, secures round 74; cash left $215
-  - {do: upgrade, id: ice89, to: 1-0-1}   # R74: $180, secures round 74; cash left $35
-  - {do: place, id: sub93, kind: sub, role: dps, segment: [0.7, 0.99], at: [0.772, 0.555]}   # R75: $2,670, secures round 75; cash left $4,453
-  - {do: upgrade, id: sub93, to: 0-1-2}
-  - {do: place, id: sub94, kind: sub, role: dps, segment: [0.35, 0.7], at: [0.494, 0.215]}   # R75: $2,670, secures round 75; cash left $1,783
-  - {do: upgrade, id: sub94, to: 0-1-2}
-  - {do: upgrade, id: mer90, to: 2-1-0}   # R75: $480, secures round 75; cash left $1,303
-  - {do: place, id: mer95, kind: mermonkey, role: dps, segment: [0.52, 0.72], at: [0.590, 0.351]}   # R75: $600, secures round 75; cash left $703
-  - {do: upgrade, id: mer95, to: 0-1-0}
-  - {do: place, id: mer96, kind: mermonkey, role: dps, segment: [0.49, 0.68], at: [0.558, 0.300]}   # R75: $600, secures round 75; cash left $103
-  - {do: upgrade, id: mer96, to: 0-1-0}
-  - {do: upgrade, id: sub94, to: 0-1-3}   # R76: $1,320, secures round 76; cash left $5,117
-  - {do: upgrade, id: sni86, to: 1-3-0}   # R76: $2,520, secures round 76; cash left $2,597
-  - {do: upgrade, id: sub93, to: 0-1-3}   # R76: $1,320, secures round 76; cash left $1,277
-  - {do: upgrade, id: mer96, to: 2-1-0}   # R76: $480, secures round 76; cash left $797
-  - {do: upgrade, id: mer95, to: 2-1-0}   # R76: $480, secures round 76; cash left $317
-  - {do: upgrade, id: mer95, to: 2-2-0}   # R76: $270, secures round 76; cash left $47
-  - {do: place, id: sub97, kind: sub, role: dps, segment: [0.41, 0.72], at: [0.516, 0.283]}   # R77: $2,670, secures round 77; cash left $1,009
-  - {do: upgrade, id: sub97, to: 0-1-2}
-  - {do: upgrade, id: mer91, to: 2-1-0}   # R77: $480, secures round 77; cash left $529
-  - {do: upgrade, id: mer91, to: 2-2-0}   # R77: $270, secures round 77; cash left $259
-  - {do: upgrade, id: sky87, to: 1-0-1}   # R77: $180, secures round 77; cash left $79
-  - {do: place, id: sub98, kind: sub, role: dps, at: [0.655, 0.470]}   # R78: $1,685, secures round 78; cash left $4,475
-  - {do: upgrade, id: sub98, to: 2-1-0}
-  - {do: upgrade, id: sub98, to: 2-3-0}   # R78: $1,980, secures round 78; cash left $2,495
-  - {do: upgrade, id: sub97, to: 0-3-2}   # R78: $1,980, secures round 78; cash left $515
-  - {do: upgrade, id: ice89, to: 2-0-1}   # R78: $420, secures round 78; cash left $95
-  - {do: upgrade, id: wiz81, to: 1-4-0}   # R79: $7,200, secures round 79; cash left $3,619
-  - {do: upgrade, id: alc88, to: 1-2-0}   # R79: $300, secures round 79; cash left $3,319
-  - {do: upgrade, id: sub94, to: 0-1-4}   # R79: $3,000, secures round 79; cash left $319
-  - {do: upgrade, id: sky84, to: 1-0-1}   # R79: $180, secures round 79; cash left $139
-  - {do: upgrade, id: boo77, to: 0-4-2}   # R80: $5,040, secures round 80; cash left $9,517
-  - {do: place, id: sub99, kind: sub, role: dps, segment: [0.68, 0.98], at: [0.729, 0.555]}   # R80: $2,670, secures round 80; cash left $6,847
-  - {do: upgrade, id: sub99, to: 0-1-2}
-  - {do: upgrade, id: sub99, to: 0-3-2}   # R80: $1,980, secures round 80; cash left $4,867
-  - {do: upgrade, id: sub93, to: 0-1-4}   # R80: $3,000, secures round 80; cash left $1,867
-  - {do: place, id: mer100, kind: mermonkey, role: dps, segment: [0.34, 0.5], at: [0.441, 0.129]}   # R80: $360, secures round 80; cash left $1,507
-  - {do: place, id: mer101, kind: mermonkey, role: dps, segment: [0.79, 0.93], at: [0.815, 0.624]}   # R80: $600, secures round 80; cash left $907
-  - {do: upgrade, id: mer101, to: 0-1-0}
-  - {do: place, id: mer102, kind: mermonkey, role: dps, segment: [0.34, 0.43], at: [0.409, 0.078]}   # R80: $600, secures round 80; cash left $307
-  - {do: upgrade, id: mer102, to: 0-1-0}
-  - {do: upgrade, id: mer101, to: 1-1-0}   # R80: $180, secures round 80; cash left $127
-  - {do: upgrade, id: nin79, to: 0-0-3}   # R81: $3,600, secures round 81; cash left $327
-  - {do: upgrade, id: mer100, to: 0-1-0}   # R81: $240, secures round 81; cash left $87
-  - {do: upgrade, id: nin79, to: 1-0-3}   # R82: $420, secures round 82; cash left $11,399
-  - {do: upgrade, id: sky85, to: 4-0-1}   # R82: $5,250, secures round 82; cash left $6,149
-  - {do: upgrade, id: sky87, to: 4-0-1}   # R82: $5,250, secures round 82; cash left $899
-  - {do: upgrade, id: mer102, to: 1-1-0}   # R82: $180, secures round 82; cash left $719
-  - {do: upgrade, id: mer100, to: 2-1-0}   # R82: $480, secures round 82; cash left $239
-  - {do: upgrade, id: mer92, to: 3-2-0}   # R83: $2,160, secures round 83; cash left $8,593
-  - {do: upgrade, id: mer90, to: 3-1-0}   # R83: $2,160, secures round 83; cash left $6,433
-  - {do: upgrade, id: mer91, to: 3-2-0}   # R83: $2,160, secures round 83; cash left $4,273
-  - {do: upgrade, id: mer100, to: 3-1-0}   # R83: $2,160, secures round 83; cash left $2,113
-  - {do: upgrade, id: mer100, to: 3-2-0}   # R83: $270, secures round 83; cash left $1,843
-  - {do: upgrade, id: mer102, to: 1-2-0}   # R83: $270, secures round 83; cash left $1,573
-  - {do: upgrade, id: sni86, to: 2-3-0}   # R83: $1,560, secures round 83; cash left $13
-  - {do: upgrade, id: nin79, to: 1-0-4}   # R84: $6,000, secures round 84; cash left $4,511
-  - {do: upgrade, id: alc88, to: 2-2-0}   # R84: $420, secures round 84; cash left $4,091
-  - {do: upgrade, id: wiz82, to: 4-2-0}   # R85: $12,000, secures round 85; cash left $7,179
-  - {do: upgrade, id: sni50, to: 3-2-0}   # R85: $4,200, secures round 85; cash left $2,979
-  - {do: upgrade, id: sni54, to: 2-2-0}   # R85: $1,560, secures round 85; cash left $1,419
-  - {do: upgrade, id: wiz81, to: 2-4-0}   # R85: $540, ahead of round 86; cash left $879
-  - {do: upgrade, id: sky84, to: 4-0-1}   # R86: $5,250, secures round 86; cash left $1,880
-  - {do: upgrade, id: nin79, to: 2-0-4}   # R86: $420, secures round 86; cash left $1,460
-  - {do: upgrade, id: sni54, to: 3-2-0}   # R87: $2,640, secures round 87; cash left $1,717
-  - {do: upgrade, id: sni50, to: 4-2-0}   # R88: $7,560, secures round 88; cash left $412
-  - {do: upgrade, id: dru74, to: 1-4-0}   # R89: $5,880, secures round 89; cash left $2,160
-  - {do: upgrade, id: sni54, to: 4-2-0}   # R90: $7,560, secures round 90; cash left $1,442
-  - {do: place, id: mer103, kind: mermonkey, role: dps, segment: [0.51, 0.88], at: [0.740, 0.266]}   # R91: $1,050, secures round 91; cash left $3,570
-  - {do: upgrade, id: mer103, to: 1-2-0}
-  - {do: upgrade, id: mer103, to: 2-2-0}   # R91: $300, secures round 91; cash left $3,270
-  - {do: upgrade, id: mer103, to: 3-2-0}   # R91: $2,160, secures round 91; cash left $1,110
-  - {do: place, id: ice104, kind: ice, role: dps, segment: [0.43, 0.64], at: [0.665, 0.198]}   # R91: $840, secures round 91; cash left $270
-  - {do: upgrade, id: ice104, to: 1-0-1}
-  - {do: upgrade, id: sky87, to: 4-0-2}   # R92: $300, secures round 92; cash left $10,852
-  - {do: upgrade, id: ice104, to: 1-0-4}   # R92: $5,820, secures round 92; cash left $5,032
-  - {do: upgrade, id: ice104, to: 2-0-4}   # R92: $420, secures round 92; cash left $4,612
-  - {do: upgrade, id: sub97, to: 0-4-2}   # R93: $15,600, secures round 93; cash left $587
-  - {do: place, id: ice105, kind: ice, role: dps, segment: [0.43, 0.55], at: [0.633, 0.164]}   # R93: $480, secures round 93; cash left $107
-  - {do: upgrade, id: mer103, to: 4-2-0}   # R94: $5,040, secures round 94; cash left $1,460
-  - {do: place, id: ice106, kind: ice, role: dps, segment: [0.67, 0.86], at: [0.761, 0.385]}   # R94: $900, secures round 94; cash left $560
-  - {do: upgrade, id: ice106, to: 0-1-1}
-  - {do: upgrade, id: ice105, to: 0-1-0}   # R94: $240, secures round 94; cash left $320
-  - {do: upgrade, id: ice105, to: 1-1-0}   # R94: $180, secures round 94; cash left $140
-  - {do: upgrade, id: ice106, to: 0-1-4}   # R95: $5,820, secures round 95; cash left $12,155
-  - {do: upgrade, id: buc45, to: 4-0-1}   # R96: $13,620, secures round 96; cash left $8,471
-  - {do: upgrade, id: sub52, to: 2-0-5}   # R97: $30,000, secures round 97; cash left $882
-  - {do: place, id: ice107, kind: ice, role: dps, segment: [0.46, 0.56], at: [0.612, 0.112]}   # R97: $660, secures round 97; cash left $222
-  - {do: upgrade, id: ice107, to: 0-0-1}
-  - {do: upgrade, id: ice107, to: 0-0-4}   # R98: $5,820, secures round 98; cash left $2,236
-  - {do: upgrade, id: ice107, to: 0-1-4}   # R98: $240, secures round 98; cash left $1,996
-  - {do: upgrade, id: buc23, to: 4-0-1}   # R99: $13,620, secures round 99; cash left $12,684
-  - {do: upgrade, id: sub99, to: 0-4-2}   # R100: $15,600, secures round 100; cash left $7,740
+  - {do: place, id: eng75, kind: engineer, role: dps, segment: [0.41, 0.69], at: [0.601, 0.129]}   # R67: $420, ahead of round 68; cash left $783
+  - {do: place, id: dru76, kind: druid, role: dps, segment: [0.47, 1.0], at: [0.751, 0.283]}   # R68: $1,020, secures round 68; cash left $2,060
+  - {do: upgrade, id: dru76, to: 1-0-1}
+  - {do: place, id: eng77, kind: engineer, role: dps, segment: [0.31, 0.64], at: [0.441, 0.112]}   # R68: $1,320, secures round 68; cash left $740
+  - {do: upgrade, id: eng77, to: 1-1-0}
+  - {do: upgrade, id: eng77, to: 2-1-0}   # R68: $480, secures round 68; cash left $260
+  - {do: upgrade, id: sky49, to: 1-0-1}   # R68: $180, secures round 68; cash left $80
+  - {do: upgrade, id: eng77, to: 3-1-0}   # R69: $690, secures round 69; cash left $1,196
+  - {do: upgrade, id: eng75, to: 2-0-0}   # R69: $1,080, secures round 69; cash left $116
+  - {do: upgrade, id: eng75, to: 2-0-3}   # R70: $1,345, secures round 70; cash left $1,803
+  - {do: upgrade, id: wiz73, to: 3-2-0}   # R70: $1,740, secures round 70; cash left $63
+  - {do: upgrade, id: dru74, to: 1-3-0}   # R71: $1,680, secures round 71; cash left $3,870
+  - {do: upgrade, id: tac70, to: 2-4-0}   # R71: $3,240, secures round 71; cash left $630
+  - {do: upgrade, id: eng77, to: 3-2-0}   # R71: $420, secures round 71; cash left $210
+  - {do: upgrade, id: sky56, to: 1-0-1}   # R71: $180, secures round 71; cash left $30
+  - {do: upgrade, id: wiz72, to: 3-2-0}   # R72: $2,280, secures round 72; cash left $1,006
+  - {do: place, id: nin78, kind: ninja, role: dps, segment: [0.68, 1.0], at: [0.761, 0.521]}   # R72: $480, secures round 72; cash left $526
+  - {do: place, id: boo79, kind: boomerang, role: dps, segment: [0.27, 0.6], at: [0.398, 0.078]}   # R72: $500, secures round 72; cash left $26
+  - {do: upgrade, id: boo79, to: 0-0-1}
+  - {do: place, id: sub80, kind: sub, role: dps, segment: [0.64, 1.0], at: [0.740, 0.487]}   # R73: $2,670, secures round 73; cash left $614
+  - {do: upgrade, id: sub80, to: 0-1-2}
+  - {do: place, id: mer81, kind: mermonkey, role: dps, segment: [0.35, 0.57], at: [0.484, 0.164]}   # R73: $600, secures round 73; cash left $14
+  - {do: upgrade, id: mer81, to: 0-1-0}
+  - {do: upgrade, id: sub80, to: 0-3-2}   # R74: $1,980, secures round 74; cash left $1,820
+  - {do: place, id: alc82, kind: alchemist, role: dps, segment: [0.42, 0.9], at: [0.676, 0.215]}   # R74: $1,530, secures round 74; cash left $290
+  - {do: upgrade, id: alc82, to: 0-2-0}
+  - {do: upgrade, id: mer81, to: 0-2-0}   # R74: $270, secures round 74; cash left $20
+  - {do: upgrade, id: sni36, to: 3-2-0}   # R75: $4,200, secures round 75; cash left $2,908
+  - {do: place, id: sub83, kind: sub, role: dps, segment: [0.7, 0.99], at: [0.772, 0.555]}   # R75: $2,670, secures round 75; cash left $238
+  - {do: upgrade, id: sub83, to: 0-1-2}
+  - {do: upgrade, id: mer81, to: 1-2-0}   # R75: $180, secures round 75; cash left $58
+  - {do: place, id: sub84, kind: sub, role: dps, segment: [0.6, 0.95], at: [0.697, 0.470]}   # R76: $2,670, secures round 76; cash left $3,722
+  - {do: upgrade, id: sub84, to: 0-1-2}
+  - {do: upgrade, id: sub84, to: 0-3-2}   # R76: $1,980, secures round 76; cash left $1,742
+  - {do: upgrade, id: mer81, to: 2-2-0}   # R76: $300, secures round 76; cash left $1,442
+  - {do: place, id: mer85, kind: mermonkey, role: dps, segment: [0.56, 0.77], at: [0.633, 0.385]}   # R76: $600, secures round 76; cash left $842
+  - {do: upgrade, id: mer85, to: 0-1-0}
+  - {do: place, id: mer86, kind: mermonkey, role: dps, segment: [0.43, 0.63], at: [0.516, 0.249]}   # R76: $360, secures round 76; cash left $482
+  - {do: upgrade, id: mer85, to: 2-1-0}   # R76: $480, secures round 76; cash left $2
+  - {do: place, id: sub87, kind: sub, role: dps, segment: [0.44, 0.78], at: [0.558, 0.300]}   # R77: $2,670, secures round 77; cash left $964
+  - {do: upgrade, id: sub87, to: 0-1-2}
+  - {do: place, id: mer88, kind: mermonkey, role: dps, segment: [0.52, 0.72], at: [0.590, 0.351]}   # R77: $600, secures round 77; cash left $364
+  - {do: upgrade, id: mer88, to: 0-1-0}
+  - {do: upgrade, id: mer85, to: 2-2-0}   # R77: $270, secures round 77; cash left $94
+  - {do: upgrade, id: sub87, to: 0-1-3}   # R78: $1,320, secures round 78; cash left $4,855
+  - {do: upgrade, id: sni46, to: 2-2-0}   # R78: $1,560, secures round 78; cash left $3,295
+  - {do: place, id: sub89, kind: sub, role: dps, segment: [0.58, 0.83], at: [0.655, 0.470]}   # R78: $2,670, secures round 78; cash left $625
+  - {do: upgrade, id: sub89, to: 0-1-2}
+  - {do: upgrade, id: mer86, to: 0-1-0}   # R78: $240, secures round 78; cash left $385
+  - {do: upgrade, id: mer88, to: 0-2-0}   # R78: $270, secures round 78; cash left $115
+  - {do: upgrade, id: sub89, to: 0-3-2}   # R79: $1,980, secures round 79; cash left $8,859
+  - {do: place, id: sub90, kind: sub, role: dps, segment: [0.68, 0.98], at: [0.729, 0.555]}   # R79: $2,670, secures round 79; cash left $6,189
+  - {do: upgrade, id: sub90, to: 0-1-2}
+  - {do: place, id: sub91, kind: sub, role: dps, segment: [0.52, 0.78], at: [0.601, 0.436]}   # R79: $2,670, secures round 79; cash left $3,519
+  - {do: upgrade, id: sub91, to: 0-1-2}
+  - {do: upgrade, id: mer88, to: 2-2-0}   # R79: $480, secures round 79; cash left $3,039
+  - {do: upgrade, id: eng67, to: 4-2-0}   # R79: $3,000, secures round 79; cash left $39
+  - {do: upgrade, id: eng69, to: 4-2-0}   # R80: $3,000, secures round 80; cash left $11,457
+  - {do: upgrade, id: sub83, to: 0-3-2}   # R80: $1,980, secures round 80; cash left $9,477
+  - {do: upgrade, id: sub91, to: 0-3-2}   # R80: $1,980, secures round 80; cash left $7,497
+  - {do: upgrade, id: sub87, to: 0-1-4}   # R80: $3,000, secures round 80; cash left $4,497
+  - {do: upgrade, id: alc82, to: 2-2-0}   # R80: $720, secures round 80; cash left $3,777
+  - {do: upgrade, id: sni37, to: 2-2-0}   # R80: $1,560, secures round 80; cash left $2,217
+  - {do: upgrade, id: mer85, to: 3-2-0}   # R80: $2,160, secures round 80; cash left $57
+  - {do: place, id: mer92, kind: mermonkey, role: dps, segment: [0.34, 0.5], at: [0.441, 0.129]}   # R81: $540, secures round 81; cash left $3,317
+  - {do: upgrade, id: mer92, to: 1-0-0}
+  - {do: upgrade, id: mer86, to: 3-1-0}   # R81: $2,640, secures round 81; cash left $677
+  - {do: upgrade, id: mer92, to: 2-0-0}   # R81: $300, secures round 81; cash left $377
+  - {do: place, id: mer93, kind: mermonkey, role: dps, segment: [0.79, 0.93], at: [0.815, 0.624]}   # R81: $360, secures round 81; cash left $17
+  - {do: upgrade, id: sub90, to: 0-3-2}   # R82: $1,980, secures round 82; cash left $9,769
+  - {do: upgrade, id: buc39, to: 4-0-1}   # R82: $9,600, secures round 82; cash left $169
+  - {do: upgrade, id: mer92, to: 2-1-0}   # R83: $240, secures round 83; cash left $10,443
+  - {do: upgrade, id: dru76, to: 2-0-1}   # R83: $1,020, secures round 83; cash left $9,423
+  - {do: upgrade, id: mer81, to: 3-2-0}   # R83: $2,160, secures round 83; cash left $7,263
+  - {do: upgrade, id: mer88, to: 3-2-0}   # R83: $2,160, secures round 83; cash left $5,103
+  - {do: upgrade, id: sni38, to: 2-2-0}   # R83: $1,560, secures round 83; cash left $3,543
+  - {do: upgrade, id: mer92, to: 3-1-0}   # R83: $2,160, secures round 83; cash left $1,383
+  - {do: upgrade, id: mer93, to: 0-1-0}   # R83: $240, secures round 83; cash left $1,143
+  - {do: upgrade, id: mer93, to: 2-1-0}   # R83: $480, secures round 83; cash left $663
+  - {do: upgrade, id: sni36, to: 4-2-0}   # R84: $7,560, secures round 84; cash left $3,601
+  - {do: upgrade, id: sni46, to: 3-2-0}   # R84: $2,640, secures round 84; cash left $961
+  - {do: place, id: mer94, kind: mermonkey, role: dps, segment: [0.34, 0.43], at: [0.409, 0.078]}   # R84: $870, secures round 84; cash left $91
+  - {do: upgrade, id: mer94, to: 0-2-0}
+  - {do: upgrade, id: sni37, to: 4-2-0}   # R85: $10,200, secures round 85; cash left $4,979
+  - {do: upgrade, id: sni46, to: 4-2-0}   # R86: $7,560, secures round 86; cash left $3,670
+  - {do: upgrade, id: sni23, to: 2-2-0}   # R86: $1,560, secures round 86; cash left $2,110
+  - {do: upgrade, id: buc39, to: 4-0-2}   # R86: $420, secures round 86; cash left $1,690
+  - {do: upgrade, id: sni23, to: 3-2-0}   # R87: $2,640, secures round 87; cash left $1,947
+  - {do: upgrade, id: dru74, to: 1-4-0}   # R88: $5,880, secures round 88; cash left $2,322
+  - {do: upgrade, id: sni23, to: 4-2-0}   # R89: $7,560, secures round 89; cash left $2,390
+  - {do: upgrade, id: sni38, to: 3-2-0}   # R90: $2,640, secures round 90; cash left $6,592
+  - {do: upgrade, id: sni38, to: 4-2-0}   # R91: $7,560, secures round 91; cash left $2,210
+  - {do: place, id: ice95, kind: ice, role: dps, segment: [0.51, 0.89], at: [0.751, 0.257]}   # R91: $1,260, secures round 91; cash left $950
+  - {do: upgrade, id: ice95, to: 0-2-1}
+  - {do: upgrade, id: ice95, to: 0-2-4}   # R92: $5,820, secures round 92; cash left $6,012
+  - {do: upgrade, id: sub89, to: 0-4-2}   # R93: $15,600, secures round 93; cash left $1,987
+  - {do: upgrade, id: sub91, to: 0-4-2}   # R95: $15,600, secures round 95; cash left $10,615
+  - {do: upgrade, id: sub90, to: 0-4-2}   # R96: $15,600, secures round 96; cash left $4,951
+  - {do: upgrade, id: sub84, to: 0-4-2}   # R97: $15,600, secures round 97; cash left $11,762
+  - {do: upgrade, id: buc11, to: 4-0-1}   # R98: $14,130, secures round 98; cash left $5,466
+  - {do: upgrade, id: sub47, to: 2-0-5}   # R100: $30,000, secures round 100; cash left $10,430
 answers:
   bad:
     - {do: upgrade, id: snb, to: 5-0-2}   # Cripple MOAB (the plan has no BAD answer of its own)
