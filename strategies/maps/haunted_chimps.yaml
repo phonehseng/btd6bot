@@ -47,6 +47,43 @@
 # hero and no ability, and under-rates map-wide towers): 40 4.09, 63 4.18, 76
 # 10.60, 81 4.97, 90 1.68, 95 0.31, 98 0.68, 100 2.54.
 #
+# Hardened (2026-11-12 night, after the round-93 loss of 22:50, case
+# 20261112_225058_Haunted_chimps: 10 fortified BFBs and 6 camo DDTs, rated
+# 0.61, with w1 4-2-0 just bought and s1 5-1-0 waiting). Searched with
+# tools/optimize_builds' Evaluator, MapSetup and replay_plan, live sight on,
+# status effects on, spots legal and never refused, CHIMPS cash ($650 at
+# round 6, then rounds only):
+#   * late game: the Bloon Solver glue, the wizard and the alchemist stood
+#     97-161 units from the village, outside its Radar (range 55 at 4-2-0):
+#     in the model they popped nothing of round 93's camo DDTs (each left out
+#     alone, the margin did not move). The glue (0.27, 0.658) and the wizard
+#     (0.238, 0.606) now stand in the Radar, on cells that see as much of
+#     both lanes as before (glue 125/127 units); the alchemist by them
+#     (0.27, 0.521), since no land cell is within its reach of the boat.
+#     Order: Flagship, Primary Mentoring, Bloon Solver, alchemist, Arcane
+#     Spike (round 89), then the sniper's Maim and Cripple MOAB (93, 99).
+#     The guide's Archmage (instead of the sniper) rated round 93 0.82-0.84
+#     and 95 0.39-0.40: worse, so the sniper stays.
+#   * the sniper is placed by round 53 with Full Metal Jacket and Night
+#     Vision: round 59's camo leads, 0.53 -> 0.66. No legal village cell is
+#     within its Radar's 48 units of the boat (the pond), so the boat never
+#     sees camo before 4-2-0.
+#   * opening: boat and dart at round 6 (two damage towers: starter: none
+#     stays), the boat's Double Shot and Hot Shot first, Sauda at
+#     (0.612, 0.709), the sub after her; Advanced Intel kept for round 33's
+#     camo yellows (0.29 without it). The dart moved to (0.751, 0.709).
+#   Margins, before (the build of 12:00) -> after, live sight:
+#     rounds 6-30: under 1.2: 4 (8 0.92, 9 1.13, 10 1.18, 15 0.93) -> none;
+#       worst 0.92 -> 1.43 (round 9);
+#     rounds 31-59: under 1.0: 47 0.78, 59 0.53 -> 59 0.66;
+#     rounds 60-100: 90 1.18 -> 1.38, 92 0.98 -> 0.99, 93 0.70 -> 0.89, 94
+#       1.00 -> 0.96, 95 0.40 -> 0.46, 96 0.81 -> 0.71, 97 1.13 -> 1.00, 98
+#       0.61 -> 0.55, 99 0.83 -> 0.86, 100 0.44 -> 0.47. Round 93 still leaks
+#       about half a camo DDT at full strength; the cash is spent by round 98
+#       ($7k left), so this is the model's ceiling for the guide's towers.
+#   tools/simulate_threats: plan 33/33, no threat gaps; plan_timeline: the
+#   last step by round 98.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -59,19 +96,21 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 0, 3], sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], mermonkey: [4, 2, 0], alchemist: [4, 0, 1], glue: [5, 2, 0], wizard: [4, 2, 0], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
-  revised: "2026-11-12T12:00"
+  revised: "2026-11-12T23:59"   # hardened (see "Hardened")
   maps: [Haunted]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.558, 0.692]}  # on Strong, by the pond
-  - {do: place, id: sb1, kind: sub, role: dps, at: [0.43, 0.521]}               # the central pond: both lanes
-  - {do: upgrade, id: sb1, to: 0-0-1}
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.302, 0.692]}            # Sauda, by the overlapping lanes
   - {do: place, id: b1, kind: buccaneer, role: dps, target: strong, at: [0.419, 0.658]}  # the central pond, on Strong
+  - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.751, 0.709]}  # opening search 2026-11-12
+  - {do: upgrade, id: b1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: b1, to: 2-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: b1, to: 2-1-0}                                              # opening search 2026-11-12
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.612, 0.709]}              # opening search 2026-11-12
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.43, 0.521]}               # the central pond: both lanes
   - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
-  - {do: upgrade, id: sb1, to: 2-0-2}                                           # Advanced Intel
+  - {do: upgrade, id: sb1, to: 2-0-2}                                           # Advanced Intel (round 33's camo yellows: 0.29 without it)
   - {do: upgrade, id: sb1, to: 2-0-4}                                           # Armor Piercing Darts
   - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
   - {do: upgrade, id: x1, to: 0-0-3}                                            # Crossbow
@@ -84,16 +123,17 @@ plan:
   - {do: upgrade, id: m1, to: 4-2-0}
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.227, 0.675]}  # added: Glaive Ricochet for round 63
   - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.302, 0.504]}  # added: the bot's BFB-to-BAD answer; here by round 59 (camo leads: 0.53 without it)
+  - {do: upgrade, id: s1, to: 1-1-0}                                              # Full Metal Jacket, Night Vision
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
-  - {do: place, id: a1, kind: alchemist, role: support, near: [b1, sb1], at: [0.558, 0.589]}
-  - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
-  - {do: place, id: g1, kind: glue, role: dps, at: [0.59, 0.658]}
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.27, 0.658]}               # in the Radar's range (was 0.59, 0.658: it saw no camo DDT)
   - {do: upgrade, id: g1, to: 5-2-0}                                            # The Bloon Solver
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.302, 0.504]}  # added: the bot's BFB-to-BAD answer (see above)
-  - {do: upgrade, id: s1, to: 4-1-0}                                            # Night Vision, Maim MOAB
-  - {do: place, id: w1, kind: wizard, role: dps, at: [0.729, 0.709]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [g1, v1], at: [0.27, 0.521]}  # by the glue, wizard and sniper (was 0.558, 0.589: in reach of no tower)
+  - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.238, 0.606]}            # in the Radar's range (was 0.729, 0.709)
   - {do: upgrade, id: w1, to: 4-2-0}                                            # Arcane Spike
+  - {do: upgrade, id: s1, to: 4-1-0}                                            # Night Vision, Maim MOAB
   - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
 answers:
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
