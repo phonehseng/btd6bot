@@ -141,11 +141,12 @@ def test_the_generator_keeps_hand_paths_for_towers_the_hand_table_lists():
     for threat in ("ceramic", "moab", "bfb", "zomg", "ddt", "bad", "rush"):
         table = G.answer_table(threat)
         hand = S.HAND_ANSWERS[threat]
-        listed = {k for k, _, _ in hand}
+        listed = G.HAND_STRENGTH_KINDS
         assert all(a in hand for a in table if a[0] in listed), threat
         assert set(hand) <= set(table)
     assert any(a[0] == "desperado" for a in G.answer_table("moab"))       # a tower with none of its own
     assert G.complement_line("tack", G.main_line("tack")).work == (0, 2, 4)
+    assert G.main_line("ace").work == (4, 2, 0)                          # not Neva-Miss 0-2-3
 
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]

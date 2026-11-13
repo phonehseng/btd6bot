@@ -252,25 +252,32 @@ def calendar_pairs():
     return tuple((r, n) for n, rounds in TH.calendar(STD, 1, 100).items() for r in rounds)
 
 
+# Towers the hand table (strategy.HAND_ANSWERS) lists for some strength threat.
+HAND_STRENGTH_KINDS = frozenset(k for t, entries in S.HAND_ANSWERS.items() if t not in PROPERTY
+                                for k, _, _ in entries)
+
+
 def answer_table(threat):
     """The (tower, path, tier) answers to a strength threat the generator
     builds with: the hand-listed ones (strategy.HAND_ANSWERS), and the
     damage model's (strategy._answers_from_damage_model) only for towers the
-    hand table lists no answer of theirs for that threat.
+    hand table lists for no strength threat at all (HAND_STRENGTH_KINDS).
 
     With every model answer, Tack's complement went from Overdrive 0-2-4 to
     Blade Maelstrom 0-4-2 (the model lists 0-4-x as a MOAB answer), and the
     build lost all its modes: the threat simulation's blimp damage table
     (counters.json blimp_dps, hand figures for the Tack) has nothing for
-    that path. Towers with no answer of their own, the gift-box towers
-    among them, still get the model's (docs/tower_exclusions_audit.md
-    item 3)."""
+    that path. Scored with the model's BFB, ZOMG and BAD answers, the Ace's
+    main line moved from Operation: Dart Storm 4-2-0 to Neva-Miss 0-2-3 and
+    the build lost Hard (blimp damage 0.78). So a tower with any hand-listed
+    strength answer keeps to the hand table, and the towers it never lists
+    (Desperado, Glue, Mermonkey, Skywarden, Engineer, Beast Handler ...) get
+    the model's (docs/tower_exclusions_audit.md item 3)."""
     hand = S.HAND_ANSWERS.get(threat)
     full = S.ANSWERS.get(threat, ())
     if hand is None or threat in ("camo", "lead"):
         return list(full)
-    listed = {k for k, _, _ in hand}
-    return [a for a in full if a in hand or a[0] not in listed]
+    return [a for a in full if a in hand or a[0] not in HAND_STRENGTH_KINDS]
 
 
 def answers_threat(kind, tiers, threat, towers):
