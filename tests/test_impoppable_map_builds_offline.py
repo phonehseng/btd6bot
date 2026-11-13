@@ -394,6 +394,94 @@ def test_mesa_opens_on_both_routes():
     assert route_units(bomb)[0] > 30, route_units(bomb)
 
 
+def test_enchanted_glade_opens_where_both_lanes_pass():
+    """Enchanted Glade (2026-11-12 17:49, case 20261112_175002): the two
+    lanes take the rounds in turn. The opening ninja stood on the
+    right-hand island with the first lane in range and none of the second,
+    Obyn went down beside it, and the one-life game ended at round 9 after
+    rounds 6 and 7 had got 99% and 98% along the route. Now, as the damage
+    model sees the towers:
+      * the first tower of the plan, the hero and the build's own starter
+        each have MIN_LANE_UNITS of route in range on BOTH lanes;
+      * the lost game's opening spot fails that check (none of lane two);
+      * the hero comes before the ninja that sees one lane only."""
+    from types import SimpleNamespace
+    from btd6bot.forecast import RoundForecast
+    min_lane_units = 30.0     # a blue bloon crosses 30 units in about a second, one dart's reload
+    lost_opening = (0.655, 0.334)
+    _, d = _build("enchantedglade")
+    forecast = RoundForecast("Enchanted Glade", "impoppable")
+    assert forecast._ready()
+
+    def lane_units(kind, at):
+        """Route in the tower's range on each of the two lanes (world units)."""
+        tower = SimpleNamespace(tid="t", kind=kind, tiers=(0, 0, 0), x=at[0], y=at[1])
+        stations = forecast.stations([tower])
+        return [0.0 if z is None else z.length for z in stations[0].zones] if stations else [0.0, 0.0]
+
+    places = [st for st in d["plan"] if st["do"] == "place"]
+    first, hero = places[0], next(st for st in places if st["kind"] == "hero")
+    assert min(lane_units(first["kind"], first["at"])) >= min_lane_units, lane_units(first["kind"], first["at"])
+    # the hero has no damage profile of its own: rated by the range of pin_spots' stand-in
+    assert min(lane_units(pin_spots.HERO_PROXY, hero["at"])) >= min_lane_units, hero
+    starter = d["starter"]
+    assert min(lane_units(starter["kind"], starter["at"])) >= min_lane_units, starter
+    assert min(lane_units("ninja", lost_opening)) == 0.0
+
+    one_lane = next(st for st in places if st["kind"] == "ninja" and min(lane_units("ninja", st["at"])) == 0.0)
+    assert places.index(hero) < places.index(one_lane), (hero, one_lane)
+
+
+def _board_at_start(d, rnd):
+    """The towers the plan has standing when round ``rnd`` starts, at their
+    pinned spots, as the damage model reads them. _bought_before(d, r)
+    stops buying before round r - 1 pays out, so the board that meets round
+    ``rnd`` with the cash of every round before it is the one of rnd + 1."""
+    from types import SimpleNamespace
+    from optimize_builds import parse_cross
+    board = {}
+    for st in _bought_before(d, rnd + 1):
+        if st["do"] == "place":
+            board[st["id"]] = SimpleNamespace(tid=st["id"], kind=st["kind"], tiers=(0, 0, 0),
+                                              x=st["at"][0], y=st["at"][1])
+        elif st["do"] == "upgrade":
+            board[st["id"]].tiers = tuple(parse_cross(st["to"]))
+    return board
+
+
+def test_muddy_puddles_buys_for_round_40_before_the_far_tack():
+    """Muddy Puddles (2026-11-12, cases 20261112_154257 and 20261112_174350):
+    round 40's MOAB comes down the right lane and reached the exit with its
+    skin whole, twice. The cash of rounds 38-39 had gone into buc502's
+    tiers and the Blade Maelstrom of tac519, the tack by the far-left lane;
+    the damage model rated the round 0.69 both times. Now:
+      * the centre tack's Maelstrom (tac512) and the sub's third tier are
+        bought before round 40, and before tac519's Maelstrom;
+      * the board the plan has at round 40 is rated at least 1.0;
+      * the lost order - tac519's Maelstrom and buc502 0-2-1 in their
+        place - is rated under 1.0 on the same board, so the rating tells
+        the two apart."""
+    from btd6bot.forecast import RoundForecast
+    _, d = _build("muddypuddles")
+    forecast = RoundForecast("Muddy Puddles", "impoppable")
+    assert forecast._ready()
+
+    order = [(st["id"], st.get("to")) for st in d["plan"] if st["do"] == "upgrade"]
+    far_tack = order.index(("tac519", "2-4-0"))
+    assert order.index(("tac512", "2-4-0")) < far_tack and order.index(("sub515", "2-3-0")) < far_tack
+
+    board = _board_at_start(d, 40)
+    assert board["tac512"].tiers == (2, 4, 0) and board["sub515"].tiers == (2, 3, 0), \
+        (board["tac512"].tiers, board["sub515"].tiers)
+    now = forecast.margin(list(board.values()), 40)
+    assert now >= 1.0, round(now, 2)
+
+    board["tac512"].tiers, board["sub515"].tiers = (2, 3, 0), (2, 2, 0)
+    board["tac519"].tiers, board["buc502"].tiers = (2, 4, 0), (0, 2, 1)
+    lost = forecast.margin(list(board.values()), 40)
+    assert lost < 1.0, round(lost, 2)
+
+
 def test_a_tower_is_pinned_on_its_part_of_the_route():
     """Mesa (2026-11-12): n1, `segment: [0.0, 0.5]`, was pinned by its cover
     of the whole route at the far end, and the one-life game was lost at
