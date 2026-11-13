@@ -73,7 +73,16 @@
 #   tools/simulate_threats: plan 44/44, no threat gaps; plan_timeline: the
 #   last step by round 98.
 #
-# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# First game (2026-11-13 04:06): lost on round 6, seven seconds after Play.
+# The two darts of the searched opening stand on the left of the map and the
+# bloons walk three routes; the reds and blues of round 6 went past them
+# (loss case 20261113_040947, frames/end_024.jpg). Round 6 now buys what the
+# guide buys there, the dart and a sniper ($215 + $380 of the $650), because
+# a sniper sees every route from one spot; the second dart follows at round
+# 7. The margins above were measured with the two-dart order.
+#
+# Status: one game, lost at round 6 with the two-dart opening; the guide's
+# opening is unplayed. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
 id: quietstreet_chimps
@@ -85,15 +94,15 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 0, 0], sniper: [5, 5, 2], tack: [5, 0, 2], alchemist: [4, 2, 1], village: [4, 2, 2], spike: [3, 2, 0], glue: [0, 2, 3]}
-  revised: "2026-11-13T06:30"   # hardened (see "Hardened")
+  revised: "2026-11-13T04:40"   # the guide's round-6 sniper back in front (see "First game")
   maps: [Quiet Street]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
   - {do: place, id: x1, kind: dart, role: dps, at: [0.302, 0.351]}              # R6
-  - {do: place, id: da1, kind: dart, role: dps, at: [0.195, 0.675]}               # opening search 2026-11-12
-  - {do: place, id: sb, kind: sniper, role: dps, target: strong, at: [0.644, 0.146]}  # R8 Sniper B, Strong (moved from 0.751, 0.675: hardening)
+  - {do: place, id: sb, kind: sniper, role: dps, target: strong, at: [0.644, 0.146]}  # R6 with the dart, as in the guide (the two-dart opening lost round 6); moved from 0.751, 0.675: hardening
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.195, 0.675]}               # opening search 2026-11-12; after the sniper since the round-6 loss
   - {do: place, id: sa, kind: sniper, role: dps, target: strong, at: [0.612, 0.896]}  # R6 Sniper A, Strong (moved from 0.751, 0.351: hardening)
   - {do: place, id: hero, kind: hero, role: dps, at: [0.302, 0.726]}              # opening search 2026-11-12
   - {do: place, id: t1, kind: tack, role: dps, at: [0.206, 0.351]}              # R16
