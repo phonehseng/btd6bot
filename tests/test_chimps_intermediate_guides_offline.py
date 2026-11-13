@@ -128,6 +128,17 @@ def test_each_build_is_an_untested_plan_first_guide_build():
         assert any(st["do"] == "place" and st["kind"] == "hero" for st in d["plan"]), (sid, "no hero")
 
 
+def _accepted_live(model, spot):
+    """Has the live game accepted a tower of this spot's surface on its cell
+    although the map file marks it blocked (MapModel.accepted_mask)? Never
+    for the hero, whose refusals are learned on their own layer."""
+    kind, hero, at = spot
+    if hero or kind == "clear":
+        return False
+    cx, cy = model.frac_to_cell(*at)
+    return any(model.accepted_mask(surface)[cy, cx] for surface in pin_spots.PL.surfaces(kind))
+
+
 def test_every_tower_is_pinned_legal_and_never_refused():
     ML.DATA = pin_spots.live_maps_dir()
     for sid, name in BUILDS.items():
@@ -142,8 +153,12 @@ def test_every_tower_is_pinned_legal_and_never_refused():
             assert st.get("at"), (sid, st.get("id"), "no spot")
             hero = d["hero"] if st["kind"] == "hero" else None
             spots.append((st["kind"], hero, tuple(st["at"])))
-        assert not TM.illegal_spots(name, spots, 100), (sid, TM.illegal_spots(name, spots, 100))
         model = pin_spots.Pinner(name, "chimps").model     # the live learned map
+        # The map file marks some ground blocked that the game takes: Bazaar's
+        # middle strip between the canals held a sniper in four games. A cell
+        # the game has accepted for the tower's surface is legal ground.
+        illegal = [spot for spot in TM.illegal_spots(name, spots, 100) if not _accepted_live(model, spot)]
+        assert not illegal, (sid, illegal)
         for kind, hero, at in spots:
             if kind == "clear":
                 continue
