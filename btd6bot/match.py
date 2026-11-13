@@ -79,7 +79,14 @@ def densest_track_point(m, window=None):
 
     The cursor-park point of Match._park_point, and the fixed aim point the
     executor gives a Mortar or a locked Dartling (Executor._aim_point), so
-    every aimed tower fires into the same thick of the bloons."""
+    every aimed tower fires into the same thick of the bloons.
+
+    On maps whose routes take turns round by round each track cell counts
+    the share of rounds that pass it (MapModel.round_share). Last Resort
+    Deflation (2026-11-12, case 20261112_164934): unweighted, the point was
+    the top-left bend at 0.126, 0.164, which one round in four passes; the
+    Dartlings aimed there sat idle on the other rounds and round 55 was
+    lost with 200 lives."""
     import cv2
     import numpy as np
     heat = getattr(m, "heat", None)
@@ -87,6 +94,9 @@ def densest_track_point(m, window=None):
         return None
     size = window or PARK_WINDOW
     track = (heat > 0).astype(np.float32)
+    share = m.round_share() if hasattr(m, "round_share") else None
+    if share is not None and share.shape == track.shape:
+        track = track * share
     dens = cv2.boxFilter(track, -1, (size, size))
     dens[track == 0] = 0
     y, x = np.unravel_index(int(np.argmax(dens)), dens.shape)

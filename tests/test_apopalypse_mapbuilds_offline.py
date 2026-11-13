@@ -62,9 +62,13 @@ def test_the_first_heli_is_bought_to_3_2_0_before_anything_else():
         plan = _plan(sid)
         assert plan[0] == {"do": "place", "id": "h1", "kind": "heli", "role": "dps", "at": plan[0]["at"]}, sid
         assert plan[1] == {"do": "upgrade", "id": "h1", "to": "3-2-0"}, sid
-    # Bloody Puddles: the second heli follows at once (two 3-2-0 helis: 2.04+ on rounds 15-20)
-    plan = _plan("bloodypuddles_apopalypse")
-    assert plan[2]["kind"] == "heli" and plan[3] == {"do": "upgrade", "id": plan[2]["id"], "to": "3-2-0"}
+        # then the second heli (two 3-2-0 helis: 2.04+ on rounds 15-20). On
+        # both maps the hero and one 2-0-2 lane ninja come before it: see
+        # test_dark_dungeons_has_a_lane_ninja_and_the_hero_before_the_second_heli
+        # and test_bloody_puddles_opens_with_the_hero_and_a_right_lane_ninja
+        second = next(i for i, st in enumerate(plan) if i > 1 and st["do"] == "place" and st["kind"] == "heli")
+        assert plan[second + 1] == {"do": "upgrade", "id": plan[second]["id"], "to": "3-2-0"}, sid
+        assert sorted(st["kind"] for st in plan[2:second] if st["do"] == "place") == ["hero", "ninja"], sid
 
 
 def test_dark_dungeons_has_a_lane_ninja_and_the_hero_before_the_second_heli():
@@ -108,6 +112,22 @@ def test_dark_dungeons_has_a_lane_ninja_and_the_hero_before_the_second_heli():
                     cost += T.upgrade_cost(kind, path, have[path - 1], family)
     assert cost <= start_cash, cost
     assert cost + T.hero_cost(S.load_all()["darkdungeons_apopalypse"]["hero"], family) > start_cash
+
+
+def test_bloody_puddles_opens_with_the_hero_and_a_right_lane_ninja():
+    """Bloody Puddles 2026-11-12 16:49 (case 20261112_165343, this build's
+    first game): with both helis first and the hero last, Obyn never stood,
+    nothing stayed by the right lanes while the Pursuit helis chased the left
+    ones, and the game leaked from round 17 (33 lives) to its end on round 25
+    (reds, zebras, whites). The 11:17 game on the same map opened with a
+    ninja at (0.6225, 0.6831), the first 3-2-0 heli and Obyn, lost 13 lives
+    on rounds 15-16 and then held to round 33. That opening is now this
+    build's, after h1's 3-2-0."""
+    plan = _plan("bloodypuddles_apopalypse")
+    assert plan[2]["kind"] == "hero", plan[2]
+    assert plan[3]["kind"] == "ninja" and plan[3]["at"] == [0.623, 0.683], plan[3]
+    assert plan[4] == {"do": "upgrade", "id": plan[3]["id"], "to": "2-0-2"}, plan[4]
+    assert sum(1 for st in plan if st.get("kind") == "hero") == 1
 
 
 def test_cheap_helis_stand_before_the_first_apache_tier():
