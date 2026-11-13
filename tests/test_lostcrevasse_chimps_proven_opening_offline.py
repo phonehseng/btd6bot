@@ -21,7 +21,10 @@ Checked here:
   * the build's opening meets the opening rule as a live-proven one;
   * the plan places the proven towers first, in that game's order, and
     Sauda right after them;
-  * the whole plan is still bought by round 100.
+  * the whole plan is still bought by round 100;
+  * the tack's Overdrive (the MOAB answer) is bought before round 40, with
+    no village step ahead of it (case 20261113_150410: the second village
+    took the cash and round 40's MOAB met no answer).
 
 Run: python tests/test_lostcrevasse_chimps_proven_opening_offline.py (no game)."""
 import logging
@@ -80,6 +83,26 @@ def test_sauda_comes_after_the_proven_towers():
 def test_the_plan_is_bought_by_the_last_round():
     timeline = TC.plan_timeline(_build(), "chimps")
     assert timeline[-1][2] <= LAST_ROUND, timeline[-1]
+
+
+# Round 40 is the first MOAB; the plan's answer to it is the tack's Overdrive.
+MOAB_ROUND = 40
+MOAB_ANSWER = {"do": "upgrade", "id": "t1", "to": "2-0-4"}
+
+
+def test_the_moab_answer_is_bought_before_the_first_moab():
+    """Case 20261113_150410: the second village ($1,983) and Monkey Commerce
+    came before the tack's Overdrive, round 38 began with $14 and round 40's
+    MOAB met no answer. The answer must stand in the plan's timeline before
+    round 40, and no step of the second village (v2) may come before it."""
+    d = _build()
+    assert MOAB_ANSWER in d["answers"]["moab"]
+    timeline = TC.plan_timeline(d, "chimps")
+    rounds = [entry[2] for entry in timeline]
+    index = d["plan"].index(MOAB_ANSWER)
+    assert rounds[index] < MOAB_ROUND, (index, timeline[index])
+    for step in d["plan"][:index]:
+        assert step["id"] != "v2", ("a second-village step before the MOAB answer", step)
 
 
 if __name__ == "__main__":
