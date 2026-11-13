@@ -348,3 +348,22 @@ may be played.
     python tools/optimize_builds.py --calibrate
     python tools/optimize_builds.py --check strategies/optimized/darkpath_hard.yaml
     python tools/optimize_builds.py --restate strategies/optimized/glacialtrail_primary_only.yaml
+
+## One-life openings: tools/opening_rule.py (2026-11-13)
+
+An opening search (any script that reorders or adds a CHIMPS build's first
+purchases on optimize_builds ratings) must keep only candidates for which
+`opening_rule.opening_source(build)` returns a source: a live-proven opening
+(`PROVEN`, from the journals), the guide's own opening (`GUIDE`, unless it
+lost live: `GUIDE_LOST`), or one the corrected model rates at 1.0 or more on
+every round 6-10 and every lane (`model_margins`: the model's margin times
+0.6 up to round 10, and never for an opening with a boat in it, backlog 107).
+
+Why: six searched openings lost rounds 7-20 in one night (cases
+20261113_032115 Bazaar, _032621 Lost Crevasse, _033512 Rake, _041444 Water
+Park, _041946 Moon Landing, _042420 Sulfur Springs). Over 105 CHIMPS journals
+the live margin of rounds 6-10 separates held from leaked rounds with an AUC
+of 0.66; 8 of 15 leaked rounds were rated 1.0 or more
+(`python tools/opening_rule.py --calibrate`). Searching on those ratings
+selects for the model's errors. tests/test_chimps_intermediate_guides_offline.py
+holds every Intermediate CHIMPS build to the rule.

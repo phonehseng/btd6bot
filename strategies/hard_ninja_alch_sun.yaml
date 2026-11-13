@@ -76,7 +76,20 @@ planner:
   # 2026-11-11 01:00 and 13:33; loss case 20261111_010036_Ouch_half_cash):
   # the Fast Track opening, n1 and h1 3-2-0, cannot hold rounds 25-27 on the
   # long track with half income. Hard there stays open to this build.
-  excluded_by_mode: {half_cash: ["#Ouch"]}
+  # not Ravine Half Cash (2026-11-13 04:24, loss case
+  # 20261113_042920_Ravine_half_cash, round 26): Fast Track starts the game at
+  # round 22 with $4,850, and the opening above puts all of it in one heli
+  # (3-1-0 by round 22, with the opener dart and a bare ninja). Ravine sends
+  # each round down two branches at once (the fork after either entrance);
+  # the damage model credits a Pursuit heli with the whole route of both
+  # (dps_model "global" reach, backlog 108 (a)) and rated rounds 22, 23 and
+  # 26 at 2.02, 3.63 and 1.70 on that board - the heli alone: without it
+  # 0.06-0.20. Live the heli chased one branch (stills end_020, end_029)
+  # while the other's bloons walked out: 22 lives in round 22, 20 in round
+  # 23, 50 in round 26 to its pinks and zebras. Until the model shares a
+  # Pursuit heli between the branches, no replay of this opening can vouch
+  # for a forked map.
+  excluded_by_mode: {half_cash: ["#Ouch", Ravine]}
   # not Bazaar: data/map_fit.json gives the heli 0.0 from both ends there (no
   # legal heliport cell reaches the track), so both helis are given up and
   # the old Flash-Bomb-only order plays - the one that lost Bazaar Half Cash

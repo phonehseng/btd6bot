@@ -71,6 +71,13 @@
 #   tools/simulate_threats: plan 35/35, no threat gaps; plan_timeline: the
 #   last step by round 98.
 #
+# Opening, 2026-11-13 (case 20261113_033512, lost round 20): the opening search
+# put a tack, a glue, a dart, the spike factory and the alchemist before the
+# guide's tack 0-0-2 and Sauda, so Sauda was never bought; rounds 16-20 got
+# 83-96% along the route while rated 1.0-2.25 and round 20's six blacks leaked.
+# The guide's desperados and tack 0-0-2 open again (tools/opening_rule.GUIDE),
+# then the search's tack and glue, Sauda, the spike factory.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -91,21 +98,28 @@ planner:
 plan:
   - {do: place, id: e1, kind: desperado, role: dps, at: [0.537, 0.351]}         # right of the bottom U: both lanes' exits (moved from 0.676, 0.811: hardening)
   - {do: place, id: e2, kind: desperado, role: dps, at: [0.441, 0.555]}          # the centre (moved from 0.43, 0.572: hardening)
-  - {do: place, id: ta1, kind: tack, role: dps, at: [0.195, 0.589]}               # opening search 2026-11-12
+  # The guide's own opening again: the two desperados, then the tack to 0-0-2 by round 10
+  # (tools/opening_rule.GUIDE), Sauda and the spike factory after it. The opening search had
+  # put a tack, a glue, a dart, the spike's 1-0-0 and the alchemist before the guide's tack and
+  # Sauda, so Sauda was never bought: rounds 16-20 got
+  # 83-96% along the route while rated 1.0-2.25 and round 20's blacks leaked (case
+  # 20261113_033512). The search's tack and glue now come right after the guide's tack 0-0-2
+  # and before Sauda (round 15 rates 0.75 so, 0.46 with Sauda first); the rest follows.
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.633, 0.402]}              # the lane crossing in the centre (moved from 0.548, 0.555: hardening)
+  - {do: upgrade, id: t1, to: 0-0-1}
+  - {do: upgrade, id: t1, to: 0-0-2}
+  - {do: place, id: ta1, kind: tack, role: dps, at: [0.195, 0.589]}               # opening search 2026-11-12; with the glue it held rounds 7-19 live (case 20261113_033512)
   - {do: place, id: gl1, kind: glue, role: dps, at: [0.313, 0.624]}               # opening search 2026-11-12
-  - {do: place, id: da1, kind: dart, role: dps, at: [0.441, 0.164]}               # opening search 2026-11-12
   - {do: upgrade, id: gl1, to: 0-1-0}                                             # opening search 2026-11-12
+  - {do: place, id: hero, kind: hero, role: dps, near: [t1], at: [0.516, 0.555]}  # Sauda, by the tack (moved from 0.505, 0.572: hardening)
   - {do: place, id: p1, kind: spike, role: dps, at: [0.505, 0.828]}             # top-left of the centre of the enclosed space: both exits
   - {do: upgrade, id: p1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: p1, to: 1-0-1}                                              # opening search 2026-11-12
+  - {do: upgrade, id: p1, to: 2-0-1}                                              # White Hot Spikes first: round 28's leads (the guide buys 0-0-2 first) (crosspath of the opening)
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.441, 0.164]}               # opening search 2026-11-12
   - {do: place, id: a1, kind: alchemist, role: support, near: [p1], at: [0.334, 0.555]}  # next to the spike factory (moved from 0.484, 0.76: hardening)
   - {do: upgrade, id: a1, to: 1-0-0}                                              # opening search 2026-11-12
-  - {do: place, id: hero, kind: hero, role: dps, near: [t1], at: [0.516, 0.555]}  # Sauda, by the tack (moved from 0.505, 0.572: hardening)
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.633, 0.402]}              # the lane crossing in the centre (moved from 0.548, 0.555: hardening)
-  - {do: upgrade, id: t1, to: 0-0-1}                                              # opening search 2026-11-12
-  - {do: upgrade, id: p1, to: 1-0-1}                                              # opening search 2026-11-12
   - {do: upgrade, id: a1, to: 2-0-0}                                              # opening search 2026-11-12
-  - {do: upgrade, id: t1, to: 0-0-2}
-  - {do: upgrade, id: p1, to: 2-0-1}                                              # White Hot Spikes first: round 28's leads (the guide buys 0-0-2 first) (crosspath of the opening)
   - {do: upgrade, id: p1, to: 2-0-2}
   - {do: upgrade, id: p1, to: 2-0-3}                                            # before round 28 (the guide's one round anchor)
   - {do: upgrade, id: a1, to: 3-2-0}

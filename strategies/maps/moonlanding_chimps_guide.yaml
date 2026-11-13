@@ -74,6 +74,11 @@
 #   tools/simulate_threats: plan 35/35, no threat gaps; plan_timeline: the
 #   last step by round 98.
 #
+# Opening, 2026-11-13 (case 20261113_041946, lost round 8): the opening search's
+# 0-0-0 glue had taken the guide's second dart's place. The guide's own order is
+# back - dart, sniper, the second dart at R7, both darts' Sharp Shots, the third
+# dart (tools/opening_rule.GUIDE) - then the search's glue and Obyn.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -94,16 +99,20 @@ planner:
 plan:
   - {do: place, id: x1, kind: dart, role: dps, target: close, segment: [0.0, 0.3], at: [0.58, 0.845]}  # first crater, on Close
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.441, 0.198]}  # as high as you can: the top-middle plateau
-  - {do: upgrade, id: x1, to: 0-1-0}
-  - {do: place, id: gl1, kind: glue, role: dps, at: [0.58, 0.726]}                # opening search 2026-11-12
+  # The guide's own opening again, in its order: the second dart at R7, both darts' Sharp
+  # Shots, the third dart by R10 (tools/opening_rule.GUIDE); the search's glue, then Obyn. The opening search's glue in
+  # the second dart's place lost round 8 (case 20261113_041946: dart 0-1-0 + sniper + a 0-0-0
+  # glue against 20 blues and 12 greens on the first crater)
   - {do: place, id: x2, kind: dart, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.59, 0.896]}
+  - {do: upgrade, id: x1, to: 0-1-0}
+  - {do: upgrade, id: x2, to: 0-1-0}
   - {do: place, id: x3, kind: dart, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.569, 0.794]}  # the guide's third dart
-  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.548, 0.47]}                # opening search 2026-11-12
+  - {do: place, id: gl1, kind: glue, role: dps, at: [0.58, 0.726]}                # opening search 2026-11-12 (after the guide's opening since 2026-11-13: rounds 11-13 rate 1.40-1.49 with it before Obyn, 0.93-1.01 after)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.419, 0.351]}              # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.548, 0.47]}                # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 0-2-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: gl1, to: 0-1-0}                                             # opening search 2026-11-12
-  - {do: upgrade, id: x2, to: 0-1-0}
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.419, 0.351]}              # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 0-2-1}                                              # opening search 2026-11-12
   - {do: place, id: h1, kind: heli, role: dps, at: [0.099, 0.385]}
   - {do: place, id: b1, kind: bomb, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.623, 0.538]}  # added: round 28's leads (see above) (moved from 0.623, 0.828: hardening)

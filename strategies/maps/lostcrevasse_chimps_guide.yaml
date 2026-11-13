@@ -79,6 +79,12 @@
 #   tools/simulate_threats: plan 39/39, no threat gaps; plan_timeline: the
 #   last step by round 100.
 #
+# Opening, 2026-11-13 (case 20261113_032621, lost round 7): the opening search's
+# druid + dart, rated 1.54, let two blues through. The guide's order is back -
+# Sauda alone at round 6 (at the search's spot on the left loop, which rates
+# better than the guide's top middle), the tack, the sniper, the druid
+# (tools/opening_rule.GUIDE).
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -99,11 +105,14 @@ planner:
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: d1, kind: druid, role: dps, at: [0.452, 0.385]}             # R12 druid behind Sauda (moved from 0.419, 0.215: hardening)
+  # The guide's own opening again, in its order: Sauda alone at round 6, the tack at R8, the
+  # sniper at R10, the druid at R12 (tools/opening_rule.GUIDE). The opening search's druid +
+  # dart (rated 1.54) lost round 7 to two blues (case 20261113_032621).
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.227, 0.47]}               # R6 Sauda, on the left loop (the opening search's spot: rounds 6-10 rate 0.49-1.16 there, 0.37-0.90 at the guide's top middle 0.452, 0.146)
   - {do: place, id: t1, kind: tack, role: dps, at: [0.484, 0.436]}              # R8 tack right of Sauda (moved from 0.548, 0.198: hardening)
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.227, 0.47]}               # opening search 2026-11-12
-  - {do: upgrade, id: d1, to: 0-1-0}                                            # R13
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.409, 0.198]}  # R10 sniper next to the crystal (moved from 0.569, 0.3: hardening)
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.452, 0.385]}             # R12 druid behind Sauda (moved from 0.419, 0.215: hardening)
+  - {do: upgrade, id: d1, to: 0-1-0}                                            # R13
   - {do: upgrade, id: t1, to: 1-0-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 0-2-0}                                            # R15
   - {do: upgrade, id: d1, to: 0-3-0}                                            # R19
