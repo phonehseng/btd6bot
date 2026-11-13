@@ -27,9 +27,12 @@ Military Only and Reverse, then Hard; Apopalypse last).
 3. **Order and spots.** Hand-written for Chutes Medium, Cracked, Downstream;
    the rest come from `tools/optimize_builds.py`'s greedy `Optimizer`, run in
    memory from a scratch script (nothing written to `strategies/optimized/`),
-   restricted to bot-friendly towers (no mortar/dartling; no skywarden,
-   mermonkey, beast handler, engineer, ice or glue as damage), with these
-   extra rules:
+   restricted, when these builds were made, to "bot-friendly" towers (no
+   mortar/dartling; no skywarden, mermonkey, beast handler, engineer, ice or
+   glue as damage). A rebuild leaves out only the Mortar, until its target
+   point can be set: the rest was a gap in the model and in counters.json,
+   now closed or rated on merit (docs/tower_exclusions_audit.md item 2).
+   The extra rules:
    * a heli is never placed or upgraded without Pursuit (top path 2) first,
      and every heli place step is followed by an explicit `2-0-0` step;
    * snipers' candidate spots are ranked by the track they can SEE (the

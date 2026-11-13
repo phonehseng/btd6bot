@@ -29,9 +29,12 @@ of sight).
    any repo file:
    - only towers the guides use on the map, the towers the account needs XP
      for (Desperado, Skywarden, Mermonkey, Ice, Bomb, Sub; their hotkeys are
-     verified now) and cheap helpers; never Mortar or Dartling (aimed by
-     hand), Heli (its Pursuit targeting cannot be set: `strategy.TARGET_MODES`
-     has no "pursuit") or Beast Handler;
+     verified now) and cheap helpers. These builds were made without Mortar,
+     Dartling, Heli or Beast Handler. For a rebuild only the Mortar stays
+     out, until the executor can set its target point. The Heli reason was
+     stale: `Executor._aim` sets Lock in Place, then Pursuit (commit
+     d674992). Dartling and Beast Handler are rated by the damage model
+     like any tower (docs/tower_exclusions_audit.md item 2);
    - the mode's tower filter (`strategy.MODE_TOWER_FILTER`);
    - the account's unlocked tiers and its Double Cash + Fast Track economy
      (`optimize_builds.economy(mode, boosts)`);

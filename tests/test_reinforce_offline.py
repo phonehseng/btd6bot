@@ -780,6 +780,58 @@ def test_a_camo_round_offers_radar_beside_the_main_tower():
     assert grown[0].step == {"do": "upgrade", "id": "v1", "to": "0-1-0"}, grown
 
 
+
+def test_an_alchemist_is_offered_like_any_damage_kind():
+    """docs/tower_exclusions_audit.md item 11: the Alchemist was never
+    offered as "another alchemist", nor as a new kind in a crisis, because
+    its value was not modelled. The damage model now rates its acid and its
+    dips, so the forecast decides. Villages and farms stay out, and an
+    Alchemist is still never the tower a Radar Scanner goes beside."""
+    assert "alchemist" not in R.NOT_DAMAGE and {"village", "farm"} <= set(R.NOT_DAMAGE)
+    assert "alchemist" in R.BUFFERS
+
+    class Board(ToyEx):
+        def __init__(self, towers):
+            self.g = N(towers={t.tid: t for t in towers}, price=lambda kind: T.tower_cost(kind, "medium"))
+            self.m = N(cell_to_frac=lambda cx, cy: (0.4, 0.4))
+            self.mode = "medium"
+
+        def upgrade_choices(self, first=None, past_plan=False):
+            return iter(())
+
+        def at_tower_cap(self):
+            return False
+
+        def pick_spots(self, kind, step, n=1):
+            return [(10, 10, 1.0)]
+
+    ex = Board([N(tid="s1", kind="sniper", tiers=[0, 0, 0], x=0.5, y=0.5),
+                N(tid="a1", kind="alchemist", tiers=[0, 0, 0], x=0.5, y=0.55),
+                N(tid="v1", kind="village", tiers=[0, 0, 0], x=0.5, y=0.6)])
+    offered = {o.step["kind"] for o in R.options(ex, 100_000)}
+    assert "alchemist" in offered and "village" not in offered, offered
+    # the crisis fallback offers kinds not standing: an Alchemist among them
+    lone = Board([N(tid="s1", kind="sniper", tiers=[0, 0, 0], x=0.5, y=0.5)])
+    seen = []
+    real_grow = R.grow       # only the offers matter here, not their rating
+
+    def keep(ex_, fc, opts, cash, rnd, deadline=None):
+        seen.extend(opts)
+        return opts
+    R.grow = keep
+    try:
+        R.new_kind_options(lone, None, 100_000, 40)
+    finally:
+        R.grow = real_grow
+    assert "alchemist" in {o.step["kind"] for o in seen}, [o.what for o in seen]
+    if D.available():
+        # an Alchemist with the most money in it is no damage tower to see camo for
+        alch = Board([N(tid="a1", kind="alchemist", tiers=[4, 2, 0], x=0.5, y=0.5),
+                      N(tid="b1", kind="boomerang", tiers=[2, 0, 0], x=0.6, y=0.5)])
+        o = R.radar_option(alch, 5000, 51)
+        assert o is not None and o.step["near"] == ["b1"], o
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

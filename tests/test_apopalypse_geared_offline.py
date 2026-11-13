@@ -44,10 +44,14 @@ def _specs():
 
 
 def test_only_helis_find_ground_on_geared():
+    """Of the towers that pop bloons, only the helis. A buffer may stand
+    beside them since 2026-11-13: an alchemist or a village is worth the
+    towers in its radius and turns with them on the same gear
+    (tests/test_buffer_on_gear_offline.py)."""
     strat = yaml.safe_load((ROOT / "strategies" / "apopalypse_apache_spikes.yaml").read_text(encoding="utf-8"))
     _, res = C.boards(strat, MAP, learned=False, click_budget=4.0)
     kinds = {kind for kind, *_ in res["placed"].values()}
-    assert kinds == {"heli"}, kinds
+    assert kinds - set(S.Executor.BUFFERS) == {"heli"}, kinds
 
 
 def test_no_general_apopalypse_build_on_geared():

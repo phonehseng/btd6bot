@@ -521,7 +521,10 @@ both snipers to Maim MOAB 4-2-0 (the MOAB answer and the round-60 BFB
 answer `strategy.coverage` asks for). Military towers only, so one file
 serves Medium, Military Only and Reverse; Reverse was validated on the
 reversed track (`Track(reverse=True)`, rounds in reverse order). Heli Pilots
-were left out (gap 2); Mortar and Dartling are aimed by hand.
+were left out (gap 2), and Mortar and Dartling as aimed by hand. A rebuild
+leaves out only the Mortar: the executor now sets a Heli's Lock in Place and
+then Pursuit, and the Dartling is rated by the damage model like any tower
+(docs/tower_exclusions_audit.md item 2).
 
 ## Executor and model gaps found (no code was changed)
 

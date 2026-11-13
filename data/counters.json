@@ -195,12 +195,12 @@
   "glue": {
    "attacks": [],
    "camo": [],
-   "notes": "Glue slows; it is not counted as a popper (Corrosive Glue and later damage-over-time types are not modelled)."
+   "notes": "Glue slows; a glue that only slows pops nothing. Its damage (Corrosive Glue and up) comes from the game model (model_towers, derived by tools/build_bloon_kb.py)."
   },
   "desperado": {
    "attacks": [],
    "camo": [],
-   "notes": "gift-box tower; no reliable facts - never counted"
+   "notes": "no hand facts: its attacks and blimp damage come from the game model (model_towers, derived by tools/build_bloon_kb.py)"
   },
   "sniper": {
    "attacks": [
@@ -557,12 +557,12 @@
   "mermonkey": {
    "attacks": [],
    "camo": [],
-   "notes": "gift-box tower; Echosense (0-0-1/0-0-2) camo is unconfirmed - never counted"
+   "notes": "no hand facts: its attacks and blimp damage come from the game model (model_towers, derived by tools/build_bloon_kb.py)"
   },
   "skywarden": {
    "attacks": [],
    "camo": [],
-   "notes": "new tower (v56); no reliable facts - never counted"
+   "notes": "no hand facts: its attacks and blimp damage come from the game model (model_towers, derived by tools/build_bloon_kb.py)"
   },
   "farm": {
    "attacks": [],
@@ -636,11 +636,11 @@
   "beast_handler": {
    "attacks": [],
    "camo": [],
-   "notes": "gift-box tower; no reliable facts - never counted"
+   "notes": "no hand facts: its attacks and blimp damage come from the game model (model_towers, derived by tools/build_bloon_kb.py)"
   }
  },
  "blimp_dps": {
-  "about": "Rough single-target damage per second against MOAB-class bloons, unbuffed, from the commonly quoted upgrade stats (bloonswiki numbers already in docs/rounds.md where available). Order-of-magnitude estimates for the blimp ramp check only; every entry applies once the tower has at least that crosspath, and the highest matching entry wins.",
+  "about": "Rough single-target damage per second against MOAB-class bloons, unbuffed, from the commonly quoted upgrade stats (bloonswiki numbers already in docs/rounds.md where available). Order-of-magnitude estimates for the blimp ramp check only; every entry applies once the tower has at least that crosspath, and the highest matching entry wins. Towers without an entry here use the figures derived from the game model (model_towers.<tower>.blimp_dps).",
   "dart": [
    [
     "0-0-0",
@@ -1061,7 +1061,7 @@
     {
      "tower": "desperado",
      "crosspath": "0-1-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "sniper",
@@ -1121,12 +1121,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-1",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "skywarden",
      "crosspath": "2-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "spike",
@@ -1136,7 +1136,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     }
    ],
    "with_radar": [
@@ -1168,17 +1168,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "sniper",
@@ -1238,12 +1238,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "engineer",
@@ -1253,7 +1253,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     }
    ],
    "with_mib": [
@@ -1285,17 +1285,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "sniper",
@@ -1355,12 +1355,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "engineer",
@@ -1370,7 +1370,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     }
    ]
   },
@@ -1419,22 +1419,22 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "desperado",
      "crosspath": "0-3-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "desperado",
      "crosspath": "3-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "desperado",
@@ -1549,12 +1549,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-3-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-2-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "skywarden",
@@ -1569,7 +1569,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "engineer",
@@ -1612,7 +1612,7 @@
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
+     "how": "model via MIB mib"
     },
     {
      "tower": "sniper",
@@ -1667,12 +1667,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
+     "how": "model via MIB mib"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
+     "how": "model via MIB mib"
     },
     {
      "tower": "spike",
@@ -1687,7 +1687,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
+     "how": "model via MIB mib"
     }
    ]
   },
@@ -1726,17 +1726,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "sniper",
@@ -1811,12 +1811,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "spike",
@@ -1826,7 +1826,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "engineer",
@@ -1836,7 +1836,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     }
    ],
    "with_radar": [],
@@ -1888,17 +1888,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "sniper",
@@ -1963,12 +1963,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "spike",
@@ -1978,7 +1978,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "engineer",
@@ -1988,7 +1988,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     }
    ],
    "with_radar": [],
@@ -2026,6 +2026,21 @@
      "tower": "ice",
      "crosspath": "3-0-0",
      "how": "normal"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "model"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "model"
     },
     {
      "tower": "sniper",
@@ -2088,14 +2103,34 @@
      "how": "sharp"
     },
     {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "model"
+    },
+    {
      "tower": "spike",
      "crosspath": "0-0-0",
      "how": "sharp"
     },
     {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "model"
+    },
+    {
      "tower": "engineer",
      "crosspath": "0-0-0",
      "how": "sharp"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "model"
     }
    ],
    "with_radar": [],
@@ -2111,39 +2146,9 @@
      "how": "cold via MIB mib"
     },
     {
-     "tower": "glue",
-     "crosspath": "2-0-0",
-     "how": "game model via MIB mib"
-    },
-    {
-     "tower": "glue",
-     "crosspath": "0-0-5",
-     "how": "game model via MIB mib"
-    },
-    {
-     "tower": "desperado",
-     "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
-    },
-    {
      "tower": "mortar",
      "crosspath": "0-0-0",
      "how": "explosion via MIB mib"
-    },
-    {
-     "tower": "mermonkey",
-     "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
-    },
-    {
-     "tower": "skywarden",
-     "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
-    },
-    {
-     "tower": "beast_handler",
-     "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
     }
    ]
   },
@@ -2177,17 +2182,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "sniper",
@@ -2257,12 +2262,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "spike",
@@ -2272,7 +2277,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "engineer",
@@ -2305,7 +2310,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib"
+     "how": "model via MIB mib"
     }
    ]
   },
@@ -2334,12 +2339,12 @@
     {
      "tower": "desperado",
      "crosspath": "0-3-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "desperado",
      "crosspath": "3-1-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "desperado",
@@ -2439,12 +2444,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-3-1",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "skywarden",
      "crosspath": "2-2-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "skywarden",
@@ -2459,7 +2464,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     }
    ],
    "with_radar": [
@@ -2491,17 +2496,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "desperado",
      "crosspath": "3-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "desperado",
@@ -2596,12 +2601,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-3-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-2-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "skywarden",
@@ -2653,17 +2658,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     },
     {
      "tower": "sniper",
@@ -2728,12 +2733,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     },
     {
      "tower": "spike",
@@ -2748,7 +2753,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     }
    ]
   },
@@ -2772,7 +2777,7 @@
     {
      "tower": "desperado",
      "crosspath": "0-1-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "sniper",
@@ -2842,12 +2847,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-1",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "skywarden",
      "crosspath": "2-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "spike",
@@ -2857,7 +2862,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     }
    ],
    "with_radar": [
@@ -2894,17 +2899,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "sniper",
@@ -2969,12 +2974,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "engineer",
@@ -2984,7 +2989,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     }
    ],
    "with_mib": [
@@ -3016,17 +3021,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "sniper",
@@ -3086,12 +3091,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "engineer",
@@ -3101,7 +3106,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     }
    ]
   },
@@ -3130,7 +3135,7 @@
     {
      "tower": "desperado",
      "crosspath": "0-1-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "sniper",
@@ -3190,12 +3195,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-1",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "skywarden",
      "crosspath": "2-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "spike",
@@ -3205,7 +3210,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     }
    ],
    "with_radar": [
@@ -3237,17 +3242,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "sniper",
@@ -3307,12 +3312,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "engineer",
@@ -3322,7 +3327,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     }
    ],
    "with_mib": [
@@ -3354,17 +3359,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "sniper",
@@ -3424,12 +3429,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "engineer",
@@ -3439,7 +3444,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     }
    ]
   },
@@ -3459,6 +3464,11 @@
      "tower": "ice",
      "crosspath": "3-0-0",
      "how": "normal; camo: detect (Cold Snap"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-1-0",
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "sniper",
@@ -3516,9 +3526,24 @@
      "how": "sharp; camo: detect (game model"
     },
     {
+     "tower": "mermonkey",
+     "crosspath": "0-0-1",
+     "how": "model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-0-0",
+     "how": "model; camo: detect (game model"
+    },
+    {
      "tower": "spike",
      "crosspath": "0-0-0",
      "how": "sharp; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "model; camo: detect (game model"
     }
    ],
    "with_radar": [
@@ -3541,6 +3566,21 @@
      "tower": "tack",
      "crosspath": "0-0-0",
      "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-0-0",
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "sniper",
@@ -3593,9 +3633,24 @@
      "how": "sharp; camo: Radar Scanner radar"
     },
     {
+     "tower": "mermonkey",
+     "crosspath": "0-0-0",
+     "how": "model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-0",
+     "how": "model; camo: Radar Scanner radar"
+    },
+    {
      "tower": "engineer",
      "crosspath": "0-0-0",
      "how": "sharp; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "beast_handler",
+     "crosspath": "0-0-0",
+     "how": "model; camo: Radar Scanner radar"
     }
    ],
    "with_mib": [
@@ -3627,17 +3682,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "sniper",
@@ -3697,12 +3752,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "engineer",
@@ -3712,7 +3767,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     }
    ]
   },
@@ -3736,7 +3791,7 @@
     {
      "tower": "desperado",
      "crosspath": "0-1-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "sniper",
@@ -3801,12 +3856,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-1",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "skywarden",
      "crosspath": "2-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "spike",
@@ -3816,7 +3871,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model; camo: detect (game model"
+     "how": "model; camo: detect (game model"
     }
    ],
    "with_radar": [
@@ -3848,17 +3903,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "sniper",
@@ -3918,12 +3973,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner radar"
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "engineer",
@@ -3975,17 +4030,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "sniper",
@@ -4045,12 +4100,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "engineer",
@@ -4060,7 +4115,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     }
    ]
   },
@@ -4089,17 +4144,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "sniper",
@@ -4164,12 +4219,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "spike",
@@ -4179,7 +4234,7 @@
     {
      "tower": "village",
      "crosspath": "5-0-0",
-     "how": "game model"
+     "how": "model"
     },
     {
      "tower": "engineer",
@@ -4189,7 +4244,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model"
+     "how": "model"
     }
    ],
    "with_radar": [],
@@ -4206,6 +4261,16 @@
      "tower": "boomerang",
      "crosspath": "5-0-2",
      "how": "fire; camo: detect (game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "0-3-0",
+     "how": "model; camo: detect (game model"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "3-1-0",
+     "how": "model; camo: detect (game model"
     },
     {
      "tower": "sniper",
@@ -4253,9 +4318,29 @@
      "how": "normal; camo: detect (innate"
     },
     {
+     "tower": "mermonkey",
+     "crosspath": "0-3-1",
+     "how": "model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-2-0",
+     "how": "model; camo: detect (game model"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "2-0-4",
+     "how": "model; camo: detect (game model"
+    },
+    {
      "tower": "spike",
      "crosspath": "2-0-0",
      "how": "fire; camo: track (spikes lie on the track"
+    },
+    {
+     "tower": "village",
+     "crosspath": "5-0-0",
+     "how": "model; camo: detect (game model"
     }
    ],
    "with_radar": [
@@ -4273,6 +4358,21 @@
      "tower": "tack",
      "crosspath": "3-0-0",
      "how": "fire; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "2-0-0",
+     "how": "model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "glue",
+     "crosspath": "0-0-5",
+     "how": "model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "desperado",
+     "crosspath": "3-0-0",
+     "how": "model; camo: Radar Scanner radar"
     },
     {
      "tower": "sniper",
@@ -4313,6 +4413,21 @@
      "tower": "alchemist",
      "crosspath": "0-0-0",
      "how": "acid; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "mermonkey",
+     "crosspath": "0-3-0",
+     "how": "model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-2-0",
+     "how": "model; camo: Radar Scanner radar"
+    },
+    {
+     "tower": "skywarden",
+     "crosspath": "0-0-4",
+     "how": "model; camo: Radar Scanner radar"
     }
    ],
    "with_mib": [
@@ -4339,17 +4454,17 @@
     {
      "tower": "glue",
      "crosspath": "2-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "glue",
      "crosspath": "0-0-5",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model; camo: Radar Scanner mib"
     },
     {
      "tower": "desperado",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     },
     {
      "tower": "sniper",
@@ -4414,12 +4529,12 @@
     {
      "tower": "mermonkey",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     },
     {
      "tower": "skywarden",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     },
     {
      "tower": "spike",
@@ -4434,7 +4549,7 @@
     {
      "tower": "beast_handler",
      "crosspath": "0-0-0",
-     "how": "game model via MIB mib; camo: Radar Scanner mib"
+     "how": "model via MIB mib; camo: Radar Scanner mib"
     }
    ]
   }
@@ -4453,13 +4568,13 @@
     "2-0-5"
    ],
    "beast_handler.black": [
-    "0-0-0",
     "0-0-1",
     "0-1-0",
     "1-0-0",
     "0-0-2",
     "0-1-1",
-    "... 61 crosspaths"
+    "0-2-0",
+    "... 60 crosspaths"
    ],
    "beast_handler.lead": [
     "0-2-0",
@@ -4480,13 +4595,13 @@
     "... 60 crosspaths"
    ],
    "beast_handler.white": [
-    "0-0-0",
     "0-0-1",
     "0-1-0",
     "1-0-0",
     "0-0-2",
     "0-1-1",
-    "... 61 crosspaths"
+    "0-2-0",
+    "... 60 crosspaths"
    ],
    "bomb.black": [
     "5-0-0",
@@ -4586,15 +4701,6 @@
     "2-2-0",
     "... 23 crosspaths"
    ],
-   "desperado.black": [
-    "0-0-0",
-    "0-0-1",
-    "0-1-0",
-    "1-0-0",
-    "0-0-2",
-    "0-1-1",
-    "... 64 crosspaths"
-   ],
    "desperado.camo": [
     "0-1-0",
     "0-1-1",
@@ -4605,31 +4711,11 @@
     "... 37 crosspaths"
    ],
    "desperado.lead": [
-    "0-3-0",
-    "3-0-0",
-    "0-3-1",
-    "0-4-0",
-    "1-3-0",
-    "3-0-1",
-    "... 35 crosspaths"
-   ],
-   "desperado.purple": [
-    "0-0-0",
-    "0-0-1",
-    "0-1-0",
-    "1-0-0",
-    "0-0-2",
-    "0-1-1",
-    "... 64 crosspaths"
-   ],
-   "desperado.white": [
-    "0-0-0",
-    "0-0-1",
-    "0-1-0",
-    "1-0-0",
-    "0-0-2",
-    "0-1-1",
-    "... 64 crosspaths"
+    "0-0-5",
+    "0-1-5",
+    "1-0-5",
+    "0-2-5",
+    "2-0-5"
    ],
    "druid.camo": [
     "4-0-0",
@@ -4658,42 +4744,6 @@
     "4-2-0",
     "... 10 crosspaths"
    ],
-   "glue.black": [
-    "2-0-0",
-    "2-0-1",
-    "2-1-0",
-    "3-0-0",
-    "2-0-2",
-    "2-2-0",
-    "... 30 crosspaths"
-   ],
-   "glue.lead": [
-    "2-0-0",
-    "2-0-1",
-    "2-1-0",
-    "3-0-0",
-    "2-0-2",
-    "2-2-0",
-    "... 30 crosspaths"
-   ],
-   "glue.purple": [
-    "2-0-0",
-    "2-0-1",
-    "2-1-0",
-    "3-0-0",
-    "2-0-2",
-    "2-2-0",
-    "... 30 crosspaths"
-   ],
-   "glue.white": [
-    "2-0-0",
-    "2-0-1",
-    "2-1-0",
-    "3-0-0",
-    "2-0-2",
-    "2-2-0",
-    "... 30 crosspaths"
-   ],
    "heli.lead": [
     "0-0-3",
     "3-0-0",
@@ -4712,15 +4762,6 @@
     "0-2-4",
     "... 10 crosspaths"
    ],
-   "mermonkey.black": [
-    "0-0-0",
-    "0-0-1",
-    "0-1-0",
-    "1-0-0",
-    "0-0-2",
-    "0-1-1",
-    "... 64 crosspaths"
-   ],
    "mermonkey.camo": [
     "0-0-1",
     "0-0-2",
@@ -4729,33 +4770,6 @@
     "0-0-3",
     "0-1-2",
     "... 37 crosspaths"
-   ],
-   "mermonkey.lead": [
-    "0-3-0",
-    "0-3-1",
-    "0-4-0",
-    "1-3-0",
-    "0-3-2",
-    "0-4-1",
-    "... 15 crosspaths"
-   ],
-   "mermonkey.purple": [
-    "0-0-0",
-    "0-0-1",
-    "0-1-0",
-    "1-0-0",
-    "0-0-2",
-    "0-1-1",
-    "... 49 crosspaths"
-   ],
-   "mermonkey.white": [
-    "0-0-0",
-    "0-0-1",
-    "0-1-0",
-    "1-0-0",
-    "0-0-2",
-    "0-1-1",
-    "... 49 crosspaths"
    ],
    "mortar.black": [
     "0-3-0",
@@ -4775,15 +4789,6 @@
     "0-1-2",
     "... 37 crosspaths"
    ],
-   "skywarden.black": [
-    "0-0-0",
-    "0-0-1",
-    "0-1-0",
-    "1-0-0",
-    "0-0-2",
-    "0-1-1",
-    "... 64 crosspaths"
-   ],
    "skywarden.camo": [
     "2-0-0",
     "2-0-1",
@@ -4794,31 +4799,10 @@
     "... 26 crosspaths"
    ],
    "skywarden.lead": [
-    "0-2-0",
     "0-0-3",
-    "0-2-1",
-    "0-3-0",
-    "1-2-0",
-    "0-0-4",
-    "... 38 crosspaths"
-   ],
-   "skywarden.purple": [
-    "0-0-0",
-    "0-0-1",
-    "1-0-0",
-    "0-0-2",
-    "1-0-1",
-    "2-0-0",
-    "... 27 crosspaths"
-   ],
-   "skywarden.white": [
-    "0-0-0",
-    "0-0-1",
-    "0-1-0",
-    "1-0-0",
-    "0-0-2",
-    "0-1-1",
-    "... 64 crosspaths"
+    "0-1-3",
+    "1-0-3",
+    "2-0-3"
    ],
    "spike.purple": [
     "2-0-0",
@@ -4881,35 +4865,7 @@
     "5-0-0",
     "... 10 crosspaths"
    ],
-   "village.black": [
-    "5-0-0",
-    "5-0-1",
-    "5-1-0",
-    "5-0-2",
-    "5-2-0"
-   ],
    "village.camo": [
-    "5-0-0",
-    "5-0-1",
-    "5-1-0",
-    "5-0-2",
-    "5-2-0"
-   ],
-   "village.lead": [
-    "5-0-0",
-    "5-0-1",
-    "5-1-0",
-    "5-0-2",
-    "5-2-0"
-   ],
-   "village.purple": [
-    "5-0-0",
-    "5-0-1",
-    "5-1-0",
-    "5-0-2",
-    "5-2-0"
-   ],
-   "village.white": [
     "5-0-0",
     "5-0-1",
     "5-1-0",
@@ -4935,5 +4891,2776 @@
     "... 43 crosspaths"
    ]
   }
- }
+ },
+ "model_towers": {
+  "ice": {
+   "blimp_dps": [
+    [
+     "0-0-4",
+     21.3
+    ],
+    [
+     "4-0-0",
+     5.4
+    ],
+    [
+     "0-0-5",
+     74.7
+    ],
+    [
+     "0-1-4",
+     28.4
+    ],
+    [
+     "0-5-0",
+     1.1
+    ],
+    [
+     "1-0-4",
+     21.3
+    ],
+    [
+     "4-0-1",
+     5.4
+    ],
+    [
+     "4-1-0",
+     7.2
+    ],
+    [
+     "5-0-0",
+     41.7
+    ],
+    [
+     "0-1-5",
+     99.6
+    ],
+    [
+     "0-2-4",
+     28.4
+    ],
+    [
+     "0-5-1",
+     1.1
+    ],
+    [
+     "1-0-5",
+     74.7
+    ],
+    [
+     "1-5-0",
+     1.1
+    ],
+    [
+     "2-0-4",
+     21.3
+    ],
+    [
+     "4-0-2",
+     5.4
+    ],
+    [
+     "4-2-0",
+     7.2
+    ],
+    [
+     "5-0-1",
+     41.7
+    ],
+    [
+     "5-1-0",
+     55.6
+    ],
+    [
+     "0-2-5",
+     99.6
+    ],
+    [
+     "0-5-2",
+     1.1
+    ],
+    [
+     "2-0-5",
+     74.7
+    ],
+    [
+     "2-5-0",
+     1.1
+    ],
+    [
+     "5-0-2",
+     41.7
+    ],
+    [
+     "5-2-0",
+     55.6
+    ]
+   ]
+  },
+  "glue": {
+   "attacks": [
+    {
+     "type": "model",
+     "cannot_pop": [],
+     "blimp": true,
+     "crosspaths": [
+      "2-0-0",
+      "2-0-1",
+      "2-1-0",
+      "3-0-0",
+      "2-0-2",
+      "2-2-0",
+      "3-0-1",
+      "3-1-0",
+      "4-0-0",
+      "0-0-5",
+      "2-0-3",
+      "2-3-0",
+      "3-0-2",
+      "3-2-0",
+      "4-0-1",
+      "4-1-0",
+      "5-0-0",
+      "0-1-5",
+      "1-0-5",
+      "2-0-4",
+      "2-4-0",
+      "4-0-2",
+      "4-2-0",
+      "5-0-1",
+      "5-1-0",
+      "0-2-5",
+      "2-0-5",
+      "2-5-0",
+      "5-0-2",
+      "5-2-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    }
+   ],
+   "blimp_dps": [
+    [
+     "2-0-0",
+     0.5
+    ],
+    [
+     "2-0-1",
+     0.5
+    ],
+    [
+     "2-1-0",
+     0.5
+    ],
+    [
+     "3-0-0",
+     2.0
+    ],
+    [
+     "2-0-2",
+     0.5
+    ],
+    [
+     "2-2-0",
+     0.5
+    ],
+    [
+     "3-0-1",
+     2.0
+    ],
+    [
+     "3-1-0",
+     2.0
+    ],
+    [
+     "4-0-0",
+     10.0
+    ],
+    [
+     "0-0-5",
+     31.0
+    ],
+    [
+     "2-0-3",
+     0.5
+    ],
+    [
+     "2-3-0",
+     0.5
+    ],
+    [
+     "3-0-2",
+     2.0
+    ],
+    [
+     "3-2-0",
+     2.0
+    ],
+    [
+     "4-0-1",
+     10.0
+    ],
+    [
+     "4-1-0",
+     10.0
+    ],
+    [
+     "5-0-0",
+     18.0
+    ],
+    [
+     "0-1-5",
+     31.0
+    ],
+    [
+     "1-0-5",
+     31.0
+    ],
+    [
+     "2-0-4",
+     0.5
+    ],
+    [
+     "2-4-0",
+     0.5
+    ],
+    [
+     "4-0-2",
+     10.0
+    ],
+    [
+     "4-2-0",
+     10.0
+    ],
+    [
+     "5-0-1",
+     10.0
+    ],
+    [
+     "5-1-0",
+     10.0
+    ],
+    [
+     "0-2-5",
+     52.0
+    ],
+    [
+     "2-0-5",
+     31.0
+    ],
+    [
+     "2-5-0",
+     0.5
+    ],
+    [
+     "5-0-2",
+     10.0
+    ],
+    [
+     "5-2-0",
+     10.0
+    ]
+   ]
+  },
+  "desperado": {
+   "attacks": [
+    {
+     "type": "model",
+     "cannot_pop": [],
+     "blimp": true,
+     "crosspaths": [
+      "0-3-0",
+      "3-0-0",
+      "0-3-1",
+      "0-4-0",
+      "1-3-0",
+      "3-0-1",
+      "3-1-0",
+      "4-0-0",
+      "0-3-2",
+      "0-4-1",
+      "0-5-0",
+      "1-4-0",
+      "2-3-0",
+      "3-0-2",
+      "3-2-0",
+      "4-0-1",
+      "4-1-0",
+      "5-0-0",
+      "0-4-2",
+      "0-5-1",
+      "1-5-0",
+      "2-4-0",
+      "4-0-2",
+      "4-2-0",
+      "5-0-1",
+      "5-1-0",
+      "0-5-2",
+      "2-5-0",
+      "5-0-2",
+      "5-2-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    },
+    {
+     "type": "model",
+     "cannot_pop": [
+      "lead"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "0-0-0",
+      "0-0-1",
+      "0-1-0",
+      "1-0-0",
+      "0-0-2",
+      "0-1-1",
+      "0-2-0",
+      "1-0-1",
+      "1-1-0",
+      "2-0-0",
+      "0-0-3",
+      "0-1-2",
+      "0-2-1",
+      "1-0-2",
+      "1-2-0",
+      "2-0-1",
+      "2-1-0",
+      "0-0-4",
+      "0-1-3",
+      "0-2-2",
+      "1-0-3",
+      "2-0-2",
+      "2-2-0",
+      "0-0-5",
+      "0-1-4",
+      "0-2-3",
+      "1-0-4",
+      "2-0-3",
+      "0-1-5",
+      "0-2-4",
+      "1-0-5",
+      "2-0-4",
+      "0-2-5",
+      "2-0-5"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    },
+    {
+     "type": "model",
+     "cannot_pop": [
+      "purple"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "5-0-0",
+      "5-0-1",
+      "5-1-0",
+      "5-0-2",
+      "5-2-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    }
+   ],
+   "blimp_dps": [
+    [
+     "0-0-0",
+     1.7
+    ],
+    [
+     "0-0-1",
+     1.7
+    ],
+    [
+     "0-1-0",
+     1.7
+    ],
+    [
+     "1-0-0",
+     1.7
+    ],
+    [
+     "0-0-2",
+     1.7
+    ],
+    [
+     "0-1-1",
+     1.7
+    ],
+    [
+     "0-2-0",
+     1.7
+    ],
+    [
+     "1-0-1",
+     1.7
+    ],
+    [
+     "1-1-0",
+     1.7
+    ],
+    [
+     "2-0-0",
+     1.7
+    ],
+    [
+     "0-0-3",
+     19.1
+    ],
+    [
+     "0-1-2",
+     1.7
+    ],
+    [
+     "0-2-1",
+     1.7
+    ],
+    [
+     "0-3-0",
+     16.3
+    ],
+    [
+     "1-0-2",
+     1.7
+    ],
+    [
+     "1-2-0",
+     1.7
+    ],
+    [
+     "2-0-1",
+     1.7
+    ],
+    [
+     "2-1-0",
+     1.7
+    ],
+    [
+     "3-0-0",
+     10.0
+    ],
+    [
+     "0-0-4",
+     48.3
+    ],
+    [
+     "0-1-3",
+     19.1
+    ],
+    [
+     "0-2-2",
+     1.7
+    ],
+    [
+     "0-3-1",
+     16.3
+    ],
+    [
+     "0-4-0",
+     16.3
+    ],
+    [
+     "1-0-3",
+     19.1
+    ],
+    [
+     "1-3-0",
+     16.3
+    ],
+    [
+     "2-0-2",
+     1.7
+    ],
+    [
+     "2-2-0",
+     1.7
+    ],
+    [
+     "3-0-1",
+     10.0
+    ],
+    [
+     "3-1-0",
+     10.0
+    ],
+    [
+     "4-0-0",
+     60.0
+    ],
+    [
+     "0-0-5",
+     353.0
+    ],
+    [
+     "0-1-4",
+     48.3
+    ],
+    [
+     "0-2-3",
+     19.1
+    ],
+    [
+     "0-3-2",
+     16.3
+    ],
+    [
+     "0-4-1",
+     16.3
+    ],
+    [
+     "0-5-0",
+     168.1
+    ],
+    [
+     "1-0-4",
+     48.3
+    ],
+    [
+     "1-4-0",
+     16.3
+    ],
+    [
+     "2-0-3",
+     19.1
+    ],
+    [
+     "2-3-0",
+     16.3
+    ],
+    [
+     "3-0-2",
+     10.0
+    ],
+    [
+     "3-2-0",
+     10.0
+    ],
+    [
+     "4-0-1",
+     60.0
+    ],
+    [
+     "4-1-0",
+     60.0
+    ],
+    [
+     "5-0-0",
+     850.0
+    ],
+    [
+     "0-1-5",
+     353.0
+    ],
+    [
+     "0-2-4",
+     48.3
+    ],
+    [
+     "0-4-2",
+     16.3
+    ],
+    [
+     "0-5-1",
+     168.1
+    ],
+    [
+     "1-0-5",
+     353.0
+    ],
+    [
+     "1-5-0",
+     168.1
+    ],
+    [
+     "2-0-4",
+     48.3
+    ],
+    [
+     "2-4-0",
+     16.3
+    ],
+    [
+     "4-0-2",
+     60.0
+    ],
+    [
+     "4-2-0",
+     60.0
+    ],
+    [
+     "5-0-1",
+     850.0
+    ],
+    [
+     "5-1-0",
+     850.0
+    ],
+    [
+     "0-2-5",
+     353.0
+    ],
+    [
+     "0-5-2",
+     168.1
+    ],
+    [
+     "2-0-5",
+     353.0
+    ],
+    [
+     "2-5-0",
+     168.1
+    ],
+    [
+     "5-0-2",
+     850.0
+    ],
+    [
+     "5-2-0",
+     850.0
+    ]
+   ]
+  },
+  "dartling": {
+   "blimp_dps": [
+    [
+     "0-0-0",
+     5.0
+    ],
+    [
+     "0-0-1",
+     5.0
+    ],
+    [
+     "0-1-0",
+     5.0
+    ],
+    [
+     "1-0-0",
+     5.0
+    ],
+    [
+     "0-0-2",
+     5.0
+    ],
+    [
+     "0-1-1",
+     5.0
+    ],
+    [
+     "0-2-0",
+     7.6
+    ],
+    [
+     "1-0-1",
+     5.0
+    ],
+    [
+     "1-1-0",
+     5.0
+    ],
+    [
+     "2-0-0",
+     6.1
+    ],
+    [
+     "0-0-3",
+     15.0
+    ],
+    [
+     "0-1-2",
+     5.0
+    ],
+    [
+     "0-2-1",
+     7.6
+    ],
+    [
+     "0-3-0",
+     30.3
+    ],
+    [
+     "1-0-2",
+     5.0
+    ],
+    [
+     "1-2-0",
+     7.6
+    ],
+    [
+     "2-0-1",
+     6.1
+    ],
+    [
+     "2-1-0",
+     6.1
+    ],
+    [
+     "3-0-0",
+     21.1
+    ],
+    [
+     "0-0-4",
+     60.0
+    ],
+    [
+     "0-1-3",
+     15.0
+    ],
+    [
+     "0-2-2",
+     7.6
+    ],
+    [
+     "0-3-1",
+     30.3
+    ],
+    [
+     "0-4-0",
+     30.3
+    ],
+    [
+     "1-0-3",
+     15.0
+    ],
+    [
+     "1-3-0",
+     30.3
+    ],
+    [
+     "2-0-2",
+     6.1
+    ],
+    [
+     "2-2-0",
+     8.6
+    ],
+    [
+     "3-0-1",
+     21.1
+    ],
+    [
+     "3-1-0",
+     21.1
+    ],
+    [
+     "4-0-0",
+     6.1
+    ],
+    [
+     "0-0-5",
+     360.0
+    ],
+    [
+     "0-1-4",
+     60.0
+    ],
+    [
+     "0-2-3",
+     22.7
+    ],
+    [
+     "0-3-2",
+     30.3
+    ],
+    [
+     "0-4-1",
+     30.3
+    ],
+    [
+     "0-5-0",
+     15.2
+    ],
+    [
+     "1-0-4",
+     60.0
+    ],
+    [
+     "1-4-0",
+     30.3
+    ],
+    [
+     "2-0-3",
+     17.1
+    ],
+    [
+     "2-3-0",
+     31.4
+    ],
+    [
+     "3-0-2",
+     21.1
+    ],
+    [
+     "3-2-0",
+     31.4
+    ],
+    [
+     "4-0-1",
+     6.1
+    ],
+    [
+     "4-1-0",
+     6.1
+    ],
+    [
+     "5-0-0",
+     871.1
+    ],
+    [
+     "0-1-5",
+     360.0
+    ],
+    [
+     "0-2-4",
+     90.9
+    ],
+    [
+     "0-4-2",
+     30.3
+    ],
+    [
+     "0-5-1",
+     15.2
+    ],
+    [
+     "1-0-5",
+     360.0
+    ],
+    [
+     "1-5-0",
+     15.2
+    ],
+    [
+     "2-0-4",
+     62.1
+    ],
+    [
+     "2-4-0",
+     31.4
+    ],
+    [
+     "4-0-2",
+     6.1
+    ],
+    [
+     "4-2-0",
+     8.6
+    ],
+    [
+     "5-0-1",
+     871.1
+    ],
+    [
+     "5-1-0",
+     871.1
+    ],
+    [
+     "0-2-5",
+     545.5
+    ],
+    [
+     "0-5-2",
+     15.2
+    ],
+    [
+     "2-0-5",
+     364.2
+    ],
+    [
+     "2-5-0",
+     1152.6
+    ],
+    [
+     "5-0-2",
+     871.1
+    ],
+    [
+     "5-2-0",
+     1308.9
+    ]
+   ]
+  },
+  "mermonkey": {
+   "attacks": [
+    {
+     "type": "model",
+     "cannot_pop": [
+      "lead"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "0-0-0",
+      "0-0-1",
+      "0-1-0",
+      "1-0-0",
+      "0-0-2",
+      "0-1-1",
+      "0-2-0",
+      "1-0-1",
+      "1-1-0",
+      "2-0-0",
+      "0-0-3",
+      "0-1-2",
+      "0-2-1",
+      "1-0-2",
+      "1-2-0",
+      "2-0-1",
+      "2-1-0",
+      "3-0-0",
+      "0-0-4",
+      "0-1-3",
+      "0-2-2",
+      "1-0-3",
+      "2-0-2",
+      "2-2-0",
+      "3-0-1",
+      "3-1-0",
+      "4-0-0",
+      "0-0-5",
+      "0-1-4",
+      "0-2-3",
+      "1-0-4",
+      "2-0-3",
+      "3-0-2",
+      "3-2-0",
+      "4-0-1",
+      "4-1-0",
+      "5-0-0",
+      "0-1-5",
+      "0-2-4",
+      "1-0-5",
+      "2-0-4",
+      "4-0-2",
+      "4-2-0",
+      "5-0-1",
+      "5-1-0",
+      "0-2-5",
+      "2-0-5",
+      "5-0-2",
+      "5-2-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    },
+    {
+     "type": "model",
+     "cannot_pop": [
+      "purple",
+      "white"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "0-3-0",
+      "0-3-1",
+      "0-4-0",
+      "1-3-0",
+      "0-3-2",
+      "0-4-1",
+      "0-5-0",
+      "1-4-0",
+      "2-3-0",
+      "0-4-2",
+      "0-5-1",
+      "1-5-0",
+      "2-4-0",
+      "0-5-2",
+      "2-5-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    }
+   ],
+   "blimp_dps": [
+    [
+     "0-0-0",
+     1.7
+    ],
+    [
+     "0-0-1",
+     1.7
+    ],
+    [
+     "0-1-0",
+     1.7
+    ],
+    [
+     "1-0-0",
+     2.1
+    ],
+    [
+     "0-0-2",
+     1.7
+    ],
+    [
+     "0-1-1",
+     1.7
+    ],
+    [
+     "0-2-0",
+     1.7
+    ],
+    [
+     "1-0-1",
+     2.1
+    ],
+    [
+     "1-1-0",
+     2.1
+    ],
+    [
+     "2-0-0",
+     3.0
+    ],
+    [
+     "0-0-3",
+     1.7
+    ],
+    [
+     "0-1-2",
+     1.7
+    ],
+    [
+     "0-2-1",
+     1.7
+    ],
+    [
+     "0-3-0",
+     2.7
+    ],
+    [
+     "1-0-2",
+     2.1
+    ],
+    [
+     "1-2-0",
+     2.1
+    ],
+    [
+     "2-0-1",
+     3.0
+    ],
+    [
+     "2-1-0",
+     3.0
+    ],
+    [
+     "3-0-0",
+     8.7
+    ],
+    [
+     "0-0-4",
+     1.7
+    ],
+    [
+     "0-1-3",
+     1.7
+    ],
+    [
+     "0-2-2",
+     1.7
+    ],
+    [
+     "0-3-1",
+     2.7
+    ],
+    [
+     "0-4-0",
+     10.7
+    ],
+    [
+     "1-0-3",
+     2.1
+    ],
+    [
+     "1-3-0",
+     3.3
+    ],
+    [
+     "2-0-2",
+     3.0
+    ],
+    [
+     "2-2-0",
+     3.0
+    ],
+    [
+     "3-0-1",
+     8.7
+    ],
+    [
+     "3-1-0",
+     8.7
+    ],
+    [
+     "4-0-0",
+     16.9
+    ],
+    [
+     "0-0-5",
+     1.7
+    ],
+    [
+     "0-1-4",
+     1.7
+    ],
+    [
+     "0-2-3",
+     1.7
+    ],
+    [
+     "0-3-2",
+     2.7
+    ],
+    [
+     "0-4-1",
+     10.7
+    ],
+    [
+     "0-5-0",
+     120.0
+    ],
+    [
+     "1-0-4",
+     2.1
+    ],
+    [
+     "1-4-0",
+     13.3
+    ],
+    [
+     "2-0-3",
+     3.0
+    ],
+    [
+     "2-3-0",
+     4.8
+    ],
+    [
+     "3-0-2",
+     8.7
+    ],
+    [
+     "3-2-0",
+     8.7
+    ],
+    [
+     "4-0-1",
+     16.9
+    ],
+    [
+     "4-1-0",
+     16.9
+    ],
+    [
+     "5-0-0",
+     63.6
+    ],
+    [
+     "0-1-5",
+     1.7
+    ],
+    [
+     "0-2-4",
+     1.7
+    ],
+    [
+     "0-4-2",
+     10.7
+    ],
+    [
+     "0-5-1",
+     120.0
+    ],
+    [
+     "1-0-5",
+     2.1
+    ],
+    [
+     "1-5-0",
+     150.0
+    ],
+    [
+     "2-0-4",
+     3.0
+    ],
+    [
+     "2-4-0",
+     19.4
+    ],
+    [
+     "4-0-2",
+     16.9
+    ],
+    [
+     "4-2-0",
+     16.9
+    ],
+    [
+     "5-0-1",
+     63.6
+    ],
+    [
+     "5-1-0",
+     63.6
+    ],
+    [
+     "0-2-5",
+     1.7
+    ],
+    [
+     "0-5-2",
+     120.0
+    ],
+    [
+     "2-0-5",
+     3.0
+    ],
+    [
+     "2-5-0",
+     218.2
+    ],
+    [
+     "5-0-2",
+     63.6
+    ],
+    [
+     "5-2-0",
+     63.6
+    ]
+   ]
+  },
+  "skywarden": {
+   "attacks": [
+    {
+     "type": "model",
+     "cannot_pop": [
+      "lead"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "0-0-0",
+      "0-0-1",
+      "1-0-0",
+      "0-0-2",
+      "1-0-1",
+      "2-0-0",
+      "0-0-3",
+      "1-0-2",
+      "2-0-1",
+      "3-0-0",
+      "0-0-4",
+      "1-0-3",
+      "2-0-2",
+      "3-0-1",
+      "4-0-0",
+      "0-0-5",
+      "1-0-4",
+      "2-0-3",
+      "3-0-2",
+      "4-0-1",
+      "5-0-0",
+      "1-0-5",
+      "2-0-4",
+      "4-0-2",
+      "5-0-1",
+      "2-0-5",
+      "5-0-2"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    },
+    {
+     "type": "model",
+     "cannot_pop": [
+      "lead",
+      "purple"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "0-1-0",
+      "0-1-1",
+      "1-1-0",
+      "0-1-2",
+      "2-1-0",
+      "0-1-3",
+      "3-1-0",
+      "0-1-4",
+      "4-1-0",
+      "0-1-5",
+      "5-1-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    },
+    {
+     "type": "model",
+     "cannot_pop": [
+      "purple"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "0-2-0",
+      "0-2-1",
+      "0-3-0",
+      "1-2-0",
+      "0-2-2",
+      "0-3-1",
+      "0-4-0",
+      "1-3-0",
+      "2-2-0",
+      "0-2-3",
+      "0-3-2",
+      "0-4-1",
+      "0-5-0",
+      "1-4-0",
+      "2-3-0",
+      "3-2-0",
+      "0-2-4",
+      "0-4-2",
+      "0-5-1",
+      "1-5-0",
+      "2-4-0",
+      "4-2-0",
+      "0-2-5",
+      "0-5-2",
+      "2-5-0",
+      "5-2-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    },
+    {
+     "type": "model",
+     "cannot_pop": [
+      "purple",
+      "white"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "0-0-4",
+      "0-0-5",
+      "0-1-4",
+      "1-0-4",
+      "0-1-5",
+      "0-2-4",
+      "1-0-5",
+      "2-0-4",
+      "0-2-5",
+      "2-0-5"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    }
+   ],
+   "blimp_dps": [
+    [
+     "0-0-0",
+     1.3
+    ],
+    [
+     "0-0-1",
+     1.3
+    ],
+    [
+     "0-1-0",
+     1.3
+    ],
+    [
+     "1-0-0",
+     1.3
+    ],
+    [
+     "0-0-2",
+     1.3
+    ],
+    [
+     "0-1-1",
+     1.3
+    ],
+    [
+     "0-2-0",
+     1.3
+    ],
+    [
+     "1-0-1",
+     1.3
+    ],
+    [
+     "1-1-0",
+     1.3
+    ],
+    [
+     "2-0-0",
+     1.3
+    ],
+    [
+     "0-0-3",
+     1.3
+    ],
+    [
+     "0-1-2",
+     1.3
+    ],
+    [
+     "0-2-1",
+     0.6
+    ],
+    [
+     "0-3-0",
+     2.6
+    ],
+    [
+     "1-0-2",
+     1.3
+    ],
+    [
+     "1-2-0",
+     0.6
+    ],
+    [
+     "2-0-1",
+     1.3
+    ],
+    [
+     "2-1-0",
+     1.3
+    ],
+    [
+     "3-0-0",
+     1.3
+    ],
+    [
+     "0-0-4",
+     6.5
+    ],
+    [
+     "0-1-3",
+     1.3
+    ],
+    [
+     "0-2-2",
+     0.6
+    ],
+    [
+     "0-3-1",
+     2.6
+    ],
+    [
+     "0-4-0",
+     2.6
+    ],
+    [
+     "1-0-3",
+     1.3
+    ],
+    [
+     "1-3-0",
+     2.6
+    ],
+    [
+     "2-0-2",
+     1.3
+    ],
+    [
+     "2-2-0",
+     0.6
+    ],
+    [
+     "3-0-1",
+     1.3
+    ],
+    [
+     "3-1-0",
+     1.3
+    ],
+    [
+     "4-0-0",
+     7.7
+    ],
+    [
+     "0-0-5",
+     18.1
+    ],
+    [
+     "0-1-4",
+     6.5
+    ],
+    [
+     "0-2-3",
+     0.6
+    ],
+    [
+     "0-3-2",
+     2.6
+    ],
+    [
+     "0-4-1",
+     2.6
+    ],
+    [
+     "0-5-0",
+     6.5
+    ],
+    [
+     "1-0-4",
+     6.5
+    ],
+    [
+     "1-4-0",
+     2.6
+    ],
+    [
+     "2-0-3",
+     1.3
+    ],
+    [
+     "2-3-0",
+     2.6
+    ],
+    [
+     "3-0-2",
+     1.3
+    ],
+    [
+     "3-2-0",
+     0.6
+    ],
+    [
+     "4-0-1",
+     7.7
+    ],
+    [
+     "4-1-0",
+     7.7
+    ],
+    [
+     "5-0-0",
+     19.4
+    ],
+    [
+     "0-1-5",
+     18.1
+    ],
+    [
+     "0-2-4",
+     3.2
+    ],
+    [
+     "0-4-2",
+     2.6
+    ],
+    [
+     "0-5-1",
+     6.5
+    ],
+    [
+     "1-0-5",
+     18.1
+    ],
+    [
+     "1-5-0",
+     6.5
+    ],
+    [
+     "2-0-4",
+     6.5
+    ],
+    [
+     "2-4-0",
+     2.6
+    ],
+    [
+     "4-0-2",
+     7.7
+    ],
+    [
+     "4-2-0",
+     3.9
+    ],
+    [
+     "5-0-1",
+     19.4
+    ],
+    [
+     "5-1-0",
+     19.4
+    ],
+    [
+     "0-2-5",
+     9.0
+    ],
+    [
+     "0-5-2",
+     6.5
+    ],
+    [
+     "2-0-5",
+     18.1
+    ],
+    [
+     "2-5-0",
+     6.5
+    ],
+    [
+     "5-0-2",
+     19.4
+    ],
+    [
+     "5-2-0",
+     9.7
+    ]
+   ]
+  },
+  "village": {
+   "attacks": [
+    {
+     "type": "model",
+     "cannot_pop": [],
+     "blimp": true,
+     "crosspaths": [
+      "5-0-0",
+      "5-0-1",
+      "5-1-0",
+      "5-0-2",
+      "5-2-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    }
+   ],
+   "blimp_dps": [
+    [
+     "5-0-0",
+     93.3
+    ],
+    [
+     "5-0-1",
+     93.3
+    ],
+    [
+     "5-1-0",
+     93.3
+    ],
+    [
+     "5-0-2",
+     93.3
+    ],
+    [
+     "5-2-0",
+     93.3
+    ]
+   ]
+  },
+  "beast_handler": {
+   "attacks": [
+    {
+     "type": "model",
+     "cannot_pop": [
+      "lead",
+      "purple"
+     ],
+     "blimp": true,
+     "crosspaths": [
+      "0-0-0"
+     ],
+     "confidence": "game_model",
+     "what": "derived from the game model (dps_model sources)"
+    }
+   ],
+   "blimp_dps": [
+    [
+     "0-0-0",
+     0.7
+    ]
+   ]
+  }
+ },
+ "model_towers_note": "Derived by tools/build_bloon_kb.py from the game model through btd6bot/dps_model.py, for the towers whose hand facts above lack attacks or a blimp_dps row (btd6bot/threats.py model_facts). Abilities and damage-free sources are left out.",
+ "model_answers": {
+  "bars": {
+   "ceramic": 47.8,
+   "rush": 99.5,
+   "moab": 327.6,
+   "bfb": 4055.9,
+   "zomg": 48510.9,
+   "ddt": 629.9,
+   "bad": 82318.2
+  },
+  "answers": {
+   "ceramic": [
+    [
+     "dart",
+     1,
+     4
+    ],
+    [
+     "dart",
+     2,
+     4
+    ],
+    [
+     "boomerang",
+     2,
+     3
+    ],
+    [
+     "boomerang",
+     3,
+     3
+    ],
+    [
+     "bomb",
+     1,
+     5
+    ],
+    [
+     "bomb",
+     3,
+     3
+    ],
+    [
+     "tack",
+     2,
+     4
+    ],
+    [
+     "tack",
+     3,
+     4
+    ],
+    [
+     "ice",
+     1,
+     5
+    ],
+    [
+     "ice",
+     3,
+     4
+    ],
+    [
+     "glue",
+     1,
+     3
+    ],
+    [
+     "desperado",
+     1,
+     3
+    ],
+    [
+     "desperado",
+     2,
+     3
+    ],
+    [
+     "desperado",
+     3,
+     3
+    ],
+    [
+     "sniper",
+     2,
+     2
+    ],
+    [
+     "sniper",
+     3,
+     3
+    ],
+    [
+     "sub",
+     1,
+     4
+    ],
+    [
+     "sub",
+     2,
+     3
+    ],
+    [
+     "sub",
+     3,
+     3
+    ],
+    [
+     "buccaneer",
+     1,
+     3
+    ],
+    [
+     "buccaneer",
+     2,
+     2
+    ],
+    [
+     "buccaneer",
+     3,
+     5
+    ],
+    [
+     "ace",
+     1,
+     2
+    ],
+    [
+     "ace",
+     2,
+     4
+    ],
+    [
+     "ace",
+     3,
+     2
+    ],
+    [
+     "mortar",
+     2,
+     5
+    ],
+    [
+     "dartling",
+     1,
+     3
+    ],
+    [
+     "dartling",
+     2,
+     3
+    ],
+    [
+     "dartling",
+     3,
+     3
+    ],
+    [
+     "wizard",
+     1,
+     3
+    ],
+    [
+     "wizard",
+     2,
+     2
+    ],
+    [
+     "wizard",
+     3,
+     5
+    ],
+    [
+     "ninja",
+     3,
+     3
+    ],
+    [
+     "druid",
+     2,
+     3
+    ],
+    [
+     "druid",
+     3,
+     5
+    ],
+    [
+     "mermonkey",
+     1,
+     3
+    ],
+    [
+     "mermonkey",
+     2,
+     5
+    ],
+    [
+     "skywarden",
+     1,
+     4
+    ],
+    [
+     "skywarden",
+     2,
+     5
+    ],
+    [
+     "skywarden",
+     3,
+     4
+    ],
+    [
+     "village",
+     1,
+     5
+    ],
+    [
+     "engineer",
+     1,
+     2
+    ]
+   ],
+   "rush": [
+    [
+     "dart",
+     1,
+     5
+    ],
+    [
+     "dart",
+     3,
+     4
+    ],
+    [
+     "boomerang",
+     2,
+     4
+    ],
+    [
+     "boomerang",
+     3,
+     3
+    ],
+    [
+     "bomb",
+     1,
+     5
+    ],
+    [
+     "tack",
+     2,
+     4
+    ],
+    [
+     "tack",
+     3,
+     4
+    ],
+    [
+     "ice",
+     1,
+     5
+    ],
+    [
+     "glue",
+     1,
+     3
+    ],
+    [
+     "desperado",
+     1,
+     4
+    ],
+    [
+     "desperado",
+     2,
+     3
+    ],
+    [
+     "desperado",
+     3,
+     4
+    ],
+    [
+     "sniper",
+     1,
+     5
+    ],
+    [
+     "sniper",
+     2,
+     5
+    ],
+    [
+     "sniper",
+     3,
+     3
+    ],
+    [
+     "sub",
+     1,
+     5
+    ],
+    [
+     "sub",
+     3,
+     5
+    ],
+    [
+     "buccaneer",
+     1,
+     3
+    ],
+    [
+     "buccaneer",
+     2,
+     3
+    ],
+    [
+     "buccaneer",
+     3,
+     5
+    ],
+    [
+     "ace",
+     2,
+     4
+    ],
+    [
+     "ace",
+     3,
+     3
+    ],
+    [
+     "heli",
+     1,
+     2
+    ],
+    [
+     "mortar",
+     2,
+     5
+    ],
+    [
+     "wizard",
+     1,
+     3
+    ],
+    [
+     "wizard",
+     3,
+     5
+    ],
+    [
+     "ninja",
+     3,
+     5
+    ],
+    [
+     "druid",
+     1,
+     4
+    ],
+    [
+     "druid",
+     3,
+     5
+    ],
+    [
+     "mermonkey",
+     1,
+     3
+    ],
+    [
+     "mermonkey",
+     2,
+     5
+    ],
+    [
+     "skywarden",
+     1,
+     4
+    ],
+    [
+     "skywarden",
+     3,
+     4
+    ],
+    [
+     "spike",
+     1,
+     4
+    ],
+    [
+     "spike",
+     2,
+     5
+    ],
+    [
+     "spike",
+     3,
+     5
+    ],
+    [
+     "village",
+     1,
+     5
+    ],
+    [
+     "engineer",
+     1,
+     3
+    ]
+   ],
+   "moab": [
+    [
+     "dart",
+     1,
+     5
+    ],
+    [
+     "boomerang",
+     2,
+     3
+    ],
+    [
+     "boomerang",
+     3,
+     3
+    ],
+    [
+     "bomb",
+     1,
+     5
+    ],
+    [
+     "bomb",
+     3,
+     4
+    ],
+    [
+     "tack",
+     2,
+     4
+    ],
+    [
+     "tack",
+     3,
+     5
+    ],
+    [
+     "ice",
+     1,
+     5
+    ],
+    [
+     "ice",
+     3,
+     4
+    ],
+    [
+     "glue",
+     1,
+     4
+    ],
+    [
+     "desperado",
+     1,
+     4
+    ],
+    [
+     "desperado",
+     2,
+     3
+    ],
+    [
+     "desperado",
+     3,
+     4
+    ],
+    [
+     "sniper",
+     2,
+     5
+    ],
+    [
+     "sniper",
+     3,
+     4
+    ],
+    [
+     "sub",
+     1,
+     5
+    ],
+    [
+     "sub",
+     2,
+     4
+    ],
+    [
+     "buccaneer",
+     1,
+     3
+    ],
+    [
+     "buccaneer",
+     3,
+     5
+    ],
+    [
+     "mortar",
+     2,
+     5
+    ],
+    [
+     "dartling",
+     1,
+     3
+    ],
+    [
+     "dartling",
+     2,
+     4
+    ],
+    [
+     "dartling",
+     3,
+     3
+    ],
+    [
+     "wizard",
+     1,
+     3
+    ],
+    [
+     "wizard",
+     3,
+     5
+    ],
+    [
+     "ninja",
+     1,
+     5
+    ],
+    [
+     "alchemist",
+     3,
+     5
+    ],
+    [
+     "druid",
+     1,
+     4
+    ],
+    [
+     "druid",
+     3,
+     5
+    ],
+    [
+     "mermonkey",
+     1,
+     5
+    ],
+    [
+     "mermonkey",
+     2,
+     5
+    ],
+    [
+     "skywarden",
+     1,
+     5
+    ],
+    [
+     "skywarden",
+     3,
+     5
+    ],
+    [
+     "spike",
+     1,
+     4
+    ],
+    [
+     "village",
+     1,
+     5
+    ],
+    [
+     "engineer",
+     1,
+     4
+    ]
+   ],
+   "bfb": [
+    [
+     "dart",
+     1,
+     5
+    ],
+    [
+     "boomerang",
+     2,
+     4
+    ],
+    [
+     "boomerang",
+     3,
+     5
+    ],
+    [
+     "bomb",
+     1,
+     5
+    ],
+    [
+     "bomb",
+     3,
+     4
+    ],
+    [
+     "tack",
+     2,
+     4
+    ],
+    [
+     "tack",
+     3,
+     5
+    ],
+    [
+     "ice",
+     3,
+     5
+    ],
+    [
+     "glue",
+     1,
+     4
+    ],
+    [
+     "desperado",
+     1,
+     5
+    ],
+    [
+     "desperado",
+     2,
+     5
+    ],
+    [
+     "desperado",
+     3,
+     5
+    ],
+    [
+     "sniper",
+     3,
+     4
+    ],
+    [
+     "sub",
+     2,
+     4
+    ],
+    [
+     "sub",
+     3,
+     5
+    ],
+    [
+     "buccaneer",
+     1,
+     4
+    ],
+    [
+     "buccaneer",
+     2,
+     4
+    ],
+    [
+     "ace",
+     1,
+     3
+    ],
+    [
+     "ace",
+     2,
+     4
+    ],
+    [
+     "ace",
+     3,
+     4
+    ],
+    [
+     "dartling",
+     1,
+     5
+    ],
+    [
+     "dartling",
+     2,
+     4
+    ],
+    [
+     "dartling",
+     3,
+     4
+    ],
+    [
+     "wizard",
+     1,
+     4
+    ],
+    [
+     "wizard",
+     2,
+     3
+    ],
+    [
+     "wizard",
+     3,
+     5
+    ],
+    [
+     "super",
+     2,
+     2
+    ],
+    [
+     "super",
+     3,
+     3
+    ],
+    [
+     "ninja",
+     1,
+     5
+    ],
+    [
+     "alchemist",
+     3,
+     5
+    ],
+    [
+     "druid",
+     1,
+     5
+    ],
+    [
+     "mermonkey",
+     1,
+     5
+    ],
+    [
+     "mermonkey",
+     2,
+     5
+    ],
+    [
+     "skywarden",
+     1,
+     5
+    ],
+    [
+     "spike",
+     1,
+     5
+    ],
+    [
+     "spike",
+     2,
+     4
+    ],
+    [
+     "village",
+     1,
+     5
+    ],
+    [
+     "engineer",
+     1,
+     5
+    ]
+   ],
+   "zomg": [
+    [
+     "dart",
+     3,
+     5
+    ],
+    [
+     "boomerang",
+     2,
+     5
+    ],
+    [
+     "boomerang",
+     3,
+     5
+    ],
+    [
+     "tack",
+     2,
+     5
+    ],
+    [
+     "desperado",
+     1,
+     5
+    ],
+    [
+     "desperado",
+     2,
+     5
+    ],
+    [
+     "buccaneer",
+     1,
+     5
+    ],
+    [
+     "ace",
+     1,
+     5
+    ],
+    [
+     "ace",
+     2,
+     4
+    ],
+    [
+     "dartling",
+     2,
+     5
+    ],
+    [
+     "dartling",
+     3,
+     5
+    ],
+    [
+     "wizard",
+     1,
+     5
+    ],
+    [
+     "wizard",
+     2,
+     5
+    ],
+    [
+     "wizard",
+     3,
+     5
+    ],
+    [
+     "super",
+     2,
+     4
+    ],
+    [
+     "super",
+     3,
+     4
+    ],
+    [
+     "alchemist",
+     3,
+     5
+    ],
+    [
+     "druid",
+     1,
+     5
+    ],
+    [
+     "spike",
+     2,
+     5
+    ],
+    [
+     "village",
+     1,
+     5
+    ],
+    [
+     "engineer",
+     1,
+     5
+    ]
+   ],
+   "ddt": [
+    [
+     "boomerang",
+     3,
+     5
+    ],
+    [
+     "tack",
+     1,
+     5
+    ],
+    [
+     "desperado",
+     1,
+     5
+    ],
+    [
+     "desperado",
+     2,
+     5
+    ],
+    [
+     "buccaneer",
+     1,
+     5
+    ],
+    [
+     "ace",
+     1,
+     5
+    ],
+    [
+     "ace",
+     3,
+     5
+    ],
+    [
+     "dartling",
+     1,
+     5
+    ],
+    [
+     "dartling",
+     2,
+     4
+    ],
+    [
+     "wizard",
+     1,
+     4
+    ],
+    [
+     "wizard",
+     2,
+     4
+    ],
+    [
+     "wizard",
+     3,
+     5
+    ],
+    [
+     "super",
+     2,
+     4
+    ],
+    [
+     "super",
+     3,
+     4
+    ],
+    [
+     "alchemist",
+     3,
+     5
+    ],
+    [
+     "druid",
+     1,
+     5
+    ],
+    [
+     "mermonkey",
+     2,
+     5
+    ],
+    [
+     "spike",
+     1,
+     5
+    ],
+    [
+     "village",
+     1,
+     5
+    ],
+    [
+     "engineer",
+     1,
+     5
+    ]
+   ],
+   "bad": [
+    [
+     "boomerang",
+     3,
+     5
+    ],
+    [
+     "tack",
+     1,
+     5
+    ],
+    [
+     "tack",
+     2,
+     5
+    ],
+    [
+     "desperado",
+     1,
+     5
+    ],
+    [
+     "ace",
+     1,
+     5
+    ],
+    [
+     "ace",
+     2,
+     4
+    ],
+    [
+     "heli",
+     1,
+     5
+    ],
+    [
+     "dartling",
+     2,
+     5
+    ],
+    [
+     "dartling",
+     3,
+     5
+    ],
+    [
+     "wizard",
+     1,
+     5
+    ],
+    [
+     "wizard",
+     2,
+     5
+    ],
+    [
+     "super",
+     2,
+     4
+    ],
+    [
+     "super",
+     3,
+     4
+    ],
+    [
+     "druid",
+     1,
+     5
+    ],
+    [
+     "spike",
+     2,
+     5
+    ],
+    [
+     "village",
+     1,
+     5
+    ]
+   ]
+  }
+ },
+ "model_answers_note": "Derived by tools/build_bloon_kb.py: (tower, path, tier) answers to the strength threats that strategy.ANSWERS does not list by hand, where the damage model rates one tower at least as strong as the median hand-listed answer (bars). strategy.py adds them to ANSWERS."
 }

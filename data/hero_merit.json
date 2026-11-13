@@ -1,0 +1,46 @@
+{
+ "about": "Heroes ranked on merit by tools/rank_heroes.py: each hero alone at its best spot, at the bot's estimated level, mean log2(damage-model margin) over the sample rounds. Read by towers.hero_merit_order (fallbacks, generated builds). Corvus is not rated.",
+ "made": "2026-11-13",
+ "maps": [
+  "Monkey Meadow",
+  "Logs"
+ ],
+ "mode": "medium",
+ "rounds": [
+  6,
+  12,
+  18,
+  24,
+  30,
+  36,
+  42,
+  48,
+  54,
+  60,
+  66,
+  72,
+  78
+ ],
+ "unrated": [
+  "corvus"
+ ],
+ "scores": {
+  "churchill": 0.398,
+  "admiral_brickell": -0.791,
+  "dan_dmonke": -1.213,
+  "psi": -1.657,
+  "sauda": -1.813,
+  "ezili": -2.094,
+  "rosalia": -2.16,
+  "pat_fusty": -2.189,
+  "quincy": -2.402,
+  "gwendolin": -2.444,
+  "obyn": -2.722,
+  "adora": -2.886,
+  "striker_jones": -2.991,
+  "geraldo": -3.183,
+  "benjamin": -4.0,
+  "etienne": -4.0,
+  "silas": -4.0
+ }
+}

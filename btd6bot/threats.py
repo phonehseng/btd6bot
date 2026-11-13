@@ -36,6 +36,13 @@ different kind of damage), so they are not part of a signature.
 
 Facts marked "likely" in counters.json are documented but never counted: the
 bot only trusts what is established or confirmed by the game model.
+
+Where counters.json has no hand facts for a tower (Desperado, Mermonkey,
+Skywarden, Beast Handler, Glue; blimp damage of those and of the Ice Monkey
+and Dartling), its "model_towers" section fills them in. That section is
+derived from the game model through the damage model by
+tools/build_bloon_kb.py, never typed in (docs/tower_exclusions_audit.md
+item 5): see model_facts.
 """
 from __future__ import annotations
 
@@ -251,7 +258,10 @@ def _tiers(cross):
 
 
 def _within(tiers, entry):
-    """Is a crosspath inside an entry's [min, max] window (see conventions)?"""
+    """Is a crosspath inside an entry's [min, max] window (see conventions)?
+    A derived entry (model_facts) lists its crosspaths instead."""
+    if "crosspaths" in entry:
+        return "-".join(map(str, tiers)) in entry["crosspaths"]
     lo = _tiers(entry.get("min", "0-0-0"))
     hi = _tiers(entry.get("max", "5-5-5"))
     return all(l <= t <= h for t, l, h in zip(tiers, lo, hi))
@@ -263,6 +273,15 @@ def _counted(entry):
 
 def tower_facts(kind):
     return (counters().get("towers") or {}).get(kind, {})
+
+
+def model_facts(kind):
+    """The facts counters.json's "model_towers" section derives for a tower
+    whose hand facts lack them: {"attacks": [...], "blimp_dps": [[cross, dps]]}
+    ({} when there are none). Each derived attack lists the crosspaths it
+    exists at, the bloon properties it cannot pop ("cannot_pop") and whether
+    it hurts MOAB-class bloons ("blimp")."""
+    return (counters().get("model_towers") or {}).get(kind, {})
 
 
 # -- the game's own model ------------------------------------------------------
@@ -301,7 +320,10 @@ def attacks(kind, tiers):
 
 @lru_cache(maxsize=None)
 def _attacks(kind, tiers):
-    return tuple(a for a in tower_facts(kind).get("attacks") or () if _counted(a) and _within(tiers, a))
+    """Hand facts first, then the attacks derived from the game model
+    (model_facts: only for towers with no hand attacks at all)."""
+    listed = list(tower_facts(kind).get("attacks") or ()) + list(model_facts(kind).get("attacks") or ())
+    return tuple(a for a in listed if _counted(a) and _within(tiers, a))
 
 
 def cannot_pop(damage_type):
@@ -371,7 +393,8 @@ def _attack_pops(attack, sig):
     """Can this one attack pop a bloon with this signature (camo aside)?"""
     if "blimp" in sig and attack.get("blimp") is False:
         return False
-    return not (cannot_pop(attack["type"]) & (set(sig) - {"camo", "blimp"}))
+    blocked = set(attack["cannot_pop"]) if "cannot_pop" in attack else cannot_pop(attack["type"])
+    return not (blocked & (set(sig) - {"camo", "blimp"}))
 
 
 GAME_MODEL_ATTACK = {"type": "game model", "what": "the game says some attack pops it"}
@@ -592,10 +615,12 @@ RED_SPEED_UNITS_S = 25.0   # bloonswiki base speed of a red bloon (bloons.json s
 
 def blimp_dps(kind, tiers):
     """Rough single-target damage per second against blimps (counters.json
-    blimp_dps; the highest entry the crosspath reaches)."""
+    blimp_dps; the highest entry the crosspath reaches). A tower with no hand
+    entry there uses the figures derived from the game model (model_facts)."""
     tiers = _tiers(tiers)
     best = 0.0
-    for cross, dps in (counters().get("blimp_dps") or {}).get(kind) or ():
+    rows = (counters().get("blimp_dps") or {}).get(kind) or model_facts(kind).get("blimp_dps") or ()
+    for cross, dps in rows:
         if all(t >= c for t, c in zip(tiers, _tiers(cross))):
             best = max(best, float(dps))
     return best

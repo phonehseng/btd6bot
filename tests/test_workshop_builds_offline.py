@@ -65,8 +65,23 @@ _SPIKES_DART_BOMB = {"sp1": ("spike", (2, 0, 4)), "sp2": ("spike", (2, 0, 4)),
 # Medium's floor 1.5 (was 1.6) since 2026-11-12 (fix/glue-dot,
 # dps_model._dot_hp_rate): Spiked Mines' 30 burn damage is credited at most
 # the health of the layer it burns, and round 50 fell from 1.78 to 1.58.
+# Since 93c2d83 (2026-11-12, few blimps are few: a zone holds no more than
+# the group sent down it, a projectile's pierce counts only the blimps
+# within its reach), before -> after:
+#   workshop_medium: worst R52 1.72 -> 1.46 (R40 2.54 -> 2.11). Won live on
+#     2026-11-10; the floor is today's worst less a little.
+#   workshop_abr: worst 1.02 -> 0.87 (R57); still over its 0.85.
+#   workshop_primary_only: R40 3.36 -> 1.26, under its 2.5;
+#   workshop_double_hp: worst R80 1.46 -> 0.51 (worst was R34 1.06), under
+#     its 0.9.
+# The last two have never played live, so no game vouches for a lower bar:
+# they are parked (base_success 0.05, NOT_READY below: the planner stops
+# picking them) instead of having their floors lowered. Their replays are
+# still checked; their margins are not held to a floor until the builds
+# are redone.
+NOT_READY = {"workshop_primary_only", "workshop_double_hp"}
 BUILDS = {
-    "workshop_medium": ("medium", 1.5, 2.0, _SPIKES_DART_BOMB),
+    "workshop_medium": ("medium", 1.4, 2.0, _SPIKES_DART_BOMB),
     "workshop_primary_only": ("primary_only", 1.05, 2.5,
                               {"d2": ("dart", (2, 0, 4)), "d5": ("dart", (2, 0, 4)),
                                "bm1": ("bomb", (0, 3, 2)), "d1": ("dart", (0, 2, 4))}),
@@ -147,6 +162,9 @@ def test_map_builds_hold_every_round():
         at40 = boards[FIRST_MOAB]
         for tid, (kind, tiers) in answer.items():
             assert at40[tid][0] == kind and all(a >= b for a, b in zip(at40[tid][1], tiers)), (build, tid, at40[tid])
+        if build in NOT_READY:
+            assert strat["planner"]["base_success"][mode] <= 0.1, (build, "not parked")
+            continue
         margins = {rnd: _margin(mode, board, rnd) for rnd, board in sorted(boards.items())}
         econ = O.economy(mode, BOOSTS)
         assert min(margins) <= econ.start_round and max(margins) >= econ.end_round, (build, sorted(margins))

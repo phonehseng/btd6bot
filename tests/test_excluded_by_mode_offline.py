@@ -51,6 +51,22 @@ def test_the_sniper_build_is_kept_off_last_resort_abr_only():
     assert "military_heli_sniper" in others and "abr_ninja_alch" in others, others
 
 
+
+def test_the_heli_opening_is_kept_off_ravine_half_cash():
+    """Ravine Half Cash (2026-11-13, loss case 20261113_042920_Ravine_half_cash):
+    hard_ninja_alch_sun's Fast Track opening is one Pursuit heli, rated
+    2.02-3.63 on rounds 22-23 while Ravine's two branches let 42 lives
+    through, and round 26 (rated 1.70) took the rest. The build keeps Ravine
+    Hard; obyn_druid_poplust stays a candidate for the Half Cash medal."""
+    specs = _live_specs()
+    build = specs["hard_ninja_alch_sun"]
+    from btd6bot.account import AccountState
+    category = AccountState().map_category("Ravine")
+    assert not P._strategy_fits(build, "Ravine", category, "half_cash")
+    assert P._strategy_fits(build, "Ravine", category, "hard")
+    others = [sid for sid, s in specs.items() if P._strategy_fits(s, "Ravine", category, "half_cash")]
+    assert others == ["obyn_druid_poplust"], others
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

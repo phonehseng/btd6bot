@@ -79,31 +79,73 @@
 #   tools/simulate_threats: plan 39/39, no threat gaps; plan_timeline: the
 #   last step by round 100.
 #
+# Opening, 2026-11-13 (case 20261113_032621, lost round 7): the opening search's
+# druid + dart, rated 1.54, let two blues through. The guide's order is back -
+# Sauda alone at round 6 (at the search's spot on the left loop, which rates
+# better than the guide's top middle), the tack, the sniper, the druid
+# (tools/opening_rule.GUIDE).
+#
+# Sauda's spot, 2026-11-13 (case 20261113_073019, lost round 6 at 07:27,
+# eleven seconds after Play): Sauda stood alone at the opening search's spot
+# inside the left loop (0.227, 0.47), rated 1.08 for round 6, and a red got
+# out with her 22 pops on the counter. The first route winds round that spot
+# and the second passes on its other side: the route within a sword's reach
+# (23 units) is spread over 190 degrees around her, and she strikes one way
+# at a time. At the guide's spot, top middle and "as high as possible"
+# (0.452, 0.146), both routes come in side by side in front of her, within
+# 111 degrees. The model rates that spot lower (round 6 0.76, rounds 6-10
+# 0.37-0.90 against 0.49-1.16): it counts the route in reach, not which way
+# a melee hero faces, so its rating does not choose Sauda's spot here
+# (tests/test_lostcrevasse_chimps_sauda_spot_offline.py).
+#
+# Opening again, 2026-11-13 (case 20261113_111449, lost round 6 at 11:11):
+# Sauda alone lost round 6 a second time, now at the guide's spot (the game
+# refused 0.146 and took her one cell lower, 0.452, 0.172): 23 pops on the
+# counter, reds passing on both sides of her and one already half way down
+# the left lane (frames/end_029.jpg). Two spots, two losses at 22 and 23
+# pops: Sauda alone is not an opening the bot can place well enough here.
+# The opening is now the one that has held this map's first rounds live -
+# a boat in the lake and a dart at round 6, a desperado at 7, a sky warden
+# at 8, the boat's 1-0-0 by 10 (journal 20261107_181331, to round 95; also
+# 20261107_213840 and 20261108_011559; tools/opening_rule.PROVEN, and the
+# guide's opening is listed in its GUIDE_LOST). The guide's plan follows
+# unchanged in its order, about three rounds later: Sauda at round 13 on
+# the same spot, the tack at 14, the sniper at 15, the druid at 17.
+# The opening costs $1,485 the guide never spent, so the guide's glue
+# (0-2-4, rounds 65-68) is left out: with it the MOAB Eliminator came at
+# round 101, without it the last step stands at round 98.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
 id: lostcrevasse_chimps_guide
 map: Lost Crevasse
 hero: sauda
-hero_opens: true      # the hero alone holds the opening (Executor.defended)
-# starter: kept (2026-11-12 17:45): this guide can afford one damage tower at
-# round 6, and Ancient Portal CHIMPS lost round 6 in 9 s with its sub alone
-# once `starter: none` was set; the generic starter is that second tower.
+starter: none         # the plan's own boat and dart open (see "Opening again, 2026-11-13"); no extra dart
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {tack: [2, 0, 5], druid: [1, 5, 0], sniper: [0, 2, 2], village: [2, 3, 2], alchemist: [4, 2, 0], ice: [5, 2, 0], glue: [0, 2, 4], bomb: [0, 5, 0]}
-  revised: "2026-11-13T04:00"   # hardened (see "Hardened")
+  towers: {buccaneer: [1, 0, 0], dart: [0, 0, 0], desperado: [0, 0, 0], skywarden: [0, 0, 0], tack: [2, 0, 5], druid: [1, 5, 0], sniper: [0, 2, 2], village: [2, 3, 2], alchemist: [4, 2, 0], ice: [5, 2, 0], bomb: [0, 5, 0]}
+  revised: "2026-11-13T11:25"   # the live-proven boat opening before Sauda (see "Opening again, 2026-11-13")
   maps: [Lost Crevasse]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: d1, kind: druid, role: dps, at: [0.452, 0.385]}             # R12 druid behind Sauda (moved from 0.419, 0.215: hardening)
+  # The opening that held rounds 6-10 live (tools/opening_rule.PROVEN, journal 20261107_181331),
+  # on the cells of that game. Sauda alone lost round 6 at two spots (cases 20261113_073019 and
+  # 20261113_111449); the opening search's druid + dart lost round 7 (case 20261113_032621).
+  - {do: place, id: bc1, kind: buccaneer, role: dps, at: [0.665, 0.709]}        # R6 the lake
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.19, 0.428]}               # R6 inside the left loop
+  - {do: place, id: ds1, kind: desperado, role: dps, at: [0.206, 0.641]}        # R7 lower-left field: without it the pair lost rounds 8 and 9
+  - {do: place, id: sk1, kind: skywarden, role: dps, at: [0.227, 0.334]}        # R8
+  - {do: upgrade, id: bc1, to: 1-0-0}                                           # R10 Faster Shooting
+  # The guide's plan from here, in its order (Sauda, tack, sniper, druid), about three rounds later
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.452, 0.146]}              # R13 Sauda at the guide's top middle, "as high as possible" (see "Sauda's spot, 2026-11-13")
   - {do: place, id: t1, kind: tack, role: dps, at: [0.484, 0.436]}              # R8 tack right of Sauda (moved from 0.548, 0.198: hardening)
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.227, 0.47]}               # opening search 2026-11-12
-  - {do: upgrade, id: d1, to: 0-1-0}                                            # R13
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.409, 0.198]}  # R10 sniper next to the crystal (moved from 0.569, 0.3: hardening)
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.452, 0.385]}             # R12 druid behind Sauda (moved from 0.419, 0.215: hardening)
+  - {do: upgrade, id: d1, to: 0-1-0}                                            # R13
   - {do: upgrade, id: t1, to: 1-0-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 0-2-0}                                            # R15
   - {do: upgrade, id: d1, to: 0-3-0}                                            # R19
@@ -127,10 +169,7 @@ plan:
   - {do: upgrade, id: i1, to: 4-1-0}                                            # R48 Embrittlement
   - {do: upgrade, id: a1, to: 4-2-0}                                            # R49 Stronger Stimulant
   - {do: upgrade, id: t1, to: 2-0-5}                                            # R63 The Tack Zone
-  - {do: place, id: g1, kind: glue, role: dps, target: strong, near: [d1], at: [0.558, 0.487]}  # R65 glue next to the druid, on Strong (moved from 0.377, 0.232: hardening)
-  - {do: upgrade, id: g1, to: 0-1-3}                                            # R65
-  - {do: upgrade, id: g1, to: 0-2-3}                                            # R66
-  - {do: upgrade, id: g1, to: 0-2-4}                                            # R68 Relentless Glue
+  # (the guide's R65-68 glue 0-2-4 is left out: its cash went to the opening, see "Opening again, 2026-11-13")
   - {do: upgrade, id: d1, to: 1-5-0}                                            # R83 Spirit of the Forest (R51's 1-4-0 is an income tier the bot skips)
   - {do: upgrade, id: i1, to: 5-2-0}                                            # R92 Super Brittle
   - {do: place, id: b1, kind: bomb, role: dps, near: [v1], at: [0.377, 0.3]}    # added: round 100's BAD (see header), by Sauda in Jungle Drums range (moved from 0.366, 0.3: hardening)

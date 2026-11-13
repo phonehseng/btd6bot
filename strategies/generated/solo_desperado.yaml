@@ -5,113 +5,138 @@
 # the cash invested in them, so this game puts most of its money into
 # Desperados.
 #
-# Desperado cannot carry a game alone (it has no blimp damage figure
-# (counters.json): it cannot be shown to stop MOABs), so a compact defence of
-# Dart Monkeys holds the track and the rest of the money goes into it.
-# Defence x2: 0-2-4 Sharp Shooter (sees camo; pops purple/black/white; answers
-# ceramic, moab, bfb; ~15 blimp dmg/s)
-# Defence complement x1: 4-0-2 Juggernaut (sees camo; pops
-# lead/purple/black/white; ~8 blimp dmg/s)
-# Desperado line: 4-2-0 Twin Sixes (sees camo; pops lead/purple/black/white)
-# Desperado second line (its other tier 5): 0-4-2 Bounty Hunter (sees camo;
-# pops lead/purple/black/white)
+# Main line x3: 4-2-0 Twin Sixes (sees camo; pops lead/purple/black/white;
+# answers ceramic, moab, rush; ~60 blimp dmg/s)
+#   path chosen at tier 4: 4-2-0 Twin Sixes (sees camo; pops
+#   lead/purple/black/white; answers ceramic, moab, rush; ~60 blimp dmg/s)
+# Complement x1: 0-2-4 Avenger (sees camo; pops purple/black/white; answers
+# ceramic, moab, rush; ~48.3 blimp dmg/s)
 # Answers, tried in order when a threat is due and the defence has none: the
 # tower's own path first, then a helper (for accounts whose own tiers are
-# still locked): camo: x1 0-1-0, else a Ninja Monkey 0-0-0, else a Ice Monkey
-# 2-0-0; purple: x1 0-0-0; lead: x1 3-0-0, else a Bomb Shooter 0-0-0; ceramic:
-# ex 0-0-0, else h_bomb (Bomb Shooter) 0-2-0; moab: d1 0-0-4, else a Monkey
-# Ace 0-0-0, else h_bomb (Bomb Shooter) 0-3-0; bfb: d1 0-0-4, else a Boomerang
-# Monkey 4-0-0
+# still locked): camo: a1 0-1-0, else a Ninja Monkey 0-0-0, else a Dart Monkey
+# 0-0-2; purple: a1 0-0-0; lead: a1 3-0-0, else a Bomb Shooter 0-0-0; ceramic:
+# a1 3-0-0, else ex (Spike Factory) 0-0-0, else h_bomb (Bomb Shooter) 0-2-0;
+# moab: a1 4-0-0, else another Desperado (up to 4), else a Monkey Ace 0-0-0,
+# else h_bomb (Bomb Shooter) 0-3-0; bfb: a1 5-0-0, else another Desperado (up
+# to 4), else h_dart (Dart Monkey) 0-0-4; rush: a1 4-0-0, else a Boomerang
+# Monkey 3-0-0; zomg: a1 5-0-0, else another Desperado (up to 4), else h_bomb
+# (Bomb Shooter) 0-4-0
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 0.86, Desperado share of the cash 51%,
-#   answers bought: ace, bomb
-#   primary_only: kept - no gaps, min blimp ratio 0.65, Desperado share of the
-#   cash 57%, answers bought: bomb
-#   deflation: dropped - blimp damage 0.34 < 0.40
-#   medium: kept - no gaps, min blimp ratio 1.11, Desperado share of the cash
-#   50%, answers bought: ace, bomb
-#   reverse: kept - no gaps, min blimp ratio 1.11, Desperado share of the cash
-#   50%, answers bought: ace, bomb
-#   apopalypse: dropped - blimp damage 0.07 < 1.00
-#   hard: dropped - blimp damage 0.50 < 1.00
+#   easy: kept - no gaps, min blimp ratio 1.77, Desperado share of the cash 100%
+#   primary_only: kept - no gaps, min blimp ratio 2.77, Desperado share of the
+#   cash 100%
+#   deflation: kept - no gaps, min blimp ratio 1.99, Desperado share of the cash
+#   100%
+#   medium: kept - no gaps, min blimp ratio 1.50, Desperado share of the cash
+#   88%, answers bought: bomb
+#   reverse: kept - no gaps, min blimp ratio 1.50, Desperado share of the cash
+#   88%, answers bought: bomb
+#   apopalypse: kept - no gaps, min blimp ratio 1.50, Desperado share of the
+#   cash 78%, answers bought: ace, bomb
+#   hard: kept - no gaps, min blimp ratio 1.29, Desperado share of the cash 93%,
+#   answers bought: bomb
+#   double_hp: dropped - blimp damage 0.65 < 1.00
+#   half_cash: dropped - blimp damage 0.73 < 1.00
+#   abr: dropped - blimp damage 0.62 < 1.00
+#   impoppable: dropped - blimp damage 0.38 < 1.00
+#   chimps: dropped - blimp damage 0.38 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
-# the simulation had to buy, for the deliberately small defence and for blimp
-# damage short of the executor's bar; the planner calibrates it from real
-# games.
+# the simulation had to buy and for blimp damage short of the executor's bar;
+# the planner calibrates it from real games.
 id: solo_desperado
 xp_target: desperado   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, primary_only, medium, reverse]
+modes: [easy, primary_only, deflation, medium, reverse, apopalypse, hard]
 planner:
-  towers: {dart: [4, 2, 4], desperado: [4, 2, 0]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.82, primary_only: 0.84, medium: 0.77, reverse: 0.77}
+  towers: {desperado: [4, 2, 4]}   # the crosspaths the build needs to be safe
+  base_success: {easy: 0.92, primary_only: 0.92, deflation: 0.92, medium: 0.83, reverse: 0.83, apopalypse: 0.7, hard: 0.82}
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {apopalypse: [Dark Dungeons, Erosion, Geared, "#Ouch", Sanctuary, "Tricky Tracks"], reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
-  - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
+  - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}   # main line: 4-2-0
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
-  - {do: upgrade, id: d1, to: 0-1-2}   # cheap tiers first (and lead/camo if they are cheap)
-  - {do: place, id: d2, kind: dart, role: dps, segment: [0.3, 0.9]}
-  - {do: upgrade, id: d2, to: 0-1-2}
-  - {do: place, id: dc, kind: dart, role: dps, segment: [0.0, 0.7]}   # defence complement 4-0-2
-  - {do: upgrade, id: dc, to: 4-0-1}   # lead before those bloons come
-  - {do: upgrade, id: d1, to: 0-2-3}
-  - {do: upgrade, id: d1, to: 0-2-4}   # blimp power before the first MOAB round
-  - {do: place, id: x1, kind: desperado, role: dps, segment: [0.0, 0.5]}   # Desperado 4-2-0
-  - {do: upgrade, id: x1, to: 2-1-0}
-  - {do: upgrade, id: d2, to: 0-2-3}
-  - {do: upgrade, id: x1, to: 4-2-0}
-  - {do: upgrade, id: dc, to: 4-0-2}
-  - {do: upgrade, id: d2, to: 0-2-4}
-  - {do: place, id: x2, kind: desperado, role: dps, segment: [0.3, 0.8]}
-  - {do: upgrade, id: x2, to: 4-2-0}
+  - {do: upgrade, id: a1, to: 2-1-0}   # cheap tiers first (and lead/camo if they are cheap)
+  - {do: place, id: a2, kind: desperado, role: dps, segment: [0.3, 0.8]}
+  - {do: upgrade, id: a2, to: 2-1-0}
+  - {do: place, id: b1, kind: desperado, role: dps, segment: [0.0, 0.7]}   # complement: 0-2-4
+  - {do: upgrade, id: b1, to: 0-1-2}
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: upgrade, id: a1, to: 4-2-0}   # blimp power before the first MOAB round
+  - {do: upgrade, id: a2, to: 3-2-0}
+  - {do: upgrade, id: b1, to: 0-2-4}
+  - {do: upgrade, id: a2, to: 4-2-0}
+  - {do: place, id: a3, kind: desperado, role: dps, segment: [0.5, 1.0]}
+  - {do: upgrade, id: a3, to: 4-2-0}
   - {do: place, id: ex, kind: spike, role: exit}   # exit spike factory 2-0-0: catches leaks, spikes hit camo on the track
   - {do: upgrade, id: ex, to: 2-0-0}
-  - {do: place, id: x3, kind: desperado, role: dps, segment: [0.5, 1.0]}
-  - {do: upgrade, id: x3, to: 4-2-0}
-  - {do: place, id: x4, kind: desperado, role: dps, segment: [0.0, 0.7]}
-  - {do: upgrade, id: x4, to: 4-2-0}
-  - {do: place, id: y1, kind: desperado, role: dps, segment: [0.2, 0.9]}   # second Desperado line: 0-4-2
-  - {do: upgrade, id: y1, to: 0-4-2}
-  - {do: upgrade, id: x1, to: 5-2-0}   # tier 5 The Blazing Sun ($16,500): one per path, the biggest XP sink
-  - {do: upgrade, id: y1, to: 0-5-2}   # tier 5 Golden Justice ($42,000): one per path, the biggest XP sink
+  - {do: upgrade, id: a1, to: 5-2-0}   # tier 5 The Blazing Sun ($16,500): one per path, the biggest XP sink
+  - {do: upgrade, id: b1, to: 0-2-5}   # tier 5 The Desert Phantom ($31,000): one per path, the biggest XP sink
 fill:
-  - {do: place, kind: desperado, role: dps, max: 9}   # surplus cash goes into Desperados (XP follows the cash)
+  - {do: place, kind: desperado, role: dps, max: 8}   # surplus cash: more copies (XP follows the cash)
   - {do: upgrade, kind: desperado, to: 4-2-0}
-  - {do: upgrade, kind: dart, to: 0-2-4}   # then the defence's own tier 4
 panic:
-  - {do: place, kind: dart, role: dps}
+  - {do: place, kind: desperado, role: dps}
   - {do: place, kind: spike, role: exit}
 answers:
   camo:
-    - {do: upgrade, id: x1, to: 0-1-0}
-    - {do: place, id: x1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: upgrade, id: a1, to: 0-1-0}
+    - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
     - {do: place, id: h_ninja, kind: ninja, role: dps, segment: [0.0, 0.7]}
-    - {do: upgrade, id: h_ice, to: 2-0-0}
-    - {do: place, id: h_ice, kind: ice, role: dps, segment: [0.0, 0.7]}
+    - {do: upgrade, id: h_dart, to: 0-0-2}
+    - {do: place, id: h_dart, kind: dart, role: dps, segment: [0.0, 0.7]}
   purple:
-    - {do: place, id: x1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
   lead:
-    - {do: upgrade, id: x1, to: 3-0-0}
-    - {do: upgrade, id: x1, to: 3-1-0}
-    - {do: place, id: x1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: upgrade, id: a1, to: 3-0-0}
+    - {do: upgrade, id: a1, to: 3-1-0}
+    - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
     - {do: place, id: h_bomb, kind: bomb, role: dps, segment: [0.0, 0.7]}
   ceramic:
+    - {do: upgrade, id: a1, to: 3-0-0}
+    - {do: upgrade, id: a1, to: 3-1-0}
+    - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
     - {do: place, id: ex, kind: spike, role: exit}
     - {do: upgrade, id: h_bomb, to: 0-2-0}
     - {do: place, id: h_bomb, kind: bomb, role: dps, segment: [0.0, 0.7]}
   moab:
-    - {do: upgrade, id: d1, to: 0-0-4}
-    - {do: upgrade, id: d1, to: 0-1-4}
-    - {do: upgrade, id: d1, to: 0-2-4}
-    - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.5]}
+    - {do: upgrade, id: a1, to: 4-0-0}
+    - {do: upgrade, id: a1, to: 4-1-0}
+    - {do: upgrade, id: a1, to: 4-2-0}
+    - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: place, kind: desperado, role: dps, segment: [0.0, 1.0], max: 4}
     - {do: place, id: h_ace, kind: ace, role: dps, segment: [0.0, 0.7]}
     - {do: upgrade, id: h_bomb, to: 0-3-0}
     - {do: place, id: h_bomb, kind: bomb, role: dps, segment: [0.0, 0.7]}
   bfb:
-    - {do: upgrade, id: d1, to: 0-0-4}
-    - {do: upgrade, id: d1, to: 0-1-4}
-    - {do: upgrade, id: d1, to: 0-2-4}
-    - {do: place, id: d1, kind: dart, role: dps, segment: [0.0, 0.5]}
-    - {do: upgrade, id: h_boomerang, to: 4-0-0}
+    - {do: upgrade, id: a1, to: 5-0-0}
+    - {do: upgrade, id: a1, to: 5-1-0}
+    - {do: upgrade, id: a1, to: 5-2-0}
+    - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: place, kind: desperado, role: dps, segment: [0.0, 1.0], max: 4}
+    - {do: upgrade, id: h_dart, to: 0-0-4}
+    - {do: place, id: h_dart, kind: dart, role: dps, segment: [0.0, 0.7]}
+  rush:
+    - {do: upgrade, id: a1, to: 4-0-0}
+    - {do: upgrade, id: a1, to: 4-1-0}
+    - {do: upgrade, id: a1, to: 4-2-0}
+    - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: upgrade, id: h_boomerang, to: 3-0-0}
     - {do: place, id: h_boomerang, kind: boomerang, role: dps, segment: [0.0, 0.7]}
+  zomg:
+    - {do: upgrade, id: a1, to: 5-0-0}
+    - {do: upgrade, id: a1, to: 5-1-0}
+    - {do: upgrade, id: a1, to: 5-2-0}
+    - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: place, kind: desperado, role: dps, segment: [0.0, 1.0], max: 4}
+    - {do: upgrade, id: h_bomb, to: 0-4-0}
+    - {do: place, id: h_bomb, kind: bomb, role: dps, segment: [0.0, 0.7]}

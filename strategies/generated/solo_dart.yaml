@@ -14,37 +14,53 @@
 #   adds lead the main line lacks (from 4-0-1, bought early)
 # Answers, tried in order when a threat is due and the defence has none: the
 # tower's own path first, then a helper (for accounts whose own tiers are
-# still locked): camo: a1 0-0-2, else a Ninja Monkey 0-0-0, else a Ice Monkey
-# 2-0-0; purple: a1 0-0-0; lead: b1 4-0-0, else a Bomb Shooter 0-0-0; ceramic:
+# still locked): camo: a1 0-0-2, else a Ninja Monkey 0-0-0, else a Desperado
+# 0-1-0; purple: a1 0-0-0; lead: b1 4-0-0, else a Bomb Shooter 0-0-0; ceramic:
 # a1 0-0-3, else ex (Spike Factory) 0-0-0, else h_bomb (Bomb Shooter) 0-2-0;
 # moab: a1 0-0-4, else another Dart Monkey (up to 8), else a Monkey Ace 0-0-0,
 # else h_bomb (Bomb Shooter) 0-3-0; bfb: a1 0-0-4, else another Dart Monkey
 # (up to 8), else a Boomerang Monkey 4-0-0
+# Hero gwendolin: of every land hero the damage model rates, the build rates
+# best with it on Monkey Meadow (medium); see gen_builds.pick_hero.
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
 #   easy: kept - no gaps, min blimp ratio 1.32, Dart Monkey share of the cash
 #   70%, answers bought: ace, bomb
 #   primary_only: kept - no gaps, min blimp ratio 1.10, Dart Monkey share of the
-#   cash 75%, answers bought: bomb
-#   deflation: kept - no gaps, min blimp ratio 0.78, Dart Monkey share of the
+#   cash 73%, answers bought: bomb
+#   deflation: kept - no gaps, min blimp ratio 0.67, Dart Monkey share of the
 #   cash 100%
 #   medium: kept - no gaps, min blimp ratio 1.08, Dart Monkey share of the cash
 #   84%, answers bought: ace, bomb
 #   reverse: kept - no gaps, min blimp ratio 1.08, Dart Monkey share of the cash
 #   84%, answers bought: ace, bomb
-#   apopalypse: dropped - blimp damage 0.14 < 1.00
-#   hard: dropped - blimp damage 0.48 < 1.00
+#   apopalypse: dropped - blimp damage 0.72 < 1.00
+#   hard: dropped - blimp damage 0.59 < 1.00
+#   double_hp: dropped - blimp damage 0.36 < 1.00
+#   half_cash: dropped - blimp damage 0.36 < 1.00
+#   abr: dropped - gap R5: camo (dart could pop it but cannot see camo)
+#   impoppable: dropped - blimp damage 0.21 < 1.00
+#   chimps: dropped - blimp damage 0.20 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
 # the planner calibrates it from real games.
 id: solo_dart
 xp_target: dart   # the tower this build levels up
-hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
+hero: gwendolin   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, primary_only, deflation, medium, reverse]
 planner:
   towers: {dart: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.86, primary_only: 0.89, deflation: 0.91, medium: 0.8, reverse: 0.8}
+  base_success: {easy: 0.86, primary_only: 0.89, deflation: 0.9, medium: 0.8, reverse: 0.8}
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: dart, role: dps, segment: [0.0, 0.5]}   # main line: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
@@ -83,8 +99,8 @@ answers:
     - {do: upgrade, id: a1, to: 0-0-2}
     - {do: place, id: a1, kind: dart, role: dps, segment: [0.0, 0.5]}
     - {do: place, id: h_ninja, kind: ninja, role: dps, segment: [0.0, 0.7]}
-    - {do: upgrade, id: h_ice, to: 2-0-0}
-    - {do: place, id: h_ice, kind: ice, role: dps, segment: [0.0, 0.7]}
+    - {do: upgrade, id: h_desperado, to: 0-1-0}
+    - {do: place, id: h_desperado, kind: desperado, role: dps, segment: [0.0, 0.7]}
   purple:
     - {do: place, id: a1, kind: dart, role: dps, segment: [0.0, 0.5]}
   lead:

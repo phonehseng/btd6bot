@@ -51,7 +51,12 @@ GENERAL = "hard_ninja_alch_sniper"                     # lost round 19 on 2026-1
 # 1.48, for Last Resort|medium). Phase 1 of docs/model_fix_plan.md (the
 # damage model's over-credits) rates round 60 (a BFB) 1.35 with the build
 # unchanged; held a little under that.
-MIN_MARGIN = 1.3
+# 1.3 until 2026-11-13. Since 93c2d83 (2026-11-12, few blimps are few: a
+# zone holds no more than the group sent down it, a projectile's pierce
+# counts only the blimps within its reach) round 40's lone MOAB rates 1.27
+# (2.46 before). The build won live on 2026-11-11 07:26 (round 60, round 40
+# held); the floor is today's number less a little.
+MIN_MARGIN = 1.2
 EARLY_MARGIN = 1.5      # rounds 15-25 (1.6 until phase 1 of docs/model_fix_plan.md: round 15 now 1.54)
 OPENING = range(15, 26)
 

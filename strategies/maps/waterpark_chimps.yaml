@@ -90,6 +90,37 @@
 #   tools/simulate_threats: plan 32/32, no threat gaps; plan_timeline: the
 #   last step by round 94.
 #
+# Opening, 2026-11-13 (case 20261113_041444, lost round 7): the guide's dart +
+# boomerang 0-0-1, rated 1.28, let round 7 through on the pool lane, under the
+# slide where neither reached; the same guide opening lost round 6 on
+# 2026-11-12. No Water Park opening is proven live and none the corrected
+# model rates as holding (tools/opening_rule: no affordable board rates over
+# 0.64 of 1.0; the lost opening 0.62, and every legal change to it rates
+# lower, as the model prices the boomerang's 0-0-1 above a third tower). The
+# guide's dart and boomerang stay; a desperado (0.494, 0.641) comes during round 7,
+# before the boomerang's upgrades, on the stretch under the slide that round 7
+# got through. Live, two-tower boards of rounds 6-10 leaked 11 times in 149
+# rated rounds, three-tower boards 3 in 76. UNPROVEN: the next game here is a
+# learning game.
+#
+# Opening, second change, 2026-11-13 (case 20261113_075317, lost round 7 at
+# 07:50): that desperado never came. It costs $325 and round 7 starts with
+# $258 ($650 less the boomerang and the dart, plus round 6's $163), and with
+# plan_first nothing else is bought while a step waits - so round 7 was played
+# on boomerang + dart alone (rated 1.10), without even the 0-0-1 of the games
+# before, and the first blue was out seven seconds after Play with 33 of the
+# round's 55 layers popped. The plan's second dart ($215) now comes first, when
+# round 7 starts, on the spot that was Rosalia's (0.58, 0.453); she takes the
+# dart's old spot (0.729, 0.283). Of the 26 free dart spots this is the one
+# that lifts round 7 on the pool lane without giving up round 8 on the slide
+# lane (the dart at 0.729, 0.283 rates round 7 at 1.56 but round 8 at 0.99).
+# Each round on its own lane, before -> after: 7 1.10 -> 1.51, 8 1.49 -> 1.43,
+# 9 0.91 -> 0.87, 10 1.83 -> 1.48, 15 0.83 -> 0.80, 16 0.77 -> 0.94; the worse
+# lane under 1.2 in rounds 6-30: 7 -> 8 rounds, under 1.0 in rounds 31-59:
+# 10 -> 8, in rounds 60-100: 12 -> 11. Round 9 stays the weak one: the cash
+# of rounds 6-8 buys no more (tests/test_waterpark_chimps_round7_offline.py).
+# Still UNPROVEN.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -102,7 +133,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 0, 0], boomerang: [3, 2, 2], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
-  revised: "2026-11-13T07:00"   # hardened (see "Hardened")
+  revised: "2026-11-13T09:30"   # the second dart at round 7 (see "Opening, second change")
   maps: [Water Park]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -110,12 +141,22 @@ planner:
 plan:
   - {do: place, id: r1, kind: boomerang, role: dps, near: [x1], at: [0.526, 0.589]}  # R6 boomerang next to it
   - {do: place, id: x1, kind: dart, role: dps, at: [0.623, 0.47]}              # R6 dart, both lanes in range (moved from 0.494, 0.641: hardening)
+  # A third tower that round 7 can pay for when it starts (2026-11-13, case 20261113_075317): the
+  # second dart, $215 of the $258 in hand, on the spot that was Rosalia's - the one free spot whose
+  # dart lifts round 7 on the pool lane and round 8 on the slide lane together (see "Opening,
+  # second change"). It came after the glue before.
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.58, 0.453]}                # R7, when the round starts
+  # The desperado follows (2026-11-13, case 20261113_041444: the guide's two towers let round 7
+  # through where the pool lane runs under the slide). It sees the most of both lanes of any
+  # tower here (156 / 299 units), on that stretch, but its $325 is not there before round 8.
+  # Two-tower boards of rounds 6-10 leaked 11 times in 149 rated rounds of the CHIMPS
+  # journals, three-tower boards 3 in 76. UNPROVEN (see "Opening, 2026-11-13").
+  - {do: place, id: e0, kind: desperado, role: dps, at: [0.494, 0.641]}
   - {do: upgrade, id: r1, to: 0-0-1}                                            # R7
   - {do: upgrade, id: r1, to: 0-0-2}                                            # R8
   - {do: upgrade, id: r1, to: 0-1-2}                                            # R9
   - {do: place, id: gl1, kind: glue, role: dps, at: [0.345, 0.862]}               # opening search 2026-11-12
-  - {do: place, id: da1, kind: dart, role: dps, at: [0.729, 0.283]}               # opening search 2026-11-12
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.58, 0.453]}               # opening search 2026-11-12
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.729, 0.283]}              # the second dart's old spot (it took hers, above)
   - {do: upgrade, id: r1, to: 0-2-2}                                            # R11
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.334, 0.129]}  # R12 on Strong, left of the slide's bottom circle (moved from 0.794, 0.112: hardening)
   - {do: upgrade, id: s1, to: 0-0-1}                                            # R18

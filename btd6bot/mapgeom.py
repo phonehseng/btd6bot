@@ -1325,6 +1325,7 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
     moving = np.zeros(shape, bool)
     drift = np.zeros(shape, np.float32)
     carriers = []   # [(cells of a moving ground area, its poses)]
+    carrier_heights = []   # how high each of them lies (carrier_of: the higher one is the ground)
     wx, wz = proj.cell_world()
     world = np.stack([wx, wz], axis=-1)
     for mover in dyn.movers:
@@ -1350,11 +1351,13 @@ def placement_grids(geom, proj, lanes=None, dyn=None):
                 unsafe |= swept & ~together
                 moving |= here
                 carriers.append((here, mover["poses"]))
+                carrier_heights.append(area_height(area))
                 far = np.zeros(shape, np.float32)
                 for pose in mover["poses"]:
                     far = np.maximum(far, np.linalg.norm(_pose_points(world, pose) - world, axis=-1))
                 drift = np.where(here, np.maximum(drift, far), drift)
     out["carriers"] = carriers
+    out["carrier_heights"] = carrier_heights
     # towers on these areas are switched off by the map (Polyphemus' eye)
     for aid in dyn.suspend:
         if aid in areas_by_id:
@@ -1982,6 +1985,28 @@ def steady_spots(model, reach_units, pose_round=None):
             steady |= cells
         grids["steady"][key] = steady
     return grids["steady"][key]
+
+
+def carrier_of(model, pose_round=None):
+    """Int grid naming the moving ground each cell rides on: 0 for ground
+    that stays put, k for the k-th carrier of placement_grids' "carriers"
+    (counted from 1). Where two lie over each other (Geared's small gear on
+    the big one) the higher one is the ground, as in the game. None on maps
+    without moving ground.
+
+    Two towers on the same carrier keep their distance to each other however
+    it turns or travels; towers on different carriers, or one on a carrier
+    and one beside it, do not. A village is judged by that (Executor._buffed),
+    not by the track it would keep in reach."""
+    grids = grids_for(model, pose_round=pose_round)
+    if grids is None or not grids["moving"].any():
+        return None
+    carriers = grids["carriers"]
+    heights = grids.get("carrier_heights") or [0.0] * len(carriers)
+    out = np.zeros(grids["moving"].shape, np.int32)
+    for k in sorted(range(len(carriers)), key=lambda k: heights[k]):   # the highest is painted last
+        out[carriers[k][0]] = k + 1
+    return out
 
 
 def reliable_reach(model, spots, reach_units, targets):

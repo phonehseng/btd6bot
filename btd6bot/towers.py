@@ -34,6 +34,10 @@ Everything not directly confirmed is marked with ``# ?``.  In particular:
 
 from __future__ import annotations
 
+import functools
+import json
+from pathlib import Path
+
 # ---------------------------------------------------------------------------
 # Difficulty pricing
 # ---------------------------------------------------------------------------
@@ -755,6 +759,44 @@ HEROES: dict[str, dict] = {
         _ab(10, "Rabble Rouser", None, "save"),     # normal form; cd ?
     ], "v55; Masqued Macaque form has Volant Strike (L7) / Berserk Frenzy (L10)"),
 }
+
+# ---------------------------------------------------------------------------
+# Hero order on merit
+# ---------------------------------------------------------------------------
+
+# The four heroes a fresh account owns, in the old hand order. Before
+# 2026-11-12 they were the whole fallback list (strategy.HERO_FALLBACK,
+# planner.HERO_PRIORITY), so twelve heroes were never chosen
+# (docs/tower_exclusions_audit.md item 1). They now come only after every
+# hero ranked on merit: the last resort of an account that owns none of those.
+FRESH_ACCOUNT_HEROES = ["obyn", "striker_jones", "gwendolin", "quincy"]
+HERO_MERIT_FILE = Path(__file__).resolve().parents[1] / "data" / "hero_merit.json"
+
+
+@functools.lru_cache(maxsize=1)
+def hero_merit_order() -> tuple:
+    """Every hero, best first: the heroes ranked on merit by
+    tools/rank_heroes.py (data/hero_merit.json: each alone in the damage
+    model, at the bot's estimated level), then the fresh-account heroes not
+    ranked there, then any hero left (Corvus: the model cannot rate him).
+    Without the file only the last two parts are left - the old order."""
+    try:
+        scores = json.loads(HERO_MERIT_FILE.read_text(encoding="utf-8")).get("scores") or {}
+    except (OSError, ValueError):
+        scores = {}
+    ranked = sorted((h for h in scores if h in HEROES), key=lambda h: (-scores[h], h))
+    order = ranked + [h for h in FRESH_ACCOUNT_HEROES if h not in ranked]
+    return tuple(order + [h for h in HEROES if h not in order])
+
+
+def hero_fallback_order() -> tuple:
+    """hero_merit_order with the heroes that stand on water (Admiral
+    Brickell) after the land ones: a fallback is chosen without knowing the
+    map, and most maps have no water to place her on."""
+    order = hero_merit_order()
+    land = [h for h in order if HEROES[h].get("placement") != "water"]
+    return tuple(land + [h for h in order if h not in land])
+
 
 # ---------------------------------------------------------------------------
 # Player-level unlocks (v57)

@@ -84,7 +84,15 @@ SAFE = O.SAFETY_MARGIN
 # 2.11 to 1.04 for the played build on its planned spots, from 1.54 to 0.80
 # for the repair under the refusals, and from 0.46 to 0.19 for the played
 # build under them. The planned/refused gap is unchanged in kind.
-HOLDS = 0.75
+# 0.7 since 2026-11-13: with 93c2d83 (2026-11-12, few blimps are few: a
+# zone holds no more than the group sent down it, a projectile's pierce
+# counts only the blimps within its reach) round 95's DDTs and BFBs rate
+# 0.92 for the played build on its planned spots (1.04 before), 0.73 for
+# the repair under the refusals (0.82) and 0.46 for the played build under
+# them (0.20). The planned/refused gap still holds either side of the bar;
+# neither board was played live (the map was won on 2026-11-07 by the guide
+# build that replaced them).
+HOLDS = 0.7
 # 0.9 until 2026-11-12. Since phase 1 of docs/model_fix_plan.md a
 # Buccaneer's rear shot counts only where the boat has track behind it, so
 # moving the boats off their planned spots costs a little more: 1.23 against

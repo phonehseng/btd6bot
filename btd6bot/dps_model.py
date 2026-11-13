@@ -49,9 +49,9 @@ damage, children included).
 
 Deliberate simplifications (each is on the safe side unless noted):
     * Monkey Knowledge and alchemist brews are not counted (they only
-      help); heroes (HERO_RATING), abilities at their uptime
-      (ABILITY_RATING), slows, stuns, knockback and damage-taken
-      debuffs (STATUS_RATING) and mechanics the export misses
+      help); heroes (HERO_RATING), abilities by the uses sure to
+      land on a bloon (ABILITY_RATING, ABILITY_TIMING), slows, stuns,
+      knockback and damage-taken debuffs (STATUS_RATING) and mechanics the export misses
       (UNEXPORTED_RATING) are, each read cautiously
       (docs/model_fix_plan.md phase 2);
     * towers aimed by hand fire at an aim point: a Dartling at the busiest
@@ -363,7 +363,7 @@ class Source:
     zone_fixed: bool = False   # zone_radius is not changed by range buffs (Glaive Lord's orbit)
     dot_immune: frozenset = frozenset()   # bloon properties its damage over time cannot hurt
                                # (0 = not such a shot; _rear_copies)
-    ability: str = ""          # the ability it belongs to, credited at its uptime ("" = the tower's
+    ability: str = ""          # the ability it belongs to, credited by its uses ("" = the tower's
                                # own attack; _ability_attacks)
     grip_rate: float = 0.0     # a hit that holds its bloon and deals this much a second (Psi: _psi_grip)
     effects: dict = field(default_factory=dict)   # what a hit does besides damage (the export's
@@ -371,6 +371,10 @@ class Source:
                                # removes); read by _Controls
     ability_use: str = ""      # for an ability's source: the bot's use of it ("moab": pressed in
                                # blimp rounds only, see _Controls)
+    timed: tuple = ()          # the abilities whose presses this source's shots depend on, as
+                               # ((every, duration, share, role, use), ...): role "on" for shots
+                               # made while the ability is up (its own attacks, a buffed or boosted
+                               # copy), "off" for the plain copy beside one (_timing_factor)
     near_plane: bool = False   # a map-wide source that works only near its plane's flight circle:
                                # its rate is cut to that share of the track (_near_plane_share)
     preempt: bool = False      # Pre-emptive Strike's missile: `damage` once on every blimp that
@@ -1239,7 +1243,7 @@ def _subtower_buffs(entry):
 
 
 # ===========================================================================
-# Abilities, credited by their uptime
+# Abilities, credited by the uses sure to land
 # ===========================================================================
 
 # The bot presses the abilities it may blindly press on cooldown, and the
@@ -1250,9 +1254,11 @@ def _subtower_buffs(entry):
 # every 10 s, Super Maelstrom's blades 9 s in 20, Call to Arms' x1.5 attack
 # speed and pierce 15 s in 45 (+42% on average for a pierce-bound tower),
 # Homeland Defense's x2 20 s in 45 (+133%). Abilities the bot never presses
-# blind ('never' in abilities.TOWER_ABILITIES and towers.HEROES: First
-# Strike, Overclock, Blood Sacrifice) count nothing. The average reading
-# is the cautious one: the bot also saves nothing for a heavy round.
+# blind ('never' in abilities.TOWER_ABILITIES and towers.HEROES: Overclock,
+# Blood Sacrifice) count nothing. That uptime is then cut, round by round,
+# to the uses sure to land on the bloons (ABILITY_TIMING): the bot presses
+# on cooldown, not when the blimps come, and a round shorter than the
+# cooldown may get no use at all.
 # Two more cautious rules came out of the calibration: an ability adds only
 # to layers its tower can hit without it (_own_attack_hits), and an
 # ability's map-wide blast meets only the bloons on the track (_bloons_met).
@@ -1269,6 +1275,42 @@ ABILITY_RATING = True
 # without a target click.
 PRESSED_USES = ("on_cooldown", "moab")
 
+# How a pressed ability counts in one round (_timing_factor, _uses_landed):
+#   "uptime" - its average over time, at every moment of every round, as
+#              phase 2 had it;
+#   "round"  - the uses sure to land while any of the round's bloons are in
+#              the tower's reach;
+#   "bloon"  - the uses sure to land while one bloon of the layer crosses
+#              the tower's reach (an ability meant for blimps - "moab",
+#              "strike", "slow" - as "round", on the blimps: it is pressed
+#              for them);
+#   a number k (calibration only) - k x the uptime.
+#
+# Calibrated on the 3,368 rated rounds of 2026-11-12's journals (77 leaked,
+# every held round; Apopalypse left out), against abilities off:
+#   setting   AUC    leak rate at/above 1.0 / 1.5 / 2.0   median leaked / held
+#   off       0.797  0.59% / 0.54% / 0.70%                0.56 / 1.53
+#   uptime    0.787  0.77% / 0.61% / 0.64%                0.62 / 1.63
+#   0.5       0.795  0.69% / 0.51% / 0.66%                0.59 / 1.58
+#   round     0.791  0.70% / 0.58% / 0.68%                0.61 / 1.58
+#   bloon     0.795  0.63% / 0.54% / 0.69%                0.59 / 1.53
+# The uptime lifted 5 leaked rounds over 1.0 that rate under it without
+# abilities (and 124 held ones); "round" 3 (and 64), "bloon" 1 (and 27):
+# Enchanted Glade Impoppable round 98, three Ground Zero aces, each sure of
+# one blast on every ZOMG crossing that long map. "bloon" separates about as
+# well as abilities off and keeps the credit only where it is sure, so it
+# is the rule. Muddy Puddles round 40 (case 20261112_202137) rates as it
+# does without abilities under "round" and "bloon" (tests/
+# test_ability_timing_offline.py).
+ABILITY_TIMING = "bloon"
+
+# The bot's game speed and its wait before a MOAB ability (abilities.
+# AbilityPlanner's default speed, abilities.MOAB_DELAY_S): a "moab" ability
+# is first pressed this many game seconds into a MOAB round.
+PRESS_GAME_SPEED = 2.0
+MOAB_PHASE_STEPS = 24      # first-press times tried between those bounds (_uses_landed)
+BLIMP_USES = ("moab", "strike", "slow")    # uses meant for a round's blimps (_timing_factor)
+
 
 def _squash(text):
     return "".join(c for c in str(text or "").lower() if c.isalnum())
@@ -1277,6 +1319,14 @@ def _squash(text):
 @lru_cache(maxsize=None)
 def _tower_ability_uses():
     """{(tower kind, exported ability name): the bot's use of it} for every
+    tower ability of abilities.TOWER_ABILITIES (see _tower_ability_names)."""
+    from .abilities import TOWER_ABILITIES
+    return {key: TOWER_ABILITIES[name][1] for key, name in _tower_ability_names().items()}
+
+
+@lru_cache(maxsize=None)
+def _tower_ability_names():
+    """{(tower kind, exported ability name): the bot's name for it} for every
     tower ability of abilities.TOWER_ABILITIES.
 
     The export names an ability by the game's display name ("Assassinate
@@ -1311,8 +1361,32 @@ def _tower_ability_uses():
                 pick = same[0] if same else new[0] if len(new) == 1 else next(
                     (a for a in new if a.get("cooldown") == TOWER_ABILITIES[name][0]), None)
                 if pick is not None:
-                    out[(kind, pick.get("name"))] = last = TOWER_ABILITIES[name][1]
+                    out[(kind, pick.get("name"))] = last = name
     return out
+
+
+def _with_use(ab, kind):
+    """The exported ability with the planner's rule for pressing it as
+    "use", for _timing: "interval" for one the tower casts by itself, the
+    bot's use (abilities.TOWER_ABILITIES / towers.HEROES: "on_cooldown",
+    "moab"), and two "moab" abilities the planner holds longer
+    (abilities.AbilityPlanner.decide): "slow" for a wave-wide slow pressed
+    only in the hand-picked slow rounds, as their blimps come (abilities.
+    ROUND_START, is_slow_round: Bloon Sabotage), "strike" for a missile
+    pressed once the round's first blimp is on the track (abilities.
+    BLIMP_TARGETED: First Strike)."""
+    if ab.get("interval"):
+        return dict(ab, use="interval")
+    if hero_of(kind) is not None:
+        return dict(ab, use=_hero_ability_use(hero_of(kind), ab.get("name")) or "")
+    from .abilities import BLIMP_TARGETED, ROUND_START, TOWER_ABILITIES
+    name = _tower_ability_names().get((kind, ab.get("name")))
+    use = TOWER_ABILITIES[name][1] if name else ""
+    if name in ROUND_START:
+        use = "slow"
+    elif name in BLIMP_TARGETED:
+        use = "strike"
+    return dict(ab, use=use)
 
 
 def _hero_ability_use(hero, name):
@@ -1370,6 +1444,162 @@ def _uptime(ab, duration):
     return min(1.0, float(duration) / float(every))
 
 
+def _timing(ab, duration, share, role):
+    """One Source.timed entry for an ability of the export: (every,
+    duration, share, role, the bot's use of it)."""
+    every = float(ab.get("interval") or ab.get("cooldown") or 0.0)
+    return (every, float(duration or 0.0), float(share), role, ab.get("use") or "")
+
+
+def _uses_landed(every, duration, window, use, rnd_info=None):
+    """(uses sure to land on the bloons of `window`, the uses the uptime
+    credits there) for an ability pressed every `every` s whose effect lasts
+    `duration` s. window: (first in, last out) of the bloons it is meant
+    for, in game seconds from the round's start. rnd_info: the round's
+    facts (Station.windows[2]: "slow", "blimp_s").
+
+    A use lands when its effect is up while the bloons are there: it starts
+    within `duration` before the window or inside it. The uptime credits
+    (window + duration) / every uses there - fractions of uses spread over
+    every moment.
+
+    When the bot presses (abilities.AbilityPlanner.decide):
+      * "on_cooldown" (and a tower's own "interval" cast): whenever it is
+        ready. The cooldown runs on only while a round is played, so when
+        it comes ready in a round depends on every round before: only
+        floor((window + duration) / every) uses are sure to land - none for
+        a round whose bloons pass in less than a cooldown.
+      * "moab": in MOAB rounds, PRESS_GAME_SPEED x abilities.MOAB_DELAY_S
+        game seconds in or as soon as it is ready after that - no later
+        than one cooldown in, as the cooldown left from the round before is
+        shorter - then on every cooldown. The presses sure to fall in the
+        window, whenever in that stretch the first one comes, land.
+      * "strike" (First Strike): the same, from BLIMP_ON_TRACK_S after the
+        round's first blimp spawns.
+      * "slow" (Bloon Sabotage): once, as the round's blimps come, and only
+        in a slow round (abilities.is_slow_round); none in any other."""
+    a, b = window
+    if every <= 0.0 or b <= a:
+        return 0.0, 0.0
+    span = b - a + duration
+    expected = span / every
+    info = rnd_info or {}
+    if use == "slow":
+        return (1.0 if info.get("slow") else 0.0), expected
+    if use not in ("moab", "strike"):
+        return float(math.floor(span / every + 1e-9)), expected
+    from .abilities import BLIMP_ON_TRACK_S, MOAB_DELAY_S
+    if use == "strike":
+        if info.get("blimp_s") is None:
+            return 0.0, expected
+        first = info["blimp_s"] + BLIMP_ON_TRACK_S
+    else:
+        first = MOAB_DELAY_S * PRESS_GAME_SPEED
+    last = max(first, every)
+    worst = math.inf
+    for i in range(MOAB_PHASE_STEPS + 1):
+        p = first + (last - first) * i / MOAB_PHASE_STEPS
+        lo = max(0, math.ceil((a - duration - p) / every - 1e-9))
+        hi = math.floor((b - p) / every + 1e-9)
+        worst = min(worst, max(0, hi - lo + 1))
+    return float(worst), expected
+
+
+def _timing_factor(src, st, stay=None):
+    """How much of this source's shots a round really gets, given when the
+    abilities it depends on (Source.timed) are pressed (ABILITY_TIMING).
+
+    Phase 2 credited every pressed ability at its uptime, as if its effect
+    were spread over every second of every round. On Muddy Puddles
+    Impoppable (case 20261112_202137, build 8f34eed) that made round 40 -
+    one MOAB - rate 1.18, 0.59 without abilities: the centre tack's Blade
+    Maelstrom (blades for a few seconds every 20 s) was counted on the MOAB
+    however short its pass, and the game was lost there at a blimp ratio of
+    0.29. A lone blimp passes a tower in a few seconds; an ability pressed
+    on cooldown is up for it only by chance.
+
+    The rules count what is sure to land (_uses_landed) against what the
+    uptime credits, never more than the uptime: "round" in the station's
+    window (Station.windows: all bloons, or the blimps for an ability meant
+    for them), "bloon" in the `stay` seconds one bloon of the layer spends
+    in the zone (the blimp abilities as "round"). A Blade Maelstrom pressed
+    on cooldown is sure to meet no bloon that passes the tack in under 17 s;
+    a Ground Zero (one blast every 35 s) is sure to strike a ZOMG that takes
+    over 35 s to cross the map. An "on" source keeps that share f of its
+    shots; an "off" source (the plain copy beside a buffed or boosted one,
+    at 1 - share of the shots) takes back the shots the buffed copy loses:
+    (1 - share x f) / (1 - share). stay: None where it is not known
+    (read as "round")."""
+    if not src.timed or ABILITY_TIMING == "uptime":
+        return 1.0
+    out = 1.0
+    for every, duration, share, role, use in src.timed:
+        if isinstance(ABILITY_TIMING, (int, float)) and not isinstance(ABILITY_TIMING, bool):
+            f = float(ABILITY_TIMING)
+        else:
+            win = st.windows
+            if win is None:
+                f = 1.0
+            elif ABILITY_TIMING == "bloon" and use not in BLIMP_USES and stay is not None:
+                landed, expected = _uses_landed(every, duration, (0.0, stay), use)
+                f = min(1.0, landed / expected) if expected > 0.0 else 0.0
+            else:
+                window = win[1] if use in BLIMP_USES else win[0]
+                landed, expected = _uses_landed(every, duration, window, use, win[2]) if window else (0.0, 0.0)
+                f = min(1.0, landed / expected) if expected > 0.0 else 0.0
+        if role == "on":
+            out *= f
+        elif share < 1.0:
+            out *= (1.0 - share * f) / (1.0 - share)
+    return out
+
+
+def _set_windows(stations, lots_by_scenario, mode=None, rnd=None):
+    """Station.windows for one round: per station (local parts too), the
+    first entry and last exit of the round's spawned bloons in its zones -
+    every bloon, and the blimps - the shortest over the scenarios the round
+    is played in, so a window holds in each of them, and the round's facts
+    the planner presses by: {"slow": a slow round (abilities.is_slow_round;
+    False when the round is not known), "blimp_s": the first blimp's spawn
+    (None without blimps), "speed_mult": the mode's and the round's speed
+    ramp}. A station that sees none of a kind gets () for
+    it. Popped layers' children are left out: they come later, and the
+    window stays the shorter, safer one."""
+    info = {"slow": False, "blimp_s": None}
+    if rnd is not None and mode is not None:
+        from .abilities import is_slow_round
+        from .strategy import MODE_RULES
+        info["slow"] = mode in MODE_RULES and is_slow_round(rnd, MODE_RULES[mode])
+    spawns = [lot.t0 for lots in lots_by_scenario for lot in lots or () if layer(lot.bloon, lot.moab_hp).moab]
+    info["blimp_s"] = min(spawns) if spawns else None
+    info["speed_mult"] = max((lot.speed_mult for lots in lots_by_scenario for lot in lots or ()), default=1.0)
+    for st in with_parts(stations):
+        if not any(s.timed for s in st.sources):
+            st.windows = None
+            continue
+        best = [None, None]
+        for lots in lots_by_scenario:
+            if not lots:
+                continue
+            spans = [[math.inf, -math.inf], [math.inf, -math.inf]]
+            for lot in lots:
+                if lot.count <= 1e-9 or not st.covers(lot.path):
+                    continue
+                zone = st.zones[lot.path]
+                a = lot.t0 + zone.entry / lot.speed
+                b = lot.t0 + (zone.entry + zone.length) / lot.speed
+                kinds = (0, 1) if layer(lot.bloon, lot.moab_hp).moab else (0,)
+                for k in kinds:
+                    spans[k][0] = min(spans[k][0], a)
+                    spans[k][1] = max(spans[k][1], b)
+            for k in (0, 1):
+                a, b = spans[k]
+                w = (a, b) if b > a else ()
+                if best[k] is None or not w or (best[k] and w[1] - w[0] < best[k][1] - best[k][0]):
+                    best[k] = w
+        st.windows = tuple(w or () for w in best) + (info,)
+
+
 def _ability_attacks(ab):
     """The attacks of an ability as attacks that fire at their average rate:
     every weapon fires as many volleys per cooldown as it does while the
@@ -1402,7 +1632,8 @@ def _ability_buffs(ab):
     for b in ab.get("buffs") or []:
         share = _uptime(ab, b.get("duration"))
         if share > 0.0:
-            out.append(dict(b, share=share, group=_squash(ab.get("name")), ability=True))
+            out.append(dict(b, share=share, group=_squash(ab.get("name")), ability=True,
+                            timing=_timing(ab, b.get("duration"), share, "on")))
     return out
 
 
@@ -1416,13 +1647,15 @@ def _ability_boosts(ab, entry, kind):
     own = ab.get("self") or {}
     share = _uptime(ab, own.get("duration"))
     if share > 0.0:
-        out.append({"share": share, "rate": own.get("rate") or 1.0, "damage_add": own.get("damage_add") or 0.0})
+        out.append({"share": share, "rate": own.get("rate") or 1.0, "damage_add": own.get("damage_add") or 0.0,
+                    "timing": _timing(ab, own.get("duration"), share, "on")})
     game_id = ((attacks().get("towers") or {}).get(kind) or {}).get("game_id")
     for b in ab.get("buffs") or []:
         if b.get("kind") == "rate" and b.get("towers") and game_id in b["towers"]:
             share = _uptime(ab, b.get("duration"))
             if share > 0.0:
-                out.append({"share": share, "rate": b.get("value") or 1.0, "damage_add": 0.0})
+                out.append({"share": share, "rate": b.get("value") or 1.0, "damage_add": 0.0,
+                            "timing": _timing(ab, b.get("duration"), share, "on")})
     return out
 
 
@@ -1751,12 +1984,20 @@ def profile(kind, tiers):
         # marked (Source.ability) so a board whose abilities the bot does
         # not press can leave them out (station_for: pressed)
         extra = []
-        for a in _ability_attacks(ab):
+        timed = _with_use(ab, kind)
+        for a, raw in zip(_ability_attacks(ab), ab.get("attacks") or []):
+            n = len(extra)
             _flatten_attack(dict(a, **_zone_radius(a, entry)), extra, tower_range=entry.get("range"))
+            for s in extra[n:]:
+                s.timed = (_timing(timed, raw.get("duration"), 1.0, "on"),)
         for made in ab.get("towers") or ():
             share = _uptime(ab, made.get("duration"))
+            n = len(extra)
             for a in made.get("attacks", []):
                 _flatten_attack(a, extra, multiplier=share, tower_range=made.get("range"))
+            for s in extra[n:]:
+                s.timed = (_timing(timed, made.get("duration"), 1.0, "on"),)
+        # the bot's own use of it (_Controls reads "moab"), not the press rule of _with_use
         use = (_hero_ability_use(hero_of(kind), ab.get("name")) if hero_of(kind) is not None
                else _tower_ability_uses().get((kind, ab.get("name")))) or ""
         for s in extra:
@@ -1768,8 +2009,8 @@ def profile(kind, tiers):
     return Profile(kind=kind, tiers=tiers, range=entry.get("range", 0.0),
                    is_global=is_global, sources=sources, aim_bound=aim_bound,
                    buffs=list(entry.get("buffs", [])) + _subtower_buffs(entry) + _potion_buffs(entry)
-                   + [b for ab in pressed for b in _ability_buffs(ab)] + unexported_buffs,
-                   boosts=[b for ab in pressed for b in _ability_boosts(ab, entry, kind)],
+                   + [b for ab in pressed for b in _ability_buffs(_with_use(ab, kind))] + unexported_buffs,
+                   boosts=[b for ab in pressed for b in _ability_boosts(_with_use(ab, kind), entry, kind)],
                    zones=list(entry.get("zones") or []),
                    income=income.get("per_round", 0.0) + income.get("bananas_per_round", 0.0),
                    pattern_radius=pattern, own_radius=own,
@@ -2571,6 +2812,11 @@ class Station:
     # damage-taken debuffs and camo removal from other towers that reach
     # this one's zones, set by _Controls before a round is played
     influence: object = None
+    # when the round's bloons are in this station's zones: ((first in, last
+    # out) of every bloon, (first in, last out) of the blimps, the round's
+    # facts), in game seconds from the round's start, or None; set by
+    # _set_windows before a round is played, read by _timing_factor
+    windows: tuple = None
 
     def covers(self, path):
         return path < len(self.zones) and self.zones[path] is not None and self.zones[path].length > 0
@@ -2797,6 +3043,10 @@ class _Rates:
             if lay.camo and src.camo_shared and camo_paths is not None and path not in camo_paths:
                 continue     # Advanced Intel sees camo only where a detector reaches
             hits = _hit_rate(src, lay, rho, zone, group) * share
+            if src.timed:
+                win = self.station.windows
+                stay = self.station.zones[path].length / max(lay.speed * win[2]["speed_mult"], 1e-6) if win else None
+                hits *= _timing_factor(src, self.station, stay)    # when its abilities are pressed
             if src.digest and src.shots > 0.0:
                 # one grab per digest at most (and the brambles with it)
                 hits *= min(1.0, 1.0 / (_digest_time(src, lay) * src.shots))
@@ -3148,6 +3398,27 @@ def _lots(mode, rnd, track):
 # so builds are chosen with Ice, Glue, stuns and pushes counted.
 STATUS_RATING = True
 LIVE_STATUS_RATING = False
+# ... except in CHIMPS, where the live bot rates with status effects on
+# (live_status_rating). Firing Range CHIMPS (2026-11-13, loss case
+# 20261113_053533_FiringRange_chimps, backlog 111 (a)): the build was chosen
+# on replays with status effects on, which rated round 95 at 0.84-0.86 on the
+# lost board; the live forecast rated the same board 0.44, because the late
+# game's Maim MOAB and Cripple MOAB stuns counted for nothing. The board then
+# read as lost whatever was bought: Sub Commander moved round 95 0.44 -> 0.44
+# live, and from round 93 every reinforce look ended in "nothing $9,502 buys
+# helps round 95 (0.44)", where with the stuns counted a $7,345 Maim MOAB
+# path lifts it 0.84 -> 0.91. CHIMPS boards are small enough for the cost:
+# on the biggest one in the journals (Alpine Run, 33 towers, round 95) ten
+# margins take 2.2 s with them against 1.5 s without; the 37-tower Impoppable
+# boards the budget was set for stay as they were.
+LIVE_STATUS_MODES = ("chimps",)
+
+
+def live_status_rating(mode):
+    """STATUS_RATING for a live game of `mode` (a bot mode key, e.g.
+    "chimps"): on in LIVE_STATUS_MODES, LIVE_STATUS_RATING elsewhere. The
+    runner sets it before every game (runner.Bot.play)."""
+    return True if mode in LIVE_STATUS_MODES else LIVE_STATUS_RATING
 # A stun, slow or push is shared among the bloons in a zone - the packing
 # rho says how many. A burst is packed a quarter of a width apart, so rho
 # reads a lone MOAB as one of ~28 in a sniper's zone; True shares the hits
@@ -3391,6 +3662,9 @@ def _per_bloon_at_one(st, src, lay, rho, path, group=None):
     hits = _hit_rate(src, lay, rho, zone)
     if src.ability_use == "moab" and not lay.moab:
         hits = 0.0             # pressed in blimp rounds, for the blimps (abilities.py)
+    if src.timed:
+        stay = zone.length / max(lay.speed * st.windows[2]["speed_mult"], 1e-6) if st.windows else None
+        hits *= _timing_factor(src, st, stay)    # when its abilities are pressed
     n = rho * zone.length
     if group is not None and STATUS_GROUP_CAP:
         n = min(n, group)
@@ -3573,6 +3847,7 @@ def simulate_round(stations, mode, rnd, track, strength=1.0):
     blimps (_lots) and return the worst. strength scales every station's output (margin
     search)."""
     worst = None
+    _set_windows(stations, _lots(mode, rnd, track), mode, rnd)
     board = _control_board(stations, track)
     for lots in _lots(mode, rnd, track):
         res = _play(stations, track, lots, strength, board)
@@ -3679,13 +3954,15 @@ def round_margin(stations, mode, rnd, track, lo=MARGIN_LO, hi=MARGIN_HI, iterati
     strength; below 1.0 = leaks at full strength). Bisection on strength,
     worst over the track's scenarios this round uses and the turns of its
     blimps (_lots)."""
-    return lots_margin(stations, track, _lots(mode, rnd, track), lo, hi, iterations)
+    return lots_margin(stations, track, _lots(mode, rnd, track), lo, hi, iterations, mode=mode, rnd=rnd)
 
 
-def lots_margin(stations, track, lots_by_scenario, lo=MARGIN_LO, hi=MARGIN_HI, iterations=9):
+def lots_margin(stations, track, lots_by_scenario, lo=MARGIN_LO, hi=MARGIN_HI, iterations=9, mode=None, rnd=None):
     """round_margin for lots built by the caller (groups_lots), one list per
-    scenario of the track: the worst margin over them."""
+    scenario of the track: the worst margin over them. mode, rnd: the round
+    played, when it is one of the mode's own (_set_windows)."""
     worst = 1.0 / lo
+    _set_windows(stations, lots_by_scenario, mode, rnd)
     board = _control_board(stations, track)
     for lots in lots_by_scenario:
         if not lots:
@@ -3760,10 +4037,16 @@ def _buffed_sources(p, buffs_here):
         nxt = []
         for full in out:
             buffed = _with_buffs(full, bs)
+            timing = next((b["timing"] for b in bs if b.get("timing")), None)
+            on = off = full.timed
+            if timing is not None:     # an ability's buff: its copies follow its presses (_timing_factor)
+                every, duration, _, _, use = timing
+                on = full.timed + ((every, duration, share, "on", use),)
+                off = full.timed + ((every, duration, share, "off", use),)
             nxt.append(Source(**{**full.__dict__, "shots": full.shots * (1.0 - share),
-                                 "shots_single": full.shots_single * (1.0 - share)}))
+                                 "shots_single": full.shots_single * (1.0 - share), "timed": off}))
             nxt.append(Source(**{**buffed.__dict__, "name": buffed.name + tag, "shots": buffed.shots * share,
-                                 "shots_single": buffed.shots_single * share}))
+                                 "shots_single": buffed.shots_single * share, "timed": on}))
         out = nxt
     return out
 
@@ -3783,11 +4066,16 @@ def _boosted_sources(sources, boosts):
             if s.ability:
                 nxt.append(s)
                 continue
+            on = off = s.timed
+            if b.get("timing"):        # its copies follow the ability's presses (_timing_factor)
+                every, duration, _, _, use = b["timing"]
+                on = s.timed + ((every, duration, share, "on", use),)
+                off = s.timed + ((every, duration, share, "off", use),)
             nxt.append(Source(**{**s.__dict__, "shots": s.shots * (1.0 - share),
-                                 "shots_single": s.shots_single * (1.0 - share)}))
+                                 "shots_single": s.shots_single * (1.0 - share), "timed": off}))
             nxt.append(Source(**{**s.__dict__, "name": s.name + " (boosted)",
                                  "shots": s.shots * share / rate, "shots_single": s.shots_single * share / rate,
-                                 "damage": s.damage + (add if s.damage > 0.0 else 0.0)}))
+                                 "damage": s.damage + (add if s.damage > 0.0 else 0.0), "timed": on}))
         out = nxt
     return out
 

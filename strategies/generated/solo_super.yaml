@@ -21,17 +21,23 @@
 # Monkey 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 1.82, Super Monkey share of the cash
-#   56%, answers bought: ninja
-#   deflation: dropped - gap R45: camo+purple (dart could pop it but cannot see
-#   camo)
-#   medium: kept - no gaps, min blimp ratio 1.70, Super Monkey share of the cash
-#   73%, answers bought: ninja
-#   reverse: kept - no gaps, min blimp ratio 1.70, Super Monkey share of the
-#   cash 73%, answers bought: ninja
-#   apopalypse: dropped - blimp damage 0.14 < 1.00
-#   hard: dropped - blimp damage 0.71 < 1.00
-#   magic_only: dropped - blimp damage 0.81 < 1.00
+#   easy: kept - no gaps, min blimp ratio 2.21, Super Monkey share of the cash
+#   73%, answers bought: dart
+#   deflation: kept - no gaps, min blimp ratio 1.62, Super Monkey share of the
+#   cash 98%
+#   medium: kept - no gaps, min blimp ratio 2.21, Super Monkey share of the cash
+#   86%, answers bought: dart, ninja
+#   reverse: kept - no gaps, min blimp ratio 2.21, Super Monkey share of the
+#   cash 86%, answers bought: dart, ninja
+#   apopalypse: kept - no gaps, min blimp ratio 2.21, Super Monkey share of the
+#   cash 86%, answers bought: dart, ninja
+#   hard: dropped - blimp damage 0.96 < 1.00
+#   magic_only: dropped - blimp damage 0.88 < 1.00
+#   double_hp: dropped - blimp damage 0.48 < 1.00
+#   half_cash: dropped - blimp damage 0.43 < 1.00
+#   abr: dropped - blimp damage 0.45 < 1.00
+#   impoppable: dropped - blimp damage 0.20 < 1.00
+#   chimps: dropped - blimp damage 0.21 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -39,12 +45,22 @@
 id: solo_super
 xp_target: super   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, medium, reverse]
+modes: [easy, deflation, medium, reverse, apopalypse]
 planner:
   towers: {super: [2, 2, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.89, medium: 0.83, reverse: 0.83}
+  base_success: {easy: 0.89, deflation: 0.92, medium: 0.8, reverse: 0.8, apopalypse: 0.7}
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {apopalypse: [Dark Dungeons, Erosion, Geared, "#Ouch", Sanctuary, "Tricky Tracks"], reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
-  - {do: place, id: o1, kind: wizard, role: dps, segment: [0.0, 0.6]}   # Super Monkey costs $2,500 - more than the $650 start: a Wizard Monkey holds the first rounds
+  - {do: place, id: o1, kind: skywarden, role: dps, segment: [0.0, 0.6]}   # Super Monkey costs $2,500 - more than the $650 start: a Skywarden holds the first rounds
   - {do: place, id: a1, kind: super, role: dps, segment: [0.0, 0.5]}   # main line: 2-0-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
   - {do: upgrade, id: a1, to: 2-0-2}   # cheap tiers first (and lead/camo if they are cheap)

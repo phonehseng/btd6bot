@@ -59,6 +59,17 @@ KNOWN_SHORT = {40: 0.65, 60: 0.62}
 # one. Rounds 50-54 and 60 rate 0.84, 0.74, 0.98, 0.91 and 0.52 (the build's
 # one live game was lost in round 50); they are held a little under that.
 KNOWN_SHORT.update({50: 0.8, 52: 0.7, 53: 0.93, 54: 0.87, 60: 0.48})
+# Since 93c2d83 (2026-11-12, few blimps are few: a zone holds no more than
+# the group sent down it, a projectile's pierce counts only the blimps
+# within its reach) round 40's lone MOAB rates 0.39 (0.70 before): the
+# snipers' pierce no longer counts on blimps that are not there. Rounds 53
+# and 54 now hold (1.0 or more, 0.98 and 0.91 before; 52 0.74 -> 0.82, 60
+# 0.52 -> 0.58), so they leave KNOWN_SHORT as
+# test_the_lone_blimp_rounds_are_still_short asks. The build won this map
+# live on 2026-11-12 11:46 (round 60, round 40 held); round 40's floor is
+# today's number less a little.
+KNOWN_SHORT[40] = 0.35
+del KNOWN_SHORT[53], KNOWN_SHORT[54]
 
 _SETUP = {}
 

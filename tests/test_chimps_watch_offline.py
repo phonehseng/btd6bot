@@ -63,6 +63,26 @@ def test_no_file_or_a_beaten_map_gives_nothing():
             assert bot.watched_chimps_pick(R.planner_specs(bot.strats, bot.account)) is None
 
 
+def test_a_parked_build_gives_way_to_the_maps_best_build():
+    """Spring Spring CHIMPS (2026-11-13 03:35, loss case
+    20261113_040648_SpringSpring_chimps): the watch line named the parked
+    springspring_chimps (base_success 0.05, nine round-95 losses) and the
+    game was lost on round 95 again. A line naming a parked build plays the
+    map's best build for the mode instead - its guide build."""
+    bot = _bot()
+    bot.account.mode_unlocked = lambda m, mode: True
+    assert bot._parked("springspring_chimps", "chimps")
+    assert not bot._parked("springspring_chimps_guide", "chimps")
+    assert not bot._parked("alpinerun_chimps", "chimps")
+    with tempfile.TemporaryDirectory() as tmp:
+        watch, state = Path(tmp) / "CHIMPS_WATCH", Path(tmp) / "tried.json"
+        watch.write_text("Spring Spring / chimps / springspring_chimps\n", encoding="utf-8")
+        with mock.patch.object(R, "CHIMPS_WATCH_FILE", watch), mock.patch.object(R, "CHIMPS_WATCH_STATE", state):
+            plan = bot.watched_chimps_pick(R.planner_specs(bot.strats, bot.account))
+            assert plan is not None and plan.mode_key == "chimps", plan
+            assert plan.strategy_id == "springspring_chimps_guide", plan.strategy_id
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

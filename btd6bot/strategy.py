@@ -212,7 +212,56 @@ def _answers_from_game_model():
         ANSWERS["lead"] = list(lead)
 
 
+# The hand-written table as written above, before the game model and the
+# damage model add to it (tools/build_bloon_kb.py measures its new answers
+# against these).
+HAND_ANSWERS = {t: list(v) for t, v in ANSWERS.items()}
+
+
+def _answers_from_damage_model():
+    """Add the strength-threat answers the damage model found
+    (counters.json "model_answers", derived by tools/build_bloon_kb.py):
+    (tower, path, tier) where one tower is at least as strong against the
+    threat's bloon as the median hand-listed answer. The hand table never
+    accepted Glue, Desperado, Alchemist, Mermonkey, Skywarden, Engineer or
+    Beast Handler for any strength threat, nor Ice and Dartling beyond the
+    rush, so coverage() dropped every mode a build carried by them played
+    without another listed tower (docs/tower_exclusions_audit.md item 3).
+    Entries are only ever added, after the hand ones; the hand table stays
+    whole when the data is missing."""
+    try:
+        found = (TH.counters().get("model_answers") or {}).get("answers") or {}
+    except Exception as e:     # a broken data file must not stop the bot
+        log.warning("damage-model answers unavailable: %r", e)
+        return
+    for threat, entries in found.items():
+        if threat not in ANSWERS:
+            continue
+        have = set(ANSWERS[threat])
+        for kind, path, tier in entries:
+            entry = (kind, int(path), int(tier))
+            if kind in T.TOWERS and entry not in have:
+                ANSWERS[threat].append(entry)
+                have.add(entry)
+
+
 _answers_from_game_model()
+_answers_from_damage_model()
+
+
+def buyable_answers(threat):
+    """The (tower, path, tier) answers the executor upgrades a standing tower
+    toward by itself (Executor._generic_answer): for a strength threat only
+    the hand-listed ones. The damage model's answers count wherever a build
+    already has them (coverage, has_answer, the generators' and optimizer's
+    answer steps), but the executor does not start buying toward one on
+    its own: on Ascent Easy that took the plan's cash for a 4-0-0 Skywarden
+    before the plan's own MOAB answer, and the plan ended three steps short.
+    Camo and lead (from the game model) and purple are bought as before."""
+    hand = HAND_ANSWERS.get(threat)
+    if hand is None or threat in ("camo", "lead"):
+        return ANSWERS.get(threat, [])
+    return [a for a in ANSWERS.get(threat, []) if a in hand]
 
 # Prices: CHIMPS is a Hard mode in the game (x1.08), not Impoppable (x1.2);
 # MODE_FAMILY keeps it with Impoppable for difficulty order (min_difficulty).
@@ -333,6 +382,11 @@ def _village_keystones():
 VILLAGE_KEYSTONES = _village_keystones()
 
 # Towers tried, in order, for the implicit panic step (when a strategy lists none).
+# The hand list comes first; every other tower that pops bloons on its own
+# from 0-0-0 follows, cheapest first (_more_kinds, added below once the
+# threat data is loaded). A game whose rules or constraints allowed none of
+# the eight had no panic tower but the dart (docs/tower_exclusions_audit.md
+# item 12).
 PANIC_KINDS = ["tack", "dart", "sniper", "ninja", "wizard", "boomerang", "engineer", "spike"]
 
 # -- achievement constraints ----------------------------------------------------------
@@ -482,8 +536,64 @@ def reachable_tier(account, kind, path0):
 
 
 # Camo backups, best first: (kind, crosspath) giving strong camo help.
+# The hand list comes first; then, for every other tower, its cheapest
+# crosspath that strong_camo counts (a camo answer at tier 3 or more),
+# cheapest first (_camo_backups_from_data). The six were the only ones
+# tried, so a mode or constraint that allowed none of them had no backup
+# (docs/tower_exclusions_audit.md item 12).
 CAMO_BACKUPS = [("village", "0-2-0"), ("dart", "0-2-3"), ("sniper", "3-2-0"),
                 ("ninja", "3-0-0"), ("wizard", "0-0-3"), ("sub", "3-0-0")]
+
+
+def pops_on_its_own(kind):
+    """Does a bare tower of this kind (0-0-0) pop bloons by itself? The game
+    model's verdict (threats.gm_can: it pops some property), else the hand
+    facts' attacks. A Glue Gunner, a village or a farm do not."""
+    if kind not in T.TOWERS or kind in INCOME_TOWERS or TH.tower_facts(kind).get("needs_aim"):
+        return False
+    verdicts = [TH.gm_can(kind, (0, 0, 0), prop) for prop in ("black", "white", "purple", "lead")]
+    if any(v is not None for v in verdicts):
+        return any(verdicts)
+    return bool(TH.attacks(kind, (0, 0, 0)))
+
+
+def _more_kinds(hand, max_price=None):
+    """The towers that pop on their own and stand on land (not on water
+    only), not in `hand`, cheapest first; with max_price, only those whose
+    Medium price is at most that."""
+    out = [k for k in T.TOWERS if k not in hand and pops_on_its_own(k)
+           and (T.TOWERS[k].get("placement") or "land") != "water"
+           and (max_price is None or T.tower_cost(k) <= max_price)]
+    return sorted(out, key=lambda k: (T.tower_cost(k), k))
+
+
+def _camo_backups_from_data():
+    """(kind, crosspath) for every tower not in CAMO_BACKUPS: its cheapest
+    legal crosspath with a tier of 3 or more at which ANSWERS["camo"] (the
+    game model's camo detection) counts it - what strong_camo needs from a
+    tower - cheapest first. Not for towers that must be aimed, income
+    towers or water-only towers (the map is unknown)."""
+    listed = {k for k, _ in CAMO_BACKUPS}
+    out = []
+    for kind in T.TOWERS:
+        if kind in listed or kind in INCOME_TOWERS or TH.tower_facts(kind).get("needs_aim") \
+                or (T.TOWERS[kind].get("placement") or "land") == "water":
+            continue
+        best = None
+        for tiers in TH.all_crosspaths():
+            if max(tiers) < 3:
+                continue
+            if any(k == kind and (path == 0 or tiers[path - 1] >= tier) for k, path, tier in ANSWERS["camo"]):
+                cost = T.total_cost(kind, tiers)
+                if best is None or cost < best[0]:
+                    best = (cost, tiers)
+        if best is not None:
+            out.append((best[0], kind, "-".join(map(str, best[1]))))
+    return [(kind, cross) for _, kind, cross in sorted(out)]
+
+
+PANIC_KINDS += _more_kinds(PANIC_KINDS)
+CAMO_BACKUPS += _camo_backups_from_data()
 
 
 def camo_backup(strat, account=None, mode=None):
@@ -576,10 +686,35 @@ def coverage(strat, mode, account=None):
     return (not missing), missing
 
 
+def _water_fits(strat, kind):
+    """Does this water tower reach the track on every map the strategy is
+    for? Only for a strategy pinned to maps (planner.maps, or its `map`),
+    each with a data/map_fit.json fit for the tower of at least the
+    planner's FULL_FIT on its early or late side. Unknown maps: no."""
+    maps = (strat.get("planner") or {}).get("maps") or ([strat["map"]] if strat.get("map") else None)
+    if not maps:
+        return False
+    try:
+        from . import mapfit
+        from .planner import FULL_FIT
+        fits = mapfit.load()
+    except Exception:          # no fit data: the map is as good as unknown
+        return False
+    for m in maps:
+        fit = ((fits.get(m) or {}).get("towers") or {}).get(kind)
+        if not fit or max(fit.get("early", 0), fit.get("late", 0)) < FULL_FIT:
+            return False
+    return True
+
+
 def _answer_kinds(strat, mode, account=None):
     """[(kind, caps)] towers the Executor could buy as an answer in this mode:
     the mode's category, the strategy's constraints, the account's unlocks;
-    no income towers, no towers that must be aimed, no water towers."""
+    no income towers, no towers that must be aimed. Water towers only for a
+    strategy pinned to maps where they reach the track (_water_fits): all
+    water towers were left out "as the map is unknown", which held against
+    subs and buccaneers on the very maps built for them
+    (docs/tower_exclusions_audit.md item 12)."""
     c = constraints(strat)
     only = MODE_TOWER_FILTER.get(mode)
     out = []
@@ -589,7 +724,9 @@ def _answer_kinds(strat, mode, account=None):
         if (c.get("allowed_towers") is not None and kind not in c["allowed_towers"]) \
                 or kind in (c.get("forbidden_towers") or ()):
             continue
-        if (facts.get("placement") or "land") == "water" or TH.tower_facts(kind).get("needs_aim"):
+        if TH.tower_facts(kind).get("needs_aim"):
+            continue
+        if (facts.get("placement") or "land") == "water" and not _water_fits(strat, kind):
             continue
         if account is not None and kind not in account.unlocked_towers:
             continue
@@ -1031,7 +1168,13 @@ def achievement_strategies(strats, cards=None):
             if s.get("achievement") and s.get("bot_ready") and _norm(s["achievement"]) not in done}
 
 
-HERO_FALLBACK = ["obyn", "striker_jones", "gwendolin", "quincy"]
+# Heroes tried, in order, when a strategy's own hero is not owned or not
+# allowed: every hero best first on merit (towers.hero_merit_order, ranked in
+# the damage model by tools/rank_heroes.py; water heroes after land ones),
+# the four fresh-account heroes (towers.FRESH_ACCOUNT_HEROES, once the whole
+# list) after them, Corvus last.
+# docs/tower_exclusions_audit.md item 1.
+HERO_FALLBACK = list(T.hero_fallback_order())
 
 
 def _hero_fits(h, c):
@@ -1232,7 +1375,15 @@ class Executor:
             return True
         return _hero_fits(getattr(self.g, "hero", None), c)
 
-    CHEAP_OPENERS = ("dart", "tack", "boomerang", "sniper", "sub", "wizard")
+    # Towers that hold rounds 1-5 cheaply: a plan that opens with one gets no
+    # dart prepended (_with_opener), and a one-life game tries them in this
+    # order for its starter (Match._starter_steps). The hand six come first,
+    # then every other tower that pops on its own and costs no more than the
+    # dearest of them, cheapest first: Desperado, Mermonkey, Skywarden,
+    # Beast Handler and Engineer got hotkeys and were never added
+    # (docs/tower_exclusions_audit.md item 12).
+    HAND_OPENERS = ("dart", "tack", "boomerang", "sniper", "sub", "wizard")
+    CHEAP_OPENERS = HAND_OPENERS + tuple(_more_kinds(HAND_OPENERS, max(T.tower_cost(k) for k in HAND_OPENERS)))
 
     def _with_opener(self, plan):
         """Rounds 1-5 leak when a plan opens with one slow/expensive tower (seen:
@@ -3057,11 +3208,48 @@ class Executor:
         """How many damage towers (or of `towers`) a `kind` buffer at cell
         (cx, cy) has in range."""
         r2 = self._range_cells(kind) ** 2
+        carriers = self._carriers()
         n = 0
         for p in self._damage_towers() if towers is None else towers:
             tx, ty = self.m.frac_to_cell(p.x, p.y)
+            if carriers is not None and carriers[ty, tx] != carriers[cy, cx]:
+                continue    # one of the two is carried away from the other
             n += (tx - cx) ** 2 + (ty - cy) ** 2 <= r2
         return n
+
+    def _carriers(self):
+        """mapgeom.carrier_of for this map and round: which moving ground
+        (Geared's gears, Sanctuary's platforms) each cell rides on, 0 for
+        ground that stays put. None on maps without moving ground."""
+        from . import mapgeom
+        pose = self._pose_round()
+        cached = self.__dict__.get("_carrier_grid")
+        if cached is None or cached[0] != pose:
+            try:
+                grid = mapgeom.carrier_of(self.m, pose)
+            except Exception:    # a map-file problem must never stop placement
+                grid = None
+            cached = self._carrier_grid = (pose, grid)
+        return cached[1]
+
+    def _beside_riders(self, kind, grid, carriers):
+        """`grid` (a buffer's legal cells with moving ground allowed) without
+        the carriers no damage tower rides on.
+
+        A village or an alchemist is worth the towers in its radius, and on
+        a gear it turns with the towers of that gear: it needs no track in
+        reach, which is what moving ground is otherwise judged by
+        (mapgeom.steady_spots). Geared ABR (2026-11-13, loss case
+        20261113_093857_Geared_abr): all of Geared's land is gear ground, so
+        a village had 0 legal cells; the Radar Scanner village meant to show
+        the Heli Pilot camo bloons was "given up after 0 refused spots", and
+        round 27's 250 camo bloons met three snipers and a 3-0-2 heli that
+        could not see them - all 100 lives in ten seconds."""
+        if grid is None or carriers is None or carriers.shape != grid.shape:
+            return grid
+        ridden = {int(carriers[ty, tx]) for tx, ty in
+                  (self.m.frac_to_cell(p.x, p.y) for p in self._damage_towers())}
+        return grid & np.isin(carriers, sorted(ridden | {0}))
 
     def _buff_spots(self, kind, step=None):
         """Legal cells where a buffer reaches the most damage towers (at least
@@ -3321,12 +3509,17 @@ class Executor:
         if self.ground_horizon is not None and kind != "hero":
             phase = self.ground_horizon if whole_game is None else min(whole_game, self.ground_horizon)
             horizons = [whole_game, phase] if self._needs_no_reach(kind) else [phase]
+        # a buffer may ride on moving ground beside the towers it buffs
+        # (_beside_riders); every other tower keeps placement's own rule
+        carriers = self._carriers() if kind in self.BUFFERS else None
         grid = None
         for last in horizons:
             grid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                                   where={"land"} if self.land_only else None,
                                   last_round=last, now_round=self._ground_round(),
-                                  pose_round=self._pose_round(), removed=tuple(self.removed))
+                                  pose_round=self._pose_round(), removed=tuple(self.removed),
+                                  moving=True if carriers is not None else None)
+            grid = self._beside_riders(kind, grid, carriers)
             if grid is None or grid.any():
                 break
         return self._off_panes(kind, grid)
@@ -5482,7 +5675,7 @@ class Executor:
         rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
         return bool(rated) and rated[0] is not None and rated[0] < 1.0
 
-    def _ramp_yields_to_lost_round(self, R, rnd):
+    def _ramp_yields_to_lost_round(self, R, rnd, ratio=None):
         """Must the blimp check leave the cash alone for blimp round R,
         because the damage model sees the game end in another round?
 
@@ -5508,8 +5701,19 @@ class Executor:
         immune to. Round 88 went 1.35 -> 1.85 in the model, round 90 stayed
         at 0.07 and its DDT took the life. Reinforcing had no look in rounds
         81-89; about $98k came in over them, and on that board a MOAB
-        Domination ($65,790) rated round 90 at 1.63."""
+        Domination ($65,790) rated round 90 at 1.63.
+
+        Not when the blimp check reads R under RAMP_PANIC (`ratio`): that far
+        short, a rating of 1-ish is no reason to give the round away. Pat's
+        Pond Impoppable again (2026-11-13 08:58, patspond_impoppable, loss
+        case 20261113_093144): rounds 89-91 were read at 0.2x and rated
+        1.13-2.04 while rounds 98 and 100 were rated 0.46 and 0.27; the
+        check yielded, the plan kept the cash for its Super Mines, and round
+        91's twenty BFBs took the life with $101,163 in hand. Round 88 of the
+        case above read 0.7x and still yields."""
         if not self.rules.get("one_life"):
+            return False
+        if ratio is not None and ratio < self.RAMP_PANIC:
             return False
         rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
         if not rated or rated[0] is None or rated[0] < 1.0:
@@ -5697,7 +5901,7 @@ class Executor:
             # steps were helis whose spots the game refused 30 times over
             # rounds 37-39, and the MOAB leaked all 150 lives with $7,519 in
             # the bank.
-        if self.plan_first():
+        if self.plan_first() and not self._plan_first_gives_up_ramp(R, ratio, money):
             return "plan"     # the build's plan is its blimp ramp (plan_first)
         # Only buys that matter: the cheapest one closing the whole shortfall,
         # else the most damage per dollar among those adding at least a tenth of
@@ -5813,6 +6017,43 @@ class Executor:
             log.warning("blimp ramp round %d: plan step %s ($%d) cannot be paid before it ($%d) - "
                         "the plan gives its turn to blimp damage", R, st, cost, money)
         return cost > money
+
+    def _plan_first_gives_up_ramp(self, R, ratio, money):
+        """Does a plan_first build's plan lose its turn as the blimp ramp
+        for blimp round R? True in a one-life game when the blimp check
+        reads R under RAMP_PANIC (and the damage model did not overrule it,
+        _model_holds) while the plan's next step cannot be paid before R
+        from `money`, the cash in hand plus the income until then
+        (_plan_step_out_of_reach). Waiting then buys nothing before the
+        blimps, and the blimp damage options are bought as for any build.
+
+        plan_first makes the plan the build's blimp ramp (Cracked CHIMPS,
+        2026-11-07: off-plan buys put its Flagship off by ten rounds). That
+        holds while the plan can deliver; a step that cannot be paid in
+        time is not a ramp. Pat's Pond Impoppable (2026-11-13 08:58,
+        patspond_impoppable, loss case 20261113_093144): from round 77 the
+        plan waited for the Super Mines (spi_carry1 -> 5-0-2), out of reach
+        before round 91; the blimp check read rounds 85, 87 and 88 at
+        0.1-0.3x of its 2.5x bar and logged "buying blimp damage that can",
+        but this rule answered "plan" and nothing was bought. The bank grew
+        from $24k to $101k, and round 91's twenty BFBs (read 0.2x, the model
+        1.13) took the one life. Over RAMP_PANIC the plan keeps its turn as
+        before: Sulfur Springs CHIMPS read round 60 at 2.1x of 2.5x with its
+        Archmage out of reach, and the plan's cash stays with the plan.
+
+        Not in CHIMPS. There the blimp check reads the guide builds' late
+        boards far short as a rule (Carrier Flagships and Glaive Lords it
+        does not count: on 2026-11-05 0.17-1.0x where the model gave 16), and
+        with this rule the offline threat simulation left Rake, Spring Spring
+        and Sulfur Springs one plan step short and Lost Crevasse two
+        (tests/test_chimps_intermediate_guides_offline): the cash went to
+        loose blimp damage, as at Cracked. Impoppable has the opposite record
+        (Dark Castle 2026-11-06: check 0.2x, model 2.18, the MOAB leaked)."""
+        if not self.rules.get("one_life") or ratio >= self.RAMP_PANIC or self.idx >= len(self.plan):
+            return False
+        if self.mode == "chimps":
+            return False
+        return self._plan_step_out_of_reach(self.plan[self.idx], money, R)
 
     def _plan_stuck(self, st):
         """Is the plan unlikely to deliver its next step soon? True when
@@ -5935,7 +6176,7 @@ class Executor:
         ramp = self._ramp_due(rnd)
         # (a blimp round the model rates as held gives way to a round it
         # rates as lost: _ramp_yields_to_lost_round)
-        if ramp and ramp[2] < self.ramp_bar(ramp[1]) and not self._ramp_yields_to_lost_round(ramp[0], rnd):
+        if ramp and ramp[2] < self.ramp_bar(ramp[1]) and not self._ramp_yields_to_lost_round(ramp[0], rnd, ramp[2]):
             self.wait_cost = self.wait_total = None
             with self.why("ramp", f"blimp damage short before round {ramp[0]}", ratio=round(ramp[2], 3)):
                 r = self._answer_ramp(*ramp, cash, rnd)
@@ -6330,7 +6571,7 @@ class Executor:
                         steps.append({"do": "upgrade", "id": village.tid, "to": "-".join(map(str, to))})
             threat = "camo"  # and/or upgrade camo towers to tier 3+
         for p in self.g.towers.values():
-            for kind, path, tier in ANSWERS.get(threat, []):
+            for kind, path, tier in buyable_answers(threat):
                 if p.kind != kind or not path:
                     continue
                 to = list(p.tiers)

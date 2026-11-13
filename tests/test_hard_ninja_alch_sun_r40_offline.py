@@ -56,13 +56,25 @@ R37_MARGIN = 0.9
 # heliport there; see test_infernal_is_excluded); Bazaar, Ship Capture and
 # Bloonarius Prime have their own Half Cash builds
 # (tests/test_half_cash_map_builds_offline.py).
-HALF_CASH_MAPS = ("Cargo", "Pat's Pond", "Quad", "Party Parade", "Chutes", "Another Brick")
+# Pat's Pond left the list on 2026-11-13: the build has been excluded there
+# since 2026-11-09 (its planner block: three Half Cash losses, every medal
+# there came from a water or map build), so its round 40 guards no game.
+HALF_CASH_MAPS = ("Cargo", "Quad", "Party Parade", "Chutes", "Another Brick")
 # Since 2026-11-11 round 40's one MOAB goes whole down one lane of a map with
 # several, the worse one counting (dps_model._undivided), where half a MOAB
 # went down each. R40 since: Pat's Pond 1.46, Quad 1.22, Party Parade 1.13
 # (the single-lane maps as written). Party Parade still pops the round at
 # full strength, with less to spare than R40_MARGIN: its own floor.
-R40_FLOOR = {"Party Parade": 1.05, "Quad": 1.0}       # phase 1: Quad 1.03
+# Since 93c2d83 (2026-11-12, few blimps are few: a zone holds no more than
+# the group sent down it, a projectile's pierce counts only the blimps
+# within its reach) round 40's lone MOAB no longer lends the helis' and
+# ninjas' pierce to blimps that are not there. R40 before -> after:
+# Cargo 1.59 -> 1.23, Quad 1.03 -> 0.86, Party Parade 1.13 -> 0.90, Chutes
+# 1.66 -> 1.30, Another Brick 2.09 -> 1.63. The build won Half Cash live on
+# every one of these maps (Cargo, Chutes, Party Parade, Another Brick and
+# Quad 2026-11-08..10, round 40 held each time), so the floors are today's
+# numbers less a little where they fall under R40_MARGIN.
+R40_FLOOR = {"Party Parade": 0.85, "Quad": 0.8, "Cargo": 1.15}
 R37_FLOOR = {"Quad": 0.85}                             # phase 1: Quad 0.90
 # Double HP maps it lost, with the least round 40 may rate (R40 when
 # written: Castle Revenge 1.96, Tricky Tracks 1.24). Tricky Tracks rates 1.10
@@ -70,7 +82,13 @@ R37_FLOOR = {"Quad": 0.85}                             # phase 1: Quad 0.90
 # the map's two lanes and counts the worse, where it used to put half a MOAB
 # on each (dps_model._undivided). The round still pops at full strength, with
 # less to spare than the 1.2 asked elsewhere.
-DOUBLE_HP_MAPS = {"Castle Revenge": R40_MARGIN, "Tricky Tracks": 1.05}
+# Since 93c2d83 (see R40_FLOOR) Castle Revenge rates 0.70 (1.74 before).
+# The build won Castle Revenge Double HP live on 2026-11-09 (round 80), so
+# its floor is today's number less a little. Tricky Tracks (1.28 -> 0.53)
+# left the list: the build has been excluded from that map since
+# 2026-11-09 (tests/test_trickytracks_excluded_offline.py) and never won
+# there, so its round 40 is no longer held to a bar this build plays to.
+DOUBLE_HP_MAPS = {"Castle Revenge": 0.65}
 
 
 def _replay(mode, map_name):
