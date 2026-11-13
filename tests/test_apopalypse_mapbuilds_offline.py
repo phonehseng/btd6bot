@@ -62,8 +62,52 @@ def test_the_first_heli_is_bought_to_3_2_0_before_anything_else():
         plan = _plan(sid)
         assert plan[0] == {"do": "place", "id": "h1", "kind": "heli", "role": "dps", "at": plan[0]["at"]}, sid
         assert plan[1] == {"do": "upgrade", "id": "h1", "to": "3-2-0"}, sid
-        # the second heli follows at once (two 3-2-0 helis: 2.04+ on rounds 15-20)
-        assert plan[2]["kind"] == "heli" and plan[3] == {"do": "upgrade", "id": plan[2]["id"], "to": "3-2-0"}, sid
+    # Bloody Puddles: the second heli follows at once (two 3-2-0 helis: 2.04+ on rounds 15-20)
+    plan = _plan("bloodypuddles_apopalypse")
+    assert plan[2]["kind"] == "heli" and plan[3] == {"do": "upgrade", "id": plan[2]["id"], "to": "3-2-0"}
+
+
+def test_dark_dungeons_has_a_lane_ninja_and_the_hero_before_the_second_heli():
+    """Dark Dungeons 2026-11-12 17:51 (case 20261112_175304): the build's
+    first game was lost on round 18, a minute in. The round-15 start paid
+    for the dart and h1 3-2-0, h2 stood at 0-2-0 and both helis chased the
+    same bloon while the other two lanes leaked; the hero was the plan's
+    last step. The general build's games of 13:13 and 15:55 held rounds
+    15-34 and 17-28 with h1 3-2-0, a ninja at the foot of the middle lane
+    and the hero. So, between h1's 3-2-0 and the second heli:
+      * that ninja is placed where it stood in those games and grown to
+        2-0-2, and the hero is placed;
+      * what the plan buys up to the hero (with the executor's $200 opener
+        dart) costs no more than the hero's price over the Fast Track
+        start, so the hero is the first buy from round 15's own cash."""
+    from btd6bot import towers as T
+    plan = _plan("darkdungeons_apopalypse")
+    second_heli = next(i for i, st in enumerate(plan) if st["do"] == "place" and st["kind"] == "heli" and i > 0)
+    between = plan[2:second_heli]
+    ninja = next(st for st in between if st.get("kind") == "ninja")
+    held_spots = ((0.478, 0.930), (0.473, 0.913))       # n1 on 13:13 and on 15:55
+    assert any(abs(ninja["at"][0] - x) < 0.02 and abs(ninja["at"][1] - y) < 0.02 for x, y in held_spots), ninja
+    assert {"do": "upgrade", "id": ninja["id"], "to": "2-0-2"} in between
+    hero = next(i for i, st in enumerate(plan) if st.get("kind") == "hero")
+    assert hero < second_heli, (hero, second_heli)
+
+    family = S.PRICE_FAMILY.get("apopalypse", "medium")
+    start_cash = 6730                                   # the HUD at 17:51:27, before the first purchase
+    cost = T.tower_cost("dart", family)                 # the executor's opener
+    tiers = {}
+    for st in plan[:hero]:
+        if st["do"] == "place":
+            cost += T.tower_cost(st["kind"], family)
+            tiers[st["id"]] = (st["kind"], [0, 0, 0])
+        else:
+            kind, have = tiers[st["id"]]
+            want = [int(v) for v in st["to"].split("-")]
+            for path in (1, 2, 3):
+                while have[path - 1] < want[path - 1]:
+                    have[path - 1] += 1
+                    cost += T.upgrade_cost(kind, path, have[path - 1], family)
+    assert cost <= start_cash, cost
+    assert cost + T.hero_cost(S.load_all()["darkdungeons_apopalypse"]["hero"], family) > start_cash
 
 
 def test_cheap_helis_stand_before_the_first_apache_tier():
