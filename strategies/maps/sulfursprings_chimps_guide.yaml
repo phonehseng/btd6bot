@@ -81,6 +81,29 @@
 # pool's tip, 1-0-0 at round 6 and 2-0-0 by round 8 (tools/opening_rule.PROVEN);
 # the guide's wizard and Obyn follow.
 #
+# Round 63, 2026-11-13 (case 20261113_085155, lost round 63's ceramic rush with
+# $21,162 saved for the Archmage): three of the hardened pins fail the live
+# executor's reach check (Executor._at_in_reach) - the wizard at (0.334, 0.112)
+# reaches 16 track cells (floor 37), the boomerang at (0.152, 0.521) 1 (floor
+# 42), the glue at (0.206, 0.146) none (floor 128). The bot stood the wizard at
+# (0.532, 0.785) and the boomerang at (0.628, 0.538) by its own search; Obyn
+# stood beside the empty pin. The damage model rated the pins well because
+# it moves every tower on this map's 51-high ground 0.124 of the screen down
+# (dps_model.Track.frac_to_world, HEIGHT_FACTOR) - towards the lava from the
+# top, away from it at the bottom - while the executor counts track round the
+# spot itself. Live the bottom-ledge wizard earned 22,156 XP, more than the
+# sniper. Re-pinned to cells both measures accept (flat reach and the shifted
+# footprint): the wizard by the exit lane (0.131, 0.76; 83 / 101 cells), the
+# boomerang back at its pre-hardening (0.623, 0.555; 160 / 116), the glue on
+# the loop's east rim (0.596, 0.692; 162 / 75). Obyn stays: beside the new wizard
+# the replay rates every round lower. optimize_builds.replay_plan, live sight,
+# against the board the bot really built: nothing lower by more than 0.05;
+# round 37 0.38 -> 0.99, 38 0.34 -> 0.61, 30 1.16 -> 1.78, 77 1.31 -> 1.58,
+# 63 1.53 -> 1.59; rounds 94-100 stay 0.18-0.82. The ratings in "Hardened" counted the
+# towers on the pins the bot passes over; most late rounds read 0.1-1.5 lower
+# on this board than they say. The model rated round 63 1.53 live and lost it:
+# the rush round is over-rated here, with or without the change.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -93,7 +116,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {wizard: [5, 0, 2], buccaneer: [5, 0, 2], glue: [0, 2, 5], sniper: [5, 1, 0], boomerang: [3, 0, 2], bomb: [0, 0, 0]}
-  revised: "2026-11-13T07:30"   # hardened (see "Hardened")
+  revised: "2026-11-13T10:30"   # round 63 (see "Round 63")
   maps: [Sulfur Springs]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -106,8 +129,8 @@ plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.419]}         # the springs in the guide: the west pool's tip, where the proven boat stood
   - {do: upgrade, id: b1, to: 1-0-0}                                            # R6 Faster Shooting
   - {do: upgrade, id: b1, to: 2-0-0}                                            # R8 Double Shot
-  - {do: place, id: w1, kind: wizard, role: dps, at: [0.334, 0.112]}            # the guide's first tower
-  - {do: place, id: hero, kind: hero, role: dps, near: [w1], at: [0.291, 0.129]}  # Obyn, beside the wizard
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.131, 0.76]}             # the guide's first tower; by the exit lane (was 0.334, 0.112: passed over live, case 20261113_085155)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.129]}             # Obyn: kept at the top (beside the new wizard spot the replay rates him lower)
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.238, 0.129]}  # added: the Cripple MOAB sniper (see above)
   - {do: place, id: x1, kind: bomb, role: dps, at: [0.612, 0.615]}              # added: round 28's leads (see above): the north rim cell the damage model rates best for them
   - {do: upgrade, id: w1, to: 0-0-1}                                              # opening search 2026-11-12
@@ -123,11 +146,11 @@ plan:
   - {do: upgrade, id: b1, to: 4-0-2}                                            # Aircraft Carrier
   - {do: upgrade, id: w1, to: 4-0-2}                                            # Arcane Spike
   - {do: upgrade, id: s1, to: 4-1-0}                                            # added: Maim MOAB, before round 60's BFB
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.152, 0.521]}         # added: Glaive Ricochet for round 63 (moved from 0.623, 0.555: hardening)
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.623, 0.555]}         # added: Glaive Ricochet for round 63 (back from 0.152, 0.521: passed over live, case 20261113_085155)
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: w1, to: 5-0-2}                                            # Archmage
   - {do: upgrade, id: b1, to: 5-0-2}                                            # Carrier Flagship
-  - {do: place, id: g1, kind: glue, role: dps, at: [0.206, 0.146]}
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.596, 0.692]}             # the east rim of the loop (was 0.206, 0.146: no track in reach for the executor, case 20261113_085155)
   - {do: upgrade, id: g1, to: 0-2-5}                                            # Super Glue
   - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
 answers:
