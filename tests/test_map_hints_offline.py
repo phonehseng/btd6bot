@@ -284,12 +284,27 @@ def test_map_strategies_usable_and_covered():
             assert ok, (sid, mode, missing)
 
 
+# Pins on ground the map file marks blocked but the game takes the tower on:
+# {build id: {tower id}}. The geometry model used here knows no learned
+# cells, so these are named with their evidence instead:
+#   ravine_magic_only nM - a ninja at (0.377, 0.743), the middle spot: placed
+#     there live on 2026-11-12 19:37 (case 20261112_194415_Ravine_magic_only,
+#     "the game accepts ninja at a spot the map file marks blocked (70,82)")
+#     and legal in play since placement.valid_spots keeps accepted cells
+#     (tests/test_accepted_cells_offline.py).
+GAME_ACCEPTED = {"ravine_magic_only": {"nM"}}
+
+
 def test_map_strategy_spots_are_legal():
     """Every `at` in plan/fill order is a legal spot for its tower; an answer
-    step that re-places a planned tower uses that tower's own spot."""
+    step that re-places a planned tower uses that tower's own spot. A pin in
+    GAME_ACCEPTED is not checked itself, but still takes its room from the
+    towers placed after it."""
     for sid, s in map_strategies().items():
         hero = s.get("hero")
         spots, where = [], {}
+        proven = {tuple(st["at"]) for st in s.get("plan") or []
+                  if st.get("do") == "place" and st.get("id") in GAME_ACCEPTED.get(sid, ())}
         for st in (s.get("plan") or []) + (s.get("fill") or []):
             if st.get("do") == "clear":
                 spots.append(("clear", st.get("obstacle"), None))
@@ -297,7 +312,7 @@ def test_map_strategy_spots_are_legal():
                 kind = st["kind"]
                 spots.append((kind, hero if kind == "hero" else None, tuple(st["at"])))
                 where[st.get("id")] = tuple(st["at"])
-        bad = illegal_spots(s["map"], spots, longest(s["modes"]))
+        bad = [b for b in illegal_spots(s["map"], spots, longest(s["modes"])) if b[2] not in proven]
         assert not bad, (sid, bad)
         for steps in (s.get("answers") or {}).values():
             for st in steps:

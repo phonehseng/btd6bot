@@ -29,7 +29,7 @@
 # L and A first, then 2-0-4 Sticky Bombs at both for the MOAB rounds; wizards
 # 0-2-4 (Necromancer: pops lead, reach 60, the most track per tower here) at
 # M, A and L; an alchemist 4-2-0 at L (acid for lead, Berserker Brew);
-# Super Monkeys 3-0-2 (Robo Monkey) where their bigger footprint fits; druids
+# Super Monkeys 3-0-2 (Sun Avatar) where their bigger footprint fits; druids
 # 0-3-1 late. Obyn (+ magic pierce) stands at (0.601, 0.3), between A and C.
 # A druid or a ninja at C first, instead of the second ninja at A, rated
 # worse (0.11 at round 34): Path1's forks are the ones the old build lost.
@@ -51,7 +51,26 @@
 # by M). The L wizard (wL, 0-2-2 for ~$2.1k) now comes right after nL's
 # Sticky Bomb, before wA's Necromancer: the same board with it rates 1.07.
 #
-# Status: played once (lost R40, see above).
+# Second game (2026-11-12 19:31, case 20261112_194415_Ravine_magic_only):
+# passed round 40 (19 lives lost) and lost round 60 with 85 lives and $7,086
+# unspent. The recording shows the BFB and its four MOABs popped beside A
+# within two seconds; their ceramics then ran the A fork's lower half and one
+# got out (defeat screen: ceramic -104, red -10). That fork (Path1-split2) is
+# 310 units long on screen: the A group covers units 68-178, and of the plan
+# only wM reached anything below (223-258). From round 52 the next plan step
+# was a $21,600 Sun Avatar; plan_first let reinforce spend for the weak rounds
+# meanwhile and $23k went to nine off-plan towers, more than the step cost.
+# Changes: a ninja in the middle (nM at 0.377, 0.743 - the game refuses a
+# wizard or druid there but took a ninja in this game and in nine before it;
+# from there a 4-0-2 reaches units 203-283 of the A fork and both Path2 forks)
+# is placed after wL and grown to Bloonjitsu before the first super; the
+# druid, ninja and druid steps (dC 0-3-1, nL2, dA) come before the Sun
+# Avatars. Replay: R47 0.52 -> 0.87, R53 0.39 -> 0.69, R55 0.39 -> 0.68,
+# R61-63 0.32, 0.37, 0.31 -> 0.64, 0.59, 0.70; R67 1.15 -> 0.52. NOT shown by
+# the model: round 60 itself stays at 0.32-0.35 - it rates the BFB, which the
+# lost board did pop, and not the children's run to the exit.
+#
+# Status: played twice (lost R40, then R60, see above).
 id: ravine_magic_only
 map: Ravine
 hero: obyn
@@ -79,21 +98,27 @@ plan:
   - {do: upgrade, id: nL, to: 2-0-4}
   - {do: place, id: wL, kind: wizard, role: dps, at: [0.195, 0.709]}      # L and Path2-split2: R40's MOAB on the L fork
   - {do: upgrade, id: wL, to: 0-2-2}                                       # (2026-11-12 17:19 loss: 0.80 -> 1.07 on R40)
+  - {do: place, id: nM, kind: ninja, role: dps, at: [0.377, 0.743]}       # middle: the A fork's lower half (2026-11-12 19:31 loss)
+  - {do: upgrade, id: nM, to: 2-0-1}
   - {do: upgrade, id: wA, to: 0-2-4}
   - {do: upgrade, id: wL, to: 0-2-4}
   - {do: upgrade, id: wM, to: 0-2-4}
+  - {do: upgrade, id: nM, to: 4-0-2}                                       # Bloonjitsu on the ceramics that outrun the A group
   - {do: place, id: sA, kind: super, role: dps, at: [0.377, 0.155]}       # A
   - {do: upgrade, id: sA, to: 2-0-2}
   - {do: upgrade, id: a1, to: 4-2-0}
   - {do: place, id: sL, kind: super, role: dps, at: [0.158, 0.768]}       # L
   - {do: upgrade, id: sL, to: 2-0-2}
-  - {do: upgrade, id: sA, to: 3-0-2}
-  - {do: upgrade, id: sL, to: 3-0-2}
   - {do: upgrade, id: dC, to: 0-3-1}
   - {do: place, id: nL2, kind: ninja, role: dps, at: [0.115, 0.802]}       # L
   - {do: upgrade, id: nL2, to: 4-0-2}
   - {do: place, id: dA, kind: druid, role: dps, at: [0.393, 0.232]}       # A
   - {do: upgrade, id: dA, to: 0-3-1}
+  # The $21,600 Sun Avatars wait for the cheaper steps above: with one as the
+  # next step from round 52, the 19:31 game's cash went to nine off-plan
+  # towers instead (see the header).
+  - {do: upgrade, id: sA, to: 3-0-2}
+  - {do: upgrade, id: sL, to: 3-0-2}
   - {do: place, id: sC, kind: super, role: dps, at: [0.671, 0.359]}       # C
   - {do: upgrade, id: sC, to: 3-0-2}
 answers:

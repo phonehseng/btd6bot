@@ -132,11 +132,21 @@ LOST_R40_BOARD = {
 }
 
 
+# What the L wizard must add to round 40's rating on the lost board (0.33
+# measured on 2026-11-12 with the damage model of 93c2d83, 0.27 before it).
+R40_WIZARD_GAIN = 0.25
+
+
 def test_round_40_has_the_l_fork_wizard_after_the_sticky_bombs():
     """Round 40 runs down Path1's two forks. In the lost game the board with
     both Sticky Bombs rated 0.80 there (the L fork, Path1-split1, has nL
-    alone); the L wizard at 0-2-2 lifts it over 1.0, so it now follows nL's
-    Sticky Bomb at once instead of waiting behind wA's Necromancer."""
+    alone); the L wizard at 0-2-2 lifted it to 1.07, so it now follows nL's
+    Sticky Bomb at once instead of waiting behind wA's Necromancer.
+
+    Since the damage model counts a lone blimp as few (93c2d83, 2026-11-12
+    21:30) the same two boards rate 0.61 and 0.94: the wizard is still worth
+    a third of the round, which is what is held here (R40_WIZARD_GAIN), but
+    the round is no longer rated over 1.0."""
     plan = S.load_all()[BUILD]["plan"]
     order = [(st.get("id"), st.get("to") or st["do"]) for st in plan]
     i = order.index(("nL", "2-0-4"))
@@ -151,7 +161,43 @@ def test_round_40_has_the_l_fork_wizard_after_the_sticky_bombs():
         return fc.margins(towers, [40])[40]
     lost = r40(LOST_R40_BOARD)
     now = r40(dict(LOST_R40_BOARD, wL=("wizard", (0, 2, 2), *wl["at"])))
-    assert lost < 1.0 <= now, (lost, now)
+    assert lost < 1.0 and now - lost >= R40_WIZARD_GAIN, (lost, now)
+
+
+A_FORK = "Path1+Path1-split2"
+A_GROUP_END = 178       # units along the A fork where the A group's reach ends (nA, the farthest)
+MIN_LOWER_REACH = 60    # units of the A fork below that a plan tower must reach
+
+
+def test_a_fork_lower_half_is_covered_before_the_supers():
+    """Case 20261112_194415_Ravine_magic_only (2026-11-12 19:31, lost round
+    60): the BFB and its MOABs were popped beside A, and their ceramics ran
+    the A fork's lower half, where only wM reached 35 units; one got out.
+    The plan now has a ninja in the middle that reaches that stretch as a
+    4-0-2, bought before the first Super Monkey, and no $21,600 Sun Avatar
+    stands in the plan ahead of the cheaper druid and ninja steps (in the
+    lost game that step blocked the plan from round 52 while $23k went to
+    off-plan towers)."""
+    fc = _forecast()
+    plan = S.load_all()[BUILD]["plan"]
+    fork = [p["name"] for p in fc.track.paths].index(A_FORK)
+
+    def lower_reach(step, tiers):
+        x, z, _ = fc.track.frac_to_world(*step["at"])
+        sight = fc.sight if P.needs_sight(step["kind"]) else None
+        zone = fc.track.zones(x, z, D.profile(step["kind"], tiers).range, sight=sight)[fork]
+        if not zone:
+            return 0.0
+        return max(0.0, zone.entry + zone.length - max(A_GROUP_END, zone.entry))
+
+    order = [(st.get("id"), st.get("to") or st["do"]) for st in plan]
+    nm = next(st for st in plan if st.get("id") == "nM" and st["do"] == "place")
+    assert lower_reach(nm, (4, 0, 2)) >= MIN_LOWER_REACH, lower_reach(nm, (4, 0, 2))
+    first_super = next(i for i, st in enumerate(plan) if st.get("kind") == "super")
+    assert order.index(("nM", "4-0-2")) < first_super
+    first_avatar = next(i for i, (_, to) in enumerate(order) if to == "3-0-2")
+    for step in (("dC", "0-3-1"), ("nL2", "4-0-2"), ("dA", "0-3-1")):
+        assert order.index(step) < first_avatar, step
 
 
 def test_general_build_is_kept_off_ravine_magic_only():
