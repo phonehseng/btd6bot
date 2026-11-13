@@ -3519,7 +3519,8 @@ class Executor:
                                   last_round=last, now_round=self._ground_round(),
                                   pose_round=self._pose_round(), removed=tuple(self.removed),
                                   moving=True if carriers is not None else None)
-            grid = self._beside_riders(kind, grid, carriers)
+            if carriers is not None:
+                grid = self._beside_riders(kind, grid, carriers)
             if grid is None or grid.any():
                 break
         return self._off_panes(kind, grid)
