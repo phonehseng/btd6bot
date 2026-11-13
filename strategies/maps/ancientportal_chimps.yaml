@@ -139,7 +139,7 @@ fill:
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.719, 0.504]}  # spare cash: a Maim MOAB sniper
   - {do: upgrade, id: s1, to: 4-1-0}
 answers:
-  camo: [{do: place, id: n1, kind: ninja, role: dps, at: [0.717, 0.563]}]
+  camo: [{do: place, id: n1, kind: ninja, role: dps, at: [0.794, 0.164]}]
   ceramic: [{do: upgrade, id: sb1, to: 2-0-4}]
   moab: [{do: upgrade, id: w1, to: 4-2-0}]
   camo_ceramic: [{do: upgrade, id: v1, to: 3-2-0}]

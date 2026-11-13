@@ -5482,6 +5482,50 @@ class Executor:
         rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
         return bool(rated) and rated[0] is not None and rated[0] < 1.0
 
+    def _ramp_yields_to_lost_round(self, R, rnd):
+        """Must the blimp check leave the cash alone for blimp round R,
+        because the damage model sees the game end in another round?
+
+        True in a one-life game when the model rates R itself as held (1 or
+        more on the board as it stands) and rates another round of the
+        look-ahead under LIKELY_LOST. The two estimates disagree about R;
+        about the other round the model is not in doubt, and one leak there
+        ends the game. The blimp check then neither buys nor holds
+        (_threat_tick): the cash goes to the plan and to reinforcing, which
+        judges purchases on the round that ends the game and saves for one
+        that holds it (reinforce.best, save_target).
+
+        A blimp round the model rates under 1 keeps the blimp check: both
+        estimates call it short. With lives to spare a low round costs
+        lives, not the game, and nothing changes either.
+
+        Pat's Pond Impoppable (2026-11-12 23:33, chimps_sub_druid_water,
+        loss case 20261113_000355_PatsPond_impoppable): from round 81 the
+        model rated round 90's fortified camo DDTs 0.06-0.07. The blimp
+        check read rounds 84, 87 and 88 at 0.6-1.2x of its 2.5x bar (the
+        model: 1.2-1.6), bought MOAB Assassins and held the bank for a MOAB
+        Eliminator, bought at round 88 for $31,200 - bombs, which a DDT is
+        immune to. Round 88 went 1.35 -> 1.85 in the model, round 90 stayed
+        at 0.07 and its DDT took the life. Reinforcing had no look in rounds
+        81-89; about $98k came in over them, and on that board a MOAB
+        Domination ($65,790) rated round 90 at 1.63."""
+        if not self.rules.get("one_life"):
+            return False
+        rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
+        if not rated or rated[0] is None or rated[0] < 1.0:
+            return False
+        worst = self.lookahead_worst(rnd)
+        if worst is None or worst[0] is None or worst[1] in (None, R) or worst[0] >= self.LIKELY_LOST:
+            return False
+        note = ("ramp-yields", R, worst[1])
+        if note not in self._notes():
+            self.noted.add(note)
+            log.warning("blimp check round %d: the damage model rates it %.2f (held) and round %d "
+                        "%.2f (likely lost, one life) - nothing is bought or held for round %d's "
+                        "blimps; the cash goes to the round that ends the game",
+                        R, rated[0], worst[1], worst[0], R)
+        return True
+
     def model_bar(self, ratio, bar):
         """The damage-model rating needed to overrule a blimp check that reads
         `ratio` against its bar `bar`.
@@ -5889,7 +5933,9 @@ class Executor:
             log.warning("threat %s: nothing applicable to buy - not holding the plan for it", threat)
             self.unanswerable.add(threat)  # nothing applicable; don't block the plan
         ramp = self._ramp_due(rnd)
-        if ramp and ramp[2] < self.ramp_bar(ramp[1]):
+        # (a blimp round the model rates as held gives way to a round it
+        # rates as lost: _ramp_yields_to_lost_round)
+        if ramp and ramp[2] < self.ramp_bar(ramp[1]) and not self._ramp_yields_to_lost_round(ramp[0], rnd):
             self.wait_cost = self.wait_total = None
             with self.why("ramp", f"blimp damage short before round {ramp[0]}", ratio=round(ramp[2], 3)):
                 r = self._answer_ramp(*ramp, cash, rnd)
