@@ -68,20 +68,23 @@
 #     Vision: round 59's camo leads, 0.53 -> 0.66. No legal village cell is
 #     within its Radar's 48 units of the boat (the pond), so the boat never
 #     sees camo before 4-2-0.
-#   * opening: boat and dart at round 6 (two damage towers: starter: none
-#     stays), the boat's Double Shot and Hot Shot first, Sauda at
-#     (0.612, 0.709), the sub after her; Advanced Intel kept for round 33's
-#     camo yellows (0.29 without it). The dart moved to (0.751, 0.709).
+#   * opening: the guide's own dart and sub at round 6 ($565, both in reach
+#     of both lanes: 89/87 and 173/175 units), then the boat at the guide's
+#     spot with Double Shot and Hot Shot, the sub's Longer Range, Sauda at
+#     the guide's spot. (A first search put the boat in at round 6 instead;
+#     on Firing Range at 00:06 a lone round-6 boat popped nothing live
+#     although the model rated it, so the round-6 pair here is the guide's.)
+#     Advanced Intel stays for round 33's camo yellows.
 #   Margins, before (the build of 12:00) -> after, live sight:
 #     rounds 6-30: under 1.2: 4 (8 0.92, 9 1.13, 10 1.18, 15 0.93) -> none;
-#       worst 0.92 -> 1.43 (round 9);
-#     rounds 31-59: under 1.0: 47 0.78, 59 0.53 -> 59 0.66;
-#     rounds 60-100: 90 1.18 -> 1.38, 92 0.98 -> 0.99, 93 0.70 -> 0.89, 94
-#       1.00 -> 0.96, 95 0.40 -> 0.46, 96 0.81 -> 0.71, 97 1.13 -> 1.00, 98
-#       0.61 -> 0.55, 99 0.83 -> 0.86, 100 0.44 -> 0.47. Round 93 still leaks
-#       about half a camo DDT at full strength; the cash is spent by round 98
-#       ($7k left), so this is the model's ceiling for the guide's towers.
-#   tools/simulate_threats: plan 33/33, no threat gaps; plan_timeline: the
+#       worst 0.92 -> 1.24 (round 7);
+#     rounds 31-59: under 1.0: 47 0.78, 59 0.53 -> 47 0.71, 59 0.66;
+#     rounds 60-100: 90 1.18 -> 1.45, 92 0.98 -> 1.07, 93 0.70 -> 0.94, 94
+#       1.00 -> 0.99, 95 0.40 -> 0.51, 96 0.81 -> 0.75, 97 1.13 -> 1.14, 98
+#       0.61 -> 0.54, 99 0.83 -> 0.93, 100 0.44 -> 0.59. Round 93 still leaks
+#       under half a camo DDT at full strength; the cash is spent by round 98,
+#       so this is the model's ceiling for the guide's towers.
+#   tools/simulate_threats: plan 35/35, no threat gaps; plan_timeline: the
 #   last step by round 98.
 #
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
@@ -102,14 +105,16 @@ planner:
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
+  - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.558, 0.692]}  # on Strong, by the pond
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.43, 0.521]}               # the central pond: both lanes
   - {do: place, id: b1, kind: buccaneer, role: dps, target: strong, at: [0.419, 0.658]}  # the central pond, on Strong
-  - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.751, 0.709]}  # opening search 2026-11-12
   - {do: upgrade, id: b1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: sb1, to: 1-0-0}                                             # opening search 2026-11-12
   - {do: upgrade, id: b1, to: 2-0-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: b1, to: 2-1-0}                                              # opening search 2026-11-12
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.612, 0.709]}              # opening search 2026-11-12
-  - {do: place, id: sb1, kind: sub, role: dps, at: [0.43, 0.521]}               # the central pond: both lanes
   - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.302, 0.692]}            # Sauda, by the overlapping lanes
+  - {do: upgrade, id: sb1, to: 1-0-1}                                             # (crosspath of the opening)
   - {do: upgrade, id: sb1, to: 2-0-2}                                           # Advanced Intel (round 33's camo yellows: 0.29 without it)
   - {do: upgrade, id: sb1, to: 2-0-4}                                           # Armor Piercing Darts
   - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
