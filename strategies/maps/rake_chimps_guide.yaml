@@ -47,6 +47,30 @@
 # no hero and no ability, and under-rates map-wide towers): 40 0.33, 63 0.25,
 # 76 0.25, 81 0.18, 90 1.00, 95 0.50, 98 0.26, 100 0.51.
 #
+# Hardened (2026-11-13). Searched with tools/optimize_builds' Evaluator,
+# MapSetup and replay_plan, live sight on, status effects on, spots legal
+# (the test's map geometry, plan order) and never refused, CHIMPS cash
+# ($650 at round 6, then rounds only):
+#   * late game: a coordinate search over every tower's spot (replay of
+#     rounds 31-100) moved the first desperado to (0.537, 0.351), the tack
+#     to (0.633, 0.402), the ice to (0.548, 0.419), the alchemists, the
+#     boomerang and the village with them; Sauda a cell right. Same towers,
+#     tiers and order.
+#   * opening: the guide's two desperados stay first (round 6, $650); a
+#     tack (0.195, 0.589), a glue with Stickier Glue and a dart come next,
+#     then the spike factory, the alchemist and Sauda; the tack's 0-0-2 and
+#     the spike's White Hot Spikes and 2-0-3 follow by round 30.
+#   Margins, before (the build of b794cba) -> after, live sight:
+#     rounds 6-30: under 1.2: 17 -> 4; worst 0.49 (round 16) -> 0.96 (round
+#       7); still under 1.2: 6 0.98, 7 0.96, 8 1.10, 14 1.19;
+#     rounds 31-59: under 1.0: 25 -> 12; worst 0.19 (round 51) -> 0.32
+#       (round 51);
+#     rounds 60-100: under 1.0: 35 -> 10; worst 0.17 (round 80) -> 0.44
+#       (round 80); still under 1.0: 60 0.97, 78 0.71, 79 0.86, 80 0.44, 81
+#       0.95, 90 0.89, 92 0.94, 95 0.68, 98 0.55, 100 0.61.
+#   tools/simulate_threats: plan 35/35, no threat gaps; plan_timeline: the
+#   last step by round 98.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -59,33 +83,42 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {desperado: [0, 0, 0], tack: [2, 0, 5], spike: [2, 0, 5], alchemist: [4, 2, 1], ice: [5, 2, 0], boomerang: [5, 0, 2], village: [4, 2, 0]}
-  revised: "2026-11-12T12:00"
+  revised: "2026-11-13T05:00"   # hardened (see "Hardened")
   maps: [Rake]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: e1, kind: desperado, role: dps, at: [0.676, 0.811]}         # right of the bottom U: both lanes' exits
-  - {do: place, id: e2, kind: desperado, role: dps, at: [0.43, 0.572]}          # the centre
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.548, 0.555]}              # the lane crossing in the centre
-  - {do: upgrade, id: t1, to: 0-0-2}
-  - {do: place, id: hero, kind: hero, role: dps, near: [t1], at: [0.505, 0.572]}  # Sauda, by the tack
+  - {do: place, id: e1, kind: desperado, role: dps, at: [0.537, 0.351]}         # right of the bottom U: both lanes' exits (moved from 0.676, 0.811: hardening)
+  - {do: place, id: e2, kind: desperado, role: dps, at: [0.441, 0.555]}          # the centre (moved from 0.43, 0.572: hardening)
+  - {do: place, id: ta1, kind: tack, role: dps, at: [0.195, 0.589]}               # opening search 2026-11-12
+  - {do: place, id: gl1, kind: glue, role: dps, at: [0.313, 0.624]}               # opening search 2026-11-12
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.441, 0.164]}               # opening search 2026-11-12
+  - {do: upgrade, id: gl1, to: 0-1-0}                                             # opening search 2026-11-12
   - {do: place, id: p1, kind: spike, role: dps, at: [0.505, 0.828]}             # top-left of the centre of the enclosed space: both exits
-  - {do: upgrade, id: p1, to: 2-0-0}                                            # White Hot Spikes first: round 28's leads (the guide buys 0-0-2 first)
+  - {do: upgrade, id: p1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: place, id: a1, kind: alchemist, role: support, near: [p1], at: [0.334, 0.555]}  # next to the spike factory (moved from 0.484, 0.76: hardening)
+  - {do: upgrade, id: a1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: place, id: hero, kind: hero, role: dps, near: [t1], at: [0.516, 0.555]}  # Sauda, by the tack (moved from 0.505, 0.572: hardening)
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.633, 0.402]}              # the lane crossing in the centre (moved from 0.548, 0.555: hardening)
+  - {do: upgrade, id: t1, to: 0-0-1}                                              # opening search 2026-11-12
+  - {do: upgrade, id: p1, to: 1-0-1}                                              # opening search 2026-11-12
+  - {do: upgrade, id: a1, to: 2-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: t1, to: 0-0-2}
+  - {do: upgrade, id: p1, to: 2-0-1}                                              # White Hot Spikes first: round 28's leads (the guide buys 0-0-2 first) (crosspath of the opening)
   - {do: upgrade, id: p1, to: 2-0-2}
   - {do: upgrade, id: p1, to: 2-0-3}                                            # before round 28 (the guide's one round anchor)
-  - {do: place, id: a1, kind: alchemist, role: support, near: [p1], at: [0.484, 0.76]}  # next to the spike factory
   - {do: upgrade, id: a1, to: 3-2-0}
-  - {do: place, id: i1, kind: ice, role: dps, at: [0.398, 0.606]}
-  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.377, 0.555]}         # the centre
+  - {do: place, id: i1, kind: ice, role: dps, at: [0.548, 0.419]}                 # moved from 0.398, 0.606 (hardening)
+  - {do: place, id: r1, kind: boomerang, role: dps, at: [0.548, 0.777]}         # the centre (moved from 0.377, 0.555: hardening)
   - {do: upgrade, id: r1, to: 4-0-2}                                            # M.O.A.R Glaives
   - {do: upgrade, id: t1, to: 1-0-4}                                            # Overdrive
   - {do: upgrade, id: t1, to: 2-0-4}
   - {do: upgrade, id: i1, to: 4-2-0}                                            # Embrittlement
   - {do: upgrade, id: t1, to: 2-0-5}                                            # The Tack Zone
-  - {do: place, id: v1, kind: village, role: support, near: [t1, r1, i1], at: [0.355, 0.641]}
+  - {do: place, id: v1, kind: village, role: support, near: [t1, r1, i1], at: [0.633, 0.266]}  # moved from 0.355, 0.641 (hardening)
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Radar, Jungle Drums, Primary Mentoring
-  - {do: place, id: a2, kind: alchemist, role: support, near: [i1, t1], at: [0.516, 0.726]}  # below the ice
+  - {do: place, id: a2, kind: alchemist, role: support, near: [i1, t1], at: [0.548, 0.589]}  # below the ice (moved from 0.516, 0.726: hardening)
   - {do: upgrade, id: a2, to: 4-0-1}
   - {do: upgrade, id: a1, to: 4-2-0}                                            # Stronger Stimulant
   - {do: upgrade, id: r1, to: 5-0-2}                                            # Glaive Lord

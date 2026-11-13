@@ -83,6 +83,30 @@
 # for them, and no longer onto a path the plan needs (reinforce.
 # keeps_plan_open).
 #
+# Hardened (2026-11-13). Searched with tools/optimize_builds' Evaluator,
+# MapSetup and replay_plan, live sight on, status effects on, spots legal
+# (the test's map geometry, plan order) and never refused, CHIMPS cash
+# ($650 at round 6, then rounds only):
+#   * late game: a coordinate search over every tower's spot (replay of
+#     rounds 31-100) moved the ice to (0.131, 0.504), the Mermonkey to
+#     (0.783, 0.436), the boat a cell up. Same towers, tiers and order.
+#   * opening: the guide's sub stays first (round 6) and the Mermonkey
+#     second (round 7; the generic starter covers round 6, no `starter`
+#     key); two tacks (0.655, 0.402) and (0.291, 0.811), the boat with
+#     Double Shot, Etienne at (0.655, 0.334) and the Radar village follow.
+#     A search that opened with a boat and a dart rated rounds 6-9 at
+#     1.34-1.89, but a lone round-6 boat popped nothing live on Firing Range
+#     (2026-11-13 00:06) although the model rated it, so it is not used.
+#   Margins, before (the build of b794cba) -> after, live sight:
+#     rounds 6-30: under 1.2: 16 -> 5; worst 0.45 (round 9) -> 0.58 (round
+#       6); still under 1.2: 6 0.58, 7 0.76, 8 1.19, 9 0.91, 27 1.18;
+#     rounds 31-59: under 1.0: 16 -> 7; worst 0.43 (round 40) -> 0.60 (round
+#       40);
+#     rounds 60-100: under 1.0: 3 -> 3; worst 0.26 (round 60) -> 0.50 (round
+#       60); still under 1.0: 60 0.50, 61 0.78, 62 0.81.
+#   tools/simulate_threats: plan 27/27, no threat gaps; plan_timeline: the
+#   last step by round 96.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -96,20 +120,24 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {sub: [0, 5, 0], mermonkey: [4, 0, 1], buccaneer: [5, 2, 0], ice: [5, 2, 0], village: [2, 3, 0], spike: [2, 0, 5], boomerang: [3, 0, 2]}
-  revised: "2026-11-12T12:00"
+  revised: "2026-11-13T06:00"   # hardened (see "Hardened")
   maps: [Spring Spring]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
   - {do: place, id: sb1, kind: sub, role: dps, at: [0.751, 0.572]}              # the exit water, where both lanes meet
-  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.804, 0.572]}         # by the sub
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.633, 0.538]}            # Etienne, the island's right end
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.778, 0.658]}         # the exit water, by the sub (where the game took it, see above)
+  - {do: place, id: m1, kind: mermonkey, role: dps, at: [0.783, 0.436]}         # by the sub (moved from 0.804, 0.572: hardening)
+  - {do: place, id: ta1, kind: tack, role: dps, at: [0.655, 0.402]}               # opening search 2026-11-12
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.761, 0.641]}         # the exit water, by the sub (where the game took it, see above) (moved from 0.778, 0.658: hardening)
+  - {do: upgrade, id: b1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: place, id: ta2, kind: tack, role: dps, at: [0.291, 0.811]}               # opening search 2026-11-12
   - {do: upgrade, id: b1, to: 2-0-0}
-  - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
   - {do: upgrade, id: m1, to: 0-0-1}                                            # camo for round 24 (the executor's own pick)
+  - {do: upgrade, id: b1, to: 2-1-0}                                              # opening search 2026-11-12
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.655, 0.334]}              # opening search 2026-11-12
   - {do: place, id: v1, kind: village, role: support, near: [b1, sb1], at: [0.676, 0.726]}  # added early: Radar for the camo (see above)
+  - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
   - {do: upgrade, id: v1, to: 0-2-0}                                            # Radar Scanner
   - {do: upgrade, id: v1, to: 1-2-0}                                            # Bigger Radius: the Radar reaches b1 and sb1 (see above)
   - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
@@ -118,7 +146,7 @@ plan:
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.644, 0.811]}  # added: Glaive Ricochet for round 63
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: sb1, to: 0-5-0}                                           # Pre-emptive Strike
-  - {do: place, id: i1, kind: ice, role: dps, near: [v1], at: [0.601, 0.606]}
+  - {do: place, id: i1, kind: ice, role: dps, near: [v1], at: [0.131, 0.504]}     # moved from 0.601, 0.606 (hardening)
   - {do: upgrade, id: i1, to: 4-2-0}                                            # Embrittlement
   - {do: upgrade, id: v1, to: 2-3-0}                                            # MIB
   - {do: place, id: p1, kind: spike, role: dps, at: [0.601, 0.487]}             # Perma-Spike above the exit

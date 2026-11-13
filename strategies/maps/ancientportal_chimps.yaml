@@ -55,6 +55,29 @@
 # and no ability, and under-rates map-wide towers): 40 2.57, 63 5.30, 76 9.11,
 # 81 2.86, 90 3.26, 95 0.96, 98 1.26, 100 4.56.
 #
+# Hardened (2026-11-13). Searched with tools/optimize_builds' Evaluator,
+# MapSetup and replay_plan, live sight on, status effects on, spots legal
+# (the test's map geometry, plan order) and never refused, CHIMPS cash
+# ($650 at round 6, then rounds only):
+#   * late game: a coordinate search over every tower's spot (replay of
+#     rounds 31-100) moved the sub a cell up-left (0.59, 0.624), the ninja
+#     to (0.794, 0.164), the alchemist to (0.612, 0.283), the wizard and
+#     the glue beside it. Same towers, tiers and order.
+#   * opening: the ninja and a dart at round 6 ($645, two damage towers on
+#     land), a Mermonkey, a second dart, Quincy at (0.537, 0.487) and a glue
+#     before the sub, which follows by round 10 (the guide's sub alone at
+#     round 6 lost the game in 9 s on 2026-11-12). The sub's 2-0-1 waits.
+#   Margins, before (the build of b794cba) -> after, live sight:
+#     rounds 6-30: under 1.2: 19 -> 3; worst 0.41 (round 13) -> 1.08 (round
+#       15); still under 1.2: 9 1.15, 15 1.08, 25 1.19;
+#     rounds 31-59: under 1.0: 13 -> 4; worst 0.35 (round 40) -> 0.79 (round
+#       34);
+#     rounds 60-100: under 1.0: 7 -> 8; worst 0.61 (round 78) -> 0.53 (round
+#       95); still under 1.0: 78 0.67, 81 0.84, 82 0.99, 94 0.82, 95 0.53, 96
+#       0.98, 98 0.71, 99 0.84.
+#   tools/simulate_threats: plan 38/38, no threat gaps; plan_timeline: the
+#   last step by round 95.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -68,26 +91,39 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {sub: [2, 0, 4], alchemist: [4, 0, 1], wizard: [5, 2, 0], village: [4, 2, 0], glue: [5, 2, 0], spike: [2, 0, 5], boomerang: [3, 0, 2], ninja: [0, 0, 0]}
-  revised: "2026-11-12T12:00"
+  revised: "2026-11-13T05:00"   # hardened (see "Hardened")
   maps: [Ancient Portal]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: sb1, kind: sub, role: dps, at: [0.623, 0.658]}              # the pond
-  - {do: place, id: hero, kind: hero, role: dps, near: [sb1], at: [0.516, 0.658]}  # Quincy
+  - {do: place, id: n1, kind: ninja, role: dps, near: [sb1], at: [0.794, 0.164]}  # added: round 24's camo (see above) (moved from 0.717, 0.563: hardening)
+  - {do: place, id: da2, kind: dart, role: dps, at: [0.794, 0.726]}               # opening search 2026-11-12
+  - {do: place, id: me1, kind: mermonkey, role: dps, at: [0.644, 0.624]}          # opening search 2026-11-12
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.558, 0.402]}               # opening search 2026-11-12
+  - {do: place, id: hero, kind: hero, role: dps, near: [sb1], at: [0.537, 0.487]}  # opening search 2026-11-12
+  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], target: strong, at: [0.612, 0.283]}  # on Strong (in buff range of sb1) (moved from 0.58, 0.828: hardening)
+  - {do: place, id: gl1, kind: glue, role: dps, at: [0.804, 0.3]}                 # opening search 2026-11-12
+  - {do: upgrade, id: da1, to: 1-0-0}                                             # opening search 2026-11-12
+  - {do: upgrade, id: me1, to: 0-1-0}                                             # opening search 2026-11-12
+  - {do: upgrade, id: me1, to: 0-2-0}                                             # opening search 2026-11-12
+  - {do: upgrade, id: gl1, to: 0-1-0}                                             # opening search 2026-11-12
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.59, 0.624]}              # the pond (moved from 0.623, 0.658: hardening)
+  - {do: upgrade, id: a1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: sb1, to: 0-0-1}                                             # opening search 2026-11-12
+  - {do: upgrade, id: gl1, to: 0-2-0}                                             # opening search 2026-11-12
+  - {do: upgrade, id: a1, to: 1-0-1}                                              # opening search 2026-11-12
+  - {do: upgrade, id: gl1, to: 0-2-1}                                             # opening search 2026-11-12
   - {do: upgrade, id: sb1, to: 2-0-1}
-  - {do: place, id: n1, kind: ninja, role: dps, near: [sb1], at: [0.717, 0.563]}  # added: round 24's camo (see above)
   - {do: upgrade, id: sb1, to: 2-0-3}                                           # damage before the buff (2026-11-12 loss, round 22)
-  - {do: place, id: a1, kind: alchemist, role: support, near: [sb1], target: strong, at: [0.58, 0.828]}  # on Strong (in buff range of sb1)
-  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: a1, to: 2-0-1}                                              # (crosspath of the opening)
   - {do: upgrade, id: a1, to: 3-0-1}
   - {do: upgrade, id: sb1, to: 2-0-4}                                           # Armor Piercing Darts
-  - {do: place, id: w1, kind: wizard, role: dps, at: [0.601, 0.198]}
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.601, 0.215]}              # moved from 0.601, 0.198 (hardening)
   - {do: upgrade, id: w1, to: 4-2-0}                                            # Arcane Spike
   - {do: place, id: v1, kind: village, role: support, near: [w1, sb1], at: [0.612, 0.436]}
   - {do: upgrade, id: v1, to: 2-0-0}                                            # Jungle Drums
-  - {do: place, id: g1, kind: glue, role: dps, at: [0.612, 0.283]}
+  - {do: place, id: g1, kind: glue, role: dps, at: [0.708, 0.436]}                # moved from 0.612, 0.283 (hardening)
   - {do: upgrade, id: g1, to: 4-2-0}                                            # Bloon Liquefier
   - {do: upgrade, id: v1, to: 3-2-0}                                            # Radar Scanner, Primary Training
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.665, 0.453]}  # added: Glaive Ricochet for round 63
