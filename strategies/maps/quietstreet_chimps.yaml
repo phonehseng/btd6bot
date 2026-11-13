@@ -81,8 +81,32 @@
 # a sniper sees every route from one spot; the second dart follows at round
 # 7. The margins above were measured with the two-dart order.
 #
-# Status: one game, lost at round 6 with the two-dart opening; the guide's
-# opening is unplayed. Untested guide build: base_success 0.5,
+# Second game (2026-11-13 06:05, the guide's opening): held rounds 6-51 and
+# lost round 52 on its one life (loss case 20261113_062147). No cash stood
+# idle; the middle of the build was too thin. From round 34 to the end the
+# bloons came 86-96% along the route in seventeen of nineteen rounds, and the
+# live forecast called ten of them crisis rounds (34 0.78, 39 0.76, 43 0.80,
+# 49 0.75, 50 0.68, 52 0.71) while the plan bought sniper tiers and saved
+# for Supply Drop and Elite Sniper. Two steps the guide buys in the
+# sixties now come first (replays of 22 orders, optimize_builds.replay_plan,
+# CHIMPS cash, live sight):
+#   * the spike factory and its Spiked Balls (3-2-0) before the
+#     sniper's Semi-Automatic, about round 39 instead of 71;
+#   * the tack's Ring of Fire before the fourth sniper's
+#     Semi-Automatic, about round 49 instead of 61.
+#   Margins, before -> after: rounds 31-59 under 1.0: 15 -> 8, worst 0.59
+#   (round 58) -> 0.75 (round 39); 40 0.79 -> 1.20, 45 0.76 -> 0.98, 50 0.71
+#   -> 1.01, 52 0.69 -> 1.09, 54 0.71 -> 0.85, 58 0.59 -> 0.80. Still under
+#   1.0: 34 0.78, 39 0.75, 43 0.81, 45 0.98, 47 0.84, 49 0.81, 54 0.85, 58
+#   0.80. The price: Elite Sniper comes at round 64, not 60, and rounds 60-64
+#   rate lower (61 0.89 -> 0.61, 62 0.84 -> 0.66, 63 0.79 -> 0.64, 64 0.64 ->
+#   0.47); from round 65 on nothing changes (rounds 60-100 under 1.0: 21
+#   either way). The step rounds and margins listed further up were measured
+#   before this change (tests/test_quietstreet_chimps_midgame_offline.py).
+#
+# Status: two games, lost at round 6 (two-dart opening) and at round 52 (the
+# guide's opening, before the spike factory and Ring of Fire moved up).
+# Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
 id: quietstreet_chimps
@@ -94,7 +118,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 0, 0], sniper: [5, 5, 2], tack: [5, 0, 2], alchemist: [4, 2, 1], village: [4, 2, 2], spike: [3, 2, 0], glue: [0, 2, 3]}
-  revised: "2026-11-13T04:40"   # the guide's round-6 sniper back in front (see "First game")
+  revised: "2026-11-13T06:55"   # spike factory and Ring of Fire in the thirties and forties (see "Second game")
   maps: [Quiet Street]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -120,6 +144,8 @@ plan:
   - {do: upgrade, id: t1, to: 2-0-2}                                            # R16
   - {do: upgrade, id: t1, to: 3-0-2}                                            # R18 Hot Shots: lead
   - {do: upgrade, id: sa, to: 0-2-2}                                            # R24
+  - {do: place, id: p1, kind: spike, role: dps, at: [0.248, 0.351]}             # R63 in the guide; here before Semi-Automatic (see "Second game")
+  - {do: upgrade, id: p1, to: 3-2-0}                                            # Spiked Balls
   - {do: upgrade, id: sa, to: 0-3-2}                                            # R35 Semi-Automatic
   - {do: place, id: a1, kind: alchemist, role: support, near: [sa, sb], at: [0.761, 0.419]}  # R38
   - {do: upgrade, id: a1, to: 3-0-0}                                            # R38
@@ -128,14 +154,12 @@ plan:
   - {do: place, id: v1, kind: village, role: support, near: [sa, sb, sc], at: [0.59, 0.095]}  # moved from 0.783, 0.283 (hardening)
   - {do: upgrade, id: v1, to: 2-0-2}                                            # R43
   - {do: upgrade, id: sb, to: 3-2-0}                                            # R49 Deadly Precision
+  - {do: upgrade, id: t1, to: 4-0-2}                                            # Ring of Fire: R65 in the guide; here before the fourth sniper's Semi-Automatic
   - {do: upgrade, id: sd, to: 0-3-2}                                            # R50
   - {do: place, id: se, kind: sniper, role: dps, target: first, at: [0.751, 0.351]}  # R50 Sniper E, First (moved from 0.783, 0.692: hardening)
   - {do: upgrade, id: se, to: 0-2-2}                                            # R50
   - {do: upgrade, id: sa, to: 0-5-2}                                            # R58 Elite Sniper (R48's 0-4-2 is an income tier the bot skips)
   - {do: upgrade, id: a1, to: 4-0-1}                                            # R63 Stronger Stimulant
-  - {do: place, id: p1, kind: spike, role: dps, at: [0.248, 0.351]}             # R63
-  - {do: upgrade, id: p1, to: 3-2-0}                                            # R63 Spiked Balls
-  - {do: upgrade, id: t1, to: 4-0-2}                                            # R65 Ring of Fire
   - {do: upgrade, id: sb, to: 4-2-0}                                            # R72 Maim MOAB
   - {do: upgrade, id: sc, to: 0-3-2}                                            # R72
   - {do: upgrade, id: t1, to: 5-0-2}                                            # R85 Inferno Ring
