@@ -21,9 +21,18 @@
 # the track, and the MIB village v2 on the top-left island beside the aces' runways (v2 is pinned
 # near ac1, not near s1, because no ace fits near the Sun Avatar) - both aces, the bomb, the heli
 # and the sniper stand inside its range.
+#
+# Round 9 (2026-11-12 17:49, loss 20261112_175002): the map's two lanes take the rounds in turn,
+# and the opening ninja n1 on the right-hand island has only the first in range (71 units of
+# route, none of the second); Obyn landed beside it. Rounds 6 and 7 got 99% and 98% along the
+# route, round 9 leaked. n2's cell at the bottom has both lanes in range (122 and 129 units), so
+# n2 opens now and grows first, Obyn and the starter dart are pinned beside it where both lanes
+# pass, and n1 follows once n2 has its third tier. Replayed as the plan buys, rounds 7, 9 and 11
+# go from 0.06 to 0.88, 1.09 and 1.35; still under 1.0: rounds 6, 7, 10, 12, 15 (0.57), 16, 39.
 id: enchantedglade_impoppable
 map: Enchanted Glade
 hero: obyn
+starter: {kind: dart, at: [0.473, 0.811]}   # the second tower of the one-life opening, on both lanes too
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:
@@ -31,14 +40,15 @@ planner:
   maps: [Enchanted Glade]
   base_success: {impoppable: 0.5}
 plan:
-  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.655, 0.334]}
-  - {do: upgrade, id: n1, to: 1-0-1}
-  - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}
-  - {do: upgrade, id: n1, to: 2-0-1}
-  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.441, 0.794]}
+  - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.441, 0.794]}   # both lanes in range
+  - {do: upgrade, id: n2, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, segment: [0.2, 0.8], at: [0.398, 0.811]}  # both lanes in range
+  - {do: upgrade, id: n2, to: 2-0-1}
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5], at: [0.655, 0.334]}   # the first lane only
   - {do: upgrade, id: n2, to: 2-0-4}
+  - {do: upgrade, id: n1, to: 2-0-1}
   - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.687, 0.385]}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: n1, to: 3-0-2}

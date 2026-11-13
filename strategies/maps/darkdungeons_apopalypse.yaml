@@ -81,7 +81,24 @@
 # lost games: apopalypse_check (same settings) worst 0.84 (R53) against 0.75
 # (R51); rounds 31-40 1.04 (R35) against 0.97; h4 stands from round 34.
 #
-# Status: written 2026-11-12, not played yet.
+# First game (2026-11-12 17:51, case 20261112_175304_DarkDungeons_apopalypse):
+# lost on round 18, a minute in, rated 3.29 and 4.91 on rounds 17 and 18. The
+# Fast Track start pays $6,730: the dart and h1 3-2-0 take $5,350, so h2 stood
+# at 0-2-0 until round 17 and the hero, last in the plan, never came. The
+# stills show h1 and h2 chasing the same first bloon (Pursuit) while yellows
+# and greens walk out of the other two lanes: 150 lives in eight seconds.
+# The general build's two games of the same day opened with h1 3-2-0, a ninja
+# at the foot of the middle lane (1-0-1, then 2-0-2) and the hero in the left
+# room, and held rounds 15-34 with all 150 lives (13:13) and from round 17 to
+# 28 without a leak (15:55). That opening stands here now, before h2: the
+# ninja nb where it stood in both games and the hero at its old pin. The
+# rater still credits a Pursuit heli in all three lanes at once (backlog 108),
+# so its verdict on this order is the weaker evidence: apopalypse_check
+# (--no-drift, 2026-11-12 18:10) worst 0.71 at round 46 (five MOABs) against
+# 0.84 at round 53 before, plan 19/21 by round 60 - the ninja and the hero
+# move every later purchase back by about $1,800.
+#
+# Status: the opening as played twice by the general build; the rest not played yet.
 id: darkdungeons_apopalypse
 map: Dark Dungeons
 hero: obyn
@@ -94,7 +111,11 @@ planner:
 plan:
   - {do: place, id: h1, kind: heli, role: dps, at: [0.067, 0.402]}      # setup R15: the first heli at once
   - {do: upgrade, id: h1, to: 3-2-0}                                     # Pursuit, IFR (camo R19), Razor Rotors (lead)
-  - {do: place, id: h2, kind: heli, role: dps, at: [0.077, 0.896]}      # ~R17: two helis hold 16-20 at 2.0
+  - {do: place, id: nb, kind: ninja, role: dps, at: [0.478, 0.93]}      # foot of the middle lane, as on 13:13 and 15:55
+  - {do: upgrade, id: nb, to: 1-0-1}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.163, 0.709]}    # left room
+  - {do: upgrade, id: nb, to: 2-0-2}
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.077, 0.896]}      # ~R18-22, once the lanes have a tower each
   - {do: upgrade, id: h2, to: 3-2-0}
   - {do: place, id: dr1, kind: druid, role: dps, at: [0.377, 0.624]}    # middle room
   - {do: upgrade, id: dr1, to: 0-3-1}
@@ -108,7 +129,6 @@ plan:
   - {do: upgrade, id: h2, to: 4-2-0}
   - {do: upgrade, id: h3, to: 4-2-0}
   - {do: upgrade, id: h1, to: 5-2-0}                                     # Apache Prime: a rich game only
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.163, 0.709]}
 answers:
   lead: [{do: upgrade, id: h1, to: 3-2-0}]
   camo: [{do: upgrade, id: h1, to: 3-2-0}]
