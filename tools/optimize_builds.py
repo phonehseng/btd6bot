@@ -476,6 +476,17 @@ class MapSetup:
             return np.ones(len(pts), bool)
         return self._sight(x, z, pts)
 
+    def use_live_sight(self):
+        """See as the live forecast does (match.py builds it with the
+        MapModel's sight_height and ground_height): a tower on raised ground
+        sees over blockers no higher than it. The optimizer's own sight has
+        no heights. On Water Park the cells by the slide see none of the
+        second lane without them and 83-114 units of both lanes with them
+        (2026-11-12); Sunken Columns' column tops the same (round 6 lost
+        three times from the pools)."""
+        heights = (getattr(self.model, "sight_height", None), getattr(self.model, "ground_height", None))
+        self._sight = D.sight_test(self.model.sight, self.track, heights=heights)
+
     def sight_for(self, kind):
         from btd6bot import placement as P
         return self.sight if kind != "hero" and P.needs_sight(kind) else None
@@ -1586,7 +1597,7 @@ def write_summary():
 # Re-checking a written plan
 # ===========================================================================
 
-def replay_plan(plan, rounds=None, account=None):
+def replay_plan(plan, rounds=None, account=None, lane=None, live_sight=False):
     """Play a plan's steps the way the executor does - in order, each as soon
     as the cash allows - on the economy recorded in its `optimizer.scenario`,
     and return {round: margin} with the towers standing when each round
@@ -1599,7 +1610,18 @@ def replay_plan(plan, rounds=None, account=None):
     The hero is rated at its estimated level in each round (hero_level_at;
     account: whose Monkey Knowledge adds hero XP - None counts none, the
     slower estimate), at the plan's "at" or, without one, at the spot
-    MapSetup.hero_spot gives it."""
+    MapSetup.hero_spot gives it.
+
+    A tower placed without an "at" (an exit tower, left to the executor's
+    choice) is paid for but left off the board: the model cannot know
+    where it will stand.
+
+    lane: the index of one of the track's scenarios (Track.scenarios): every
+    round is then played on that lane, whichever lane the game sends it down
+    (lane_margins).
+
+    live_sight: see as the live forecast does, heights and all
+    (MapSetup.use_live_sight)."""
     (mode,) = plan["modes"]
     sc = (plan.get("optimizer") or {}).get("scenario") or {}
     econ = economy(mode)
@@ -1607,9 +1629,16 @@ def replay_plan(plan, rounds=None, account=None):
     econ.start_cash = float(sc.get("start_cash", econ.start_cash))
     econ.cash_mult = float(sc.get("income_multiplier", econ.cash_mult))
     setup = MapSetup(plan["map"], mode)
+    if live_sight:
+        setup.use_live_sight()
+    if lane is not None:
+        # an instance attribute shadows Track.scenarios_in; the round lots
+        # are cached on this track alone (dps_model._lots)
+        setup.track.scenarios_in = lambda rnd: [lane]
     hero = plan.get("hero") or "quincy"
     ev = Evaluator(setup, mode, hero)
     towers, cash, i = {}, econ.start_cash, 0
+    unplaced = {}           # tower id -> Tower bought where the executor chooses (no "at")
     placed = {}             # tower id -> the round it was bought before
     hero_bought = None      # the round the hero was bought, for its income
     steps = plan.get("plan") or []
@@ -1624,9 +1653,15 @@ def replay_plan(plan, rounds=None, account=None):
             step = steps[i]
             if step["do"] == "place" and step["kind"] == "hero":
                 cost = T.hero_cost(plan.get("hero") or "quincy", econ.family)
+            elif step["do"] == "place" and not step.get("at"):
+                spot = None
+                cost = place_cost(step["kind"], (0, 0, 0), econ.family, None, [])
             elif step["do"] == "place":
                 spot = setup.cell_spot(setup.model.frac_to_cell(*step["at"]))
                 cost = place_cost(step["kind"], (0, 0, 0), econ.family, spot, list(towers.values()))
+            elif step["do"] == "upgrade" and step.get("id") in unplaced:
+                t = unplaced[step["id"]]
+                cost = upgrade_cost(t.kind, t.tiers, parse_cross(step["to"]), econ.family)
             elif step["do"] == "upgrade" and step["id"] not in towers:
                 cost = 0.0            # its tower stood on ice that has melted (Erosion): nothing to buy
             elif step["do"] == "upgrade":
@@ -1640,7 +1675,13 @@ def replay_plan(plan, rounds=None, account=None):
             cash -= cost
             if step["do"] == "place" and step["kind"] == "hero":
                 hero_bought = rnd
-            if step["do"] == "place" and step["kind"] != "hero":
+            if step["do"] == "place" and step["kind"] != "hero" and spot is None:
+                unplaced[step.get("id") or f"unplaced{i}"] = Tower(step.get("id"), step["kind"], None,
+                                                                   (0, 0, 0), cost)
+            elif step["do"] == "upgrade" and step.get("id") in unplaced:
+                t = unplaced[step["id"]]
+                unplaced[step["id"]] = Tower(t.tid, t.kind, None, parse_cross(step["to"]), t.spent + cost)
+            elif step["do"] == "place" and step["kind"] != "hero":
                 # on Erosion's ice the tower lasts to the end of the phase it was bought in
                 spot.until = setup.spot_until(spot.cell, step["kind"], rnd)
                 towers[step["id"]] = Tower(step["id"], step["kind"], spot, (0, 0, 0), cost)
@@ -1667,6 +1708,41 @@ def replay_plan(plan, rounds=None, account=None):
         cash += econ.income(rnd) + board_cash(mode, list(towers.values()),
                                               hero if hero_bought is not None else None, level)
     return margins
+
+
+def lane_margins(plan, rounds, account=None, live_sight=True):
+    """{lane: {round: margin}} for a written plan on a map whose rounds take
+    turns on several lanes (Track.scenarios: Water Park, Luminous Cove,
+    Bazaar, Enchanted Glade, Muddy Puddles, Erosion's phases, Bloonarius
+    Prime's prime rounds); {} on a map with one lane. The lane is the path
+    id the scenario was made for (Track.scenario_paths).
+
+    Each round of ``rounds`` is played on every lane in turn, on the board
+    replay_plan buys by then, so a lane the opening does not reach shows
+    whichever round the game happens to send down it. replay_plan alone
+    rates each round on the lane the map data says it takes, and which lane
+    a round takes is the one thing a lost game cannot always confirm.
+
+    Why: Water Park CHIMPS (2026-11-12 20:23, journal
+    20261112_202347_WaterPark_chimps) lost round 6 twelve seconds in. Its
+    dart and boomerang had the slide between them and the second lane:
+    rated on that lane, rounds 6-11 sat at the model's 0.06 floor, while
+    the build's header listed only rounds 40-100.
+
+    live_sight: rated with the live forecast's line of sight (heights and
+    all, MapSetup.use_live_sight), as the game's own forecast rates it."""
+    track = D.Track(plan["map"], reverse=(plan["modes"][0] == "reverse"))
+    if len(track.scenarios) < 2:
+        return {}
+    return {key: replay_plan(plan, rounds, account, lane=k, live_sight=live_sight)
+            for k, key in enumerate(track.scenario_paths)}
+
+
+def round_lanes(map_name, rounds):
+    """{round: [lane path ids]} the map data sends each of ``rounds`` down
+    (Track.scenarios_in), for reading lane_margins."""
+    track = D.Track(map_name)
+    return {r: [track.scenario_paths[k] for k in track.scenarios_in(r)] for r in rounds}
 
 
 def _awake_margin(ev, setup, map_name, mode, rnd, towers, placed):
