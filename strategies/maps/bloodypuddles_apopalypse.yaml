@@ -58,7 +58,27 @@
 # without a leak where it rates 0.38.
 # Test: tests/test_apopalypse_mapbuilds_offline.py.
 #
-# Status: written 2026-11-12, not played yet.
+# First game (2026-11-12 16:49, case 20261112_165343_BloodyPuddles_
+# apopalypse): lost round 25 with 150 lives, the earliest loss on this map.
+# Setup put all $6,780 into h1 3-2-0 and h2; the hero was the plan's last
+# step and never stood. Both Pursuit helis hung over the left and middle
+# lanes (stills end_012, end_028), and round 17's regrow yellows (33 lives),
+# round 21's pinks (23) and rounds 24-25's reds, zebras and whites (the
+# rest) leaked down the right lanes past the opener dart and two
+# reinforce tacks. The 11:17 game here (apopalypse_apache_spikes) opened
+# with a ninja at (0.6225, 0.6831) by the right lanes, the first 3-2-0 heli
+# and Obyn, lost 13 lives on rounds 15-16 and then held to round 33 without
+# a leak. That opening now follows h1's 3-2-0: Obyn, then n1 to 2-0-2 at
+# that spot, then h2. The check's rater above prefers the helis (it rated
+# this build's round 17 at 0.96 and the game lost 33 lives there); the
+# live games are the evidence here: the check rated the lost build's rounds
+# 17, 21 and 24 at 0.96, 1.59 and 2.35, and they cost 33, 23 and 84 lives.
+# apopalypse_check -v (no drift, constructed windows) after the change:
+# rounds 15-25 1.79, 1.31, 0.90, 1.16, 1.31, 1.23, 1.43, 1.43, 1.20, 1.20,
+# 1.56 (before: 1.79, 1.31, 0.96, 1.23, 1.59, 1.45, 1.59, 2.20, 1.83, 2.35,
+# 2.09); worst 0.55 at R44 both; plan 18/20 bought by round 60 (15/18).
+#
+# Status: played once (lost R25, see above); opening changed after it.
 id: bloodypuddles_apopalypse
 map: Bloody Puddles
 hero: obyn
@@ -71,6 +91,9 @@ planner:
 plan:
   - {do: place, id: h1, kind: heli, role: dps, at: [0.516, 0.487]}      # setup R15
   - {do: upgrade, id: h1, to: 3-2-0}                                     # Pursuit, IFR (camo), Razor Rotors (lead)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.216, 0.419]}    # setup R15: Obyn, as in the 11:17 game
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.623, 0.683]}     # setup R15: the right lanes, the 11:17 game's n1
+  - {do: upgrade, id: n1, to: 2-0-2}                                     # Sharp Shurikens + Caltrops (ninjas see camo); held R16-33 there
   - {do: place, id: h2, kind: heli, role: dps, at: [0.516, 0.351]}
   - {do: upgrade, id: h2, to: 3-2-0}
   - {do: place, id: dr1, kind: druid, role: dps, at: [0.377, 0.845]}
@@ -85,7 +108,6 @@ plan:
   - {do: upgrade, id: h2, to: 4-2-0}
   - {do: upgrade, id: h3, to: 4-2-0}
   - {do: upgrade, id: h1, to: 5-2-0}                                     # Apache Prime: a rich game only
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.216, 0.419]}
 answers:
   lead: [{do: upgrade, id: h1, to: 3-2-0}]
   camo: [{do: upgrade, id: h1, to: 3-2-0}]

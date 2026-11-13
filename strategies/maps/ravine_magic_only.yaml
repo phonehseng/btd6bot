@@ -43,7 +43,15 @@
 # 2.0 still: the best measured for this medal, so base_success is low.
 # Test: tests/test_ravine_magic_offline.py.
 #
-# Status: written 2026-11-12, not played yet.
+# First game (2026-11-12 17:19, case 20261112_172416_Ravine_magic_only):
+# lost round 40 to its one MOAB with 100 lives, both Sticky Bombs bought (nA
+# R35, nL R39). Round 40 runs down Path1's forks; on the L fork nL stood
+# alone, and the live forecast rated that board 0.80 there. $4.7k had gone
+# to reinforce towers off both Path1 forks (druid1 at 0.083, 0.445, wizard1
+# by M). The L wizard (wL, 0-2-2 for ~$2.1k) now comes right after nL's
+# Sticky Bomb, before wA's Necromancer: the same board with it rates 1.07.
+#
+# Status: played once (lost R40, see above).
 id: ravine_magic_only
 map: Ravine
 hero: obyn
@@ -69,8 +77,9 @@ plan:
   - {do: upgrade, id: dC, to: 0-3-0}
   - {do: upgrade, id: nA, to: 2-0-4}                                       # Sticky Bomb: R40's MOAB
   - {do: upgrade, id: nL, to: 2-0-4}
+  - {do: place, id: wL, kind: wizard, role: dps, at: [0.195, 0.709]}      # L and Path2-split2: R40's MOAB on the L fork
+  - {do: upgrade, id: wL, to: 0-2-2}                                       # (2026-11-12 17:19 loss: 0.80 -> 1.07 on R40)
   - {do: upgrade, id: wA, to: 0-2-4}
-  - {do: place, id: wL, kind: wizard, role: dps, at: [0.195, 0.709]}      # L and Path2-split2
   - {do: upgrade, id: wL, to: 0-2-4}
   - {do: upgrade, id: wM, to: 0-2-4}
   - {do: place, id: sA, kind: super, role: dps, at: [0.377, 0.155]}       # A
