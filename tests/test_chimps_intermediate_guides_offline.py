@@ -23,7 +23,16 @@ Checked here, for each build:
   * the plan is affordable by round 100 on the CHIMPS cash curve
     (tests/test_chimps_builds_offline.plan_timeline);
   * on the maps with an older, lost CHIMPS build, the guide build rates
-    above it in the planner, so a NEXT line without a strategy picks it.
+    above it in the planner, so a NEXT line without a strategy picks it;
+  * the opening (the purchases by round 10) meets tools/opening_rule: a
+    live-proven opening, the guide's own one, or one the corrected model
+    rates as holding every round 6-10 on every lane. On 2026-11-13 six of
+    these builds lost rounds 7-20 on openings an opening search had chosen
+    by model ratings the game did not honour (cases 20261113_032115 Bazaar,
+    _032621 Lost Crevasse, _033512 Rake, _041444 Water Park, _041946 Moon
+    Landing, _042420 Sulfur Springs). Builds that do not meet it yet are in
+    OPENING_KNOWN with what they need; the test fails when another build
+    fails, or a listed one passes (then drop it from the list).
 
 Not covered: Encrypted and Chutes have no written guide (the doc found
 only videos and wiki notes), so no build is written for them.
@@ -74,6 +83,20 @@ PARKED = {"lostcrevasse_chimps": "lostcrevasse_chimps_guide",
           "springspring_chimps": "springspring_chimps_guide",
           "moonlanding_chimps": "moonlanding_chimps_guide",
           "rake_chimps": "rake_chimps_guide"}
+# builds whose opening does not meet tools/opening_rule yet, with what it
+# needs (the openings of other sessions' builds; test_every_opening_meets_the_opening_rule)
+OPENING_KNOWN = {
+    "springspring_chimps_guide": "the search's tack before the guide's Etienne; the guide's sub + mermonkey "
+                                 "held to round 37 (journal 20261112_154428) with the mermonkey at 0.804, 0.572",
+    "luminouscove_chimps": "the guide's dart + boat lost round 8 twice (rated 2.48, backlog 107): needs a "
+                           "proven opening or 107 fixed",
+    "bloonariusprime_chimps": "the search's druid and glue before the guide's second dart, sub and third dart",
+    "quietstreet_chimps": "the search's second dart before the guide's snipers",
+    "balance_chimps": "the search's druid, dart and tack before the guide's Sauda",
+    "waterpark_chimps": "nothing meets it yet: the guide's dart + boomerang lost twice, no opening is proven, "
+                        "and no affordable one rates over 0.64 corrected; the guide's two towers and a desperado "
+                        "during round 7 play until an opening is proven live",
+}
 # tiers the main account cannot buy (docs/chimps_map_guides.md, "Account
 # constraints"): [top, middle, bottom] caps; every other tower is 5-5-5
 CAPS = {"mortar": (5, 5, 0), "village": (4, 5, 5), "mermonkey": (4, 4, 4),
@@ -177,6 +200,43 @@ def test_guide_builds_rank_above_the_parked_builds():
         p_old = P.win_probability(acct, specs[old], name, "chimps")[0]
         p_new = P.win_probability(acct, specs[new], name, "chimps")[0]
         assert p_new > p_old, (new, p_new, old, p_old)
+
+
+def test_every_opening_meets_the_opening_rule():
+    import opening_rule as OR
+    bad = {}
+    for sid in BUILDS:
+        _, d = _load(sid)
+        src, why = OR.opening_source(d)
+        if src is None:
+            bad[sid] = why
+    unexpected = {sid: why for sid, why in bad.items() if sid not in OPENING_KNOWN}
+    assert not unexpected, unexpected
+    fixed = [sid for sid in OPENING_KNOWN if sid not in bad]
+    assert not fixed, f"meets the rule now, drop from OPENING_KNOWN: {fixed}"
+
+
+def test_the_lost_openings_fail_the_opening_rule():
+    """The openings of the 2026-11-13 losses, as their builds stood
+    (git 573af1b), do not meet tools/opening_rule."""
+    import opening_rule as OR
+    lost = {
+        "bazaar_chimps": ["x1", "x2", "x3", "gl1", "d1"],             # round 9
+        "lostcrevasse_chimps_guide": ["d1", "t1", "hero"],            # round 7
+        "sulfursprings_chimps_guide": ["w1", "s1", "b1"],             # round 8
+        "moonlanding_chimps_guide": ["x1", "s1", "x1:0-1-0", "gl1"],  # round 8
+        "rake_chimps_guide": ["e1", "e2", "ta1", "gl1", "da1"],       # round 20
+        "waterpark_chimps": ["r1", "x1", "r1:0-0-1"],                 # round 7
+    }
+    for sid, order in lost.items():
+        _, d = _load(sid)
+        places = {st["id"]: st for st in d["plan"] if st["do"] == "place"}
+        steps = []
+        for item in order:
+            tid, _, to = item.partition(":")
+            steps.append({"do": "upgrade", "id": tid, "to": to} if to else places[tid])
+        src, why = OR.opening_source(dict(d, plan=steps))
+        assert src is None, (sid, src, why)
 
 
 def _account_for_planner(cls):

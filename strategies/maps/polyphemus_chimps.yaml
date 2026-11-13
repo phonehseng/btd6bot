@@ -73,6 +73,25 @@
 #   tools/simulate_threats: plan 29/29, no threat gaps; plan_timeline: the
 #   last step by round 96.
 #
+# Late game (2026-11-13, after the round-82 loss of 02:34, case
+# 20261113_023838_Polyphemus_chimps): the second druid's Ball Lightning was
+# bought by round 67 and the plan then saved fifteen rounds for Superstorm -
+# $40,362 lay unspent when round 82's BFBs got through, and the live forecast
+# had rated rounds 78-83 at 0.34-0.77 all that time. Replayed
+# (optimize_builds.replay_plan, live sight), one purchase before Superstorm
+# after another: only the starter dart's Crossbow Master (0-2-5, camo sight
+# included) lifts rounds 79-88 over 1.0. So:
+#   * dr1 stops at Druid of the Storm, then da1 to Crossbow Master, then
+#     Superstorm; Ball Lightning for dr1 and the spike factory with Deadly
+#     Spikes come after it.
+#   * no Perma-Spike: with the crossbow the plan cost $188,157, more than a
+#     CHIMPS game pays by round 100. It covered one of the two exits only.
+#   Margins, before -> after: 79 0.75 -> 3.02, 80 0.75 -> 2.38, 83 0.77 ->
+#   1.58, 84 0.53 -> 1.45, 85 0.87 -> 1.89, 87 0.81 -> 1.58, 88 0.78 -> 1.26;
+#   rounds 73-89 all 1.19 or more. Still under 1.0: 90 0.85, 92 0.44 and 93
+#   0.44 - Superstorm now comes at round 94, not 89 (OPEN: nothing tried
+#   closes both gaps; the next loss is expected there, not at 79-84).
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -84,8 +103,8 @@ starter: none         # the plan buys two damage towers at round 6 (the druid an
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {druid: [5, 0, 2], dart: [0, 0, 0], sniper: [0, 2, 5], village: [2, 0, 2], alchemist: [4, 2, 0], spike: [2, 0, 5], boomerang: [3, 0, 2]}
-  revised: "2026-11-12T23:59"   # hardened (see "Hardened")
+  towers: {druid: [5, 0, 2], dart: [0, 2, 5], sniper: [0, 2, 5], village: [2, 0, 2], alchemist: [4, 2, 0], spike: [2, 0, 4], boomerang: [3, 0, 2]}
+  revised: "2026-11-13T03:45"   # Crossbow Master before Superstorm (see "Late game")
   maps: [Polyphemus]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -112,14 +131,14 @@ plan:
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.516, 0.3]}  # added: Glaive Ricochet for round 63
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: d1, to: 4-0-2}                                            # Ball Lightning, then save
-  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.751, 0.777]}  # before Superstorm: rounds 70-83 (see "Hardened")
-  - {do: upgrade, id: p1, to: 2-0-4}
   - {do: upgrade, id: dr1, to: 1-0-0}
   - {do: upgrade, id: dr1, to: 2-0-0}
-  - {do: upgrade, id: dr1, to: 3-0-0}
-  - {do: upgrade, id: dr1, to: 4-0-0}                                             # added: the opening's second druid to Ball Lightning while Superstorm is saved for
+  - {do: upgrade, id: dr1, to: 3-0-0}                                             # the second druid to Druid of the Storm: rounds 71-72 while the crossbow is saved for
+  - {do: upgrade, id: da1, to: 0-2-5}                                             # Crossbow Master before Superstorm: rounds 79-88 (see "Late game")
   - {do: upgrade, id: d1, to: 5-0-2}                                            # Superstorm
-  - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
+  - {do: upgrade, id: dr1, to: 4-0-0}                                             # Ball Lightning: after Superstorm now
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.751, 0.777]}  # after Superstorm now (see "Late game")
+  - {do: upgrade, id: p1, to: 2-0-4}
 answers:
   camo: [{do: upgrade, id: s1, to: 0-2-2}]
   ceramic: [{do: upgrade, id: s1, to: 0-2-4}]
@@ -129,5 +148,5 @@ answers:
   bfb: [{do: upgrade, id: s1, to: 0-2-5}]
   rush: [{do: upgrade, id: r1, to: 3-0-2}]
   zomg: [{do: upgrade, id: d1, to: 4-0-2}]
-  ddt: [{do: upgrade, id: p1, to: 2-0-4}]
-  bad: [{do: upgrade, id: p1, to: 2-0-5}]
+  ddt: [{do: upgrade, id: da1, to: 0-2-5}]
+  bad: [{do: upgrade, id: d1, to: 5-0-2}]
