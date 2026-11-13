@@ -160,12 +160,12 @@ plan:
   - {do: upgrade, id: bom538, to: 0-2-2}
   - {do: place, id: dru539, kind: druid, role: support, at: [0.665, 0.334]}
   - {do: upgrade, id: dru539, to: 1-1-0}
-  - {do: place, id: eng540, kind: engineer, role: support, at: [0.323, 0.368]}
-  - {do: place, id: bom541, kind: bomb, role: support, at: [0.291, 0.419]}
+  - {do: place, id: eng540, kind: engineer, role: support, at: [0.136, 0.342]}
+  - {do: place, id: bom541, kind: bomb, role: support, at: [0.291, 0.411]}
   - {do: upgrade, id: bom541, to: 0-1-2}
   - {do: upgrade, id: bom541, to: 0-2-2}
-  - {do: place, id: eng542, kind: engineer, role: support, at: [0.195, 0.283]}
-  - {do: place, id: eng543, kind: engineer, role: support, at: [0.633, 0.777]}
+  - {do: place, id: eng542, kind: engineer, role: support, at: [0.2, 0.308]}
+  - {do: place, id: eng543, kind: engineer, role: support, at: [0.671, 0.734]}
   - {do: upgrade, id: eng543, to: 2-0-0}
   - {do: upgrade, id: eng543, to: 2-0-3}
   - {do: upgrade, id: eng540, to: 2-0-0}
@@ -212,7 +212,7 @@ plan:
   - {do: place, id: alc546, kind: alchemist, role: support, at: [0.537, 0.181]}
   - {do: upgrade, id: alc546, to: 0-2-0}
   - {do: upgrade, id: alc528, to: 1-2-0}
-  - {do: place, id: boo547, kind: boomerang, role: support, at: [0.248, 0.232]}
+  - {do: place, id: boo547, kind: boomerang, role: support, at: [0.243, 0.257]}
   - {do: upgrade, id: boo547, to: 0-0-3}
   - {do: upgrade, id: boo547, to: 0-2-3}
   - {do: upgrade, id: boo520, to: 0-4-2}

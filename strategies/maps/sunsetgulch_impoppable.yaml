@@ -116,7 +116,7 @@ plan:
   - {do: place, id: dru526, kind: druid, role: support, at: [0.206, 0.845]}
   - {do: upgrade, id: dru526, to: 0-3-0}
   - {do: upgrade, id: dru526, to: 0-3-1}
-  - {do: place, id: dru527, kind: druid, role: support, at: [0.195, 0.93]}
+  - {do: place, id: dru527, kind: druid, role: support, at: [0.74, 0.871]}
   - {do: upgrade, id: dru527, to: 0-3-0}
   - {do: upgrade, id: eng515, to: 3-2-0}
   - {do: upgrade, id: sni525, to: 0-2-0}

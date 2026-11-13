@@ -127,11 +127,11 @@ plan:
   - {do: upgrade, id: mer505, to: 1-1-0}
   - {do: upgrade, id: buc512, to: 0-4-1}
   - {do: upgrade, id: buc509, to: 2-4-0}
-  - {do: place, id: sub519, kind: sub, role: support, at: [0.526, 0.862]}
+  - {do: place, id: sub519, kind: sub, role: support, at: [0.526, 0.854]}
   - {do: upgrade, id: sub519, to: 2-1-0}
   - {do: upgrade, id: sub519, to: 2-3-0}
   - {do: upgrade, id: mer505, to: 2-1-0}
-  - {do: place, id: sub520, kind: sub, role: support, at: [0.115, 0.112]}
+  - {do: place, id: sub520, kind: sub, role: support, at: [0.708, 0.274]}
   - {do: upgrade, id: sub520, to: 0-3-0}
   - {do: upgrade, id: sub520, to: 2-3-0}
   - {do: place, id: sub521, kind: sub, role: support, at: [0.163, 0.658]}

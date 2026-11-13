@@ -36,7 +36,7 @@ plan:
   - {do: upgrade, id: n2, to: 2-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
   - {do: upgrade, id: n2, to: 2-0-4}
-  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.655, 0.692]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.2, 0.683]}
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: n1, to: 3-0-2}
   # rounds 35-100: bought by tools/optimize_builds.py's greedy on the damage model,
@@ -66,7 +66,7 @@ plan:
   - {do: upgrade, id: sni513, to: 1-2-0}
   - {do: upgrade, id: dru511, to: 0-3-1}
   - {do: upgrade, id: dru512, to: 0-3-1}
-  - {do: place, id: dru514, kind: druid, role: support, at: [0.697, 0.862]}
+  - {do: place, id: dru514, kind: druid, role: support, at: [0.703, 0.862]}
   - {do: upgrade, id: dru514, to: 0-3-0}
   - {do: upgrade, id: dru514, to: 0-3-1}
   - {do: place, id: dru515, kind: druid, role: support, at: [0.74, 0.93]}
@@ -86,7 +86,7 @@ plan:
   - {do: upgrade, id: sni519, to: 0-2-0}
   - {do: place, id: dru521, kind: druid, role: support, at: [0.142, 0.93]}
   - {do: upgrade, id: dru521, to: 0-3-0}
-  - {do: place, id: dru522, kind: druid, role: support, at: [0.184, 0.896]}
+  - {do: place, id: dru522, kind: druid, role: support, at: [0.174, 0.632]}
   - {do: upgrade, id: dru522, to: 0-3-0}
   - {do: upgrade, id: dru522, to: 0-3-1}
   - {do: upgrade, id: dru521, to: 0-3-1}
@@ -102,7 +102,7 @@ plan:
   - {do: upgrade, id: sni519, to: 0-2-2}
   - {do: upgrade, id: sni519, to: 0-2-3}
   - {do: upgrade, id: buc505, to: 0-4-2}
-  - {do: place, id: dru525, kind: druid, role: support, at: [0.184, 0.828]}
+  - {do: place, id: dru525, kind: druid, role: support, at: [0.136, 0.615]}
   - {do: upgrade, id: dru525, to: 0-3-0}
   - {do: upgrade, id: sni519, to: 0-2-4}
   - {do: upgrade, id: dru525, to: 0-3-1}
@@ -122,7 +122,7 @@ panic:
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.655, 0.692]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.2, 0.683]}
   ceramic:
     - {do: upgrade, id: n1, to: 3-0-2}
   moab:
