@@ -3208,11 +3208,48 @@ class Executor:
         """How many damage towers (or of `towers`) a `kind` buffer at cell
         (cx, cy) has in range."""
         r2 = self._range_cells(kind) ** 2
+        carriers = self._carriers()
         n = 0
         for p in self._damage_towers() if towers is None else towers:
             tx, ty = self.m.frac_to_cell(p.x, p.y)
+            if carriers is not None and carriers[ty, tx] != carriers[cy, cx]:
+                continue    # one of the two is carried away from the other
             n += (tx - cx) ** 2 + (ty - cy) ** 2 <= r2
         return n
+
+    def _carriers(self):
+        """mapgeom.carrier_of for this map and round: which moving ground
+        (Geared's gears, Sanctuary's platforms) each cell rides on, 0 for
+        ground that stays put. None on maps without moving ground."""
+        from . import mapgeom
+        pose = self._pose_round()
+        cached = self.__dict__.get("_carrier_grid")
+        if cached is None or cached[0] != pose:
+            try:
+                grid = mapgeom.carrier_of(self.m, pose)
+            except Exception:    # a map-file problem must never stop placement
+                grid = None
+            cached = self._carrier_grid = (pose, grid)
+        return cached[1]
+
+    def _beside_riders(self, kind, grid, carriers):
+        """`grid` (a buffer's legal cells with moving ground allowed) without
+        the carriers no damage tower rides on.
+
+        A village or an alchemist is worth the towers in its radius, and on
+        a gear it turns with the towers of that gear: it needs no track in
+        reach, which is what moving ground is otherwise judged by
+        (mapgeom.steady_spots). Geared ABR (2026-11-13, loss case
+        20261113_093857_Geared_abr): all of Geared's land is gear ground, so
+        a village had 0 legal cells; the Radar Scanner village meant to show
+        the Heli Pilot camo bloons was "given up after 0 refused spots", and
+        round 27's 250 camo bloons met three snipers and a 3-0-2 heli that
+        could not see them - all 100 lives in ten seconds."""
+        if grid is None or carriers is None or carriers.shape != grid.shape:
+            return grid
+        ridden = {int(carriers[ty, tx]) for tx, ty in
+                  (self.m.frac_to_cell(p.x, p.y) for p in self._damage_towers())}
+        return grid & np.isin(carriers, sorted(ridden | {0}))
 
     def _buff_spots(self, kind, step=None):
         """Legal cells where a buffer reaches the most damage towers (at least
@@ -3472,12 +3509,17 @@ class Executor:
         if self.ground_horizon is not None and kind != "hero":
             phase = self.ground_horizon if whole_game is None else min(whole_game, self.ground_horizon)
             horizons = [whole_game, phase] if self._needs_no_reach(kind) else [phase]
+        # a buffer may ride on moving ground beside the towers it buffs
+        # (_beside_riders); every other tower keeps placement's own rule
+        carriers = self._carriers() if kind in self.BUFFERS else None
         grid = None
         for last in horizons:
             grid = PL.valid_spots(self.m, kind, self.g.hero if kind == "hero" else None, placed,
                                   where={"land"} if self.land_only else None,
                                   last_round=last, now_round=self._ground_round(),
-                                  pose_round=self._pose_round(), removed=tuple(self.removed))
+                                  pose_round=self._pose_round(), removed=tuple(self.removed),
+                                  moving=True if carriers is not None else None)
+            grid = self._beside_riders(kind, grid, carriers)
             if grid is None or grid.any():
                 break
         return self._off_panes(kind, grid)

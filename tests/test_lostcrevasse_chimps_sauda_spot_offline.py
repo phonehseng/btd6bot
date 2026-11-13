@@ -16,6 +16,12 @@ both routes enter side by side and stay in front of her. The model counts
 the route in reach and not which way she faces, so it cannot choose between
 the two spots; the guide's spot is taken as written.
 
+Since 2026-11-13 11:25 she no longer opens alone: she lost round 6 at the
+guide's spot too (case 20261113_111449_LostCrevasse_chimps), and the build
+buys her at round 13, after a live-proven opening
+(tests/test_lostcrevasse_chimps_proven_opening_offline.py). Her spot is
+still the guide's.
+
 Checked here:
   * the build's Sauda stands in the guide's area (top middle), on a cell
     that is legal for her and that the game never refused;
