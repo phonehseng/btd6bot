@@ -17,7 +17,17 @@
 # the boomerang next to it, the sniper on the left of the slide's bottom
 # circle, Rosalia by the slide, the ace next to Rosalia, the alchemist and
 # the village above it. The bot's map data has no placeable slide, so the
-# dart and the boomerang take the cells that see the most of both lanes.
+# dart and the boomerang take cells that see both lanes.
+#
+# Lost 2026-11-12 20:23 (journal 20261112_202347_WaterPark_chimps): round 6,
+# 12 s in, nothing popped. The opening stood by the slide (dart 0.334, 0.828;
+# boomerang 0.190, 0.726 where the game took it) and saw route on the first
+# lane only: the slide hides the second from that side. The lanes take the
+# rounds in turn, and rated on the second lane rounds 6-11 sat at the damage
+# model's 0.06 floor (optimize_builds.lane_margins). Both now stand on the
+# island inside the pool loop, the only ground whose cells see both lanes as
+# the live forecast sees them (heights and all): dart 71 / 132 units of route,
+# boomerang 114 / 264 (tests/test_alternating_openings_offline.py).
 #
 # Adapted, and why:
 #   * Rosalia's timed abilities (R35, R85, R87: when the blimps break open)
@@ -73,8 +83,11 @@ planner:
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: x1, kind: dart, role: dps, at: [0.334, 0.828]}              # R6 dart on the edge of the slide
-  - {do: place, id: r1, kind: boomerang, role: dps, near: [x1], at: [0.206, 0.726]}  # R6 boomerang next to it
+  # R6 the dart and the boomerang on the island inside the pool loop, the one ground
+  # whose cells see both lanes (2026-11-12 20:23: by the slide, 0.334,0.828 and
+  # 0.190,0.726, they saw none of the second lane and round 6 was lost there)
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.494, 0.641]}              # R6 dart, both lanes in range
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [x1], at: [0.526, 0.589]}  # R6 boomerang next to it
   - {do: upgrade, id: r1, to: 0-0-1}                                            # R7
   - {do: upgrade, id: r1, to: 0-0-2}                                            # R8
   - {do: upgrade, id: r1, to: 0-1-2}                                            # R9
