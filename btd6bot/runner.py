@@ -1332,6 +1332,12 @@ class Bot:
             log.info("scanning water on %s for %s", plan.map, water)
             scan_water(g, model, "sub" if "sub" in water else ("hero" if water == ["hero"] else water[0]))
             model.save()
+        # status effects in the damage model for this game's mode: on in
+        # CHIMPS, where the builds' late games stand on stuns (dps_model.
+        # live_status_rating; Firing Range CHIMPS 2026-11-13 rated round 95
+        # 0.44 live where its build's replay said 0.86)
+        from . import dps_model
+        dps_model.STATUS_RATING = dps_model.live_status_rating(plan.mode_key)
         ex = Executor(g, model, strat, plan.mode_key, self.account)
         g.on_hero = lambda hid: setattr(self.account, "selected_hero", hid)
         # Powers / Instas for their achievements, once before round 1 of a

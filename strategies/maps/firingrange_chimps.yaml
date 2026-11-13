@@ -31,7 +31,8 @@
 #   * the opening (rounds 6-30) is the bot's own, not the guide's (2026-11-12
 #     evening): see "Opening" below.
 #   * the guide's Super Brittle ice and Tack Zone are left out, Sub Commander
-#     (sub 2-0-5) takes their cash (2026-11-13): see "Late blimp damage".
+#     (sub 2-0-5) takes their cash (2026-11-13): see "Late blimp damage";
+#     a Sentry Champion engineer comes before both (see "Sentry Champion").
 #
 # Opening (2026-11-12, loss case 20261112_193101: round 21 lost to its
 # yellows and pinks, rated 0.89, with $293 in hand):
@@ -141,6 +142,27 @@
 #     98 1.22 -> 1.34, 99 0.81 -> 0.81, 100 0.53 -> 0.94; rounds 6-91 within
 #     0.08 of before.
 #
+# Sentry Champion (2026-11-13 06:30, loss case 20261113_053533_FiringRange_chimps:
+# round 95 lost for the fourth time, on the Sub Commander ending above, with
+# $9,502 in hand). Sub Commander was bought at round 91 as planned, and the
+# live forecast rated round 95 at 0.44 before and after it. Replayed, that
+# ending rated 95 at 0.86, 99 0.81, 100 0.94: under 1.0 in the model the
+# build was chosen with, too. The engineer the caretaker's search of 02:25
+# found (worktree ct-1113-0208: every tower kind at its best free legal spot,
+# twelve crosspaths each) goes in before Cripple MOAB: at (0.74, 0.555), on the
+# right strip above Psi, a Sentry Champion (range 60) reaches 151 units of
+# the right lane and 53 of the left. Sub Commander stays, after Cripple MOAB;
+# Primary Mentoring goes last (only the boomerang is a primary monkey).
+#   Replayed (replay_plan, live learned map, live sight), Sub Commander
+# ending -> this one:
+#     status effects on (as builds are chosen): 95 0.86 -> 1.14, 99 0.81 ->
+#       1.10, 100 0.94 -> 1.27, 98 1.34 -> 1.83; 92 1.58 -> 1.51 and 94
+#       1.83 -> 1.53 (Cripple MOAB comes later); rounds 84-91 2.16-5.13;
+#     status effects off (as the live bot rated CHIMPS until this change,
+#       dps_model.live_status_rating): 95 0.44 -> 0.52, 99 0.33 -> 0.60,
+#       100 0.71 -> 1.01.
+#   Rounds 6, 7 and 12 stay at 0.75-0.86 (the opening, unchanged).
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -152,8 +174,8 @@ starter: none         # the guide's own opening is the opener: no extra dart (20
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {sub: [2, 0, 5], buccaneer: [5, 2, 0], village: [4, 2, 0], sniper: [5, 2, 0], boomerang: [3, 0, 2]}
-  revised: "2026-11-13T03:30"   # Sub Commander instead of Super Brittle and the Tack Zone (see "Late blimp damage")
+  towers: {sub: [2, 0, 5], buccaneer: [5, 2, 0], village: [4, 2, 0], engineer: [5, 2, 0], sniper: [5, 2, 0], boomerang: [3, 0, 2]}
+  revised: "2026-11-13T06:30"   # a Sentry Champion before Cripple MOAB and Sub Commander (see "Sentry Champion")
   maps: [Firing Range]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -184,9 +206,12 @@ plan:
   - {do: upgrade, id: s1, to: 3-2-0}                                            # Deadly Precision
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: upgrade, id: s1, to: 4-2-0}                                            # added: Maim MOAB
-  - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
-  - {do: upgrade, id: s1, to: 5-2-0}                                            # added: Cripple MOAB (kept: round 93 0.82 -> 1.22, 95 0.42 -> 0.82 with it, see above)
-  - {do: upgrade, id: sb1, to: 2-0-5}                                           # Sub Commander: the late blimp damage (see "Late blimp damage"; was Super Brittle and the Tack Zone)
+  # rounds 84-100 (see "Sentry Champion"): the engineer first, Primary Mentoring last
+  - {do: place, id: e1, kind: engineer, role: dps, at: [0.74, 0.555]}           # right strip above Psi: 151 units of the right lane, 53 of the left
+  - {do: upgrade, id: e1, to: 5-2-0}                                            # Sentry Champion (round 95 0.86 -> 1.14 beside Cripple MOAB)
+  - {do: upgrade, id: s1, to: 5-2-0}                                            # added: Cripple MOAB (round 95 is 0.70 without it)
+  - {do: upgrade, id: sb1, to: 2-0-5}                                           # Sub Commander: the late blimp damage (see "Late blimp damage"), now after the Champion
+  - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring, last: only the boomerang is a primary monkey here
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
   lead: [{do: upgrade, id: s1, to: 1-2-0}]
