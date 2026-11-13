@@ -59,8 +59,14 @@ GENERAL = ("hard_glaive_lord", "abr")                  # lost ABR at R22 on 2026
 # throw no darts, Airburst bursts once, Buccaneer rear shots need track
 # behind the boat) rates its worst round 1.66 (round 40; 1.68 at 63). The
 # build is unchanged; it is held a little under today's number.
+# 1.6 until 2026-11-13. Since 93c2d83 (2026-11-12, few blimps are few: a
+# zone holds no more than the group sent down it, a projectile's pierce
+# counts only the blimps within its reach) round 40's lone MOAB rates 1.09
+# (2.11 before): the buccaneers' pierce no longer counts on blimps that are
+# not there. The build won live on 2026-11-10 (round 80, round 40 held);
+# the floor is today's number less a little.
 BUILDS = {
-    "floodedvalley_abr": [("abr", 1.6)],
+    "floodedvalley_abr": [("abr", 1.0)],
 }
 # builds whose spots are checked (Apopalypse is rated by tools/apopalypse_check.py,
 # minutes per run: its numbers are in the build's header)

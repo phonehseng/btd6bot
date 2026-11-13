@@ -40,7 +40,14 @@ BOOSTS = {"double_cash": True, "fast_track": True}     # the main account's (acc
 BUILD = "lastresort_primary_only"
 GENERAL = "solo_desperado"                             # lost round 32 on 2026-11-12 11:07
 PATCH = ((0.024, 0.249), (0.045, 0.317))               # the two cells that reach the top straight
-MIN_MARGIN = 0.88         # round 40 rates 0.91-0.94: the best measured, held a little under
+# 0.88 until 2026-11-13 (round 40 rated 0.91-0.94 when written). Since
+# 93c2d83 (2026-11-12, few blimps are few: a zone holds no more than the
+# group sent down it, a projectile's pierce counts only the blimps within
+# its reach) round 36 rates 0.77 (1.48 before) and round 40's lone MOAB
+# 0.99 (2.25 before; 0.72 on the main of 2026-11-12 22:30, before the
+# Erosion and pinned-spot merges). The build won live on 2026-11-12 16:31
+# (round 40, the game's last); the floor is today's worst less a little.
+MIN_MARGIN = 0.7
 STRAIGHT_LATE = (28, 32, 36)   # straight rounds the general build lost or nearly lost
 PRIMARY = {"dart", "boomerang", "bomb", "tack", "ice", "glue", "desperado"}
 

@@ -72,11 +72,19 @@ def test_flying_fortress_with_rapid_fire_carries_hard_dark_castle():
     model leaks R95's camo regrow rainbows and ceramics and its camo DDTs
     (pierce-limited among 500 purples and 250 fortified leads) and R98's
     fortified BFBs and MOABs, with only about 205 units of hittable track
-    on the castle map."""
+    on the castle map.
+
+    Round 85 rated 2.20 until 93c2d83 (2026-11-12, few blimps are few: a
+    zone holds no more than the group sent down it, and a projectile's
+    pierce reaches only the blimps within its reach); 1.59 since: the
+    planes' pierce no longer counts on spaced-out blimps beyond its reach.
+    Round 90 fell from 5.72 to 2.16 the same way and still holds the 2.0.
+    No live game pins this board; the floor is today's number less a
+    little."""
     tr = D.Track("Dark Castle")
     st = D.stations_for(_board((2, 0, 5), 100.0, 60.0), tr)
-    for rnd in (63, 76, 85, 90):
-        assert D.round_margin(st, "hard", rnd, tr) >= 2.0, rnd
+    for rnd, floor in ((63, 2.0), (76, 2.0), (85, 1.5), (90, 2.0)):
+        assert D.round_margin(st, "hard", rnd, tr) >= floor, rnd
 
 
 if __name__ == "__main__":

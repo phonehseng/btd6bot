@@ -38,10 +38,17 @@
 # after it (done by R38; the bot also bought one off-plan dart at R33). The
 # R40 board without the pocket's third dart (d5) rates 1.58.
 #
-# Status: written 2026-11-09, not played yet.
+# Status: written 2026-11-09, not played yet. Not ready since 2026-11-13:
+# with 93c2d83 (2026-11-12, few blimps are few: a zone holds no more than the
+# group sent down it, a projectile's pierce counts only the blimps within its
+# reach) round 40's lone MOAB rates 1.26 (3.36 before), under the 2.5 its
+# test asked. The build has never played (solo_bomb won the medal on
+# 2026-11-09), so no live game vouches for it.
 id: workshop_primary_only
 map: Workshop
 hero: sauda
+bot_ready: false
+bot_ready_reason: 'not ready: never played, and round 40 rates 1.26 since 93c2d83 (tests/test_workshop_builds_offline.py)'
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [primary_only]
 planner:

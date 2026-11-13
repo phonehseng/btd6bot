@@ -46,7 +46,12 @@ BUILD = "patspond_abr"
 LOSER = "abr_ninja_alch"
 BOOSTS = {"double_cash": True, "fast_track": True}   # the main account's
 # 1.26 measured 2026-11-12 (round 40, the first MOABs); held a little under it
-WORST_FLOOR = 1.2
+# 1.2 until 2026-11-13. Since 93c2d83 (2026-11-12, few blimps are few: a
+# zone holds no more than the group sent down it, a projectile's pierce
+# counts only the blimps within its reach) round 60 rates 0.88 (1.87
+# before; the worst was round 40 at 1.23). The build won live on 2026-11-12
+# 16:54 (round 80); the floor is today's worst less a little.
+WORST_FLOOR = 0.85
 # the live checkout's learned maps (refused spots), when this runs in a worktree
 LIVE_MAPS = Path(r"C:/Users/phone/OneDrive/Documents/Projects/btd6bot/data/maps")
 
