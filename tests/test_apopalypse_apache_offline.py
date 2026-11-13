@@ -129,7 +129,14 @@ def test_covered_garden_round_45_wave():
     fortified leads, 10 camo purples) against each build's round-45 board,
     with round 46 sent on its heels as apopalypse_check builds its worst
     windows (the wave alone rates 2-3 for both: what lost the game was the
-    next round arriving before it was popped). Old ~0.7, new ~3.2."""
+    next round arriving before it was popped). Old ~0.7, new ~3.2 when
+    written; old 0.92, new 2.13 on 2026-11-12 before 93c2d83 (few blimps
+    are few: a zone holds no more than the group sent down it, a
+    projectile's pierce counts only the blimps within its reach), old 0.75,
+    new 1.46 since. The new build still holds the wave that took the old
+    one's lives, at about twice its rating; the 2.0 it was held to went with
+    the over-credit. (It has not played this round live: it lost Covered
+    Garden at round 16 on 2026-11-10 and is kept off the map.)"""
     from btd6bot import apopalypse as A
 
     def group(bloon, count):
@@ -143,7 +150,7 @@ def test_covered_garden_round_45_wave():
         st = rater.stations(board)
         nxt = rater.worst_rounds(board, st, 46)
         margin[sid] = min(rater.margin(st, [wave, r46]) for r46 in nxt.values())
-    assert margin[OLD] < 1.0 < 2.0 < margin[NEW], margin
+    assert margin[OLD] < 1.0 < margin[NEW] and margin[NEW] > 1.5 * margin[OLD], margin
 
 
 def test_late_rounds_rate_above_the_old_build():

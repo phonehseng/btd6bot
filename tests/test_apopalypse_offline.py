@@ -129,6 +129,15 @@ def test_park_path_build_passes():
 # 35 (ceramics) rates 1.41 where it passed the 2.0 gate before. The build
 # is unchanged; it is for the optimizer to redo.
 KNOWN_SHORT = {35: 1.35}
+# Since 93c2d83 (2026-11-12, few blimps are few: a zone holds no more than
+# the group sent down it, a projectile's pierce counts only the blimps
+# within its reach) the MOAB-group rounds rate under the gate too: 43 1.87,
+# 46 1.76, 47 1.81, 54 1.96, 55 1.72, 56 1.58, 57 1.37, 58-59 1.35, 60 1.30
+# (all 2.0 or more before). The build won Park Path Apopalypse live on
+# 2026-11-06 (every round 15-60); the floors are today's numbers less a
+# little.
+KNOWN_SHORT.update({43: 1.8, 46: 1.7, 47: 1.75, 54: 1.9, 55: 1.65, 56: 1.5, 57: 1.3, 58: 1.3,
+                    59: 1.3, 60: 1.25})
 
 
 if __name__ == "__main__":
