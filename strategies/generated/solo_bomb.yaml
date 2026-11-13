@@ -14,40 +14,48 @@
 # ceramic, rush; ~1 blimp dmg/s)
 # Answers, tried in order when a threat is due and the defence has none: the
 # tower's own path first, then a helper (for accounts whose own tiers are
-# still locked): camo: ex 0-0-0, else a Ninja Monkey 0-0-0, else a Dart Monkey
-# 0-0-2; purple: a1 0-0-0; lead: a1 0-0-0; ceramic: a1 0-2-0, else ex (Spike
-# Factory) 0-0-0, else h_dart (Dart Monkey) 0-0-3; moab: a1 0-3-0, else
-# another Bomb Shooter (up to 7), else a Monkey Ace 0-0-0, else h_dart (Dart
-# Monkey) 0-0-4; bfb: a1 0-4-0, else another Bomb Shooter (up to 7), else
-# h_dart (Dart Monkey) 0-0-4; rush: b1 0-0-3, else a Boomerang Monkey 3-0-0;
-# zomg: a1 0-4-0, else another Bomb Shooter (up to 7), else ex (Spike Factory)
-# 0-0-4, else h_boomerang (Boomerang Monkey) 5-0-0
+# still locked): camo: ex 0-0-0, else a Ninja Monkey 0-0-0, else a Desperado
+# 0-1-0; purple: a1 0-0-0; lead: a1 0-0-0; ceramic: a1 0-2-0, else ex (Spike
+# Factory) 0-0-0, else a Dart Monkey 0-0-3; moab: a1 0-3-0, else another Bomb
+# Shooter (up to 7), else a Monkey Ace 0-0-0, else h_dart (Dart Monkey) 0-0-4;
+# bfb: a1 0-4-0, else another Bomb Shooter (up to 7), else h_dart (Dart
+# Monkey) 0-0-4; rush: b1 0-0-3, else a Boomerang Monkey 3-0-0; zomg: a1
+# 0-4-0, else another Bomb Shooter (up to 7), else ex (Spike Factory) 0-0-4,
+# else h_desperado (Desperado) 5-0-0
+# Hero sauda: of every land hero the damage model rates, the build rates best
+# with it on Monkey Meadow (medium); see gen_builds.pick_hero.
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 1.45, Bomb Shooter share of the cash
-#   76%, answers bought: ace
-#   primary_only: kept - no gaps, min blimp ratio 1.80, Bomb Shooter share of
-#   the cash 100%
+#   easy: kept - no gaps, min blimp ratio 1.33, Bomb Shooter share of the cash
+#   56%, answers bought: ace, dart
+#   primary_only: kept - no gaps, min blimp ratio 1.48, Bomb Shooter share of
+#   the cash 82%, answers bought: dart
 #   deflation: kept - no gaps, min blimp ratio 1.07, Bomb Shooter share of the
 #   cash 85%
-#   medium: kept - no gaps, min blimp ratio 1.45, Bomb Shooter share of the cash
-#   86%, answers bought: ace
-#   reverse: kept - no gaps, min blimp ratio 1.45, Bomb Shooter share of the
-#   cash 86%, answers bought: ace
-#   apopalypse: dropped - blimp damage 0.16 < 1.00
+#   medium: kept - no gaps, min blimp ratio 1.33, Bomb Shooter share of the cash
+#   73%, answers bought: ace, dart
+#   reverse: kept - no gaps, min blimp ratio 1.33, Bomb Shooter share of the
+#   cash 73%, answers bought: ace, dart
+#   apopalypse: kept - no gaps, min blimp ratio 1.24, Bomb Shooter share of the
+#   cash 86%, answers bought: ace, dart
 #   hard: kept - no gaps, min blimp ratio 1.09, Bomb Shooter share of the cash
-#   89%, answers bought: ace
+#   79%, answers bought: ace, dart
+#   double_hp: dropped - blimp damage 0.54 < 1.00
+#   half_cash: dropped - blimp damage 0.50 < 1.00
+#   abr: dropped - blimp damage 0.57 < 1.00
+#   impoppable: dropped - blimp damage 0.26 < 1.00
+#   chimps: dropped - blimp damage 0.27 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
 # the planner calibrates it from real games.
 id: solo_bomb
 xp_target: bomb   # the tower this build levels up
-hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, primary_only, deflation, medium, reverse, hard]
+hero: sauda   # equipped if owned, else a fallback (strategy.hero_for)
+modes: [easy, primary_only, deflation, medium, reverse, apopalypse, hard]
 planner:
   towers: {bomb: [0, 4, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.89, primary_only: 0.92, deflation: 0.92, medium: 0.83, reverse: 0.83, hard: 0.77}
+  base_success: {easy: 0.86, primary_only: 0.89, deflation: 0.92, medium: 0.8, reverse: 0.8, apopalypse: 0.8, hard: 0.79}
 plan:
   - {do: place, id: a1, kind: bomb, role: dps, segment: [0.0, 0.5]}   # main line: 0-4-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
@@ -85,8 +93,8 @@ answers:
   camo:
     - {do: place, id: ex, kind: spike, role: exit}
     - {do: place, id: h_ninja, kind: ninja, role: dps, segment: [0.0, 0.7]}
-    - {do: upgrade, id: h_dart, to: 0-0-2}
-    - {do: place, id: h_dart, kind: dart, role: dps, segment: [0.0, 0.7]}
+    - {do: upgrade, id: h_desperado, to: 0-1-0}
+    - {do: place, id: h_desperado, kind: desperado, role: dps, segment: [0.0, 0.7]}
   purple:
     - {do: place, id: a1, kind: bomb, role: dps, segment: [0.0, 0.5]}
   lead:
@@ -126,5 +134,6 @@ answers:
     - {do: upgrade, id: ex, to: 0-0-4}
     - {do: upgrade, id: ex, to: 2-0-4}
     - {do: place, id: ex, kind: spike, role: exit}
-    - {do: upgrade, id: h_boomerang, to: 5-0-0}
-    - {do: place, id: h_boomerang, kind: boomerang, role: dps, segment: [0.0, 0.7]}
+    - {do: upgrade, id: h_desperado, to: 5-0-0}
+    - {do: upgrade, id: h_desperado, to: 5-1-0}
+    - {do: place, id: h_desperado, kind: desperado, role: dps, segment: [0.0, 0.7]}

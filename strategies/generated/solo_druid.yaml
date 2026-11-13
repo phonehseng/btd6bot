@@ -17,28 +17,38 @@
 # still locked): camo: b1 4-0-0, else a Ninja Monkey 0-0-0; purple: a1 0-0-0;
 # lead: a1 1-0-0, else a Bomb Shooter 0-0-0; ceramic: b1 3-0-0, else ex (Spike
 # Factory) 0-0-0; moab: a1 0-4-0, else another Druid (up to 5), else a Monkey
-# Ace 0-0-0
+# Ace 0-0-0; bfb: a1 0-4-0, else another Druid (up to 5), else a Dart Monkey
+# 0-0-4
+# Hero ezili: of every land hero the damage model rates, the build rates best
+# with it on Monkey Meadow (medium); see gen_builds.pick_hero.
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 0.40, Druid share of the cash 96%,
+#   easy: kept - no gaps, min blimp ratio 0.40, Druid share of the cash 95%,
 #   answers bought: ace
 #   deflation: dropped - blimp damage 0.31 < 0.40
-#   medium: dropped - blimp damage 0.32 < 0.40
-#   reverse: dropped - blimp damage 0.32 < 0.40
-#   apopalypse: dropped - blimp damage 0.29 < 1.00
+#   medium: kept - no gaps, min blimp ratio 2.20, Druid share of the cash 93%,
+#   answers bought: ace
+#   reverse: kept - no gaps, min blimp ratio 2.20, Druid share of the cash 93%,
+#   answers bought: ace
+#   apopalypse: dropped - blimp damage 0.47 < 1.00
 #   hard: dropped - blimp damage 0.07 < 1.00
-#   magic_only: dropped - blimp damage 0.18 < 1.00
+#   magic_only: dropped - blimp damage 0.10 < 1.00
+#   double_hp: dropped - blimp damage 0.03 < 1.00
+#   half_cash: dropped - blimp damage 0.38 < 1.00
+#   abr: dropped - blimp damage 0.14 < 1.00
+#   impoppable: dropped - blimp damage 0.20 < 1.00
+#   chimps: dropped - blimp damage 0.19 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
 # the planner calibrates it from real games.
 id: solo_druid
 xp_target: druid   # the tower this build levels up
-hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy]
+hero: ezili   # equipped if owned, else a fallback (strategy.hero_for)
+modes: [easy, medium, reverse]
 planner:
   towers: {druid: [4, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.86}
+  base_success: {easy: 0.86, medium: 0.83, reverse: 0.83}
 plan:
   - {do: place, id: a1, kind: druid, role: dps, segment: [0.0, 0.5]}   # main line: 2-4-0
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
@@ -88,3 +98,11 @@ answers:
     - {do: place, id: a1, kind: druid, role: dps, segment: [0.0, 0.5]}
     - {do: place, kind: druid, role: dps, segment: [0.0, 1.0], max: 5}
     - {do: place, id: h_ace, kind: ace, role: dps, segment: [0.0, 0.7]}
+  bfb:
+    - {do: upgrade, id: a1, to: 0-4-0}
+    - {do: upgrade, id: a1, to: 1-4-0}
+    - {do: upgrade, id: a1, to: 2-4-0}
+    - {do: place, id: a1, kind: druid, role: dps, segment: [0.0, 0.5]}
+    - {do: place, kind: druid, role: dps, segment: [0.0, 1.0], max: 5}
+    - {do: upgrade, id: h_dart, to: 0-0-4}
+    - {do: place, id: h_dart, kind: dart, role: dps, segment: [0.0, 0.7]}

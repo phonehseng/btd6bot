@@ -14,36 +14,43 @@
 #   adds purple the main line lacks (from 0-1-2, bought early)
 # Answers, tried in order when a threat is due and the defence has none: the
 # tower's own path first, then a helper (for accounts whose own tiers are
-# still locked): camo: ex 0-0-0, else a Ninja Monkey 0-0-0, else a Dart Monkey
-# 0-0-2; purple: a1 0-0-0; lead: a1 3-0-0, else a Bomb Shooter 0-0-0; ceramic:
+# still locked): camo: ex 0-0-0, else a Ninja Monkey 0-0-0, else a Desperado
+# 0-1-0; purple: a1 0-0-0; lead: a1 3-0-0, else a Bomb Shooter 0-0-0; ceramic:
 # a1 3-0-0, else ex (Spike Factory) 0-0-0, else h_bomb (Bomb Shooter) 0-2-0;
 # moab: a1 4-0-0, else another Tack Shooter (up to 8), else a Monkey Ace
 # 0-0-0, else h_bomb (Bomb Shooter) 0-3-0; bfb: a1 4-0-0, else another Tack
-# Shooter (up to 8), else h_dart (Dart Monkey) 0-0-4
+# Shooter (up to 8), else a Dart Monkey 0-0-4
+# Hero sauda: of every land hero the damage model rates, the build rates best
+# with it on Monkey Meadow (medium); see gen_builds.pick_hero.
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 0.94, Tack Shooter share of the cash
+#   easy: kept - no gaps, min blimp ratio 0.58, Tack Shooter share of the cash
 #   54%, answers bought: ace, bomb, ninja
-#   primary_only: kept - no gaps, min blimp ratio 0.64, Tack Shooter share of
-#   the cash 74%, answers bought: bomb, desperado
-#   deflation: dropped - blimp damage 0.29 < 0.40
-#   medium: kept - no gaps, min blimp ratio 0.56, Tack Shooter share of the cash
-#   82%, answers bought: ace, bomb, ninja
-#   reverse: kept - no gaps, min blimp ratio 0.56, Tack Shooter share of the
-#   cash 82%, answers bought: ace, bomb, ninja
-#   apopalypse: dropped - blimp damage 0.08 < 1.00
+#   primary_only: kept - no gaps, min blimp ratio 0.89, Tack Shooter share of
+#   the cash 75%, answers bought: bomb, desperado
+#   deflation: dropped - blimp damage 0.30 < 0.40
+#   medium: kept - no gaps, min blimp ratio 0.58, Tack Shooter share of the cash
+#   81%, answers bought: ace, bomb, dart, ninja
+#   reverse: kept - no gaps, min blimp ratio 0.58, Tack Shooter share of the
+#   cash 81%, answers bought: ace, bomb, dart, ninja
+#   apopalypse: dropped - blimp damage 0.56 < 1.00
 #   hard: dropped - blimp damage 0.56 < 1.00
+#   double_hp: dropped - blimp damage 0.28 < 1.00
+#   half_cash: dropped - blimp damage 0.40 < 1.00
+#   abr: dropped - blimp damage 0.15 < 1.00
+#   impoppable: dropped - blimp damage 0.19 < 1.00
+#   chimps: dropped - blimp damage 0.21 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
 # the planner calibrates it from real games.
 id: solo_tack
 xp_target: tack   # the tower this build levels up
-hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
+hero: sauda   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, primary_only, medium, reverse]
 planner:
   towers: {tack: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.83, primary_only: 0.84, medium: 0.75, reverse: 0.75}
+  base_success: {easy: 0.81, primary_only: 0.85, medium: 0.72, reverse: 0.72}
 plan:
   - {do: place, id: a1, kind: tack, role: dps, segment: [0.0, 0.5]}   # main line: 4-0-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
@@ -83,8 +90,8 @@ answers:
   camo:
     - {do: place, id: ex, kind: spike, role: exit}
     - {do: place, id: h_ninja, kind: ninja, role: dps, segment: [0.0, 0.7]}
-    - {do: upgrade, id: h_dart, to: 0-0-2}
-    - {do: place, id: h_dart, kind: dart, role: dps, segment: [0.0, 0.7]}
+    - {do: upgrade, id: h_desperado, to: 0-1-0}
+    - {do: place, id: h_desperado, kind: desperado, role: dps, segment: [0.0, 0.7]}
   purple:
     - {do: place, id: a1, kind: tack, role: dps, segment: [0.0, 0.5]}
   lead:

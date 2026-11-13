@@ -17,30 +17,37 @@
 # Shooter 0-0-0; ceramic: b1 3-0-0, else ex (Spike Factory) 0-0-0; moab: a1
 # 0-0-3, else another Ninja Monkey (up to 4), else a Monkey Ace 0-0-0; bfb: a1
 # 0-0-4, else another Ninja Monkey (up to 4), else a Dart Monkey 0-0-4
+# Hero gwendolin: of every land hero the damage model rates, the build rates
+# best with it on Monkey Meadow (medium); see gen_builds.pick_hero.
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 0.60, Ninja Monkey share of the cash
-#   77%, answers bought: ace, bomb
-#   deflation: kept - no gaps, min blimp ratio 0.86, Ninja Monkey share of the
-#   cash 99%, answers bought: dart
-#   medium: kept - no gaps, min blimp ratio 0.48, Ninja Monkey share of the cash
+#   easy: kept - no gaps, min blimp ratio 1.58, Ninja Monkey share of the cash
+#   78%, answers bought: ace, bomb
+#   deflation: kept - no gaps, min blimp ratio 0.85, Ninja Monkey share of the
+#   cash 100%
+#   medium: kept - no gaps, min blimp ratio 0.56, Ninja Monkey share of the cash
 #   75%, answers bought: ace, bomb
-#   reverse: kept - no gaps, min blimp ratio 0.48, Ninja Monkey share of the
+#   reverse: kept - no gaps, min blimp ratio 0.56, Ninja Monkey share of the
 #   cash 75%, answers bought: ace, bomb
-#   apopalypse: dropped - blimp damage 0.18 < 1.00
+#   apopalypse: dropped - blimp damage 0.56 < 1.00
 #   hard: dropped - blimp damage 0.48 < 1.00
-#   magic_only: dropped - blimp damage 0.56 < 1.00
+#   magic_only: dropped - blimp damage 0.43 < 1.00
+#   double_hp: dropped - blimp damage 0.24 < 1.00
+#   half_cash: dropped - blimp damage 0.30 < 1.00
+#   abr: dropped - blimp damage 0.61 < 1.00
+#   impoppable: dropped - blimp damage 0.22 < 1.00
+#   chimps: dropped - blimp damage 0.25 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
 # the planner calibrates it from real games.
 id: solo_ninja
 xp_target: ninja   # the tower this build levels up
-hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
+hero: gwendolin   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, reverse]
 planner:
   towers: {ninja: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.84, deflation: 0.88, medium: 0.77, reverse: 0.77}
+  base_success: {easy: 0.86, deflation: 0.91, medium: 0.78, reverse: 0.78}
 plan:
   - {do: place, id: a1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # main line: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
