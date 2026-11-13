@@ -46,9 +46,12 @@ def test_own_damage_modes():
 def test_a_clean_hard_pass_starts_at_the_paragon_bar():
     assert G.BASE_CEILING["hard"] == P.DEFAULT_CONFIG.paragon_min_p
     clean = G.Verdict("hard", True, "ok", ratio=2.0, share=0.9)
-    assert G.base_success(clean) == P.DEFAULT_CONFIG.paragon_min_p
+    assert G.base_success(clean) == min(P.DEFAULT_CONFIG.paragon_min_p, G.hand_prior_cap("hard"))
     one_life = G.Verdict("chimps", True, "ok", ratio=2.0, share=0.9)
-    assert G.base_success(one_life) == G.BASE_CEILING["impoppable"] < G.BASE_CEILING["hard"]
+    # (and never above the hand-written priors of the mode: hand_prior_cap)
+    assert G.base_success(one_life) == min(G.BASE_CEILING["impoppable"], G.hand_prior_cap("chimps"))
+    assert G.BASE_CEILING["impoppable"] < G.BASE_CEILING["hard"]
+    assert G.base_success(G.Verdict("apopalypse", True, "ok", ratio=2.0, share=0.9)) <= G.hand_prior_cap("apopalypse")
     helped = G.Verdict("hard", True, "ok", ratio=2.0, share=0.9, helpers=("ace",))
     assert G.base_success(helped) < G.base_success(clean)
 
