@@ -213,6 +213,7 @@ GUIDE = {
 GUIDE_LOST = {
     "Water Park": "20261112_202347 (round 6) and 20261113_041113 (round 7): dart + boomerang",
     "Luminous Cove": "20261112_160247 and 20261112_164008 (round 8): dart + boat 1-0-0, rated 2.48",
+    "Lost Crevasse": "20261113_072717 and 20261113_111120 (round 6): Sauda alone, at two spots, 22 and 23 pops",
 }
 
 
