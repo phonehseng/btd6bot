@@ -68,6 +68,14 @@ FORCE_TAG = "!force"
 # skipped (never replay) and can be deleted.
 CHIMPS_WATCH_FILE = ROOT_DIR / "CHIMPS_WATCH"
 CHIMPS_WATCH_STATE = ROOT_DIR / "logs" / "chimps_watch_tried.json"
+# A build whose base_success for a mode is this or less is parked: kept as a
+# record after a better build replaced it, never what a CHIMPS_WATCH line
+# should play. Spring Spring CHIMPS (2026-11-13 03:35, loss case
+# 20261113_040648_SpringSpring_chimps): the watch line named the parked
+# springspring_chimps (base_success 0.05, "does not reach round 95 there",
+# nine losses) instead of springspring_chimps_guide, and the game was lost
+# on round 95 as the nine before it.
+PARKED_SUCCESS = 0.05
 from .status import STATE_FILE, set_state  # noqa: E402,F401
 
 
@@ -2313,6 +2321,16 @@ class Bot:
         body = json.dumps(self.strats.get(sid), sort_keys=True, default=str)
         return hashlib.sha1((line + "\n" + body).encode("utf-8")).hexdigest()[:16]
 
+    def _parked(self, sid, mode):
+        """Is build `sid` parked for `mode`: its planner.base_success there
+        PARKED_SUCCESS or less, the mark a build gets when a better one
+        replaces it (e.g. springspring_chimps, parked 2026-11-12 for
+        springspring_chimps_guide)? A build that names no base_success for
+        the mode is not."""
+        base = (((self.strats or {}).get(sid) or {}).get("planner") or {}).get("base_success") or {}
+        value = base.get(mode) if isinstance(base, dict) else None
+        return value is not None and float(value) <= PARKED_SUCCESS
+
     def watched_chimps_pick(self, specs):
         """The first CHIMPS_WATCH line whose build changed since it was last
         tried, as a forced GamePlan; None when every line was tried as it
@@ -2340,6 +2358,14 @@ class Bot:
             fp = self._watch_fingerprint(raw.strip(), parts[2])
             if tried.get(key) == fp:
                 continue
+            if self._parked(parts[2], parts[1].lower()):
+                # the line names a build that was parked for a better one:
+                # play the map's best build for the mode instead (as a line
+                # without a strategy does)
+                log.warning("CHIMPS_WATCH: %s is parked (base_success %.2f or less) - playing the best "
+                            "build for %s / %s instead; name that build in the line",
+                            parts[2], PARKED_SUCCESS, parts[0], parts[1])
+                line = " / ".join(parts[:2])
             plan = self._pick_from_line(line, specs, force=True)
             tried[key] = fp      # refused or picked: this version is done either way
             try:
