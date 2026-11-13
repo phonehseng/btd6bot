@@ -166,12 +166,12 @@ def test_every_tower_is_pinned_legal_and_never_refused():
             assert pin_spots.never_refused(model, kind, cell, hero), (sid, kind, at)
 
 
-# pinned damage towers under the executor's reach floor that other sessions'
-# worktrees are re-pinning (test_every_pinned_damage_tower_reaches_the_track):
+# pinned damage towers under the executor's reach floor in builds other
+# sessions are reworking (test_every_pinned_damage_tower_reaches_the_track):
 # build id -> {tower id: why it is left}
 REACH_KNOWN = {
-    "haunted_chimps": {"w1": "28 of 74 cells; the caretaker's ct-1113-0617 leaves the wizard out"},
-    "waterpark_chimps": {"r2": "50 of 84 cells; Water Park's build is being reworked in ct-1113-0917"},
+    "waterpark_chimps": {"r2": "50 of 84 cells (0.804, 0.215); the build is the caretaker's, reworked "
+                               "round by round since 2026-11-12"},
 }
 
 

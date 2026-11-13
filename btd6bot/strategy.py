@@ -5997,8 +5997,19 @@ class Executor:
         from $24k to $101k, and round 91's twenty BFBs (read 0.2x, the model
         1.13) took the one life. Over RAMP_PANIC the plan keeps its turn as
         before: Sulfur Springs CHIMPS read round 60 at 2.1x of 2.5x with its
-        Archmage out of reach, and the plan's cash stays with the plan."""
+        Archmage out of reach, and the plan's cash stays with the plan.
+
+        Not in CHIMPS. There the blimp check reads the guide builds' late
+        boards far short as a rule (Carrier Flagships and Glaive Lords it
+        does not count: on 2026-11-05 0.17-1.0x where the model gave 16), and
+        with this rule the offline threat simulation left Rake, Spring Spring
+        and Sulfur Springs one plan step short and Lost Crevasse two
+        (tests/test_chimps_intermediate_guides_offline): the cash went to
+        loose blimp damage, as at Cracked. Impoppable has the opposite record
+        (Dark Castle 2026-11-06: check 0.2x, model 2.18, the MOAB leaked)."""
         if not self.rules.get("one_life") or ratio >= self.RAMP_PANIC or self.idx >= len(self.plan):
+            return False
+        if self.mode == "chimps":
             return False
         return self._plan_step_out_of_reach(self.plan[self.idx], money, R)
 

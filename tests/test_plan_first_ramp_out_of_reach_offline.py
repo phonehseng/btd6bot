@@ -156,6 +156,19 @@ def test_over_ramp_panic_the_plan_keeps_its_turn():
     assert not ex._plan_first_gives_up_ramp(87, 2.1, CASH[87])
 
 
+
+def test_not_in_chimps():
+    """CHIMPS keeps the plan as its ramp: there the blimp check reads the
+    guide builds' late boards far short as a rule, and with the rule the
+    offline threat simulation left four guide builds a step or two short."""
+    if not _ready():
+        return
+    ex = _setup(87)
+    ratio, _ = _ratio(ex, 87)
+    ex.mode = "chimps"
+    assert not ex._plan_first_gives_up_ramp(87, ratio, CASH[87])
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
