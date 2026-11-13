@@ -122,6 +122,38 @@ def test_build_holds_better_than_the_general_build():
         assert own[rnd] > general[rnd], (rnd, own[rnd], general[rnd])
 
 
+# The plan's towers standing at round 40 in the build's first game
+# (2026-11-12 17:19, case 20261112_172416_Ravine_magic_only), exact spots
+# from its journal; lost to round 40's one MOAB with both Sticky Bombs bought.
+LOST_R40_BOARD = {
+    "nL": ("ninja", (2, 0, 4), 0.152, 0.6409), "nA": ("ninja", (2, 0, 4), 0.436, 0.2398),
+    "wM": ("wizard", (0, 2, 2), 0.2753, 0.768), "a1": ("alchemist", (2, 0, 0), 0.142, 0.692),
+    "wA": ("wizard", (0, 2, 2), 0.532, 0.164), "dC": ("druid", (0, 3, 0), 0.687, 0.283),
+}
+
+
+def test_round_40_has_the_l_fork_wizard_after_the_sticky_bombs():
+    """Round 40 runs down Path1's two forks. In the lost game the board with
+    both Sticky Bombs rated 0.80 there (the L fork, Path1-split1, has nL
+    alone); the L wizard at 0-2-2 lifts it over 1.0, so it now follows nL's
+    Sticky Bomb at once instead of waiting behind wA's Necromancer."""
+    plan = S.load_all()[BUILD]["plan"]
+    order = [(st.get("id"), st.get("to") or st["do"]) for st in plan]
+    i = order.index(("nL", "2-0-4"))
+    assert order[i + 1:i + 3] == [("wL", "place"), ("wL", "0-2-2")], order[i:i + 4]
+    assert order.index(("wL", "0-2-2")) < order.index(("wA", "0-2-4"))
+    fc = _forecast()
+    wl = next(st for st in plan if st.get("id") == "wL" and st["do"] == "place")
+
+    def r40(board):
+        towers = [SimpleNamespace(tid=t, kind=k, tiers=ti, x=fx, y=fy, placed_round=1)
+                  for t, (k, ti, fx, fy) in board.items()]
+        return fc.margins(towers, [40])[40]
+    lost = r40(LOST_R40_BOARD)
+    now = r40(dict(LOST_R40_BOARD, wL=("wizard", (0, 2, 2), *wl["at"])))
+    assert lost < 1.0 <= now, (lost, now)
+
+
 def test_general_build_is_kept_off_ravine_magic_only():
     d = S.load_all()[GENERAL]
     assert MAP not in d["planner"]["excluded_maps"]      # its Medium/Hard stay open there

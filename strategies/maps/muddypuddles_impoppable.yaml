@@ -99,6 +99,14 @@ plan:
   - {do: upgrade, id: wiz513, to: 0-2-0}
   - {do: upgrade, id: wiz513, to: 1-2-0}
   - {do: place, id: buc502, kind: buccaneer, role: support, at: [0.377, 0.675]}
+  - {do: upgrade, id: buc502, to: 0-0-1}
+  # Round 40's MOAB comes down the right lane. Lost there twice (2026-11-12 15:42 and
+  # 17:43, rated 0.69): the cash of rounds 38-39 went into buc502's two tiers and the
+  # far-left tack's Blade Maelstrom (tac519, three lanes from the MOAB). The same money
+  # buys the centre tack's Maelstrom and the sub's third tier, both steps of this plan
+  # that used to come after round 45: round 40 is rated 1.16 with them, 43 and 46 over 1.0.
+  - {do: upgrade, id: tac512, to: 2-4-0}
+  - {do: upgrade, id: sub515, to: 2-3-0}
   - {do: upgrade, id: buc502, to: 0-2-1}
   - {do: upgrade, id: tac519, to: 2-4-0}
   - {do: upgrade, id: eng518, to: 1-0-0}
@@ -132,11 +140,9 @@ plan:
   - {do: place, id: tac507, kind: tack, role: support, at: [0.526, 0.436]}
   - {do: upgrade, id: tac507, to: 1-2-0}
   - {do: upgrade, id: tac507, to: 1-3-0}
-  - {do: upgrade, id: tac512, to: 2-4-0}
   - {do: upgrade, id: eng518, to: 3-2-0}
   - {do: upgrade, id: tac507, to: 1-4-0}
   - {do: upgrade, id: tac507, to: 2-4-0}
-  - {do: upgrade, id: sub515, to: 2-3-0}
   - {do: place, id: buc508, kind: buccaneer, role: support, at: [0.099, 0.47]}
   - {do: upgrade, id: buc508, to: 1-2-0}
   - {do: upgrade, id: buc508, to: 1-3-0}
