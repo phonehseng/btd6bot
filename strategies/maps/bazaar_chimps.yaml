@@ -50,6 +50,41 @@
 # boards (it counts no hero and no ability, and under-rates map-wide towers):
 # 40 0.42, 63 1.59, 76 1.24, 81 0.82, 90 0.06, 95 0.06, 98 1.37, 100 0.06.
 #
+# Hardened (2026-11-13, after the round-15 loss of 22:53, case
+# 20261112_225949_Bazaar_chimps: Rosalia refused at (0.195, 0.845) and nine
+# cells around it, round 15 played without a hero). Searched with
+# tools/optimize_builds' Evaluator, MapSetup and replay_plan, live sight on,
+# status effects on, every round on both lanes, spots legal (the test's map
+# geometry, plan order) and never refused, CHIMPS cash ($650 at round 6,
+# then rounds only):
+#   * opening: the guide's three darts stay first (round 6, $645, at their
+#     spots: no other dart cell is legal and sees more of both lanes); a
+#     glue (0.74, 0.624) by round 7, the druid and Rosalia next, Rosalia at
+#     (0.687, 0.181), far from the refused bottom-left strip; the druid to
+#     1-3-0 and the sniper's Night Vision by round 20; the boomerang at
+#     (0.12, 0.249). Openings that began with a boat rated higher (rounds
+#     6-30 at 1.14 or more) but are not used: a lone round-6 boat popped
+#     nothing live on Firing Range (2026-11-13 00:06) although the model
+#     rated it.
+#   * late game: the village stands by the ace and the sniper (0.115,
+#     0.675). At (0.687, 0.845) its Radar reached neither, the ace saw no
+#     camo, and rounds 59, 78 and 95-100 rated 0.06. Rounds 90 and 93 (camo
+#     DDTs) still rate 0.06: nothing before the $97k Flying Fortress (round
+#     95) pops them in the model; a Maim MOAB sniper in the Radar took 0.2
+#     of round 90's 3 DDTs.
+#   Margins, before (the build of 5643112) -> after, live sight, the worse
+#   lane of each round:
+#     rounds 6-30: under 1.2: 14 (9 0.39, 10 0.39, 13 0.46, 25 0.55, ...) ->
+#       10 (6 0.75, 7 0.75, 8 0.81, 9 0.65, 10 0.84, 11 1.13, 12 1.14, 13
+#       0.90, 15 1.01, 19 1.01); worst 0.39 -> 0.65;
+#     rounds 31-59: under 1.0: 11, worst 0.06 (round 59) -> 8, worst 0.43
+#       (round 40: the druid is out of the moved Radar);
+#     rounds 60-100: under 1.0: 20, ten of them 0.06-0.21 (59-78 and
+#       90-100) -> 10 (83-94: 0.06 at 90 and 93, 0.43-0.93 else); 95-100
+#       1.56-3.26.
+#   tools/simulate_threats: plan 26/26, no threat gaps; plan_timeline: the
+#   last step by round 94.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -61,8 +96,8 @@ starter: none         # the guide's own opening is the opener: no extra dart (20
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {dart: [0, 0, 0], boomerang: [0, 0, 0], druid: [1, 3, 0], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
-  revised: "2026-11-12T12:00"
+  towers: {glue: [0, 0, 0], dart: [0, 1, 0], boomerang: [0, 0, 0], druid: [1, 3, 0], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
+  revised: "2026-11-13T02:00"   # hardened (see "Hardened")
   maps: [Bazaar]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -71,20 +106,20 @@ plan:
   - {do: place, id: x1, kind: dart, role: dps, at: [0.719, 0.504]}              # R6 the middle strip, right
   - {do: place, id: x2, kind: dart, role: dps, target: strong, at: [0.74, 0.555]}  # R6 the middle, on Strong
   - {do: place, id: x3, kind: dart, role: dps, at: [0.131, 0.487]}              # R6 the middle strip, left
-  # R8 the boomerang on Strong, on the left strip beside x3 rather than the guide's "left of
-  # the middle dart": there it saw 4 units of lane 4647 (86 of the other), and round 9 rated
-  # 0.26 on 4647 against 0.53 on 4703. Here it sees 70 / 30 and the lanes rate 0.43 / 0.39 at
-  # worst over rounds 6-20 (2026-11-12, after Water Park CHIMPS lost round 6 on its bare lane)
-  - {do: place, id: r1, kind: boomerang, role: dps, target: strong, near: [x3], at: [0.11, 0.436]}
+  - {do: place, id: gl1, kind: glue, role: dps, at: [0.74, 0.624]}                # opening search 2026-11-12
   - {do: place, id: d1, kind: druid, role: dps, near: [x2], at: [0.751, 0.47]}  # R11 right of the middle dart
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.195, 0.845]}            # R14 Rosalia, on the left
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.687, 0.181]}              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 0-1-0}                                            # R15
-  - {do: place, id: s1, kind: sniper, role: dps, at: [0.11, 0.538]}             # R17 lined up with the top row
-  - {do: upgrade, id: s1, to: 0-2-0}                                            # R18-20 Night Vision, Shrapnel: camo
+  - {do: upgrade, id: d1, to: 0-2-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 0-3-0}                                            # R26
+  - {do: place, id: s1, kind: sniper, role: dps, at: [0.11, 0.538]}             # R17 lined up with the top row
+  - {do: upgrade, id: s1, to: 0-1-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: x2, to: 0-1-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 1-3-0}                                            # R27 Hard Thorns: lead
+  - {do: place, id: r1, kind: boomerang, role: dps, target: strong, near: [x3], at: [0.12, 0.249]}  # opening search 2026-11-12
+  - {do: upgrade, id: s1, to: 0-2-0}                                            # R18-20 Night Vision, Shrapnel: camo
   - {do: upgrade, id: s1, to: 0-2-2}                                            # R28-29
-  - {do: place, id: v1, kind: village, role: support, near: [d1, x2], at: [0.687, 0.845]}
+  - {do: place, id: v1, kind: village, role: support, near: [ac1, s1], at: [0.115, 0.675]}  # by the ace and the sniper: its Radar lends them camo (was 0.687, 0.845: the ace saw no camo)
   - {do: upgrade, id: v1, to: 0-2-0}                                            # R36 Radar Scanner
   - {do: place, id: ac1, kind: ace, role: dps, at: [0.131, 0.845]}              # R40
   - {do: upgrade, id: ac1, to: 2-0-3}                                           # R40
