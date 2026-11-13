@@ -133,6 +133,20 @@ def test_the_merit_choice_stays_unless_the_other_is_stronger():
     assert G.carry_from_model("ice") == G.is_carry("ice")    # Ice has no hand blimp figure
     assert not G.carry_from_model("sniper")                   # the sniper has one
 
+
+def test_the_generator_keeps_hand_paths_for_towers_the_hand_table_lists():
+    """answer_table: the damage model's answers only for towers the hand
+    table has none of their own for (Tack's complement and Ace's main line
+    moved to model-only paths and lost modes in the simulation)."""
+    for threat in ("ceramic", "moab", "bfb", "zomg", "ddt", "bad", "rush"):
+        table = G.answer_table(threat)
+        hand = S.HAND_ANSWERS[threat]
+        listed = {k for k, _, _ in hand}
+        assert all(a in hand for a in table if a[0] in listed), threat
+        assert set(hand) <= set(table)
+    assert any(a[0] == "desperado" for a in G.answer_table("moab"))       # a tower with none of its own
+    assert G.complement_line("tack", G.main_line("tack")).work == (0, 2, 4)
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in tests:

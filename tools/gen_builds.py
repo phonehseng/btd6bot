@@ -252,11 +252,32 @@ def calendar_pairs():
     return tuple((r, n) for n, rounds in TH.calendar(STD, 1, 100).items() for r in rounds)
 
 
+def answer_table(threat):
+    """The (tower, path, tier) answers to a strength threat the generator
+    builds with: the hand-listed ones (strategy.HAND_ANSWERS), and the
+    damage model's (strategy._answers_from_damage_model) only for towers the
+    hand table lists no answer of theirs for that threat.
+
+    With every model answer, Tack's complement went from Overdrive 0-2-4 to
+    Blade Maelstrom 0-4-2 (the model lists 0-4-x as a MOAB answer), and the
+    build lost all its modes: the threat simulation's blimp damage table
+    (counters.json blimp_dps, hand figures for the Tack) has nothing for
+    that path. Towers with no answer of their own, the gift-box towers
+    among them, still get the model's (docs/tower_exclusions_audit.md
+    item 3)."""
+    hand = S.HAND_ANSWERS.get(threat)
+    full = S.ANSWERS.get(threat, ())
+    if hand is None or threat in ("camo", "lead"):
+        return list(full)
+    listed = {k for k, _, _ in hand}
+    return [a for a in full if a in hand or a[0] not in listed]
+
+
 def answers_threat(kind, tiers, threat, towers):
     """Does a tower of this kind at these tiers answer a strength threat the
     way coverage() and the executor count it (strategy.ANSWERS)? A DDT answer
     must also hurt DDTs itself (camo + lead + black at once)."""
-    for k, path, tier in S.ANSWERS.get(threat, ()):
+    for k, path, tier in answer_table(threat):
         if k == kind and (path == 0 or tiers[path - 1] >= tier):
             if threat == "ddt":
                 me = {t[0] for t in towers if t[1] == kind and tuple(t[2]) == tuple(tiers)}
@@ -668,7 +689,7 @@ def _answering_crosspaths(kind, threat, final, towers=()):
         opts = TH.covering_crosspaths(kind, TH.sig_from_name(threat), caps=final)
     else:
         opts = []
-        for k, path, tier in S.ANSWERS.get(threat, ()):
+        for k, path, tier in answer_table(threat):
             want = path_tiers(path, tier) if path else (0, 0, 0)
             if k == kind and all(w <= f for w, f in zip(want, final)):
                 if threat != "ddt" or answers_threat(kind, want, "ddt", list(towers) + [("me", kind, want)]):
