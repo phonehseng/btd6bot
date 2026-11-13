@@ -61,6 +61,37 @@
 # 0.86, 7 0.75, 9 1.03, 10 1.06, 12 0.82): $650-1,900 buys no more there by
 # the model's best search; the old opening had 6 0.78, 7 0.68, 8 0.58.
 #
+# Hardened (2026-11-12 night, after the round-95 losses with "plan and fill
+# exhausted"; searched with tools/optimize_builds' Evaluator, MapSetup and
+# replay_plan, live sight on, status effects on, every spot legal and never
+# refused, CHIMPS cash: $650 at round 6, then rounds only):
+#   * opening: the boat (b1, the guide's own water spot) is bought at round 6
+#     beside the sub, before the sub's tiers; the sniper stands one cell right
+#     (0.441, 0.93); Psi goes at (0.142, 0.692), a cell where she is legal with
+#     every late tower placed (she is map-wide, the spot changes nothing for
+#     her); the sub's Triple Guns waits for the 2-0-4 step. Annealing over
+#     the opening steps found it (late towers allowed to come early).
+#   * late game: the Aircraft Carrier (b1 4-2-0) and Deadly Precision are
+#     bought on their own before the Flagship, so rounds 60-65 no longer wait
+#     for $36.7k (60 0.53 -> 3.29, 63 0.66 -> 2.02, 65 0.83 -> 2.33). The
+#     guide's Tack Zone is back in the plan, after Super Brittle (the guide's
+#     order), bought at round 98 instead of never. Cripple MOAB stays: without
+#     the sniper's Maim and Cripple, round 93 rated 0.73-0.82 and 95 0.37-0.42
+#     (with them 1.22 and 0.82). Super Brittle and the Tack Zone add almost
+#     nothing in the model here: from every legal cell they reach 30-55 units
+#     of one lane only (the fence).
+#   Margins, before (the build of 20:20) -> after, rated with the live sight:
+#     rounds 6-30: under 1.2: 5 (6 0.86, 7 0.76, 9 1.03, 10 1.06, 12 0.82) ->
+#       none; worst 0.76 -> 1.31 (round 9);
+#     rounds 31-59: worst 0.95 (round 54) -> 1.23 (round 37);
+#     rounds 60-100: under 1.0: 60 0.53, 63 0.64, 64 0.88, 65 0.82, 95 0.82, 99 0.81,
+#       100 0.53 -> 95 0.77, 99 0.75, 100 0.64 (93 1.22 -> 1.24). Rounds 95
+#       and 99 leak camo DDTs and 100 rainbows from the BAD at full strength:
+#       the model's ceiling for this board (a second Maim sniper instead of
+#       Super Brittle reached only 95 0.81, 100 0.88).
+#   tools/simulate_threats: plan 29/29, no threat gaps; plan_timeline: the
+#   last step (the Tack Zone) by round 98.
+#
 # Offline replay (2026-11-12 20:20, the live learned map, CHIMPS cash: $650 at
 # round 6, then only the rounds' own pops and bonuses). tools/simulate_threats
 # with the live account: plan 25/25 bought, threat gaps: none, off-plan answer
@@ -93,25 +124,22 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], ice: [5, 2, 0], tack: [2, 0, 5], sniper: [5, 2, 0], boomerang: [3, 0, 2]}
-  revised: "2026-11-12T20:20"   # the new opening (rounds 6-30)
+  revised: "2026-11-12T23:59"   # hardened: opening searched again, Carrier and Tack Zone (see "Hardened")
   maps: [Firing Range]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  # the opening (rounds 6-30, see "Opening" above): sub and sniper first, Psi last
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.729, 0.453]}         # the water spot
   - {do: place, id: sb1, kind: sub, role: dps, at: [0.687, 0.436]}              # the water spot: both lanes
   - {do: upgrade, id: sb1, to: 1-0-0}                                           # Longer Range (round 6)
   - {do: upgrade, id: sb1, to: 1-0-1}                                           # Twin Guns (round 8)
   - {do: upgrade, id: sb1, to: 1-0-2}                                           # Airburst Darts (round 13)
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.409, 0.93]}  # added: the bottom grass (see above)
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.441, 0.93]}  # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo on both lanes
   - {do: upgrade, id: s1, to: 0-2-0}                                            # Shrapnel Shot: rounds 27-30 (28 rated 0.37 without it)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.142, 0.692]}              # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 1-2-0}                                            # Full Metal Jacket: round 28's leads
-  - {do: upgrade, id: sb1, to: 1-0-3}                                           # Triple Guns (round 23)
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.74, 0.675]}             # Psi (round 27)
-  # the guide's late game from here, as before (the sniper one Shrapnel tier up)
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.729, 0.453]}         # the water spot
   - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
   - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
   - {do: upgrade, id: sb1, to: 2-0-4}                                           # Advanced Intel, Armor Piercing Darts
@@ -120,17 +148,16 @@ plan:
   - {do: upgrade, id: s1, to: 2-2-0}                                            # Large Calibre: ceramics
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.676, 0.726]}  # added: Glaive Ricochet for round 63
   - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: b1, to: 4-2-0}                                            # Aircraft Carrier on its own (rounds 60-65: 0.53-0.83 -> 1.98-4.46)
+  - {do: upgrade, id: s1, to: 3-2-0}                                            # Deadly Precision
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: upgrade, id: s1, to: 4-2-0}                                            # added: Maim MOAB
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
   - {do: place, id: i1, kind: ice, role: dps, at: [0.74, 0.777]}
-  # (2026-11-12 18:50: with a second Maim MOAB sniper here, round 93's BFBs held but Super Brittle was
-  #  $5.5k short at round 95, whose 500 camo regrow purples and 250 camo fortified leads took the life;
-  #  the second sniper is gone so Cripple MOAB and Super Brittle both stand by round 95)
-  - {do: upgrade, id: s1, to: 5-2-0}                                            # Cripple MOAB before Super Brittle and the Tack Zone (2026-11-12: lost round 93 twice, Cripple never bought by then)
+  - {do: upgrade, id: s1, to: 5-2-0}                                            # added: Cripple MOAB (kept: round 93 0.82 -> 1.22, 95 0.42 -> 0.82 with it, see above)
   - {do: upgrade, id: i1, to: 5-2-0}                                            # Super Brittle
-fill:                 # bought with what is left: the Tack Zone at the exit gave way to Cripple MOAB and a second Maim MOAB sniper (2026-11-12)
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.74, 0.845]}
+  - {do: place, id: t1, kind: tack, role: dps, at: [0.74, 0.845]}              # the guide's Tack Zone, in the plan again (was the fill)
+  - {do: upgrade, id: t1, to: 2-0-4}
   - {do: upgrade, id: t1, to: 2-0-5}                                            # The Tack Zone
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]

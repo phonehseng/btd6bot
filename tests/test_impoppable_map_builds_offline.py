@@ -67,7 +67,7 @@ MAPS = {"quad": "Quad", "coveredgarden": "Covered Garden", "sunkencolumns": "Sun
         "bloonariusprime": "Bloonarius Prime", "peninsula": "Peninsula", "firingrange": "Firing Range",
         "midnightmansion": "Midnight Mansion", "sunsetgulch": "Sunset Gulch", "mesa": "Mesa",
         "spillway": "Spillway", "muddypuddles": "Muddy Puddles", "enchantedglade": "Enchanted Glade",
-        "erosion": "Erosion"}
+        "erosion": "Erosion", "patspond": "Pat's Pond"}
 
 
 def _build(map_id):

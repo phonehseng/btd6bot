@@ -40,33 +40,71 @@
 # under-rates map-wide towers): 40 2.48, 63 0.71, 76 0.76, 81 0.39, 90 3.79,
 # 95 0.75, 98 0.63, 100 0.89.
 #
+# Hardened (2026-11-12 night, after the round-22 loss of 21:01, case
+# 20261112_210752_Polyphemus_chimps: 16 whites against a 0-0-0 druid, a 0-0-0
+# starter dart, a 0-1-0 sniper and Obyn, $2,375 in the village and Monkey
+# Commerce). Searched with tools/optimize_builds' Evaluator, MapSetup and
+# replay_plan, live sight on, status effects on, spots legal and never
+# refused, CHIMPS cash ($650 at round 6, then rounds only):
+#   * opening: the druid (moved to 0.366, 0.317) and a dart (0.323, 0.334,
+#     the druid's old cell) at round 6, so no generic starter (starter:
+#     none); the sniper by round 10 with Night Vision and Shrapnel (round
+#     24's camo was rated 0.06: the plan bought Night Vision only inside its
+#     0-2-2 step at round 28); a second druid (dr1, 0.345, 0.709, the other
+#     side of the eye) by round 9; Obyn at (0.398, 0.76); the druid's Hard
+#     Thorns and Heart of Thunder by round 30; the village, with Monkey
+#     Business only, after them (Monkey Commerce waits for the 2-0-2 step).
+#   * late game: Druid of the Storm after Full Auto Rifle (rounds 49-53);
+#     the spike factory's Deadly Spikes and dr1's Ball Lightning (4-0-0)
+#     before Superstorm, which costs about $65k: the replay held $40-60k
+#     idle in rounds 79-83 waiting for it. Superstorm comes at round 89
+#     instead of 84; the Perma-Spike last (round 96).
+#   Margins, before (the build of 12:00, Night Vision inside 0-2-2) ->
+#   after, live sight:
+#     rounds 6-30: under 1.2: 10 (9 0.92, 10 1.04, 15 0.81, 19 0.98, 21 0.88,
+#       22 0.95, 24 0.06, 25 0.56, 27 1.03, 30 0.78) -> none; worst 0.06 ->
+#       1.23 (round 15);
+#     rounds 31-59: under 1.0: 37 0.91, 38 0.89, 49 0.96, 50 0.78 -> 34 0.66,
+#       50 0.91, 52 0.85, 53 0.89 (the opening's dart and second druid cost
+#       $645 by then);
+#     rounds 60-100: under 1.0: 78 0.97, 79 0.63, 80 0.63, 83 0.56 -> 79
+#       0.75, 80 0.75, 83 0.77, 84 0.53, 85 0.87, 87 0.81, 88 0.78 (70-77
+#       hold 1.31-1.58 where they sat at 1.06-1.26); 89-100 1.16-5.54.
+#   tools/simulate_threats: plan 29/29, no threat gaps; plan_timeline: the
+#   last step by round 96.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
 id: polyphemus_chimps
 map: Polyphemus
 hero: obyn
-# starter: kept (2026-11-12 17:45): this guide can afford one damage tower at
-# round 6, and Ancient Portal CHIMPS lost round 6 in 9 s with its sub alone
-# once `starter: none` was set; the generic starter is that second tower.
+starter: none         # the plan buys two damage towers at round 6 (the druid and a dart, $645), so no
+                      # generic starter: on 2026-11-12 21:01 the starter dart was refused five times before it stood
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {druid: [5, 0, 2], sniper: [0, 2, 5], village: [2, 0, 2], alchemist: [4, 2, 0], spike: [2, 0, 5], boomerang: [3, 0, 2]}
-  revised: "2026-11-12T12:00"
+  towers: {druid: [5, 0, 2], dart: [0, 0, 0], sniper: [0, 2, 5], village: [2, 0, 2], alchemist: [4, 2, 0], spike: [2, 0, 5], boomerang: [3, 0, 2]}
+  revised: "2026-11-12T23:59"   # hardened (see "Hardened")
   maps: [Polyphemus]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: d1, kind: druid, role: dps, at: [0.323, 0.334]}             # the guide's first tower
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.366, 0.317]}               # opening search 2026-11-12
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.323, 0.334]}               # opening search 2026-11-12
+  - {do: place, id: dr1, kind: druid, role: dps, at: [0.345, 0.709]}              # opening search 2026-11-12
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.484, 0.249]}
-  - {do: place, id: hero, kind: hero, role: dps, near: [d1], at: [0.366, 0.317]}  # Obyn, by the druid
+  - {do: upgrade, id: s1, to: 0-1-0}                                              # opening search 2026-11-12
+  - {do: place, id: hero, kind: hero, role: dps, near: [d1], at: [0.398, 0.76]}   # opening search 2026-11-12
+  - {do: upgrade, id: s1, to: 0-2-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: d1, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: d1, to: 2-0-0}                                              # opening search 2026-11-12
   - {do: place, id: v1, kind: village, role: support, near: [d1, s1], at: [0.43, 0.351]}
-  - {do: upgrade, id: v1, to: 0-0-2}                                            # Monkey Commerce
-  - {do: upgrade, id: s1, to: 0-2-2}                                            # Night Vision, Shrapnel Shot: camo
+  - {do: upgrade, id: v1, to: 0-0-1}                                              # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 0-2-3}                                            # Semi-Automatic
   - {do: upgrade, id: s1, to: 0-2-4}                                            # Full Auto Rifle, before round 40
+  - {do: upgrade, id: d1, to: 3-0-0}                                              # Druid of the Storm: rounds 49-53 (50 0.78 -> 0.91, 52 0.73 -> 0.85)
   - {do: upgrade, id: v1, to: 2-0-2}                                            # Jungle Drums, before round 40
   - {do: place, id: a1, kind: alchemist, role: support, near: [s1], at: [0.558, 0.402]}  # next to the sniper
   - {do: upgrade, id: a1, to: 4-2-0}                                            # Stronger Stimulant
@@ -74,9 +112,13 @@ plan:
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.516, 0.3]}  # added: Glaive Ricochet for round 63
   - {do: upgrade, id: r1, to: 3-0-2}
   - {do: upgrade, id: d1, to: 4-0-2}                                            # Ball Lightning, then save
-  - {do: upgrade, id: d1, to: 5-0-2}                                            # Superstorm
-  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.751, 0.777]}  # before round 96, at an exit
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.751, 0.777]}  # before Superstorm: rounds 70-83 (see "Hardened")
   - {do: upgrade, id: p1, to: 2-0-4}
+  - {do: upgrade, id: dr1, to: 1-0-0}
+  - {do: upgrade, id: dr1, to: 2-0-0}
+  - {do: upgrade, id: dr1, to: 3-0-0}
+  - {do: upgrade, id: dr1, to: 4-0-0}                                             # added: the opening's second druid to Ball Lightning while Superstorm is saved for
+  - {do: upgrade, id: d1, to: 5-0-2}                                            # Superstorm
   - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
 answers:
   camo: [{do: upgrade, id: s1, to: 0-2-2}]

@@ -104,6 +104,11 @@ planner:
   # belt at the chute and in the exit pocket); Impoppable needs one too
   # (backlog 98, tests/test_workshop_excluded_offline.py).
   excluded_maps: [Tricky Tracks, Glacial Trail, Flooded Valley, Workshop]
+  # not Pat's Pond Impoppable (2026-11-12 17:19, case 20261112_171904, round 40): its first
+  # ninja stood behind the bottom trees and popped nothing in 12 rounds, a dart nothing in
+  # 26, the Sticky Bomb came at round 38. strategies/maps/patspond_impoppable.yaml plays it
+  # from the right junction.
+  excluded_by_mode: {impoppable: ["Pat's Pond"]}
 plan:
   - {do: place, id: n1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   - {do: upgrade, id: n1, to: 1-0-1}
