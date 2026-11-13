@@ -50,6 +50,30 @@
 # ability, and under-rates map-wide towers): 40 4.09, 63 1.22, 76 1.48, 81
 # 1.63, 90 3.19, 95 0.84, 98 0.56, 100 2.04.
 #
+# Hardened (2026-11-13). Searched with tools/optimize_builds' Evaluator,
+# MapSetup and replay_plan, live sight on, status effects on, spots legal
+# (the test's map geometry, plan order) and never refused, CHIMPS cash
+# ($650 at round 6, then rounds only):
+#   * late game: a coordinate search over every tower's spot (replay of
+#     rounds 31-100) moved the boat to (0.623, 0.538), the boomerang to
+#     (0.505, 0.436), the first wizard to (0.548, 0.572), the alchemist to
+#     (0.612, 0.658) and the spike factory to (0.537, 0.129). Same towers,
+#     tiers and order.
+#   * opening: the guide's dart and the sniper at round 6 ($595), the
+#     dart's 0-1-0, a glue, the guide's other darts, a bomb (0.548, 0.47),
+#     then the plan's own order.
+#   Margins, before (the build of cbf172c) -> after, live sight:
+#     rounds 6-30: under 1.2: 11 -> 11; worst 0.45 (round 9) -> 0.81 (round
+#       9); still under 1.2: 6 0.92, 7 1.04, 8 1.03, 9 0.81, 10 0.96, 14 1.10,
+#       15 1.10, 25 1.11, ...;
+#     rounds 31-59: under 1.0: 0 -> 0; worst 1.14 (round 34) -> 1.27 (round
+#       34);
+#     rounds 60-100: under 1.0: 21 -> 16; worst 0.42 (round 87) -> 0.44
+#       (round 98); still under 1.0: 63 0.80, 78 0.66, 80 0.68, 83 0.72, 85
+#       0.70, 87 0.56, 88 0.55, 95 0.53, 96 0.74, 98 0.44, ....
+#   tools/simulate_threats: plan 35/35, no threat gaps; plan_timeline: the
+#   last step by round 98.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -62,7 +86,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 1, 0], sniper: [0, 2, 5], heli: [3, 0, 2], village: [2, 2, 0], wizard: [5, 2, 5], alchemist: [4, 0, 1], spike: [2, 0, 5], boomerang: [3, 0, 2], bomb: [0, 0, 0]}
-  revised: "2026-11-12T12:00"
+  revised: "2026-11-13T07:30"   # hardened (see "Hardened")
   maps: [Moon Landing]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -70,32 +94,37 @@ planner:
 plan:
   - {do: place, id: x1, kind: dart, role: dps, target: close, segment: [0.0, 0.3], at: [0.58, 0.845]}  # first crater, on Close
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.441, 0.198]}  # as high as you can: the top-middle plateau
-  - {do: place, id: x2, kind: dart, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.59, 0.896]}
   - {do: upgrade, id: x1, to: 0-1-0}
-  - {do: upgrade, id: x2, to: 0-1-0}
+  - {do: place, id: gl1, kind: glue, role: dps, at: [0.58, 0.726]}                # opening search 2026-11-12
+  - {do: place, id: x2, kind: dart, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.59, 0.896]}
   - {do: place, id: x3, kind: dart, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.569, 0.794]}  # the guide's third dart
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.537, 0.504]}            # Obyn, the central plateau
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.548, 0.47]}                # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo
-  - {do: upgrade, id: s1, to: 0-2-2}                                            # Shrapnel Shot
-  - {do: place, id: b1, kind: bomb, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.623, 0.828]}  # added: round 28's leads (see above)
+  - {do: upgrade, id: s1, to: 0-2-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: gl1, to: 0-1-0}                                             # opening search 2026-11-12
+  - {do: upgrade, id: x2, to: 0-1-0}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.419, 0.351]}              # opening search 2026-11-12
+  - {do: upgrade, id: s1, to: 0-2-1}                                              # opening search 2026-11-12
   - {do: place, id: h1, kind: heli, role: dps, at: [0.099, 0.385]}
+  - {do: place, id: b1, kind: bomb, role: dps, near: [x1], segment: [0.0, 0.3], at: [0.623, 0.538]}  # added: round 28's leads (see above) (moved from 0.623, 0.828: hardening)
+  - {do: upgrade, id: s1, to: 0-2-2}                                            # Shrapnel Shot
   - {do: upgrade, id: h1, to: 2-0-0}                                            # Pursuit from here
   - {do: upgrade, id: h1, to: 3-0-2}                                            # Razor Rotors: round 38-40's ceramics and MOAB
   - {do: upgrade, id: s1, to: 0-2-4}                                            # Full Auto Rifle
   - {do: place, id: v1, kind: village, role: support, near: [s1], at: [0.505, 0.198]}
   - {do: upgrade, id: v1, to: 2-2-0}                                            # Radar Scanner, Jungle Drums
   - {do: upgrade, id: s1, to: 0-2-5}                                            # Elite Defender
-  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.473, 0.129]}  # added: Glaive Ricochet for round 63
+  - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.505, 0.436]}  # added: Glaive Ricochet for round 63 (moved from 0.473, 0.129: hardening)
   - {do: upgrade, id: r1, to: 3-0-2}
-  - {do: place, id: w1, kind: wizard, role: dps, at: [0.441, 0.351]}
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.548, 0.572]}              # moved from 0.441, 0.351 (hardening)
   - {do: upgrade, id: w1, to: 0-2-4}                                            # Necromancer
   - {do: upgrade, id: w1, to: 0-2-5}                                            # Prince of Darkness
   - {do: place, id: w2, kind: wizard, role: dps, at: [0.484, 0.368]}            # the middle: sees into every crater
   - {do: upgrade, id: w2, to: 4-2-0}                                            # Arcane Spike
   - {do: upgrade, id: w2, to: 5-2-0}                                            # Archmage
-  - {do: place, id: a1, kind: alchemist, role: support, near: [w2, w1], at: [0.419, 0.47]}
+  - {do: place, id: a1, kind: alchemist, role: support, near: [w2, w1], at: [0.612, 0.658]}  # moved from 0.419, 0.47 (hardening)
   - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
-  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.195, 0.504]}  # the guide's optional Perma-Spike, at the exit
+  - {do: place, id: p1, kind: spike, role: dps, segment: [0.85, 1.0], at: [0.537, 0.129]}  # the guide's optional Perma-Spike, at the exit (moved from 0.195, 0.504: hardening)
   - {do: upgrade, id: p1, to: 2-0-4}                                            # Deadly Spikes
   - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
 answers:
