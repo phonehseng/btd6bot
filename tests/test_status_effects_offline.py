@@ -95,7 +95,12 @@ def test_embrittlement_and_super_brittle():
         dart, = [s for s in stations if s.tid == "d"]
         bonus, seen = ctl.influence(dart, D.layer("RedCamo"), 0, 0.05)
         per, stay = ctl._per_bloon(st, src, D.layer("Red"), 0.05, 0)
-        assert math.isclose(bonus, add * min(1.0, per * life), rel_tol=1e-6)
+        # only on the stretch of the dart's zone where bloons carry the debuff (_debuffed_share)
+        zd, zi = dart.zones[0], st.zones[0]
+        share = D._debuffed_share(zd.entry, zd.entry + zd.length, zi.entry,
+                                  zi.entry + zi.length + life * D.layer("RedCamo").speed)
+        assert 0.0 < share <= 1.0
+        assert math.isclose(bonus, add * share * min(1.0, per * life), rel_tol=1e-6)
         assert math.isclose(seen, min(1.0, per * stay), rel_tol=1e-6) and seen > 0.0
     # a camo red is out of the dart's sight alone, and seen at that share with the ice
     alone = D._Rates(D.stations_for([D.Placed("d", "dart", (0, 0, 0), x2, z2)], tr)[0])
