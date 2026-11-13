@@ -186,7 +186,10 @@ def test_the_moab_answer_comes_before_the_alchemist():
     cover). Mesa's late plan (2026-11-12, from round 27) buys its MOAB damage
     elsewhere first: the damage model rates round 40 at 0.91 that way and at
     0.31 with the Sticky Bomb moved ahead of it."""
-    for map_id in ("sunsetgulch", "coveredgarden", "bloonariusprime", "firingrange", "midnightmansion",
+    # (Bloonarius Prime's plan from round 9, 2026-11-13, is the optimizer's,
+    # rated on both lanes: n2 grows on another path and its MOAB answer is
+    # another tower.)
+    for map_id in ("sunsetgulch", "coveredgarden", "firingrange", "midnightmansion",
                    "spillway", "enchantedglade"):
         _, d = _build(map_id)
         order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
@@ -311,18 +314,25 @@ def test_sunken_columns_opens_with_towers_that_see_the_route():
 def test_enchanted_glade_aces_stand_by_the_mib_village():
     """Enchanted Glade (loss 20261112_055921): the MIB village stood on the
     bottom-right island and both aces across the map, so their darts could
-    not pop a DDT. In its own build the late blimp damage - both Ground
-    Zero aces and the Eliminator bomb - is pinned inside the range of v2,
-    the village that becomes MIB, and the plan owns the cash for them."""
+    not pop a DDT. In its own build both Ground Zero aces are pinned inside
+    the range of v2, the village that becomes MIB, which comes after ac1.
+    The Eliminator b1 stands on the bottom lanes with route in range (losses
+    20261112_210026 and 20261112_232434: pinned by v2 at (0.099, 0.112) it
+    reached none of it); n4 is dropped."""
     import math
     _, d = _build("enchantedglade")
     pinner = pin_spots.Pinner("Enchanted Glade", "impoppable")
     at = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place" and st.get("at")}
-    assert ("upgrade", "v2", "2-3-0") in [(st["do"], st.get("id"), st.get("to")) for st in d["plan"]]
+    order = [(st["do"], st.get("id"), st.get("to")) for st in d["plan"]]
+    assert ("upgrade", "v2", "2-3-0") in order
+    assert order.index(("place", "ac1", None)) < order.index(("place", "v2", None))
     mib = pinner.world(pinner.model.frac_to_cell(*at["v2"]))
-    for tid in ("ac1", "ac2", "b1"):
+    for tid in ("ac1", "ac2"):
         tower = pinner.world(pinner.model.frac_to_cell(*at[tid]))
         assert math.dist(tower, mib) <= pin_spots.buffer_range("village"), (tid, at[tid])
+    cover = pinner.segment_cover("bomb", pinner.model.frac_to_cell(*at["b1"]), (0.0, 1.0))
+    assert cover > 100, (at["b1"], cover)
+    assert "n4" not in at, "n4 reached no route worth its cost (sold in 20261112_232434)"
 
 
 def test_peninsula_pops_round_28_leads_from_the_water():

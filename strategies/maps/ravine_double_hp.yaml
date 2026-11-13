@@ -1,0 +1,111 @@
+# Ravine, Double HP MOABs (Hard rules, rounds to 80): the general build's
+# order (hard_ninja_alch_sun: ninjas, an alchemist, two Apache helis) on the
+# spots its last game stood on, with Recursive Cluster bombs on the two
+# stretches of the A fork that a tower can reach at all, and without the
+# village that found no tower to help.
+#
+# Why (case 20261112_222133_Ravine_double_hp, 2026-11-12 22:10): the general
+# build held rounds 22-63 without losing a life and lost all 100 on round 64
+# within ten seconds of pressing Play. Round 64 is nine MOABs (three of them
+# fortified) down Path1's two forks. The stills show them popped at the top
+# of the A fork (Path1-split2); the defeat screen counts "ceramic -228", two
+# fortified ceramics. Along that fork (237 units) the board had: a 0-0-0 dart
+# (units 96-142), two 4-0-2 ninjas beside A (74-167, 105-132) and one 4-0-2
+# ninja in the middle (210-237); the helis and three Monkey Aces bought by
+# the blimp ramp fly where they like. Nothing with area damage stood on the
+# fork, and the village (0.633, 0.112) reached no tower of the plan.
+#
+# Map facts (data/map_geometry, dps_model.Track; see ravine_magic_only.yaml):
+# two entrances take turns by round (Path1 on even rounds, Path2 on odd) and
+# each forks in two. Measured over every legal cell of the learned map
+# (placement.valid_spots, sight counted): no tower reaches units 190-210 of
+# the A fork - the river and a bridge lie there. The fork can be held on
+# units 67-190 from the A patch around (0.44, 0.23) and on its last 27 units
+# from the middle patch around (0.31-0.37, 0.73-0.79), which also reaches the
+# tails of both Path2 forks. So the children of a blimp popped at the top
+# must be popped inside those two stretches: that takes area damage, not
+# another single-target ninja.
+#
+# Changes against the general build:
+#   * bA, a bomb beside A (0.441, 0.232): 2-0-3 Cluster Bombs, later 2-0-4
+#     Recursive Cluster - units 67-183 of the A fork, 127-206 of Path2-split2
+#   * bM, the same bomb in the middle (0.313, 0.785): the last 19 units of
+#     the A fork and the tails of both Path2 forks (241-329, 333-432)
+#   * n3, the third ninja, at (0.548, 0.317): units 105-180 of the A fork and
+#     102-204 of Path2-split2 (the general build's `near` rule put it on the
+#     A patch, where the bomb stands now)
+#   * sp1 at (0.585, 0.394): Deadly Spikes on units 137-163 of the A fork and
+#     115-190 of Path2-split2; sp2 keeps the general build's exit spot
+#   * no village: $3,130 that goes to the first bomb
+#   * every spot is named (`at`): n1, n2, a1, h1, h2, hero and sp2 are where
+#     the game accepted them on 2026-11-12 22:10
+#
+# Evidence (2026-11-12, the executor-faithful replay simulate_threats.
+# simulate on the learned map, Fast Track start R22 with $8,930, Double Cash,
+# each round's start board rated by the live forecast): see the numbers in
+# tests/test_ravine_double_hp_offline.py, which holds this build's round 64
+# and its worst round above the general build's. NOT shown by the model: it
+# rates a blimp round on the blimp and not on its children's run to the exit
+# (docs/backlog.md 109), so the bombs' real worth on round 64 is only seen in
+# a game.
+#
+# Status: written 2026-11-12, not played yet.
+id: ravine_double_hp
+map: Ravine
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys before it is done
+modes: [double_hp]
+planner:
+  towers: {ninja: [4, 0, 4], alchemist: [4, 2, 0], heli: [4, 2, 2], bomb: [2, 0, 4], spike: [2, 0, 4]}
+  base_success: {double_hp: 0.5}
+  maps: [Ravine]
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.366, 0.734]}        # middle: the A fork's tail and both Path2 forks
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.687, 0.308]}       # Obyn between A and C
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: n2, kind: ninja, role: dps, at: [0.152, 0.641]}        # L: Path1-split1 (+ Path2-split2)
+  - {do: upgrade, id: n2, to: 0-0-1}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.259, 0.743]}  # reaches n1 (its acid dip was logged live)
+  - {do: place, id: h1, kind: heli, role: dps, at: [0.639, 0.402]}
+  - {do: upgrade, id: h1, to: 0-2-0}                                        # IFR: camo everywhere the heli flies
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: upgrade, id: h1, to: 3-2-0}                                        # Razor Rotors: round 40's 400 HP MOAB
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.045, 0.411]}         # west edge, off the A patch (an ace stood here live)
+  - {do: upgrade, id: h2, to: 3-0-2}
+  - {do: upgrade, id: n2, to: 2-0-3}
+  - {do: place, id: bA, kind: bomb, role: dps, at: [0.441, 0.232]}          # A: units 67-183 of the A fork
+  - {do: upgrade, id: bA, to: 2-0-3}                                        # Cluster Bombs: the ceramics of a popped MOAB
+  - {do: upgrade, id: a1, to: 3-2-0}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: n2, to: 2-0-4}                                        # Sticky Bomb
+  - {do: place, id: bM, kind: bomb, role: dps, at: [0.313, 0.785]}          # middle: the A fork's last units, both Path2 tails
+  - {do: upgrade, id: bM, to: 2-0-3}
+  - {do: upgrade, id: a1, to: 4-2-0}
+  - {do: upgrade, id: bA, to: 2-0-4}                                        # Recursive Cluster, before the $21,600 steps
+  - {do: upgrade, id: bM, to: 2-0-4}
+  - {do: upgrade, id: h1, to: 4-2-0}                                        # Apache Dartship
+  - {do: place, id: n3, kind: ninja, role: dps, at: [0.548, 0.317]}         # units 105-180 of the A fork
+  - {do: upgrade, id: n3, to: 4-0-2}
+  - {do: place, id: sp1, kind: spike, role: exit, at: [0.585, 0.394]}       # units 137-163 of the A fork, 115-190 of Path2-split2
+  - {do: upgrade, id: sp1, to: 2-0-4}                                       # Deadly Spikes, in place before round 64
+  - {do: upgrade, id: h2, to: 4-0-2}
+  - {do: place, id: sp2, kind: spike, role: exit, at: [0.222, 0.777]}       # the Path2 forks' tails
+  - {do: upgrade, id: sp2, to: 2-0-4}
+  - {do: place, id: n4, kind: ninja, role: dps, at: [0.297, 0.768]}         # middle
+  - {do: upgrade, id: n4, to: 4-0-2}
+fill:
+  - {do: place, kind: ninja, role: dps, max: 5}
+  - {do: upgrade, kind: ninja, to: 4-0-2}
+  - {do: place, kind: spike, role: exit, max: 3}
+  - {do: upgrade, kind: spike, to: 2-0-4}
+panic:
+  - {do: place, kind: ninja, role: exit}
+  - {do: place, kind: spike, role: exit}
+answers:
+  lead: [{do: upgrade, id: a1, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: h1, to: 3-2-0}, {do: upgrade, id: h2, to: 3-0-0}]
+  bfb: [{do: upgrade, id: n2, to: 2-0-4}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: n2, to: 2-0-4}]
