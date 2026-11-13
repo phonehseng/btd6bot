@@ -1832,6 +1832,8 @@ class Executor:
                          for cx, cy, sc in cands), key=lambda t: -t[2])
         # the build's researched spot comes first, then its neighbours
         out = self._at_spots(step, valid, n)
+        if out and kind not in self.BUFFERS and kind not in ("farm", "spike", "hero"):
+            out = self._at_in_reach(kind, step, valid, out)
         exact = out[0] if out else None
         if role in ("dps", "exit"):
             floor = self._reach_floor(kind, valid)
@@ -2774,6 +2776,9 @@ class Executor:
             return self._defer(step, key, self.BUFFER_RETRY_S)   # nothing to buff yet
         if self._pane_already_empty(key):
             return self._defer(step, key, self.PANE_RETRY_S)   # same pane, same answer
+        waiting = self._wait_for_pinned_ground(step, key, kind)
+        if waiting is not None:
+            return waiting
         spots = self._spots_widening(kind, step)
         if not spots:
             # a plan tower with no ground is first given the ground under a
@@ -2846,6 +2851,56 @@ class Executor:
             return False
         pane = self._open_pane()
         return pane is not None and pane[0] in tried and len(tried) < pane[1]
+
+    # How far ahead a plan tower waits for its pinned ground to appear
+    # (_wait_for_pinned_ground): a phase and a bit on Erosion.
+    PIN_GROUND_LOOKAHEAD = 20
+
+    def _wait_for_pinned_ground(self, step, key, kind):
+        """On a map whose ground changes with long path phases (Erosion: the
+        ice melts into water at each phase's end), a plan tower whose exact
+        spot (`at`) is not ground yet but becomes ground within
+        PIN_GROUND_LOOKAHEAD rounds is set aside until it is (self.deferred,
+        the plan goes on), instead of being placed by role elsewhere.
+        Returns None when this is not such a case.
+
+        Erosion Impoppable (threat simulation, 2026-11-12): the executor's
+        cash ran ahead of the optimizer's plan, and buc20 - pinned on water
+        that the melt of round 18 makes - was bought in round 15 and stood
+        across the map ("nothing legal within 15 cells of its spot"); so
+        did the subs bought before the melt of round 72. Placed there, they
+        reached none of the path they were bought for."""
+        at = step.get("at")
+        now = getattr(self, "now_round", None)
+        if not at or kind == "hero" or now is None or step.get("id") not in self._plan_place_ids():
+            return None
+        try:
+            from . import mapgeom as G
+            from . import placement as PL
+            geom = G.load(self.m.name)
+            if not geom or G.phase_end(geom, now) is None:
+                return None
+            cx, cy = self.m.frac_to_cell(*at)
+            hero = None
+            last = self.rules.get("end_round")
+
+            def ground(rnd):
+                horizon = G.phase_end(geom, rnd) or last
+                grid = PL.valid_spots(self.m, kind, hero, (), last_round=horizon if last is None else min(horizon, last),
+                                      now_round=rnd)
+                return grid is not None and bool(grid[cy, cx])
+
+            if ground(now):
+                return None             # the ground is there: anything else is for the spot search
+            coming = next((r for r in range(now + 1, now + self.PIN_GROUND_LOOKAHEAD + 1)
+                           if (last is None or r <= last) and ground(r)), None)
+        except Exception:
+            return None
+        if coming is None:
+            return None
+        log.info("%s: its spot %s is ground from round %d (the map changes by phase) - set aside until then",
+                 step.get("id"), list(at), coming)
+        return self._defer(step, key, self.PANE_RETRY_S)
 
     def _wait_for_next_pane(self, step, key, kind):
         """A plan placement found no spot at all on a map with cycling panes:
@@ -3795,6 +3850,34 @@ class Executor:
             return f"the damage model rates round {worst[1]} at {worst[0]:.2f}"
         return None
 
+    def _at_in_reach(self, kind, step, valid, spots):
+        """The cells round a step's researched spot (`at`, from _at_spots)
+        whose range reaches the track sell_useless asks of a standing tower
+        (SELL_REACH_SHARE of the best legal spot's reach): one under it is
+        sold as soon as it stands. All of them when no floor applies
+        (global range, no track or ground known).
+
+        Enchanted Glade Impoppable (2026-11-12, loss case 20261112_210026):
+        b1, the plan's MOAB Eliminator "near v2", was pinned at (0.099,
+        0.112), where a bomb reaches 0 of the best 276 track cells. It was
+        placed there, grown to 0-4-0 ($6,570) and sold at round 68, and the
+        plan's DDT and BAD answer was gone for the rest of the game (round
+        98's fortified BFBs and ZOMGs leaked). A spot under the floor is
+        passed over; the search goes on round it, then relaxes as usual."""
+        floor = self._reach_floor(kind, valid, self.SELL_REACH_SHARE)
+        if floor is None:
+            return spots
+        reach = self._reach(kind)
+        kept = [c for c in spots if reach[c[1], c[0]] >= floor]
+        note = ("at_under_floor", kind, step.get("id"))
+        noted = self.__dict__.setdefault("noted", set())
+        if (not kept or kept[0] != spots[0]) and note not in noted and not getattr(self, "_peeking", False):
+            noted.add(note)
+            log.info("%s: its spot %s reaches %.0f track cells, under the %.0f a standing %s must "
+                     "reach - passed over", step.get("id", kind), list(step.get("at")),
+                     float(reach[spots[0][1], spots[0][0]]), floor, kind)
+        return kept
+
     def _at_spots(self, step, valid, n, radius=None):
         """Up to n cells round a step's exact spot (`at`), nearest first and
         at least AT_SPOT_GAP_CELLS apart, all within AT_SEARCH_CELLS of it;
@@ -3941,6 +4024,19 @@ class Executor:
         Each relaxation that finds spots is logged; a real dead end logs how
         much legal ground there was, so the cause shows in the log."""
         if kind in self.BUFFERS and not any(i in self.g.towers for i in step.get("near") or ()):
+            if step.get("at") and self._near_to_come(step):
+                # The build placed it before the towers it buffs, on purpose,
+                # at its researched spot: they come next and stand round it.
+                # Enchanted Glade Impoppable (2026-11-12, loss case
+                # 20261112_210026): v2, the MIB village pinned on the top-left
+                # island "near ac1", was bought two steps before ac1; with no
+                # ace standing yet it went where it buffed the most towers -
+                # the bottom of the map by the opening ninja - and the aces,
+                # the bomb and the sniper meant to stand in its range stood
+                # across the map from it.
+                spots = self._at_spots(step, self._legal_cells(kind), self.SPOTS_PER_HOLD)
+                if spots:
+                    return spots
             # none of the towers it was meant to buff stands (Water Park: a
             # lone village buffing nothing)
             return self._buff_spots(kind, step)
@@ -4001,6 +4097,15 @@ class Executor:
         if spots:
             log.info("%s: no spot reaches the track - global range, any legal spot", label)
         return spots
+
+    def _near_to_come(self, step):
+        """Will a tower this step stands `near` still be placed by a later
+        step of the plan or the fill (a place step with that id, not given
+        up)? Used for a buffer bought before the towers it buffs."""
+        names = set(step.get("near") or ())
+        return any(st.get("do") == "place" and st.get("id") in names and st["id"] not in self.g.towers
+                   and self._step_key(st) not in self.dead_steps
+                   for st in list(self.plan) + list(self.fill))
 
     def _any_legal_spot(self, kind):
         """For a tower with global range (range None: sniper, mortar, heli,
@@ -4218,6 +4323,15 @@ class Executor:
                 self.g.towers.pop(tid, None)
                 gone.append(tid)
         if not gone:
+            return gone
+        if (getattr(self, "strat", None) or {}).get("rebuild_lost") is False:
+            # the plan buys each phase's defence itself (an optimizer plan for
+            # Erosion: MapSetup.set_round): its destroyed towers' steps are not
+            # queued again - their pins are water now, and rebuilt by role they
+            # spent the cash the next phase's own towers were planned on
+            log.warning("the map destroyed the ground under %s - forgotten (the plan buys "
+                        "the next phase's towers itself)", ", ".join(gone))
+            self.track_changed()
             return gone
         redo = [dict(s) for s in self.plan[:self.idx]
                 if s.get("id") in gone and s.get("do") in ("place", "upgrade")]
@@ -6308,15 +6422,60 @@ class Executor:
             return r == "progress"  # waiting for cash / round, or mid-upgrade
         else:
             ability_wait = None
-        for st in self.fill:
+        weak = self._fill_yields(rnd)
+        for st in () if weak else self.fill:
             with self.why("fill", "the plan is done: fill step", step=dict(st)):
                 r = self.try_step(st, cash, rnd)
             if r in ("bought", "progress"):
                 return True
+        if weak:
+            # the match's reinforce (then surplus) spends for the weak round
+            self.waiting = (f"fill yields to reinforce: the damage model rates round {weak[1]} "
+                            f"at {weak[0]:.2f}")
+            return False
         if ability_wait is None and self._idle_blimp_damage(cash, rnd):
             return True
         self.waiting = ability_wait or PLAN_EXHAUSTED
         return False
+
+    # The fill gives way to reinforce while a round of the look-ahead is rated
+    # under this (it would leak at full strength).
+    FILL_YIELD_MARGIN = 1.0
+
+    def _fill_yields(self, rnd):
+        """(margin, round) of a look-ahead round the damage model rates under
+        FILL_YIELD_MARGIN, or None: then the fill's steps wait and the cash
+        goes to what the match's reinforce picks for that round (Match: an
+        idle tick with a weak look-ahead runs reinforce, then surplus).
+
+        The fill is the plan's generic growth, written without any round in
+        mind, and it ran before reinforce on every tick. Ravine Double HP
+        (2026-11-12 22:10, hard_ninja_alch_sun, loss case
+        20261112_222133_Ravine_double_hp): from round 55 the model rated
+        round 64 (six MOABs and three fortified MOABs, double HP) at
+        0.53-0.59; the plan was done at round 57, and rounds 57-62 spent
+        $11.8k on the fill's two ninjas to 4-0-2 and a spike factory, which
+        moved round 64 by 0.00-0.02 in the model. The blimp ramp looked at
+        round 64 only from round 61, and round 64 took all 100 lives.
+        Unrated (no forecast) the fill goes on as before, and so it does
+        where no reinforce runs after it (reinforce_live unset: the offline
+        replays, tools/simulate_threats), so their boards still show the
+        fill's towers."""
+        if rnd is None or not getattr(self, "reinforce_live", False):
+            return None
+        try:
+            worst = self.lookahead_worst(rnd)
+        except Exception:      # the rating is advice: never stop the fill over it
+            log.exception("rating the look-ahead for the fill failed")
+            return None
+        if not worst or worst[0] is None or worst[1] is None or worst[0] >= self.FILL_YIELD_MARGIN:
+            return None
+        noted = self.__dict__.setdefault("noted", set())
+        if ("fill-yields", worst[1]) not in noted:
+            noted.add(("fill-yields", worst[1]))
+            log.warning("fill: the damage model rates round %d at %.2f - the fill waits, reinforce "
+                        "spends for that round", worst[1], worst[0])
+        return worst
 
     def _idle_blimp_damage(self, cash, rnd):
         """With one life, once the plan and the fill are used up, put idle

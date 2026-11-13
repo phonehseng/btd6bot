@@ -98,6 +98,30 @@
 # 0.84 at round 53 before, plan 19/21 by round 60 - the ninja and the hero
 # move every later purchase back by about $1,800.
 #
+# Right-room ninja (2026-11-12 21:07, case 20261112_211357_DarkDungeons_apopalypse):
+# the opening above held rounds 15-30 with all 114 lives, then rounds 31-35
+# took them all (zebras, blacks and whites on 31; blacks, whites and purples
+# on 32; round 35's 25 whites, 30 blacks, 35 pinks and 5 rainbows the last
+# 59) while the model rated those rounds 2.95, 4.46 and 3.55. The stills
+# (frames/end_014, end_020, end_026, end_029) show the three Pursuit helis
+# over the middle room together and the right room's lane (PathRight) with
+# nothing on its ground but the $260 tack reinforce put there in round 31:
+# the left room had the hero, the middle nb, dr1 and n1, the right none -
+# the same bare lane as Bloody Puddles' right lanes (its nr). backlog 108(a)
+# is still open (a Pursuit heli is rated in every lane at once), so the
+# check below cannot see this gap. nr, a 2-0-2 ninja, now stands in the
+# right room, on the ninja's best right-room cell (75 units of
+# PathRight and 105 of the top MOAB route in reach, sight counted;
+# optimize_builds.MapSetup.ranked_spots), beside the spot (0.735, 0.308)
+# where the live game took tack1.
+# The next game (2026-11-12 23:24, case 20261112_233008, the build before nr)
+# lost the same lane in the opening: 77 lives in rounds 15-16 (the round
+# reader stuck at 16 for 45 s), yellows on 17 and greens on 18 down the right
+# room while h1 flew over the middle (frames/end_010: the green at the right
+# room's foot, the heli by nb); 150 lives by round 24. So nr stands in the
+# opening, after the hero and nb's 2-0-2, before h2 - the three lanes each
+# with a ground tower before the second heli.
+#
 # Status: the opening as played twice by the general build; the rest not played yet.
 id: darkdungeons_apopalypse
 map: Dark Dungeons
@@ -115,6 +139,8 @@ plan:
   - {do: upgrade, id: nb, to: 1-0-1}
   - {do: place, id: hero, kind: hero, role: dps, at: [0.163, 0.709]}    # left room
   - {do: upgrade, id: nb, to: 2-0-2}
+  - {do: place, id: nr, kind: ninja, role: dps, at: [0.729, 0.283]}     # right room: PathRight had no ground tower (21:07, 23:24 losses)
+  - {do: upgrade, id: nr, to: 2-0-2}
   - {do: place, id: h2, kind: heli, role: dps, at: [0.077, 0.896]}      # ~R18-22, once the lanes have a tower each
   - {do: upgrade, id: h2, to: 3-2-0}
   - {do: place, id: dr1, kind: druid, role: dps, at: [0.377, 0.624]}    # middle room

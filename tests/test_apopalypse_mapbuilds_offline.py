@@ -68,7 +68,11 @@ def test_the_first_heli_is_bought_to_3_2_0_before_anything_else():
         # and test_bloody_puddles_opens_with_the_hero_and_a_right_lane_ninja
         second = next(i for i, st in enumerate(plan) if i > 1 and st["do"] == "place" and st["kind"] == "heli")
         assert plan[second + 1] == {"do": "upgrade", "id": plan[second]["id"], "to": "3-2-0"}, sid
-        assert sorted(st["kind"] for st in plan[2:second] if st["do"] == "place") == ["hero", "ninja"], sid
+        # (Dark Dungeons also its right-room ninja nr since the 21:07 and
+        # 23:24 losses: test_dark_dungeons_has_a_ground_tower_in_every_room_
+        # before_the_second_heli)
+        want = ["hero", "ninja", "ninja"] if sid == "darkdungeons_apopalypse" else ["hero", "ninja"]
+        assert sorted(st["kind"] for st in plan[2:second] if st["do"] == "place") == want, sid
 
 
 def test_dark_dungeons_has_a_lane_ninja_and_the_hero_before_the_second_heli():
@@ -128,6 +132,37 @@ def test_bloody_puddles_opens_with_the_hero_and_a_right_lane_ninja():
     assert plan[3]["kind"] == "ninja" and plan[3]["at"] == [0.623, 0.683], plan[3]
     assert plan[4] == {"do": "upgrade", "id": plan[3]["id"], "to": "2-0-2"}, plan[4]
     assert sum(1 for st in plan if st.get("kind") == "hero") == 1
+
+
+def test_dark_dungeons_has_a_ground_tower_in_every_room_before_the_second_heli():
+    """Dark Dungeons 2026-11-12 21:07 (case 20261112_211357): rounds 31-35
+    took all 114 lives while the three Pursuit helis flew over the middle
+    room together (frames end_020, end_026, end_029) and the right room's
+    lane had no tower on its ground. The next game, 23:24 (case
+    20261112_233008), lost the same lane in the opening (rounds 15-18, the
+    green at the right room's foot in end_010, h1 over the middle). Every
+    lane of the three that run at once reaches a ground tower placed before
+    h2 (the left room's is the hero, Obyn); the right room's is a 2-0-2
+    ninja."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import optimize_builds as O
+    from btd6bot import dps_model as D
+    plan = _plan("darkdungeons_apopalypse")
+    h2 = next(i for i, st in enumerate(plan) if st.get("id") == "h2" and st["do"] == "place")
+    ground = [st for st in plan[:h2] if st["do"] == "place" and st["kind"] not in ("heli", "hero")]
+    setup = O.MapSetup("Dark Dungeons", "apopalypse")
+    names = [p.get("name") for p in setup.track.paths]
+    reached = set()
+    for st in ground:
+        prof = D.profile(st["kind"], (0, 0, 0))
+        x, z, _ = setup.track.frac_to_world(*st["at"])
+        zones = setup.track.zones(x, z, prof.range, sight=setup.sight_for(st["kind"]))
+        reached |= {names[i] for i, zn in enumerate(zones) if zn and zn.length >= 30}
+    assert {"PathMiddle", "PathRight"} <= reached, reached
+    assert any(st.get("kind") == "hero" for st in plan[:h2])          # the left room's
+    nr = next(st for st in ground if st["id"] == "nr")
+    assert nr["kind"] == "ninja" and nr["at"][0] > 0.65, nr
+    assert {"do": "upgrade", "id": "nr", "to": "2-0-2"} in plan[:h2]
 
 
 def test_cheap_helis_stand_before_the_first_apache_tier():

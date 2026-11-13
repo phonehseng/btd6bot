@@ -390,6 +390,14 @@ class Pinner:
         cands = ranked + [c for c in grid if c not in seen]
         return [c for c in cands if never_refused(self.model, kind, c)]
 
+    def reaching(self, kind):
+        """The cells from which a tower of ``kind`` reaches the track (its
+        ranked spots, MapSetup.ranked_spots), or None for the kinds that need
+        none: buffers, map-wide towers and the hero."""
+        if kind == "hero" or kind in S.Executor.BUFFERS or kind == "farm" or self._global(kind):
+            return None
+        return {sp.cell for sp in self.setup.ranked_spots(kind)}
+
     def world(self, cell):
         """(x, z) world position of a tower standing on ``cell``."""
         sp = self.setup.cell_spot(cell)
@@ -476,8 +484,20 @@ class Pinner:
         cands = self.in_area(self.candidates(kind, ok, segment, hero, lanes), area, kind)
         refs = [(self.kinds[r], self.cells[r]) for r in near if r in self.cells]
         if refs:
+            def closeness(c):
+                return sum(math.dist(c, r) for _, r in refs)
             inside = [c for c in cands if all(self.reach(kind, c, k, r, near_radius) for k, r in refs)]
-            cands = inside or sorted(cands, key=lambda c: sum(math.dist(c, r) for _, r in refs))[:1]
+            reaching = self.reaching(kind)
+            if reaching is not None:
+                # A damage tower stands where it reaches the track, even when
+                # that is outside the circle round the towers it supports:
+                # Enchanted Glade Impoppable (2026-11-12, loss case
+                # 20261112_210026) had b1, its MOAB Eliminator "near v2",
+                # pinned on a grid cell inside v2's range from which a bomb
+                # reaches no track; it was sold at round 68 after $6,570.
+                inside = ([c for c in inside if c in reaching]
+                          or sorted((c for c in cands if c in reaching), key=closeness)[:1])
+            cands = inside or sorted(cands, key=closeness)[:1]
         if kind in S.Executor.BUFFERS and len(cands) > 1:
             if area:
                 # the room decides only among the cells where the guide puts it

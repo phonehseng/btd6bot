@@ -1021,6 +1021,9 @@ class Match:
                         self._forecast_round(rnd)
                         self._journal_round(rnd, cash, lives, reset=True)
                 self.ex.reinforce_hold = self._reinforce_hold(last_round, dropped)
+                # an idle tick here runs reinforce: the fill may yield to it
+                # while a round ahead is rated under 1.0 (Executor._fill_yields)
+                self.ex.reinforce_live = True
                 self._mark("plan tick")
                 self.ex.play_running = self._in_round
                 self._follow_round_end(last_round)
