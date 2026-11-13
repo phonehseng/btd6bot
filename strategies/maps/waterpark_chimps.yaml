@@ -65,6 +65,31 @@
 # towers): 40 0.33, 63 1.38, 76 1.65, 81 0.81, 90 0.06, 95 2.33, 98 2.04, 100
 # 3.51.
 #
+# Hardened (2026-11-13). Searched with tools/optimize_builds' Evaluator,
+# MapSetup and replay_plan, live sight on, status effects on, every round
+# on both lanes, spots legal (the test's map geometry, plan order) and never
+# refused, CHIMPS cash ($650 at round 6, then rounds only):
+#   * late game: a coordinate search over every tower's spot (replay of
+#     rounds 31-100) moved the dart to (0.623, 0.47) (it still sees both
+#     lanes, 63/80 units), the sniper to (0.334, 0.129) and the alchemist to
+#     (0.345, 0.078). Same towers, tiers and order.
+#   * opening: the boomerang and the dart at round 6 as before, the
+#     boomerang's tiers by round 9, then a glue, a second dart and Rosalia
+#     at (0.58, 0.453). The village's Radar already reaches the ace; rounds
+#     83-94 wait for the $97k Flying Fortress, as on Bazaar.
+#   Margins, before (the build of 5643112) -> after, live sight, the worse
+#   lane of each round:
+#     rounds 6-30: under 1.2: 11 -> 6; worst 0.61 (round 15) -> 1.03 (round
+#       9); still under 1.2: 6 1.11, 8 1.13, 9 1.03, 13 1.10, 15 1.10, 30
+#       1.19;
+#     rounds 31-59: under 1.0: 12 -> 10; worst 0.39 (round 54) -> 0.45
+#       (round 54);
+#     rounds 60-100: under 1.0: 12 -> 12; worst 0.15 (round 93) -> 0.06
+#       (round 90); still under 1.0: 83 0.86, 84 0.90, 85 0.73, 87 0.62, 88
+#       0.56, 90 0.06, 91 0.75, 92 0.56, 93 0.11, 94 0.35, ....
+#   tools/simulate_threats: plan 32/32, no threat gaps; plan_timeline: the
+#   last step by round 94.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -77,27 +102,28 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 0, 0], boomerang: [3, 2, 2], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
-  revised: "2026-11-12T12:00"
+  revised: "2026-11-13T07:00"   # hardened (see "Hardened")
   maps: [Water Park]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  # R6 the dart and the boomerang on the island inside the pool loop, the one ground
-  # whose cells see both lanes (2026-11-12 20:23: by the slide, 0.334,0.828 and
-  # 0.190,0.726, they saw none of the second lane and round 6 was lost there)
-  - {do: place, id: x1, kind: dart, role: dps, at: [0.494, 0.641]}              # R6 dart, both lanes in range
   - {do: place, id: r1, kind: boomerang, role: dps, near: [x1], at: [0.526, 0.589]}  # R6 boomerang next to it
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.623, 0.47]}              # R6 dart, both lanes in range (moved from 0.494, 0.641: hardening)
   - {do: upgrade, id: r1, to: 0-0-1}                                            # R7
   - {do: upgrade, id: r1, to: 0-0-2}                                            # R8
   - {do: upgrade, id: r1, to: 0-1-2}                                            # R9
+  - {do: place, id: gl1, kind: glue, role: dps, at: [0.345, 0.862]}               # opening search 2026-11-12
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.729, 0.283]}               # opening search 2026-11-12
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.58, 0.453]}               # opening search 2026-11-12
   - {do: upgrade, id: r1, to: 0-2-2}                                            # R11
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.794, 0.112]}  # R12 on Strong, left of the slide's bottom circle
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.729, 0.283]}            # R16 Rosalia by the slide
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.334, 0.129]}  # R12 on Strong, left of the slide's bottom circle (moved from 0.794, 0.112: hardening)
   - {do: upgrade, id: s1, to: 0-0-1}                                            # R18
   - {do: upgrade, id: s1, to: 0-0-2}                                            # R20
+  - {do: upgrade, id: gl1, to: 0-1-0}                                             # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 0-1-2}                                            # R21 Night Vision: camo
   - {do: upgrade, id: s1, to: 0-2-2}                                            # R23 Shrapnel Shot
+  - {do: upgrade, id: gl1, to: 0-2-0}                                             # opening search 2026-11-12
   - {do: place, id: v1, kind: village, role: support, near: [hero], at: [0.826, 0.385]}  # R30
   - {do: upgrade, id: v1, to: 2-0-0}                                            # R30-41 Jungle Drums (see above)
   - {do: place, id: ac1, kind: ace, role: dps, near: [v1], at: [0.815, 0.538]}  # R32 next to Rosalia
@@ -105,7 +131,7 @@ plan:
   - {do: upgrade, id: ac1, to: 0-0-3}                                           # R35 Neva-Miss Targeting
   - {do: upgrade, id: ac1, to: 1-0-3}                                           # R36
   - {do: upgrade, id: ac1, to: 2-0-3}                                           # R37
-  - {do: place, id: a1, kind: alchemist, role: support, near: [ac1, v1], at: [0.804, 0.317]}  # R38
+  - {do: place, id: a1, kind: alchemist, role: support, near: [ac1, v1], at: [0.345, 0.078]}  # R38 (moved from 0.804, 0.317: hardening)
   - {do: upgrade, id: a1, to: 3-0-0}                                            # R39
   - {do: upgrade, id: v1, to: 2-2-0}                                            # R42 Radar Scanner
   - {do: upgrade, id: a1, to: 3-2-0}                                            # R43
