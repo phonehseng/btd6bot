@@ -66,7 +66,8 @@ from btd6bot.account import AccountState  # noqa: E402
 MAPS = {"quad": "Quad", "coveredgarden": "Covered Garden", "sunkencolumns": "Sunken Columns",
         "bloonariusprime": "Bloonarius Prime", "peninsula": "Peninsula", "firingrange": "Firing Range",
         "midnightmansion": "Midnight Mansion", "sunsetgulch": "Sunset Gulch", "mesa": "Mesa",
-        "spillway": "Spillway", "muddypuddles": "Muddy Puddles", "enchantedglade": "Enchanted Glade"}
+        "spillway": "Spillway", "muddypuddles": "Muddy Puddles", "enchantedglade": "Enchanted Glade",
+        "erosion": "Erosion"}
 
 
 def _build(map_id):
