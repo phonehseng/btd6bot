@@ -49,6 +49,9 @@
 # (docs/backlog.md 109), so the bombs' real worth on round 64 is only seen in
 # a game.
 #
+# 2026-11-13: n1, h2, sp1 and n4 moved 1-5 cells to the nearest legal cell (the live map
+# file had refused their pins since).
+#
 # Status: written 2026-11-12, not played yet.
 id: ravine_double_hp
 map: Ravine
@@ -60,7 +63,7 @@ planner:
   base_success: {double_hp: 0.5}
   maps: [Ravine]
 plan:
-  - {do: place, id: n1, kind: ninja, role: dps, at: [0.366, 0.734]}        # middle: the A fork's tail and both Path2 forks
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.366, 0.768]}        # middle: the A fork's tail and both Path2 forks
   - {do: place, id: hero, kind: hero, role: dps, at: [0.687, 0.308]}       # Obyn between A and C
   - {do: upgrade, id: n1, to: 2-0-1}
   - {do: place, id: n2, kind: ninja, role: dps, at: [0.152, 0.641]}        # L: Path1-split1 (+ Path2-split2)
@@ -71,7 +74,7 @@ plan:
   - {do: upgrade, id: a1, to: 2-0-0}
   - {do: upgrade, id: h1, to: 3-2-0}                                        # Razor Rotors: round 40's 400 HP MOAB
   - {do: upgrade, id: n1, to: 3-0-2}
-  - {do: place, id: h2, kind: heli, role: dps, at: [0.045, 0.411]}         # west edge, off the A patch (an ace stood here live)
+  - {do: place, id: h2, kind: heli, role: dps, at: [0.04, 0.402]}         # west edge, off the A patch (an ace stood here live)
   - {do: upgrade, id: h2, to: 3-0-2}
   - {do: upgrade, id: n2, to: 2-0-3}
   - {do: place, id: bA, kind: bomb, role: dps, at: [0.441, 0.232]}          # A: units 67-183 of the A fork
@@ -87,12 +90,12 @@ plan:
   - {do: upgrade, id: h1, to: 4-2-0}                                        # Apache Dartship
   - {do: place, id: n3, kind: ninja, role: dps, at: [0.548, 0.317]}         # units 105-180 of the A fork
   - {do: upgrade, id: n3, to: 4-0-2}
-  - {do: place, id: sp1, kind: spike, role: exit, at: [0.585, 0.394]}       # units 137-163 of the A fork, 115-190 of Path2-split2
+  - {do: place, id: sp1, kind: spike, role: exit, at: [0.58, 0.359]}       # units 137-163 of the A fork, 115-190 of Path2-split2
   - {do: upgrade, id: sp1, to: 2-0-4}                                       # Deadly Spikes, in place before round 64
   - {do: upgrade, id: h2, to: 4-0-2}
   - {do: place, id: sp2, kind: spike, role: exit, at: [0.222, 0.777]}       # the Path2 forks' tails
   - {do: upgrade, id: sp2, to: 2-0-4}
-  - {do: place, id: n4, kind: ninja, role: dps, at: [0.297, 0.768]}         # middle
+  - {do: place, id: n4, kind: ninja, role: dps, at: [0.275, 0.794]}         # middle
   - {do: upgrade, id: n4, to: 4-0-2}
 fill:
   - {do: place, kind: ninja, role: dps, max: 5}
