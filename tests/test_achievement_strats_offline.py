@@ -141,12 +141,7 @@ def test_all_achievement_yamls_load():
             assert S.validate(s) == [], (sid, S.validate(s))
             assert s["bot_ready"] or all("margin" in r for r in s["bot_ready_reasons"]), sid
         elif not s.get("achievement"):
-            # a hand-written build may be held back on purpose, with its
-            # reason in the YAML (workshop_double_hp and
-            # workshop_primary_only since 2026-11-13: never played, rated
-            # under their bars since 93c2d83); never by accident
-            assert S.validate(s) == [], (sid, S.validate(s))
-            assert s["bot_ready"] is True or s.get("bot_ready_reason"), sid
+            assert s["bot_ready"] is True and S.validate(s) == [], (sid, S.validate(s))
 
 
 def test_bot_ready_set_and_safety():

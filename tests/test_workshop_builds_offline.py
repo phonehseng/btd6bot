@@ -75,9 +75,10 @@ _SPIKES_DART_BOMB = {"sp1": ("spike", (2, 0, 4)), "sp2": ("spike", (2, 0, 4)),
 #   workshop_double_hp: worst R80 1.46 -> 0.51 (worst was R34 1.06), under
 #     its 0.9.
 # The last two have never played live, so no game vouches for a lower bar:
-# they are marked bot_ready: false (NOT_READY below) instead of having
-# their floors lowered. Their replays are still checked; their margins are
-# not held to a floor until the builds are redone.
+# they are parked (base_success 0.05, NOT_READY below: the planner stops
+# picking them) instead of having their floors lowered. Their replays are
+# still checked; their margins are not held to a floor until the builds
+# are redone.
 NOT_READY = {"workshop_primary_only", "workshop_double_hp"}
 BUILDS = {
     "workshop_medium": ("medium", 1.4, 2.0, _SPIKES_DART_BOMB),
@@ -162,7 +163,7 @@ def test_map_builds_hold_every_round():
         for tid, (kind, tiers) in answer.items():
             assert at40[tid][0] == kind and all(a >= b for a, b in zip(at40[tid][1], tiers)), (build, tid, at40[tid])
         if build in NOT_READY:
-            assert strat.get("bot_ready") is False and strat.get("bot_ready_reasons"), build
+            assert strat["planner"]["base_success"][mode] <= 0.1, (build, "not parked")
             continue
         margins = {rnd: _margin(mode, board, rnd) for rnd, board in sorted(boards.items())}
         econ = O.economy(mode, BOOSTS)

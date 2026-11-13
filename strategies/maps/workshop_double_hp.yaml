@@ -44,7 +44,8 @@
 # R80 0.84 - the heli and the Crossbow Master are the late-game additions;
 # the heli comes before the Perma-Spike because round 54 rated 1.18 without it.
 #
-# Status: written 2026-11-09, not played yet. Not ready since 2026-11-13:
+# Status: written 2026-11-09, not played yet. Parked since 2026-11-13
+# (base_success 0.05: the planner stops picking it):
 # with 93c2d83 (2026-11-12, few blimps are few: a zone holds no more than the
 # group sent down it, a projectile's pierce counts only the blimps within its
 # reach) the replay's worst round is round 80 at 0.51 (1.46 before; worst
@@ -54,13 +55,11 @@
 id: workshop_double_hp
 map: Workshop
 hero: sauda
-bot_ready: false
-bot_ready_reason: 'not ready: never played, and round 80 rates 0.51 since 93c2d83 (tests/test_workshop_builds_offline.py)'
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [double_hp]
 planner:
   towers: {druid: [1, 3, 0], ninja: [5, 0, 2], spike: [4, 0, 5], dart: [2, 0, 5], bomb: [0, 5, 2], heli: [4, 0, 2]}
-  base_success: {double_hp: 0.8}
+  base_success: {double_hp: 0.05}   # parked 2026-11-13 (see the header); was 0.8
   maps: [Workshop]
 plan:
   - {do: place, id: hero, kind: hero, role: dps, at: [0.387, 0.453]}       # Sauda above the belt; first, so no $200 opener dart
