@@ -1492,8 +1492,10 @@ def base_success(v, carry=True):
         p -= SUPPORT_PENALTY
     if v.ratio is not None and v.ratio < S.Executor.RAMP_OK:
         p -= 0.05 * (1.0 - v.ratio / S.Executor.RAMP_OK)
+    # the hand-written priors' cap wins over the floor: hand-tested CHIMPS
+    # builds declare 0.50, under BASE_FLOOR
     cap = min(BASE_CEILING.get(fam, BASE_CEILING["impoppable"]), hand_prior_cap(v.mode))
-    return round(max(BASE_FLOOR, min(cap, p)), 2)
+    return round(min(cap, max(BASE_FLOOR, p)), 2)
 
 
 @lru_cache(maxsize=None)

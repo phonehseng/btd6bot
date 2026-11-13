@@ -169,7 +169,8 @@ def test_base_success_is_conservative():
     for kind, s in generated().items():
         for mode, p in s["planner"]["base_success"].items():
             fam = G.mode_family(mode)
-            assert G.BASE_FLOOR <= p <= G.BASE_CEILING.get(fam, G.BASE_CEILING["hard"]), (kind, mode, p)
+            floor = min(G.BASE_FLOOR, G.hand_prior_cap(mode))      # hand-tested CHIMPS sit at 0.50
+            assert floor <= p <= G.BASE_CEILING.get(fam, G.BASE_CEILING["hard"]), (kind, mode, p)
             # below every hand-written strategy of the same difficulty family
             hand = [h["planner"]["base_success"][mode] for h in everything
                     if not h.get("source") and not h.get("achievement")
