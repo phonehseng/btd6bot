@@ -74,6 +74,13 @@
 #   tools/simulate_threats: plan 27/27, no threat gaps; plan_timeline: the
 #   last step by round 99.
 #
+# Opening, 2026-11-13 (case 20261113_042420, lost round 8): the wizard + sniper
+# held $345 for the $430 boat and round 8 leaked. The opening is the one that
+# held live three times on 2026-11-07/08 (journals 20261107_205259,
+# 20261107_230013, 20261108_014403, rounds 6-94): the boat alone at the west
+# pool's tip, 1-0-0 at round 6 and 2-0-0 by round 8 (tools/opening_rule.PROVEN);
+# the guide's wizard and Obyn follow.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -92,12 +99,16 @@ planner:
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
+  # The opening that held live: the boat alone at the west pool's tip, Faster Shooting at
+  # round 6 and Double Shot by round 8 (journals 20261107_205259, 20261107_230013,
+  # 20261108_014403: rounds 6-94 held each time; tools/opening_rule.PROVEN). The guide's
+  # wizard + the sniper with $345 held for the boat lost round 8 (case 20261113_042420).
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.419]}         # the springs in the guide: the west pool's tip, where the proven boat stood
+  - {do: upgrade, id: b1, to: 1-0-0}                                            # R6 Faster Shooting
+  - {do: upgrade, id: b1, to: 2-0-0}                                            # R8 Double Shot
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.334, 0.112]}            # the guide's first tower
-  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.238, 0.129]}  # added: the Cripple MOAB sniper (see above)
-  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.453]}         # the springs in the guide: the west pool's tip here (see above) (moved from 0.195, 0.402: hardening)
   - {do: place, id: hero, kind: hero, role: dps, near: [w1], at: [0.291, 0.129]}  # Obyn, beside the wizard
-  - {do: upgrade, id: b1, to: 1-0-0}                                              # opening search 2026-11-12
-  - {do: upgrade, id: b1, to: 2-0-0}                                              # opening search 2026-11-12
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.238, 0.129]}  # added: the Cripple MOAB sniper (see above)
   - {do: place, id: x1, kind: bomb, role: dps, at: [0.612, 0.615]}              # added: round 28's leads (see above): the north rim cell the damage model rates best for them
   - {do: upgrade, id: w1, to: 0-0-1}                                              # opening search 2026-11-12
   - {do: upgrade, id: s1, to: 1-0-0}                                              # opening search 2026-11-12
