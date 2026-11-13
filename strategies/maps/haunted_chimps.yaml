@@ -87,6 +87,28 @@
 #   tools/simulate_threats: plan 35/35, no threat gaps; plan_timeline: the
 #   last step by round 98.
 #
+# Blimp answer (2026-11-13, after the round-96 loss of 00:40 with the
+# opening of fb1829b: round 96's blimp check read 159,720 blimp HP and the
+# defence at about 0.2x of it in reach, while the damage model rated the
+# round 1.08; the two games before lost round 93). The build had no
+# MOAB-class damage the blimp check counts beyond the Flagship (35 in its
+# table), the sniper's Maim (19) and Arcane Spike (40) until Cripple MOAB
+# (180) at round 99. Now a MOAB Eliminator (400; $33.6k) stands in the
+# Radar at (0.174, 0.692) by round 88, Cripple MOAB by round 97 and Arcane
+# Spike last (round 99). The Bloon Solver glue ($33.5k) makes room for it:
+# the guide's tower, but in the model it added 0.04 to round 93 and nothing
+# the blimp check counts.
+#   Blimp check ratios (tools/simulate_threats' ex.blimp_ratio, the live
+#   check's numbers), before -> after: 90 0.58 -> 1.31, 93 0.13 -> 0.39, 95
+#   0.16 -> 0.63, 96 0.05 -> 0.15, 97 0.08 -> 0.50, 98 0.03 -> 0.18, 99 0.25
+#   -> 0.47, 100 0.32 -> 0.39: two to five times as much, still under the
+#   bar. Nothing the guide's cash allows reaches it: the plan is bought by
+#   round 98 either way.
+#   Damage model margins, before -> after: 93 0.94 -> 0.71 (the glue held
+#   camo DDTs there), 95 0.51 -> 0.40, 96 0.75 -> 0.80, 97 1.14 -> 1.26, 98
+#   0.54 -> 0.69, 99 0.93 -> 0.86, 100 0.59 -> 0.53; rounds 6-30 unchanged
+#   (worst 1.24).
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -98,7 +120,7 @@ starter: none         # the guide's own opening is the opener: no extra dart (20
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {dart: [0, 0, 3], sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], mermonkey: [4, 2, 0], alchemist: [4, 0, 1], glue: [5, 2, 0], wizard: [4, 2, 0], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
+  towers: {dart: [0, 0, 3], sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], mermonkey: [4, 2, 0], alchemist: [4, 0, 1], bomb: [0, 5, 0], wizard: [4, 2, 0], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
   revised: "2026-11-12T23:59"   # hardened (see "Hardened")
   maps: [Haunted]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
@@ -132,14 +154,15 @@ plan:
   - {do: upgrade, id: s1, to: 1-1-0}                                              # Full Metal Jacket, Night Vision
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
-  - {do: place, id: g1, kind: glue, role: dps, at: [0.27, 0.658]}               # in the Radar's range (was 0.59, 0.658: it saw no camo DDT)
-  - {do: upgrade, id: g1, to: 5-2-0}                                            # The Bloon Solver
-  - {do: place, id: a1, kind: alchemist, role: support, near: [g1, v1], at: [0.27, 0.521]}  # by the glue, wizard and sniper (was 0.558, 0.589: in reach of no tower)
+  - {do: place, id: a1, kind: alchemist, role: support, near: [s1, v1], at: [0.27, 0.521]}  # by the wizard, the sniper and the bomb (was 0.558, 0.589: in reach of no tower)
   - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
+  - {do: upgrade, id: s1, to: 4-1-0}                                            # Night Vision, Maim MOAB
+  - {do: place, id: e1, kind: bomb, role: dps, at: [0.174, 0.692]}                # added: the round 90-100 blimp answer, in the Radar (see "Hardened")
+  - {do: upgrade, id: e1, to: 0-4-0}                                              # MOAB Assassin
+  - {do: upgrade, id: e1, to: 0-5-0}                                              # MOAB Eliminator (round 88)
+  - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
   - {do: place, id: w1, kind: wizard, role: dps, at: [0.238, 0.606]}            # in the Radar's range (was 0.729, 0.709)
   - {do: upgrade, id: w1, to: 4-2-0}                                            # Arcane Spike
-  - {do: upgrade, id: s1, to: 4-1-0}                                            # Night Vision, Maim MOAB
-  - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD
 answers:
   lead: [{do: upgrade, id: b1, to: 2-2-0}]
   camo: [{do: upgrade, id: x1, to: 0-0-3}]
