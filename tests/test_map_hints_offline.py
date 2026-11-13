@@ -89,11 +89,26 @@ def illegal_spots(map_name, spots, last_round):
     removes that obstacle for the spots after it."""
     m = model(map_name)
     placed, bad, removed = [], [], []
+    phases = _phase_windows(map_name, last_round)
     for kind, hero, at in spots:
         if kind == "clear":
             removed += [r["id"] for r in G.removables(map_name, PLAYFIELD) if hero in (r["name"], r["id"])]
             continue
         fx, fy = at
+        if phases:
+            # Erosion (2026-11-12): a tower on a phase's ice is bought in that
+            # phase and destroyed when its ice melts, so its spot is legal when
+            # it holds a tower through one whole phase; it collides only with
+            # the towers on ground that lasts the game (the others are gone)
+            cx, cy = m.frac_to_cell(fx, fy)
+            lasting = PL.valid_spots(m, kind, hero, placed, last_round=last_round, removed=tuple(removed))
+            ok_any = any(PL.valid_spots(m, kind, hero, placed, now_round=a, last_round=b,
+                                        removed=tuple(removed))[cy, cx] for a, b in phases)
+            if not ok_any:
+                bad.append((kind, hero, (fx, fy)))
+            elif lasting[cy, cx]:
+                placed.append((cx, cy, kind, hero))
+            continue
         # a spot under a cycling pane (Covered Garden) is built in that
         # pane's round (Executor._pane_shut): check it for that round
         pane_round = _pane_round(m, fx, fy)
@@ -105,6 +120,21 @@ def illegal_spots(map_name, spots, last_round):
             bad.append((kind, hero, (fx, fy)))
         placed.append((cx, cy, kind, hero))
     return bad
+
+
+def _phase_windows(map_name, last_round):
+    """[(first round, last round)] of a map's long path phases up to
+    `last_round` (mapgeom.phase_end: Erosion's six 18-round phases), or []
+    on a map without them."""
+    geom = G.load(map_name)
+    if not geom or G.phase_end(geom, 1) is None:
+        return []
+    out, start = [], 1
+    while start <= last_round:
+        end = G.phase_end(geom, start) or last_round
+        out.append((start, min(end, last_round)))
+        start = end + 1
+    return out
 
 
 def longest(modes):

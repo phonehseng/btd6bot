@@ -186,15 +186,29 @@ def test_ice_shards_and_icicles():
 
 
 def test_blazing_sun_fire():
-    """The Blazing Sun: every 50th shot burns its target 600 over 12 s, no
-    more than the bloon's whole health; the spread is left out. About the
-    audit's +50% on a blimp round (primary F6)."""
+    """The Blazing Sun: every 50th shot burns its target 600 over 12 s; the
+    spread to nearby bloons is left out.
+
+    Each ignition is credited no more than the health of the layer it
+    burns (dps_model._dot_hp_rate). Until 2026-11-12 this fire alone was
+    capped at the whole bloon's health (616 on a MOAB, whose shell has 200),
+    which made it worth +50% on hard round 40 - the audit's estimate, but
+    that estimate counts the spread (primary F6). Capped at the layer, as
+    every damage over time now is since the Ancient Portal glue case, the
+    fire adds a few percent of the gun's damage, and the rating moves by
+    less than 15% either way (its carry-free ticks dilute the gun's
+    overflow a little)."""
     fire = _source("desperado", (5, 0, 0), "The Blazing Sun fire")
     gun = max((s for s in D.profile("desperado", (5, 0, 0)).sources if s.damage > 0), key=lambda s: s.shots)
-    assert math.isclose(fire.shots, gun.shots / 50.0) and fire.dot_total == 600.0 and fire.dot_one_bloon
+    assert math.isclose(fire.shots, gun.shots / 50.0) and fire.dot_total == 600.0
     tr = D.Track("Monkey Meadow")
+    st = D.stations_for([D.Placed("d", "desperado", (5, 0, 0), *_beside(tr))], tr)[0]
+    zone = next(z for z in st.zones if z is not None)
+    moab = D.layer("Moab", D.mode_rules("hard")["moab_hp"])
+    burn = D._dot_hp_rate(fire, fire.shots, moab, 0.05, zone)
+    assert burn <= fire.shots * moab.hp + 1e-9, (burn, moab.hp)
     off, on = _gain([D.Placed("d", "desperado", (5, 0, 0), *_beside(tr))], "hard", 40, tr)
-    assert 1.2 * off <= on <= 2.5 * off, (off, on)
+    assert 0.85 * off <= on <= 1.15 * off, (off, on)
 
 
 def test_glaives_ricochet_further():

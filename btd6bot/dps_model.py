@@ -371,8 +371,6 @@ class Source:
                                # removes); read by _Controls
     ability_use: str = ""      # for an ability's source: the bot's use of it ("moab": pressed in
                                # blimp rounds only, see _Controls)
-    dot_one_bloon: bool = False  # its damage over time stays on the bloon it struck: one hit burns
-                               # at most that bloon's whole health (The Blazing Sun's fire)
     near_plane: bool = False   # a map-wide source that works only near its plane's flight circle:
                                # its rate is cut to that share of the track (_near_plane_share)
     preempt: bool = False      # Pre-emptive Strike's missile: `damage` once on every blimp that
@@ -1607,7 +1605,7 @@ def _unexported(kind, tiers, entry, sources):
             fire = BLAZING_SUN
             sources.append(_made("The Blazing Sun fire", gun.shots / fire["every"], 1.0 + fire["spread"], 0.0,
                                  immune=frozenset({"purple"}), camo=gun.camo, reach=0.0,
-                                 dot_total=fire["total"], dot_rate=fire["per_s"], dot_one_bloon=True,
+                                 dot_total=fire["total"], dot_rate=fire["per_s"],
                                  zone_radius=gun.zone_radius))
     if kind == "boomerang" and top in GLAIVE_BOUNCE and GLAIVE_BOUNCE_RATING:
         out = []
@@ -2693,6 +2691,49 @@ def _hit_rate(src, lay, rho, zone, group=None):
     return shots * per_shot
 
 
+def _dot_key(src):
+    """The damage over time a source applies, as one status on a bloon.
+
+    A bloon carries one glue or burn of a kind: the game refreshes it when
+    the bloon is struck again, it does not stack. The pieces of one attack
+    that carry the same damage over time - a Glue Gunner's glob and the
+    Splat it throws off, a Ray of Doom's first hit and its beam - put that
+    one status on the same crowd, so only the piece that reaches the most
+    bloons is credited (Rates._compute). Summed, a 4-2-0 glue's glob and
+    splat counted 42 glued bloons a second from 2.35 shots of pierce 6.
+    A Buccaneer's rear dart (rear_fov) flies the other way, at other
+    bloons, and keeps its own key."""
+    return (src.name.split(">")[0], src.ability, src.dot_total, src.dot_rate, src.rear_fov)
+
+
+def _dot_hp_rate(src, hits, lay, rho, zone):
+    """HP per second a source's damage over time takes off one layer.
+
+    Only bloons the attack strikes carry it: `hits` a second (_hit_rate:
+    shots times pierce, no more than the bloons each shot can meet). Each
+    of them takes at most the damage over time's whole amount (dot_total:
+    its rate for its lifespan) and at most the layer's own health: what is
+    left when the layer pops is not credited to other bloons. The bloons
+    burning at once are also no more than those in the zone, each at
+    dot_rate a second.
+
+    Without the health cap every glued bloon was credited the full amount:
+    a Bloon Liquefier glob (110 damage over 11 s) counted as 110 HP off the
+    10-HP ceramic shell in front of the station, popping eleven shells per
+    glue. On Ancient Portal CHIMPS (2026-11-12, lost round 63 to its 160
+    ceramics) one 4-2-0 glue was rated 1,422 HP a second on ceramics and
+    carried the round to 5.19; without it the board rated 0.45. Capped, it
+    takes about 280 HP a second off ceramic shells and the board rates
+    about 0.5, as the game played out.
+
+    The children of a popped layer are not credited the leftover here:
+    Glue Soak's glue does stay on them, and the station's own hits on the
+    children (which are in the zone too) carry that part."""
+    in_zone = max(1.0, rho * zone.length)
+    per_bloon = min(src.dot_total, lay.hp)
+    return min(hits * per_bloon, in_zone * src.dot_rate)
+
+
 class _Rates:
     """Per station: how fast it takes health off one layer (bloon id) at a
     given packing, and how much damage overflows into the children."""
@@ -2734,6 +2775,7 @@ class _Rates:
         lay = layer(bloon_id, moab_hp)
         whole = rbe(bloon_id, moab_hp)
         hp_rate = overflow = kill_rate = kill_carry = 0.0
+        dots = {}            # damage over time per glue/burn (_dot_key): HP per second
         camo_paths = self.station.camo_paths
         infl = self.station.influence
         bonus, seen = infl.on(lay, path, rho) if infl is not None else (0.0, 0.0)
@@ -2777,12 +2819,9 @@ class _Rates:
             else:
                 overflow += rate * max(0.0, d - lay.hp)
             if src.dot_total and not (src.dot_immune & lay.immune):
-                # damage over time: every hit poisons a bloon for dot_total in
-                # all; no more than the bloons in the zone, each burning at
-                # dot_rate per second
-                in_zone = max(1.0, rho * zone.length)
-                total = min(src.dot_total, whole) if src.dot_one_bloon else src.dot_total
-                hp_rate += min(hits * total, in_zone * src.dot_rate)
+                key = _dot_key(src)
+                dots[key] = max(dots.get(key, 0.0), _dot_hp_rate(src, hits, lay, rho, zone))
+        hp_rate += sum(dots.values())
         if hp_rate <= 0.0:
             return None
         ordinary = hp_rate - kill_rate
