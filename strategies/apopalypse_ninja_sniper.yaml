@@ -72,7 +72,15 @@ planner:
   # the central pond; apopalypse_check rates this build 0.17 there (every
   # round under 2) against 1.11 for the pond build strategies/maps/
   # ouch_apopalypse.yaml (2.02-3.12 in the MOAB rounds 44-60).
-  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Flooded Valley, Erosion, Sanctuary, "#Ouch"]
+  # Dark Dungeons: lost rounds 33 and 32 (the second 2026-11-13 04:37, case
+  # 20261113_043704_DarkDungeons_apopalypse, picked as a last resort at
+  # p=0.07): the live forecast rated rounds 21-32 at 0.06-0.81 and 150 lives
+  # went in rounds 22-32. Three walled lanes run at once and a ninja or a
+  # sniper sees one room; tools/apopalypse_check.py rates this build 0.06 at
+  # every round 15-60 there (2026-11-13), and darkdungeons_apopalypse.yaml's
+  # screen found no short-range tower that holds a room past round 16.
+  # apopalypse_apache_spikes already excludes it; the map build stays.
+  excluded_maps: [Tricky Tracks, Sunken Columns, Castle Revenge, Dark Path, Spillway, Mesa, Ravine, Muddy Puddles, Flooded Valley, Erosion, Sanctuary, "#Ouch", Dark Dungeons]
 # The Fast Track start is round 15, and Apopalypse sends it while the
 # opening is still being bought: Ravine, Dark Path and Muddy Puddles
 # (2026-11-06) lost 95-143 lives in the first 15 s with one ninja, an
