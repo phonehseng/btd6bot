@@ -14,6 +14,14 @@ planner:
   # not Tricky Tracks (2026-11-09): Half Cash replays 59 rounds under 1 there
   # (tests/test_trickytracks_excluded_offline.py)
   excluded_maps: [Tricky Tracks]
+  # not Ravine Half Cash (2026-11-13 12:28 and 13:52, cases
+  # 20261113_122848_Ravine_half_cash and 20261113_135225_Ravine_half_cash,
+  # both lost at round 26 within 80 seconds of Play): the druid cluster goes
+  # beside the top-right bend, which only one of Ravine's two alternating
+  # entrances passes, and 24 of the 30 even rounds replay under 0.1.
+  # strategies/maps/ravine_half_cash.yaml plays that medal
+  # (tests/test_ravine_half_cash_offline.py).
+  excluded_by_mode: {half_cash: [Ravine]}
 plan:
   - {do: place, id: d1, kind: druid, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: support, near: [d1], near_radius: 7}

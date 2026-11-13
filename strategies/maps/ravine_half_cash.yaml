@@ -1,0 +1,87 @@
+# Ravine, Half Cash (Hard rules, rounds to 80): a tower beside each of the
+# four forks from the first purchase, so the round-22 start already covers
+# whichever entrance the round uses.
+#
+# Why: Ravine Half Cash was lost four times at round 26, each within 80
+# seconds of pressing Play (2026-11-13 04:29 and 06:41 hard_ninja_alch_sun,
+# 12:28 and 13:52 obyn_druid_poplust; cases 20261113_122848_Ravine_half_cash
+# and 20261113_135225_Ravine_half_cash). Two entrances take turns by round
+# (Path1 on even rounds, Path2 on odd) and each forks in two. The general
+# builds place by track segment and put the whole $4,465 Fast Track start
+# beside the top-right bend (0.69, 0.29), which only Path2 passes: round 22's
+# 16 whites cost 83 lives, round 24 another 40 and round 26 the rest. The
+# damage model said so before Play was pressed (round 22 rated 0.06, "149
+# lives"), and the replay of that build rates the even rounds from 22 to 80
+# at or near the 0.06 floor.
+#
+# Map facts and spots: strategies/maps/ravine_magic_only.yaml (the build that
+# won this map's Magic Monkeys Only on 2026-11-12) - L (0.152, 0.641) beside
+# Path1-split1, A (0.436, 0.24) beside Path1-split2, M (0.291, 0.768) and the
+# ninja-only cell (0.345, 0.777) for both Path2 forks, C (0.687, 0.283) for
+# Path2-split1. Every `at` below is a spot of that build or of
+# ravine_medium.yaml (won 2026-11-04).
+#
+# The opening ($4,465 at round 22): a Heart of Thunder druid at L (pops
+# everything up to lead, round 28's leads included), a druid at A, a ninja at
+# L, at A and in the middle (camo beside both entrances: round 24's camo
+# green runs Path1) and a wizard at M for Path2. Then the druids' lightning
+# and a druid at C, and Monkey Aces: they fly over the bridges and trees
+# that block sight here (ravine_medium.yaml's towers and ace spots), one ace
+# circle reaches all four forks, and a Spectre is the one late-game tower
+# Half Cash can pay for on this map.
+#
+# Measured 2026-11-13 (executor-faithful replay, simulate_threats.simulate on
+# the learned map, Fast Track start R22 with $4,465, each round's start board
+# rated by the live forecast). obyn_druid_poplust: 24 of the 30 even rounds
+# under 0.1 and none over 0.21. This build: R22 0.90, R24 2.68, R26 0.78,
+# R28 1.20, R30 1.16; odd rounds 23-29 0.23-0.41 (Path2, a few lives each);
+# R40 0.23; rounds 41-63 0.14-0.73 (the lowest of the game: R48 0.14); 11 of
+# rounds 64-79 at 0.8 or more with the Spectres; R80 0.48. Twelve other
+# orders were replayed: wizards and Sticky Bomb ninjas instead of aces rate
+# R40 and R80 at 0.06-0.08; a Spectre rushed before the cheap towers rates
+# rounds 48-58 at 0.11-0.21. The model stays under 1.0 for most of the game
+# on every order tried, as it did for the Magic Only build that won, so this
+# medal remains a long shot and base_success is low.
+#
+# Status: NOT played.
+# Test: tests/test_ravine_half_cash_offline.py.
+id: ravine_half_cash
+map: Ravine
+hero: obyn
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys before it is done
+modes: [half_cash]
+planner:
+  towers: {druid: [2, 0, 0], ninja: [1, 0, 1], wizard: [0, 2, 2], ace: [2, 0, 4]}
+  base_success: {half_cash: 0.3}
+  maps: [Ravine]
+plan:
+  # the round-22 start: something beside every fork
+  - {do: place, id: dL, kind: druid, role: dps, at: [0.152, 0.658]}       # L: Path1-split1 (+ Path2-split2)
+  - {do: upgrade, id: dL, to: 2-0-0}                                       # Heart of Thunder: lead
+  - {do: place, id: dA, kind: druid, role: dps, at: [0.393, 0.232]}       # A: Path1-split2
+  - {do: upgrade, id: dA, to: 1-0-0}
+  - {do: place, id: nM, kind: ninja, role: dps, at: [0.345, 0.777]}       # middle: both Path2 forks, lower A fork; camo
+  - {do: place, id: nA, kind: ninja, role: dps, at: [0.436, 0.24]}        # A: camo on Path1-split2
+  - {do: place, id: nL, kind: ninja, role: dps, at: [0.12, 0.76]}         # L: camo on Path1-split1
+  - {do: place, id: wM, kind: wizard, role: dps, at: [0.291, 0.768]}      # M: both Path2 forks
+  # rounds 23-39
+  - {do: upgrade, id: dA, to: 2-0-0}                                       # lead on the A fork before round 28
+  - {do: upgrade, id: nM, to: 1-0-1}
+  - {do: upgrade, id: wM, to: 0-1-0}                                       # Fireball: lead on Path2
+  - {do: place, id: dC, kind: druid, role: dps, at: [0.687, 0.283]}       # C: Path2-split1
+  - {do: upgrade, id: dC, to: 2-0-0}
+  - {do: place, id: ac1, kind: ace, role: dps, at: [0.361, 0.138]}        # flies over every fork; round 40's MOAB (clear of dA and nA)
+  - {do: upgrade, id: ac1, to: 2-0-3}
+  - {do: upgrade, id: nA, to: 1-0-1}
+  - {do: upgrade, id: nL, to: 1-0-1}
+  - {do: place, id: wA, kind: wizard, role: dps, at: [0.532, 0.164]}      # A
+  - {do: upgrade, id: wA, to: 0-2-2}
+  - {do: upgrade, id: wM, to: 0-2-2}
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.601, 0.3]}        # Obyn between A and C
+  - {do: place, id: ac2, kind: ace, role: dps, at: [0.27, 0.777]}
+  - {do: upgrade, id: ac2, to: 2-0-3}
+  # the late game: Spectres
+  - {do: upgrade, id: ac1, to: 2-0-4}
+  - {do: upgrade, id: ac2, to: 2-0-4}
+  - {do: place, id: ac3, kind: ace, role: dps, at: [0.195, 0.862]}
+  - {do: upgrade, id: ac3, to: 2-0-4}
