@@ -27,13 +27,21 @@
 # Wizard Lord Phoenix (wizard 0-5-2 by round 75; 0-4-2 by round 50), the best carry the
 # pane-free ground holds. Etienne is the hero: his map-wide camo (level 8) lets the
 # towers hit the camo DDTs of rounds 95 and 99, which the Obyn build leaked. The plan before it rated under 1.0 in 49 of rounds 40-100. The hero stands where the late game was rated with it, off every pin.
+#
+# Loss 20261112_145934 (round 63): the carry's last stage (wiz_carry1 0-5-2, $60,000) was
+# due by round 75; the executor reached it in round 58 and, plan_first, bought nothing
+# after it - rounds 62 and 63 began with $11,482 and $14,254 in hand, rated 0.59. The
+# greedy saving for it had left rounds 59-74 without purchases. Re-run with the stage due by
+# round 82 (0-4-2 still by round 50), the plan buys rounds 62-63's defence first: replayed as
+# the executor buys, 1.23 and 1.46 there, 0.63 at worst over rounds 30-100 (rounds 34 and 80
+# under 1.0).
 id: coveredgarden_impoppable
 map: Covered Garden
 hero: etienne
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys
 modes: [impoppable]
 planner:
-  towers: {ninja: [4, 0, 4], wizard: [5, 5, 2], skywarden: [4, 0, 1], desperado: [5, 1, 0], sniper: [4, 5, 0]}
+  towers: {ninja: [4, 0, 4], wizard: [0, 5, 2], skywarden: [4, 2, 1], druid: [4, 0, 1], desperado: [5, 1, 0], sniper: [5, 5, 0]}
   base_success: {impoppable: 0.5}
   maps: [Covered Garden]
 plan:
@@ -48,92 +56,93 @@ plan:
   # saving for the carry (`*_carry*`) by its round
   - {do: place, id: wiz_carry1, kind: wizard, role: support, at: [0.056, 0.811]}
   - {do: place, id: sky501, kind: skywarden, role: support, at: [0.815, 0.487]}
-  - {do: place, id: wiz502, kind: wizard, role: support, at: [0.056, 0.538]}
-  - {do: upgrade, id: wiz502, to: 1-2-0}
-  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.815, 0.555]}
+  - {do: place, id: sky502, kind: skywarden, role: support, at: [0.815, 0.555]}
+  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.056, 0.487]}
   - {do: place, id: sky504, kind: skywarden, role: support, at: [0.826, 0.232]}
+  - {do: upgrade, id: sky501, to: 0-2-0}
+  - {do: upgrade, id: sky502, to: 0-2-0}
   - {do: place, id: sky505, kind: skywarden, role: support, at: [0.826, 0.606]}
   - {do: upgrade, id: sky505, to: 1-0-0}
+  - {do: place, id: dru506, kind: druid, role: support, at: [0.035, 0.555]}
+  - {do: upgrade, id: dru506, to: 1-0-1}
   - {do: upgrade, id: n1, to: 3-0-1}
-  - {do: upgrade, id: sky501, to: 1-0-0}
-  - {do: upgrade, id: n1, to: 3-0-2}
-  - {do: upgrade, id: sky501, to: 2-0-0}
-  - {do: upgrade, id: sky505, to: 2-0-0}
   - {do: upgrade, id: sky503, to: 2-0-0}
-  - {do: upgrade, id: wiz502, to: 2-2-0}
-  - {do: upgrade, id: wiz502, to: 3-2-0}
-  - {do: place, id: des506, kind: desperado, role: support, at: [0.035, 0.879]}
-  - {do: upgrade, id: des506, to: 0-1-0}
-  - {do: place, id: des507, kind: desperado, role: support, at: [0.035, 0.453]}
-  - {do: upgrade, id: des507, to: 0-1-0}
-  - {do: upgrade, id: sky504, to: 1-0-0}
-  - {do: upgrade, id: sky501, to: 2-0-1}
-  - {do: upgrade, id: sky503, to: 2-0-1}
-  - {do: place, id: sni508, kind: sniper, role: support, at: [0.056, 0.93]}
-  - {do: upgrade, id: sni508, to: 1-2-0}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: sky505, to: 2-0-0}
+  - {do: place, id: des507, kind: desperado, role: support, at: [0.035, 0.879]}
   - {do: upgrade, id: sky505, to: 2-0-1}
-  - {do: place, id: sni509, kind: sniper, role: support, at: [0.045, 0.146]}
-  - {do: upgrade, id: sni509, to: 1-2-0}
+  - {do: upgrade, id: dru506, to: 2-0-1}
+  - {do: upgrade, id: sky504, to: 2-0-0}
+  - {do: upgrade, id: sky504, to: 2-0-1}
+  - {do: upgrade, id: des507, to: 0-1-0}
+  - {do: place, id: sni508, kind: sniper, role: support, at: [0.045, 0.112]}
+  - {do: place, id: sni509, kind: sniper, role: support, at: [0.035, 0.164]}
+  - {do: upgrade, id: sky503, to: 2-0-1}
   - {do: place, id: sni510, kind: sniper, role: support, at: [0.815, 0.181]}
-  - {do: upgrade, id: sky504, to: 1-0-1}
-  - {do: upgrade, id: n1, to: 4-0-2}
-  - {do: upgrade, id: sni510, to: 0-2-0}
-  - {do: place, id: sni511, kind: sniper, role: support, at: [0.035, 0.215]}
+  - {do: place, id: sni511, kind: sniper, role: support, at: [0.045, 0.215]}
   - {do: upgrade, id: sni511, to: 1-2-0}
-  - {do: upgrade, id: sni510, to: 1-2-0}
-  - {do: place, id: sni512, kind: sniper, role: support, at: [0.056, 0.283]}
-  - {do: upgrade, id: sni512, to: 0-1-0}
-  - {do: upgrade, id: des507, to: 3-1-0}
-  - {do: upgrade, id: sni512, to: 0-2-0}
+  - {do: place, id: sni512, kind: sniper, role: support, at: [0.035, 0.266]}
   - {do: upgrade, id: sni512, to: 1-2-0}
-  - {do: place, id: sni513, kind: sniper, role: support, at: [0.045, 0.334]}
-  - {do: upgrade, id: sni513, to: 0-1-0}
-  - {do: upgrade, id: sni513, to: 0-2-0}
+  - {do: upgrade, id: sni510, to: 1-0-0}
+  - {do: upgrade, id: sni510, to: 1-1-0}
+  - {do: upgrade, id: sni510, to: 1-2-0}
+  - {do: upgrade, id: sni509, to: 1-0-0}
+  - {do: upgrade, id: sni509, to: 1-2-0}
+  - {do: place, id: sni513, kind: sniper, role: support, at: [0.067, 0.3]}
   - {do: upgrade, id: sni513, to: 1-2-0}
-  - {do: upgrade, id: sky501, to: 4-0-1}
-  - {do: place, id: sni514, kind: sniper, role: support, at: [0.035, 0.385]}
-  - {do: upgrade, id: sni514, to: 0-1-0}
-  - {do: upgrade, id: sni514, to: 0-2-0}
+  - {do: upgrade, id: sni508, to: 0-2-0}
+  - {do: place, id: sni514, kind: sniper, role: support, at: [0.045, 0.351]}
   - {do: upgrade, id: sni514, to: 1-2-0}
-  - {do: place, id: sni515, kind: sniper, role: support, at: [0.067, 0.402]}
+  - {do: upgrade, id: sni508, to: 1-2-0}
+  - {do: place, id: sni515, kind: sniper, role: support, at: [0.056, 0.402]}
+  - {do: upgrade, id: sni515, to: 0-1-0}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: sni515, to: 0-2-0}
   - {do: upgrade, id: sni515, to: 1-2-0}
-  - {do: upgrade, id: des506, to: 3-1-0}
-  - {do: upgrade, id: sni514, to: 3-2-0}
+  - {do: upgrade, id: dru506, to: 3-0-1}
+  - {do: upgrade, id: des507, to: 3-1-0}
+  - {do: upgrade, id: sni515, to: 2-2-0}
   - {do: upgrade, id: sni510, to: 1-3-0}
-  - {do: upgrade, id: sni515, to: 1-3-0}
-  - {do: upgrade, id: sni515, to: 2-3-0}
-  - {do: upgrade, id: wiz_carry1, to: 0-4-2}
-  - {do: upgrade, id: sky503, to: 4-0-1}
-  - {do: upgrade, id: sni509, to: 3-2-0}
-  - {do: upgrade, id: sni513, to: 3-2-0}
+  - {do: upgrade, id: sni515, to: 3-2-0}
+  - {do: upgrade, id: dru506, to: 4-0-1}
   - {do: upgrade, id: sky504, to: 4-0-1}
-  - {do: upgrade, id: des506, to: 4-1-0}
-  - {do: upgrade, id: sni510, to: 2-3-0}
-  - {do: upgrade, id: wiz_carry1, to: 0-5-2}
-  - {do: upgrade, id: des506, to: 5-1-0}
+  - {do: upgrade, id: wiz_carry1, to: 0-4-2}
   - {do: upgrade, id: des507, to: 4-1-0}
   - {do: upgrade, id: sky505, to: 4-0-1}
-  - {do: upgrade, id: wiz502, to: 4-2-0}
-  - {do: upgrade, id: sni512, to: 3-2-0}
-  - {do: upgrade, id: sni511, to: 3-2-0}
-  - {do: upgrade, id: sni508, to: 3-2-0}
-  - {do: upgrade, id: wiz502, to: 5-2-0}
+  - {do: upgrade, id: des507, to: 5-1-0}
+  - {do: upgrade, id: sky503, to: 4-0-1}
+  - {do: upgrade, id: sni514, to: 1-3-0}
+  - {do: upgrade, id: sni513, to: 1-3-0}
+  - {do: upgrade, id: sni508, to: 2-2-0}
+  - {do: upgrade, id: sni508, to: 2-3-0}
+  - {do: upgrade, id: sni509, to: 1-3-0}
+  - {do: upgrade, id: sni511, to: 1-3-0}
+  - {do: upgrade, id: sni512, to: 1-3-0}
+  - {do: upgrade, id: sni508, to: 2-4-0}
+  - {do: upgrade, id: sni514, to: 1-4-0}
+  - {do: upgrade, id: sni509, to: 2-3-0}
+  - {do: upgrade, id: sni514, to: 2-4-0}
+  - {do: upgrade, id: sni513, to: 2-3-0}
+  - {do: upgrade, id: sni511, to: 2-3-0}
+  - {do: upgrade, id: wiz_carry1, to: 0-5-2}
+  - {do: upgrade, id: sni515, to: 5-2-0}
+  - {do: upgrade, id: sni514, to: 2-5-0}
+  - {do: upgrade, id: sni510, to: 1-4-0}
+  - {do: upgrade, id: sni512, to: 1-4-0}
+  - {do: upgrade, id: sni509, to: 2-4-0}
+  - {do: upgrade, id: sky501, to: 4-2-0}
   - {do: upgrade, id: n2, to: 2-0-4}
-  - {do: upgrade, id: sni510, to: 2-4-0}
-  - {do: upgrade, id: sni510, to: 2-5-0}
-  - {do: upgrade, id: sni515, to: 2-4-0}
-  - {do: upgrade, id: sni514, to: 4-2-0}
-  - {do: upgrade, id: sni512, to: 4-2-0}
-  - {do: upgrade, id: sni509, to: 4-2-0}
-  - {do: upgrade, id: sni508, to: 4-2-0}
-  - {do: upgrade, id: sni513, to: 4-2-0}
+  - {do: upgrade, id: sky502, to: 4-2-0}
+  - {do: upgrade, id: sni512, to: 2-4-0}
+  - {do: upgrade, id: sni511, to: 2-4-0}
+  - {do: upgrade, id: sni513, to: 2-4-0}
 fill: []
 panic:
   - {do: place, kind: ninja, role: exit}
 answers:
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
-    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.067, 0.606]}
+    - {do: place, id: a1, kind: alchemist, role: support, near: [n1], near_radius: 6, at: [0.826, 0.675]}
   ceramic:
     - {do: upgrade, id: n1, to: 3-0-2}
   moab:
@@ -149,5 +158,5 @@ answers:
     - {do: upgrade, id: n2, to: 2-0-4}
     - {do: place, id: n2, kind: ninja, role: dps, segment: [0.2, 0.8], at: [0.826, 0.334]}
   bad:
-    - {do: upgrade, id: snb, to: 5-0-2}   # Cripple MOAB: no bomb fits the pane-free ground any more
-    - {do: place, id: snb, kind: sniper, role: support, at: [0.815, 0.777]}
+    - {do: upgrade, id: sni515, to: 5-2-0}
+    - {do: place, id: sni515, kind: sniper, role: support, at: [0.056, 0.402]}
