@@ -132,6 +132,35 @@
 #   13 0.53 -> 0.54, 14 1.61 -> 1.74. Against the middle-dart board: round 12
 #   0.91 -> 0.95, round 10 0.46 -> 0.52, rounds 8, 9 and 13 0.02-0.04 lower.
 #
+# Village, 2026-11-13: the live learned map now has a "land" refusal on the
+# village's cell (0.115, 0.675) (a refused strip runs down x 0.115 from 0.59
+# to 0.76). The village is there for its Radar Scanner (R36), which lends
+# camo to the ace; the sniper has Night Vision of its own. The ace has only
+# eight legal cells on the whole map: five at the bottom left round
+# (0.131, 0.845) and three at the top left, which the spike factory p1
+# (0.195, 0.181) blocks. Searched with tools/pin_spots (Pinner.legal,
+# never_refused, Pinner.reach with buffer_range: 40 units at the base tier)
+# over every legal village cell, the ace on each of its cells, and every
+# later pin kept legal (test_map_hints_offline.illegal_spots): every pair
+# that works is on a strip of ground at (0.184-0.216, 0.845-0.854), so the ace
+# keeps its cell.
+#   * v1 to (0.195, 0.845), 23 units from the ace. Rosalia was refused
+#     round it on 2026-11-12, but the game has since taken a dart and a tack
+#     on these cells. Of the strip's cells, this one is the farthest from a
+#     refused centre (3.9 units). Pinner.pin picks (0.206, 0.845) (1.9 units);
+#     (0.19-0.2, 0.845) rate the same.
+#   * A risk the checks do not catch: the area is full of refusals for
+#     smaller towers that would fall inside a village's or an ace's footprint.
+#     The ace's own cell has a druid refusal on it. If the game refuses v1
+#     here, the next answer is the top left: ace at (0.131, 0.181), with
+#     p1 moved.
+#   Margins (replay_plan, live sight, the worse lane), the old cell -> this
+#   one: only rounds 45-91 change, each by 0.01-0.05 (here Jungle Drums no
+#   longer reaches the sniper): 45 1.81 -> 1.78, 47 1.45 -> 1.40, 49 1.03 ->
+#   1.01, 51 0.94 -> 0.89, 56 1.11 -> 1.08, 57 0.78 -> 0.77, 83 0.92 -> 0.91,
+#   84 0.94 -> 0.93, 91 0.93 -> 0.92; no round crosses 1.0 either way.
+#   tools/simulate_threats: plan 26/26, no threat gaps, before and after.
+#
 # The boomerang never stood in the middle, 2026-11-13 (case 20261113_145054,
 # lost round 9 at 14:45): a boomerang's footprint (7 units) is wider than a
 # dart's (6), and the middle cell is ground the map file marks blocked - it
@@ -150,12 +179,8 @@
 #   * x4, a fourth dart ($215), takes the middle cell after Rosalia: a dart
 #     stood there live at 11:06 and sees 62 / 58 units of the two lanes.
 #     Rounds 6-15 rate as before, 16 1.09 -> 1.14, 17 1.26 -> 1.41, 19 0.90
-#     -> 0.95, 21 0.61 -> 0.66;
-#   * the village moves to (0.195, 0.845), beside the ace (23 units, inside
-#     its Radar): its cell (0.115, 0.675) has since been refused live for a
-#     small tower, and with every pinned tower standing 21 village cells on
-#     the map are legal and never refused - none of them reaches the sniper,
-#     which has its own Night Vision.
+#     -> 0.95, 21 0.61 -> 0.66.
+#   The village had left its refused cell the same afternoon (the section above).
 #
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
@@ -169,7 +194,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 1, 0], boomerang: [0, 0, 0], glue: [0, 0, 0], druid: [1, 3, 0], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
-  revised: "2026-11-13T15:50"   # the boomerang back on the left end, a fourth dart in the middle after the hero, the village beside the ace
+  revised: "2026-11-13T15:50"   # the boomerang back on the left end, a fourth dart in the middle after the hero (see "The boomerang never stood in the middle")
   maps: [Bazaar]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -196,7 +221,7 @@ plan:
   - {do: place, id: gl1, kind: glue, role: dps, at: [0.74, 0.624]}                # opening search 2026-11-12 (after the opening since 2026-11-13)
   - {do: upgrade, id: s1, to: 0-2-0}                                            # R18-20 Night Vision, Shrapnel: camo
   - {do: upgrade, id: s1, to: 0-2-2}                                            # R28-29
-  - {do: place, id: v1, kind: village, role: support, near: [ac1], at: [0.195, 0.845]}  # beside the ace: its Radar lends it camo (0.115, 0.675 was refused live; 0.687, 0.845 before that left the ace without camo)
+  - {do: place, id: v1, kind: village, role: support, near: [ac1], at: [0.195, 0.845]}  # 23 units from the ace, inside the Radar's 40: lends it camo (0.115, 0.675 refused live; see "Village, 2026-11-13")
   - {do: upgrade, id: v1, to: 0-2-0}                                            # R36 Radar Scanner
   - {do: place, id: ac1, kind: ace, role: dps, at: [0.131, 0.845]}              # R40
   - {do: upgrade, id: ac1, to: 2-0-3}                                           # R40
