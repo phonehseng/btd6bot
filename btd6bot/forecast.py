@@ -15,8 +15,8 @@ bot's own estimate gives it in each round (abilities.estimate_hero_level,
 from its placement round, with the map's and Monkey Knowledge's XP
 bonuses); a hero whose placement round is not known is left out.
 
-Abilities count at their uptime (dps_model.ABILITY_RATING) on the boards
-where the bot presses them: not once Adora may have Blood Sacrifice
+Abilities count by the uses sure to land in each round (dps_model.
+ABILITY_RATING, ABILITY_TIMING) on the boards where the bot presses them: not once Adora may have Blood Sacrifice
 (abilities.presses_blind), when the bot presses no hotkey at all. Example: the Water Park Easy game
 lost on 2026-10-22 rated 0.29-0.45 at rounds 27-30, where it collapsed.
 
