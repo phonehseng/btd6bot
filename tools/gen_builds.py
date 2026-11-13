@@ -1762,13 +1762,38 @@ def exclusions(kind):
         return {}
     out = dict(data.get(kind) or {})
     every = data.get("every_build") or {}
-    if every.get("by_mode"):
-        # map/mode pairs no general build may play (the losses of the
-        # general builds there, e.g. Tricky Tracks' and Geared's), for the
-        # modes this generator now tries too
-        out["by_mode"] = {m: list(ms) for m, ms in every["by_mode"].items()}
-        out["why"] = list(out.get("why") or ()) + list(every.get("why") or ())
+    # map/mode pairs no general build may play, for the modes this generator
+    # now tries too: the ones data/generated_exclusions.json lists for every
+    # build, and the maps every hand-written general build of the mode
+    # excludes (hand_exclusions: the general builds lost there - #Ouch,
+    # Erosion, Sanctuary and Tricky Tracks in Apopalypse ...)
+    by_mode = {m: set(ms) for m, ms in (every.get("by_mode") or {}).items()}
+    for mode in candidate_modes(kind):
+        by_mode.setdefault(mode, set()).update(hand_exclusions(mode))
+    by_mode = {m: sorted(ms) for m, ms in by_mode.items() if ms}
+    if by_mode:
+        out["by_mode"] = by_mode
+        out["why"] = list(out.get("why") or ()) + list(every.get("why") or ()) + [
+            "Every generated build: also kept off the maps every hand-written general build of a mode "
+            "excludes there (gen_builds.hand_exclusions)."]
     return out
+
+
+@lru_cache(maxsize=None)
+def hand_exclusions(mode):
+    """Maps every hand-written general build (no map list, not an
+    achievement) that plays `mode` keeps off in it (planner.excluded_maps or
+    excluded_by_mode): each was lost there and diagnosed, so a generated
+    build is not offered there either (tests/test_ouch_apopalypse_offline.py,
+    test_trickytracks_excluded_offline.py ...). Empty when no such build
+    plays the mode."""
+    sets = []
+    for st in S.load_all().values():
+        planner = st.get("planner") or {}
+        if st.get("source") or st.get("achievement") or planner.get("maps") or mode not in (st.get("modes") or ()):
+            continue
+        sets.append(set(planner.get("excluded_maps") or ()) | set((planner.get("excluded_by_mode") or {}).get(mode) or ()))
+    return frozenset(set.intersection(*sets)) if sets else frozenset()
 
 
 def to_yaml(r):

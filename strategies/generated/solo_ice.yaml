@@ -51,6 +51,15 @@ planner:
   # reached the track (d1's best legal cell saw 2 track cells, d2 and dc found
   # none) and four ice monkeys alone were rated 0.06-0.50 from round 11.
   excluded_maps: ["Flooded Valley"]
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: ice, role: dps, segment: [0.0, 0.5]}   # main line: 2-0-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

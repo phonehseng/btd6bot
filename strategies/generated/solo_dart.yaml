@@ -52,6 +52,15 @@ modes: [easy, primary_only, deflation, medium, reverse]
 planner:
   towers: {dart: [4, 2, 4]}   # the crosspaths the build needs to be safe
   base_success: {easy: 0.86, primary_only: 0.89, deflation: 0.9, medium: 0.8, reverse: 0.8}
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: dart, role: dps, segment: [0.0, 0.5]}   # main line: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
