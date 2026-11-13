@@ -1832,6 +1832,8 @@ class Executor:
                          for cx, cy, sc in cands), key=lambda t: -t[2])
         # the build's researched spot comes first, then its neighbours
         out = self._at_spots(step, valid, n)
+        if out and kind not in self.BUFFERS and kind not in ("farm", "spike", "hero"):
+            out = self._at_in_reach(kind, step, valid, out)
         exact = out[0] if out else None
         if role in ("dps", "exit"):
             floor = self._reach_floor(kind, valid)
@@ -3795,6 +3797,34 @@ class Executor:
             return f"the damage model rates round {worst[1]} at {worst[0]:.2f}"
         return None
 
+    def _at_in_reach(self, kind, step, valid, spots):
+        """The cells round a step's researched spot (`at`, from _at_spots)
+        whose range reaches the track sell_useless asks of a standing tower
+        (SELL_REACH_SHARE of the best legal spot's reach): one under it is
+        sold as soon as it stands. All of them when no floor applies
+        (global range, no track or ground known).
+
+        Enchanted Glade Impoppable (2026-11-12, loss case 20261112_210026):
+        b1, the plan's MOAB Eliminator "near v2", was pinned at (0.099,
+        0.112), where a bomb reaches 0 of the best 276 track cells. It was
+        placed there, grown to 0-4-0 ($6,570) and sold at round 68, and the
+        plan's DDT and BAD answer was gone for the rest of the game (round
+        98's fortified BFBs and ZOMGs leaked). A spot under the floor is
+        passed over; the search goes on round it, then relaxes as usual."""
+        floor = self._reach_floor(kind, valid, self.SELL_REACH_SHARE)
+        if floor is None:
+            return spots
+        reach = self._reach(kind)
+        kept = [c for c in spots if reach[c[1], c[0]] >= floor]
+        note = ("at_under_floor", kind, step.get("id"))
+        noted = self.__dict__.setdefault("noted", set())
+        if (not kept or kept[0] != spots[0]) and note not in noted and not getattr(self, "_peeking", False):
+            noted.add(note)
+            log.info("%s: its spot %s reaches %.0f track cells, under the %.0f a standing %s must "
+                     "reach - passed over", step.get("id", kind), list(step.get("at")),
+                     float(reach[spots[0][1], spots[0][0]]), floor, kind)
+        return kept
+
     def _at_spots(self, step, valid, n, radius=None):
         """Up to n cells round a step's exact spot (`at`), nearest first and
         at least AT_SPOT_GAP_CELLS apart, all within AT_SEARCH_CELLS of it;
@@ -3941,6 +3971,19 @@ class Executor:
         Each relaxation that finds spots is logged; a real dead end logs how
         much legal ground there was, so the cause shows in the log."""
         if kind in self.BUFFERS and not any(i in self.g.towers for i in step.get("near") or ()):
+            if step.get("at") and self._near_to_come(step):
+                # The build placed it before the towers it buffs, on purpose,
+                # at its researched spot: they come next and stand round it.
+                # Enchanted Glade Impoppable (2026-11-12, loss case
+                # 20261112_210026): v2, the MIB village pinned on the top-left
+                # island "near ac1", was bought two steps before ac1; with no
+                # ace standing yet it went where it buffed the most towers -
+                # the bottom of the map by the opening ninja - and the aces,
+                # the bomb and the sniper meant to stand in its range stood
+                # across the map from it.
+                spots = self._at_spots(step, self._legal_cells(kind), self.SPOTS_PER_HOLD)
+                if spots:
+                    return spots
             # none of the towers it was meant to buff stands (Water Park: a
             # lone village buffing nothing)
             return self._buff_spots(kind, step)
@@ -4001,6 +4044,15 @@ class Executor:
         if spots:
             log.info("%s: no spot reaches the track - global range, any legal spot", label)
         return spots
+
+    def _near_to_come(self, step):
+        """Will a tower this step stands `near` still be placed by a later
+        step of the plan or the fill (a place step with that id, not given
+        up)? Used for a buffer bought before the towers it buffs."""
+        names = set(step.get("near") or ())
+        return any(st.get("do") == "place" and st.get("id") in names and st["id"] not in self.g.towers
+                   and self._step_key(st) not in self.dead_steps
+                   for st in list(self.plan) + list(self.fill))
 
     def _any_legal_spot(self, kind):
         """For a tower with global range (range None: sniper, mortar, heli,
