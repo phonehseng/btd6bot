@@ -50,7 +50,39 @@
 # ability, and under-rates map-wide towers): 40 2.62, 63 0.49, 76 0.75, 81
 # 0.40, 90 1.53, 95 0.33, 98 0.46, 100 1.11.
 #
-# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# Hardened (2026-11-13). Searched with tools/optimize_builds' Evaluator,
+# MapSetup and replay_plan, live sight on, status effects on, spots legal
+# (the test's map geometry, plan order) and never refused, CHIMPS cash
+# ($650 at round 6, then rounds only):
+#   * late game: a coordinate search over every tower's spot (replay of
+#     rounds 31-100) moved four of the snipers (sa, sb, sd, se), the first
+#     village and the second alchemist. Same towers, tiers and order.
+#   * opening: the guide's dart and a second dart at round 6 (both reach
+#     all three routes, 74/39/73 and 46/33/46 units), the sniper sb at
+#     round 7, then the plan's own order; the tack's 2-0-2 and 3-0-2 and the
+#     sniper's 0-2-1 follow by round 30.
+#   Margins, before (the build of cbf172c) -> after, live sight:
+#     rounds 6-30: under 1.2: 18 -> 9; worst 0.59 (round 9) -> 0.84 (round
+#       9); still under 1.2: 8 0.95, 9 0.84, 10 1.08, 13 1.14, 15 1.00, 19
+#       1.10, 21 0.99, 27 1.02, ...;
+#     rounds 31-59: under 1.0: 15 -> 15; worst 0.44 (round 54) -> 0.59
+#       (round 58);
+#     rounds 60-100: under 1.0: 24 -> 21; worst 0.37 (round 83) -> 0.41
+#       (round 95); still under 1.0: 64 0.64, 76 0.64, 78 0.50, 83 0.42, 84
+#       0.56, 85 0.49, 86 0.56, 90 0.44, 95 0.41, 98 0.61, ....
+#   tools/simulate_threats: plan 44/44, no threat gaps; plan_timeline: the
+#   last step by round 98.
+#
+# First game (2026-11-13 04:06): lost on round 6, seven seconds after Play.
+# The two darts of the searched opening stand on the left of the map and the
+# bloons walk three routes; the reds and blues of round 6 went past them
+# (loss case 20261113_040947, frames/end_024.jpg). Round 6 now buys what the
+# guide buys there, the dart and a sniper ($215 + $380 of the $650), because
+# a sniper sees every route from one spot; the second dart follows at round
+# 7. The margins above were measured with the two-dart order.
+#
+# Status: one game, lost at round 6 with the two-dart opening; the guide's
+# opening is unplayed. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
 id: quietstreet_chimps
@@ -62,34 +94,42 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 0, 0], sniper: [5, 5, 2], tack: [5, 0, 2], alchemist: [4, 2, 1], village: [4, 2, 2], spike: [3, 2, 0], glue: [0, 2, 3]}
-  revised: "2026-11-12T12:00"
+  revised: "2026-11-13T04:40"   # the guide's round-6 sniper back in front (see "First game")
   maps: [Quiet Street]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
   - {do: place, id: x1, kind: dart, role: dps, at: [0.302, 0.351]}              # R6
-  - {do: place, id: sa, kind: sniper, role: dps, target: strong, at: [0.751, 0.351]}  # R6 Sniper A, Strong
-  - {do: place, id: sb, kind: sniper, role: dps, target: strong, at: [0.751, 0.675]}  # R8 Sniper B, Strong
-  - {do: place, id: sc, kind: sniper, role: dps, target: strong, at: [0.719, 0.317]}  # R10 Sniper C, Strong
-  - {do: place, id: sd, kind: sniper, role: dps, target: strong, at: [0.74, 0.726]}  # R11 Sniper D, Strong
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.675]}            # added: Quincy (see above)
+  - {do: place, id: sb, kind: sniper, role: dps, target: strong, at: [0.644, 0.146]}  # R6 with the dart, as in the guide (the two-dart opening lost round 6); moved from 0.751, 0.675: hardening
+  - {do: place, id: da1, kind: dart, role: dps, at: [0.195, 0.675]}               # opening search 2026-11-12; after the sniper since the round-6 loss
+  - {do: place, id: sa, kind: sniper, role: dps, target: strong, at: [0.612, 0.896]}  # R6 Sniper A, Strong (moved from 0.751, 0.351: hardening)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.302, 0.726]}              # opening search 2026-11-12
   - {do: place, id: t1, kind: tack, role: dps, at: [0.206, 0.351]}              # R16
+  - {do: place, id: ni1, kind: ninja, role: dps, at: [0.409, 0.164]}              # opening search 2026-11-12
+  - {do: upgrade, id: ni1, to: 1-0-0}                                             # opening search 2026-11-12
+  - {do: place, id: sd, kind: sniper, role: dps, target: strong, at: [0.216, 0.3]}  # R11 Sniper D, Strong (moved from 0.74, 0.726: hardening)
+  - {do: place, id: sc, kind: sniper, role: dps, target: strong, at: [0.719, 0.317]}  # R10 Sniper C, Strong
+  - {do: upgrade, id: sb, to: 1-0-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: t1, to: 0-0-1}                                              # opening search 2026-11-12
+  - {do: upgrade, id: sb, to: 1-1-0}                                              # opening search 2026-11-12
+  - {do: upgrade, id: sb, to: 1-2-0}                                            # R27 Full Metal Jacket
+  - {do: upgrade, id: sa, to: 0-0-1}                                              # opening search 2026-11-12
+  - {do: upgrade, id: sa, to: 0-0-2}                                              # opening search 2026-11-12
+  - {do: upgrade, id: sd, to: 0-0-1}                                              # opening search 2026-11-12
   - {do: upgrade, id: t1, to: 2-0-2}                                            # R16
   - {do: upgrade, id: t1, to: 3-0-2}                                            # R18 Hot Shots: lead
-  - {do: upgrade, id: sa, to: 0-2-1}                                            # R22 Night Vision: camo
   - {do: upgrade, id: sa, to: 0-2-2}                                            # R24
-  - {do: upgrade, id: sb, to: 1-2-0}                                            # R27 Full Metal Jacket
   - {do: upgrade, id: sa, to: 0-3-2}                                            # R35 Semi-Automatic
   - {do: place, id: a1, kind: alchemist, role: support, near: [sa, sb], at: [0.761, 0.419]}  # R38
   - {do: upgrade, id: a1, to: 3-0-0}                                            # R38
   - {do: upgrade, id: sb, to: 2-2-0}                                            # R38
   - {do: upgrade, id: sc, to: 0-2-2}                                            # R40 on First
-  - {do: place, id: v1, kind: village, role: support, near: [sa, sb, sc], at: [0.783, 0.283]}
+  - {do: place, id: v1, kind: village, role: support, near: [sa, sb, sc], at: [0.59, 0.095]}  # moved from 0.783, 0.283 (hardening)
   - {do: upgrade, id: v1, to: 2-0-2}                                            # R43
   - {do: upgrade, id: sb, to: 3-2-0}                                            # R49 Deadly Precision
   - {do: upgrade, id: sd, to: 0-3-2}                                            # R50
-  - {do: place, id: se, kind: sniper, role: dps, target: first, at: [0.783, 0.692]}  # R50 Sniper E, First
+  - {do: place, id: se, kind: sniper, role: dps, target: first, at: [0.751, 0.351]}  # R50 Sniper E, First (moved from 0.783, 0.692: hardening)
   - {do: upgrade, id: se, to: 0-2-2}                                            # R50
   - {do: upgrade, id: sa, to: 0-5-2}                                            # R58 Elite Sniper (R48's 0-4-2 is an income tier the bot skips)
   - {do: upgrade, id: a1, to: 4-0-1}                                            # R63 Stronger Stimulant
@@ -101,7 +141,7 @@ plan:
   - {do: upgrade, id: t1, to: 5-0-2}                                            # R85 Inferno Ring
   - {do: place, id: v2, kind: village, role: support, near: [t1, sb], at: [0.302, 0.266]}
   - {do: upgrade, id: v2, to: 4-2-0}                                            # R89 Radar, Primary Mentoring
-  - {do: place, id: a2, kind: alchemist, role: support, near: [t1], at: [0.248, 0.283]}
+  - {do: place, id: a2, kind: alchemist, role: support, near: [t1], at: [0.772, 0.215]}  # moved from 0.248, 0.283 (hardening)
   - {do: upgrade, id: a2, to: 4-2-0}                                            # R91
   - {do: upgrade, id: sb, to: 5-2-0}                                            # added: Cripple MOAB, round 100's BAD
 fill:

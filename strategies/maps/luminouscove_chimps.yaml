@@ -49,7 +49,26 @@
 # and no ability, and under-rates map-wide towers): 40 4.32, 63 8.09, 76
 # 16.00, 81 3.15, 90 0.49, 95 0.21, 98 1.06, 100 1.87.
 #
-# Status: UNTESTED, never played. Untested guide build: base_success 0.5,
+# Played once, lost (2026-11-12 16:04, round 8, two blues leaked): the dart
+# stood at 0.623, 0.845 on the right strip, in reach of the right exit only.
+# The lanes alternate by round, and rounds 6 and 8 left by the left exit, so
+# the boat held them alone: round 6 got 99% along the route, round 8 leaked.
+# The guide's words fit the left strip instead: its top lies between the
+# lower-left pool ring (one lane, on its way in) and the darker bottom path
+# (the other lane, on its way out), and the glue, village, druid and sniper
+# all stand there. The dart is now on the cell of that strip with the most
+# route in range on its worse lane (47 and 40 units; the old spot 0 and 63;
+# as a Crossbow 168 and 159 against 72 and 125), and the village on the one
+# legal cell beside the glue that has the dart in range (the old one was 48
+# units from this spot; a village reaches 40). The sniper keeps its cell, 39
+# units from the village; the druid moved left of the glue, into the Radar's
+# reach (from its old cell, 51 units off, the replay bought an ice monkey
+# for round 53's camo leads). tests/test_luminouscove_chimps_lanes_offline.py
+# holds the three spots. Still open: the damage model rated the lost board
+# 2.48 on round 8 and 3.22 on round 6 - it credits the boat's four pierce in
+# full against a thin line of bloons (docs/backlog.md 107).
+#
+# Status: UNTESTED with these spots. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
 id: luminouscove_chimps
@@ -67,7 +86,7 @@ planner:
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: x1, kind: dart, role: dps, at: [0.623, 0.845]}              # R6 dart closer to the darker bottom path
+  - {do: place, id: x1, kind: dart, role: dps, at: [0.184, 0.734]}              # R6 dart closer to the darker bottom path: the left strip's top, both lanes in range
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.43, 0.47]}           # R6 the heart pond: both lanes
   - {do: upgrade, id: b1, to: 1-0-0}                                            # R7
   - {do: place, id: hero, kind: hero, role: dps, near: [b1], at: [0.387, 0.453]}  # R12 Brickell, in the heart pond
@@ -78,11 +97,11 @@ plan:
   - {do: upgrade, id: x1, to: 2-0-4}                                            # R29 Sharp Shooter
   - {do: upgrade, id: b1, to: 3-2-0}                                            # R35 Destroyer
   - {do: place, id: g1, kind: glue, role: dps, at: [0.131, 0.777]}              # R35 glue as high into the corner as possible
-  - {do: place, id: v1, kind: village, role: support, near: [g1, x1], at: [0.27, 0.896]}  # before R40, next to the glue, covering the dart
+  - {do: place, id: v1, kind: village, role: support, near: [g1, x1], at: [0.131, 0.854]}  # before R40, next to the glue, covering the dart (33 units away, range 40)
   - {do: upgrade, id: v1, to: 1-2-0}                                            # Radar Scanner
   - {do: upgrade, id: v1, to: 2-2-0}                                            # R40 Jungle Drums
   - {do: upgrade, id: b1, to: 4-2-0}                                            # R48 Aircraft Carrier
-  - {do: place, id: d1, kind: druid, role: dps, at: [0.27, 0.811]}              # R48
+  - {do: place, id: d1, kind: druid, role: dps, at: [0.094, 0.794]}             # R48, in the Radar's reach: round 53's camo leads are its to pop
   - {do: upgrade, id: d1, to: 1-3-0}                                            # R48 (R49's 1-4-0 is an income tier the bot skips)
   - {do: upgrade, id: d1, to: 1-5-0}                                            # R71 Spirit of the Forest
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, near: [v1], at: [0.227, 0.93]}  # the guide's R94 sniper, placed early in the Radar's reach (see above)

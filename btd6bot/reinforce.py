@@ -646,6 +646,18 @@ def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
     # sat unspent until round 57 ended the game. Rounds further off are left
     # to the saving rules (save_target, dies_first): income comes in first.
     ending = deciding_round(forecast, ex, [r for r in rounds_rated if r <= rnd + ENDING_LOOKAHEAD], lives)
+    one_life = _one_life(ex)
+    if ending is None and one_life:
+        # With one life the first round of the whole look-ahead that ends the
+        # game is the one to judge on, however far off: a purchase that holds
+        # it may cost several rounds of income and has to be saved for from
+        # the moment it is seen (save_target). Pat's Pond Impoppable
+        # (2026-11-12, loss case 20261113_000355_PatsPond_impoppable): from
+        # round 81 the model rated round 90's fortified camo DDTs 0.06-0.07,
+        # but rounds 81, 83 and 86 judged purchases on rounds 87, 92 and 94,
+        # so the $65,790 MOAB Domination that holds round 90 was never saved
+        # for while about $98k came in.
+        ending = deciding_round(forecast, ex, rounds_rated, lives)
     if ending is not None and ending != worst:
         # the game would end at `ending`: rounds after it never come, so the
         # purchase is judged on that round and the ones before it only
@@ -659,6 +671,10 @@ def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
     # is at stake, so the purchase saving the most lives wins, not the most
     # per dollar (which kept buying the cheapest small step, see trim()).
     crisis = before is not None and before < 1.0
+    # one life and the judged round ends the game: purchases are ranked by
+    # what they do to that round alone (holding_pick), and the tier 5s the
+    # standing towers can grow into are among them (growth_options)
+    game_ending = one_life and ending is not None and worst == ending and crisis
     pick = None
     opts = options(ex, cash, weak=worst)
     radar = radar_option(ex, cash, worst)     # camo sight for the group (backlog #64)
@@ -674,7 +690,18 @@ def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
     # too: worth(), clicktime.py
     budget_s = CT.time_left(ex, rnd, worst)
     now_board = board(ex)
-    for done, o in enumerate(tried):
+    later = ()
+    if game_ending:
+        # the ENDING_LOOKAHEAD rounds after it that the board loses too
+        # (they are judged on next, with little time left to save): a
+        # purchase that also holds them comes first (best_holder)
+        later = [r for r in range(worst + 1, min(worst + ENDING_LOOKAHEAD, end_round) + 1)
+                 if (forecast.margin(now_board, r) or 0.0) < 1.0]
+        tried = tried + growth_options(ex, cash)
+        pick = holding_pick(forecast, tried, worst, before, later=later, deadline=deadline)
+        if deadline.cuts():
+            return "busy", None
+    for done, o in enumerate([] if game_ending else tried):
         if deadline.over("rating the purchases' leaks", done, len(tried)):
             if not deadline.settle:
                 return "busy", None
@@ -688,7 +715,7 @@ def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
         value = worth(ex, o, saved, cash, budget_s, crisis, now_board)
         if pick is None or value > pick[0]:
             pick = (value, o)
-    if pick is None and crisis:
+    if pick is None and crisis and not game_ending:      # (holding_pick has rated these)
         pick = strongest(forecast, tried, worst, before, deadline=deadline)
         if deadline.cuts():
             return "busy", None
@@ -743,7 +770,8 @@ def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
     if crisis and (after is None or after < 1.0) and not dies_first(forecast, ex, rnd, worst, lives):
         # Nothing affordable stops the leak: spending now only delays the
         # purchase that would (see save_target).
-        target = save_target(forecast, ex, cash, rnd, worst, deadline=deadline)
+        target = save_target(forecast, ex, cash, rnd, worst, deadline=deadline, game_ending=game_ending,
+                             later=later)
         if deadline.cuts():
             return "busy", None
         if (target is not None and now and pick is not None
@@ -812,7 +840,8 @@ def deciding_round(forecast, ex, rounds, lives):
     so a $240 ace tier that would lift round 40 to 0.98 read "0.73 -> 0.73",
     the plan's $6,000 step took the cash, and round 40's MOAB ended the game.
     Lives lost in a round after the game is over count for nothing.
-    best() asks this only of the round being played and the next one."""
+    best() asks this of the round being played and the next
+    ENDING_LOOKAHEAD, and with one life of the whole look-ahead."""
     if lives is None or lives <= 0 or not rounds:
         return None
     by_round = forecast.leaks(board(ex), sorted(rounds), 1.0, per_round=True)
@@ -1059,6 +1088,128 @@ def strongest(forecast, tried, worst, before, deadline=None):
     return found
 
 
+def _one_life(ex):
+    """Is the executor's game one where a single leak ends it (rules
+    `one_life`: Impoppable, CHIMPS)? False for executors without rules."""
+    return bool((getattr(ex, "rules", None) or {}).get("one_life"))
+
+
+def holding_pick(forecast, tried, worst, before, later=(), deadline=None):
+    """(margin, Option) for the purchase to make when round `worst` ends a
+    one-life game: of the purchases in `tried` that hold it (margin 1 or
+    more) the one that also holds the most of the `later` rounds the board
+    loses (in order: the first it does not hold ends the count), then the
+    cheapest (best_holder); else the one that lifts `worst` the most, as
+    strongest() - or None when none lifts it at all.
+
+    The usual ranking (lives saved at half strength over the rounds up to
+    `worst`) counts leaks in rounds the board holds at full strength, and
+    there a purchase for those rounds outranks one for the round that ends
+    the game. Pat's Pond Impoppable (2026-11-12, loss case
+    20261113_000355_PatsPond_impoppable), round 88 with $35,965: a heli to
+    4-0-0 "saved" 3,428 lives, almost all of them in round 88 (held at 1.26
+    at full strength), and left round 90 at 0.07; dr2 -> 0-2-5, the
+    Crossbow Master, saved fewer and lifted round 90 to 0.47. The heli was
+    bought. With one life only the round that ends the game counts.
+
+    Past the look's `deadline` the purchases not rated yet are left out, as
+    in strongest()."""
+    lifted, holders = None, []
+    for done, o in enumerate(sorted(tried, key=lambda o: o.cost)):
+        if _over(deadline, f"rating purchases for round {worst}", done, len(tried)):
+            if not _memo_only(deadline):
+                break
+            m = _margin(forecast, o.towers, worst, deadline)
+        else:
+            m = forecast.margin(o.towers, worst)
+        if m is None:
+            continue
+        if m >= 1.0:
+            holders.append((m, o))
+        elif m > (before or 0.0) + 0.01 and (lifted is None or m > lifted[0]):
+            lifted = (m, o)
+    return best_holder(forecast, holders, later, deadline) or lifted
+
+
+def best_holder(forecast, holders, later, deadline=None):
+    """The (margin, Option) of `holders` - purchases that hold the round
+    that ends a one-life game - that holds the most of the `later` lost
+    rounds in a row, then the cheapest; None for no holders.
+
+    The cheapest holder alone can be the wrong one. On the Pat's Pond
+    Impoppable board of round 88 (loss case
+    20261113_000355_PatsPond_impoppable) the bare boomerang grown to Glaive
+    Lord (5-2-0, $43,205) holds round 90 at 1.02 and leaves round 93's DDTs
+    at 0.71; the MOAB Domination (0-2-5, $65,790) holds 90 at 1.58 and 93 at
+    1.23. A boomerang takes one tier 5, so the Glaive Lord would have shut
+    the Domination out, and round 93 would need a second answer three rounds
+    later. Past the look's `deadline` the rating stops and the look answers
+    "busy" (on a settling pass only the remembered margins count)."""
+    if not holders:
+        return None
+
+    def held(o):
+        n = 0
+        for r in later:
+            if _over(deadline, f"rating the holders on round {r}") and not _memo_only(deadline):
+                break       # the look answers "busy" (LookBudget.cut) and goes on next time
+            m = _margin(forecast, o.towers, r, deadline)
+            if m is None or m < 1.0:
+                break
+            n += 1
+        return n
+
+    return max(holders, key=lambda h: (held(h[1]), -h[1].cost))
+
+
+def growth_options(ex, budget):
+    """The tier 5s the standing damage towers can grow into with `budget`,
+    as purchases rated at the whole path: each tower toward each of
+    CROSSPATHS (grown_from: XP locks, a tier 5 another tower holds, a path
+    the game closed), kept where the path reaches tier 5. The Option buys
+    the first tier, costs the rest of the path and carries the path as its
+    goal (buy_best follows it on, as for grow_standing).
+
+    options() offers one tier at a time, at most MAX_OPTIONS of them (trim):
+    a bare tower's tier 5 is five purchases away and never rated as such,
+    and with a big bank the 20 options are the cheapest tiers and the
+    dearest ones. Pat's Pond Impoppable (2026-11-12, loss case
+    20261113_000355_PatsPond_impoppable) at round 88: the bare
+    ans_blimps_boomerang's MOAB Domination (0-2-5, $65,790) rates round 90's
+    fortified camo DDTs 1.63 and was never offered; with $66,000 the trimmed
+    list kept the $51,000-57,600 tier 5s (a Sky Shredder: 0.07) and dropped
+    the $25,800 Crossbow Master (0.43).
+
+    The plan's crosspath for a tower (planned_cap) only bars a path it
+    would shut (keeps_plan_open); going further along the same paths is
+    allowed, as in Executor.upgrade_choices(past_plan=True). Towers that pop
+    nothing (Executor._dead) or stand under a closed pane (_reachable) are
+    left out like there."""
+    family = _price_family(ex)
+    now = board(ex)
+    dead = getattr(ex, "_dead", None)
+    reachable = getattr(ex, "_reachable", None)
+    out = []
+    for p in ex.g.towers.values():
+        if p.kind == "hero" or p.kind in NOT_DAMAGE or p.kind not in T.TOWERS:
+            continue
+        if (callable(dead) and dead(p)) or (callable(reachable) and not reachable(p)):
+            continue
+        start = tuple(p.tiers)
+        cap = planned_cap(ex, p)
+        for target, first in grown_from(ex, p.kind, start, budget, tower=p).items():
+            if first is None or 5 not in target or not keeps_plan_open(target, cap):
+                continue
+            cost = T.total_cost(p.kind, target, family) - T.total_cost(p.kind, start, family)
+            after = [SimpleNamespace(**{**vars(t), "tiers": target}) if t.tid == p.tid else t for t in now]
+            code, whole = "-".join(map(str, first)), "-".join(map(str, target))
+            out.append(Option(f"upgrade {p.tid} -> {code} (to grow to {whole})", cost,
+                              {"do": "upgrade", "id": p.tid, "to": code}, after,
+                              goal={"do": "upgrade", "id": p.tid, "to": whole}))
+    out.sort(key=lambda o: o.cost)
+    return out
+
+
 def new_kind_options(ex, forecast, cash, rnd, deadline=None):
     """"another <kind>" purchases for every damage kind the game allows that
     is not standing yet (options() only offers the kinds already on the
@@ -1182,10 +1333,11 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family, de
         if i and _past(deadline) and not memo_only:
             return UNJUDGED
         best = None
+        cap = planned_cap(ex, t)
         for target, first in grown_from(ex, kind, tuple(t.tiers), cash, tower=t).items():
             if best is not None and _past(deadline) and not memo_only:
                 break
-            if first is None:
+            if first is None or not keeps_plan_open(target, cap):
                 continue
             after = [SimpleNamespace(**{**vars(x), "tiers": target}) if x.tid == t.tid else x for x in rest]
             m = _margin(forecast, after, rnd, deadline)
@@ -1203,6 +1355,36 @@ def grow_standing(ex, forecast, rest, kind, tiers, margin, cash, rnd, family, de
                           {"do": "upgrade", "id": t.tid, "to": code}, after,
                           goal={"do": "upgrade", "id": t.tid, "to": whole})
     return UNJUDGED if unrated else None
+
+
+def planned_cap(ex, tower):
+    """The crosspath the plan wants `tower` to end at (Executor._planned_cap),
+    or None when the plan never upgrades it or `ex` cannot say (test fakes)."""
+    f = getattr(ex, "_planned_cap", None)
+    if f is None:
+        return None
+    try:
+        return f(tower)
+    except Exception:       # a fake executor without a plan: no limit
+        return None
+
+
+def keeps_plan_open(target, cap):
+    """Can a tower grown to the crosspath `target` still be upgraded to the
+    plan's crosspath `cap`? The game lets a tower use two paths, only one of
+    them past tier 2, so the two crosspaths together must keep to that rule.
+    No `cap` (the plan never upgrades the tower): any target.
+
+    Spring Spring CHIMPS (2026-11-12, case 20261112_155459): the plan wants
+    sb1 at 0-5-0 (Pre-emptive Strike, the guide's round-95 answer). With
+    round 33 rated 0.23, reinforce grew it "to 2-0-1", the top and bottom
+    paths, and the middle path was shut for the rest of the game.
+    Executor.upgrade_choices already kept to the plan's crosspath; this
+    ladder (grown_from) did not."""
+    if cap is None:
+        return True
+    both = [max(a, b) for a, b in zip(target, cap)]
+    return sum(x > 0 for x in both) <= 2 and sum(x > 2 for x in both) <= 1
 
 
 # grow_standing's answer when a standing tower behind could not be judged
@@ -1433,7 +1615,7 @@ def dies_first(forecast, ex, rnd, worst, lives):
     return lost is not None and lost >= lives
 
 
-def save_target(forecast, ex, cash, rnd, worst, deadline=None):
+def save_target(forecast, ex, cash, rnd, worst, deadline=None, game_ending=False, later=()):
     """(Option, margin after) for the cheapest purchase the cash cannot buy
     yet that gets round `worst` to margin 1 or better - or None.
 
@@ -1455,22 +1637,49 @@ def save_target(forecast, ex, cash, rnd, worst, deadline=None):
     all 142 lives in round 55 with $17,084 banked; Ancient Portal (r52,
     $18,040) and Spring Spring (r60, $21,494) died the same way.
 
+    game_ending: the game has one life and `worst` is the round that ends
+    it (best). Then the reach is what the cash and the income until that
+    round pay (payable_by), not SAVE_REACH times the cash, and the tier 5s
+    the standing towers grow into are candidates too (growth_options): a
+    one-tier list never offered Pat's Pond Impoppable's MOAB Domination
+    (2026-11-12, loss case 20261113_000355_PatsPond_impoppable: $65,790,
+    round 90 0.07 -> 1.63), and at round 83, with $35,802 and seven rounds
+    of income to come, it could have been saved for. A purchase income
+    cannot pay before the round is no target, and among the targets that
+    hold the round the one holding the most of the `later` lost rounds
+    comes first (best_holder), then the cheapest.
+
     Past `deadline` (the look's, best) the search stops with None, and
     best() answers "busy": the next look goes on from where this one
     stopped."""
     if rnd is None or worst - rnd < SAVE_LEAD or cash <= 0:
         return None
     continuous = bool((getattr(ex, "rules", None) or {}).get("continuous"))
-    dearer = [o for o in options(ex, cash * SAVE_REACH, weak=worst) if o.cost > cash]     # cheapest first
+    reach = cash * SAVE_REACH
+    if game_ending:
+        income_until = getattr(ex, "income_until", None)
+        income = income_until(worst, rnd) if callable(income_until) else None
+        if income:
+            reach = cash + income
+    dearer = [o for o in options(ex, reach, weak=worst) if o.cost > cash]
+    if game_ending:
+        dearer += [o for o in growth_options(ex, reach) if o.cost > cash]
+    dearer.sort(key=lambda o: o.cost)     # cheapest first
+    holders = []        # (margin, Option): with game_ending, every target that holds the round
     for done, o in enumerate(dearer):
         if _over(deadline, "looking for a purchase to save for", done, len(dearer)):
             return None
         if continuous and payable_by(ex, o.cost, cash, rnd + CONTINUOUS_SAVE_ROUNDS, rnd) is False:
             continue        # too far off: the board would stand still for too many rounds
+        if game_ending and payable_by(ex, o.cost, cash, worst, rnd) is False:
+            continue        # not paid before the round that ends the game
         m = forecast.margin(o.towers, worst)
         if m is not None and m >= 1.0:
-            return o, m
-    return None
+            if not game_ending:
+                return o, m
+            holders.append((m, o))
+    found = best_holder(forecast, holders, later, deadline)
+    return (found[1], found[0]) if found else None
 
 
 def no_lift(status, found):

@@ -30,6 +30,16 @@ plan or the fill places an `at` spot:
     one-life game was lost at round 6). A pinned cell is checked once more
     against every refusal layer of its kind (never_refused), and it is off
     the cycling panes while there is room off them (pane_free);
+  * on a map whose rounds take turns on several lanes (Water Park,
+    Luminous Cove, Bazaar, Enchanted Glade, Muddy Puddles; Erosion's phases;
+    Bloonarius Prime's prime rounds: dps_model.Track.scenarios), a damage
+    tower's ranked spots that reach every lane of the rounds it must hold
+    come first (Pinner.by_lanes, hold_window: an opening tower holds the
+    first OPENING_ROUNDS rounds or until the next damage tower, whichever is
+    later). Scored over the whole map, Water Park CHIMPS' dart and boomerang
+    (2026-11-12 20:23) and Luminous Cove's dart (16:04, 16:40) stood beside
+    one lane, and rounds 6 and 8 came down the other. When no spot reaches
+    them all, the header names the lane left bare: it needs an opener;
   * a damage tower takes the best free spot the optimizer ranks for its kind
     (most bloon route in range, line of sight counted), and among the spots
     nearly as good (PROVEN_SCORE_SHARE of the best) one where a tower of
@@ -96,6 +106,14 @@ UNTESTED_SUCCESS = 0.5
 CELL_STRIDE = 2
 # A `near` step's radius in cells when it names none (the executor's default).
 NEAR_RADIUS = 9
+# Route (world units) a damage tower must have in sight and range on a lane
+# to count as reaching it: a blue bloon crosses 30 units in about a second,
+# one dart's reload (tests/test_luminouscove_chimps_lanes_offline.py).
+MIN_LANE_UNITS = 30.0
+# Rounds from the mode's first that its opening towers must hold on their own
+# (CHIMPS 6-15): on a map whose rounds take turns on several lanes they must
+# reach every lane those rounds use (hold_window).
+OPENING_ROUNDS = 10
 # A ranked spot where the kind already stood in a live game goes first when
 # its score is at least this share of the best free ranked spot's.
 PROVEN_SCORE_SHARE = 0.8
@@ -208,12 +226,17 @@ class Pinner:
         ML.DATA = Path(maps_dir) if maps_dir else live_maps_dir()   # ... as the live file holds them
         self.setup = O.MapSetup(map_name, mode)
         self.model = self.setup.model
+        # spots are judged by what the live forecast sees from them, heights
+        # and all (MapSetup.use_live_sight): Water Park's cells by the slide
+        # see its second lane only so
+        self.setup.use_live_sight()
         self.hero = hero
         self.last_round = S.MODE_RULES[mode]["end_round"]
         self.placed = []              # (cx, cy, kind, hero) as placement.valid_spots takes them
         self.cells = {}               # tower id -> (cx, cy)
         self.kinds = {}               # tower id -> kind
         self.removed = ()             # obstacles a `clear` step bought (placement.valid_spots)
+        self.uncovered = {}           # tower id -> lane path ids its spot does not reach (pin)
 
     def legal(self, kind, hero=None):
         """Bool grid [cy, cx] of cells where ``kind`` (``hero`` for the
@@ -244,16 +267,45 @@ class Pinner:
         from ``cell`` and within ``segment`` - the share of each route from
         its entrance, (0.0, 0.5) its first half - that it can see. A global
         tower (a sniper) has no range limit: only its sight counts."""
+        return sum(self.route_cover(kind, cell, segment))
+
+    def lane_cover(self, kind, cell, segment=None, lanes=None):
+        """Route in sight and range of ``kind`` on ``cell`` on each of the
+        map's lanes (Track.scenarios, a lane per alternative of a spawn that
+        takes turns by round), world units, in the order of ``lanes``
+        (scenario indices; all of them when None). A lane of several routes
+        is as covered as its least covered one that carries non-MOAB bloons
+        (the round's bloons are shared out over them; the openings meet no
+        MOAB-class)."""
+        track = self.setup.track
+        routes = self.route_cover(kind, cell, segment or (0.0, 1.0))
+        out = []
+        for k in (range(len(track.scenarios)) if lanes is None else lanes):
+            ids = track.routes_for(k, False)
+            out.append(min(routes[i] for i in ids))
+        return out
+
+    def hold_lanes(self, rounds):
+        """Scenario indices (lanes) the damage model plays ``rounds`` on
+        (Track.scenarios_in): the lanes a tower that must hold those rounds
+        has to reach. None on a map with one lane."""
+        track = self.setup.track
+        if len(track.scenarios) < 2:
+            return None
+        return sorted({k for r in rounds for k in track.scenarios_in(r)})
+
+    def route_cover(self, kind, cell, segment):
+        """segment_cover per route (Track.paths), in route order."""
         import numpy as np
         from btd6bot import dps_model as D
         prof = D.profile(kind, (0, 0, 0))
         if prof is None:
-            return 0.0
+            return [0.0] * len(self.setup.track.paths)
         reach = math.inf if prof.is_global else prof.range
         x, z = self.world(cell)
         lo, hi = segment
         sight = self.setup.sight_for(kind)
-        total = 0.0
+        out = []
         for path in self.setup.track.paths:
             xyz, dist, length = path["xyz"], path["dist"], path["length"]
             progress = dist / length if length else dist * 0
@@ -263,16 +315,35 @@ class Pinner:
             if sight is not None and inside.any():
                 idx = np.nonzero(inside)[0]
                 inside[idx[~sight(x, z, xyz[inside])]] = False
-            total += float(np.sum(np.diff(dist)[inside[:-1]]))
-        return total
+            out.append(float(np.sum(np.diff(dist)[inside[:-1]])))
+        return out
 
-    def candidates(self, kind, ok, segment=None, hero=None):
+    def by_lanes(self, kind, cells, segment=None, lanes=None):
+        """``cells`` with those that reach every lane of ``lanes`` (at least
+        MIN_LANE_UNITS of route on the worst one, lane_cover) first, in
+        their own order; then the rest, the best worst lane first. No
+        change without two lanes to hold.
+
+        Why: Water Park CHIMPS (2026-11-12 20:23) and Luminous Cove CHIMPS
+        (2026-11-12 16:04 and 16:40) lost rounds 6 and 8: the opening stood
+        on the cells with the most route in range over the whole map, all of
+        it on one lane, and the round came down the other."""
+        if not lanes or len(lanes) < 2 or not cells:
+            return cells
+        worst = {c: min(self.lane_cover(kind, c, segment, lanes)) for c in cells}
+        both = [c for c in cells if worst[c] >= MIN_LANE_UNITS]
+        taken = set(both)
+        return both + sorted((c for c in cells if c not in taken), key=lambda c: -worst[c])
+
+    def candidates(self, kind, ok, segment=None, hero=None, lanes=None):
         """Cells (cx, cy) for ``kind``, best first, none of them refused for
         it (never_refused): its free ranked spots (reaching the track), the
         spots nearly as good as the best (PROVEN_SCORE_SHARE) where the kind
         already stood in a live game first, then every legal cell on a
         CELL_STRIDE grid, proven cells first. With ``segment`` the ranked
-        spots are scored by the route they cover inside it. A buffer (village, alchemist:
+        spots are scored by the route they cover inside it. With ``lanes``
+        (two or more lanes the tower must hold, hold_lanes) the ranked spots
+        that reach all of them go first (by_lanes). A buffer (village, alchemist:
         Executor.BUFFERS) lends to the towers around it, not to the track,
         so it gets the legal cells alone (pin ranks them by room)."""
         if kind == "hero":
@@ -292,7 +363,9 @@ class Pinner:
             cells = [(int(x), int(y)) for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0]
             scored = [(c, self.segment_cover(kind, c, segment or (0.0, 1.0))) for c in cells]
             scored.sort(key=lambda t: -t[1])
-            return [c for c, _ in scored if never_refused(self.model, kind, c)]
+            ranked = [c for c, s in scored if s > 0 and never_refused(self.model, kind, c)]
+            rest = [c for c, s in scored if s <= 0 and never_refused(self.model, kind, c)]
+            return self.by_lanes(kind, ranked, segment, lanes) + rest
         proven = proven_cells(self.model, kind)
         spots = [] if kind in S.Executor.BUFFERS else             [(sp.cell, sp.score) for sp in self.setup.ranked_spots(kind) if ok[sp.cell[1], sp.cell[0]]]
         if spots and segment and tuple(segment) != (0.0, 1.0):
@@ -307,13 +380,23 @@ class Pinner:
         if spots:
             bar = spots[0][1] * PROVEN_SCORE_SHARE
             spots.sort(key=lambda t: not (t[1] >= bar and proven[t[0][1], t[0][0]]))
-        ranked = [c for c, _ in spots]
+        # on a map whose rounds take turns on several lanes, the spots that
+        # reach every lane the tower must hold come first (by_lanes)
+        ranked = self.by_lanes(kind, [c for c, _ in spots], segment, lanes)
         ys, xs = ok.nonzero()
         grid = [(int(x), int(y)) for x, y in zip(xs, ys) if x % CELL_STRIDE == 0 and y % CELL_STRIDE == 0]
         grid.sort(key=lambda c: not proven[c[1], c[0]])     # stable: proven cells first
         seen = set(ranked)
         cands = ranked + [c for c in grid if c not in seen]
         return [c for c in cands if never_refused(self.model, kind, c)]
+
+    def reaching(self, kind):
+        """The cells from which a tower of ``kind`` reaches the track (its
+        ranked spots, MapSetup.ranked_spots), or None for the kinds that need
+        none: buffers, map-wide towers and the hero."""
+        if kind == "hero" or kind in S.Executor.BUFFERS or kind == "farm" or self._global(kind):
+            return None
+        return {sp.cell for sp in self.setup.ranked_spots(kind)}
 
     def world(self, cell):
         """(x, z) world position of a tower standing on ``cell``."""
@@ -382,7 +465,7 @@ class Pinner:
             return math.hypot(max(x0 - fx, 0, fx - x1), max(y0 - fy, 0, fy - y1))
         return sorted(cands, key=gap)
 
-    def pin(self, tid, kind, near=(), near_radius=NEAR_RADIUS, segment=None, area=None, hero=None):
+    def pin(self, tid, kind, near=(), near_radius=NEAR_RADIUS, segment=None, area=None, hero=None, lanes=None):
         """The `at` [fx, fy] for tower ``tid`` (None when no legal spot).
 
         With ``near``: the best candidate that works with every tower named
@@ -390,15 +473,31 @@ class Pinner:
         when nothing is free inside it. A buffer takes, among those, the
         cell with the most room for the towers it is to lend to (room):
         on Sunset Gulch (2026-11-12) the first legal cell left its Eliminator
-        78 units from the camo village (range 48)."""
+        78 units from the camo village (range 48).
+
+        With ``lanes`` (scenario indices, hold_lanes) a damage tower's spots
+        that reach every one of those lanes come first; when none does, the
+        lanes it misses are kept in self.uncovered[tid] for the header."""
         ok = self.legal(kind, hero)
         if ok is None:
             return None
-        cands = self.in_area(self.candidates(kind, ok, segment, hero), area, kind)
+        cands = self.in_area(self.candidates(kind, ok, segment, hero, lanes), area, kind)
         refs = [(self.kinds[r], self.cells[r]) for r in near if r in self.cells]
         if refs:
+            def closeness(c):
+                return sum(math.dist(c, r) for _, r in refs)
             inside = [c for c in cands if all(self.reach(kind, c, k, r, near_radius) for k, r in refs)]
-            cands = inside or sorted(cands, key=lambda c: sum(math.dist(c, r) for _, r in refs))[:1]
+            reaching = self.reaching(kind)
+            if reaching is not None:
+                # A damage tower stands where it reaches the track, even when
+                # that is outside the circle round the towers it supports:
+                # Enchanted Glade Impoppable (2026-11-12, loss case
+                # 20261112_210026) had b1, its MOAB Eliminator "near v2",
+                # pinned on a grid cell inside v2's range from which a bomb
+                # reaches no track; it was sold at round 68 after $6,570.
+                inside = ([c for c in inside if c in reaching]
+                          or sorted((c for c in cands if c in reaching), key=closeness)[:1])
+            cands = inside or sorted(cands, key=closeness)[:1]
         if kind in S.Executor.BUFFERS and len(cands) > 1:
             if area:
                 # the room decides only among the cells where the guide puts it
@@ -408,11 +507,59 @@ class Pinner:
         if not cands:
             return None
         cx, cy = cands[0]
+        if lanes and len(lanes) > 1 and kind != "hero" and kind not in S.Executor.BUFFERS:
+            cover = self.lane_cover(kind, (cx, cy), segment, lanes)
+            missed = [self.setup.track.scenario_paths[k] for k, u in zip(lanes, cover) if u < MIN_LANE_UNITS]
+            if missed:
+                self.uncovered[tid] = missed
         self.placed.append((cx, cy, kind, hero))
         self.cells[tid] = (cx, cy)
         self.kinds[tid] = kind
         fx, fy = self.model.cell_to_frac(cx, cy)
         return [round(float(fx), 3), round(float(fy), 3)]
+
+
+def buy_rounds(steps, mode, hero=None):
+    """{step index: the round it is first bought in} for the place and
+    upgrade steps of a plan, bought in order as the mode's own round cash
+    allows (optimize_builds.economy, at list prices: no village discount,
+    no farm or hero income). An estimate for hold_window, made before the
+    spots are known; replay_plan rates the written file exactly."""
+    from btd6bot import towers as T
+    econ = O.economy(mode)
+    cash, rnd, tiers, out = econ.start_cash, econ.start_round, {}, {}
+    for i, st in enumerate(steps):
+        if st.get("do") == "place":
+            cost = T.hero_cost(hero or "quincy", econ.family) if st.get("kind") == "hero"                 else T.tower_cost(st["kind"], econ.family)
+            tiers[st.get("id")] = (st.get("kind"), (0, 0, 0))
+        elif st.get("do") == "upgrade" and st.get("id") in tiers:
+            kind, now = tiers[st["id"]]
+            to = O.parse_cross(st["to"])
+            cost = O.upgrade_cost(kind, now, to, econ.family)
+            tiers[st["id"]] = (kind, to)
+        else:
+            continue
+        while cost > cash and rnd < econ.end_round:
+            cash += econ.income(rnd)
+            rnd += 1
+        cash -= cost
+        out[i] = rnd
+    return out
+
+
+def hold_window(steps, i, bought, start_round):
+    """The rounds the damage tower placed by step ``i`` must hold: from the
+    round it is bought (``bought``, buy_rounds) to the later of the round the
+    plan's next damage tower is bought and the end of the opening
+    (OPENING_ROUNDS from ``start_round``, at least OPENING_ROUNDS rounds in
+    all, enough for every every-round cycle the maps run: Last Resort's 4,
+    Muddy Puddles' 6)."""
+    first = bought.get(i, start_round)
+    later = [bought[j] for j in range(i + 1, len(steps)) if j in bought and steps[j].get("do") == "place"
+             and steps[j].get("kind") not in ("hero",) + tuple(S.Executor.BUFFERS)
+             and steps[j].get("role", "dps") == "dps"]
+    end = max(later[0] if later else first, start_round + OPENING_ROUNDS - 1, first + OPENING_ROUNDS - 1)
+    return range(first, end + 1)
 
 
 def load_source(sid):
@@ -456,6 +603,14 @@ def pinned_strategy(sid, map_name, mode):
         order = [st for st in wanted if not st.get("near") and st["kind"] != "hero"
                  and pinner.scarce(st["kind"], kinds)]
         order += [st for st in wanted if st not in order]
+    # on a map whose rounds take turns on several lanes, a damage tower is
+    # pinned where it reaches every lane of the rounds it must hold
+    # (hold_window): Water Park and Luminous Cove CHIMPS lost rounds 6 and 8
+    # on 2026-11-12 with their openings beside one lane
+    bought = buy_rounds(plan_steps, mode, src.get("hero"))
+    start = O.economy(mode).start_round
+    lanes_of = {id(st): pinner.hold_lanes(hold_window(plan_steps, i, bought, start))
+                for i, st in enumerate(plan_steps) if pins_wanted(st) and st.get("role", "dps") == "dps"}
     spots = {}
     for st in order:
         if st.get("do") == "clear":
@@ -463,7 +618,8 @@ def pinned_strategy(sid, map_name, mode):
             continue
         at = pinner.pin(st["id"], st["kind"], st.get("near") or (), st.get("near_radius", NEAR_RADIUS),
                         segment=st.get("segment") if st.get("role", "dps") == "dps" else None,
-                        area=st.get("area"), hero=src.get("hero") if st["kind"] == "hero" else None)
+                        area=st.get("area"), hero=src.get("hero") if st["kind"] == "hero" else None,
+                        lanes=lanes_of.get(id(st)))
         if at is None:
             unpinned.append(st["id"])
         else:
@@ -493,6 +649,8 @@ def pinned_strategy(sid, map_name, mode):
         out["answers"] = {threat: [dict(st, at=spots[st["id"]]) if st.get("do") == "place" and st.get("id") in spots
                                    else st for st in _for_mode(steps, mode)]
                           for threat, steps in src["answers"].items()}
+    if pinner.uncovered:
+        out["uncovered"] = dict(pinner.uncovered)
     return out, unpinned
 
 
@@ -526,6 +684,11 @@ def to_yaml(d, sid, unpinned):
         lines += [(f"# {ln}" if ln else "#") for ln in d["notes"]]
     if unpinned:
         lines.append(f"# No legal spot was found for: {', '.join(unpinned)} (left to the executor).")
+    for tid, missed in (d.get("uncovered") or {}).items():
+        # no legal spot of its kind reaches every lane its rounds take: the
+        # lane needs a tower of its own (Water Park CHIMPS, 2026-11-12)
+        lines.append(f"# {tid} reaches no spot on lane(s) {', '.join(map(str, missed))} of the rounds it must"
+                     " hold: add an opener there.")
     lines += [f"id: {d['id']}", f"map: {_flow(d['map'])}", f"hero: {d['hero']}",
               "plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys",
               f"modes: [{', '.join(d['modes'])}]", "planner:"]

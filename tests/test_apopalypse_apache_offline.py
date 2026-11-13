@@ -69,7 +69,9 @@ def test_build_is_valid_and_apopalypse_only():
 def test_planned_on_harder_maps_ahead_of_the_old_build():
     acc = AccountState()
     new, old = _spec(NEW), _spec(OLD)
-    for m in ("Firing Range", "Ravine", "Muddy Puddles", "Bloody Puddles", "Sunset Gulch", "Workshop"):
+    # (Bloody Puddles left the list on 2026-11-12: its own map build plays it,
+    # tests/test_apopalypse_mapbuilds_offline.py)
+    for m in ("Firing Range", "Ravine", "Muddy Puddles", "Sunset Gulch", "Workshop"):
         cat = acc.map_category(m)
         assert PL._strategy_fits(new, m, cat, "apopalypse"), m
         assert PL._prior(new, m, cat, "apopalypse") > PL._prior(old, m, cat, "apopalypse"), m

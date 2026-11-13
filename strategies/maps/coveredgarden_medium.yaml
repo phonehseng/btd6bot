@@ -145,7 +145,7 @@ plan:
   - {do: upgrade, id: sky5, to: 2-2-0}   # R51: $315, ahead of round 59; cash left $8,162
   - {do: upgrade, id: sky2, to: 2-2-0}   # R51: $315, ahead of round 59; cash left $7,847
   - {do: upgrade, id: sky1, to: 2-2-0}   # R51: $450, ahead of round 59; cash left $7,397
-  - {do: place, id: sni23, kind: sniper, role: dps, at: [0.035, 0.095]}   # R51: $1,400, ahead of round 59; cash left $5,997; strip, open all game
+  - {do: place, id: sni23, kind: sniper, role: dps, at: [0.045, 0.121]}   # R51: $1,400, ahead of round 59; cash left $5,997; strip, open all game
   - {do: upgrade, id: sni23, to: 1-2-0}
   - {do: target, id: sni23, mode: strong}   # single-target: MOAB-class first (as modelled)
   - {do: upgrade, id: sky14, to: 2-2-0}   # R51: $450, ahead of round 59; cash left $5,547

@@ -74,6 +74,13 @@ def fast_track_wanted(mode, strategy=None):
     builds tuned for the round-22 start (double_hp_sniper_sun) keep it."""
     if mode in FAST_TRACK_OFF_MODES:
         return False
+    from .strategy import MODE_RULES     # imported here: strategy imports a lot
+    if MODE_RULES.get(mode, {}).get("no_powers"):
+        # CHIMPS forbids every boost. The toggle was switched ON for it at
+        # 2026-11-12 17:45 (Ancient Portal CHIMPS, lost 9 s after its first
+        # tower): only Impoppable was in FAST_TRACK_OFF_MODES, and nothing
+        # asked whether the mode allows powers at all.
+        return False
     return not (isinstance(strategy, dict) and strategy.get("fast_track") is False)
 
 

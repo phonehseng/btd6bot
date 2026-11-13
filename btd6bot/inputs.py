@@ -97,6 +97,10 @@ class Input:
                            "stopped from the HUD - press GO to continue")
         if not self.screen.is_foreground():
             self._wait_for(self.screen.is_foreground, "BTD6 is not the foreground window")
+        cover = self.screen.obscured_by()
+        if cover:
+            self._wait_for(lambda: self.screen.obscured_by() is None,
+                           f"a window ({cover[:40]}) lies over the game")
 
     def release_all(self):
         for k in reversed(self._held_keys):

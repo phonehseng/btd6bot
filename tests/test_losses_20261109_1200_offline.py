@@ -9,6 +9,12 @@ removed, which frees the central ground): bloons take one of four loops by
 round, and no primary tower covers them all. data/model_ceiling.json said
 0.33 from the first research; it now says 0.09, so the game ranks under
 every last resort whose research comes closer to holding.
+
+2026-11-12: a map build (strategies/maps/lastresort_primary_only.yaml,
+loss case 20261112_111354) stands a boomerang and a desperado on the two
+cells beside the top straight every route shares; it replays at a worst of
+0.94, and the ceiling was raised to that. The 0.09 belonged to the general
+builds, which no longer fit this map/mode.
 Run: python tests/test_losses_20261109_1200_offline.py"""
 import sys
 from pathlib import Path
@@ -20,9 +26,8 @@ from btd6bot import planner as PL  # noqa: E402
 
 
 def test_last_resort_primary_only_ceiling():
-    assert PL.model_ceiling("Last Resort", "primary_only") <= 0.1
-    # capped well under the 0.11 it was picked at
-    assert PL.ceiling_cap(0.9, "Last Resort", "primary_only") < 0.04
+    # the map build's replayed worst (2026-11-12), not the general builds' 0.09
+    assert 0.5 <= PL.model_ceiling("Last Resort", "primary_only") <= 1.0
     # its other modes keep their own numbers (Medium's build holds)
     assert PL.model_ceiling("Last Resort", "deflation") > 1.5
 

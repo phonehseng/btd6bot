@@ -168,16 +168,52 @@ def hud_zones():
     (x 0.724-0.836) were each "not on the map; forgotten" after two failed
     selections and bought again - $1,264 for towers the bot could not use.
 
-    The lives and cash bar top left is left out on purpose: towers there
-    were selected and upgraded without trouble (an alchemist at 0.142,0.095
-    on 2026-10-24), and several Deflation builds use that strip."""
+    The lives and cash bar top left takes the clicks too, on its icons and
+    digits (top_left_hud_zones). It was left out at first, because an
+    alchemist at 0.142,0.095 was upgraded there on 2026-10-24."""
     from .layout import LAYOUTS
     lay = LAYOUTS["16:10"]
     rnd, gear, playfield = lay["round"], lay["gear"], lay["playfield"]
     top = playfield[1]
     # the gear icon is as far below its centre as above it
     bottom = max(rnd[3], gear[1] + (gear[1] - top))
-    return [(rnd[0], top, playfield[2], bottom)]
+    return [(rnd[0], top, playfield[2], bottom), *top_left_hud_zones()]
+
+
+# The cash digits are drawn higher than the coin and the heart: their glyphs
+# end about here (screen fraction), and towers just below them were selected
+# (villages at 0.232,0.095 and 0.259,0.095 on Bloonarius Prime and Flooded
+# Valley, 2026-11-10/12, upgraded every time).
+CASH_DIGITS_BOTTOM = 0.09
+
+
+def top_left_hud_zones():
+    """Screen rectangles (x0, y0, x1, y1) of the lives and cash bar top
+    left, where a click lands on the HUD instead of the tower under it:
+    the heart and the lives count, and the Double Cash coin, down to the
+    calibrated lives/cash crops' bottom (layout "lives"/"cash"); the cash
+    digits right of the coin, down to CASH_DIGITS_BOTTOM.
+
+    Quad Impoppable (2026-11-12 08:51, loss case 20261112_085548_Quad_
+    impoppable): the plan pinned two aces and a bomb in that strip. ac1's
+    ace stood at 0.056,0.095 under the heart but could not be selected, so
+    the placement was "NOT confirmed" and $910 bought nothing the bot
+    knew of; ac2 at 0.147,0.095 under the coin and b1 at 0.216,0.078 under
+    the digits were placed, never selected ("could not select", then
+    "not on the map; forgotten") and b1 was bought again. Their 2-4-0 and
+    0-4-0 tiers never came, and round 63 was lost to ceramics. A Deflation
+    sniper did the same twice on 2026-11-11 (20:53 and 22:15): sni16 at
+    0.024,0.078 and then 0.056,0.104 was forgotten after two failed
+    selections each time, and selected at once at 0.024,0.138. Towers at
+    y >= 0.112 there (dozens in the loss logs, x 0.02-0.34) were all
+    selected, so the zones end above that row."""
+    from .layout import LAYOUTS
+    lay = LAYOUTS["16:10"]
+    lives, cash, playfield = lay["lives"], lay["cash"], lay["playfield"]
+    top = playfield[1]
+    icons_bottom = max(lives[3], cash[3])
+    return [(playfield[0], top, cash[0], icons_bottom),          # heart, lives, coin
+            (cash[0], top, cash[2], CASH_DIGITS_BOTTOM)]          # the cash digits
 
 
 def hud_cells(model):
@@ -250,6 +286,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
     where = surfaces(kind, hero) & set(where) if where else surfaces(kind, hero)
     ok = np.zeros(model.heat.shape, bool)
     free = np.zeros(model.heat.shape, bool)   # ok minus the spots the game refused
+    proven = np.zeros(model.heat.shape, bool)  # cells the game has taken a tower's centre on
     # spots the game refused in earlier play are learned per surface and kept
     # outside the geometry grids (MapModel.refused), so subtract them here
     def refused(surface):
@@ -272,6 +309,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
             mermonkey_water, size_limit = alt["mermonkey_water"], alt["size_limit"]
     if "land" in where:
         land = (scan["land"] == 1) | accepted("land")
+        proven |= accepted("land")
         ok |= land
         free |= land & ~refused("land")
     if "water" in where:
@@ -279,6 +317,7 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
         if kind == "mermonkey" and mermonkey_water is not None:
             water |= mermonkey_water
         water = water | accepted("water")
+        proven |= accepted("water")
         ok |= water
         free |= water & ~refused("water")
     if size_limit is not None:
@@ -309,7 +348,21 @@ def valid_spots(model, kind, hero=None, towers=(), where=None,
     # learned refusals, each a 3x3 patch, made every cell of the map "too
     # close to a forbidden one" - no legal spot at all, and an Easy game
     # was lost with one sniper.)
-    valid = (dist >= radius) & free
+    roomy = dist >= radius
+    # A cell the game took a tower on although the map file marks it blocked
+    # (MapModel.accept, learned from a probe) is one allowed cell among
+    # blocked ones: the footprint check above throws it out again, so the
+    # bot never came back to a spot it had found. On 2026-11-12 the 13 maps
+    # with such cells held 32 of them and 1 was legal here; Ravine's middle
+    # spot, the only ground that reaches the lower half of the centre fork,
+    # had to be found by a new probe every game. The game has shown that a
+    # footprint fits there, so the cell stands without the check - for the
+    # small towers only: which tower was accepted is not kept, and a bigger
+    # footprint may not fit where a small one did (the same line
+    # refusal_layer draws for refusals).
+    if footprint_radius(kind, hero) <= SHARED_REFUSAL_RADIUS:
+        roomy = roomy | proven
+    valid = roomy & free
     # a tower under the HUD could be bought but never selected again
     if valid.shape == (GRID[1], GRID[0]):
         valid &= ~hud_cells(model)

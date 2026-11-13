@@ -1,0 +1,106 @@
+# Pat's Pond, Alternate Bloons Rounds: patspond_hard's right-junction build
+# (ninja, alchemist, Monkey Pirates boat, sub, bomb, village, sniper),
+# re-ordered for ABR's lead and MOAB rounds and played from the Fast Track
+# start (round 22, ~$9,000; this file does not say `fast_track: false`, so
+# boosts.fast_track_wanted keeps the toggle on).
+#
+# Why: Pat's Pond ABR was lost seven times by general land builds -
+# hard_glaive_lord (R40), double_hp_sniper_sun (R54, R57, R40) and
+# abr_ninja_alch (R40, R30, R30). The last (2026-11-12 11:23, case
+# 20261112_113006_PatsPond_abr) went from round 3 without Fast Track: its one
+# lead answer was n1 dipped by a 2-0-0 alchemist on the left side, the
+# reinforcement spent ~$5.5k on rounds 23-29 on sharp-only darts (0-3-2,
+# 0-2-4) and ninjas while the plan's n2 2-0-3 waited from round 17, and
+# round 30's camo leads walked round the pond (stills end_028-031: grey leads
+# along both lanes, "-69" leads on the defeat card).
+#
+# Map facts (patspond_hard.yaml has the sources): two lanes run round the
+# pond in opposite directions and meet at two junctions; everything here
+# stands at the right one, where both lanes pass, with the boat and the sub in
+# the water beside it. n1, b1, sb1, bo1 and the hero stand where
+# patspond_hard's did when it won Medium (rounds 1-60). Its alchemist spot
+# (0.756, 0.624) is refused on the live learned map now, so a1 stands right of
+# n1 (0.804, 0.419), where its dip reaches n1; the village and the sniper
+# moved off it to (0.815, 0.342) and (0.767, 0.334). Every spot is legal on the
+# live learned map in plan order (tests/test_patspond_abr_offline.py).
+#
+# ABR's own threats: camo from round 5, lead from 10, camo leads at 24 and 30,
+# purples from 15, ceramics from 32, MOABs from 40, BFBs from 54, ZOMGs at 79.
+# The Fast Track setup buys n1 2-0-1 (camo), the alchemist 2-0-0 (lead), the
+# 0-2-2 boat (camo by Crow's Nest) and the 2-0-2 sub at once, so rounds 3-21
+# - rated 0.06 at round 10 when played from round 3 (no lead answer yet) -
+# are never played. The alchemist's 3-0-0 waits until the boat is 0-4-2:
+# bought before, the boat came a round late and round 32 rated 1.07.
+#
+# Hero: rated by the damage model since 2026-11-12 (dps_model.HERO_RATING).
+# On the hero spot, same plan: Quincy and Ezili lift the late rounds most
+# (worst 1.07 at R32 before the re-order, rest 1.26+); Obyn, Sauda, Geraldo
+# 1.07 and R40 0.97-1.26; Striker Jones, Gwendolin, Psi, Rosalia, Pat Fusty,
+# Adora 0.78-0.97; Churchill 0.78 (R22: dearer); Etienne 0.82 (R40). Admiral
+# Brickell buffs boats but must stand in water, and her nearest legal water
+# cell (0.612, 0.368) is out of reach of the junction: 0.82 (R54). Quincy, the
+# cheapest, it is.
+#
+# Evidence: replayed executor-faithfully 2026-11-12 (simulate_threats.simulate
+# on the live learned map, Double Cash, Fast Track start R22 $9,004), each
+# round's start board rated by the live forecast: worst R40 1.26 (the first
+# MOABs), then R51 1.33, R54 1.43, R57 1.43, R52 1.48; every tower on its
+# `at`, the plan done by round 62, then the executor's own blimp answers
+# (aces at R73+). abr_ninja_alch replays to R38 0.25 with Fast Track and R10
+# 0.06 without (as it was played); patspond_hard's order as it stands 0.55
+# (R63). Orders tried: Pirate Lord before Pre-emptive Strike (R54 0.81-0.85),
+# a second sub or sniper instead (R63 0.78-0.79), the brew before the village
+# (R40 0.98), the bomb before the alchemist's 3-0-0 (R34-35 0.88). Under the
+# planner's 1.5 bar, so data/model_ceiling.json records 1.26: the best
+# measured, not a safe one.
+#
+# Status: written 2026-11-12, not played yet.
+id: patspond_abr
+map: Pat's Pond
+hero: quincy
+plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
+modes: [abr]
+planner:
+  towers: {ninja: [4, 0, 2], buccaneer: [0, 5, 2], sub: [2, 0, 5], alchemist: [4, 0, 1], village: [4, 2, 0], bomb: [0, 2, 4], sniper: [4, 2, 0]}
+  base_success: {abr: 0.6}
+  maps: ["Pat's Pond"]
+plan:
+  - {do: place, id: n1, kind: ninja, role: dps, at: [0.772, 0.394]}          # right junction, above-left: camo
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.778, 0.572]}         # right junction, below
+  - {do: upgrade, id: n1, to: 2-0-1}
+  - {do: place, id: a1, kind: alchemist, role: support, at: [0.804, 0.419]}  # lead: acid, and the dip on n1
+  - {do: upgrade, id: a1, to: 2-0-0}
+  - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.665, 0.351]}      # pond water left of the junction
+  - {do: upgrade, id: b1, to: 0-2-2}                                          # Crow's Nest: camo
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.633, 0.683]}           # pond water below-left (bottom lane)
+  - {do: upgrade, id: sb1, to: 2-0-2}
+  - {do: upgrade, id: n1, to: 3-0-2}
+  - {do: upgrade, id: b1, to: 0-3-2}
+  - {do: upgrade, id: b1, to: 0-4-2}                                          # Monkey Pirates before the R40 MOABs
+  - {do: upgrade, id: a1, to: 3-0-0}
+  - {do: upgrade, id: n1, to: 4-0-2}
+  - {do: upgrade, id: sb1, to: 2-0-4}
+  - {do: place, id: bo1, kind: bomb, role: dps, at: [0.804, 0.624]}          # bottom lane side
+  - {do: upgrade, id: bo1, to: 0-2-4}
+  - {do: place, id: v1, kind: village, role: support, at: [0.815, 0.342]}
+  - {do: upgrade, id: v1, to: 0-2-0}
+  - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.767, 0.334]}
+  - {do: upgrade, id: s1, to: 2-2-0}
+  - {do: upgrade, id: v1, to: 2-2-0}
+  - {do: upgrade, id: a1, to: 4-0-1}
+  - {do: upgrade, id: s1, to: 4-2-0}                                          # Maim MOAB before the R54 BFBs
+  - {do: upgrade, id: sb1, to: 2-0-5}                                         # Pre-emptive Strike: R54 0.85 -> 1.38
+  - {do: upgrade, id: v1, to: 4-2-0}
+  - {do: upgrade, id: b1, to: 0-5-2}                                          # Pirate Lord
+fill:
+  - {do: place, kind: bomb, role: dps, max: 2}
+  - {do: upgrade, kind: bomb, to: 0-2-4}
+panic:
+  - {do: place, kind: ninja, role: dps}
+answers:
+  lead: [{do: upgrade, id: a1, to: 1-0-0}]
+  ceramic: [{do: upgrade, id: n1, to: 3-0-2}]
+  moab: [{do: upgrade, id: b1, to: 0-4-2}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
+  rush: [{do: upgrade, id: n1, to: 4-0-2}]
+  zomg: [{do: upgrade, id: s1, to: 4-2-0}]

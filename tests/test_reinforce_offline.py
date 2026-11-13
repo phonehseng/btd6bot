@@ -615,6 +615,34 @@ def test_a_blocked_path_is_not_grown():
     assert any(f and f[0] > 0 for f in R.grown_from(ex, "wizard", (0, 2, 0), 50_000).values())
 
 
+def test_a_plan_tower_is_not_grown_off_its_planned_crosspath():
+    # Spring Spring CHIMPS (2026-11-12, case 20261112_155459): the plan
+    # wanted sb1 at 0-5-0 (Pre-emptive Strike); reinforce grew it to 2-0-1
+    # for a weak round 33 and the middle path was shut for good.
+    assert not R.keeps_plan_open((2, 0, 1), (0, 5, 0))     # three paths
+    assert not R.keeps_plan_open((3, 0, 0), (0, 5, 0))     # two paths past tier 2
+    assert R.keeps_plan_open((2, 2, 0), (0, 5, 0))         # 2-5-0 is still a legal crosspath
+    assert R.keeps_plan_open((0, 3, 0), (0, 5, 0))
+    assert R.keeps_plan_open((2, 0, 1), None)              # the plan never upgrades it
+
+    class Planned(ToyForecast):
+        # the top and bottom paths lift the round most, as 2-0-1 did in the model
+        def margin(self, towers, rnd):
+            return 0.2 + sum(0.4 * t.tiers[0] + 0.1 * t.tiers[1] + 0.6 * t.tiers[2] for t in towers)
+    sub = N(tid="sb1", kind="sub", tiers=(0, 0, 0), x=0.5, y=0.5)
+    ex = N(mode="hard", account=None, _planned_cap=lambda p: (0, 5, 0) if p.tid == "sb1" else None)
+    o = R.grow_standing(ex, Planned(), [sub], "sub", (2, 0, 2), 0.0, 3000, 33, "hard")
+    assert o is not None and o is not R.UNJUDGED, o
+    goal = R._tiers(o.goal["to"])
+    assert R.keeps_plan_open(goal, (0, 5, 0)) and not (goal[0] and goal[2]), o.goal
+    # without a plan for the tower any way may be grown, as before: here
+    # the one the game ended with, top and bottom
+    free = N(mode="hard", account=None)
+    o = R.grow_standing(free, Planned(), [sub], "sub", (2, 0, 2), 0.0, 3000, 33, "hard")
+    goal = R._tiers(o.goal["to"])
+    assert goal[0] and goal[2], o.goal
+
+
 def test_path_blocked_reads_the_executor_and_the_game():
     import time
     from btd6bot.strategy import Executor

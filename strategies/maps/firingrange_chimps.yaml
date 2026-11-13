@@ -12,8 +12,8 @@
 # (confidence: video-description, ordered steps). Hero: Psi (the 4th
 # purchase), left passive.
 # Core towers: Sub 2-0-4, Buccaneer 5-2-0 (Carrier Flagship), Village
-# 4-2-0, Ice 5-2-0 (Super Brittle), Tack 2-0-5 (The Tack Zone), and a Dart
-# on Strong for the opening.
+# 4-2-0, Ice 5-2-0 (Super Brittle), Tack 2-0-5 (The Tack Zone); the guide's Dart
+# on Strong for the opening is left out (see "Opening").
 # Placements: the sub and the boat in the water spot under the lanes (the
 # only water); the outpost ($1,000) is not bought, as in the guide; the
 # dart, the ice and the tack on the grass below the fence where the lanes
@@ -28,18 +28,118 @@
 #     after Psi with Night Vision and Full Metal Jacket: by the bot's tables
 #     nothing of the guide's sees round 24's camo or pops round 28's leads
 #     on both lanes (Psi does live, but the bot does not count heroes).
+#   * the opening (rounds 6-30) is the bot's own, not the guide's (2026-11-12
+#     evening): see "Opening" below.
+#   * the guide's Super Brittle ice and Tack Zone are left out, Sub Commander
+#     (sub 2-0-5) takes their cash (2026-11-13): see "Late blimp damage".
 #
-# Offline replay (tools/simulate_threats.py on the live learned map with the
-# live account; CHIMPS cash: $650 at round 6, then only the rounds' own pops
-# and bonuses): plan 25/25 bought, threat gaps: none, off-plan answer buys:
-# 10. Each step stands from: sb1 placed R6, x1 placed R6, sb1 1-0-1 R9, hero
-# placed R14, s1 placed R16, s1 0-1-0 R17, s1 1-1-0 R18, sb1 2-0-2 R24, b1
-# placed R26, b1 2-2-0 R31, b1 3-2-0 R40, sb1 2-0-4 R38, v1 placed R42, v1
-# 2-2-0 R45, s1 2-1-0 R33, r1 placed R46, r1 3-0-2 R46, b1 5-2-0 R71, s1 4-1-0
-# R55, v1 4-2-0 R73, i1 placed R74, i1 5-2-0 R84, t1 placed R84, t1 2-0-5 R93,
-# s1 5-1-0 R99. Damage model margins on those boards (it counts no hero and no
-# ability, and under-rates map-wide towers): 40 2.68, 63 6.10, 76 15.16, 81
-# 5.97, 90 2.68, 95 0.41, 98 0.81, 100 2.57.
+# Opening (2026-11-12, loss case 20261112_193101: round 21 lost to its
+# yellows and pinks, rated 0.89, with $293 in hand):
+#   The guide's sub + dart + Psi + sniper start reached rounds 93, 93 and 95
+# in the three games before, but the damage model rated 16 of rounds 6-30
+# under 1.2 (round 8 0.58, 16 0.71, 21 0.90, 28 0.37, 30 0.31): a coin flip
+# every game. Firing Range runs two lanes at once and the fence keeps every
+# ground tower to under 60 units of ONE lane (the dart at (0.74, 0.606) sees
+# the right-hand strip only); only the water sub (both lanes), the bottom-grass
+# sniper and Psi (map-wide) reach both. So the opening puts its cash there:
+#   * sub first, Longer Range and Twin Guns by round 8, Airburst by 13, Triple
+#     Guns by 23 - the tiers of the guide's own 2-0-4, bought earlier and with
+#     Advanced Intel left for the 2-0-4 step;
+#   * the sniper from round 15 with Night Vision (round 24's camo) and
+#     Shrapnel Shot (0-2-0), then Full Metal Jacket: Shrapnel is what holds
+#     the lead rounds - 28 rated 0.37 -> 3.08 and 30 0.31 -> 1.87, where a
+#     second FMJ sniper ($1,030) only reached 0.71/0.57. The sniper ends at
+#     5-2-0 instead of 5-1-0 (Shrapnel stays a crosspath of Cripple MOAB);
+#   * Psi after them (round 27): rated by level, she adds little before her
+#     level 6, and $1,080 at round 14 starved rounds 15-21;
+#   * no dart: one lane only, and the $215 goes to the sub.
+#   Searched with tools/optimize_builds (Evaluator, MapSetup, the replay of
+# replay_plan) on the live learned map, status effects on, every spot legal
+# and never refused: beams and annealing over every tower kind at the best
+# legal spots of each lane, plus every hero at this spot (Psi kept: the late
+# game is hers). A dartling at the bottom (cursor on the lane crossing),
+# boomerangs, bombs, ninjas, wizards, alchemists and mermonkeys on the side
+# strips did not beat the sub + sniper cash. Rounds 6-12 stay under 1.2 (6
+# 0.86, 7 0.75, 9 1.03, 10 1.06, 12 0.82): $650-1,900 buys no more there by
+# the model's best search; the old opening had 6 0.78, 7 0.68, 8 0.58.
+#
+# Hardened (2026-11-12 night, after the round-95 losses with "plan and fill
+# exhausted"; searched with tools/optimize_builds' Evaluator, MapSetup and
+# replay_plan, live sight on, status effects on, every spot legal and never
+# refused, CHIMPS cash: $650 at round 6, then rounds only):
+#   * opening: the one of 20:20 again (sub with Longer Range at round 6,
+#     then the sniper, Psi last). The first hardened opening bought the boat
+#     at round 6 (rated 2.25 there); live at 00:06 the lone boat popped
+#     nothing and round 6 leaked in 12 s: the model sees far more of the
+#     lanes from that water than the game does for a 0-0-0 boat. Searched
+#     again with the sub fixed first and two damage towers at round 6 (sub
+#     + a dart or tack: the generic starter's case), rounds 6-13 rated
+#     0.61-0.86 at best, no better than this opening, which held rounds 6-20
+#     in every live game. So `starter: none` stays for this build (the sub
+#     reaches both lanes, 143/106 units); rounds 6, 7, 9, 10 and 12 stay
+#     under 1.2.
+#   * late game: the Aircraft Carrier (b1 4-2-0) and Deadly Precision are
+#     bought on their own before the Flagship, so rounds 60-65 no longer wait
+#     for $36.7k (60 0.53 -> 4.46, 63 0.64 -> 1.96, 65 0.82 -> 2.38). The
+#     guide's Tack Zone is back in the plan, after Super Brittle (the guide's
+#     order), bought at round 98 instead of never. Cripple MOAB stays: without
+#     the sniper's Maim and Cripple, round 93 rated 0.73-0.82 and 95 0.37-0.42
+#     (with them 1.22 and 0.82). Super Brittle and the Tack Zone add almost
+#     nothing in the model here: from every legal cell they reach 30-55 units
+#     of one lane only (the fence).
+#   Margins, before (the build of 20:20) -> after, rated with the live sight:
+#     rounds 6-30: unchanged: under 1.2: 6 0.86, 7 0.75, 9 1.03, 10 1.06,
+#       12 0.82;
+#     rounds 31-59: worst 0.95 (round 54) -> 1.28 (round 36);
+#     rounds 60-100: under 1.0: 60 0.53, 63 0.64, 64 0.88, 65 0.82, 95 0.82,
+#       99 0.81, 100 0.53 -> 95 0.82, 99 0.81, 100 0.53 (93 stays 1.22). Rounds 95 and 99 leak camo DDTs
+#       and 100 rainbows from the BAD at full strength: the model's ceiling
+#       for this board (a second Maim sniper instead of Super Brittle
+#       reached only 95 0.81, 100 0.88).
+#   tools/simulate_threats: plan 30/30, no threat gaps; plan_timeline: the
+#   last step (the Tack Zone) by round 98.
+#
+# Offline replay (2026-11-12 20:20, the live learned map, CHIMPS cash: $650 at
+# round 6, then only the rounds' own pops and bonuses). tools/simulate_threats
+# with the live account: plan 25/25 bought, threat gaps: none, off-plan answer
+# buys: 15 (late aces, as before). optimize_builds.replay_plan (hero rated at
+# its estimated level, status effects on) buys each step before: sb1 R6, sb1
+# 1-0-0 R6, 1-0-1 R8, 1-0-2 R13, s1 R15, 0-1-0 R16, 0-2-0 R18, 1-2-0 R19, sb1
+# 1-0-3 R23, Psi R27, b1 R28, 2-2-0 R33, 3-2-0 R37, sb1 2-0-4 R40, v1 R41,
+# 2-2-0 R44, s1 2-2-0 R46, r1 3-0-2 R46, b1 5-2-0 R66, s1 4-2-0 R71, v1 4-2-0
+# R74, i1 R74, s1 5-2-0 R84, i1 5-2-0 R95. Its margins, old opening -> new:
+#   rounds 6-30 under 1.2: 16 -> 5 (6, 7, 9, 10, 12); worst 0.31 -> 0.75;
+#     8 0.58 -> 1.30, 16 0.71 -> 1.68, 21 0.90 -> 1.65, 28 0.37 -> 3.08,
+#     30 0.31 -> 1.87;
+#   rounds 85-100: worst 0.97 -> 1.19 (95 0.97 -> 1.19, 98 1.38 -> 1.83,
+#     99 1.10 -> 1.33): Shrapnel and the earlier sub tiers carry on;
+#   rounds 31-84: 63 0.77 -> 0.92, but 65 11.69 -> 0.93 and 36 4.56 -> 1.28:
+#     the opening costs $270 more by then (Shrapnel $485, no $215 dart), so the
+#     Flagship lands one round later in the replay, which buys only between
+#     rounds; it is $100-200 short at round 65's start, so the live bot buys
+#     it a few seconds into round 65.
+#
+# Late blimp damage (2026-11-13, loss case 20261113_013939_FiringRange_chimps:
+# round 95 lost to its camo DDTs; the blimp check read 0.3-0.6x of the 2.5x
+# wanted from round 87 on). From round 85 to 94 the bot sat on $5,600-28,400
+# waiting for Super Brittle ($30,240), bought at round 94; the Tack Zone's
+# tiers took the rest. Neither adds blimp damage: from every legal cell they
+# reach 30-55 units of one lane (the fence), the blimp check counts an ice
+# monkey and a 2-0-5 tack for nothing, and the damage model moved round 95
+# 0.44 -> 0.44 with them. Both are out, and the bare ice with them (it only
+# held up the plan); their cash goes to Sub Commander (sb1 2-0-5, $27,000),
+# the water sub that reaches both lanes, after Cripple MOAB (Sub Commander
+# first cost rounds 85-91 their Cripple: blimp check 1.66 -> 0.47 at 85).
+# The plan is done by round 91; after it the bot's own blimp check spends.
+#   Blimp check (simulate_threats, learned map, CHIMPS cash), before -> after:
+#     92 0.52 -> 0.61, 93 0.64 -> 0.76, 94 0.26 -> 0.37, 95 0.43 -> 0.68,
+#     96 0.23 -> 0.35, 97 0.55 -> 0.91, 98 0.15 -> 0.26, 99 0.33 -> 0.52,
+#     100 0.59 -> 0.87 (85-91 unchanged); still under 2.5x: the guide's cash
+#     buys no more by round 100.
+#   Damage model (replay_plan, live sight), before -> after: 92 1.26 -> 1.58,
+#     94 1.49 -> 1.83, 95 0.82 -> 0.86, 96 1.46 -> 1.66, 97 1.70 -> 1.98,
+#     98 1.22 -> 1.34, 99 0.81 -> 0.81, 100 0.53 -> 0.94; rounds 6-91 within
+#     0.08 of before.
 #
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
@@ -52,47 +152,50 @@ starter: none         # the guide's own opening is the opener: no extra dart (20
 plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus buys (Executor.plan_first)
 modes: [chimps]
 planner:
-  towers: {sub: [2, 0, 4], dart: [0, 0, 0], buccaneer: [5, 2, 0], village: [4, 2, 0], ice: [5, 2, 0], tack: [2, 0, 5], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
-  revised: "2026-11-12T12:00"
+  towers: {sub: [2, 0, 5], buccaneer: [5, 2, 0], village: [4, 2, 0], sniper: [5, 2, 0], boomerang: [3, 0, 2]}
+  revised: "2026-11-13T03:30"   # Sub Commander instead of Super Brittle and the Tack Zone (see "Late blimp damage")
   maps: [Firing Range]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
   base_success: {chimps: 0.5}
 plan:
-  - {do: place, id: sb1, kind: sub, role: dps, at: [0.687, 0.436]}              # the water spot
-  - {do: place, id: x1, kind: dart, role: dps, target: strong, at: [0.74, 0.606]}  # on Strong
-  - {do: upgrade, id: sb1, to: 1-0-1}
-  - {do: place, id: hero, kind: hero, role: dps, at: [0.74, 0.675]}             # Psi
+  # the opening (rounds 6-30, see "Opening" above): sub and sniper first, Psi last
+  - {do: place, id: sb1, kind: sub, role: dps, at: [0.687, 0.436]}              # the water spot: both lanes
+  - {do: upgrade, id: sb1, to: 1-0-0}                                           # Longer Range (round 6)
+  - {do: upgrade, id: sb1, to: 1-0-1}                                           # Twin Guns (round 8)
+  - {do: upgrade, id: sb1, to: 1-0-2}                                           # Airburst Darts (round 13)
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.409, 0.93]}  # added: the bottom grass (see above)
   - {do: upgrade, id: s1, to: 0-1-0}                                            # Night Vision: round 24's camo on both lanes
-  - {do: upgrade, id: s1, to: 1-1-0}                                            # Full Metal Jacket: round 28's leads
-  - {do: upgrade, id: sb1, to: 2-0-2}                                           # Advanced Intel
+  - {do: upgrade, id: s1, to: 0-2-0}                                            # Shrapnel Shot: rounds 27-30 (28 rated 0.37 without it)
+  - {do: upgrade, id: s1, to: 1-2-0}                                            # Full Metal Jacket: round 28's leads
+  - {do: upgrade, id: sb1, to: 1-0-3}                                           # Triple Guns (round 23)
+  - {do: place, id: hero, kind: hero, role: dps, at: [0.74, 0.675]}             # Psi (round 27)
+  # the guide's late game from here, as before (the sniper one Shrapnel tier up)
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.729, 0.453]}         # the water spot
   - {do: upgrade, id: b1, to: 2-2-0}                                            # Hot Shot: lead
   - {do: upgrade, id: b1, to: 3-2-0}                                            # Destroyer
-  - {do: upgrade, id: sb1, to: 2-0-4}                                           # Armor Piercing Darts
+  - {do: upgrade, id: sb1, to: 2-0-4}                                           # Advanced Intel, Armor Piercing Darts
   - {do: place, id: v1, kind: village, role: support, near: [b1, sb1], at: [0.655, 0.572]}
   - {do: upgrade, id: v1, to: 2-2-0}                                            # Radar Scanner, Jungle Drums
-  - {do: upgrade, id: s1, to: 2-1-0}                                            # Large Calibre: ceramics
+  - {do: upgrade, id: s1, to: 2-2-0}                                            # Large Calibre: ceramics
   - {do: place, id: r1, kind: boomerang, role: dps, near: [v1], at: [0.676, 0.726]}  # added: Glaive Ricochet for round 63
   - {do: upgrade, id: r1, to: 3-0-2}
+  - {do: upgrade, id: b1, to: 4-2-0}                                            # Aircraft Carrier on its own (rounds 60-65: 0.53-0.83 -> 1.98-4.46)
+  - {do: upgrade, id: s1, to: 3-2-0}                                            # Deadly Precision
   - {do: upgrade, id: b1, to: 5-2-0}                                            # Carrier Flagship
-  - {do: upgrade, id: s1, to: 4-1-0}                                            # added: Maim MOAB
+  - {do: upgrade, id: s1, to: 4-2-0}                                            # added: Maim MOAB
   - {do: upgrade, id: v1, to: 4-2-0}                                            # Primary Mentoring
-  - {do: place, id: i1, kind: ice, role: dps, at: [0.74, 0.777]}
-  - {do: upgrade, id: i1, to: 5-2-0}                                            # Super Brittle
-  - {do: upgrade, id: s1, to: 5-1-0}                                            # Cripple MOAB before the Tack Zone (2026-11-12 game lost round 93's fortified BFBs on the upper lane, every tower on the right)
-  - {do: place, id: t1, kind: tack, role: dps, at: [0.74, 0.845]}
-  - {do: upgrade, id: t1, to: 2-0-5}                                            # The Tack Zone
+  - {do: upgrade, id: s1, to: 5-2-0}                                            # added: Cripple MOAB (kept: round 93 0.82 -> 1.22, 95 0.42 -> 0.82 with it, see above)
+  - {do: upgrade, id: sb1, to: 2-0-5}                                           # Sub Commander: the late blimp damage (see "Late blimp damage"; was Super Brittle and the Tack Zone)
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
-  lead: [{do: upgrade, id: s1, to: 1-1-0}]
-  ceramic: [{do: upgrade, id: s1, to: 2-1-0}]
+  lead: [{do: upgrade, id: s1, to: 1-2-0}]
+  ceramic: [{do: upgrade, id: s1, to: 2-2-0}]
   moab: [{do: upgrade, id: sb1, to: 2-0-4}]
   camo_ceramic: [{do: upgrade, id: v1, to: 2-2-0}]
   camo_lead: [{do: upgrade, id: v1, to: 2-2-0}]
-  bfb: [{do: upgrade, id: s1, to: 4-1-0}]
+  bfb: [{do: upgrade, id: s1, to: 4-2-0}]
   rush: [{do: upgrade, id: r1, to: 3-0-2}]
-  zomg: [{do: upgrade, id: s1, to: 4-1-0}]
-  ddt: [{do: upgrade, id: s1, to: 4-1-0}]
-  bad: [{do: upgrade, id: s1, to: 5-1-0}]
+  zomg: [{do: upgrade, id: s1, to: 4-2-0}]
+  ddt: [{do: upgrade, id: s1, to: 4-2-0}]
+  bad: [{do: upgrade, id: s1, to: 5-2-0}]

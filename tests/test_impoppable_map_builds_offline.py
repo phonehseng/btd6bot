@@ -30,6 +30,24 @@ keep their plans up to round 30-35 and then take tools/optimize_builds.py's
 greedy purchases, saving for one tier-5 carry (Super Mines, Flying Fortress
 or Wizard Lord Phoenix); the ace builds have Etienne for his map-wide camo.
 
+Sunken Columns lost round 6 three times (losses 20261112_012149, 20261112_093331
+and 20261112_144210): its two opening subs stood in a pool whose walls hide the
+route. The optimizer's line of sight has no heights, so the column tops looked
+as blind as the pools when the build was pinned; the build opens on the
+columns now, measured with the live forecast's sight (heights and all).
+
+Peninsula lost round 28 twice (losses 20261112_090153 and 20261112_141254) to
+six leads: its only lead answer was an alchemist, and Peninsula's land lies
+out of reach of the track and of every tower on the water. The lead answer is
+the first buccaneer of the late game now (Hot Shot), bought in the
+alchemist's place; the alchemist and a dart that saw no track are gone.
+
+Enchanted Glade got one after its fourth general-build loss (20261112_055921,
+round 95: Ground Zero put off for twenty rounds by off-plan buys, both aces
+across the map from the MIB village); there the MIB village is pinned beside
+the aces' runways, and test_enchanted_glade_aces_stand_by_the_mib_village
+holds the build to that.
+
 Run: python tests/test_impoppable_map_builds_offline.py"""
 import sys
 from pathlib import Path
@@ -48,7 +66,8 @@ from btd6bot.account import AccountState  # noqa: E402
 MAPS = {"quad": "Quad", "coveredgarden": "Covered Garden", "sunkencolumns": "Sunken Columns",
         "bloonariusprime": "Bloonarius Prime", "peninsula": "Peninsula", "firingrange": "Firing Range",
         "midnightmansion": "Midnight Mansion", "sunsetgulch": "Sunset Gulch", "mesa": "Mesa",
-        "spillway": "Spillway", "muddypuddles": "Muddy Puddles"}
+        "spillway": "Spillway", "muddypuddles": "Muddy Puddles", "enchantedglade": "Enchanted Glade",
+        "erosion": "Erosion", "patspond": "Pat's Pond"}
 
 
 def _build(map_id):
@@ -161,9 +180,14 @@ def test_covered_garden_stands_off_the_panes():
 
 def test_the_moab_answer_comes_before_the_alchemist():
     """Mesa lost at round 40 with the blimp check at 0.4-0.9: n2's Sticky
-    Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan."""
-    for map_id in ("mesa", "sunsetgulch", "coveredgarden", "quad", "bloonariusprime", "firingrange", "midnightmansion",
-                   "spillway"):
+    Bomb (2-0-4) is bought before a1 in every ninja-led Impoppable plan -
+    but Quad's and Mesa's: there a1 comes first, as the lead popper by round
+    28 (loss review 2026-11-12 13:20: n2's Flash Bomb was counted as lead
+    cover). Mesa's late plan (2026-11-12, from round 27) buys its MOAB damage
+    elsewhere first: the damage model rates round 40 at 0.91 that way and at
+    0.31 with the Sticky Bomb moved ahead of it."""
+    for map_id in ("sunsetgulch", "coveredgarden", "bloonariusprime", "firingrange", "midnightmansion",
+                   "spillway", "enchantedglade"):
         _, d = _build(map_id)
         order = [(st["do"], st.get("id"), str(st.get("to"))) for st in d["plan"]]
         # Covered Garden's late-game plan (2026-11-12) buys no alchemist at all
@@ -236,6 +260,237 @@ def test_late_game_carries_answer_the_last_blimps():
             assert all(st["id"] in ids for st in d["answers"][threat]), (map_id, threat)
 
 
+def _with_the_live_sight(pinner):
+    """``pinner`` measuring cover with the line of sight the live forecast
+    uses (match.py): the blockers' heights and the ground's go in, so a
+    tower on raised ground sees over blockers no higher than it. The
+    optimizer's own sight (MapSetup.sight) takes no heights yet (backlog
+    106): for it every tower on Sunken Columns' column tops is blind."""
+    from btd6bot import dps_model as D
+    model = pinner.model
+    heights = (getattr(model, "sight_height", None), getattr(model, "ground_height", None))
+    pinner.setup._sight = D.sight_test(model.sight, pinner.setup.track, heights=heights)
+    return pinner
+
+
+def test_on_sunken_columns_the_column_tops_see_the_route_and_the_pools_do_not():
+    """Sunken Columns (2026-11-12, cases 20261112_012149, 20261112_093331 and
+    20261112_144210): as the live game sees it, the entrance row on the
+    column tops, where the round-98 game opened, has the route in sight,
+    and a sub down in a pool sees next to none of it over the pool's walls."""
+    pinner = _with_the_live_sight(pin_spots.Pinner("Sunken Columns", "impoppable"))
+    cover = lambda kind, at: pinner.segment_cover(kind, pinner.model.frac_to_cell(*at), (0.0, 1.0))
+    on_the_columns = cover("dart", (0.361, 0.112))      # where the round-98 game's first dart stood
+    in_the_pool = cover("sub", (0.58, 0.385))           # where sb1 stood when round 6 was lost
+    assert on_the_columns > 100, on_the_columns
+    assert in_the_pool < 20, in_the_pool
+
+
+def test_sunken_columns_opens_with_towers_that_see_the_route():
+    """Its opening - every tower bought before the first sub - stands on the
+    column tops and sees the route; the subs are bought straight to
+    Advanced Intel (2-0-2), never left at tiers that only shoot what they see."""
+    import math
+    _, d = _build("sunkencolumns")
+    pinner = _with_the_live_sight(pin_spots.Pinner("Sunken Columns", "impoppable"))
+    places = [st for st in d["plan"] if st["do"] == "place"]
+    first_sub = next(i for i, st in enumerate(places) if st["kind"] == "sub")
+    opening = [st for st in places[:first_sub] if st["kind"] not in ("hero", "alchemist")]
+    assert [st["id"] for st in places[:2]] == ["dr", "hero"], places[:2]
+    assert len(opening) >= 2, opening
+    for st in opening:
+        cell = pinner.model.frac_to_cell(*st["at"])
+        assert pinner.segment_cover(st["kind"], cell, (0.0, 1.0)) > 100, st
+    for sub in ("sb1", "sb2"):
+        first = next(st["to"] for st in d["plan"] if st["do"] == "upgrade" and st.get("id") == sub)
+        assert first == "2-0-2", (sub, first)
+    at = {st["id"]: pinner.world(pinner.model.frac_to_cell(*st["at"])) for st in places if st.get("at")}
+    assert math.dist(at["a1"], at["dr"]) <= pin_spots.buffer_range("alchemist") - 10, "the brew reaches dr with room to spare"
+
+
+def test_enchanted_glade_aces_stand_by_the_mib_village():
+    """Enchanted Glade (loss 20261112_055921): the MIB village stood on the
+    bottom-right island and both aces across the map, so their darts could
+    not pop a DDT. In its own build the late blimp damage - both Ground
+    Zero aces and the Eliminator bomb - is pinned inside the range of v2,
+    the village that becomes MIB, and the plan owns the cash for them."""
+    import math
+    _, d = _build("enchantedglade")
+    pinner = pin_spots.Pinner("Enchanted Glade", "impoppable")
+    at = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place" and st.get("at")}
+    assert ("upgrade", "v2", "2-3-0") in [(st["do"], st.get("id"), st.get("to")) for st in d["plan"]]
+    mib = pinner.world(pinner.model.frac_to_cell(*at["v2"]))
+    for tid in ("ac1", "ac2", "b1"):
+        tower = pinner.world(pinner.model.frac_to_cell(*at[tid]))
+        assert math.dist(tower, mib) <= pin_spots.buffer_range("village"), (tid, at[tid])
+
+
+def test_peninsula_pops_round_28_leads_from_the_water():
+    """Peninsula (2026-11-12, cases 20261112_090153 and 20261112_141254):
+    round 28's leads ended two games. The lead answer was an alchemist on
+    the plateau, where no cell has track in range and none is within the
+    brew's reach of a sub. Now the towers bought before round 28 pop lead
+    by themselves, the answer is a tower with route in its range, and no
+    tower of the plan stands where it sees no track at all."""
+    from btd6bot import strategy as S
+    _, d = _build("peninsula")
+    pinner = pin_spots.Pinner("Peninsula", "impoppable")
+    cover = lambda st: pinner.segment_cover(st["kind"], pinner.model.frac_to_cell(*st["at"]), (0.0, 1.0))
+    early = dict(d, plan=_bought_before(d, 28), answers={})
+    _, missing = S.coverage(early, "impoppable")
+    assert "lead" not in missing, missing
+    answer = next(st for st in d["answers"]["lead"] if st["do"] == "place")
+    assert cover(answer) > 50, answer
+    for st in d["plan"]:
+        if st["do"] == "place" and st["kind"] != "hero":
+            assert cover(st) > 0, st
+    # the plateau holds no alchemist cell that could ever work: keep the kind out of the build
+    assert all(st.get("kind") != "alchemist" for st in d["plan"]), "an alchemist reaches nothing on Peninsula"
+
+
+def test_mesa_opens_on_both_routes():
+    """Mesa (2026-11-12, cases 20261112_100238 and 20261112_162905): every
+    round's bloons split over two routes, and no ninja cell has both in
+    range. The plan's opening ninjas stood on the first route only; the
+    second was bare until round 27 at the earliest, and the one-life games
+    ended there at rounds 38 and 28 (round 28's leads; a yellow out of
+    them took the life). Now, as the damage model sees the towers:
+      * the second tower the plan buys is a ninja with the second route in
+        range, bought before the hero;
+      * the alchemist is within its brew's reach of that ninja and has
+        Acidic Mixture Dip (2-0-0) before round 28, so the ninja pops lead;
+      * the towers bought before round 28 pop lead by themselves, and a
+        bomb among them has the first route in range."""
+    import math
+    from types import SimpleNamespace
+    from btd6bot import strategy as S
+    from btd6bot.forecast import RoundForecast
+    _, d = _build("mesa")
+    forecast = RoundForecast("Mesa", "impoppable")
+    assert forecast._ready()
+
+    def route_units(st):
+        """Route in the tower's range on each of the two routes (world units)."""
+        tower = SimpleNamespace(tid=st["id"], kind=st["kind"], tiers=(0, 0, 0), x=st["at"][0], y=st["at"][1])
+        stations = forecast.stations([tower])
+        return [0.0 if z is None else z.length for z in stations[0].zones] if stations else [0.0, 0.0]
+
+    places = [st for st in d["plan"] if st["do"] == "place"]
+    first, second = places[0], places[1]
+    assert (first["id"], second["id"], second["kind"]) == ("n1", "n3", "ninja"), places[:2]
+    assert route_units(first)[0] > 50 and route_units(second)[1] > 50, (route_units(first), route_units(second))
+    hero = next(i for i, st in enumerate(d["plan"]) if st.get("kind") == "hero")
+    assert d["plan"].index(second) < hero, "the second route's ninja comes before the hero"
+
+    pinner = pin_spots.Pinner("Mesa", "impoppable")
+    at = {st["id"]: pinner.world(pinner.model.frac_to_cell(*st["at"])) for st in places}
+    assert math.dist(at["a1"], at["n3"]) <= pin_spots.buffer_range("alchemist"), "the brew reaches n3"
+
+    early = _bought_before(d, 28)
+    _, missing = S.coverage(dict(d, plan=early, answers={}), "impoppable")
+    assert "lead" not in missing, missing
+    bought = {(st["do"], st["id"], st.get("to")) for st in early}
+    assert ("upgrade", "a1", "2-0-0") in bought, "Acidic Mixture Dip stands before round 28"
+    bomb = next(st for st in early if st["do"] == "place" and st["kind"] == "bomb")
+    assert route_units(bomb)[0] > 30, route_units(bomb)
+
+
+def test_enchanted_glade_opens_where_both_lanes_pass():
+    """Enchanted Glade (2026-11-12 17:49, case 20261112_175002): the two
+    lanes take the rounds in turn. The opening ninja stood on the
+    right-hand island with the first lane in range and none of the second,
+    Obyn went down beside it, and the one-life game ended at round 9 after
+    rounds 6 and 7 had got 99% and 98% along the route. Now, as the damage
+    model sees the towers:
+      * the first tower of the plan, the hero and the build's own starter
+        each have MIN_LANE_UNITS of route in range on BOTH lanes;
+      * the lost game's opening spot fails that check (none of lane two);
+      * the hero comes before the ninja that sees one lane only."""
+    from types import SimpleNamespace
+    from btd6bot.forecast import RoundForecast
+    min_lane_units = 30.0     # a blue bloon crosses 30 units in about a second, one dart's reload
+    lost_opening = (0.655, 0.334)
+    _, d = _build("enchantedglade")
+    forecast = RoundForecast("Enchanted Glade", "impoppable")
+    assert forecast._ready()
+
+    def lane_units(kind, at):
+        """Route in the tower's range on each of the two lanes (world units)."""
+        tower = SimpleNamespace(tid="t", kind=kind, tiers=(0, 0, 0), x=at[0], y=at[1])
+        stations = forecast.stations([tower])
+        return [0.0 if z is None else z.length for z in stations[0].zones] if stations else [0.0, 0.0]
+
+    places = [st for st in d["plan"] if st["do"] == "place"]
+    first, hero = places[0], next(st for st in places if st["kind"] == "hero")
+    assert min(lane_units(first["kind"], first["at"])) >= min_lane_units, lane_units(first["kind"], first["at"])
+    # the hero has no damage profile of its own: rated by the range of pin_spots' stand-in
+    assert min(lane_units(pin_spots.HERO_PROXY, hero["at"])) >= min_lane_units, hero
+    starter = d["starter"]
+    assert min(lane_units(starter["kind"], starter["at"])) >= min_lane_units, starter
+    assert min(lane_units("ninja", lost_opening)) == 0.0
+
+    one_lane = next(st for st in places if st["kind"] == "ninja" and min(lane_units("ninja", st["at"])) == 0.0)
+    assert places.index(hero) < places.index(one_lane), (hero, one_lane)
+
+
+def _board_at_start(d, rnd):
+    """The towers the plan has standing when round ``rnd`` starts, at their
+    pinned spots, as the damage model reads them. _bought_before(d, r)
+    stops buying before round r - 1 pays out, so the board that meets round
+    ``rnd`` with the cash of every round before it is the one of rnd + 1."""
+    from types import SimpleNamespace
+    from optimize_builds import parse_cross
+    board = {}
+    for st in _bought_before(d, rnd + 1):
+        if st["do"] == "place":
+            board[st["id"]] = SimpleNamespace(tid=st["id"], kind=st["kind"], tiers=(0, 0, 0),
+                                              x=st["at"][0], y=st["at"][1])
+        elif st["do"] == "upgrade":
+            board[st["id"]].tiers = tuple(parse_cross(st["to"]))
+    return board
+
+
+def test_muddy_puddles_has_its_moab_answer_by_round_40():
+    """Muddy Puddles (2026-11-12, cases 20261112_154257, 20261112_174350 and
+    20261112_202137): round 40's MOAB reached the exit three times. The last
+    plan rated the round 1.14 with the towers' abilities credited and 0.55
+    without, and lost it at a blimp ratio of 0.29. Now the MOAB answer - the
+    heli hel_carry1 at 3-0-2 - and the sub sub_carry2 at 2-0-4 stand when
+    round 40 starts, and the live forecast rates that board at 1.0 or more;
+    without the two it is rated under 1.0, so the rating tells them apart."""
+    from btd6bot.forecast import RoundForecast
+    _, d = _build("muddypuddles")
+    forecast = RoundForecast("Muddy Puddles", "impoppable")
+    assert forecast._ready()
+    board = _board_at_start(d, 40)
+    assert board["hel_carry1"].tiers == (3, 0, 2) and board["sub_carry2"].tiers == (2, 0, 4),         (board["hel_carry1"].tiers, board["sub_carry2"].tiers)
+    now = forecast.margin(list(board.values()), 40)
+    assert now >= 1.0, round(now, 2)
+    without = [t for t in board.values() if t.tid not in ("hel_carry1", "sub_carry2")]
+    assert forecast.margin(without, 40) < 1.0
+    assert [st["id"] for st in d["answers"]["moab"]] == ["hel_carry1", "hel_carry1"]
+
+
+def test_covered_garden_buys_for_rounds_62_and_63_before_its_carry():
+    """Covered Garden (2026-11-12, case 20261112_145934, round 63): the
+    carry's last stage (wiz_carry1 0-5-2, $60,000) was due by round 75; the
+    executor reached it in round 58 and, plan_first, bought nothing after
+    it - rounds 62 and 63 began with $11,482 and $14,254 in hand. Now the
+    stage comes later, the plan has not reached it when round 63 starts,
+    and the live forecast rates the boards of rounds 62 and 63 at 1.0 or
+    more."""
+    from btd6bot.forecast import RoundForecast
+    _, d = _build("coveredgarden")
+    forecast = RoundForecast("Covered Garden", "impoppable")
+    assert forecast._ready()
+    bought = [(st["do"], st.get("id"), st.get("to")) for st in _bought_before(d, 64)]
+    assert ("upgrade", "wiz_carry1", "0-5-2") not in bought
+    for rnd in (62, 63):
+        board = _board_at_start(d, rnd)
+        margin = forecast.margin(list(board.values()), rnd)
+        assert margin >= 1.0, (rnd, round(margin, 2))
+
+
 def test_a_tower_is_pinned_on_its_part_of_the_route():
     """Mesa (2026-11-12): n1, `segment: [0.0, 0.5]`, was pinned by its cover
     of the whole route at the far end, and the one-life game was lost at
@@ -267,6 +522,33 @@ def test_a_buffer_takes_the_cell_with_room_round_it():
     assert pinner.pin("v1", "village") is not None
     pinner.placed.pop()     # its room as the pin weighed it, without itself
     assert pinner.room("village", pinner.cells["v1"]) == most
+
+
+def test_pats_pond_has_its_own_ddt_answer():
+    """Pat's Pond Impoppable (backlog 110): chimps_sub_druid_water lost round
+    90's camo DDTs twice there (case 20261113_000355), and this map build had
+    no DDT answer of its own - its `ddt` answer was a Maim MOAB sniper the
+    plan never buys, and plan_first keeps the cash for the plan. Now sub527
+    grows to Pre-emptive Strike (2-5-0) before the Super Mines; the `ddt`
+    answer names that plan tower, it sees camo, and the live forecast rates
+    the boards of DDT rounds 90, 93 and 99 at 1.0 or more (round 99 was 0.81
+    before)."""
+    from btd6bot import dps_model as D
+    from btd6bot.forecast import RoundForecast
+    _, d = _build("patspond")
+    spots = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place"}
+    answer = d["answers"]["ddt"]
+    assert answer[0] == {"do": "upgrade", "id": "sub527", "to": "2-5-0"}, answer
+    assert all(st["id"] in spots for st in answer), answer
+    assert {"do": "upgrade", "id": "sub527", "to": "2-5-0"} in d["plan"]
+    assert D.detects_camo("sub", (2, 5, 0))
+    forecast = RoundForecast("Pat's Pond", "impoppable")
+    assert forecast._ready()
+    for rnd in (90, 93, 99):
+        board = _board_at_start(d, rnd)
+        assert board["sub527"].tiers == (2, 5, 0), (rnd, board["sub527"].tiers)
+        margin = forecast.margin(list(board.values()), rnd)
+        assert margin >= 1.0, (rnd, round(margin, 2))
 
 
 def _spec(sid, maps=None):
