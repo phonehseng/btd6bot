@@ -57,7 +57,7 @@ plan:
   - {do: place, id: wiz_carry1, kind: wizard, role: support, at: [0.056, 0.811]}
   - {do: place, id: sky501, kind: skywarden, role: support, at: [0.815, 0.487]}
   - {do: place, id: sky502, kind: skywarden, role: support, at: [0.815, 0.555]}
-  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.056, 0.487]}
+  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.061, 0.487]}
   - {do: place, id: sky504, kind: skywarden, role: support, at: [0.826, 0.232]}
   - {do: upgrade, id: sky501, to: 0-2-0}
   - {do: upgrade, id: sky502, to: 0-2-0}

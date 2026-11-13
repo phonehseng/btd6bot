@@ -36,9 +36,9 @@ plan:
   - {do: place, id: des501, kind: desperado, role: support, at: [0.248, 0.726]}
   - {do: place, id: bea502, kind: beast_handler, role: support, at: [0.334, 0.845]}
   - {do: place, id: sky503, kind: skywarden, role: support, at: [0.59, 0.641]}
+  - {do: place, id: sky506, kind: skywarden, role: support, at: [0.58, 0.589]}   # the right lanes (2979, 2982) before sky504/sky505 on the left ones: round 10
   - {do: place, id: sky504, kind: skywarden, role: support, at: [0.259, 0.385]}
   - {do: place, id: sky505, kind: skywarden, role: support, at: [0.227, 0.624]}
-  - {do: place, id: sky506, kind: skywarden, role: support, at: [0.58, 0.589]}
   - {do: upgrade, id: sky506, to: 1-0-0}
   - {do: upgrade, id: sky503, to: 1-0-0}
   - {do: place, id: des507, kind: desperado, role: support, at: [0.601, 0.726]}
@@ -65,7 +65,7 @@ plan:
   - {do: place, id: buc517, kind: buccaneer, role: support, at: [0.419, 0.641]}
   - {do: place, id: eng518, kind: engineer, role: support, at: [0.537, 0.692]}
   - {do: place, id: tac519, kind: tack, role: support, at: [0.152, 0.641]}
-  - {do: place, id: mer520, kind: mermonkey, role: support, at: [0.687, 0.641]}
+  - {do: place, id: mer520, kind: mermonkey, role: support, at: [0.66, 0.794]}
   - {do: upgrade, id: tac519, to: 0-1-0}
   - {do: upgrade, id: tac519, to: 0-2-0}
   - {do: upgrade, id: tac519, to: 1-2-0}

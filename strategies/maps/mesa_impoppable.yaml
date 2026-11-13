@@ -68,21 +68,21 @@ plan:
   - {do: place, id: ace_carry3, kind: ace, role: support, at: [0.697, 0.112]}
   - {do: place, id: sky501, kind: skywarden, role: support, at: [0.174, 0.76]}
   - {do: place, id: sky502, kind: skywarden, role: support, at: [0.163, 0.709]}
-  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.184, 0.453]}
-  - {do: place, id: sky504, kind: skywarden, role: support, at: [0.206, 0.402]}
+  - {do: place, id: sky503, kind: skywarden, role: support, at: [0.334, 0.581]}
+  - {do: place, id: sky504, kind: skywarden, role: support, at: [0.35, 0.513]}
   - {do: place, id: des505, kind: desperado, role: support, at: [0.58, 0.351]}
-  - {do: place, id: sky506, kind: skywarden, role: support, at: [0.238, 0.385]}
+  - {do: place, id: sky506, kind: skywarden, role: support, at: [0.387, 0.513]}
   - {do: place, id: sky507, kind: skywarden, role: support, at: [0.494, 0.521]}
   - {do: upgrade, id: sky507, to: 0-2-0}
   - {do: place, id: sky508, kind: skywarden, role: support, at: [0.206, 0.743]}
   - {do: place, id: des509, kind: desperado, role: support, at: [0.687, 0.641]}
   - {do: upgrade, id: sky504, to: 1-0-0}
-  - {do: place, id: sky510, kind: skywarden, role: support, at: [0.216, 0.334]}
-  - {do: place, id: eng511, kind: engineer, role: support, at: [0.419, 0.164]}
+  - {do: place, id: sky510, kind: skywarden, role: support, at: [0.051, 0.641]}
+  - {do: place, id: eng511, kind: engineer, role: support, at: [0.623, 0.325]}
   - {do: upgrade, id: des509, to: 0-1-0}
   - {do: place, id: sni512, kind: sniper, role: support, at: [0.323, 0.078]}
   - {do: upgrade, id: sky501, to: 1-0-0}
-  - {do: place, id: eng513, kind: engineer, role: support, at: [0.452, 0.112]}
+  - {do: place, id: eng513, kind: engineer, role: support, at: [0.665, 0.325]}
   - {do: upgrade, id: des505, to: 0-1-0}
   - {do: upgrade, id: sky508, to: 1-0-0}
   - {do: upgrade, id: n3, to: 4-0-2}
@@ -92,7 +92,7 @@ plan:
   - {do: upgrade, id: sni512, to: 1-0-1}
   - {do: upgrade, id: dru514, to: 1-0-1}
   - {do: place, id: eng515, kind: engineer, role: support, at: [0.644, 0.112]}
-  - {do: place, id: eng516, kind: engineer, role: support, at: [0.131, 0.47]}
+  - {do: place, id: eng516, kind: engineer, role: support, at: [0.019, 0.726]}
   - {do: upgrade, id: sky510, to: 1-0-0}
   - {do: upgrade, id: sky502, to: 1-0-0}
   - {do: upgrade, id: sky503, to: 1-0-0}
@@ -159,7 +159,7 @@ plan:
   - {do: place, id: dru533, kind: druid, role: support, at: [0.58, 0.743]}
   - {do: upgrade, id: dru533, to: 0-3-0}
   - {do: upgrade, id: dru533, to: 0-3-1}
-  - {do: place, id: wiz534, kind: wizard, role: support, at: [0.377, 0.181]}
+  - {do: place, id: wiz534, kind: wizard, role: support, at: [0.804, 0.632]}
   - {do: upgrade, id: wiz534, to: 1-2-0}
   - {do: place, id: wiz535, kind: wizard, role: support, at: [0.174, 0.368]}
   - {do: upgrade, id: wiz535, to: 1-2-0}
@@ -203,7 +203,7 @@ plan:
   - {do: upgrade, id: wiz542, to: 1-3-0}
   - {do: upgrade, id: wiz542, to: 1-4-0}
   - {do: upgrade, id: wiz537, to: 1-4-0}
-  - {do: place, id: alc544, kind: alchemist, role: support, at: [0.152, 0.419]}
+  - {do: place, id: alc544, kind: alchemist, role: support, at: [0.126, 0.717]}
   - {do: upgrade, id: alc544, to: 0-2-0}
   - {do: upgrade, id: alc544, to: 2-2-0}
   - {do: place, id: mer545, kind: mermonkey, role: support, at: [0.761, 0.624]}
