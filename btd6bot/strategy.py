@@ -6360,15 +6360,60 @@ class Executor:
             return r == "progress"  # waiting for cash / round, or mid-upgrade
         else:
             ability_wait = None
-        for st in self.fill:
+        weak = self._fill_yields(rnd)
+        for st in () if weak else self.fill:
             with self.why("fill", "the plan is done: fill step", step=dict(st)):
                 r = self.try_step(st, cash, rnd)
             if r in ("bought", "progress"):
                 return True
+        if weak:
+            # the match's reinforce (then surplus) spends for the weak round
+            self.waiting = (f"fill yields to reinforce: the damage model rates round {weak[1]} "
+                            f"at {weak[0]:.2f}")
+            return False
         if ability_wait is None and self._idle_blimp_damage(cash, rnd):
             return True
         self.waiting = ability_wait or PLAN_EXHAUSTED
         return False
+
+    # The fill gives way to reinforce while a round of the look-ahead is rated
+    # under this (it would leak at full strength).
+    FILL_YIELD_MARGIN = 1.0
+
+    def _fill_yields(self, rnd):
+        """(margin, round) of a look-ahead round the damage model rates under
+        FILL_YIELD_MARGIN, or None: then the fill's steps wait and the cash
+        goes to what the match's reinforce picks for that round (Match: an
+        idle tick with a weak look-ahead runs reinforce, then surplus).
+
+        The fill is the plan's generic growth, written without any round in
+        mind, and it ran before reinforce on every tick. Ravine Double HP
+        (2026-11-12 22:10, hard_ninja_alch_sun, loss case
+        20261112_222133_Ravine_double_hp): from round 55 the model rated
+        round 64 (six MOABs and three fortified MOABs, double HP) at
+        0.53-0.59; the plan was done at round 57, and rounds 57-62 spent
+        $11.8k on the fill's two ninjas to 4-0-2 and a spike factory, which
+        moved round 64 by 0.00-0.02 in the model. The blimp ramp looked at
+        round 64 only from round 61, and round 64 took all 100 lives.
+        Unrated (no forecast) the fill goes on as before, and so it does
+        where no reinforce runs after it (reinforce_live unset: the offline
+        replays, tools/simulate_threats), so their boards still show the
+        fill's towers."""
+        if rnd is None or not getattr(self, "reinforce_live", False):
+            return None
+        try:
+            worst = self.lookahead_worst(rnd)
+        except Exception:      # the rating is advice: never stop the fill over it
+            log.exception("rating the look-ahead for the fill failed")
+            return None
+        if not worst or worst[0] is None or worst[1] is None or worst[0] >= self.FILL_YIELD_MARGIN:
+            return None
+        noted = self.__dict__.setdefault("noted", set())
+        if ("fill-yields", worst[1]) not in noted:
+            noted.add(("fill-yields", worst[1]))
+            log.warning("fill: the damage model rates round %d at %.2f - the fill waits, reinforce "
+                        "spends for that round", worst[1], worst[0])
+        return worst
 
     def _idle_blimp_damage(self, cash, rnd):
         """With one life, once the plan and the fill are used up, put idle
