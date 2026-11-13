@@ -1,4 +1,4 @@
-"""Bazaar CHIMPS: the boomerang sees both lanes, the third dart keeps round 7.
+"""Bazaar CHIMPS: a dart in the middle sees both lanes, the third dart keeps round 7.
 
 Why
 ---
@@ -20,17 +20,28 @@ they had held it in every earlier game. The damage model rated the middle
 higher for that round, so its rating cannot choose between the two cells;
 the games can.
 
-The build now keeps the third dart on the cell that held round 7 and gives
-the middle cell to the boomerang, which is bought before round 8
-(strategies/maps/bazaar_chimps.yaml, "Spots again, 2026-11-13").
+The second answer kept the third dart on the cell that held round 7 and gave
+the middle cell to the boomerang. The boomerang never stood there: its
+footprint is a unit wider than a dart's, the middle cell is legal only for
+the small towers the game has taken on it, and the executor, finding nothing
+legal near the pin, placed the boomerang by the lower lane's exit. Round 9,
+a top-lane round, was lost at 14:45 (case 20261113_145054_Bazaar_chimps).
+
+The build now keeps the guide's opening on the cells the game took it on -
+the boomerang back on the strip's left end - and buys a fourth dart for the
+middle cell after the hero (strategies/maps/bazaar_chimps.yaml, "The
+boomerang never stood in the middle"). The opening rule allows no searched
+opening here (tools/opening_rule), so the middle dart comes after it.
 
 Checked here:
   * the lost boomerang spot sees less than LOST_UNITS of the lower lane;
   * the build's x3 stands on the cell that held round 7 live (ROUND_7_CELL);
-  * the build's r1 sees at least BOTH_UNITS of either lane;
-  * round 12, played on its own lane on the board the plan has bought by
-    then, rates higher than on the lost board, and no round from 6 to 14
-    rates lower.
+  * the build's x4, a dart, sees at least BOTH_UNITS of either lane;
+  * every tower the plan places before the hero is legal on the live map
+    for its own footprint, with the towers placed before it standing;
+  * no round from 6 to 20, played on its own lane on the board the plan has
+    bought by then, rates lower than on the board of the 06:51 game, and
+    the rounds after the middle dart rate higher.
 
 Run: python tests/test_bazaar_chimps_opening_offline.py (no game)."""
 import copy
@@ -56,11 +67,12 @@ LOST_SPOTS = {"x3": (0.115, 0.487), "r1": (0.104, 0.428)}
 LOWER_LANE = 1          # Track.scenarios index of the lane the even rounds take
 LOST_ROUND = 12
 LOST_UNITS = 30.0       # the lost spots saw less of the lower lane than this
-BOTH_UNITS = 50.0       # the boomerang in the middle sees at least this much of either lane
+BOTH_UNITS = 50.0       # the dart in the middle sees at least this much of either lane
 # Where the third dart stood in the games whose three darts held round 7
 # (journals 20261112_225338 and 20261113_064858, place events).
 ROUND_7_CELL = (0.115, 0.487)
-OPENING = range(6, 15)  # the rounds before the hero is bought
+OPENING = range(6, 21)  # the rounds replayed: the opening and the first rounds with the middle dart
+MIDDLE_DART = "x4"      # the dart on the middle cell; the lost board had none
 
 
 @lru_cache(maxsize=None)
@@ -84,10 +96,15 @@ def _cover(kind, at):
 
 
 def _lost_build():
-    """The build with x3 and r1 back where they stood in the lost game."""
+    """The build as it stood in the lost game: x3 and r1 on their spots of
+    that day, no dart in the middle, the boomerang bought before the druid."""
     d = copy.deepcopy(_build())
     for tid, at in LOST_SPOTS.items():
         _place(d, tid)["at"] = list(at)
+    boomerang, druid = _place(d, "r1"), _place(d, "d1")
+    plan = [st for st in d["plan"] if st is not boomerang and st.get("id") != MIDDLE_DART]
+    plan.insert(plan.index(druid), boomerang)
+    d["plan"] = plan
     return d
 
 
@@ -115,17 +132,36 @@ def test_the_third_dart_stands_where_it_held_round_7():
     assert model.frac_to_cell(*dart["at"]) == model.frac_to_cell(*ROUND_7_CELL), dart["at"]
 
 
-def test_the_boomerang_sees_both_lanes():
-    boomerang = _place(_build(), "r1")
-    cover = _cover(boomerang["kind"], boomerang["at"])
-    assert min(cover) >= BOTH_UNITS, (boomerang["at"], cover)
+def test_the_middle_dart_sees_both_lanes():
+    dart = _place(_build(), MIDDLE_DART)
+    assert dart["kind"] == "dart", dart
+    cover = _cover(dart["kind"], dart["at"])
+    assert min(cover) >= BOTH_UNITS, (dart["at"], cover)
 
 
-def test_the_opening_rates_no_worse_and_round_12_better():
+def test_the_opening_towers_are_legal_for_their_own_footprint():
+    """On the live learned map, as the executor judges a pin: a cell the game
+    accepted for a small tower is not legal for a wider one."""
+    from btd6bot import placement as PL
+    model = _pinner().model
+    standing = []
+    for step in _build()["plan"]:
+        if step["do"] != "place":
+            continue
+        if step["kind"] == "hero":
+            break
+        cx, cy = (int(round(v)) for v in model.frac_to_cell(*step["at"]))
+        legal = PL.valid_spots(model, step["kind"], None, standing)
+        assert legal[cy, cx], (step["id"], step["kind"], step["at"])
+        standing.append((cx, cy, step["kind"], None))
+
+
+def test_no_round_rates_worse_and_the_middle_dart_lifts_some():
     new, old = _margins(False), _margins(True)
-    assert new[LOST_ROUND] > old[LOST_ROUND], (new[LOST_ROUND], old[LOST_ROUND])
     worse = {r: (old[r], new[r]) for r in OPENING if new[r] < old[r]}
     assert not worse, worse
+    better = [r for r in OPENING if new[r] > old[r]]
+    assert better, "the middle dart lifts no round of the opening"
 
 
 if __name__ == "__main__":

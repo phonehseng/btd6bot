@@ -132,6 +132,31 @@
 #   13 0.53 -> 0.54, 14 1.61 -> 1.74. Against the middle-dart board: round 12
 #   0.91 -> 0.95, round 10 0.46 -> 0.52, rounds 8, 9 and 13 0.02-0.04 lower.
 #
+# The boomerang never stood in the middle, 2026-11-13 (case 20261113_145054,
+# lost round 9 at 14:45): a boomerang's footprint (7 units) is wider than a
+# dart's (6), and the middle cell is ground the map file marks blocked - it
+# is legal only for the small towers the game has already taken there
+# (placement.valid_spots, SHARED_REFUSAL_RADIUS). The executor found
+# "nothing legal within 15 cells" and placed the boomerang by role, at
+# (0.687, 0.828) by the lower lane's exit; round 9 runs along the top lane,
+# so three darts alone met its 30 greens (that board replays at 0.22).
+# No legal boomerang cell sees both lanes: of the 185, the best for the top
+# lane see nothing of the lower one, and the other way round.
+#   * the boomerang goes back to the left-end cell where the game took it on
+#     2026-11-12 (0.104, 0.428), bought before round 8 as the guide has it:
+#     the opening is the guide's again, the one board that held rounds 6-14
+#     live (tools/opening_rule: a searched opening is not allowed here; a
+#     fourth dart before the druid rated rounds 10-13 higher and is not used);
+#   * x4, a fourth dart ($215), takes the middle cell after Rosalia: a dart
+#     stood there live at 11:06 and sees 62 / 58 units of the two lanes.
+#     Rounds 6-15 rate as before, 16 1.09 -> 1.14, 17 1.26 -> 1.41, 19 0.90
+#     -> 0.95, 21 0.61 -> 0.66;
+#   * the village moves to (0.195, 0.845), beside the ace (23 units, inside
+#     its Radar): its cell (0.115, 0.675) has since been refused live for a
+#     small tower, and with every pinned tower standing 21 village cells on
+#     the map are legal and never refused - none of them reaches the sniper,
+#     which has its own Night Vision.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -144,7 +169,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 1, 0], boomerang: [0, 0, 0], glue: [0, 0, 0], druid: [1, 3, 0], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
-  revised: "2026-11-13T11:18"   # x3 back on its proven cell, the boomerang in the middle (see "Spots again, 2026-11-13")
+  revised: "2026-11-13T15:50"   # the boomerang back on the left end, a fourth dart in the middle after the hero, the village beside the ace
   maps: [Bazaar]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -155,10 +180,12 @@ plan:
   - {do: place, id: x3, kind: dart, role: dps, at: [0.115, 0.487]}              # R6 the middle strip, left: the cell that held round 7 live (see "Spots again, 2026-11-13"; in the middle it lost round 7)
   # R7 the guide's boomerang on Strong and R10 its druid, the guide's order. The opening search's
   # glue in their place lost round 9 (case 20261113_032115): 3 darts + a 0-0-0 glue, $305 of $430.
-  # The boomerang stands in the middle of the strip, between the canals, where both lanes run straight past
-  - {do: place, id: r1, kind: boomerang, role: dps, target: strong, at: [0.43, 0.496]}  # 82 / 82 units of the two lanes; the game took a dart on this cell (see "Spots again, 2026-11-13")
+  # The boomerang stands on the strip's left end. It is too wide for the middle cell: pinned there it was
+  # placed across the map and round 9 was lost (see "The boomerang never stood in the middle").
+  - {do: place, id: r1, kind: boomerang, role: dps, target: strong, at: [0.104, 0.428]}  # R7 where it stood in the game that held rounds 8-14 (2026-11-12)
   - {do: place, id: d1, kind: druid, role: dps, near: [x2], at: [0.751, 0.47]}  # R10 right of the middle dart
   - {do: place, id: hero, kind: hero, role: dps, at: [0.687, 0.181]}              # opening search 2026-11-12
+  - {do: place, id: x4, kind: dart, role: dps, at: [0.43, 0.496]}               # added: the middle of the strip, 62 / 58 units of the two lanes; a dart stood on this cell live (2026-11-13 11:06)
   - {do: upgrade, id: d1, to: 0-1-0}                                            # R15
   - {do: upgrade, id: d1, to: 0-2-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 0-3-0}                                            # R26
@@ -169,7 +196,7 @@ plan:
   - {do: place, id: gl1, kind: glue, role: dps, at: [0.74, 0.624]}                # opening search 2026-11-12 (after the opening since 2026-11-13)
   - {do: upgrade, id: s1, to: 0-2-0}                                            # R18-20 Night Vision, Shrapnel: camo
   - {do: upgrade, id: s1, to: 0-2-2}                                            # R28-29
-  - {do: place, id: v1, kind: village, role: support, near: [ac1, s1], at: [0.115, 0.675]}  # by the ace and the sniper: its Radar lends them camo (was 0.687, 0.845: the ace saw no camo)
+  - {do: place, id: v1, kind: village, role: support, near: [ac1], at: [0.195, 0.845]}  # beside the ace: its Radar lends it camo (0.115, 0.675 was refused live; 0.687, 0.845 before that left the ace without camo)
   - {do: upgrade, id: v1, to: 0-2-0}                                            # R36 Radar Scanner
   - {do: place, id: ac1, kind: ace, role: dps, at: [0.131, 0.845]}              # R40
   - {do: upgrade, id: ac1, to: 2-0-3}                                           # R40

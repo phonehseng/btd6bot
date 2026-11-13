@@ -292,11 +292,32 @@ def test_map_strategies_usable_and_covered():
 #     "the game accepts ninja at a spot the map file marks blocked (70,82)")
 #     and legal in play since placement.valid_spots keeps accepted cells
 #     (tests/test_accepted_cells_offline.py).
-# Pins the map geometry calls illegal but the game accepted live. Bazaar's
-# r1 (0.43, 0.496): the dart x3 was placed on that very cell in the CHIMPS
-# game of 2026-11-13 11:06 (case 20261113_110931, game.log "placed x3 (dart)
-# at 0.430,0.496"); the boomerang has the same small footprint as a dart.
-GAME_ACCEPTED = {"ravine_magic_only": {"nM"}, "bazaar_chimps": {"r1"}}
+#   bazaar_chimps x4 - a dart at (0.43, 0.496), the middle of the strip: the
+#     dart x3 was placed on that very cell in the CHIMPS game of 2026-11-13
+#     11:06 (case 20261113_110931, game.log "placed x3 (dart) at
+#     0.430,0.496").
+# Only the smallest towers may be named here. An accepted cell stays legal in
+# play for footprints up to placement.SHARED_REFUSAL_RADIUS and for no wider
+# one (placement.valid_spots). Bazaar's boomerang was named for that same
+# cell "with a dart's footprint"; it is a unit wider, the executor found
+# nothing legal near its pin and placed it across the map, and round 9 was
+# lost (case 20261113_145054_Bazaar_chimps).
+GAME_ACCEPTED = {"ravine_magic_only": {"nM"}, "bazaar_chimps": {"x4"}}
+
+
+def test_game_accepted_pins_are_small_towers():
+    """Every pin excused from the legality check is a tower small enough for
+    the executor to stand on an accepted cell, and exists in its build."""
+    from btd6bot import placement as PL
+    strategies = map_strategies()
+    for sid, ids in GAME_ACCEPTED.items():
+        places = {st.get("id"): st for st in strategies[sid].get("plan") or [] if st.get("do") == "place"}
+        for tid in ids:
+            assert tid in places, (sid, tid, "no such place step")
+            kind = places[tid]["kind"]
+            hero = strategies[sid].get("hero") if kind == "hero" else None
+            radius = PL.footprint_radius(kind, hero)
+            assert radius <= PL.SHARED_REFUSAL_RADIUS, (sid, tid, kind, radius)
 
 
 def test_map_strategy_spots_are_legal():
