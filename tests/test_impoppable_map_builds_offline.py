@@ -450,37 +450,45 @@ def _board_at_start(d, rnd):
     return board
 
 
-def test_muddy_puddles_buys_for_round_40_before_the_far_tack():
-    """Muddy Puddles (2026-11-12, cases 20261112_154257 and 20261112_174350):
-    round 40's MOAB comes down the right lane and reached the exit with its
-    skin whole, twice. The cash of rounds 38-39 had gone into buc502's
-    tiers and the Blade Maelstrom of tac519, the tack by the far-left lane;
-    the damage model rated the round 0.69 both times. Now:
-      * the centre tack's Maelstrom (tac512) and the sub's third tier are
-        bought before round 40, and before tac519's Maelstrom;
-      * the board the plan has at round 40 is rated at least 1.0;
-      * the lost order - tac519's Maelstrom and buc502 0-2-1 in their
-        place - is rated under 1.0 on the same board, so the rating tells
-        the two apart."""
+def test_muddy_puddles_has_its_moab_answer_by_round_40():
+    """Muddy Puddles (2026-11-12, cases 20261112_154257, 20261112_174350 and
+    20261112_202137): round 40's MOAB reached the exit three times. The last
+    plan rated the round 1.14 with the towers' abilities credited and 0.55
+    without, and lost it at a blimp ratio of 0.29. Now the MOAB answer - the
+    heli hel_carry1 at 3-0-2 - and the sub sub_carry2 at 2-0-4 stand when
+    round 40 starts, and the live forecast rates that board at 1.0 or more;
+    without the two it is rated under 1.0, so the rating tells them apart."""
     from btd6bot.forecast import RoundForecast
     _, d = _build("muddypuddles")
     forecast = RoundForecast("Muddy Puddles", "impoppable")
     assert forecast._ready()
-
-    order = [(st["id"], st.get("to")) for st in d["plan"] if st["do"] == "upgrade"]
-    far_tack = order.index(("tac519", "2-4-0"))
-    assert order.index(("tac512", "2-4-0")) < far_tack and order.index(("sub515", "2-3-0")) < far_tack
-
     board = _board_at_start(d, 40)
-    assert board["tac512"].tiers == (2, 4, 0) and board["sub515"].tiers == (2, 3, 0), \
-        (board["tac512"].tiers, board["sub515"].tiers)
+    assert board["hel_carry1"].tiers == (3, 0, 2) and board["sub_carry2"].tiers == (2, 0, 4),         (board["hel_carry1"].tiers, board["sub_carry2"].tiers)
     now = forecast.margin(list(board.values()), 40)
     assert now >= 1.0, round(now, 2)
+    without = [t for t in board.values() if t.tid not in ("hel_carry1", "sub_carry2")]
+    assert forecast.margin(without, 40) < 1.0
+    assert [st["id"] for st in d["answers"]["moab"]] == ["hel_carry1", "hel_carry1"]
 
-    board["tac512"].tiers, board["sub515"].tiers = (2, 3, 0), (2, 2, 0)
-    board["tac519"].tiers, board["buc502"].tiers = (2, 4, 0), (0, 2, 1)
-    lost = forecast.margin(list(board.values()), 40)
-    assert lost < 1.0, round(lost, 2)
+
+def test_covered_garden_buys_for_rounds_62_and_63_before_its_carry():
+    """Covered Garden (2026-11-12, case 20261112_145934, round 63): the
+    carry's last stage (wiz_carry1 0-5-2, $60,000) was due by round 75; the
+    executor reached it in round 58 and, plan_first, bought nothing after
+    it - rounds 62 and 63 began with $11,482 and $14,254 in hand. Now the
+    stage comes later, the plan has not reached it when round 63 starts,
+    and the live forecast rates the boards of rounds 62 and 63 at 1.0 or
+    more."""
+    from btd6bot.forecast import RoundForecast
+    _, d = _build("coveredgarden")
+    forecast = RoundForecast("Covered Garden", "impoppable")
+    assert forecast._ready()
+    bought = [(st["do"], st.get("id"), st.get("to")) for st in _bought_before(d, 64)]
+    assert ("upgrade", "wiz_carry1", "0-5-2") not in bought
+    for rnd in (62, 63):
+        board = _board_at_start(d, rnd)
+        margin = forecast.margin(list(board.values()), rnd)
+        assert margin >= 1.0, (rnd, round(margin, 2))
 
 
 def test_a_tower_is_pinned_on_its_part_of_the_route():
