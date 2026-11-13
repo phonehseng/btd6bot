@@ -2774,6 +2774,9 @@ class Executor:
             return self._defer(step, key, self.BUFFER_RETRY_S)   # nothing to buff yet
         if self._pane_already_empty(key):
             return self._defer(step, key, self.PANE_RETRY_S)   # same pane, same answer
+        waiting = self._wait_for_pinned_ground(step, key, kind)
+        if waiting is not None:
+            return waiting
         spots = self._spots_widening(kind, step)
         if not spots:
             # a plan tower with no ground is first given the ground under a
@@ -2846,6 +2849,56 @@ class Executor:
             return False
         pane = self._open_pane()
         return pane is not None and pane[0] in tried and len(tried) < pane[1]
+
+    # How far ahead a plan tower waits for its pinned ground to appear
+    # (_wait_for_pinned_ground): a phase and a bit on Erosion.
+    PIN_GROUND_LOOKAHEAD = 20
+
+    def _wait_for_pinned_ground(self, step, key, kind):
+        """On a map whose ground changes with long path phases (Erosion: the
+        ice melts into water at each phase's end), a plan tower whose exact
+        spot (`at`) is not ground yet but becomes ground within
+        PIN_GROUND_LOOKAHEAD rounds is set aside until it is (self.deferred,
+        the plan goes on), instead of being placed by role elsewhere.
+        Returns None when this is not such a case.
+
+        Erosion Impoppable (threat simulation, 2026-11-12): the executor's
+        cash ran ahead of the optimizer's plan, and buc20 - pinned on water
+        that the melt of round 18 makes - was bought in round 15 and stood
+        across the map ("nothing legal within 15 cells of its spot"); so
+        did the subs bought before the melt of round 72. Placed there, they
+        reached none of the path they were bought for."""
+        at = step.get("at")
+        now = getattr(self, "now_round", None)
+        if not at or kind == "hero" or now is None or step.get("id") not in self._plan_place_ids():
+            return None
+        try:
+            from . import mapgeom as G
+            from . import placement as PL
+            geom = G.load(self.m.name)
+            if not geom or G.phase_end(geom, now) is None:
+                return None
+            cx, cy = self.m.frac_to_cell(*at)
+            hero = None
+            last = self.rules.get("end_round")
+
+            def ground(rnd):
+                horizon = G.phase_end(geom, rnd) or last
+                grid = PL.valid_spots(self.m, kind, hero, (), last_round=horizon if last is None else min(horizon, last),
+                                      now_round=rnd)
+                return grid is not None and bool(grid[cy, cx])
+
+            if ground(now):
+                return None             # the ground is there: anything else is for the spot search
+            coming = next((r for r in range(now + 1, now + self.PIN_GROUND_LOOKAHEAD + 1)
+                           if (last is None or r <= last) and ground(r)), None)
+        except Exception:
+            return None
+        if coming is None:
+            return None
+        log.info("%s: its spot %s is ground from round %d (the map changes by phase) - set aside until then",
+                 step.get("id"), list(at), coming)
+        return self._defer(step, key, self.PANE_RETRY_S)
 
     def _wait_for_next_pane(self, step, key, kind):
         """A plan placement found no spot at all on a map with cycling panes:
@@ -4218,6 +4271,15 @@ class Executor:
                 self.g.towers.pop(tid, None)
                 gone.append(tid)
         if not gone:
+            return gone
+        if (getattr(self, "strat", None) or {}).get("rebuild_lost") is False:
+            # the plan buys each phase's defence itself (an optimizer plan for
+            # Erosion: MapSetup.set_round): its destroyed towers' steps are not
+            # queued again - their pins are water now, and rebuilt by role they
+            # spent the cash the next phase's own towers were planned on
+            log.warning("the map destroyed the ground under %s - forgotten (the plan buys "
+                        "the next phase's towers itself)", ", ".join(gone))
+            self.track_changed()
             return gone
         redo = [dict(s) for s in self.plan[:self.idx]
                 if s.get("id") in gone and s.get("do") in ("place", "upgrade")]

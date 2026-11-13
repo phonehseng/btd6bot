@@ -531,6 +531,12 @@ class MapSetup:
         if self.phased and self.now is not None:
             ok = P.valid_spots(self.model, kind, now_round=self.now, last_round=self.horizon)
             lasting = P.valid_spots(self.model, kind, now_round=self.now, last_round=self.end_round)
+            if needs_no_reach(kind) and lasting is not None and lasting.any():
+                # a tower that pops bloons wherever it stands (sniper, heli,
+                # mortar) goes on ground that lasts, as the executor puts it
+                # (Executor._legal_cells): pinned on the phase's ice, it stood
+                # elsewhere in the threat simulation
+                ok = lasting
         else:
             ok, lasting = P.valid_spots(self.model, kind), None
         if USE_PANES and ok is not None:
@@ -1265,6 +1271,14 @@ class Optimizer:
             towers = self.setup.alive(towers, r)       # Erosion: the towers on melted ice are gone
             out[r] = round(D.round_margin(self.ev.stations(towers), self.mode, r, self.setup.track), 2)
         return out
+
+
+def needs_no_reach(kind):
+    """A tower that pops bloons wherever it stands: global range, the ace
+    excepted (it flies a route of its own) - Executor._needs_no_reach."""
+    from btd6bot import strategy as S
+    return (kind != "hero" and kind in T.TOWERS and T.TOWERS[kind].get("range") is None
+            and kind not in S.Executor.GLOBAL_BUT_LOCAL)
 
 
 def _bundles(cap, max_tiers):
