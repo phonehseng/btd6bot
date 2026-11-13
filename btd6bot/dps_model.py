@@ -1798,6 +1798,48 @@ class Zone:
     angular: float = 1.0
 
 
+# A zone holds no more bloons than the spawn group sent down its route.
+# The packing rho is how close the group's bloons follow each other; times a
+# zone's length it says how many are in the zone at once - but a group
+# spawned over a few seconds is only span x speed long, and a zone longer
+# than that (a map-wide plane's whole track) holds the group, no more.
+# Without the cap, round 93's ten fortified BFBs (spawned over 20 s at
+# 9.8 units a second, 197 units of track, five on each lane of Firing
+# Range) read as 23 BFBs at once on each 900-unit lane, and a Carrier
+# Flagship's Hot Shot burn (18 HP a second on each burning blimp) was
+# credited 411 HP a second on them instead of 90 - more than its darts,
+# radial shots and missiles together. Firing Range CHIMPS (2026-11-12,
+# cases 20261112_140140 and 20261112_152730) and Haunted CHIMPS
+# (2026-11-12 20:07) were rated 1.74, 1.70 and 1.18 for round 93, and the
+# camo DDTs sent among the BFBs leaked each time; the Flagship's planes
+# were the only towers that could pop them on the far lane. The cap alone
+# rates those boards 1.15 and 0.94 (live, status effects off); with
+# BLIMP_SPACING_RATING 0.80 and 0.66 (tests/test_fortified_bfb_r93_offline.py).
+# The same count feeds every term that counts the bloons of a zone: damage
+# over time, blasts over the whole zone (_bloons_met) and grips. False reads
+# the zone at the packing alone, as before.
+GROUP_ZONE_CAP = True
+
+
+def _zone_for_group(zone, rho, group):
+    """The zone as the bloons of one lot fill it: no longer than the stretch
+    of track their whole spawn group covers (group / rho, see
+    GROUP_ZONE_CAP). The zone itself when it is shorter, when the group is
+    not known (None) or with the cap off."""
+    if not GROUP_ZONE_CAP or zone is None or group is None or rho <= 0.0:
+        return zone
+    stretch = max(group, 1.0) / rho
+    if zone.length <= stretch:
+        return zone
+    return Zone(entry=zone.entry, length=stretch, angular=zone.angular)
+
+
+def _group_key(group):
+    """A lot's group for the rate caches: groups within about 20% of each
+    other share an answer, as packings do (None: not known)."""
+    return None if group is None else round(math.log2(max(group, 1.0)) * 4)
+
+
 JOIN_DISTANCE = 6.0   # world units: a path starting this close to another's end continues it
 
 
@@ -2562,14 +2604,59 @@ def _bloons_met(src, rho, zone):
 MAP_BLAST_REACH = 1000.0
 
 
-def _hit_rate(src, lay, rho, zone):
+# Blimps come one by one, evenly spaced: a projectile meets the next one
+# only if it lies within its reach. For a crowd of small bloons the packing
+# times the reach (_bloons_met) is the right average, but blimps are few and
+# far apart and that average credits a share of a neighbour that is never
+# there. Round 93's six camo DDTs (2026-11-12) come three to a lane of Firing
+# Range, 69 units apart; a Carrier Flagship missile's 30-unit blast was
+# credited 2.1 of them a missile, where a blast that hits one DDT reaches
+# no other. With the blimp's own size counted and the spacing read whole,
+# that round is rated 1.40 and 0.90 on the Firing Range and Haunted boards
+# that lost it (1.74 and 1.18 before); with GROUP_ZONE_CAP 0.80 and 0.66,
+# while every round from 80 to 92 of the same games, all held, stays at
+# 1.09 or more. False reads blimps as a crowd.
+#
+# Calibrated with GROUP_ZONE_CAP, SLOW_TO_EXIT and DEBUFF_STRETCH_RATING on
+# the journals' boards (764 journals, 591 leaked rounds, 2026-11-12): AUC
+# 0.812 -> 0.819; rounds at or above 2.0 that leaked 0.54% -> 0.54%, at or
+# above 1.5 0.67% -> 0.60%, at or above 1.0 0.92% -> 0.82%; held rounds
+# under 2.0 49.5% -> 52.4%. Median margin of held rounds 2.00 -> 1.89, of
+# leaked ones 0.73 -> 0.64.
+BLIMP_SPACING_RATING = True
+
+
+def _blimps_met(src, lay, rho, group=None):
+    """Blimps of one lot a projectile of this source meets: the one it
+    strikes and the neighbours within its reach on either side, the reach
+    widened from a small bloon's size to this blimp's (Layer.radius) and the
+    neighbours counted whole, never more than the group sent down this route
+    (Lot.group). None when the crowd reading stands: sources with no reach
+    of their own, map-wide blasts, blasts over the whole zone and track
+    piles (_bloons_met)."""
+    if (not BLIMP_SPACING_RATING or src.reach <= 0.0 or src.zone_wide or math.isinf(src.reach)
+            or src.reach >= MAP_BLAST_REACH):
+        return None
+    window = src.reach + 2.0 * max(0.0, lay.radius - 8.0)      # _reach_of counts an 8-unit bloon
+    met = 1.0 + 2.0 * math.floor(rho * window / 2.0)
+    if group is not None:
+        met = min(met, max(1.0, group))
+    return met
+
+
+def _hit_rate(src, lay, rho, zone, group=None):
     """Hits per second this source lands on bloons of this layer.
 
     projectiles per second (fewer for spawn-on-contact chains when bloons
     are sparse, see Source.shots_single), times hits per projectile: its
     pierce, but no more than the bloons it can meet - except that a
-    lingering projectile may hit one bloon several times (single_hits)."""
+    lingering projectile may hit one bloon several times (single_hits).
+    Blimps are met one by one (_blimps_met; group: the lot's Lot.group)."""
     met = _bloons_met(src, rho, zone)
+    if lay.moab:
+        spaced = _blimps_met(src, lay, rho, group)
+        if spaced is not None:
+            met = spaced
     if src.off_struck and not src.zone_wide and not math.isinf(met):
         # thrown off the bloon its carrier struck and flying away from it:
         # the game's frags and shrapnel never hit the struck bloon, only the
@@ -2614,17 +2701,18 @@ class _Rates:
         self.station = station
         self.cache = {}
 
-    def get(self, bloon_id, moab_hp, rho, path):
+    def get(self, bloon_id, moab_hp, rho, path, group=None):
         """(HP per second, mean overflow per ordinary pop, share of pops that
         destroy the whole bloon, mean overflow per pop of every kind) on this
         layer, or None when no source of the station can damage it (immune,
-        camo, MOAB filter). See _compute."""
-        key = (bloon_id, moab_hp, round(math.log2(max(rho, 1e-4)) * 2), path)
+        camo, MOAB filter). group: the lot's Lot.group (_zone_for_group).
+        See _compute."""
+        key = (bloon_id, moab_hp, round(math.log2(max(rho, 1e-4)) * 2), path, _group_key(group))
         if key not in self.cache:
-            self.cache[key] = self._compute(bloon_id, moab_hp, rho, path)
+            self.cache[key] = self._compute(bloon_id, moab_hp, rho, path, group)
         return self.cache[key]
 
-    def _compute(self, bloon_id, moab_hp, rho, path):
+    def _compute(self, bloon_id, moab_hp, rho, path, group=None):
         """See get(). A station's pops are of two kinds.
 
         Ordinary hits pass their damage beyond the layer's health on to the
@@ -2642,7 +2730,7 @@ class _Rates:
         finding 1). The last value, for the layers inside a bloon (subtree),
         averages every pop's carry, a whole-bloon hit counting what is left
         inside the bloon (its expected damage to the children)."""
-        zone = self.station.zones[path]
+        zone = _zone_for_group(self.station.zones[path], rho, group)
         lay = layer(bloon_id, moab_hp)
         whole = rbe(bloon_id, moab_hp)
         hp_rate = overflow = kill_rate = kill_carry = 0.0
@@ -2666,7 +2754,7 @@ class _Rates:
                 continue     # an ability adds to what its tower can hit, no more (_own_attack_hits)
             if lay.camo and src.camo_shared and camo_paths is not None and path not in camo_paths:
                 continue     # Advanced Intel sees camo only where a detector reaches
-            hits = _hit_rate(src, lay, rho, zone) * share
+            hits = _hit_rate(src, lay, rho, zone, group) * share
             if src.digest and src.shots > 0.0:
                 # one grab per digest at most (and the brambles with it)
                 hits *= min(1.0, 1.0 / (_digest_time(src, lay) * src.shots))
@@ -2702,7 +2790,7 @@ class _Rates:
         return (hp_rate * self.station.strength * TOWER_EFFICIENCY, carry, kill_rate / hp_rate,
                 (overflow + kill_carry) / hp_rate)
 
-    def subtree(self, bloon_id, moab_hp, rho, path, free):
+    def subtree(self, bloon_id, moab_hp, rho, path, free, group=None):
         """(seconds of work per bloon, ((id, count), ...) handed on) to pop a
         small bloon and everything inside it that this station can pop.
 
@@ -2720,12 +2808,14 @@ class _Rates:
         damage) gets 0.38 + 5.8 / 47 = 0.51 whole Rainbows a second, the
         audit's "about 0.4" with the model's vine rate
         (docs/model_audit_magic.md, finding 1; the vine's longer digest of
-        big bloons is not modelled)."""
-        key = (bloon_id, moab_hp, round(math.log2(max(rho, 1e-4)) * 2), path, round(free, 1))
+        big bloons is not modelled).
+        group: the lot's Lot.group; a layer inside counts k times as many
+        bloons for k per top bloon (_zone_for_group)."""
+        key = (bloon_id, moab_hp, round(math.log2(max(rho, 1e-4)) * 2), path, round(free, 1), _group_key(group))
         hit = self.cache.get(("subtree",) + key)
         if hit is not None:
             return hit
-        top = self.get(bloon_id, moab_hp, rho, path)
+        top = self.get(bloon_id, moab_hp, rho, path, group)
         kills = 0.0
         if top is not None and max(0.0, layer(bloon_id, moab_hp).hp - free) > 0.0:
             kills = top[0] * top[2] / layer(bloon_id, moab_hp).hp
@@ -2733,7 +2823,7 @@ class _Rates:
         stack = [(bloon_id, 1.0, rho, free)]   # (id, bloons per top bloon, packing, damage carried in)
         while stack:
             bid, n, r, f = stack.pop()
-            rate = self.get(bid, moab_hp, r, path)
+            rate = self.get(bid, moab_hp, r, path, _times(group, n))
             if rate is not None and bid == bloon_id and n == 1.0 and kills > 0.0:
                 hp, overflow = rate[0] * (1.0 - rate[2]), rate[1]    # the kills are counted apart
             elif rate is not None:
@@ -2819,7 +2909,7 @@ class _Server:
         the station's rates on it when the caller has them already (None:
         looked up here)."""
         if r is None:
-            r = self.rates.get(lot.bloon, lot.moab_hp, lot.rho, lot.path)
+            r = self.rates.get(lot.bloon, lot.moab_hp, lot.rho, lot.path, lot.group)
         if r is None:
             return None
         hp_rate, overflow, killed, _ = r
@@ -2836,7 +2926,7 @@ class _Server:
             deadline = release + max(0.0, end - pos) / lot.speed
         prio = 0 if (self.st.strong and lay.moab) else 1
         if not lay.moab and lay.hp <= SMALL_LAYER_HP:
-            per_bloon, passed = self.rates.subtree(lot.bloon, lot.moab_hp, lot.rho, lot.path, free)
+            per_bloon, passed = self.rates.subtree(lot.bloon, lot.moab_hp, lot.rho, lot.path, free, lot.group)
             work = lot.count * per_bloon
             return _Job(release, deadline, work, work, lot, zone, pos, 0.0, prio, passed, segs=segs)
         need = max(0.0, lay.hp - free)               # health left after the carried damage
@@ -2849,7 +2939,7 @@ class _Server:
         """The job for a lot that reaches the zone from upstream, or None
         when the station cannot damage its layer. The rate is asked first:
         most lots pass most stations untouched, and those need no delays."""
-        r = self.rates.get(lot.bloon, lot.moab_hp, lot.rho, lot.path)
+        r = self.rates.get(lot.bloon, lot.moab_hp, lot.rho, lot.path, lot.group)
         if r is None:
             return None
         segs = self.segs(lot)
@@ -3279,6 +3369,32 @@ def _push_distance(kind, e):
                                                   + float(e.get("distance_max") or 0.0))
 
 
+SLOW_TO_EXIT = True          # a slow lasts until the bloon is out at most (_route_end); False: its lifespan
+
+
+def _route_end(track, path):
+    """Distance along route `path` of its last point a tower can hit: past
+    it a delay helps no station.
+
+    A slow lasts its lifespan or until the bloon is out, whichever comes
+    first: it costs at most the rest of the bloon's way at the slowed speed
+    times (1 - its speed multiplier). It used to cost the whole lifespan
+    (60 s at most) wherever it was struck. Super Brittle's permanent 25%
+    blimp slow, struck by the exit of Firing Range's right-hand lane, then
+    held each DDT 15 s - more than its 9 s across the map - and that time
+    went to every map-wide tower: the Carrier Flagship's planes had the
+    lane's camo DDTs twice as long as the game gives them. With status
+    effects on (build design, calibration) round 93 of case
+    20261112_140140 was rated 2.57; the other fixes of that loss bring it
+    to 1.30, and this one to 0.84 (the DDTs leaked in the game)."""
+    cache = track.__dict__.setdefault("_route_ends", {})
+    if path not in cache:
+        p = track.paths[path]
+        hit = np.flatnonzero(p["hittable"])
+        cache[path] = float(p["dist"][hit[-1]]) if hit.size else float(p["length"])
+    return cache[path]
+
+
 def _segment_terms(board, lot):
     """[(a, b, per1, stay, hold, slow_cost, push_s, fixed)] for one lot: per
     controlling tower whose zone [a, b] the lot crosses, its hits a second
@@ -3313,7 +3429,12 @@ def _segment_terms(board, lot):
         slow_cost = 0.0
         if "slow" in eff and _control_applies(eff, "slow", lay):
             m = _slow_factor(eff, lay)
-            slow_cost = min(float(eff["slow"].get("lifespan") or 0.0), 60.0) * (1.0 - m)
+            slowed = min(float(eff["slow"].get("lifespan") or 0.0), 60.0)
+            if m > 0.0 and SLOW_TO_EXIT:
+                # slowed no longer than the rest of its way out (_route_end)
+                left = max(0.0, _route_end(board.track, path) - zone.entry)
+                slowed = min(slowed, left / (m * lot.speed))
+            slow_cost = slowed * (1.0 - m)
         push = 0.0
         for kind in ("pushback", "blowback"):
             if kind in eff and _control_applies(eff, kind, lay) and not _is_bad(lay):
@@ -3334,6 +3455,27 @@ def _segment_terms(board, lot):
             delay = zone.length / max(lot.speed, 1e-6) * (1.0 / scale - 1.0)
             out.append((zone.entry, zone.entry + max(zone.length, TRACK_STEP), 0.0, 0.0, 0.0, 0.0, 0.0, delay))
     return out
+
+
+DEBUFF_STRETCH_RATING = True  # a debuff counts on the stretch its bloons carry it (_debuffed_share); False: everywhere
+
+
+def _debuffed_share(lo, hi, start, end):
+    """Share of a station's zone (lo..hi along the route) where the bloons a
+    debuffer touches still carry its debuff: from where they enter its zone
+    (start) to where the debuff wears off (end: the zone's end plus the
+    debuff's lifespan at the bloon's speed). The station's hits on the rest
+    of its zone fall on bloons not debuffed yet, or no longer.
+
+    A map-wide station's zone is the whole route, and every one of its hits
+    used to take the whole bonus: on Firing Range CHIMPS (2026-11-12, case
+    20261112_140140) a Super Brittle ice by the exit (41 units of a 900-unit
+    lane) added 4 damage to every Carrier Flagship plane hit on that lane.
+    With status effects on, round 93 rated 0.91 with the other fixes of
+    that loss and 0.84 with this one; the round leaked."""
+    if hi <= lo or not DEBUFF_STRETCH_RATING:
+        return 1.0
+    return max(0.0, min(hi, end) - max(lo, start)) / (hi - lo)
 
 
 def _influence_terms(board, station, lay, path, rho):
@@ -3366,7 +3508,7 @@ def _influence_terms(board, station, lay, path, rho):
         if hi < z.entry or lo > reach:
             continue          # the debuffed bloons never stand in this zone
         per1, _ = _per_bloon_at_one(st, src, lay, rho, path)
-        debuffs.append((add, per1, life))
+        debuffs.append((add * _debuffed_share(lo, hi, z.entry, reach), per1, life))
     strips = []
     if lay.camo:
         plain = _decamo(lay)
