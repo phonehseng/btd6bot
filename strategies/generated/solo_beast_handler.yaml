@@ -6,41 +6,41 @@
 # Handlers.
 #
 # Beast Handler cannot carry a game alone (a support tower), so a compact
-# defence of Desperados holds the track and the rest of the money goes into
+# defence of Ninja Monkeys holds the track and the rest of the money goes into
 # it.
-# Defence x2: 4-2-0 Twin Sixes (sees camo; pops lead/purple/black/white;
-# answers ceramic, moab, bfb, rush; ~60 blimp dmg/s)
-# Defence complement x1: 0-2-4 Avenger (sees camo; pops purple/black/white;
-# answers ceramic, moab, rush; ~48.3 blimp dmg/s)
+# Defence x2: 0-2-4 Sticky Bomb (sees camo; pops lead/purple/black/white;
+# answers moab, bfb, zomg, ddt; ~60 blimp dmg/s)
+# Defence complement x1: 4-2-0 Bloonjitsu (sees camo; pops purple/black/white;
+# answers ceramic, rush; ~10 blimp dmg/s)
 # Beast Handler line: 0-2-4 Giant Condor (pops lead/purple/black/white; ~0.7
 # blimp dmg/s)
 # Beast Handler second line (its other tier 5): 2-3-0 Velociraptor (pops
 # lead/purple/black/white; ~0.7 blimp dmg/s)
 # Answers, tried in order when a threat is due and the defence has none: the
 # tower's own path first, then a helper (for accounts whose own tiers are
-# still locked): camo: d1 0-1-0, else a Ninja Monkey 0-0-0; purple: y1 1-0-0,
-# else a Dart Monkey 0-0-0; lead: x1 0-2-0, else a Bomb Shooter 0-0-0;
-# ceramic: ex 0-0-0, else h_bomb (Bomb Shooter) 0-2-0; moab: d1 4-0-0, else a
-# Monkey Ace 0-0-0; bfb: d1 4-0-0, else h_dart (Dart Monkey) 0-0-4
-# Hero gwendolin: of every land hero the damage model rates, the build rates
+# still locked): camo: d1 0-0-0; purple: y1 1-0-0, else a Dart Monkey 0-0-0;
+# lead: x1 0-2-0, else a Bomb Shooter 0-0-0; ceramic: ex 0-0-0, else h_bomb
+# (Bomb Shooter) 0-2-0; moab: d1 0-0-3, else a Monkey Ace 0-0-0; bfb: d1
+# 0-0-4, else h_dart (Dart Monkey) 0-0-4
+# Hero churchill: of every land hero the damage model rates, the build rates
 # best with it on Monkey Meadow (medium); see gen_builds.pick_hero.
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 1.78, Beast Handler share of the cash
-#   45%
-#   deflation: kept - no gaps, min blimp ratio 1.61, Beast Handler share of the
-#   cash 26%
-#   medium: kept - no gaps, min blimp ratio 0.52, Beast Handler share of the
-#   cash 79%
-#   reverse: kept - no gaps, min blimp ratio 0.52, Beast Handler share of the
-#   cash 79%
-#   apopalypse: dropped - blimp damage 0.52 < 1.00
-#   hard: dropped - blimp damage 0.53 < 1.00
-#   double_hp: dropped - blimp damage 0.42 < 1.00
-#   half_cash: dropped - blimp damage 0.38 < 1.00
-#   abr: dropped - blimp damage 0.52 < 1.00
-#   impoppable: dropped - blimp damage 0.17 < 1.00
-#   chimps: dropped - blimp damage 0.19 < 1.00
+#   easy: kept - no gaps, min blimp ratio 3.72, Beast Handler share of the cash
+#   52%, answers bought: ace
+#   deflation: kept - no gaps, min blimp ratio 0.71, Beast Handler share of the
+#   cash 37%, answers bought: dart
+#   medium: kept - no gaps, min blimp ratio 2.80, Beast Handler share of the
+#   cash 55%, answers bought: ace
+#   reverse: kept - no gaps, min blimp ratio 2.80, Beast Handler share of the
+#   cash 55%, answers bought: ace
+#   apopalypse: dropped - the executor had to buy blimp damage from other towers
+#   hard: dropped - blimp damage 0.59 < 1.00
+#   double_hp: dropped - blimp damage 0.44 < 1.00
+#   half_cash: dropped - blimp damage 0.23 < 1.00
+#   abr: dropped - blimp damage 0.51 < 1.00
+#   impoppable: dropped - blimp damage 0.16 < 1.00
+#   chimps: dropped - blimp damage 0.18 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -48,26 +48,32 @@
 # games.
 id: solo_beast_handler
 xp_target: beast_handler   # the tower this build levels up
-hero: gwendolin   # equipped if owned, else a fallback (strategy.hero_for)
+hero: churchill   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, reverse]
 planner:
-  towers: {desperado: [4, 2, 4], beast_handler: [0, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.89, deflation: 0.89, medium: 0.81, reverse: 0.81}
+  towers: {ninja: [4, 2, 4], beast_handler: [0, 2, 4]}   # the crosspaths the build needs to be safe
+  base_success: {easy: 0.86, deflation: 0.85, medium: 0.8, reverse: 0.8}
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
 plan:
-  - {do: place, id: d1, kind: desperado, role: dps, segment: [0.0, 0.5]}   # defence: 4-2-0
+  - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
-  - {do: upgrade, id: d1, to: 2-1-0}   # cheap tiers first (and lead/camo if they are cheap)
-  - {do: place, id: d2, kind: desperado, role: dps, segment: [0.3, 0.9]}
-  - {do: upgrade, id: d2, to: 2-1-0}
-  - {do: upgrade, id: d1, to: 3-2-0}
-  - {do: upgrade, id: d1, to: 4-2-0}   # blimp power before the first MOAB round
+  - {do: upgrade, id: d1, to: 0-1-2}   # cheap tiers first (and lead/camo if they are cheap)
+  - {do: place, id: d2, kind: ninja, role: dps, segment: [0.3, 0.9]}
+  - {do: upgrade, id: d2, to: 0-1-2}
+  - {do: upgrade, id: d1, to: 0-2-3}
+  - {do: upgrade, id: d1, to: 0-2-4}   # blimp power before the first MOAB round
   - {do: place, id: x1, kind: beast_handler, role: dps, segment: [0.0, 0.5]}   # Beast Handler 0-2-4
   - {do: upgrade, id: x1, to: 0-2-2}
-  - {do: upgrade, id: d2, to: 3-2-0}
+  - {do: upgrade, id: d2, to: 0-2-3}
   - {do: upgrade, id: x1, to: 0-2-4}
-  - {do: place, id: dc, kind: desperado, role: dps, segment: [0.0, 0.7]}   # defence complement 0-2-4
-  - {do: upgrade, id: dc, to: 0-2-4}
-  - {do: upgrade, id: d2, to: 4-2-0}
+  - {do: place, id: dc, kind: ninja, role: dps, segment: [0.0, 0.7]}   # defence complement 4-2-0
+  - {do: upgrade, id: dc, to: 4-2-0}
+  - {do: upgrade, id: d2, to: 0-2-4}
   - {do: place, id: x2, kind: beast_handler, role: dps, segment: [0.3, 0.8]}
   - {do: upgrade, id: x2, to: 0-2-4}
   - {do: place, id: ex, kind: spike, role: exit}   # exit spike factory 2-0-0: catches leaks, spikes hit camo on the track
@@ -82,15 +88,13 @@ fill:
   - {do: upgrade, id: y1, to: 2-5-0}   # Giganotosaurus costs $60,000, more than half a Hard game: only in fill
   - {do: place, kind: beast_handler, role: dps, max: 8}   # surplus cash goes into Beast Handlers (XP follows the cash)
   - {do: upgrade, kind: beast_handler, to: 0-2-4}
-  - {do: upgrade, kind: desperado, to: 4-2-0}   # then the defence's own tier 4
+  - {do: upgrade, kind: ninja, to: 0-2-4}   # then the defence's own tier 4
 panic:
-  - {do: place, kind: desperado, role: dps}
+  - {do: place, kind: ninja, role: dps}
   - {do: place, kind: spike, role: exit}
 answers:
   camo:
-    - {do: upgrade, id: d1, to: 0-1-0}
-    - {do: place, id: d1, kind: desperado, role: dps, segment: [0.0, 0.5]}
-    - {do: place, id: h_ninja, kind: ninja, role: dps, segment: [0.0, 0.7]}
+    - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}
   purple:
     - {do: upgrade, id: y1, to: 1-0-0}
     - {do: place, id: y1, kind: beast_handler, role: dps, segment: [0.2, 0.9]}
@@ -104,15 +108,14 @@ answers:
     - {do: upgrade, id: h_bomb, to: 0-2-0}
     - {do: place, id: h_bomb, kind: bomb, role: dps, segment: [0.0, 0.7]}
   moab:
-    - {do: upgrade, id: d1, to: 4-0-0}
-    - {do: upgrade, id: d1, to: 4-1-0}
-    - {do: upgrade, id: d1, to: 4-2-0}
-    - {do: place, id: d1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: upgrade, id: d1, to: 0-0-3}
+    - {do: upgrade, id: d1, to: 0-1-3}
+    - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}
     - {do: place, id: h_ace, kind: ace, role: dps, segment: [0.0, 0.7]}
   bfb:
-    - {do: upgrade, id: d1, to: 4-0-0}
-    - {do: upgrade, id: d1, to: 4-1-0}
-    - {do: upgrade, id: d1, to: 4-2-0}
-    - {do: place, id: d1, kind: desperado, role: dps, segment: [0.0, 0.5]}
+    - {do: upgrade, id: d1, to: 0-0-4}
+    - {do: upgrade, id: d1, to: 0-1-4}
+    - {do: upgrade, id: d1, to: 0-2-4}
+    - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}
     - {do: upgrade, id: h_dart, to: 0-0-4}
     - {do: place, id: h_dart, kind: dart, role: dps, segment: [0.0, 0.7]}

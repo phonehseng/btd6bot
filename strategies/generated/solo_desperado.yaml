@@ -6,9 +6,9 @@
 # Desperados.
 #
 # Main line x3: 4-2-0 Twin Sixes (sees camo; pops lead/purple/black/white;
-# answers ceramic, moab, bfb, rush; ~60 blimp dmg/s)
+# answers ceramic, moab, rush; ~60 blimp dmg/s)
 #   path chosen at tier 4: 4-2-0 Twin Sixes (sees camo; pops
-#   lead/purple/black/white; answers ceramic, moab, bfb, rush; ~60 blimp dmg/s)
+#   lead/purple/black/white; answers ceramic, moab, rush; ~60 blimp dmg/s)
 # Complement x1: 0-2-4 Avenger (sees camo; pops purple/black/white; answers
 # ceramic, moab, rush; ~48.3 blimp dmg/s)
 # Answers, tried in order when a threat is due and the defence has none: the
@@ -17,7 +17,7 @@
 # 0-0-2; purple: a1 0-0-0; lead: a1 3-0-0, else a Bomb Shooter 0-0-0; ceramic:
 # a1 3-0-0, else ex (Spike Factory) 0-0-0, else h_bomb (Bomb Shooter) 0-2-0;
 # moab: a1 4-0-0, else another Desperado (up to 4), else a Monkey Ace 0-0-0,
-# else h_bomb (Bomb Shooter) 0-3-0; bfb: a1 4-0-0, else another Desperado (up
+# else h_bomb (Bomb Shooter) 0-3-0; bfb: a1 5-0-0, else another Desperado (up
 # to 4), else h_dart (Dart Monkey) 0-0-4; rush: a1 4-0-0, else a Boomerang
 # Monkey 3-0-0; zomg: a1 5-0-0, else another Desperado (up to 4), else h_bomb
 # (Bomb Shooter) 0-4-0
@@ -34,8 +34,8 @@
 #   88%, answers bought: bomb
 #   apopalypse: kept - no gaps, min blimp ratio 1.50, Desperado share of the
 #   cash 78%, answers bought: ace, bomb
-#   hard: kept - no gaps, min blimp ratio 1.29, Desperado share of the cash 90%,
-#   answers bought: bomb, dart
+#   hard: kept - no gaps, min blimp ratio 1.29, Desperado share of the cash 93%,
+#   answers bought: bomb
 #   double_hp: dropped - blimp damage 0.65 < 1.00
 #   half_cash: dropped - blimp damage 0.73 < 1.00
 #   abr: dropped - blimp damage 0.62 < 1.00
@@ -51,7 +51,7 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, primary_only, deflation, medium, reverse, apopalypse, hard]
 planner:
   towers: {desperado: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.92, primary_only: 0.92, deflation: 0.92, medium: 0.83, reverse: 0.83, apopalypse: 0.7, hard: 0.79}
+  base_success: {easy: 0.92, primary_only: 0.92, deflation: 0.92, medium: 0.83, reverse: 0.83, apopalypse: 0.7, hard: 0.82}
   # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
   # every cell that reaches the track turns on a gear
   # (tests/test_apopalypse_geared_offline.py).
@@ -115,9 +115,9 @@ answers:
     - {do: upgrade, id: h_bomb, to: 0-3-0}
     - {do: place, id: h_bomb, kind: bomb, role: dps, segment: [0.0, 0.7]}
   bfb:
-    - {do: upgrade, id: a1, to: 4-0-0}
-    - {do: upgrade, id: a1, to: 4-1-0}
-    - {do: upgrade, id: a1, to: 4-2-0}
+    - {do: upgrade, id: a1, to: 5-0-0}
+    - {do: upgrade, id: a1, to: 5-1-0}
+    - {do: upgrade, id: a1, to: 5-2-0}
     - {do: place, id: a1, kind: desperado, role: dps, segment: [0.0, 0.5]}
     - {do: place, kind: desperado, role: dps, segment: [0.0, 1.0], max: 4}
     - {do: upgrade, id: h_dart, to: 0-0-4}
