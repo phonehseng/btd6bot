@@ -55,8 +55,15 @@ hero: churchill   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, military_only, reverse, apopalypse]
 planner:
   towers: {buccaneer: [4, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.89, deflation: 0.89, medium: 0.83, military_only: 0.83, reverse: 0.83, apopalypse: 0.83}
+  base_success: {easy: 0.89, deflation: 0.89, medium: 0.83, military_only: 0.83, reverse: 0.83, apopalypse: 0.7}
   maps: ["Adora's Temple", "Another Brick", "Bloody Puddles", "Bloonarius Prime", Cargo, Chutes, Cubism, "End Of The Road", "Flooded Valley", "Four Circles", "Frozen Over", Haunted, "Lotus Island", "Luminous Cove", "Muddy Puddles", "Off The Coast", "Park Path", "Pat's Pond", Peninsula, Quad, Rake, Resort, Skates, "Skull Tweak", "Spa Pits", "Spice Islands", "Spring Spring", "The Cabin"]
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  excluded_by_mode: {apopalypse: [Geared, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: buccaneer, role: dps, segment: [0.0, 0.5]}   # main line: 0-4-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

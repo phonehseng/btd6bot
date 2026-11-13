@@ -55,7 +55,14 @@ hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, military_only, reverse, apopalypse]
 planner:
   towers: {sniper: [4, 2, 4], mortar: [0, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.89, deflation: 0.89, medium: 0.83, military_only: 0.83, reverse: 0.83, apopalypse: 0.8}
+  base_success: {easy: 0.89, deflation: 0.89, medium: 0.83, military_only: 0.83, reverse: 0.83, apopalypse: 0.7}
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  excluded_by_mode: {apopalypse: [Geared, "Tricky Tracks"]}
 plan:
   - {do: place, id: d1, kind: sniper, role: dps, segment: [0.0, 0.5]}   # defence: 4-2-0
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

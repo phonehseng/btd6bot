@@ -1492,7 +1492,20 @@ def base_success(v, carry=True):
         p -= SUPPORT_PENALTY
     if v.ratio is not None and v.ratio < S.Executor.RAMP_OK:
         p -= 0.05 * (1.0 - v.ratio / S.Executor.RAMP_OK)
-    return round(max(BASE_FLOOR, min(BASE_CEILING.get(fam, BASE_CEILING["impoppable"]), p)), 2)
+    cap = min(BASE_CEILING.get(fam, BASE_CEILING["impoppable"]), hand_prior_cap(v.mode))
+    return round(max(BASE_FLOOR, min(cap, p)), 2)
+
+
+@lru_cache(maxsize=None)
+def hand_prior_cap(mode):
+    """The highest base_success any hand-written strategy declares for this
+    mode (1.0 when none does): a generated build never starts above it.
+    The family ceiling alone let the new Apopalypse builds start at 0.86,
+    where the hand-tested Apopalypse strategies sit at 0.70 or less."""
+    hand = [((st.get("planner") or {}).get("base_success") or {}).get(mode)
+            for st in S.load_all().values() if not st.get("source") and not st.get("achievement")]
+    hand = [x for x in hand if x is not None]
+    return max(hand) if hand else 1.0
 
 
 def defence_only_strategy(b, strat):
@@ -1745,7 +1758,15 @@ def exclusions(kind):
         data = json.loads(EXCLUSIONS.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
-    return data.get(kind) or {}
+    out = dict(data.get(kind) or {})
+    every = data.get("every_build") or {}
+    if every.get("by_mode"):
+        # map/mode pairs no general build may play (the losses of the
+        # general builds there, e.g. Tricky Tracks' and Geared's), for the
+        # modes this generator now tries too
+        out["by_mode"] = {m: list(ms) for m, ms in every["by_mode"].items()}
+        out["why"] = list(out.get("why") or ()) + list(every.get("why") or ())
+    return out
 
 
 def to_yaml(r):
@@ -1801,6 +1822,9 @@ def to_yaml(r):
         lines += _wrap(note, prefix="  # ")
     if excluded.get("maps"):
         lines.append(f"  excluded_maps: {_fmt(excluded['maps'])}")
+    by_mode = {m: ms for m, ms in (excluded.get("by_mode") or {}).items() if m in d["modes"]}
+    if by_mode:
+        lines.append(f"  excluded_by_mode: {_fmt(by_mode)}")
     lines.append("plan:")
     lines += _steps_yaml(b.plan)
     lines.append("fill:")

@@ -59,7 +59,11 @@ def test_towers_the_hand_table_left_out_now_answer_on_merit():
     for kind in ("desperado", "mermonkey", "skywarden", "glue", "engineer"):
         assert kind in kinds, kind
     assert "ice" in {k for k, _, _ in DERIVED["moab"]}       # beyond the rush
-    assert "mortar" not in kinds                             # aimed: the model rates it at nothing
+    # the Mortar is rated at a fixed aim point now (damage model, merged
+    # 2026-11-12), so it may count where a build has it; it still needs
+    # aiming, so the executor never buys a new one as an answer
+    from btd6bot import threats as TH
+    assert TH.tower_facts("mortar").get("needs_aim")
 
 
 def test_a_desperado_build_is_covered_for_the_moab_now():
