@@ -20,6 +20,18 @@
 # (spike 5-0-2 by round 88): 0.62 at worst, 8 rounds under 1.0 (63, 78, 79, 83, 84, 87, 95,
 # 99). Without the late game the plan rated 0.17 at worst over rounds 87-100.
 #
+# The DDT answer (backlog 110, 2026-11-13): chimps_sub_druid_water lost this map and mode
+# twice at round 90 to its camo DDTs (case 20261113_000355), and this plan had none of its
+# own - its answer was a Maim MOAB sniper the plan never buys, and plan_first keeps the
+# cash for the $150,000 Super Mines. sub527 now grows to Pre-emptive Strike (2-5-0,
+# $54,065, sees camo) just before the Super Mines, in place of its 0-1-3 after them.
+# Replayed with tools/optimize_builds.replay_plan on Double Cash (the account's economy,
+# as above): rounds 90 / 93 / 95 / 99 at 1.72 / 1.65 / 0.98 / 1.59, before 4.51 / 3.26 /
+# 0.77 / 0.82; the rounds under 1.0 after 40 are now 78 (0.81), 94 (0.68, BFBs and ZOMGs
+# while the Super Mines waits) and 95, before 78, 83, 84, 87, 95 and 99 (0.61 at worst).
+# On base income (no boosts, the replay's default) the plan reaches neither tower by
+# round 90, which stays at 0.23 either way; 99 goes 0.06 -> 0.77.
+#
 # The hero stands where the late game was rated with it, off every pin.
 id: patspond_impoppable
 map: Pat's Pond
@@ -142,11 +154,11 @@ plan:
   - {do: place, id: sub527, kind: sub, role: support, at: [0.238, 0.266]}
   - {do: upgrade, id: dru512, to: 1-3-0}
   - {do: place, id: mer528, kind: mermonkey, role: support, at: [0.633, 0.76]}
+  # the DDT answer, before the Super Mines: sub527 to Pre-emptive Strike (2-5-0), which
+  # sees camo (backlog 110, see the header)
+  - {do: upgrade, id: sub527, to: 2-5-0}
   - {do: upgrade, id: spi_carry1, to: 5-0-2}
   - {do: place, id: hel529, kind: heli, role: support, at: [0.088, 0.828]}
-  - {do: upgrade, id: sub527, to: 0-0-2}
-  - {do: upgrade, id: sub527, to: 0-1-2}
-  - {do: upgrade, id: sub527, to: 0-1-3}
   - {do: upgrade, id: eng514, to: 3-2-0}
   - {do: place, id: hel530, kind: heli, role: support, at: [0.74, 0.198]}
   - {do: upgrade, id: hel529, to: 1-0-0}
@@ -220,8 +232,8 @@ answers:
     - {do: upgrade, id: s1, to: 4-2-0}   # Maim MOAB (the late plan has no BFB answer of its own)
     - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.729, 0.93]}
   ddt:
-    - {do: upgrade, id: s1, to: 4-2-0}
-    - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.729, 0.93]}
+    - {do: upgrade, id: sub527, to: 2-5-0}   # Pre-emptive Strike: the plan's own DDT answer
+    - {do: place, id: sub527, kind: sub, role: support, at: [0.238, 0.266]}
   lead:
     - {do: upgrade, id: a1, to: 1-0-0}
   ceramic:

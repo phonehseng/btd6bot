@@ -109,6 +109,38 @@
 #   0.54 -> 0.69, 99 0.93 -> 0.86, 100 0.59 -> 0.53; rounds 6-30 unchanged
 #   (worst 1.24).
 #
+# The Eliminator on the right-hand branch (2026-11-13, loss case
+# 20261113_020851_Haunted_chimps: round 91 lost, rated 1.31, blimp check
+# 0.4x; the round-96 loss of 00:40 the same way). Haunted's two routes
+# cross: path 1 comes in on the left, climbs the left branch of the stairs
+# to the door and comes down the RIGHT branch to the right-hand exit; path 0
+# the mirror image. The video of round 91 shows the BFBs of path 1 alive at
+# the right-hand exit and their ceramics leaking there. Since the hardening
+# moved the wizard (0.729, 0.709) and the glue into the Radar on the left,
+# no tower but the crossbow and the boat stood by the last 300 units of path
+# 1 (the board's reach of each route's last 300 units, radius 54/100:
+# e1 106/0, x2 86/0, r1 172/0, w1 160/0, x1 0/176, b1 126/120); the left
+# exit had five towers. The two games that held round 91 (2026-11-12 19:45
+# and 22:23) still had the wizard and the glue by the right-hand exit.
+# The MOAB Eliminator now stands at (0.558, 0.598), beside the right
+# branch: 208 units of path 1's last 300 and 208 of path 0's climb in its
+# 54-unit range, where (0.174, 0.692) reached 106 units of path 0's exit
+# and path 1's entry. Out of the Radar there, but it popped nothing of the
+# camo DDT rounds at the old spot either (the damage model credited it 0.00
+# for rounds 93 and 95).
+#   The damage model and the blimp check do not see this: both rate the
+# board the same with the Eliminator on either side (blimp check 85-100
+# within 0.07 of before: 90 1.31 -> 1.32, 91 0.41, 93 0.39 -> 0.40, 95 0.63,
+# 97 0.50, 99 0.47, 100 0.40; model 88 1.30 -> 1.51, 91 1.51 -> 1.58, 96
+# 0.80 -> 0.84, 97 1.26 -> 1.33, 100 0.53 -> 0.61). Re-rated with today's
+# model, 29 of the 31 late CHIMPS rounds the journals lost rate under 1.1;
+# Haunted's rounds 91 (1.51) and 96 (1.83) are the two that do not, the
+# model's credit going to map-wide towers (Flagship planes 0.80 of 1.51).
+#   More blimp damage does not fit the guide's cash here: a Sub Commander
+# or a second Eliminator before Cripple MOAB pushes the plan past round 100
+# (blimp check 0.13-0.45 either way), the Bloon Solver variant (eee79df)
+# brings the Eliminator at round 97 (0.04-0.21 for rounds 93-98).
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -121,7 +153,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 0, 3], sub: [2, 0, 4], buccaneer: [5, 2, 0], village: [4, 2, 0], mermonkey: [4, 2, 0], alchemist: [4, 0, 1], bomb: [0, 5, 0], wizard: [4, 2, 0], sniper: [5, 1, 0], boomerang: [3, 0, 2]}
-  revised: "2026-11-12T23:59"   # hardened (see "Hardened")
+  revised: "2026-11-13T03:30"   # the Eliminator by the right-hand branch (see "The Eliminator on the right-hand branch")
   maps: [Haunted]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -157,7 +189,7 @@ plan:
   - {do: place, id: a1, kind: alchemist, role: support, near: [s1, v1], at: [0.27, 0.521]}  # by the wizard, the sniper and the bomb (was 0.558, 0.589: in reach of no tower)
   - {do: upgrade, id: a1, to: 4-0-1}                                            # Stronger Stimulant
   - {do: upgrade, id: s1, to: 4-1-0}                                            # Night Vision, Maim MOAB
-  - {do: place, id: e1, kind: bomb, role: dps, at: [0.174, 0.692]}                # added: the round 90-100 blimp answer, in the Radar (see "Hardened")
+  - {do: place, id: e1, kind: bomb, role: dps, at: [0.558, 0.598]}                # added: the round 90-100 blimp answer, by the right-hand exit's branch (see "The Eliminator on the right-hand branch")
   - {do: upgrade, id: e1, to: 0-4-0}                                              # MOAB Assassin
   - {do: upgrade, id: e1, to: 0-5-0}                                              # MOAB Eliminator (round 88)
   - {do: upgrade, id: s1, to: 5-1-0}                                            # added: Cripple MOAB, round 100's BAD

@@ -524,6 +524,33 @@ def test_a_buffer_takes_the_cell_with_room_round_it():
     assert pinner.room("village", pinner.cells["v1"]) == most
 
 
+def test_pats_pond_has_its_own_ddt_answer():
+    """Pat's Pond Impoppable (backlog 110): chimps_sub_druid_water lost round
+    90's camo DDTs twice there (case 20261113_000355), and this map build had
+    no DDT answer of its own - its `ddt` answer was a Maim MOAB sniper the
+    plan never buys, and plan_first keeps the cash for the plan. Now sub527
+    grows to Pre-emptive Strike (2-5-0) before the Super Mines; the `ddt`
+    answer names that plan tower, it sees camo, and the live forecast rates
+    the boards of DDT rounds 90, 93 and 99 at 1.0 or more (round 99 was 0.81
+    before)."""
+    from btd6bot import dps_model as D
+    from btd6bot.forecast import RoundForecast
+    _, d = _build("patspond")
+    spots = {st["id"]: st["at"] for st in d["plan"] if st["do"] == "place"}
+    answer = d["answers"]["ddt"]
+    assert answer[0] == {"do": "upgrade", "id": "sub527", "to": "2-5-0"}, answer
+    assert all(st["id"] in spots for st in answer), answer
+    assert {"do": "upgrade", "id": "sub527", "to": "2-5-0"} in d["plan"]
+    assert D.detects_camo("sub", (2, 5, 0))
+    forecast = RoundForecast("Pat's Pond", "impoppable")
+    assert forecast._ready()
+    for rnd in (90, 93, 99):
+        board = _board_at_start(d, rnd)
+        assert board["sub527"].tiers == (2, 5, 0), (rnd, board["sub527"].tiers)
+        margin = forecast.margin(list(board.values()), rnd)
+        assert margin >= 1.0, (rnd, round(margin, 2))
+
+
 def _spec(sid, maps=None):
     return P.StrategySpec.from_any({"id": sid, "towers": {}, "modes": ["impoppable"],
                                     "base_success": {"impoppable": 0.5}, "maps": maps})

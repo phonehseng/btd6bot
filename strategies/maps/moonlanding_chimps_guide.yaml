@@ -129,7 +129,7 @@ plan:
   - {do: upgrade, id: p1, to: 2-0-5}                                            # Perma-Spike
 answers:
   camo: [{do: upgrade, id: s1, to: 0-1-0}]
-  lead: [{do: place, id: b1, kind: bomb, role: dps, at: [0.623, 0.828]}]
+  lead: [{do: place, id: b1, kind: bomb, role: dps, at: [0.623, 0.538]}]
   ceramic: [{do: upgrade, id: h1, to: 3-0-2}]
   moab: [{do: upgrade, id: h1, to: 3-0-2}]
   camo_ceramic: [{do: upgrade, id: v1, to: 2-2-0}]
