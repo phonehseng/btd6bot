@@ -154,6 +154,42 @@ def test_round_40_has_the_l_fork_wizard_after_the_sticky_bombs():
     assert lost < 1.0 <= now, (lost, now)
 
 
+A_FORK = "Path1+Path1-split2"
+A_GROUP_END = 178       # units along the A fork where the A group's reach ends (nA, the farthest)
+MIN_LOWER_REACH = 60    # units of the A fork below that a plan tower must reach
+
+
+def test_a_fork_lower_half_is_covered_before_the_supers():
+    """Case 20261112_194415_Ravine_magic_only (2026-11-12 19:31, lost round
+    60): the BFB and its MOABs were popped beside A, and their ceramics ran
+    the A fork's lower half, where only wM reached 35 units; one got out.
+    The plan now has a ninja in the middle that reaches that stretch as a
+    4-0-2, bought before the first Super Monkey, and no $21,600 Sun Avatar
+    stands in the plan ahead of the cheaper druid and ninja steps (in the
+    lost game that step blocked the plan from round 52 while $23k went to
+    off-plan towers)."""
+    fc = _forecast()
+    plan = S.load_all()[BUILD]["plan"]
+    fork = [p["name"] for p in fc.track.paths].index(A_FORK)
+
+    def lower_reach(step, tiers):
+        x, z, _ = fc.track.frac_to_world(*step["at"])
+        sight = fc.sight if P.needs_sight(step["kind"]) else None
+        zone = fc.track.zones(x, z, D.profile(step["kind"], tiers).range, sight=sight)[fork]
+        if not zone:
+            return 0.0
+        return max(0.0, zone.entry + zone.length - max(A_GROUP_END, zone.entry))
+
+    order = [(st.get("id"), st.get("to") or st["do"]) for st in plan]
+    nm = next(st for st in plan if st.get("id") == "nM" and st["do"] == "place")
+    assert lower_reach(nm, (4, 0, 2)) >= MIN_LOWER_REACH, lower_reach(nm, (4, 0, 2))
+    first_super = next(i for i, st in enumerate(plan) if st.get("kind") == "super")
+    assert order.index(("nM", "4-0-2")) < first_super
+    first_avatar = next(i for i, (_, to) in enumerate(order) if to == "3-0-2")
+    for step in (("dC", "0-3-1"), ("nL2", "4-0-2"), ("dA", "0-3-1")):
+        assert order.index(step) < first_avatar, step
+
+
 def test_general_build_is_kept_off_ravine_magic_only():
     d = S.load_all()[GENERAL]
     assert MAP not in d["planner"]["excluded_maps"]      # its Medium/Hard stay open there
