@@ -32,9 +32,16 @@
 #   cash 90%
 #   reverse: kept - no gaps, min blimp ratio 4.45, Heli Pilot share of the cash
 #   90%
-#   apopalypse: dropped - blimp damage 0.21 < 1.00
-#   hard: kept - no gaps, min blimp ratio 1.73, Heli Pilot share of the cash
-#   88%, answers bought: boomerang
+#   apopalypse: kept - no gaps, min blimp ratio 4.08, Heli Pilot share of the
+#   cash 88%, answers bought: ace
+#   hard: kept - no gaps, min blimp ratio 1.72, Heli Pilot share of the cash
+#   82%, answers bought: ace
+#   double_hp: dropped - blimp damage 0.83 < 1.00
+#   half_cash: dropped - blimp damage 0.64 < 1.00
+#   abr: kept - no gaps, min blimp ratio 1.15, Heli Pilot share of the cash 76%,
+#   answers bought: ace, ninja
+#   impoppable: dropped - blimp damage 0.23 < 1.00
+#   chimps: dropped - blimp damage 0.25 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -42,10 +49,20 @@
 id: solo_heli
 xp_target: heli   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, deflation, medium, military_only, reverse, hard]
+modes: [easy, deflation, medium, military_only, reverse, apopalypse, hard, abr]
 planner:
   towers: {heli: [3, 2, 3]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.92, deflation: 0.92, medium: 0.86, military_only: 0.86, reverse: 0.86, hard: 0.77}
+  base_success: {easy: 0.92, deflation: 0.92, medium: 0.86, military_only: 0.86, reverse: 0.86, apopalypse: 0.7, hard: 0.82, abr: 0.79}
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {apopalypse: ["#Ouch", Erosion, Geared, Sanctuary, "Tricky Tracks"], abr: ["Tricky Tracks"], military_only: [Sanctuary, "Tricky Tracks"], reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: o1, kind: sniper, role: dps, segment: [0.0, 0.6]}   # Heli Pilot costs $1,500 - more than the $650 start: a Sniper Monkey holds the first rounds
   - {do: place, id: a1, kind: heli, role: dps, segment: [0.0, 0.5]}   # main line: 3-2-0

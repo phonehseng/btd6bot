@@ -47,6 +47,9 @@ How a build is made
    (and Apopalypse) also needs the damage to come from the build itself.
    base_success comes from the same results and stays below the hand-tested
    strategies of the same difficulty: the planner calibrates it from games.
+6. Hero. Every land hero the damage model rates is tried with the build on
+   a reference map, and the build names the one it rates best with
+   (pick_hero).
 
 Usage:
     python tools/gen_builds.py              # rewrite every build + docs/builds.md, print a report
@@ -82,17 +85,22 @@ def _load_tool(name):
     """Another script of tools/ as a module (tools/ is not a package)."""
     spec = importlib.util.spec_from_file_location(f"_gen_{name}", ROOT / "tools" / f"{name}.py")
     mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod     # dataclasses look their module up there (optimize_builds)
     spec.loader.exec_module(mod)
     return mod
 
 
 SIM = _load_tool("simulate_threats")
+OPT = _load_tool("optimize_builds")
 
 OUT_DIR = S.STRAT_DIR / "generated"
 DOC = ROOT / "docs" / "builds.md"
 DOC_START, DOC_END = "<!-- builds:start -->", "<!-- builds:end -->"
 STD = "standard"
-HERO = "quincy"      # owned by every account and placed on land: the bot never lacks him
+# The hero a build names when pick_hero cannot choose (no damage model
+# data): owned by every account and placed on land. It used to be every
+# build's hero (docs/tower_exclusions_audit.md item 1).
+HERO = "quincy"
 
 # ---------------------------------------------------------------------------
 # Money: what the game pays (data/rounds.json, base rates, no Double Cash)
@@ -159,7 +167,20 @@ MIN_RATIO = {"easy": S.Executor.RAMP_PANIC, "medium": S.Executor.RAMP_PANIC,
 # Win-chance priors of a generated build, per difficulty: below every
 # hand-tested strategy of the same difficulty (Easy 0.94-0.98, Medium
 # 0.90-0.95, Hard 0.85-0.88), because no generated build has been played yet.
-BASE_CEILING = {"easy": 0.92, "medium": 0.86, "hard": 0.80}
+#
+# Hard used to start at 0.80, under the planner's paragon bar
+# (planner.Config.paragon_min_p, 0.85): no generated Hard build could ever
+# be a paragon game (docs/tower_exclusions_audit.md item 9). It now starts
+# at that bar, which is still the bottom of the hand-tested Hard range, and
+# only a build that passed Hard cleanly gets there (base_success takes off
+# helpers, a support build and blimp damage short of the executor's bar).
+# The planner trusts no untested Hard prior above 0.85 anyway
+# (runner.planner_specs) and calibrates it from games. The Impoppable
+# family (one life, to round 100) starts one hand-tested step lower: the
+# gap between the Medium and Hard ranges above.
+HAND_STEP = 0.05
+BASE_CEILING = {"easy": 0.92, "medium": 0.86, "hard": P.DEFAULT_CONFIG.paragon_min_p}
+BASE_CEILING["impoppable"] = round(BASE_CEILING["hard"] - HAND_STEP, 2)
 # A mode in which the tower being levelled ends with less than a fifth of the
 # cash spent is no XP game for it (the planner reads the share from the plan,
 # which would overstate it), so the mode is dropped. A fifth of a Medium game
@@ -231,11 +252,39 @@ def calendar_pairs():
     return tuple((r, n) for n, rounds in TH.calendar(STD, 1, 100).items() for r in rounds)
 
 
+# Towers the hand table (strategy.HAND_ANSWERS) lists for some strength threat.
+HAND_STRENGTH_KINDS = frozenset(k for t, entries in S.HAND_ANSWERS.items() if t not in PROPERTY
+                                for k, _, _ in entries)
+
+
+def answer_table(threat):
+    """The (tower, path, tier) answers to a strength threat the generator
+    builds with: the hand-listed ones (strategy.HAND_ANSWERS), and the
+    damage model's (strategy._answers_from_damage_model) only for towers the
+    hand table lists for no strength threat at all (HAND_STRENGTH_KINDS).
+
+    With every model answer, Tack's complement went from Overdrive 0-2-4 to
+    Blade Maelstrom 0-4-2 (the model lists 0-4-x as a MOAB answer), and the
+    build lost all its modes: the threat simulation's blimp damage table
+    (counters.json blimp_dps, hand figures for the Tack) has nothing for
+    that path. Scored with the model's BFB, ZOMG and BAD answers, the Ace's
+    main line moved from Operation: Dart Storm 4-2-0 to Neva-Miss 0-2-3 and
+    the build lost Hard (blimp damage 0.78). So a tower with any hand-listed
+    strength answer keeps to the hand table, and the towers it never lists
+    (Desperado, Glue, Mermonkey, Skywarden, Engineer, Beast Handler ...) get
+    the model's (docs/tower_exclusions_audit.md item 3)."""
+    hand = S.HAND_ANSWERS.get(threat)
+    full = S.ANSWERS.get(threat, ())
+    if hand is None or threat in ("camo", "lead"):
+        return list(full)
+    return [a for a in full if a in hand or a[0] not in HAND_STRENGTH_KINDS]
+
+
 def answers_threat(kind, tiers, threat, towers):
     """Does a tower of this kind at these tiers answer a strength threat the
     way coverage() and the executor count it (strategy.ANSWERS)? A DDT answer
     must also hurt DDTs itself (camo + lead + black at once)."""
-    for k, path, tier in S.ANSWERS.get(threat, ()):
+    for k, path, tier in answer_table(threat):
         if k == kind and (path == 0 or tiers[path - 1] >= tier):
             if threat == "ddt":
                 me = {t[0] for t in towers if t[1] == kind and tuple(t[2]) == tuple(tiers)}
@@ -483,6 +532,9 @@ class Build:
     history: dict = field(default_factory=dict)    # tower id -> tiers after each plan step
     maps: list | None = None
     uses_income: bool = False
+    hero: str = HERO                               # pick_hero, set by _assemble
+    extra: int = 0                                 # Hard reinforcement copies (generate)
+    carry: bool = True                             # solo build (False: defence + the tower)
 
     def place(self, tid, kind, why=None, **kw):
         st = {"do": "place", "id": tid, "kind": kind, **kw}
@@ -509,10 +561,17 @@ class Build:
 
     def strategy(self, modes=(), base=None):
         """The build as a strategy dict (what load_all would read)."""
-        d = {"id": f"solo_{self.kind}", "xp_target": self.kind, "hero": HERO,
+        d = {"id": f"solo_{self.kind}", "xp_target": self.kind, "hero": self.hero,
              "modes": list(modes)}
         if self.uses_income:
             d["uses_income"] = True
+        gen = {}
+        if self.extra:
+            gen["hard_extra"] = self.extra
+        if self.carry != is_carry(self.kind):
+            gen["carry"] = self.carry
+        if gen:
+            d["generator"] = gen      # how to make it again (tests/test_generated_builds_offline.py)
         planner = {"towers": {k: list(v) for k, v in self.core.items()},
                    "base_success": dict(base or {m: BASE_FLOOR for m in modes})}
         if self.maps is not None:
@@ -564,7 +623,7 @@ def _affordable_tier(line, top):
     return tier
 
 
-def _late_power(b, ids_main, main, ids_comp, comp):
+def _late_power(b, ids_main, main, ids_comp, comp, before_tier5=None):
     """One main copy (and the first complement) on to tier 4 and tier 5 - one
     tier 5 per path, as the game allows - and the second main copy to tier 4.
     All tier 3/4 upgrades come before the tier 5s. A tier dearer than half a
@@ -584,11 +643,17 @@ def _late_power(b, ids_main, main, ids_comp, comp):
             b.fill.append(({"do": "upgrade", "id": tid, "to": cross(line.at(top))},
                            f"{upgrade_name(line.kind, line.path, reach + 1)} costs ${price:,}, more than "
                            f"half a Hard game: only in fill"))
+    hook_done = before_tier5 is None
     for tier, tid, line in sorted(steps, key=lambda s: s[0]):
+        if tier == 5 and not hook_done:
+            before_tier5()
+            hook_done = True
         name5 = upgrade_name(line.kind, line.path, tier)
         why = (f"tier 5 {name5} (${T.upgrade_cost(line.kind, line.path, 5):,}): one per path, "
                f"the biggest XP sink" if tier == 5 else f"{name5}: late-game power")
         b.upgrade(tid, line.at(tier), why)
+    if not hook_done:
+        before_tier5()
 
 
 def _radar_village(b, near):
@@ -631,7 +696,7 @@ def _answering_crosspaths(kind, threat, final, towers=()):
         opts = TH.covering_crosspaths(kind, TH.sig_from_name(threat), caps=final)
     else:
         opts = []
-        for k, path, tier in S.ANSWERS.get(threat, ()):
+        for k, path, tier in answer_table(threat):
             want = path_tiers(path, tier) if path else (0, 0, 0)
             if k == kind and all(w <= f for w, f in zip(want, final)):
                 if threat != "ddt" or answers_threat(kind, want, "ddt", list(towers) + [("me", kind, want)]):
@@ -685,8 +750,14 @@ def _helper_options(threat, b, exclude, allowed_cats, water_only, used_ids=()):
     sig = TH.sig_from_name(threat) if threat in PROPERTY else None
     out = []
     for kind in T.TOWERS:
-        if kind in exclude or kind in S.INCOME_TOWERS or needs_aim(kind) or kind in T.GIFT_BOX_TOWERS:
-            continue          # gift-box towers come last to an account: no helper may need one
+        # Gift-box towers (Desperado, Mermonkey, Skywarden, Beast Handler,
+        # Dartling) were never helpers: "they may be locked". The executor
+        # skips a step whose tower the account lacks and goes on to the next
+        # answer, as for any locked tower, and the live account has all of
+        # them (docs/tower_exclusions_audit.md item 9). A tower that must be
+        # aimed (the Dartling) is still no helper.
+        if kind in exclude or kind in S.INCOME_TOWERS or needs_aim(kind):
+            continue
         if allowed_cats is not None and category(kind) not in allowed_cats:
             continue
         if placement(kind) == "water" and not water_only:
@@ -725,7 +796,11 @@ def _more_copies(b, kind):
     estimate first buys more of the tower the plan buys anyway, and the
     helper after it only comes when they all stand (or the tower's own tiers
     are locked)."""
-    planned = [st for st, _ in b.plan if st.get("do") == "place" and st.get("kind") == kind]
+    # not the Hard reinforcement's late copies (_extra_copies): counting them
+    # let this step buy bare copies early - on the sub build one more
+    # ("max" 7 -> 8) took the round-40 blimp ratio from 3.72 to 0.41
+    planned = [st for st, _ in b.plan if st.get("do") == "place" and st.get("kind") == kind
+               and not str(st.get("id", "")).startswith(EXTRA_PREFIXES)]
     if not planned:
         return None
     first = planned[0]
@@ -871,8 +946,26 @@ def _lacking(p_main, p_other):
     return props
 
 
-def build_carry(kind):
+EXTRA_PREFIXES = ("hx", "dx")      # tower ids of the Hard reinforcement's copies
+
+
+def _extra_copies(b, kind, line, n, segs, prefix="hx"):
+    """The Hard reinforcement (generate): n more copies of a line at its
+    working crosspath, placed after the tier 3/4 upgrades and before the
+    tier 5s (_late_power's before_tier5): at the very end of a plan a Hard
+    game does not finish by its last blimp rounds, they were never bought
+    (the sub build stayed at 0.84 with one to four of them)."""
+    for i in range(n):
+        tid = f"{prefix}{i + 1}"
+        b.place(tid, kind, "Hard: more blimp damage than a Medium game needs" if i == 0 else None,
+                role="dps", segment=list(segs[(i + 2) % len(segs)]))
+        b.upgrade(tid, line.work)
+
+
+def build_carry(kind, extra=0):
     """A solo build: copies of the tower on its main and complement lines.
+    extra: more main-line copies than the Medium budget sizes it for (the
+    Hard reinforcement, see generate).
 
     Order of the plan, with the reason for each part:
       * two copies at their cheap first tiers (rounds 1-20);
@@ -947,7 +1040,7 @@ def build_carry(kind):
     if kind not in S.EXIT_KINDS:
         _exit_spike(b)
     # -- late game: tier 4 and the tier 5s ----------------------------------------------
-    _late_power(b, a, main, k, comp)
+    _late_power(b, a, main, k, comp, before_tier5=lambda: _extra_copies(b, kind, main, extra, segs))
 
     b.need(kind, main.work)
     if comp:
@@ -963,9 +1056,11 @@ def build_carry(kind):
     return b
 
 
-def build_support(kind):
+def build_support(kind, extra=0):
     """A support/income/aimed tower: a compact defence of the best carry that
-    may stand beside it, then the tower itself, and the surplus into it."""
+    may stand beside it, then the tower itself, and the surplus into it.
+    extra: more copies of the tower itself when it has blimp damage of its
+    own, else more defence copies (the Hard reinforcement, see generate)."""
     b = Build(kind)
     dkind = defence_for(kind)
     dmain = main_line(dkind)
@@ -1009,6 +1104,9 @@ def build_support(kind):
     # the tower being levelled must outnumber the defence in the plan.
     n_def = 2 + (1 if dcomp else 0)
     n_k = max(n_k, n_def + 1 - (1 if comp else 0))
+    own_extra = extra if pk.blimp > 0 and not needs_aim(kind) else 0
+    extra_def = extra - own_extra
+    n_k = max(n_k, n_def + extra_def + 1 - (1 if comp else 0))   # still outnumbers the defence
     kids = [f"x{i + 1}" for i in range(n_k)]
 
     def place_k(i, why=None):
@@ -1065,7 +1163,9 @@ def build_support(kind):
             kw.update(near=["d1", "d2"], near_radius=8)
         b.place("y1", kind, f"second {name(kind)} line: {cross(comp.work)}", **kw)
         b.upgrade("y1", comp.work)
-    _late_power(b, kids, line, kc, comp)
+    _late_power(b, kids, line, kc, comp, before_tier5=lambda: (
+        _extra_copies(b, kind, line, own_extra, _segments_for(kind)),
+        _extra_copies(b, dkind, dmain, extra_def, SEGMENTS, prefix="dx")))
 
     b.need(dkind, dmain.work)
     if dcomp:
@@ -1088,11 +1188,144 @@ def build_support(kind):
 
 
 # ---------------------------------------------------------------------------
+# The hero, on merit
+# ---------------------------------------------------------------------------
+# Every build used to name Quincy (docs/tower_exclusions_audit.md item 1).
+# Now each build is rated in the damage model with every hero the model can
+# rate, and the best one is named: the build's plan is bought on a
+# reference map as a Medium game pays for it, round by round, with the hero
+# at its place in the plan, at its own price and at its level by round. The
+# score is the mean log2(margin) over the sample rounds, as
+# tools/rank_heroes.py scores a hero alone. A hero's price and its buffs to
+# the build's own towers (Obyn's to magic towers, Etienne's camo) count this
+# way, which a ranking of heroes alone cannot see.
+#
+# A generated build plays on any map, so only heroes that stand on land are
+# tried. Corvus has no profile (dps_model.UNRATED_HEROES); Geraldo is rated
+# on his own attack (the game model exports no shop, and the bot cannot use
+# it). An account that lacks the named hero gets the best owned one
+# (strategy.hero_for).
+HERO_MAP = "Monkey Meadow"
+HERO_MODE = "medium"
+HERO_ROUNDS = tuple(range(8, 81, 8))
+
+
+def hero_candidates():
+    """Land heroes the damage model can rate, best on merit first."""
+    from btd6bot import dps_model as D
+    return [h for h in T.hero_merit_order()
+            if h not in D.UNRATED_HEROES and (T.HEROES[h].get("placement") or "land") == "land"
+            and D.profile(D.hero_kind(h), (1,)) is not None]
+
+
+def _step_cost(step, standing):
+    """Medium price of a place or upgrade step (the hero's is priced apart).
+    standing: {tower id: (kind, tiers)} before the step."""
+    if step["do"] == "place":
+        return T.tower_cost(step["kind"])
+    kind, have = standing[step["id"]]
+    want = S.parse_cross(step["to"])
+    return sum(T.upgrade_cost(kind, path + 1, tier) for path in range(3)
+               for tier in range(have[path] + 1, want[path] + 1))
+
+
+def boards_by_round(plan, hero, rounds):
+    """({round: [(id, kind, tiers)]}, {id: round placed}): the plan's steps
+    bought in order, each once the cash a Medium game has paid by the start
+    of that round (income) covers it, the hero at its own price."""
+    standing, placed, boards = {}, {}, {}
+    spent, i = 0.0, 0
+    for rnd in range(1, max(rounds) + 1):
+        budget = income(rnd - 1) if rnd > 1 else START_CASH
+        while i < len(plan):
+            st = plan[i]
+            if st["do"] == "place":
+                cost = T.hero_cost(hero) if st["kind"] == "hero" else _step_cost(st, standing)
+            elif st["do"] == "upgrade" and st.get("id") in standing:
+                cost = _step_cost(st, standing)
+            else:
+                i += 1              # nothing to buy (an upgrade of a tower not placed)
+                continue
+            if spent + cost > budget:
+                break
+            spent += cost
+            if st["do"] == "place":
+                standing[st["id"]] = (st["kind"], (0, 0, 0))
+                placed[st["id"]] = rnd
+            else:
+                kind, have = standing[st["id"]]
+                standing[st["id"]] = (kind, tuple(max(a, b) for a, b in zip(have, S.parse_cross(st["to"]))))
+            i += 1
+        if rnd in rounds:
+            boards[rnd] = [(tid, kind, tiers) for tid, (kind, tiers) in standing.items()]
+    return boards, placed
+
+
+def rate_hero(plan, hero, setup):
+    """Mean log2(margin) of the plan with this hero over HERO_ROUNDS on the
+    reference map (setup: optimize_builds.MapSetup of HERO_MAP). A round
+    with nothing standing scores the model's floor."""
+    import math
+    from btd6bot import dps_model as D
+    boards, placed = boards_by_round(plan, hero, HERO_ROUNDS)
+    ev = OPT.Evaluator(setup, HERO_MODE, hero)
+    spots, taken, logs = {}, [], []
+    for rnd in HERO_ROUNDS:
+        towers = []
+        for tid, kind, tiers in boards[rnd]:
+            if tid not in spots:            # each tower keeps the spot it was given first
+                spots[tid] = (setup.hero_spot(hero, taken) if kind == "hero"
+                              else setup.free_spot(kind, taken))
+                if spots[tid] is not None:
+                    taken.append(OPT.Tower(tid, kind, spots[tid], (0, 0, 0)))
+            if spots[tid] is None:
+                continue
+            if kind == "hero":
+                tiers = OPT.hero_tiers_at(hero, HERO_MAP, HERO_MODE, None, placed[tid], rnd)
+            towers.append(OPT.Tower(tid, kind, spots[tid], tiers))
+        margin = ev.margins(towers, [rnd])[rnd] if towers else D.MARGIN_LO
+        logs.append(math.log2(min(max(margin, D.MARGIN_LO), D.MARGIN_HI)))
+    return sum(logs) / len(logs)
+
+
+_HERO_PICKS = {}
+
+
+def pick_hero(b):
+    """The hero the build rates best with (rate_hero); HERO when the damage
+    model is missing. A tie goes to the hero ranked higher on merit.
+    Remembered by the plan's steps: generate() assembles a build several
+    times, and the hero does not change the steps."""
+    from btd6bot import dps_model as D
+    if not D.available() or not D.HERO_RATING:
+        return HERO
+    plan = [dict(st) for st, _ in b.plan]
+    key = repr(plan)
+    if key not in _HERO_PICKS:
+        setup = OPT.MapSetup(HERO_MAP, HERO_MODE)
+        best = None
+        for hero in hero_candidates():
+            score = rate_hero(plan, hero, setup)
+            if best is None or score > best[0] + 1e-9:
+                best = (score, hero)
+        _HERO_PICKS[key] = best[1] if best else HERO
+    return _HERO_PICKS[key]
+
+
+# ---------------------------------------------------------------------------
 # Candidate modes and validation
 # ---------------------------------------------------------------------------
 
 def candidate_modes(kind):
-    """Modes worth trying, in the order the YAML lists them."""
+    """Modes worth trying, in the order the YAML lists them: every mode the
+    game has, the category-only ones for the tower's own category, and
+    CHIMPS only for a tower that is not income (it forbids income towers).
+
+    Double HP, Half Cash, ABR, Impoppable and CHIMPS were never tried
+    (docs/tower_exclusions_audit.md item 9); each is now kept wherever the
+    build passes the same checks (judge: coverage, the offline threat
+    simulation, and for the Hard and Impoppable families blimp damage of
+    the build's own)."""
     modes = ["easy"]
     if category(kind) == "primary":
         modes.append("primary_only")
@@ -1102,7 +1335,17 @@ def candidate_modes(kind):
     modes += ["reverse", "apopalypse", "hard"]
     if category(kind) == "magic":
         modes.append("magic_only")
+    modes += ["double_hp", "half_cash", "abr", "impoppable"]
+    if kind not in S.INCOME_TOWERS:
+        modes.append("chimps")
     return modes
+
+
+def needs_own_damage(mode):
+    """Must the build hold this mode's blimps with its own damage, no
+    helper bought for the blimp ramp? Every mode of the Hard and Impoppable
+    families (judge), and Apopalypse (random rounds, no breaks)."""
+    return mode_family(mode) in ("hard", "impoppable") or mode == "apopalypse"
 
 
 def for_mode(strat, mode):
@@ -1207,7 +1450,7 @@ def judge(b, strat, mode, defence_only=None):
     bought = {tid for r in runs for tid in r["build"] if tid.startswith(("ans_", "h_"))}
     helper_kinds = sorted({_tid_kind(t, kinds) or "?" for t in bought} - {kind})
     blimp_helpers = any(t.startswith("ans_blimps") for t in bought)
-    if fam == "hard" or mode == "apopalypse":
+    if needs_own_damage(mode):
         # "has the damage": also without the helpers the build lists for blimp
         # classes (bought because strategy.ANSWERS does not list the tower for
         # that class, not for damage), and without the executor buying any
@@ -1226,10 +1469,11 @@ def judge(b, strat, mode, defence_only=None):
     need = MIN_RATIO[fam if fam in MIN_RATIO else "hard"]
     if mode == "apopalypse":
         need = MIN_RATIO["hard"]     # random rounds to 100, no breaks: Hard's bar
+    # (the Impoppable family, one life to round 100, takes Hard's bar too)
     v = Verdict(mode, True, "ok", ratio, share, tuple(helper_kinds), plan_done)
     if ratio is not None and ratio < need:
         v.ok, v.why = False, f"blimp damage {ratio:.2f} < {need:.2f}"
-    elif (fam in ("hard",) or mode == "apopalypse") and blimp_helpers:
+    elif needs_own_damage(mode) and blimp_helpers:
         v.ok, v.why = False, "the executor had to buy blimp damage from other towers"
     elif share < MIN_SHARE:
         v.ok, v.why = False, f"{name(kind)} gets only {share:.0%} of the cash: no XP game for it"
@@ -1242,13 +1486,28 @@ def base_success(v, carry=True):
     tower kind the executor had to buy, less SUPPORT_PENALTY for a support
     build, and less when blimp damage is short of the executor's 'enough' bar."""
     fam = mode_family(v.mode)
-    p = BASE_CEILING.get(fam, BASE_CEILING["hard"])
+    p = BASE_CEILING.get(fam, BASE_CEILING["impoppable"])
     p -= HELPER_PENALTY * len(v.helpers)
     if not carry:
         p -= SUPPORT_PENALTY
     if v.ratio is not None and v.ratio < S.Executor.RAMP_OK:
         p -= 0.05 * (1.0 - v.ratio / S.Executor.RAMP_OK)
-    return round(max(BASE_FLOOR, min(BASE_CEILING.get(fam, 0.8), p)), 2)
+    # the hand-written priors' cap wins over the floor: hand-tested CHIMPS
+    # builds declare 0.50, under BASE_FLOOR
+    cap = min(BASE_CEILING.get(fam, BASE_CEILING["impoppable"]), hand_prior_cap(v.mode))
+    return round(min(cap, max(BASE_FLOOR, p)), 2)
+
+
+@lru_cache(maxsize=None)
+def hand_prior_cap(mode):
+    """The highest base_success any hand-written strategy declares for this
+    mode (1.0 when none does): a generated build never starts above it.
+    The family ceiling alone let the new Apopalypse builds start at 0.86,
+    where the hand-tested Apopalypse strategies sit at 0.70 or less."""
+    hand = [((st.get("planner") or {}).get("base_success") or {}).get(mode)
+            for st in S.load_all().values() if not st.get("source") and not st.get("achievement")]
+    hand = [x for x in hand if x is not None]
+    return max(hand) if hand else 1.0
 
 
 def defence_only_strategy(b, strat):
@@ -1281,9 +1540,14 @@ class Result:
     base: dict
 
 
-def _assemble(kind, modes):
-    """The build with helpers for the strength threats of these modes' rounds."""
-    b = build_carry(kind) if is_carry(kind) else build_support(kind)
+def _assemble(kind, modes, extra=0, carry=None, hero=None):
+    """The build with helpers for the strength threats of these modes' rounds.
+    extra: the Hard reinforcement's added copies; carry: a solo build (True)
+    or a defence plus the tower (False), default is_carry; hero: the hero to
+    name, default pick_hero (see generate for when these are overridden)."""
+    carry = is_carry(kind) if carry is None else carry
+    b = build_carry(kind, extra) if carry else build_support(kind, extra)
+    b.extra, b.carry = extra, carry
     restricted = [m for m in modes if m in S.MODE_TOWER_FILTER]
     allowed = {S.MODE_TOWER_FILTER[m] for m in restricted} if restricted else None
     last = max(S.MODE_RULES[m]["end_round"] for m in modes)
@@ -1293,11 +1557,15 @@ def _assemble(kind, modes):
         b.notes.append("Answers, tried in order when a threat is due and the defence has none: the "
                        "tower's own path first, then a helper (for accounts whose own tiers are "
                        "still locked): " + "; ".join(notes))
+    b.hero = hero or pick_hero(b)
+    if b.hero != HERO:
+        b.notes.append(f"Hero {b.hero}: of every land hero the damage model rates, the build rates best "
+                       f"with it on {HERO_MAP} ({HERO_MODE}); see gen_builds.pick_hero.")
     return b
 
 
-def _judge_all(kind, modes):
-    b = _assemble(kind, modes)
+def _judge_all(kind, modes, extra=0, carry=None, hero=None):
+    b = _assemble(kind, modes, extra, carry, hero)
     strat = b.strategy(modes)
     defence = defence_only_strategy(b, strat) if needs_aim(kind) else None
     verdicts = [judge(b, strat, m, defence) for m in modes]
@@ -1312,16 +1580,71 @@ def _judge_all(kind, modes):
     return b, verdicts
 
 
-def generate(kind):
-    """Build, simulate every candidate mode, keep the ones that pass. The
-    build is then made again for the kept modes only (no helpers for threats
-    that come after their last round) and checked again, until it is stable."""
-    candidates = candidate_modes(kind)
-    b, verdicts = _judge_all(kind, candidates)
+# Choices the merit rules make that the threat simulation may not agree
+# with, screened before the full run (generate):
+#   * the hero: pick_hero rates heroes in the damage model, which counts
+#     their damage; the threat simulation counts only their price, so a dear
+#     hero (Churchill $2,000) can leave a build short of blimp damage at
+#     round 40 (Tack: every mode lost in the trial of 2026-11-12);
+#   * carry or support: a tower whose only blimp damage figure is derived
+#     from the game model (counters.json model_towers: Ice, Glue, Mermonkey,
+#     Desperado, Skywarden) becomes a carry, and a weak solo build of it can
+#     lose modes its defence-plus-tower build passed (Ice: Easy only).
+# The merit choice stays unless the other one is stronger on the screen.
+SCREEN_MODES = ("easy", "medium", "hard")
+
+
+def carry_from_model(kind):
+    """Does is_carry rest on a blimp figure derived from the game model
+    (no hand blimp_dps row for the tower)?"""
+    return (is_carry(kind) and kind not in (TH.counters().get("blimp_dps") or {})
+            and bool(TH.model_facts(kind).get("blimp_dps")))
+
+
+def screen(kind, modes, carry=None, hero=None):
+    """(modes passed, sum of their blimp ratios) of a build variant over
+    `modes`: what generate compares variants by."""
+    b = _assemble(kind, modes, carry=carry, hero=hero)
+    strat = b.strategy(modes)
+    defence = defence_only_strategy(b, strat) if needs_aim(kind) else None
+    verdicts = [judge(b, strat, m, defence) for m in modes]
+    passed = [v for v in verdicts if v.ok]
+    return len(passed), round(sum(min(v.ratio, 10.0) for v in passed if v.ratio is not None), 3), b
+
+
+def choose_variant(kind, candidates):
+    """(carry, hero) for the build: the merit choices (is_carry, pick_hero)
+    unless a variant with the other carry rule or the default hero (HERO)
+    is stronger on SCREEN_MODES. None means the default."""
+    modes = [m for m in SCREEN_MODES if m in candidates]
+    passed, ratios, b = screen(kind, modes)
+    best_score, best = (passed, ratios), (None, None)
+    picked = b.hero
+    variants = []
+    if picked != HERO:
+        variants.append((None, HERO))
+    if carry_from_model(kind):
+        variants.append((False, None))
+        if picked != HERO:
+            variants.append((False, HERO))
+    for carry, hero in variants:
+        passed, ratios, _ = screen(kind, modes, carry, hero)
+        if (passed, ratios) > best_score:
+            best_score, best = (passed, ratios), (carry, hero)
+    return best
+
+
+def _resolve(kind, candidates, extra=0, carry=None, hero=None):
+    """Simulate every candidate mode and keep the ones that pass; the build
+    is then made again for the kept modes only (no helpers for threats that
+    come after their last round) and checked again, until it is stable.
+    Returns (build, kept modes, {mode: verdict} kept, {mode: verdict} dropped)."""
+    b, verdicts = _judge_all(kind, candidates, extra, carry, hero)
     dropped = {v.mode: v for v in verdicts if not v.ok}
     kept = [v.mode for v in verdicts if v.ok]
+    kept_v = {}
     while kept:
-        b, again = _judge_all(kind, kept)
+        b, again = _judge_all(kind, kept, extra, carry, hero)
         newly = [v for v in again if not v.ok]
         dropped.update({v.mode: v for v in newly})
         kept_v = {v.mode: v for v in again if v.ok}
@@ -1329,10 +1652,54 @@ def generate(kind):
         if not newly:
             break
     if not kept:
-        b = _assemble(kind, candidates)
+        b = _assemble(kind, candidates, extra, carry, hero)
+    return b, kept, kept_v, dropped
+
+
+# Hard reinforcement. Most solo builds failed Hard on their own blimp damage
+# (docs/builds.md: only ace, bomb, heli and sniper had a Hard build), because
+# the plan is sized for a Medium game. A Hard game pays for more: when Hard
+# fails on blimp damage, the build is made again with up to HARD_EXTRA_MAX
+# more copies of its blimp damage (build_carry / build_support `extra`), and
+# the first that passes Hard is kept - if it also keeps every mode the plain
+# build passed. docs/tower_exclusions_audit.md item 9.
+HARD_EXTRA_MAX = 4
+BLIMP_SHORT = ("blimp damage", "the executor had to buy blimp damage", "without its blimp helpers")
+
+
+def _hard_extra(kind, candidates, carry=None, hero=None):
+    """The fewest extra copies (1..HARD_EXTRA_MAX) with which the build
+    passes Hard, or 0 when none does or Hard fails for another reason."""
+    for extra in range(1, HARD_EXTRA_MAX + 1):
+        b = _assemble(kind, candidates, extra, carry, hero)
+        strat = b.strategy(candidates)
+        v = judge(b, strat, "hard", defence_only_strategy(b, strat) if needs_aim(kind) else None)
+        if v.ok:
+            return extra
+        if not v.why.startswith(BLIMP_SHORT):
+            return 0          # a gap or a share more copies cannot fix
+    return 0
+
+
+def generate(kind):
+    """Build, simulate every candidate mode and keep the ones that pass
+    (_resolve); when Hard fails on blimp damage, try the Hard reinforcement
+    (_hard_extra) and keep it if it passes Hard without losing a mode."""
+    candidates = candidate_modes(kind)
+    carry, hero = choose_variant(kind, candidates)
+    b, kept, kept_v, dropped = _resolve(kind, candidates, 0, carry, hero)
+    if "hard" in candidates and "hard" not in kept and dropped["hard"].why.startswith(BLIMP_SHORT):
+        extra = _hard_extra(kind, candidates, carry, hero)
+        if extra:
+            hb, hkept, hkept_v, hdropped = _resolve(kind, candidates, extra, carry, hero)
+            if "hard" in hkept and set(kept) <= set(hkept):
+                b, kept, kept_v, dropped = hb, hkept, hkept_v, hdropped
+                b.notes.append(f"Hard reinforcement: {extra} more cop{'y' if extra == 1 else 'ies'} of the "
+                               f"build's blimp damage than a Medium game needs, so Hard passes on the "
+                               f"build's own damage.")
     final = [dropped[m] if m in dropped else kept_v[m] for m in candidates]
-    base = {m: base_success(kept_v[m], is_carry(kind)) for m in kept}
-    return Result(kind, is_carry(kind), b, b.strategy(kept, base), final, kept, base)
+    base = {m: base_success(kept_v[m], b.carry) for m in kept}
+    return Result(kind, b.carry, b, b.strategy(kept, base), final, kept, base)
 
 
 # ---------------------------------------------------------------------------
@@ -1393,7 +1760,40 @@ def exclusions(kind):
         data = json.loads(EXCLUSIONS.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
-    return data.get(kind) or {}
+    out = dict(data.get(kind) or {})
+    every = data.get("every_build") or {}
+    # map/mode pairs no general build may play, for the modes this generator
+    # now tries too: the ones data/generated_exclusions.json lists for every
+    # build, and the maps every hand-written general build of the mode
+    # excludes (hand_exclusions: the general builds lost there - #Ouch,
+    # Erosion, Sanctuary and Tricky Tracks in Apopalypse ...)
+    by_mode = {m: set(ms) for m, ms in (every.get("by_mode") or {}).items()}
+    for mode in candidate_modes(kind):
+        by_mode.setdefault(mode, set()).update(hand_exclusions(mode))
+    by_mode = {m: sorted(ms) for m, ms in by_mode.items() if ms}
+    if by_mode:
+        out["by_mode"] = by_mode
+        out["why"] = list(out.get("why") or ()) + list(every.get("why") or ()) + [
+            "Every generated build: also kept off the maps every hand-written general build of a mode "
+            "excludes there (gen_builds.hand_exclusions)."]
+    return out
+
+
+@lru_cache(maxsize=None)
+def hand_exclusions(mode):
+    """Maps every hand-written general build (no map list, not an
+    achievement) that plays `mode` keeps off in it (planner.excluded_maps or
+    excluded_by_mode): each was lost there and diagnosed, so a generated
+    build is not offered there either (tests/test_ouch_apopalypse_offline.py,
+    test_trickytracks_excluded_offline.py ...). Empty when no such build
+    plays the mode."""
+    sets = []
+    for st in S.load_all().values():
+        planner = st.get("planner") or {}
+        if st.get("source") or st.get("achievement") or planner.get("maps") or mode not in (st.get("modes") or ()):
+            continue
+        sets.append(set(planner.get("excluded_maps") or ()) | set((planner.get("excluded_by_mode") or {}).get(mode) or ()))
+    return frozenset(set.intersection(*sets)) if sets else frozenset()
 
 
 def to_yaml(r):
@@ -1438,6 +1838,8 @@ def to_yaml(r):
     lines.append(f"modes: {_fmt(d['modes'])}")
     if d.get("uses_income"):
         lines.append("uses_income: true   # never CHIMPS")
+    if d.get("generator"):
+        lines.append(f"generator: {_fmt(d['generator'])}   # Hard reinforcement (gen_builds.generate)")
     lines.append("planner:")
     lines.append(f"  towers: {_fmt(d['planner']['towers'])}   # the crosspaths the build needs to be safe")
     lines.append(f"  base_success: {_fmt(d['planner']['base_success'])}")
@@ -1447,6 +1849,9 @@ def to_yaml(r):
         lines += _wrap(note, prefix="  # ")
     if excluded.get("maps"):
         lines.append(f"  excluded_maps: {_fmt(excluded['maps'])}")
+    by_mode = {m: ms for m, ms in (excluded.get("by_mode") or {}).items() if m in d["modes"]}
+    if by_mode:
+        lines.append(f"  excluded_by_mode: {_fmt(by_mode)}")
     lines.append("plan:")
     lines += _steps_yaml(b.plan)
     lines.append("fill:")

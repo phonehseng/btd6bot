@@ -20,34 +20,53 @@
 # Shooter) 0-2-0, else h_sniper (Sniper Monkey) 2-0-0; moab: a1 0-4-0, else
 # another Monkey Buccaneer (up to 5), else a Monkey Ace 0-0-0; bfb: a Dart
 # Monkey 0-0-4, else h_sniper (Sniper Monkey) 4-0-0
+# Hero churchill: of every land hero the damage model rates, the build rates
+# best with it on Monkey Meadow (medium); see gen_builds.pick_hero.
 # Water tower: only maps where it reaches at least 60% of the track
 # (data/map_fit.json).
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 1.17, Monkey Buccaneer share of the
-#   cash 93%
-#   deflation: kept - no gaps, min blimp ratio 0.98, Monkey Buccaneer share of
+#   easy: kept - no gaps, min blimp ratio 1.46, Monkey Buccaneer share of the
+#   cash 95%, answers bought: ace
+#   deflation: kept - no gaps, min blimp ratio 0.90, Monkey Buccaneer share of
 #   the cash 99%, answers bought: dart
-#   medium: kept - no gaps, min blimp ratio 1.18, Monkey Buccaneer share of the
-#   cash 75%, answers bought: ace, dart
-#   military_only: kept - no gaps, min blimp ratio 1.63, Monkey Buccaneer share
-#   of the cash 80%, answers bought: sniper
-#   reverse: kept - no gaps, min blimp ratio 1.18, Monkey Buccaneer share of the
-#   cash 75%, answers bought: ace, dart
-#   apopalypse: dropped - blimp damage 0.12 < 1.00
-#   hard: dropped - blimp damage 0.76 < 1.00
+#   medium: kept - no gaps, min blimp ratio 1.28, Monkey Buccaneer share of the
+#   cash 93%, answers bought: ace
+#   military_only: kept - no gaps, min blimp ratio 1.40, Monkey Buccaneer share
+#   of the cash 87%, answers bought: ace
+#   reverse: kept - no gaps, min blimp ratio 1.28, Monkey Buccaneer share of the
+#   cash 93%, answers bought: ace
+#   apopalypse: kept - no gaps, min blimp ratio 1.11, Monkey Buccaneer share of
+#   the cash 93%, answers bought: ace
+#   hard: dropped - blimp damage 0.73 < 1.00
+#   double_hp: dropped - blimp damage 0.41 < 1.00
+#   half_cash: dropped - gap R24: camo (buccaneer could pop it but cannot see
+#   camo)
+#   abr: dropped - blimp damage 0.44 < 1.00
+#   impoppable: dropped - blimp damage 0.19 < 1.00
+#   chimps: dropped - blimp damage 0.24 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
 # the planner calibrates it from real games.
 id: solo_buccaneer
 xp_target: buccaneer   # the tower this build levels up
-hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, deflation, medium, military_only, reverse]
+hero: churchill   # equipped if owned, else a fallback (strategy.hero_for)
+modes: [easy, deflation, medium, military_only, reverse, apopalypse]
 planner:
   towers: {buccaneer: [4, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.92, deflation: 0.89, medium: 0.8, military_only: 0.83, reverse: 0.8}
-  maps: ["Adora's Temple", "Another Brick", "Bloody Puddles", "Bloonarius Prime", Cargo, Chutes, Cubism, "End Of The Road", "Flooded Valley", "Four Circles", "Frozen Over", Haunted, "Lotus Island", "Luminous Cove", "Muddy Puddles", "Off The Coast", "Park Path", "Pat's Pond", Peninsula, Quad, Rake, Ravine, Resort, Skates, "Skull Tweak", "Spa Pits", "Spice Islands", Spillway, "Spring Spring", "The Cabin", "Water Park"]
+  base_success: {easy: 0.89, deflation: 0.89, medium: 0.83, military_only: 0.83, reverse: 0.83, apopalypse: 0.7}
+  maps: ["Adora's Temple", "Another Brick", "Bloody Puddles", "Bloonarius Prime", Cargo, Chutes, Cubism, "End Of The Road", "Flooded Valley", "Four Circles", "Frozen Over", Haunted, "Lotus Island", "Luminous Cove", "Muddy Puddles", "Off The Coast", "Park Path", "Pat's Pond", Peninsula, Quad, Rake, Resort, Skates, "Skull Tweak", "Spa Pits", "Spice Islands", "Spring Spring", "The Cabin"]
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {apopalypse: ["#Ouch", Erosion, Geared, Sanctuary, "Tricky Tracks"], military_only: [Sanctuary, "Tricky Tracks"], reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: buccaneer, role: dps, segment: [0.0, 0.5]}   # main line: 0-4-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

@@ -21,14 +21,22 @@
 # Monkey) 0-0-4
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: dropped - blimp damage 0.37 < 0.40
-#   deflation: kept - no gaps, min blimp ratio 0.56, Wizard Monkey share of the
-#   cash 94%, answers bought: dart
-#   medium: dropped - blimp damage 0.35 < 0.40
-#   reverse: dropped - blimp damage 0.35 < 0.40
-#   apopalypse: dropped - blimp damage 0.11 < 1.00
-#   hard: dropped - blimp damage 0.33 < 1.00
-#   magic_only: dropped - blimp damage 0.38 < 1.00
+#   easy: kept - no gaps, min blimp ratio 0.77, Wizard Monkey share of the cash
+#   96%, answers bought: ace
+#   deflation: kept - no gaps, min blimp ratio 0.54, Wizard Monkey share of the
+#   cash 99%, answers bought: dart
+#   medium: kept - no gaps, min blimp ratio 0.63, Wizard Monkey share of the
+#   cash 94%, answers bought: ace
+#   reverse: kept - no gaps, min blimp ratio 0.63, Wizard Monkey share of the
+#   cash 94%, answers bought: ace
+#   apopalypse: dropped - the executor had to buy blimp damage from other towers
+#   hard: dropped - blimp damage 0.60 < 1.00
+#   magic_only: dropped - blimp damage 0.44 < 1.00
+#   double_hp: dropped - blimp damage 0.36 < 1.00
+#   half_cash: dropped - blimp damage 0.23 < 1.00
+#   abr: dropped - blimp damage 0.42 < 1.00
+#   impoppable: dropped - blimp damage 0.20 < 1.00
+#   chimps: dropped - blimp damage 0.27 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -36,10 +44,19 @@
 id: solo_wizard
 xp_target: wizard   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [deflation]
+modes: [easy, deflation, medium, reverse]
 planner:
   towers: {wizard: [4, 4, 2]}   # the crosspaths the build needs to be safe
-  base_success: {deflation: 0.87}
+  base_success: {easy: 0.88, deflation: 0.87, medium: 0.81, reverse: 0.81}
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: wizard, role: dps, segment: [0.0, 0.5]}   # main line: 0-4-2
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

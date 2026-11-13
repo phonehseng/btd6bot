@@ -47,7 +47,11 @@ so the research relied on search snippets, Steam threads and GitHub.
      before the hero.
    - Quincy-first works ($585).
 2. **No aiming.**
-   - No Mortar, Dartling or Ace.
+   - No Mortar, until the executor can set its target point.
+   - The Ace and the Dartling are not banned. The Ace never needed aiming: it
+     flies its own circle. The Dartling is rated by the damage model like any
+     tower (docs/tower_exclusions_audit.md item 2). This rule used to say
+     "No Mortar, Dartling or Ace" and shaped the 21 hand strategies.
    - Snipers set to Strong. Subs, Heli and Spike need no aiming.
    - Ninjas, Druids, Supers and Alchemists cluster with `role: support, near: [...]`.
 3. **Every threat is covered by the plan itself, before its calendar window opens.**

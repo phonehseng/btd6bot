@@ -32,7 +32,8 @@ Offline checks:
   * every strategies/optimized/*chimps*.yaml is bot-ready with a worst model
     margin of at least strategy.OPTIMIZED_SAFE_MARGIN, no sell step, no
     income tower or income upgrade, and none of the tiers the damage model is
-    known to overrate (optimize_builds.CHIMPS_MODEL_DOUBTS).
+    known to overrate (optimize_builds.CHIMPS_MODEL_DOUBTS; Glaive Lord and
+    Master Bomber left it once the model gave them their own reach).
 """
 import json
 import sys
@@ -45,6 +46,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
 import optimize_builds as O  # noqa: E402
+from btd6bot import dps_model as D  # noqa: E402
 from btd6bot import gamemodel  # noqa: E402
 from btd6bot import strategy as S  # noqa: E402
 from btd6bot import threats as TH  # noqa: E402
@@ -351,7 +353,8 @@ def test_model_doubts_and_income_rules():
     known to overrate are out in CHIMPS until that model is fixed."""
     assert O.income_tiers("buccaneer", (0, 0, 3)) and O.income_tiers("engineer", (0, 0, 4))
     assert not O.income_tiers("buccaneer", (2, 0, 2))
-    assert O.model_doubt("boomerang", (5, 0, 2)) and O.model_doubt("ninja", (2, 0, 5))
+    # Glaive Lord and Master Bomber are no longer refused (see the next test)
+    assert not O.model_doubt("boomerang", (5, 0, 2)) and not O.model_doubt("ninja", (2, 0, 5))
     assert not O.model_doubt("ninja", (2, 0, 4)) and not O.model_doubt("boomerang", (4, 0, 2))
     assert O.model_doubt("village", (3, 0, 2), towers=[("ninja", (4, 0, 2))])
     assert not O.model_doubt("village", (3, 0, 2), towers=[("dart", (0, 2, 4))])
@@ -361,6 +364,23 @@ def test_model_doubts_and_income_rules():
         opt.setup = O.MapSetup("Monkey Meadow", "chimps")
         assert "farm" not in opt._kinds(), target
     assert "chimps" in dict(O.CHIMPS_RUNS).values()
+
+
+def test_glaive_lord_and_master_bomber_work_in_their_own_reach():
+    """Why CHIMPS_MODEL_DOUBTS no longer refuses them
+    (docs/tower_exclusions_audit.md item 10): the model bug it guarded -
+    Glaive Lord's glaives and Master Bomber's bombs counted map-wide - was
+    fixed in commit d2800f8. Neither tower is map-wide, the glaives work
+    only inside their orbit, and no source of either reaches past the
+    tower's own range."""
+    glaive = D.profile("boomerang", (5, 0, 2))
+    assert not glaive.is_global and 0 < glaive.own_radius < glaive.range
+    orbit = [s for s in glaive.sources if "Orbit" in s.name]
+    assert orbit and all(s.zone_fixed and s.zone_radius <= glaive.own_radius for s in orbit)
+    bomber = D.profile("ninja", (2, 0, 5))
+    assert not bomber.is_global
+    assert all(s.placement != "global" and (s.zone_radius or 0) <= bomber.range for s in bomber.sources)
+    assert O.CHIMPS_MODEL_DOUBTS == {}
 
 
 if __name__ == "__main__":

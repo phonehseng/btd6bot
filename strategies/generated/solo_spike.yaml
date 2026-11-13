@@ -30,10 +30,17 @@
 #   59%, answers bought: ace, bomb
 #   deflation: kept - no gaps, min blimp ratio 0.93, Spike Factory share of the
 #   cash 35%
-#   medium: dropped - blimp damage 0.19 < 0.40
-#   reverse: dropped - blimp damage 0.19 < 0.40
-#   apopalypse: dropped - blimp damage 0.19 < 1.00
-#   hard: dropped - blimp damage 0.52 < 1.00
+#   medium: kept - no gaps, min blimp ratio 0.56, Spike Factory share of the
+#   cash 49%, answers bought: ?, ace, bomb, sniper
+#   reverse: kept - no gaps, min blimp ratio 0.56, Spike Factory share of the
+#   cash 49%, answers bought: ?, ace, bomb, sniper
+#   apopalypse: dropped - blimp damage 0.56 < 1.00
+#   hard: dropped - blimp damage 0.55 < 1.00
+#   double_hp: dropped - blimp damage 0.28 < 1.00
+#   half_cash: dropped - blimp damage 0.18 < 1.00
+#   abr: dropped - blimp damage 0.22 < 1.00
+#   impoppable: dropped - blimp damage 0.19 < 1.00
+#   chimps: dropped - blimp damage 0.19 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy, for the deliberately small defence and for blimp
@@ -42,10 +49,20 @@
 id: solo_spike
 xp_target: spike   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, deflation]
+modes: [easy, deflation, medium, reverse]
 planner:
   towers: {ninja: [4, 2, 4], spike: [2, 0, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.8, deflation: 0.89}
+  base_success: {easy: 0.8, deflation: 0.89, medium: 0.69, reverse: 0.69}
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: d1, kind: ninja, role: dps, segment: [0.0, 0.5]}   # defence: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

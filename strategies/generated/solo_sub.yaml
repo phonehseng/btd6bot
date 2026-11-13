@@ -20,34 +20,50 @@
 # Shooter) 0-2-0, else h_sniper (Sniper Monkey) 2-0-0; moab: a1 0-0-3, else
 # another Monkey Sub (up to 7), else a Monkey Ace 0-0-0; bfb: a Dart Monkey
 # 0-0-4, else h_sniper (Sniper Monkey) 4-0-0
+# Hero churchill: of every land hero the damage model rates, the build rates
+# best with it on Monkey Meadow (medium); see gen_builds.pick_hero.
 # Water tower: only maps where it reaches at least 60% of the track
 # (data/map_fit.json).
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 0.93, Monkey Sub share of the cash
-#   81%, answers bought: ace, ninja
+#   easy: kept - no gaps, min blimp ratio 3.72, Monkey Sub share of the cash
+#   80%, answers bought: ace, ninja
 #   deflation: kept - no gaps, min blimp ratio 0.75, Monkey Sub share of the
-#   cash 100%
-#   medium: kept - no gaps, min blimp ratio 0.73, Monkey Sub share of the cash
-#   89%, answers bought: ace, dart, ninja
-#   military_only: kept - no gaps, min blimp ratio 1.17, Monkey Sub share of the
-#   cash 78%, answers bought: ace, sniper
-#   reverse: kept - no gaps, min blimp ratio 0.73, Monkey Sub share of the cash
-#   89%, answers bought: ace, dart, ninja
-#   apopalypse: dropped - blimp damage 0.13 < 1.00
-#   hard: dropped - blimp damage 0.42 < 1.00
+#   cash 98%, answers bought: dart
+#   medium: kept - no gaps, min blimp ratio 3.15, Monkey Sub share of the cash
+#   86%, answers bought: ace, ninja
+#   military_only: kept - no gaps, min blimp ratio 0.71, Monkey Sub share of the
+#   cash 92%, answers bought: ace, sniper
+#   reverse: kept - no gaps, min blimp ratio 3.15, Monkey Sub share of the cash
+#   86%, answers bought: ace, ninja
+#   apopalypse: dropped - blimp damage 0.41 < 1.00
+#   hard: dropped - blimp damage 0.84 < 1.00
+#   double_hp: dropped - blimp damage 0.42 < 1.00
+#   half_cash: dropped - blimp damage 0.15 < 1.00
+#   abr: dropped - blimp damage 0.24 < 1.00
+#   impoppable: dropped - blimp damage 0.19 < 1.00
+#   chimps: dropped - blimp damage 0.22 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
 # the planner calibrates it from real games.
 id: solo_sub
 xp_target: sub   # the tower this build levels up
-hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
+hero: churchill   # equipped if owned, else a fallback (strategy.hero_for)
 modes: [easy, deflation, medium, military_only, reverse]
 planner:
   towers: {sub: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.86, deflation: 0.91, medium: 0.76, military_only: 0.8, reverse: 0.76}
-  maps: ["Adora's Temple", "Bloonarius Prime", Cargo, Cubism, "Flooded Valley", "Lotus Island", "Luminous Cove", "Muddy Puddles", "Park Path", "Pat's Pond", Peninsula, Resort, "Skull Tweak", "Spa Pits", "Spice Islands", "Spring Spring", "The Cabin", "Water Park"]
+  base_success: {easy: 0.86, deflation: 0.88, medium: 0.8, military_only: 0.79, reverse: 0.8}
+  maps: ["Adora's Temple", "Bloonarius Prime", Cargo, Cubism, "Flooded Valley", "Lotus Island", "Luminous Cove", "Muddy Puddles", "Pat's Pond", Peninsula, Resort, "Skull Tweak", "Spa Pits", "Spice Islands", "Spring Spring", "The Cabin"]
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {military_only: [Sanctuary, "Tricky Tracks"], reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: sub, role: dps, segment: [0.0, 0.5]}   # main line: 0-2-4
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

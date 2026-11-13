@@ -25,19 +25,26 @@
 # 3), else h_bomb (Bomb Shooter) 0-4-0, else h_heli (Heli Pilot) 4-0-0
 #
 # Modes - offline simulation at real prices and base income (tools/simulate_threats.py):
-#   easy: kept - no gaps, min blimp ratio 5.84, Sniper Monkey share of the cash
-#   96%, answers bought: ace
+#   easy: kept - no gaps, min blimp ratio 5.89, Sniper Monkey share of the cash
+#   100%
 #   deflation: kept - no gaps, min blimp ratio 3.00, Sniper Monkey share of the
 #   cash 100%
-#   medium: kept - no gaps, min blimp ratio 3.33, Sniper Monkey share of the
-#   cash 90%, answers bought: ace
-#   military_only: kept - no gaps, min blimp ratio 3.33, Sniper Monkey share of
-#   the cash 97%, answers bought: ace
-#   reverse: kept - no gaps, min blimp ratio 3.33, Sniper Monkey share of the
-#   cash 90%, answers bought: ace
-#   apopalypse: dropped - blimp damage 0.19 < 1.00
-#   hard: kept - no gaps, min blimp ratio 1.62, Sniper Monkey share of the cash
-#   84%, answers bought: ace, boomerang
+#   medium: kept - no gaps, min blimp ratio 4.54, Sniper Monkey share of the
+#   cash 100%
+#   military_only: kept - no gaps, min blimp ratio 4.54, Sniper Monkey share of
+#   the cash 100%
+#   reverse: kept - no gaps, min blimp ratio 4.54, Sniper Monkey share of the
+#   cash 100%
+#   apopalypse: kept - no gaps, min blimp ratio 4.54, Sniper Monkey share of the
+#   cash 100%
+#   hard: kept - no gaps, min blimp ratio 1.87, Sniper Monkey share of the cash
+#   93%
+#   double_hp: dropped - blimp damage 0.86 < 1.00
+#   half_cash: dropped - blimp damage 0.58 < 1.00
+#   abr: kept - no gaps, min blimp ratio 1.20, Sniper Monkey share of the cash
+#   73%, answers bought: ace, dart, heli, ninja
+#   impoppable: dropped - blimp damage 0.20 < 1.00
+#   chimps: dropped - blimp damage 0.21 < 1.00
 # base_success: an untested generated build, so each mode starts below every
 # hand-tested strategy of its difficulty, minus a little for every other tower
 # the simulation had to buy and for blimp damage short of the executor's bar;
@@ -45,10 +52,20 @@
 id: solo_sniper
 xp_target: sniper   # the tower this build levels up
 hero: quincy   # equipped if owned, else a fallback (strategy.hero_for)
-modes: [easy, deflation, medium, military_only, reverse, hard]
+modes: [easy, deflation, medium, military_only, reverse, apopalypse, hard, abr]
 planner:
   towers: {sniper: [4, 2, 4]}   # the crosspaths the build needs to be safe
-  base_success: {easy: 0.89, deflation: 0.92, medium: 0.83, military_only: 0.83, reverse: 0.83, hard: 0.74}
+  base_success: {easy: 0.92, deflation: 0.92, medium: 0.86, military_only: 0.86, reverse: 0.86, apopalypse: 0.7, hard: 0.85, abr: 0.73}
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # Every generated build: Geared Apopalypse lost round 36 (2026-11-09 22:01):
+  # every cell that reaches the track turns on a gear
+  # (tests/test_apopalypse_geared_offline.py).
+  # Every generated build: the general builds lost all eight games on Tricky
+  # Tracks' ABR, Double HP, Half Cash, Apopalypse and Impoppable
+  # (tests/test_trickytracks_excluded_offline.py).
+  # Every generated build: also kept off the maps every hand-written general
+  # build of a mode excludes there (gen_builds.hand_exclusions).
+  excluded_by_mode: {apopalypse: ["#Ouch", Erosion, Geared, Sanctuary, "Tricky Tracks"], abr: ["Tricky Tracks"], military_only: [Sanctuary, "Tricky Tracks"], reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: sniper, role: dps, segment: [0.0, 0.5]}   # main line: 4-2-0
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP
