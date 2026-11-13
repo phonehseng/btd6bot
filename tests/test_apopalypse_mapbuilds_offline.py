@@ -130,6 +130,34 @@ def test_bloody_puddles_opens_with_the_hero_and_a_right_lane_ninja():
     assert sum(1 for st in plan if st.get("kind") == "hero") == 1
 
 
+def test_dark_dungeons_has_a_ground_tower_in_every_room_before_the_third_heli():
+    """Dark Dungeons 2026-11-12 21:07 (case 20261112_211357): rounds 31-35
+    took all 114 lives while the three Pursuit helis flew over the middle
+    room together (frames end_020, end_026, end_029) and the right room's
+    lane had no tower on its ground. Every lane of the three that run at
+    once (PathLeft, PathMiddle, PathRight) gets a ground damage tower
+    reaching it, placed before h3; the right room's is a 2-0-2 ninja."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import optimize_builds as O
+    from btd6bot import dps_model as D
+    plan = _plan("darkdungeons_apopalypse")
+    h3 = next(i for i, st in enumerate(plan) if st.get("id") == "h3" and st["do"] == "place")
+    ground = [st for st in plan[:h3] if st["do"] == "place" and st["kind"] not in ("heli", "hero")]
+    setup = O.MapSetup("Dark Dungeons", "apopalypse")
+    names = [p.get("name") for p in setup.track.paths]
+    reached = set()
+    for st in ground:
+        prof = D.profile(st["kind"], (0, 0, 0))
+        x, z, _ = setup.track.frac_to_world(*st["at"])
+        zones = setup.track.zones(x, z, prof.range, sight=setup.sight_for(st["kind"]))
+        reached |= {names[i] for i, zn in enumerate(zones) if zn and zn.length >= 30}
+    assert {"PathLeft", "PathMiddle", "PathRight"} - reached <= {"PathLeft"}, reached
+    # the left room has the hero (Obyn) before the second heli; the right room its ninja
+    nr = next(st for st in ground if st["id"] == "nr")
+    assert nr["kind"] == "ninja" and nr["at"][0] > 0.65, nr
+    assert {"do": "upgrade", "id": "nr", "to": "2-0-2"} in plan[:h3]
+
+
 def test_cheap_helis_stand_before_the_first_apache_tier():
     """Bloody Puddles 2026-11-12: the bank waited 15 rounds for the $20,000
     tier with two helis on the board, and Dark Dungeons 13:13 (case

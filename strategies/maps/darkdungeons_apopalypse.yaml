@@ -98,6 +98,23 @@
 # 0.84 at round 53 before, plan 19/21 by round 60 - the ninja and the hero
 # move every later purchase back by about $1,800.
 #
+# Right-room ninja (2026-11-12 21:07, case 20261112_211357_DarkDungeons_apopalypse):
+# the opening above held rounds 15-30 with all 114 lives, then rounds 31-35
+# took them all (zebras, blacks and whites on 31; blacks, whites and purples
+# on 32; round 35's 25 whites, 30 blacks, 35 pinks and 5 rainbows the last
+# 59) while the model rated those rounds 2.95, 4.46 and 3.55. The stills
+# (frames/end_014, end_020, end_026, end_029) show the three Pursuit helis
+# over the middle room together and the right room's lane (PathRight) with
+# nothing on its ground but the $260 tack reinforce put there in round 31:
+# the left room had the hero, the middle nb, dr1 and n1, the right none -
+# the same bare lane as Bloody Puddles' right lanes (its nr). backlog 108(a)
+# is still open (a Pursuit heli is rated in every lane at once), so the
+# check below cannot see this gap. nr, a 2-0-2 ninja, now stands in the
+# right room before h3, on the ninja's best right-room cell (75 units of
+# PathRight and 105 of the top MOAB route in reach, sight counted;
+# optimize_builds.MapSetup.ranked_spots), beside the spot (0.735, 0.308)
+# where the live game took tack1.
+#
 # Status: the opening as played twice by the general build; the rest not played yet.
 id: darkdungeons_apopalypse
 map: Dark Dungeons
@@ -121,6 +138,8 @@ plan:
   - {do: upgrade, id: dr1, to: 0-3-1}
   - {do: place, id: n1, kind: ninja, role: dps, at: [0.419, 0.624]}     # middle room: camo ceramics R33-38
   - {do: upgrade, id: n1, to: 2-0-3}                                     # Flash Bomb
+  - {do: place, id: nr, kind: ninja, role: dps, at: [0.729, 0.283]}     # right room: PathRight had no ground tower (21:07 loss)
+  - {do: upgrade, id: nr, to: 2-0-2}
   - {do: place, id: h3, kind: heli, role: dps, at: [0.067, 0.215]}
   - {do: upgrade, id: h3, to: 3-2-0}
   - {do: place, id: h4, kind: heli, role: dps, at: [0.542, 0.513]}      # ~R34: the bank of the 13:13 loss, spent
