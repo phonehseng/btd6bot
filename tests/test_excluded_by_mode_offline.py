@@ -52,6 +52,21 @@ def test_the_sniper_build_is_kept_off_last_resort_abr_only():
 
 
 
+def test_the_druid_cluster_is_kept_off_bazaar_and_ouch_half_cash():
+    """Bazaar Half Cash (lost three times on 2026-11-13, each at round 40) and
+    #Ouch Half Cash (lost twice that day): obyn_druid_poplust's one druid
+    cluster cannot cover Bazaar's alternating lanes and bled lives from the
+    20s on #Ouch. Its Medium and Hard stay open on both maps, and Bazaar Half
+    Cash keeps its own map build."""
+    specs = _live_specs()
+    druids = specs["obyn_druid_poplust"]
+    for map_name, tier in (("Bazaar", "intermediate"), ("#Ouch", "expert")):
+        assert not P._strategy_fits(druids, map_name, tier, "half_cash"), map_name
+        assert P._strategy_fits(druids, map_name, tier, "hard"), map_name
+    others = [sid for sid, s in specs.items() if P._strategy_fits(s, "Bazaar", "intermediate", "half_cash")]
+    assert "bazaar_half_cash" in others, others
+
+
 def test_the_heli_opening_is_kept_off_ravine_half_cash():
     """Ravine Half Cash (2026-11-13, loss case 20261113_042920_Ravine_half_cash):
     hard_ninja_alch_sun's Fast Track opening is one Pursuit heli, rated
@@ -65,7 +80,9 @@ def test_the_heli_opening_is_kept_off_ravine_half_cash():
     assert not P._strategy_fits(build, "Ravine", category, "half_cash")
     assert P._strategy_fits(build, "Ravine", category, "hard")
     others = [sid for sid, s in specs.items() if P._strategy_fits(s, "Ravine", category, "half_cash")]
-    assert others == ["obyn_druid_poplust"], others
+    # obyn_druid_poplust is kept off it too since its own Ravine losses
+    # (2026-11-13); the map build strategies/maps/ravine_half_cash.yaml plays it
+    assert others == ["ravine_half_cash"], others
 
 if __name__ == "__main__":
     for name, fn in list(globals().items()):

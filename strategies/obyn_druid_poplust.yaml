@@ -21,7 +21,19 @@ planner:
   # entrances passes, and 24 of the 30 even rounds replay under 0.1.
   # strategies/maps/ravine_half_cash.yaml plays that medal
   # (tests/test_ravine_half_cash_offline.py).
-  excluded_by_mode: {half_cash: [Ravine]}
+  # not Bazaar Half Cash either (2026-11-13 10:33, 13:18 and 16:35, cases
+  # 20261113_103302, 20261113_131814 and 20261113_163513_Bazaar_half_cash, all
+  # three lost at round 40 after bleeding lives from the 20s): Bazaar's two
+  # lanes also take turns and its market stalls block sight, so one druid
+  # cluster covers one lane (bazaar_half_cash.yaml's map analysis: the ground
+  # between the lanes reaches ~10% of each). bazaar_half_cash plays that medal.
+  # not #Ouch Half Cash (2026-11-13 13:40 at round 63 and 16:54 at round 40,
+  # case 20261113_165452_Ouch_half_cash): lives leaked from round 22 on, round
+  # 30-37 rated 0.06-0.3 every other round and the cash never caught up. No
+  # other build is left for that medal, so it waits for a map build
+  # (docs/backlog.md) while the planner plays the other open medals.
+  # (tests/test_excluded_by_mode_offline.py)
+  excluded_by_mode: {half_cash: [Ravine, Bazaar, "#Ouch"]}
 plan:
   - {do: place, id: d1, kind: druid, role: dps, segment: [0.0, 0.5]}
   - {do: place, id: hero, kind: hero, role: support, near: [d1], near_radius: 7}
