@@ -134,7 +134,14 @@ planner:
   # and bloodypuddles_apopalypse.yaml (helis first, more 3-2-0 helis before
   # the first Apache; check worst 0.75 and 0.55 against this build's 0.43
   # and 0.38).
-  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary, "#Ouch", Covered Garden, Dark Dungeons, Bloody Puddles]
+  # Ravine (lost rounds 36 and 38 on 2026-11-10; every general build lost
+  # there - apopalypse_ninja_sniper at rounds 42, 45 and 49, solo_desperado
+  # at 45 on 2026-11-13, case 20261113_140240_Ravine_apopalypse): its long
+  # winding lanes outrun one heli group, and the land spots that reach the
+  # track are few (bomb and spike spots refused, 71 lives at round 26).
+  # Excluding it here takes the generated builds off too (gen_builds.
+  # hand_exclusions); the map waits for a map build (docs/backlog.md).
+  excluded_maps: [Erosion, Tricky Tracks, Geared, Sanctuary, "#Ouch", Covered Garden, Dark Dungeons, Bloody Puddles, Ravine]
 plan_first: true
 # Bloody Puddles has six lanes, three leaving at the top and three at the
 # bottom: one exit spike covers one of them (2026-11-10, sp1 at the Path2

@@ -15,6 +15,16 @@
       "Flooded Valley: Primary Only lost round 23 (2026-11-10 22:33, case 20261110_223302): the dam hides the river from the land, no dart spot reached the track (d1's best legal cell saw 2 track cells, d2 and dc found none) and four ice monkeys alone were rated 0.06-0.50 from round 11."
     ]
   },
+  "sniper": {
+    "by_mode": {
+      "abr": [
+        "Geared"
+      ]
+    },
+    "why": [
+      "Geared: ABR lost round 27 (2026-11-13 13:07, case 20261113_130725): ABR's round 27 is 250 camo red-to-yellow bloons in one dense stream; four single-shot snipers (3-2-0, 2-2-0, 1-0-2, 0-0-0) rated 1.61 leaked 93 lives in seconds. Two other sniper builds lost the same round there (2026-11-04, 2026-11-13 09:38); solo_heli won it."
+    ]
+  },
   "every_build": {
     "by_mode": {
       "apopalypse": [

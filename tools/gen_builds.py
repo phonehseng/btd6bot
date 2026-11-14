@@ -1749,7 +1749,8 @@ EXCLUSIONS = ROOT / "data" / "generated_exclusions.json"
 
 
 def exclusions(kind):
-    """{"maps": [...], "why": [...]} for the solo build of `kind`: maps a
+    """{"maps": [...], "by_mode": {mode: [...]}, "why": [...]} for the solo
+    build of `kind`: maps (in every mode, or in one mode) a
     live loss took the generated build off (data/generated_exclusions.json,
     written by hand after a loss's diagnosis). The simulation cannot see
     them - Workshop's MOABs drop down a chute out of a solo tower's reach -
@@ -1768,6 +1769,10 @@ def exclusions(kind):
     # excludes (hand_exclusions: the general builds lost there - #Ouch,
     # Erosion, Sanctuary and Tricky Tracks in Apopalypse ...)
     by_mode = {m: set(ms) for m, ms in (every.get("by_mode") or {}).items()}
+    # the tower's own map/mode pairs (a loss of this one build in one mode,
+    # e.g. the sniper on Geared's ABR) join them rather than being replaced
+    for m, ms in (out.get("by_mode") or {}).items():
+        by_mode.setdefault(m, set()).update(ms)
     for mode in candidate_modes(kind):
         by_mode.setdefault(mode, set()).update(hand_exclusions(mode))
     by_mode = {m: sorted(ms) for m, ms in by_mode.items() if ms}
