@@ -45,13 +45,22 @@ ONE_THREAD = {k: "1" for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_N
 CLOCKED = {"test_reinforce_budget_offline.py", "test_glass_field_offline.py",
            "test_glass_hud_offline.py", "test_between_games_offline.py"}
 
+# Tests too slow for one process, run as this many shards side by side
+# (the file takes `--shard k/n`). The threat simulation of every map strategy
+# took over an hour in one process on 2026-11-13 (an Impoppable game up to
+# four minutes), so no caretaker run's check could finish and fixes piled up
+# on branches. Shards start first, so the slow ones are not left for last.
+SHARDED = {"test_map_threat_sim_offline.py": 12}
+
 
 def run_step(cmd):
     """Run one check step; returns (name, passed, last lines of its output)."""
     flags = subprocess.CREATE_NO_WINDOW | getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0)
     r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
                        creationflags=flags, env={**os.environ, **ONE_THREAD})
-    name = Path(cmd[-1]).name if cmd[-1].endswith(".py") else "import"
+    name = next((Path(c).name for c in cmd if c.endswith(".py")), "import")
+    if "--shard" in cmd:
+        name += " shard " + cmd[cmd.index("--shard") + 1]
     return name, r.returncode == 0, "\n".join((r.stdout + r.stderr).strip().splitlines()[-8:])
 
 
@@ -62,7 +71,9 @@ if __name__ == "__main__":
     args = ap.parse_args()
     steps = [[sys.executable, "-c", "import btd6bot.runner, btd6bot.strategy as s; s.load_all()"]]
     tests = sorted((ROOT / "tests").glob("test_*.py"))
-    steps += [[sys.executable, str(t)] for t in tests if t.name not in CLOCKED]
+    steps += [[sys.executable, str(t), "--shard", f"{k}/{n}"]
+              for t in tests if t.name in SHARDED for n in [SHARDED[t.name]] for k in range(1, n + 1)]
+    steps += [[sys.executable, str(t)] for t in tests if t.name not in CLOCKED and t.name not in SHARDED]
     alone = [[sys.executable, str(t)] for t in tests if t.name in CLOCKED]
     failed = []
 
