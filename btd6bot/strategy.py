@@ -5668,10 +5668,22 @@ class Executor:
         1.13-2.04 while rounds 98 and 100 were rated 0.46 and 0.27; the
         check yielded, the plan kept the cash for its Super Mines, and round
         91's twenty BFBs took the life with $101,163 in hand. Round 88 of the
-        case above read 0.7x and still yields."""
+        case above read 0.7x and still yields.
+
+        Nor when a plan_first build's plan has given its ramp turn away for
+        R (_plan_first_gives_up_ramp): yielding hands the cash to the plan
+        and to reinforcing, and there the plan's step cannot be paid before
+        R and reinforcing has no turn, so the cash would go to nobody. The
+        same build two games later (2026-11-13 12:30, loss case
+        20261113_130204): rounds 89-91 read 0.5x, over RAMP_PANIC, and
+        yielded to rounds 98 and 100; round 91's BFBs took the life again,
+        with $57,329 in hand and the Super Mines $90,000 away."""
         if not self.rules.get("one_life"):
             return False
         if ratio is not None and ratio < self.RAMP_PANIC:
+            return False
+        if (ratio is not None and self.plan_first()
+                and self._plan_first_gives_up_ramp(R, ratio, self._money_before(R, rnd))):
             return False
         rated = self._rated(f"blimp{R}", rnd, lambda fc, towers: fc.worst(towers, [R]))
         if not rated or rated[0] is None or rated[0] < 1.0:
@@ -5785,6 +5797,11 @@ class Executor:
         opts.sort(key=lambda o: -o["gain"] / max(o["cost"], 1))
         return opts[:8]
 
+    def _money_before(self, R, rnd):
+        """What can be paid before round R, seen from round rnd: the cash in
+        hand plus the income of the rounds in between."""
+        return self.cash_seen + sum(self.round_income(r) for r in range(rnd, R))
+
     def _answer_ramp(self, R, load, ratio, cash, rnd):
         """More blimp damage for round R. The strategy's own answer for that
         round's biggest blimp class comes first; otherwise the plan carries on
@@ -5802,8 +5819,7 @@ class Executor:
                   key=TH.blimp_hp, default=None)
         why = f"blimp ramp round {R} ratio {ratio:.1f}"
         own = [st for st in (self.strat.get("answers") or {}).get(cls) or () if self._step_allowed(st)]
-        # what can be paid before round R: cash now + the rounds in between
-        money = self.cash_seen + sum(self.round_income(r) for r in range(rnd, R))
+        money = self._money_before(R, rnd)
         total = self._steps_cost(own, f"the {cls} answer") if own else None
         if total is not None and total > money:
             # The strategy's own answer cannot be finished before the blimps:
@@ -5979,7 +5995,8 @@ class Executor:
     def _plan_first_gives_up_ramp(self, R, ratio, money):
         """Does a plan_first build's plan lose its turn as the blimp ramp
         for blimp round R? True in a one-life game when the blimp check
-        reads R under RAMP_PANIC (and the damage model did not overrule it,
+        reads R under RAMP_OK - the defence deals less in reach than the
+        round's blimps have HP - (and the damage model did not overrule it,
         _model_holds) while the plan's next step cannot be paid before R
         from `money`, the cash in hand plus the income until then
         (_plan_step_out_of_reach). Waiting then buys nothing before the
@@ -5995,9 +6012,20 @@ class Executor:
         0.1-0.3x of its 2.5x bar and logged "buying blimp damage that can",
         but this rule answered "plan" and nothing was bought. The bank grew
         from $24k to $101k, and round 91's twenty BFBs (read 0.2x, the model
-        1.13) took the one life. Over RAMP_PANIC the plan keeps its turn as
+        1.13) took the one life. Over RAMP_OK the plan keeps its turn as
         before: Sulfur Springs CHIMPS read round 60 at 2.1x of 2.5x with its
         Archmage out of reach, and the plan's cash stays with the plan.
+
+        The bar was RAMP_PANIC (0.4x) at first, and the next game on the
+        same build (2026-11-13 12:30, loss case 20261113_130204) showed it
+        too low: the ramp bought at rounds 81, 82 and 84 (read 0.4x: a bomb,
+        a super monkey, Cripple MOAB), which lifted rounds 87-91 to 0.4-0.5x
+        - just over the bar. The plan took its turn back with the Super
+        Mines as far off as before, nothing was bought from round 85 on, the
+        bloons got 88-94% along the route in rounds 87-89, and round 91's
+        BFBs took the life with $57,329 idle. A reading under 1x says the
+        blimps outlast the defence's reach whatever the 2.5x bar; rounds 83,
+        85 and 86 of that game read 1.0-1.6x and held.
 
         Not in CHIMPS. There the blimp check reads the guide builds' late
         boards far short as a rule (Carrier Flagships and Glaive Lords it
@@ -6007,7 +6035,7 @@ class Executor:
         (tests/test_chimps_intermediate_guides_offline): the cash went to
         loose blimp damage, as at Cracked. Impoppable has the opposite record
         (Dark Castle 2026-11-06: check 0.2x, model 2.18, the MOAB leaked)."""
-        if not self.rules.get("one_life") or ratio >= self.RAMP_PANIC or self.idx >= len(self.plan):
+        if not self.rules.get("one_life") or ratio >= self.RAMP_OK or self.idx >= len(self.plan):
             return False
         if self.mode == "chimps":
             return False

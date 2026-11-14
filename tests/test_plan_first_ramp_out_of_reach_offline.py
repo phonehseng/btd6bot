@@ -147,13 +147,47 @@ def test_with_lives_to_spare_the_plan_keeps_its_turn():
     assert not ex._plan_first_gives_up_ramp(87, ratio, CASH[87])
 
 
-def test_over_ramp_panic_the_plan_keeps_its_turn():
+def test_over_ramp_ok_the_plan_keeps_its_turn():
     """Sulfur Springs CHIMPS (case 20261113_085155) read round 60 at 2.1x
-    of 2.5x with its Archmage out of reach: there the plan keeps the cash."""
+    of 2.5x with its Archmage out of reach: there the plan keeps the cash.
+    So it does from 1x on (RAMP_OK), the readings of the rounds that held
+    in the build's next game."""
     if not _ready():
         return
     ex = _setup(87)
-    assert not ex._plan_first_gives_up_ramp(87, 2.1, CASH[87])
+    for ratio in (ex.RAMP_OK, 1.6, 2.1):
+        assert not ex._plan_first_gives_up_ramp(87, ratio, CASH[87]), ratio
+
+
+def test_a_reading_just_over_ramp_panic_gives_the_turn_away_too():
+    """The build's next game (case 20261113_130204): the ramp's own buys of
+    rounds 81-84 lifted rounds 87-91 to 0.4-0.5x, over RAMP_PANIC; the plan
+    took its turn back, nothing more was bought and round 91 took the life
+    with $57,329 idle. Under RAMP_OK the plan's turn stays given away."""
+    if not _ready():
+        return
+    for rnd in (87, 91):
+        ex = _setup(rnd)
+        for ratio in (0.44, 0.5, 0.9):
+            assert ex.RAMP_PANIC < ratio < ex.RAMP_OK
+            assert ex._plan_first_gives_up_ramp(rnd, ratio, CASH[rnd]), (rnd, ratio)
+
+
+def test_a_given_away_turn_does_not_yield_to_a_lost_round():
+    """Round 91 read at 0.5x, rounds 98 and 100 rated lost: yielding would
+    leave the cash to a plan step that cannot be paid and to reinforcing,
+    which a plan_first build gives no turn - so the blimp check keeps it.
+    With the Super Mines in reach (money enough) the old rule decides."""
+    if not _ready():
+        return
+    ex = _setup(91)
+    assert not ex._ramp_yields_to_lost_round(91, 91, 0.5)
+    ex.saving_for_threat = False
+
+    ex.blimp_ratio = lambda load: 0.5   # the second game's reading of its late blimp rounds
+    ex._threat_tick(CASH[91], 91)
+    assert ex.g.bought, "nothing bought for round 91's blimps at 0.5x"
+    print("round 91 at 0.5x bought:", ex.g.bought[:6])
 
 
 
