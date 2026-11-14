@@ -247,7 +247,7 @@ class RoundForecast:
                   if any(p.kind != "hero" for p in awake) else []), rs, True)
                 for awake, lv, pr, rs in groups.values()]
 
-    def _rate(self, towers, rounds, rate, what=None):
+    def _rate(self, towers, rounds, rate, what=None, stop=None):
         """{round: rate(stations, round)} over `rounds`, rating each round
         with the towers awake in it (_phases); None without towers.
 
@@ -255,7 +255,12 @@ class RoundForecast:
         answer is remembered per board and round (_memo); None: not
         remembered. The rounds come out in the order an unremembered call
         rates them, whatever was remembered: best() takes the first of
-        equally bad rounds as the worst."""
+        equally bad rounds as the worst.
+
+        stop: a callable asked before each rating that is not remembered;
+        when it returns True the rounds rated so far are returned. The ones
+        rated are remembered, so a later call goes on where this one
+        stopped. Remembered rounds never ask it (they cost nothing)."""
         key = self._key(towers) if what is not None else None
         out = {}
         for stations, rs, exact in self._phase_groups(towers, rounds):
@@ -278,6 +283,8 @@ class RoundForecast:
                     if r in known:
                         out[r] = known[r]
                         continue
+                    if stop is not None and stop():
+                        return out          # cut short: the caller goes on later
                     out[r] = rate(st, r)
                     self.computed += 1
                     if key is not None:
@@ -325,18 +332,24 @@ class RoundForecast:
         """(lowest margin, its round) over `rounds` for `towers`, or None."""
         return lowest(self.margins(towers, rounds, iterations))
 
-    def leaks(self, towers, rounds, strength, per_round=False):
+    def leaks(self, towers, rounds, strength, per_round=False, stop=None):
         """Lives the model's defence would lose over `rounds` with every
         tower at `strength` (0.5 = half strength: what a margin of 2 must
         hold); {round: lives} with per_round. One simulation per round, and
         it moves with every purchase - unlike the margin search, whose steps
-        hide small gains. None when it cannot be rated."""
+        hide small gains. None when it cannot be rated.
+
+        stop: asked before each round not remembered yet (see _rate); once
+        it says True the rest are left unrated, so the answer covers only
+        part of `rounds` - the caller must know it stopped (reinforce's
+        look budget does)."""
         try:
             if not self._ready():
                 return None
             from . import dps_model as D
             lost = self._rate(towers, rounds, lambda st, r: D.simulate_round(
-                st, self.mode, r, self.track, strength=strength).lives_lost, what=("leaks", strength))
+                st, self.mode, r, self.track, strength=strength).lives_lost, what=("leaks", strength),
+                stop=stop)
             if lost is None:
                 return None
             return lost if per_round else sum(lost.values())

@@ -296,6 +296,7 @@ class LookBudget:
         self.deadline = deadline
         self.forecast = forecast
         self.start_count = getattr(forecast, "computed", None)
+        self.started = time.monotonic()
         self.cut = None
         self.settle = settle
 
@@ -305,12 +306,29 @@ class LookBudget:
         return self.cut is not None and not self.settle
 
     def past(self):
-        if self.deadline is None or time.monotonic() <= self.deadline:
+        """True when the look must stop before its next rating: the deadline
+        has passed, or the next rating - taking as long as this look's
+        ratings have taken on average - would end past it.
+
+        A rating cannot be interrupted once started, and late in a game one
+        takes 2-4 s. Checking the clock alone let a rating start just before
+        the deadline and end seconds after it: on X Factor Impoppable's
+        round-85 board (tests/test_reinforce_budget_offline.py) looks took
+        7.8 and 10.1 s on a 6 s budget, on an idle machine. The average is
+        over the look's whole time (its other work included), so it errs
+        towards stopping early; the next look goes on from the memo."""
+        if self.deadline is None:
             return False
         count = getattr(self.forecast, "computed", None)
         if self.start_count is not None and count == self.start_count:
             return False            # nothing new rated yet: no progress, no cut
-        return True
+        now = time.monotonic()
+        if now > self.deadline:
+            return True
+        if self.start_count is None or count is None:
+            return False            # no rating count (test fakes): the clock alone
+        pace = (now - self.started) / (count - self.start_count)
+        return now + pace > self.deadline
 
     def over(self, stage, done=None, total=None):
         """past(), noted and said once a look: True when `stage` must stop."""
@@ -631,7 +649,23 @@ def _look(ex, forecast, cash, rnd, end_round, lives, deadline):
     half = 1.0 / TARGET_MARGIN
     # only the rounds that leak at half strength can gain (and each skipped
     # round saves a simulation per option)
-    by_round = forecast.leaks(board(ex), rounds, half, per_round=True) or {}
+    #
+    # This opening rating is itself under the budget: late in a game each
+    # round takes 0.3-0.9 s, and on a fresh forecast the ten look-ahead
+    # rounds were about 90% of a look - X Factor Impoppable's round-85 board
+    # (tests/test_reinforce_budget_offline.py) took 9.0-9.3 s on a 6 s
+    # budget before any other stage was reached. The rounds rated are
+    # remembered, so a cut look ("busy") goes on from there next time; a
+    # settling pass rates them all, since nothing can be chosen without them.
+    # Forecasts without a rating count (the tests' fakes, which rate
+    # instantly) are asked plainly, as LookBudget.past treats them.
+    if deadline.settle or getattr(forecast, "computed", None) is None:
+        by_round = forecast.leaks(board(ex), rounds, half, per_round=True) or {}
+    else:
+        by_round = forecast.leaks(board(ex), rounds, half, per_round=True,
+                                  stop=lambda: deadline.over("rating the look-ahead rounds")) or {}
+    if deadline.cuts():
+        return "busy", None
     rounds_rated = [r for r, lost in by_round.items() if lost > 0]
     base = sum(by_round[r] for r in rounds_rated)
     if not base:

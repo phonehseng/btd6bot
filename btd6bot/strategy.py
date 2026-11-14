@@ -7586,6 +7586,12 @@ class Executor:
         target = self.strat.get("xp_target") if isinstance(getattr(self, "strat", None), dict) else None
         if deadline is None:
             deadline = RF.look_deadline()
+        if not isinstance(deadline, RF.LookBudget):
+            # a LookBudget also stops when the next lift rating (_lifts_now,
+            # up to six margins) would end past the deadline, not only once
+            # it has passed: X Factor Impoppable's round-85 board took
+            # 8.5-9.2 s a call on a 6 s budget (test_reinforce_budget_offline)
+            deadline = RF.LookBudget(deadline, getattr(self, "forecast", None))
         # with no income the plan's crosspath caps would strand cash: the
         # leading path may go further (as reinforce.py does)
         for p, t, cost in self.upgrade_choices(first=target, past_plan=bool(self.rules.get("buy_all_upfront"))):
