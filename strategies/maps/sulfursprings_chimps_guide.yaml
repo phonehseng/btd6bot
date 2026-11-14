@@ -131,7 +131,7 @@ plan:
   - {do: place, id: b1, kind: buccaneer, role: dps, at: [0.195, 0.419]}         # the springs in the guide: the west pool's tip, where the proven boat stood
   - {do: upgrade, id: b1, to: 1-0-0}                                            # R6 Faster Shooting
   - {do: upgrade, id: b1, to: 2-0-0}                                            # R8 Double Shot
-  - {do: place, id: w1, kind: wizard, role: dps, at: [0.099, 0.845]}            # the guide's first tower; by the exit lane (was 0.334, 0.112: passed over live, case 20261113_085155)
+  - {do: place, id: w1, kind: wizard, role: dps, at: [0.532, 0.785]}            # the guide's first tower, on the bottom ledge: the cell the game gave it in all three games (04:20, 08:36, 12:00 on 2026-11-13); (0.099, 0.845) was never taken live and is now refused
   - {do: place, id: hero, kind: hero, role: dps, at: [0.291, 0.129]}             # Obyn: kept at the top (beside the new wizard spot the replay rates him lower)
   - {do: place, id: s1, kind: sniper, role: dps, target: strong, at: [0.238, 0.129]}  # added: the Cripple MOAB sniper (see above)
   - {do: place, id: x1, kind: bomb, role: dps, at: [0.612, 0.615]}              # added: round 28's leads (see above): the north rim cell the damage model rates best for them

@@ -65,7 +65,7 @@ planner:
   # (tests/test_trickytracks_excluded_offline.py).
   # Every generated build: also kept off the maps every hand-written general
   # build of a mode excludes there (gen_builds.hand_exclusions).
-  excluded_by_mode: {apopalypse: ["#Ouch", Erosion, Geared, Sanctuary, "Tricky Tracks"], abr: ["Tricky Tracks"], military_only: [Sanctuary, "Tricky Tracks"], reverse: [Sanctuary, "Tricky Tracks"]}
+  excluded_by_mode: {apopalypse: [Dark Dungeons, Erosion, Geared, "#Ouch", Sanctuary, "Tricky Tracks"], abr: ["Tricky Tracks"], military_only: [Sanctuary, "Tricky Tracks"], reverse: [Sanctuary, "Tricky Tracks"]}
 plan:
   - {do: place, id: a1, kind: sniper, role: dps, segment: [0.0, 0.5]}   # main line: 4-2-0
   - {do: place, id: hero, kind: hero, role: dps, segment: [0.0, 0.6]}   # heroes take no share of tower XP

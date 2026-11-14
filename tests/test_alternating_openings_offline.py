@@ -76,11 +76,8 @@ LOST_WATERPARK = {"x1": ("dart", (0.334, 0.828)), "r1": ("boomerang", (0.190, 0.
 # Impoppable map builds that fail a lane, with what they need (another
 # session owns them; see the module docstring).
 IMPOPPABLE_KNOWN = {
-    # Lanes 2979 and 2982 (the right two of four) have only sky503 (R8, 124 /
-    # 78 units) until sky506 at R11; round 10 rates 0.32 on 2982 against 0.83
-    # on 2963. Needs: sky506 (or des507) bought before sky504/sky505, which
-    # both stand on the left lanes 3019/2963.
-    "muddypuddles_impoppable": "round 10 weak on lane 2982",
+    # (muddypuddles_impoppable left this list on 2026-11-13: sky506 on the
+    # right lanes 2979/2982 is now bought before sky504/sky505 on the left.)
 }
 
 

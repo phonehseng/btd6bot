@@ -114,6 +114,53 @@
 #   13 0.53 -> 0.56 (tests/test_bazaar_chimps_opening_offline.py). Rounds 9,
 #   10 and 13 held live twice at those ratings; round 12 is the one that lost.
 #
+# Spots again, 2026-11-13 (case 20261113_110931, lost round 7 at 11:06): the
+# first game with x3 in the middle lost its life to one red in round 7, nine
+# seconds after Play. Round 7 is played by the three darts alone (it starts
+# with $201; the boomerang costs $340), and with x3 on the strip's left end
+# (0.115, 0.487) those three darts had held it in every game that got there
+# (journals 20261112_225338, 20261113_064858). The model rated the middle
+# higher for that round (0.81 against 0.71) and the game said the opposite:
+# between 0.7 and 0.8 its rating does not tell two dart cells apart.
+#   * x3 back to (0.115, 0.487), the cell the game gave it in those games
+#     (it refuses 0.131 beside it): rounds 6 and 7 are the proven board again;
+#   * the boomerang, bought before round 8, takes the middle cell (0.43,
+#     0.496) instead: 82 / 82 units of the two lanes (70 / 37 at the left
+#     end). The game took a dart there in the lost game, the same footprint.
+#   Margins, the 06:51 board -> this one: 6 0.78 and 7 0.71 unchanged,
+#   8 0.79 -> 0.96, 9 0.38 -> 0.43, 10 0.35 -> 0.52, 12 0.71 -> 0.95,
+#   13 0.53 -> 0.54, 14 1.61 -> 1.74. Against the middle-dart board: round 12
+#   0.91 -> 0.95, round 10 0.46 -> 0.52, rounds 8, 9 and 13 0.02-0.04 lower.
+#
+# Village, 2026-11-13: the live learned map now has a "land" refusal on the
+# village's cell (0.115, 0.675) (a refused strip runs down x 0.115 from 0.59
+# to 0.76). The village is there for its Radar Scanner (R36), which lends
+# camo to the ace; the sniper has Night Vision of its own. The ace has only
+# eight legal cells on the whole map: five at the bottom left round
+# (0.131, 0.845) and three at the top left, which the spike factory p1
+# (0.195, 0.181) blocks. Searched with tools/pin_spots (Pinner.legal,
+# never_refused, Pinner.reach with buffer_range: 40 units at the base tier)
+# over every legal village cell, the ace on each of its cells, and every
+# later pin kept legal (test_map_hints_offline.illegal_spots): every pair
+# that works is on a strip of ground at (0.184-0.216, 0.845-0.854), so the ace
+# keeps its cell.
+#   * v1 to (0.195, 0.845), 23 units from the ace. Rosalia was refused
+#     round it on 2026-11-12, but the game has since taken a dart and a tack
+#     on these cells. Of the strip's cells, this one is the farthest from a
+#     refused centre (3.9 units). Pinner.pin picks (0.206, 0.845) (1.9 units);
+#     (0.19-0.2, 0.845) rate the same.
+#   * A risk the checks do not catch: the area is full of refusals for
+#     smaller towers that would fall inside a village's or an ace's footprint.
+#     The ace's own cell has a druid refusal on it. If the game refuses v1
+#     here, the next answer is the top left: ace at (0.131, 0.181), with
+#     p1 moved.
+#   Margins (replay_plan, live sight, the worse lane), the old cell -> this
+#   one: only rounds 45-91 change, each by 0.01-0.05 (here Jungle Drums no
+#   longer reaches the sniper): 45 1.81 -> 1.78, 47 1.45 -> 1.40, 49 1.03 ->
+#   1.01, 51 0.94 -> 0.89, 56 1.11 -> 1.08, 57 0.78 -> 0.77, 83 0.92 -> 0.91,
+#   84 0.94 -> 0.93, 91 0.93 -> 0.92; no round crosses 1.0 either way.
+#   tools/simulate_threats: plan 26/26, no threat gaps, before and after.
+#
 # Status: UNTESTED, never played. Untested guide build: base_success 0.5,
 # like the Beginner guide builds before their first games (under the 0.80
 # CHIMPS bar: it plays when the NEXT file names it with "!force").
@@ -126,7 +173,7 @@ plan_first: true      # the plan owns the cash: no off-plan reinforce/surplus bu
 modes: [chimps]
 planner:
   towers: {dart: [0, 1, 0], boomerang: [0, 0, 0], glue: [0, 0, 0], druid: [1, 3, 0], sniper: [0, 2, 2], village: [2, 2, 0], ace: [2, 0, 5], alchemist: [3, 2, 0], spike: [2, 0, 5]}
-  revised: "2026-11-13T08:20"   # x3 and the boomerang moved to both lanes (see "Spots, 2026-11-13")
+  revised: "2026-11-13T14:30"   # the village off its refused cell, beside the ace (see "Village, 2026-11-13")
   maps: [Bazaar]
   # an untested guide build: the map builds' lowest rate, as the Beginner CHIMPS
   # guide builds had before their first games (tools/pin_spots.UNTESTED_SUCCESS)
@@ -134,24 +181,24 @@ planner:
 plan:
   - {do: place, id: x1, kind: dart, role: dps, at: [0.719, 0.504]}              # R6 the middle strip, right
   - {do: place, id: x2, kind: dart, role: dps, target: strong, at: [0.74, 0.555]}  # R6 the middle, on Strong
-  - {do: place, id: x3, kind: dart, role: dps, at: [0.43, 0.496]}               # R6 the middle of the middle strip, between the canals: 62 / 58 units of the two lanes (see "Spots, 2026-11-13"; was 0.131, 0.487)
+  - {do: place, id: x3, kind: dart, role: dps, at: [0.115, 0.487]}              # R6 the middle strip, left: the cell that held round 7 live (see "Spots again, 2026-11-13"; in the middle it lost round 7)
   # R7 the guide's boomerang on Strong and R10 its druid, the guide's order. The opening search's
   # glue in their place lost round 9 (case 20261113_032115): 3 darts + a 0-0-0 glue, $305 of $430.
-  # The boomerang stays on the left end of the strip, two cells nearer the lower lane
-  - {do: place, id: r1, kind: boomerang, role: dps, target: strong, at: [0.115, 0.445]}  # 70 / 37 units of the two lanes, a cell a boomerang has stood on (see "Spots, 2026-11-13")
+  # The boomerang stands in the middle of the strip, between the canals, where both lanes run straight past
+  - {do: place, id: r1, kind: boomerang, role: dps, target: strong, at: [0.43, 0.496]}  # 82 / 82 units of the two lanes; the game took a dart on this cell (see "Spots again, 2026-11-13")
   - {do: place, id: d1, kind: druid, role: dps, near: [x2], at: [0.751, 0.47]}  # R10 right of the middle dart
   - {do: place, id: hero, kind: hero, role: dps, at: [0.687, 0.181]}              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 0-1-0}                                            # R15
   - {do: upgrade, id: d1, to: 0-2-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 0-3-0}                                            # R26
-  - {do: place, id: s1, kind: sniper, role: dps, at: [0.11, 0.538]}             # R17 lined up with the top row
+  - {do: place, id: s1, kind: sniper, role: dps, at: [0.11, 0.56]}              # R17 lined up with the top row; one cell below 0.538, which is too close to x3 on its proven cell (363 / 376 units of the two lanes in sight)
   - {do: upgrade, id: s1, to: 0-1-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: x2, to: 0-1-0}                                              # opening search 2026-11-12
   - {do: upgrade, id: d1, to: 1-3-0}                                            # R27 Hard Thorns: lead
   - {do: place, id: gl1, kind: glue, role: dps, at: [0.74, 0.624]}                # opening search 2026-11-12 (after the opening since 2026-11-13)
   - {do: upgrade, id: s1, to: 0-2-0}                                            # R18-20 Night Vision, Shrapnel: camo
   - {do: upgrade, id: s1, to: 0-2-2}                                            # R28-29
-  - {do: place, id: v1, kind: village, role: support, near: [ac1, s1], at: [0.115, 0.675]}  # by the ace and the sniper: its Radar lends them camo (was 0.687, 0.845: the ace saw no camo)
+  - {do: place, id: v1, kind: village, role: support, near: [ac1], at: [0.195, 0.845]}  # 23 units from the ace, inside the Radar's 40: lends it camo (0.115, 0.675 refused live; see "Village, 2026-11-13")
   - {do: upgrade, id: v1, to: 0-2-0}                                            # R36 Radar Scanner
   - {do: place, id: ac1, kind: ace, role: dps, at: [0.131, 0.845]}              # R40
   - {do: upgrade, id: ac1, to: 2-0-3}                                           # R40

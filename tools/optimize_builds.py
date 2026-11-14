@@ -479,9 +479,18 @@ class MapSetup:
     def sight(self, x, z, pts):
         """Visible mask of world points pts (N x 3) from a tower at (x, z):
         no sight-blocking cell of the MapModel on the straight line between
-        (dps_model.sight_test, shared with the live forecast)."""
+        (dps_model.sight_test, shared with the live forecast), with the
+        blockers' heights and the ground's as the live forecast passes them:
+        a tower on raised ground sees over blockers no higher than it.
+
+        Without them (until 2026-11-13, backlog 106 (d)) every tower on
+        Sunken Columns' column tops counted as blind behind the columns it
+        stands on - the best dart spot "saw" 18 units of a 640-unit route -
+        and the optimizer's plans for Sunken Columns and Mesa were ranked on
+        a sight the game does not have (pin_spots and replay_plan had moved
+        to the live sight already: use_live_sight)."""
         if not hasattr(self, "_sight"):
-            self._sight = D.sight_test(self.model.sight, self.track)
+            self.use_live_sight()
         if self._sight is None:
             return np.ones(len(pts), bool)
         return self._sight(x, z, pts)
@@ -493,7 +502,8 @@ class MapSetup:
         no heights. On Water Park the cells by the slide see none of the
         second lane without them and 83-114 units of both lanes with them
         (2026-11-12); Sunken Columns' column tops the same (round 6 lost
-        three times from the pools)."""
+        three times from the pools). MapSetup.sight uses it by default now;
+        it stays for the callers that ask for it."""
         heights = (getattr(self.model, "sight_height", None), getattr(self.model, "ground_height", None))
         self._sight = D.sight_test(self.model.sight, self.track, heights=heights)
 

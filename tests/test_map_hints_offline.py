@@ -15,9 +15,9 @@ Checked here:
     game the build serves;
   * every map strategy loads, is valid and bot-ready (apart from the `at` step
     key the executor does not read yet), is usable and covers every threat in
-    each mode it lists on a fully unlocked account, passes the offline threat
-    simulation (tools/simulate_threats.py: real prices and income, no bloon
-    the defence cannot pop), and every `at` is legal in plan order.
+    each mode it lists on a fully unlocked account, and every `at` is legal
+    in plan order. (The offline threat simulation of each map strategy is
+    tests/test_map_threat_sim_offline.py, which tools/check.py runs in shards.)
 
 Run: python tests/test_map_hints_offline.py (also collectable by pytest).
 Never touches the game, mouse or keyboard."""
@@ -292,7 +292,11 @@ def test_map_strategies_usable_and_covered():
 #     "the game accepts ninja at a spot the map file marks blocked (70,82)")
 #     and legal in play since placement.valid_spots keeps accepted cells
 #     (tests/test_accepted_cells_offline.py).
-GAME_ACCEPTED = {"ravine_magic_only": {"nM"}}
+# Pins the map geometry calls illegal but the game accepted live. Bazaar's
+# r1 (0.43, 0.496): the dart x3 was placed on that very cell in the CHIMPS
+# game of 2026-11-13 11:06 (case 20261113_110931, game.log "placed x3 (dart)
+# at 0.430,0.496"); the boomerang has the same small footprint as a dart.
+GAME_ACCEPTED = {"ravine_magic_only": {"nM"}, "bazaar_chimps": {"r1"}}
 
 
 def test_map_strategy_spots_are_legal():
@@ -327,30 +331,9 @@ def test_map_strategy_spots_are_legal():
                         assert not illegal_spots(s["map"], one, longest(s["modes"])), (sid, st)
 
 
-# Builds whose won medal lets their plan end short in the simulation:
-# darkpath_easy (Dark Path Easy won): since an upgrade step keeps tiers a
-# threat answer bought on another path (Executor._widened, 2026-11-11) its
-# m1/de1 steps run where they used to be skipped, and the plan is 40/42 at R40.
-# lastresort_primary_only (case 20261112_111354_LastResort_primary_only): its
-# last tiers are a 5-2-0 desperado ($21k), round 40's MOAB answer on the
-# straight, which only the account's Double Cash pays by round 39; at base
-# income the plan is 11/14 at R40 with no threat gap (tests/
-# test_lastresort_primary_offline.py replays it on the account's economy).
-PLAN_SHORT_OK = {"darkpath_easy", "lastresort_primary_only"}
-
-
-def test_map_strategies_pass_the_threat_simulation():
-    """No round brings a bloon the defence cannot pop, with the real prices
-    and the game's base income (no Double Cash), in every listed mode."""
-    for sid, s in map_strategies().items():
-        for mode in s["modes"]:
-            r = SIM.simulate(dict(s, bot_ready=True), mode)
-            assert not r["gaps"], (sid, mode, r["gaps"][:3])
-            done, total = (int(x) for x in r["plan_done"].split("/"))
-            if S.MODE_FAMILY[mode] == "easy" and sid not in PLAN_SHORT_OK:
-                # Deflation: everything is bought with the starting cash
-                assert done == total or (done == total - 1 and s["plan"][-1].get("kind") == "hero"), \
-                    (sid, mode, r["plan_done"])
+# The threat simulation of every map strategy lives in
+# tests/test_map_threat_sim_offline.py: it takes over an hour in one process
+# since the Impoppable map builds, so tools/check.py runs it in shards.
 
 
 if __name__ == "__main__":
